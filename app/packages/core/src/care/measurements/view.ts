@@ -9,6 +9,10 @@ export interface ViewDependencies {
   readonly species: SpeciesSource;
 }
 
+/** The etiolation signs of the species; empty or unknown (#1005) is `null` (P-08). */
+const signsOf = (species: { readonly etiolationSigns: string | null } | null | undefined) =>
+  species?.etiolationSigns?.trim() || null;
+
 /**
  * The "Measure" view of a specimen (US-WAC-01): what is measured, how etiolation shows on the species (US-WAC-02),
  * the measurements, the last measurement and its rating. Everything is derived and never stored (P-01). `null` if the specimen does not exist or belongs to another
@@ -29,7 +33,7 @@ export async function measurementView(
     specimenId: specimen.id,
     status: specimen.status,
     growthMeasure: species?.growthMeasure ?? null,
-    etiolationSigns: species?.etiolationSigns.trim() || null,
+    etiolationSigns: signsOf(species),
     measurements,
     last,
     lastRating: last?.quality ?? null,

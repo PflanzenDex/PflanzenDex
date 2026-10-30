@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/display/label/label";
 import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { ageText, issueText } from "../review-text";
 import {
-  GROWTH,
+  growthText,
   difficultyText,
   dormancyPhase,
   levelText,
@@ -40,11 +40,11 @@ function Facts(props: { entry: ReviewEntry }) {
       <dt>Ruhephase</dt>
       <dd>{dormancyPhase(s)}</dd>
       <dt>Wachstumsmaß</dt>
-      <dd>{GROWTH[s.growthMeasure]}</dd>
+      <dd>{growthText(s.growthMeasure)}</dd>
       <dt>Vergeilungsanzeichen</dt>
-      <dd>{s.etiolationSigns}</dd>
+      <dd>{orUnknown(s.etiolationSigns)}</dd>
       <dt>Erfolgskriterien</dt>
-      <dd>{s.successCriteria}</dd>
+      <dd>{orUnknown(s.successCriteria)}</dd>
       <dt>Quelle</dt>
       <dd>{orUnknown(s.source)}</dd>
     </dl>

@@ -4,8 +4,9 @@ import { normalize, parseLatin } from "@pflanzendex/core";
 import type { SeedRow } from "./species-list.ts";
 
 // Writes demo species as an operator batch (`curated`, FR-BES-11) on a superuser connection, which is the only way
-// to create `created_by = 'operator'` rows outside the application. Difficulty, default level and lux need are never
-// written: without a source they stay unknown (P-08, #1003). Same text as migration 0095 writes into rows it cleared.
+// to create `created_by = 'operator'` rows outside the application. Difficulty, default level and lux need (#1003) and
+// growth measure, etiolation signs and success criteria (#1005) are never written: without a source they stay unknown
+// (P-08). Same text as migration 0095 writes into rows it cleared.
 export const SEED_SOURCE =
   "Dev seed: names and family from common botanical knowledge; difficulty and light need unknown";
 
@@ -18,8 +19,8 @@ async function insertSpecies(
 ): Promise<void> {
   const inserted = await client.query<{ id: string }>(
     `insert into species (created_by, latin_name, genus, epithet, german_name, english_name, family_latin,
-       family_german, growth_measure, etiolation_signs, success_criteria, source)
-     values ('operator', $1, $2, $3, $4, $5, $6, $7, 'height', $8, $9, $10) returning id`,
+       family_german, source)
+     values ('operator', $1, $2, $3, $4, $5, $6, $7, $8) returning id`,
     [
       parsed.display,
       parsed.genus,
@@ -28,8 +29,6 @@ async function insertSpecies(
       english,
       famLatin,
       famGerman,
-      "Lange, helle Zwischenräume und blasse Triebe.",
-      "Kompakter Neuaustrieb ohne Streckung.",
       SEED_SOURCE,
     ],
   );

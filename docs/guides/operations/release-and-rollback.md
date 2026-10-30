@@ -59,14 +59,39 @@ DB=$(grep '^POSTGRES_DB=' app/config/deploy/.env | cut -d= -f2)
 ```
 
 1. **Migrate and deploy** (`make deploy`, which backs up first and runs `migrate`). Check: `$c logs migrate` ends without error.
-2. **Load the curated start catalog** (`catalog:load`, 137 houseplants). It runs inside the api container, as the owner role, which is neither superuser nor BYPASSRLS (`DB_ROLE_CHECK`); species are written as the operator account `catalog-load` under the application role and the row rules, provenance with owner rights, all in one transaction. It writes names, family and synonyms only; difficulty, default level and lux need stay unknown until a value with a source is entered (P-08, #1003).
+2. **Load the curated start catalog and the researched attributes** (`catalog:load`, 137 houseplants). Always in this order: `catalog:check-data`, then the dry run, then the load.
 
    ```bash
+   $c exec -T api npm run catalog:check-data                       # checks the research data, needs no database
    $c exec -T api npm run catalog:load -- --dry-run                 # summary only, writes nothing
    $c exec -T api npm run catalog:load -- --confirm "$DB" | tee "catalog-load-$(date +%F).log"
    ```
 
-   The summary names host and database (never the password) and the number of new and present species. Without `--confirm <database name>` (or `CATALOG_LOAD_CONFIRM`) nothing is written. Running it again adds nothing. What it stores: Latin name, family, German and English name and synonyms of renamed species; provenance `origin = operator`, license `CC0-1.0` (assumption, E-25) per field; no source links are invented. An unverified German name stays empty (P-08). The schema still requires difficulty, standard level and lux, so those are starting values, marked in `species.source`; a reviewer or the fill job replaces them.
+   **Research data.** One JSON file per part under `app/packages/api/src/catalog/load/research/data/batch-NN/part-N.json` (at most 5 parts per batch folder, layout rule), each a list of records, one per species of the start list:
+
+   ```json
+   [
+     {
+       "species": "Monstera deliciosa",
+       "attributes": {
+         "toxicToPets": {
+           "value": true,
+           "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Monstera_deliciosa&oldid=1374208594",
+           "sourceName": "wikipedia",
+           "license": "CC-BY-SA-4.0",
+           "retrievedOn": "2026-10-30",
+           "note": "Section Toxicity"
+         }
+       }
+     }
+   ]
+   ```
+
+   Attributes are those of DM-ENT-01: `humidity` (`low`/`medium`/`high`), `minTemperature` (°C, -30 to 30), `growthSize` (`small`/`medium`/`large`), `toxicToPets` (true/false). An attribute that is not sourced is left out and stays unknown (P-08). `catalog:check-data` refuses a value without an https link on an allowed host (`gbif.org`, `api.gbif.org`, `wikidata.org`, `www.wikidata.org`, `de.wikipedia.org`, `en.wikipedia.org`, `commons.wikimedia.org`, matching `sourceName` `gbif`/`wikidata`/`wikipedia`), without a license from `CC0-1.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`, `CC-BY-SA-3.0`, with a retrieval date after today, an unknown attribute or key, a value outside its range, a note over 300 characters, a species listed twice or a species not on the start list; it prints one line per problem (`<file>: <species> / <attribute>: <code>`) and exits 1. How to research: `catalog-research-howto.md`.
+
+   **Load.** It runs inside the api container, as the owner role, which is neither superuser nor BYPASSRLS (`DB_ROLE_CHECK`). It runs the data check first and refuses with the same lines on any problem (nothing is written). Species are written as the operator account `catalog-load` under the application role and the row rules, provenance and the attribute values with owner rights, all in one transaction. It writes names, family and synonyms only; difficulty, default level and lux need (#1003) and growth measure, etiolation signs and success criteria (#1005) stay unknown until a value with a source is entered (P-08). Attribute values go to `taxon_attribute` with source, link, license and retrieval date; they show as "ungeprüft" until a reviewer confirms them (US-ENT-09).
+
+   The summary names host and database (never the password), the number of new and present species and the attribute values (`new`, `changed`, `unchanged`). Without `--confirm <database name>` (or `CATALOG_LOAD_CONFIRM`) nothing is written. Running it again adds nothing; a changed value in the data replaces the stored one (one row per species and field). What it stores per species: Latin name, family, German and English name and synonyms of renamed species; provenance `origin = operator`, license `CC0-1.0` (assumption, E-25) per field; no source links are invented. An unverified German name stays empty (P-08).
 
 3. **Switch the fill from open sources on:** set `CATALOG_FILL=on` in `app/config/deploy/.env`, then `$c up -d api`. The job (US-BES-12) asks GBIF, Wikipedia and Wikidata for the family, the German name and the botanical story of every approved species with a gap, one request at a time through the source client, and only fills empty fields (the start catalog is never overwritten); it records source, link, license and date per field. Progress: `$c logs -f api`, or the counts below.
 4. **Then `ATTRIBUTE_FILL=on`** (same way). It sends nothing itself; it turns the answers the catalog fill stored into species attributes for Discover (US-ENT-09), so it is useful only after step 3 has run. Both values accept only `on` or `off`; any other value stops the api at start (P-10).
@@ -96,7 +121,7 @@ commit;
 SQL
 ```
 
-If it fails on a foreign key, species are in use: restore instead, or leave them. To stop a fill, set `CATALOG_FILL=off` (or empty) and `$c up -d api`; values already set stay (nothing disappears silently, P-10) and carry their provenance.
+If it fails on a foreign key, species are in use: restore instead, or leave them. A wrong attribute value is corrected in the data file and loaded again (the newer value replaces it); to drop one, delete its row (`delete from taxon_attribute where latin_name = '<Latin name>' and field = '<field>';`) and remove it from the data file in the same PR, otherwise the next load writes it again. To stop a fill, set `CATALOG_FILL=off` (or empty) and `$c up -d api`; values already set stay (nothing disappears silently, P-10) and carry their provenance.
 
 **Must never run on production:** `npm run seed:catalog` and `npm run seed:demo` (dev and test only, they use a superuser connection and invented demo data; both refuse unless `PFLANZENDEX_ENV` is `local` or `test` and the database is on this machine). Do not run `catalog:load` against a database you did not name in `--confirm`.
 

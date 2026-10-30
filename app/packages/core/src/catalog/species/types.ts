@@ -45,13 +45,17 @@ export interface SpeciesValues {
   readonly dormancyFrom: string | null;
   readonly dormancyUntil: string | null;
   readonly locationHint: string | null;
-  readonly growthMeasure: GrowthMeasure;
-  readonly etiolationSigns: string;
+  /**
+   * Growth measure, etiolation signs and success criteria: `null` = unknown (P-08, #1005). A proposal fills them
+   * (FR-BES-05); the operator batch and the dev seed leave them unknown instead of writing a generic text.
+   */
+  readonly growthMeasure: GrowthMeasure | null;
+  readonly etiolationSigns: string | null;
   readonly wateringHint: string | null;
   readonly substrate: string | null;
   readonly pruning: string | null;
   readonly growthHacks: string | null;
-  readonly successCriteria: string;
+  readonly successCriteria: string | null;
   readonly botanicalStory: string | null;
   readonly source: string | null;
 }

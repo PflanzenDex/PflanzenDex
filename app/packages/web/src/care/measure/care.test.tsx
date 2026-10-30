@@ -157,6 +157,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("noch keine Messung");
     expect(html).toContain("noch keine Bewertung");
     expect(html).toContain("unbekannt");
+    // US-BES-12 (#1005): an unknown growth measure names the next step instead of a guessed "Höhe" (P-09).
+    expect(html).toContain("Wähle selbst Höhe, Rosettendurchmesser oder Trieblänge");
   });
 
   it("the course names value, date, quality and note; when empty it says what to do (P-09)", () => {

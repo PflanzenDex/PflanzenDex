@@ -21,7 +21,8 @@ export interface DifficultyRow {
   } | null;
   readonly substrate: string | null;
   readonly pruning: string | null;
-  readonly successCriteria: string;
+  /** `null` = unknown (P-08, #1005). */
+  readonly successCriteria: string | null;
   /** 1 easy, 2 medium, 3 hard (DM-BES-01); `null` = unknown, never a starting value (P-08). */
   readonly difficulty: number | null;
 }

@@ -40,6 +40,20 @@ describe("US-BES-13 gap list", () => {
     ]);
   });
 
+  it("US-BES-13 P-08: an unknown growth measure, etiolation signs or success criteria is a gap with next step research (#1005)", () => {
+    const list = buildGapList([
+      species({
+        id: "a",
+        values: { ...known, growthMeasure: null, etiolationSigns: null, successCriteria: null },
+      }),
+    ]);
+    expect(list.entries[0]?.gaps).toEqual([
+      { field: "growthMeasure", nextStep: "research" },
+      { field: "etiolationSigns", nextStep: "research" },
+      { field: "successCriteria", nextStep: "research" },
+    ]);
+  });
+
   it("US-BES-13 names the source and time of the last check, or null when none was asked (P-08)", () => {
     const list = buildGapList([
       species({
