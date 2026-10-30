@@ -15,7 +15,7 @@ function EndConfirm(props: { name: string; busy: boolean; onYes: () => void; onN
   return (
     <div
       role="group"
-      aria-label={`Freundschaft mit ${props.name} beenden`}
+      aria-label={`Freundschaft beenden: ${props.name}`}
       className="mt-2 flex flex-col gap-2"
     >
       <p>
@@ -60,7 +60,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
         </span>
         <span className="mt-2 flex flex-wrap gap-2">
           <Button asChild variant="outline" size="touch">
-            <Link to={`/friends/${f.id}`} aria-label={`Sammlung von ${nameOf(f.name)} ansehen`}>
+            <Link to={`/friends/${f.id}`} aria-label={`Sammlung ansehen: ${nameOf(f.name)}`}>
               Sammlung ansehen
             </Link>
           </Button>
@@ -69,7 +69,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
               type="button"
               size="touch"
               variant="outline"
-              aria-label={`Freundschaft mit ${nameOf(f.name)} beenden`}
+              aria-label={`Freundschaft beenden: ${nameOf(f.name)}`}
               onClick={() => setAsking(true)}
             >
               Freundschaft beenden

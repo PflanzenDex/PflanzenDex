@@ -27,7 +27,7 @@ function Incoming(props: {
           size="touch"
           variant="secondary"
           disabled={props.busy}
-          aria-label={`Anfrage von ${who} annehmen`}
+          aria-label={`Annehmen: Anfrage von ${who}`}
           onClick={() => props.onAnswer(r.id, "accept")}
         >
           Annehmen
@@ -37,7 +37,7 @@ function Incoming(props: {
           size="touch"
           variant="outline"
           disabled={props.busy}
-          aria-label={`Anfrage von ${who} ablehnen`}
+          aria-label={`Ablehnen: Anfrage von ${who}`}
           onClick={() => props.onAnswer(r.id, "decline")}
         >
           Ablehnen

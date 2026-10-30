@@ -190,7 +190,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-02 accepting a request makes the person a friend and says so", async () => {
     const { calls } = fakeServer({ incoming: [req()] });
     show("requests");
-    await userEvent.click(await screen.findByRole("button", { name: "Anfrage von Ben annehmen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Annehmen: Anfrage von Ben" }));
     expect(await screen.findByText(/Du bist jetzt mit Ben befreundet/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/friends/requests/r1/answer", body: { decision: "accept" } });
     expect(screen.queryByRole("button", { name: /annehmen/ })).toBeNull();
@@ -200,7 +200,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-02 declining sends the answer and tells the receiver what the other side learns", async () => {
     const { calls } = fakeServer({ incoming: [req()] });
     show("requests");
-    await userEvent.click(await screen.findByRole("button", { name: "Anfrage von Ben ablehnen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ablehnen: Anfrage von Ben" }));
     expect(await screen.findByText(/nur, dass sie nicht angenommen wurde/)).toBeTruthy();
     expect(calls[0]?.body).toEqual({ decision: "decline" });
   });
@@ -268,12 +268,32 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
     show("friends");
-    const see = await screen.findByRole("link", { name: "Sammlung von Ben ansehen" });
-    const end = screen.getByRole("button", { name: "Freundschaft mit Ben beenden" });
+    const see = await screen.findByRole("link", { name: "Sammlung ansehen: Ben" });
+    const end = screen.getByRole("button", { name: "Freundschaft beenden: Ben" });
     const row = see.parentElement;
     expect(row).toBe(end.parentElement);
     expect(row?.className).toContain("flex-wrap");
     expect(row?.className).toContain("gap-2");
+  });
+
+  it("US-QS-08 · WCAG 2.5.3 the friend link's and button's accessible names contain their visible text", async () => {
+    fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
+    });
+    show("friends");
+    const see = await screen.findByRole("link", { name: /^Sammlung ansehen/ });
+    expect(see.getAttribute("aria-label")).toContain("Sammlung ansehen");
+    const end = screen.getByRole("button", { name: /^Freundschaft beenden/ });
+    expect(end.getAttribute("aria-label")).toContain("Freundschaft beenden");
+  });
+
+  it("US-QS-08 · WCAG 2.5.3 the sharing buttons' accessible names contain their visible text", async () => {
+    fakeServer();
+    show("sharing");
+    for (const text of ["Alle Pflanzen dieser Art teilen", "Alle zurückziehen"]) {
+      const b = await screen.findByText(text);
+      expect((b.getAttribute("aria-label") ?? "").startsWith(text)).toBe(true);
+    }
   });
 
   it("US-QS-07 shows each friend with a decorative initials avatar, the name stays the text", async () => {
@@ -292,14 +312,12 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
     show("friends");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Freundschaft mit Ben beenden" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Freundschaft beenden: Ben" }));
     expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
     expect(calls).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(screen.queryByText(/alle Freigaben gelten dann nicht mehr/)).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Freundschaft mit Ben beenden" }));
+    await userEvent.click(screen.getByRole("button", { name: "Freundschaft beenden: Ben" }));
     await userEvent.click(screen.getByRole("button", { name: "Ja, beenden" }));
     expect(await screen.findByText(/Freundschaft mit Ben beendet/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/friends/f1/end", body: {} });
@@ -350,14 +368,14 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     show("sharing");
     await screen.findByRole("checkbox", { name: "Zebra – M2: mit Freunden teilen" });
     expect(screen.queryByRole("checkbox", { name: /M3/ })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Alle Pflanzen von Zebra teilen" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Alle Pflanzen dieser Art teilen: Zebra" }),
+    );
     expect(
       await screen.findByText(/Alle Pflanzen dieser Art sind für Freunde freigegeben/),
     ).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Alle Pflanzen von Zebra zurückziehen" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen: Zebra" }));
     expect(await screen.findByText(/Alle Pflanzen dieser Art sind zurückgezogen/)).toBeTruthy();
   });
 
