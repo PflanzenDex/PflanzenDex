@@ -11,7 +11,7 @@ import {
 import type { Pool, PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app";
-import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./index";
+import { checkTaxonomy, pokedexJobHandlers, scheduleChecks, taxonomyBuildEnabled } from "./index";
 
 // US-POK-03: the build job against real PostgreSQL; the sources are a fake (no network, no clock).
 let pool: Pool;
@@ -230,5 +230,12 @@ describe("US-POK-03 taxonomy build job", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("US-POK-03 the taxonomy check runs by default and stops only with TAXONOMY_BUILD=off", () => {
+    expect(taxonomyBuildEnabled({})).toBe(true);
+    expect(taxonomyBuildEnabled({ TAXONOMY_BUILD: "on" })).toBe(true);
+    expect(taxonomyBuildEnabled({ TAXONOMY_BUILD: "off" })).toBe(false);
+    expect(() => taxonomyBuildEnabled({ TAXONOMY_BUILD: "no" })).toThrow(/TAXONOMY_BUILD/);
   });
 });

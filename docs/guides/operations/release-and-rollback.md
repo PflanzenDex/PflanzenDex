@@ -49,6 +49,57 @@ Limits: database migrations are not reverted. Migrations must be expand/contract
 
 On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health` (status) and, on the host, `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details` (version).
 
+## Filling the catalog (first release, #991)
+
+A fresh installation has an empty species catalog, so the first plant fails at the species search (US-ONB-01). Four steps, always in this order. All commands run on the host in the checkout; `c` is the compose shortcut used in `staging-deploy-and-backup.md`.
+
+```bash
+c="docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml"
+DB=$(grep '^POSTGRES_DB=' app/config/deploy/.env | cut -d= -f2)
+```
+
+1. **Migrate and deploy** (`make deploy`, which backs up first and runs `migrate`). Check: `$c logs migrate` ends without error.
+2. **Load the curated start catalog** (`catalog:load`, 137 houseplants). It runs inside the api container, as the owner role, which is neither superuser nor BYPASSRLS (`DB_ROLE_CHECK`); species are written as the operator account `catalog-load` under the application role and the row rules, provenance with owner rights, all in one transaction.
+
+   ```bash
+   $c exec -T api npm run catalog:load -- --dry-run                 # summary only, writes nothing
+   $c exec -T api npm run catalog:load -- --confirm "$DB" | tee "catalog-load-$(date +%F).log"
+   ```
+
+   The summary names host and database (never the password) and the number of new and present species. Without `--confirm <database name>` (or `CATALOG_LOAD_CONFIRM`) nothing is written. Running it again adds nothing. What it stores: Latin name, family, German and English name and synonyms of renamed species; provenance `origin = operator`, license `CC0-1.0` (assumption, E-25) per field; no source links are invented. An unverified German name stays empty (P-08). The schema still requires difficulty, standard level and lux, so those are starting values, marked in `species.source`; a reviewer or the fill job replaces them.
+
+3. **Switch the fill from open sources on:** set `CATALOG_FILL=on` in `app/config/deploy/.env`, then `$c up -d api`. The job (US-BES-12) asks GBIF, Wikipedia and Wikidata for the family, the German name and the botanical story of every approved species with a gap, one request at a time through the source client, and only fills empty fields (the start catalog is never overwritten); it records source, link, license and date per field. Progress: `$c logs -f api`, or the counts below.
+4. **Then `ATTRIBUTE_FILL=on`** (same way). It sends nothing itself; it turns the answers the catalog fill stored into species attributes for Discover (US-ENT-09), so it is useful only after step 3 has run. Both values accept only `on` or `off`; any other value stops the api at start (P-10).
+
+The taxonomy build (US-POK-03) needs no step: it checks hourly whether the approved catalog differs from the stored tree and builds it from OpenTree, Wikidata and Wikipedia, so it picks up the start catalog on its own. `TAXONOMY_BUILD=off` in `.env` stops the check; the default is on.
+
+**Check queries** (`species_status` hides nothing from the cluster user; "approved" means review status `curated` or `reviewed`):
+
+```bash
+$c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atf -' <<'SQL'
+select count(*) as approved_species from species s join review_case v on v.object_kind = 'species' and v.object_id = s.id where v.status in ('curated', 'reviewed');
+select count(*) as with_source_snapshot from (select distinct species_id from catalog_source_snapshot) x;
+select count(*) as taxa from taxon;
+SQL
+```
+
+Expected after step 2: `approved_species` 137 or more. After step 3 (minutes to hours, depending on source limits): `with_source_snapshot` rises towards `approved_species`. Then open the app and search "Monstera" in the species search of the first-plant flow: it must list a hit. If the catalog is empty, the species search says so in German and names the next step (operator: run step 2).
+
+**Rollback.** Before step 2 take `make backup`; the data rollback is the restore of that dump (`staging-deploy-and-backup.md`). A targeted removal is only safe while no specimen points at the loaded species; the foreign keys then stop a wrong delete, so never use `session_replication_role` for it:
+
+```bash
+$c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -Atf -' <<'SQL'
+begin;
+with gone as (delete from species where created_by = 'operator' and source like 'Curated start catalog%' returning id)
+delete from review_case where object_kind = 'species' and object_id in (select id from gone);
+commit;
+SQL
+```
+
+If it fails on a foreign key, species are in use: restore instead, or leave them. To stop a fill, set `CATALOG_FILL=off` (or empty) and `$c up -d api`; values already set stay (nothing disappears silently, P-10) and carry their provenance.
+
+**Must never run on production:** `npm run seed:catalog` and `npm run seed:demo` (dev and test only, they use a superuser connection and invented demo data; both refuse unless `PFLANZENDEX_ENV` is `local` or `test` and the database is on this machine). Do not run `catalog:load` against a database you did not name in `--confirm`.
+
 ## Hotfix path (E-13)
 
 1. Branch from `main` (`fix/...`), keep the change small.

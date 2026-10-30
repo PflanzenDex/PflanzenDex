@@ -189,6 +189,11 @@ services:
       AI_RESOURCE_URL: ${APP_URL}/api/mcp
       # Global feature switches (US-DEV-06): e.g. `social,ai`. Empty: all off in production.
       FEATURES: ${FEATURES:-}
+      # Catalog jobs (#991): `on` starts the catalog fill from open sources (US-BES-12) and the attribute fill
+      # (US-ENT-09); `TAXONOMY_BUILD=off` stops the taxonomy check (US-POK-03, default on). Empty: fills stay off.
+      CATALOG_FILL: ${CATALOG_FILL:-}
+      ATTRIBUTE_FILL: ${ATTRIBUTE_FILL:-}
+      TAXONOMY_BUILD: ${TAXONOMY_BUILD:-}
     depends_on:
       db:
         condition: service_healthy
