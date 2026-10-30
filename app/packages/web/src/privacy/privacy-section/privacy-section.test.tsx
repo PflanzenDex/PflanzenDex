@@ -138,6 +138,15 @@ describe("US-ACC-04 download of all own data", () => {
 });
 
 describe("US-ACC-04 deleting the account", () => {
+  it("US-QS-17 · US-QS-15 step one names the next step in one line, the lists sit behind Mehr erfahren", async () => {
+    fakeServer();
+    show();
+    await userEvent.click(await deleteRow());
+    expect(await screen.findByText(/steht hinter „Mehr erfahren“/)).toBeTruthy();
+    expect(screen.getByText("Mehr erfahren")).toBeTruthy();
+    expect(screen.getByText("Das wird gelöscht:")).toBeTruthy();
+  });
+
   it("US-ACC-04 names what is removed and what stays before anything can be confirmed", async () => {
     fakeServer();
     show();

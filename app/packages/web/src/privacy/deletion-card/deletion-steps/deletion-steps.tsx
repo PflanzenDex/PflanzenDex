@@ -4,6 +4,7 @@ import { errorText } from "@/lib/error-text";
 import { keepTogether } from "@/lib/format";
 import type { ApiError } from "../../../kernel";
 import { cancelDeletion, requestDeletion, type DeletionState } from "../../privacy-api";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { CONFIRM_WORD, WhatHappens } from "../what-happens/what-happens";
 import type { useDeletionAction } from "../use-deletion-action/use-deletion-action";
 
@@ -18,6 +19,19 @@ export const day = (iso: string) =>
   new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
 
 const failure = (e: ApiError) => (e.code === "network.not_reachable" ? e.text : errorText(e.code));
+
+/**
+ * Step 1 (US-QS-15): one line of what happens next; the lists of what goes and what stays are one tap away behind
+ * "Mehr erfahren", so the layer and its footer fit a phone of 360 × 640 px.
+ */
+function DeletionSummary() {
+  return (
+    <MoreHelp more={<WhatHappens />}>
+      Nach der Bestätigung passiert 7&nbsp;Tage lang nichts. Was gelöscht wird und was bleibt, steht
+      hinter „Mehr erfahren“.
+    </MoreHelp>
+  );
+}
 
 /** The content of the step, or the state when the deletion is requested or cannot be read (P-10). */
 function StepContent(props: {
@@ -60,7 +74,7 @@ function StepContent(props: {
         </Button>
       </div>
     );
-  if (props.step === 1) return <WhatHappens />;
+  if (props.step === 1) return <DeletionSummary />;
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span>

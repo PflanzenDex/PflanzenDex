@@ -5,7 +5,7 @@ import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loade
 import { LAYER_SLOT, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LayerOpenRow } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
 import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
 import { errorText } from "@/lib/error-text";
 import { useInvalidate, useWriteAction } from "../../kernel";
 import { PATHS } from "../../components/shared/navigation/nav-model/navigation/navigation";
@@ -129,7 +129,7 @@ function FailedOverview(props: { code: string | undefined; retry: () => void }) 
  * and names the next step (P-09).
  */
 function Overview(props: { api: string; token: Token }) {
-  const size = useRowPageSize();
+  const size = useOverviewPageSize();
   const unlocks = useUnlocks();
   const refresh = useInvalidate(UNLOCKS_KEY);
   const write = useWriteAction(props.token, refresh);
