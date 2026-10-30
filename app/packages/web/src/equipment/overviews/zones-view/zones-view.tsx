@@ -1,5 +1,5 @@
 import type { Lamp, ZoneEquipment, ZoneEquipmentView } from "@pflanzendex/core";
-import { EQUIPMENT_STATUSES } from "@pflanzendex/core";
+import { EQUIPMENT_STATUSES, zoneLabel } from "@pflanzendex/core";
 import { Select } from "@/components/ui/fields/select/select";
 import { STATUS_LABELS } from "../../labels";
 import type { EquipmentStatus } from "../../equipment-api";
@@ -45,7 +45,7 @@ function LampRow(props: {
             {zoneId === "" ? <option value="">ohne Zone</option> : null}
             {zones.map((z) => (
               <option key={z.zoneId} value={z.zoneId}>
-                {z.name}
+                {zoneLabel(z.name)}
               </option>
             ))}
           </Select>
@@ -66,7 +66,7 @@ function ZoneCard(props: {
   const warning = zone.note?.kind === "no_active_lamp";
   return (
     <li className="min-w-0 rounded-lg border border-border p-3">
-      <h3 className="font-semibold">{zone.name}</h3>
+      <h3 className="font-semibold">{zoneLabel(zone.name)}</h3>
       <p className="text-sm text-muted-foreground">
         {zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens)}
       </p>
@@ -87,7 +87,7 @@ function ZoneCard(props: {
       ) : (
         <ul
           className="m-0 mt-2 flex list-none flex-col gap-2 p-0"
-          aria-label={`Lampen in ${zone.name}`}
+          aria-label={`Lampen in ${zoneLabel(zone.name)}`}
         >
           {zone.lamps.map((l) => (
             <LampRow key={l.id} lamp={l} zoneId={zone.zoneId} zones={all} actions={actions} />

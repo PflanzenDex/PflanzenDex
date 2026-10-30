@@ -42,7 +42,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
         onWithdraw={(o: OfferView) =>
           void withdraw.run(
             (t) => withdrawOffer(api, t, o.id),
-            `Das Angebot für ${o.specimenName ?? "das Exemplar"} ist zurückgezogen.`,
+            `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
           )
         }
       />
@@ -77,7 +77,7 @@ export function ExchangePage(props: { api: string; token: Token }) {
           Tauschbörse
         </h1>
         <p className="text-muted-foreground">
-          Biete Exemplare zum Tausch oder zum Verschenken an. Nur deine Freunde sehen ein Angebot,
+          Biete Pflanzen zum Tausch oder zum Verschenken an. Nur deine Freunde sehen ein Angebot,
           und nur, was du für sie freigegeben hast.
         </p>
         <LoadFrame

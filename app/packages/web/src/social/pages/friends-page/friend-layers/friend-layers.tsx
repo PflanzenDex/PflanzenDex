@@ -78,7 +78,7 @@ export function HelpLayer() {
         </p>
         <p>
           Was Freunde von dir sehen, bestimmst du; ohne deine Freigabe sieht niemand etwas. Von
-          einem freigegebenen Exemplar sehen Freunde nur die Art, den Namen, das Fangdatum und ob es
+          einer freigegebenen Pflanze sehen Freunde nur die Art, den Namen, das Fangdatum und ob es
           ein Steckling ist, nie Standort, Messwerte, Behandlungen, Kennzeichen oder Preise.
         </p>
         <p>

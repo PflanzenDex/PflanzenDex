@@ -123,7 +123,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
             "measurements",
             "Aloe",
             "„Aloe“: Die letzte Messung vom 01.10.2026 ist vergeilt/dünn.",
-            "Stelle das Exemplar heller.",
+            "Stelle die Pflanze heller.",
           ),
           {
             ...item(
@@ -162,7 +162,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     render(<TodayPage api="http://api" token={token} onOpen={onOpen} />);
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
     expect(screen.getByText("Ein weiterer Behandlungstermin steht später an.")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(onOpen).toHaveBeenCalledWith("collection");
   });
 

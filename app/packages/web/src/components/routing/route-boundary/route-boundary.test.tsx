@@ -19,13 +19,13 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
     );
     render(
       <RouteBoundary resetKey="a">
-        <Page title="Mein Bestand" />
+        <Page title="Meine Sammlung" />
       </RouteBoundary>,
     );
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("Lädt…")).toBeTruthy();
     release({ default: (p) => <h1>{p.title}</h1> });
-    expect(await screen.findByRole("heading", { name: "Mein Bestand" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Meine Sammlung" })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
   });
 

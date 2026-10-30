@@ -73,7 +73,7 @@ describe("US-POK-09 view details of a species", () => {
     expect(d.getByText(/Gattung: Ficus/)).toBeTruthy();
     expect(d.getByText(/Familie: Moraceae \(Maulbeergewächse\)/)).toBeTruthy();
     expect(d.getByText(/Status: gefangen/)).toBeTruthy();
-    expect(d.getByText(/3 Exemplare/)).toBeTruthy();
+    expect(d.getByText(/3 Pflanzen/)).toBeTruthy();
     expect(d.getByText("'Bambino'")).toBeTruthy();
     expect(d.getByText(/gefangen 05.03.2026/)).toBeTruthy();
     const link = d.getByRole("link", { name: /Quelle/ });

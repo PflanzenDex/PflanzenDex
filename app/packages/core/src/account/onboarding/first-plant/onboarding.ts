@@ -37,7 +37,7 @@ const FIRST_PLANT: OnboardingStep = {
   id: "first_plant",
   title: "Deine erste Pflanze",
   actionLabel: "Art im Katalog wählen",
-  nextAction: "Wähle im Katalog eine Art und lege dein erstes Exemplar an.",
+  nextAction: "Wähle im Katalog eine Art und lege deine erste Pflanze an.",
 };
 
 /** The guide is for new accounts only: no active and no archived plant (an account with only archived ones returns). */

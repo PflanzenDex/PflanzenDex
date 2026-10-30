@@ -92,14 +92,14 @@ export function MarkerFields(props: {
         required={props.required}
         description={
           props.required
-            ? "Du hast schon ein Exemplar dieser Art. Das Kennzeichen unterscheidet die Töpfe; „Klammer“ ist nur eine Voreinstellung."
-            : "Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe."
+            ? "Du hast schon eine Pflanze dieser Art. Das Kennzeichen unterscheidet die Töpfe; „Klammer“ ist nur eine Voreinstellung."
+            : "Nur nötig, wenn du schon eine Pflanze dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe."
         }
       />
       {props.missing.length > 0 && (
         <Quiet>
-          Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die
-          fehlenden jetzt, dann wird alles zusammen gespeichert.
+          Ab der dritten Pflanze braucht jede Pflanze der Art ein Kennzeichen. Vergib die fehlenden
+          jetzt, dann wird alles zusammen gespeichert.
         </Quiet>
       )}
       {props.missing.map((s) => (

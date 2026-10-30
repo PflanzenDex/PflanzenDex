@@ -42,7 +42,7 @@ export function MeasurementList(props: {
                 <p className="text-muted-foreground">{QUALITY_NAME[m.quality]}</p>
                 {props.records?.has(m.id) && (
                   <p className="text-sm">
-                    Persönlicher Rekord: schnellstes Wachstum dieses Exemplars bis hier.
+                    Persönlicher Rekord: schnellstes Wachstum dieser Pflanze bis hier.
                   </p>
                 )}
                 {m.note && <p className="text-muted-foreground">{m.note}</p>}

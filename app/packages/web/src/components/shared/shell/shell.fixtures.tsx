@@ -25,7 +25,7 @@ const icons: LucideIcon[] = [
   Settings,
 ];
 const labels = [
-  "Bestand",
+  "Sammlung",
   "Behandlung",
   "Pokédex",
   "Arten",

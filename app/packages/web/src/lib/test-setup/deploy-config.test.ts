@@ -357,3 +357,36 @@ describe("TE-03 · realm for deployments", () => {
     expect(smtp["password"]).toBe("${KC_SMTP_PASSWORD}");
   });
 });
+
+describe("US-DEV-07 · PostgreSQL 18 in the stack", () => {
+  const db = service(compose, "db");
+  const deployScript = read("deploy/scripts/deploy.sh");
+  const readRoot = (path: string) =>
+    readFileSync(new URL(`../../../../../../${path}`, import.meta.url), "utf8");
+
+  it("US-DEV-07 every PostgreSQL image in the repository is the same major, 18", () => {
+    const texts = [
+      compose,
+      read("deploy/scripts/restore-test.sh"),
+      readRoot(".github/workflows/ci.yml"),
+      readRoot(".github/workflows/nightly.yml"),
+      readRoot("Makefile"),
+    ];
+    const majors = texts.flatMap((text) =>
+      [...text.matchAll(/postgres:(\d+)-alpine/g)].map((m) => m[1]),
+    );
+    expect(majors).toHaveLength(9);
+    expect(new Set(majors)).toEqual(new Set(["18"]));
+  });
+
+  it("US-DEV-07 the data volume is mounted one level up, where PostgreSQL 18 keeps its data", () => {
+    expect(db).toContain("- dbdata:/var/lib/postgresql\n");
+    expect(db).not.toContain("/var/lib/postgresql/data");
+  });
+
+  it("US-DEV-07 deploy.sh checks the data volume before the stack starts (P-10)", () => {
+    const check = deployScript.indexOf("check_db_volume || return 1");
+    expect(check).toBeGreaterThan(-1);
+    expect(check).toBeLessThan(deployScript.indexOf('"${compose[@]}" up -d --build'));
+  });
+});

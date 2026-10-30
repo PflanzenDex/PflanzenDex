@@ -10,7 +10,7 @@ afterEach(() => cleanup());
 
 const zones: LightZone[] = [
   { id: "z2", name: "Fensterbank", luxCeiling: 15000, ppfd: 300, sortOrder: 2 },
-  { id: "z1", name: "Lampe 1", luxCeiling: 1500, ppfd: null, sortOrder: 1 },
+  { id: "z1", name: "Zone 1 · Stecklingslicht", luxCeiling: 1500, ppfd: null, sortOrder: 1 },
 ];
 
 describe("US-LIC-04 look up the classification rules (view)", () => {
@@ -23,7 +23,7 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
         .map((c) => c.textContent),
     );
     expect(cells).toEqual([
-      ["Lampe 1", "1.500", "unbekannt"],
+      ["Zone 1 · Stecklingslicht", "1.500", "unbekannt"],
       ["Fensterbank", "15.000", "300"],
     ]);
   });

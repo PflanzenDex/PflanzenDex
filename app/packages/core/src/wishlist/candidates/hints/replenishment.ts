@@ -2,6 +2,7 @@
 // zones 2 to 4, never stored (P-01). Wishes without a zone 2 to 4 count towards no zone (FR-WUN-03).
 import type { Replenishment } from "../types";
 import type { WishRow, ZoneStock } from "../../types";
+import { zoneLabel } from "../../../light";
 
 /**
  * Default of open candidates every zone 2 to 4 should have at least. Assumption, decided by the PO: 2. The account can
@@ -26,7 +27,7 @@ export function replenishment(
       zoneNumber: i + 2,
       name: z.name,
       open: n,
-      text: `Nachschub nötig: ${z.name} (${candidates(n)})`,
+      text: `Nachschub nötig: ${zoneLabel(z.name)} (${candidates(n)})`,
     }));
   return {
     buffer,
@@ -36,6 +37,6 @@ export function replenishment(
     nextAction:
       low.length === 0
         ? null
-        : `Erfasse einen Wunsch mit Ziel-Zone ${low.map((l) => l.name).join(" oder ")} (Formular „Wunsch erfassen“).`,
+        : `Erfasse einen Wunsch mit Ziel-Zone ${low.map((l) => zoneLabel(l.name)).join(" oder ")} (Formular „Wunsch erfassen“).`,
   };
 }

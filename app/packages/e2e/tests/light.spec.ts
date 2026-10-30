@@ -9,7 +9,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
   }, info) => {
     await signInAtLight(page, account);
     await expect(page.getByRole("heading", { name: "Noch keine Lichtzonen" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Standard-Lampen übernehmen" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Standard-Zonen übernehmen" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Noch keine Standorte" })).toBeVisible();
     await axeReport(page, info, "light-empty");
   });
@@ -19,19 +19,19 @@ test.describe("US-LIC-05 locations and light zones", () => {
     account,
   }, info) => {
     await signInAtLight(page, account);
-    await page.getByRole("button", { name: "Standard-Lampen übernehmen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
+    await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
+    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
     await expect(page.getByText("bis 15.000 Lux")).toBeVisible();
 
     await page.getByText("Neuer Standort").click();
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await form.getByLabel("Name").fill("Balkon");
-    await form.getByLabel("Lichtzone").selectOption({ label: "Lampe 3" });
+    await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });
     await form.getByLabel("Art").selectOption("outdoor");
     await form.getByRole("button", { name: "Standort anlegen" }).click();
 
     await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
-    await expect(page.getByText("Lampe 3 · außen")).toBeVisible();
+    await expect(page.getByText("Zone 3 · außen")).toBeVisible();
     await axeReport(page, info, "light-eingerichtet", { blocking: true });
 
     // Nothing is lost silently (P-10): after reloading the data from the database is there again.
@@ -70,22 +70,22 @@ test.describe("US-LIC-01 determine the zone of a species", () => {
     account,
   }) => {
     await signInAtLight(page, account);
-    await page.getByRole("button", { name: "Standard-Lampen übernehmen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
+    await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
+    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
 
     const form = page.getByRole("form", { name: "Zone ermitteln" });
     await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("15000");
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
-    await expect(form.getByText("Lichtzone: Lampe 2")).toBeVisible();
+    await expect(form.getByText("Lichtzone: Zone 2")).toBeVisible();
 
     await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("100000");
     await form.getByLabel("Sonnenliebende C3-Pflanze mit weichem Blatt").check();
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
-    await expect(form.getByText("Lichtzone: Lampe 2")).toBeVisible();
+    await expect(form.getByText("Lichtzone: Zone 2")).toBeVisible();
     await expect(form.getByText(/nicht automatisch in eine stärkere Zone/)).toBeVisible();
 
     await form.getByLabel("Sonnenliebende C3-Pflanze mit weichem Blatt").uncheck();
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
-    await expect(form.getByText("Lichtzone: Lampe 4")).toBeVisible();
+    await expect(form.getByText("Lichtzone: Zone 4")).toBeVisible();
   });
 });

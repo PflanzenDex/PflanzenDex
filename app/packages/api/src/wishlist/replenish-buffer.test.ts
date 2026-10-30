@@ -78,7 +78,7 @@ describe("US-WUN-02 the buffer as an account setting", () => {
     expect(await buffer(subA)).toBe(2);
     const r = await replenishment(subA);
     expect(r.buffer).toBe(2);
-    expect(r.zones.map((z) => z.name)).toEqual(["Lampe 2", "Lampe 3", "Lampe 4"]);
+    expect(r.zones.map((z) => z.name)).toEqual(["Zone 2", "Zone 3", "Zone 4"]);
   });
 
   it("a saved value is used by the warning at once; 0 switches the warning off", async () => {

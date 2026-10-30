@@ -38,7 +38,7 @@ export function MarkerForm(props: {
       </h1>
       <p className="mb-2 text-muted-foreground">„{props.name}“</p>
       <Quiet className="mb-5">
-        Nur der Name ändert sich: Messungen und Behandlungen bleiben beim Exemplar.
+        Nur der Name ändert sich: Messungen und Behandlungen bleiben bei der Pflanze.
       </Quiet>
       <Form {...form}>
         <FormRoot

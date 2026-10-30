@@ -86,7 +86,7 @@ describe("US-WUN-01 what a candidate shows", () => {
       title: "Zebra-Haworthie (Haworthia fasciata)",
       zone: { id: Z3, name: "Lampe 3" },
       stock: 1,
-      zoneText: "Lampe 3 — 1 Pflanze",
+      zoneText: "Zone 3 — 1 Pflanze",
       difficulty: 2,
       reasoning: "Bleibt klein und mag helles Licht.",
       image: {
@@ -115,7 +115,7 @@ describe("US-WUN-01 what a candidate shows", () => {
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
     wishes.seed("anna", { id: "b", name: "Bryophyllum" });
     const list = (await candidates()).candidates;
-    expect(list.map((c) => c.zoneText)).toEqual(["Lampe 2 — 0 Pflanzen", "Ziel-Zone unbekannt"]);
+    expect(list.map((c) => c.zoneText)).toEqual(["Zone 2 — 0 Pflanzen", "Ziel-Zone unbekannt"]);
   });
 
   it("US-WUN-01 explains why: the thinnest zone is named, other zones point to where room is left", async () => {
@@ -127,7 +127,7 @@ describe("US-WUN-01 what a candidate shows", () => {
     expect(thin?.priority).toMatchObject({ kind: "thinnest" });
     expect(thin?.priority.text).toContain("am meisten Platz");
     expect(other?.priority.kind).toBe("other");
-    expect(other?.priority.text).toContain("Lampe 3");
+    expect(other?.priority.text).toContain("Zone 3");
     expect(unknown?.priority.kind).toBe("zone_unknown");
     expect(unknown?.priority.text).toContain("zählt");
   });
@@ -164,7 +164,7 @@ describe("US-WUN-01 empty list and the next action (P-09)", () => {
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
     const { hint } = await candidates();
     expect(hint.text).toContain("Aloe");
-    expect(hint.text).toContain("Lampe 3");
+    expect(hint.text).toContain("Zone 3");
     expect(hint.nextAction).not.toBe("");
   });
 

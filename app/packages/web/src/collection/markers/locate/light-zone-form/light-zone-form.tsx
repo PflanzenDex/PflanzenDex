@@ -19,11 +19,12 @@ import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
 import { refusalText } from "../../../specimens/model/refusal";
 import { setLightZone } from "../../../specimens/model/specimens-api";
 import { zoneText } from "../../../specimens/model/text";
+import { zoneLabel } from "@pflanzendex/core";
 
 type ZoneFields = { lightZoneId: string };
 
 const NEXT_FOR_UNKNOWN =
-  "Welche Zone gilt, ist unbekannt. Weise dem Standort eine Lichtzone zu oder setze die Zone des Exemplars selbst.";
+  "Welche Zone gilt, ist unbekannt. Weise dem Standort eine Lichtzone zu oder setze die Zone der Pflanze selbst.";
 
 /** What the keeper sees after clearing: which zone applies again, from the freshly loaded card (P-09, P-08). */
 async function derivedText(api: string, token: string, id: string, name: string): Promise<string> {
@@ -36,10 +37,10 @@ async function derivedText(api: string, token: string, id: string, name: string)
 }
 
 const setText = (card: SpecimenCard, zone: LightZone): string =>
-  `Die Lichtzone von „${card.name}“ ist jetzt „${zone.name}“ (von dir gesetzt). ` +
+  `Die Lichtzone von „${card.name}“ ist jetzt „${zoneLabel(zone.name)}“ (von dir gesetzt). ` +
   (card.status === "cutting"
     ? "Als Steckling steht es weiter unter Stecklingslicht; die Zone gilt, sobald du es eintopfst."
-    : "Die Verteilung unter „Lichtzonen“ zählt das Exemplar dort mit.");
+    : "Die Verteilung unter „Lichtzonen“ zählt die Pflanze dort mit.");
 
 /**
  * State and action for the own light zone of an existing specimen (US-LIC-02, US-BES-04). A zone is set or changed
@@ -89,7 +90,7 @@ function ZoneSelect(props: { control: Control<ZoneFields>; zones: readonly Light
               <option value="">Aus Standort und Art ableiten</option>
               {props.zones.map((z) => (
                 <option key={z.id} value={z.id}>
-                  {z.name}
+                  {zoneLabel(z.name)}
                 </option>
               ))}
             </Select>

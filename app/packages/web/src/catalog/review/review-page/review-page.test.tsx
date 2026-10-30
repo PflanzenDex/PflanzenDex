@@ -198,7 +198,7 @@ describe("US-BES-10 review list page", () => {
     );
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("zusammengeführt");
-    expect(status.textContent).toContain("2 Exemplare übernommen");
+    expect(status.textContent).toContain("2 Pflanzen übernommen");
     expect(status.textContent).toContain("1 Pflegeprofil nicht übernommen");
     expect(posts[0]).toMatchObject({ path: "/review/c1/merge", body: { targetSpeciesId: "t1" } });
   });
@@ -264,6 +264,6 @@ describe("US-BES-10 texts", () => {
           { kind: "other_kind", moved: 2, kept: 0 },
         ],
       }),
-    ).toBe("1 Exemplar übernommen; 2 other_kind übernommen.");
+    ).toBe("1 Pflanze übernommen; 2 other_kind übernommen.");
   });
 });

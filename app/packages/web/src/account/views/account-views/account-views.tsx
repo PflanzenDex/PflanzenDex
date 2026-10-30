@@ -88,7 +88,7 @@ const MEASURED = [
   "Keine Klickzählung und keine Nutzungsanalyse: PflanzenDex zählt nicht, was du antippst oder wie lange du die App nutzt, und bindet keine Werbe- oder Analysedienste ein.",
   "Bei jeder Anmeldung speichern wir, wann du zuletzt aktiv warst. Der Betreiber sieht davon nur die Zahl der aktiven Konten der letzten 30 Tage, nie deinen Zeitpunkt.",
   "Fotos zu deinen Messungen speichern wir ohne Ort- und Kameradaten (EXIF/GPS) und verkleinert; nur du kannst sie sehen.",
-  "Standort, Notizen, Behandlungen und Preise deiner Pflanzen sehen Freunde nie, auch nicht bei geteilten Exemplaren.",
+  "Standort, Notizen, Behandlungen und Preise deiner Pflanzen sehen Freunde nie, auch nicht bei geteilten Pflanzen.",
   "Bilder auf Sammlerkarten und Vorschlägen lädt dein Gerät direkt von Wikipedia (Wikimedia).",
 ] as const;
 

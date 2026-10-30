@@ -52,8 +52,8 @@ export function ProfileList(props: {
       )}
       {data.entries.length === 0 ? (
         <EmptyState
-          title="Du hast noch kein Exemplar dieser Art."
-          description="Lege zuerst mit „Diese Art wählen“ ein Exemplar an, dann kannst du hier das Pflegeprofil der Art anpassen."
+          title="Du hast noch keine Pflanze dieser Art."
+          description="Lege zuerst mit „Diese Art wählen“ eine Pflanze an, dann kannst du hier das Pflegeprofil der Art anpassen."
         />
       ) : (
         <ul className={PROFILE_GRID}>

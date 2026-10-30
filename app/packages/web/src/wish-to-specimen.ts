@@ -25,12 +25,12 @@ async function speciesOf(api: string, token: Token, wish: WishToPlant): Promise<
 }
 
 const NOT_IN_CATALOG = (w: WishToPlant) =>
-  `„${w.title}“ ist noch nicht im Katalog. Suche die Art unter ihrem Namen oder schlage sie vor; danach legst du das Exemplar an und der Wunsch wird verknüpft.`;
+  `„${w.title}“ ist noch nicht im Katalog. Suche die Art unter ihrem Namen oder schlage sie vor; danach legst du die Pflanze an und der Wunsch wird verknüpft.`;
 
 /** The German texts of all error codes are a big table: it loads with the first failure, not with the shell (DS-08). */
 async function failureText(w: WishToPlant, code: string | undefined): Promise<string> {
   const { errorText } = await import("@/lib/error-text");
-  return `Das Exemplar ist angelegt, aber die Verknüpfung mit dem Wunsch „${w.title}“ hat nicht geklappt. ${errorText(code)}`;
+  return `Die Pflanze ist angelegt, aber die Verknüpfung mit dem Wunsch „${w.title}“ hat nicht geklappt. ${errorText(code)}`;
 }
 
 /** Links the wish to its new specimen and says what happened; a failure offers a retry (P-10). */

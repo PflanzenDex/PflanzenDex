@@ -66,9 +66,9 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     );
     const list = await screen.findByRole("list", { name: "Neuigkeiten" });
     const [first, second] = within(list).getAllByRole("listitem");
-    expect(first?.textContent).toContain("Anna: 1 Exemplar Zebra-Haworthie (Haworthia fasciata)");
+    expect(first?.textContent).toContain("Anna: 1 Pflanze Zebra-Haworthie (Haworthia fasciata)");
     expect(first?.textContent).toContain("Neue Art gefangen · 04.10.2026");
-    expect(second?.textContent).toContain("Name unbekannt: 3 Exemplare Art unbekannt");
+    expect(second?.textContent).toContain("Name unbekannt: 3 Pflanzen Art unbekannt");
     expect(second?.textContent).toContain("Neuer Steckling · Datum unbekannt");
     expect(screen.getByText("Schau in die Sammlung.")).toBeTruthy();
   });
