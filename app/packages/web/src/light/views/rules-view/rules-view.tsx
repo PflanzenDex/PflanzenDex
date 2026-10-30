@@ -7,6 +7,13 @@ import {
 } from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightZone } from "../../shared/light-api/light-api";
 import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { useIsMd } from "@/lib/use-breakpoint";
+
+/** The entries cut into pages of `size` (a page is one part of the rules). */
+const pagesOf = <T,>(entries: readonly T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(entries.length / size) }, (_, i) =>
+    entries.slice(i * size, (i + 1) * size),
+  );
 
 const number = new Intl.NumberFormat("de-DE");
 const H2 = "text-xl font-semibold";
@@ -29,26 +36,31 @@ const COLUMNS: ResponsiveColumn<LightZone>[] = [
 
 // US-LIC-04: reference on levels, indicators and warning signs. The collection table is the overview above (US-LIC-03).
 // Three parts, one per page (US-QS-19): the zone table, the indicators and the warning signs.
-export function RulesView({ zones }: { zones: readonly LightZone[] }) {
+/** The parts of the rules, one per page: the zone table, the help with the indicators, the warning signs (US-QS-19). */
+function rulePartsFor(zones: readonly LightZone[], size: number): ReactNode[] {
   const rules = classificationRules();
   const sorted = [...zones].sort((a, b) => a.sortOrder - b.sortOrder);
   const { promoteFromPercent, stayBelowGapPercent } = rules.thresholds;
-  const parts: ReactNode[] = [
-    <div key="zones" className="flex min-w-0 flex-col gap-3">
-      {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Deine Stufentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
-          hast.
-        </p>
-      ) : (
-        <ResponsiveTable
-          caption="Deine Lichtzonen"
-          columns={COLUMNS}
-          rows={sorted}
-          getRowKey={(z) => z.id}
-        />
-      )}
-    </div>,
+  const zonePages: ReactNode[] =
+    sorted.length === 0
+      ? [
+          <p key="empty" className="text-sm text-muted-foreground">
+            Deine Stufentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
+            hast.
+          </p>,
+        ]
+      : pagesOf(sorted, size).map((page, i) => (
+          <ResponsiveTable
+            key={`zones-${i}`}
+            caption="Deine Lichtzonen"
+            columns={COLUMNS}
+            rows={page}
+            getRowKey={(z) => z.id}
+          />
+        ));
+  const warningPages = pagesOf(rules.warnings, size);
+  return [
+    ...zonePages,
     <div key="indicators" className="flex min-w-0 flex-col gap-3">
       <MoreHelp
         more={`Eine Art steigt auf, wenn ihr Bedarf mindestens ${promoteFromPercent}\u00a0% der Lux-Obergrenze ihrer Zone erreicht; liegt er mehr als ${stayBelowGapPercent}\u00a0% unter der Obergrenze der nächsten Zone, bleibt sie, denn mehr Licht bringt dann Stress.`}
@@ -62,17 +74,25 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
         ))}
       </ul>
     </div>,
-    <div key="warnings" className="flex min-w-0 flex-col gap-3">
-      <h3 className={H3}>Warnzeichen</h3>
-      <ul className={LIST}>
-        {rules.warnings.map((w) => (
-          <li key={w.key}>
-            {w.sign}. {w.action}
-          </li>
-        ))}
-      </ul>
-    </div>,
+    ...warningPages.map((page, i) => (
+      <div key={`warnings-${i}`} className="flex min-w-0 flex-col gap-3">
+        <h3 className={H3}>Warnzeichen</h3>
+        <ul className={LIST}>
+          {page.map((w) => (
+            <li key={w.key}>
+              {w.sign}. {w.action}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )),
   ];
+}
+
+export function RulesView({ zones }: { zones: readonly LightZone[] }) {
+  const md = useIsMd();
+  // Phones: two zones and two warning signs a page, so each page fits a layer at 360 x 640 (US-QS-19).
+  const parts = rulePartsFor(zones, md ? 6 : 2);
   return (
     <section aria-labelledby="rules" className="flex min-w-0 flex-col gap-3">
       <h2 id="rules" className={H2}>
