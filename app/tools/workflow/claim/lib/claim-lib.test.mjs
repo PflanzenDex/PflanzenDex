@@ -5,11 +5,13 @@ import {
   branchName,
   claimKey,
   findConflicts,
+  firstOpenRelease,
   keyOfBranch,
   scopeOf,
   slugOf,
   staleHoursFrom,
   storyIdOf,
+  workItems,
 } from "./claim-lib.mjs";
 
 const story = {
@@ -121,4 +123,32 @@ test("US-DEV-11: a generated report issue is no work item and can never be claim
   assert.equal(found.length, 1);
   assert.equal(found[0].kind, "report");
   assert.match(found[0].text, /generated report/);
+});
+
+test("US-DEV-08: the board type decides the branch type, the labels only without one", () => {
+  const bug = { number: 7, title: "Login fails", labels: [{ name: "enabler" }], typ: "Bug" };
+  assert.equal(branchName(bug), "fix/issue-7-login-fails");
+  assert.equal(branchName({ ...bug, typ: "Story" }), "feat/issue-7-login-fails");
+  assert.equal(branchName({ ...bug, typ: undefined }), "chore/issue-7-login-fails");
+});
+
+test("US-DEV-08: work items are the open stories and enablers of one release on the board", () => {
+  const issues = [1, 2, 3, 4, 5].map((number) => ({ number, title: `Item ${number}` }));
+  const items = [
+    { issue: 1, typ: "Story", release: "R1 Parität" },
+    { issue: 2, typ: "Enabler", release: "R1 Parität" },
+    { issue: 3, typ: "Bug", release: "R1 Parität" },
+    { issue: 4, typ: "Story", release: "R2 Soziales" },
+  ];
+  assert.deepEqual(
+    workItems(issues, items, "R1 Parität").map((i) => [i.number, i.typ]),
+    [
+      [1, "Story"],
+      [2, "Enabler"],
+    ],
+  );
+  const order = ["R0 Fundament", "R1 Parität", "R2 Soziales"];
+  assert.equal(firstOpenRelease(order, issues, items), "R1 Parität");
+  assert.equal(firstOpenRelease(order, [issues[3]], items), "R2 Soziales");
+  assert.equal(firstOpenRelease(order, [issues[4]], items), null);
 });

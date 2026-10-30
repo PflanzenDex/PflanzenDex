@@ -13,7 +13,7 @@ import { preflight, PreflightFailed } from "./claim-preflight.mjs";
 import { collect } from "./migration/git-view.mjs";
 import { nextNumber, pad } from "./migration/migration-lib.mjs";
 import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs";
-import { missingPriority } from "../actions/project-status/project-status.mjs";
+import { loadItems, missingPriority } from "../actions/project-status/project-status.mjs";
 import {
   handoffBody,
   prTitle,
@@ -30,12 +30,13 @@ export class ClaimRefused extends Error {
   }
 }
 
-async function assertFree(client, number, env, login) {
-  const [issue, prs, branches] = await Promise.all([
+async function assertFree(client, number, { env, login, typ }) {
+  const [found, prs, branches] = await Promise.all([
     fetchIssue(client, number),
     fetchPrs(client),
     fetchBranches(client),
   ]);
+  const issue = typ ? { ...found, typ } : found;
   if (issue.state !== "OPEN")
     throw new ClaimRefused([{ text: `issue #${number} is ${issue.state}` }]);
   // The caller's own assignment is a half claim of an earlier run: continue, do not refuse.
@@ -105,6 +106,16 @@ async function warnNoPriority(client, number, log) {
   }
 }
 
+/** The Typ of the issue on the board; a failed lookup is reported and the labels decide instead (P-10). */
+async function boardTyp(client, number, log) {
+  try {
+    return (await loadItems(client)).find((i) => i.issue === number)?.typ;
+  } catch (e) {
+    log(`Warning: could not read the board type of #${number} (${e.message}); using its labels`);
+    return undefined;
+  }
+}
+
 /**
  * Atomic claim: preflight first, then the branch is pushed (the step that fails most often), then the
  * assignee, status and draft PR. Any failure undoes what was written; a re-run starts clean.
@@ -117,7 +128,8 @@ export async function claim(
   await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
   await check(client);
   const login = await me(client);
-  const issue = await assertFree(client, number, env, login);
+  const typ = await boardTyp(client, number, log);
+  const issue = await assertFree(client, number, { env, login, typ });
   const branch = branchName(issue);
   const undo = [];
   try {

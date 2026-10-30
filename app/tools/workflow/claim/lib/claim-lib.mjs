@@ -56,11 +56,36 @@ export function slugOf(title) {
   return slug || (words[0] ?? "").slice(0, 30);
 }
 
-/** Branch naming rule: <type>/<story-id>-<slug>; type fix for label bug, chore for enabler, else feat. */
-export function branchName(issue) {
+/**
+ * Branch type from the project field Typ: fix for Bug, chore for Enabler, else feat. The board holds the type, not
+ * the issue; the labels `bug` / `enabler` count only for an issue that is not on the board yet.
+ */
+function branchType(issue) {
+  if (issue.typ) return issue.typ === "Bug" ? "fix" : issue.typ === "Enabler" ? "chore" : "feat";
   const labels = (issue.labels ?? []).map((l) => l.name);
-  const type = labels.includes("bug") ? "fix" : labels.includes("enabler") ? "chore" : "feat";
-  return `${type}/${claimKey(issue)}-${slugOf(issue.title) || "work"}`;
+  return labels.includes("bug") ? "fix" : labels.includes("enabler") ? "chore" : "feat";
+}
+
+/** Branch naming rule: <type>/<story-id>-<slug>. */
+export function branchName(issue) {
+  return `${branchType(issue)}/${claimKey(issue)}-${slugOf(issue.title) || "work"}`;
+}
+
+const WORK_TYPES = ["Story", "Enabler"];
+
+/** Open issues whose board item is a story or enabler of `release`, each with its board Typ. */
+export function workItems(issues, items, release) {
+  return issues.flatMap((issue) => {
+    const item = items.find((i) => i.issue === issue.number);
+    return item && WORK_TYPES.includes(item.typ) && item.release === release
+      ? [{ ...issue, typ: item.typ }]
+      : [];
+  });
+}
+
+/** The first release in board order that still has open stories or enablers; null when none has. */
+export function firstOpenRelease(order, issues, items) {
+  return order.find((release) => workItems(issues, items, release).length > 0) ?? null;
 }
 
 /** Conventional Commits scope: the epic of the story ID, "dev" when there is none. */

@@ -192,8 +192,8 @@ pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
 
-board: ## Who works on which open story of the milestone; flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
-	cd $(APP) && node tools/workflow/board.mjs $(MILESTONE)
+board: ## Who works on which open story of a release (board field Release, RELEASE="R1 Parität"); flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
+	cd $(APP) && node tools/workflow/board.mjs "$(RELEASE)"
 
 status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
 	cd $(APP) && node tools/workflow/actions/project-status/project-status.mjs check

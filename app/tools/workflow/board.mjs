@@ -1,18 +1,25 @@
-// `make board` (US-DEV-08): who works on which open story/enabler of the milestone, with PR and age of the
+// `make board` (US-DEV-08): who works on which open story/enabler of a release, with PR and age of the
 // last commit. Flags: STALE (claim older than CLAIM_STALE_HOURS, default 48, assumption), DOUBLE (more than
 // one assignee, live branch or open PR for one story) and NO-CLAIM (work exists but nobody is assigned).
-// Usage: node board.mjs [milestone]   (default: the open milestone with the lowest number)
+// Release and type come from the project board (fields Release and Typ), not from milestones or labels.
+// Usage: node board.mjs [release]   (default: the first release in board order with open work)
 import { fileURLToPath } from "node:url";
-import { fetchPrs, fetchWorkItems, openMilestone, realClient } from "./claim/lib/claim-client.mjs";
+import { fetchOpenIssues, fetchPrs, realClient } from "./claim/lib/claim-client.mjs";
 import { PRIORITY_HINT } from "./actions/project-status/project-status-lib.mjs";
-import { missingPriority } from "./actions/project-status/project-status.mjs";
+import {
+  loadItems,
+  missingPriority,
+  releaseOrder,
+} from "./actions/project-status/project-status.mjs";
 import {
   ageHours,
   claimKey,
+  firstOpenRelease,
   hasKey,
   prReferences,
   prState,
   staleHoursFrom,
+  workItems,
 } from "./claim/lib/claim-lib.mjs";
 
 const latest = (dates) => dates.filter(Boolean).sort().at(-1) ?? null;
@@ -93,14 +100,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const client = realClient();
   try {
     await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
-    const milestone = process.argv[2] || (await openMilestone(client));
     const staleHours = staleHoursFrom(process.env);
-    const [items, prs, branchDates] = await Promise.all([
-      fetchWorkItems(client, milestone),
+    const [issues, board, order, prs, branchDates] = await Promise.all([
+      fetchOpenIssues(client),
+      loadItems(client),
+      releaseOrder(client),
       fetchPrs(client),
       branchDatesOf(client),
     ]);
-    console.log(`Milestone: ${milestone}`);
+    const release = process.argv[2] || firstOpenRelease(order, issues, board);
+    if (!release) throw new Error("no release on the board has open stories or enablers");
+    const items = workItems(issues, board, release);
+    console.log(`Release: ${release}`);
     const noPriority = await missingPriority(
       client,
       items.map((i) => i.number),

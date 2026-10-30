@@ -8,7 +8,7 @@ A second collision type is two people building the same story (LIC-01 and WAC-01
 
 ```bash
 make claim ISSUE=<n>     # claim the issue, branch and draft PR
-make board               # who works on what (optional: MILESTONE="R0 Fundament")
+make board               # who works on what (optional: RELEASE="R0 Fundament")
 ```
 
 `make claim` (`app/tools/workflow/claim/claim.mjs`) refuses with exit 1 and names the finding when
@@ -21,9 +21,11 @@ Before any write a preflight checks that `node_modules` exists and matches `pack
 
 **Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/actions/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift and missing priorities. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is.
 
+**The board tracks, the issue describes:** release, type and epic are the project fields Release, Typ and Epic, not milestones or labels. `make board` lists the open items whose Typ is Story or Enabler for one Release (default: the first release in board order with open work). The issue templates add new issues to the board; set Typ, Release, Epic and Priority there.
+
 **Priority:** `make claim` prints a warning when the claimed issue has no project priority, and `make board` flags such items `NO-PRIO` (both only warn). The rule is in `CLAUDE.md` ("Priority of tickets").
 
-**Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for label `bug`, `chore` for label `enabler`, otherwise `feat`. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
+**Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for the board type (field Typ) Bug, `chore` for Enabler, otherwise `feat`; the labels `bug` / `enabler` count only for an issue that is not on the board. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
 
 Exceptions, all explicit:
 

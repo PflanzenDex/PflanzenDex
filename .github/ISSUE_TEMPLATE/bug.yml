@@ -1,6 +1,6 @@
 name: Bug
 description: Something behaves differently than the spec describes.
-labels: [bug]
+projects: ["PflanzenDex/2"] # type, release and epic are set on the board (fields Typ, Release, Epic)
 body:
   - type: input
     id: spec
