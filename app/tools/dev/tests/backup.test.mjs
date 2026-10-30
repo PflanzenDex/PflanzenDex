@@ -1,7 +1,16 @@
-// Tests for deploy/scripts/backup.sh with a stubbed Postgres container (PG_EXEC), no Docker (TE-03, #760).
+// Tests for deploy/scripts/backup.sh and restore.sh with stubbed Postgres containers (PG_EXEC), no Docker (TE-03, #760, #1010).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -22,12 +31,37 @@ esac
 `,
 );
 chmodSync(pgExec, 0o755);
+// Stub for restore.sh: records the last argument of its call (the schema owner role) in $RESTORE_LOG.
+const restoreExec = join(stubDir, "restore-exec");
+writeFileSync(
+  restoreExec,
+  `#!/usr/bin/env bash
+cat > /dev/null
+for last; do :; done
+printf '%s' "$last" > "$RESTORE_LOG"
+`,
+);
+chmodSync(restoreExec, 0o755);
 
-function run(env) {
-  return spawnSync("bash", [backup], {
+// DEPLOY_ENV_FILE is empty unless a test names a file, so the host's real .env never reaches these tests (#1010).
+function run(env, script = backup) {
+  return spawnSync("bash", [script], {
     encoding: "utf8",
-    env: { PATH: process.env.PATH, PG_EXEC: pgExec, BACKUP_REMOTE: "", ...env },
+    env: {
+      PATH: process.env.PATH,
+      PG_EXEC: pgExec,
+      BACKUP_REMOTE: "",
+      DEPLOY_ENV_FILE: "",
+      ...env,
+    },
   });
+}
+// A copy of a deploy script in a folder of its own: a .env written next to it is the copy's, never the checkout's (#1010).
+function copyScript(name) {
+  const root = mkdtempSync(join(tmpdir(), "deploy-copy-"));
+  mkdirSync(join(root, "scripts"));
+  copyFileSync(join(deploy, "scripts", name), join(root, "scripts", name));
+  return { root, script: join(root, "scripts", name) };
 }
 const mode = (path) => statSync(path).mode & 0o777;
 
@@ -57,6 +91,70 @@ test("TE-03 without BACKUP_DIR the dumps go outside the repository, into the hom
   const r = run({ HOME: home });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(readdirSync(join(home, "pflanzendex-backups")).length, 2);
+});
+
+test("NFR-15 DEPLOY_ENV_FILE= keeps the .env of the deploy folder out of a run, so the dumps stay in BACKUP_DIR (#1010)", () => {
+  const { root, script } = copyScript("backup.sh");
+  const hostBackups = join(mkdtempSync(join(tmpdir(), "host-backups-")), "backups");
+  mkdirSync(hostBackups);
+  writeFileSync(join(root, ".env"), `BACKUP_DIR=${hostBackups}\n`);
+  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const r = run({ BACKUP_DIR: dir, HOME: tmpdir(), DEPLOY_ENV_FILE: "" }, script);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readdirSync(dir).length, 2);
+  assert.deepEqual(readdirSync(hostBackups), []);
+});
+
+test("NFR-15 without DEPLOY_ENV_FILE the .env of the deploy folder is loaded, as before (#1010)", () => {
+  const { root, script } = copyScript("backup.sh");
+  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  writeFileSync(join(root, ".env"), `BACKUP_DIR=${dir}\n`);
+  const r = spawnSync("bash", [script], {
+    encoding: "utf8",
+    env: { PATH: process.env.PATH, PG_EXEC: pgExec, HOME: tmpdir() },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readdirSync(dir).length, 2);
+});
+
+test("NFR-15 DEPLOY_ENV_FILE names an env file anywhere, and its BACKUP_DIR is honored (#1010)", () => {
+  const envFile = join(mkdtempSync(join(tmpdir(), "backup-env-")), "custom.env");
+  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  writeFileSync(envFile, `BACKUP_DIR=${dir}\n`);
+  const r = run({ DEPLOY_ENV_FILE: envFile, HOME: tmpdir() });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readdirSync(dir).length, 2);
+});
+
+test("NFR-15 DEPLOY_ENV_FILE naming a missing file loads nothing, so the caller's BACKUP_DIR applies (#1010)", () => {
+  const missing = join(mkdtempSync(join(tmpdir(), "backup-env-")), "missing.env");
+  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const r = run({ DEPLOY_ENV_FILE: missing, BACKUP_DIR: dir, HOME: tmpdir() });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readdirSync(dir).length, 2);
+});
+
+// Runs restore.sh on a copy of the deploy scripts whose .env sets the owner role; returns the role it was called with.
+function restoreOwnerRole(env) {
+  const { root, script } = copyScript("restore.sh");
+  writeFileSync(join(root, ".env"), "DB_OWNER_USER=from-host-env\n");
+  const dump = join(root, "app.dump");
+  writeFileSync(dump, "PGDMP fake dump");
+  const log = join(root, "owner.log");
+  const r = spawnSync("bash", [script, dump, "pdx_check"], {
+    encoding: "utf8",
+    env: { PATH: process.env.PATH, PG_EXEC: restoreExec, RESTORE_LOG: log, ...env },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  return readFileSync(log, "utf8");
+}
+
+test("NFR-15 restore.sh with DEPLOY_ENV_FILE= ignores the .env of the deploy folder (#1010)", () => {
+  assert.equal(restoreOwnerRole({ DEPLOY_ENV_FILE: "" }), "pflanzendex_owner");
+});
+
+test("NFR-15 restore.sh without DEPLOY_ENV_FILE loads the .env of the deploy folder, as before (#1010)", () => {
+  assert.equal(restoreOwnerRole({}), "from-host-env");
 });
 
 test("TE-03 git ignores the old backup folder and any dump (#760)", () => {

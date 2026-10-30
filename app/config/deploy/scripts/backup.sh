@@ -2,15 +2,26 @@
 # Database backup (NFR-15, TE-03): pg_dump in custom format, verified with pg_restore -l. Two files per run:
 # pflanzendex-<time>.dump (app) and keycloak-<time>.dump (sign-in service, only if its database exists).
 # Retention per BACKUP_RETENTION_DAYS; optional second target via rsync (BACKUP_REMOTE, R-11).
-# Environment: config/deploy/.env (if present; its COMPOSE_FILE selects the overlay files); PG_EXEC overrides how the Postgres container is reached (for tests).
+# Environment: DEPLOY_ENV_FILE names the env file (default config/deploy/.env if present, empty or missing = none; its COMPOSE_FILE selects the overlay files); PG_EXEC overrides how the Postgres container is reached (for tests).
 # The dumps hold password hashes and realm keys: only the owner may read them (0600 in a 0700 folder), and the
 # default folder lies outside the repository, so a `git add -A` on the host cannot pick them up (#760).
 set -euo pipefail
 umask 077
 cd "$(dirname "$0")/.."
 
-if [ -f .env ]; then set -a; . ./.env; set +a; fi
-PG_EXEC="${PG_EXEC:-docker compose --env-file .env exec -T db}"
+# DEPLOY_ENV_FILE (#1010) names the env file: default .env in this folder; empty or missing loads none, so a caller
+# can keep the host's .env out of a run (restore-test does).
+env_file="${DEPLOY_ENV_FILE-.env}"
+compose_env=""
+if [ -n "$env_file" ] && [ -f "$env_file" ]; then
+  case "$env_file" in /* | ./*) env_path="$env_file" ;; *) env_path="./$env_file" ;; esac # `.` would search $PATH for a bare name
+  set -a
+  # shellcheck source=/dev/null
+  . "$env_path"
+  set +a
+  compose_env="--env-file $env_file"
+fi
+PG_EXEC="${PG_EXEC:-docker compose $compose_env exec -T db}"
 BACKUP_DIR="${BACKUP_DIR:-$HOME/pflanzendex-backups}"
 RETENTION="${BACKUP_RETENTION_DAYS:-14}"
 
