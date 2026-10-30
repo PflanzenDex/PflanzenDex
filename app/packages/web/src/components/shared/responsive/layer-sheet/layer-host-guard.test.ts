@@ -21,6 +21,9 @@ const ACCOUNT = `${AREA}/account-area/account-area.tsx`;
  * its layer in its frame" in app.test.tsx.
  */
 const PANE_FRAMES: Record<string, readonly string[]> = {
+  "account/operator/operator-page/operator-page.tsx": [
+    "account/operator/operator-page/operator-page.tsx",
+  ],
   "account/settings-page/settings-page.tsx": ["account/settings-page/settings-page.tsx"],
   "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx": [ACCOUNT],
   "shell/function-overview/function-overview.tsx": [ACCOUNT],
