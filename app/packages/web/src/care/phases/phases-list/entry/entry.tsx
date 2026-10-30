@@ -79,15 +79,14 @@ function CompactEntry(props: {
       : null,
   ].filter((h): h is string => h !== null);
   return (
-    <div className={`${CARD_CLASSES} flex flex-col gap-0 px-3 py-2 text-sm leading-snug`}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="min-w-0 text-base font-semibold">{z.name}</h3>
+    <div className={`${CARD_CLASSES} flex flex-col gap-0 px-3 py-1 text-xs leading-tight`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-2">
+        <h3 className="min-w-[8ch] flex-1 text-base font-semibold">{z.name}</h3>
         {canSwitch && (
           <Button
             type="button"
-            size="touch"
             variant="secondary"
-            className="shrink-0"
+            className="shrink-0 px-3"
             disabled={props.busy}
             aria-label={`Jetzt umgestellt: ${z.name}`}
             onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
