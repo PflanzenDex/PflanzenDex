@@ -23,13 +23,7 @@ export const me = async (client) =>
   (await client.run("gh", ["api", "user", "-q", ".login"])).trim();
 
 export const fetchIssue = (client, n) =>
-  json(client, [
-    "issue",
-    "view",
-    String(n),
-    "--json",
-    "number,title,state,labels,assignees,url,milestone",
-  ]);
+  json(client, ["issue", "view", String(n), "--json", "number,title,state,labels,assignees,url"]);
 
 export const fetchPrs = (client) =>
   json(client, [
@@ -52,29 +46,18 @@ export async function fetchBranches(client) {
     .filter((b) => b && b !== "main" && b !== "dev");
 }
 
-/** Open issues of a milestone that are stories or enablers. */
-export async function fetchWorkItems(client, milestone) {
-  const issues = await json(client, [
+/** All open issues; which of them are work items of a release is decided by the board (`workItems`). */
+export const fetchOpenIssues = (client) =>
+  json(client, [
     "issue",
     "list",
     "--state",
     "open",
     "--limit",
     "500",
-    "--milestone",
-    milestone,
     "--json",
     "number,title,labels,assignees,updatedAt,url",
   ]);
-  return issues.filter((i) => i.labels.some((l) => ["story", "enabler"].includes(l.name)));
-}
-
-export async function openMilestone(client) {
-  const all = await json(client, ["api", "repos/{owner}/{repo}/milestones?state=open"]);
-  const first = [...all].sort((a, b) => a.number - b.number)[0];
-  if (!first) throw new Error("no open milestone");
-  return first.title;
-}
 
 /** Open issues (stories, enablers) that share a claim key; the search is done here, not by GitHub. */
 export async function findIssuesByKey(client, key) {
