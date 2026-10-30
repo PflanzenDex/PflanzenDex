@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { SharedDevice } from "@pflanzendex/core";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { LoadFrame } from "../../../../kernel";
 import { loadFriendEquipment } from "../../../api/friends-api";
 
@@ -16,11 +17,14 @@ const TYPE_LABELS: Record<string, string> = {
   "Plant agent": "Pflanzenmittel",
   Other: "Sonstiges",
 };
+/** Devices per page in the layer (starting value, assumption; #1029). */
+const DEVICES_PER_PAGE = 2;
+
 const label = (type: string) => TYPE_LABELS[type] ?? type;
 
 function Device({ d }: { d: SharedDevice }) {
   return (
-    <li className="min-w-0 rounded-lg border border-border p-3">
+    <div className="min-w-0 rounded-lg border border-border p-3">
       <h3 className="break-words font-semibold">{d.name}</h3>
       <p className="m-0 text-sm text-muted-foreground">{label(d.type)}</p>
       <dl className="m-0 mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
@@ -38,7 +42,7 @@ function Device({ d }: { d: SharedDevice }) {
         ) : null}
       </dl>
       {d.note ? <p className="mt-2 break-words text-sm">{d.note}</p> : null}
-    </li>
+    </div>
   );
 }
 
@@ -57,7 +61,7 @@ export function FriendEquipment(props: {
   const load = useCallback((t: string) => loadFriendEquipment(api, t, friendId), [api, friendId]);
   return (
     <section aria-labelledby="friend-equipment-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-equipment-title" className="text-xl font-semibold">
+      <h2 id="friend-equipment-title" className="sr-only">
         Geräte von {name}
       </h2>
       <LoadFrame
@@ -74,14 +78,15 @@ export function FriendEquipment(props: {
               Freunde frei, wenn du deine Erfahrung teilen möchtest.
             </p>
           ) : (
-            <ul
-              className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3"
-              aria-label={`Geräte von ${name}`}
-            >
-              {data.devices.map((d) => (
-                <Device key={d.id} d={d} />
-              ))}
-            </ul>
+            <Pager
+              items={data.devices}
+              pageSize={DEVICES_PER_PAGE}
+              label={`Geräte von ${name}`}
+              param={LAYER_PARAM}
+              replace
+              getKey={(d) => d.id}
+              renderItem={(d) => <Device d={d} />}
+            />
           )
         }
       </LoadFrame>
