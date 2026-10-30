@@ -2,6 +2,7 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
@@ -59,24 +60,42 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The page in a router, because each topic's layer lives in the address (`?sheet=`, US-QS-15). */
+const show = () =>
+  render(
+    <MemoryRouter>
+      <OperatorPage api="http://api" token={token} />
+    </MemoryRouter>,
+  );
+
 const open = async () => {
-  render(<OperatorPage api="http://api" token={token} />);
+  show();
   await screen.findByRole("heading", { name: "Betreiber" });
-  // The numbers arrive through the data layer after the heading.
-  await screen.findByRole("region", { name: "Zahlen" });
+  // The topics arrive through the data layer after the heading.
+  await screen.findByRole("button", { name: /^Zahlen/ });
 };
+
+/** Opens one topic as its layer, the way a person does: its row names the topic and shows its value (US-QS-15). */
+const topic = async (name: RegExp) => {
+  await userEvent.click(screen.getByRole("button", { name }));
+  return screen.findByRole("dialog");
+};
+
+const numbers = async () => {
+  await open();
+  await topic(/^Zahlen/);
+  return screen.getByRole("region", { name: "Zahlen" });
+};
+
+const fact = (facts: HTMLElement, label: string) =>
+  within(facts).getByText(label).nextElementSibling?.textContent ?? "";
 
 describe("US-ACC-05 operator area: counts, no content", () => {
   it("US-ACC-05 shows accounts and active users, and the cost per user as unknown (P-08)", async () => {
-    await open();
-    const facts = screen.getByRole("region", { name: "Zahlen" });
-    expect(within(facts).getByText("Konten").nextElementSibling?.textContent).toBe("12");
-    expect(
-      within(facts).getByText("Aktive Nutzer (letzte 30 Tage)").nextElementSibling?.textContent,
-    ).toBe("5");
-    expect(within(facts).getByText("Kosten pro Nutzer").nextElementSibling?.textContent).toMatch(
-      /^unbekannt/,
-    );
+    const facts = await numbers();
+    expect(fact(facts, "Konten")).toBe("12");
+    expect(fact(facts, "Aktive Nutzer (letzte 30 Tage)")).toBe("5");
+    expect(fact(facts, "Kosten pro Nutzer")).toMatch(/^unbekannt/);
     expect(facts.textContent).not.toMatch(/€|EUR|\$/);
   });
 
@@ -104,21 +123,17 @@ describe("US-ACC-05 operator area: counts, no content", () => {
         json(403, { error: { code: "access.denied", text: "Darauf hast du keinen Zugriff." } }),
       ),
     );
-    render(<OperatorPage api="http://api" token={token} />);
+    show();
     expect(await screen.findByText("Darauf hast du keinen Zugriff.")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
   });
 });
 
 describe("US-ACC-05 monthly cost and cost per user", () => {
-  const facts = () => screen.getByRole("region", { name: "Zahlen" });
-  const fact = (label: string) =>
-    within(facts()).getByText(label).nextElementSibling?.textContent ?? "";
-
   it("US-ACC-05 without a figure: cost per user unknown with what to do (P-08, P-09)", async () => {
-    await open();
-    expect(fact("Monatliche Kosten")).toBe("nicht eingetragen");
-    expect(fact("Kosten pro Nutzer")).toBe("unbekannt: trage unten die Kosten eines Monats ein");
+    const facts = await numbers();
+    expect(fact(facts, "Monatliche Kosten")).toBe("nicht eingetragen");
+    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: trage die Kosten eines Monats ein");
   });
 
   it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen'", async () => {
@@ -132,9 +147,11 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
         source: "manual",
       },
     });
-    await open();
-    expect(fact("Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
-    expect(fact("Kosten pro Nutzer")).toMatch(/^10,00\s€ \(September 2026, manuell eingetragen\)$/);
+    const facts = await numbers();
+    expect(fact(facts, "Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
+    expect(fact(facts, "Kosten pro Nutzer")).toMatch(
+      /^10,00\s€ \(September 2026, manuell eingetragen\)$/,
+    );
   });
 
   it("US-ACC-05 a figure without active users: cost per user unknown with the reason", async () => {
@@ -143,8 +160,8 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       cost: { amountCents: 4999, currency: "EUR", month: "2026-09" },
       costPerUser: { known: false, reason: "no_active_accounts" },
     });
-    await open();
-    expect(fact("Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
+    const facts = await numbers();
+    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
   });
 
   it("US-ACC-05 saving sends the amount in cents with a repeat-guard key and reloads the numbers", async () => {
@@ -154,6 +171,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
         : json(404, {}),
     );
     await open();
+    await topic(/^Monatliche Kosten/);
     const amount = screen.getByLabelText("Betrag");
     await userEvent.type(amount, "1.234,5");
     const month = screen.getByLabelText("Monat");
@@ -172,6 +190,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
 
   it("US-ACC-05 an invalid amount or currency is refused before sending, with what to do (P-10)", async () => {
     await open();
+    await topic(/^Monatliche Kosten/);
     await userEvent.type(screen.getByLabelText("Betrag"), "12,345");
     await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/zum Beispiel 12,50/);
@@ -194,6 +213,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       }),
     );
     await open();
+    await topic(/^Monatliche Kosten/);
     await userEvent.type(screen.getByLabelText("Betrag"), "10");
     await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
@@ -219,12 +239,14 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
 describe("US-ACC-05 registration mode", () => {
   it("US-ACC-05 says in words whether registration is open", async () => {
     await open();
-    expect(screen.getByText("offen für alle")).toBeTruthy();
+    const dialog = await topic(/^Registrierung/);
+    expect(within(dialog).getByText("offen für alle")).toBeTruthy();
     cleanup();
     current = overview({ invitationOnly: true });
     serve();
     await open();
-    expect(screen.getByText("nur mit Einladungscode")).toBeTruthy();
+    const again = await topic(/^Registrierung/);
+    expect(within(again).getByText("nur mit Einladungscode")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Für alle öffnen" })).toBeTruthy();
   });
 
@@ -242,11 +264,12 @@ describe("US-ACC-05 registration mode", () => {
         }),
     );
     await open();
+    const dialog = await topic(/^Registrierung/);
     const user = userEvent.setup();
     const button = screen.getByRole("button", { name: "Nur mit Einladungscode erlauben" });
     await user.dblClick(button);
     answer();
-    await screen.findByText("nur mit Einladungscode");
+    await within(dialog).findByText("nur mit Einladungscode");
     const writes = calls.filter((c) => c.method === "PUT");
     expect(writes).toHaveLength(1);
     expect(writes[0]?.body).toEqual({ invitationOnly: true });
@@ -268,6 +291,7 @@ describe("US-ACC-05 invitation codes", () => {
       return json(404, {});
     });
     await open();
+    await topic(/^Einladungscodes/);
     const user = userEvent.setup();
     expect((screen.getByLabelText("Gültig für (Tage)") as HTMLInputElement).value).toBe("7");
     await user.click(screen.getByRole("button", { name: "Code erstellen" }));
@@ -281,6 +305,7 @@ describe("US-ACC-05 invitation codes", () => {
   it("US-ACC-05 takes the chosen validity and refuses a value outside 1 to 30 before sending", async () => {
     serve(async () => json(201, created));
     await open();
+    await topic(/^Einladungscodes/);
     const user = userEvent.setup();
     const days = screen.getByLabelText("Gültig für (Tage)") as HTMLInputElement;
     expect(days.min).toBe("1");
@@ -302,6 +327,7 @@ describe("US-ACC-05 invitation codes", () => {
       json(403, { error: { code: "access.denied", text: "Darauf hast du keinen Zugriff." } }),
     );
     await open();
+    await topic(/^Einladungscodes/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Darauf hast du keinen Zugriff.");
     expect(screen.queryByRole("region", { name: "Neuer Einladungscode" })).toBeNull();
@@ -335,6 +361,7 @@ describe("US-ACC-05 invitation codes", () => {
     });
     serve();
     await open();
+    await topic(/^Einladungscodes/);
     const items = within(screen.getByRole("list", { name: "Einladungen" })).getAllByRole(
       "listitem",
     );
@@ -347,6 +374,7 @@ describe("US-ACC-05 invitation codes", () => {
 
   it("US-ACC-05 without invitations the page says how to create one (P-09)", async () => {
     await open();
+    await topic(/^Einladungscodes/);
     expect(screen.getByText(/Noch keine Einladung/)).toBeTruthy();
   });
 
@@ -366,6 +394,7 @@ describe("US-ACC-05 invitation codes", () => {
     });
     serve();
     await open();
+    await topic(/^Einladungscodes/);
     // 2026-10-11T12:00Z is 12 Oct 01:00 in Auckland (UTC+13 in October).
     await waitFor(() =>
       expect(
@@ -376,19 +405,66 @@ describe("US-ACC-05 invitation codes", () => {
   });
 });
 
-describe("US-ACC-05 · DS-48 states and primitives", () => {
+describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
+  it("US-QS-15 each row names its topic and shows its current value, and opens its layer", async () => {
+    current = overview({ cost: { amountCents: 4999, currency: "EUR", month: "2026-09" } });
+    await open();
+    const rows: [RegExp, string][] = [
+      [/^Zahlen/, "12 Konten · 5 aktiv"],
+      [/^Einstieg/, "Dauer und Schritte beim Einstieg neuer Konten"],
+      [/^Monatliche Kosten/, "49,99\u00a0€ (September 2026)"],
+      [/^Registrierung/, "offen für alle"],
+      [/^Einladungscodes/, "noch keine"],
+    ];
+    for (const [name, value] of rows) {
+      const row = screen.getByRole("button", { name });
+      expect(row.textContent).toContain(value);
+      expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    }
+    const dialog = await topic(/^Einstieg/);
+    expect(within(dialog).getByRole("heading", { name: "Einstieg" })).toBeTruthy();
+  });
+
+  it("US-QS-15 a long list of invitations is paged: five per page, 'Seite n von m' and Weiter", async () => {
+    current = overview({
+      invitations: Array.from({ length: 7 }, (_, i) => ({
+        id: `i${i}`,
+        createdAt: "2026-10-04T10:00:00.000Z",
+        expiresAt: "2026-10-11T10:00:00.000Z",
+        redeemedAt: null,
+        status: "open" as const,
+      })),
+    });
+    serve();
+    await open();
+    const dialog = await topic(/^Einladungscodes/);
+    const list = within(dialog).getByRole("list", { name: "Einladungen" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(dialog).getByText("Seite 1 von 2")).toBeTruthy();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Weiter" }));
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(dialog).getByText("Seite 2 von 2")).toBeTruthy();
+  });
+});
+
+describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
   it("US-ACC-05 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
-    const { container } = render(<OperatorPage api="http://api" token={token} />);
+    const { container } = render(
+      <MemoryRouter>
+        <OperatorPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     expect(screen.getByRole("status").textContent).toContain("Zahlen werden geladen");
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
   });
 
   it("US-ACC-05 · DS-26 the empty invitation list offers the next action: it takes the operator to the validity field", async () => {
     await open();
+    await topic(/^Einladungscodes/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Gültigkeit wählen" }));
     expect(document.activeElement).toBe(screen.getByLabelText("Gültig für (Tage)"));
   });
@@ -396,6 +472,7 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
   it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
     serve(async () => json(403, { error: { code: "access.denied", text: "RAW SERVER TEXT" } }));
     await open();
+    await topic(/^Einladungscodes/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("Darauf hast du keinen Zugriff.");
@@ -403,6 +480,7 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
 
   it("US-ACC-05 · DS-48 an invalid amount marks the field and moves the focus to it", async () => {
     await open();
+    await topic(/^Monatliche Kosten/);
     const user = userEvent.setup();
     const amount = screen.getByLabelText("Betrag");
     await user.type(amount, "12,345");
@@ -417,9 +495,18 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
 describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.3)", () => {
   const created = { id: "i9", code: "ABCD-EFGH", expiresAt: "2026-10-11T10:00:00.000Z" };
   const cases = [
-    { button: "Kosten speichern", done: "Monatliche Kosten gespeichert.", prep: true },
-    { button: "Nur mit Einladungscode erlauben", done: /ab jetzt nur mit Einladungscode/ },
-    { button: "Code erstellen", done: "Einladungscode erstellt." },
+    {
+      topic: /^Monatliche Kosten/,
+      button: "Kosten speichern",
+      done: "Monatliche Kosten gespeichert.",
+      prep: true,
+    },
+    {
+      topic: /^Registrierung/,
+      button: "Nur mit Einladungscode erlauben",
+      done: /ab jetzt nur mit Einladungscode/,
+    },
+    { topic: /^Einladungscodes/, button: "Code erstellen", done: "Einladungscode erstellt." },
   ];
   for (const c of cases)
     it(`US-QS-14 after "${c.button}" the focus stays on the control, not on the body`, async () => {
@@ -438,6 +525,7 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
           }),
       );
       await open();
+      await topic(c.topic);
       const user = userEvent.setup();
       if (c.prep) await user.type(screen.getByLabelText("Betrag"), "12,50");
       const button = screen.getByRole("button", { name: c.button });
