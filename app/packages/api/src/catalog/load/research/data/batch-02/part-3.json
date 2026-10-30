@@ -17,16 +17,7 @@
   },
   {
     "species": "Begonia rex",
-    "attributes": {
-      "lightDescription": {
-        "value": "bright_indirect",
-        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Begonia_rex&oldid=1381624141",
-        "sourceName": "wikipedia",
-        "license": "CC-BY-SA-4.0",
-        "retrievedOn": "2026-10-30",
-        "note": "Section Light: states that the plant does well in bright, indirect light."
-      }
-    }
+    "attributes": {}
   },
   {
     "species": "Peperomia obtusifolia",

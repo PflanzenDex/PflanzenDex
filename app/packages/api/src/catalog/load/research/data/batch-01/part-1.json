@@ -14,7 +14,16 @@
   },
   {
     "species": "Epipremnum aureum",
-    "attributes": {}
+    "attributes": {
+      "toxicToPets": {
+        "value": true,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Epipremnum_aureum&oldid=1379550525",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Toxicity: states the plant is listed as toxic to cats and dogs by the ASPCA, attributed in the article."
+      }
+    }
   },
   {
     "species": "Sansevieria trifasciata",

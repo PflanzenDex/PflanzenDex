@@ -26,16 +26,7 @@
   },
   {
     "species": "Chlorophytum comosum",
-    "attributes": {
-      "toxicToPets": {
-        "value": false,
-        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Chlorophytum_comosum&oldid=1371067621",
-        "sourceName": "wikipedia",
-        "license": "CC-BY-SA-4.0",
-        "retrievedOn": "2026-10-30",
-        "note": "Section Toxicity and effects on pets: states the plant is non-toxic to pets. Wikidata and GBIF carry no structured value."
-      }
-    }
+    "attributes": {}
   },
   {
     "species": "Aloe vera",
