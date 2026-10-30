@@ -9,7 +9,7 @@ import {
 } from "@pflanzendex/core";
 import { Hono } from "hono";
 import { errorBody, statusFor } from "../../kernel";
-import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../client-auth";
+import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
 
 const bad = (field: string) =>
   errorBody(appError("input.invalid", { details: [{ field, code: "input.invalid" }] }));
