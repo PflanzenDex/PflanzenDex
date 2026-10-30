@@ -24,6 +24,10 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "catalog/search-view/search-filters/search-filters.tsx": [DISCOVER],
   "catalog/species-page/species-page.tsx": [DISCOVER, PROFILE],
   "collection/other-pages/difficulty-page/difficulty-page.tsx": [COLLECTION],
+  "care/measure/measure-page/course-layer/course-layer.tsx": [COLLECTION],
+  "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx": [
+    COLLECTION,
+  ],
   "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx": [COLLECTION],
   "collection/plants-screen/plant-layers/plant-layers.tsx": [COLLECTION],
   "components/routing/areas/today-area/today-area.tsx": [TODAY],
