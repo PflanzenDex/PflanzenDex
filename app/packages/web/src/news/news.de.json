@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Konto: „Erfolge“, „Erinnerungen“, „KI-Clients“, „Was die App kann“ und „Meine Daten“ passen jetzt auf einen Bildschirm. Jeder Teil ist eine Zeile, die sich über der Seite öffnet; lange Listen blättern mit „Zurück“ und „Weiter“. „Konto löschen“ fragt in zwei Schritten nach, und der Knopf für die Bestätigung bleibt unten sichtbar.",
     "Standorte und Lichtzonen passen auf einen Bildschirm: Lichtzonen und Standorte stehen als kurze Zeilen in zwei Listen (auf dem Handy umschaltbar, am Desktop nebeneinander), „+“ legt etwas Neues an, „Ändern“ öffnet die Bearbeitung. Gelöscht wird nur dort, nach einer Rückfrage. Hinweise sowie Lichthunger und Einstufung öffnen sich in einer Ansicht.",
     "Konto › Einstellungen › Licht: Die vier Lux-Schwellen stehen jetzt in vier beschrifteten Feldern mit Tausender-Trennzeichen („10.000“) und dem Zusatz „Lux“. „Speichern“ ist sofort aktiv; ein Speichern ohne Änderung sagt, dass nichts zu speichern ist.",
     "Betreiber: Die Seite passt jetzt auf einen Bildschirm. Zahlen, Einstieg, Monatliche Kosten, Registrierung und Einladungscodes stehen untereinander als Zeilen mit ihrem aktuellen Wert. Jede Zeile öffnet sich über der Liste, mit der Eingabe der Kosten und dem Erstellen eines Codes. Die Einladungscodes stehen in Seiten zu je fünf.",

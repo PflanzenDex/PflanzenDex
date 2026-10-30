@@ -109,6 +109,7 @@ export const GROUPS_3: Config<string, string>["classGroups"] = {
   "touch-x": [{ "touch-pan": ["x", "left", "right"] }],
   "touch-y": [{ "touch-pan": ["y", "up", "down"] }],
   select: [{ select: ["none", "text", "all", "auto"] }],
+  resize: [{ resize: ["none", "", "y", "x"] }],
   fill: [{ fill: ["none", ...scaleColor()] }],
   "stroke-w": [
     { stroke: [isNumber, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber] },
