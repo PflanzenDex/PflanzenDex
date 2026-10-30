@@ -65,7 +65,7 @@ Acceptance criteria (agent hooks, Claude Code `settings.json` in the repo):
 - Hooks have their own tests (example Tombola: `review_analysis_test.py`) and a time limit; a hanging hook must not block the session.
 - The permission list (`permissions.allow`) contains only reading and gate-near commands (`make ci`, `git status`, …), no write or deploy commands.
 
-### US-DEV-03 · Routines: regularly running checks and maintenance · ⬜
+### US-DEV-03 · Routines: regularly running checks and maintenance · 🟨
 
 As an **operator** I want things to be checked that get worse without a code change.
 
