@@ -48,7 +48,7 @@ function ProfilePart({ card }: { card: SpecimenCard }) {
       <h3 id="own-profile" className="font-semibold">
         Eigenes Pflegeprofil
       </h3>
-      <Quiet>Das Profil gilt für alle deine Pflanzen dieser Art.</Quiet>
+      <Quiet>Das Profil gilt für alle deine Pflanzen dieser Art und ist privat.</Quiet>
       <LayerOpener id={careProfileLayerId(card.id)}>Pflegeprofil bearbeiten</LayerOpener>
     </section>
   );

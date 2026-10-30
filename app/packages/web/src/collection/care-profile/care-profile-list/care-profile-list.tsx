@@ -8,13 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import type { ApiError } from "../../../kernel";
 import { CareProfileCard } from "../sections/care-profile-card/care-profile-card";
 import { KeptProfileCard } from "../sections/kept-profile-card/kept-profile-card";
-import {
-  NextAction,
-  PROFILE_GRID,
-  Quiet,
-  Status,
-  Warning,
-} from "../../specimens/cards/parts/parts";
+import { NextAction, PROFILE_GRID, Status, Warning } from "../../specimens/cards/parts/parts";
 import { refusalText } from "../../specimens/model/refusal";
 
 export interface ProfileData {
@@ -32,10 +26,6 @@ export function ProfileList(props: {
   const { data, write } = props;
   return (
     <div>
-      <Quiet className="mb-3">
-        Hier weichst du von den Katalogwerten ab, wo dein Standort oder dein Klima es verlangt. Der
-        Katalog bleibt unverändert. Dein Pflegeprofil ist privat und nie Teil einer Freigabe.
-      </Quiet>
       {write.message && <Status>{write.message}</Status>}
       {write.error && (
         <Warning>
