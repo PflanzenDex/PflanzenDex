@@ -2,7 +2,7 @@ import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
-import { LAYER_SLOT, LayerSheet, useLayer } from "../layer-sheet";
+import { LayerSheet, useLayer } from "../layer-sheet";
 
 /**
  * A row of a list that opens its layer (US-QS-15, US-QS-17): the name, one line of value or help and a chevron. The whole
@@ -44,8 +44,8 @@ export function LayerOpenRow({
 }
 
 /**
- * A row and its layer as two items of one grid (US-QS-17): the row sits in the list, the layer beside the list from
- * 1024 px (`LAYER_SLOT`) and above the screen below that. A closed layer renders nothing and loads nothing.
+ * A row and its layer (US-QS-17): the row sits in the list; the layer opens in the pane of the surrounding `LayerHost`
+ * from 1024 px and above the screen below that. A closed layer renders nothing and loads nothing.
  */
 export function LayerPart({
   id,
@@ -63,11 +63,9 @@ export function LayerPart({
   return (
     <>
       <LayerOpenRow id={id} title={title} value={value} />
-      <div className={LAYER_SLOT}>
-        <LayerSheet id={id} title={title} primaryAction={primaryAction}>
-          {children}
-        </LayerSheet>
-      </div>
+      <LayerSheet id={id} title={title} primaryAction={primaryAction}>
+        {children}
+      </LayerSheet>
     </>
   );
 }

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
-import { LAYER_SLOT, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LayerOpenRow } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
@@ -177,9 +177,7 @@ function Overview(props: { api: string; token: Token }) {
           />
         </div>
         {entries.map((e) => (
-          <div key={e.id} className={LAYER_SLOT}>
-            <FunctionLayer entry={e} write={write} onUnlock={(id) => void unlock(id)} />
-          </div>
+          <FunctionLayer key={e.id} entry={e} write={write} onUnlock={(id) => void unlock(id)} />
         ))}
       </div>
     </div>

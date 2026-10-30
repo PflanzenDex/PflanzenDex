@@ -12,6 +12,7 @@ const COLLECTION = `${AREA}/collection-area/collection-area.tsx`;
 const DISCOVER = `${AREA}/discover-area/discover-area.tsx`;
 const TODAY = `${AREA}/today-area/today-area.tsx`;
 const PROFILE = `${AREA}/collection-area/hand-over-routes/hand-over-routes.tsx`;
+const ACCOUNT = `${AREA}/account-area/account-area.tsx`;
 
 /**
  * Every file that renders a `LayerSheet`, with the frames (files that render a `LayerHost`) its panes land in. A layer in
@@ -21,6 +22,8 @@ const PROFILE = `${AREA}/collection-area/hand-over-routes/hand-over-routes.tsx`;
  */
 const PANE_FRAMES: Record<string, readonly string[]> = {
   "account/settings-page/settings-page.tsx": ["account/settings-page/settings-page.tsx"],
+  "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx": [ACCOUNT],
+  "shell/function-overview/function-overview.tsx": [ACCOUNT],
   "catalog/search-view/search-filters/search-filters.tsx": [DISCOVER],
   "catalog/species-page/species-page.tsx": [DISCOVER, PROFILE],
   "collection/other-pages/difficulty-page/difficulty-page.tsx": [COLLECTION],
