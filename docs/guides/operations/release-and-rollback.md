@@ -43,7 +43,7 @@ If the api does not become healthy or the smoke test fails, `deploy.sh` redeploy
 - `ROLLBACK ok ...`: the previous version is live again, the new one is not. Exit code is still 1, so the failed deploy is not mistaken for a success.
 - `ROLLBACK FEHLGESCHLAGEN`: intervene manually (below).
 
-Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `scripts/restore.sh`.
+Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `scripts/restore/restore.sh`.
 
 ## Manual rollback
 

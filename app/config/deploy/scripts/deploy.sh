@@ -99,7 +99,7 @@ main() {
 
   echo "ERROR: deploy of $ref failed; rolling back to $previous" >&2
   if deploy_ref "$previous"; then
-    echo "ROLLBACK ok: back to $APP_VERSION ($GIT_SHA). Deploy of $ref is NOT live. Database migrations are not rolled back (backup: scripts/restore.sh)." >&2
+    echo "ROLLBACK ok: back to $APP_VERSION ($GIT_SHA). Deploy of $ref is NOT live. Database migrations are not rolled back (backup: scripts/restore/restore.sh)." >&2
   else
     echo "ROLLBACK FAILED: manual intervention required (docs/guides/operations/release-and-rollback.md)." >&2
   fi

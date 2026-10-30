@@ -186,7 +186,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Backup and restore
 
-`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
+`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
 
 ### Memory
 
