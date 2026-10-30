@@ -80,7 +80,7 @@ describe("US-BES-01 Seite Arten", () => {
     fakeServer();
     render(page());
     expect(await screen.findByText("Der gemeinsame Katalog ist noch leer.")).toBeTruthy();
-    expect(screen.getByText("Schlage die erste Art vor.")).toBeTruthy();
+    expect(screen.getByText(/Schlage die erste Art vor/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Art vorschlagen" })).toBeTruthy();
   });
 
