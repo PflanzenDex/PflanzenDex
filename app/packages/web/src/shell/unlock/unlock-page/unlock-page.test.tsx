@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { UnlockEntry } from "../model/unlock-api";
 import { UnlocksProvider } from "../model/unlocks/unlocks";
@@ -55,9 +55,18 @@ function server(list: () => UnlockEntry[], post?: () => Promise<Response>) {
   return posts;
 }
 
+/** The address the tests check (a stale `?sheet` is taken out of it, US-QS-18); kept out of the DOM on purpose. */
+let address = "";
+function Address() {
+  const { pathname, search } = useLocation();
+  address = `${pathname}${search}`;
+  return null;
+}
+
 const page = (path: string) =>
   render(
     <MemoryRouter initialEntries={[path]}>
+      <Address />
       <UnlocksProvider api="http://api" token={token}>
         <Routes>
           <Route path="/unlock/:id" element={<UnlockPage api="http://api" token={token} />} />
@@ -148,6 +157,31 @@ describe("US-ONB-05 lock page", () => {
     page("/unlock/nonsense");
     expect(await screen.findByRole("heading", { level: 1 })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zum Start" })).toBeTruthy();
+  });
+
+  it("US-ONB-05 · A-03 an open function is a card with the button that opens it, not an underlined sentence", async () => {
+    server(() => [open("friends")]);
+    page("/unlock/friends");
+    const opener = await screen.findByRole("link", { name: "Freunde öffnen" });
+    expect(opener.className).toContain("bg-primary");
+    expect(opener.className).not.toContain("underline");
+    expect(screen.getByRole("link", { name: "Alle Funktionen ansehen" }).className).not.toContain(
+      "underline",
+    );
+  });
+
+  it("US-QS-18 · A-07 ?sheet=locked with nothing locked is taken out of the address, the page stays", async () => {
+    server(() => [open("swapping")]);
+    page("/collapsed?sheet=locked");
+    await waitFor(() => expect(address).toBe("/collapsed"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-18 · A-07 ?sheet=locked with a locked function keeps the address and opens its layer", async () => {
+    server(() => [swapping()]);
+    page("/collapsed?sheet=locked");
+    expect(await screen.findByRole("dialog", { name: "Weitere Funktionen" })).toBeTruthy();
+    expect(address).toBe("/collapsed?sheet=locked");
   });
 
   it("US-ONB-05 a failed load shows the error with a retry, not an empty page (P-10)", async () => {

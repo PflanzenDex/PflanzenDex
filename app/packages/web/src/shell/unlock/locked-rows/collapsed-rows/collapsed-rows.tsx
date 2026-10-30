@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { isShownLocked } from "../../model/unlock-texts";
 import { useUnlocks } from "../../model/unlocks/unlocks";
@@ -11,10 +13,28 @@ function CollapsedRows({ n }: { n: number }) {
         <span>{n === 1 ? "1\u00a0Funktion" : `${n}\u00a0Funktionen`} noch nicht geöffnet</span>
       </LayerOpener>
       <LayerSheet id="locked" title="Weitere Funktionen">
-        <LockedRows />
+        <LockedRows inLayer />
       </LayerSheet>
     </>
   );
+}
+
+/**
+ * An address `?sheet=locked` with nothing locked (an old link, or the last function was opened meanwhile) has no layer
+ * behind it: it is taken out of the address, so the page shows what it shows (US-QS-18). Nothing happens while the
+ * lock states are loading or failing, because then nothing is known to be open.
+ */
+function useDropStaleLockedSheet(): void {
+  const { status, entries } = useUnlocks();
+  const [params, setParams] = useSearchParams();
+  const stale =
+    status === "ready" && params.get("sheet") === "locked" && !entries.some(isShownLocked);
+  useEffect(() => {
+    if (!stale) return;
+    const next = new URLSearchParams(params);
+    next.delete("sheet");
+    setParams(next, { replace: true });
+  }, [stale, params, setParams]);
 }
 
 /**
@@ -23,5 +43,6 @@ function CollapsedRows({ n }: { n: number }) {
  */
 export function CollapsedLockedRows() {
   const locked = useUnlocks().entries.filter(isShownLocked);
+  useDropStaleLockedSheet();
   return locked.length === 0 ? null : <CollapsedRows n={locked.length} />;
 }

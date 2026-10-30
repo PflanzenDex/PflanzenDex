@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { RulesView } from "./rules-view";
@@ -15,7 +17,11 @@ const zones: LightZone[] = [
 
 describe("US-LIC-04 look up the classification rules (view)", () => {
   it("shows the keeper's own zones sorted, with lux ceiling (de-DE) and unknown PPFD as 'unbekannt'", () => {
-    render(<RulesView zones={zones} />);
+    render(
+      <MemoryRouter>
+        <RulesView zones={zones} />
+      </MemoryRouter>,
+    );
     const rows = screen.getAllByRole("row").slice(1);
     const cells = rows.map((r) =>
       within(r)
@@ -28,19 +34,33 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
     ]);
   });
 
-  it("lists the indicators for higher levels and the warning signs with their next step", () => {
-    render(<RulesView zones={zones} />);
+  it("US-QS-19 the parts come one per page: the indicators on page 2, the warning signs on page 3", async () => {
+    render(
+      <MemoryRouter>
+        <RulesView zones={zones} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("status").textContent).toContain("Seite 1 von 3");
+    expect(screen.queryByRole("heading", { name: "Indikatoren für höhere Stufen" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("heading", { name: "Indikatoren für höhere Stufen" })).toBeTruthy();
     expect(screen.getByText(/CAM-Stoffwechsel/)).toBeTruthy();
     expect(screen.getByText(/Dornen/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
     expect(screen.getByText(/Vergeilung/)).toBeTruthy();
     expect(screen.getAllByText(/Prüfe/).length).toBeGreaterThan(0);
   });
 
-  it("without zones it still shows the reference and says what to do next (P-09)", () => {
-    render(<RulesView zones={[]} />);
+  it("without zones it still shows the reference and says what to do next (P-09)", async () => {
+    render(
+      <MemoryRouter>
+        <RulesView zones={[]} />
+      </MemoryRouter>,
+    );
     expect(screen.getByText(/Stufentabelle erscheint/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByText(/Warnzeichen/)).toBeTruthy();
   });
 });

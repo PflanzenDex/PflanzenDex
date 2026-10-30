@@ -12,7 +12,7 @@ import {
   FormMessage,
   FormRoot,
 } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { currentTimeZone, type ApiError } from "../../../../kernel";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
@@ -46,7 +46,7 @@ export function CatchDateField(props: { control: Control<CreateFields>; today: s
         <FormItem>
           <FormLabel>Fangdatum</FormLabel>
           <FormControl>
-            <Input {...field} type="date" max={props.today} />
+            <DateField {...field} max={props.today} />
           </FormControl>
           <FormDescription>
             Voreingestellt ist heute. Hast du die Pflanze schon länger, trage hier ein früheres
@@ -103,7 +103,7 @@ function CorrectedDateField(props: { control: Control<CatchDateFields>; today: s
         <FormItem>
           <FormLabel>Fangdatum</FormLabel>
           <FormControl>
-            <Input {...field} type="date" max={props.today} />
+            <DateField {...field} max={props.today} />
           </FormControl>
           <FormDescription>Heute oder ein früheres Datum; die Zukunft geht nicht.</FormDescription>
           <FormMessage />

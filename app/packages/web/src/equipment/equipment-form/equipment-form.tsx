@@ -49,6 +49,25 @@ function usePrefill(
   }, [prefill, form]);
 }
 
+/** Optional fields stay behind "Mehr Angaben"; a prefill or a refusal on one of them opens the group (P-10). */
+function hasOptional(prefill: EquipmentPrefill | null | undefined, refused: string[]): boolean {
+  const required = ["type", "name", "lightZoneId"];
+  return (
+    Boolean(prefill?.productId || prefill?.priceEur) || refused.some((k) => !required.includes(k))
+  );
+}
+
+/** Sticky: the form may scroll inside the layer while the save button stays visible. */
+function SaveBar({ pending }: { pending: boolean }) {
+  return (
+    <div className="sticky bottom-0 bg-card py-2">
+      <Button type="submit" size="touch" className="w-full" disabled={pending}>
+        {pending ? "Speichert …" : "Equipment speichern"}
+      </Button>
+    </div>
+  );
+}
+
 /** The form to record equipment (US-EQU-01): only type and name are required, the rest stays unknown (P-08). */
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
@@ -67,13 +86,14 @@ export function EquipmentForm(props: {
   const { alertText, alertRef } = useServerRefusal(props.error, form.setError);
   usePrefill(form, props.prefill);
   const refused = Object.keys(form.formState.errors).length > 0;
+  const moreOpen = hasOptional(props.prefill, Object.keys(form.formState.errors));
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {
     if (await props.onSend(toEquipmentInput(values))) form.reset(EMPTY_FIELDS);
   });
   return (
-    <section aria-labelledby="equipment-form-title" className="mt-7 flex flex-col gap-3">
-      <h2 id="equipment-form-title" className="text-xl font-semibold">
+    <section aria-labelledby="equipment-form-title" className="flex flex-col gap-3">
+      <h2 id="equipment-form-title" className="sr-only">
         Equipment erfassen
       </h2>
       {props.message && !refused && (
@@ -95,10 +115,13 @@ export function EquipmentForm(props: {
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
-          <OptionalFields control={form.control} />
-          <Button type="submit" size="touch" disabled={pending}>
-            {pending ? "Speichert …" : "Equipment speichern"}
-          </Button>
+          <details open={moreOpen || undefined} className="rounded-lg border border-border">
+            <summary className="cursor-pointer p-3">Mehr Angaben</summary>
+            <div className="flex flex-col gap-4 px-3 pb-3">
+              <OptionalFields control={form.control} />
+            </div>
+          </details>
+          <SaveBar pending={pending} />
         </FormRoot>
       </Form>
     </section>
