@@ -28,8 +28,6 @@ const species = (suffix: string, extra: Partial<StartSpecies> = {}): StartSpecie
   english: `Load plant ${letters}${suffix}`,
   familyLatin: "Araceae",
   familyGerman: "Aronstabgewächse",
-  difficulty: 2,
-  standardLevel: 3,
   synonyms: [`Synogenus ${letters}${suffix}`],
   ...extra,
 });
@@ -160,6 +158,10 @@ describe("US-BES-12 catalog:load, the curated start catalog (#991)", () => {
     const search = new SpeciesPostgres(owner);
     const hits = await search.search(stranger, `ladeart ${letters}alpha`);
     expect(hits.map((h) => h.latinName)).toEqual([`Loadgenus ${letters}alpha`]);
+    // US-LIC-01, P-08 (#1003): the batch invents no difficulty or light need; they stay unknown.
+    expect(hits.map((h) => [h.difficulty, h.standardLevel, h.lightDemandLux])).toEqual([
+      [null, null, null],
+    ]);
     const bySynonym = await search.search(stranger, `synogenus ${letters}beta`);
     expect(bySynonym.map((h) => h.latinName)).toEqual([`Loadgenus ${letters}beta`]);
     await admin.query("delete from account where id = $1", [stranger]);

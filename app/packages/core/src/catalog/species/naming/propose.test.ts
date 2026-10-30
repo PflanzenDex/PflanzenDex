@@ -53,20 +53,34 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
     expect(await speciesLoad(store, "ben", first())).toBeNull();
   });
 
-  it.each([
-    "latinName",
-    "difficulty",
-    "standardLevel",
-    "lightDemandLux",
-    "growthMeasure",
-    "etiolationSigns",
-    "successCriteria",
-  ])("required field %s missing: rejected, nothing written (P-03, FR-BES-05)", async (field) => {
-    const r = await propose({ ...profile, [field]: undefined });
-    expect(!r.ok && r.error.code).toBe("input.invalid");
-    expect(!r.ok && r.error.details?.map((d) => d.field)).toEqual([field]);
-    expect(store.rows).toHaveLength(0);
+  it("US-BES-01 P-08: Given no difficulty, level or lux need, when proposing, then they stay unknown (null), never a default (#1003)", async () => {
+    const r = await propose({
+      ...profile,
+      difficulty: undefined,
+      standardLevel: null,
+      lightDemandLux: undefined,
+    });
+    expect(r.ok && r.value).toMatchObject({
+      difficulty: null,
+      standardLevel: null,
+      lightDemandLux: null,
+    });
   });
+
+  it("US-BES-01: Given a lux need out of range, when proposing, then it is rejected", async () => {
+    const r = await propose({ ...profile, lightDemandLux: 0 });
+    expect(!r.ok && r.error.details?.map((d) => d.field)).toEqual(["lightDemandLux"]);
+  });
+
+  it.each(["latinName", "growthMeasure", "etiolationSigns", "successCriteria"])(
+    "required field %s missing: rejected, nothing written (P-03, FR-BES-05)",
+    async (field) => {
+      const r = await propose({ ...profile, [field]: undefined });
+      expect(!r.ok && r.error.code).toBe("input.invalid");
+      expect(!r.ok && r.error.details?.map((d) => d.field)).toEqual([field]);
+      expect(store.rows).toHaveLength(0);
+    },
+  );
 
   it("US-LIC-01: Given the soft-leaf flag, when proposing, then it is kept; missing means false; a non-boolean is rejected", async () => {
     const soft = await propose({ ...profile, softLeaf: true });

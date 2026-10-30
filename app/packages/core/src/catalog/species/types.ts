@@ -35,9 +35,10 @@ export interface SpeciesValues {
   readonly synonyms: readonly string[];
   readonly familyGerman: string | null;
   readonly familyLatin: string | null;
-  readonly difficulty: number;
-  readonly standardLevel: number;
-  readonly lightDemandLux: number;
+  /** Difficulty 1–3, default level 2–4 and lux need: `null` = unknown, never a starting value (P-08, US-BES-12). */
+  readonly difficulty: number | null;
+  readonly standardLevel: number | null;
+  readonly lightDemandLux: number | null;
   /** C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01). */
   readonly softLeaf: boolean;
   /** Month-day `MM-DD`; both or none. */

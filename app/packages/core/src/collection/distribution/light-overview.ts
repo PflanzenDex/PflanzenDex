@@ -1,5 +1,6 @@
 // Light overview: species sorted by lux demand with position recommendations (US-LIC-03, FR-LIC-05).
-// Pure derivation, never stored (P-01). Only species with at least one active specimen and a set lux demand.
+// Pure derivation, never stored (P-01). Every species with at least one active specimen; an unknown lux demand stays
+// unknown and is listed last with its next step, never dropped or guessed (P-08, P-09, P-10).
 import {
   recommendPosition,
   type PositionRecommendation,
@@ -13,8 +14,10 @@ import { isActive } from "../shared/types";
 export interface LightOverviewRow {
   readonly speciesId: string;
   readonly speciesName: string;
-  readonly lightDemandLux: number;
-  readonly position: PositionRecommendation;
+  /** `null` = the catalog does not know the lux demand (P-08). */
+  readonly lightDemandLux: number | null;
+  /** `null` = no recommendation, because the lux demand is unknown. */
+  readonly position: PositionRecommendation | null;
   /** `null` = zone unknown (P-08), e.g. the account has no adult zone. */
   readonly zone: LightZone | null;
 }
@@ -30,8 +33,8 @@ interface Dependencies {
 }
 
 /**
- * Light overview: one row per species with at least one active specimen and a set lux demand,
- * sorted descending by lux demand. Includes the zone derived from the lux demand and a position
+ * Light overview: one row per species with at least one active specimen, sorted descending by lux demand; species
+ * with an unknown lux demand come last (no position, zone unknown). Includes the zone derived from the lux demand and a position
  * recommendation (US-LIC-03). The position uses the keeper's thresholds (FR-LIC-05), the defaults without.
  */
 export async function lightOverview(
@@ -60,12 +63,10 @@ export async function lightOverview(
     const speciesId = speciesIds[i];
     const species = speciesList[i];
 
-    // A species the account cannot read is skipped. The lux demand is a required catalog field (1 to 200,000),
-    // so every readable species has one; only a corrupt value has no recommendation and is skipped.
+    // A species the account cannot read is skipped. An unknown lux demand has no position (null), it is not skipped.
     if (!speciesId || !species) continue;
 
     const position = recommendPosition(species.lightDemandLux, thresholds);
-    if (!position) continue;
 
     // `softLeaf` is the catalog field of the species, as in the distribution and the care profile (US-LIC-01).
     const derivation = zoneDerive(
@@ -87,7 +88,7 @@ export async function lightOverview(
   }
 
   // Sort descending by lux demand
-  rows.sort((a, b) => b.lightDemandLux - a.lightDemandLux);
+  rows.sort((a, b) => (b.lightDemandLux ?? -1) - (a.lightDemandLux ?? -1));
 
   return { rows };
 }

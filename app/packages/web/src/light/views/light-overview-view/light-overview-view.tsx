@@ -18,9 +18,21 @@ const COLUMNS: ResponsiveColumn<LightOverviewRow>[] = [
   {
     key: "lux",
     header: "Lux-Bedarf",
-    cell: (r) => <span className="tabular-nums">{lux.format(r.lightDemandLux)}</span>,
+    cell: (r) =>
+      r.lightDemandLux === null ? (
+        "unbekannt"
+      ) : (
+        <span className="tabular-nums">{lux.format(r.lightDemandLux)}</span>
+      ),
   },
-  { key: "position", header: "Position", cell: (r) => r.position.description },
+  {
+    key: "position",
+    header: "Position",
+    // P-08/P-09: without a known lux need there is no position; the next step says how to get one.
+    cell: (r) =>
+      r.position?.description ??
+      "Lichtbedarf eintragen: Lichtzone im Pflegeprofil der Art festlegen",
+  },
 ];
 
 // US-LIC-03: species by light hunger with position recommendations
@@ -33,14 +45,15 @@ export function LightOverviewView(props: { data: LightOverview; onOpenCollection
       </h2>
       {data.rows.length === 0 ? (
         <EmptyState
-          title="Noch keine Arten mit aktiver Pflanze und gesetztem Lux-Bedarf"
-          description="Lege eine Pflanze an oder aktualisiere den Lux-Bedarf einer Art."
+          title="Noch keine Arten mit aktiver Pflanze"
+          description="Lege eine Pflanze an, dann erscheint ihre Art hier."
           action={{ label: "Zur Sammlung", onClick: onOpenCollection }}
         />
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
-            Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe.
+            Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe. Arten mit unbekanntem
+            Lux-Bedarf stehen am Ende.
           </p>
           <ResponsiveTable
             caption="Lichthunger der Arten"

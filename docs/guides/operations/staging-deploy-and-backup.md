@@ -50,6 +50,8 @@ docker run --rm -v pflanzendex_caddydata:/data caddy:2.11.7-alpine chown -R 1000
 
 The other volumes need nothing: the PostgreSQL entrypoint already gave the data directory in `dbdata` (`18/docker`) to `postgres`, which is all `db` needs as that user (checked on a volume set up by the old root entrypoint and on a fresh one), and the Tailscale state stays with root. A rollback to an older version keeps working (root can use the files).
 
+**Image scan (report only):** `make image-scan` scans every image of the deploy and dev compose files plus the `api` and `web` images built from the checkout with Grype (`tools/lint/image-scan.sh`, pinned by digest, no Docker socket, no capabilities) and writes `app/.cache/image-scan.md`. The nightly job `image-scan` runs it on `dev` and shows the report in its summary; findings never fail it, a scan that cannot run does. A critical or high finding with a fixed version is the cue for an image update PR (new exact tag and digest). The CI service containers, the test database (`make db-up`), the restore test and `deploy.sh` use pinned images too; `deploy-config.test.ts` checks all of them.
+
 ## Realm security defaults (#757)
 
 The deployment realm is stricter than the development realm, because anyone may register on a public installation. The development realm keeps `length(10)` and its long sessions, so its test users and their passwords stay valid.

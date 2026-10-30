@@ -59,7 +59,7 @@ DB=$(grep '^POSTGRES_DB=' app/config/deploy/.env | cut -d= -f2)
 ```
 
 1. **Migrate and deploy** (`make deploy`, which backs up first and runs `migrate`). Check: `$c logs migrate` ends without error.
-2. **Load the curated start catalog** (`catalog:load`, 137 houseplants). It runs inside the api container, as the owner role, which is neither superuser nor BYPASSRLS (`DB_ROLE_CHECK`); species are written as the operator account `catalog-load` under the application role and the row rules, provenance with owner rights, all in one transaction.
+2. **Load the curated start catalog** (`catalog:load`, 137 houseplants). It runs inside the api container, as the owner role, which is neither superuser nor BYPASSRLS (`DB_ROLE_CHECK`); species are written as the operator account `catalog-load` under the application role and the row rules, provenance with owner rights, all in one transaction. It writes names, family and synonyms only; difficulty, default level and lux need stay unknown until a value with a source is entered (P-08, #1003).
 
    ```bash
    $c exec -T api npm run catalog:load -- --dry-run                 # summary only, writes nothing

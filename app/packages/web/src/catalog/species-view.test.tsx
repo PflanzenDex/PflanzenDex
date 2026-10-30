@@ -59,6 +59,18 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     expect(h).toMatch(/Quelle<\/dt><dd>unbekannt/);
   });
 
+  it('US-BES-12 P-08: unknown difficulty, default level and lux need read "unbekannt", never a default (#1003)', () => {
+    const h = renderToString(
+      <SpeciesProfile
+        species={{ ...species, difficulty: null, standardLevel: null, lightDemandLux: null }}
+        onChoose={vi.fn()}
+      />,
+    );
+    expect(h).toMatch(/Schwierigkeit<\/dt><dd[^>]*>unbekannt<\/dd>/);
+    expect(h).toMatch(/Standard-Stufe<\/dt><dd[^>]*>unbekannt<\/dd>/);
+    expect(h).toMatch(/Lichtbedarf<\/dt><dd[^>]*>unbekannt<\/dd>/);
+  });
+
   it("approved species: marked as reviewed, with a button to choose", () => {
     const h = renderToString(<SpeciesProfile species={species} onChoose={vi.fn()} />);
     expect(h).toContain("Geprüft");
@@ -92,16 +104,16 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
 
   it("requires all required fields from DM-BES-01", () => {
     const h = html();
-    for (const name of [
-      "latinName",
-      "difficulty",
-      "standardLevel",
-      "lightDemandLux",
-      "growthMeasure",
-      "etiolationSigns",
-      "successCriteria",
-    ])
+    for (const name of ["latinName", "growthMeasure", "etiolationSigns", "successCriteria"])
       expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
+  });
+
+  it('US-BES-01 P-08: difficulty, default level and lux need are optional and offer "Unbekannt" (#1003)', () => {
+    const h = html();
+    for (const name of ["difficulty", "standardLevel", "lightDemandLux"])
+      expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).not.toContain("required");
+    expect(h).toContain("Unbekannt");
+    expect(h).toContain("leer bleibt der Wert unbekannt");
   });
 
   it("takes the search text as the name and explains visibility and review", () => {
@@ -172,15 +184,7 @@ describe("US-BES-01 · DS-48 proposal schema", () => {
     const r = proposalSchema.safeParse(EMPTY_PROPOSAL);
     expect(r.success).toBe(false);
     const fields = r.success ? [] : r.error.issues.map((i) => i.path[0]);
-    expect(fields).toEqual([
-      "latinName",
-      "difficulty",
-      "standardLevel",
-      "lightDemandLux",
-      "growthMeasure",
-      "etiolationSigns",
-      "successCriteria",
-    ]);
+    expect(fields).toEqual(["latinName", "growthMeasure", "etiolationSigns", "successCriteria"]);
   });
 
   it("the dormancy needs both dates or none, as MM-DD", () => {

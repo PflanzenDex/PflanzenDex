@@ -62,14 +62,15 @@ const FURTHER_AWAY = {
 /**
  * Recommend a position based on light demand in lux. The thresholds are the keeper's (FR-LIC-05) and default to
  * `POSITION_THRESHOLD_DEFAULTS`. The category is used as a stable key; the description is German
- * for the UI (P-01). A demand that is not a finite number >= 0 has no recommendation (`null`, P-08): the
+ * for the UI (P-01). An unknown demand (`null`) or one that is not a finite number >= 0 has no recommendation (`null`, P-08): the
  * function never invents a position for bad data.
  */
 export function recommendPosition(
-  lightDemandLux: number,
+  lightDemandLux: number | null,
   thresholds: PositionThresholds = POSITION_THRESHOLD_DEFAULTS,
 ): PositionRecommendation | null {
-  if (!Number.isFinite(lightDemandLux) || lightDemandLux < 0) return null;
+  if (lightDemandLux === null || !Number.isFinite(lightDemandLux) || lightDemandLux < 0)
+    return null;
   const i = thresholds.findIndex((min) => lightDemandLux >= min);
   const t = i < 0 ? FURTHER_AWAY : STEPS[i];
   return t ? { category: t.category, description: t.description } : null;
