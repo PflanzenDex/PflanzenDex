@@ -73,7 +73,7 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
   });
 
   it("TE-03 two Tailscale nodes in userspace mode, pinned image, state volumes and memory limits", () => {
-    expect(funnel).toMatch(/image: tailscale\/tailscale:v\d+\.\d+\.\d+\n/);
+    expect(funnel).toMatch(/image: tailscale\/tailscale:v\d+\.\d+\.\d+@sha256:[0-9a-f]{64}\n/);
     expect(funnel).toContain('TS_USERSPACE: "true"');
     expect(funnel).not.toMatch(/\/dev\/net\/tun|cap_add|privileged/);
     // Optional: after the first registration the state volume is enough and the key leaves .env.
@@ -177,6 +177,89 @@ describe("TE-03 · log size limits (#762)", () => {
     expect(anchor).toMatch(limit);
     for (const name of ["ts-app", "ts-auth"])
       expect(service(funnel, name)).toContain("<<: *tailscale");
+  });
+});
+
+describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () => {
+  const hardened = /security_opt: \[no-new-privileges:true\]\n\s+cap_drop: \[ALL\]\n/;
+  const files = { compose, testOverlay, funnel };
+  const apiImage = read("deploy/docker/api.Dockerfile");
+  const webImage = read("deploy/docker/web.Dockerfile");
+  /** Names of the services a file defines with an image of its own (not the ones it only extends). */
+  const ownServices = (text: string) =>
+    [...text.slice(text.indexOf("\nservices:\n")).matchAll(/^ {2}([a-z][a-z-]*):$/gm)]
+      .map((m) => m[1] as string)
+      .filter((name) => /\n {4}(image: |build:|<<: )/.test(service(text, name)));
+
+  // How each service avoids root. A new service fails here until someone decides it.
+  const nonRoot: Record<string, () => void> = {
+    db: () => expect(service(compose, "db")).toContain("user: postgres\n"),
+    "keycloak-db": () => expect(service(compose, "keycloak-db")).toContain("user: postgres\n"),
+    "db-roles": () => expect(service(compose, "db-roles")).toContain("user: postgres\n"),
+    migrate: () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
+    api: () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
+    // The upstream image runs as uid 1000 (no `user:` needed); the version is pinned below.
+    keycloak: () => expect(service(compose, "keycloak")).not.toMatch(/\n {4}user: /),
+    web: () => expect(webImage).toMatch(/AS caddy\n[\s\S]*\nUSER caddy\n\nFROM caddy\n/),
+    proxy: () => {
+      expect(service(compose, "proxy")).toContain("target: caddy");
+      expect(service(compose, "proxy")).not.toMatch(/\n {4}image: /);
+    },
+    mailpit: () => expect(service(testOverlay, "mailpit")).toContain('user: "65534:65534"'),
+    // Documented exception: uid 0 for the root-owned registered state, but without any capability (funnel file).
+    "ts-app": () => expect(funnel).toContain("The nodes stay uid 0, but without any"),
+    "ts-auth": () => expect(funnel).toContain("The nodes stay uid 0, but without any"),
+  };
+
+  it("TE-03 every service sets no-new-privileges and drops every capability; none adds one back", () => {
+    for (const [file, text] of Object.entries(files)) {
+      expect(text, file).not.toMatch(/^\s+(cap_add|privileged|devices|network_mode|pid|ipc):/m);
+      for (const name of ownServices(text)) {
+        const block = service(text, name);
+        if (block.includes("<<: *tailscale")) continue;
+        expect(block, `${file}: ${name}`).toMatch(hardened);
+      }
+    }
+    const anchor = funnel.slice(funnel.indexOf("x-tailscale:"), funnel.indexOf("\nservices:"));
+    expect(anchor).toMatch(
+      /\n {2}security_opt: \[no-new-privileges:true\]\n {2}cap_drop: \[ALL\]\n/,
+    );
+  });
+
+  it("TE-03 every service runs as a non-root user (Tailscale: uid 0 without capabilities)", () => {
+    const all = Object.values(files).flatMap(ownServices);
+    expect(all.sort()).toEqual(Object.keys(nonRoot).sort());
+    for (const [name, check] of Object.entries(nonRoot)) {
+      try {
+        check();
+      } catch (error) {
+        throw new Error(`${name}: ${String(error)}`, { cause: error });
+      }
+    }
+  });
+
+  it("TE-03 Caddy runs from a copy of its binary without the file capability", () => {
+    // Under no-new-privileges a non-root user cannot execute a binary with file capabilities.
+    expect(webImage).toContain("cp /usr/bin/caddy /tmp/caddy && mv /tmp/caddy /usr/bin/caddy");
+    expect(webImage).toContain("chown -R caddy:caddy /data /config");
+  });
+
+  it("TE-03 every image is pinned to an exact version and a digest (deploy and development)", () => {
+    const dev = { dev: read("dev/compose.yaml"), storage: read("dev/storage.compose.yaml") };
+    const refs = [
+      ...Object.values({ ...files, ...dev }).flatMap((text) =>
+        [...text.matchAll(/^\s+image: (\S+)$/gm)].map((m) => m[1] as string),
+      ),
+      ...[apiImage, webImage].flatMap((text) =>
+        [...text.matchAll(/^FROM (\S+)/gm)].map((m) => m[1] as string).filter((r) => r !== "caddy"),
+      ),
+    ];
+    expect(refs.length).toBeGreaterThan(10);
+    for (const ref of refs) {
+      expect(ref, ref).toMatch(/^[a-z0-9./-]+:[\w.-]+@sha256:[0-9a-f]{64}$/);
+      // Chainguard's free images carry only `latest`; the digest is the pin there.
+      if (!ref.startsWith("cgr.dev/")) expect(ref, ref).toMatch(/:v?\d+\.\d+[-.@]/);
+    }
   });
 });
 

@@ -3,7 +3,11 @@
 # Use: COMPOSE_FILE=docker-compose.yml:docker-compose.test.yml in .env, or a second `-f` option.
 services:
   mailpit:
-    image: axllent/mailpit:v1.21
+    image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
+    # The same privilege settings as the services of docker-compose.yml (#761); the image runs as root without `user`.
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    user: "65534:65534"
     # The same log limit as the services of docker-compose.yml (TE-03, #762).
     logging:
       driver: json-file

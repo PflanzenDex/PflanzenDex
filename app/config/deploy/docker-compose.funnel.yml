@@ -1,12 +1,18 @@
 # Public test environment through Tailscale Funnel (TE-03). No reverse proxy in front of the host, no inbound port:
-# two Tailscale nodes (one per public name) in userspace networking (no tun device, no extra capabilities) dial out to
+# two Tailscale nodes (one per public name) in userspace networking (no tun device, no capabilities) dial out to
 # Tailscale, terminate TLS themselves and forward plain HTTP to the Caddy `proxy` on the Docker network.
 # Use: COMPOSE_FILE=docker-compose.yml:docker-compose.test.yml:docker-compose.funnel.yml in .env.
 # The serve config is docker/tailscale/serve.json.
 # Memory limits are starting values (assumption, TE-03); measure and adjust.
 x-tailscale: &tailscale
-  image: tailscale/tailscale:v1.102.3
+  image: tailscale/tailscale:v1.102.3@sha256:8c42c4574ab066384fcb72f69e086a2ff1dd3652eb6f56856cee34bcf0d2f680
   restart: unless-stopped
+  # The same privilege settings as the services of docker-compose.yml (#761). The nodes stay uid 0, but without any
+  # capability: userspace networking needs none, and the registered state on the volumes belongs to root (a switch to
+  # another user would need a re-registration with a new auth key). The only effect: a log warning that the UDP buffer
+  # size cannot be raised (throughput only).
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
   # The same log limit as the services of docker-compose.yml (TE-03, #762).
   logging:
     driver: json-file

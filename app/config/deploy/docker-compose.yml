@@ -10,11 +10,19 @@ x-logging: &logging
   options:
     max-size: 10m
     max-file: "3"
+# Every service runs without extra privileges (TE-03, #761): `no-new-privileges` (no setuid escalation), every Linux
+# capability dropped, and a non-root user (from the image or `user:` below). Nothing needs a capability back: Docker lets
+# unprivileged users bind ports below 1024 inside a container, so the proxy listens on 80/443 as the user `caddy`.
+# Images are pinned to an exact version and a digest; Renovate keeps both current (FR-QG-15, `config:best-practices`).
 services:
   db:
     logging: *logging
-    image: postgres:16-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     restart: unless-stopped
+    # The image's own user (uid 70): the entrypoint skips its root-only steps; the data directory already belongs to it.
+    user: postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing}
@@ -34,8 +42,11 @@ services:
   # volume). The role has no right on the app database, so tenant isolation stays untouched (P-04, TE-03).
   keycloak-db:
     logging: *logging
-    image: postgres:16-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     restart: "no"
+    user: postgres
     entrypoint: ["sh", "/init-db.sh"]
     environment:
       PGHOST: db
@@ -59,8 +70,11 @@ services:
   # `security definer` function ignore row-level security. Runs as the cluster user, which nothing else connects as.
   db-roles:
     logging: *logging
-    image: postgres:16-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     restart: "no"
+    user: postgres
     entrypoint: ["sh", "/db-roles/init-db-roles.sh"]
     environment:
       PGHOST: db
@@ -82,6 +96,8 @@ services:
   # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
   migrate:
     logging: *logging
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     build:
       context: ../..
       dockerfile: config/deploy/docker/api.Dockerfile
@@ -109,7 +125,9 @@ services:
   # The realm is imported on the first start only; later changes to the file do not touch an existing realm.
   keycloak:
     logging: *logging
-    image: quay.io/keycloak/keycloak:26.8.0
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: quay.io/keycloak/keycloak:26.8.0@sha256:27b3230fbabb8c9ff3c66c864cf09dcd8a41aca82e5100679d109ef0eeb05741
     restart: unless-stopped
     command: ["start", "--import-realm"]
     environment:
@@ -166,6 +184,8 @@ services:
           memory: 900m
   api:
     logging: *logging
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     build:
       context: ../..
       dockerfile: config/deploy/docker/api.Dockerfile
@@ -203,6 +223,8 @@ services:
           memory: 512m
   web:
     logging: *logging
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     build:
       context: ../..
       dockerfile: config/deploy/docker/web.Dockerfile
@@ -219,7 +241,13 @@ services:
   # Public entry. CADDY_SCHEME=http:// (TLS ends at a proxy in front) or empty (Caddy gets certificates itself).
   proxy:
     logging: *logging
-    image: caddy:2-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # The unprivileged Caddy stage of the web image (user `caddy`, web.Dockerfile); the Caddyfile stays a mount.
+    build:
+      context: ../..
+      dockerfile: config/deploy/docker/web.Dockerfile
+      target: caddy
     restart: unless-stopped
     environment:
       CADDY_SCHEME: ${CADDY_SCHEME:-}
