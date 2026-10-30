@@ -1,6 +1,6 @@
 import { REMINDER_OCCASIONS, type ReminderOccasion } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { Label } from "@/components/ui/display/label/label";
 import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { currentTimeZone } from "../../../kernel";
@@ -36,12 +36,7 @@ export function PauseRow(props: {
     <div className="flex flex-wrap items-end gap-2">
       <div className="flex flex-col gap-1">
         <Label htmlFor={id}>{OCCASION_TEXT[o]} pausiert bis</Label>
-        <Input
-          id={id}
-          type="date"
-          value={until}
-          onChange={(e) => props.onChange(o, e.target.value)}
-        />
+        <DateField id={id} value={until} onChange={(e) => props.onChange(o, e.target.value)} />
       </div>
       <Button
         type="button"
