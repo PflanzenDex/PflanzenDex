@@ -2,7 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { HintsPage } from "../../hints-page/hints-page";
+import { HintsPage } from "../../other-pages/hints-page/hints-page";
 import { setSpecimenLocation } from "../../specimens/model/specimens-api";
 
 const response = (status: number, body: unknown) =>

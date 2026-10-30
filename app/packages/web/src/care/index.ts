@@ -1,4 +1,4 @@
-// Public interface of the module `care` (ADR 0003): page "Measure" of a specimen.
+// Public interface of the module `care` (ADR 0003): page "Measure" of a specimen, and the parts of the plant layer (US-QS-23).
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 export const MeasurePage = lazyPage(() =>
   import("./measure/measure-page/measure-page").then((m) => ({ default: m.MeasurePage })),
@@ -10,4 +10,13 @@ export const TreatmentsPage = lazyPage(() =>
   import("./treatments/treatments-page/treatments-page").then((m) => ({
     default: m.TreatmentsPage,
   })),
+);
+export const PlantGrowth = lazyPage(() =>
+  import("./plant-detail/plant-growth/plant-growth").then((m) => ({ default: m.PlantGrowth })),
+);
+export const PlantHistory = lazyPage(() =>
+  import("./plant-detail/plant-history/plant-history").then((m) => ({ default: m.PlantHistory })),
+);
+export const PlantCare = lazyPage(() =>
+  import("./plant-detail/plant-care/plant-care").then((m) => ({ default: m.PlantCare })),
 );

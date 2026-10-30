@@ -1,14 +1,19 @@
 import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
 import { CollectorCards } from "@/components/collector-cards/collector-cards";
+import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { LoadFrame } from "../../kernel";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
 import { PokedexPageSkeleton } from "./pokedex-page.skeleton";
-import { CARD, GRID } from "../pokedex-cards/pokedex-cards";
-import { CollectorRank } from "../collector-rank/collector-rank";
+import { CARD } from "../pokedex-cards/pokedex-cards";
+import { CollectorRank, PROGRESS_LAYER, ProgressRow } from "../collector-rank/collector-rank";
 import { Milestones } from "../milestones/milestones";
 import { NewlyCaught } from "../caught/newly-caught/newly-caught";
+
+const CARDS_LAYER = "cards";
+const UNCOUNTED_LAYER = "uncounted";
 
 /** Set when a destination shows this page below its own title (US-QS-14). */
 type Host = { onCaption: (text: string | null) => void };
@@ -23,9 +28,10 @@ function ReportCaption({ host, caught }: { host: Host | undefined; caught: numbe
 }
 
 /**
- * The species the account has caught (US-POK-06): derived from the active specimens, never stored (P-01). A specimen
- * that does not count yet is named with the action that fixes it (P-09, P-10). Species caught since the last visit are
- * announced above the rank until the keeper confirms (US-POK-12).
+ * The species the account has caught (US-POK-06) on one screen (US-QS-22): derived from the active specimens, never
+ * stored (P-01). The screen holds the progress row, the search with "Filter" and a page of compact entries; the
+ * progress, the filters, the details of a species, the collector cards and the specimens that do not count yet are
+ * layers. Species caught since the last visit are announced above the progress until the keeper confirms (US-POK-12).
  */
 export function PokedexPage(props: {
   api: string;
@@ -48,23 +54,24 @@ export function PokedexPage(props: {
         loadingFallback={<PokedexPageSkeleton label="Pokédex wird geladen …" />}
       >
         {(ownership: Ownership) => (
-          <section aria-labelledby="pokedex-title">
+          <section aria-labelledby="pokedex-title" className="flex min-w-0 flex-col gap-2">
             <ReportCaption host={host} caught={ownership.caught.length} />
             {host ? (
               <h2 id="pokedex-title" className="sr-only">
                 Arten
               </h2>
             ) : (
-              <h1 id="pokedex-title" className="mb-2 text-2xl font-semibold">
+              <h1 id="pokedex-title" className="text-2xl font-semibold">
                 Pokédex
               </h1>
             )}
             <NewlyCaught api={api} token={token} caught={ownership.caught} />
-            <CollectorRank caught={ownership.caught.length} />
-            <Milestones caught={ownership.caught} />
+            <ProgressRow
+              caught={ownership.caught.length}
+              uncounted={ownership.unidentified.length}
+            />
             <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
-            <Unidentified specimens={ownership.unidentified} />
-            <CollectorCards api={api} token={token} />
+            <Layers api={api} token={token} ownership={ownership} />
           </section>
         )}
       </LoadFrame>
@@ -72,21 +79,52 @@ export function PokedexPage(props: {
   );
 }
 
+/** The layers of the progress, the collector cards and the specimens that do not count yet (US-QS-22). */
+function Layers(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  ownership: Ownership;
+}) {
+  const { ownership } = props;
+  return (
+    <>
+      <LayerSheet id={PROGRESS_LAYER} title="Fortschritt">
+        <div className="flex flex-col gap-3">
+          <CollectorRank caught={ownership.caught.length} />
+          <Milestones caught={ownership.caught} />
+          <LayerOpener id={CARDS_LAYER}>Sammlerkarten ansehen</LayerOpener>
+          {ownership.unidentified.length > 0 ? (
+            <LayerOpener id={UNCOUNTED_LAYER}>
+              {`Noch nicht gezählt (${ownership.unidentified.length})`}
+            </LayerOpener>
+          ) : null}
+        </div>
+      </LayerSheet>
+      <LayerSheet id={CARDS_LAYER} title="Sammlerkarten">
+        <CollectorCards api={props.api} token={props.token} />
+      </LayerSheet>
+      <LayerSheet id={UNCOUNTED_LAYER} title="Noch nicht gezählt">
+        <Unidentified specimens={ownership.unidentified} />
+      </LayerSheet>
+    </>
+  );
+}
+
 function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
   if (props.specimens.length === 0) return null;
   return (
-    <section aria-labelledby="unidentified-title">
-      <h2 id="unidentified-title" className="mb-2 text-lg font-semibold">
-        Noch nicht gezählt
-      </h2>
-      <ul className={GRID}>
-        {props.specimens.map((s) => (
-          <li key={s.specimenId} className={CARD}>
-            <span>{s.text}</span>
-            <span className="font-semibold">{s.nextAction}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Pager
+      items={props.specimens}
+      pageSize={4}
+      label="Noch nicht gezählt"
+      param={LAYER_PARAM}
+      getKey={(s) => s.specimenId}
+      renderItem={(s) => (
+        <div className={CARD}>
+          <span>{s.text}</span>
+          <span className="font-semibold">{s.nextAction}</span>
+        </div>
+      )}
+    />
   );
 }

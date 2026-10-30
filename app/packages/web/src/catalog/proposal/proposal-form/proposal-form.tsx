@@ -34,14 +34,12 @@ function useRefusal(error: ApiError | null, refuse: UseFormSetError<ProposalFiel
   return { alertRef, namesField, existing: error ? duplicate(error) : null };
 }
 
-function Actions(props: { pending: boolean; onCancel: () => void }) {
+/** The one filled action of the proposal layer (US-QS-15, US-QS-21). */
+function SaveAction(props: { pending: boolean }) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row md:col-span-2">
+    <div className="flex flex-col gap-2 md:col-span-2">
       <Button type="submit" size="touch" pending={props.pending} pendingLabel="Speichert …">
         Vorschlag speichern
-      </Button>
-      <Button type="button" variant="secondary" size="touch" onClick={props.onCancel}>
-        Abbrechen
       </Button>
     </div>
   );
@@ -51,17 +49,14 @@ function Actions(props: { pending: boolean; onCancel: () => void }) {
  * Propose species, the path without AI (FR-KI-05): all required fields from DM-BES-01 in the form. The proposal is
  * visible only to the creator and goes into the review list (FR-BES-11); the UI says so beforehand. A refusal of
  * the server lands on the fields it names (German text by error code, focus on the first); without a field it stays
- * in an alert (P-10).
+ * in an alert (P-10). It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
+ * "Vorschlag speichern" is its one filled action.
  */
 export function ProposalForm(props: {
   start?: string;
   onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
-  onCancel: () => void;
   onExisting: (id: string) => void;
-  /** Below a destination title the form is a section: its name is then an h2 (US-QS-14). */
-  embedded?: boolean | undefined;
 }) {
-  const Heading = props.embedded ? "h2" : "h1";
   const form = useForm<ProposalFields>({
     resolver: zodResolver(proposalSchema),
     defaultValues: { ...EMPTY_PROPOSAL, latinName: props.start ?? "" },
@@ -72,10 +67,7 @@ export function ProposalForm(props: {
     setError(await props.onSend(toProposalInput(values)));
   });
   return (
-    <section aria-labelledby="proposal-title" className="flex min-w-0 flex-col gap-3">
-      <Heading id="proposal-title" className="text-2xl font-semibold">
-        Art vorschlagen
-      </Heading>
+    <section className="flex min-w-0 flex-col gap-3">
       <p className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground">
         Dein Vorschlag ist zunächst nur für dich sichtbar und kommt in die Prüfliste. Erst nach der
         Freigabe sehen ihn alle und er zählt im Pokédex. Bis dahin kannst du die Art trotzdem für
@@ -106,7 +98,7 @@ export function ProposalForm(props: {
               </Button>
             </div>
           )}
-          <Actions pending={form.formState.isSubmitting} onCancel={props.onCancel} />
+          <SaveAction pending={form.formState.isSubmitting} />
         </FormRoot>
       </Form>
     </section>

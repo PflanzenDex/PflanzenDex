@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, Specimen, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { openPlant, openTab } from "../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "./collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
@@ -72,14 +74,16 @@ function fakeServer(opts: { specimens?: Specimen[]; create?: () => Promise<Respo
 }
 
 const page = (extra: Partial<Parameters<typeof CollectionPage>[0]> = {}) => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-    {...extra}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+      {...extra}
+    />
+  </MemoryRouter>
 );
 
 afterEach(() => {
@@ -92,6 +96,8 @@ describe("US-BES-02 Seite Bestand", () => {
     fakeServer({ specimens: [specimen({ locationId: "s1" })] });
     render(page());
     expect(screen.getByRole("status").textContent).toContain("Bestand wird geladen");
+    await openPlant("Bogenhanf");
+    await openTab("Standort");
     expect(await screen.findByText("Standort: Regal Süd")).toBeTruthy();
   });
 
@@ -234,9 +240,8 @@ describe("US-BES-06 cards on the collection page", () => {
     );
     URL.createObjectURL = vi.fn(() => "blob:card");
     render(page());
-    expect(
-      await screen.findByText("Lichtzone: Zone 3 (vom Standort) · Status: Pflanze"),
-    ).toBeTruthy();
+    await openPlant("Bogenhanf");
+    expect(await screen.findByText("Art: Bogenhanf · Status: Pflanze")).toBeTruthy();
     const photo = await screen.findByRole("link", { name: "Foto von Bogenhanf groß öffnen" });
     expect(photo.getAttribute("href")).toBe("blob:card");
     expect(screen.getByText(/kein Erfolgssignal/)).toBeTruthy();

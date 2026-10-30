@@ -11,6 +11,13 @@ const FROM_APP = "layerFromApp";
 /** The element that opened the layer; focus returns to it when the layer closes (US-QS-15). */
 let opener: HTMLElement | null = null;
 
+/**
+ * Classes for the wrapper around a `LayerSheet` inside a grid of two columns from 1024 px (`lg:grid-cols-[minmax(0,1fr)_auto]`):
+ * the pane takes the second column beside the overview, below that the wrapper adds nothing (US-QS-18).
+ */
+export const LAYER_SLOT =
+  "contents empty:hidden lg:empty:hidden lg:flex lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:ml-4 lg:max-h-[calc(100dvh-10rem)] lg:min-h-0 lg:flex-col";
+
 export type LayerControl = {
   open: boolean;
   /** Opens the layer: pushes a history entry, so Back closes it. Pass the event target to return focus to it. */
@@ -165,7 +172,8 @@ export function LayerSheet({
         if (!next) closeLayer();
       }}
     >
-      <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
+      {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22). */}
+      {open ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
     </ResponsiveModal>
   );
 }

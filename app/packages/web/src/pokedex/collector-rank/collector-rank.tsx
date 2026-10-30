@@ -1,5 +1,8 @@
 import type { CSSProperties } from "react";
+import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { collectorProgress, type CollectorRank as Rank, type TreeTotals } from "@pflanzendex/core";
+
+export const PROGRESS_LAYER = "progress";
 
 const NAME: Record<Rank, string> = {
   seedling: "Keimling",
@@ -54,5 +57,36 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * The progress as one row (US-QS-22): the rank and the caught species; the total only when the tree knows it, otherwise
+ * one line says that it follows (P-08). Species that do not count yet are named here, so they do not vanish (P-10).
+ * The row opens the layer "Fortschritt" with the bar, the orders and the milestones.
+ */
+export function ProgressRow(props: {
+  caught: number;
+  uncounted: number;
+  tree?: TreeTotals | null;
+}) {
+  const p = collectorProgress(props.caught, props.tree ?? null);
+  const { species } = p;
+  const info =
+    species.total === null
+      ? "Die Gesamtzahl folgt, sobald der Baum der Arten aufgebaut ist."
+      : `${species.caught} von ${species.total} Arten (${species.percent ?? 0} %)`;
+  const uncounted =
+    props.uncounted === 0
+      ? ""
+      : ` ${props.uncounted} ${props.uncounted === 1 ? "Exemplar zählt" : "Exemplare zählen"} noch nicht.`;
+  return (
+    <LayerOpener
+      id={PROGRESS_LAYER}
+      className="h-auto w-full flex-col items-start gap-0 whitespace-normal py-2 text-left"
+    >
+      <span className="font-semibold">{`${NAME[p.rank]} · ${props.caught} gefangen`}</span>
+      <span className="text-sm font-normal text-muted-foreground">{`${info}${uncounted}`}</span>
+    </LayerOpener>
   );
 }

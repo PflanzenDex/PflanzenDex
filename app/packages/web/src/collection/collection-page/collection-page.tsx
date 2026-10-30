@@ -6,9 +6,7 @@ import { CollectionPageSkeleton } from "./collection-page.skeleton";
 import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
 import { refusalText } from "../specimens/model/refusal";
 import { CreateForm } from "../specimens/create/create-form/create-form";
-import { ArchivedList } from "../archived/archived-list/archived-list";
 import { ArchiveForm } from "../archived/archived-form/archived-form";
-import { CollectionList } from "../specimens/cards/collection-list/collection-list";
 import {
   COLLECTION_KEY,
   useCollection,
@@ -25,12 +23,13 @@ import { MarkerForm } from "../markers/marker/marker-form/marker-form";
 import {
   CatchDateForm,
   useCatchDate,
-  type CatchDateTarget,
 } from "../markers/catch-date/catch-date-field/catch-date-field";
 import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/light-zone-form";
 import { Created } from "./created/created";
 import { ListHint } from "./hint-occasions/hint-occasions";
-import { DistributionView } from "../insights/distribution-view/distribution-view";
+import { PlantsScreen } from "../plants-screen/plants-screen";
+import type { PlantSlots } from "../plants-screen/plant-layers/layer-ids";
+import { useListActions, type ListActions } from "../specimens/hooks/use-list-actions";
 type Props = {
   api: string;
   token: Token;
@@ -41,8 +40,12 @@ type Props = {
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
   host?: Host;
+  /** Opens the management of locations and light zones from the layers of the plants (US-QS-19). */
+  onManage?: () => void;
   groupBy?: "location"; // grouping by location and zone (US-QS-14)
   renderHint?: (applicable: readonly string[]) => ReactNode; // calm hint (US-ONB-07)
+  /** Parts of the plant layer that belong to other modules, wired by the app (US-QS-23). */
+  plantSlots?: PlantSlots;
 };
 
 /**
@@ -91,19 +94,11 @@ export function CollectionPage(props: Props) {
   );
 }
 
-type Actions = {
-  archived: ReturnType<typeof useArchive>;
-  potted: ReturnType<typeof useRepot>;
-  marked: ReturnType<typeof useMarker>;
-  caught: ReturnType<typeof useCatchDate>;
-  zoned: ReturnType<typeof useLightZone>;
-  clearMessages: () => void;
-};
 /** One view at a time: the create form, the archive form, the marker form or the list. */
 function Views(p: {
   data: Loaded;
   create: ReturnType<typeof useCreate>;
-  actions: Actions;
+  actions: ListActions;
   props: Props;
 }) {
   const { data, create, props } = p;
@@ -146,54 +141,28 @@ function Views(p: {
   return <List data={data} created={create.created} actions={p.actions} props={props} />;
 }
 
-function List(p: { data: Loaded; created: Specimen | null; actions: Actions; props: Props }) {
-  const { data, actions } = p;
-  const { archived, potted, marked, caught, zoned, clearMessages } = actions;
-  const message =
-    zoned.message ?? caught.message ?? marked.message ?? archived.message ?? potted.message;
-  const error = archived.error ?? potted.error;
-  const openCatchDate = (e: CatchDateTarget) => {
-    clearMessages();
-    caught.setOpen(e);
-  };
+function List(p: { data: Loaded; created: Specimen | null; actions: ListActions; props: Props }) {
+  const { data } = p;
+  const { api, token } = p.props;
+  const { message, error, handlers } = useListActions(api, token, p.actions);
   return (
     <>
       {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
       {error && <Warning>{refusalText(error)}</Warning>}
       {p.created === null && <ListHint cards={data.cards} render={p.props.renderHint} />}
-      <DistributionView distribution={data.distribution} />
-      <CollectionList
+      <PlantsScreen
         cards={data.cards}
+        distribution={data.distribution}
+        archived={data.archived}
         onSpeciesChoose={p.props.onAdd ?? p.props.onSpeciesChoose}
+        onManage={p.props.onManage ?? p.props.onSpeciesChoose}
         embedded={p.props.host !== undefined}
-        photoAccess={{ api: p.props.api, token: p.props.token }}
+        photoAccess={{ api, token }}
         {...(p.props.groupBy ? { groupBy: p.props.groupBy } : {})}
-        onArchive={(e) => {
-          clearMessages();
-          archived.setOpen(e);
-        }}
-        onRepot={(e) => {
-          clearMessages();
-          void potted.repot(e);
-        }}
-        onMark={(e) => {
-          clearMessages();
-          marked.setOpen(e);
-        }}
-        onCatchDate={openCatchDate}
-        onLightZone={(e) => {
-          clearMessages();
-          zoned.setOpen(e);
-        }}
+        slots={p.props.plantSlots}
+        locations={data.locations}
+        {...handlers}
         {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
-      />
-      <ArchivedList
-        entries={data.archived}
-        onRestore={(e) => {
-          clearMessages();
-          void archived.restore(e);
-        }}
-        onCatchDate={openCatchDate}
       />
     </>
   );

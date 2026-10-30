@@ -2,6 +2,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton, openPlant, openTab } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
@@ -69,16 +71,17 @@ function fakeServer(state: {
 }
 
 const page = () => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  </MemoryRouter>
 );
-const open = async () =>
-  userEvent.click(await screen.findByRole("button", { name: "Lichtzone ändern: Bogenhanf" }));
+const open = async () => userEvent.click(await findCardButton("Lichtzone ändern: Bogenhanf"));
 const select = async () => (await screen.findByLabelText("Eigene Lichtzone")) as HTMLSelectElement;
 const save = () => userEvent.click(screen.getByRole("button", { name: "Lichtzone speichern" }));
 
@@ -120,6 +123,8 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     expect(posts[0]?.key).toBeTruthy();
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Lampe 3“");
+    await openPlant("Bogenhanf");
+    await openTab("Standort");
     expect(await screen.findByText(/Lampe 3 \(von dir für dieses Exemplar gesetzt\)/)).toBeTruthy();
   });
 
@@ -213,7 +218,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     render(page());
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(await screen.findByRole("button", { name: "Lichtzone ändern: Bogenhanf" })).toBeTruthy();
+    expect(await findCardButton("Lichtzone ändern: Bogenhanf")).toBeTruthy();
     expect(posts).toHaveLength(0);
   });
 });

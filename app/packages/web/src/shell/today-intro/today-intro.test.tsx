@@ -147,7 +147,7 @@ afterEach(() => {
 });
 
 describe("US-ONB-01 start with the first plant on Heute", () => {
-  it("US-ONB-01 a new account starts with the first plant; no location and no light zone is asked or loaded", async () => {
+  it("US-QS-18 · US-ONB-01 the introduction still shows on Heute: a new account starts with the first plant; no location and no light zone is asked or loaded", async () => {
     fakeServer(world());
     view();
     expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
@@ -452,7 +452,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
 });
 
 describe("US-ONB-07 calm hints on Heute", () => {
-  it("US-ONB-07 a due hint is a short note without modal; it is recorded as shown and 'Okay' dismisses it for good", async () => {
+  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due hint is a short note without modal; it is recorded as shown and 'Okay' dismisses it for good", async () => {
     const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
     fakeServer(w);
     view();

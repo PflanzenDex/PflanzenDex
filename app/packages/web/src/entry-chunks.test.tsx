@@ -27,7 +27,7 @@ vi.mock("./care/treatments/treatments-page/treatments-page", () => {
   return { TreatmentsPage: () => null };
 });
 
-vi.mock("./collection/hints-page/hints-page", () => {
+vi.mock("./collection/other-pages/hints-page/hints-page", () => {
   loaded.pages.push("hints");
   return { HintsPage: () => null };
 });
@@ -37,7 +37,7 @@ vi.mock("./wishlist/wishlist-page/wishlist-page", () => {
   return { WishlistPage: () => null };
 });
 
-vi.mock("./collection/difficulty-page/difficulty-page", () => {
+vi.mock("./collection/other-pages/difficulty-page/difficulty-page", () => {
   loaded.pages.push("difficulty");
   return { DifficultyPage: () => null };
 });

@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setProfileTimeZone, type ApiError } from "../../../kernel";
 import { CollectionPage } from "../../collection-page/collection-page";
@@ -195,18 +197,18 @@ function fakeServer(cards: SpecimenCard[], answer: () => Promise<Response>) {
 }
 
 const page = () => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  </MemoryRouter>
 );
 const openForm = async () => {
-  await userEvent.click(
-    await screen.findByRole("button", { name: "Fangdatum korrigieren: Bogenhanf" }),
-  );
+  await userEvent.click(await findCardButton("Fangdatum korrigieren: Bogenhanf"));
   return screen.getByLabelText("Fangdatum") as HTMLInputElement;
 };
 

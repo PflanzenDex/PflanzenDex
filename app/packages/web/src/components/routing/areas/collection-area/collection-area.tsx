@@ -7,14 +7,11 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
-import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
-import { PlantControls } from "@/components/sammlung-header/plant-controls/plant-controls";
+import { plantSlots } from "./plant-slots/plant-slots";
+import { AreaHeader } from "./area-header/area-header";
 import { Button } from "@/components/ui/button/button";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import {
   PLANT_GROUPS,
-  SAMMLUNG_VIEWS,
-  SPECIES_SORTS,
   useManage,
   usePlantGroup,
   useSammlungView,
@@ -64,42 +61,51 @@ export function CollectionArea(props: {
   const { caption, fullView, host } = useHostState();
   const managing = view === "plants" && manage.open && !props.newSpecies;
   const own = view === "plants" && (measure !== null || fullView || managing);
+  const plantsOnScreen = view === "plants" && !own;
   return (
-    <>
-      {own ? null : (
-        <SammlungHeader view={view} options={SAMMLUNG_VIEWS} onChoose={choose} caption={caption}>
-          {view === "species" ? (
-            <SegmentedControl
-              label="Anordnung der Arten"
-              options={SPECIES_SORTS}
-              value={sort}
-              onChange={chooseSort}
-            />
-          ) : null}
-          {view === "plants" ? (
-            <PlantControls
-              group={group}
-              options={PLANT_GROUPS}
-              onGroup={chooseGroup}
-              onManage={() => manage.setOpen(true)}
-            />
-          ) : null}
-        </SammlungHeader>
-      )}
-      <Suspense fallback={<PageSkeleton />}>
-        <ModeBody
-          {...props}
-          view={view}
-          sort={sort}
-          group={group}
-          managing={managing}
-          onCloseManage={() => manage.setOpen(false)}
-          host={host}
-          measure={measure}
-          setMeasure={setMeasure}
-        />
-      </Suspense>
-    </>
+    <div className="flex min-h-0 gap-4" {...(own ? {} : { "data-fit-screen": "" })}>
+      <div className="min-w-0 flex-1">
+        {own ? null : (
+          <AreaHeader
+            view={view}
+            caption={caption}
+            onChoose={choose}
+            sort={sort}
+            onSort={chooseSort}
+          />
+        )}
+        <Suspense fallback={<PageSkeleton />}>
+          <ModeBody
+            {...props}
+            view={view}
+            sort={sort}
+            group={group}
+            managing={managing}
+            onCloseManage={() => manage.setOpen(false)}
+            onOpenManage={() => manage.setOpen(true)}
+            host={host}
+            measure={measure}
+            setMeasure={setMeasure}
+          />
+        </Suspense>
+      </div>
+      {plantsOnScreen ? (
+        <GroupLayer group={group} onGroup={chooseGroup} onManage={() => manage.setOpen(true)} />
+      ) : null}
+    </div>
+  );
+}
+
+/** The layer "Ansicht" of the plants, loaded with the plants (US-QS-19). */
+function GroupLayer(props: {
+  group: PlantGroup;
+  onGroup: (g: PlantGroup) => void;
+  onManage: () => void;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <CollectionPage part="layer" options={PLANT_GROUPS} {...props} />
+    </Suspense>
   );
 }
 
@@ -109,6 +115,7 @@ type ModeProps = Parameters<typeof CollectionArea>[0] & {
   group: PlantGroup;
   managing: boolean;
   onCloseManage: () => void;
+  onOpenManage: () => void;
   host: { onCaption: (t: string | null) => void; onFullView: (open: boolean) => void };
   measure: { id: string; name: string } | null;
   setMeasure: (m: { id: string; name: string } | null) => void;
@@ -158,6 +165,13 @@ function ModeBody(p: ModeProps) {
     );
   if (p.group === "phase" && !p.newSpecies)
     return <CarePhasesPage api={api} token={token} host={host} />;
+  return <PlantsMode {...p} />;
+}
+
+/** The plants themselves, with the parts of other modules wired into the plant layer (US-QS-23). */
+function PlantsMode(p: ModeProps) {
+  const { api, token, host } = p;
+  const slots = plantSlots(api, token);
   return (
     <CollectionPage
       api={api}
@@ -170,6 +184,8 @@ function ModeBody(p: ModeProps) {
       {...(p.renderHint ? { renderHint: p.renderHint } : {})}
       {...(p.group === "location" ? { groupBy: "location" as const } : {})}
       onMeasure={p.setMeasure}
+      onManage={p.onOpenManage}
+      plantSlots={slots}
     />
   );
 }

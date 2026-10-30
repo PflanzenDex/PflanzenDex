@@ -3,6 +3,7 @@ import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { loadLocations } from "../../../light";
 import { LoadFrame, useInvalidate, type Response } from "../../../kernel";
 import { PhasesList } from "../phases-list/phases-list";
+import { PhasesPaged } from "../phases-paged/phases-paged";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
 import { CarePhasesSkeleton } from "./care-phases-page.skeleton";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
@@ -63,12 +64,21 @@ export function CarePhasesPage(props: { api: string; token: Token; host?: Phases
             <ReportCount host={props.host} count={data.rows.length} />
             {move.message && <StatusNote>{move.message}</StatusNote>}
             {move.error && <RefusalAlert error={move.error} />}
-            <PhasesList
-              rows={data.rows}
-              locations={data.locations}
-              busy={move.running}
-              onConfirm={(ids, text) => void move.confirm(ids, text)}
-            />
+            {props.host && data.rows.length > 0 ? (
+              <PhasesPaged
+                rows={data.rows}
+                locations={data.locations}
+                busy={move.running}
+                onConfirm={(ids, text) => void move.confirm(ids, text)}
+              />
+            ) : (
+              <PhasesList
+                rows={data.rows}
+                locations={data.locations}
+                busy={move.running}
+                onConfirm={(ids, text) => void move.confirm(ids, text)}
+              />
+            )}
           </>
         )}
       </LoadFrame>

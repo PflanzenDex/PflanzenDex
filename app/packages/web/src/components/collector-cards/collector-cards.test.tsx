@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 import type { CollectorCard } from "@pflanzendex/core";
+import type { ReactElement } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectorCards } from "./collector-cards";
+
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+const view = (ui: ReactElement, url = "/") =>
+  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
 
 const card = (extra: Partial<CollectorCard>): CollectorCard => ({
   number: 1,
@@ -57,13 +64,16 @@ describe("US-POK-01 collector cards section", () => {
       }),
     );
     vi.stubGlobal("fetch", fetchFn);
-    render(<CollectorCards api="http://api" token={token} />);
+    view(<CollectorCards api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Sammlerkarten" });
-    const items = within(list).getAllByRole("listitem");
-    expect(items).toHaveLength(3);
+    // US-QS-22: two cards per page, the rest on the next page.
+    const items = [...list.querySelectorAll<HTMLElement>("li[data-state]")];
+    expect(items).toHaveLength(2);
     expect(within(items[0] as HTMLElement).getByText("gefangen 05.03.2026")).toBeTruthy();
     expect(within(items[1] as HTMLElement).getByText("noch nicht gefangen")).toBeTruthy();
-    expect(within(items[2] as HTMLElement).getByText("Datum unbekannt")).toBeTruthy();
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(await screen.findByText("Datum unbekannt")).toBeTruthy();
     expect(String(fetchFn.mock.calls[0]?.[0])).toMatch(/^http:\/\/api\/pokedex\/cards\?timeZone=/);
   });
 
@@ -72,7 +82,7 @@ describe("US-POK-01 collector cards section", () => {
       "fetch",
       vi.fn<typeof fetch>(async () => response(200, { cards: [] })),
     );
-    render(<CollectorCards api="http://api" token={token} />);
+    view(<CollectorCards api="http://api" token={token} />);
     expect(await screen.findByText(/Noch keine Sammlerkarten/)).toBeTruthy();
     expect(screen.queryByRole("list", { name: "Sammlerkarten" })).toBeNull();
   });
@@ -84,7 +94,7 @@ describe("US-POK-01 collector cards section", () => {
         response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } }),
       ),
     );
-    render(<CollectorCards api="http://api" token={token} />);
+    view(<CollectorCards api="http://api" token={token} />);
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });

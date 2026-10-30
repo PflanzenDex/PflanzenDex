@@ -19,7 +19,7 @@ describe("US-QS-14 · page story Entdecken", () => {
 
   it("US-QS-14 · the catalog mode lists the species of the search", async () => {
     await CatalogDesktopDark.run();
-    expect(await screen.findByText("Ochsenzunge")).toBeTruthy();
+    expect(await screen.findByText(/Ochsenzunge/)).toBeTruthy();
   });
 
   it("US-QS-14 · a decided deck says so and offers the next step", async () => {

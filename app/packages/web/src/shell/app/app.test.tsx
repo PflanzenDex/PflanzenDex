@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import "../../collection/specimens/tests/plants-test-helpers";
 
 // The sign-in service is a foreign system: UserManager is replaced, app and modules run for real.
 const mgr = vi.hoisted(() => ({
@@ -79,6 +80,7 @@ const WISHLIST: Record<string, unknown> = {
   "/wishes/candidates": {
     candidates: [],
     zones: [],
+    duplicates: [],
     unfit: [],
     hint: {
       text: "Keine offenen Kandidaten in der Wunschliste.",
@@ -171,6 +173,7 @@ function fakeServer(accountStatus = 200, plants = 0) {
 
 // Heute and its sections are lazy parts: loading them first keeps the waits on the data, not on a cold import (#444).
 beforeAll(async () => {
+  Element.prototype.setPointerCapture ??= () => undefined;
   // jsdom has no matchMedia: the planning form of the treatments section reads it.
   window.matchMedia ??= ((query: string) => ({
     matches: false,
@@ -186,7 +189,7 @@ beforeAll(async () => {
     import("@/components/routing/areas/today-area/today-area"),
     import("../../today/today-page/today-page"),
     import("../../care/treatments/treatments-page/treatments-page"),
-    import("../../collection/hints-page/hints-page"),
+    import("../../collection/other-pages/hints-page/hints-page"),
     import("../today-intro/today-intro"),
   ]);
 }, 30_000);
@@ -310,7 +313,10 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(species.getAttribute("aria-current")).toBeNull();
 
-    await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Standorte und Lichtzonen verwalten" }),
+    );
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
 
     await userEvent.click(tab("Konto"));
@@ -345,9 +351,13 @@ describe("US-ACC-01 App", () => {
     renderApp("/care-phases");
     expect(await screen.findByText("Noch kein Exemplar hat eine Phase.")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     expect(
-      screen.getByRole("button", { name: /Nach Pflegephase/ }).getAttribute("aria-pressed"),
+      (await screen.findByRole("button", { name: /Nach Pflegephase/ })).getAttribute(
+        "aria-pressed",
+      ),
     ).toBe("true");
+    await userEvent.keyboard("{Escape}");
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(queryTab("Pflegephasen")).toBeNull();
   });
@@ -361,7 +371,7 @@ describe("US-ACC-01 App", () => {
     expect(queryTab("Standorte und Licht")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Standorte verwalten" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ansicht" })).toBeTruthy();
   });
 
   it("US-QS-14 · US-BES-05 the old address /difficulty opens the comparison in the species mode of the Sammlung and says what to do without a species", async () => {
@@ -388,15 +398,12 @@ describe("US-ACC-01 App", () => {
     expect(header().queryByRole("link", { name: "Wunschliste" })).toBeNull();
   });
 
-  it("US-QS-14 · US-BES-08 the old address /hints lands on the section Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
+  it("US-QS-14 · US-QS-18 · US-BES-08 the old address /hints lands on the layer Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
     fakeServer(200, 1);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/hints");
     expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 2, name: "Fehlt noch" })).toBeTruthy();
-    expect(tab("Heute").getAttribute("aria-current")).toBe("page");
-    expect(header().queryByRole("link", { name: "Hinweise" })).toBeNull();
-    expect(header().queryByRole("link", { name: "Behandlung" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Fehlt noch" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
