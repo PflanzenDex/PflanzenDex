@@ -1,6 +1,6 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { useCallback } from "react";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { LoadFrame } from "../../../kernel";
 import { loadOverview } from "../../api/access-api";
@@ -185,10 +185,10 @@ export function OperatorPage(props: { api: string; token: Token }) {
         loadingFallback={<OperatorPageSkeleton label="Zahlen werden geladen …" />}
       >
         {(overview: OperatorOverview) => (
-          <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start">
+          <LayerHost>
             <Rows overview={overview} />
             <Layers api={api} token={token} overview={overview} actions={actions} />
-          </div>
+          </LayerHost>
         )}
       </LoadFrame>
     </div>
