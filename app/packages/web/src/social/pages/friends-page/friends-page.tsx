@@ -4,6 +4,7 @@ import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet
 import { LoadFrame, useInvalidate, useRequest } from "../../../kernel";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
 import { loadBanner } from "../../api/feed-api";
+import { loadMatchingCount, loadOpenOffersCount } from "../../api/offer-counts-api";
 import { sharingChoice } from "../../parts/sharing-panel/sharing-panel";
 import { AddFriendLayer } from "./friend-layers/add-friend-layer/add-friend-layer";
 import { HelpLayer, ListLayers } from "./friend-layers/friend-layers";
@@ -28,12 +29,70 @@ function useNewsCount(api: string, token: Token, calm: boolean): TileCount {
   return r.value === undefined ? "loading" : r.value.firstVisit ? 0 : r.value.count;
 }
 
+/** The count of the exchange tiles: not asked in calm mode or while the function is locked (US-ACH-08, US-ONB-05); loading and failing show (P-10). */
+function useOfferCount(
+  props: { api: string; token: Token; key: string; enabled: boolean },
+  fetchCount: (api: string, token: string) => ReturnType<typeof loadOpenOffersCount>,
+): TileCount | undefined {
+  const { api, enabled } = props;
+  const load = useCallback((t: string) => fetchCount(api, t), [api, fetchCount]);
+  const r = useRequest({
+    queryKey: ["social", "tile-count", props.key],
+    token: props.token,
+    load,
+    enabled,
+  });
+  if (!enabled) return undefined;
+  if (r.status === "error") return "error";
+  return r.value === undefined ? "loading" : r.value;
+}
+
 type Options = {
   /** Calm mode is on or not known yet: the tiles show their names without counts (US-ACH-08). */
   calm: boolean;
+  /** The text mark of the exchange while "Tauschen" is not open yet (US-ONB-05); the tiles still lead to the lock page. */
+  swapMark?: string | undefined;
 };
 
 const friendsText = (n: number) => (n === 0 ? "Noch keine" : n === 1 ? "1 Freund" : `${n} Freunde`);
+
+/** The counts of the tiles that load by themselves (US-QS-20); `undefined` means no count is shown. */
+function useTileCounts(api: string, token: Token, options: Options) {
+  const counted = !options.calm && !options.swapMark;
+  return {
+    news: useNewsCount(api, token, options.calm),
+    offers: useOfferCount({ api, token, key: "offers", enabled: counted }, loadOpenOffersCount),
+    matching: useOfferCount({ api, token, key: "matching", enabled: counted }, loadMatchingCount),
+  };
+}
+
+/** The four tiles of the overview (US-QS-20): requests, news, exchange and matching offers. */
+function Tiles(props: {
+  open: number;
+  counts: { news: TileCount; offers: TileCount | undefined; matching: TileCount | undefined };
+  options: Options;
+}) {
+  const { counts, options } = props;
+  const note = options.swapMark ? { note: options.swapMark } : {};
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <LayerTile id="requests" name="Anfragen" count={options.calm ? "hidden" : props.open} />
+      <LayerTile id="news" name="Neu bei Freunden" count={counts.news} />
+      <LinkTile
+        to="/friends/exchange"
+        name="Tauschbörse"
+        {...(counts.offers !== undefined ? { count: counts.offers } : {})}
+        {...note}
+      />
+      <LinkTile
+        to="/friends/match"
+        name="Passende Angebote"
+        {...(counts.matching !== undefined ? { count: counts.matching } : {})}
+        {...note}
+      />
+    </div>
+  );
+}
 
 function Body(props: {
   data: FriendsData;
@@ -43,7 +102,7 @@ function Body(props: {
   options: Options;
 }) {
   const { api, token, data, options } = props;
-  const news = useNewsCount(api, token, options.calm);
+  const { news, offers, matching } = useTileCounts(api, token, options);
   const add = useLayer("add");
   const open = data.requests.incoming.length;
   return (
@@ -62,12 +121,7 @@ function Body(props: {
       >
         Freund hinzufügen
       </Button>
-      <div className="grid grid-cols-2 gap-2">
-        <LayerTile id="requests" name="Anfragen" count={options.calm ? "hidden" : open} />
-        <LayerTile id="news" name="Neu bei Freunden" count={news} />
-        <LinkTile to="/friends/exchange" name="Tauschbörse" />
-        <LinkTile to="/friends/match" name="Passende Angebote" />
-      </div>
+      <Tiles open={open} counts={{ news, offers, matching }} options={options} />
       <div className="flex flex-col gap-2">
         <LayerRow id="friends" name="Meine Freunde" state={friendsText(data.friends.length)} />
         <LayerRow
@@ -93,13 +147,19 @@ function Body(props: {
  * shows a friend's collection: private by default (P-05), and there are no rankings between friends. A write reloads
  * everything (P-10). Calm mode shows the tiles without counts.
  */
-export function FriendsPage(props: { api: string; token: Token; calm?: boolean }) {
+export function FriendsPage(props: {
+  api: string;
+  token: Token;
+  calm?: boolean;
+  /** The text mark of the locked exchange (US-ONB-05). */
+  swapMark?: string;
+}) {
   const { api, token } = props;
-  const options: Options = { calm: props.calm ?? false };
+  const options: Options = { calm: props.calm ?? false, swapMark: props.swapMark };
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
-    <div className="min-w-0">
+    <div className="min-w-0" data-fit-screen="">
       <section aria-labelledby="friends-title" className="flex min-w-0 flex-col gap-3">
         <h1 id="friends-title" className="text-2xl font-semibold">
           Freunde

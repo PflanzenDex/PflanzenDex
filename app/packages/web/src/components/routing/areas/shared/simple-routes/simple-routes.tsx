@@ -62,24 +62,34 @@ export function socialRoutes(
   api: string,
   token: Token,
   lockPage: (id: string) => ReactNode | undefined,
+  /** The text mark of a function that is not open yet ("Bald", "Noch gesperrt"), by function id (US-ONB-05). */
+  lockMarkOf: (id: string) => string | undefined = () => undefined,
 ) {
+  const swapMark = lockMarkOf("swapping");
   const page = (id: string, open: ReactNode) => lockPage(id) ?? open;
-  // The short route keys keep the first load within its budget (QG-U6): e exchange, m match deck, f friends.
   return [
     <Route
-      key="e"
+      key="exchange"
       path={EXCHANGE_PATH}
       element={page("swapping", <ExchangePage api={api} token={token} />)}
     />,
     <Route
-      key="m"
+      key="match"
       path={MATCH_PATH}
       element={page("swapping", <CalmGate page={MatchPage} api={api} token={token} />)}
     />,
-    <Route key="f" path={PATHS.friends}>
+    <Route key="friends" path={PATHS.friends}>
       <Route
         index
-        element={page("friends", <CalmGate page={FriendsPage} api={api} token={token} />)}
+        element={page(
+          "friends",
+          <CalmGate
+            page={FriendsPage}
+            api={api}
+            token={token}
+            {...(swapMark ? { swapMark } : {})}
+          />,
+        )}
       />
       <Route
         path=":friendId"

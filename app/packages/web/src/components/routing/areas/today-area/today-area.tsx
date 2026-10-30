@@ -57,7 +57,7 @@ export function TodayArea(props: {
     if (view) props.onOpen(view);
   };
   return (
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]" data-fit-screen="">
       <Suspense fallback={<TodaySkeleton />}>
         {props.intro ? (
           props.intro(<Tasks {...props} open={open} />, <TodaySkeleton />)

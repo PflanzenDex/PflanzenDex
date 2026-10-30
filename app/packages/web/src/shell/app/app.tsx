@@ -17,7 +17,6 @@ import { AppShell } from "../../components/shared/navigation/app-shell/app-shell
 import {
   pageTitle,
   navItems,
-  PATHS,
   profileAddress,
   viewAddress,
   viewTitle,
@@ -63,11 +62,9 @@ type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
 function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
   const { account } = props;
   const friends = useUnlocks().entries.find((e) => e.id === "friends");
-  // "Heute" fits one screen (US-QS-18); the other destinations keep their page scroll until they are converted.
   return (
     <AppShell
       titleOf={viewTitle}
-      fit={useLocation().pathname === PATHS.today}
       items={navItems({
         reviewer: account.reviewer === true,
         operator: account.operator === true,
