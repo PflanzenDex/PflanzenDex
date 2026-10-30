@@ -163,7 +163,8 @@ describe("US-BES-01 Seite Arten", () => {
     await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
     await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
     await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "Blätter kippen.");
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "Aufrecht.");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
@@ -204,7 +205,8 @@ describe("US-BES-01 Seite Arten", () => {
     await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
     await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
     await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
@@ -224,14 +226,15 @@ describe("US-BES-01 Seite Arten", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     const name = screen.getByLabelText(/Lateinischer Name/);
     await vi.waitFor(() => expect(document.activeElement).toBe(name));
     const message = screen.getByText("Bitte gib den lateinischen Namen an.");
     expect(name.getAttribute("aria-describedby")).toContain(message.id);
-    expect(screen.getByLabelText(/Wachstumsmaß/).getAttribute("aria-invalid")).toBe("true");
     // P-08 (#1003): an empty difficulty stays unknown and is not an error.
     expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).not.toBe("true");
+    // The first step does not let go until its fields are valid; the growth fields have not been shown yet.
+    expect(screen.queryByLabelText(/Wachstumsmaß/)).toBeNull();
   });
 
   it("US-BES-01 · DS-48 a lux value outside the allowed range is refused before sending", async () => {
@@ -240,7 +243,7 @@ describe("US-BES-01 Seite Arten", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "0");
-    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(await screen.findByText(/ganze Zahl zwischen 1 und 200.000/)).toBeTruthy();
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
@@ -300,7 +303,7 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     const filled = within(layer)
       .getAllByRole("button")
       .filter((b) => b.className.includes("bg-primary"));
-    expect(filled.map((b) => b.textContent)).toEqual(["Vorschlag speichern"]);
+    expect(filled.map((b) => b.textContent)).toEqual(["Weiter"]);
     await userEvent.keyboard("{Escape}");
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
@@ -313,7 +316,8 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
     await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
     await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
@@ -336,12 +340,68 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
     await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
     await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(ERROR_TEXTS["species.duplicate"]);
     expect(alert.textContent).not.toContain("roh");
+  }, 20_000);
+});
+
+describe("US-QS-21 propose in two steps", () => {
+  it("US-QS-21 step 1 asks for name and light, step 2 for growth and saves; Zurück keeps the entries", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    expect(screen.getByText(/Schritt 1 von 2/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Vorschlag speichern" })).toBeNull();
+    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Aloe vera");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(await screen.findByText(/Schritt 2 von 2/)).toBeTruthy();
+    expect(screen.queryByLabelText(/Lateinischer Name/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Vorschlag speichern" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    expect(((await screen.findByLabelText(/Lateinischer Name/)) as HTMLInputElement).value).toBe(
+      "Aloe vera",
+    );
+  });
+
+  it("US-QS-21 the visibility notice is at most two sentences", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    const notice = within(layer).getByText(/Nur für dich sichtbar/);
+    expect((notice.textContent ?? "").split(/[.;] /).length).toBeLessThanOrEqual(2);
+    expect((notice.textContent ?? "").length).toBeLessThanOrEqual(110);
+  });
+
+  it("US-QS-21 a refusal of a step-1 field on step 2 brings step 1 back with the message on the field", async () => {
+    fakeServer({
+      proposal: () =>
+        response(409, {
+          error: {
+            code: "species.duplicate",
+            text: "roh",
+            details: [{ field: "latinName", code: "species.duplicate" }],
+            data: { existing: species },
+          },
+        }),
+    });
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
+    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    const name = await screen.findByLabelText(/Lateinischer Name/);
+    expect(name.getAttribute("aria-invalid")).toBe("true");
   }, 20_000);
 });

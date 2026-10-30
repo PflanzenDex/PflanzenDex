@@ -41,9 +41,9 @@ const list = (cards: SpecimenCard[]) =>
 
 describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)", () => {
   it("US-QS-10 submitting an empty proposal focuses the first invalid field and every error names the field and the fix", async () => {
-    render(<ProposalForm onSend={async () => null} onExisting={vi.fn()} />);
+    render(<ProposalForm onSend={async () => null} onExisting={vi.fn()} startStep={2} />);
     await userEvent.click(screen.getByRole("button", { name: /speichern|vorschlagen|senden/i }));
-    const first = screen.getByRole("textbox", { name: /lateinischer Name/i });
+    const first = screen.getByRole("combobox", { name: /Wachstumsmaß/i });
     await waitFor(() => expect(document.activeElement).toBe(first));
     const alerts = await screen.findAllByRole("alert");
     expect(alerts.length).toBeGreaterThan(1);
@@ -56,7 +56,7 @@ describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)
       expect(field?.getAttribute("aria-invalid")).toBe("true");
       expect((field?.getAttribute("aria-describedby") ?? "").split(" ")).toContain(alert.id);
     }
-    expect(alerts[0]?.textContent).toBe("Bitte gib den lateinischen Namen an.");
+    expect(alerts[0]?.textContent).toBe("Bitte wähle das Wachstumsmaß.");
   });
 });
 

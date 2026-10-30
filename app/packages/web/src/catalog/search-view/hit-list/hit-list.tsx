@@ -1,3 +1,4 @@
+import { Leaf } from "lucide-react";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Button } from "@/components/ui/button/button";
@@ -28,15 +29,24 @@ function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
       <Button
         type="button"
         variant="ghost"
-        className="grid h-auto min-h-14 w-full justify-items-start gap-0 px-3.5 py-2 text-left font-normal"
+        className="flex h-auto min-h-14 w-full justify-start gap-3 px-3.5 py-2 text-left font-normal"
         onClick={() => onOpen(t.id)}
       >
-        <span className="text-base font-semibold">
-          <i>{t.latinName}</i>
+        {/* A fixed thumbnail slot keeps every name on the same left edge; species carry no photo yet, so no image is invented. */}
+        <span
+          aria-hidden="true"
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+        >
+          <Leaf className="size-5" />
         </span>
-        <span className="break-words text-sm text-muted-foreground">
-          {t.germanName ? `${t.germanName} · ` : ""}
-          {fact(t)}
+        <span className="grid min-w-0 flex-1 justify-items-start gap-0">
+          <span className="text-base font-semibold">
+            <i>{t.latinName}</i>
+          </span>
+          <span className="break-words text-sm text-muted-foreground">
+            {t.germanName ? `${t.germanName} · ` : ""}
+            {fact(t)}
+          </span>
         </span>
       </Button>
     </div>

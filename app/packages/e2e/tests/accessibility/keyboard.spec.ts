@@ -35,6 +35,7 @@ async function specimenByKeyboard(page: Page, species: string): Promise<void> {
   await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
   await chooseByArrows(page, form.getByLabel(/^Standard-Stufe/), 3);
   await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
+  await press(page, form.getByRole("button", { name: "Weiter" }));
   await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
   await typeInto(page, form.getByLabel(/^Vergeilung-Anzeichen/), "Die Rosette streckt sich.");
   await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");

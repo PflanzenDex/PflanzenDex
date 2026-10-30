@@ -44,22 +44,12 @@ function ChoiceFields({ control }: { control: Control<ProposalFields> }) {
         ]}
         help="Bei „Ja“ steigt die Art bei der Lichtzonen-Ableitung nie automatisch in die stärkere Zone auf; bleibt es leer, gilt „Nein“."
       />
-      <ChoiceField
-        control={control}
-        name="growthMeasure"
-        label="Wachstumsmaß"
-        required
-        options={Object.entries(GROWTH)}
-      />
     </>
   );
 }
 
-/**
- * The core fields from DM-BES-01 (FR-BES-05); everything else is in "More details". Difficulty, default level and lux
- * need are optional: without a source they stay unknown (P-08, issue 1003).
- */
-export function RequiredFields({ control }: { control: Control<ProposalFields> }) {
+/** Step 1 of the proposal (US-QS-21): the name and what is known about the light. */
+export function NameStepFields({ control }: { control: Control<ProposalFields> }) {
   return (
     <>
       <TextField
@@ -74,6 +64,33 @@ export function RequiredFields({ control }: { control: Control<ProposalFields> }
         help="Gattung, Epitheton, Sorte nur in Anführungszeichen."
       />
       <ChoiceFields control={control} />
+    </>
+  );
+}
+
+/** The fields of step 1; a refusal of one of them leads back to that step. */
+export const NAME_STEP: readonly (keyof ProposalFields)[] = [
+  "latinName",
+  "difficulty",
+  "standardLevel",
+  "lightDemandLux",
+  "softLeaf",
+];
+
+/**
+ * Step 2 of the proposal: the growth fields from DM-BES-01 (FR-BES-05); everything else is in "More details".
+ * Difficulty, default level and lux need (step 1) are optional: without a source they stay unknown (P-08, issue 1003).
+ */
+export function GrowthStepFields({ control }: { control: Control<ProposalFields> }) {
+  return (
+    <>
+      <ChoiceField
+        control={control}
+        name="growthMeasure"
+        label="Wachstumsmaß"
+        required
+        options={Object.entries(GROWTH)}
+      />
       <AreaField
         control={control}
         name="etiolationSigns"
