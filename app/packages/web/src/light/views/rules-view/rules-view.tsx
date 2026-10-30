@@ -1,4 +1,4 @@
-import { classificationRules } from "@pflanzendex/core";
+import { classificationRules, zoneLabel } from "@pflanzendex/core";
 import {
   ResponsiveTable,
   type ResponsiveColumn,
@@ -12,7 +12,7 @@ const H3 = "text-base font-semibold";
 const LIST = "m-0 flex flex-col gap-2 pl-5";
 
 const COLUMNS: ResponsiveColumn<LightZone>[] = [
-  { key: "name", header: "Zone", cell: (z) => z.name },
+  { key: "name", header: "Zone", cell: (z) => zoneLabel(z.name) },
   {
     key: "lux",
     header: "Lux-Obergrenze",

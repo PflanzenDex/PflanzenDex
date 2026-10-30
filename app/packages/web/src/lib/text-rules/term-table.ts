@@ -11,7 +11,7 @@ export const RETIRED_WORDS: ReadonlyArray<{ concept: string; use: string; patter
     pattern: /\b(?:Exemplaren|Exemplare|Exemplars|Exemplar)\b/,
   },
   { concept: "Wishlist", use: "Wunschliste", pattern: /\bWunschzettel\b|\bWunsch-Liste\b/ },
-  { concept: "Light zone 1", use: "Stecklingslicht", pattern: /\bLampe 1\b/ },
+  { concept: "Light zone", use: "Zone <n> (Zone 1 · Stecklingslicht)", pattern: /\bLampe [1-9]\b/ },
 ];
 
 /**
@@ -26,10 +26,6 @@ export const EXCEPTIONS: ReadonlyArray<{ file: RegExp; reason: string }> = [
   {
     file: /(^|\/)news\/news\.de\.json$/,
     reason: "dated release notes are history and are not rewritten",
-  },
-  {
-    file: /(^|\/)social\/pages\/friends-page\//,
-    reason: "being changed in PR #964; the term table is applied there as a follow-up",
   },
 ];
 

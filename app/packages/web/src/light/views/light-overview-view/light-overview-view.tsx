@@ -4,12 +4,17 @@ import {
   type ResponsiveColumn,
 } from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
+import { zoneLabel } from "@pflanzendex/core";
 
 const lux = new Intl.NumberFormat("de-DE");
 
 const COLUMNS: ResponsiveColumn<LightOverviewRow>[] = [
   { key: "species", header: "Art", cell: (r) => r.speciesName },
-  { key: "zone", header: "Lichtzone", cell: (r) => (r.zone ? r.zone.name : "unbekannt") },
+  {
+    key: "zone",
+    header: "Lichtzone",
+    cell: (r) => (r.zone ? zoneLabel(r.zone.name) : "unbekannt"),
+  },
   {
     key: "lux",
     header: "Lux-Bedarf",

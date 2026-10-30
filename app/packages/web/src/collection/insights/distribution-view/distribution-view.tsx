@@ -3,6 +3,7 @@ import type { NotCounted, Distribution } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
+import { zoneLabel } from "@pflanzendex/core";
 
 /** The bar of the thinnest zone takes the warning token; the words "dünnste Zone" carry the meaning too (DS-38). */
 const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
@@ -45,7 +46,7 @@ export function DistributionView({ distribution }: { distribution: Distribution 
           {distribution.zones.map(({ zone, count }) => (
             <li key={zone.id} className="grid gap-1 break-words">
               <span>
-                {zone.name}: {specimens(count)}
+                {zoneLabel(zone.name)}: {specimens(count)}
                 {thin.has(zone.id) && <strong> · dünnste Zone</strong>}
               </span>
               <span

@@ -20,15 +20,15 @@ export function SharingSection(props: {
     void sharing.run(
       (t) => setSpecimenSharing(api, t, { specimenId, share }),
       share
-        ? "Freigegeben: Freunde sehen dieses Exemplar ab jetzt."
-        : "Zurückgezogen: Freunde sehen dieses Exemplar ab dem nächsten Abruf nicht mehr.",
+        ? "Freigegeben: Freunde sehen diese Pflanze ab jetzt."
+        : "Zurückgezogen: Freunde sehen diese Pflanze ab dem nächsten Abruf nicht mehr.",
     );
   const setSpecies = (speciesId: string, share: boolean) =>
     void sharing.run(
       (t) => setSpeciesSharing(api, t, { speciesId, share }),
       share
-        ? "Alle Exemplare dieser Art sind für Freunde freigegeben."
-        : "Alle Exemplare dieser Art sind zurückgezogen.",
+        ? "Alle Pflanzen dieser Art sind für Freunde freigegeben."
+        : "Alle Pflanzen dieser Art sind zurückgezogen.",
     );
   return (
     <>

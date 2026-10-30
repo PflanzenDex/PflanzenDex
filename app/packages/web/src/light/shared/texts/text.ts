@@ -5,6 +5,7 @@ import type {
   LightZone,
   ZoneUser,
 } from "../light-api/light-api";
+import { zoneLabel } from "@pflanzendex/core";
 
 const numberFormat = new Intl.NumberFormat("de-DE");
 
@@ -14,7 +15,12 @@ export const ppfd = (n: number | null) =>
 export const kindText = (a: LightLocation["kind"]) => (a === "indoor" ? "innen" : "außen");
 
 export const zoneName = (zones: readonly LightZone[], id: string | null): string | null =>
-  id === null ? null : (zones.find((z) => z.id === id)?.name ?? null);
+  id === null
+    ? null
+    : (() => {
+        const n = zones.find((z) => z.id === id)?.name;
+        return n === undefined ? null : zoneLabel(n);
+      })();
 
 const FIELDS: Record<string, string> = {
   name: "Name",
@@ -59,6 +65,6 @@ const REASON: Record<string, string> = {
 };
 
 export const derivationText = (a: Derivation): { title: string; reason: string } => ({
-  title: a.kind === "zone" ? `Lichtzone: ${a.zone.name}` : "Lichtzone: unbekannt",
+  title: a.kind === "zone" ? `Lichtzone: ${zoneLabel(a.zone.name)}` : "Lichtzone: unbekannt",
   reason: REASON[a.reason] ?? "",
 });

@@ -1,5 +1,11 @@
 import { useWatch, type Control } from "react-hook-form";
-import { specimenName, type Species, type LightLocation, type LightZone } from "@pflanzendex/core";
+import {
+  specimenName,
+  type Species,
+  type LightLocation,
+  type LightZone,
+  zoneLabel,
+} from "@pflanzendex/core";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import {
   FormControl,
@@ -31,7 +37,7 @@ function ZoneField(props: {
               <option value="">Aus Standort und Art ableiten</option>
               {props.zones.items.map((z) => (
                 <option key={z.id} value={z.id}>
-                  {z.name}
+                  {zoneLabel(z.name)}
                 </option>
               ))}
             </Select>

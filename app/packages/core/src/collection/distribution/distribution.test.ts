@@ -165,7 +165,7 @@ describe("US-LIC-02 thinnest zone and tie", () => {
     await create("anna", "Wüstenbank");
     const v = await zoneDistribution(deps(), "anna");
     expect(v.thinnest.map((z) => z.name)).toEqual(["Lampe 4"]);
-    expect(v.hint.text).toContain("Lampe 4");
+    expect(v.hint.text).toContain("Zone 4");
     expect(v.hint.nextAction).not.toBe("");
   });
 
@@ -176,7 +176,7 @@ describe("US-LIC-02 thinnest zone and tie", () => {
     await create("anna", "Wüstenbank");
     const v = await zoneDistribution(deps(), "anna");
     expect(v.thinnest.map((z) => z.name)).toEqual(["Lampe 3", "Lampe 4"]);
-    expect(v.hint.text).toContain("Lampe 3 und Lampe 4");
+    expect(v.hint.text).toContain("Zone 3 und Zone 4");
     expect(v.hint.nextAction).toContain("Wunschliste");
     expect(v.hint.nextAction).toContain("eigene Lichtzone"); // US-LIC-02, P-09: names the second way as well
   });
@@ -187,7 +187,7 @@ describe("US-LIC-02 thinnest zone and tie", () => {
     await create("anna", "Wüstenbank");
     const v = await zoneDistribution(deps(), "anna");
     expect(v.thinnest.map((z) => z.name)).toEqual(["Lampe 2", "Lampe 3", "Lampe 4"]);
-    expect(v.hint.text).toContain("Lampe 2, Lampe 3 und Lampe 4");
+    expect(v.hint.text).toContain("Zone 2, Zone 3 und Zone 4");
     expect(v.hint.nextAction).toContain("Wunschliste");
   });
 

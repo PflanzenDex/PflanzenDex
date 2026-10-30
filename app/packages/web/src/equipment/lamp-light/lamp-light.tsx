@@ -5,6 +5,7 @@ import { MeasureForm } from "./measure-form/measure-form";
 import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
 import { keepTogether } from "@/lib/format";
+import { zoneLabel } from "@pflanzendex/core";
 
 export interface LampLightActions {
   busy: boolean;
@@ -70,7 +71,9 @@ function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightAction
       <div>
         <h3 className="break-words font-semibold">{lamp.name}</h3>
         <p className="text-sm text-muted-foreground">
-          {lamp.zone ? `${lamp.zone.name} · Obergrenze ${lux(lamp.zone.luxCeiling)}` : "ohne Zone"}
+          {lamp.zone
+            ? `${zoneLabel(lamp.zone.name)} · Obergrenze ${lux(lamp.zone.luxCeiling)}`
+            : "ohne Zone"}
         </p>
       </div>
       {lamp.check ? (

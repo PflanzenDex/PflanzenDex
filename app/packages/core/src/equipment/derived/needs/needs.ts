@@ -2,6 +2,7 @@ import type { ZoneStore } from "../../../light";
 import type { WishStore, ZoneStockSource } from "../../../wishlist";
 import { zoneEquipment } from "../../lamps/zones";
 import type { EquipmentRow, EquipmentStore } from "../../store/types";
+import { zoneLabel } from "../../../light";
 
 export type NeedKind = "supply_low" | "zone_without_lamp" | "wish_without_lamp" | "no_replacement";
 
@@ -104,7 +105,7 @@ export async function equipmentNeeds(deps: NeedsDependencies, userId: string): P
           {
             id: `wish-zone:${z.id}`,
             kind: "wish_without_lamp",
-            reason: `${n === 1 ? "Ein Wunsch zielt" : `${n} Wünsche zielen`} auf die Lichtzone ${z.name}, die keine aktive Lampe hat.`,
+            reason: `${n === 1 ? "Ein Wunsch zielt" : `${n} Wünsche zielen`} auf die Lichtzone ${zoneLabel(z.name)}, die keine aktive Lampe hat.`,
             source: "Wunschliste",
             nextAction: "Erfasse eine Lampe für diese Zone, bevor die Pflanze einzieht.",
           },

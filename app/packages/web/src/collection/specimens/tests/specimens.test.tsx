@@ -104,13 +104,13 @@ describe('US-BES-02 form "Create specimen"', () => {
   it("US-LIC-02: offers the own light zone from the own zones; without a choice it is derived", () => {
     const h = html({
       zones: {
-        items: [{ id: "z3", name: "Lampe 3", luxCeiling: 40000, ppfd: null, sortOrder: 3 }],
+        items: [{ id: "z3", name: "Zone 3", luxCeiling: 40000, ppfd: null, sortOrder: 3 }],
         failed: false,
       },
     });
     expect(h).toContain("Eigene Lichtzone");
     expect(h).toContain("Aus Standort und Art ableiten");
-    expect(h).toContain("Lampe 3");
+    expect(h).toContain("Zone 3");
     expect(h).toContain("Stecklingslicht");
   });
 

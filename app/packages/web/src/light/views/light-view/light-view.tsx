@@ -63,8 +63,8 @@ function Zones(props: { data: LightData; actions: LightActions }) {
       {data.zones.length === 0 ? (
         <EmptyState
           title="Noch keine Lichtzonen"
-          description="Übernimm die vier Standard-Lampen oder lege unten eine eigene Zone an."
-          action={{ label: "Standard-Lampen übernehmen", onClick: () => void actions.defaults() }}
+          description="Übernimm die vier Standard-Zonen oder lege unten eine eigene Zone an."
+          action={{ label: "Standard-Zonen übernehmen", onClick: () => void actions.defaults() }}
         />
       ) : (
         <ul className={LIST}>

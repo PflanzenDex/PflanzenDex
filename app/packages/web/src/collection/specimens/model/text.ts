@@ -1,3 +1,4 @@
+import { zoneLabel } from "@pflanzendex/core";
 import type { SpecimenCard, ZoneSource } from "@pflanzendex/core";
 import type { ApiError } from "../../../kernel";
 import { UNKNOWN } from "@/lib/format";
@@ -30,5 +31,5 @@ export const ZONE_SOURCE_TEXT: Record<ZoneSource, string> = {
 };
 export const zoneText = (card: SpecimenCard): string =>
   card.lightZone && card.lightZoneSource
-    ? `${card.lightZone} (${ZONE_SOURCE_TEXT[card.lightZoneSource]})`
+    ? `${zoneLabel(card.lightZone)} (${ZONE_SOURCE_TEXT[card.lightZoneSource]})`
     : UNKNOWN;

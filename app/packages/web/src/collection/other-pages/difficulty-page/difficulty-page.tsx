@@ -11,6 +11,7 @@ import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
 import { keepTogether } from "@/lib/format";
+import { zoneLabel } from "@pflanzendex/core";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
@@ -18,7 +19,7 @@ const OWN = " (dein Pflegeprofil)";
 
 /** The zone; my care-profile zone says where it comes from (US-BES-09, #306). */
 const zoneText = (r: DifficultyRow) =>
-  r.zone ? `${r.zone.name}${r.zoneSource === "profile" ? OWN : ""}` : UNKNOWN;
+  r.zone ? `${zoneLabel(r.zone.name)}${r.zoneSource === "profile" ? OWN : ""}` : UNKNOWN;
 
 /** My watering intervals from the care profile, else the catalog hint (US-BES-09, #306). */
 function wateringText(r: DifficultyRow): string {

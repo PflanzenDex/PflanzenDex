@@ -13,8 +13,8 @@ import { setLightZone } from "../../specimens/model/specimens-api";
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const zones = [
-  { id: "z2", name: "Lampe 2" },
-  { id: "z3", name: "Lampe 3" },
+  { id: "z2", name: "Zone 2" },
+  { id: "z3", name: "Zone 3" },
 ];
 const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   id: "e1",
@@ -24,7 +24,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   speciesName: "Bogenhanf",
   status: "plant",
   location: "Regal",
-  lightZone: "Lampe 2",
+  lightZone: "Zone 2",
   lightZoneSource: "location",
   caughtAt: "2026-10-03",
   photo: null,
@@ -105,7 +105,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
   it("US-LIC-02 offers the own zones plus 'derive', sets the chosen one and says what changed", async () => {
     const posts = fakeServer({
       cards: [card()],
-      after: [card({ lightZone: "Lampe 3", lightZoneSource: "specimen" })],
+      after: [card({ lightZone: "Zone 3", lightZoneSource: "specimen" })],
     });
     render(page());
     await open();
@@ -122,14 +122,14 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     });
     expect(posts[0]?.key).toBeTruthy();
     const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Lampe 3“");
+    expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Zone 3“");
     await openPlant("Bogenhanf");
     await openTab("Standort");
-    expect(await screen.findByText(/Lampe 3 \(von dir für diese Pflanze gesetzt\)/)).toBeTruthy();
+    expect(await screen.findByText(/Zone 3 \(von dir für diese Pflanze gesetzt\)/)).toBeTruthy();
   });
 
   it("US-LIC-02 starts at the current own zone", async () => {
-    fakeServer({ cards: [card({ lightZone: "Lampe 3", lightZoneSource: "specimen" })] });
+    fakeServer({ cards: [card({ lightZone: "Zone 3", lightZoneSource: "specimen" })] });
     render(page());
     await open();
     await vi.waitFor(async () => expect((await select()).value).toBe("z3"));
@@ -137,8 +137,8 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
 
   it("US-LIC-02 clearing goes back to the derived zone and names it", async () => {
     const posts = fakeServer({
-      cards: [card({ lightZone: "Lampe 3", lightZoneSource: "specimen" })],
-      after: [card({ lightZone: "Lampe 2", lightZoneSource: "location" })],
+      cards: [card({ lightZone: "Zone 3", lightZoneSource: "specimen" })],
+      after: [card({ lightZone: "Zone 2", lightZoneSource: "location" })],
     });
     render(page());
     await open();
@@ -149,13 +149,13 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toEqual({ lightZoneId: null });
     expect((await screen.findByRole("status")).textContent).toContain(
-      "Es gilt wieder die abgeleitete Zone: Lampe 2 (vom Standort).",
+      "Es gilt wieder die abgeleitete Zone: Zone 2 (vom Standort).",
     );
   });
 
   it("US-LIC-02 clearing with nothing derivable says so and what to do next (P-08, P-09)", async () => {
     fakeServer({
-      cards: [card({ lightZone: "Lampe 3", lightZoneSource: "specimen" })],
+      cards: [card({ lightZone: "Zone 3", lightZoneSource: "specimen" })],
       after: [card({ lightZone: null, lightZoneSource: null })],
     });
     render(page());
@@ -171,7 +171,13 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
 
   it("US-BES-04 a cutting keeps its cutting light and the message says when the zone applies", async () => {
     fakeServer({
-      cards: [card({ status: "cutting", lightZone: "Lampe 1", lightZoneSource: "cutting" })],
+      cards: [
+        card({
+          status: "cutting",
+          lightZone: "Zone 1 · Stecklingslicht",
+          lightZoneSource: "cutting",
+        }),
+      ],
     });
     render(page());
     await open();

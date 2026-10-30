@@ -13,7 +13,7 @@ const view = (ui: ReactElement, url = "/") =>
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
-const zone = { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 };
+const zone = { id: "z2", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 };
 const row = (extra: Record<string, unknown> = {}) => ({
   speciesId: "sp1",
   speciesName: "Bogenhanf",
@@ -70,7 +70,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     const entries = within(list).getAllByRole("listitem");
     expect(entries).toHaveLength(2);
     expect(entries[0]?.textContent).toContain("Bogenhanf");
-    expect(entries[0]?.textContent).toContain("Leicht · Lampe 2");
+    expect(entries[0]?.textContent).toContain("Leicht · Zone 2");
     expect(entries[1]?.textContent).toContain("Schwer");
   });
 
@@ -80,7 +80,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     const values = await valuesOf("Bogenhanf");
     expect([...values.entries()]).toEqual([
       ["Botanischer Name", "Dracaena trifasciata"],
-      ["Lichtzone", "Lampe 2"],
+      ["Lichtzone", "Zone 2"],
       ["Gießregel", "alle 10 Tage"],
       ["Substrat", "Humus"],
       ["Schnitt", "selten"],
@@ -139,7 +139,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     );
     view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
     const values = await valuesOf("Bogenhanf");
-    expect(values.get("Lichtzone")).toBe("Lampe 2 (dein Pflegeprofil)");
+    expect(values.get("Lichtzone")).toBe("Zone 2 (dein Pflegeprofil)");
     expect(values.get("Gießregel")).toBe(
       "alle 7\u00a0Tage, in der Ruhe alle 21\u00a0Tage (dein Pflegeprofil)",
     );

@@ -11,8 +11,8 @@ afterEach(() => {
   cleanup();
 });
 
-const zone2 = { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 };
-const zone3 = { id: "z3", name: "Lampe 3", luxCeiling: 100000, ppfd: 1600, sortOrder: 2 };
+const zone2 = { id: "z2", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 };
+const zone3 = { id: "z3", name: "Zone 3", luxCeiling: 100000, ppfd: 1600, sortOrder: 2 };
 const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
   speciesId: "sp1",
   speciesName: "Monstera deliciosa",
@@ -41,7 +41,7 @@ describe("US-LIC-03: light overview view", () => {
     const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
       .getAllByRole("cell")
       .map((c) => c.textContent);
-    expect(cells).toEqual(["Monstera deliciosa", "Lampe 2", "15.000", "sehr nah (~10 cm)"]);
+    expect(cells).toEqual(["Monstera deliciosa", "Zone 2", "15.000", "sehr nah (~10 cm)"]);
   });
 
   it("formats five-digit demands with the German thousands separator", () => {

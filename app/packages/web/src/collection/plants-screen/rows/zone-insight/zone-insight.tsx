@@ -2,13 +2,14 @@ import type { Distribution } from "@pflanzendex/core";
 import { Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { zoneLabel } from "@pflanzendex/core";
 
 /** The id of the layer with the distribution per light zone (`?sheet=zones`, US-QS-19). */
 export const ZONES_LAYER = "zones";
 
 /** One line about the light zones: the thinnest zone named in text, or the way to the distribution (P-08, P-09). */
 export function zoneInsightText(distribution: Distribution): string {
-  const names = distribution.thinnest.map((z) => z.name);
+  const names = distribution.thinnest.map((z) => zoneLabel(z.name));
   return names.length > 0 ? `Dünnste Zone: ${names.join(", ")}` : "Lichtzonen ansehen";
 }
 

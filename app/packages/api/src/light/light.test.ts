@@ -161,10 +161,10 @@ describe("US-LIC-05 manage light zones and locations", () => {
     const r = await call(subB, "POST", "/light-zones/defaults");
     expect(r.status).toBe(201);
     expect(r.body["zones"].map((z: { name: string }) => z.name)).toEqual([
-      "Lampe 1",
-      "Lampe 2",
-      "Lampe 3",
-      "Lampe 4",
+      "Zone 1 · Stecklingslicht",
+      "Zone 2",
+      "Zone 3",
+      "Zone 4",
     ]);
     const again = await call(subB, "POST", "/light-zones/defaults");
     expect(again).toMatchObject({
@@ -270,10 +270,10 @@ describe("US-LIC-01 derive the zone of the species", () => {
     const r = await call(sub, "GET", query(15000, 2));
     expect(r).toMatchObject({
       status: 200,
-      body: { kind: "zone", level: 2, zone: { name: "Lampe 2" }, reason: "standard" },
+      body: { kind: "zone", level: 2, zone: { name: "Zone 2" }, reason: "standard" },
     });
     expect((await call(sub, "GET", query(100000, 2, true))).body).toMatchObject({
-      zone: { name: "Lampe 2" },
+      zone: { name: "Zone 2" },
       reason: "soft_leaf",
     });
     await admin.query("delete from account where subject = $1", [sub]);

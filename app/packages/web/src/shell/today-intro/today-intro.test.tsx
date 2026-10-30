@@ -11,9 +11,9 @@ const response = (status: number, body: unknown) =>
 const token = async () => "tok";
 const ZONES = [
   { id: "z1", name: "Stecklingslicht", luxCeiling: 5000, ppfd: null, sortOrder: 1 },
-  { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: null, sortOrder: 2 },
-  { id: "z3", name: "Lampe 3", luxCeiling: 30000, ppfd: null, sortOrder: 3 },
-  { id: "z4", name: "Lampe 4", luxCeiling: 60000, ppfd: null, sortOrder: 4 },
+  { id: "z2", name: "Zone 2", luxCeiling: 15000, ppfd: null, sortOrder: 2 },
+  { id: "z3", name: "Zone 3", luxCeiling: 30000, ppfd: null, sortOrder: 3 },
+  { id: "z4", name: "Zone 4", luxCeiling: 60000, ppfd: null, sortOrder: 4 },
 ];
 const HIT = { id: "sp1", latinName: "Monstera deliciosa", germanName: "Fensterblatt" };
 const SPECIES = { ...HIT, lightDemandLux: 12000, standardLevel: 2, softLeaf: false };
@@ -178,7 +178,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     expect(screen.getByText("Schritt 2 von 2: Pflanze speichern")).toBeTruthy();
     const select = (await screen.findByLabelText("Lichtbedarf")) as HTMLSelectElement;
     expect(select.value).toBe("");
-    expect(select.selectedOptions[0]?.textContent).toBe("Lampe 2 (laut Art)");
+    expect(select.selectedOptions[0]?.textContent).toBe("Zone 2 (laut Art)");
   });
 
   it("US-ONB-01 saving creates the specimen of the species, derived light is not stored, and the next action is named", async () => {
@@ -217,7 +217,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     const select = (await screen.findByLabelText("Lichtbedarf")) as HTMLSelectElement;
     await vi.waitFor(() =>
-      expect(select.selectedOptions[0]?.textContent).toBe("Lampe 2 (laut Art)"),
+      expect(select.selectedOptions[0]?.textContent).toBe("Zone 2 (laut Art)"),
     );
     expect(w.writes.map((x) => x.path)).toContain("/light-zones/defaults");
     expect(screen.queryByRole("alert")).toBeNull();
@@ -363,7 +363,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
     expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
     expect((await screen.findByRole("status")).textContent).toBe(
-      "Standort gespeichert: Zuhause, Lampe 3.",
+      "Standort gespeichert: Zuhause, Zone 3.",
     );
   });
 
@@ -374,10 +374,10 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     fakeServer(w);
     view();
     await saveFirstPlant();
-    expect(await screen.findByText("Balkon (Lampe 4)")).toBeTruthy();
+    expect(await screen.findByText("Balkon (Zone 4)")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
     expect((await screen.findByRole("status")).textContent).toBe(
-      "Standort gespeichert: Balkon, Lampe 4.",
+      "Standort gespeichert: Balkon, Zone 4.",
     );
   });
 

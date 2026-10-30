@@ -46,6 +46,8 @@ describe("US-QS-24 one word per concept", () => {
   it("US-QS-24 the term table catches a retired word", () => {
     expect(RETIRED_WORDS.some((w) => w.pattern.test("Zurück zum Bestand"))).toBe(true);
     expect(RETIRED_WORDS.some((w) => w.pattern.test("Lege ein Exemplar an"))).toBe(true);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Lampe 3 hat Platz"))).toBe(true);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Die Lampe leuchtet nicht"))).toBe(false);
     expect(RETIRED_WORDS.some((w) => w.pattern.test("Zurück zur Sammlung"))).toBe(false);
   });
 

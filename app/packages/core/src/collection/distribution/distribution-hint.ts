@@ -1,5 +1,6 @@
 import type { LightZone } from "../../light";
 import type { DistributionHint, ZoneCount } from "./distribution-types";
+import { zoneLabel } from "../../light";
 
 const name = (names: readonly string[]): string =>
   names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} und ${names.at(-1)}`;
@@ -18,7 +19,7 @@ export function distributionHint(
     return {
       text: "Es gibt keine Lichtzone für erwachsene Pflanzen.",
       nextAction:
-        "Lege unter „Licht“ mindestens zwei Lichtzonen an oder übernimm die Standard-Lampen.",
+        "Lege unter „Licht“ mindestens zwei Lichtzonen an oder übernimm die Standard-Zonen.",
     };
   const count = zones.find((z) => z.zone.id === thinnest[0]?.id)?.count;
   if (count === undefined)
@@ -26,7 +27,7 @@ export function distributionHint(
       text: "Noch keine Pflanze steht in einer Zone für erwachsene Pflanzen.",
       nextAction: "Lege eine Pflanze an und ordne ihrem Standort eine Lichtzone zu.",
     };
-  const names = thinnest.map((z) => z.name);
+  const names = thinnest.map((z) => zoneLabel(z.name));
   if (thinnest.length > 1)
     return {
       text: `${name(names)} sind gleich dünn besetzt (je ${specimens(count)}).`,

@@ -1,3 +1,4 @@
+import { zoneLabel } from "@pflanzendex/core";
 import { Suspense, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
@@ -57,7 +58,9 @@ function Chips({ card }: { card: SpecimenCard }) {
   return (
     <ul aria-label="Auf einen Blick" className="m-0 flex list-none flex-wrap gap-1.5 p-0">
       <li>
-        <Badge variant="outline">{card.lightZone ?? "Zone unbekannt"}</Badge>
+        <Badge variant="outline">
+          {card.lightZone ? zoneLabel(card.lightZone) : "Zone unbekannt"}
+        </Badge>
       </li>
       <li>
         <Badge variant="outline">{card.location ?? "Standort unbekannt"}</Badge>

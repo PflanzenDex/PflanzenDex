@@ -119,9 +119,9 @@ export async function seedClara(ctx: Ctx): Promise<{ specimens: Map<string, Id> 
   await setUp(ctx, "Clara", "many");
   const zones = await ensureZones(ctx);
   const locations = await ensureLocations(ctx, zones, [
-    { name: "Fensterbank", zone: "Lampe 3" },
-    { name: "Regal", zone: "Lampe 2" },
-    { name: "Stecklingsglas", zone: "Lampe 1" },
+    { name: "Fensterbank", zone: "Zone 3" },
+    { name: "Regal", zone: "Zone 2" },
+    { name: "Stecklingsglas", zone: "Zone 1 · Stecklingslicht" },
   ]);
   const latin = [...new Set([...PLANTS.map((p) => p.latin), "Monstera deliciosa"])];
   const species = await speciesByLatin(ctx, latin);
@@ -134,7 +134,7 @@ export async function seedClara(ctx: Ctx): Promise<{ specimens: Map<string, Id> 
       [22, 25],
       [8, 27],
     ]);
-  const bright = zones.get("Lampe 3") ?? "";
+  const bright = zones.get("Zone 3") ?? "";
   await seedWishes(ctx, bright);
   await seedGear(ctx, bright);
   const adults = ADULTS.map((l) => specimens.get(l)).filter((x): x is Id => !!x);

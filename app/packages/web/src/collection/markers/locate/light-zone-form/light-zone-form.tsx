@@ -19,6 +19,7 @@ import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
 import { refusalText } from "../../../specimens/model/refusal";
 import { setLightZone } from "../../../specimens/model/specimens-api";
 import { zoneText } from "../../../specimens/model/text";
+import { zoneLabel } from "@pflanzendex/core";
 
 type ZoneFields = { lightZoneId: string };
 
@@ -36,7 +37,7 @@ async function derivedText(api: string, token: string, id: string, name: string)
 }
 
 const setText = (card: SpecimenCard, zone: LightZone): string =>
-  `Die Lichtzone von „${card.name}“ ist jetzt „${zone.name}“ (von dir gesetzt). ` +
+  `Die Lichtzone von „${card.name}“ ist jetzt „${zoneLabel(zone.name)}“ (von dir gesetzt). ` +
   (card.status === "cutting"
     ? "Als Steckling steht es weiter unter Stecklingslicht; die Zone gilt, sobald du es eintopfst."
     : "Die Verteilung unter „Lichtzonen“ zählt die Pflanze dort mit.");
@@ -89,7 +90,7 @@ function ZoneSelect(props: { control: Control<ZoneFields>; zones: readonly Light
               <option value="">Aus Standort und Art ableiten</option>
               {props.zones.map((z) => (
                 <option key={z.id} value={z.id}>
-                  {z.name}
+                  {zoneLabel(z.name)}
                 </option>
               ))}
             </Select>

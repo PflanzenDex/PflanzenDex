@@ -105,9 +105,9 @@ beforeAll(async () => {
   app = createApp({ reviewer, pool });
   zoneA = await defaults(subA);
   const species = await newSpecies(subA, `Aloe${run} vera`);
-  const window = await location(subA, `Fenster ${run}`, zoneA["Lampe 2"]);
-  const shelf = await location(subA, `Regal ${run}`, zoneA["Lampe 3"]);
-  // Lampe 2: 2 specimens, Lampe 3: 1, Lampe 4: 0.
+  const window = await location(subA, `Fenster ${run}`, zoneA["Zone 2"]);
+  const shelf = await location(subA, `Regal ${run}`, zoneA["Zone 3"]);
+  // Zone 2: 2 specimens, Zone 3: 1, Zone 4: 0.
   for (const [marker, place] of [
     ["a1", window],
     ["a2", window],
@@ -154,9 +154,9 @@ describe("US-WUN-01 sign-in and input", () => {
 describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
   it("lists the open candidates ascending by the specimen count of the target zone, unknown zone last", async () => {
     for (const [name, zone] of [
-      [`Aloe ${run}`, "Lampe 2"],
-      [`Bryo ${run}`, "Lampe 3"],
-      [`Cereus ${run}`, "Lampe 4"],
+      [`Aloe ${run}`, "Zone 2"],
+      [`Bryo ${run}`, "Zone 3"],
+      [`Cereus ${run}`, "Zone 4"],
       [`Dudleya ${run}`, undefined],
     ] as const) {
       const r = await wish(subA, {
@@ -179,7 +179,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     ]);
     expect(list[0]).toMatchObject({
       title: `Cereus ${run} deutsch (Cereus ${run})`,
-      zoneText: "Lampe 4 — 0 Pflanzen",
+      zoneText: "Zone 4 — 0 Pflanzen",
       priority: { kind: "thinnest" },
     });
     expect(list[3]).toMatchObject({ zone: null, priority: { kind: "zone_unknown" } });
@@ -187,9 +187,9 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     expect(
       (r.body["zones"] as { name: string; count: number }[]).map((z) => [z.name, z.count]),
     ).toEqual([
-      ["Lampe 2", 2],
-      ["Lampe 3", 1],
-      ["Lampe 4", 0],
+      ["Zone 2", 2],
+      ["Zone 3", 1],
+      ["Zone 4", 0],
     ]);
   });
 
@@ -200,11 +200,11 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     };
     expect(own.buffer).toBe(2);
     expect(own.zones.map((z) => [z.name, z.open])).toEqual([
-      ["Lampe 2", 1],
-      ["Lampe 3", 1],
-      ["Lampe 4", 1],
+      ["Zone 2", 1],
+      ["Zone 3", 1],
+      ["Zone 4", 1],
     ]);
-    expect(own.zones[0]?.text).toBe("Nachschub nötig: Lampe 2 (1 offener Kandidat)");
+    expect(own.zones[0]?.text).toBe("Nachschub nötig: Zone 2 (1 offener Kandidat)");
     // Ben's zones are his own and hold none of Anna's wishes (P-04).
     const ben = (await candidates(subB)).body["replenishment"] as { zones: { open: number }[] };
     expect(ben.zones.map((z) => z.open)).toEqual([0, 0, 0]);
@@ -212,7 +212,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
 
   it("an archived specimen no longer counts in the stock (isActive)", async () => {
     const before = (await candidates(subA)).body["zones"] as { name: string; count: number }[];
-    expect(before.find((z) => z.name === "Lampe 3")?.count).toBe(1);
+    expect(before.find((z) => z.name === "Zone 3")?.count).toBe(1);
     const archived = await call(subA, "POST", `/specimens/${specimenIds[2]}/archive`, {
       timeZone: "Europe/Berlin",
       reason: "eingegangen",
@@ -231,7 +231,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
   });
 
   it("a wish that is no longer open leaves the list (FR-WUN-02)", async () => {
-    await wish(subA, { name: `Gekauft ${run}`, targetZoneId: zoneA["Lampe 4"] });
+    await wish(subA, { name: `Gekauft ${run}`, targetZoneId: zoneA["Zone 4"] });
     await admin.query("update wish set status = 'bought' where name = $1", [`Gekauft ${run}`]);
     expect(await names(subA)).not.toContain(`Gekauft ${run}`);
   });
@@ -239,7 +239,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
   it("a picture is shown with its source", async () => {
     await wish(subA, {
       name: `Bild ${run}`,
-      targetZoneId: zoneA["Lampe 4"],
+      targetZoneId: zoneA["Zone 4"],
       imageUrl: "https://example.test/bild.jpg",
       imageSource: "Wikimedia Commons",
     });
@@ -296,7 +296,7 @@ describe("US-WUN-01 tenant isolation and privacy (P-04, P-05)", () => {
   });
 
   it("a target zone of another account looks unknown: 404 light_zone.not_found, nothing written", async () => {
-    const r = await wish(subB, { name: `Fremdzone ${run}`, targetZoneId: zoneA["Lampe 2"] });
+    const r = await wish(subB, { name: `Fremdzone ${run}`, targetZoneId: zoneA["Zone 2"] });
     expect(r).toMatchObject({ status: 404, body: { error: { code: "light_zone.not_found" } } });
     expect(await names(subB)).not.toContain(`Fremdzone ${run}`);
   });
@@ -304,7 +304,7 @@ describe("US-WUN-01 tenant isolation and privacy (P-04, P-05)", () => {
 
 describe("US-WUN-01 a zone a wish points to cannot be deleted unnoticed (P-10)", () => {
   it("DELETE /light-zones/:id answers 409 light_zone.in_use and names the wish", async () => {
-    const r = await call(subA, "DELETE", `/light-zones/${zoneA["Lampe 4"]}`);
+    const r = await call(subA, "DELETE", `/light-zones/${zoneA["Zone 4"]}`);
     expect(r).toMatchObject({ status: 409, body: { error: { code: "light_zone.in_use" } } });
     expect(JSON.stringify(r.body)).toContain(`Cereus ${run}`);
     expect((await call(subA, "GET", "/light-zones")).body["zones"]).toHaveLength(4);
@@ -623,7 +623,10 @@ describe("FR-WUN-03 hints for wishes without a fitting zone", () => {
   it("lists a wish with the cutting light and one without a zone, names the zone, and keeps both among the candidates (P-10)", async () => {
     const own = `wun3-${randomUUID()}`;
     const zones = await defaults(own);
-    const cutting = await wish(own, { name: `Anzucht ${run}`, targetZoneId: zones["Lampe 1"] });
+    const cutting = await wish(own, {
+      name: `Anzucht ${run}`,
+      targetZoneId: zones["Zone 1 · Stecklingslicht"],
+    });
     const none = await wish(own, { name: `Ohne ${run}` });
     expect([cutting.status, none.status]).toEqual([201, 201]);
     const r = await candidates(own);
@@ -636,7 +639,7 @@ describe("FR-WUN-03 hints for wishes without a fitting zone", () => {
     }[];
     expect(unfit.map((u) => [u.title, u.kind, u.zone]).sort()).toEqual(
       [
-        [`Anzucht ${run}`, "zone_outside", "Lampe 1"],
+        [`Anzucht ${run}`, "zone_outside", "Zone 1 · Stecklingslicht"],
         [`Ohne ${run}`, "zone_unknown", null],
       ].sort(),
     );

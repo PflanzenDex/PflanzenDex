@@ -103,11 +103,11 @@ describe("US-BES-06 Karte: Inhalt", () => {
   });
 
   it.each([
-    ["species", "Lichtzone: Lampe 3 (aus dem Lichtbedarf der Art)"],
-    ["profile", "Lichtzone: Lampe 3 (aus deinem Pflegeprofil)"],
-    ["cutting", "Lichtzone: Lampe 3 (Stecklingslicht)"],
+    ["species", "Lichtzone: Zone 3 (aus dem Lichtbedarf der Art)"],
+    ["profile", "Lichtzone: Zone 3 (aus deinem Pflegeprofil)"],
+    ["cutting", "Lichtzone: Zone 3 (Stecklingslicht)"],
   ] as const)("US-BES-06 · #592 says where the zone comes from (%s)", (source, text) => {
-    expect(html([card({ lightZone: "Lampe 3", lightZoneSource: source })])).toContain(text);
+    expect(html([card({ lightZone: "Zone 3", lightZoneSource: source })])).toContain(text);
   });
 
   it("shows the levels of the status in words", () => {

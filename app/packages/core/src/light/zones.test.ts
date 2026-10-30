@@ -7,6 +7,8 @@ import {
   lightZoneCreate,
   lightZoneDelete,
   lightZoneDefault,
+  ZONE_DEFAULT,
+  zoneLabel,
   locationUpdate,
   locationSetUp,
 } from "./index";
@@ -161,10 +163,10 @@ describe("US-LIC-05 default (FR-LIC-01)", () => {
   it("creates the four lamps of the specification for an account without zones", async () => {
     const r = await call(lightZoneDefault(store.zoneAdapter()), {});
     expect(r.ok && r.value.map((z) => [z.name, z.luxCeiling, z.ppfd, z.sortOrder])).toEqual([
-      ["Lampe 1", 1500, 36, 1],
-      ["Lampe 2", 15000, 300, 2],
-      ["Lampe 3", 100000, 1600, 3],
-      ["Lampe 4", 110000, 2000, 4],
+      ["Zone 1 · Stecklingslicht", 1500, 36, 1],
+      ["Zone 2", 15000, 300, 2],
+      ["Zone 3", 100000, 1600, 3],
+      ["Zone 4", 110000, 2000, 4],
     ]);
   });
 
@@ -215,5 +217,28 @@ describe("US-LIC-05 renaming changes no assignment (id instead of text)", () => 
       lightZoneId: z.value.id,
       kind: "outdoor",
     });
+  });
+});
+
+describe("US-QS-24 zone labels", () => {
+  it("US-QS-24 default-style names read Zone n, the lowest one names its role", () => {
+    expect(zoneLabel("Lampe 2")).toBe("Zone 2");
+    expect(zoneLabel("Zone 3")).toBe("Zone 3");
+    expect(zoneLabel("Lampe 1")).toBe("Zone 1 · Stecklingslicht");
+    expect(zoneLabel("Zone 1 · Stecklingslicht")).toBe("Zone 1 · Stecklingslicht");
+  });
+
+  it("US-QS-24 a name the keeper chose stays as typed", () => {
+    expect(zoneLabel("Regal")).toBe("Regal");
+    expect(zoneLabel("Lampe 2 links")).toBe("Lampe 2 links");
+  });
+
+  it("US-QS-24 the defaults for new accounts no longer say Lampe", () => {
+    expect(ZONE_DEFAULT.map((z) => z.name)).toEqual([
+      "Zone 1 · Stecklingslicht",
+      "Zone 2",
+      "Zone 3",
+      "Zone 4",
+    ]);
   });
 });
