@@ -268,7 +268,7 @@ describe("TE-03 · sign-in service in the stack", () => {
   const api = service(compose, "api");
 
   it("TE-03 runs Keycloak in production mode with its own database and forwarded headers", () => {
-    expect(keycloak).toContain("quay.io/keycloak/keycloak:26.8.0");
+    expect(keycloak).toContain("quay.io/keycloak/keycloak:26.8.1");
     expect(keycloak).toContain('command: ["start", "--import-realm"]');
     expect(keycloak).not.toContain("start-dev");
     expect(keycloak).toContain("KC_DB: postgres");
