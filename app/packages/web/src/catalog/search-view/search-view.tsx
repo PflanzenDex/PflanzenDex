@@ -31,7 +31,9 @@ function Empty(props: { searchText: string; onPropose: () => void }) {
     <EmptyState
       title={text ? `Keine Art zu „${text}“ gefunden.` : "Der gemeinsame Katalog ist noch leer."}
       description={
-        text ? "Prüfe die Schreibweise oder schlage die Art vor." : "Schlage die erste Art vor."
+        text
+          ? "Prüfe die Schreibweise oder schlage die Art vor. Findest du ohne Suchtext auch nichts, ist der Katalog noch leer."
+          : "Schlage die erste Art vor oder bitte den Betreiber, den Start-Katalog zu laden."
       }
       action={{ label: "Art vorschlagen", onClick: props.onPropose }}
     />

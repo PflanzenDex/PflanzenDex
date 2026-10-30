@@ -127,7 +127,7 @@ export function SpeciesStep(props: {
       <HitList hits={hits} chosen={species?.id} onPick={(id) => void pick(id)} />
       {text.trim() && hits.length === 0 && !failed && (
         <p className="m-0 text-sm">
-          Nichts gefunden.{" "}
+          Nichts gefunden. Ist der Katalog noch leer oder fehlt die Art?{" "}
           <Button type="button" variant="link" onClick={props.onCatalog}>
             Im Katalog suchen oder vorschlagen
           </Button>
