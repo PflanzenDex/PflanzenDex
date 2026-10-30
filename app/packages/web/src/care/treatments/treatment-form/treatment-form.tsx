@@ -12,6 +12,7 @@ import {
   FormRoot,
 } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { currentTimeZone } from "../../../kernel";
 import { Field } from "../../shared/field/field";
 import {
@@ -83,7 +84,7 @@ export function TermFields({ control }: { control: Control<TreatmentFields> }) {
         {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
       </Field>
       <Field control={control} name="date" label="Datum">
-        {(field) => <Input {...field} type="date" />}
+        {(field) => <DateField {...field} />}
       </Field>
     </>
   );
