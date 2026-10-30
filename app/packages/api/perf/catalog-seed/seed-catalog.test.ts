@@ -110,3 +110,10 @@ describe("US-BES-12 dev seed of the catalog", () => {
     expect(again.created).toBe(0);
   });
 });
+
+describe("seed source text (US-QS-24)", () => {
+  it("US-QS-24 the source shown to users is German, not English", () => {
+    expect(SEED_SOURCE).toMatch(/^Dev-Seed: Namen und Familie/);
+    expect(SEED_SOURCE).not.toMatch(/\bnames and family\b/);
+  });
+});

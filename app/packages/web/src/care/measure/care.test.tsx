@@ -188,8 +188,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   it("the form has number, date, quality (healthy preset), note and the optional photo (US-WAC-05)", () => {
     const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
     expect(html).toContain("Messwert (cm, in Schritten von 0,5)");
-    expect(html).toMatch(/<input[^>]*type="date"[^>]*>/);
-    expect(html).toMatch(/<input[^>]*value="\d{4}-\d{2}-\d{2}"[^>]*>/);
+    expect(html).toMatch(/<input[^>]*placeholder="TT.MM.JJJJ"[^>]*>/);
+    expect(html).toMatch(/<input[^>]*value="\d{2}\.\d{2}\.\d{4}"[^>]*>/);
     expect(html).toMatch(/<option value="healthy" selected/);
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("Notiz (optional)");

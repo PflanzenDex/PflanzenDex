@@ -1,9 +1,18 @@
 import type { CostPerUser, OperatorCostFigure } from "@pflanzendex/core";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type Control } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormRoot,
+} from "@/components/ui/fields/form/form";
 import { TextField } from "@/components/ui/fields/input/input";
+import { MonthField } from "@/components/ui/fields/input/native-fields/month-field/month-field";
 import { costSchema, parseAmount, type CostFields } from "../../schemas";
 
 /**
@@ -38,6 +47,25 @@ export function costPerUserText(c: CostPerUser): string {
 /** The current month as `YYYY-MM` (UTC, like the rule on the server). */
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
+/** The month of a cost entry as a select with German month names (US-QS-24). */
+function MonthRow(props: { control: Control<CostFields>; max: string }) {
+  return (
+    <FormField
+      control={props.control}
+      name="month"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Monat</FormLabel>
+          <FormControl>
+            <MonthField {...field} max={props.max} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
 /** The operator enters the real hosting cost of one month (US-ACC-05, NFR-16); a new entry replaces the old one. */
 export function CostForm(props: {
   cost: OperatorCostFigure | null;
@@ -64,13 +92,7 @@ export function CostForm(props: {
       <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
         <TextField control={form.control} name="amount" label="Betrag" inputMode="decimal" />
         <TextField control={form.control} name="currency" label="Währung" maxLength={3} />
-        <TextField
-          control={form.control}
-          name="month"
-          label="Monat"
-          type="month"
-          max={thisMonth()}
-        />
+        <MonthRow control={form.control} max={thisMonth()} />
         <Button
           type="submit"
           size="touch"

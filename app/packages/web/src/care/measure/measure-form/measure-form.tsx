@@ -5,6 +5,8 @@ import { localToday, MEASUREMENT_LIMITS, MEDIA_LIMITS } from "@pflanzendex/core"
 import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
+import { FileField } from "@/components/ui/fields/input/native-fields/file-field/file-field";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { Label } from "@/components/ui/display/label/label";
 import { Select } from "@/components/ui/fields/select/select";
 import { Textarea } from "@/components/ui/fields/textarea/textarea";
@@ -47,10 +49,9 @@ function PhotoInput(props: {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>Foto (optional)</Label>
-      <Input
+      <FileField
         key={props.inputKey}
         id={id}
-        type="file"
         accept={MEDIA_LIMITS.uploadTypes.join(",")}
         aria-describedby="measure-photo-hint"
         onChange={(e) => props.onPick(e.target.files?.[0] ?? null)}
@@ -96,7 +97,7 @@ function Fields(props: {
         )}
       </Field>
       <Field control={props.control} name="date" label="Datum">
-        {(field) => <Input {...field} type="date" max={props.today} />}
+        {(field) => <DateField {...field} max={props.today} />}
       </Field>
       <Field control={props.control} name="quality" label="Qualität">
         {(field) => (

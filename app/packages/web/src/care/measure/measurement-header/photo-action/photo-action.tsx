@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { FileField } from "@/components/ui/fields/input/native-fields/file-field/file-field";
 import { Label } from "@/components/ui/display/label/label";
 import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
 import { errorText } from "@/lib/error-text";
@@ -87,10 +87,9 @@ export function PhotoAction(props: {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{props.hasPhoto ? "Foto ersetzen" : "Foto hinzufügen"}</Label>
-      <Input
+      <FileField
         key={up.inputKey}
         id={id}
-        type="file"
         accept={MEDIA_LIMITS.uploadTypes.join(",")}
         onChange={(e) => up.pick(e.target.files?.[0])}
       />
