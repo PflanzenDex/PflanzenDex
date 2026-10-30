@@ -77,11 +77,11 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | MIG Migration (dropped)        | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                   | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
 | QG Quality gates               | 10      | 0      | 8       | 2      | 2 · 6 · 16                | 0                      | 10      |
-| DEV Development process        | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
+| DEV Development process        | 12      | 1      | 10      | 1      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 5      | 3       | 0      | 1 · 0 · 9                 | 0                      | 8       |
-| **Total**                      | **179** | **36** | **128** | **15** |                           | **50**                 | **129** |
+| **Total**                      | **179** | **36** | **129** | **14** |                           | **50**                 | **129** |
 
 <!-- spec-status:end -->
 
