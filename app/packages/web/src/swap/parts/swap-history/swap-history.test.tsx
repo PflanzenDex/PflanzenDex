@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapHistory } from "./swap-history";
 
@@ -29,7 +31,12 @@ const server = (entries: unknown[]) =>
         : response(404, {}),
     ),
   );
-const show = () => render(<SwapHistory api="http://api" token={token} />);
+const show = () =>
+  render(
+    <MemoryRouter>
+      <SwapHistory api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(() => {
   cleanup();
@@ -77,6 +84,12 @@ describe("US-SOZ-13 swap history", () => {
     expect(items[1]).toContain("Pflanze · Verschenken");
     expect(items[2]).toContain("Abgelehnt");
     expect(items[2]).toContain("Grund: Zu klein");
+    // The fourth entry is on the second page (US-QS-20).
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    const last = within(screen.getByRole("list", { name: "Tauschverlauf" }))
+      .getAllByRole("listitem")
+      .map((i) => i.textContent ?? "");
+    items[3] = last[0] ?? "";
     expect(items[3]).toContain("Art unbekannt");
     expect(items[3]).toContain("einem Freund");
     expect(items[3]).toContain("Ihr seid nicht mehr befreundet");

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FriendOffers } from "./friend-offers";
 
@@ -62,7 +63,12 @@ function server(opts: { offers?: unknown[]; post?: () => Promise<Response> } = {
   );
   return { gets, posts };
 }
-const show = () => render(<FriendOffers api="http://api" token={token} />);
+const show = () =>
+  render(
+    <MemoryRouter>
+      <FriendOffers api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(() => {
   cleanup();

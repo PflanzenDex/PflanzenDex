@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FriendCollectionPage } from "./friend-collection";
+import { collectionTitle, FriendCollectionPage } from "./friend-collection";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -65,6 +65,17 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(aloe?.textContent).toContain("Du hast sie nicht");
     expect(unknown?.textContent).toContain("Art unbekannt");
     expect(unknown?.textContent).toContain("Vergleich unbekannt");
+  });
+
+  it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are paged", async () => {
+    const many = Array.from({ length: 8 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
+    show({ friend: { name: "Clara" }, cards: many });
+    expect(await screen.findByRole("heading", { level: 1, name: "Claras Sammlung" })).toBeTruthy();
+    const list = await screen.findByRole("list", { name: "Sammlung von Clara" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(6);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(collectionTitle("Lars")).toBe("Lars' Sammlung");
+    expect(collectionTitle(null)).toBe("Sammlung eines Freundes");
   });
 
   it("US-SOZ-07 the filters 'Ich habe nicht' and 'Wir haben beide' narrow the cards", async () => {

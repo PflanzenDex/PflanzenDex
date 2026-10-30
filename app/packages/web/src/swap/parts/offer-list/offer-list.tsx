@@ -1,7 +1,11 @@
 import type { OfferView } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
+
+/** Offers per page (starting value, assumption; the page size from the free height is #1029). */
+const PAGE_SIZE = 3;
 
 const STATUS_TEXT = {
   open: "Offen",
@@ -31,11 +35,15 @@ export function OfferList(props: {
           Tausch an.
         </p>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Meine Angebote">
-          {props.offers.map((o) => {
+        <Pager
+          items={props.offers}
+          pageSize={PAGE_SIZE}
+          label="Meine Angebote"
+          getKey={(o) => o.id}
+          renderItem={(o) => {
             const active = o.status === "open" || o.status === "reserved";
             return (
-              <li key={o.id} className="grid break-words rounded-lg border border-border p-3">
+              <div className="grid break-words rounded-lg border border-border p-3">
                 <span className="font-semibold">{o.specimenName ?? "Pflanze unbekannt"}</span>
                 <span className="text-sm">
                   {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
@@ -61,10 +69,10 @@ export function OfferList(props: {
                     </Button>
                   )}
                 </span>
-              </li>
+              </div>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
     </section>
   );

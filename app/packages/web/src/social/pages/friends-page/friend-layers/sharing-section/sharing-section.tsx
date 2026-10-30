@@ -23,13 +23,25 @@ export function SharingSection(props: {
         ? "Freigegeben: Freunde sehen diese Pflanze ab jetzt."
         : "Zurückgezogen: Freunde sehen diese Pflanze ab dem nächsten Abruf nicht mehr.",
     );
-  const setSpecies = (speciesId: string, share: boolean) =>
+  // One bulk action over every active species, one request after the other; the first refusal stops it (P-10).
+  const setAll = (share: boolean) => {
+    const ids = [
+      ...new Set(data.specimens.filter((s) => s.status !== "archived").map((s) => s.speciesId)),
+    ];
     void sharing.run(
-      (t) => setSpeciesSharing(api, t, { speciesId, share }),
+      async (t) => {
+        let last: Awaited<ReturnType<typeof setSpeciesSharing>> | undefined;
+        for (const speciesId of ids) {
+          last = await setSpeciesSharing(api, t, { speciesId, share });
+          if (!last.ok) return last;
+        }
+        return last ?? { ok: true as const, value: { changed: 0 } };
+      },
       share
-        ? "Alle Pflanzen dieser Art sind für Freunde freigegeben."
-        : "Alle Pflanzen dieser Art sind zurückgezogen.",
+        ? "Alle Pflanzen sind für Freunde freigegeben."
+        : "Alle Pflanzen sind zurückgezogen: Freunde sehen sie ab dem nächsten Abruf nicht mehr.",
     );
+  };
   return (
     <>
       <Outcome message={sharing.message} error={sharing.error} />
@@ -38,7 +50,7 @@ export function SharingSection(props: {
         shared={data.shared}
         busy={sharing.running}
         onSet={set}
-        onSetSpecies={setSpecies}
+        onSetAll={setAll}
       />
     </>
   );

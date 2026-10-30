@@ -1,9 +1,11 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router";
 import type { FriendCard as Card } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
+import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
 import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import { Button } from "@/components/ui/button/button";
-import { LoadFrame, useWriteAction } from "../../../kernel";
+import { LoadFrame, useRequest, useWriteAction } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import { addToWishlist, loadFriendCollection } from "../../api/friends-api";
 import { nameOf } from "../../parts/request-list/request-list";
@@ -17,6 +19,19 @@ const FILTERS = [
   { value: "lack", label: "Ich habe nicht" },
   { value: "both", label: "Wir haben beide" },
 ] as const;
+
+/** Cards per page (starting values, assumption; the page size from the free height is #1029): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px. */
+function usePageSize(): number {
+  const md = useIsMd();
+  const lg = useIsLg();
+  return lg ? 16 : md ? 12 : 6;
+}
+
+/** "Claras Sammlung", "Lars' Sammlung": the German genitive of a name; an unknown name stays unknown (P-08). */
+export const collectionTitle = (name: string | null): string =>
+  name === null || name.trim() === ""
+    ? "Sammlung eines Freundes"
+    : `${/[sßxz]$/i.test(name.trim()) ? `${name.trim()}'` : `${name.trim()}s`} Sammlung`;
 
 const visible = (cards: readonly Card[], filter: Filter) =>
   filter === "all" ? cards : cards.filter((c) => c.iHave === (filter === "both"));
@@ -52,12 +67,12 @@ function Body(props: {
   const [filter, setFilter] = useState<Filter>("all");
   const shown = visible(props.cards, filter);
   const name = nameOf(props.name);
+  const size = usePageSize();
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="text-muted-foreground">
-        Das ist die freigegebene Sammlung von {name}: nur Art, Anzahl und Fangdatum. Es gibt keine
-        Wertung und keinen Vergleich der Sammlungen untereinander. Die freigegebenen Geräte stehen
-        weiter unten.
+        Freigegeben von {name}: nur Art, Anzahl und Fangdatum. Es gibt keine Wertung und keinen
+        Vergleich der Sammlungen untereinander. Geräte stehen weiter unten.
       </p>
       <SegmentedControl label="Filter" options={FILTERS} value={filter} onChange={setFilter} />
       {wish.message && (
@@ -72,13 +87,15 @@ function Body(props: {
       )}
       <Next total={props.cards.length} shown={shown.length} filter={filter} name={name} />
       {shown.length > 0 && (
-        <ul
-          className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3"
-          aria-label={`Sammlung von ${name}`}
-        >
-          {shown.map((c) => (
+        <Pager
+          items={shown}
+          pageSize={size}
+          label={`Sammlung von ${name}`}
+          resetKey={filter}
+          getKey={(c) => c.speciesLatin ?? `${c.speciesGerman}-${c.firstCaught}`}
+          listClassName="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
+          renderItem={(c) => (
             <FriendCard
-              key={c.speciesLatin ?? `${c.speciesGerman}-${c.firstCaught}`}
               card={c}
               busy={wish.running}
               onWish={(card) =>
@@ -88,8 +105,8 @@ function Body(props: {
                 )
               }
             />
-          ))}
-        </ul>
+          )}
+        />
       )}
     </div>
   );
@@ -107,6 +124,10 @@ export function FriendCollectionPage(props: {
 }) {
   const { api, friendId } = props;
   const load = useCallback((t: string) => loadFriendCollection(api, t, friendId), [api, friendId]);
+  const queryKey = ["social", "friend-collection", friendId];
+  // The same request as the frame below shares one cached copy: the heading names the friend once it is there (US-QS-20).
+  const loaded = useRequest({ queryKey, token: props.token, load });
+  const title = collectionTitle(loaded.value?.friend.name ?? null);
   return (
     <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
       <section aria-labelledby="friend-collection-title" className="flex min-w-0 flex-col gap-3">
@@ -116,10 +137,10 @@ export function FriendCollectionPage(props: {
           </Button>
         </div>
         <h1 id="friend-collection-title" className="text-2xl font-semibold">
-          Sammlung eines Freundes
+          {title}
         </h1>
         <LoadFrame
-          queryKey={["social", "friend-collection", friendId]}
+          queryKey={queryKey}
           token={props.token}
           load={load}
           loadingText="Sammlung wird geladen …"

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
@@ -38,6 +39,8 @@ function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
 
 function Section(props: {
   id: string;
+  /** The address part that holds the page, so the two lists page on their own. */
+  param: string;
   title: string;
   rows: readonly SwapSide[];
   busy: boolean;
@@ -50,17 +53,21 @@ function Section(props: {
       <h3 id={props.id} className="text-lg font-semibold">
         {props.title}
       </h3>
-      <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label={props.title}>
-        {props.rows.map((s) => (
+      <Pager
+        items={props.rows}
+        pageSize={3}
+        label={props.title}
+        param={props.param}
+        getKey={(s) => s.swapId}
+        renderItem={(s) => (
           <SwapCard
-            key={s.swapId}
             s={s}
             busy={props.busy}
             onAnswer={(a) => props.onAnswer(s, a)}
             onHandover={(m) => props.onHandover(s, m)}
           />
-        ))}
-      </ul>
+        )}
+      />
     </section>
   );
 }
@@ -103,6 +110,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
       )}
       <Section
         id="swaps-received"
+        param="rpage"
         title="Anfragen an dich"
         rows={data.received}
         busy={write.running}
@@ -111,6 +119,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
       />
       <Section
         id="swaps-sent"
+        param="spage"
         title="Deine Anfragen"
         rows={data.sent}
         busy={write.running}

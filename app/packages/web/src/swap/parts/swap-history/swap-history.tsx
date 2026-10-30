@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { currentTimeZone, LoadFrame } from "../../../kernel";
 import { loadHistory } from "../../api/swaps-api";
@@ -18,7 +19,7 @@ const dayText = (iso: string): string =>
 function Entry({ e }: { e: HistoryEntry }) {
   const who = e.friend ?? "einem Freund";
   return (
-    <li className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
+    <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="text-sm text-muted-foreground">{dayText(e.date)}</span>
       <span className="font-semibold">{e.species ?? "Art unbekannt"}</span>
       <span className="text-sm">
@@ -34,7 +35,7 @@ function Entry({ e }: { e: HistoryEntry }) {
           {STATUS_TEXT[e.status]}
         </Badge>
       </span>
-    </li>
+    </div>
   );
 }
 
@@ -64,11 +65,13 @@ export function SwapHistory(props: { api: string; token: Token }) {
               Anfragen, auch wenn die Freundschaft endet.
             </p>
           ) : (
-            <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Tauschverlauf">
-              {data.entries.map((e) => (
-                <Entry key={e.swapId} e={e} />
-              ))}
-            </ul>
+            <Pager
+              items={data.entries}
+              pageSize={3}
+              label="Tauschverlauf"
+              getKey={(e) => e.swapId}
+              renderItem={(e) => <Entry e={e} />}
+            />
           )
         }
       </LoadFrame>

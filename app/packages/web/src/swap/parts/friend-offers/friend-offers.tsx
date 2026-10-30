@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ExchangeOffer, OfferType } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
@@ -59,7 +60,7 @@ function Card(props: {
 }) {
   const { o } = props;
   return (
-    <li className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
+    <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="font-semibold">{title(o)}</span>
       {o.speciesLatin && o.speciesGerman && (
         <span className="text-sm italic">{o.speciesLatin}</span>
@@ -101,7 +102,7 @@ function Card(props: {
           onCancel={props.onCancel}
         />
       )}
-    </li>
+    </div>
   );
 }
 
@@ -135,10 +136,13 @@ function Offers(props: {
           {errorText(write.error.code)}
         </p>
       )}
-      <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Angebote von Freunden">
-        {data.offers.map((o) => (
+      <Pager
+        items={data.offers}
+        pageSize={3}
+        label="Angebote von Freunden"
+        getKey={(o) => o.offerId}
+        renderItem={(o) => (
           <Card
-            key={o.offerId}
             o={o}
             data={data}
             open={openId === o.offerId}
@@ -152,8 +156,8 @@ function Offers(props: {
               )
             }
           />
-        ))}
-      </ul>
+        )}
+      />
     </>
   );
 }

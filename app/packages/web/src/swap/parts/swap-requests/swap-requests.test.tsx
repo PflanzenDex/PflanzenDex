@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapRequests } from "./swap-requests";
 
@@ -52,7 +53,12 @@ function server(
   );
   return posts;
 }
-const show = () => render(<SwapRequests api="http://api" token={token} />);
+const show = () =>
+  render(
+    <MemoryRouter>
+      <SwapRequests api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(() => {
   cleanup();
@@ -129,10 +135,13 @@ describe("US-SOZ-10 requests for my offers", () => {
     );
     await screen.findByText(/Die Zusage ist zurückgezogen/);
     expect(posts[0]).toEqual({ path: "/swaps/a/answer", body: { action: "cancel" } });
-    const text = (await screen.findByRole("list", { name: "Anfragen an dich" })).textContent ?? "";
-    expect(text).toContain("Schon vergeben");
-    expect(text).toContain("Ihr seid nicht mehr befreundet");
-    expect(text).toContain("Grund: Zu klein");
+    const list = () => screen.findByRole("list", { name: "Anfragen an dich" });
+    const first = (await list()).textContent ?? "";
+    expect(first).toContain("Schon vergeben");
+    expect(first).toContain("Ihr seid nicht mehr befreundet");
+    // The fourth request is on the second page (US-QS-20).
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect((await list()).textContent ?? "").toContain("Grund: Zu klein");
   });
 
   it("a refusal shows the German text of its code (P-10)", async () => {

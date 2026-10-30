@@ -142,7 +142,7 @@ export function SwapCard(props: {
   const { s } = props;
   const waiting = s.status === "requested" || s.status === "accepted";
   return (
-    <li className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
+    <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="font-semibold">{swapTitle(s)}</span>
       <Facts s={s} />
       <span className="mt-1 flex flex-wrap items-center gap-2">
@@ -162,6 +162,6 @@ export function SwapCard(props: {
       </span>
       <HandoverBox s={s} busy={props.busy} onConfirm={props.onHandover} />
       {s.role === "giver" && <GiverActions s={s} busy={props.busy} onAnswer={props.onAnswer} />}
-    </li>
+    </div>
   );
 }
