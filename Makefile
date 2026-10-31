@@ -7,6 +7,9 @@ APP := app
 DB_PORT := $(or $(PFLANZENDEX_TEST_DB_PORT),54329)
 DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
+# Memory cap of the local test database: one per worktree on a small dev box (#1084, starting value, assumption).
+# Local only: CI provides its own database service, production uses config/deploy. Override with DB_MEMORY=1g.
+DB_MEMORY ?= 512m
 
 .DEFAULT_GOAL := help
 .PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
@@ -46,7 +49,7 @@ docs-check: ## Lint markdown and check relative links (QG-U2)
 	cd $(APP) && npm run docs
 
 db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running
-	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
+	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory $(DB_MEMORY) \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
 
