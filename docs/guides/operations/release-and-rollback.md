@@ -123,6 +123,32 @@ SQL
 
 If it fails on a foreign key, species are in use: restore instead, or leave them. A wrong attribute value is corrected in the data file and loaded again (the newer value replaces it); to drop one, delete its row (`delete from taxon_attribute where latin_name = '<Latin name>' and field = '<field>';`) and remove it from the data file in the same PR, otherwise the next load writes it again. To stop a fill, set `CATALOG_FILL=off` (or empty) and `$c up -d api`; values already set stay (nothing disappears silently, P-10) and carry their provenance.
 
+**Data fix for the starting values of catalogs loaded before 0.2.0 (#1024, one-off, test host only).** Migrations `0095` and `0096` clear the invented starting values (P-08) only on rows that are still at version 1 and have `reviewed_by` null. But `review_case_guard` sets `reviewed_by` on every curated row, so the batch's rows never match that guard: on the test host all 137 species kept difficulty, default level, light need, growth measure, etiolation signs and success criteria. A catalog loaded with 0.2.0 or later holds none of these values (#1003, #1005) and needs no fix. The fix is not a migration. Two scripts in `docs/guides/operations/catalog-starting-values/` share one selection:
+
+- `dry-run.sql` reads only (`begin read only`) and prints one JSON document.
+- `fix.sql` writes, in one transaction, and only with `-v expected=<rows_to_change>` from the dry run.
+
+Per species the selection requires: created by the operator, source = the batch marker (the text of `catalog:load` before #1004 or after it), review case `curated` and reviewed by the `catalog-load` account. A curated case cannot change afterwards, so no later review can exist. A species with a user correction or with a merged proposal pointing to it is counted and left alone. A field is cleared only when it holds exactly the value the batch wrote: difficulty and default level from the start list before #1004, light need from the default level (3000, 8000 or 20000 lx), growth measure `height`, and the two generic texts. Any other value is kept and counted. A cleared row gets the current source marker and `version + 1`.
+
+1. **Back up first.** `make backup` (hosts without `make`: `app/config/deploy/scripts/backup.sh`, the same script). Check that the dump exists in `BACKUP_DIR` and keep its path for the rollback.
+2. **Dry run.** Needs the checkout at a ref that has the two files. Read the output: `batch_reviewed_at` should show one time, `candidates` the batch size, `kept_differs_or_unknown` what was not cleared and why, `rows_to_change` the count for step 3, `sample_before` three rows before the fix.
+
+   ```bash
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -tA -f -' < docs/guides/operations/catalog-starting-values/dry-run.sql
+   ```
+
+3. **Write**, only after the dry run was reviewed, with the count from step 2:
+
+   ```bash
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v expected=<rows_to_change> -tA -f -' < docs/guides/operations/catalog-starting-values/fix.sql
+   ```
+
+   It commits only if exactly `expected` rows changed; otherwise it rolls back and exits with status 3. Without `-v expected` it changes nothing. Running it again is harmless: the next dry run reports `rows_to_change` 0.
+4. **Check.** The next dry run reports `rows_to_change` 0. The species profile on the test host shows "unbekannt" for the six fields (open one species; the profile is the check of P-08).
+5. **Rollback.** A failed run changes nothing (one transaction). For a wrong result after the commit, restore the dump of step 1 as described in `staging-deploy-and-backup.md` ("Backup and restore").
+
+The folder is a one-off. Remove it in a later pull request once every host that loaded the batch has run it; the dry-run output belongs in the pull request's test evidence. Production has no batch rows (a catalog loaded with 0.2.0 or later), so the dry run there reports `batch_rows` 0 and there is nothing to do.
+
 **Must never run on production:** `npm run seed:catalog` and `npm run seed:demo` (dev and test only, they use a superuser connection and invented demo data; both refuse unless `PFLANZENDEX_ENV` is `local` or `test` and the database is on this machine). Do not run `catalog:load` against a database you did not name in `--confirm`.
 
 ## Hotfix path (E-13)
