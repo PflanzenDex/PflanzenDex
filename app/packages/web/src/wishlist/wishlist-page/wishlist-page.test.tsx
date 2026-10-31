@@ -177,7 +177,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     const rows = screen.getAllByRole("listitem");
     expect(rows[0]?.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
     expect(rows[1]?.textContent).toContain("2. Ficus");
-    expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · unbekannt");
+    expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · Schwierigkeit: unbekannt");
   });
 
   it("US-WUN-01 · US-QS-22 the card of a wish without picture says 'Kein Bild' and 'Schwierigkeit: unbekannt'", async () => {

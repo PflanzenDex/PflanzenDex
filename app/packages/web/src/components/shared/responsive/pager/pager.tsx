@@ -33,7 +33,14 @@ function useSwipe(page: number, pages: number, go: (target: number) => void) {
   };
 }
 
-/** "Zurück", the position and "Weiter" (US-QS-15). */
+/**
+ * A disabled page button keeps its text and border neutral: the outline green at half opacity fell to about 1.8:1
+ * (issue 1045). It is still disabled and shows no action (DS-39, DS-65).
+ */
+const DISABLED_PAGE_BUTTON =
+  "disabled:border-border disabled:text-muted-foreground disabled:opacity-100";
+
+/** "Zurück", the position and "Weiter" (US-QS-15). The caption never wraps: a page number and its count stay together (US-QS-24). */
 function PagerBar({
   page,
   pages,
@@ -45,13 +52,29 @@ function PagerBar({
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <Button type="button" variant="outline" disabled={page <= 1} onClick={() => go(page - 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className={DISABLED_PAGE_BUTTON}
+        disabled={page <= 1}
+        onClick={() => go(page - 1)}
+      >
         Zurück
       </Button>
-      <p role="status" aria-live="polite" className="text-sm tabular-nums text-muted-foreground">
+      <p
+        role="status"
+        aria-live="polite"
+        className="whitespace-nowrap text-sm tabular-nums text-muted-foreground"
+      >
         Seite {page} von {pages}
       </p>
-      <Button type="button" variant="outline" disabled={page >= pages} onClick={() => go(page + 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className={DISABLED_PAGE_BUTTON}
+        disabled={page >= pages}
+        onClick={() => go(page + 1)}
+      >
         Weiter
       </Button>
     </div>

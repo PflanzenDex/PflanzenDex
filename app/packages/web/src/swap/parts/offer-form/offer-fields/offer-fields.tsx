@@ -19,7 +19,7 @@ type FieldProps = { value: OfferFieldValues; onChange: (v: OfferFieldValues) => 
 /** The type of the offer (cutting, plant, offshoot) and the mode (swap or give away). */
 function TypeModeFields({ value, onChange }: FieldProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid gap-3 sm:grid-cols-2">
       <div className="flex flex-col gap-1">
         <Label htmlFor="offer-type">Art des Angebots</Label>
         <Select

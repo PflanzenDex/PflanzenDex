@@ -43,6 +43,7 @@ function SignOutRow(props: { onSignOut: () => void; onEverywhereSignOut: () => v
   const [open, setOpen] = useState(false);
   return (
     <>
+      {/* The same row as the sections, with its chevron, so it reads as an action of the list and not as plain text (issue 1045). */}
       <Button
         type="button"
         variant="ghost"
@@ -50,6 +51,10 @@ function SignOutRow(props: { onSignOut: () => void; onEverywhereSignOut: () => v
         onClick={() => setOpen(true)}
       >
         Abmelden…
+        <ChevronRight
+          aria-hidden="true"
+          className="ml-auto size-4 shrink-0 text-muted-foreground"
+        />
       </Button>
       <ResponsiveModal title="Abmelden?" closeLabel="Schließen" open={open} onOpenChange={setOpen}>
         <div className="flex flex-col gap-3">

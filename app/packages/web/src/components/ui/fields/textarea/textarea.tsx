@@ -10,7 +10,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     <textarea
       ref={ref}
       aria-invalid={invalid || props["aria-invalid"] || undefined}
-      className={cn(fieldClasses, "min-h-[88px] py-2", className)}
+      className={cn(fieldClasses, "min-h-[88px] resize-none py-2", className)}
       {...props}
     />
   ),

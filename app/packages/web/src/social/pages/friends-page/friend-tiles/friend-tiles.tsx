@@ -15,6 +15,8 @@ function CountText({ count }: { count: TileCount }) {
   if (count === "loading") return <span className="text-sm text-muted-foreground">lädt …</span>;
   if (count === "error")
     return <span className="text-sm text-muted-foreground">nicht geladen</span>;
+  // Zero reads as "nothing to do", not as a number to work through (issue 1045).
+  if (count === 0) return <span className="text-sm text-muted-foreground">keine</span>;
   return <span className="text-sm tabular-nums text-muted-foreground">{count}</span>;
 }
 

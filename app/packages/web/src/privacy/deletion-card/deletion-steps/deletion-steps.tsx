@@ -134,7 +134,7 @@ export function DeletionFooter(props: {
         <Button type="button" className="w-full" onClick={() => props.onStep(2)}>
           Weiter
         </Button>
-        <Button type="button" variant="outline" className="w-full" onClick={props.onClose}>
+        <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>
           Abbrechen
         </Button>
       </>
@@ -153,7 +153,7 @@ export function DeletionFooter(props: {
       <Button type="button" variant="outline" className="w-full" onClick={() => props.onStep(1)}>
         Zurück
       </Button>
-      <Button type="button" variant="outline" className="w-full" onClick={props.onClose}>
+      <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>
         Abbrechen
       </Button>
     </>

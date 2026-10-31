@@ -179,7 +179,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     ]);
     expect(list[0]).toMatchObject({
       title: `Cereus ${run} deutsch (Cereus ${run})`,
-      zoneText: "Zone 4 — 0 Pflanzen",
+      zoneText: "Zone 4 · 0 Pflanzen",
       priority: { kind: "thinnest" },
     });
     expect(list[3]).toMatchObject({ zone: null, priority: { kind: "zone_unknown" } });

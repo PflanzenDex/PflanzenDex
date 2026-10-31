@@ -92,3 +92,11 @@ describe("Tabs (US-QS-07, DS-34)", () => {
     expect(screen.getByRole("tabpanel").className).toContain("flex-1");
   });
 });
+
+describe("US-QS-07 the selected tab in dark mode (issue 1045)", () => {
+  it("US-QS-07 the selected tab is the green intent fill, not a card that disappears on the track", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    expect(screen.getByRole("tab", { name: "Licht" }).className).toContain("bg-accent");
+    expect(screen.getByRole("tab", { name: "Boden" }).className).not.toContain("bg-accent");
+  });
+});
