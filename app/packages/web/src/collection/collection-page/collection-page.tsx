@@ -72,7 +72,7 @@ export function CollectionPage(props: Props) {
     completed: props.onCompleted,
   });
   return (
-    <PageFrame>
+    <PageFrame className="flex min-h-0 flex-1 flex-col">
       <RequestState
         status={request.status}
         {...(request.error ? { errorText: request.error.text } : {})}

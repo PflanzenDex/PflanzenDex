@@ -6,18 +6,26 @@ import { refusalText } from "../../model/refusal";
 import { dateText } from "../../model/text";
 import { cn } from "@/lib/utils";
 
-/** The card of a page of the module: the former `.light` frame, on tokens (DS-27). */
-export function PageFrame({ children }: { children: ReactNode }) {
+/**
+ * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
+ * pass its height down to the list (issue 1029).
+ */
+export function PageFrame({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div
+      className={cn(
+        "min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7",
+        className,
+      )}
+    >
       {children}
     </div>
   );
 }
 
 /** A page shown inside another destination is not framed in a card of its own (US-QS-14). */
-export function Plain({ children }: { children: ReactNode }) {
-  return <div className="min-w-0">{children}</div>;
+export function Plain({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn("min-w-0", className)}>{children}</div>;
 }
 
 export const TITLE = "mb-2 text-2xl font-semibold";

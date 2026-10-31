@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import type { Distribution, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { openPlant } from "../specimens/tests/plants-test-helpers";
@@ -134,6 +134,39 @@ describe("US-QS-19 tiles of the plants", () => {
     fireEvent.pointerDown(list, { clientX: 200, clientY: 10 });
     fireEvent.pointerUp(list, { clientX: 100, clientY: 10 });
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
+  });
+});
+
+describe("US-QS-19 page size fills the free height of the region (tiles)", () => {
+  // jsdom has no layout: the list region and its tiles get a height (a tile is 100 px, the list has no gap in jsdom).
+  let region = 0;
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      const height = this.tagName === "UL" ? region : this.tagName === "LI" ? 100 : 0;
+      return { height, width: 0, top: 0, left: 0, right: 0, bottom: height, x: 0, y: 0 } as DOMRect;
+    });
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-19 the tiles fill the free height of the region: whole rows per page, the pager below", () => {
+    region = 532;
+    screenWith(many(8));
+    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
   });
 });
 

@@ -11,6 +11,7 @@ import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-shee
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
 import { Button } from "@/components/ui/button/button";
+import { cn } from "@/lib/utils";
 import {
   PLANT_GROUPS,
   useManage,
@@ -63,9 +64,14 @@ export function CollectionArea(props: {
   const managing = view === "plants" && manage.open && !props.newSpecies;
   const own = view === "plants" && (measure !== null || fullView || managing);
   const plantsOnScreen = view === "plants" && !own;
+  // One screen (US-QS-19, issue 1029): the frame fills the viewport and the list region takes the free height below it.
+  const fit = !own || managing;
   return (
-    <LayerHost className="min-h-0" {...(own && !managing ? {} : { "data-fit-screen": "" })}>
-      <div className="min-w-0 flex-1">
+    <LayerHost
+      className={cn("min-h-0", fit && "h-full")}
+      {...(fit ? { "data-fit-screen": "", "data-fit-fill": "" } : {})}
+    >
+      <div className={cn("min-w-0 flex-1", fit && "flex min-h-0 flex-col")}>
         {own ? null : (
           <AreaHeader
             view={view}

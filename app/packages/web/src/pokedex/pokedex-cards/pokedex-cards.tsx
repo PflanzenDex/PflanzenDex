@@ -78,6 +78,7 @@ export function SpeciesPager(props: {
     <Pager
       items={props.species}
       pageSize={size}
+      fit
       label={props.label}
       resetKey={props.resetKey}
       getKey={(c) => c.species}
