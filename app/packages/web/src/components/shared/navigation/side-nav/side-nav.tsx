@@ -97,7 +97,7 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
               end={item.href === "/"}
               className={({ isActive }) =>
                 cn(
-                  "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-[15px] font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-base font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isActive
                     ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
                     : "text-muted-foreground hover:bg-muted",

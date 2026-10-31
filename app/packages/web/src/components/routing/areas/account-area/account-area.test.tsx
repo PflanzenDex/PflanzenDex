@@ -155,6 +155,13 @@ describe("US-DEV-06 Konto without the AI function", () => {
 });
 
 describe("US-QS-17 Konto with its sections as views", () => {
+  it("US-QS-17 · US-QS-15 Konto is one screen: its frame carries data-fit-screen, so main scrolls inside itself at a larger text size (DS-61, issue 1019)", async () => {
+    fakeServer();
+    show("/account");
+    await screen.findByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+
   it("US-QS-17 · US-ACC-01 a section has one h1 with its name and a way back Konto", async () => {
     fakeServer();
     show("/account/reminders");

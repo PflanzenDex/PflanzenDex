@@ -129,7 +129,7 @@ export function SuggestionCard(props: {
         <h2 id="suggestion-title" tabIndex={-1} className="m-0 scroll-mb-24 text-xl font-semibold">
           {s.species}
         </h2>
-        <p className="m-0">{s.germanName ?? "Deutscher Name unbekannt"}</p>
+        <p className="m-0 text-base">{s.germanName ?? "Deutscher Name unbekannt"}</p>
       </div>
       <Summary s={s} more={more} />
       <Button
