@@ -7,7 +7,12 @@ import type { ApiError } from "../../../kernel";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
 import { refusalText } from "../../shared/refusal";
-import { LightStepFields, RequiredFields, REQUIRED_STEP } from "../required-fields/required-fields";
+import {
+  LightStepFields,
+  NameStepFields,
+  REQUIRED_STEP,
+  TextStepFields,
+} from "../required-fields/required-fields";
 import {
   EMPTY_PROPOSAL,
   proposalSchema,
@@ -34,17 +39,15 @@ function useRefusal(error: ApiError | null, refuse: UseFormSetError<ProposalFiel
   return { alertRef, namesField, existing: error ? duplicate(error) : null };
 }
 
-/** The visibility notice (two lines at most) and the step counter (US-QS-21). */
+/** The visibility notice (two lines at most at 360 px, US-QS-21) and the step counter. */
 function StepNotice({ step }: { step: 1 | 2 }) {
   return (
     <>
-      <p className="rounded-lg border border-warning-border bg-warning p-2.5 text-sm text-warning-foreground">
-        Nur für dich sichtbar, bis die Prüfliste sie freigibt. Wählen kannst du die Art schon jetzt.
+      <p className="rounded-lg border border-warning-border bg-warning p-2 text-sm text-warning-foreground">
+        Nur für dich sichtbar, bis die Prüfliste sie freigibt.
       </p>
       <p className="text-sm text-muted-foreground">
-        {step === 1
-          ? "Schritt 1 von 2 · Pflichtfelder sind mit * markiert."
-          : "Schritt 2 von 2 · alles hier ist optional."}
+        {step === 1 ? "Schritt 1 von 2 · * = Pflichtfeld" : "Schritt 2 von 2 · alles optional"}
       </p>
     </>
   );
@@ -84,16 +87,17 @@ function StepActions(props: {
   onNext: () => void;
   onBack: () => void;
 }) {
+  // Sticky at the foot of the sheet: the optional fields scroll, the one filled action stays in view (US-QS-21).
   if (props.step === 1)
     return (
-      <div className="flex flex-col gap-2 md:col-span-2">
+      <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
         <Button type="button" size="touch" onClick={props.onNext}>
           Weiter
         </Button>
       </div>
     );
   return (
-    <div className="flex flex-col gap-2 md:col-span-2">
+    <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
       <Button type="submit" size="touch" pending={props.pending} pendingLabel="Speichert …">
         Vorschlag speichern
       </Button>
@@ -108,7 +112,8 @@ function StepActions(props: {
  * Propose species, the path without AI (FR-KI-05): all required fields from DM-BES-01 in the form. The proposal is
  * visible only to the creator and goes into the review list (FR-BES-11); the UI says so beforehand. A refusal of
  * the server lands on the fields it names (German text by error code, focus on the first); without a field it stays
- * in an alert (P-10). Two steps (US-QS-21): name and light, then growth. It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
+ * in an alert (P-10). Two steps (US-QS-21): the name and the growth measure, then the two texts and the light; the
+ * optional fields scroll in the sheet and the action row stays in view. It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
  * "Vorschlag speichern" is its one filled action.
  */
 export function ProposalForm(props: {
@@ -145,9 +150,10 @@ export function ProposalForm(props: {
           className="grid gap-4 md:grid-cols-2"
         >
           {step === 1 ? (
-            <RequiredFields control={form.control} />
+            <NameStepFields control={form.control} />
           ) : (
             <>
+              <TextStepFields control={form.control} />
               <LightStepFields control={form.control} />
               <MoreDetails control={form.control} />
             </>

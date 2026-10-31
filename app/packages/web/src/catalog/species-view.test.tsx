@@ -152,10 +152,13 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
       <ProposalForm start="Aloe" onSend={async () => null} onExisting={vi.fn()} startStep={2} />,
     );
 
-  it("requires all required fields from DM-BES-01 (US-QS-21: all of them on step 1)", () => {
-    const h = html();
-    for (const name of ["latinName", "growthMeasure", "etiolationSigns", "successCriteria"])
-      expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
+  it("US-BES-01 requires all required fields from DM-BES-01: the name and the growth on step 1, the two texts on step 2 (US-QS-21)", () => {
+    const first = html();
+    for (const name of ["latinName", "growthMeasure"])
+      expect(first.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
+    const second = light();
+    for (const name of ["etiolationSigns", "successCriteria"])
+      expect(second.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
   });
 
   it('US-BES-01 P-08: difficulty, default level and lux need are optional and offer "Unbekannt" (#1003)', () => {

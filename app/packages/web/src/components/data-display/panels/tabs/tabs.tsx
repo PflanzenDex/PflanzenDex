@@ -15,6 +15,11 @@ export type TabsProps = {
   className?: string;
   /** Classes of the panel, e.g. to let it scroll inside a frame of fixed height (US-QS-21). */
   panelClassName?: string;
+  /**
+   * Breaks the tabs onto further lines when they do not fit (text at 200 %), instead of scrolling the list sideways
+   * (US-QS-21: nothing scrolls horizontally). The default keeps one line and scrolls the list.
+   */
+  wrap?: boolean;
 };
 
 /** Index the key moves to (wrapping Left and Right), or undefined for other keys. */
@@ -63,7 +68,7 @@ function TabButton(props: TabButtonProps) {
 type TabPanelProps = {
   id: string;
   labelledBy: string;
-  className?: string;
+  className?: string | undefined;
   children: React.ReactNode;
 };
 
@@ -124,7 +129,10 @@ export function Tabs(props: TabsProps) {
         aria-label={props.label}
         aria-orientation="horizontal"
         onKeyDown={onKeyDown}
-        className="flex w-full gap-1 overflow-x-auto rounded-full bg-muted p-1"
+        className={cn(
+          "flex w-full gap-1 bg-muted p-1",
+          props.wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto rounded-full",
+        )}
       >
         {tabs.map((t) => (
           <TabButton

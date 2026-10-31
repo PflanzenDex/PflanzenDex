@@ -50,8 +50,8 @@ function LightFields({ control }: { control: Control<ProposalFields> }) {
   );
 }
 
-/** Step 1 of the proposal (US-QS-21): the required fields from DM-BES-01 (FR-BES-05). */
-export function RequiredFields({ control }: { control: Control<ProposalFields> }) {
+/** Step 1 of the proposal (US-QS-21): the name and the growth measure, the first required fields (FR-BES-05). */
+export function NameStepFields({ control }: { control: Control<ProposalFields> }) {
   return (
     <>
       <TextField
@@ -72,6 +72,14 @@ export function RequiredFields({ control }: { control: Control<ProposalFields> }
         required
         options={Object.entries(GROWTH)}
       />
+    </>
+  );
+}
+
+/** Step 2 of the proposal (US-QS-21): the two required texts that describe the species (FR-BES-05). */
+export function TextStepFields({ control }: { control: Control<ProposalFields> }) {
+  return (
+    <>
       <AreaField
         control={control}
         name="etiolationSigns"
@@ -95,16 +103,11 @@ export function RequiredFields({ control }: { control: Control<ProposalFields> }
 }
 
 /** The fields of step 1; a refusal of one of them leads back to that step. */
-export const REQUIRED_STEP: readonly (keyof ProposalFields)[] = [
-  "latinName",
-  "growthMeasure",
-  "etiolationSigns",
-  "successCriteria",
-];
+export const REQUIRED_STEP: readonly (keyof ProposalFields)[] = ["latinName", "growthMeasure"];
 
 /**
- * Step 2 of the proposal: what is known about the light (difficulty, default level and lux need are optional: without
- * a source they stay unknown, P-08, issue 1003); everything else is in "More details".
+ * Step 2 of the proposal, after the two texts: what is known about the light (difficulty, default level and lux need
+ * are optional: without a source they stay unknown, P-08, issue 1003); everything else is in "More details".
  */
 export function LightStepFields({ control }: { control: Control<ProposalFields> }) {
   return <LightFields control={control} />;

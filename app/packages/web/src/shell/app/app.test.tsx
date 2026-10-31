@@ -372,6 +372,14 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByText(/Du hast noch keine Pflanze dieser Art/)).toBeTruthy();
   });
 
+  it("US-QS-21 the profile at its own address is one screen: the frame is marked to fit, and the header holds the primary action", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/discover/species/a1");
+    expect(await screen.findByRole("button", { name: "Diese Art wählen" })).toBeTruthy();
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+
   it("US-QS-14 · US-PHA-01 the old address /care-phases opens the plants grouped by care phase", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });

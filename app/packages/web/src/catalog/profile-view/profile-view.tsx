@@ -73,7 +73,8 @@ function ProfileTabs({ species }: { species: Species }) {
   return (
     <Tabs
       className="flex min-h-0 flex-1 flex-col"
-      panelClassName="min-h-0 flex-1 overflow-y-auto"
+      panelClassName="mt-1 min-h-[40dvh] flex-1 overflow-y-auto"
+      wrap
       label="Angaben zur Art"
       tabs={[
         {
@@ -113,7 +114,7 @@ export function SpeciesProfile(props: {
   const { species } = props;
   const Heading = props.embedded ? "h2" : "h1";
   return (
-    <article aria-labelledby="species-title" className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+    <article aria-labelledby="species-title" className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <header className="flex min-w-0 items-center gap-3">
         {props.onBack && (
           <Button
@@ -129,11 +130,16 @@ export function SpeciesProfile(props: {
           </Button>
         )}
         <PhotoSlot />
-        <div className="flex min-w-0 flex-col items-start gap-1">
-          <Heading id="species-title" className="break-words text-xl font-semibold leading-tight">
+        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-1">
+          <Heading
+            id="species-title"
+            className="break-words text-lg font-semibold leading-tight md:text-xl"
+          >
             <i>{species.latinName}</i>
           </Heading>
-          <Badge variant="outline">{STATUS[species.reviewStatus]}</Badge>
+          <Badge variant="outline" className="self-start">
+            {STATUS[species.reviewStatus]}
+          </Badge>
         </div>
       </header>
       {(props.onChoose || props.extra) && (

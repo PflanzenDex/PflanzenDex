@@ -75,14 +75,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Both steps of the proposal layer; the Latin name is typed first (US-QS-21). */
+/**
+ * Both steps of the proposal layer (US-QS-21): the name and the growth measure on step 1, then the two texts on step 2.
+ * The Latin name is typed first.
+ */
 async function toStepTwo(etiolation = "x", success = "y") {
   await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
   await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
-  await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), etiolation);
-  await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), success);
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
   await screen.findByText(/Schritt 2 von 2/);
+  await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), etiolation);
+  await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), success);
 }
 
 async function fillProposal(etiolation: string, success: string) {
@@ -347,7 +350,7 @@ describe("US-QS-21 the proposal opens as a layer", () => {
 });
 
 describe("US-QS-21 propose in two steps", () => {
-  it("US-QS-21 step 1 asks for the required fields, step 2 for the optional light and saves; Zurück keeps the entries", async () => {
+  it("US-QS-21 step 1 asks for the name and the growth, step 2 for the two texts and the optional light, and saves; Zurück keeps the entries", async () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
@@ -364,14 +367,14 @@ describe("US-QS-21 propose in two steps", () => {
     );
   });
 
-  it("US-QS-21 the visibility notice is at most two sentences", async () => {
+  it("US-QS-21 the visibility notice is one sentence of at most 60 characters, so it stays within two lines at 360 px", async () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
     const notice = within(layer).getByText(/Nur für dich sichtbar/);
-    expect((notice.textContent ?? "").split(/[.;] /).length).toBeLessThanOrEqual(2);
-    expect((notice.textContent ?? "").length).toBeLessThanOrEqual(110);
+    expect((notice.textContent ?? "").split(/[.;] /).length).toBeLessThanOrEqual(1);
+    expect((notice.textContent ?? "").length).toBeLessThanOrEqual(60);
   });
 
   it("US-QS-21 a refusal of a step-1 field on step 2 brings step 1 back with the message on the field", async () => {

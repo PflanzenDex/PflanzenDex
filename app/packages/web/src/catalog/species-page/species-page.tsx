@@ -144,7 +144,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
   };
   const searchError = view.kind === "search" ? search.error : null;
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-4 text-card-foreground md:p-7">
       {searchError && <SearchFailure error={searchError} onRetry={search.retry} />}
       {view.kind === "search" && (
         <SpeciesSearch
