@@ -130,6 +130,17 @@ describe("US-QS-21 the catalog list is paged", () => {
     expect(screen.queryByText("Mehr laden")).toBeNull();
   });
 
+  it("US-QS-21 every result row has a thumbnail slot of one fixed size, so the names share one left edge", () => {
+    search(many(3));
+    const rows = within(screen.getByRole("list", { name: "Treffer" })).getAllByRole("button");
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      const slot = row.querySelector('[aria-hidden="true"]');
+      expect(slot?.className).toContain("size-10");
+      expect(slot?.className).toContain("shrink-0");
+    }
+  });
+
   it("US-QS-21 a short list has no pager", () => {
     search(many(2));
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();

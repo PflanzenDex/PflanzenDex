@@ -13,6 +13,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await proposal.getByLabel("Schwierigkeit").selectOption({ index: 1 });
   await proposal.getByLabel("Standard-Stufe (Lichtzone)").selectOption("3");
   await proposal.getByLabel(/Lichtbedarf/).fill("40000");
+  await proposal.getByRole("button", { name: "Weiter" }).click();
   await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
   await proposal.getByLabel("Vergeilung-Anzeichen").fill("Die Rosette streckt sich.");
   await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");

@@ -1,7 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import {
+  LayerOpener,
+  LayerSheet,
+  useLayer,
+} from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
 import type { ApiError, Request } from "../../kernel";
@@ -16,6 +20,8 @@ type View = { kind: "search" } | { kind: "profile" };
 
 /** The layer with the proposal form (`?sheet=propose`, US-QS-21). */
 const PROPOSE_LAYER = "propose";
+/** The layer with my care profile of the species (`?sheet=care`, US-BES-09, US-QS-21). */
+const CARE_LAYER = "care";
 
 function ProfilePage(props: {
   profile: Request<Species>;
@@ -27,7 +33,7 @@ function ProfilePage(props: {
 }) {
   const { profile } = props;
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       {props.fresh && (
         <p
           role="status"
@@ -57,8 +63,19 @@ function ProfilePage(props: {
             onChoose={() => props.onChoose(profile.value as Species)}
             onBack={props.onBack}
             embedded={props.embedded}
+            extra={
+              props.section && (
+                <LayerOpener id={CARE_LAYER} className="h-12">
+                  Mein Pflegeprofil
+                </LayerOpener>
+              )
+            }
           />
-          {props.section?.(profile.value)}
+          {props.section && (
+            <LayerSheet id={CARE_LAYER} title="Mein Pflegeprofil">
+              {props.section(profile.value)}
+            </LayerSheet>
+          )}
         </>
       )}
     </div>
@@ -127,7 +144,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
   };
   const searchError = view.kind === "search" ? search.error : null;
   return (
-    <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-4 text-card-foreground md:p-7">
       {searchError && <SearchFailure error={searchError} onRetry={search.retry} />}
       {view.kind === "search" && (
         <SpeciesSearch

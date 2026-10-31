@@ -13,6 +13,13 @@ export type TabsProps = {
   defaultValue?: string;
   onValueChange?: (value: string) => void;
   className?: string;
+  /** Classes of the panel, e.g. to let it scroll inside a frame of fixed height (US-QS-21). */
+  panelClassName?: string;
+  /**
+   * Breaks the tabs onto further lines when they do not fit (text at 200 %), instead of scrolling the list sideways
+   * (US-QS-21: nothing scrolls horizontally). The default keeps one line and scrolls the list.
+   */
+  wrap?: boolean;
 };
 
 /** Index the key moves to (wrapping Left and Right), or undefined for other keys. */
@@ -58,6 +65,31 @@ function TabButton(props: TabButtonProps) {
   );
 }
 
+type TabPanelProps = {
+  id: string;
+  labelledBy: string;
+  className?: string | undefined;
+  children: React.ReactNode;
+};
+
+/** The focusable panel of the selected tab; `className` is the caller's (US-QS-21), the focus ring is ours. */
+function TabPanel(props: TabPanelProps) {
+  return (
+    <div
+      id={props.id}
+      role="tabpanel"
+      aria-labelledby={props.labelledBy}
+      tabIndex={0}
+      className={cn(
+        "mt-3 min-h-[44px] rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        props.className,
+      )}
+    >
+      {props.children}
+    </div>
+  );
+}
+
 /**
  * Tabs (US-QS-07, DS-34): a real `tablist` with roving tabindex. Tab reaches the selected tab only, Left and Right move
  * (wrapping), Home and End jump to the ends, and a moved focus selects at once (automatic activation). The panel is
@@ -97,7 +129,10 @@ export function Tabs(props: TabsProps) {
         aria-label={props.label}
         aria-orientation="horizontal"
         onKeyDown={onKeyDown}
-        className="flex w-full gap-1 overflow-x-auto rounded-full bg-muted p-1"
+        className={cn(
+          "flex w-full gap-1 bg-muted p-1",
+          props.wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto rounded-full",
+        )}
       >
         {tabs.map((t) => (
           <TabButton
@@ -111,15 +146,13 @@ export function Tabs(props: TabsProps) {
         ))}
       </div>
       {panel ? (
-        <div
+        <TabPanel
           id={idOf("panel", panel.value)}
-          role="tabpanel"
-          aria-labelledby={idOf("tab", panel.value)}
-          tabIndex={0}
-          className="mt-3 min-h-[44px] rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          labelledBy={idOf("tab", panel.value)}
+          className={props.panelClassName}
         >
           {panel.content}
-        </div>
+        </TabPanel>
       ) : null}
     </div>
   );
