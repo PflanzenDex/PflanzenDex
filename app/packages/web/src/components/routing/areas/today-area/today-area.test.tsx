@@ -44,6 +44,8 @@ type Setup = {
   cards?: unknown[];
   hintsStatus?: number;
   items?: unknown[];
+  /** The anniversaries of US-ACH-06 due today; without it the endpoint is not there (no card). */
+  anniversaries?: unknown;
 };
 
 const SPECIMENS = [{ id: "s-a", name: "Aloe", status: "plant" }];
@@ -85,6 +87,8 @@ function fakeServer(setup: Setup = {}) {
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
         "/specimens/e1/location": () => response(200, {}),
+        "/achievements/anniversaries": () =>
+          response(200, setup.anniversaries ?? { calmMode: true }),
       };
       if (/^\/treatments\/[^/]+\/complete$/.test(path)) {
         open = [];
@@ -134,6 +138,7 @@ beforeAll(async () => {
     import("@/care/treatments/treatments-page/treatments-page"),
     import("@/collection/other-pages/hints-page/hints-page"),
     import("@/monitoring/watering/watering-list/watering-list"),
+    import("@/achievements"),
   ]);
 }, 30_000);
 
@@ -230,6 +235,50 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
     expect(await screen.findByRole("button", { name: /^0Behandeln$/ })).toBeTruthy();
+  });
+});
+
+describe("US-QS-18 Heute stays one column, with or without an anniversary", () => {
+  const ANNIVERSARY = {
+    calmMode: false,
+    items: [
+      {
+        specimenId: "s-a",
+        name: "Aloe",
+        months: 12,
+        date: "2026-10-03",
+        caughtOn: "2025-10-03",
+        first: null,
+        latest: null,
+      },
+    ],
+  };
+  /** The frame of Heute: its content column is the first child, the pane column the second one (US-QS-15). */
+  const columns = (container: HTMLElement) => {
+    const frame = container.querySelector("[data-layer-host]") as HTMLElement;
+    return {
+      content: frame.firstElementChild as HTMLElement,
+      pane: frame.lastElementChild as HTMLElement,
+    };
+  };
+
+  it("US-QS-18 the anniversary card is a row of the content column, never a column beside it (#1027)", async () => {
+    fakeServer({ anniversaries: ANNIVERSARY });
+    const { container } = show();
+    const card = await screen.findByRole("region", { name: "Jubiläen" });
+    const { content, pane } = columns(container);
+    expect(content.contains(card)).toBe(true);
+    expect(pane.contains(card)).toBe(false);
+    expect(pane.childElementCount).toBe(0);
+  });
+
+  it("US-QS-18 Heute without an anniversary has the same two columns: the pane column stays empty (#1027)", async () => {
+    fakeServer();
+    const { container } = show();
+    await screen.findByRole("heading", { level: 1, name: "Heute" });
+    const { content, pane } = columns(container);
+    expect(content.contains(screen.getByRole("heading", { level: 1, name: "Heute" }))).toBe(true);
+    expect(pane.childElementCount).toBe(0);
   });
 });
 

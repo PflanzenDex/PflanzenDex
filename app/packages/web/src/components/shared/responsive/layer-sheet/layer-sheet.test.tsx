@@ -160,6 +160,17 @@ describe("LayerSheet (US-QS-15)", () => {
     expect(slot?.previousElementSibling).toBe(frame?.firstElementChild);
   });
 
+  it("US-QS-15 · US-QS-18 the content column is at most 720 px and centred, so the pane beside it takes the rest of the frame", () => {
+    setViewportWidth(1440);
+    render(<Example at="/?sheet=licht" />);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const content = pane.parentElement?.previousElementSibling as HTMLElement;
+    expect(content.contains(screen.getByRole("button", { name: "Licht" }))).toBe(true);
+    // The cap is the content's own (DS-59): a pane never shrinks the frame below the content (US-QS-15, #1027).
+    expect(content.className).toContain("max-w-180");
+    expect(content.className).toContain("mx-auto");
+  });
+
   it("US-QS-15 a layer in a component deep inside the frame still opens in the frame's pane, not in its own place", () => {
     setViewportWidth(1440);
     const warn = vi.spyOn(console, "warn");
