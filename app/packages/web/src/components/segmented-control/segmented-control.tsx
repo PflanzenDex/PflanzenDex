@@ -25,7 +25,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
       role="group"
       aria-label={props.label}
       className={cn(
-        "inline-flex w-fit max-w-full gap-1 rounded-full bg-muted p-1",
+        "inline-flex w-fit max-w-full flex-wrap gap-1 rounded-full bg-muted p-1",
         props.className,
       )}
     >
@@ -41,7 +41,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             className={cn(
               "min-w-[44px] rounded-full px-4 font-semibold",
               selected
-                ? "bg-card text-foreground shadow-elevation-1 hover:bg-card forced-colors:border-[color:Highlight]"
+                ? "bg-accent text-accent-foreground shadow-elevation-1 hover:bg-accent forced-colors:border-[color:Highlight]"
                 : "text-muted-foreground hover:bg-transparent hover:text-foreground",
             )}
           >

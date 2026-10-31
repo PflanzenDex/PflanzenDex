@@ -11,6 +11,7 @@ import {
   unknownInEvery,
 } from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/components/ui/button/button";
+import { SPECIES_ENTRY_ROW } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
 import { LoadFrame } from "../../../kernel";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
@@ -86,7 +87,7 @@ function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] 
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-label={`Vergleichswerte: ${row.speciesName}`}
-      className="h-auto w-full justify-between gap-2 whitespace-normal px-3 py-2 text-left"
+      className={SPECIES_ENTRY_ROW}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">

@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils";
 import { LayerSheet, useLayer } from "../layer-sheet";
 
 /**
+ * The look of a species row that opens its layer (issue 1045): one neutral row for the Pokédex and the comparison by
+ * difficulty alike. Green stays for intent, so a long list of rows does not turn green.
+ */
+export const SPECIES_ENTRY_ROW =
+  "h-auto w-full justify-between gap-2 whitespace-normal border-border px-3 py-1.5 text-left text-foreground";
+
+/**
  * A row of a list that opens its layer (US-QS-15, US-QS-17): the name, one line of value or help and a chevron. The whole
  * row is the hit area (44 px and more); the layer it opens is `?sheet=<id>`.
  */

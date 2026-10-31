@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/fields/input/input";
@@ -61,6 +62,10 @@ function HitList(props: {
             aria-pressed={props.chosen === h.id}
             onClick={() => props.onPick(h.id)}
           >
+            {/* The chosen hit says so in words and a mark, not by its colour alone (issue 1045). */}
+            {props.chosen === h.id ? (
+              <Check aria-hidden="true" className="size-4 shrink-0" />
+            ) : null}
             <i>{h.latinName}</i>
             {h.germanName ? ` (${h.germanName})` : ""}
           </Button>

@@ -24,7 +24,11 @@ const CARDS = [
 ];
 
 const writes: { path: string; body: Record<string, unknown> }[] = [];
-function server(cards: unknown[] = CARDS) {
+function server(
+  cards: unknown[] = CARDS,
+  zones: unknown[] = ZONES,
+  locations: unknown[] = LOCATIONS,
+) {
   writes.length = 0;
   vi.stubGlobal(
     "fetch",
@@ -34,8 +38,8 @@ function server(cards: unknown[] = CARDS) {
         writes.push({ path, body: JSON.parse(String(init.body)) as Record<string, unknown> });
         return response(201, { id: "e1", speciesId: "sp1" });
       }
-      if (path === "/light-zones") return response(200, { zones: ZONES });
-      if (path === "/locations") return response(200, { locations: LOCATIONS });
+      if (path === "/light-zones") return response(200, { zones });
+      if (path === "/locations") return response(200, { locations });
       if (path === "/specimens/cards") return response(200, { cards });
       if (path === "/species") return response(200, { species: [HIT] });
       if (path === "/species/sp1") return response(200, SPECIES);
@@ -136,6 +140,40 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
     expect(await screen.findByLabelText("Name der Pflanze")).toBeTruthy();
+  });
+});
+
+describe("US-ONB-01 · US-BES-04 the first-plant steps (issue 1045)", () => {
+  it("US-ONB-01 a place under cutting light is no suggestion for a plant that is not a cutting", async () => {
+    const cutting = {
+      id: "z1",
+      name: "Zone 1 · Stecklingslicht",
+      luxCeiling: 1500,
+      ppfd: null,
+      sortOrder: 1,
+    };
+    const box = { id: "l3", name: "Stecklingsbox", lightZoneId: "z1", kind: "indoor" };
+    server(
+      [{ id: "e7", name: "C", speciesId: "x", location: "Stecklingsbox", caughtAt: "2026-09-01" }],
+      [cutting, ...ZONES],
+      [box, ...LOCATIONS],
+    );
+    view();
+    await toSave();
+    const place = (await screen.findByLabelText("Standort")) as HTMLSelectElement;
+    expect(await screen.findByRole("option", { name: "Balkon (Zone 4)" })).toBeTruthy();
+    expect(place.value).toBe("");
+  });
+
+  it("US-ONB-01 the chosen species is marked by a check mark and aria-pressed, not by colour alone", async () => {
+    server();
+    view();
+    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+    const hit = await screen.findByRole("button", { name: /Monstera deliciosa/ });
+    expect(hit.getAttribute("aria-pressed")).toBe("false");
+    await userEvent.click(hit);
+    expect(hit.getAttribute("aria-pressed")).toBe("true");
+    expect(hit.querySelector("svg")).not.toBeNull();
   });
 });
 

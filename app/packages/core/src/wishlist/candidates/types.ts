@@ -19,7 +19,7 @@ export interface Candidate {
   readonly zone: { readonly id: string; readonly name: string } | null;
   /** Specimens in the target zone; `null` = unknown, never a guess (P-08). */
   readonly stock: number | null;
-  /** "<zone> — N Pflanzen", or "Ziel-Zone unbekannt". */
+  /** "<zone> · N Pflanzen", or "Ziel-Zone unbekannt". */
   readonly zoneText: string;
   readonly difficulty: number | null;
   readonly reasoning: string | null;

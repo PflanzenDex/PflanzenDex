@@ -115,6 +115,7 @@ function Body(props: {
       <Button
         type="button"
         size="touch"
+        className="sm:self-start"
         aria-haspopup="dialog"
         aria-expanded={add.open}
         onClick={(event) => add.openLayer(event.currentTarget)}

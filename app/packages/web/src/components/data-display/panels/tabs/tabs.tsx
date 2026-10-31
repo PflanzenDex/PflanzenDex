@@ -56,7 +56,7 @@ function TabButton(props: TabButtonProps) {
       className={cn(
         "min-w-[44px] flex-1 whitespace-nowrap rounded-full px-4 font-semibold",
         active
-          ? "bg-card text-foreground shadow-elevation-1 hover:bg-card forced-colors:border-[color:Highlight]"
+          ? "bg-accent text-accent-foreground shadow-elevation-1 hover:bg-accent forced-colors:border-[color:Highlight]"
           : "text-muted-foreground hover:bg-transparent hover:text-foreground",
       )}
     >

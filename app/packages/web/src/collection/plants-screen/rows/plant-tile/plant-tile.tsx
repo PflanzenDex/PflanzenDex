@@ -38,7 +38,7 @@ function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
     <span
       aria-hidden="true"
       data-initial={initial}
-      className="grid size-14 shrink-0 place-items-center rounded-md bg-muted text-xl font-semibold text-muted-foreground after:content-[attr(data-initial)]"
+      className="grid size-14 shrink-0 place-items-center rounded-md text-xl font-semibold text-muted-foreground after:content-[attr(data-initial)]"
     />
   );
 }
