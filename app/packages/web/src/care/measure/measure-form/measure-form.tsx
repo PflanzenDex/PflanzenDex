@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { currentTimeZone, type ApiError } from "../../../kernel";
 import { Field } from "../../shared/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
-import { Folded } from "../measurement-header/measurement-header";
+import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
 import { RefusalAlert } from "../../shared/notices/notices";
 import type { MeasurementInput } from "../../shared/api/measurements-api";
 import {
@@ -79,6 +79,8 @@ function Fields(props: {
   etiolationSigns: string | null;
   focusRef: React.MutableRefObject<HTMLInputElement | null> | undefined;
   photo: React.ReactNode;
+  /** A chosen or refused photo lives behind "Mehr Angaben" and opens it (P-10). */
+  photoOpen: boolean;
 }) {
   return (
     <>
@@ -115,12 +117,12 @@ function Fields(props: {
         )}
       </Field>
       <EtiolationSigns signs={props.etiolationSigns} />
-      <Folded summary="Mehr Angaben">
+      <FormMoreFields control={props.control} names={["note"]} forced={props.photoOpen}>
         <Field control={props.control} name="note" label="Notiz (optional)">
           {(field) => <Textarea {...field} rows={2} maxLength={MEASUREMENT_LIMITS.note.max} />}
         </Field>
         {props.photo}
-      </Folded>
+      </FormMoreFields>
     </>
   );
 }
@@ -175,6 +177,7 @@ export function MeasureForm(props: {
           etiolationSigns={props.signs ?? null}
           focusRef={props.focusRef}
           photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
+          photoOpen={photo !== null || problem !== null}
         />
         {refusal && <RefusalAlert error={refusal} />}
       </FormRoot>

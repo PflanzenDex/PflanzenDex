@@ -320,6 +320,26 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
+  it("US-QS-24 step 2 keeps the optional light and details behind Mehr Angaben, the save button sits in a sticky footer, and no heading repeats the layer title", async () => {
+    fakeServer({ species: [hit] });
+    render(at("/discover?view=catalog&sheet=propose"));
+    const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await toStepTwo();
+    expect(
+      within(layer)
+        .getAllByRole("heading")
+        .map((h) => h.textContent),
+    ).toEqual(["Art vorschlagen"]);
+    const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(more.contains(within(layer).getByLabelText(/Schwierigkeit/))).toBe(true);
+    expect(more.contains(within(layer).getByLabelText(/Lichtbedarf/))).toBe(true);
+    expect(more.contains(within(layer).getByLabelText(/Vergeilung-Anzeichen/))).toBe(false);
+    expect(
+      within(layer).getByRole("button", { name: "Vorschlag speichern" }).parentElement?.className,
+    ).toContain("sticky");
+  });
+
   it("US-QS-21 a link with ?sheet=propose opens the layer, and saving leaves it for the new profile", async () => {
     fakeServer();
     render(at("/discover?view=catalog&sheet=propose"));

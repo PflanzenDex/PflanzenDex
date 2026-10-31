@@ -151,6 +151,22 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     expect(screen.getByText("Keine Behandlung bekannt")).toBeTruthy();
   });
 
+  it("US-QS-24 the offer form: the wish and the note sit behind Mehr Angaben, the offer button sits in a sticky footer, and no heading repeats the layer title", async () => {
+    server();
+    view("/?sheet=offer");
+    await screen.findByLabelText("Pflanze");
+    const region = screen.getByRole("region", { name: "Zum Tausch anbieten" });
+    expect(within(region).queryByRole("heading")).toBeNull();
+    const more = screen
+      .getByLabelText("Wunsch (optional)")
+      .closest("details") as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(more.contains(screen.getByLabelText("Hinweis (optional)"))).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Angebot erstellen" }).parentElement?.className,
+    ).toContain("sticky");
+  });
+
   it("US-SOZ-08 a private specimen cannot be offered until it is shared; the dialog sets the sharing", async () => {
     const calls = server({ preview: preview({ shared: false }) });
     view("/?sheet=offer");

@@ -3,9 +3,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../kernel";
-import { OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
+import { OPTIONAL_FIELDS, OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
 import {
   EMPTY_FIELDS,
   equipmentSchema,
@@ -49,14 +50,6 @@ function usePrefill(
   }, [prefill, form]);
 }
 
-/** Optional fields stay behind "Mehr Angaben"; a prefill or a refusal on one of them opens the group (P-10). */
-function hasOptional(prefill: EquipmentPrefill | null | undefined, refused: string[]): boolean {
-  const required = ["type", "name", "lightZoneId"];
-  return (
-    Boolean(prefill?.productId || prefill?.priceEur) || refused.some((k) => !required.includes(k))
-  );
-}
-
 /** Sticky: the form may scroll inside the layer while the save button stays visible. */
 function SaveBar({ pending }: { pending: boolean }) {
   return (
@@ -86,16 +79,13 @@ export function EquipmentForm(props: {
   const { alertText, alertRef } = useServerRefusal(props.error, form.setError);
   usePrefill(form, props.prefill);
   const refused = Object.keys(form.formState.errors).length > 0;
-  const moreOpen = hasOptional(props.prefill, Object.keys(form.formState.errors));
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {
     if (await props.onSend(toEquipmentInput(values))) form.reset(EMPTY_FIELDS);
   });
+  // No heading here: the layer "Neues Equipment" already names the form (US-QS-24, issue 1032).
   return (
-    <section aria-labelledby="equipment-form-title" className="flex flex-col gap-3">
-      <h2 id="equipment-form-title" className="sr-only">
-        Equipment erfassen
-      </h2>
+    <section aria-label="Equipment erfassen" className="flex flex-col gap-3">
       {props.message && !refused && (
         <p role="status" className="rounded-lg border border-border p-3">
           {props.message}
@@ -115,12 +105,9 @@ export function EquipmentForm(props: {
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
-          <details open={moreOpen || undefined} className="rounded-lg border border-border">
-            <summary className="cursor-pointer p-3">Mehr Angaben</summary>
-            <div className="flex flex-col gap-4 px-3 pb-3">
-              <OptionalFields control={form.control} />
-            </div>
-          </details>
+          <FormMoreFields control={form.control} names={OPTIONAL_FIELDS}>
+            <OptionalFields control={form.control} />
+          </FormMoreFields>
           <SaveBar pending={pending} />
         </FormRoot>
       </Form>

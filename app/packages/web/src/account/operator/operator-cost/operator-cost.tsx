@@ -93,15 +93,18 @@ export function CostForm(props: {
         <TextField control={form.control} name="amount" label="Betrag" inputMode="decimal" />
         <TextField control={form.control} name="currency" label="Währung" maxLength={3} />
         <MonthRow control={form.control} max={thisMonth()} />
-        <Button
-          type="submit"
-          size="touch"
-          aria-disabled={props.running || undefined}
-          aria-busy={props.running || undefined}
-          className={BUSY_LOOK}
-        >
-          Kosten speichern
-        </Button>
+        {/* Sticky: the save button stays in view in the layer "Monatliche Kosten" (US-QS-15). */}
+        <div className="sticky bottom-0 bg-card py-2">
+          <Button
+            type="submit"
+            size="touch"
+            className={`w-full ${BUSY_LOOK}`}
+            aria-disabled={props.running || undefined}
+            aria-busy={props.running || undefined}
+          >
+            Kosten speichern
+          </Button>
+        </div>
       </FormRoot>
     </Form>
   );

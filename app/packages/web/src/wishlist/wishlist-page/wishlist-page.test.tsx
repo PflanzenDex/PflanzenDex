@@ -343,7 +343,7 @@ describe("US-WUN-01 recording a wish", () => {
     at = "/?sheet=new-wish";
   });
   const fill = async (name: string) => {
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.type(screen.getByLabelText("Name"), name);
   };
 
@@ -440,7 +440,7 @@ describe("US-WUN-01 recording a wish", () => {
   it("US-WUN-01 refuses an empty name before sending: field marked, described, focused", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await save();
     const name = screen.getByLabelText("Name");
     expect(name.getAttribute("aria-invalid")).toBe("true");
@@ -485,7 +485,7 @@ describe("US-WUN-01 recording a wish", () => {
   it("US-WUN-01 a field loses its mark again when the next input is fine", async () => {
     fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await save();
     const name = screen.getByLabelText("Name");
     expect(name.getAttribute("aria-invalid")).toBe("true");
@@ -558,7 +558,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
   it("US-WUN-01 · #902 picking a species from the catalog fills the wish; the free fields stay below Mehr Angaben", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
     await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
     await userEvent.click(await screen.findByRole("button", { name: /Epipremnum aureum/ }));
@@ -576,10 +576,22 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
   it("US-WUN-01 · #902 saving without a species opens Mehr Angaben and names the missing name", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     expect(await screen.findByText("Bitte gib einen Namen an.")).toBeTruthy();
     expect(screen.getByLabelText("Name").closest("details")?.open).toBe(true);
+  });
+
+  it("US-QS-24 · US-WUN-01 'Neuer Wunsch' has no heading inside the form that repeats the layer title; Mehr Angaben starts closed; the save button sits in a sticky footer", async () => {
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
+    const section = screen.getByRole("button", { name: "Wunsch speichern" }).closest("section");
+    expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
+    expect(
+      screen.getByRole("button", { name: "Wunsch speichern" }).parentElement?.className,
+    ).toContain("sticky");
   });
 
   it("US-WUN-01 · DS-50 the save button is disabled while the write runs, so a double tap writes once", async () => {
@@ -589,7 +601,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
       () => new Promise<Response>((resolve) => (release = resolve)),
     );
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.type(screen.getByLabelText("Name"), "Neu");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     const busy = (await screen.findByRole("button", { name: /Speichert/ })) as HTMLButtonElement;

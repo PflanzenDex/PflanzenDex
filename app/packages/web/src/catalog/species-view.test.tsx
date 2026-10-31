@@ -176,9 +176,9 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
     expect(h).toContain("Prüfliste");
   });
 
-  it("optional details are collapsed and recognizable as optional; numbers have input aids", () => {
+  it("US-QS-24 optional details are collapsed behind Mehr Angaben; numbers have input aids", () => {
     const h = light();
-    expect(h).toContain("Weitere Angaben (optional)");
+    expect(h).toContain("Mehr Angaben");
     expect(h).toContain('inputMode="numeric"');
   });
 });
