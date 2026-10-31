@@ -1,15 +1,21 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/kernel";
+import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "./equipment-page";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+// The toast of an undo needs the provider of the app shell above the page (US-QS-07).
 const view = (ui: ReactElement, url = "/") =>
-  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+  render(
+    <ToastProvider>
+      <MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>
+    </ToastProvider>,
+  );
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
 Element.prototype.setPointerCapture ??= () => undefined;
@@ -566,5 +572,68 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const layer = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
     await userEvent.selectOptions(await within(layer).findByLabelText("Zustand"), "defective");
     expect(await within(layer).findByText(/Zustand von „Lampe Regal“ gespeichert/)).toBeTruthy();
+  });
+  it("US-EQU-02 equipment status change offers Rückgängig which restores the previous status (P-10)", async () => {
+    const fetchFn = fakeServer([], undefined, {
+      zones: [zone({ lamps: [lampOf()] })],
+      unassigned: [],
+    });
+    const base = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/equipment/l1/status" && init?.method === "POST")
+        return response(200, {
+          ...item({ id: "l1" }),
+          status: JSON.parse(String(init.body)).status,
+        });
+      return base?.(url, init) ?? response(404, {});
+    });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const user = userEvent.setup();
+    await user.selectOptions(await screen.findByLabelText("Zustand"), "defective");
+    // jsdom has no CSS: the toast sits beside the modal, whose body has pointer-events none; in the browser the toast is
+    // pointer-events-auto, so a plain click is the same here.
+    fireEvent.click(await screen.findByRole("button", { name: "Rückgängig" }));
+    const posts = await vi.waitFor(() => {
+      const calls = fetchFn.mock.calls.filter(
+        ([url, init]) =>
+          init?.method === "POST" && new URL(String(url)).pathname === "/equipment/l1/status",
+      );
+      if (calls.length < 2) throw new Error("undo not sent yet");
+      return calls;
+    });
+    expect(JSON.parse(String(posts[0]?.[1]?.body))).toEqual({ status: "defective" });
+    expect(JSON.parse(String(posts[1]?.[1]?.body))).toEqual({ status: "active" });
+  });
+
+  it("US-EQU-05 a supply change offers Rückgängig which restores the previous level (P-10)", async () => {
+    const substrate = item({
+      id: "s1",
+      type: "Substrate",
+      name: "Kokos",
+      status: null,
+      supply: "available",
+    });
+    const fetchFn = fakeServer([substrate]);
+    const base = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) =>
+      new URL(String(url)).pathname === "/equipment/s1/supply" && init?.method === "POST"
+        ? response(200, { ...substrate, supply: JSON.parse(String(init.body)).supply })
+        : (base?.(url, init) ?? response(404, {})),
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-s1");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Wird knapp" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Rückgängig" }));
+    const posts = await vi.waitFor(() => {
+      const calls = fetchFn.mock.calls.filter(
+        ([url, init]) =>
+          init?.method === "POST" && new URL(String(url)).pathname === "/equipment/s1/supply",
+      );
+      if (calls.length < 2) throw new Error("undo not sent yet");
+      return calls;
+    });
+    expect(JSON.parse(String(posts[0]?.[1]?.body))).toEqual({ supply: "low" });
+    expect(JSON.parse(String(posts[1]?.[1]?.body))).toEqual({ supply: "available" });
   });
 });

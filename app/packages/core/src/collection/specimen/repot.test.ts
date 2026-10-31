@@ -131,3 +131,64 @@ describe("US-BES-04 repotted", () => {
     expect((await specimens.find("anna", cutting.id))?.status).toBe("cutting");
   });
 });
+
+describe("US-BES-04 the repot date is chosen by the keeper (local calendar date, NFR-08)", () => {
+  // The clock is 23:30 UTC on 9 October, which is already 10 October in Berlin: "today" is the local day.
+  const at = (specimenId: string, input: object) =>
+    execute(
+      specimenRepot({ specimens, clock: () => new Date("2026-10-09T23:30:00Z") }),
+      { idempotency: idem },
+      { context: anna, input: { specimenId, ...input }, idempotencyKey: `k${++counter}` },
+    );
+
+  it("US-BES-04: a chosen past date is recorded as the repot day", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    const r = await at(cutting.id, { timeZone: "Europe/Berlin", date: "2026-09-30" });
+    expect(r.ok).toBe(true);
+    expect((await specimens.find("anna", cutting.id))?.repottedAt).toBe("2026-09-30");
+    expect((await specimens.find("anna", cutting.id))?.status).toBe("plant");
+  });
+
+  it("US-BES-04: today in the keeper's time zone is allowed, tomorrow there is refused", async () => {
+    const today = await create("anna", "Bogenhanf", "cutting");
+    expect((await at(today.id, { timeZone: "Europe/Berlin", date: "2026-10-10" })).ok).toBe(true);
+    const tomorrow = await create("anna", "Bogenhanf 2", "cutting");
+    const r = await at(tomorrow.id, { timeZone: "Europe/Berlin", date: "2026-10-11" });
+    expect(!r.ok && r.error.code).toBe("specimen.repotted_in_future");
+    expect(!r.ok && r.error.details).toEqual([
+      { field: "date", code: "specimen.repotted_in_future" },
+    ]);
+  });
+
+  it("US-BES-04: a future date writes nothing, the cutting stays a cutting", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    const before = specimens.writes;
+    await at(cutting.id, { timeZone: "Europe/Berlin", date: "2026-12-24" });
+    expect(specimens.writes).toBe(before);
+    const kept = await specimens.find("anna", cutting.id);
+    expect(kept?.status).toBe("cutting");
+    expect(kept?.repottedAt ?? null).toBeNull();
+  });
+
+  it("US-BES-04: a date that is no calendar day or lies before 1900 is input.invalid on the field date", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    for (const date of ["2026-02-30", "09.10.2026", "1899-12-31"]) {
+      const r = await at(cutting.id, { timeZone: "Europe/Berlin", date });
+      expect(!r.ok && r.error.details).toEqual([{ field: "date", code: "input.invalid" }]);
+    }
+    expect((await specimens.find("anna", cutting.id))?.status).toBe("cutting");
+  });
+
+  it("US-BES-04: a chosen date without a time zone is refused, nothing is guessed (P-08)", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    const r = await at(cutting.id, { date: "2026-09-30" });
+    expect(!r.ok && r.error.code).toBe("input.invalid");
+    expect((await specimens.find("anna", cutting.id))?.status).toBe("cutting");
+  });
+
+  it("US-BES-04: without a date today is recorded as before (older clients keep working)", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    expect((await at(cutting.id, { timeZone: "Europe/Berlin" })).ok).toBe(true);
+    expect((await specimens.find("anna", cutting.id))?.repottedAt).toBe("2026-10-10");
+  });
+});

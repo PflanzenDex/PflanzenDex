@@ -68,6 +68,10 @@ Acceptance criteria:
 - Phase tracker and light distribution (lamps 2–4) exclude cuttings.
 - "Potted" is an action: it sets `Status: Plant`, removes the light zone override, and from then on the light zone of the species applies. A "Potted" event goes into the feed if the specimen is shared.
 - The species keeps its target profile (target light zone, `Light_Lux_Demand`).
+- Given a cutting, when I choose "Eingetopft" in its menu "Mehr", then a form opens with the date field "Eingetopft am" preset to today in my time zone (NFR-08), the button "Speichern" and "Abbrechen"; nothing is written before "Speichern" (owner decision 2026-10-30, issue 1028).
+- Given the form, when I save a day from 1900-01-01 up to today in my time zone, then the cutting becomes a plant that was potted on this day; when I save a later day, then nothing is written and the field says that the day lies in the future; "Abbrechen" changes nothing.
+
+State of implementation (issue 1028): the layer's "Eingetopft" opens the form (web, the same form pattern as "Fangdatum" and "Archivieren"). The operation `specimen.repot` takes the optional local day `date` (`YYYY-MM-DD`, from 1900 on): a later day is refused with `specimen.repotted_in_future` on the field `date`, and a day without `timeZone` is `input.invalid` on `timeZone`, because it cannot be checked. Without a day today is recorded as before, so older clients keep working.
 
 ### US-BES-05 · Compare species by difficulty · ✅ (prototype ✅)
 

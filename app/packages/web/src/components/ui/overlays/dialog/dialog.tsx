@@ -30,7 +30,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         )}
         {...props}
       >
-        <DialogPrimitive.Title className="text-lg font-semibold leading-none">
+        <DialogPrimitive.Title tabIndex={-1} className="text-lg font-semibold leading-none">
           {title}
         </DialogPrimitive.Title>
         {description ? (

@@ -35,6 +35,7 @@ Acceptance criteria:
 
 - A lamp device belongs to exactly one light zone (selection, no text).
 - The zone view shows per zone the assigned devices and their state (`active`, `defective`, `retired`).
+- Given a changed state of a device, when it is saved, then a toast says the new state and offers "Rückgängig", which writes the previous state back (US-QS-07, P-10, issue 1028).
 - Warning if a zone 2–4 has specimens but **no active lamp device** (P-10).
 - Hint (no error) if an active lamp device serves no occupied zone (unused capacity).
 - The distribution of the specimens (US-LIC-02) stays unchanged; equipment extends it with the device list.
@@ -70,6 +71,7 @@ Acceptance criteria:
 - `low`/`empty` creates an entry in "Rebuy" (US-EQU-07).
 - A plant agent can be linked to `Treatment.Agent`; without a link the free text stays unchanged.
 - The species' `Substrate` stays free text; optional link to a consumable.
+- Given a changed supply, when it is saved, then a toast offers "Rückgängig", which writes the previous level back (US-QS-07, P-10, issue 1028).
 
 Decisions (assumption, decided by the PO): the consumable types are `Substrate`, `Fertilizer` and `Plant agent`; `Other` stays a device with a state, because a generic record cannot be both. A new consumable starts `available`; a consumable recorded before has no value and reads `available`; a device has no supply. The supply changes by tap and may jump to any level. `Agent_Link` is a text of up to 80 characters that the keeper links to a plant agent; it is matched against `Treatment.Agent` case-insensitively and never changes the free text of a treatment. The entry in "Rebuy" is derived by US-EQU-07, not stored. The link from the species' `Substrate` to a consumable is open: a species is shared, equipment is private to the account (P-05), so the link needs its own decision.
 
