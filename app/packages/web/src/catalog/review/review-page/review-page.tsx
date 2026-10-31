@@ -6,6 +6,7 @@ import {
   type SegmentedOption,
 } from "@/components/segmented-control/segmented-control";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
 import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
@@ -135,39 +136,37 @@ export function ReviewPage(props: { api: string; token: Token; now?: () => numbe
   const load = useCallback((t: string) => loadReviewList(api, t), [api]);
   const now = (props.now ?? Date.now)();
   return (
-    <div
-      data-fit-screen=""
-      className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7"
-    >
-      <h1 className="text-2xl font-semibold">Prüfliste</h1>
-      {review.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {review.message} {review.outcome}
-        </p>
-      )}
-      {review.error && (
-        <div role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-          <p>{refusalText(review.error)}</p>
-        </div>
-      )}
-      <LoadFrame
-        queryKey={KEY}
-        token={token}
-        load={load}
-        loadingText="Prüfliste wird geladen …"
-        loadingFallback={<ReviewPageSkeleton label="Prüfliste wird geladen …" />}
-      >
-        {(list: ReviewList) => (
-          <ReviewBody
-            list={list}
-            show={show}
-            choose={choose}
-            actions={review.actions}
-            now={now}
-            reload={reload}
-          />
+    <div data-fit-screen="" className="flex min-w-0 flex-1 flex-col">
+      <FullView headingId="review-title" title="Prüfliste">
+        {review.message && (
+          <p role="status" className="rounded-lg border border-border p-3">
+            {review.message} {review.outcome}
+          </p>
         )}
-      </LoadFrame>
+        {review.error && (
+          <div role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+            <p>{refusalText(review.error)}</p>
+          </div>
+        )}
+        <LoadFrame
+          queryKey={KEY}
+          token={token}
+          load={load}
+          loadingText="Prüfliste wird geladen …"
+          loadingFallback={<ReviewPageSkeleton label="Prüfliste wird geladen …" />}
+        >
+          {(list: ReviewList) => (
+            <ReviewBody
+              list={list}
+              show={show}
+              choose={choose}
+              actions={review.actions}
+              now={now}
+              reload={reload}
+            />
+          )}
+        </LoadFrame>
+      </FullView>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 import { useCallback } from "react";
-import { Link } from "react-router";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { EXCHANGE_PATH } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { Button } from "@/components/ui/button/button";
+import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
 import { LoadFrame, type Response } from "../../../kernel";
 import {
   answerYes,
@@ -66,15 +65,11 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
   const load = useCallback((t: string) => loadMatchDeck(api, t), [api]);
   const { yes, answer, undo } = useWrites(api, token);
   return (
-    <section aria-labelledby="match-page-title" className="flex min-w-0 flex-col gap-3">
-      <div>
-        <Button asChild variant="outline" size="touch">
-          <Link to={EXCHANGE_PATH}>Zur Tauschbörse</Link>
-        </Button>
-      </div>
-      <h1 id="match-page-title" className="text-2xl font-semibold">
-        Passende Angebote
-      </h1>
+    <FullView
+      headingId="match-page-title"
+      title="Passende Angebote"
+      back={{ label: "Zurück zur Tauschbörse", to: EXCHANGE_PATH }}
+    >
       <p className="text-muted-foreground [@media(max-height:700px)]:hidden">
         Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.
       </p>
@@ -84,7 +79,6 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
         load={load}
         loadingText="Angebote werden geladen …"
         loadingFallback={<DeckSkeleton label="Angebote werden geladen …" />}
-        heading="Passende Angebote"
         fresh
       >
         {(deck: DeckData) => (
@@ -99,6 +93,6 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
           />
         )}
       </LoadFrame>
-    </section>
+    </FullView>
   );
 }

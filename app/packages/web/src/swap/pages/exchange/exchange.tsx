@@ -8,6 +8,7 @@ import {
   useLayer,
 } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/components/ui/button/button";
+import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { loadExchange, withdrawOffer, type ExchangeData } from "../../api/offers-api";
@@ -126,49 +127,30 @@ export function ExchangePage(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadExchange(api, t), [api]);
   return (
     <LayerHost>
-      <div className="rounded-2xl border border-border bg-card px-4 py-3 text-card-foreground md:p-7">
-        <section aria-labelledby="exchange-title" className="flex min-w-0 flex-col gap-2">
-          <div className="flex gap-2">
-            <Button
-              asChild
-              variant="outline"
-              size="touch"
-              className="min-w-0 flex-1 px-1.5 text-[13px]"
-            >
-              <Link to="/friends">Zurück zu Freunde</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="touch"
-              className="min-w-0 flex-1 px-1.5 text-[13px]"
-            >
-              <Link to="/friends/match">Passende Angebote</Link>
-            </Button>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <h1 id="exchange-title" className="text-2xl font-semibold">
-              Tauschbörse
-            </h1>
-            <OfferOpener />
-          </div>
-          <p className="hidden text-muted-foreground md:block">
-            Nur deine Freunde sehen ein Angebot, und nur, was du für sie freigegeben hast.
-          </p>
-          <LoadFrame
-            queryKey={KEY}
-            token={token}
-            load={load}
-            loadingText="Tauschbörse wird geladen …"
-            loadingFallback={<ExchangeSkeleton label="Tauschbörse wird geladen …" />}
-            heading="Tauschbörse"
-          >
-            {(data: ExchangeData) => (
-              <Body data={data} api={api} token={token} onWritten={reload} />
-            )}
-          </LoadFrame>
-        </section>
-      </div>
+      <FullView
+        headingId="exchange-title"
+        title="Tauschbörse"
+        back={{ label: "Zurück zu Freunde", to: "/friends" }}
+        action={<OfferOpener />}
+      >
+        <div>
+          <Button asChild variant="outline" size="touch" className="w-auto">
+            <Link to="/friends/match">Passende Angebote</Link>
+          </Button>
+        </div>
+        <p className="hidden text-muted-foreground md:block">
+          Nur deine Freunde sehen ein Angebot, und nur, was du für sie freigegeben hast.
+        </p>
+        <LoadFrame
+          queryKey={KEY}
+          token={token}
+          load={load}
+          loadingText="Tauschbörse wird geladen …"
+          loadingFallback={<ExchangeSkeleton label="Tauschbörse wird geladen …" />}
+        >
+          {(data: ExchangeData) => <Body data={data} api={api} token={token} onWritten={reload} />}
+        </LoadFrame>
+      </FullView>
     </LayerHost>
   );
 }

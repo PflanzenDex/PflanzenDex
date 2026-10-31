@@ -35,7 +35,7 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
     return <PlantLoader label="Funktion wird geladen …" size="lg" className="mx-auto my-8 flex" />;
   if (props.status === "error")
     return (
-      <section aria-labelledby="unlock-title" className="flex flex-col gap-3">
+      <section aria-labelledby="unlock-title" className={CARD}>
         <h1 id="unlock-title" className="text-2xl font-semibold">
           {props.name}
         </h1>
@@ -55,9 +55,12 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
         Diese Funktion gibt es hier nicht
       </h1>
       <p>Zurück zum Start findest du alles, was die App für dich bereithält.</p>
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Button asChild>
           <Link to={PATHS.today}>Zum Start</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to={accountAddress("functions")}>Alle Funktionen ansehen</Link>
         </Button>
       </div>
     </section>
@@ -145,33 +148,32 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
       <Unavailable name={name} status={unlocks.status === "ready" ? "unknown" : unlocks.status} />
     );
   const locked = entry.state === "locked" && entry.announced;
+  // One card with its heading and its buttons, like the other states of this page (issue 1031, US-QS-14).
   return (
-    <section aria-labelledby="unlock-title" className="flex flex-col gap-3">
+    <section aria-labelledby="unlock-title" className={CARD}>
       <h1 ref={heading} tabIndex={-1} id="unlock-title" className="text-2xl font-semibold">
         {name}
       </h1>
       <WriteNotes message={write.message} error={write.error} />
-      <div className={CARD}>
-        {locked ? (
-          <LockedBody
-            entry={entry}
-            name={name}
-            running={write.running}
-            onUnlock={() => void unlock()}
-          />
-        ) : (
-          !write.message && <p>{name} ist offen.</p>
-        )}
-        <p className="m-0">{FUNCTION_PURPOSES[id as UnlockFunctionId]}</p>
-        {/* Once open (or unlocked just now) the next step is the function itself (P-09). */}
-        {(!locked || write.message) && (
-          <div>
-            <Button asChild>
-              <Link to={functionAddress(id)}>{name} öffnen</Link>
-            </Button>
-          </div>
-        )}
-      </div>
+      {locked ? (
+        <LockedBody
+          entry={entry}
+          name={name}
+          running={write.running}
+          onUnlock={() => void unlock()}
+        />
+      ) : (
+        !write.message && <p>{name} ist offen.</p>
+      )}
+      <p className="m-0">{FUNCTION_PURPOSES[id as UnlockFunctionId]}</p>
+      {/* Once open (or unlocked just now) the next step is the function itself (P-09). */}
+      {(!locked || write.message) && (
+        <div>
+          <Button asChild>
+            <Link to={functionAddress(id)}>{name} öffnen</Link>
+          </Button>
+        </div>
+      )}
       <div>
         <Button asChild variant="outline">
           <Link to={accountAddress("functions")}>Alle Funktionen ansehen</Link>

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -136,5 +136,32 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
     expect(await screen.findByLabelText("Name der Pflanze")).toBeTruthy();
+  });
+});
+
+describe("US-QS-14 · US-ONB-01 Pflanze anlegen is a full-view page with one page header", () => {
+  it("US-QS-14 has one h1 whose page header leads back to the Sammlung", () => {
+    server();
+    view();
+    const title = screen.getByRole("heading", { level: 1, name: "Pflanze anlegen" });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const header = title.closest("[data-page-header]") as HTMLElement | null;
+    expect(header).not.toBeNull();
+    expect(
+      within(header as HTMLElement)
+        .getByRole("link", { name: "Zurück zur Sammlung" })
+        .getAttribute("href"),
+    ).toBe("/collection");
+  });
+
+  it("US-QS-14 the step's back is an outline button and 'Mehr Angaben' a ghost button, no filled grey one (ADR 0017)", async () => {
+    server();
+    view();
+    await toSave();
+    expect(screen.getByRole("button", { name: "Zurück" }).className).toContain("border-primary");
+    const more = screen.getByRole("button", { name: "Mehr Angaben" }).className;
+    expect(more).toContain("hover:bg-accent");
+    expect(more).not.toContain("border-primary");
+    expect(more).not.toContain("bg-secondary");
   });
 });

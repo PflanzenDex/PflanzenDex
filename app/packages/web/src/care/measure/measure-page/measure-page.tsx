@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef } from "react";
-import { ArrowLeft } from "lucide-react";
 import { GrowthMomentNote, useGrowthMoments } from "@/achievements";
-import { Button } from "@/components/ui/button/button";
+import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
 import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LoadFrame, useInvalidate } from "../../../kernel";
 import { MeasureForm } from "../measure-form/measure-form";
@@ -14,25 +13,8 @@ import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 
 type Token = () => Promise<string | undefined>;
 
-/** The way back and the name of the page, one row (US-QS-15): the arrow button goes back to the collection. */
-function MeasureHeading(props: { name: string; onBack: () => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="Zurück zur Sammlung"
-        onClick={props.onBack}
-      >
-        <ArrowLeft aria-hidden="true" className="size-5" />
-      </Button>
-      <h1 id="measure-title" className="min-w-0 text-xl font-semibold [overflow-wrap:anywhere]">
-        Messen: {props.name}
-      </h1>
-    </div>
-  );
-}
+/** The loading text of the measure page (also its skeleton label). */
+const LOADING = "Messungen werden geladen …";
 
 /**
  * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Verlauf (n)", the
@@ -61,16 +43,19 @@ export function MeasurePage(props: {
     invalidate,
   });
   const moments = useGrowthMoments(api, token, specimen.id);
-  const loading = "Messungen werden geladen …";
   return (
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
-      <MeasureHeading name={specimen.name} onBack={props.onBack} />
+      <PageHeader
+        headingId="measure-title"
+        title={`Messen: ${specimen.name}`}
+        back={{ label: "Zurück zur Sammlung", onBack: props.onBack }}
+      />
       <LoadFrame
         queryKey={key}
         token={token}
         load={load}
-        loadingText={loading}
-        loadingFallback={<MeasurePageSkeleton label={loading} />}
+        loadingText={LOADING}
+        loadingFallback={<MeasurePageSkeleton label={LOADING} />}
       >
         {(view) => (
           <>

@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { ArrowLeft, Leaf } from "lucide-react";
+import { Leaf } from "lucide-react";
 import { speciesHints, type Species } from "@pflanzendex/core";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
+import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
 import {
   FactGrid,
   type Fact,
@@ -112,36 +113,21 @@ export function SpeciesProfile(props: {
   extra?: ReactNode;
 }) {
   const { species } = props;
-  const Heading = props.embedded ? "h2" : "h1";
   return (
     <article aria-labelledby="species-title" className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      <header className="flex min-w-0 items-center gap-3">
-        {props.onBack && (
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            aria-label="Zurück zur Suche"
-            title="Zurück zur Suche"
-            className="shrink-0"
-            onClick={props.onBack}
-          >
-            <ArrowLeft className="size-5" aria-hidden="true" />
-          </Button>
-        )}
+      {/* The way back "Zurück zur Suche" is the page header's chevron (issue 1031); embedded, the name is a level-2 heading. */}
+      <PageHeader
+        headingId="species-title"
+        heading={props.embedded ? "h2" : "h1"}
+        title={<i>{species.latinName}</i>}
+        {...(props.onBack ? { back: { label: "Zurück zur Suche", onBack: props.onBack } } : {})}
+      />
+      <div className="flex min-w-0 items-center gap-3">
         <PhotoSlot />
-        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-1">
-          <Heading
-            id="species-title"
-            className="break-words text-lg font-semibold leading-tight md:text-xl"
-          >
-            <i>{species.latinName}</i>
-          </Heading>
-          <Badge variant="outline" className="self-start">
-            {STATUS[species.reviewStatus]}
-          </Badge>
-        </div>
-      </header>
+        <Badge variant="outline" className="self-start">
+          {STATUS[species.reviewStatus]}
+        </Badge>
+      </div>
       {(props.onChoose || props.extra) && (
         <div className="flex flex-wrap gap-2 [&>*]:min-w-0 [&>*]:flex-1">
           {props.onChoose && (

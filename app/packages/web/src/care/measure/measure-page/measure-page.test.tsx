@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
@@ -395,5 +395,19 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     await openCourse();
     await screen.findAllByRole("heading", { level: 3 });
     expect(screen.getAllByLabelText(/Foto hinzufügen/)).toHaveLength(1);
+  });
+});
+
+describe("US-QS-14 · US-QS-15 the measure page is a sub-page with one page header", () => {
+  it("US-QS-14 has one h1, and its back control sits in that page header", async () => {
+    fakeServer();
+    show();
+    const title = await screen.findByRole("heading", { level: 1, name: /^Messen: / });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const header = title.closest("[data-page-header]") as HTMLElement | null;
+    expect(header).not.toBeNull();
+    expect(
+      within(header as HTMLElement).getByRole("button", { name: "Zurück zur Sammlung" }),
+    ).toBeTruthy();
   });
 });

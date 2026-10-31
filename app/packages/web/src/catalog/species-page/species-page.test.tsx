@@ -258,6 +258,21 @@ describe("US-BES-01 Seite Arten", () => {
   });
 });
 
+describe("US-QS-14 · US-QS-15 the species route is a page with one page header", () => {
+  it("US-QS-14 the profile opened from outside has exactly one h1, and its back control sits in that page header", async () => {
+    fakeServer();
+    render(page({ openId: "a1" }));
+    await screen.findByText(/Bogenhanf/);
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const header = title.closest("[data-page-header]") as HTMLElement | null;
+    expect(header).not.toBeNull();
+    expect(
+      within(header as HTMLElement).getByRole("button", { name: "Zurück zur Suche" }),
+    ).toBeTruthy();
+  });
+});
+
 describe("US-POK-09 open a species profile from outside", () => {
   it("US-POK-09 with openId the page starts on the profile of that species", async () => {
     fakeServer();
