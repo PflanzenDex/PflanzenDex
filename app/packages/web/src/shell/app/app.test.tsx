@@ -364,10 +364,20 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/species/a1");
+    // US-QS-21: the section is one layer away from the profile, so the profile fits one screen.
+    await userEvent.click(await screen.findByRole("button", { name: "Mein Pflegeprofil" }));
     expect(
-      await screen.findByRole("heading", { level: 2, name: "Mein Pflegeprofil" }),
-    ).toBeTruthy();
+      (await screen.findAllByRole("heading", { level: 2, name: "Mein Pflegeprofil" })).length,
+    ).toBeGreaterThan(0);
     expect(await screen.findByText(/Du hast noch keine Pflanze dieser Art/)).toBeTruthy();
+  });
+
+  it("US-QS-21 the profile at its own address is one screen: the frame is marked to fit, and the header holds the primary action", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/discover/species/a1");
+    expect(await screen.findByRole("button", { name: "Diese Art wählen" })).toBeTruthy();
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
   });
 
   it("US-QS-14 · US-PHA-01 the old address /care-phases opens the plants grouped by care phase", async () => {

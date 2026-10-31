@@ -34,9 +34,10 @@ const careProfile = (api: string, token: Token) =>
 /** The species profile has its own address; the id comes from it (US-POK-09). */
 function SpeciesProfileRoute(props: { api: string; token: Token; onChoose: (s: Species) => void }) {
   const { profileId } = useParams();
-  // The profile has layers of its own (the catalog's "Art vorschlagen"), so it has a frame too (US-QS-15).
+  // The profile has layers of its own (the catalog's "Art vorschlagen"), so it has a frame too (US-QS-15). It is one
+  // screen like "Entdecken" (US-QS-21): the frame takes the viewport and the facts scroll inside themselves at most.
   return (
-    <LayerHost>
+    <LayerHost className="h-full min-h-0" data-fit-screen="" data-fit-fill="">
       <SpeciesPage
         {...props}
         openId={profileId ?? null}

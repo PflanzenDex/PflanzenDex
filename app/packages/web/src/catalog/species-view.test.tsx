@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+import { cleanup, render as mount, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderToString as render } from "react-dom/server";
 import type { Species } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
@@ -49,14 +52,33 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     const h = renderToString(<SpeciesProfile species={species} onChoose={vi.fn()} />);
     expect(h).toContain("Dracaena trifasciata");
     expect(h).toContain("Bogenhanf");
-    expect(h).toContain("Sansevieria trifasciata");
     expect(h).toContain("Einfach");
     expect(h).toContain("15.000\u00a0Lux");
     expect(h).toContain("Höhe");
-    expect(h).toContain("Blätter kippen zur Seite.");
-    expect(h).toMatch(/Ruhephase<\/dt><dd>unbekannt/);
-    expect(h).toMatch(/Englischer Name<\/dt><dd>unbekannt/);
-    expect(h).toMatch(/Quelle<\/dt><dd>unbekannt/);
+  });
+
+  it("US-QS-21 the profile has a header with the primary action first and three tabs; known facts are a grid, unknown ones are named (P-08, P-10)", () => {
+    const h = renderToString(<SpeciesProfile species={species} onChoose={vi.fn()} />);
+    expect(h.indexOf("Diese Art wählen")).toBeGreaterThan(h.indexOf("<header"));
+    expect(h.indexOf("Diese Art wählen")).toBeLessThan(h.indexOf("Steckbrief</button>") + 400);
+    for (const tab of ["Steckbrief", "Pflege", "Herkunft"]) expect(h).toContain(`>${tab}<`);
+    expect(h).toContain("<dl");
+    // Unknown stays unknown: counted in one line with the names behind it, no empty row each, nothing filled in.
+    expect(h).toContain("3 Angaben fehlen");
+    expect(h).toContain("Englischer Name, Ruhephase, Standort-Hinweis");
+    expect(h).not.toMatch(/Englischer Name<\/dt>/);
+  });
+
+  it("US-QS-21 the care and origin tabs show their known facts and name the unknown ones", async () => {
+    mount(<SpeciesProfile species={species} onChoose={vi.fn()} />);
+    await userEvent.click(screen.getByRole("tab", { name: "Pflege" }));
+    expect(screen.getByText("Blätter kippen zur Seite.")).toBeTruthy();
+    expect(screen.getByText("4 Angaben fehlen")).toBeTruthy();
+    expect(screen.getByText("Gießhinweis, Substrat, Rückschnitt, Wuchs-Hacks")).toBeTruthy();
+    await userEvent.click(screen.getByRole("tab", { name: "Herkunft" }));
+    expect(screen.getByText("Sansevieria trifasciata")).toBeTruthy();
+    expect(screen.getByText("Botanische Story, Quelle")).toBeTruthy();
+    cleanup();
   });
 
   it('US-BES-12 P-08: unknown difficulty, default level and lux need read "unbekannt", never a default (#1003)', () => {
@@ -66,9 +88,10 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
         onChoose={vi.fn()}
       />,
     );
-    expect(h).toMatch(/Schwierigkeit<\/dt><dd[^>]*>unbekannt<\/dd>/);
-    expect(h).toMatch(/Standard-Stufe<\/dt><dd[^>]*>unbekannt<\/dd>/);
-    expect(h).toMatch(/Lichtbedarf<\/dt><dd[^>]*>unbekannt<\/dd>/);
+    expect(h).toContain(
+      "Englischer Name, Schwierigkeit, Standard-Stufe, Lichtbedarf, Ruhephase, Standort-Hinweis",
+    );
+    expect(h).not.toContain("Einfach");
   });
 
   it('US-BES-12 P-08: unknown growth measure, etiolation signs and success criteria read "unbekannt" (#1005)', () => {
@@ -78,9 +101,19 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
         onChoose={vi.fn()}
       />,
     );
-    expect(h).toMatch(/Wachstumsmaß<\/dt><dd[^>]*>unbekannt<\/dd>/);
-    expect(h).toMatch(/Vergeilung-Anzeichen<\/dt><dd[^>]*>unbekannt<\/dd>/);
-    expect(h).toMatch(/Erfolgskriterien<\/dt><dd[^>]*>unbekannt<\/dd>/);
+    expect(h).toContain("Englischer Name, Ruhephase, Wachstumsmaß, Standort-Hinweis");
+    // The care facts are on their own tab; opened there they are named as unknown too.
+    mount(
+      <SpeciesProfile
+        species={{ ...species, growthMeasure: null, etiolationSigns: null, successCriteria: null }}
+        onChoose={vi.fn()}
+      />,
+    );
+    return userEvent.click(screen.getByRole("tab", { name: "Pflege" })).then(() => {
+      expect(screen.getByText("6 Angaben fehlen")).toBeTruthy();
+      expect(screen.getByText(/Vergeilung-Anzeichen, Erfolgskriterien/)).toBeTruthy();
+      cleanup();
+    });
   });
 
   it("approved species: marked as reviewed, with a button to choose", () => {
@@ -114,14 +147,22 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
   const html = () =>
     renderToString(<ProposalForm start="Aloe" onSend={async () => null} onExisting={vi.fn()} />);
 
-  it("requires all required fields from DM-BES-01", () => {
-    const h = html();
-    for (const name of ["latinName", "growthMeasure", "etiolationSigns", "successCriteria"])
-      expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
+  const light = () =>
+    renderToString(
+      <ProposalForm start="Aloe" onSend={async () => null} onExisting={vi.fn()} startStep={2} />,
+    );
+
+  it("US-BES-01 requires all required fields from DM-BES-01: the name and the growth on step 1, the two texts on step 2 (US-QS-21)", () => {
+    const first = html();
+    for (const name of ["latinName", "growthMeasure"])
+      expect(first.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
+    const second = light();
+    for (const name of ["etiolationSigns", "successCriteria"])
+      expect(second.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
   });
 
   it('US-BES-01 P-08: difficulty, default level and lux need are optional and offer "Unbekannt" (#1003)', () => {
-    const h = html();
+    const h = light();
     for (const name of ["difficulty", "standardLevel", "lightDemandLux"])
       expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).not.toContain("required");
     expect(h).toContain("Unbekannt");
@@ -131,12 +172,12 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
   it("takes the search text as the name and explains visibility and review", () => {
     const h = html();
     expect(h).toContain('value="Aloe"');
-    expect(h).toContain("nur für dich sichtbar");
+    expect(h).toContain("Nur für dich sichtbar");
     expect(h).toContain("Prüfliste");
   });
 
   it("optional details are collapsed and recognizable as optional; numbers have input aids", () => {
-    const h = html();
+    const h = light();
     expect(h).toContain("Weitere Angaben (optional)");
     expect(h).toContain('inputMode="numeric"');
   });
