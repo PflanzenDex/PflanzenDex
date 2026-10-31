@@ -242,6 +242,30 @@ describe("US-BES-04 repotted on the card", () => {
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
   });
 
+  it("US-BES-04: a day before the catch date is refused on the date field and nothing is written (P-10)", async () => {
+    fakeServer({
+      repotError: new Response(
+        JSON.stringify({
+          error: {
+            code: "specimen.repotted_before_caught",
+            text: "Vor dem Fangdatum.",
+            details: [{ field: "date", code: "specimen.repotted_before_caught" }],
+          },
+        }),
+        { status: 400 },
+      ),
+    });
+    render(page());
+    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
+      target: { value: "2026-08-31" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByText(/liegt vor dem Fangdatum/)).toBeTruthy();
+    expect(screen.getByLabelText("Eingetopft am").getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
+  });
+
   it("US-BES-04: when repotting fails the form stays and the German text of the code is shown (P-10)", async () => {
     fakeServer({
       repotError: new Response(
