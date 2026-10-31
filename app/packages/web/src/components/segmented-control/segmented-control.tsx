@@ -25,7 +25,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
       role="group"
       aria-label={props.label}
       className={cn(
-        "inline-flex w-fit max-w-full flex-wrap gap-1 rounded-full bg-muted p-1",
+        "inline-flex w-fit max-w-full gap-1 rounded-full bg-muted p-1",
         props.className,
       )}
     >

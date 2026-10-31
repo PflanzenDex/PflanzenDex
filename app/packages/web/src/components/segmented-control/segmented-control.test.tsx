@@ -61,23 +61,6 @@ describe("US-QS-14 segmented control", () => {
 });
 
 describe("US-QS-14 segmented control on phones and in dark mode (issue 1045)", () => {
-  it("US-QS-14 the group wraps its segments instead of clipping the last one", () => {
-    render(
-      <SegmentedControl
-        label="Ansicht der Sammlung"
-        options={[
-          { value: "plants", label: "Pflanzen" },
-          { value: "equipment", label: "Equipment" },
-        ]}
-        value="plants"
-        onChange={() => {}}
-      />,
-    );
-    expect(screen.getByRole("group", { name: "Ansicht der Sammlung" }).className).toContain(
-      "flex-wrap",
-    );
-  });
-
   it("US-QS-14 the selected segment is green intent, readable in both modes", () => {
     render(
       <SegmentedControl
