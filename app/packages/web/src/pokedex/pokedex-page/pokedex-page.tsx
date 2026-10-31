@@ -44,7 +44,7 @@ export function PokedexPage(props: {
   const { api, token, onOpenSpecies, host } = props;
   const load = useCallback((t: string) => loadOwnership(api, t), [api]);
   return (
-    <div className="min-w-0">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <LoadFrame
         queryKey={["pokedex", "ownership"]}
         token={token}
@@ -54,7 +54,10 @@ export function PokedexPage(props: {
         loadingFallback={<PokedexPageSkeleton label="Pokédex wird geladen …" />}
       >
         {(ownership: Ownership) => (
-          <section aria-labelledby="pokedex-title" className="flex min-w-0 flex-col gap-2">
+          <section
+            aria-labelledby="pokedex-title"
+            className="flex min-h-0 min-w-0 flex-1 flex-col gap-2"
+          >
             <ReportCaption host={host} caught={ownership.caught.length} />
             {host ? (
               <h2 id="pokedex-title" className="sr-only">

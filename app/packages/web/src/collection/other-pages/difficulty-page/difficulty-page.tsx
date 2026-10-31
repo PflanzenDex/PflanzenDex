@@ -46,7 +46,7 @@ export function DifficultyPage(props: {
   const load = useCallback((t: string) => loadDifficulty(api, t), [api]);
   const Frame = host ? Plain : PageFrame;
   return (
-    <Frame>
+    <Frame className="flex min-h-0 flex-1 flex-col">
       <LoadFrame
         queryKey={["collection", "difficulty"]}
         token={token}
@@ -125,7 +125,10 @@ function DifficultyTable(props: {
   const chosen = rows.find((r) => layerId(r) === params.get("sheet"));
   const hidden = unknownInEvery(rows, ENTRY_FACTS);
   return (
-    <section aria-labelledby="difficulty-title" className="flex min-w-0 flex-col gap-2">
+    <section
+      aria-labelledby="difficulty-title"
+      className="flex min-h-0 min-w-0 flex-1 flex-col gap-2"
+    >
       {host ? (
         <h2 id="difficulty-title" className="sr-only">
           Artenvergleich
@@ -151,6 +154,7 @@ function DifficultyTable(props: {
           <Pager
             items={rows}
             pageSize={size}
+            fit
             label="Artenvergleich"
             getKey={(r) => r.speciesId}
             listClassName="md:grid md:grid-cols-2"

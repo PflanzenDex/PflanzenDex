@@ -13,7 +13,10 @@ import { PlantLayers } from "./plant-layers/plant-layers";
 import { ARCHIVE_LAYER, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
 
-/** Tiles per page (starting values, assumption): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px. */
+/**
+ * Tiles per page without a layout (starting values, assumption): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px.
+ * With a layout the page takes the free height of the region instead (US-QS-19, issue 1029).
+ */
 export function usePageSize(): number {
   const md = useIsMd();
   const lg = useIsLg();
@@ -37,6 +40,7 @@ function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string
     <Pager
       items={props.items}
       pageSize={size}
+      fit
       label="Pflanzen"
       resetKey={props.resetKey}
       getKey={(card) => card.id}
@@ -61,6 +65,7 @@ function Grouped(props: Props) {
       listLabel="Pflanzen"
       groups={groups}
       pageSize={size}
+      fit
       listClassName={TILES}
       getKey={(card) => card.id}
       renderItem={(card) => <PlantTile card={card} access={props.photoAccess} />}
@@ -120,8 +125,8 @@ export function PlantsScreen(props: Props) {
       <Tiles {...props} items={props.cards} resetKey="all" />
     );
   return (
-    <section aria-labelledby="collection-title" className="min-h-0">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
+    <section aria-labelledby="collection-title" className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
         {props.embedded ? (
           <h2 id="collection-title" className="sr-only">
             Pflanzen

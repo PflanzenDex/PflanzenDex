@@ -109,8 +109,11 @@ export function SpeciesSearch(props: {
   const shown = applyFilters(props.hit, filters);
   const hasHits = props.hit.length > 0;
   return (
-    <div className="flex min-w-0 gap-4">
-      <section aria-labelledby="search-title" className="flex min-w-0 flex-1 flex-col gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 gap-4">
+      <section
+        aria-labelledby="search-title"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
+      >
         <div className="flex items-center justify-between gap-2">
           <Heading id="search-title" className="text-2xl font-semibold">
             Art wählen

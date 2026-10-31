@@ -49,7 +49,7 @@ export function Browse(props: {
   };
   const poorKnown = caught.some((c) => c.genusSpeciesCount !== null);
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <Controls query={query} searchRef={search} onQuery={setQuery} />
       {shown !== caught.length && (
         <p className="m-0 text-sm text-muted-foreground">{`${shown} von ${plural(caught.length)}`}</p>
@@ -127,6 +127,7 @@ function Families(props: { result: ReturnType<typeof browsePokedex> }) {
       listLabel="Gefangene Arten"
       groups={groups}
       pageSize={size}
+      fit
       getKey={(c) => c.species}
       listClassName={SPECIES_LIST}
       renderItem={(c) => <SpeciesRow c={c} />}
