@@ -40,10 +40,10 @@ function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
           <Leaf className="size-5" />
         </span>
         <span className="grid min-w-0 flex-1 justify-items-start gap-0">
-          <span className="text-base font-semibold">
+          <span className="text-base font-semibold [overflow-wrap:anywhere]">
             <i>{t.latinName}</i>
           </span>
-          <span className="break-words text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
             {t.germanName ? `${t.germanName} · ` : ""}
             {fact(t)}
           </span>

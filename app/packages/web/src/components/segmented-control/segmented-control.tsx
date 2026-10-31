@@ -17,6 +17,8 @@ export type SegmentedControlProps<V extends string> = {
  * A pill group of two or three exclusive choices (US-QS-14, DS-15): toggle buttons in a named group, so Tab reaches
  * every segment, Enter and Space choose, and screen readers say which one is pressed. Every segment is a 44 px target;
  * the selected one is a raised pill with a check mark and a visible focus ring, so colour is never the only sign.
+ * The choices stay in one row: at a larger text size the row scrolls sideways inside its own box instead of running past
+ * the right edge or taking the height of the screen (issue 1019). Every choice keeps its width.
  */
 export function SegmentedControl<V extends string>(props: SegmentedControlProps<V>) {
   const { options, value, onChange } = props;
@@ -25,7 +27,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
       role="group"
       aria-label={props.label}
       className={cn(
-        "inline-flex w-fit max-w-full gap-1 rounded-full bg-muted p-1",
+        "inline-flex w-fit max-w-full gap-1 overflow-x-auto overscroll-x-contain rounded-full bg-muted p-1 [scrollbar-width:none]",
         props.className,
       )}
     >
@@ -39,7 +41,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             aria-pressed={selected}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-w-[44px] rounded-full px-4 font-semibold",
+              "min-w-[44px] shrink-0 gap-1 rounded-full px-2 font-semibold",
               selected
                 ? "bg-accent text-accent-foreground shadow-elevation-1 hover:bg-accent forced-colors:border-[color:Highlight]"
                 : "text-muted-foreground hover:bg-transparent hover:text-foreground",

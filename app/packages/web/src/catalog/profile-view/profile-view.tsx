@@ -128,8 +128,13 @@ export function SpeciesProfile(props: {
           {STATUS[species.reviewStatus]}
         </Badge>
       </div>
+      {/*
+       * The primary action is a sticky footer (issue 1019): it keeps its place in the order of the profile, and it
+       * stays in view above the phone bar when the profile is taller than the screen, so "Diese Art wählen" is always
+       * reachable at a larger text size. Same offset as the suggestion actions (DS-61).
+       */}
       {(props.onChoose || props.extra) && (
-        <div className="flex flex-wrap gap-2 [&>*]:min-w-0 [&>*]:flex-1">
+        <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 flex flex-wrap gap-2 bg-background md:bottom-0 [&>*]:min-w-0 [&>*]:flex-1">
           {props.onChoose && (
             <Button type="button" size="touch" onClick={props.onChoose}>
               Diese Art wählen

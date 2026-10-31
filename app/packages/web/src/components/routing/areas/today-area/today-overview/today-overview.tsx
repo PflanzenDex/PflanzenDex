@@ -15,6 +15,12 @@ export type CategoryCount = {
 /** The look of a tile that opens a layer. */
 const TILE =
   "h-auto min-h-14 w-full flex-col items-center justify-center gap-0 px-2 py-1 text-center";
+/**
+ * The category tiles: three in a row while a tile holds its label (6.5 rem, 104 px at normal text, starting value); at a
+ * larger text size the tiles stack, one per row, so no label runs into its neighbour (issue 1019). The `minmax` is a rem
+ * value on purpose, so it grows with the text.
+ */
+const TILE_GRID = "m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-2 p-0";
 const NBSP = " ";
 const count = (n: number, one: string, many: string) => `${n}${NBSP}${n === 1 ? one : many}`;
 
@@ -102,7 +108,7 @@ export function TodayOverview(props: {
                     <TodaySummary treatments={treatments} watering={watering} hints={hints} />
                   }
                   tiles={
-                    <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0" aria-label="Themen">
+                    <ul className={TILE_GRID} aria-label="Themen">
                       <CategoryTile id="treatments" label="Behandeln" category={treatments} />
                       <CategoryTile id="watering" label="Gießen" category={watering} />
                       <CategoryTile id="hints" label="Fehlt noch" category={hints} />

@@ -62,8 +62,10 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
     >
       <Face card={card} access={access} />
       <span className="grid min-w-0 gap-0.5">
-        <span className="truncate font-semibold">{card.name}</span>{" "}
-        <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>{" "}
+        <span className="font-semibold [overflow-wrap:anywhere]">{card.name}</span>{" "}
+        <span className="text-xs text-muted-foreground [overflow-wrap:anywhere]">
+          {tileZone(card)}
+        </span>{" "}
         <span
           data-attention={state.attention}
           className={stateMark({ attention: state.attention })}

@@ -168,8 +168,9 @@ export function AccountArea(props: Props) {
     return <Navigate to={PATHS.account} replace />;
 
   // The section's frame widens from 1024 px: a settings layer inside it needs the room beside its list (US-QS-15, #1027).
+  // Konto is a one-screen destination (US-QS-17, DS-61): the frame fits the viewport and `main` scrolls inside itself.
   return (
-    <div className="flex min-w-0 flex-col gap-3 lg:gap-6">
+    <div data-fit-screen="" className="flex min-w-0 flex-col gap-3 lg:gap-6">
       <KontoTitle open={open} byDefault={byDefault} />
       <div className="flex min-w-0 gap-8">
         <div className={indexClass(open, layered, byDefault)}>

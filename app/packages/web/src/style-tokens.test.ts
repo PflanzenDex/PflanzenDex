@@ -1,7 +1,7 @@
 // US-QS-14 · ADR 0011 decisions 2 to 5: the Greenhouse tokens (colour values, type scale, radius, elevation, motion);
 // ADR 0017: neutral surfaces, green only for intent.
 // The contrast of every pair is in style-contrast.test.ts; this file pins the values and the structure of tokens.css.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(new URL("./styles/tokens.css", import.meta.url), "utf8");
@@ -194,5 +194,26 @@ describe("US-QS-15 the one-screen frame rule is valid CSS", () => {
     expect(selectors.length).toBeGreaterThan(0);
     for (const sel of selectors) expect(sel).not.toMatch(/:has\([^)]*:has\(/);
     expect(css).toContain("div:has(> div > main [data-fit-screen])");
+  });
+});
+
+/** Every source file below `dir` without its tests and stories. */
+function appSources(dir: URL): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const at = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, dir);
+    if (entry.isDirectory()) return appSources(at);
+    return /\.tsx?$/.test(entry.name) && !/\.(test|stories)\.tsx?$/.test(entry.name)
+      ? [at.pathname]
+      : [];
+  });
+}
+
+describe("US-QS-15 no fixed pixel text size (issue 1019)", () => {
+  it("US-QS-15 every text size is rem-based: no class like text-[15px] and no px font size in a style object, so 200 % text scales all text", () => {
+    const offenders = appSources(new URL("./", import.meta.url)).filter((file) => {
+      const text = readFileSync(file, "utf8");
+      return /text-\[[\d.]+px\]/.test(text) || /fontSize:\s*["']?[\d.]+px/.test(text);
+    });
+    expect(offenders.map((file) => file.slice(file.indexOf("/src/") + 5))).toEqual([]);
   });
 });

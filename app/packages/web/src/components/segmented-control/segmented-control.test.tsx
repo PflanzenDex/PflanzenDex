@@ -77,3 +77,14 @@ describe("US-QS-14 segmented control on phones and in dark mode (issue 1045)", (
     expect(screen.getByRole("button", { name: "Pflanzen" }).className).not.toContain("bg-accent");
   });
 });
+
+describe("US-QS-15 the switch at a larger text size (issue 1019)", () => {
+  it("US-QS-15 the choices stay in one row that scrolls sideways inside its own box, and no choice shrinks or wraps", () => {
+    const { container } = render(<Host />);
+    const group = container.querySelector('[role="group"]');
+    expect(group?.className).toContain("overflow-x-auto");
+    expect(group?.className).not.toContain("flex-wrap");
+    for (const choice of container.querySelectorAll("button"))
+      expect(choice.className).toContain("shrink-0");
+  });
+});

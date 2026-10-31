@@ -29,4 +29,18 @@ describe("MobileNavBar in forced colors (US-QS-14)", () => {
     for (const link of bar.getAllByRole("link")) expect(forcedBorder(link)).toEqual([]);
     expect(forcedBorder(more)).toEqual(["forced-colors:border-0"]);
   });
+
+  it("US-QS-15 the icon pill of a destination stays inside its slot at a larger text size: its 3.5 rem width is capped by max-w-full (issue 1019)", () => {
+    render(
+      <MemoryRouter initialEntries={["/p0"]}>
+        <MobileNavBar items={items} />
+      </MemoryRouter>,
+    );
+    const first = within(screen.getByRole("navigation", { name: "Navigation unten" })).getAllByRole(
+      "link",
+    )[0];
+    const pill = first?.querySelector("span.rounded-full");
+    expect(pill?.className).toContain("w-14");
+    expect(pill?.className).toContain("max-w-full");
+  });
 });

@@ -57,7 +57,8 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
   });
   return (
     <Form {...form}>
-      <FormRoot role="search" className="min-w-0 flex-1">
+      {/* A 10 rem basis keeps the field from shrinking to a sliver; at a larger text size the row wraps (issue 1019). */}
+      <FormRoot role="search" className="min-w-0 grow basis-40">
         <FormField
           control={form.control}
           name="search"
@@ -83,6 +84,23 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
         />
       </FormRoot>
     </Form>
+  );
+}
+
+/** The heading of the search and the proposal opener beside it; the opener goes below the heading when there is no room (issue 1019). */
+function SearchTitle(props: { Heading: "h1" | "h2"; hasHits: boolean }) {
+  const { Heading } = props;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <Heading id="search-title" className="text-2xl font-semibold">
+        Art wählen
+      </Heading>
+      {props.hasHits && (
+        <LayerOpener id="propose" className="max-w-full shrink-0">
+          Art vorschlagen
+        </LayerOpener>
+      )}
+    </div>
   );
 }
 
@@ -114,16 +132,11 @@ export function SpeciesSearch(props: {
         aria-labelledby="search-title"
         className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
       >
-        <div className="flex items-center justify-between gap-2">
-          <Heading id="search-title" className="text-2xl font-semibold">
-            Art wählen
-          </Heading>
-          {hasHits && <LayerOpener id="propose">Art vorschlagen</LayerOpener>}
-        </div>
-        <div className="flex items-start gap-2">
+        <SearchTitle Heading={Heading} hasHits={hasHits} />
+        <div className="flex flex-wrap items-start gap-2">
           <SearchField searchText={props.searchText} onSearch={props.onSearch} />
           {(hasHits || active > 0) && (
-            <LayerOpener id={FILTERS_LAYER}>
+            <LayerOpener id={FILTERS_LAYER} className="shrink-0">
               {active > 0 ? `Filter (${active})` : "Filter"}
             </LayerOpener>
           )}

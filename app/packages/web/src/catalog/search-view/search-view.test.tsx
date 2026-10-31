@@ -118,6 +118,20 @@ describe("US-BES-01 search", () => {
   });
 });
 
+describe("US-QS-21 the search row at a larger text size (issue 1019)", () => {
+  it("US-QS-21 the field keeps a 10 rem basis, the Filter opener and the proposal never shrink, and the rows wrap instead of squeezing the field", () => {
+    search(many(2));
+    const field = screen.getByRole("search");
+    expect(field.className).toContain("basis-40");
+    expect(field.className).toContain("min-w-0");
+    expect(field.parentElement?.className).toContain("flex-wrap");
+    expect(screen.getByRole("button", { name: /^Filter/ }).className).toContain("shrink-0");
+    const propose = screen.getByRole("button", { name: "Art vorschlagen" });
+    expect(propose.className).toContain("shrink-0");
+    expect(propose.parentElement?.className).toContain("flex-wrap");
+  });
+});
+
 describe("US-QS-21 the catalog list is paged", () => {
   it("US-QS-21 shows one page of compact results with name, scientific name and one fact", () => {
     search(many(45));

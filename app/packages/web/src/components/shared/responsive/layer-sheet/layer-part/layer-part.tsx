@@ -35,7 +35,7 @@ export function LayerOpenRow({
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
       className={cn(
-        "h-auto min-h-12 w-full justify-start gap-3 whitespace-normal rounded-lg border border-border px-3 py-2 text-left text-[15px] font-normal",
+        "h-auto min-h-12 w-full justify-start gap-3 whitespace-normal rounded-lg border border-border px-3 py-2 text-left text-base font-normal",
         className,
       )}
     >

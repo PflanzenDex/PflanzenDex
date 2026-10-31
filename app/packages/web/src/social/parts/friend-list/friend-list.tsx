@@ -53,7 +53,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
       <Card className="grid gap-1 break-words">
         <span className="flex items-center gap-3">
           <Avatar name={f.name ?? ""} decorative />
-          <span>{nameOf(f.name)}</span>
+          <span className="text-base">{nameOf(f.name)}</span>
         </span>
         <span className="text-sm text-muted-foreground">befreundet seit {dateText(f.since)}</span>
         <span className="text-sm text-muted-foreground">
