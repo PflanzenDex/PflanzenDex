@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { PROFILE_BASE } from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { profileAddress } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
@@ -107,7 +107,7 @@ function Values({ row }: { row: DifficultyRow }) {
       facts={factsOf(row)}
       next={
         <Button asChild variant="outline" size="sm">
-          <Link to={`${PROFILE_BASE}/${row.speciesId}`}>Artprofil öffnen</Link>
+          <Link to={profileAddress(row.speciesId)}>Artprofil öffnen</Link>
         </Button>
       }
     />

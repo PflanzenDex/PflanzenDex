@@ -1,7 +1,8 @@
 import { REMINDER_OCCASIONS, type ReminderOccasion } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { Label } from "@/components/ui/display/label/label";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { currentTimeZone } from "../../../kernel";
 import { addDays, localToday } from "./pause";
 
@@ -35,12 +36,7 @@ export function PauseRow(props: {
     <div className="flex flex-wrap items-end gap-2">
       <div className="flex flex-col gap-1">
         <Label htmlFor={id}>{OCCASION_TEXT[o]} pausiert bis</Label>
-        <Input
-          id={id}
-          type="date"
-          value={until}
-          onChange={(e) => props.onChange(o, e.target.value)}
-        />
+        <DateField id={id} value={until} onChange={(e) => props.onChange(o, e.target.value)} />
       </div>
       <Button
         type="button"
@@ -66,7 +62,10 @@ export function PauseRow(props: {
   );
 }
 
-/** All occasions as rows of one group. */
+/** Occasions per page of the pause layer (starting value, assumption; US-QS-15). */
+const PAUSE_PAGE = 2;
+
+/** All occasions as rows of one group, in pages of whole rows inside the layer (US-QS-15). */
 export function PauseRows(props: {
   paused: Paused;
   onChange: (o: ReminderOccasion, until: string) => void;
@@ -79,9 +78,16 @@ export function PauseRows(props: {
         was fällig ist; Daten gehen nicht verloren. Einen Anlass ganz auszuschalten geht unter
         Einstellungen.
       </p>
-      {REMINDER_OCCASIONS.map((o) => (
-        <PauseRow key={o} occasion={o} until={props.paused[o] ?? ""} onChange={props.onChange} />
-      ))}
+      <Pager
+        items={REMINDER_OCCASIONS}
+        pageSize={PAUSE_PAGE}
+        label="Anlässe"
+        param={LAYER_PARAM}
+        getKey={(o) => o}
+        renderItem={(o) => (
+          <PauseRow occasion={o} until={props.paused[o] ?? ""} onChange={props.onChange} />
+        )}
+      />
     </fieldset>
   );
 }

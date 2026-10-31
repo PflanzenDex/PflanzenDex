@@ -1,12 +1,16 @@
 import { useCallback, useState } from "react";
 import { NewTask } from "./new-task/new-task";
 import { Button } from "@/components/ui/button/button";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { copyText } from "@/platform/clipboard";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { cancelTask, loadTasks, type AiTaskRow } from "../api/connections-api";
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["ai", "tasks"] as const;
+/** Tasks per page inside the layer (starting value, assumption; US-QS-15). */
+const PAGE = 2;
 
 const STATUS_TEXT: Record<AiTaskRow["status"], string> = {
   open: "Offen",
@@ -25,7 +29,7 @@ function Task(props: {
   const { row } = props;
   const name = `${row.title}: ${row.label}`;
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-border p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <strong className="break-all">{name}</strong>
         <span>{STATUS_TEXT[row.status]}</span>
@@ -64,16 +68,11 @@ function Task(props: {
           </div>
         </>
       )}
-    </li>
+    </div>
   );
 }
 
-function List(props: {
-  api: string;
-  token: Token;
-  connected: boolean;
-  rows: readonly AiTaskRow[];
-}) {
+function List(props: { api: string; token: Token; rows: readonly AiTaskRow[] }) {
   const again = useInvalidate(KEY);
   const write = useWriteAction(props.token, again);
   const [copied, setCopied] = useState<string | null>(null);
@@ -84,20 +83,21 @@ function List(props: {
         : "Das Kopieren ging nicht. Öffne „Text des Auftrags ansehen“ und kopiere ihn selbst.",
     );
   return (
-    <div className="flex max-w-xl flex-col gap-3">
-      <p className="m-0 text-sm text-muted-foreground">
-        Ein Auftrag bittet deinen KI-Client um etwas, zum Beispiel ein Artprofil. Das Ergebnis kommt
-        als Entwurf und zählt erst, wenn du es übernimmst. Offene Aufträge verfallen nach
-        14&nbsp;Tagen.
-      </p>
-      <NewTask api={props.api} token={props.token} connected={props.connected} onCreated={again} />
+    <div className="flex min-w-0 max-w-xl flex-col gap-3">
+      <MoreHelp more="Ein Auftrag bittet deinen KI-Client um etwas, zum Beispiel ein Artprofil. Das Ergebnis kommt als Entwurf und zählt erst, wenn du es übernimmst. Offene Aufträge verfallen nach 14 Tagen.">
+        Ein Auftrag bittet deinen KI-Client um etwas. Das Ergebnis kommt als Entwurf.
+      </MoreHelp>
       {props.rows.length === 0 ? (
         <p className="m-0">Keine Aufträge vorhanden.</p>
       ) : (
-        <ul aria-label="KI-Aufträge" className="m-0 flex list-none flex-col gap-2 p-0">
-          {props.rows.map((row) => (
+        <Pager
+          items={props.rows}
+          pageSize={PAGE}
+          label="KI-Aufträge"
+          param={LAYER_PARAM}
+          getKey={(row) => row.id}
+          renderItem={(row) => (
             <Task
-              key={row.id}
               row={row}
               busy={write.running}
               onCopy={(t) => void copy(t)}
@@ -108,8 +108,8 @@ function List(props: {
                 )
               }
             />
-          ))}
-        </ul>
+          )}
+        />
       )}
       {write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3">
@@ -125,7 +125,7 @@ function List(props: {
   );
 }
 
-/** Tasks from the app to the AI client (US-KI-08): create, see the status, open in the client, copy as text. */
+/** Tasks from the app to the AI client (US-KI-08): see the status, open in the client, copy as text, withdraw. */
 export function TasksSection(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadTasks(props.api, t), [props.api]);
   return (
@@ -135,12 +135,28 @@ export function TasksSection(props: { api: string; token: Token }) {
       load={load}
       loadingText="Aufträge werden geladen …"
     >
+      {(data) => <List api={props.api} token={props.token} rows={data.tasks} />}
+    </LoadFrame>
+  );
+}
+
+/** The form for a new task (US-KI-08) in its own layer: it needs to know whether a client is connected. */
+export function NewTaskPart(props: { api: string; token: Token }) {
+  const load = useCallback((t: string) => loadTasks(props.api, t), [props.api]);
+  const again = useInvalidate(KEY);
+  return (
+    <LoadFrame
+      queryKey={KEY}
+      token={props.token}
+      load={load}
+      loadingText="Aufträge werden geladen …"
+    >
       {(data) => (
-        <List
+        <NewTask
           api={props.api}
           token={props.token}
           connected={data.clientConnected}
-          rows={data.tasks}
+          onCreated={again}
         />
       )}
     </LoadFrame>

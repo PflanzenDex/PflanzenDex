@@ -1,7 +1,5 @@
-import type { ReactNode } from "react";
 import type { Control } from "react-hook-form";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
 import {
   FormControl,
   FormField,
@@ -12,7 +10,9 @@ import {
 import { Input } from "@/components/ui/fields/input/input";
 import { Select } from "@/components/ui/fields/select/select";
 import { Textarea } from "@/components/ui/fields/textarea/textarea";
-import { Quiet } from "../../../specimens/cards/parts/parts";
+import { Row } from "./care-profile-row/care-profile-row";
+
+export { Row };
 import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
 
 export const MONTHS = [
@@ -37,31 +37,6 @@ export const dayText = (tag: string) => `${tag.slice(3, 5)}.${tag.slice(0, 2)}.`
  * One field of the profile: the catalog value above and my deviation below (US-BES-09), with the reset to the
  * catalog next to it. A field without deviation has nothing to reset.
  */
-export function Row(props: {
-  label: string;
-  species: string;
-  catalog: string;
-  hasOwn: boolean;
-  busy: boolean;
-  onReset: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div className="grid gap-2 border-t border-border py-3">
-      <Quiet>{`Katalog: ${props.catalog}`}</Quiet>
-      <div className="grid gap-2">{props.children}</div>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={!props.hasOwn || props.busy}
-        aria-label={`Auf Katalog zurücksetzen: ${props.label} (${props.species})`}
-        onClick={props.onReset}
-      >
-        Auf Katalog zurücksetzen
-      </Button>
-    </div>
-  );
-}
 
 type Key = keyof Fields;
 

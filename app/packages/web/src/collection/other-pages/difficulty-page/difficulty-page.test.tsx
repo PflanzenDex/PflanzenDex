@@ -266,6 +266,19 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     expect(screen.queryByText(/unbekannt/)).toBeNull();
   });
 
+  it("US-QS-24 a blank or empty value counts as unknown in the layer (P-08)", async () => {
+    fakeServer(() =>
+      response(200, { rows: [row({ wateringHint: "  ", substrate: "", zone: null })] }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    const values = await valuesOf("Bogenhanf");
+    expect(values.has("Gießregel")).toBe(false);
+    expect(values.has("Substrat")).toBe(false);
+    expect(values.has("Lichtzone")).toBe(false);
+    const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
+    expect(within(layer).getByText("3 Angaben fehlen")).toBeTruthy();
+  });
+
   it("US-QS-24 the layer of a species with nothing unknown shows no fold line", async () => {
     fakeServer(() =>
       response(200, {

@@ -12,6 +12,7 @@ const COLLECTION = `${AREA}/collection-area/collection-area.tsx`;
 const DISCOVER = `${AREA}/discover-area/discover-area.tsx`;
 const TODAY = `${AREA}/today-area/today-area.tsx`;
 const PROFILE = `${AREA}/collection-area/hand-over-routes/hand-over-routes.tsx`;
+const ACCOUNT = `${AREA}/account-area/account-area.tsx`;
 
 /**
  * Every file that renders a `LayerSheet`, with the frames (files that render a `LayerHost`) its panes land in. A layer in
@@ -20,24 +21,43 @@ const PROFILE = `${AREA}/collection-area/hand-over-routes/hand-over-routes.tsx`;
  * its layer in its frame" in app.test.tsx.
  */
 const PANE_FRAMES: Record<string, readonly string[]> = {
+  "account/operator/operator-page/operator-page.tsx": [
+    "account/operator/operator-page/operator-page.tsx",
+  ],
   "account/settings-page/settings-page.tsx": ["account/settings-page/settings-page.tsx"],
+  "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx": [ACCOUNT],
+  "shell/function-overview/function-overview.tsx": [ACCOUNT],
+  "catalog/review/review-layer/review-layer.tsx": ["catalog/review/review-page/review-page.tsx"],
   "catalog/search-view/search-filters/search-filters.tsx": [DISCOVER],
   "catalog/species-page/species-page.tsx": [DISCOVER, PROFILE],
   "collection/other-pages/difficulty-page/difficulty-page.tsx": [COLLECTION],
+  "care/measure/measure-page/course-layer/course-layer.tsx": [COLLECTION],
+  "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx": [
+    COLLECTION,
+  ],
   "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx": [COLLECTION],
   "collection/plants-screen/plant-layers/plant-layers.tsx": [COLLECTION],
   "components/routing/areas/today-area/today-area.tsx": [TODAY],
   "components/sammlung-header/view-layer/view-layer.tsx": [COLLECTION],
+  "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx": [COLLECTION],
   "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx": [
     COLLECTION,
   ],
   "pokedex/pokedex-browse/pokedex-browse.tsx": [COLLECTION],
   "pokedex/pokedex-page/pokedex-page.tsx": [COLLECTION],
+  "care/treatments/planning/plan-layer/plan-layer.tsx": [TODAY],
+  "light/views/light-view/light-layers/light-layers.tsx": [COLLECTION],
+  "light/zones/location-layer/location-layer.tsx": [COLLECTION],
+  "light/zones/zone-layer/zone-layer.tsx": [COLLECTION],
   "shell/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx": [TODAY],
   "social/pages/friends-page/friend-layers/layer/layer.tsx": [
     "social/pages/friends-page/friends-page.tsx",
   ],
   "today/today-page/today-page.tsx": [TODAY],
+  "social/pages/friend-collection/friend-collection.tsx": [
+    "social/pages/friend-collection/friend-collection.tsx",
+  ],
+  "swap/pages/exchange/exchange.tsx": ["swap/pages/exchange/exchange.tsx"],
   "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx": [COLLECTION],
 };
 

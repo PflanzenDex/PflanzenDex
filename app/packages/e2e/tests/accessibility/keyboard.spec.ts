@@ -1,4 +1,4 @@
-import { expect, test } from "../../support/fixtures";
+import { expect, showLocations, test } from "../../support/fixtures";
 import {
   chooseByArrows,
   keyboardWalk,
@@ -109,7 +109,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     await locationsByKeyboard(page);
     await press(page, page.getByRole("button", { name: "Standard-Zonen übernehmen" }));
     await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
-    await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
+    await showLocations(page);
+    await press(page, page.getByRole("button", { name: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Fensterbank");
     await chooseByArrows(page, form.getByLabel("Lichtzone"), 2);
@@ -162,7 +163,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     test.setTimeout(120_000);
     await signInByKeyboard(page, account);
     await locationsByKeyboard(page);
-    await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
+    await showLocations(page);
+    await press(page, page.getByRole("button", { name: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Regal");
     await press(page, form.getByRole("button", { name: "Standort anlegen" }));
