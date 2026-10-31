@@ -1,6 +1,9 @@
 # Local auth server (E-03: self-hosted Keycloak) plus a mail catcher for the confirmation email.
 # Development only: start-dev with H2. Credentials come from the environment (see `make auth-up`), never from the repo.
 # Images are pinned to an exact version and a digest, the same as the deployment (#761); Renovate keeps them current.
+# Memory caps are for a small dev box shared by parallel worktrees (US-DEV-08, #1084), starting values (assumption).
+# Production never reads this file: it has its own limits in config/deploy/docker-compose.yml. To raise them locally,
+# set KC_MEMORY, KC_JAVA_HEAP or MAILPIT_MEMORY in config/dev/.env.
 name: pflanzendex-auth
 services:
   keycloak:
@@ -13,6 +16,7 @@ services:
       KC_HOSTNAME: http://localhost:18081
       KC_HTTP_PORT: "8080"
       KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: ${KC_JAVA_HEAP:--Xms64m -Xmx384m}
     ports:
       - "127.0.0.1:18081:8080"
     volumes:
@@ -20,8 +24,16 @@ services:
       - ./keycloak-theme/pflanzendex:/opt/keycloak/themes/pflanzendex:ro
     depends_on:
       - mailpit
+    deploy:
+      resources:
+        limits:
+          memory: ${KC_MEMORY:-768m}
   mailpit:
     image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
     container_name: pflanzendex-mailpit
     ports:
       - "127.0.0.1:18025:8025"
+    deploy:
+      resources:
+        limits:
+          memory: ${MAILPIT_MEMORY:-128m}
