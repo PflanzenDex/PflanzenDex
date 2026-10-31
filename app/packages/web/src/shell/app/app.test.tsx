@@ -658,6 +658,21 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
   beforeEach(() => setViewportWidth(1440));
   afterEach(() => setViewportWidth(360));
 
+  it("US-QS-15 · US-QS-18 the shell does not cap a destination with layers: its frame takes the main column, so a pane fits beside the content (#1027)", async () => {
+    fakeServer(200, 1);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/today?sheet=treatments");
+    await waitFor(() => expect(document.querySelector("[data-layer-pane]")).not.toBeNull(), {
+      timeout: 15000,
+    });
+    const frame = document.querySelector("[data-layer-host]") as HTMLElement;
+    // The shell's wrapper is the direct child of `main` that holds the frame; the cap is lifted only by the frame's `:has`.
+    const wrapper = frame.closest("main > div") as HTMLElement;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper.className).toContain("max-w-180");
+    expect(wrapper.className).toContain("has-[[data-layer-host]]:max-w-none");
+  }, 20000);
+
   it.each(LAYER_ADDRESSES)(
     "US-QS-15 %s: the pane is the second column of its destination's frame, the content is the first",
     async (_name, address, expected) => {

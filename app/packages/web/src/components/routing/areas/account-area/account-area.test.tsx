@@ -325,6 +325,58 @@ describe("US-QS-17 the address names a section", () => {
   });
 });
 
+describe("US-QS-15 · US-QS-17 Konto opens Einstellungen in the pane on a wide screen", () => {
+  afterEach(() => setViewportWidth(390));
+
+  /** The column of the index: the wrapper of its navigation. */
+  const indexColumn = () =>
+    screen.getByRole("navigation", { name: "Abschnitte von Konto" }).parentElement as HTMLElement;
+
+  it("US-QS-15 · US-QS-17 from 1280 px /account shows Einstellungen in the pane beside the index, never the placeholder (#1027)", async () => {
+    setViewportWidth(1280);
+    fakeServer();
+    show("/account");
+    expect(await screen.findByRole("heading", { level: 1, name: "Einstellungen" })).toBeTruthy();
+    expect(screen.queryByText("Wähle links einen Abschnitt.")).toBeNull();
+    expect(screen.getByTestId("address").textContent).toBe("/account");
+    expect(indexColumn().className).not.toContain("hidden");
+  });
+
+  it("US-QS-15 · US-QS-17 at 1024 px the index stays visible beside the default Einstellungen (#1027)", async () => {
+    setViewportWidth(1024);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(indexColumn().className).not.toContain("hidden");
+  });
+
+  it("US-QS-17 the default Einstellungen takes no focus on arrival (#1027)", async () => {
+    setViewportWidth(1280);
+    fakeServer();
+    show("/account");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(document.activeElement).not.toBe(heading);
+  });
+
+  it("US-QS-17 · US-QS-15 below 1024 px /account shows the index alone, no section", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account");
+    expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "Einstellungen" })).toBeNull();
+  });
+
+  it("US-QS-15 · US-QS-17 a section beside the index keeps its layer frame free to widen from 1024 px (nested frame, #1027)", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account/reminders");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Erinnerungen" });
+    const frame = heading.closest("[data-layer-host]") as HTMLElement;
+    const content = frame.firstElementChild as HTMLElement;
+    expect(content.className).toContain("lg:max-w-none");
+  });
+});
+
 describe("US-QS-15 the index yields while a settings layer is open, from 1280 px", () => {
   beforeEach(() => setViewportWidth(1280));
   afterEach(() => setViewportWidth(390));
