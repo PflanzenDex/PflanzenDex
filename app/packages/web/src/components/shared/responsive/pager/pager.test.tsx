@@ -128,6 +128,8 @@ describe("Pager in a layer (US-QS-22)", () => {
 // jsdom has no layout: the test gives the list region and its rows a height and calls the resize observer the way a
 // browser does (US-QS-19). The gap of the list is 0 in jsdom, so the rows are whole heights.
 let box = { region: 0, row: 0 };
+/** An entry whose row is taller than the others (a chip, a second line), with its height. */
+let tall: { name: string; row: number } | null = null;
 let observers: Array<() => void> = [];
 
 function resizeTo(region: number, row: number) {
@@ -149,11 +151,13 @@ function FitExample({ at = "/" }: { at?: string }) {
 describe("US-QS-19 page size fills the free height of the region", () => {
   beforeEach(() => {
     box = { region: 0, row: 0 };
+    tall = null;
     observers = [];
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
       this: Element,
     ) {
-      const height = this.tagName === "UL" ? box.region : this.tagName === "LI" ? box.row : 0;
+      const row = tall && this.textContent === tall.name ? tall.row : box.row;
+      const height = this.tagName === "UL" ? box.region : this.tagName === "LI" ? row : 0;
       return { height, width: 0, top: 0, left: 0, right: 0, bottom: height, x: 0, y: 0 } as DOMRect;
     });
     vi.stubGlobal(
@@ -241,5 +245,23 @@ describe("US-QS-19 page size fills the free height of the region", () => {
     expect(screen.getByRole("status").textContent).toBe("Seite 2 von 2");
     expect(screen.getByTestId("address").textContent).toBe("?page=2");
     expect(screen.getAllByRole("listitem")[0]?.textContent).toBe("Pflanze 7");
+  });
+
+  it("US-QS-19 rows of different heights keep one page size on every page instead of changing it back and forth", async () => {
+    // Pflanze 1 is taller. Sized from the rows on screen, page 1 would hold 3 and page 2 five, which brings Pflanze 1 back
+    // onto page 2 and so on: the page size follows the tallest row seen at this width instead.
+    tall = { name: "Pflanze 1", row: 150 };
+    resizeTo(532, 100);
+    render(<FitExample />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByRole("status").textContent).toBe("Seite 2 von 3");
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Pflanze 4",
+      "Pflanze 5",
+      "Pflanze 6",
+    ]);
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
   });
 });

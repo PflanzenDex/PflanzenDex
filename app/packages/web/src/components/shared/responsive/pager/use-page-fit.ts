@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type RefObject } from "react";
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 
 /** The measures of a list region in px: its free height, one row and the gap between two rows. */
 export type FitInput = {
@@ -55,10 +55,21 @@ export function pageAfterResize({
  */
 export type PageFit = { size: number | null; rowHeight: number };
 
-/** Reads the measures of a rendered list region and its first row from the layout; `null` without a rendered row. */
-function measure(list: HTMLElement): PageFit | null {
-  const rowHeight = list.firstElementChild?.getBoundingClientRect().height ?? 0;
+/** The tallest row seen at one width of the region; rows differ per page, see `measure`. */
+type Tallest = { width: number; rowHeight: number };
+
+/**
+ * Reads the measures of a rendered list region and its tallest row from the layout; `null` without a rendered row. The
+ * row height only grows while the width stays (`tallest`): rows differ per page (a chip, a second line), and a size taken
+ * from the rows on screen would change the page, and with it the rows, forever.
+ */
+function measure(list: HTMLElement, tallest: { current: Tallest | null }): PageFit | null {
+  const width = list.getBoundingClientRect().width;
+  const rows = Array.from(list.children, (row) => row.getBoundingClientRect().height);
+  const seen = tallest.current?.width === width ? tallest.current.rowHeight : 0;
+  const rowHeight = Math.max(seen, ...rows);
   if (!(rowHeight > 0)) return null;
+  tallest.current = { width, rowHeight };
   const style = getComputedStyle(list);
   const tracks = style.gridTemplateColumns;
   const size = fitPageSize({
@@ -79,12 +90,13 @@ function measure(list: HTMLElement): PageFit | null {
  */
 export function usePageFit(list: RefObject<HTMLElement | null>, enabled: boolean): PageFit | null {
   const [fit, setFit] = useState<PageFit | null>(null);
+  const tallest = useRef<Tallest | null>(null);
   useLayoutEffect(() => {
     if (!enabled) return;
     const update = () => {
       const el = list.current;
       if (!el) return;
-      const next = measure(el);
+      const next = measure(el, tallest);
       // Compare the values: a new object each time would re-render, and so measure again, forever.
       setFit((prev) =>
         prev?.size === next?.size && prev?.rowHeight === next?.rowHeight ? prev : next,
