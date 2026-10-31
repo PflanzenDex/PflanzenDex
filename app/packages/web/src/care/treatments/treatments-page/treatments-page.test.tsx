@@ -27,7 +27,7 @@ function fakeServer(
     const path = new URL(String(url)).pathname;
     const other = more(path, init);
     if (other) return other;
-    if (path === "/specimens") return response(200, { specimens });
+    if (path === "/specimens/cards") return response(200, { cards: specimens });
     if (path === "/treatments" && (init?.method ?? "GET") === "GET") return open();
     if (path === "/treatments" && init?.method === "POST") {
       posts.push({
@@ -525,22 +525,25 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
       onchange: null,
     })) as unknown as typeof window.matchMedia;
   });
-  const showHost = () =>
+  const showHost = (onPlan = vi.fn()) =>
     render(
       <MemoryRouter>
-        <TreatmentsPage api="http://api" token={token} host />
+        <TreatmentsPage api="http://api" token={token} host onPlan={onPlan} />
       </MemoryRouter>,
     );
 
   it("US-QS-14 has no h1 and no title of its own; its headings are level 3", async () => {
     doneServer();
+    const user = userEvent.setup();
     showHost();
     await screen.findByRole("list", { name: "Offene Behandlungen" });
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
     expect(screen.getByRole("heading", { level: 3, name: "Offene Behandlungen" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 3, name: "Erledigte Behandlungen" })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+    // The history is the other part of the segment "Offen | Erledigt" (US-QS-18, A-05).
+    await user.click(screen.getByRole("button", { name: "Erledigt" }));
+    expect(screen.getByRole("heading", { level: 3, name: "Erledigte Behandlungen" })).toBeTruthy();
   });
 
   it("US-QS-14 · US-BEH-02 an overdue row shows its status text from the data as a chip", async () => {
@@ -550,13 +553,15 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
   });
 
-  it("US-QS-14 · US-BEH-01 the form is not on the page until Behandlung planen is chosen", async () => {
+  it("US-QS-14 · US-BEH-01 · A-04 the host has no form: Behandlung planen hands over to the planning layer", async () => {
     doneServer();
-    showHost();
+    const onPlan = vi.fn();
+    showHost(onPlan);
     await screen.findByRole("list", { name: "Offene Behandlungen" });
     expect(screen.queryByRole("button", { name: "Behandlung speichern" })).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
-    expect(await screen.findByRole("button", { name: "Behandlung speichern" })).toBeTruthy();
+    expect(onPlan).toHaveBeenCalledTimes(1);
   });
 });
 

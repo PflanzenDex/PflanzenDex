@@ -9,8 +9,12 @@ import { useUnlocks } from "../model/unlocks/unlocks";
  * calm mode, the achievement functions never appear (FR-ONB-03, US-ACH-08). With `only` the rows of a destination
  * show the locked parts inside it (AI access, the achievement sections), same marking.
  */
-export function LockedRows(props: { only?: readonly string[] }) {
-  const { only } = props;
+export function LockedRows(props: {
+  only?: readonly string[];
+  /** Inside its own layer the layer title names the part, so the heading is only for screen readers (US-QS-18, A-05). */
+  inLayer?: boolean;
+}) {
+  const { only, inLayer } = props;
   const locked = useUnlocks()
     .entries.filter(isShownLocked)
     .filter((e) => !only || only.includes(e.id));
@@ -20,7 +24,10 @@ export function LockedRows(props: { only?: readonly string[] }) {
   const id = only ? `locked-title-${only.join("-")}` : "locked-title";
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
-      <Heading id={id} className={only ? "text-lg font-semibold" : "text-xl font-semibold"}>
+      <Heading
+        id={id}
+        className={inLayer ? "sr-only" : only ? "text-lg font-semibold" : "text-xl font-semibold"}
+      >
         Noch nicht geöffnet
       </Heading>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">

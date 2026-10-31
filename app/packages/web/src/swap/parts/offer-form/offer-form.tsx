@@ -88,7 +88,7 @@ export function OfferForm(props: {
   const s = useOfferForm(props.api, props.token, props.onChanged);
   return (
     <section aria-labelledby="offer-form-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="offer-form-title" className="text-xl font-semibold">
+      <h2 id="offer-form-title" className="sr-only">
         Zum Tausch anbieten
       </h2>
       {s.write.message && (

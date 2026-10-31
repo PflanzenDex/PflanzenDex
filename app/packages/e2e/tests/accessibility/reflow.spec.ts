@@ -7,7 +7,7 @@ import {
   signInToApp,
   tooltips,
 } from "../../support/display";
-import { expect, test } from "../../support/fixtures";
+import { addLocation, expect, test } from "../../support/fixtures";
 
 // US-QS-12: enlarge and adapt the display without losing content. Every view of a fresh account is measured in the
 // real browser; the standing criteria hold for every view added to VIEWS later (FR-QG-10 item 11).
@@ -17,7 +17,7 @@ async function withSomeData(page: Page): Promise<void> {
   await openView(page, "/light");
   await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
   await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
-  await page.getByText("Neuer Standort").click();
+  await addLocation(page);
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill("Fensterbank im Schlafzimmer nach Südsüdwest");
   await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });

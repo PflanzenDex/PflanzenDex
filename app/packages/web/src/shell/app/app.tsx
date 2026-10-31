@@ -144,17 +144,20 @@ export function App() {
     <FeaturesProvider features={z.account.features}>
       <UnlocksProvider api={api} token={s.token}>
         <SignedInShell account={z.account}>
-          <div className="mx-auto w-full max-w-180">
-            {navState?.hint && (
-              <p role="alert" className="mb-3 rounded-lg border border-border p-3">
-                {navState.hint}
-              </p>
-            )}
-            {(wishPath.notes.wish || wishPath.notes.notice) && (
-              <Suspense fallback={null}>
-                <PathNotes {...wishPath.notes} />
-              </Suspense>
-            )}
+          {/* The width cap of the page is lifted for a destination with layers: its frame takes the main column and caps only its content, so a pane fits beside it (US-QS-15, #1027). */}
+          <div className="mx-auto w-full max-w-180 has-[[data-layer-host]]:max-w-none">
+            <div className="mx-auto w-full max-w-180">
+              {navState?.hint && (
+                <p role="alert" className="mb-3 rounded-lg border border-border p-3">
+                  {navState.hint}
+                </p>
+              )}
+              {(wishPath.notes.wish || wishPath.notes.notice) && (
+                <Suspense fallback={null}>
+                  <PathNotes {...wishPath.notes} />
+                </Suspense>
+              )}
+            </div>
             <RouteBoundary resetKey={pathname}>
               <AppRoutes
                 api={api}
