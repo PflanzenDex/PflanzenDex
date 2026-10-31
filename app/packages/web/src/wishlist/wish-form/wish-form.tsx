@@ -38,7 +38,7 @@ function useServerRefusal(error: ApiError | null, setError: UseFormSetError<Wish
   return { alertText, alertRef };
 }
 
-/** Every field behind "Mehr Angaben": a value (the species pick fills the names too) or a refusal opens it (P-10). */
+/** Every field behind "Mehr Angaben": a value or a refusal opens it (P-10). */
 const FOLDED: readonly (keyof WishFields)[] = [
   "name",
   "german",
@@ -47,6 +47,8 @@ const FOLDED: readonly (keyof WishFields)[] = [
   "reasoning",
   "imageUrl",
 ];
+/** After a pick the names are shown by the pick itself, so only the other fields open the group by their value. */
+const FOLDED_AFTER_PICK = FOLDED.filter((name) => name !== "name" && name !== "german");
 
 /** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (US-QS-24, issue 1032). */
 function FieldGroups(props: {
@@ -71,7 +73,11 @@ function FieldGroups(props: {
           setChosen(h.germanName ? `${h.latinName} (${h.germanName})` : h.latinName);
         }}
       />
-      <FormMoreFields control={form.control} names={FOLDED}>
+      <FormMoreFields
+        control={form.control}
+        names={chosen ? FOLDED_AFTER_PICK : FOLDED}
+        forced={Boolean(form.formState.errors.name ?? form.formState.errors.german)}
+      >
         <NameFields control={form.control} />
         <ChoiceFields control={form.control} zones={props.zones} />
         <ImageFields control={form.control} />

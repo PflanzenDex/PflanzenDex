@@ -563,6 +563,8 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
     await userEvent.click(await screen.findByRole("button", { name: /Epipremnum aureum/ }));
     expect(await screen.findByText(/Gewählt: Epipremnum aureum \(Efeutute\)/)).toBeTruthy();
+    // The pick shows the names, so they do not open the group (issue 1032).
+    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText(/Wunsch „Epipremnum aureum“ gespeichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
