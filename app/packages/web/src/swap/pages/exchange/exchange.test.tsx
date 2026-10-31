@@ -71,9 +71,9 @@ function server(opts: { offers?: unknown[]; preview?: unknown } = {}) {
   );
   return calls;
 }
-const view = () =>
+const view = (path = "/") =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <ExchangePage api="http://api" token={token} />
     </MemoryRouter>,
   );
@@ -83,7 +83,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
+describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 an empty list says what to do next (P-09)", async () => {
     server();
     view();
@@ -93,12 +93,27 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     );
   });
 
-  it("US-SOZ-08 · P-09 the offer dialog stands above the lists", async () => {
+  it("US-SOZ-08 · US-QS-20 the form is a layer behind 'Zum Tausch anbieten', not stacked above the list", async () => {
     server();
     view();
-    const empty = await screen.findByText(/Du hast noch nichts angeboten/);
-    const dialog = screen.getByLabelText(/Pflanze/, { selector: "select" });
-    expect(dialog.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await screen.findByText(/Du hast noch nichts angeboten/);
+    expect(screen.queryByLabelText("Pflanze", { selector: "select" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Zum Tausch anbieten" }));
+    expect(await screen.findByLabelText("Pflanze", { selector: "select" })).toBeTruthy();
+  });
+
+  it("US-QS-20 my offers are paged and the other parts open one at a time behind a switch", async () => {
+    server({
+      offers: [1, 2, 3, 4].map((n) => offer({ id: `o${n}`, specimenName: `Pflanze ${n}` })),
+    });
+    view();
+    const list = await screen.findByRole("list", { name: "Meine Angebote" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Tauschverlauf" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Verlauf" }));
+    expect(await screen.findByRole("heading", { name: "Tauschverlauf" })).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Meine Angebote" })).toBeNull();
   });
 
   it("US-SOZ-08 lists my offers with type, mode, wish, health details without agent and the dormancy phase", async () => {
@@ -128,7 +143,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
 
   it("US-SOZ-08 the dialog offers only active specimens and shows the plant law notice for the chosen one", async () => {
     server();
-    view();
+    view("/?sheet=offer");
     const select = await screen.findByLabelText("Pflanze");
     expect(within(select).queryByRole("option", { name: "Aloe" })).toBeNull();
     await userEvent.selectOptions(select, "s1");
@@ -138,7 +153,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
 
   it("US-SOZ-08 a private specimen cannot be offered until it is shared; the dialog sets the sharing", async () => {
     const calls = server({ preview: preview({ shared: false }) });
-    view();
+    view("/?sheet=offer");
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText(/nicht für Freunde freigegeben/)).toBeTruthy();
     expect(
@@ -158,7 +173,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     const calls = server({
       preview: preview({ health: { treatmentOpen: true, lastTreated: null } }),
     });
-    view();
+    view("/?sheet=offer");
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText("Behandlung offen")).toBeTruthy();
     const button = screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement;
@@ -179,7 +194,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
 
   it("US-SOZ-08 a specimen with an open offer cannot be offered twice", async () => {
     server({ preview: preview({ offered: true }) });
-    view();
+    view("/?sheet=offer");
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText(/schon ein offenes Angebot/)).toBeTruthy();
     expect(

@@ -61,7 +61,7 @@ Acceptance criteria:
   | below    | may stand further away   |
 
 - Columns: plant, zone, lux demand (locale-formatted), position. The thresholds are defaults and adjustable.
-- The four thresholds are an account setting in Account > Settings (`account.update_profile`, `positionThresholds`): four whole lux values from 1 to 200,000, strictly descending; not set means the defaults of the table (assumption, starting values, decided by the PO). The light overview uses the thresholds of the asking account only (P-04); an invalid input is refused with the field named (P-10).
+- The four thresholds are an account setting in Account > Settings (`account.update_profile`, `positionThresholds`): four whole lux values from 1 to 200,000, strictly descending; not set means the defaults of the table (assumption, starting values, decided by the PO). The four values are shown as four labelled fields, each with the unit Lux and German grouping (10.000); the stored format does not change. The light overview uses the thresholds of the asking account only (P-04); an invalid input is refused with the field named (P-10).
 
 ### US-LIC-04 · Look up the classification rules · ✅ (prototype ✅)
 

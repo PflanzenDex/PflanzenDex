@@ -1,6 +1,6 @@
 name: Story or enabler
 description: Work item from the spec. The spec is authoritative; the issue only points to it.
-labels: [story]
+projects: ["PflanzenDex/2"] # type, release and epic are set on the board (fields Typ, Release, Epic)
 body:
   - type: markdown
     attributes:
@@ -17,7 +17,16 @@ body:
     id: release
     attributes:
       label: Release
-      options: [R0 Foundation, R1 Parity, R2 Social, R3 Swapping and reminders, R4 AI access, R5 Equipment, R6 Sensors]
+      options:
+        [
+          R0 Foundation,
+          R1 Parity,
+          R2 Social,
+          R3 Swapping and reminders,
+          R4 AI access,
+          R5 Equipment,
+          R6 Sensors,
+        ]
     validations:
       required: true
   - type: textarea

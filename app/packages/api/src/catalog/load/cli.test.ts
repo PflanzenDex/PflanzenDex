@@ -352,3 +352,10 @@ describe("US-BES-12 catalog:load, the curated start catalog (#991)", () => {
     expect(stderr).toContain("Catalog seed refused: PFLANZENDEX_ENV is 'prod'");
   });
 });
+
+describe("loader source text (US-QS-24)", () => {
+  it("US-QS-24 the source shown to users is German, not English", () => {
+    expect(START_SOURCE).toMatch(/^Kuratierter Startkatalog/);
+    expect(START_SOURCE).not.toMatch(/\bnames and family\b/);
+  });
+});

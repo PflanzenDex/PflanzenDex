@@ -1,6 +1,12 @@
+// @vitest-environment jsdom
 import { renderToString as render } from "react-dom/server";
+import { cleanup, render as plainRender } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
+import { DerivationForm } from "../../zones/derivation-view/derivation-view";
+import { LocationForm } from "../../zones/locations-view/locations-view";
+import { ZoneForm } from "../../zones/zones-view/zones-view";
 import type { LightData } from "../../shared/light-api/light-api";
 import { ErrorMessage } from "../../shared/ui/message/message";
 import { derivationText } from "../../shared/texts";
@@ -19,7 +25,25 @@ const actions: LightActions = {
 };
 const zone = { id: "z1", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
 const empty: LightData = { zones: [], locations: [], hints: [] };
-const html = (data: LightData) => renderToString(<LightView data={data} actions={actions} />);
+const overview = { ok: true as const, value: { rows: [] } };
+/** The page in the DOM: the layers are portals, which server rendering does not support. */
+const html = (data: LightData) => {
+  const { container } = plainRender(
+    <MemoryRouter>
+      <LightView
+        data={data}
+        actions={actions}
+        overview={overview}
+        onOpenCollection={() => undefined}
+        onRetry={() => undefined}
+      />
+    </MemoryRouter>,
+  );
+  // Non-breaking spaces come out as entities; the text checks compare the characters.
+  const markup = container.innerHTML.replaceAll("&nbsp;", "\u00a0");
+  cleanup();
+  return markup;
+};
 
 describe("US-LIC-05 view locations and light zones", () => {
   it("empty account: says what to do (P-09), and offers the default", () => {
@@ -29,11 +53,11 @@ describe("US-LIC-05 view locations and light zones", () => {
     expect(h).toContain("Noch keine Standorte");
   });
 
-  it("shows zone with lux ceiling, PPFD and order; missing PPFD means unknown (P-08)", () => {
+  it("US-QS-19 shows each zone as a compact row with its lux ceiling", () => {
     const h = html({ ...empty, zones: [zone, { ...zone, id: "z2", name: "Zone 9", ppfd: null }] });
     expect(h).toContain("bis 15.000\u00a0Lux");
-    expect(h).toContain("PPFD 300 µmol/m²/s");
-    expect(h).toContain("PPFD unbekannt");
+    expect(h).toContain("Zone 9");
+    expect(h).toContain("Lichtzonen (2)");
   });
 
   it("shows location with zone name and kind (outdoor/indoor)", () => {
@@ -46,7 +70,7 @@ describe("US-LIC-05 view locations and light zones", () => {
     expect(h).toContain("Zone 2 · außen");
   });
 
-  it('location without zone: appears in "Hints" with the next action and offers assigning', () => {
+  it("US-QS-19 location without zone: the notice counts the hints, the layer says what to do (P-09)", () => {
     const h = html({
       zones: [zone],
       locations: [{ id: "s2", name: "Regal", lightZoneId: null, kind: "indoor" }],
@@ -59,21 +83,22 @@ describe("US-LIC-05 view locations and light zones", () => {
         },
       ],
     });
-    expect(h).toContain("Hinweise");
-    expect(h).toContain("Weise dem Standort eine Lichtzone zu.");
+    expect(h).toContain("Hinweise (1)");
     expect(h).toContain("Keine Lichtzone");
-    expect(h).toContain("Lichtzone zuweisen");
+    expect(h).toContain("Lichthunger und Einstufung");
   });
 
-  it("without affected locations there is no hints block", () => {
-    expect(html({ ...empty, zones: [zone] })).not.toContain('id="hints"');
+  it("US-QS-19 without affected locations there is no hints notice", () => {
+    expect(html({ ...empty, zones: [zone] })).not.toContain("Hinweise (");
   });
 
   it("forms carry visible labels and input aids for numbers", () => {
-    const h = html(empty);
+    const h = renderToString(<ZoneForm onSave={nothing} />);
     expect(h).toContain("Lux-Decke (Lux)");
     expect(h).toContain('inputMode="numeric"');
-    expect(h).toContain("Keine Lichtzone (erscheint in den Hinweisen)");
+    expect(renderToString(<LocationForm zones={[zone]} onSave={nothing} />)).toContain(
+      "Keine Lichtzone (erscheint in den Hinweisen)",
+    );
   });
 });
 
@@ -116,16 +141,14 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
 
 describe("US-LIC-01 view: derive the zone of a species", () => {
   it("offers lux need, default level and the C3 hint and explains why", () => {
-    const h = html(empty);
-    expect(h).toContain("Zone einer Art ermitteln");
+    const h = renderToString(<DerivationForm onDerive={actions.zoneDerive} />);
     expect(h).toContain("Lux-Bedarf der Art (Lux)");
     expect(h).toContain("Stufe 4");
     expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
-    expect(h).toContain("Stecklingslicht ist nie das Ziel");
   });
 
   it("US-LIC-01 the C3 checkbox is the design-system box in one row with its label (#261)", () => {
-    const h = html(empty);
+    const h = renderToString(<DerivationForm onDerive={actions.zoneDerive} />);
     // The label row that holds the soft-leaf checkbox and its text, as the Checkbox primitive renders it.
     const row = h.match(
       /<label class="([^"]*)"><input([^>]*)\/><span>Sonnenliebende C3-Pflanze mit weichem Blatt<\/span><\/label>/,

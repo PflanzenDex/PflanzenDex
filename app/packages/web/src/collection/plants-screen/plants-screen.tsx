@@ -120,7 +120,7 @@ export function PlantsScreen(props: Props) {
       <Tiles {...props} items={props.cards} resetKey="all" />
     );
   return (
-    <section aria-labelledby="collection-title" className="flex min-h-0 gap-4">
+    <section aria-labelledby="collection-title" className="min-h-0">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         {props.embedded ? (
           <h2 id="collection-title" className="sr-only">

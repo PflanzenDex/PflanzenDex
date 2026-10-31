@@ -20,6 +20,7 @@ function fake({
   branches = "",
   pushFails = false,
   prFails = false,
+  board,
 } = {}) {
   const calls = [];
   let views = 0;
@@ -45,6 +46,7 @@ function fake({
     ["gh api user", () => "max\n"],
     ["gh repo view", () => "PflanzenDex\n"],
     ["gh project item-add", () => JSON.stringify({ id: "ITEM" })],
+    ["gh project item-list", board ? () => JSON.stringify(board) : fail("no board")],
     ["gh project field-list", () => JSON.stringify(fields)],
     ["gh project view", () => JSON.stringify({ id: "PROJ" })],
     ["git rev-parse", () => "tree\n"],
@@ -196,4 +198,17 @@ test("US-DEV-05: no warning when the priority is set; a failed lookup is reporte
   assert.ok(!logs.some((l) => /Warning/.test(l)));
   await claim(fake(), 62, { log: (m) => logs.push(m) });
   assert.ok(logs.some((l) => /Warning: could not check the priority of #62/.test(l)));
+});
+
+test("US-DEV-08: the branch type comes from the board type, not from the issue labels", async () => {
+  const board = { items: [{ id: "I", content: { type: "Issue", number: 62 }, typ: "Bug" }] };
+  const result = await claim(fake({ board }), 62, quiet);
+  assert.equal(result.branch, "fix/bes-06-delete-specimen");
+});
+
+test("US-DEV-08: a board that cannot be read is reported and the labels decide (P-10)", async () => {
+  const lines = [];
+  const result = await claim(fake(), 62, { log: (l) => lines.push(l) });
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.ok(lines.some((l) => /could not read the board type of #62/.test(l)));
 });

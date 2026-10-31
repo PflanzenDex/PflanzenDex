@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/kernel";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { AccountArea } from "./account-area";
@@ -322,5 +322,96 @@ describe("US-QS-17 the address names a section", () => {
     await waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole("link", { name: /^Erinnerungen/ })),
     );
+  });
+});
+
+describe("US-QS-15 · US-QS-17 Konto opens Einstellungen in the pane on a wide screen", () => {
+  afterEach(() => setViewportWidth(390));
+
+  /** The column of the index: the wrapper of its navigation. */
+  const indexColumn = () =>
+    screen.getByRole("navigation", { name: "Abschnitte von Konto" }).parentElement as HTMLElement;
+
+  it("US-QS-15 · US-QS-17 from 1280 px /account shows Einstellungen in the pane beside the index, never the placeholder (#1027)", async () => {
+    setViewportWidth(1280);
+    fakeServer();
+    show("/account");
+    expect(await screen.findByRole("heading", { level: 1, name: "Einstellungen" })).toBeTruthy();
+    expect(screen.queryByText("Wähle links einen Abschnitt.")).toBeNull();
+    expect(screen.getByTestId("address").textContent).toBe("/account");
+    expect(indexColumn().className).not.toContain("hidden");
+  });
+
+  it("US-QS-15 · US-QS-17 at 1024 px the index stays visible beside the default Einstellungen (#1027)", async () => {
+    setViewportWidth(1024);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(indexColumn().className).not.toContain("hidden");
+  });
+
+  it("US-QS-17 the default Einstellungen takes no focus on arrival (#1027)", async () => {
+    setViewportWidth(1280);
+    fakeServer();
+    show("/account");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(document.activeElement).not.toBe(heading);
+  });
+
+  it("US-QS-17 · US-QS-15 below 1024 px /account shows the index alone, no section", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account");
+    expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "Einstellungen" })).toBeNull();
+  });
+
+  it("US-QS-15 · US-QS-17 a section beside the index keeps its layer frame free to widen from 1024 px (nested frame, #1027)", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account/reminders");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Erinnerungen" });
+    const frame = heading.closest("[data-layer-host]") as HTMLElement;
+    const content = frame.firstElementChild as HTMLElement;
+    expect(content.className).toContain("lg:max-w-none");
+  });
+});
+
+describe("US-QS-15 the index yields while a settings layer is open, from 1280 px", () => {
+  beforeEach(() => setViewportWidth(1280));
+  afterEach(() => setViewportWidth(390));
+
+  /** The column of the index: the wrapper of its navigation; it is shown beside the section with `xl:block`. */
+  const indexColumn = () =>
+    screen.getByRole("navigation", { name: "Abschnitte von Konto" }).parentElement as HTMLElement;
+  const shownBesideSection = () => indexColumn().className.includes("xl:block");
+
+  it("US-QS-15 an open settings layer hides the index beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=profile");
+    await screen.findByRole("complementary", { name: "Profil" });
+    expect(shownBesideSection()).toBe(false);
+  });
+
+  it("US-QS-15 an address with an unknown sheet keeps the index beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=bogus");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(shownBesideSection()).toBe(true);
+  });
+
+  it("US-QS-15 a settings layer address of another section keeps the index beside it", async () => {
+    fakeServer();
+    show("/account/profile?sheet=profile");
+    await screen.findByRole("heading", { level: 1 });
+    expect(shownBesideSection()).toBe(true);
+  });
+
+  it("US-QS-15 closing the settings layer brings the index back beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=profile");
+    const pane = await screen.findByRole("complementary", { name: "Profil" });
+    await userEvent.click(within(pane).getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(shownBesideSection()).toBe(true));
   });
 });

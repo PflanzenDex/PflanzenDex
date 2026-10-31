@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render as plainRender, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { EquipmentRow } from "@pflanzendex/core";
 import { CostsView } from "./costs-view";
@@ -9,6 +11,8 @@ const item = (type: string, priceEur: number | null) =>
   ({ id: `e${++n}`, type, name: `Teil ${n}`, priceEur }) as unknown as EquipmentRow;
 
 afterEach(cleanup);
+
+const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("US-EQU-09 cost view", () => {
   it("US-EQU-09 shows the sum per type and in total and for how many records the price is missing", () => {

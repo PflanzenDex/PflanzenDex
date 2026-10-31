@@ -23,8 +23,8 @@ import { UNLOCKS_KEY, useUnlocks } from "../model/unlocks/unlocks";
 type Token = () => Promise<string | undefined>;
 type Entry = NonNullable<ReturnType<typeof useUnlocks>["entries"][number]>;
 
-const LINK =
-  "inline-flex min-h-[44px] items-center rounded-control px-1 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+/** The one card of the page: the state, the way and the buttons (US-ONB-05, A-03). */
+const CARD = "flex flex-col gap-3 rounded-card bg-card p-4 text-card-foreground shadow-elevation-1";
 const ALERT =
   "rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
@@ -50,14 +50,16 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
       </section>
     );
   return (
-    <section aria-labelledby="unlock-title" className="flex flex-col gap-3">
+    <section aria-labelledby="unlock-title" className={CARD}>
       <h1 id="unlock-title" className="text-2xl font-semibold">
         Diese Funktion gibt es hier nicht
       </h1>
       <p>Zurück zum Start findest du alles, was die App für dich bereithält.</p>
-      <Link to={PATHS.today} className={LINK}>
-        Zum Start
-      </Link>
+      <div>
+        <Button asChild>
+          <Link to={PATHS.today}>Zum Start</Link>
+        </Button>
+      </div>
     </section>
   );
 }
@@ -72,7 +74,7 @@ function LockedBody(props: { entry: Entry; name: string; running: boolean; onUnl
         </span>
         {props.name}: {waysText(props.entry)}.
       </p>
-      <p>
+      <p className="text-sm text-muted-foreground">
         Du kannst die Funktion jederzeit selbst freischalten, auch wenn das noch nicht erfüllt ist.
       </p>
       <div>
@@ -149,25 +151,32 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
         {name}
       </h1>
       <WriteNotes message={write.message} error={write.error} />
-      {locked ? (
-        <LockedBody
-          entry={entry}
-          name={name}
-          running={write.running}
-          onUnlock={() => void unlock()}
-        />
-      ) : (
-        <>
-          {!write.message && <p>{name} ist offen.</p>}
-          <Link to={functionAddress(id)} className={LINK}>
-            {name} öffnen
-          </Link>
-        </>
-      )}
-      <p className="m-0">{FUNCTION_PURPOSES[id as UnlockFunctionId]}</p>
-      <Link to={accountAddress("functions")} className={LINK}>
-        Alle Funktionen ansehen
-      </Link>
+      <div className={CARD}>
+        {locked ? (
+          <LockedBody
+            entry={entry}
+            name={name}
+            running={write.running}
+            onUnlock={() => void unlock()}
+          />
+        ) : (
+          !write.message && <p>{name} ist offen.</p>
+        )}
+        <p className="m-0">{FUNCTION_PURPOSES[id as UnlockFunctionId]}</p>
+        {/* Once open (or unlocked just now) the next step is the function itself (P-09). */}
+        {(!locked || write.message) && (
+          <div>
+            <Button asChild>
+              <Link to={functionAddress(id)}>{name} öffnen</Link>
+            </Button>
+          </div>
+        )}
+      </div>
+      <div>
+        <Button asChild variant="outline">
+          <Link to={accountAddress("functions")}>Alle Funktionen ansehen</Link>
+        </Button>
+      </div>
     </section>
   );
 }

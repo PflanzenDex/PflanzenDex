@@ -1,11 +1,8 @@
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../../kernel";
 import { LightView, type LightActions } from "../views/light-view/light-view";
-import { LightOverviewView } from "../views/light-overview-view/light-overview-view";
-import { RulesView } from "../views/rules-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
 import { refusalText } from "../shared/texts";
 import {
@@ -70,28 +67,6 @@ function buildActions(
   };
 }
 
-function OverviewSection(props: {
-  overview: Response<LightOverview>;
-  onOpenCollection: () => void;
-  onRetry: () => void;
-}) {
-  const o = props.overview;
-  if (o.ok) return <LightOverviewView data={o.value} onOpenCollection={props.onOpenCollection} />;
-  return (
-    <section aria-labelledby="overview-error" className="flex min-w-0 flex-col gap-3">
-      <h2 id="overview-error" className="text-xl font-semibold">
-        Lichthunger
-      </h2>
-      <EmptyState
-        variant="error"
-        title="Lichthunger konnte nicht geladen werden"
-        description={refusalText(o.error)}
-        action={{ label: "Erneut versuchen", onClick: props.onRetry }}
-      />
-    </section>
-  );
-}
-
 /** Loads the data and connects the view to the API; after every write it reloads (never guesses). */
 export function LightPage(props: {
   api: string;
@@ -132,16 +107,14 @@ export function LightPage(props: {
       {...(request.error ? { errorText: errorTitle(request.error) } : {})}
     >
       {z && (
-        // The view carries the page heading, so it comes first; the reference sections follow (US-QS-09, #591).
-        <div className="flex min-w-0 flex-col gap-6">
-          <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
-          <OverviewSection
-            overview={z.overview}
-            onOpenCollection={props.onOpenCollection}
-            onRetry={() => void load()}
-          />
-          <RulesView zones={z.data.zones} />
-        </div>
+        <LightView
+          data={z.data}
+          actions={actions}
+          overview={z.overview}
+          onOpenCollection={props.onOpenCollection}
+          onRetry={() => void load()}
+          {...(lastError ? { error: lastError } : {})}
+        />
       )}
     </RequestState>
   );
