@@ -223,6 +223,29 @@ describe("LayerSheet (US-QS-15)", () => {
     }
   });
 
+  it("US-QS-15: a layer that starts with a text field keeps the focus in it, also in the desktop pane", async () => {
+    // Owner decision of 31.10. (issue 1104): the wish form starts in its species search on every width.
+    for (const width of [360, 800, 1440]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/?sheet=new-wish"]}>
+          <LayerHost>
+            <LayerSheet id="new-wish" title="Neuer Wunsch">
+              <label>
+                Art suchen
+                <input type="search" />
+              </label>
+              <button type="button">Wunsch speichern</button>
+            </LayerSheet>
+          </LayerHost>
+        </MemoryRouter>,
+      );
+      const field = await screen.findByLabelText("Art suchen");
+      await waitFor(() => expect(document.activeElement).toBe(field));
+      unmount();
+    }
+  });
+
   it("US-QS-15 a LayerSheet outside a LayerHost warns in dev when it opens beside the content", () => {
     setViewportWidth(1440);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);

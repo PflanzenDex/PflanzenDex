@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Ebenen am Computer: Beginnt eine Ebene mit einem Suchfeld, etwa „Neuer Wunsch“, kannst du auch in der Seitenleiste sofort lostippen.",
     "Feinschliff: Die Ansicht der Sammlung und ihre Reiter sind im Dunkelmodus gut zu erkennen, das Schließkreuz der Dialoge ist groß genug, und „Abmelden…“ steht als Zeile in der Liste. Arten im Artenvergleich und im Pokédex sehen gleich aus. Die Wunschliste bleibt in einer Zeile, Hinweise auf eine Nachschub-Zone sind nicht mehr rot, und die Seitenschaltung bleibt lesbar, auch wenn sie deaktiviert ist.",
     "Formulare: Die weniger wichtigen Felder von „Neues Equipment“, „Art vorschlagen“, „Messen“, „Zum Tausch anbieten“ und „Neuer Wunsch“ liegen unter „Mehr Angaben“ und öffnen sich von selbst, wenn dort etwas steht oder fehlt. Der Knopf zum Speichern bleibt unten sichtbar, und die Formulare wiederholen den Titel der Ebene nicht mehr. Bei „Art vorschlagen“ liegt auch der Lichtbedarf unter „Mehr Angaben“.",
     "Sammlung und Entdecken: Die Listen von Pflanzen, Arten, Artenvergleich und Katalog nutzen die Höhe des Bildschirms. Eine Seite zeigt so viele Einträge, wie ganz darauf passen; die Blätterleiste bleibt unten an derselben Stelle, auch auf der letzten Seite. Ändert sich die Höhe, etwa beim Drehen des Telefons, bleibt der erste Eintrag der Seite sichtbar.",
