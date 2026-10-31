@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { currentTimeZone } from "../../../kernel";
+import { localToday, type Species, type SpecimenCard } from "@pflanzendex/core";
+import { showDateText } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { MemoryRouter } from "react-router";
 import { findCardButton, openPlant } from "./plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -96,7 +98,7 @@ describe("US-BES-04 client of the specimen API", () => {
 
   it("US-BES-04: repots with a bearer token and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e1", status: "plant" }));
-    const r = await repotSpecimen("http://api", "tok", "e1", fetchFn);
+    const r = await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn);
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/repot");
     expect(init?.method).toBe("POST");
@@ -108,10 +110,21 @@ describe("US-BES-04 client of the specimen API", () => {
   it("US-BES-04: a server error stays an error with a code (P-10)", async () => {
     const error = { code: "specimen.not_a_cutting", text: "Kein Steckling." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await repotSpecimen("http://api", "tok", "e1", fetchFn)).toMatchObject({
+    expect(await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn)).toMatchObject({
       ok: false,
       error: { code: "specimen.not_a_cutting" },
     });
+  });
+  it("US-BES-04: a chosen date goes with the time zone; without one the date stays out (older clients)", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e1", status: "plant" }));
+    await repotSpecimen("http://api", "tok", { id: "e1", date: "2026-10-01" }, fetchFn);
+    const [, init] = fetchFn.mock.calls[0] ?? [];
+    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    expect(body["date"]).toBe("2026-10-01");
+    expect(body["timeZone"]).toBeTruthy();
+    await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn);
+    const [, plain] = fetchFn.mock.calls[1] ?? [];
+    expect(JSON.parse(String(plain?.body))).not.toHaveProperty("date");
   });
 });
 
@@ -162,12 +175,40 @@ describe("US-BES-04 repotted on the card", () => {
     expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull();
   });
 
-  it("US-BES-04: repotting sends the request, reloads and says what happens next (P-09)", async () => {
+  it("US-BES-04: tapping Eingetopft changes nothing until Speichern, Abbrechen changes nothing either", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    expect(await screen.findByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
+    expect(posts).toHaveLength(0);
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Steckling eintopfen" })).toBeNull(),
+    );
+    expect(posts).toHaveLength(0);
+    expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
+  });
+
+  it("US-BES-04: the date of the form is preset to the keeper's local today (NFR-08)", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    const today = localToday(new Date(), currentTimeZone());
+    expect(((await screen.findByLabelText("Eingetopft am")) as HTMLInputElement).value).toBe(
+      showDateText(today),
+    );
+  });
+
+  it("US-BES-04: Speichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
+    const { posts } = fakeServer();
+    render(page());
+    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
+      target: { value: "2026-10-01" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0]).toMatchObject({ path: "/specimens/e1/repot", body: {} });
+    expect(posts[0]).toMatchObject({ path: "/specimens/e1/repot", body: { date: "2026-10-01" } });
     expect(posts[0]?.key).toBeTruthy();
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("„Ableger“ ist eingetopft");
@@ -177,7 +218,31 @@ describe("US-BES-04 repotted on the card", () => {
     );
   });
 
-  it("US-BES-04: when repotting fails the card stays and the error text is shown (P-10)", async () => {
+  it("US-BES-04: a date in the future is refused on the date field and nothing is written (P-10)", async () => {
+    fakeServer({
+      repotError: new Response(
+        JSON.stringify({
+          error: {
+            code: "specimen.repotted_in_future",
+            text: "Zukunft.",
+            details: [{ field: "date", code: "specimen.repotted_in_future" }],
+          },
+        }),
+        { status: 400 },
+      ),
+    });
+    render(page());
+    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
+      target: { value: "2026-12-24" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByText(/liegt in der Zukunft/)).toBeTruthy();
+    expect(screen.getByLabelText("Eingetopft am").getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
+  });
+
+  it("US-BES-04: when repotting fails the form stays and the German text of the code is shown (P-10)", async () => {
     fakeServer({
       repotError: new Response(
         JSON.stringify({
@@ -188,7 +253,8 @@ describe("US-BES-04 repotted on the card", () => {
     });
     render(page());
     await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await screen.findByRole("button", { name: "Speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("kein Steckling");
-    expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
   });
 });

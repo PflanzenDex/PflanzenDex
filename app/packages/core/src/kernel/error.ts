@@ -46,6 +46,8 @@ export const ERROR_TEXTS = {
     "Ab der dritten Pflanze braucht jede Pflanze der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
   "specimen.caught_in_future":
     "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
+  "specimen.repotted_in_future":
+    "Das Datum des Eintopfens liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
   "specimen.caught_after_archived":
     "Das Fangdatum liegt nach dem Tag, an dem die Pflanze archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
   "specimen.not_found": "Diese Pflanze gibt es nicht.",

@@ -4,11 +4,16 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "./equipment-page";
 
-/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. The toast provider is the app shell's (US-QS-07). */
 const view = (ui: ReactElement, url = "/") =>
-  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+  render(
+    <ToastProvider>
+      <MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>
+    </ToastProvider>,
+  );
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
 Element.prototype.setPointerCapture ??= () => undefined;

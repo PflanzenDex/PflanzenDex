@@ -4,7 +4,7 @@ import type {
   useCatchDate,
 } from "../../markers/catch-date/catch-date-field/catch-date-field";
 import type { useLightZone } from "../../markers/locate/light-zone-form/light-zone-form";
-import type { useMarker } from "../../markers/use-marker";
+import type { useMarker } from "../../markers/marker/use-marker";
 import { setSpecimenLocation } from "../model/specimens-api";
 import type { useArchive } from "./use-archive";
 import { COLLECTION_KEY, type Token } from "./use-collection";
@@ -41,7 +41,7 @@ export function useListActions(api: string, token: Token, a: ListActions) {
       marked.message ??
       archived.message ??
       potted.message,
-    error: archived.error ?? potted.error ?? place.error,
+    error: archived.error ?? place.error,
     handlers: {
       onLocate: (specimenId: string, locationId: string, success: string) => {
         clearMessages();
@@ -53,7 +53,7 @@ export function useListActions(api: string, token: Token, a: ListActions) {
       },
       onRepot: (e: Named) => {
         clearMessages();
-        void potted.repot(e);
+        potted.setOpen(e);
       },
       onMark: (e: Parameters<typeof marked.setOpen>[0] & object) => {
         clearMessages();

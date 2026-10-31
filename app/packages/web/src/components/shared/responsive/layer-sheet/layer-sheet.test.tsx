@@ -201,6 +201,28 @@ describe("LayerSheet (US-QS-15)", () => {
     warn.mockRestore();
   });
 
+  it("US-QS-15: a layer opens with focus on its title, not on a destructive control", async () => {
+    // The first control of the layer is destructive, as "Freundschaft beenden" is in "Meine Freunde" (issue 1028).
+    for (const width of [360, 800, 1440]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/?sheet=friends"]}>
+          <LayerHost>
+            <LayerSheet id="friends" title="Meine Freunde">
+              <button type="button">Freundschaft beenden</button>
+            </LayerSheet>
+          </LayerHost>
+        </MemoryRouter>,
+      );
+      const title = await screen.findByRole("heading", { name: "Meine Freunde" });
+      await waitFor(() => expect(document.activeElement).toBe(title));
+      expect(document.activeElement).not.toBe(
+        screen.getByRole("button", { name: "Freundschaft beenden" }),
+      );
+      unmount();
+    }
+  });
+
   it("US-QS-15 a LayerSheet outside a LayerHost warns in dev when it opens beside the content", () => {
     setViewportWidth(1440);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
