@@ -435,3 +435,15 @@ describe("US-BES-10 texts", () => {
     ).toBe("1 Pflanze übernommen; 2 other_kind übernommen.");
   });
 });
+
+describe("US-QS-14 · US-QS-15 the review list is a full-view page: one h1, outside any card", () => {
+  it("US-QS-14 the h1 Prüfliste is not inside a bordered card, and it is the only h1", async () => {
+    server(list([entry({})]));
+    show();
+    const title = screen.getByRole("heading", { level: 1, name: "Prüfliste" });
+    expect(title.closest(".bg-card")).toBeNull();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    await screen.findByRole("button", { name: /Echeveria elegans/ });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+});

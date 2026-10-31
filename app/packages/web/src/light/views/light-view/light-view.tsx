@@ -37,12 +37,14 @@ export function LightView(props: {
   overview: Response<LightOverview>;
   onOpenCollection: () => void;
   onRetry: () => void;
+  /** Inside the Sammlung the page header above is the one h1 (issue 1031). */
+  hosted?: boolean;
 }) {
   const { data, actions } = props;
   return (
     <div className="flex min-w-0 gap-4">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <h1 className="text-xl font-semibold">Standorte und Lichtzonen</h1>
+        {props.hosted ? null : <h1 className="text-xl font-semibold">Standorte und Lichtzonen</h1>}
         {props.error && <ErrorMessage error={props.error} />}
         <ManageLists data={data} actions={actions} />
         <Notices data={data} />

@@ -65,7 +65,7 @@ function Row(props: { item: TodayItem; date?: string; onOpen: (d: TodayDestinati
       </div>
       <Button
         type="button"
-        variant="secondary"
+        variant="outline"
         className="shrink-0"
         // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
         aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}

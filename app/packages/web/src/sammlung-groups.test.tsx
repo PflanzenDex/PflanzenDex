@@ -259,3 +259,23 @@ describe("US-QS-19 the layer Ansicht follows the layer rules", () => {
     await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });
+
+describe("US-QS-14 · US-LIC-01 the locations view is a sub-page with one page header", () => {
+  it("US-QS-14 has exactly one h1 in its failing state too, and its back control sits in that page header", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } }),
+      ),
+    );
+    renderAt("/collection?view=plants&manage=locations");
+    await screen.findByRole("button", { name: "Erneut versuchen" });
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const header = title.closest("[data-page-header]") as HTMLElement | null;
+    expect(header).not.toBeNull();
+    expect(
+      within(header as HTMLElement).getByRole("button", { name: "Zurück zur Sammlung" }),
+    ).toBeTruthy();
+  });
+});

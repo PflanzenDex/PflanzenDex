@@ -202,3 +202,18 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     ).toBe(true);
   });
 });
+
+describe("US-QS-14 · US-QS-15 the exchange is a sub-page with one page header", () => {
+  it("US-QS-14 has exactly one h1 while the exchange loads, and its page header names the way back", async () => {
+    server();
+    view();
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Tauschbörse",
+    ]);
+    expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
+      "/friends",
+    );
+    expect(await screen.findByText(/Du hast noch nichts angeboten/)).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+});
