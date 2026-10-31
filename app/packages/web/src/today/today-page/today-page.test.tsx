@@ -71,7 +71,7 @@ const INCOMPLETE = item(
 );
 
 describe("US-QS-18 the most urgent item of Heute", () => {
-  it("US-QS-18 shows the date, the single most urgent item with a short chip and its action, the rest behind one opener", async () => {
+  it("US-QS-18 shows the date, the single most urgent item with a short chip and its action, the further tasks inline", async () => {
     fakeServer(() =>
       response(200, { date: "2026-10-03", upcoming: 2, items: [OVERDUE, PHASE, INCOMPLETE] }),
     );
@@ -88,8 +88,10 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(screen.queryByText("Überfällig")).toBeNull();
     expect(screen.queryByText(/überfällig seit/)).toBeNull();
     expect(screen.queryByText("Efeu")).toBeNull();
-    // The further tasks and the later treatments share one row (US-QS-18).
-    expect(screen.getByRole("button", { name: /Weitere Aufgaben.*2 Termine später/ })).toBeTruthy();
+    // The further tasks stand inline, the later treatments in small text (US-QS-18).
+    expect(screen.getByRole("heading", { level: 2, name: "Weitere Aufgaben" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zu Pflegephasen: Efeu" })).toBeTruthy();
+    expect(screen.getByText("2 Termine später")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zu Behandlung: Aloe" }));
     expect(onOpen).toHaveBeenCalledWith("treatments");
   });
@@ -107,14 +109,56 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(onOpen).toHaveBeenCalledWith("care_phases");
   });
 
-  it("US-QS-18 the opener of the layer opens it", async () => {
-    fakeServer(() => response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, PHASE] }));
+  it("US-QS-18 the further tasks list no treatment: they are counted in the one Behandlungen entry", async () => {
+    const DUE = item("treatment_due", "treatments", "Farn", "„Farn“: Dünger – heute fällig.", "x");
+    fakeServer(() =>
+      response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, DUE, PHASE] }),
+    );
     render(<TodayPage api="http://api" token={token} onOpen={() => undefined} />);
-    await userEvent.click(await screen.findByRole("button", { name: /Weitere Aufgaben/ }));
-    expect(await screen.findByRole("dialog", { name: "Weitere Aufgaben" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Zu Pflegephasen: Efeu" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Zu Behandlung: Farn" })).toBeNull();
+    const layerRows = within(screen.getByRole("list", { name: "Weitere Aufgaben" })).getAllByRole(
+      "listitem",
+    );
+    expect(layerRows).toHaveLength(1);
   });
 
-  it("US-QS-18 · A-02 the further tasks are compact rows: the action sentence is not repeated on every row, four per page on a phone", async () => {
+  it("US-QS-18 one control opens the treatments layer when a treatment is most urgent: it replaces the action and names the count", async () => {
+    fakeServer(() => response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, PHASE] }));
+    render(
+      <TodayPage
+        api="http://api"
+        token={token}
+        onOpen={() => undefined}
+        treatmentsEntry={<button type="button">Behandlungen 5 · 2 überfällig</button>}
+        tiles={(first) => (first ? null : <p>Kachel Behandlungen</p>)}
+      />,
+    );
+    expect(
+      await screen.findByRole("button", { name: "Behandlungen 5 · 2 überfällig" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Zu Behandlung: Aloe" })).toBeNull();
+    expect(screen.queryByText("Kachel Behandlungen")).toBeNull();
+  });
+
+  it("US-QS-18 the treatments stay a tile when another item is the most urgent", async () => {
+    fakeServer(() => response(200, { date: "2026-10-03", upcoming: 0, items: [PHASE, OVERDUE] }));
+    render(
+      <TodayPage
+        api="http://api"
+        token={token}
+        onOpen={() => undefined}
+        treatmentsEntry={<button type="button">Eintrag</button>}
+        tiles={(first) => (first ? null : <p>Kachel Behandlungen</p>)}
+      />,
+    );
+    expect(await screen.findByText("Kachel Behandlungen")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Eintrag" })).toBeNull();
+    // The treatment item is not listed again as a further task.
+    expect(screen.queryByRole("button", { name: "Zu Behandlung: Aloe" })).toBeNull();
+  });
+
+  it("US-QS-18 · A-02 the further tasks are compact rows: the action sentence is not repeated on every row, three per page on a phone", async () => {
     const more = Array.from({ length: 5 }, (_, i) =>
       item(
         "phase_deviation",
@@ -125,15 +169,17 @@ describe("US-QS-18 the most urgent item of Heute", () => {
       ),
     );
     fakeServer(() => response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, ...more] }));
-    render(
-      <TodayPage api="http://api" token={token} onOpen={() => undefined} />,
-      "/today?sheet=tasks",
-    );
-    const layer = await screen.findByRole("dialog", { name: "Weitere Aufgaben" });
-    expect(within(layer).queryAllByText("Stelle es um.")).toHaveLength(0);
-    expect(within(layer).getAllByRole("listitem")).toHaveLength(4);
-    expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
-    expect(within(layer).getByRole("button", { name: "Zu Pflegephasen: Pflanze 1" })).toBeTruthy();
+    render(<TodayPage api="http://api" token={token} onOpen={() => undefined} />);
+    const list = await screen.findByRole("list", { name: "Weitere Aufgaben" });
+    expect(screen.queryAllByText("Stelle es um.")).toHaveLength(0);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(list).getByRole("button", { name: "Zu Pflegephasen: Pflanze 1" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
+    expect(
+      within(screen.getByRole("list", { name: "Weitere Aufgaben" })).getAllByRole("listitem"),
+    ).toHaveLength(2);
   });
 
   it("US-QS-04 · US-QS-18 an etiolated measurement and a zone below the buffer show their state word and lead to their place", async () => {
@@ -171,7 +217,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     first.unmount();
     render(<TodayPage api="http://api" token={token} onOpen={onOpen} />, "/today?sheet=tasks");
     const layer = await screen.findByRole("dialog", { name: "Weitere Aufgaben" });
-    expect(within(layer).getByText("Nachschub")).toBeTruthy();
+    expect(await within(layer).findByText("Nachschub")).toBeTruthy();
     await userEvent.click(
       within(layer).getByRole("button", {
         name: "Zur Wunschliste: Nachschub nötig: Lampe 3 (0 offene Kandidaten)",
@@ -199,8 +245,8 @@ describe("US-QS-18 the most urgent item of Heute", () => {
         api="http://api"
         token={token}
         onOpen={() => undefined}
-        summary={<p>Zusammenfassung</p>}
-        tiles={<p>Kacheln</p>}
+        summary={() => <p>Zusammenfassung</p>}
+        tiles={() => <p>Kacheln</p>}
       />,
     );
     expect(await screen.findByText("Der Server antwortet nicht.")).toBeTruthy();

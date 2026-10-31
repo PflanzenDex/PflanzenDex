@@ -40,6 +40,24 @@ export const todayRoutes = {
         nextAction: "Weise der Pflanze einen Standort zu.",
         target: "hints",
       }),
+      item("d", "Efeu", {
+        kind: "phase_deviation",
+        text: "„Efeu“ steht nicht am Soll-Standort.",
+        nextAction: "Stelle es um.",
+        target: "care_phases",
+      }),
+      item("e", "Farn", {
+        kind: "measurement_etiolated",
+        text: "„Farn“: Die letzte Messung ist vergeilt/dünn.",
+        nextAction: "Stelle die Pflanze heller.",
+        target: "measurements",
+      }),
+      item("f", "Zeder", {
+        kind: "specimen_incomplete",
+        text: "„Zeder“ hat noch keine Lichtzone.",
+        nextAction: "Weise eine Lichtzone zu.",
+        target: "hints",
+      }),
     ],
   },
   "/treatments": {
@@ -90,4 +108,13 @@ export const todayEmpty = {
   "/today": { date: "2026-10-08", upcoming: 0, items: [] },
   "/treatments": { treatments: [] },
   "/specimens/hints": { hints: [] },
+};
+
+/** A care phase deviation is the most urgent item: the treatments stay a tile next to the others (US-QS-18). */
+export const todayPhaseFirst = {
+  ...todayRoutes,
+  "/today": {
+    ...todayRoutes["/today"],
+    items: [todayRoutes["/today"].items[3], ...todayRoutes["/today"].items.slice(0, 3)],
+  },
 };
