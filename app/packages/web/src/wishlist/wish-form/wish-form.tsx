@@ -4,6 +4,7 @@ import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-fo
 import type { ZoneStock } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../kernel";
 import { SpeciesPick } from "./species-pick/species-pick";
@@ -37,19 +38,26 @@ function useServerRefusal(error: ApiError | null, setError: UseFormSetError<Wish
   return { alertText, alertRef };
 }
 
-/** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (opens by itself on a refusal). */
+/** Every field behind "Mehr Angaben": a value or a refusal opens it (P-10). */
+const FOLDED: readonly (keyof WishFields)[] = [
+  "name",
+  "german",
+  "targetZoneId",
+  "difficulty",
+  "reasoning",
+  "imageUrl",
+];
+/** After a pick the names are shown by the pick itself, so only the other fields open the group by their value. */
+const FOLDED_AFTER_PICK = FOLDED.filter((name) => name !== "name" && name !== "german");
+
+/** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (US-QS-24, issue 1032). */
 function FieldGroups(props: {
   form: UseFormReturn<WishFields>;
   access: { api: string; token: () => Promise<string | undefined> };
   zones: readonly ZoneStock[];
 }) {
   const { form } = props;
-  const [more, setMore] = useState(false);
   const [chosen, setChosen] = useState<string | null>(null);
-  const refused = Object.keys(form.formState.errors).length > 0;
-  useEffect(() => {
-    if (refused) setMore(true);
-  }, [refused]);
   useEffect(() => {
     // A saved wish empties the form: the pick starts again.
     if (!form.formState.isDirty) setChosen(null);
@@ -65,14 +73,15 @@ function FieldGroups(props: {
           setChosen(h.germanName ? `${h.latinName} (${h.germanName})` : h.latinName);
         }}
       />
-      <details open={more} onToggle={(e) => setMore(e.currentTarget.open)}>
-        <summary className="flex min-h-11 cursor-pointer items-center">Mehr Angaben</summary>
-        <div className="mt-3 flex flex-col gap-4">
-          <NameFields control={form.control} />
-          <ChoiceFields control={form.control} zones={props.zones} />
-          <ImageFields control={form.control} />
-        </div>
-      </details>
+      <FormMoreFields
+        control={form.control}
+        names={chosen ? FOLDED_AFTER_PICK : FOLDED}
+        forced={Boolean(form.formState.errors.name ?? form.formState.errors.german)}
+      >
+        <NameFields control={form.control} />
+        <ChoiceFields control={form.control} zones={props.zones} />
+        <ImageFields control={form.control} />
+      </FormMoreFields>
     </>
   );
 }
@@ -98,10 +107,8 @@ export function WishForm(props: {
     if (await props.onSend(toWishInput(values))) form.reset(EMPTY_FIELDS);
   });
   return (
-    <section aria-labelledby="wish-form-title" className="mt-7 flex flex-col gap-3">
-      <h2 id="wish-form-title" className="text-xl font-semibold">
-        Wunsch erfassen
-      </h2>
+    // The layer "Neuer Wunsch" already names the form, so the section has no heading of its own (US-QS-24, issue 1032).
+    <section aria-label="Wunsch erfassen" className="mt-7 flex flex-col gap-3">
       {props.message && !refused && (
         <p role="status" className="rounded-lg border border-border p-3">
           {props.message}
@@ -120,9 +127,12 @@ export function WishForm(props: {
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <FieldGroups form={form} access={props.access} zones={props.zones} />
-          <Button type="submit" size="touch" disabled={pending}>
-            {pending ? "Speichert …" : "Wunsch speichern"}
-          </Button>
+          {/* Sticky: the form scrolls inside the layer while the save button stays in view (US-QS-15). */}
+          <div className="sticky bottom-0 bg-card py-2">
+            <Button type="submit" size="touch" className="w-full" disabled={pending}>
+              {pending ? "Speichert …" : "Wunsch speichern"}
+            </Button>
+          </div>
         </FormRoot>
       </Form>
     </section>

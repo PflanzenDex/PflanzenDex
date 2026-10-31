@@ -5,21 +5,6 @@ import { GrowthSummary } from "./growth-summary/growth-summary";
 import { dateText, massName, measurementText, QUALITY_NAME } from "../../shared/text";
 
 /**
- * A closed block with a summary, used for the facts and the optional form fields of the measure page (US-WAC-01,
- * US-QS-23). Folded, not hidden: the summary names what is inside (P-10).
- */
-export function Folded({ summary, children }: { summary: string; children: ReactNode }) {
-  return (
-    <details className="text-sm">
-      <summary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        {summary}
-      </summary>
-      <div className="mt-1 grid gap-3">{children}</div>
-    </details>
-  );
-}
-
-/**
  * The one fact line of the measure page (US-WAC-01): the last measurement with its value and date; a cutting is marked
  * beside it, and `action` (the link to the course) sits in the same row. The other facts are in the layer of the
  * course (`MeasurementFacts`), so the page keeps only the form and this line.

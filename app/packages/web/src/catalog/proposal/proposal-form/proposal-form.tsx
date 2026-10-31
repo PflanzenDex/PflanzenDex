@@ -7,12 +7,7 @@ import type { ApiError } from "../../../kernel";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
 import { refusalText } from "../../shared/refusal";
-import {
-  LightStepFields,
-  NameStepFields,
-  REQUIRED_STEP,
-  TextStepFields,
-} from "../required-fields/required-fields";
+import { NameStepFields, REQUIRED_STEP, TextStepFields } from "../required-fields/required-fields";
 import {
   EMPTY_PROPOSAL,
   proposalSchema,
@@ -112,8 +107,8 @@ function StepActions(props: {
  * Propose species, the path without AI (FR-KI-05): all required fields from DM-BES-01 in the form. The proposal is
  * visible only to the creator and goes into the review list (FR-BES-11); the UI says so beforehand. A refusal of
  * the server lands on the fields it names (German text by error code, focus on the first); without a field it stays
- * in an alert (P-10). Two steps (US-QS-21): the name and the growth measure, then the two texts and the light; the
- * optional fields scroll in the sheet and the action row stays in view. It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
+ * in an alert (P-10). Two steps (US-QS-21): the name and the growth measure, then the two texts and, behind "Mehr Angaben",
+ * the optional light and details (US-QS-24); the action row stays in view. It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
  * "Vorschlag speichern" is its one filled action.
  */
 export function ProposalForm(props: {
@@ -154,7 +149,6 @@ export function ProposalForm(props: {
           ) : (
             <>
               <TextStepFields control={form.control} />
-              <LightStepFields control={form.control} />
               <MoreDetails control={form.control} />
             </>
           )}

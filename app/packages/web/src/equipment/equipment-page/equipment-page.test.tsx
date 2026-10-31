@@ -516,6 +516,22 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(save.parentElement?.className).toContain("sticky");
   });
 
+  it("US-QS-24 'Neues Equipment' starts with Mehr Angaben closed, has no heading inside the form that repeats the layer title, and saves from a sticky footer", async () => {
+    fakeServer([item()]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Equipment erfassen" }));
+    const layer = await screen.findByRole("dialog", { name: "Neues Equipment" });
+    const section = within(layer)
+      .getByRole("button", { name: "Equipment speichern" })
+      .closest("section");
+    expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
+    const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(
+      within(layer).getByRole("button", { name: "Equipment speichern" }).parentElement?.className,
+    ).toContain("sticky");
+  });
+
   it("US-QS-22 a tile opens its layer with the existing content; the layers mount only while open", async () => {
     fakeServer([item()]);
     view(<EquipmentPage api="http://api" token={token} />);

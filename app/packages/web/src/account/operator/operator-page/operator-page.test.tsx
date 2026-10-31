@@ -164,6 +164,15 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
     expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
   });
 
+  it("US-QS-24 US-ACC-05 the cost form has no heading that repeats the layer title and its save button sits in a sticky footer", async () => {
+    serve(() => json(404, {}));
+    await open();
+    await topic(/^Monatliche Kosten/);
+    const save = screen.getByRole("button", { name: "Kosten speichern" });
+    expect(save.closest("form")?.querySelector("h1, h2, h3")).toBeNull();
+    expect(save.parentElement?.className).toContain("sticky");
+  });
+
   it("US-ACC-05 saving sends the amount in cents with a repeat-guard key and reloads the numbers", async () => {
     serve((path, init) =>
       path === "/operator/cost" && init.method === "PUT"

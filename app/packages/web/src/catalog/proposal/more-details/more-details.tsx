@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useFormState, type Control } from "react-hook-form";
+import type { Control } from "react-hook-form";
+import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
 import { AreaField, TextField } from "../field-controls/field-controls";
+import { LightStepFields } from "../required-fields/required-fields";
 import type { ProposalFields } from "../../shared/schemas";
 
 const TEXTS: [name: keyof ProposalFields, label: string, help?: string][] = [
@@ -16,8 +17,13 @@ const TEXTS: [name: keyof ProposalFields, label: string, help?: string][] = [
   ["source", "Quelle", "Woher stammen die Angaben? Für die Freigabe nötig."],
 ];
 
-const OPTIONAL = [
+/** Every optional field of step 2: the light demand and the details. A value or a refusal in one opens "Mehr Angaben". */
+const OPTIONAL: readonly (keyof ProposalFields)[] = [
   ...TEXTS.map(([name]) => name),
+  "difficulty",
+  "standardLevel",
+  "lightDemandLux",
+  "softLeaf",
   "dormancyFrom",
   "dormancyUntil",
   "synonyms",
@@ -73,29 +79,16 @@ function DetailFields({ control }: { control: Control<ProposalFields> }) {
 }
 
 /**
- * Optional details: what you leave out later means "unknown", nothing is invented (P-08). The section opens by
- * itself when one of its fields is refused, so the focus can reach the field.
+ * The optional part of step 2 (US-QS-21, US-QS-24): the light demand and the details behind "Mehr Angaben". What is left
+ * out later means "unknown", nothing is invented (P-08); a refused field opens the group, so the focus can reach it (P-10).
  */
 export function MoreDetails({ control }: { control: Control<ProposalFields> }) {
-  const { errors } = useFormState({ control });
-  const invalid = OPTIONAL.some((name) => name in errors);
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (invalid) box.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-  }, [invalid]);
   return (
-    <details
-      open={open || invalid}
-      onToggle={(e) => setOpen(e.currentTarget.open)}
-      className="rounded-lg border border-border p-3 md:col-span-2"
-    >
-      <summary className="flex min-h-[44px] cursor-pointer items-center rounded-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        Weitere Angaben (optional)
-      </summary>
-      <div ref={box} className="mt-2 grid gap-4 md:grid-cols-2">
+    <FormMoreFields control={control} names={OPTIONAL} className="md:col-span-2">
+      <div className="grid gap-4 md:grid-cols-2">
+        <LightStepFields control={control} />
         <DetailFields control={control} />
       </div>
-    </details>
+    </FormMoreFields>
   );
 }
