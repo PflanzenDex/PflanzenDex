@@ -87,10 +87,8 @@ export function OfferForm(props: {
 }) {
   const s = useOfferForm(props.api, props.token, props.onChanged);
   return (
-    <section aria-labelledby="offer-form-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="offer-form-title" className="sr-only">
-        Zum Tausch anbieten
-      </h2>
+    // The layer "Zum Tausch anbieten" already names the form, so the section has no heading of its own (US-QS-24, issue 1032).
+    <section aria-label="Zum Tausch anbieten" className="flex min-w-0 flex-col gap-3">
       {s.write.message && (
         <p role="status" className="rounded-lg border border-border p-3">
           {s.write.message}
@@ -122,10 +120,12 @@ export function OfferForm(props: {
             onShare={s.share}
           />
         )}
-        <div>
+        {/* Sticky: the form scrolls inside the layer while the offer button stays in view (US-QS-15). */}
+        <div className="sticky bottom-0 bg-card py-2">
           <Button
             type="button"
             size="touch"
+            className="w-full"
             disabled={!s.ready || s.write.running}
             onClick={() => void s.submit()}
           >

@@ -288,6 +288,32 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     expect(photoPosts).toHaveLength(0);
   });
 
+  it("US-QS-24 the optional note and photo sit behind Mehr Angaben, closed; the save button sits in a sticky footer", async () => {
+    fakeServer();
+    show();
+    await screen.findAllByText("noch keine Messung");
+    const more = screen.getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(more.contains(screen.getByLabelText(/Foto/))).toBe(true);
+    expect(more.contains(screen.getByLabelText("Notiz (optional)"))).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Messung speichern" }).parentElement?.className,
+    ).toContain("sticky");
+  });
+
+  it("US-QS-24 a refused photo opens Mehr Angaben, so its message is never hidden (P-10)", async () => {
+    fakeServer();
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent
+      .setup({ applyAccept: false })
+      .upload(screen.getByLabelText(/Foto/), new File(["x"], "x.pdf", { type: "application/pdf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("JPEG, PNG oder WebP");
+    expect(alert.closest("details")?.open).toBe(true);
+  });
+
   it("a file that is not an image is rejected before sending and writes nothing", async () => {
     const { posts, photoPosts } = fakeServer();
     show();

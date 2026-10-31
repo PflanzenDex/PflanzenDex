@@ -116,6 +116,16 @@ export function RequiredFields({ control }: FieldProps) {
   );
 }
 
+/** The fields behind "Mehr Angaben"; one of them holding a value or a refusal opens the group (US-QS-24, issue 1032). */
+export const OPTIONAL_FIELDS = [
+  "manufacturer",
+  "model",
+  "productId",
+  "priceEur",
+  "boughtAt",
+  "note",
+] as const satisfies readonly (keyof EquipmentFields)[];
+
 export function OptionalFields({ control }: FieldProps) {
   return (
     <>
