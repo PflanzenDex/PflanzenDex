@@ -8,6 +8,12 @@ const TEXT_FIELD =
   "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])";
 const CONTROL = `${TEXT_FIELD}, button:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])`;
 
+/** The text field a layer starts with, when its first control is one; otherwise `null` (US-QS-15, issue 1104). */
+export function leadingTextField(layer: HTMLElement | null): HTMLElement | null {
+  const first = layer?.querySelector<HTMLElement>(CONTROL) ?? null;
+  return first?.matches(TEXT_FIELD) ? first : null;
+}
+
 /**
  * Focus on open for a layer (US-QS-15, issue 1028): the title takes the focus, so no button inside a layer gets it first
  * (a stray Enter on "Freundschaft beenden" would end a friendship). A text field that comes first keeps the focus, as the
@@ -15,7 +21,7 @@ const CONTROL = `${TEXT_FIELD}, button:not([disabled]), a[href], [tabindex]:not(
  */
 export function focusModalTitle(event: Event): void {
   const modal = event.currentTarget as HTMLElement | null;
-  if (modal?.querySelector<HTMLElement>(CONTROL)?.matches(TEXT_FIELD)) return;
+  if (leadingTextField(modal)) return;
   event.preventDefault();
   const titleId = modal?.getAttribute("aria-labelledby");
   if (titleId) document.getElementById(titleId)?.focus();

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import {
   ResponsiveModal,
   focusModalTitle,
+  leadingTextField,
 } from "@/components/shared/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/lib/use-breakpoint";
 import { restoreFocus, useLayer } from "./use-layer";
@@ -57,7 +58,7 @@ function LayerBody({
   primaryAction?: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div data-layer-body="" className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Below lg the sheet or dialog around it scrolls, so a sticky bar inside sticks to that; from lg the pane scrolls this region. */}
       <div className="min-h-0 flex-1 lg:overflow-y-auto lg:overscroll-contain">{children}</div>
       {primaryAction ? <div className="flex flex-col gap-2">{primaryAction}</div> : null}
@@ -65,7 +66,10 @@ function LayerBody({
   );
 }
 
-/** The pane of an open layer from 1024 px. Its heading takes the focus when the pane mounts; Escape closes it. */
+/**
+ * The pane of an open layer from 1024 px. Its heading takes the focus when the pane mounts, unless the layer starts with
+ * a text field, which keeps it as in the sheet and dialog (`focusModalTitle`, issue 1104); Escape closes it.
+ */
 function LayerPane({
   id,
   title,
@@ -75,11 +79,15 @@ function LayerPane({
   children,
 }: LayerSheetProps & { primaryAction?: React.ReactNode | undefined; onClose: () => void }) {
   const heading = React.useRef<HTMLHeadingElement>(null);
+  const pane = React.useRef<HTMLElement>(null);
   React.useEffect(() => {
-    heading.current?.focus();
+    // The pane's own close button comes first, so the text field is looked for in the layer's body.
+    const body = pane.current?.querySelector<HTMLElement>("[data-layer-body]") ?? null;
+    (leadingTextField(body) ?? heading.current)?.focus();
   }, []);
   return (
     <aside
+      ref={pane}
       data-layer-pane=""
       aria-labelledby={`layer-${id}`}
       onKeyDown={(event) => {
