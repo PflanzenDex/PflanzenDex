@@ -1,10 +1,11 @@
 import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { useEffect, useRef, type ReactNode } from "react";
-import { Link, Navigate, useLocation, useSearchParams } from "react-router";
+import { Navigate, useLocation, useSearchParams } from "react-router";
 import { useFeature } from "@/kernel";
 import { useIsLg } from "@/lib/use-breakpoint";
 import { useAnnounce } from "@/platform/announcer/context";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
+import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
 import { headingId } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { SETTINGS_LAYER_IDS, type Account } from "@/account";
 import {
@@ -57,23 +58,27 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
   if (!info) return null;
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      {byDefault ? null : (
-        <Link
-          to={PATHS.account}
-          state={{ keepFocus: true }}
-          className="inline-flex min-h-11 items-center self-start rounded-lg px-1 text-[15px] font-medium underline xl:hidden"
-        >
-          Konto
-        </Link>
-      )}
       <AreaSection
         anchor={ACCOUNT_SECTIONS[rest.section]}
         title={info.title}
         loading={info.loading}
         heading={
-          <h1 id={id} className="text-2xl font-semibold">
-            {info.title}
-          </h1>
+          // The section's name is the one h1; the way back "Zurück zu Konto" is the page header's (issue 1031). From
+          // 1280 px the index stands beside the section, so the way back is hidden there.
+          <PageHeader
+            headingId={id}
+            title={info.title}
+            {...(byDefault
+              ? {}
+              : {
+                  back: {
+                    label: "Zurück zu Konto",
+                    to: PATHS.account,
+                    state: { keepFocus: true },
+                    className: "xl:hidden",
+                  },
+                })}
+          />
         }
       >
         <SectionContent {...rest} />

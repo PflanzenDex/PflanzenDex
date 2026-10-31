@@ -421,3 +421,16 @@ describe("US-TAU-07 empty states and calm mode", () => {
     ).toBeTruthy();
   });
 });
+
+describe("US-QS-14 · US-QS-15 the matching offers are a sub-page with one page header", () => {
+  it("US-QS-14 have exactly one h1 while they load, and the page header's back control leads to the exchange", () => {
+    server([card(1)]);
+    open();
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Passende Angebote",
+    ]);
+    expect(screen.getByRole("link", { name: "Zurück zur Tauschbörse" }).getAttribute("href")).toBe(
+      "/friends/exchange",
+    );
+  });
+});

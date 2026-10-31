@@ -207,3 +207,26 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
   });
 });
+
+describe("US-QS-14 · US-QS-15 a friend's collection is a sub-page with one page header", () => {
+  it("US-QS-14 has exactly one h1 while the collection loads, and its back control is the page header's", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS });
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Sammlung eines Freundes",
+    ]);
+    expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
+      "/friends",
+    );
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Annas Sammlung",
+    ]);
+  });
+
+  it("US-QS-15 the header with its back control stays while the friend's collection fails (P-10)", async () => {
+    show({ error: { code: "friend.not_found", text: "x" } }, 404);
+    await screen.findByRole("alert");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Zurück zu Freunde" })).toBeTruthy();
+  });
+});

@@ -282,3 +282,35 @@ describe("US-QS-18 locked functions on Heute", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 });
+
+describe("US-QS-14 · US-ONB-05 the unlock pages are one card with buttons", () => {
+  it("US-QS-14 an unknown function is one card: its one h1, the sentence and two buttons, none of them underlined", async () => {
+    server(() => [open("friends")]);
+    page("/unlock/nonsense");
+    const heading = await screen.findByRole("heading", { level: 1 });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const card = heading.closest("section") as HTMLElement;
+    expect(card.className).toContain("bg-card");
+    const start = within(card).getByRole("link", { name: "Zum Start" });
+    const all = within(card).getByRole("link", { name: "Alle Funktionen ansehen" });
+    expect(start.className).not.toContain("underline");
+    expect(all.className).not.toContain("underline");
+    expect(all.className).toContain("border-primary");
+  });
+
+  it("US-QS-14 a failed unlock page is a card too: one h1, the alert and the retry button (P-10)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(500, { error: { code: "input.invalid", text: "x" } }),
+      ),
+    );
+    page("/unlock/swapping");
+    await screen.findByRole("alert");
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const card = heading.closest("section") as HTMLElement;
+    expect(card.className).toContain("bg-card");
+    expect(within(card).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+});

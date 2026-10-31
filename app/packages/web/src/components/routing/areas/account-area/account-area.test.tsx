@@ -161,7 +161,9 @@ describe("US-QS-17 Konto with its sections as views", () => {
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Erinnerungen",
     ]);
-    expect(screen.getByRole("link", { name: "Konto" }).getAttribute("href")).toBe("/account");
+    expect(screen.getByRole("link", { name: "Zurück zu Konto" }).getAttribute("href")).toBe(
+      "/account",
+    );
     await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
@@ -318,7 +320,7 @@ describe("US-QS-17 the address names a section", () => {
     await userEvent.click(row);
     const heading = await screen.findByRole("heading", { level: 1, name: "Erinnerungen" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    await userEvent.click(screen.getByRole("link", { name: "Konto" }));
+    await userEvent.click(screen.getByRole("link", { name: "Zurück zu Konto" }));
     await waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole("link", { name: /^Erinnerungen/ })),
     );
@@ -413,5 +415,46 @@ describe("US-QS-15 the index yields while a settings layer is open, from 1280 px
     const pane = await screen.findByRole("complementary", { name: "Profil" });
     await userEvent.click(within(pane).getByRole("button", { name: "Schließen" }));
     await waitFor(() => expect(shownBesideSection()).toBe(true));
+  });
+});
+
+describe("US-QS-14 · US-QS-17 Konto has exactly one h1 on every width", () => {
+  afterEach(() => setViewportWidth(390));
+
+  const headings1 = () => screen.queryAllByRole("heading", { level: 1 }).map((h) => h.textContent);
+
+  it("US-QS-14 · US-QS-17 on a wide screen the index and the default section have one h1 (desktop Konto)", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(headings1()).toEqual(["Einstellungen"]);
+  });
+
+  it("US-QS-14 · US-QS-17 on a wide screen a section beside the index keeps one h1, its name", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account/profile");
+    await screen.findByRole("region", { name: "Profil" });
+    expect(headings1()).toEqual(["Profil"]);
+  });
+
+  it("US-QS-14 · US-QS-17 on a phone the section Profil has one h1 and the page header's way back", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account/profile");
+    await screen.findByRole("region", { name: "Profil" });
+    expect(headings1()).toEqual(["Profil"]);
+    expect(screen.getByRole("link", { name: "Zurück zu Konto" }).getAttribute("href")).toBe(
+      "/account",
+    );
+  });
+
+  it("US-QS-14 the index on a phone keeps the one h1 Konto", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(headings1()).toEqual(["Konto"]);
   });
 });

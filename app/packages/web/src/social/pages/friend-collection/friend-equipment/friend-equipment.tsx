@@ -69,7 +69,6 @@ export function FriendEquipment(props: {
         token={props.token}
         load={load}
         loadingText="Geräte werden geladen …"
-        heading="Geräte eines Freundes"
       >
         {(data) =>
           data.devices.length === 0 ? (

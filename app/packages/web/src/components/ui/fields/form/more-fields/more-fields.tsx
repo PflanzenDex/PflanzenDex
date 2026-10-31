@@ -18,7 +18,7 @@ type MoreFieldsProps = {
 };
 
 /**
- * The optional fields of a form behind "Mehr Angaben" (US-QS-15, US-QS-24, DS-64): closed by default, opened by a click.
+ * The optional fields of a form behind "Mehr Angaben" (US-QS-15, US-QS-24, DS-66): closed by default, opened by a click.
  * While a field inside holds a value or a refusal (`forced`), it stays open and its summary does not close it, so nothing
  * is hidden silently (P-10). A refused field takes the focus when the group opens by itself.
  */

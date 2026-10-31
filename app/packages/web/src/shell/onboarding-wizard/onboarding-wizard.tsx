@@ -85,12 +85,12 @@ function Buttons(props: { f: Flow; onSkip: () => void }) {
           >
             {FIRST_PLANT_STEPS[1]?.actionLabel}
           </Button>
-          <Button type="button" variant="secondary" onClick={() => f.setIndex(0)}>
+          <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
             Zurück
           </Button>
         </>
       )}
-      <Button type="button" variant="secondary" onClick={props.onSkip}>
+      <Button type="button" variant="ghost" onClick={props.onSkip}>
         Überspringen
       </Button>
     </div>

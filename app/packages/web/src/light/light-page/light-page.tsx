@@ -72,6 +72,8 @@ export function LightPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onOpenCollection: () => void;
+  /** Inside the Sammlung the frame above names the page (`FullView`, issue 1031): no second h1 from here. */
+  hosted?: boolean;
 }) {
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
@@ -101,7 +103,7 @@ export function LightPage(props: {
     <RequestState
       status={request.status}
       onRetry={request.retry}
-      heading="Standorte und Lichtzonen"
+      {...(props.hosted ? {} : { heading: "Standorte und Lichtzonen" })}
       skeleton={<LightPageSkeleton label={loading} />}
       offline={request.offline}
       {...(request.error ? { errorText: errorTitle(request.error) } : {})}
@@ -113,6 +115,7 @@ export function LightPage(props: {
           overview={z.overview}
           onOpenCollection={props.onOpenCollection}
           onRetry={() => void load()}
+          {...(props.hosted ? { hosted: true } : {})}
           {...(lastError ? { error: lastError } : {})}
         />
       )}

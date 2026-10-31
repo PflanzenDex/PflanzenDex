@@ -10,7 +10,7 @@ import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skel
 import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
-import { Button } from "@/components/ui/button/button";
+import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
 import { cn } from "@/lib/utils";
 import {
   PLANT_GROUPS,
@@ -153,18 +153,13 @@ function ModeBody(p: ModeProps) {
     );
   if (p.managing)
     return (
-      <div className="flex min-w-0 flex-col gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="self-start"
-          onClick={p.onCloseManage}
-        >
-          Zurück zur Sammlung
-        </Button>
-        <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} />
-      </div>
+      <FullView
+        headingId="light-title"
+        title="Standorte und Lichtzonen"
+        back={{ label: "Zurück zur Sammlung", onBack: p.onCloseManage }}
+      >
+        <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} hosted />
+      </FullView>
     );
   if (p.measure)
     return (
