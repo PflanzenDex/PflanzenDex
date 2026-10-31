@@ -4,8 +4,12 @@ import { cn } from "@/lib/utils";
 /** The pane column of a `LayerHost`: hidden while empty, so it adds no gap (US-QS-15, US-QS-18). */
 const PANE_SLOT = "hidden lg:flex lg:shrink-0 lg:flex-col lg:self-start lg:empty:hidden";
 
-/** The content column: at most 720 px and centred, so the pane beside it takes the rest (US-QS-18, issue 1027). */
-const CONTENT_COLUMN = "mx-auto flex min-h-0 min-w-0 max-w-180 flex-1 flex-col";
+/**
+ * The content column: at most 720 px and centred, so the pane beside it takes the rest (US-QS-18, issue 1027). It takes
+ * the full width of the frame: a centred box without `w-full` shrinks to its widest content, and at 200 % text that
+ * content pushes the column past the right edge (issue 1019).
+ */
+const CONTENT_COLUMN = "mx-auto flex w-full min-h-0 min-w-0 max-w-180 flex-1 flex-col";
 
 type LayerHostState = { pane: HTMLDivElement | null } | null;
 export const LayerHostContext = React.createContext<LayerHostState>(null);

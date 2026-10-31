@@ -11,7 +11,7 @@ export function NavNote(props: { text: string | undefined; inline?: boolean }) {
       {props.text}
     </span>
   ) : (
-    <span className="max-w-full break-words text-[10px] font-normal leading-tight">
+    <span className="max-w-full break-words text-xs font-normal leading-tight">
       <span className="sr-only">, </span>
       {props.text}
     </span>

@@ -204,14 +204,14 @@ describe("US-QS-14 the third mode Wunschliste", () => {
   it("US-QS-14 · US-WUN-01 the address with view=wishlist shows the wishlist, its count line and one main heading", async () => {
     renderAt("/collection?view=wishlist");
     expect(await screen.findByText("0 offene Wünsche")).toBeTruthy();
-    expect(checked("Wunschliste")).toBe(true);
+    expect(checked("Wünsche")).toBe(true);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Sammlung");
     expect(screen.getByRole("heading", { level: 2, name: "Wunschliste" })).toBeTruthy();
     expect(screen.getByText("Erfasse einen Wunsch.")).toBeTruthy();
   });
 
-  it("US-QS-14 the switch offers four modes in the order Pflanzen, Arten, Wunschliste, Equipment (US-EQU-01)", async () => {
+  it("US-QS-19 the mode switch labels are Pflanzen, Arten, Wünsche, Geräte", async () => {
     renderAt("/collection");
     await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     const group = screen.getByRole("group", { name: "Ansicht der Sammlung" });
@@ -219,27 +219,27 @@ describe("US-QS-14 the third mode Wunschliste", () => {
       within(group)
         .getAllByRole("button")
         .map((b) => b.textContent),
-    ).toEqual(["Pflanzen", "Arten", "Wunschliste", "Equipment"]);
+    ).toEqual(["Pflanzen", "Arten", "Wünsche", "Geräte"]);
   });
 
-  it("US-QS-14 a click on Wunschliste changes the address, remembers it, announces it and keeps the focus", async () => {
+  it("US-QS-14 a click on Wünsche changes the address, remembers it, announces it and keeps the focus", async () => {
     renderAt("/collection");
     await screen.findByText("Du hast noch keine Pflanze", { exact: false });
-    await userEvent.click(screen.getByText("Wunschliste"));
+    await userEvent.click(screen.getByText("Wünsche"));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=wishlist");
     expect(window.localStorage.getItem(VIEW_KEY)).toBe("wishlist");
     expect(await screen.findByText("0 offene Wünsche")).toBeTruthy();
-    expect(document.activeElement).toBe(radio("Wunschliste"));
-    expect(document.querySelector("[aria-live=polite]")?.textContent).toContain("Wunschliste");
+    expect(document.activeElement).toBe(radio("Wünsche"));
+    expect(document.querySelector("[aria-live=polite]")?.textContent).toContain("Wünsche");
   });
 
   it("US-QS-14 the wishlist mode is reachable from the keyboard", async () => {
     renderAt("/collection?view=species");
     await screen.findByText("1 gefangen");
-    radio("Wunschliste").focus();
+    radio("Wünsche").focus();
     await userEvent.keyboard("{Enter}");
     expect(await screen.findByText("0 offene Wünsche")).toBeTruthy();
-    expect(document.activeElement).toBe(radio("Wunschliste"));
+    expect(document.activeElement).toBe(radio("Wünsche"));
   });
 
   it("US-QS-14 the stored wishlist mode is used without an address, and the address wins over it", async () => {
@@ -300,7 +300,7 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
   it("US-QS-14 leaving the species mode drops the arrangement from the address", async () => {
     renderAt("/collection?view=species&sort=difficulty");
     await screen.findByText("0 Arten im Vergleich");
-    await userEvent.click(screen.getByText("Wunschliste"));
+    await userEvent.click(screen.getByText("Wünsche"));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=wishlist");
   });
 });

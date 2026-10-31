@@ -51,8 +51,10 @@ function Row(props: { item: TodayItem; date?: string; onOpen: (d: TodayDestinati
   const { item } = props;
   const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
   return (
-    <div className={cn(CARD, "flex items-center gap-3", urgent && URGENT)}>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+    // The row wraps the action below the text when the two do not fit side by side at a larger text size (issue 1019);
+    // the text column keeps a basis of 9 rem, so at normal text the row stays one line as before.
+    <div className={cn(CARD, "flex flex-wrap items-center gap-3", urgent && URGENT)}>
+      <div className="flex min-w-0 grow basis-36 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-x-2">
           <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
             {chipOf(item)}
@@ -66,7 +68,7 @@ function Row(props: { item: TodayItem; date?: string; onOpen: (d: TodayDestinati
       <Button
         type="button"
         variant="outline"
-        className="shrink-0"
+        className="max-w-full shrink-0"
         // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
         aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}
         onClick={() => props.onOpen(item.target)}

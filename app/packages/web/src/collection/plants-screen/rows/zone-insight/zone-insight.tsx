@@ -27,7 +27,7 @@ export function ZoneInsightRow({ distribution }: { distribution: Distribution })
       className="min-w-0 flex-1 justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
     >
       <Gauge aria-hidden="true" className="size-4 shrink-0" />
-      <span className="truncate">{zoneInsightText(distribution)}</span>
+      <span className="min-w-0 [overflow-wrap:anywhere]">{zoneInsightText(distribution)}</span>
     </Button>
   );
 }
