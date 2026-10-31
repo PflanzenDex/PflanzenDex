@@ -4,6 +4,23 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/overlays/d
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/lib/use-breakpoint";
 
+const TEXT_FIELD =
+  "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])";
+const CONTROL = `${TEXT_FIELD}, button:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])`;
+
+/**
+ * Focus on open for a layer (US-QS-15, issue 1028): the title takes the focus, so no button inside a layer gets it first
+ * (a stray Enter on "Freundschaft beenden" would end a friendship). A text field that comes first keeps the focus, as the
+ * wish form starts in its species search (issue 902). Radix would focus the first focusable element otherwise.
+ */
+export function focusModalTitle(event: Event): void {
+  const modal = event.currentTarget as HTMLElement | null;
+  if (modal?.querySelector<HTMLElement>(CONTROL)?.matches(TEXT_FIELD)) return;
+  event.preventDefault();
+  const titleId = modal?.getAttribute("aria-labelledby");
+  if (titleId) document.getElementById(titleId)?.focus();
+}
+
 export type ResponsiveModalProps = {
   /** Required: the accessible name of the modal (DS-40). */
   title: string;
@@ -14,6 +31,8 @@ export type ResponsiveModalProps = {
   trigger?: React.ReactElement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Focus on open; Radix's default (the first focusable element) unless given, e.g. `focusModalTitle` for a layer. */
+  onOpenAutoFocus?: (event: Event) => void;
   children: React.ReactNode;
 };
 
@@ -29,6 +48,7 @@ export function ResponsiveModal({
   trigger,
   open: openProp,
   onOpenChange,
+  onOpenAutoFocus,
   children,
 }: ResponsiveModalProps) {
   const isMd = useIsMd();
@@ -58,14 +78,19 @@ export function ResponsiveModal({
       {isMd ? (
         <Dialog open={open} onOpenChange={setOpen}>
           {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-          <DialogContent title={title} {...copy} {...(closeLabel ? { closeLabel } : {})}>
+          <DialogContent
+            title={title}
+            {...copy}
+            {...(closeLabel ? { closeLabel } : {})}
+            {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
+          >
             {body}
           </DialogContent>
         </Dialog>
       ) : (
         <Sheet open={open} onOpenChange={setOpen}>
           {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
-          <SheetContent title={title} {...copy}>
+          <SheetContent title={title} {...copy} {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}>
             {body}
           </SheetContent>
         </Sheet>

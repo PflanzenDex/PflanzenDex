@@ -1,7 +1,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button/button";
-import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
+import {
+  ResponsiveModal,
+  focusModalTitle,
+} from "@/components/shared/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/lib/use-breakpoint";
 import { restoreFocus, useLayer } from "./use-layer";
 import { LayerHostContext } from "./layer-host/layer-host";
@@ -159,6 +162,7 @@ export function LayerSheet({
       onOpenChange={(next) => {
         if (!next) closeLayer();
       }}
+      onOpenAutoFocus={focusModalTitle}
     >
       {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22). */}
       {open ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}

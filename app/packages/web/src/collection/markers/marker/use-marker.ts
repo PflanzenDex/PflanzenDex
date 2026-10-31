@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import type { ApiError } from "../../kernel";
-import { markSpecimen } from "../specimens/model/specimens-api";
-import { SIGN_IN, type Token } from "../specimens/hooks/use-collection";
+import type { ApiError } from "../../../kernel";
+import { markSpecimen } from "../../specimens/model/specimens-api";
+import { SIGN_IN, type Token } from "../../specimens/hooks/use-collection";
 
 /** The specimen whose marker is being changed (US-BES-03). */
 export type MarkTarget = {

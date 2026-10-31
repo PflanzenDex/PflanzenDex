@@ -17,7 +17,8 @@ import {
 } from "../specimens/hooks/use-collection";
 import { useArchive } from "../specimens/hooks/use-archive";
 import { useRepot } from "../specimens/hooks/use-repot";
-import { useMarker } from "../markers/use-marker";
+import { RepotForm } from "../markers/repot/repot-form/repot-form";
+import { useMarker } from "../markers/marker/use-marker";
 import { useCreate } from "../specimens/create/use-create";
 import { MarkerForm } from "../markers/marker/marker-form/marker-form";
 import {
@@ -64,7 +65,14 @@ export function CollectionPage(props: Props) {
   const clearMessages = useCallback(() => {
     for (const a of [archived, potted, marked, caught, zoned]) a.setMessage(null);
   }, [archived, potted, marked, caught, zoned]);
-  const formOpen = !!(newSpecies || archived.open || marked.open || caught.open || zoned.open);
+  const formOpen = !!(
+    newSpecies ||
+    archived.open ||
+    potted.open ||
+    marked.open ||
+    caught.open ||
+    zoned.open
+  );
   useHostReport(props.host, request.value?.cards.length, formOpen);
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
@@ -102,7 +110,7 @@ function Views(p: {
   props: Props;
 }) {
   const { data, create, props } = p;
-  const { archived, marked, caught, zoned } = p.actions;
+  const { archived, potted, marked, caught, zoned } = p.actions;
   if (props.newSpecies) {
     const id = props.newSpecies.id;
     return (
@@ -125,6 +133,7 @@ function Views(p: {
       />
     );
   }
+  if (potted.open) return <RepotForm state={{ ...potted, open: potted.open }} />;
   if (marked.open) {
     return (
       <MarkerForm
