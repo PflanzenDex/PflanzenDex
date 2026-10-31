@@ -85,6 +85,19 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.getByRole("status").textContent).toBe("Seite 1 von 3");
   });
 
+  it("US-QS-15 · issue 1045 a disabled page button is neutral, not the faded outline green", () => {
+    render(<Example at="/?page=1" />);
+    const back = screen.getByRole("button", { name: "Zurück" });
+    expect(back.hasAttribute("disabled")).toBe(true);
+    expect(back.className).toContain("disabled:text-muted-foreground");
+    expect(back.className).toContain("disabled:opacity-100");
+  });
+
+  it("US-QS-24 the page caption never breaks inside a number and its count", () => {
+    render(<Example at="/?page=2" />);
+    expect(screen.getByRole("status").className).toContain("whitespace-nowrap");
+  });
+
   it("US-QS-15 one page shows no controls", () => {
     render(
       <MemoryRouter>

@@ -47,3 +47,10 @@ describe("Textarea (US-QS-07, DS-15, DS-38)", () => {
     expect(cls).toContain("focus-visible:ring-2");
   });
 });
+
+describe("Textarea on the Tauschbörse (issue 1045)", () => {
+  it("US-SOZ-08 the field has no resize handle", () => {
+    render(<Textarea aria-label="Hinweis" />);
+    expect(screen.getByRole("textbox", { name: "Hinweis" }).className).toContain("resize-none");
+  });
+});

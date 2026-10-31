@@ -59,3 +59,21 @@ describe("US-QS-14 segmented control", () => {
     expect(labels[1]?.querySelector("svg")).toBeNull();
   });
 });
+
+describe("US-QS-14 segmented control on phones and in dark mode (issue 1045)", () => {
+  it("US-QS-14 the selected segment is green intent, readable in both modes", () => {
+    render(
+      <SegmentedControl
+        label="Ansicht der Sammlung"
+        options={[
+          { value: "plants", label: "Pflanzen" },
+          { value: "species", label: "Arten" },
+        ]}
+        value="species"
+        onChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Arten" }).className).toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Pflanzen" }).className).not.toContain("bg-accent");
+  });
+});

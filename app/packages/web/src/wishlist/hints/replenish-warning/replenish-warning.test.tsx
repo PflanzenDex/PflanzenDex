@@ -60,3 +60,12 @@ describe("US-ENT-07 Discover for the zone from the warning", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 });
+
+describe("US-WUN-02 a suggestion is not an alarm (issue 1045)", () => {
+  it("US-WUN-02 the replenishment hint has no alarm-red border", () => {
+    const { container } = render(<ReplenishWarning replenishment={low} />);
+    const box = container.querySelector("[role='status']");
+    expect(box?.className).not.toContain("border-destructive");
+    expect(box?.className).toContain("border-border");
+  });
+});

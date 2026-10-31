@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button/button";
+import { SPECIES_ENTRY_ROW } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
 import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
@@ -47,7 +48,7 @@ export function SpeciesRow({ c }: { c: CaughtSpecies }) {
       data-species={c.species}
       aria-haspopup="dialog"
       aria-expanded={open}
-      className="h-auto w-full justify-between gap-2 whitespace-normal border-border px-3 py-1.5 text-left text-foreground"
+      className={SPECIES_ENTRY_ROW}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">
