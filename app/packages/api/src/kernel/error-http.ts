@@ -17,6 +17,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "species.not_found": 404,
   "specimen.caught_in_future": 400,
   "specimen.repotted_in_future": 400,
+  "specimen.repotted_before_caught": 400,
   "specimen.not_found": 404,
   "treatment.not_found": 404,
   "measurement.not_found": 404,

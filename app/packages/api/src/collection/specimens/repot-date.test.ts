@@ -38,8 +38,8 @@ async function call(method: string, path: string, body?: unknown): Promise<Respo
 const run = randomUUID().replace(/-/g, "").slice(0, 10).replace(/[0-9]/g, "q");
 let speciesCounter = 0;
 
-/** A new cutting of its own species, so each case starts from an unrepotted cutting. */
-async function freshCutting(): Promise<string> {
+/** A new cutting of its own species, so each case starts from an unrepotted cutting; caught on `catchDate` (issue 1103). */
+async function freshCutting(catchDate = "2026-09-01"): Promise<string> {
   speciesCounter += 1;
   const name = `Datum${run}${"abcdefgh"[speciesCounter] ?? "z"}`;
   const species = await call("POST", "/species", {
@@ -56,6 +56,7 @@ async function freshCutting(): Promise<string> {
     speciesId: species.body["id"],
     timeZone: "Europe/Berlin",
     status: "cutting",
+    catchDate,
   });
   return created.body["id"] as string;
 }
@@ -104,6 +105,24 @@ describe("US-BES-04 the repot date", () => {
         error: {
           code: "specimen.repotted_in_future",
           details: [{ field: "date", code: "specimen.repotted_in_future" }],
+        },
+      },
+    });
+    expect((await call("GET", `/specimens/${cutting}`)).body["status"]).toBe("cutting");
+  });
+
+  it("US-BES-04: a day before the catch date is 400 specimen.repotted_before_caught on the field date, nothing changes", async () => {
+    const cutting = await freshCutting("2026-09-01");
+    const r = await call("POST", `/specimens/${cutting}/repot`, {
+      timeZone: "Europe/Berlin",
+      date: "2026-08-31",
+    });
+    expect(r).toMatchObject({
+      status: 400,
+      body: {
+        error: {
+          code: "specimen.repotted_before_caught",
+          details: [{ field: "date", code: "specimen.repotted_before_caught" }],
         },
       },
     });

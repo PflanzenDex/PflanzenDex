@@ -19,7 +19,7 @@ import { repotSchema, type RepotFields } from "../../../specimens/model/schemas"
 import type { RepotTarget, useRepot } from "../../../specimens/hooks/use-repot";
 import { useToday } from "../../catch-date/catch-date-field/catch-date-field";
 
-/** The fields the server refused by name: the day of the repot (`date`), for a day in the future or no calendar day. */
+/** The fields the server refused by name: the day of the repot (`date`), for a day in the future, before the catch date (issue 1103) or no calendar day. */
 const repotFields = (error: ApiError): "date"[] =>
   error.details?.some((d) => d.field === "date") ? ["date"] : [];
 

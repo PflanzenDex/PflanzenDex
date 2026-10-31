@@ -192,3 +192,54 @@ describe("US-BES-04 the repot date is chosen by the keeper (local calendar date,
     expect((await specimens.find("anna", cutting.id))?.repottedAt).toBe("2026-10-10");
   });
 });
+
+describe("US-BES-04 the chosen day is not before the catch date (issue 1103)", () => {
+  // The clock is 23:30 UTC on 9 October: "today" in Berlin is 10 October. The catch date of `create` is 1 September.
+  const chosen = (specimenId: string, input: object, userId: { userId: string } = anna) =>
+    execute(
+      specimenRepot({ specimens, clock: () => new Date("2026-10-09T23:30:00Z") }),
+      { idempotency: idem },
+      { context: userId, input: { specimenId, ...input }, idempotencyKey: `k${++counter}` },
+    );
+
+  it("US-BES-04: a day before the catch date is refused on the field date and nothing is written", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    const before = specimens.writes;
+    const r = await chosen(cutting.id, { timeZone: "Europe/Berlin", date: "2026-08-31" });
+    expect(!r.ok && r.error.code).toBe("specimen.repotted_before_caught");
+    expect(!r.ok && r.error.details).toEqual([
+      { field: "date", code: "specimen.repotted_before_caught" },
+    ]);
+    expect(specimens.writes).toBe(before);
+    expect((await specimens.find("anna", cutting.id))?.status).toBe("cutting");
+  });
+
+  it("US-BES-04: the catch day itself is a valid repot day", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    const r = await chosen(cutting.id, { timeZone: "Europe/Berlin", date: "2026-09-01" });
+    expect(r.ok).toBe(true);
+    expect((await specimens.find("anna", cutting.id))?.repottedAt).toBe("2026-09-01");
+  });
+
+  it("US-BES-04: a specimen without a catch date accepts any past day (unknown, P-08)", async () => {
+    const unknown = await specimens.create("anna", {
+      speciesId: SPECIES,
+      name: "Ohne Fangdatum",
+      marker: null,
+      locationId: null,
+      caughtAt: null,
+      status: "cutting",
+    });
+    if (typeof unknown === "string") throw new Error(unknown);
+    const r = await chosen(unknown.id, { timeZone: "Europe/Berlin", date: "1900-01-01" });
+    expect(r.ok).toBe(true);
+    expect((await specimens.find("anna", unknown.id))?.repottedAt).toBe("1900-01-01");
+  });
+
+  it("US-BES-04, P-04: a foreign cutting looks unknown, not as a date conflict", async () => {
+    const foreign = await create("ben", "Bogenhanf", "cutting");
+    const r = await chosen(foreign.id, { timeZone: "Europe/Berlin", date: "2026-08-01" });
+    expect(!r.ok && r.error.code).toBe("specimen.not_found");
+    expect((await specimens.find("ben", foreign.id))?.status).toBe("cutting");
+  });
+});
