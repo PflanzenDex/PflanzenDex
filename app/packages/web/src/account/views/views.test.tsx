@@ -36,6 +36,32 @@ describe("welcome (US-ACC-01)", () => {
   });
 });
 
+describe("welcome in the sign-in frame (US-QS-14)", () => {
+  it("US-QS-14 shows the wordmark, the three value lines and a drawing that assistive technology skips", () => {
+    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    expect(html).toContain("PflanzenDéx");
+    expect(html).toContain("Sammle deine Pflanzen wie Karten");
+    expect(html).toContain("Miss Wachstum gegen deine eigene Geschichte");
+    expect(html).toContain("Tausche Stecklinge mit Freunden");
+    expect(html).toMatch(/<svg[^>]*aria-hidden="true"/);
+  });
+
+  it("US-QS-14 sign-in is the filled button and comes first, registration the outline button", () => {
+    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    const [signIn, register] = html.split("<button").slice(1);
+    expect(signIn).toContain(">Anmelden<");
+    expect(signIn).toContain("bg-primary text-primary-foreground");
+    expect(register).toContain(">Konto anlegen<");
+    expect(register).toContain("border border-primary bg-transparent");
+    expect(register).not.toContain("bg-primary text-primary-foreground");
+  });
+
+  it("US-QS-14 offers no language choice on the card", () => {
+    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    expect(html).not.toMatch(/<select|lang=|Sprache|language/i);
+  });
+});
+
 describe("signed-in view (US-ACC-01)", () => {
   const props = { onSignOut: nothing, onEverywhereSignOut: nothing };
 

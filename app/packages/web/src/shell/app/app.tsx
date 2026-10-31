@@ -95,20 +95,13 @@ function useEntryTitle(kind: State["kind"]) {
   }, [kind]);
 }
 
-/** What shows before there is an account to work with: loading, an error, the welcome page, the invitation code. */
+/** What shows before there is an account to work with: loading, an error, the invitation code (the welcome page has its own frame). */
 function EntryStates(props: { state: State; session: Session }) {
   const { state: z, session: s } = props;
   return (
     <>
       {z.kind === "loading" && <Loading />}
       {z.kind === "error" && <AppError text={z.text} onReload={() => void s.reload()} />}
-      {z.kind === "signedOut" && (
-        <Welcome
-          onRegister={s.register}
-          onSignIn={s.signIn}
-          {...(z.hint ? { hint: z.hint } : {})}
-        />
-      )}
       {z.kind === "invitationNeeded" && (
         <RouteBoundary resetKey="invitation">
           <InvitationPage
@@ -136,6 +129,11 @@ export function App() {
   useEffect(() => void loadRoutes().catch(() => undefined), []);
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
+  // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
+  if (z.kind === "signedOut")
+    return (
+      <Welcome onRegister={s.register} onSignIn={s.signIn} {...(z.hint ? { hint: z.hint } : {})} />
+    );
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">

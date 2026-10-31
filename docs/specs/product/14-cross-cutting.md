@@ -165,12 +165,18 @@ Acceptance criteria:
 - Given a release into `main`, then the known gaps on the page match the open issues with the label `accessibility` (nothing disappears silently, P-10).
 - Given the legal check of E-23 finds the app in scope of the BFSG, then the page also carries the information the BFSG requires for services, before the first external user.
 
-### US-QS-14 · Modern, calm and fast-feeling interface · ⬜ new
+### US-QS-14 · Modern, calm and fast-feeling interface · 🟨 new
 
 As a **plant keeper** I want the app to look modern and feel quick on the phone and on a large screen, so that checking my plants is pleasant every day.
 
 Acceptance criteria:
 
+- Given the welcome page of the app and each page of the sign-in service (sign-in, registration, forgot and reset password, update password, verify email, error, logout confirmation, consent), then the pages share one frame: on a 360 px phone a band with a line drawing of a shelf of pots above the form, on a wide screen a calm panel with the drawing and three value lines beside the form, and the wordmark "PflanzenDéx" above the form (owner decision 2026-10-30, direction "Gewächshaus split").
+- Given the sign-in page, the registration page and the forgot-password page at 360 × 640 px, then each fits the screen without scrolling, also with an error message (starting value: 640 px high, assumption).
+- Given the sign-in pages in German, then the texts use the "du" form ("Melde dich an", "E-Mail oder Benutzername", "Konto anlegen"), the card offers no language choice, and "Konto anlegen" is an outline button below the one filled button "Melde dich an".
+- Given light or dark mode, then the colours are the tokens of ADR 0017, text meets 4.5:1, boundaries and focus 3:1, every field and button is at least 48 px high, and the pages show no axe violation of the WCAG 2.2 AA rules.
+- Given forced colours, `prefers-reduced-motion: reduce`, a width of 320 px or 200 % text size, then the controls keep their boundaries and focus, no transition runs, and no page scrolls sideways.
+- Given the sign-in pages, then they load only what the server delivers (font, styles, drawing and scripts): no request leaves for a third party (P-04, P-05).
 - Given a viewport of 360 px, then the main destinations are reached from a bottom bar with at most five items; from 768 px a navigation rail and from 1280 px a labelled sidebar show the same destinations from one list.
 - Given my account has no role, when I open the app at 360 px, then the bottom bar shows the five destinations "Heute", "Sammlung", "Entdecken", "Freunde" and "Konto" and no "Mehr".
 - Given my account has the role reviewer or operator, when I open the app at 360 px, then the bar still holds at most five slots: "Heute", "Sammlung", "Entdecken", "Freunde" and "Mehr", and the drawer "Mehr" holds "Konto" and the role-only entries "Prüfliste" and "Betreiber" (owner decision 2026-10-08, issue #607); from 768 px the rail and the sidebar show "Konto" and the role-only entries as separate items.
