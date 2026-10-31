@@ -127,7 +127,7 @@ describe("US-QS-19 the first screen of the plants", () => {
     const { container } = renderAt("/collection?view=plants");
     await screen.findByText("4 Pflanzen");
     expect(container.querySelector("[data-fit-screen]")).not.toBeNull();
-    for (const mode of ["Arten", "Wunschliste"]) {
+    for (const mode of ["Arten", "Wünsche"]) {
       await userEvent.click(screen.getByRole("button", { name: mode }));
       await waitFor(() =>
         expect(screen.getByRole("button", { name: mode }).getAttribute("aria-pressed")).toBe(

@@ -426,7 +426,7 @@ describe("US-ACC-01 App", () => {
     renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
     expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Wunschliste" }).getAttribute("aria-pressed")).toBe(
+    expect(screen.getByRole("button", { name: "Wünsche" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");

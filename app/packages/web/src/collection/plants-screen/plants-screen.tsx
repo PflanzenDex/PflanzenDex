@@ -32,7 +32,9 @@ type Props = LayerProps & {
   groupBy?: "location";
 };
 
-const TILES = "grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4";
+// Two tiles per row while a tile holds its name at normal text, one per row at a larger text size (issue 1019).
+const TILES =
+  "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4";
 
 function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string }) {
   const size = usePageSize();

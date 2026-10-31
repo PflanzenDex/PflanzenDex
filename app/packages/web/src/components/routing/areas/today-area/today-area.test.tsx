@@ -165,6 +165,13 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("US-QS-18 the category tiles stand three in a row while a label fits and stack when the text is larger (issue 1019)", async () => {
+    fakeServer({ items: [todayItem] });
+    show();
+    const list = await screen.findByRole("list", { name: "Themen" });
+    expect(list.className).toContain("grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))]");
+  });
+
   it("US-QS-18 a tile opens its items as a layer by address; Back-able and with the layer heading", async () => {
     fakeServer();
     const user = userEvent.setup();

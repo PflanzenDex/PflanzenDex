@@ -24,7 +24,7 @@ export function WishRow(props: {
   return (
     <div
       data-priority={c.priority.kind}
-      className="flex min-w-0 items-center gap-1 rounded-card border border-border bg-card p-2 text-card-foreground"
+      className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-card border border-border bg-card p-2 text-card-foreground"
     >
       <Button
         type="button"
@@ -33,7 +33,7 @@ export function WishRow(props: {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={`${rank}. ${c.title} ${c.zoneText} · Schwierigkeit: ${level}`}
-        className="h-auto min-w-0 flex-1 flex-col items-start justify-start gap-0 whitespace-normal px-1 py-1 text-left"
+        className="h-auto min-w-0 shrink-0 grow basis-28 flex-col items-start justify-start gap-0 whitespace-normal px-1 py-1 text-left"
         onClick={(event) => openLayer(event.currentTarget)}
       >
         <span className="break-words font-semibold">{`${rank}. ${c.title}`}</span>

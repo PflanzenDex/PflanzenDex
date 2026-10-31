@@ -20,8 +20,9 @@ export function SammlungHeader<V extends string>(props: {
 }) {
   return (
     <div className="mb-1.5 flex flex-col gap-1.5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      {/* The action goes below the heading when there is no room beside it at a larger text size (issue 1019). */}
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
           {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
         </div>

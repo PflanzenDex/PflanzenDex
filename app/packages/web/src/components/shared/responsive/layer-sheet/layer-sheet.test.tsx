@@ -169,6 +169,8 @@ describe("LayerSheet (US-QS-15)", () => {
     // The cap is the content's own (DS-59): a pane never shrinks the frame below the content (US-QS-15, #1027).
     expect(content.className).toContain("max-w-180");
     expect(content.className).toContain("mx-auto");
+    // The column takes the frame's width: a centred box without it shrinks to its widest content (issue 1019).
+    expect(content.className).toContain("w-full");
   });
 
   it("US-QS-15 a layer in a component deep inside the frame still opens in the frame's pane, not in its own place", () => {

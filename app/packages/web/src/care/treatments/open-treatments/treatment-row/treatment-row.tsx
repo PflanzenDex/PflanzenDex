@@ -22,17 +22,17 @@ export function Row(props: {
   return (
     <div className="flex min-w-0 items-center gap-2 rounded-card bg-card p-2 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <Name className="text-[15px] font-semibold">{row.specimenName}</Name>
-        <p className="text-[12.5px] text-muted-foreground">
+        <Name className="text-base font-semibold">{row.specimenName}</Name>
+        <p className="text-label text-muted-foreground">
           {row.reason} · {row.agent ?? "kein Mittel"}
         </p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <p
-            className={`w-fit rounded-control px-2.5 py-0.5 text-[12.5px] font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
+            className={`w-fit rounded-control px-2.5 py-0.5 text-label font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
           >
             {overdueChip(row.status.text) ?? keepTogether(row.status.text)}
           </p>
-          <p className="text-[12.5px] tabular-nums text-muted-foreground">{dateText(row.dueAt)}</p>
+          <p className="text-label tabular-nums text-muted-foreground">{dateText(row.dueAt)}</p>
         </div>
       </div>
       <Button

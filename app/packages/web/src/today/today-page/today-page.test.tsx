@@ -225,4 +225,19 @@ describe("US-QS-14 Heute mixes no two secondary styles", () => {
       .filter((b) => b.className.includes("bg-secondary"));
     expect(grey.map((b) => b.textContent)).toEqual([]);
   });
+
+  it("US-QS-18 the Jetzt dran row wraps its action below the text when there is no room at a larger text size; the text column keeps a 9 rem basis (issue 1019)", async () => {
+    fakeServer(() =>
+      response(200, { date: "2026-10-03", upcoming: 2, items: [OVERDUE, PHASE, INCOMPLETE] }),
+    );
+    render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />);
+    const action = await screen.findByRole("button", { name: "Zu Behandlung: Aloe" });
+    const row = action.parentElement;
+    expect(row?.className).toContain("flex-wrap");
+    const text = row?.firstElementChild;
+    expect(text?.className).toContain("basis-36");
+    expect(text?.className).toContain("min-w-0");
+    // The action may take less than its text, never more than the row (it wraps below the text instead).
+    expect(action.className).toContain("max-w-full");
+  });
 });

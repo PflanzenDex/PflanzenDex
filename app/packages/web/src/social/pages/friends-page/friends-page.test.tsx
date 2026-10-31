@@ -497,6 +497,13 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(filled.map((b) => b.textContent)).toEqual(["Freund hinzufügen"]);
   });
 
+  it("US-QS-20 the four tiles stand two in a row while the labels fit and stack at a larger text size (issue 1019)", async () => {
+    fakeServer({ incoming: [], friends: [friend(1)], news: 0, offers: 0, matching: 0 });
+    show();
+    const tile = await screen.findByRole("button", { name: /^Anfragen/ });
+    expect(tile.parentElement?.className).toContain("minmax(9rem,1fr)");
+  });
+
   it("US-QS-20 calm mode shows the tiles with their names but no counts, and asks for no offers", async () => {
     const { fetchFn } = fakeServer({ incoming: [req()], news: 3, offers: 4, matching: 2 });
     show(undefined, { calm: true });

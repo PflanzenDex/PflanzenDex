@@ -69,6 +69,14 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     expect(h).not.toMatch(/Englischer Name<\/dt>/);
   });
 
+  it("US-QS-21 the primary action is a sticky footer: it keeps its place in the profile and stays in view above the phone bar at a larger text size (issue 1019)", () => {
+    const h = renderToString(<SpeciesProfile species={species} onChoose={vi.fn()} />);
+    const at = h.indexOf("Diese Art wählen");
+    const footer = h.slice(h.lastIndexOf("<div", at), at);
+    expect(footer).toContain("sticky");
+    expect(footer).toContain("bottom-[calc(3.5rem+env(safe-area-inset-bottom))]");
+  });
+
   it("US-QS-21 the care and origin tabs show their known facts and name the unknown ones", async () => {
     mount(<SpeciesProfile species={species} onChoose={vi.fn()} />);
     await userEvent.click(screen.getByRole("tab", { name: "Pflege" }));

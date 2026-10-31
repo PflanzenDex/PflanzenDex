@@ -15,11 +15,15 @@ export const VIEW_PARAM = "view";
 /** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). */
 export const VIEW_KEY = "pflanzendex.collection-view";
 
+/**
+ * The four modes of the switch. The labels are short so that the switch stands in one row on a 360 px phone at normal
+ * text (issue 1100); the views keep their full names as headings ("Wunschliste", "Equipment").
+ */
 export const SAMMLUNG_VIEWS: readonly { value: SammlungView; label: string }[] = [
   { value: "plants", label: "Pflanzen" },
   { value: "species", label: "Arten" },
-  { value: "wishlist", label: "Wunschliste" },
-  { value: "equipment", label: "Equipment" },
+  { value: "wishlist", label: "Wünsche" },
+  { value: "equipment", label: "Geräte" },
 ];
 
 /** The query parameter of the arrangement of the species, e.g. `/collection?view=species&sort=difficulty` (US-QS-14). */

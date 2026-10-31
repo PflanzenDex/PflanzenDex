@@ -75,7 +75,9 @@ function Tiles(props: {
   const { counts, options } = props;
   const note = options.swapMark ? { note: options.swapMark } : {};
   return (
-    <div className="grid grid-cols-2 gap-2">
+    // Two tiles per row while a label fits (9 rem, starting value at normal text); at a larger text size one per row, so
+    // no label runs into its neighbour (issue 1019).
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
       <LayerTile id="requests" name="Anfragen" count={options.calm ? "hidden" : props.open} />
       <LayerTile id="news" name="Neu bei Freunden" count={counts.news} />
       <LinkTile

@@ -27,14 +27,18 @@ const schema = shape({
   date: orNull(calendarDateField("date")),
 });
 
-const ERROR = {
-  not_found: "specimen.not_found",
-  not_a_cutting: "specimen.not_a_cutting",
-} as const;
-
 const REPOTTED_IN_FUTURE = appError("specimen.repotted_in_future", {
   details: [{ field: "date", code: "specimen.repotted_in_future" }],
 });
+
+/** The refusals of the store; a day before the catch date names the field `date` (issue 1103). */
+const REFUSED = {
+  not_found: appError("specimen.not_found"),
+  not_a_cutting: appError("specimen.not_a_cutting"),
+  before_caught: appError("specimen.repotted_before_caught", {
+    details: [{ field: "date", code: "specimen.repotted_before_caught" }],
+  }),
+} as const;
 
 /**
  * "Repotted" (US-BES-04): a cutting becomes a plant. The status is the only stored part of the cutting assignment;
@@ -42,7 +46,9 @@ const REPOTTED_IN_FUTURE = appError("specimen.repotted_in_future", {
  * without an override to delete. Anything else (plant, archived) stays unchanged and reports
  * `specimen.not_a_cutting`; the local day of the repot is recorded for the feed "Potted" (US-SOZ-05): the chosen `date`
  * (not after today in the keeper's zone, else `specimen.repotted_in_future`; a chosen date needs a time zone to be
- * checked, else `input.invalid`) or today. A foreign or unknown specimen looks the same: 404 (P-04).
+ * checked, else `input.invalid`; not before the catch date, else `specimen.repotted_before_caught` on the field `date`,
+ * issue 1103, a specimen without a catch date accepts any day, P-08) or today. A foreign or unknown specimen looks the
+ * same: 404 (P-04).
  */
 export const specimenRepot = (deps: RepotDependencies) =>
   defineOperation({
@@ -57,7 +63,12 @@ export const specimenRepot = (deps: RepotDependencies) =>
           );
         if (input.date > today) return failed(REPOTTED_IN_FUTURE);
       }
-      const r = await deps.specimens.repot(userId, input.specimenId, input.date ?? today);
-      return typeof r === "string" ? failed(appError(ERROR[r])) : ok(r);
+      const r = await deps.specimens.repot(
+        userId,
+        input.specimenId,
+        input.date ?? today,
+        input.date,
+      );
+      return typeof r === "string" ? failed(REFUSED[r]) : ok(r);
     },
   });

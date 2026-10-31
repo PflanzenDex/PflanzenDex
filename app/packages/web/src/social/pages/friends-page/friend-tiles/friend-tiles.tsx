@@ -68,15 +68,14 @@ export function LayerRow(props: { id: string; name: string; state: ReactNode }) 
     <Button
       type="button"
       variant="outline"
-      className="h-auto min-h-12 w-full justify-between gap-3 rounded-card px-3 text-left"
+      className="h-auto min-h-12 w-full flex-wrap justify-between gap-x-3 gap-y-1 rounded-card px-3 py-2 text-left"
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="font-semibold">{props.name}</span>
-      <span className="min-w-0 truncate text-sm tabular-nums text-muted-foreground">
-        {props.state}
-      </span>
+      {/* No truncation: at a larger text size the state wraps below the name instead of being cut (issue 1019). */}
+      <span className="min-w-0 text-sm tabular-nums text-muted-foreground">{props.state}</span>
     </Button>
   );
 }

@@ -39,7 +39,8 @@ export function FactGrid({ facts, next, className }: FactGridProps) {
   return (
     <div className={cn("grid min-w-0 gap-2 text-sm", className)}>
       {known.length > 0 ? (
-        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 break-words">
+        // The value column may shrink below its longest word, so a long value wraps and never runs past the panel (issue 1019).
+        <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 [overflow-wrap:anywhere]">
           {known.map((f, index) => (
             <div key={`${index}-${f.label}`} className="contents">
               <dt className="font-semibold">{f.label}</dt>

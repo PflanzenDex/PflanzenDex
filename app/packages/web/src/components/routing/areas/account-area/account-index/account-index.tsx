@@ -16,7 +16,7 @@ import { useAccountValues } from "./account-values";
 type Token = () => Promise<string | undefined>;
 
 const ROW =
-  "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-[15px] text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-base text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
 
 function Row(props: {
