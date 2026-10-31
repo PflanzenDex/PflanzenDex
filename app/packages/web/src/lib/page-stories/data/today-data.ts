@@ -100,6 +100,18 @@ export const todayRoutes = {
     ],
   },
   "/locations": { locations: [{ id: "l1", name: "Fensterbank Süd", lightZoneId: null }] },
+  "/watering/due": {
+    due: [
+      {
+        specimenId: "s1",
+        name: "Aloe",
+        intervalDays: 7,
+        lastWateredOn: "2026-09-30",
+        daysSince: 8,
+      },
+      { specimenId: "s3", name: "Efeu", intervalDays: 5, lastWateredOn: null, daysSince: 0 },
+    ],
+  },
 };
 
 /** Nothing is due: the list "Jetzt dran" says so and offers the way to the collection (P-09). */

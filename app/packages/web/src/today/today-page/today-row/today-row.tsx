@@ -47,7 +47,7 @@ export function TodayRow(props: {
   action?: ReactNode;
 }) {
   const { item } = props;
-  const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
+  const urgent = isTreatment(item);
   return (
     // The row wraps the action below the text when the two do not fit side by side at a larger text size (issue 1019);
     // the text column keeps a basis of 9 rem, so at normal text the row stays one line as before.

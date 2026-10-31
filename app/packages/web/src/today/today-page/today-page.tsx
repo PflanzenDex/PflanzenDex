@@ -92,10 +92,9 @@ function Below(props: { list: TodayList; onOpen: (d: TodayDestination) => void }
   return (
     <>
       {rest.length > 0 && (
-        <section
-          aria-labelledby="tasks-title"
-          className="flex min-h-0 min-w-0 flex-1 flex-col gap-2"
-        >
+        // No min-h-0: when the page has no free height left (200 % text, `main` scrolls), the section keeps one row and
+        // the pager instead of collapsing to nothing below the next line.
+        <section aria-labelledby="tasks-title" className="flex min-w-0 flex-1 flex-col gap-2">
           <h2 id="tasks-title" className="text-sm font-semibold">
             Weitere Aufgaben
           </h2>
