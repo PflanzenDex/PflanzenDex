@@ -32,9 +32,8 @@ export function runCatalog({
   storyArgs = "",
   update = false,
 } = {}) {
-  const catalog = fs.mkdtempSync(path.join(os.tmpdir(), "ds-snapshots-"));
+  const catalog = catalogFor(fixtures);
   try {
-    buildCatalog(catalog, fixtures);
     const index = JSON.parse(fs.readFileSync(path.join(catalog, "index.json"), "utf8"));
     const ids = snapshotStoryIds(index, { fixtures });
     if (ids.length === 0) throw new Error("QG-U5: no stories to snapshot");
@@ -68,6 +67,7 @@ export function runCatalog({
         ...env("DS_STORIES", JSON.stringify(ids)),
         ...env("DS_STORY_ARGS", storyArgs),
         ...env("DS_UPDATE", update ? "1" : "0"),
+        ...env("DS_WORKERS", WORKERS),
         ...env("HOME", "/tmp"),
         playwrightImage(),
         "node",
@@ -79,10 +79,32 @@ export function runCatalog({
       ? []
       : baselineFindings(expectedBaselines(ids), fs.readdirSync(snapshotDir));
     return { status: r.status ?? 1, findings, ids };
-  } finally {
+  } catch (error) {
     fs.rmSync(catalog, { recursive: true, force: true });
+    built.delete(fixtures);
+    throw error;
   }
 }
+
+// Each catalog (with or without the self-test fixtures) is built once per process and reused: the self-test called
+// runCatalog five times and rebuilt Storybook every time, though only story args change (issue 1124). The catalogs
+// are removed when the process exits.
+const built = new Map();
+function catalogFor(fixtures) {
+  if (!built.has(fixtures)) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ds-snapshots-"));
+    buildCatalog(dir, fixtures);
+    built.set(fixtures, dir);
+  }
+  return built.get(fixtures);
+}
+process.on("exit", () => {
+  for (const dir of built.values()) fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// Screenshots on this many Playwright workers in the container. Measured (issue 1120): 92 shots take 20-24 s on 4
+// workers instead of 59 s on one, and every baseline still matches.
+const WORKERS = process.env.DS_WORKERS ?? "4";
 
 function main() {
   const update = process.argv.includes("--update");
