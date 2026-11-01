@@ -29,3 +29,22 @@ describe("US-QS-19 a plant tile without a photo (issue 1045)", () => {
     expect(screen.getByRole("button", { name: /Aloe/ })).toBeTruthy();
   });
 });
+
+describe("US-QS-19 a plant tile in two columns at 360 px (issue 1108)", () => {
+  it("US-QS-19 name and zone keep one line each and end in an ellipsis, never breaking inside a word; the full name stays the name of the tile", () => {
+    const long = { ...card, name: "Philodendron hederaceum Brasil" } as SpecimenCard;
+    render(
+      <MemoryRouter>
+        <PlantTile card={long} access={{} as never} />
+      </MemoryRouter>,
+    );
+    const tile = screen.getByRole("button", { name: /Philodendron hederaceum Brasil/ });
+    const name = screen.getByText("Philodendron hederaceum Brasil");
+    const zone = screen.getByText("unbekannt", { selector: "span.text-muted-foreground" });
+    for (const line of [name, zone]) {
+      expect(line.className).toContain("truncate");
+      expect(line.className).not.toMatch(/overflow-wrap|break-/);
+    }
+    expect(tile.className).toContain("py-1.5");
+  });
+});
