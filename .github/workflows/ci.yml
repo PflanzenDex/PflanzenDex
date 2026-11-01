@@ -67,6 +67,8 @@ jobs:
     outputs:
       app-gates: ${{ steps.reuse.outputs['app-gates'] }}
       app-tests: ${{ steps.reuse.outputs['app-tests'] }}
+      app-tests-web: ${{ steps.reuse.outputs['app-tests-web'] }}
+      app-coverage: ${{ steps.reuse.outputs['app-coverage'] }}
       app-ui: ${{ steps.reuse.outputs['app-ui'] }}
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
     steps:
@@ -80,7 +82,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: make ci-reuse JOBS="app-gates app-tests app-ui ds-snapshots"
+        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots"
 
   # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, #1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
@@ -113,7 +115,7 @@ jobs:
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
       && !(github.event.action == 'edited' && github.event.pull_request.draft)
-      && needs.reuse.outputs.app-tests != 'success'
+      && (needs.reuse.outputs.app-tests != 'success' || needs.reuse.outputs.app-coverage != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
@@ -136,7 +138,73 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
       - run: make setup
-      - run: make ci-tests
+      - run: make ci-tests-base
+      # Only what the ratchet (coverage-summary.json) and the CRAP check (coverage-final.json) read in app-coverage.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage-base
+          path: |
+            app/packages/*/coverage/coverage-summary.json
+            app/packages/*/coverage/coverage-final.json
+          if-no-files-found: error
+          retention-days: 1
+
+  # The web suite beside app-tests (issue 1125): in one job it ran after api, core and db and made app-tests the slowest
+  # job. Reused only together with app-coverage, so the ratchet never runs on half the coverage.
+  app-tests-web:
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.app-coverage != 'success')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make ci-tests-web
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage-web
+          # Same pattern as coverage-base: the wildcard keeps `web/coverage/` in the artifact, so the download lands there.
+          path: |
+            app/packages/*/coverage/coverage-summary.json
+            app/packages/*/coverage/coverage-final.json
+          if-no-files-found: error
+          retention-days: 1
+
+  # Coverage ratchet and CRAP check over all four packages, once both test jobs have succeeded in this run (issue 1125).
+  # When they are reused, this job was green on the same commit too and is skipped with them.
+  app-coverage:
+    needs: [changes, reuse, app-tests, app-tests-web]
+    if: >-
+      !cancelled() && needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # Shallow like app-tests before the split: without origin/dev the CRAP check scores all functions, as before.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-*
+          path: app/packages
+          merge-multiple: true
+      - run: make ci-coverage
 
   app-ui:
     needs: [changes, reuse]
@@ -342,6 +410,8 @@ jobs:
         reuse,
         app-gates,
         app-tests,
+        app-tests-web,
+        app-coverage,
         app-ui,
         layout,
         ds-snapshots,
@@ -360,6 +430,8 @@ jobs:
           REUSE: ${{ needs.reuse.result }}
           APP_GATES: ${{ needs.app-gates.result }}
           APP_TESTS: ${{ needs.app-tests.result }}
+          APP_TESTS_WEB: ${{ needs.app-tests-web.result }}
+          APP_COVERAGE: ${{ needs.app-coverage.result }}
           APP_UI: ${{ needs.app-ui.result }}
           LAYOUT: ${{ needs.layout.result }}
           DS_SNAPSHOTS: ${{ needs.ds-snapshots.result }}
@@ -369,7 +441,7 @@ jobs:
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
