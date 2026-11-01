@@ -12,7 +12,7 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 DB_MEMORY ?= 512m
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -168,6 +168,16 @@ gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundar
 
 ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
 	cd $(APP) && npm run ci
+
+# The three parts of `make ci`; CI runs them as parallel jobs (US-QG-02, #1118), locally `make ci` runs all three.
+ci-gates: secrets workflows ## Part 1 of `make ci`: secrets, workflows and the fast gates
+	cd $(APP) && npm run ci:gates
+
+ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and the ratchet, then the CRAP check
+	cd $(APP) && npm run ci:tests
+
+ci-ui: ## Part 3 of `make ci`: build, initial JS budget and the blocking conformance run (needs `make browsers`)
+	cd $(APP) && npm run ci:ui
 
 release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
 	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }
