@@ -58,6 +58,7 @@ export const GROUPS_3: Config<string, string>["classGroups"] = {
   "translate-x": [{ "translate-x": scaleTranslate() }],
   "translate-y": [{ "translate-y": scaleTranslate() }],
   accent: [{ accent: scaleColor() }],
+  appearance: [{ appearance: ["none", "auto"] }],
   cursor: [
     {
       cursor: [
