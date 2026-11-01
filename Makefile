@@ -90,7 +90,7 @@ coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet ch
 browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
 	cd $(APP) && npx --no-install playwright install $(if $(CI),--with-deps) chromium
 
-conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
+conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px; 8 pages at once, CONFORMANCE_PAGES=<n> overrides (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
 
 ds-snapshots-check: ## Visual regression of the components/ui stories against the baselines in app/packages/web/.storybook/snapshots, 360 px, light and dark, in the pinned Playwright container; also runs its self-test (QG-U5, US-QS-07; needs Docker)
