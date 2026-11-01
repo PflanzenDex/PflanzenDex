@@ -1,5 +1,5 @@
 // Reuses a green heavy CI job for the same PR head commit (US-QG-02, #404). Editing a PR title or body and
-// `ready_for_review` start a new CI run on an unchanged commit; without this the `app` suite ran again (and the
+// `ready_for_review` start a new CI run on an unchanged commit; without this the app suite (`app-*` jobs) ran again (and the
 // shared concurrency group cancelled the run that was still going: 23 of 100 runs on 2026-10-08).
 // Safe by construction: only a `success` of the same job on the same head commit is reused. Anything else (none,
 // failed, cancelled, still running after the wait) answers `none`, and the job runs in full.
@@ -9,7 +9,7 @@ import { appendFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const POLL_SECONDS = 30;
-// The `app` job has a 15 minute timeout; a little more covers queueing (starting value, assumption).
+// Each `app-*` job has a 15 minute timeout; a little more covers queueing (starting value, assumption).
 const WAIT_SECONDS = 20 * 60;
 
 /** Run id from a check run's details URL (`…/actions/runs/<run id>/job/<job id>`), or null. */
