@@ -55,7 +55,9 @@ export function TreatmentsEntry(props: {
 }) {
   const { treatments } = props;
   return (
-    <LayerOpener id="treatments" className="h-auto min-h-11 max-w-full shrink-0 py-1">
+    // A fixed 12 px side padding that does not grow with the text: at 200 % text the word "Behandlungen" fits the row
+    // whole instead of breaking inside it (issue 1113).
+    <LayerOpener id="treatments" className="h-auto min-h-11 max-w-full shrink-0 px-[12px] py-1">
       <span className="flex flex-col items-center text-center">
         <span>Behandlungen</span>{" "}
         {/* The second line is the count and the overdue ones; the spaces keep the accessible name readable. */}

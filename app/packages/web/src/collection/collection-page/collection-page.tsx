@@ -80,7 +80,9 @@ export function CollectionPage(props: Props) {
     completed: props.onCompleted,
   });
   return (
-    <PageFrame className="flex min-h-0 flex-1 flex-col">
+    // No min-h-0: the card is never shorter than what it holds, so at a larger text size it grows with its content
+    // and the one-screen frame scrolls (issue 1113); at normal text the list inside takes the free height.
+    <PageFrame className="flex flex-1 flex-col">
       <RequestState
         status={request.status}
         {...(request.error ? { errorText: request.error.text } : {})}

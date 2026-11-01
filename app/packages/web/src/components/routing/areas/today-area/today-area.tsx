@@ -59,12 +59,7 @@ export function TodayArea(props: {
     if (view) props.onOpen(view);
   };
   return (
-    <LayerHost
-      className="h-full min-h-0"
-      contentClassName="gap-4"
-      data-fit-screen=""
-      data-fit-fill=""
-    >
+    <LayerHost className="min-h-0" contentClassName="gap-4" data-fit-screen="" data-fit-fill="">
       <Suspense fallback={<TodaySkeleton />}>
         {props.intro ? (
           props.intro(<Tasks {...props} open={open} plan={plan.openLayer} />, <TodaySkeleton />)

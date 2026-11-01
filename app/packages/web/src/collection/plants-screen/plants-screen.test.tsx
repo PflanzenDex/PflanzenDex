@@ -131,11 +131,21 @@ describe("US-QS-19 tiles of the plants", () => {
   it("US-QS-19 at 360 x 640 two tile columns fit the 294 px list: the column minimum 8.75 rem leaves room for two and the gap, so a page holds 6 tiles in 3 rows (issue 1108)", () => {
     screenWith(many(8));
     const grid = screen.getAllByRole("listitem")[0]?.parentElement;
-    const min = /minmax\(([\d.]+)rem,1fr\)/.exec(grid?.className ?? "")?.[1];
+    const min = /minmax\(min\(([\d.]+)rem,100%\),1fr\)/.exec(grid?.className ?? "")?.[1];
     expect(min).toBeDefined();
     // Two columns and the 0.5 rem gap at 16 px per rem, within the list width the page story measures at 360 px.
     expect((2 * Number(min) + 0.5) * 16).toBeLessThanOrEqual(294);
     expect(grid?.className).toContain("gap-2");
+  });
+
+  it("US-QS-19 at 200 % text the insight row wraps at whole words: the row may wrap, the insight never gets narrower than its longest word, and the section grows with its content (issue 1113)", () => {
+    screenWith(many(8));
+    const insight = screen.getByRole("button", { name: /Lichtzonen ansehen|Dünnste Zone/ });
+    expect(insight.className).not.toContain("min-w-0");
+    expect(insight.querySelector("span.break-normal")).not.toBeNull();
+    expect(insight.parentElement?.className).toContain("flex-wrap");
+    const section = screen.getByRole("region", { name: "Pflanzen" });
+    expect(section.className).not.toContain("min-h-0");
   });
 
   it("US-QS-19 a swipe turns the page", () => {

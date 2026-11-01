@@ -286,4 +286,15 @@ describe("US-QS-14 Heute mixes no two secondary styles", () => {
     // The action may take less than its text, never more than the row (it wraps below the text instead).
     expect(action.className).toContain("max-w-full");
   });
+
+  it("US-QS-18 at 200 % text the row actions keep their words whole: a fixed 12 px side padding, and the rows of the further tasks do not count towards the height of their section (issue 1113)", async () => {
+    fakeServer(() =>
+      response(200, { date: "2026-10-03", upcoming: 2, items: [OVERDUE, PHASE, INCOMPLETE] }),
+    );
+    render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />);
+    const action = await screen.findByRole("button", { name: "Zu Behandlung: Aloe" });
+    expect(action.className).toContain("px-[12px]");
+    const tasks = screen.getByRole("region", { name: "Weitere Aufgaben" });
+    expect(tasks.querySelector("ul")?.className).toContain("[contain:size]");
+  });
 });

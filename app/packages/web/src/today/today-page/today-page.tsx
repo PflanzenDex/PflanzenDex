@@ -77,6 +77,10 @@ function FurtherTasks(props: {
       pageSize={pageSize}
       {...(props.fit ? { fit: true } : {})}
       label="Weitere Aufgaben"
+      // The rows do not count towards the height of the section (size containment): the section keeps one row and the
+      // pager at a larger text size without growing with the page it shows, so the page size follows the free height
+      // only (issue 1113).
+      {...(props.fit ? { listClassName: "[contain:size]" } : {})}
       getKey={(item) => item.id}
       {...(props.param ? { param: props.param } : {})}
       renderItem={(item) => <TodayRow item={item} onOpen={props.onOpen} />}
