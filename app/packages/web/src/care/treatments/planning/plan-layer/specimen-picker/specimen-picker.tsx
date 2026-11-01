@@ -2,7 +2,7 @@ import { useState, type MutableRefObject } from "react";
 import type { ControllerRenderProps, Control } from "react-hook-form";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { FormField, FormItem, FormMessage } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
+import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
 import { Select } from "@/components/ui/fields/select/select";
 import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
 import { useIsMd } from "@/lib/use-breakpoint";
@@ -46,13 +46,13 @@ function PickFilters(props: {
   );
   return (
     <div className="flex min-w-0 gap-2">
-      <Input
-        type="search"
+      <SearchInput
         aria-label="Pflanze suchen"
         placeholder="Pflanze suchen"
         autoComplete="off"
         value={props.query}
         onChange={(e) => props.onQuery(e.target.value)}
+        onClear={() => props.onQuery("")}
         className="min-w-0 flex-1"
       />
       <Select

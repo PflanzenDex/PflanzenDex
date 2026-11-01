@@ -13,7 +13,7 @@ import {
   FormMessage,
   FormRoot,
 } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
+import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";
@@ -66,15 +66,18 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
             <FormItem>
               <FormLabel className="sr-only">Lateinischer oder deutscher Name</FormLabel>
               <FormControl>
-                <Input
+                <SearchInput
                   {...field}
-                  type="search"
                   autoComplete="off"
                   maxLength={120}
                   placeholder="Name der Art"
                   onChange={(e) => {
                     field.onChange(e);
                     props.onSearch(e.target.value);
+                  }}
+                  onClear={() => {
+                    field.onChange("");
+                    props.onSearch("");
                   }}
                 />
               </FormControl>
