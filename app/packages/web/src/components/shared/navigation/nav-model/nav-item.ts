@@ -9,6 +9,8 @@ export type NavItem = {
   icon: ReactNode;
   /** Text mark of a destination that is not open yet ("Bald", "Noch gesperrt"); the label itself never changes (US-ONB-05, NFR-13). */
   note?: string;
+  /** German name of the group the item belongs to; the labelled sidebar shows it as a heading above the group (issue 1093). */
+  group?: string;
 };
 
 /** Same look for the bottom bar and the rail: a 56x30 px pill behind a 22 px icon, the label under it (ADR 0011 decision 6). */

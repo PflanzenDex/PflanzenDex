@@ -21,3 +21,9 @@ export const SidebarActiveItem: Story = {
   parameters: { path: "/pokedex" },
 };
 export const Tablet: Story = { globals: { viewport: { value: "tablet", isRotated: false } } };
+
+// The role entries under the heading "Verwaltung" (issue 1093): the last two destinations carry the group.
+const withRoles = items.map((item, index) =>
+  index >= items.length - 2 ? { ...item, group: "Verwaltung" } : item,
+);
+export const SidebarWithRoles: Story = { args: { show: "sidebar", items: withRoles } };
