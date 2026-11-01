@@ -17,8 +17,12 @@ DB_MEMORY ?= 512m
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-setup: ## Install dependencies (npm ci, or npm install without a lock file)
-	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# node_modules that already match package-lock.json (the check-deps stamp) are kept: in CI they come from the
+# node_modules cache (issue 1123, measured saving 30-50 s per job). FRESH=1 always reinstalls.
+setup: ## Install dependencies (npm ci, or npm install without a lock file); skipped when node_modules matches the lock file (FRESH=1 forces)
+	cd $(APP) && if [ -z "$(FRESH)" ] && [ -f package-lock.json ] && node tools/check/supply/check-deps.mjs 2>/dev/null; then \
+	  echo "setup: node_modules matches package-lock.json, npm ci skipped (FRESH=1 reinstalls)"; \
+	elif [ -f package-lock.json ]; then npm ci; else npm install; fi
 	cd $(APP) && node tools/check/supply/check-deps.mjs --stamp
 	$(if $(CI),,$(MAKE) hooks)
 
