@@ -19,7 +19,7 @@ The suite checks every table in the schema: without an account column or without
 
 ## Gate
 
-`make ci` (test step, needs the PostgreSQL test database), run by the CI job `app` in `.github/workflows/ci.yml`.
+`make ci` (test step, needs the PostgreSQL test database); in CI the job `app-tests` of `.github/workflows/ci.yml` runs it (`make ci-tests`).
 
 ## Evidence
 

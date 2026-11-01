@@ -50,8 +50,8 @@ jobs:
             echo "app=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app` or
-  # `ds-snapshots` of that head commit is reused (waiting while a run of it is still going); a failed, cancelled or
+  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*` or
+  # `ds-snapshots` job of that head commit is reused (waiting while a run of it is still going); a failed, cancelled or
   # missing result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
   reuse:
     if: >-
@@ -65,7 +65,9 @@ jobs:
       contents: read
       checks: read
     outputs:
-      app: ${{ steps.reuse.outputs.app }}
+      app-gates: ${{ steps.reuse.outputs['app-gates'] }}
+      app-tests: ${{ steps.reuse.outputs['app-tests'] }}
+      app-ui: ${{ steps.reuse.outputs['app-ui'] }}
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
     steps:
       - uses: actions/checkout@v7
@@ -78,16 +80,40 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: make ci-reuse JOBS="app ds-snapshots"
+        run: make ci-reuse JOBS="app-gates app-tests app-ui ds-snapshots"
 
-  app:
+  # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, #1118): in one job it ran
+  # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
+  # `make ci` chains locally, so nothing is dropped. Editing a draft's title or body (Handoff updates) does not rerun
+  # them; `ready_for_review` runs everything unless `reuse` found a green result for the same commit. `!cancelled()`
+  # because `reuse` is skipped on most events.
+  app-gates:
     needs: [changes, reuse]
-    # Editing a draft's title or body (Handoff updates) does not rerun the suite; `ready_for_review` runs everything
-    # unless `reuse` found a green result for the same commit. `!cancelled()` because `reuse` is skipped on most events.
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
       && !(github.event.action == 'edited' && github.event.pull_request.draft)
-      && needs.reuse.outputs.app != 'success'
+      && needs.reuse.outputs.app-gates != 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # secret scan over the full history (QG-S1)
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make ci-gates
+
+  app-tests:
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.app-tests != 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
@@ -103,7 +129,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # secret scan over the full history (QG-S1)
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
@@ -111,10 +136,30 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
       - run: make setup
-      - run: make browsers # QG-U5: the conformance run in `make ci` drives Chromium over the stories
-      - run: make ci
+      - run: make ci-tests
+
+  app-ui:
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.app-ui != 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make browsers # QG-U5: the conformance run drives Chromium over the stories
+      - run: make ci-ui
       # QG-U6 report (FR-QG-10): initial JS per chunk and package in the job summary. Report only: runs after a
-      # failure too, and a failing report never fails the job (the blocking gate is the budget step inside `make ci`).
+      # failure too, and a failing report never fails the job (the blocking gate is the budget step inside `make ci-ui`).
       - name: Initial JS bundle report
         if: always()
         run: make bundle-report >> "$GITHUB_STEP_SUMMARY" || echo "bundle report unavailable (report only)"
@@ -244,7 +289,7 @@ jobs:
         run: make changelog-check
 
   # QG-C4: the file layout is checked for every change, also when only `docs/` or the repo root changed
-  # (the `app` job is skipped for those). The check needs no dependencies; the full history gives it `origin/dev`
+  # (the `app-*` jobs are skipped for those). The check needs no dependencies; the full history gives it `origin/dev`
   # for the "baseline must not grow" comparison (a missing ref fails in CI).
   layout:
     runs-on: ubuntu-24.04
@@ -295,7 +340,9 @@ jobs:
       [
         changes,
         reuse,
-        app,
+        app-gates,
+        app-tests,
+        app-ui,
         layout,
         ds-snapshots,
         metadata,
@@ -311,7 +358,9 @@ jobs:
       - env:
           CHANGES: ${{ needs.changes.result }}
           REUSE: ${{ needs.reuse.result }}
-          APP: ${{ needs.app.result }}
+          APP_GATES: ${{ needs.app-gates.result }}
+          APP_TESTS: ${{ needs.app-tests.result }}
+          APP_UI: ${{ needs.app-ui.result }}
           LAYOUT: ${{ needs.layout.result }}
           DS_SNAPSHOTS: ${{ needs.ds-snapshots.result }}
           METADATA: ${{ needs.metadata.result }}
@@ -320,7 +369,7 @@ jobs:
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
