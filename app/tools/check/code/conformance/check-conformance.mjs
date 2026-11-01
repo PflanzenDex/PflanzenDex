@@ -33,6 +33,10 @@ const FIXTURE_PREFIX = "conformance-fixture-";
 const where = ({ story, scheme }) => `QG-U5 ${story} (${scheme})`;
 const SCHEMES = ["light", "dark"];
 const VIEWPORT = { width: 360, height: 640 };
+const CONTEXT = { viewport: VIEWPORT, locale: "de-DE", reducedMotion: "reduce" };
+// Stories run on this many pages at once, each in its own browser context. Measured (issue 1120): on the 4-vCPU CI
+// runner 8 pages take 94-102 s instead of ~290 s for one; the raw results are identical for 1, 4, 8 and 12 pages.
+const PAGES = Number(process.env.CONFORMANCE_PAGES ?? 8);
 
 export function serve(root) {
   const types = {
@@ -91,10 +95,12 @@ async function checkStory({ page, baseUrl, allowlist }, id, scheme) {
   await page.evaluate(() => document.fonts.ready);
   await settleBeforeAxe(page);
 
-  // Stories with autoFocus or an open overlay start with focus inside; measure the unfocused style first.
+  // Stories with autoFocus or an open overlay start with focus inside; measure the unfocused style first, after the
+  // focus ring has faded out (issue 1122).
   await page.evaluate(
     () => document.activeElement instanceof HTMLElement && document.activeElement.blur(),
   );
+  await page.evaluate(settleStyles);
   const targets = await page.evaluate(probeTargets, INTERACTIVE);
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
@@ -134,15 +140,18 @@ export async function runConformance({ outDir, fixtures = false } = {}) {
   const browser = await chromium.launch();
   const findings = [];
   try {
-    const context = await browser.newContext({
-      viewport: VIEWPORT,
-      locale: "de-DE",
-      reducedMotion: "reduce",
-    });
-    const page = await context.newPage();
-    for (const scheme of SCHEMES)
-      for (const id of ids)
-        findings.push(...(await checkStory({ page, baseUrl: url, allowlist }, id, scheme)));
+    // One queue of (story, scheme) jobs; each page takes the next. Results keep the queue order, so the report reads
+    // the same for any number of pages.
+    const jobs = SCHEMES.flatMap((scheme) => ids.map((id) => [id, scheme]));
+    const results = [];
+    let next = 0;
+    const worker = async () => {
+      const page = await (await browser.newContext(CONTEXT)).newPage();
+      for (let i = next++; i < jobs.length; i = next++)
+        results[i] = await checkStory({ page, baseUrl: url, allowlist }, ...jobs[i]);
+    };
+    await Promise.all(Array.from({ length: Math.max(1, PAGES) }, worker));
+    findings.push(...results.flat());
     console.log(`QG-U5 conformance: ${ids.length} stories x ${SCHEMES.length} schemes checked`);
   } finally {
     await browser.close();

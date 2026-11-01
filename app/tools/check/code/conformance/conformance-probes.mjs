@@ -95,11 +95,14 @@ export function focusSnapshot() {
   };
 }
 
-// Tab through the page once; returns the style of every marked control at the moment it had focus.
+// Tab through the page once; returns the style of every marked control at the moment it had focus. The focus ring
+// fades in through a transition, so each snapshot waits until it has settled (QG-U9): read mid-transition, the style
+// depended on machine load and a ring could look absent (issue 1122).
 export async function tabThrough(page, count) {
   const focused = new Map();
   for (let i = 0; i < count + 2; i++) {
     await page.keyboard.press("Tab");
+    await page.evaluate(settleStyles);
     const snap = await page.evaluate(focusSnapshot);
     if (snap && !focused.has(snap.index)) focused.set(snap.index, snap.style);
   }
