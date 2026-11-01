@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Große Schrift: Die Leiste unten trennt keine Wörter mehr. Ist die Schrift so groß, dass ein Name nicht mehr in sein Feld passt, zeigt die Leiste nur noch die Symbole; Bildschirmleser nennen die Namen weiter. Bei normaler Schrift bleibt alles wie bisher.",
     "Konto: Abmelden geht nur noch über „Abmelden…“ in der Übersicht und fragt immer nach. Das Profil zeigt Name und E-Mail ohne eigene Abmelde-Knöpfe.",
     "Heute: Die Behandlungen haben nur noch einen Zugang. Ist eine Behandlung am dringendsten, steht „Behandlungen“ mit der Anzahl und den überfälligen direkt in der Zeile „Jetzt dran“, sonst als Kachel neben „Gießen“ und „Fehlt noch“. Die weiteren Aufgaben stehen jetzt gleich darunter, so viele Zeilen pro Seite, wie Platz haben.",
     "Ebenen am Computer: Beginnt eine Ebene mit einem Suchfeld, etwa „Neuer Wunsch“, kannst du auch in der Seitenleiste sofort lostippen.",
