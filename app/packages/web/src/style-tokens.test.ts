@@ -197,6 +197,30 @@ describe("US-QS-15 the one-screen frame rule is valid CSS", () => {
   });
 });
 
+describe("US-QS-15 the filling view at a larger text size (issue 1113)", () => {
+  const rule = (media: string) => {
+    const at = media ? css.indexOf(media) : 0;
+    const from = css.indexOf("main > div > [data-fit-fill] {", at);
+    return css.slice(from, css.indexOf("}", from));
+  };
+  const shell = readFileSync(
+    new URL("./components/shared/navigation/app-shell/app-shell.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("US-QS-15 the filling view scrolls inside itself, so its last line ends above the bottom bar, and reaches into the padding of main by as much as it pads itself", () => {
+    const base = rule("");
+    expect(base).toContain("overflow-y: auto;");
+    expect(base).toContain("height: calc(100% + 1rem);");
+    expect(base).toContain("margin: -0.5rem -1rem;");
+    expect(base).toContain("padding: 0.5rem 1rem;");
+    expect(rule("@media (width >= 48rem)")).toContain("margin-inline: -1.5rem;");
+    expect(rule("@media (width >= 80rem)")).toContain("margin-inline: -2.5rem;");
+    // The bleed matches the side padding of main: 1 rem, 1.5 rem from md, 2.5 rem from xl.
+    expect(shell).toMatch(/className="flex-1 px-4 [^"]*md:px-6[^"]*xl:px-10"/);
+  });
+});
+
 /** Every source file below `dir` without its tests and stories. */
 function appSources(dir: URL): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

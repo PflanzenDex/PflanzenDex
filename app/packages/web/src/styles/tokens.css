@@ -260,6 +260,32 @@
   main > div:has(> [data-fit-fill]) {
     height: 100%;
   }
+  /*
+   * The filling view itself (issue 1113): its height is the free height, and at a larger text size whatever no longer
+   * fits scrolls inside it. An overflow past a fixed height never gets the bottom padding of `main`, so the last line
+   * ended under the bottom bar; scrolling inside the view keeps it above. The view reaches into the padding of `main`
+   * on every side by as much as it pads itself, so its content stays where it was and no shadow or focus ring at its
+   * edge is cut off (main pads 1 rem, 1.5 rem from `md`, 2.5 rem from `xl`).
+   */
+  main > div > [data-fit-fill] {
+    height: calc(100% + 1rem);
+    margin: -0.5rem -1rem;
+    padding: 0.5rem 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  @media (width >= 48rem) {
+    main > div > [data-fit-fill] {
+      margin-inline: -1.5rem;
+      padding-inline: 1.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    main > div > [data-fit-fill] {
+      margin-inline: -2.5rem;
+      padding-inline: 2.5rem;
+    }
+  }
   main:has([data-fit-screen]) {
     overflow-y: auto;
     overscroll-behavior: contain;

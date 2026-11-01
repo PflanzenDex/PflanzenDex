@@ -33,9 +33,10 @@ type Props = LayerProps & {
 };
 
 // Two tiles per row from a 360 px phone at normal text, one per row at a larger text size (issue 1019). 8.75 rem lets
-// two columns fit the 294 px of the list at 360 px, so a page holds 6 tiles (owner decision 2026-11-01, issue 1108).
+// two columns fit the 294 px of the list at 360 px, so a page holds 6 tiles (owner decision 2026-11-01, issue 1108);
+// a column is never wider than the list, so at a larger text size a tile stays inside its card (issue 1113).
 const TILES =
-  "grid grid-cols-[repeat(auto-fill,minmax(8.75rem,1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-[repeat(auto-fill,minmax(min(8.75rem,100%),1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4";
 
 function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string }) {
   const size = usePageSize();
@@ -84,7 +85,8 @@ function Grouped(props: Props) {
 function Row(props: Props) {
   const archive = useLayer(ARCHIVE_LAYER);
   return (
-    <div className="flex items-center gap-2">
+    // Wraps at a larger text size, so the insight keeps its longest word whole (issue 1113).
+    <div className="flex flex-wrap items-center gap-2">
       <ZoneInsightRow distribution={props.distribution} />
       {props.archived.length > 0 ? (
         <Button
@@ -128,8 +130,9 @@ export function PlantsScreen(props: Props) {
       <Tiles {...props} items={props.cards} resetKey="all" />
     );
   return (
-    <section aria-labelledby="collection-title" className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+    <section aria-labelledby="collection-title" className="flex flex-1 flex-col">
+      {/* No min-h-0: at a larger text size the section grows with its content and scrolls in the frame (issue 1113). */}
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
         {props.embedded ? (
           <h2 id="collection-title" className="sr-only">
             Pflanzen

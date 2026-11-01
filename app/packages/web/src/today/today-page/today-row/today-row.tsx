@@ -67,7 +67,9 @@ export function TodayRow(props: {
         <Button
           type="button"
           variant="outline"
-          className="max-w-full shrink-0"
+          // A fixed 12 px side padding that does not grow with the text, so "Zu Pflegephasen" keeps its words whole at
+          // 200 % text (issue 1113).
+          className="max-w-full shrink-0 px-[12px]"
           // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
           aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}
           onClick={() => props.onOpen(item.target)}

@@ -37,7 +37,7 @@ function SpeciesProfileRoute(props: { api: string; token: Token; onChoose: (s: S
   // The profile has layers of its own (the catalog's "Art vorschlagen"), so it has a frame too (US-QS-15). It is one
   // screen like "Entdecken" (US-QS-21): the frame takes the viewport and the facts scroll inside themselves at most.
   return (
-    <LayerHost className="h-full min-h-0" data-fit-screen="" data-fit-fill="">
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <SpeciesPage
         {...props}
         openId={profileId ?? null}

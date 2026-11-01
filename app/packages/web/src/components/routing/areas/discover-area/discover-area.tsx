@@ -35,7 +35,7 @@ export function DiscoverArea(props: {
   const { view, choose } = useDiscoverView();
   const zone = zoneOf(useSearchParams()[0].get("zone"));
   return (
-    <LayerHost className="h-full min-h-0" data-fit-screen="" data-fit-fill="">
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <SammlungHeader
         title="Entdecken"
         switchLabel="Ansicht von Entdecken"
