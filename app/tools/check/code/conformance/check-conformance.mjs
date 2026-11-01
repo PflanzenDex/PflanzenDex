@@ -76,6 +76,12 @@ export function buildCatalog(outDir, fixtures) {
   if (r.status !== 0) throw new Error(`storybook build failed:\n${r.stdout}\n${r.stderr}`);
 }
 
+// A story can still be loading after Storybook marks it rendered: the open sheet of ui-sheet--open appears about
+// 380 ms later. Probing earlier checked the story without its overlay and raced its focus trap (issue 1131).
+export async function waitForStory(page) {
+  await page.waitForLoadState("networkidle");
+}
+
 // QG-U9: axe starts only after the colour scheme and its transitions have settled (see settleStyles).
 export async function settleBeforeAxe(page) {
   const unsettled = await page.evaluate(settleStyles);
@@ -92,6 +98,7 @@ async function checkStory({ page, baseUrl, allowlist }, id, scheme) {
   });
   if (await page.locator("body.sb-show-errordisplay").count())
     return [`${where(ctx)}: the story failed to render`];
+  await waitForStory(page);
   await page.evaluate(() => document.fonts.ready);
   await settleBeforeAxe(page);
 
