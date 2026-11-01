@@ -2,7 +2,7 @@ import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
 import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
 import { Label } from "@/components/ui/display/label/label";
 import { Select } from "@/components/ui/fields/select/select";
 import { cn } from "@/lib/utils";
@@ -37,13 +37,13 @@ export function Controls(props: {
         <Label htmlFor={searchId} className="sr-only">
           Suche (Art, deutscher Name, Gattung, Familie)
         </Label>
-        <Input
+        <SearchInput
           id={searchId}
           ref={props.searchRef}
-          type="search"
           placeholder="Suche"
           value={props.query}
           onChange={(e) => props.onQuery(e.target.value)}
+          onClear={() => props.onQuery("")}
         />
       </div>
       <LayerOpener id={FILTER_LAYER}>Filter</LayerOpener>
