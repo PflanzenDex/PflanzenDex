@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 import os from "node:os";
 import path from "node:path";
 import { after, before, beforeEach, describe, it } from "node:test";
+import fs from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "playwright";
-import { runConformance, settleBeforeAxe } from "./check-conformance.mjs";
+import { runConformance, serve, settleBeforeAxe, waitForStory } from "./check-conformance.mjs";
 import { INTERACTIVE, probeTargets, tabThrough } from "./conformance-probes.mjs";
 
 describe("QG-U5 · conformance run catches", () => {
@@ -116,6 +117,38 @@ describe("DS-37 · conformance run reads the settled focus ring", () => {
       assert.equal(reached.get(0)?.boxShadow, "rgb(27, 107, 74) 0px 0px 0px 4px");
     } finally {
       await browser.close();
+    }
+  });
+});
+
+// Issue 1131: an overlay whose code arrives late (like the open sheet story) must be in the page before the probe.
+describe("QG-U5 · conformance run waits for late overlays", () => {
+  it("QG-U5 · a dialog that opens after a slow script load is present when the probe starts", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "conformance-late-"));
+    fs.writeFileSync(
+      path.join(dir, "index.html"),
+      `<!doctype html><html lang="en"><body><main><p>Story</p></main>
+<script>import("./late.js");</script></body></html>`,
+    );
+    fs.writeFileSync(
+      path.join(dir, "late.js"),
+      `const d = document.createElement("div"); d.setAttribute("role", "dialog"); d.textContent = "Sheet"; document.body.append(d);`,
+    );
+    const { server, url } = await serve(dir);
+    const browser = await chromium.launch();
+    try {
+      const page = await (await browser.newContext()).newPage();
+      await page.route("**/late.js", async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        await route.continue();
+      });
+      await page.goto(url);
+      await waitForStory(page);
+      assert.equal(await page.locator("[role=dialog]").count(), 1);
+    } finally {
+      await browser.close();
+      server.close();
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 });
