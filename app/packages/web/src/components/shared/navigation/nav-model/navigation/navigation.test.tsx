@@ -68,6 +68,14 @@ describe("US-DEV-06 navigation", () => {
     expect(link.textContent).toContain("Noch gesperrt");
   });
 
+  it("US-QS-14 Prüfliste and Betreiber belong to the group Verwaltung, no other destination has a group (issue 1093)", () => {
+    const items = navItems({ reviewer: true, operator: true });
+    expect(items.filter((i) => i.group).map((i) => [i.label, i.group])).toEqual([
+      ["Prüfliste", "Verwaltung"],
+      ["Betreiber", "Verwaltung"],
+    ]);
+  });
+
   it("US-ONB-05 / FR-ONB-06 without locks (style many) the navigation is exactly as before", () => {
     expect(navItems({ locks: {} })).toEqual(navItems({}));
     expect(navItems({}).some((i) => i.note)).toBe(false);

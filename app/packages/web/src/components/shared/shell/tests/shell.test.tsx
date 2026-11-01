@@ -188,6 +188,20 @@ describe("SideNav, sidebar (US-QS-14, DS-25, DS-44)", () => {
     await userEvent.keyboard("{Enter}");
   });
 
+  it("US-QS-14 the role entries stand under the heading Verwaltung in the sidebar only: a group named by the heading, which is no link; the rail shows no heading (issue 1093)", () => {
+    const items = make(7).map((item, i) => (i >= 5 ? { ...item, group: "Verwaltung" } : item));
+    at("/", <SideNav items={items} />);
+    const group = within(sidebar()).getByRole("group", { name: "Verwaltung" });
+    expect(
+      within(group)
+        .getAllByRole("link")
+        .map((l) => l.textContent),
+    ).toEqual(["Ziel 5", "Ziel 6"]);
+    expect(within(sidebar()).queryByRole("link", { name: "Verwaltung" })).toBeNull();
+    expect(within(sidebar()).getAllByRole("link", { name: /^Ziel/ })).toHaveLength(7);
+    expect(within(rail()).queryByText("Verwaltung")).toBeNull();
+  });
+
   it("US-QS-14 · the destination list scrolls on its own and a hairline separates the first four from the rest", () => {
     at("/", <SideNav items={make(9)} />);
     for (const nav of [rail(), sidebar()]) {

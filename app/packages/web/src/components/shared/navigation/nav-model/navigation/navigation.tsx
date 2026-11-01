@@ -17,14 +17,16 @@ export type View =
 export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile" | "addPlant";
 
 /** Pflegephasen, Pflegeprofil and Standorte und Licht are no destinations any more: they live in the Sammlung (US-QS-14). */
-const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
+// The role entries share the group "Verwaltung" (owner decision 2026-11-01, issue 1093): a heading in the sidebar only.
+const ADMIN = "Verwaltung";
+const ENTRIES: { id: View; text: string; icon: LucideIcon; group?: string }[] = [
   { id: "today", text: "Heute", icon: CalendarCheck },
   { id: "collection", text: "Sammlung", icon: Package },
   { id: "discover", text: "Entdecken", icon: Compass },
   { id: "friends", text: "Freunde", icon: Users },
   { id: "account", text: "Konto", icon: User },
-  { id: "review", text: "Prüfliste", icon: ClipboardCheck },
-  { id: "operator", text: "Betreiber", icon: Building2 },
+  { id: "review", text: "Prüfliste", icon: ClipboardCheck, group: ADMIN },
+  { id: "operator", text: "Betreiber", icon: Building2, group: ADMIN },
 ];
 
 /** The exchange (ADR 0012) lives below "Freunde", no destination of its own (US-SOZ-08). */
@@ -151,6 +153,7 @@ export function navItems(who: Who): NavItem[] {
     label: e.text,
     icon: <e.icon aria-hidden="true" className="size-5 shrink-0" />,
     ...(who.locks?.[e.id] ? { note: who.locks[e.id] } : {}),
+    ...(e.group ? { group: e.group } : {}),
   }));
 }
 
