@@ -45,7 +45,9 @@ function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
 
 /**
  * A compact plant tile (US-QS-19): photo or the initial of the name, the name, the light zone as text and one state.
- * Choosing it opens the plant in its layer (`?sheet=plant-<id>`). Takes the card and the photo access only.
+ * Name and zone keep one line each and end in "…" when they are longer than the tile, never breaking inside a word;
+ * the full text stays the accessible name and the layer shows it (owner decision 2026-11-01, issue 1108). Choosing
+ * it opens the plant in its layer (`?sheet=plant-<id>`). Takes the card and the photo access only.
  */
 export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
   const { openLayer, open } = useLayer(plantLayerId(card.id));
@@ -58,14 +60,12 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="h-auto w-full min-w-0 justify-start gap-2 whitespace-normal rounded-card bg-secondary p-2 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
+      className="h-auto w-full min-w-0 justify-start gap-2 whitespace-normal rounded-card bg-secondary px-2 py-1.5 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
     >
       <Face card={card} access={access} />
       <span className="grid min-w-0 gap-0.5">
-        <span className="font-semibold [overflow-wrap:anywhere]">{card.name}</span>{" "}
-        <span className="text-xs text-muted-foreground [overflow-wrap:anywhere]">
-          {tileZone(card)}
-        </span>{" "}
+        <span className="truncate font-semibold">{card.name}</span>{" "}
+        <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>{" "}
         <span
           data-attention={state.attention}
           className={stateMark({ attention: state.attention })}

@@ -128,6 +128,16 @@ describe("US-QS-19 tiles of the plants", () => {
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 
+  it("US-QS-19 at 360 x 640 two tile columns fit the 294 px list: the column minimum 8.75 rem leaves room for two and the gap, so a page holds 6 tiles in 3 rows (issue 1108)", () => {
+    screenWith(many(8));
+    const grid = screen.getAllByRole("listitem")[0]?.parentElement;
+    const min = /minmax\(([\d.]+)rem,1fr\)/.exec(grid?.className ?? "")?.[1];
+    expect(min).toBeDefined();
+    // Two columns and the 0.5 rem gap at 16 px per rem, within the list width the page story measures at 360 px.
+    expect((2 * Number(min) + 0.5) * 16).toBeLessThanOrEqual(294);
+    expect(grid?.className).toContain("gap-2");
+  });
+
   it("US-QS-19 a swipe turns the page", () => {
     screenWith(many(8));
     const list = screen.getByRole("list", { name: "Pflanzen" });

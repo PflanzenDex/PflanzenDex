@@ -1,6 +1,6 @@
 import type { Meta } from "@storybook/react-vite";
 import { CollectionArea } from "@/components/routing/areas/shared/lazy-areas";
-import { collectionEmpty, collectionRoutes } from "../../data/collection-data";
+import { collectionEmpty, collectionMany, collectionRoutes } from "../../data/collection-data";
 import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
@@ -35,6 +35,13 @@ export const WishlistPhone = wishlist.phone;
 export const WishlistPhoneDark = wishlist.phoneDark;
 export const WishlistDesktop = wishlist.desktop;
 export const WishlistDesktopDark = wishlist.desktopDark;
+// Many plants (issue 1108): at 360 x 640 a page holds 6 tiles (US-QS-19).
+const plantsMany = variants(
+  screenStory({ path: "/collection?view=plants", routes: collectionMany, screen }),
+);
+export const PlantsManyPhone = plantsMany.phone;
+export const PlantsManyPhoneDark = plantsMany.phoneDark;
+export const PlantsManyDesktop = plantsMany.desktop;
 export const PlantsEmpty = screenStory({
   path: "/collection?view=plants",
   routes: collectionEmpty,

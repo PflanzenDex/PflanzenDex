@@ -32,9 +32,10 @@ type Props = LayerProps & {
   groupBy?: "location";
 };
 
-// Two tiles per row while a tile holds its name at normal text, one per row at a larger text size (issue 1019).
+// Two tiles per row from a 360 px phone at normal text, one per row at a larger text size (issue 1019). 8.75 rem lets
+// two columns fit the 294 px of the list at 360 px, so a page holds 6 tiles (owner decision 2026-11-01, issue 1108).
 const TILES =
-  "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-[repeat(auto-fill,minmax(8.75rem,1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4";
 
 function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string }) {
   const size = usePageSize();
