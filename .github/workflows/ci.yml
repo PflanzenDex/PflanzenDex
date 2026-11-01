@@ -102,12 +102,7 @@ jobs:
         with:
           fetch-depth: 0 # secret scan over the full history (QG-S1)
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make ci-gates
 
   app-tests:
@@ -132,12 +127,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make ci-tests-base
       # Only what the ratchet (coverage-summary.json) and the CRAP check (coverage-final.json) read in app-coverage.
       - uses: actions/upload-artifact@v7
@@ -163,12 +153,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make ci-tests-web
       - uses: actions/upload-artifact@v7
         with:
@@ -193,12 +178,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - uses: actions/download-artifact@v7
         with:
           pattern: coverage-*
@@ -218,12 +198,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make browsers # QG-U5: the conformance run drives Chromium over the stories
       - run: make ci-ui
       # QG-U6 report (FR-QG-10): initial JS per chunk and package in the job summary. Report only: runs after a
@@ -256,12 +231,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make audit
 
   # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main` and manual dispatch; otherwise nightly (nightly.yml).
@@ -275,12 +245,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make lighthouse
         continue-on-error: true
       - if: always()
@@ -310,12 +275,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make e2e
       - uses: actions/upload-artifact@v7
         if: always()
@@ -339,12 +299,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       # Title and body only as environment variables, never inline in the command (script injection).
       - env:
           MSG: ${{ github.event.pull_request.title }}
@@ -387,12 +342,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
+      - uses: ./.github/actions/setup-app
       - run: make ds-snapshots-check
       - uses: actions/upload-artifact@v7
         if: failure()
