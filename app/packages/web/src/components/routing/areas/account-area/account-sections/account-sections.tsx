@@ -46,8 +46,6 @@ export type SectionProps = {
   token: Token;
   account: Account;
   error?: string | undefined;
-  onSignOut: () => void;
-  onEverywhereSignOut: () => void;
   /** The overview "Was die App kann" (US-ONB-06) from the shell, which no area imports. */
   overview?: ReactNode;
   locks?: Locks | undefined;
@@ -73,14 +71,7 @@ function SettingsContent(props: { api: string; token: Token }) {
 export function SectionContent({ section, ...p }: SectionProps & { section: AccountSection }) {
   switch (section) {
     case "profile":
-      return (
-        <AccountView
-          account={p.account}
-          onSignOut={p.onSignOut}
-          onEverywhereSignOut={p.onEverywhereSignOut}
-          {...(p.error ? { error: p.error } : {})}
-        />
-      );
+      return <AccountView account={p.account} {...(p.error ? { error: p.error } : {})} />;
     case "settings":
       return <SettingsContent api={p.api} token={p.token} />;
     case "achievements":

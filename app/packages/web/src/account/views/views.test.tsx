@@ -63,29 +63,24 @@ describe("welcome in the sign-in frame (US-QS-14)", () => {
 });
 
 describe("signed-in view (US-ACC-01)", () => {
-  const props = { onSignOut: nothing, onEverywhereSignOut: nothing };
-
-  it("shows name and email and both ways to sign out", () => {
-    const html = renderToString(<AccountView account={account} {...props} />);
+  it("US-ACC-01 shows name and email and no sign-out of its own: signing out always asks first, in the index", () => {
+    const html = renderToString(<AccountView account={account} />);
     expect(html).toContain("Lena");
     expect(html).toContain("lena@example.test");
-    expect(html).toContain("Abmelden");
-    expect(html).toContain("Auf allen Geräten abmelden");
+    expect(html).not.toContain("Abmelden");
+    expect(html).not.toContain("<button");
   });
 
   it("for an unconfirmed email points out what to do", () => {
     const html = renderToString(
-      <AccountView
-        account={{ ...account, emailConfirmed: false, mayShareWithFriends: false }}
-        {...props}
-      />,
+      <AccountView account={{ ...account, emailConfirmed: false, mayShareWithFriends: false }} />,
     );
     expect(html).toContain("E-Mail-Adresse bestätigen");
     expect(html).toContain("Teilen mit Freunden");
   });
 
   it("shows no warning for a confirmed email", () => {
-    const html = renderToString(<AccountView account={account} {...props} />);
+    const html = renderToString(<AccountView account={account} />);
     expect(html).not.toContain("bestätigen");
   });
 });
