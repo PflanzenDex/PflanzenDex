@@ -174,18 +174,18 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
-  it("US-QS-17 · US-ACC-01 the section Profil shows name, e-mail and both ways to sign out", async () => {
+  it("US-QS-17 · US-ACC-01 the section Profil shows name and e-mail and no sign-out that skips the confirmation (issue 1098)", async () => {
     fakeServer();
     const signOut = vi.fn();
     show("/account/profile", { signOut });
     const profileSection = screen.getByRole("region", { name: "Profil" });
     expect(await within(profileSection).findByText("Hallo, Lena")).toBeTruthy();
     expect(within(profileSection).getByText("lena@example.test")).toBeTruthy();
-    await userEvent.click(within(profileSection).getByRole("button", { name: "Abmelden" }));
-    expect(signOut).toHaveBeenCalledOnce();
-    expect(
-      within(profileSection).getByRole("button", { name: "Auf allen Geräten abmelden" }),
-    ).toBeTruthy();
+    // The one way out is "Abmelden…" in the index, which asks first; nothing signs out with a single tap.
+    expect(within(profileSection).queryByRole("button", { name: /abmelden/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Abmelden" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Auf allen Geräten abmelden" })).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
   });
 
   it("US-QS-17 · US-ACC-01 a sign-in error stays visible in the section Profil", async () => {
