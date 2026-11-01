@@ -143,8 +143,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Aloe polyphylla");
     await openByKeyboard(page, "Heute");
-    // The treatments are a layer above the overview of "Heute" (US-QS-18): the tile, named by its count and topic, opens it.
-    await press(page, page.getByRole("button", { name: /Behandeln$/ }));
+    // The treatments are a layer above the overview of "Heute" (US-QS-18): the one "Behandlungen" entry (tile or row action), named by its count and topic, opens it.
+    await press(page, page.getByRole("button", { name: /^(\d+Behandlungen|Behandlungen \d+.*)$/ }));
     await press(page, page.getByRole("button", { name: "Behandlung planen" }).first());
     const plan = page.getByRole("form", { name: /Behandlung planen/ });
     await press(page, plan.getByRole("checkbox").first(), "Space");

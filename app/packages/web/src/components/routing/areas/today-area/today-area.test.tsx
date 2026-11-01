@@ -148,21 +148,52 @@ afterEach(() => {
 });
 
 describe("US-QS-18 Heute fits one screen", () => {
-  it("US-QS-18 the overview shows one h1, the summary, the most urgent item and one tile per category with its count", async () => {
+  it("US-QS-18 with an urgent treatment first, exactly one control opens the treatments layer: it names the count and the overdue ones, and no treatments tile exists", async () => {
     fakeServer({ items: [todayItem] });
     show();
     expect(await screen.findByRole("heading", { level: 1, name: "Heute" })).toBeTruthy();
-    expect(await screen.findByText(/1 Behandlung offen, davon 1 überfällig/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^Zu Behandlung/ })).toBeTruthy();
+    const entry = await screen.findByRole("button", { name: /^Behandlungen 1 · 1.überfällig$/ });
+    expect(entry.textContent).toBe("Behandlungen 1 · 1\u00a0überfällig");
+    // The action of the row is the entry; the summary line no longer carries the treatments.
+    expect(screen.queryByRole("button", { name: /^Zu Behandlung/ })).toBeNull();
+    expect(screen.queryByText(/Behandlung offen/)).toBeNull();
     const tiles = within(screen.getByRole("list", { name: "Themen" }));
-    expect((await tiles.findByRole("button", { name: /^1Behandeln$/ })).textContent).toBe(
-      "1Behandeln",
-    );
+    expect(tiles.queryByRole("button", { name: /Behandeln|Behandlungen/ })).toBeNull();
+    expect(tiles.getAllByRole("listitem")).toHaveLength(2);
     expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
     expect(tiles.getByRole("button", { name: /^1Fehlt noch$/ })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^Behandlungen/ })).toHaveLength(1);
     // The topics are layers: no section of them stands on the page.
     expect(screen.queryByRole("heading", { level: 2, name: "Behandlungen" })).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-18 with another item first and open treatments, the Behandlungen tile exists once and the summary names the treatments", async () => {
+    fakeServer({
+      items: [{ ...todayItem, id: "p", kind: "phase_deviation", target: "care_phases" }],
+    });
+    show();
+    const tiles = within(await screen.findByRole("list", { name: "Themen" }));
+    expect((await tiles.findByRole("button", { name: /^1Behandlungen$/ })).textContent).toBe(
+      "1Behandlungen",
+    );
+    expect(tiles.getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.getAllByRole("button", { name: /Behandlungen$/ })).toHaveLength(1);
+    expect(screen.getByText(/1 Behandlung offen, davon 1 überfällig/)).toBeTruthy();
+  });
+
+  it("US-QS-18 · P-10 a treatments load that is still running or failed stays visible on the entry or tile", async () => {
+    fakeServer({ items: [todayItem] });
+    const fetchFn = vi.mocked(fetch);
+    const base = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) =>
+      new URL(String(url)).pathname === "/treatments"
+        ? response(500, { error: { code: "server.error", text: "x" } })
+        : (base as typeof fetch)(url, init),
+    );
+    show();
+    const entry = await screen.findByRole("button", { name: /^Behandlungen/ });
+    await waitFor(() => expect(entry.textContent).toContain("nicht geladen"));
   });
 
   it("US-QS-18 the category tiles stand three in a row while a label fits and stack when the text is larger (issue 1019)", async () => {
@@ -176,7 +207,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     fakeServer();
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: /Behandeln$/ }));
+    await user.click(await screen.findByRole("button", { name: /Behandlungen$/ }));
     const layer = await dialog("Behandlungen");
     expect(address()).toBe("/today?sheet=treatments");
     expect(
@@ -216,11 +247,11 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(address()).toBe("/today#gibt-es-nicht");
   });
 
-  it("US-QS-18 · TE-07 Zu Behandlung in Jetzt dran opens the layer Behandlungen", async () => {
+  it("US-QS-18 · TE-07 the Behandlungen entry in Jetzt dran opens the layer Behandlungen", async () => {
     fakeServer({ items: [todayItem] });
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Zu Behandlung: Aloe" }));
+    await user.click(await screen.findByRole("button", { name: /^Behandlungen/ }));
     expect(await dialog("Behandlungen")).toBeTruthy();
     expect(address()).toBe("/today?sheet=treatments");
   });
@@ -241,7 +272,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     show();
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: /^0Behandeln$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^0Behandlungen$/ })).toBeTruthy();
   });
 });
 

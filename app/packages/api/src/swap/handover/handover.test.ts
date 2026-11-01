@@ -697,7 +697,10 @@ describe("US-SOZ-13 swap history and provenance through the API", () => {
     }[];
     const card = cards.find((c) => c.id === done.body.receivedSpecimenId);
     expect(card?.provenance?.from).toBeTruthy();
-    expect(card?.provenance?.date).toMatch(/^2026-10-/);
+    // The handover was just now; a fixed month here failed once the calendar moved on (issue 1092 CI, 2026-11-01).
+    expect(Math.abs(Date.parse(card?.provenance?.date ?? "") - Date.now())).toBeLessThan(
+      5 * 60_000,
+    );
     const giverCards = (await call(subA, "GET", "/specimens/cards?timeZone=Europe%2FBerlin")).body
       .cards as { provenance: unknown }[];
     expect(giverCards.every((c) => c.provenance === null)).toBe(true);

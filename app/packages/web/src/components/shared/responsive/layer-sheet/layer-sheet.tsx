@@ -18,16 +18,20 @@ export function LayerOpener({
   id,
   children,
   className,
+  size,
 }: {
   id: string;
   children: React.ReactNode;
   className?: string;
+  /** `sm` gives the control radius instead of the pill, e.g. for a tile (issue 1092). */
+  size?: "sm";
 }) {
   const { openLayer, open } = useLayer(id);
   return (
     <Button
       type="button"
       variant="outline"
+      {...(size ? { size } : {})}
       className={className}
       aria-haspopup="dialog"
       aria-expanded={open}

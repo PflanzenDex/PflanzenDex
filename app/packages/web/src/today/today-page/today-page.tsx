@@ -1,98 +1,50 @@
 import { useCallback, type ReactNode } from "react";
-import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/core";
+import type { TodayList } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
-import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
+import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { useIsMd } from "@/lib/use-breakpoint";
-import { cn } from "@/lib/utils";
-import { dateText, keepTogether, overdueChip, withoutOverdue } from "@/lib/format";
-import { LoadFrame } from "../../kernel";
+import { dateText } from "@/lib/format";
+import { LoadFrame, useRequest } from "../../kernel";
 import { loadToday } from "../today-api";
+import { isTreatment, TodayRow, type TodayDestination } from "./today-row/today-row";
 
-/** Where an action leads: the app wires the destination to a view (the modules do not know each other). */
-export type TodayDestination = TodayTarget | "collection";
+export type { TodayDestination };
 
 const KEY = ["today", "list"] as const;
-const LABEL: Record<TodayKind, string> = {
-  treatment_overdue: "Überfällig",
-  treatment_due: "Heute fällig",
-  phase_deviation: "Abweichung",
-  measurement_etiolated: "Vergeilt",
-  specimen_incomplete: "Angaben fehlen",
-  buffer_low: "Nachschub",
-  equipment_check_due: "Prüfung fällig",
-};
-const GO: Record<TodayTarget, string> = {
-  treatments: "Zu Behandlung",
-  care_phases: "Zu Pflegephasen",
-  measurements: "Zum Messen",
-  hints: "Zu Hinweisen",
-  wishlist: "Zur Wunschliste",
-  equipment: "Zum Equipment",
-};
-const CARD =
-  "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";
-const URGENT = "border-warning-border bg-warning text-warning-foreground";
-/** Rows per page of the layer with the further tasks (starting values, assumption; US-QS-18): four, six from 768 px. */
-const PAGE_SIZE = { phone: 4, md: 6 } as const;
 const TASKS = "tasks";
-
-/** The state as a short chip ("10 Tage überfällig"), never a repeated heading and sentence (US-QS-18). */
-function chipOf(item: TodayItem): string {
-  return (item.kind === "treatment_overdue" ? overdueChip(item.text) : null) ?? LABEL[item.kind];
-}
-
 /**
- * One item as a compact row: the state chip, the short text and one action (US-QS-18). The action sentence of the item
- * is not repeated on every row; the action's name says where it leads. `date` is shown only for the most urgent item.
+ * Rows per page of the further tasks below the tiles and in the layer `?sheet=tasks` (starting values, assumption;
+ * US-QS-18): three on a phone, so Heute still fits 360×640 px; six from 768 px.
  */
-function Row(props: { item: TodayItem; date?: string; onOpen: (d: TodayDestination) => void }) {
-  const { item } = props;
-  const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
-  return (
-    // The row wraps the action below the text when the two do not fit side by side at a larger text size (issue 1019);
-    // the text column keeps a basis of 9 rem, so at normal text the row stays one line as before.
-    <div className={cn(CARD, "flex flex-wrap items-center gap-3", urgent && URGENT)}>
-      <div className="flex min-w-0 grow basis-36 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-x-2">
-          <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
-            {chipOf(item)}
-          </p>
-          {props.date && <p className="text-xs opacity-80">Stand: {props.date}</p>}
-        </div>
-        <p className="line-clamp-2 text-sm">
-          {keepTogether(item.kind === "treatment_overdue" ? withoutOverdue(item.text) : item.text)}
-        </p>
-      </div>
-      <Button
-        type="button"
-        variant="outline"
-        className="max-w-full shrink-0"
-        // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
-        aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}
-        onClick={() => props.onOpen(item.target)}
-      >
-        {GO[item.target]}
-      </Button>
-    </div>
-  );
-}
-
+const PAGE_SIZE = { phone: 3, md: 6 } as const;
 const laterText = (n: number): string =>
   n === 1
     ? "Ein weiterer Behandlungstermin steht später an."
     : `${n} weitere Behandlungstermine stehen später an.`;
 
-/** The single most urgent item; the rest opens as a layer (US-QS-18). */
-function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void }) {
+/**
+ * The single most urgent item and, below the tiles, the further tasks as compact rows (US-QS-18). Treatment items are
+ * not listed again: they are counted in the one "Behandlungen" entry (`treatmentsEntry` on the row, or the tile).
+ */
+function Content(props: {
+  list: TodayList;
+  onOpen: (d: TodayDestination) => void;
+  treatmentsEntry?: ReactNode;
+}) {
   const { list } = props;
-  const pageSize = useIsMd() ? PAGE_SIZE.md : PAGE_SIZE.phone;
-  const [first, ...rest] = list.items;
+  const [first] = list.items;
   return (
     <>
       {first ? (
-        <Row item={first} date={dateText(list.date)} onOpen={props.onOpen} />
+        <TodayRow
+          item={first}
+          date={dateText(list.date)}
+          onOpen={props.onOpen}
+          {...(isTreatment(first) && props.treatmentsEntry
+            ? { action: props.treatmentsEntry }
+            : {})}
+        />
       ) : (
         <EmptyState
           title="Heute steht nichts an."
@@ -105,30 +57,55 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
           action={{ label: "Zur Sammlung", onClick: () => props.onOpen("collection") }}
         />
       )}
-      {first && list.upcoming > 0 && rest.length === 0 && (
-        <p className="text-sm text-muted-foreground">{laterText(list.upcoming)}</p>
-      )}
+    </>
+  );
+}
+
+/** The further tasks of the day, treatments excluded: one pager, in the page below the tiles or in the layer. */
+function FurtherTasks(props: {
+  list: TodayList;
+  onOpen: (d: TodayDestination) => void;
+  param?: string;
+  /** The page takes the free height below the tiles (the page, not the layer). */
+  fit?: boolean;
+}) {
+  const pageSize = useIsMd() ? PAGE_SIZE.md : PAGE_SIZE.phone;
+  const rest = props.list.items.slice(1).filter((item) => !isTreatment(item));
+  return (
+    <Pager
+      items={rest}
+      pageSize={pageSize}
+      {...(props.fit ? { fit: true } : {})}
+      label="Weitere Aufgaben"
+      getKey={(item) => item.id}
+      {...(props.param ? { param: props.param } : {})}
+      renderItem={(item) => <TodayRow item={item} onOpen={props.onOpen} />}
+    />
+  );
+}
+
+/** What stands below the tiles: the further tasks inline and the later treatments in small text (US-QS-18). */
+function Below(props: { list: TodayList; onOpen: (d: TodayDestination) => void }) {
+  const { list } = props;
+  const [first] = list.items;
+  const rest = list.items.slice(1).filter((item) => !isTreatment(item));
+  return (
+    <>
       {rest.length > 0 && (
-        // One row: the further tasks and, small, the treatments that stand later (US-QS-18).
-        <LayerOpener id={TASKS} className="h-auto min-h-11 w-full justify-between py-1">
-          <span className="flex flex-col items-start text-left">
-            <span>Weitere Aufgaben</span>
-            {list.upcoming > 0 && (
-              <span className="text-xs font-normal">{`${list.upcoming} Termine später`}</span>
-            )}
-          </span>
-          <span className="tabular-nums">{rest.length}</span>
-        </LayerOpener>
+        // No min-h-0: when the page has no free height left (200 % text, `main` scrolls), the section keeps one row and
+        // the pager instead of collapsing to nothing below the next line.
+        <section aria-labelledby="tasks-title" className="flex min-w-0 flex-1 flex-col gap-2">
+          <h2 id="tasks-title" className="text-sm font-semibold">
+            Weitere Aufgaben
+          </h2>
+          <FurtherTasks list={list} onOpen={props.onOpen} fit />
+        </section>
       )}
-      <LayerSheet id={TASKS} title="Weitere Aufgaben">
-        <Pager
-          items={rest}
-          pageSize={pageSize}
-          label="Weitere Aufgaben"
-          getKey={(item) => item.id}
-          renderItem={(item) => <Row item={item} onOpen={props.onOpen} />}
-        />
-      </LayerSheet>
+      {first && list.upcoming > 0 && (
+        <p className="text-sm text-muted-foreground">
+          {rest.length > 0 ? `${list.upcoming} Termine später` : laterText(list.upcoming)}
+        </p>
+      )}
     </>
   );
 }
@@ -143,29 +120,53 @@ export function TodayPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onOpen: (d: TodayDestination) => void;
-  /** The summary of the open items per category, below the title (US-QS-18); the area knows the other modules. */
-  summary?: ReactNode;
-  /** The tiles of the categories, below "Jetzt dran" (US-QS-18). */
-  tiles?: ReactNode;
+  /**
+   * The summary of the open items per category, below the title (US-QS-18); the area knows the other modules. It gets
+   * whether the most urgent item is a treatment: then the treatments are named by the entry on its row instead.
+   */
+  summary?: (treatmentFirst: boolean) => ReactNode;
+  /** The tiles of the categories, below "Jetzt dran"; without the treatments tile when the entry stands on the row. */
+  tiles?: (treatmentFirst: boolean) => ReactNode;
+  /** The one "Behandlungen" entry, shown as the action of a most urgent treatment (US-QS-18). */
+  treatmentsEntry?: ReactNode;
 }) {
   const { api } = props;
   const load = useCallback((t: string) => loadToday(api, t), [api]);
   const loading = "Heute wird geladen …";
+  // The same key as the frame below: one request, one copy. Until it is there the entry stays a tile.
+  const today = useRequest({ queryKey: KEY, token: props.token, load });
+  const first = today.value?.items[0];
+  const treatmentFirst = first !== undefined && isTreatment(first) && !!props.treatmentsEntry;
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <h1 id="today-title" className="text-2xl font-semibold">
         Heute
       </h1>
-      {props.summary}
+      {props.summary?.(treatmentFirst)}
       <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-2">
         <h2 id="now-title" className="sr-only">
           Jetzt dran
         </h2>
         <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
-          {(list: TodayList) => <Content list={list} onOpen={props.onOpen} />}
+          {(list: TodayList) => (
+            <Content
+              list={list}
+              onOpen={props.onOpen}
+              {...(props.treatmentsEntry ? { treatmentsEntry: props.treatmentsEntry } : {})}
+            />
+          )}
         </LoadFrame>
       </section>
-      {props.tiles}
+      {props.tiles?.(treatmentFirst)}
+      {today.value && <Below list={today.value} onOpen={props.onOpen} />}
+      {/* The former address of the further tasks stays valid: the layer lists the same rows. */}
+      <LayerSheet id={TASKS} title="Weitere Aufgaben">
+        <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
+          {(list: TodayList) => (
+            <FurtherTasks list={list} onOpen={props.onOpen} param={LAYER_PARAM} />
+          )}
+        </LoadFrame>
+      </LayerSheet>
     </div>
   );
 }
