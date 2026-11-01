@@ -12,7 +12,7 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 DB_MEMORY ?= 512m
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -179,6 +179,17 @@ ci-gates: secrets workflows ## Part 1 of `make ci`: secrets, workflows and the f
 
 ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and the ratchet, then the CRAP check
 	cd $(APP) && npm run ci:tests
+
+# Part 2 in CI as three jobs (issue 1125): the web suite runs beside the others, the ratchet and CRAP check read both
+# coverage outputs afterwards. Together they are exactly `make ci-tests`.
+ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests
+	cd $(APP) && npm run ci:tests:base
+
+ci-tests-web: ## Part 2b: web tests with coverage
+	cd $(APP) && npm run ci:tests:web
+
+ci-coverage: ## Part 2c: coverage ratchet and CRAP check over the coverage of all packages (run 2a and 2b first)
+	cd $(APP) && npm run ci:coverage
 
 ci-ui: ## Part 3 of `make ci`: build, initial JS budget and the blocking conformance run (needs `make browsers`)
 	cd $(APP) && npm run ci:ui
