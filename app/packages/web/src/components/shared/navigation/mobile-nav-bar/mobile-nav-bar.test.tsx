@@ -43,4 +43,28 @@ describe("MobileNavBar in forced colors (US-QS-14)", () => {
     expect(pill?.className).toContain("w-14");
     expect(pill?.className).toContain("max-w-full");
   });
+
+  it("US-QS-15 a bar label never breaks inside a word: it stays on one line, and below 21.75 rem of bar width every label leaves the view and stays the name, so the bar shows icons only (issue 1107)", () => {
+    render(
+      <MemoryRouter initialEntries={["/p0"]}>
+        <MobileNavBar items={items} />
+      </MemoryRouter>,
+    );
+    const nav = screen.getByRole("navigation", { name: "Navigation unten" });
+    expect(nav.className).toContain("@container");
+    const bar = within(nav);
+    const slots = [...bar.getAllByRole("link"), bar.getByRole("button", { name: "Mehr" })];
+    expect(slots).toHaveLength(5);
+    for (const slot of slots) {
+      const word = [...slot.querySelectorAll("span")].find(
+        (s) => s.children.length === 0 && s.textContent?.trim(),
+      );
+      expect(word?.className).toContain("whitespace-nowrap");
+      expect(word?.className).not.toMatch(/hyphens|break-words|break-all/);
+      expect(word?.parentElement?.className).toContain("@max-[21.75rem]:sr-only");
+    }
+    expect(bar.getAllByRole("link").map((l) => l.textContent)).toEqual(
+      items.slice(0, 4).map((i) => i.label),
+    );
+  });
 });
