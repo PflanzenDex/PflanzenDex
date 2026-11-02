@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import type { TestAccount } from "../account";
-import { SCREENS } from "./fit";
+import { SCREENS } from "./one-screen/register";
 
 // Helpers for the adaptable display checks (US-QS-12): every view, measured in the real browser.
 

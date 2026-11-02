@@ -453,7 +453,8 @@
     "id": "discover-view-suggestions-zone-2",
     "account": "test2",
     "path": "/discover?view=suggestions&zone=2",
-    "title": "Entdecken"
+    "title": "Entdecken",
+    "unstable": "The deck is seeded by account id and date (FR-ENT-05); a fresh database has new account ids, so the cards and their height change between runs."
   },
   {
     "id": "collection-view-plants-manage-locations-list-locations-sheet-new-location",

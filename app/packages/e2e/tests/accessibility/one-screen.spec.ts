@@ -1,64 +1,28 @@
-import { test as base, expect, type BrowserContext } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { WEB, test } from "../../support/display/one-screen/sign-in";
 import { readBaseline, saveResults } from "../../support/display/reporter";
-import { SCREENS, measure, openScreen, settle, type Screen } from "../../support/display/fit";
+import { measure, openScreen, settle } from "../../support/display/one-screen/fit";
+import { SCREENS, type Screen } from "../../support/display/one-screen/register";
 import {
   SIZES,
-  buildBaseline,
   evaluate,
-  judgeBaseline,
-  judgeScreen,
-  lostScreen,
   type Baseline,
   type Raw,
   type Size,
   type Result,
-} from "../../support/display/judge";
+} from "../../support/display/one-screen/judge";
+import {
+  buildBaseline,
+  judgeBaseline,
+  judgeScreen,
+  lostScreen,
+} from "../../support/display/one-screen/baseline";
 
-// US-QS-15, DS-58, QG-U8 (issue 1137): every view and layer of the register fits the window at every supported size. Each
-// screen is opened once and the same page is resized through the sizes. Writes to the API are aborted, so measuring never
-// changes data. Run with `make one-screen`; the project "one-screen" is not part of `make e2e`.
+// US-QS-15, DS-58, QG-U8 (issue 1137): every screen of the register fits at every size; opened once, resized through the
+// sizes, writes aborted. `make one-screen`; the project "one-screen" is not part of `make e2e`.
 
-const WEB = `http://localhost:${process.env["E2E_WEB_PORT"] ?? "5173"}`;
 const API = `http://localhost:${process.env["E2E_API_PORT"] ?? "3000"}`;
-const PASSWORD = "testtest12"; // the dev accounts test, test2, test3 of the realm import (docs/guides/reference/app.md)
 const WRITE = process.env["ONE_SCREEN_WRITE"] === "1";
-
-type States = (
-  account: string,
-) => Promise<Awaited<ReturnType<BrowserContext["storageState"]>> | undefined>;
-
-// Signs in once per worker and account; the sign-in state is reused by every screen of that account.
-const test = base.extend<object, { states: States }>({
-  states: [
-    async ({ browser }, use) => {
-      const cache = new Map<string, Promise<Awaited<ReturnType<BrowserContext["storageState"]>>>>();
-      const signIn = async (account: string) => {
-        const context = await browser.newContext({ locale: "de-DE" });
-        const page = await context.newPage();
-        await page.goto(WEB + "/");
-        await page
-          .getByRole("button", { name: /anmelden/i })
-          .first()
-          .click();
-        await page.locator("#username").fill(account);
-        await page.locator("#password").fill(PASSWORD);
-        await page.locator("#kc-login").click();
-        await page.waitForURL(`${WEB}/**`);
-        await settle(page, 1500);
-        const state = await context.storageState();
-        await context.close();
-        return state;
-      };
-      await use(async (account) => {
-        if (account === "anon") return undefined;
-        const known = cache.get(account) ?? signIn(account);
-        cache.set(account, known);
-        return known;
-      });
-    },
-    { scope: "worker" },
-  ],
-});
 
 test.describe.configure({ mode: "parallel", timeout: 150_000 });
 
@@ -97,8 +61,13 @@ test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
       try {
         await openScreen(page, WEB, screen);
         const results = await measureAll(page, screen);
+        const lost = lostScreen(WEB + screen.path, page.url());
+        if (lost) throw new Error(`${screen.id}: ${lost}`);
         saveResults(screen.id, results);
-        if (!WRITE) expect(judgeScreen(results, readBaseline()), screen.id).toEqual([]);
+        if (!WRITE)
+          expect(judgeScreen(results, readBaseline(), Boolean(screen.unstable)), screen.id).toEqual(
+            [],
+          );
       } finally {
         await context.close();
       }
@@ -109,14 +78,8 @@ test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
 const sizeOf = (name: string) => SIZES.find((s) => s.name === name) as Size;
 
 const raw = (over: Partial<Raw>): Raw => ({
-  scrollHeight: 640,
-  innerHeight: 640,
-  scrollWidth: 360,
-  innerWidth: 360,
-  region: null,
-  pageEl: "main",
-  hEl: "div",
-  paint: null,
+  ...{ scrollHeight: 640, innerHeight: 640, scrollWidth: 360, innerWidth: 360, region: null },
+  ...{ pageEl: "main", hEl: "div", paint: null },
   ...over,
 });
 
@@ -192,6 +155,19 @@ test("QG-U8 self-test: a borderline entry that fits in one run does not flip the
   const size = sizeOf("360x640");
   const listed = buildBaseline([evaluate("s", size, raw({ scrollHeight: 650 }))]);
   expect(judgeScreen([evaluate("s", size, raw({}))], listed)).toEqual([]);
+  const unstable = buildBaseline([evaluate("s", size, raw({ scrollHeight: 960 }))]);
+  expect(judgeScreen([evaluate("s", size, raw({}))], unstable, true)).toEqual([]);
+});
+
+test("QG-U8 self-test: at 200 % text a taller region is no regression, a taller page is", () => {
+  const zoomed = sizeOf("360x640@200%");
+  const region = (inner: number) => ({ scrollHeight: inner, clientHeight: 300, el: "div" });
+  const tall = (inner: number) =>
+    evaluate("s", zoomed, raw({ scrollHeight: 1247, region: region(inner) }));
+  const listed = buildBaseline([tall(600)]);
+  expect(judgeScreen([tall(1200)], listed)).toEqual([]);
+  const page = evaluate("s", zoomed, raw({ scrollHeight: 1400, region: region(600) }));
+  expect(judgeScreen([page], listed)[0]).toContain("worse");
 });
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {

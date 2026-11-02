@@ -1,36 +1,9 @@
-import { readFileSync } from "node:fs";
 import type { JSHandle, Page } from "@playwright/test";
-import { lostScreen, type Raw } from "./judge";
+import { lostScreen } from "./baseline";
+import type { Raw } from "./judge";
+import type { Screen, Step } from "./register";
 
-// Browser side of the one-screen gate (issue 1137): the register, opening a screen, measuring one window size.
-
-/** One click: by CSS selector or by role and name (exact, or `re` as a case-insensitive pattern). */
-export interface Step {
-  css?: string;
-  role?: string;
-  name?: string;
-  re?: string;
-  nth?: number;
-}
-
-// One screen: a view, layer, dialog or sign-in page. `route` names the route pattern when a click leads elsewhere;
-// `layerFile` is the source file of its LayerSheet; `capExempt` is the written reason the 1920 px cap does not apply.
-export interface Screen {
-  id: string;
-  account: "test" | "test2" | "test3" | "anon";
-  path: string;
-  steps?: Step[];
-  route?: string;
-  layerFile?: string;
-  title?: string;
-  capExempt?: string;
-}
-
-/** The register: read from the checked-in file, so the unit tests of the web package read the same list (issue 1137). */
-export const SCREENS: readonly Screen[] = JSON.parse(
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed file next to this module
-  readFileSync(new URL("./screens.json", import.meta.url), "utf8"),
-) as Screen[];
+// Browser side of the one-screen gate (issue 1137): opening a screen of the register, measuring one window size.
 
 // Waits until the page has loaded, nothing is busy and the layer has slid in (Vaul needs about 900 ms).
 export async function settle(page: Page, pause = 900): Promise<void> {

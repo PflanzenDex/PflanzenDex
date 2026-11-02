@@ -1,8 +1,9 @@
 /* eslint-disable security/detect-non-literal-fs-filename -- every path is a fixed folder or file of this package or comes from the checked-in register */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import type { FullConfig, FullResult, Reporter, Suite } from "@playwright/test/reporter";
-import { SIZES, buildBaseline, entryOf, judgeBaseline, type Baseline, type Result } from "./judge";
-import { SCREENS } from "./fit";
+import { SIZES, type Baseline, type Result } from "./one-screen/judge";
+import { buildBaseline, entryOf, judgeBaseline } from "./one-screen/baseline";
+import { SCREENS } from "./one-screen/register";
 
 // Playwright reporter of the one-screen gate (issue 1137, QG-U8): after the run it merges the results of all workers,
 // writes the table for the job summary, checks the baseline itself and, with ONE_SCREEN_WRITE=1, rewrites the baseline.
