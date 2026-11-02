@@ -86,8 +86,18 @@ const renderAt = (path: string) =>
 
 const radio = (name: string) => screen.getByRole("button", { name });
 const checked = (name: string) => radio(name).getAttribute("aria-pressed") === "true";
-const arrangement = () =>
-  screen.getByRole("combobox", { name: "Anordnung der Arten" }) as HTMLSelectElement;
+const openView = async () =>
+  userEvent.click(await screen.findByRole("button", { name: "Ansicht" }));
+const arrangement = async () => {
+  await openView();
+  const group = await screen.findByRole("group", { name: "Anordnung der Arten" });
+  return within(group)
+    .getAllByRole("button")
+    .map(
+      (b) =>
+        `${b.textContent?.replace("✓", "")}${b.getAttribute("aria-pressed") === "true" ? " *" : ""}`,
+    );
+};
 
 beforeAll(async () => {
   await Promise.all([
@@ -258,43 +268,52 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
     expect(await screen.findByRole("heading", { level: 2, name: "Artenvergleich" })).toBeTruthy();
     expect(await screen.findByText("0 Arten im Vergleich")).toBeTruthy();
     expect(checked("Arten")).toBe(true);
-    expect(arrangement().value).toBe("difficulty");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByText(/Lege in der Sammlung eine Pflanze an/)).toBeTruthy();
+    expect(await arrangement()).toEqual(["Pokédex", "Schwierigkeit *"]);
   });
 
-  it("US-QS-14 the species mode offers the arrangement Pokédex and Schwierigkeit beside the title in one control; the Pokédex is the default", async () => {
+  it("US-QS-14 · issue 1096 the species mode offers the arrangement Pokédex and Schwierigkeit in the layer Ansicht beside the title; the Pokédex is the default", async () => {
     renderAt("/collection?view=species");
     expect(await screen.findByText("1 gefangen")).toBeTruthy();
-    expect(arrangement().value).toBe("pokedex");
-    expect(Array.from(arrangement().options).map((o) => o.textContent)).toEqual([
-      "Pokédex",
-      "Schwierigkeit",
-    ]);
+    expect(await arrangement()).toEqual(["Pokédex *", "Schwierigkeit"]);
+    expect(screen.getByTestId("address").textContent).toBe("/collection?view=species&sheet=view");
   });
 
-  it("US-QS-14 choosing Schwierigkeit keeps the species mode, changes the address, announces it and keeps the focus", async () => {
+  it("US-QS-14 · issue 1096 choosing Schwierigkeit keeps the species mode, changes the address, announces it and returns the focus to Ansicht", async () => {
     renderAt("/collection?view=species");
     await screen.findByText("1 gefangen");
-    await userEvent.selectOptions(arrangement(), "difficulty");
+    await openView();
+    await userEvent.click(await screen.findByRole("button", { name: "Schwierigkeit" }));
     expect(screen.getByTestId("address").textContent).toBe(
       "/collection?view=species&sort=difficulty",
     );
     expect(await screen.findByText("0 Arten im Vergleich")).toBeTruthy();
-    expect(document.activeElement).toBe(arrangement());
     expect(document.querySelector("[aria-live=polite]")?.textContent).toContain("Schwierigkeit");
-    await userEvent.selectOptions(arrangement(), "pokedex");
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ansicht" })),
+    );
+    await openView();
+    await userEvent.click(await screen.findByRole("button", { name: "Pokédex" }));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species");
     expect(await screen.findByText("1 gefangen")).toBeTruthy();
   });
 
-  it("US-QS-14 the arrangement is not offered in the other modes and an unknown sort shows the Pokédex", async () => {
-    renderAt("/collection?view=plants&sort=difficulty");
-    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
-    expect(screen.queryByRole("combobox", { name: "Anordnung der Arten" })).toBeNull();
-    cleanup();
+  it("US-QS-14 an unknown sort shows the Pokédex", async () => {
     renderAt("/collection?view=species&sort=unsinn");
     expect(await screen.findByText("1 gefangen")).toBeTruthy();
+  });
+
+  it("US-QS-22 · issue 1096 Wunschliste and Geräte offer no Ansicht, but a hidden stand-in keeps the header's height", async () => {
+    for (const view of ["wishlist", "equipment"]) {
+      renderAt(`/collection?view=${view}`);
+      await screen.findByRole("heading", { level: 1, name: "Sammlung" });
+      expect(screen.queryByRole("button", { name: "Ansicht" })).toBeNull();
+      const standIn = screen.getByTestId("view-stand-in");
+      expect(standIn.getAttribute("aria-hidden")).toBe("true");
+      expect(standIn.className).toContain("invisible");
+      cleanup();
+    }
   });
 
   it("US-QS-14 leaving the species mode drops the arrangement from the address", async () => {
