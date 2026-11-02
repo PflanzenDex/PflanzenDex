@@ -1,8 +1,6 @@
-import { defineOperation, integerField, ok, orNull, shape } from "../kernel";
+import { defineOperation, integerField, ok, orNull, shape, MS_PER_DAY } from "../kernel";
 import { isOperator, type AccessStore } from "./access";
 import { INVITATION_VALIDITY_DAYS, newInvitationCode } from "./invitation-code";
-
-const DAY_MS = 86_400_000;
 
 export interface InvitationDependencies {
   readonly access: AccessStore;
@@ -38,7 +36,7 @@ export const invitationCreate = (deps: InvitationDependencies) =>
     run: async ({ userId }, input) => {
       const code = newInvitationCode(deps.random);
       const days = input.validForDays ?? INVITATION_VALIDITY_DAYS.default;
-      const expiresAt = new Date(deps.now().getTime() + days * DAY_MS).toISOString();
+      const expiresAt = new Date(deps.now().getTime() + days * MS_PER_DAY).toISOString();
       const saved = await deps.access.createInvitation(userId, {
         code: code.replaceAll("-", ""),
         expiresAt,

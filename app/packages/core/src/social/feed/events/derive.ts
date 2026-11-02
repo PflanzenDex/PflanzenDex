@@ -1,11 +1,12 @@
 import type { SharedSpecimen } from "../../sharing";
 import type { FeedEvent, FeedType } from "../types";
+import { MS_PER_DAY } from "../../../kernel";
 
 /** Whole days from `from` to `to` (calendar dates `YYYY-MM-DD`); calendar arithmetic, so daylight saving shifts nothing. */
 export function daysBetween(from: string, to: string): number {
   const day = (d: string) => {
     const [y, m, dd] = d.split("-").map(Number) as [number, number, number];
-    return Date.UTC(y, m - 1, dd) / 86_400_000;
+    return Date.UTC(y, m - 1, dd) / MS_PER_DAY;
   };
   return day(to) - day(from);
 }

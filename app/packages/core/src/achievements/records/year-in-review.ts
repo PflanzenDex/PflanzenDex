@@ -3,6 +3,7 @@
 // P-08); two years are two plain sets of numbers. Etiolated growth never counts (US-WAC-04). Pure; dates are local
 // calendar dates (NFR-08).
 import { RECORD_LIMITS } from "./records";
+import { MS_PER_DAY } from "../../kernel";
 
 export interface YearSpecimen {
   readonly id: string;
@@ -68,7 +69,6 @@ export interface YearInReview {
   readonly hasData: boolean;
 }
 
-const MS_PER_DAY = 86_400_000;
 const day = (d: string): number => {
   const [y, m, dd] = d.split("-").map(Number);
   return Date.UTC(y ?? 0, (m ?? 1) - 1, dd ?? 1) / MS_PER_DAY;

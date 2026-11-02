@@ -6,6 +6,7 @@ import {
   type RhythmPauseStore,
   type SpeciesSource,
   localToday,
+  MS_PER_DAY,
   type MeasurementStore,
   type RhythmTask,
   type SpecimenStore,
@@ -25,7 +26,7 @@ export interface RhythmSources {
 
 function addDays(date: string, days: number): string {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
-  const t = new Date(Date.UTC(y, m - 1, d) + days * 86_400_000);
+  const t = new Date(Date.UTC(y, m - 1, d) + days * MS_PER_DAY);
   return [t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate()]
     .map((n, i) => String(n).padStart(i === 0 ? 4 : 2, "0"))
     .join("-");

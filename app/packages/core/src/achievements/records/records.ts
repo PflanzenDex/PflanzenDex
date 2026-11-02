@@ -1,3 +1,4 @@
+import { MS_PER_DAY } from "../../kernel";
 // Personal records and growth moments (US-ACH-05): a specimen is compared with its own history only, never with other
 // specimens, species averages or other keepers (P-08, FR-ACH-04). Etiolated growth never counts as success (US-WAC-04,
 // FR-ACH-05). Pure; the trend of the care module is passed in because this module imports nothing but the kernel.
@@ -37,7 +38,6 @@ export interface GrowthMoments {
   readonly records: readonly string[];
 }
 
-const MS_PER_DAY = 86_400_000;
 const day = (d: string): number => {
   const [y, m, dd] = d.split("-").map(Number);
   return Date.UTC(y ?? 0, (m ?? 1) - 1, dd ?? 1) / MS_PER_DAY;

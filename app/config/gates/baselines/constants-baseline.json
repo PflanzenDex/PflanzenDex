@@ -1,0 +1,659 @@
+{
+  "maxTotal": 327,
+  "entries": [
+    {
+      "file": "packages/api/src/achievements/history/year.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/achievements/rhythm.ts",
+      "numbers": 2,
+      "enums": 2
+    },
+    {
+      "file": "packages/api/src/ai/discover/client-discover-routes.ts",
+      "numbers": 3
+    },
+    {
+      "file": "packages/api/src/ai/guard/client-auth.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/ai/mcp/mcp-routes.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/ai/mcp/protocol.ts",
+      "numbers": 4
+    },
+    {
+      "file": "packages/api/src/care/care-routes.ts",
+      "numbers": 3
+    },
+    {
+      "file": "packages/api/src/catalog/load/research/check-cli.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/catalog/load/run.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/discover/discover-routes.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/api/src/health.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/api/src/jobs/job-worker.ts",
+      "numbers": 1,
+      "enums": 1
+    },
+    {
+      "file": "packages/api/src/kernel/error-http.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/kernel/sources/exchange.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/api/src/kernel/write-limit.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/main.ts",
+      "numbers": 13
+    },
+    {
+      "file": "packages/api/src/monitoring/push/web-push-channel.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/privacy/export/zip.ts",
+      "numbers": 7
+    },
+    {
+      "file": "packages/api/src/social/feed/feed-routes.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/api/src/social/sharing/wiring.ts",
+      "enums": 4
+    },
+    {
+      "file": "packages/api/src/swap/exchange/wiring.ts",
+      "enums": 3
+    },
+    {
+      "file": "packages/api/src/today/watering.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/api/src/wishlist/wishlist-routes.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/account/invitation-code.ts",
+      "numbers": 5
+    },
+    {
+      "file": "packages/core/src/account/onboarding/unlock/unlock-state.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/account/operator/introduction.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/account/operator/operator-cost.ts",
+      "numbers": 3
+    },
+    {
+      "file": "packages/core/src/achievements/anniversaries/anniversaries.ts",
+      "numbers": 6
+    },
+    {
+      "file": "packages/core/src/achievements/criteria/care.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/achievements/criteria/growth.ts",
+      "numbers": 2,
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/achievements/records/records.ts",
+      "numbers": 2,
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/achievements/records/year-in-review.ts",
+      "numbers": 2,
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/achievements/rhythm/pause.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/achievements/rhythm/rhythm.ts",
+      "numbers": 5
+    },
+    {
+      "file": "packages/core/src/achievements/seen/seen.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/ai/reads/catalog-reads.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/ai/reads/collection-reads.ts",
+      "enums": 3
+    },
+    {
+      "file": "packages/core/src/ai/results/discover.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/ai/results/image-source.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/ai/tasks/prompt/prompt.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/ai/tasks/tasks.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/care/measurements/capture/photo.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/measurements/growth/growth.ts",
+      "numbers": 3,
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/measurements/write/assess.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/measurements/write/record.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/phases/phase.ts",
+      "numbers": 3
+    },
+    {
+      "file": "packages/core/src/care/phases/phases.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/switching/profile-location.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/switching/switch.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/treatment-data/treatment-dates.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/care/treatments/treatment-complete.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/care/treatments/treatment-plan.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/catalog/propose.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/catalog/review/list.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/catalog/review/merge.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/catalog/review/review.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/catalog/sources/derive.ts",
+      "numbers": 1,
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/catalog/species/lookup/hints.ts",
+      "enums": 4
+    },
+    {
+      "file": "packages/core/src/catalog/species/naming/fields.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/catalog/species/naming/name.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/collection/care-profile/care-profile-schema.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/collection/distribution/difficulty-overview.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/collection/distribution/distribution-hint.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/collection/distribution/distribution.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/collection/placement/effective-zone.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/collection/shared/markers.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/collection/specimen/archived.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/collection/specimen/create.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/collection/specimen/mark.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/discover/attributes/attributes.ts",
+      "numbers": 3
+    },
+    {
+      "file": "packages/core/src/discover/decide/decide.ts",
+      "numbers": 1,
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/discover/exploration/exploration.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/discover/suggestions/suggestions.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/equipment/derived/costs/costs.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/equipment/derived/needs/needs.ts",
+      "enums": 9
+    },
+    {
+      "file": "packages/core/src/equipment/lamps/measurements/light.ts",
+      "numbers": 1,
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/equipment/lamps/zones.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/equipment/maintenance/checks-due.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/equipment/record/fields.ts",
+      "numbers": 5
+    },
+    {
+      "file": "packages/core/src/equipment/record/record.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/equipment/sensors/view.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/equipment/sharing/sharing.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/equipment/store/lamp-log-helper.ts",
+      "numbers": 1,
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/equipment/supply/plant-agents.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/jobs/retry.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/kernel/input/date.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/kernel/sources/policy.ts",
+      "numbers": 6
+    },
+    {
+      "file": "packages/core/src/light/classification/rules.ts",
+      "numbers": 3
+    },
+    {
+      "file": "packages/core/src/light/derive.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/monitoring/daily/bundle.ts",
+      "numbers": 4
+    },
+    {
+      "file": "packages/core/src/monitoring/daily/daily.ts",
+      "numbers": 2
+    },
+    {
+      "file": "packages/core/src/monitoring/settings/settings.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/monitoring/watering/watering.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/pokedex/milestones/milestones.ts",
+      "numbers": 4
+    },
+    {
+      "file": "packages/core/src/pokedex/rank/rank.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/pokedex/rarity/rarity.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/pokedex/taxonomy/build/run.ts",
+      "numbers": 13
+    },
+    {
+      "file": "packages/core/src/privacy/data-export.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/social/feed/banner/mark-seen.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/social/feed/events/feed.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/social/friendship/operations/lifecycle/answer.ts",
+      "enums": 3
+    },
+    {
+      "file": "packages/core/src/social/sharing/write/set-species.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/core/src/social/sharing/write/set.ts",
+      "enums": 3
+    },
+    {
+      "file": "packages/core/src/swap/exchange/write/answer.ts",
+      "enums": 4
+    },
+    {
+      "file": "packages/core/src/swap/exchange/write/handover/handover.ts",
+      "enums": 4
+    },
+    {
+      "file": "packages/core/src/swap/match/deck.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/swap/offer/write/create.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/today/deviations.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/today/today.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/core/src/wishlist/candidates/hints/replenishment.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/core/src/wishlist/image/commons.ts",
+      "numbers": 1
+    },
+    {
+      "file": "packages/web/src/achievements/overview/overview.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/ai/tasks-section/new-task/new-task.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/care/measure/measurement-header/growth-chart/growth-chart.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/care/measure/measurement-header/growth-summary/growth-text.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/care/measure/measurement-header/measurement-header.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/care/treatments/open-treatments/open-treatments.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/catalog/search-view/hit-list/hit-list.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/catalog/shared/text.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/collection/collection-page/created/created.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/collection/collection-page/hint-occasions/hint-occasions.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/collection/markers/locate/light-zone-form/light-zone-form.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/collection/plants-screen/rows/plant-tile/plant-tile.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/collection/specimens/cards/specimen-card/specimen-card.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/components/routing/areas/collection-area/collection-area.tsx",
+      "enums": 4
+    },
+    {
+      "file": "packages/web/src/components/routing/areas/today-area/today-area.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/components/shared/navigation/nav-model/navigation/navigation.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/components/shared/states/request-state/request-state.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/discover/deck-view/deck-view.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-form/fields/fields.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-page/equipment-screen/item-card/item-card.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-page/lamp-actions/lamp-actions.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-page/parts/sharing/sharing-api.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-page/parts/sharing/sharing.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/equipment/equipment-page/parts/supply/supply.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/overviews/wishes-view/wishes-view.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/equipment/schemas.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/light/shared/texts/text.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/sammlung-view.ts",
+      "enums": 5
+    },
+    {
+      "file": "packages/web/src/shell/app/app.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/shell/today-intro/today-intro.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/shell/today-intro/use-hints.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/social/pages/friends-page/friend-layers/friend-layers.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/social/pages/friends-page/friend-layers/sharing-section/sharing-section.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/social/parts/sharing-panel/sharing-panel.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/swap/api/exchange-api.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/pages/exchange/exchange.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/pages/match/match-card/match-card.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/swap/pages/match/match-deck/answer-lists/answer-lists.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/swap/pages/match/match-deck/deck-state.ts",
+      "enums": 3
+    },
+    {
+      "file": "packages/web/src/swap/pages/match/match-deck/use-deck.ts",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/parts/friend-offers/friend-offers.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/parts/friend-offers/request-form/request-form.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/parts/offer-form/offer-fields/offer-fields.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/parts/offer-form/offer-notices/offer-notices.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/parts/offer-list/offer-list.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/swap/parts/swap-requests/swap-card/swap-card.tsx",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/swap/parts/swap-requests/swap-requests.tsx",
+      "enums": 4
+    }
+  ]
+}

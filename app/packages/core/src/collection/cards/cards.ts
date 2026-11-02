@@ -19,6 +19,7 @@ import {
   type SpecimenStore,
   type SpecimenRow,
 } from "../shared/types";
+import { MS_PER_DAY } from "../../kernel";
 
 export interface CardsDependencies {
   readonly specimens: SpecimenStore;
@@ -38,10 +39,9 @@ export const NO_MEASUREMENTS: MeasurementSource = { forSpecimens: async () => ne
 export const NO_TREATMENTS: TreatmentSource = { open: async () => new Map() };
 export const NO_PROVENANCE: ProvenanceSource = { forSpecimens: async () => new Map() };
 
-const TAG_MS = 86_400_000;
 const dayNumber = (date: string): number => {
   const [j, m, t] = date.split("-").map(Number);
-  return Date.UTC(j ?? 0, (m ?? 1) - 1, t ?? 1) / TAG_MS;
+  return Date.UTC(j ?? 0, (m ?? 1) - 1, t ?? 1) / MS_PER_DAY;
 };
 
 /**
