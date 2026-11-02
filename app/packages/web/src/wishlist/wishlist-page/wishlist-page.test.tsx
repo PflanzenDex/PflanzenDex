@@ -130,6 +130,20 @@ describe("US-WUN-01 page of the candidate list", () => {
       expect(label).toContain(text);
   });
 
+  it("US-WUN-01 · US-QS-22 · issue 1154 the candidates page by the free height below the controls", async () => {
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} host={{ onCaption: () => undefined }} />);
+    const rows = await screen.findByRole("list", { name: "Offene Kandidaten" });
+    expect(rows.hasAttribute("data-page-fit")).toBe(true);
+    // Every region between the destination and the list passes the free height on.
+    let region = rows.parentElement;
+    while (region && region.getAttribute("aria-labelledby") !== "wishlist-title") {
+      expect(region.className).toContain("flex-1");
+      region = region.parentElement;
+    }
+    expect(region?.className).toContain("flex-1");
+  });
+
   it("US-WUN-01 · US-QS-22 a row opens the full card in a layer: reasoning, picture with source and the why", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
