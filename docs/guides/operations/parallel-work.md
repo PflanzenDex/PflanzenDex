@@ -59,6 +59,17 @@ This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the br
 
 The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a`. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
 
+### One shared Keycloak for every checkout
+
+All checkouts share one Keycloak container (`pflanzendex-keycloak`, port 18081) and one mail catcher. Its realm lives in memory, so recreating the container drops every port added with `web-port.mjs` and signs every session out. Therefore (issue 1187):
+
+- Only the main checkout holds `app/config/dev/.env` with `KC_ADMIN_PASSWORD`. `make auth-up` in the main checkout creates it when it is missing; in a worktree it refuses ("run `make auth-up` in the main checkout first") and never writes a `.env` of its own.
+- `make auth-up`, `make auth-down` and `make stop` always run `docker compose` with the main checkout's `compose.yaml` and `.env`, also from a worktree. A worktree's own copy of the compose file would recreate the container even with the same password, because its mount paths differ. Changes to the realm or the theme take effect only after they are on the main checkout's branch and the auth server is recreated there.
+- When the running container was started with another admin password than that file, `make auth-up` refuses instead of recreating it. To restore: `make auth-down && make auth-up` in the main checkout, then `cd app && node tools/keycloak/web-port.mjs <port>` for every web port in use, and tell the other sessions.
+- `make auth-down` and `make stop` in any checkout stop the shared containers for everyone.
+- Tools that need the admin password (`web-port.mjs`, the demo seed, the e2e account helper) read the main checkout's `.env` through the git common dir (`app/tools/keycloak/dev-env.mjs`), so they work from a worktree too. `KC_ADMIN_PASSWORD` in the environment overrides it.
+- Self-test: `app/tools/keycloak/auth-up.test.mjs` (a throwaway repository with a linked worktree and a stubbed `docker`).
+
 ### Memory caps of the local containers
 
 Every worktree starts its own test database, so the local containers are capped (#1084, starting values, assumption): the test database 512 MB (`make db-up`, override with `DB_MEMORY=1g`), Keycloak 768 MB with a 384 MB JVM heap and Mailpit 128 MB (`app/config/dev/compose.yaml`, override with `KC_MEMORY`, `KC_JAVA_HEAP`, `MAILPIT_MEMORY` in `app/config/dev/.env`). An existing container keeps its old settings: run `make db-down` or `make auth-down` once to recreate it. The caps are local only. CI brings its own database service, and production has its own limits in `app/config/deploy/docker-compose.yml`. `app/tools/dev/tests/dev-memory-caps.test.mjs` fails if a deploy file or deploy workflow loads a dev compose file or uses one of these variables.
