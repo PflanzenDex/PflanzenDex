@@ -10,6 +10,19 @@ afterEach(cleanup);
 const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("US-EQU-07 what is missing", () => {
+  it("US-EQU-07 · US-QS-15 · issue 1154 the needs page by the free height of the layer", () => {
+    const need = (id: string) => ({
+      id,
+      kind: "supply_low" as const,
+      reason: `${id} wird knapp.`,
+      source: "Vorrat unter Equipment",
+      nextAction: "Kaufe Nachschub.",
+    });
+    render(<NeedsView needs={[need("a"), need("b"), need("c")]} />);
+    const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
+  });
+
   it("US-EQU-07 shows reason, source and next action of every item", () => {
     render(
       <NeedsView

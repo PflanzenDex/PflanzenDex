@@ -1,5 +1,5 @@
 {
-  "maxEntries": 187,
+  "maxEntries": 172,
   "entries": [
     {
       "screen": "account",
@@ -288,12 +288,6 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-equipment-sheet-costs",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.01
-    },
-    {
       "screen": "collection-view-equipment-sheet-items",
       "size": "2560x1440",
       "page": 0,
@@ -315,12 +309,6 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-equipment-sheet-needs",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.03
-    },
-    {
       "screen": "collection-view-equipment-sheet-new",
       "size": "2560x1440",
       "page": 0,
@@ -336,28 +324,10 @@
     },
     {
       "screen": "collection-view-equipment-sheet-wishes",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.38
-    },
-    {
-      "screen": "collection-view-equipment-sheet-wishes",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "collection-view-equipment-sheet-wishes",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.4
-    },
-    {
-      "screen": "collection-view-equipment-sheet-wishes",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1.03
     },
     {
       "screen": "collection-view-plants",
@@ -598,18 +568,6 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-wishlist",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.01
-    },
-    {
-      "screen": "collection-view-wishlist-sheet-bought",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.46
-    },
-    {
       "screen": "collection-view-wishlist-sheet-bought",
       "size": "2560x1440",
       "page": 0,
@@ -617,41 +575,11 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-wishlist-sheet-bought",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.6
-    },
-    {
-      "screen": "collection-view-wishlist-sheet-bought",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1.13
-    },
-    {
-      "screen": "collection-view-wishlist-sheet-discarded",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.46
-    },
-    {
       "screen": "collection-view-wishlist-sheet-discarded",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "collection-view-wishlist-sheet-discarded",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.6
-    },
-    {
-      "screen": "collection-view-wishlist-sheet-discarded",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1.13
     },
     {
       "screen": "collection-view-wishlist-sheet-hints",
@@ -661,23 +589,11 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-wishlist-sheet-hints",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.01
-    },
-    {
       "screen": "collection-view-wishlist-sheet-new-wish",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "collection-view-wishlist-sheet-new-wish",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.01
     },
     {
       "screen": "discover",
@@ -1234,12 +1150,6 @@
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "wishlist-wish-layer",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.01
     }
   ]
 }

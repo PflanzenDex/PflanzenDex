@@ -1,4 +1,7 @@
 import { useCallback, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../wishlist.de.json";
 import { LoadFrame, useInvalidate } from "../../kernel";
 import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { WriteOutcome, type WishToPlant } from "../actions/actions";
@@ -8,6 +11,7 @@ import { useWishWrites } from "./parts/use-wish-writes/use-wish-writes";
 import { HINTS_LAYER, WishlistLayers } from "./layers/wishlist-layers/wishlist-layers";
 import { WishlistPageSkeleton } from "./wishlist-page.skeleton";
 
+const t = texts(table);
 const KEY = ["wishlist", "candidates"] as const;
 type Token = () => Promise<string | undefined>;
 
@@ -33,7 +37,7 @@ function Body(props: {
     />
   );
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       {write.message ? (
         <p role="status" className="rounded-lg border border-border p-2">
           {write.message}
@@ -73,7 +77,7 @@ type Host = { onCaption: (text: string | null) => void };
 /** Tells the host the count line of the loaded list and takes it back when the page goes away (US-QS-14). */
 function ReportCaption({ host, open }: { host: Host | undefined; open: number }) {
   useEffect(() => {
-    host?.onCaption(open === 1 ? "1 offener Wunsch" : `${open} offene Wünsche`);
+    host?.onCaption(open === 1 ? t("page.caption.one") : t("page.caption.other", { count: open }));
     return () => host?.onCaption(null);
   }, [host, open]);
   return null;
@@ -99,26 +103,30 @@ export function WishlistPage(props: {
     <div
       className={
         host
-          ? "min-w-0"
+          ? // Below its title the list takes the free height of the destination, page by page (issue 1154).
+            "flex min-h-0 min-w-0 flex-1 flex-col"
           : "rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7"
       }
     >
-      <section aria-labelledby="wishlist-title" className="flex min-w-0 flex-col gap-3">
+      <section
+        aria-labelledby="wishlist-title"
+        className={cn("flex min-w-0 flex-col gap-3", host && "min-h-0 flex-1")}
+      >
         {host ? (
           <h2 id="wishlist-title" className="sr-only">
-            Wunschliste
+            {t("page.title")}
           </h2>
         ) : (
           <h1 id="wishlist-title" className="text-2xl font-semibold">
-            Wunschliste
+            {t("page.title")}
           </h1>
         )}
         <LoadFrame
           queryKey={KEY}
           token={token}
           load={load}
-          loadingText="Wunschliste wird geladen …"
-          loadingFallback={<WishlistPageSkeleton label="Wunschliste wird geladen …" />}
+          loadingText={t("page.loading")}
+          loadingFallback={<WishlistPageSkeleton label={t("page.loading")} />}
         >
           {(data: Wishlist) => (
             <>

@@ -28,6 +28,13 @@ describe("US-EQU-09 cost view", () => {
     expect(lamp.textContent).toContain("Preis bekannt bei 1 von 2");
   });
 
+  it("US-EQU-09 · US-QS-15 · issue 1182 the types page by the free height of the layer", () => {
+    render(<CostsView items={[item("Lamp", 49.9), item("Timer", 12.5)]} />);
+    expect(screen.getByRole("list", { name: "Kosten je Art" }).hasAttribute("data-page-fit")).toBe(
+      true,
+    );
+  });
+
   it("US-EQU-09 reads unknown instead of 0 when no price is known and names what is not estimated", () => {
     render(<CostsView items={[item("Pot", null)]} />);
     const section = screen.getByRole("region", { name: "Kosten" });

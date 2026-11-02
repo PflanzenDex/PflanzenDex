@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1428,
+  "maxTotal": 1378,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -538,10 +538,6 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
-      "count": 16
-    },
-    {
       "file": "packages/web/src/equipment/equipment-page/lamp-actions/save-with-undo.ts",
       "count": 1
     },
@@ -574,14 +570,6 @@
       "count": 6
     },
     {
-      "file": "packages/web/src/equipment/overviews/costs-view/costs-view.tsx",
-      "count": 3
-    },
-    {
-      "file": "packages/web/src/equipment/overviews/needs-view/needs-view.tsx",
-      "count": 4
-    },
-    {
       "file": "packages/web/src/equipment/overviews/needs-view/recommendations-view/recommendations-view.tsx",
       "count": 10
     },
@@ -592,10 +580,6 @@
     {
       "file": "packages/web/src/equipment/overviews/wishes-view/wish-form/wish-form.tsx",
       "count": 4
-    },
-    {
-      "file": "packages/web/src/equipment/overviews/wishes-view/wishes-view.tsx",
-      "count": 10
     },
     {
       "file": "packages/web/src/equipment/overviews/zones-view/zones-view.tsx",
@@ -894,10 +878,6 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/wishlist/hints/unfit-wishes/unfit-wishes.tsx",
-      "count": 3
-    },
-    {
       "file": "packages/web/src/wishlist/history/bought-list/bought-list.tsx",
       "count": 4
     },
@@ -918,19 +898,7 @@
       "count": 3
     },
     {
-      "file": "packages/web/src/wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
-      "count": 5
-    },
-    {
-      "file": "packages/web/src/wishlist/wishlist-page/parts/candidates/candidates.tsx",
-      "count": 5
-    },
-    {
       "file": "packages/web/src/wishlist/wishlist-page/rows/wish-row/wish-row.tsx",
-      "count": 4
-    },
-    {
-      "file": "packages/web/src/wishlist/wishlist-page/wishlist-page.tsx",
       "count": 4
     }
   ]
