@@ -43,7 +43,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  # QG-U1 (report only, E-15): Lighthouse on the built web app; never fails the nightly run.
+  # QG-U1 / FR-QG-09 (issue 1136): Lighthouse on the built web app against the limits in quality-limits.json; a value past
+  # its limit turns this job red, so drift on dev shows up before the next PR runs into it.
   lighthouse:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -59,7 +60,6 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: make setup
       - run: make lighthouse
-        continue-on-error: true
       - if: always()
         run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
       - if: always()

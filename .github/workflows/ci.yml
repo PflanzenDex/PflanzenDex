@@ -58,7 +58,7 @@ jobs:
           fi
 
   # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*`,
-  # `ds-snapshots`, `one-screen` or `a11y-routes` job of that head commit is reused (issue 1184: the two gates were skipped
+  # `ds-snapshots`, `one-screen`, `a11y-routes` or `lighthouse` job of that head commit is reused (issue 1184: the two gates were skipped
   # on edits without this proof, so an edit turned a red gate green) (waiting while a run of it is still going); a failed, cancelled or
   # missing result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
   reuse:
@@ -81,6 +81,7 @@ jobs:
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
       one-screen: ${{ steps.reuse.outputs['one-screen'] }}
       a11y-routes: ${{ steps.reuse.outputs['a11y-routes'] }}
+      lighthouse: ${{ steps.reuse.outputs['lighthouse'] }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -92,7 +93,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots one-screen a11y-routes"
+        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots one-screen a11y-routes lighthouse"
 
   # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, #1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
@@ -244,11 +245,17 @@ jobs:
       - uses: ./.github/actions/setup-app
       - run: make audit
 
-  # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main` and manual dispatch; otherwise nightly (nightly.yml).
-  # Never fails the build: no thresholds until the first baseline exists.
+  # QG-U1 / FR-QG-09 (issue 1136): Lighthouse on the built web app, median of 3 mobile runs against the limits in
+  # `app/config/gates/quality-limits.json`; blocking. Runs on PRs into `dev` and `main` when the app changes (about 2 min,
+  # parallel to the other jobs), on a manual dispatch and nightly (nightly.yml).
   lighthouse:
-    needs: changes
-    if: (github.event_name == 'pull_request' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success'
+      && (github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.lighthouse != 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -257,7 +264,6 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
       - run: make lighthouse
-        continue-on-error: true
       - if: always()
         run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
       - if: always()
