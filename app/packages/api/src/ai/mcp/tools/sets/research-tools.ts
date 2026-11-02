@@ -1,5 +1,15 @@
 // Tools over Discover, the image source check and the photo of a measurement (US-KI-04, US-KI-05, US-ENT-08).
-import { ID, IDEMPOTENCY, keyOf, object, query, seg, str, TIME_ZONE, type McpTool } from "./schema";
+import {
+  ID,
+  IDEMPOTENCY,
+  keyOf,
+  object,
+  query,
+  seg,
+  str,
+  TIME_ZONE,
+  type McpTool,
+} from "../schema";
 
 export const RESEARCH_TOOLS: readonly McpTool[] = [
   {

@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { execute } from "../../../kernel";
 import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
-import { speciesHints, speciesLoad, speciesSearch, speciesPropose } from "../index";
+import {
+  speciesExisting,
+  speciesHints,
+  speciesLoad,
+  speciesSearch,
+  speciesPropose,
+} from "../index";
 import { InMemorySpecies } from "../test-helpers";
 
 let store: InMemorySpecies;
@@ -51,6 +57,20 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
     expect((await speciesSearch(store, "anna", "bogenhanf")).length).toBe(1);
     expect(await speciesSearch(store, "ben", "bogenhanf")).toEqual([]);
     expect(await speciesLoad(store, "ben", first())).toBeNull();
+  });
+
+  it("US-KI-11 the existing visible species is named before anything is proposed, by Latin name or synonym", async () => {
+    await propose(profile);
+    const id = first();
+    expect((await speciesExisting(store, "anna", profile))?.id).toBe(id);
+    const bySynonym = { ...profile, latinName: "Sansevieria trifasciata", synonyms: [] };
+    expect((await speciesExisting(store, "anna", bySynonym))?.id).toBe(id);
+    // Another account does not see the proposal, so for it nothing exists yet (P-04).
+    expect(await speciesExisting(store, "ben", profile)).toBeNull();
+    expect(
+      await speciesExisting(store, "anna", { ...profile, latinName: "Ficus carica", synonyms: [] }),
+    ).toBeNull();
+    expect(await speciesExisting(store, "anna", {})).toBeNull();
   });
 
   it("US-BES-01 P-08: Given no difficulty, level or lux need, when proposing, then they stay unknown (null), never a default (#1003)", async () => {

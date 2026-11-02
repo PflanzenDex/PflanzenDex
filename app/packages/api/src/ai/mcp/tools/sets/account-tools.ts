@@ -1,6 +1,6 @@
 // Tools over the connection, the daily status, the tasks and the drafts of the AI interface (US-KI-02, -07, -08, -09).
-import { DRAFT_CONTENT_SCHEMA } from "./draft-content";
-import { ID, object, query, seg, str, TIME_ZONE, type McpTool } from "./schema";
+import { DRAFT_CONTENT_SCHEMA } from "../draft-content";
+import { ID, object, query, seg, str, TIME_ZONE, type McpTool } from "../schema";
 
 export const ACCOUNT_TOOLS: readonly McpTool[] = [
   {

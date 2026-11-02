@@ -53,7 +53,40 @@ export type { AiTask, TaskStatus, TaskStore, TaskTransition, TaskType } from "./
 export { taskPrompt } from "./tasks/prompt/prompt";
 export type { PromptTask } from "./tasks/prompt/prompt";
 export { TASK_INSTRUCTIONS, TASK_TITLES } from "./tasks/prompt/texts";
-export { aiDiscoverDecide, aiDiscoverSuggestions } from "./discover";
-export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./discover";
+export { aiDiscoverDecide, aiDiscoverSuggestions } from "./results/discover";
+export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./results/discover";
 export { aiCheckImageSource } from "./results/image-source";
 export type { ImageSourceCall, ImageSourceChecker } from "./results/image-source";
+// The catalog and the collection by name (US-KI-11, FR-KI-15, FR-KI-16).
+export {
+  aiGetSpecies,
+  aiSearchSpecies,
+  getSpeciesSchema,
+  resolveSpecies,
+  searchSpeciesSchema,
+} from "./reads/catalog-reads";
+export type { ReadDependencies } from "./reads/catalog-reads";
+export {
+  aiGetSpecimen,
+  aiListLightZones,
+  aiListLocations,
+  aiListMeasurements,
+  aiListSpecimens,
+  getSpecimenSchema,
+  listMeasurementsSchema,
+  listPlacesSchema,
+  listSpecimensSchema,
+} from "./reads/collection-reads";
+export { NAMING_LIMITS, normalizeName, resolveName } from "./reads/naming";
+export type { Named, Resolution } from "./reads/naming";
+export { PAGE_SIZE } from "./reads/types";
+export type {
+  CollectionReadSource,
+  LocationRow,
+  MeasurementsRead,
+  Page,
+  ReadCall,
+  SpeciesItem,
+  SpecimenItem,
+  ZoneRow,
+} from "./reads/types";

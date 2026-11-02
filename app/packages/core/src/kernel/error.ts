@@ -83,6 +83,8 @@ export const ERROR_TEXTS = {
   "ai.task_not_found": "Diesen Auftrag gibt es nicht. Lade die Liste neu.",
   "ai.task_closed":
     "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
+  "ai.reference_ambiguous":
+    "Der Name passt auf mehrere Einträge. Es wurde nichts getan; wähle einen der genannten Einträge.",
   "ai.no_client":
     "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",

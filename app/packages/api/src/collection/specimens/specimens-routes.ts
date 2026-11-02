@@ -50,7 +50,11 @@ export type SpecimenOptions = {
 };
 
 /** What the cards read (US-BES-06); the care profiles give the same effective zone as the distribution (#592). */
-const cardsDependencies = (pool: Pool, specimens: SpecimenPostgres, opt: SpecimenOptions) => ({
+export const cardsDependencies = (
+  pool: Pool,
+  specimens: SpecimenPostgres,
+  opt: SpecimenOptions,
+) => ({
   specimens,
   species: new SpeciesPostgres(pool),
   locations: new LocationPostgres(pool),
