@@ -34,7 +34,11 @@ export const SUBTITLE = "mb-1 text-xl font-semibold";
 /** Layout of the card grids (upward only, DS-12): one column on a phone, more as there is room. */
 export const GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3";
 /** The care profile cards are wider (a row of controls each): two columns at most. */
-export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 lg:grid-cols-2";
+/**
+ * The care profiles: two columns once their container is 42 rem wide, so the page shows two and the 384 px pane of the
+ * species profile one (a container query, not the window width: issue 1182). The parent carries `@container`.
+ */
+export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 @2xl:grid-cols-2";
 export const CARD =
   "grid min-w-0 content-start gap-1 break-words rounded-card bg-secondary p-3 text-secondary-foreground";
 
