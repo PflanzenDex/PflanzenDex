@@ -1,8 +1,14 @@
+import { Fragment } from "react";
 import type { CollectorCard as Card } from "@pflanzendex/core";
+import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
+import {
+  FoldNext,
+  missingText,
+} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { cn } from "@/lib/utils";
 import { catchText } from "./catch-text";
-import { AppRarityNote, RarityNote } from "./rarity-note/rarity-note";
+import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 
@@ -33,31 +39,86 @@ function Picture(props: { card: Card }) {
       src={c.imageUrl}
       alt={`Bild von ${c.species}`}
       loading="lazy"
-      className={cn("h-32 w-full rounded-tile object-cover", c.state === "missing" && "grayscale")}
+      className={cn(
+        // 80 px instead of 128 on a short screen, so one card fits a 360 x 640 phone (issue 1154).
+        "h-32 w-full rounded-tile object-cover [@media(max-height:700px)]:h-20",
+        c.state === "missing" && "grayscale",
+      )}
     />
   );
 }
 
 /** Genus count, difficulty and light zone; every unknown value says "unbekannt" (P-08). */
-function Facts(props: { card: Card }) {
-  const c = props.card;
+function factLines(c: Card): CardLine[] {
+  return [
+    {
+      key: "genus",
+      unknown: c.genusSpeciesCount === null,
+      node: (
+        <span className="text-sm text-muted-foreground">
+          {c.genusSpeciesCount === null
+            ? "Gattung: Artenzahl unbekannt"
+            : `Gattung: ${c.genusSpeciesCount} Arten`}
+        </span>
+      ),
+    },
+    c.difficulty === null
+      ? {
+          key: "difficulty",
+          unknown: true,
+          node: <span className="text-sm">Schwierigkeit unbekannt</span>,
+        }
+      : {
+          key: "difficulty",
+          unknown: false,
+          node: (
+            <span className="text-sm">
+              <DifficultyStars level={c.difficulty} label={`Schwierigkeit ${c.difficulty} von 3`} />
+            </span>
+          ),
+        },
+    {
+      key: "zone",
+      unknown: c.lightZone === null,
+      node: (
+        <span className="text-sm">
+          {c.lightZone === null ? "Lichtzone unbekannt" : `Lichtzone ${c.lightZone}`}
+        </span>
+      ),
+    },
+  ];
+}
+
+/**
+ * The facts and rarity lines of a card. On a short screen (at most 700 px high) the unknown ones fold into one line
+ * "n Angaben fehlen" that opens them (US-QS-24, owner decision 2026-11-02, issue 1154): one card then fits a 360 x 640
+ * phone. Elsewhere every line shows as before.
+ */
+function Lines(props: { lines: readonly CardLine[] }) {
+  const short = useIsShort();
+  const shown = short ? props.lines.filter((l) => !l.unknown) : props.lines;
+  const folded = short ? props.lines.filter((l) => l.unknown) : [];
   return (
     <>
-      <span className="text-sm text-muted-foreground">
-        {c.genusSpeciesCount === null
-          ? "Gattung: Artenzahl unbekannt"
-          : `Gattung: ${c.genusSpeciesCount} Arten`}
-      </span>
-      {c.difficulty === null ? (
-        <span className="text-sm">Schwierigkeit unbekannt</span>
-      ) : (
-        <span className="text-sm">
-          <DifficultyStars level={c.difficulty} label={`Schwierigkeit ${c.difficulty} von 3`} />
-        </span>
-      )}
-      <span className="text-sm">
-        {c.lightZone === null ? "Lichtzone unbekannt" : `Lichtzone ${c.lightZone}`}
-      </span>
+      {shown.map((l) => (
+        <Fragment key={l.key}>{l.node}</Fragment>
+      ))}
+      {folded.length > 0 ? (
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+          <details className="min-w-0">
+            <summary className="inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {missingText(folded.length)}
+            </summary>
+            <span className="grid gap-1 pb-1 text-foreground">
+              {folded.map((l) => (
+                <Fragment key={l.key}>{l.node}</Fragment>
+              ))}
+            </span>
+          </details>
+          <span aria-hidden="true">·</span>
+          <FoldNext />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -111,10 +172,13 @@ export function CollectorCard(props: { card: Card }) {
       {c.germanName !== null && (
         <span title={c.germanNameFull ?? c.germanName}>{c.germanName}</span>
       )}
-      <span className="text-sm">{c.summary ?? "Keine Beschreibung vorhanden."}</span>
-      <Facts card={c} />
-      <RarityNote rarity={c.natureRarity} />
-      <AppRarityNote rarity={c.appRarity} />
+      {/* Two lines on a short screen; the full text is in the species profile (issue 1154). */}
+      <span className="text-sm [@media(max-height:700px)]:line-clamp-2">
+        {c.summary ?? "Keine Beschreibung vorhanden."}
+      </span>
+      <Lines
+        lines={[...factLines(c), ...rarityLines(c.natureRarity), appRarityLine(c.appRarity)]}
+      />
       <span className="flex flex-wrap gap-1.5">
         <Badge variant={caught ? "default" : "outline"}>
           {c.caughtDate === null ? "noch nicht gefangen" : catchText(c.caughtDate)}
