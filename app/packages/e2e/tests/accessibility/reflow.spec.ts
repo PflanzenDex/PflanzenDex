@@ -6,7 +6,7 @@ import {
   openView,
   signInToApp,
   tooltips,
-} from "../../support/display";
+} from "../../support/display/display";
 import { addLocation, expect, test } from "../../support/fixtures";
 
 // US-QS-12: enlarge and adapt the display without losing content. Every view of a fresh account is measured in the
