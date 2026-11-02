@@ -6,6 +6,8 @@ import {
   shape,
   textField,
   choiceField,
+  described,
+  jsonSchemaOf,
   type Result,
   type ErrorDetail,
 } from "../../../kernel";
@@ -19,7 +21,9 @@ const empty = (value: unknown) =>
 /** Free text that may be missing: empty means "unknown" (null), never an invented value (P-08). */
 const optional = (field: string, max: number) => {
   const check = textField(field, { min: 1, max });
-  return (value: unknown): string | ErrorDetail | null => (empty(value) ? null : check(value));
+  const maybe = (value: unknown): string | ErrorDetail | null =>
+    empty(value) ? null : check(value);
+  return described(maybe, { type: ["string", "null"], maxLength: max });
 };
 
 const NAME_PROBLEM = {
@@ -27,42 +31,56 @@ const NAME_PROBLEM = {
   hybrid: "catalog.name_hybrid",
 } as const;
 
-const latinField = (value: unknown): LatinName | ErrorDetail => {
-  const parsed = typeof value === "string" && parseLatin(value);
-  if (parsed) return parsed;
-  const problem = typeof value === "string" ? latinNameProblem(value) : null;
-  return problem ? { field: "latinName", code: NAME_PROBLEM[problem] } : invalid("latinName");
-};
+const latinField = described(
+  (value: unknown): LatinName | ErrorDetail => {
+    const parsed = typeof value === "string" && parseLatin(value);
+    if (parsed) return parsed;
+    const problem = typeof value === "string" ? latinNameProblem(value) : null;
+    return problem ? { field: "latinName", code: NAME_PROBLEM[problem] } : invalid("latinName");
+  },
+  { type: "string", minLength: 1 },
+);
 
-const synonymField = (value: unknown): string[] | ErrorDetail => {
+const SYNONYMS = {
+  type: ["array", "null"],
+  items: { type: "string", minLength: SPECIES_LIMITS.name.min, maxLength: SPECIES_LIMITS.name.max },
+  maxItems: SPECIES_LIMITS.synonyms,
+};
+const synonymField = described((value: unknown): string[] | ErrorDetail => {
   if (empty(value)) return [];
   const check = textField("synonyms", SPECIES_LIMITS.name);
   if (!Array.isArray(value) || value.length > SPECIES_LIMITS.synonyms) return invalid("synonyms");
   const texts = value.map(check);
   const text = (t: string | ErrorDetail): t is string => typeof t === "string";
   return texts.every(text) ? [...new Set(texts)] : invalid("synonyms");
-};
+}, SYNONYMS);
 
 const DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 /** `MM-DD` (month-day, no year); February 29 is allowed. */
 const validTag = (month: number, tag: number) =>
   month >= 1 && month <= 12 && tag >= 1 && tag <= (DAYS[month - 1] ?? 0);
 
-export const monthTag = (field: string) => (value: unknown) => {
-  if (empty(value)) return null;
-  const m = typeof value === "string" ? /^(\d\d)-(\d\d)$/.exec(value) : null;
-  return m && validTag(Number(m[1]), Number(m[2])) ? m[0] : invalid(field);
-};
+export const monthTag = (field: string) =>
+  described(
+    (value: unknown) => {
+      if (empty(value)) return null;
+      const m = typeof value === "string" ? /^(\d\d)-(\d\d)$/.exec(value) : null;
+      return m && validTag(Number(m[1]), Number(m[2])) ? m[0] : invalid(field);
+    },
+    { type: ["string", "null"], pattern: "^\\d\\d-\\d\\d$" },
+  );
 
 /** A flag that may be missing: missing means false, anything but a boolean is invalid. */
-const flag =
-  (field: string) =>
-  (value: unknown): boolean | ErrorDetail =>
-    value === undefined || value === null
-      ? false
-      : typeof value === "boolean"
-        ? value
-        : invalid(field);
+const flag = (field: string) =>
+  described(
+    (value: unknown): boolean | ErrorDetail =>
+      value === undefined || value === null
+        ? false
+        : typeof value === "boolean"
+          ? value
+          : invalid(field),
+    { type: ["boolean", "null"] },
+  );
 
 const base = shape({
   latinName: latinField,
@@ -92,9 +110,12 @@ const base = shape({
 export type SpeciesInput = ReturnType<typeof base> extends Result<infer T> ? T : never;
 
 /** The dormancy phase counts only as a pair (from and until), otherwise it is unknown. */
-export function speciesSchema(input: unknown): Result<SpeciesInput> {
-  const r = base(input);
-  if (!r.ok || (r.value.dormancyFrom === null) === (r.value.dormancyUntil === null)) return r;
-  const field = r.value.dormancyFrom === null ? "dormancyFrom" : "dormancyUntil";
-  return failed(appError("input.invalid", { details: [invalid(field)] }));
-}
+export const speciesSchema = described(
+  (input: unknown): Result<SpeciesInput> => {
+    const r = base(input);
+    if (!r.ok || (r.value.dormancyFrom === null) === (r.value.dormancyUntil === null)) return r;
+    const field = r.value.dormancyFrom === null ? "dormancyFrom" : "dormancyUntil";
+    return failed(appError("input.invalid", { details: [invalid(field)] }));
+  },
+  () => jsonSchemaOf(base) ?? {},
+);

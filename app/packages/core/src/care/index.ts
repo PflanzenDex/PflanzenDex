@@ -6,7 +6,11 @@ export type { GrowthSignal, GrowthTrend, Trend } from "./measurements/growth";
 export { measurementSource } from "./measurements/capture/source";
 export type { SourceDependencies } from "./measurements/capture/source";
 export { measurementRecord } from "./measurements/write/record";
-export { measurementAssess, measurementPhotoById } from "./measurements/write/assess";
+export {
+  measurementAssess,
+  measurementAssessSchema,
+  measurementPhotoById,
+} from "./measurements/write/assess";
 export type { RecordDependencies } from "./measurements/write/record";
 export { measurementPhoto } from "./measurements/capture/photo";
 export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";

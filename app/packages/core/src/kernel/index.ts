@@ -17,8 +17,11 @@ export {
   numberField,
   timeZoneField,
   calendarDateField,
+  described,
+  jsonSchemaOf,
+  nullable,
 } from "./input";
-export type { Schema } from "./input";
+export type { JsonSchema, Schema } from "./input";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
 export { canonical } from "./input";

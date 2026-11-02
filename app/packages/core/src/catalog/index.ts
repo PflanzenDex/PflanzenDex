@@ -20,6 +20,7 @@ export {
   speciesLoad,
   speciesSearch,
   speciesPropose,
+  speciesSchema,
   normalize,
   parseLatin,
 } from "./species";

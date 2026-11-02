@@ -1,4 +1,5 @@
 export { speciesPropose } from "./naming/propose";
+export { speciesSchema } from "./naming/fields";
 export { speciesLoad, speciesSearch } from "./lookup/search";
 export { speciesHints } from "./lookup/hints";
 export type { SpeciesHint } from "./lookup/hints";
