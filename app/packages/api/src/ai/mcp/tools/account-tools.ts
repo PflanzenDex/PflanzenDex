@@ -1,4 +1,5 @@
 // Tools over the connection, the daily status, the tasks and the drafts of the AI interface (US-KI-02, -07, -08, -09).
+import { DRAFT_CONTENT_SCHEMA } from "./draft-content";
 import { ID, object, query, seg, str, TIME_ZONE, type McpTool } from "./schema";
 
 export const ACCOUNT_TOOLS: readonly McpTool[] = [
@@ -71,7 +72,11 @@ export const ACCOUNT_TOOLS: readonly McpTool[] = [
     operation: "propose_draft",
     inputSchema: object(
       {
-        type: str("Draft type, one of list_draft_types.", { minLength: 1, maxLength: 50 }),
+        type: str(
+          "Draft type, one of list_draft_types (species, photo_assessment, discover_decision, wish); the " +
+            "content follows the branch of the same title.",
+          { minLength: 1, maxLength: 50 },
+        ),
         reference: {
           type: ["string", "null"],
           description: "What the draft refers to (e.g. species name or measurement id).",
@@ -86,10 +91,7 @@ export const ACCOUNT_TOOLS: readonly McpTool[] = [
           description: "Id of the task this draft answers.",
           format: "uuid",
         },
-        content: {
-          type: "object",
-          description: "The fields of the target form for this draft type.",
-        },
+        content: DRAFT_CONTENT_SCHEMA,
       },
       ["type", "source", "content"],
     ),

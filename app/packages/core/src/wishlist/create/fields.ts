@@ -1,4 +1,4 @@
-import { textField, type ErrorDetail } from "../../kernel";
+import { described, textField, type ErrorDetail } from "../../kernel";
 import { WISH_LIMITS } from "../types";
 
 const SCHEME = "https://";
@@ -19,9 +19,15 @@ function isHttps(text: string): boolean {
 
 export function httpsUrlField(field: string) {
   const text = textField(field, WISH_LIMITS.imageUrl);
-  return (value: unknown): string | ErrorDetail => {
+  const check = (value: unknown): string | ErrorDetail => {
     const checked = text(value);
     if (typeof checked !== "string") return checked;
     return isHttps(checked) ? checked : { field, code: "input.invalid" };
   };
+  return described(check, {
+    type: "string",
+    format: "uri",
+    pattern: "^https://",
+    maxLength: WISH_LIMITS.imageUrl.max,
+  });
 }

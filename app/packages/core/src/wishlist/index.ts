@@ -2,7 +2,7 @@
 // purchase and its history (US-WUN-03), the link to the specimen and
 // "Discarded" (US-WUN-05).
 export { REPLENISH_BUFFER, replenishment, wishCandidates } from "./candidates";
-export { wishCreate } from "./create";
+export { wishCreate, wishCreateSchema } from "./create";
 export { wishNameKey } from "./repair/name-key";
 export { checkCommonsImage, wishImageFile, wishStoreImage } from "./image";
 export type {

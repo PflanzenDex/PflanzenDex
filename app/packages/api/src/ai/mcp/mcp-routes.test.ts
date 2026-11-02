@@ -271,6 +271,21 @@ describe("US-KI-07 FR-KI-06 the protocol", () => {
     for (const t of tools) expect(t["inputSchema"]).toMatchObject({ type: "object" });
   });
 
+  it("US-KI-07 tools/list shows the optional fields of each draft type, e.g. light level and dormancy of a species", async () => {
+    const r = await rpc(ai(subA, "pflanzen:read"), "tools/list");
+    const draft = (r.body["result"].tools as Json[]).find((t) => t["name"] === "propose_draft");
+    const branches = draft?.["inputSchema"].properties.content.anyOf as Json[];
+    expect(branches.map((b) => b["title"])).toEqual([
+      "species",
+      "photo_assessment",
+      "discover_decision",
+      "wish",
+    ]);
+    expect(Object.keys(branches[0]?.["properties"])).toEqual(
+      expect.arrayContaining(["standardLevel", "lightDemandLux", "dormancyFrom", "dormancyUntil"]),
+    );
+  });
+
   it("FR-KI-03 an unknown tool and non-object arguments are -32602, invalid arguments a tool error", async () => {
     expect((await tool(ai(subA, "pflanzen:read"), "drop_tables")).body["error"].code).toBe(-32602);
     const bad = await rpc(ai(subA, "pflanzen:read"), "tools/call", {
