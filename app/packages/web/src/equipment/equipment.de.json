@@ -36,5 +36,9 @@
   "wishes.unknown": "unbekannt",
   "wishes.buy": "Gekauft: {name}",
   "wishes.discard": "Verwerfen: {name}",
-  "wishes.create": "Equipment-Wunsch erfassen"
+  "wishes.create": "Equipment-Wunsch erfassen",
+  "costs.title": "Kosten",
+  "costs.list": "Kosten je Art",
+  "costs.known": "Preis bekannt bei {priced} von {count}",
+  "costs.unknown": "unbekannt"
 }

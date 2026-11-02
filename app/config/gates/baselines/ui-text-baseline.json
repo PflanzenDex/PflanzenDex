@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1453,
+  "maxTotal": 1450,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -568,10 +568,6 @@
     {
       "file": "packages/web/src/equipment/lamp-light/measure-form/measure-form.tsx",
       "count": 6
-    },
-    {
-      "file": "packages/web/src/equipment/overviews/costs-view/costs-view.tsx",
-      "count": 3
     },
     {
       "file": "packages/web/src/equipment/overviews/needs-view/recommendations-view/recommendations-view.tsx",
