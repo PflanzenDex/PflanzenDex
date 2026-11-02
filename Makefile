@@ -141,11 +141,11 @@ storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark
 build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
 	cd $(APP) && npm run build-storybook
 
-lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
+lighthouse: ## Lighthouse on the built web app, mobile, median of 3 runs against the limits in app/config/gates/quality-limits.json; fails past a limit (QG-U1, FR-QG-09), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web
 	cd $(APP) && npm run bundle-budget -- --report
 	tools/lighthouse/lighthouse-run.sh
-	tools/lighthouse/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+	@summary=$(APP)/packages/web/.lighthouseci/summary.md; tools/lighthouse/lighthouse-summary.sh --check > $$summary; status=$$?; cat $$summary; exit $$status
 
 bundle-report: ## Initial JS per chunk and package as Markdown against the 125 kB goal; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Report-only Lighthouse run (QG-U1): 3 mobile runs against `vite preview` of the built web app.
+# Lighthouse runs of the gate QG-U1 (FR-QG-09): 3 mobile runs against `vite preview` of the built web app.
 # Reports go to app/packages/web/.lighthouseci; Chrome comes from the machine (CHROME_PATH or chrome-launcher lookup).
 set -euo pipefail
 web="$(cd "$(dirname "$0")/../../app/packages/web" && pwd)"
