@@ -23,19 +23,23 @@ function fact(t: SpeciesHit): string {
   return `Schwierigkeit: ${difficultyText(t.difficulty)}`;
 }
 
+/**
+ * A row narrower than 14rem only happens at a large text size (18.5rem at normal text on a 360 px phone): there the
+ * thumbnail slot goes and the padding tightens, so a word like "Schwierigkeit:" never breaks inside (issue 1116).
+ */
 function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
   return (
-    <div className="rounded-xl border border-border bg-card text-card-foreground">
+    <div className="@container rounded-xl border border-border bg-card text-card-foreground">
       <Button
         type="button"
         variant="ghost"
-        className="flex h-auto min-h-14 w-full justify-start gap-3 px-3.5 py-2 text-left font-normal"
+        className="flex h-auto min-h-14 w-full justify-start gap-3 px-3.5 py-2 text-left font-normal @max-[14rem]:px-2"
         onClick={() => onOpen(t.id)}
       >
         {/* A fixed thumbnail slot keeps every name on the same left edge; species carry no photo yet, so no image is invented. */}
         <span
           aria-hidden="true"
-          className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground @max-[14rem]:hidden"
         >
           <Leaf className="size-5" />
         </span>

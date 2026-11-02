@@ -155,6 +155,15 @@ describe("US-QS-21 the catalog list is paged", () => {
     }
   });
 
+  it("US-QS-15 · issue 1116 at a large text size a row drops its thumbnail and tightens its padding, so words stay whole", () => {
+    search(many(1));
+    const row = within(screen.getByRole("list", { name: "Treffer" })).getByRole("button");
+    // The row is a size container; below 14rem (only reached at large text) the slot hides and the padding shrinks.
+    expect(row.parentElement?.className).toContain("@container");
+    expect(row.className).toContain("@max-[14rem]:px-2");
+    expect(row.querySelector('[aria-hidden="true"]')?.className).toContain("@max-[14rem]:hidden");
+  });
+
   it("US-QS-21 a short list has no pager", () => {
     search(many(2));
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();
