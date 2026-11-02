@@ -57,8 +57,9 @@ jobs:
             echo "app=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*` or
-  # `ds-snapshots` job of that head commit is reused (waiting while a run of it is still going); a failed, cancelled or
+  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*`,
+  # `ds-snapshots`, `one-screen` or `a11y-routes` job of that head commit is reused (issue 1184: the two gates were skipped
+  # on edits without this proof, so an edit turned a red gate green) (waiting while a run of it is still going); a failed, cancelled or
   # missing result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
   reuse:
     if: >-
@@ -78,6 +79,8 @@ jobs:
       app-coverage: ${{ steps.reuse.outputs['app-coverage'] }}
       app-ui: ${{ steps.reuse.outputs['app-ui'] }}
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
+      one-screen: ${{ steps.reuse.outputs['one-screen'] }}
+      a11y-routes: ${{ steps.reuse.outputs['a11y-routes'] }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -89,7 +92,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots"
+        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots one-screen a11y-routes"
 
   # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, #1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
@@ -298,11 +301,13 @@ jobs:
   # 1920 px width cap. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run with
   # several workers. Runs for PRs into `dev` and `main` when the UI, the e2e package or the gate files change, and by hand.
   one-screen:
-    needs: changes
+    needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
-      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true' && github.event.action != 'edited'))
+      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.one-screen != 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -337,11 +342,13 @@ jobs:
   # layer at 390x844 and 1920x1080. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run
   # with several workers. Runs on the same paths as one-screen (its `changes` output), and by hand.
   a11y-routes:
-    needs: changes
+    needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
-      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true' && github.event.action != 'edited'))
+      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.a11y-routes != 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:

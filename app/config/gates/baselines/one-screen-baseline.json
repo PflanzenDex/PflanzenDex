@@ -1,5 +1,5 @@
 {
-  "maxEntries": 192,
+  "maxEntries": 193,
   "entries": [
     {
       "screen": "account",
@@ -1173,6 +1173,13 @@
     },
     {
       "screen": "today-sheet-locked",
+      "size": "2560x1440",
+      "page": 0,
+      "inner": 0,
+      "cap": 639
+    },
+    {
+      "screen": "today-sheet-news",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
