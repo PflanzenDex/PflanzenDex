@@ -164,6 +164,7 @@ describe("TE-03 · log size limits (#762)", () => {
       "db-roles",
       "migrate",
       "keycloak",
+      "keycloak-mcp",
       "api",
       "web",
       "proxy",
@@ -196,6 +197,8 @@ describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () =>
     db: () => expect(service(compose, "db")).toContain("user: postgres\n"),
     "keycloak-db": () => expect(service(compose, "keycloak-db")).toContain("user: postgres\n"),
     "db-roles": () => expect(service(compose, "db-roles")).toContain("user: postgres\n"),
+    // One-shot MCP realm setup (US-KI-07): the node image's own user.
+    "keycloak-mcp": () => expect(service(compose, "keycloak-mcp")).toContain("user: node\n"),
     migrate: () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
     api: () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
     // The upstream image runs as uid 1000 (no `user:` needed); the version is pinned below.
