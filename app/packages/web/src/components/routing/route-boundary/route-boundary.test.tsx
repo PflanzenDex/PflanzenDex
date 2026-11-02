@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
@@ -27,6 +27,28 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
     release({ default: (p) => <h1>{p.title}</h1> });
     expect(await screen.findByRole("heading", { name: "Meine Sammlung" })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-14 · issue 1097 a destination is named while its chunk loads, and its page's heading replaces the name", async () => {
+    let release: (c: { default: () => React.ReactElement }) => void = () => undefined;
+    const Page = lazyPage<() => React.ReactElement>(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    render(
+      <RouteBoundary resetKey="/friends" heading="Freunde">
+        <Page />
+      </RouteBoundary>,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Freunde" })).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    release({ default: () => <h1>Freunde</h1> });
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+    const headings = screen.getAllByRole("heading", { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0]?.hasAttribute("data-route-fallback")).toBe(false);
   });
 
   it("US-QS-07 · DS-08 a failed chunk shows an error with 'Erneut versuchen' that loads it again, never a blank page", async () => {

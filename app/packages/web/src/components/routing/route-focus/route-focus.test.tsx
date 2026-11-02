@@ -6,6 +6,7 @@ import { Link, MemoryRouter, Route, Routes, useNavigate, useSearchParams } from 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "./route-focus";
+import { createFocusMover } from "./focus-moves";
 
 afterEach(() => {
   cleanup();
@@ -209,5 +210,26 @@ describe("US-QS-15 · no frame on the heading after navigation (NFR-13)", () => 
     const heading = await screen.findByRole("heading", { name: "Zweite Seite" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
     expect(document.documentElement.getAttribute("data-input")).toBe("keyboard");
+  });
+});
+
+describe("US-QS-09 · issue 1097 the heading of a loading skeleton is not the view's heading", () => {
+  it("US-QS-09 · issue 1097 the focus waits past the skeleton's h1 and goes to the page's own heading", async () => {
+    const main = document.createElement("main");
+    main.id = "inhalt";
+    main.innerHTML = '<h1 data-route-fallback="">Freunde</h1>';
+    document.body.append(main);
+    const mover = createFocusMover();
+    let done = false;
+    mover.move("a", "b", "PUSH", () => {
+      done = true;
+    });
+    expect(done).toBe(false);
+    expect(document.activeElement).not.toBe(main.querySelector("h1"));
+    main.innerHTML = "<h1>Freunde</h1>";
+    await waitFor(() => expect(done).toBe(true));
+    expect(document.activeElement).toBe(main.querySelector("h1"));
+    mover.dispose();
+    main.remove();
   });
 });

@@ -11,6 +11,7 @@ import {
   PHASES_ADDRESS,
   WISHLIST_MODE_ADDRESS,
   accountAddress,
+  destinationHeading,
   navItems,
   pageTitle,
   PATHS,
@@ -220,6 +221,27 @@ describe("US-QS-14 Behandlung and Hinweise are sections of Heute", () => {
     expect(todayAddress("hints")).toBe("/today?sheet=hints");
     expect(viewTitle("/today")).toBe("Heute – PflanzenDéx");
     expect(viewTitle("/unlock/equipment")).toBe("Funktion freischalten – PflanzenDéx");
+  });
+});
+
+describe("US-QS-14 · issue 1097 the heading of a destination while it loads", () => {
+  it("US-QS-14 · issue 1097 four destinations are named by their entry; Konto and any other address get none", () => {
+    expect(["/today", "/collection", "/discover", "/friends"].map(destinationHeading)).toEqual([
+      "Heute",
+      "Sammlung",
+      "Entdecken",
+      "Freunde",
+    ]);
+    for (const other of [
+      "/account",
+      "/account/settings",
+      "/discover/species/x",
+      "/friends/abc",
+      "/review",
+      "/operator",
+      "/unlock/equipment",
+    ])
+      expect(destinationHeading(other)).toBeNull();
   });
 });
 
