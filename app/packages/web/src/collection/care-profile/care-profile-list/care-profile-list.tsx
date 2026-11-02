@@ -25,7 +25,7 @@ export function ProfileList(props: {
 }) {
   const { data, write } = props;
   return (
-    <div>
+    <div className="@container">
       {write.message && <Status>{write.message}</Status>}
       {write.error && (
         <Warning>
