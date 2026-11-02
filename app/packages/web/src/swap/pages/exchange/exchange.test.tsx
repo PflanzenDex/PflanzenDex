@@ -116,6 +116,20 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     expect(screen.queryByRole("list", { name: "Meine Angebote" })).toBeNull();
   });
 
+  it("US-QS-20 · US-QS-15 · issue 1157 the exchange fills one screen and its lists page by the free height", async () => {
+    server({ offers: [offer()] });
+    const { container } = view();
+    const list = await screen.findByRole("list", { name: "Meine Angebote" });
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    expect(container.querySelector("[data-fit-screen]")).not.toBeNull();
+    // Every region between the frame and the list passes the height on.
+    let region = list.parentElement;
+    while (region && !region.hasAttribute("data-fit-screen")) {
+      if (region.tagName !== "UL") expect(region.className).toMatch(/flex-1|contents/);
+      region = region.parentElement;
+    }
+  });
+
   it("US-SOZ-08 lists my offers with type, mode, wish, health details without agent and the dormancy phase", async () => {
     server({ offers: [offer()] });
     view();
