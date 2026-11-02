@@ -3,6 +3,7 @@ import {
   aiConnections,
   aiRevoke,
   aiSetRights,
+  type CollectionReadSource,
   type DiscoverSource,
   type PhotoSource,
   type SourceClient,
@@ -47,6 +48,15 @@ export interface AiAccessOptions {
   readonly features?: FeatureAccess;
 }
 
+/** The ports of the app the client routes read through. */
+export interface AiPorts {
+  status: StatusSource;
+  photo: PhotoSource;
+  discover: DiscoverSource;
+  collection: CollectionReadSource;
+  sources?: SourceClient;
+}
+
 /**
  * Access of the keeper's AI client (epic KI, US-KI-07), always for one account (P-04, P-05, KI-R6).
  *
@@ -63,12 +73,7 @@ export function aiAccessRoutes(
   pool: Pool,
   auth: MiddlewareHandler<AuthEnv>,
   opt: AiAccessOptions | undefined,
-  ports: {
-    status: StatusSource;
-    photo: PhotoSource;
-    discover: DiscoverSource;
-    sources?: SourceClient;
-  },
+  ports: AiPorts,
 ): Hono<AuthEnv> {
   if (!opt) return new Hono<AuthEnv>();
   const connections = opt.connections ?? new ConnectionsPostgres(pool);

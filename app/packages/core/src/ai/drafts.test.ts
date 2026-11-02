@@ -73,6 +73,26 @@ describe("US-KI-09 drafts instead of writing", () => {
     expect(s.drafts.rows).toEqual([]);
   });
 
+  it("US-KI-11 a refusal of the type's check (species.duplicate with the existing id) stores nothing", async () => {
+    const s = setup();
+    const existing = { id: "00000000-0000-4000-8000-000000000001", latinName: "Aloe vera" };
+    const wish = s.types["wish"];
+    if (!wish) throw new Error("missing type");
+    const checked = {
+      ...s,
+      types: {
+        wish: {
+          ...wish,
+          check: async () => failed(appError("species.duplicate", { data: { existing } })),
+        },
+      },
+    };
+    const r = await propose(checked);
+    expect(code(r)).toBe("species.duplicate");
+    expect(!r.ok && r.error.data).toEqual({ existing });
+    expect(s.drafts.rows).toEqual([]);
+  });
+
   it("US-KI-09 delivering the same content twice keeps one open draft", async () => {
     const s = setup();
     await propose(s);

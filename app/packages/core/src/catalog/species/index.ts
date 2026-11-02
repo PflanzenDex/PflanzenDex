@@ -1,4 +1,4 @@
-export { speciesPropose } from "./naming/propose";
+export { speciesExisting, speciesPropose } from "./naming/propose";
 export { speciesSchema } from "./naming/fields";
 export { speciesLoad, speciesSearch } from "./lookup/search";
 export { speciesHints } from "./lookup/hints";

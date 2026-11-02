@@ -267,6 +267,13 @@ describe("US-KI-07 FR-KI-06 the protocol", () => {
       "get_discover_suggestions",
       "decide_discover_suggestion",
       "get_measurement_photo",
+      "search_species",
+      "get_species",
+      "list_specimens",
+      "get_specimen",
+      "list_measurements",
+      "list_locations",
+      "list_light_zones",
     ]);
     for (const t of tools) expect(t["inputSchema"]).toMatchObject({ type: "object" });
   });

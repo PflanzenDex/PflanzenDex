@@ -17,6 +17,7 @@ import {
   SPECIMEN_PATHS,
   careProfileRoutes,
   careProfileZoneUsageFor,
+  collectionReadSourceFor,
   specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
@@ -134,6 +135,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
       status: todayStatusSource(pool, today),
       photo: measurementPhotoSourceFor(pool, opt.media),
       discover: discoverSourceFor(pool, opt.zoneStock),
+      collection: collectionReadSourceFor(pool, { clock: opt.clock, ...careSources(pool, opt) }),
       ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
     }),
   );
