@@ -250,6 +250,11 @@ jobs:
     needs: changes
     if: (github.event_name == 'pull_request' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
+    # Experiment only (issue 1136, never merged): five independent samples of the Lighthouse median.
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3, 4, 5]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -263,7 +268,7 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: lighthouse-report
+          name: lighthouse-report-${{ matrix.sample }}
           path: app/packages/web/.lighthouseci
           if-no-files-found: ignore
 
