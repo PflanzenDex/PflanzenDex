@@ -1,5 +1,5 @@
 {
-  "maxEntries": 194,
+  "maxEntries": 177,
   "entries": [
     {
       "screen": "account",
@@ -395,35 +395,11 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-plants-manage-locations-list-locations",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.05
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
-    },
-    {
       "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.05
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
     },
     {
       "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
@@ -433,47 +409,11 @@
       "cap": 639
     },
     {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.05
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 2.03
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1.35
-    },
-    {
       "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.05
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1.03
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-sheet-hints",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
     },
     {
       "screen": "collection-view-plants-manage-locations-sheet-hints",
@@ -484,12 +424,6 @@
     },
     {
       "screen": "collection-view-plants-manage-locations-sheet-new-zone",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
@@ -497,28 +431,10 @@
     },
     {
       "screen": "collection-view-plants-manage-locations-sheet-reference",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 2.03
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-sheet-reference",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1.35
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-sheet-reference",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "collection-view-plants-manage-locations-sheet-reference",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1.03
     },
     {
       "screen": "collection-view-plants-sheet-archive",
@@ -918,28 +834,10 @@
     },
     {
       "screen": "light-location-edit",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
-    },
-    {
-      "screen": "light-location-edit",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "light-location-edit",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.05
-    },
-    {
-      "screen": "light-zone-edit",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
     },
     {
       "screen": "light-zone-edit",
