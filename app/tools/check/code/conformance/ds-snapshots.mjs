@@ -10,10 +10,31 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCatalog } from "./check-conformance.mjs";
-import { baselineFindings, expectedBaselines, snapshotStoryIds } from "./ds-snapshots.lib.mjs";
+import {
+  baselineFindings,
+  expectedBaselines,
+  expectedPageBaselines,
+  pageStoryIds,
+  quarantineFindings,
+  snapshotStoryIds,
+} from "./ds-snapshots.lib.mjs";
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 export const baselineDir = path.join(appRoot, "packages", "web", ".storybook", "snapshots");
+export const pageBaselineDir = path.join(
+  appRoot,
+  "packages",
+  "web",
+  ".storybook",
+  "page-snapshots",
+);
+export const quarantineFile = path.join(
+  appRoot,
+  "config",
+  "gates",
+  "baselines",
+  "page-snapshots-baseline.json",
+);
 export const resultsDir = path.join(appRoot, ".cache", "ds-snapshots-results");
 
 /** The image is derived from the installed Playwright, so browser and library can never drift apart. */
@@ -24,67 +45,106 @@ export function playwrightImage() {
   return `mcr.microsoft.com/playwright:v${version}-noble`;
 }
 
-/** Builds the catalog, renders its stories in the container and returns { status, findings }. */
+/** Creates the baseline directories; an update starts from empty ones, so removed stories leave no stale picture. */
+function prepare(dirs, update) {
+  for (const dir of dirs) {
+    fs.mkdirSync(dir, { recursive: true });
+    if (update) for (const f of pngs(dir)) fs.rmSync(path.join(dir, f));
+  }
+}
+
+const pngs = (dir) => fs.readdirSync(dir).filter((f) => f.endsWith(".png"));
+
+/** The `docker run` arguments: the app read-only, the catalog, both baseline directories and the results. */
+function dockerArgs({
+  catalog,
+  ids,
+  pages,
+  skipped,
+  snapshotDir,
+  pageSnapshotDir,
+  outputDir,
+  storyArgs,
+  update,
+}) {
+  const env = (k, v) => ["-e", `${k}=${v}`];
+  return [
+    "run",
+    "--rm",
+    "--init",
+    "--ipc=host",
+    "--user",
+    `${process.getuid()}:${process.getgid()}`,
+    "-v",
+    `${appRoot}:/work/app:ro`,
+    "-v",
+    `${catalog}:/catalog:ro`,
+    "-v",
+    `${snapshotDir}:/snapshots/ui`,
+    "-v",
+    `${pageSnapshotDir}:/snapshots/pages`,
+    "-v",
+    `${outputDir}:/out`,
+    ...env("DS_CATALOG", "/catalog"),
+    ...env("DS_SNAPSHOT_DIR", "/snapshots"),
+    ...env("DS_OUTPUT_DIR", "/out/results"),
+    ...env("DS_STORIES", JSON.stringify(ids)),
+    ...env("DS_PAGES", JSON.stringify(pages)),
+    ...env("DS_QUARANTINE", JSON.stringify(skipped)),
+    ...env("DS_STORY_ARGS", storyArgs),
+    ...env("DS_UPDATE", update ? "1" : "0"),
+    ...env("DS_WORKERS", WORKERS),
+    ...env("HOME", "/tmp"),
+    playwrightImage(),
+    "node",
+    "/work/app/tools/check/code/conformance/ds-snapshots.container.mjs",
+  ];
+}
+
+/** Builds the catalog, renders its ui stories and page states in the container; returns { status, findings, ids }. */
 export function runCatalog({
   fixtures = false,
   snapshotDir = baselineDir,
+  pageSnapshotDir = pageBaselineDir,
+  quarantine,
   outputDir = resultsDir,
   storyArgs = "",
   update = false,
 } = {}) {
+  const q = quarantine ?? (fixtures ? { maxEntries: 0, entries: [] } : readQuarantine());
   const catalog = catalogFor(fixtures);
   try {
-    const index = JSON.parse(fs.readFileSync(path.join(catalog, "index.json"), "utf8"));
-    const ids = snapshotStoryIds(index, { fixtures });
-    if (ids.length === 0) throw new Error("QG-U5: no stories to snapshot");
-    fs.rmSync(outputDir, { recursive: true, force: true });
-    fs.mkdirSync(outputDir, { recursive: true });
-    fs.mkdirSync(snapshotDir, { recursive: true });
-    if (update)
-      for (const f of fs.readdirSync(snapshotDir))
-        if (f.endsWith(".png")) fs.rmSync(path.join(snapshotDir, f));
-    const env = (k, v) => ["-e", `${k}=${v}`];
-    const r = spawnSync(
-      "docker",
-      [
-        "run",
-        "--rm",
-        "--init",
-        "--ipc=host",
-        "--user",
-        `${process.getuid()}:${process.getgid()}`,
-        "-v",
-        `${appRoot}:/work/app:ro`,
-        "-v",
-        `${catalog}:/catalog:ro`,
-        "-v",
-        `${snapshotDir}:/snapshots`,
-        "-v",
-        `${outputDir}:/out`,
-        ...env("DS_CATALOG", "/catalog"),
-        ...env("DS_SNAPSHOT_DIR", "/snapshots"),
-        ...env("DS_OUTPUT_DIR", "/out/results"),
-        ...env("DS_STORIES", JSON.stringify(ids)),
-        ...env("DS_STORY_ARGS", storyArgs),
-        ...env("DS_UPDATE", update ? "1" : "0"),
-        ...env("DS_WORKERS", WORKERS),
-        ...env("HOME", "/tmp"),
-        playwrightImage(),
-        "node",
-        "/work/app/tools/check/code/conformance/ds-snapshots.container.mjs",
-      ],
-      { stdio: "inherit" },
-    );
-    const findings = update
-      ? []
-      : baselineFindings(expectedBaselines(ids), fs.readdirSync(snapshotDir));
-    return { status: r.status ?? 1, findings, ids };
+    const run = { catalog, fixtures, quarantine: q, snapshotDir, pageSnapshotDir };
+    return render({ ...run, outputDir, storyArgs, update });
   } catch (error) {
     fs.rmSync(catalog, { recursive: true, force: true });
     built.delete(fixtures);
     throw error;
   }
 }
+
+function render(run) {
+  const { catalog, fixtures, quarantine, snapshotDir, pageSnapshotDir, outputDir } = run;
+  const index = JSON.parse(fs.readFileSync(path.join(catalog, "index.json"), "utf8"));
+  const ids = snapshotStoryIds(index, { fixtures });
+  const pages = pageStoryIds(index, { fixtures });
+  if (ids.length === 0 || pages.length === 0) throw new Error("QG-U5: no stories to snapshot");
+  const skipped = quarantine.entries.map((e) => e.file);
+  fs.rmSync(outputDir, { recursive: true, force: true });
+  fs.mkdirSync(outputDir, { recursive: true });
+  prepare([snapshotDir, pageSnapshotDir], run.update);
+  const r = spawnSync("docker", dockerArgs({ ...run, ids, pages, skipped }), { stdio: "inherit" });
+  const findings = run.update
+    ? []
+    : [
+        ...baselineFindings(expectedBaselines(ids), pngs(snapshotDir)),
+        ...baselineFindings(expectedPageBaselines(pages, skipped), pngs(pageSnapshotDir)),
+        ...quarantineFindings(quarantine, pages),
+      ];
+  return { status: r.status ?? 1, findings, ids, pages };
+}
+
+const readQuarantine = () => JSON.parse(fs.readFileSync(quarantineFile, "utf8"));
 
 // Each catalog (with or without the self-test fixtures) is built once per process and reused: the self-test called
 // runCatalog five times and rebuilt Storybook every time, though only story args change (issue 1124). The catalogs
@@ -108,10 +168,10 @@ const WORKERS = process.env.DS_WORKERS ?? "4";
 
 function main() {
   const update = process.argv.includes("--update");
-  const { status, findings, ids } = runCatalog({ update });
+  const { status, findings, ids, pages } = runCatalog({ update });
   if (update) {
     console.log(
-      `QG-U5 snapshots: ${status === 0 ? "baselines written" : "failed"} for ${ids.length} stories in app/packages/web/.storybook/snapshots; review the images and commit them`,
+      `QG-U5 snapshots: ${status === 0 ? "baselines written" : "failed"} for ${ids.length} ui stories (app/packages/web/.storybook/snapshots) and ${pages.length} page states (.storybook/page-snapshots); review the images and commit them`,
     );
     process.exit(status);
   }
@@ -121,7 +181,9 @@ function main() {
       `\nQG-U5 snapshots: screenshots differ; diff images are in ${path.relative(appRoot, resultsDir)}. If the change is intended run \`make ds-snapshots\` and commit the new baselines.`,
     );
   if (status !== 0 || findings.length > 0) process.exit(1);
-  console.log(`QG-U5 snapshots: ok (${ids.length} stories x 2 schemes)`);
+  console.log(
+    `QG-U5 snapshots: ok (${ids.length} ui stories x 2 schemes, ${pages.length} page states x 5 sizes x 2 schemes)`,
+  );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();
