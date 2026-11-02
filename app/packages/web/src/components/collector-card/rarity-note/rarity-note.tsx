@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { AppRarity, CollectorCard as Card } from "@pflanzendex/core";
 
 type Rarity = Card["natureRarity"];
@@ -28,36 +29,61 @@ function Source(props: { url: string; retrievedAt: string }) {
   );
 }
 
+/** One line of the card; `unknown` lines fold on a short screen (US-QS-24, issue 1154). */
+export type CardLine = { key: string; node: ReactNode; unknown: boolean };
+
 /**
  * Rarity in nature (US-POK-13): IUCN category and GBIF occurrence count, each labelled "in der Natur", with source and
  * retrieval date; unknown says "unbekannt" (P-08). Information only: no sorting, badge or reward, and the note on a
  * threatened species neither blocks nor promotes anything.
  */
-export function RarityNote(props: { rarity: Rarity }) {
-  const { iucn, occurrences, threatened } = props.rarity;
-  return (
-    <>
-      <span className="text-sm">
-        {iucn === null
-          ? "In der Natur: Gefährdung unbekannt"
-          : `In der Natur: ${CATEGORY_TEXT[iucn.category]} (${iucn.category})`}
-      </span>
-      {iucn !== null && <Source url={iucn.url} retrievedAt={iucn.retrievedAt} />}
-      <span className="text-sm">
-        {occurrences === null
-          ? "In der Natur: Fundmeldungen unbekannt"
-          : `In der Natur: ${occurrences.count.toLocaleString("de-DE")} Fundmeldungen (GBIF)`}
-      </span>
-      {occurrences !== null && (
-        <Source url={occurrences.url} retrievedAt={occurrences.retrievedAt} />
-      )}
-      {threatened && (
+export function rarityLines(rarity: Rarity): CardLine[] {
+  const { iucn, occurrences, threatened } = rarity;
+  const lines: CardLine[] = [
+    iucn === null
+      ? {
+          key: "iucn",
+          unknown: true,
+          node: <span className="text-sm">In der Natur: Gefährdung unbekannt</span>,
+        }
+      : {
+          key: "iucn",
+          unknown: false,
+          node: (
+            <>
+              <span className="text-sm">{`In der Natur: ${CATEGORY_TEXT[iucn.category]} (${iucn.category})`}</span>
+              <Source url={iucn.url} retrievedAt={iucn.retrievedAt} />
+            </>
+          ),
+        },
+    occurrences === null
+      ? {
+          key: "occurrences",
+          unknown: true,
+          node: <span className="text-sm">In der Natur: Fundmeldungen unbekannt</span>,
+        }
+      : {
+          key: "occurrences",
+          unknown: false,
+          node: (
+            <>
+              <span className="text-sm">{`In der Natur: ${occurrences.count.toLocaleString("de-DE")} Fundmeldungen (GBIF)`}</span>
+              <Source url={occurrences.url} retrievedAt={occurrences.retrievedAt} />
+            </>
+          ),
+        },
+  ];
+  if (threatened)
+    lines.push({
+      key: "threatened",
+      unknown: false,
+      node: (
         <span className="text-sm text-muted-foreground">
           Hinweis: Diese Art gilt in der Natur als bedroht.
         </span>
-      )}
-    </>
-  );
+      ),
+    });
+  return lines;
 }
 
 /** "40 %", but never "0 %" for a species somebody owns and never "100 %" while one account lacks it. */
@@ -72,12 +98,19 @@ function percentText(r: AppRarity): string {
  * basis; unknown without participants (P-08). Information only, labelled "in PflanzenDex", never merged with the
  * rarity in nature.
  */
-export function AppRarityNote(props: { rarity: AppRarity | null }) {
-  const r = props.rarity;
+export function appRarityLine(r: AppRarity | null): CardLine {
   if (r === null)
-    return <span className="text-sm">In PflanzenDex: unbekannt (noch kein Konto nimmt teil)</span>;
+    return {
+      key: "app",
+      unknown: true,
+      node: <span className="text-sm">In PflanzenDex: unbekannt (noch kein Konto nimmt teil)</span>,
+    };
   const accounts = r.participants === 1 ? "Konto" : "Konten";
-  return (
-    <span className="text-sm">{`In PflanzenDex: ${percentText(r)} (${r.owners} von ${r.participants} ${accounts})`}</span>
-  );
+  return {
+    key: "app",
+    unknown: false,
+    node: (
+      <span className="text-sm">{`In PflanzenDex: ${percentText(r)} (${r.owners} von ${r.participants} ${accounts})`}</span>
+    ),
+  };
 }

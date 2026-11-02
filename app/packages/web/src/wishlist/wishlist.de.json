@@ -1,0 +1,19 @@
+{
+  "page.title": "Wunschliste",
+  "page.loading": "Wunschliste wird geladen …",
+  "page.caption.one": "1 offener Wunsch",
+  "page.caption.other": "{count} offene Wünsche",
+  "candidates.label": "Offene Kandidaten",
+  "controls.create": "Wunsch erfassen",
+  "controls.hints": "Hinweise ({count})",
+  "controls.bought": "Gekauft ({count})",
+  "controls.discarded": "Verworfen ({count})",
+  "unfit.title": "Wünsche ohne passende Zone",
+  "unfit.zone": "Zone: {zone}",
+  "unfit.unknown": "unbekannt",
+  "layers.newWish": "Neuer Wunsch",
+  "layers.wish": "Wunsch",
+  "layers.bought": "Gekauft",
+  "layers.discarded": "Verworfen",
+  "layers.hints": "Hinweise"
+}

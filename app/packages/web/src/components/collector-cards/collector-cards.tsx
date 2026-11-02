@@ -17,13 +17,14 @@ async function loadCards(api: string, token: string): Promise<Response<Card[]>> 
 
 /**
  * The collector cards of the taxonomy tree (US-POK-01) in pages, shown in their layer (US-QS-22): caught species colored, the others as "missing" cards. Caught is
- * derived live by the server from the specimens, never stored (P-01).
+ * derived live by the server from the specimens, never stored (P-01). The page holds the whole cards that fit the free
+ * height of the layer; 2 is the starting value until the layout measures it (issue 1154).
  */
 export function CollectorCards(props: { api: string; token: () => Promise<string | undefined> }) {
   const { api, token } = props;
   const load = useCallback((t: string) => loadCards(api, t), [api]);
   return (
-    <section aria-labelledby="collector-cards-title">
+    <section aria-labelledby="collector-cards-title" className="flex min-h-0 flex-1 flex-col">
       <h2 id="collector-cards-title" className="sr-only">
         Sammlerkarten
       </h2>
@@ -43,8 +44,10 @@ export function CollectorCards(props: { api: string; token: () => Promise<string
           <Pager
             items={cards}
             pageSize={2}
+            fit
             label="Sammlerkarten"
             param={LAYER_PARAM}
+            replace
             getKey={(c) => c.species}
             renderItem={(c) => (
               <ul className="m-0 list-none p-0">
