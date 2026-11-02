@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Sammlung: Bei „Arten“ wählst du die Anordnung (Pokédex oder Schwierigkeit) jetzt wie bei „Pflanzen“ über den Knopf „Ansicht“ an derselben Stelle. Bei „Wünsche“ und „Geräte“ bleibt der Platz frei, damit beim Wechseln nichts springt.",
     "Suchfelder: Statt des kleinen blauen Kreuzes des Browsers gibt es jetzt in jedem Suchfeld einen eigenen, gut treffbaren Knopf „Suche leeren“. Er erscheint, sobald du etwas getippt hast, leert das Feld und setzt den Cursor wieder hinein.",
     "Seitenleiste am Computer: „Prüfliste“ und „Betreiber“ stehen unter der Überschrift „Verwaltung“, damit klar ist, wozu sie gehören.",
     "Große Schrift: Auf „Heute“ und in der Sammlung endet die letzte Zeile jetzt über der Leiste unten, auch ganz unten gescrollt. „Behandlungen“, „Zu Pflegephasen“ und „Dünnste Zone“ werden nicht mehr mitten im Wort getrennt, und die Pflanzen-Karte umschließt ihren Inhalt.",

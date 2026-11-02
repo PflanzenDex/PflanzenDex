@@ -203,14 +203,17 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=plants");
   });
 
-  it("US-QS-19 an unknown group in the address shows all plants; the species mode has no Ansicht", async () => {
+  it("US-QS-19 an unknown group in the address shows all plants; the species mode opens its own Ansicht (issue 1096)", async () => {
     renderAt("/collection?view=plants&group=unsinn");
     expect(await screen.findByText("4 Pflanzen")).toBeTruthy();
     await openView();
     expect(pressed("Alle")).toBe(true);
     await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByRole("button", { name: "Arten" }));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Ansicht" })).toBeNull());
+    await openView();
+    expect(await screen.findByRole("group", { name: "Anordnung der Arten" })).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Standorte und Lichtzonen verwalten" })).toBeNull();
   });
 });
 

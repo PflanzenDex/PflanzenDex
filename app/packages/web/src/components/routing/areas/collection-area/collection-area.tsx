@@ -8,12 +8,14 @@ import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
 import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { ViewLayer } from "@/components/sammlung-header/view-layer/view-layer";
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
 import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
 import { cn } from "@/lib/utils";
 import {
   PLANT_GROUPS,
+  SPECIES_SORTS,
   useManage,
   usePlantGroup,
   useSammlungView,
@@ -69,15 +71,7 @@ export function CollectionArea(props: {
   return (
     <LayerHost className="min-h-0" {...(fit ? { "data-fit-screen": "", "data-fit-fill": "" } : {})}>
       <div className={cn("min-w-0 flex-1", fit && "flex min-h-0 flex-col")}>
-        {own ? null : (
-          <AreaHeader
-            view={view}
-            caption={caption}
-            onChoose={choose}
-            sort={sort}
-            onSort={chooseSort}
-          />
-        )}
+        {own ? null : <AreaHeader view={view} caption={caption} onChoose={choose} />}
         <Suspense fallback={<PageSkeleton />}>
           <ModeBody
             {...props}
@@ -96,6 +90,14 @@ export function CollectionArea(props: {
       {plantsOnScreen ? (
         <GroupLayer group={group} onGroup={chooseGroup} onManage={() => manage.setOpen(true)} />
       ) : null}
+      {view === "species" ? (
+        <ViewLayer
+          group={sort}
+          options={SPECIES_SORTS}
+          onGroup={chooseSort}
+          label="Anordnung der Arten"
+        />
+      ) : null}
     </LayerHost>
   );
 }
@@ -108,7 +110,7 @@ function GroupLayer(props: {
 }) {
   return (
     <Suspense fallback={null}>
-      <PlantsViewLayer options={PLANT_GROUPS} {...props} />
+      <PlantsViewLayer options={PLANT_GROUPS} label="Gruppierung der Pflanzen" {...props} />
     </Suspense>
   );
 }

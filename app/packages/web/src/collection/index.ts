@@ -4,11 +4,6 @@ import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 export const CollectionPage = lazyPage(() =>
   import("./collection-page/collection-page").then((m) => ({ default: m.CollectionPage })),
 );
-export const PlantsViewOpener = lazyPage(() =>
-  import("./plants-screen/plants-parts/view-opener/view-opener").then((m) => ({
-    default: m.PlantsViewOpener,
-  })),
-);
 export const PlantsViewLayer = lazyPage(() =>
   import("./plants-screen/plants-parts/plants-parts").then((m) => ({ default: m.PlantsViewLayer })),
 );
