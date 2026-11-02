@@ -3,7 +3,6 @@ import { isNewAccount, type OnboardingCounts } from "@pflanzendex/core";
 import { loadSpecimenCount } from "../../collection";
 import { useFeature, useRequest } from "../../kernel";
 import { FriendsBanner } from "../../social";
-import { CollapsedLockedRows } from "../unlock/locked-rows/collapsed-rows/collapsed-rows";
 import { HintNote } from "./hint";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
@@ -45,7 +44,8 @@ function Content(props: {
     <>
       {social && (
         <Suspense fallback={null}>
-          <FriendsBanner api={props.api} token={props.token} quiet requests />
+          {/* The new plants are a tile of the overview (issue 1156); only the requests stay a notice here. */}
+          <FriendsBanner api={props.api} token={props.token} quiet requests news={false} />
         </Suspense>
       )}
       {(due === "first_plant_saved" || due === "function_unlocked") && (
@@ -59,7 +59,6 @@ function Content(props: {
         </Suspense>
       )}
       {props.children}
-      <CollapsedLockedRows />
     </>
   );
 }
@@ -67,7 +66,8 @@ function Content(props: {
 /**
  * The onboarding parts of the destination "Heute" (US-ONB-01, -05, -07, moved here by US-QS-16): a new account sees
  * the first-plant guide in place of the day's tasks (`children`); an account whose plants are all archived is a
- * returning keeper and gets the tasks. Otherwise the calm hint comes above the tasks and the locked functions below.
+ * returning keeper and gets the tasks. Otherwise the calm hint comes above the tasks; the locked functions are a tile of
+ * the tasks (issue 1156).
  * Counting fails open: when the count is not there the tasks show without the introduction (P-10 is kept by the tasks
  * themselves, which show their own error).
  */

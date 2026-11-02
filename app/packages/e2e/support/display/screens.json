@@ -537,6 +537,13 @@
     "title": "Weitere Funktionen"
   },
   {
+    "id": "today-sheet-news",
+    "account": "test",
+    "path": "/today?sheet=news",
+    "layerFile": "social/feed/friends-news/friends-news.tsx",
+    "title": "Neu bei Freunden"
+  },
+  {
     "id": "friends-sheet-requests",
     "account": "test",
     "path": "/friends?sheet=requests",

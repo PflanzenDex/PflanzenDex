@@ -20,6 +20,19 @@ import { TodayOverview } from "./today-overview/today-overview";
 
 type Token = () => Promise<string | undefined>;
 
+/** Draws a tile of another module like the area's own: its count, its name and the layer it opens. */
+export type DrawTile = (count: number, label: string, layer: string) => ReactNode;
+
+/**
+ * A tile of another module after the categories, with its layer (issue 1156): the new plants of friends, the locked
+ * functions. `tile` renders nothing while there is nothing to show.
+ */
+export type TodayTile = {
+  id: string;
+  tile: (draw: DrawTile) => ReactNode;
+  layer: ReactNode;
+};
+
 /** Where the actions of "Jetzt dran" lead (TE-07): treatments and hints open their layer, the rest are views. */
 const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
   care_phases: "carePhases",
@@ -46,6 +59,8 @@ export function TodayArea(props: {
    * (the shell imports the routes). Without it the overview shows alone.
    */
   intro?: (sections: ReactNode, fallback: ReactNode) => ReactNode;
+  /** Tiles of other modules with their layers (issue 1156), wired by the app. */
+  tiles?: readonly TodayTile[];
 }) {
   useFormerAnchors();
   const treatments = useLayer("treatments");
@@ -102,6 +117,7 @@ function Tasks(props: {
   open: (d: TodayDestination) => void;
   /** Opens the planning layer above the layer Behandlungen (US-QS-18). */
   plan: () => void;
+  tiles?: readonly TodayTile[] | undefined;
 }) {
   const { api, token } = props;
   // The counts come from the same requests and keys as the lists in the layers: both share one copy and a write
@@ -109,7 +125,13 @@ function Tasks(props: {
   return (
     <>
       <Suspense fallback={<TodaySkeleton />}>
-        <TodayOverview api={api} token={token} onOpen={props.onOpen} open={props.open} />
+        <TodayOverview
+          api={api}
+          token={token}
+          onOpen={props.onOpen}
+          open={props.open}
+          {...(props.tiles ? { tiles: props.tiles } : {})}
+        />
       </Suspense>
       <LazyAnniversaries api={api} token={token} onOpen={() => props.onOpen("collection")} />
       <LayerSheet id="treatments" title="Behandlungen">
@@ -128,6 +150,11 @@ function Tasks(props: {
         </InLayer>
       </LayerSheet>
       <PlanLayer api={api} token={token} />
+      {props.tiles?.map((x) => (
+        <Suspense key={x.id} fallback={null}>
+          {x.layer}
+        </Suspense>
+      ))}
     </>
   );
 }

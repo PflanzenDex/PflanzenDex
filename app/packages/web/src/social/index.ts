@@ -13,3 +13,10 @@ export const FriendCollectionPage = lazyPage(() =>
 export const FriendsBanner = lazyPage(() =>
   import("./feed/friends-banner/friends-banner").then((m) => ({ default: m.FriendsBanner })),
 );
+// The new plants of friends as a tile and a layer on "Heute" (US-QS-18, issue 1156), in the same chunk as the banner.
+export const FriendsNewsTile = lazyPage(() =>
+  import("./feed/friends-news/friends-news").then((m) => ({ default: m.FriendsNewsTile })),
+);
+export const FriendsNewsLayer = lazyPage(() =>
+  import("./feed/friends-news/friends-news").then((m) => ({ default: m.FriendsNewsLayer })),
+);

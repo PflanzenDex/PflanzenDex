@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router";
+import { useFeature } from "./kernel";
+import { FriendsNewsLayer, FriendsNewsTile } from "./social";
 import {
   handOverRoutes,
   SPECIES_LOOKUP,
@@ -8,7 +10,9 @@ import { useSession, type State } from "./account";
 import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
 import {
   FunctionOverview,
+  LockedLayer,
   LockedRows,
+  LockedTile,
   TodayIntro,
   UnlockPage,
   isShownLocked,
@@ -17,6 +21,7 @@ import {
 } from "./shell";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AccountArea, TodayArea } from "@/components/routing/areas/shared/lazy-areas";
+import type { DrawTile, TodayTile } from "@/components/routing/areas/today-area/today-area";
 import {
   simpleRoutes,
   socialRoutes,
@@ -44,13 +49,31 @@ function useLockPages(api: string, token: Token) {
   };
 }
 
-/** "Heute" with the introduction around its sections (US-QS-16): the app wires the shell into the area. */
+/**
+ * "Heute" with the introduction around its sections (US-QS-16): the app wires the shell into the area, and while
+ * "social" is on the new plants of friends, and the locked functions, as tiles with their layers (issue 1156).
+ */
 function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) => void }) {
+  const social = useFeature("social");
+  const { api, token } = props;
+  const tiles: TodayTile[] = [
+    ...(social
+      ? [
+          {
+            id: "news",
+            tile: (draw: DrawTile) => <FriendsNewsTile api={api} token={token} tile={draw} />,
+            layer: <FriendsNewsLayer api={api} token={token} />,
+          },
+        ]
+      : []),
+    { id: "locked", tile: (draw: DrawTile) => <LockedTile tile={draw} />, layer: <LockedLayer /> },
+  ];
   return (
     <TodayArea
       api={props.api}
       token={props.token}
       onOpen={props.onOpen}
+      tiles={tiles}
       intro={(sections, fallback) => (
         <TodayIntro
           lookup={SPECIES_LOOKUP}

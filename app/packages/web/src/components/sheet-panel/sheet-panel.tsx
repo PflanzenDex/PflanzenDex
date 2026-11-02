@@ -45,6 +45,8 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
             ref={ref}
             className={cn(
               "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90dvh] flex-col rounded-t-card bg-card shadow-elevation-2 pb-[env(safe-area-inset-bottom)] text-foreground",
+              // A list that pages by free height (`data-page-fit`) gets the full height to fill (issue 1156).
+              "has-[[data-page-fit]]:h-[90dvh]",
               className,
             )}
             {...props}
@@ -71,7 +73,9 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
                 {description}
               </Drawer.Description>
             ) : null}
-            <div className="overflow-y-auto p-4">{children}</div>
+            <div className="overflow-y-auto p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col">
+              {children}
+            </div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

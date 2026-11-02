@@ -1,23 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
-import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../../shell.de.json";
 import { isShownLocked } from "../../model/unlock-texts";
 import { useUnlocks } from "../../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows";
 
-/** One row "n Funktionen noch nicht geöffnet" that opens the rows as a layer (US-QS-18, `?sheet=locked`). */
-function CollapsedRows({ n }: { n: number }) {
-  return (
-    <>
-      <LayerOpener id="locked" className="w-full justify-between">
-        <span>{n === 1 ? "1\u00a0Funktion" : `${n}\u00a0Funktionen`} noch nicht geöffnet</span>
-      </LayerOpener>
-      <LayerSheet id="locked" title="Weitere Funktionen">
-        <LockedRows inLayer />
-      </LayerSheet>
-    </>
-  );
-}
+const t = texts(table);
+/** The value of `?sheet=` of the layer with the locked functions. */
+const LAYER = "locked";
 
 /**
  * An address `?sheet=locked` with nothing locked (an old link, or the last function was opened meanwhile) has no layer
@@ -27,8 +19,7 @@ function CollapsedRows({ n }: { n: number }) {
 function useDropStaleLockedSheet(): void {
   const { status, entries } = useUnlocks();
   const [params, setParams] = useSearchParams();
-  const stale =
-    status === "ready" && params.get("sheet") === "locked" && !entries.some(isShownLocked);
+  const stale = status === "ready" && params.get("sheet") === LAYER && !entries.some(isShownLocked);
   useEffect(() => {
     if (!stale) return;
     const next = new URLSearchParams(params);
@@ -38,11 +29,24 @@ function useDropStaleLockedSheet(): void {
 }
 
 /**
- * The locked functions on "Heute" (US-QS-18): nothing while nothing is locked, else the one row and its layer. It
- * lives in the chunk of the introduction and not in the shell (QG-U6).
+ * The locked functions as a tile of "Heute" (US-QS-18, issue 1156): `tile` gets the count, the name and the layer, the
+ * area draws it like its other tiles. Nothing while nothing is locked. It lives in the shell's chunk, not the area's (QG-U6).
  */
-export function CollapsedLockedRows() {
+export function LockedTile(props: {
+  tile: (count: number, label: string, layer: string) => ReactNode;
+}) {
+  const n = useUnlocks().entries.filter(isShownLocked).length;
+  return n === 0 ? null : <>{props.tile(n, t("locked.title"), LAYER)}</>;
+}
+
+/** The layer behind the tile (`?sheet=locked`) with the rows of the locked functions (US-ONB-05). */
+export function LockedLayer() {
   const locked = useUnlocks().entries.filter(isShownLocked);
   useDropStaleLockedSheet();
-  return locked.length === 0 ? null : <CollapsedRows n={locked.length} />;
+  if (locked.length === 0) return null;
+  return (
+    <LayerSheet id={LAYER} title={t("locked.layer")}>
+      <LockedRows inLayer />
+    </LayerSheet>
+  );
 }

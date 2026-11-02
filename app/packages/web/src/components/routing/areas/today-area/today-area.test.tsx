@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
+import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { TodayArea } from "./today-area";
 
 const response = (status: number, body: unknown) =>
@@ -201,6 +202,44 @@ describe("US-QS-18 Heute fits one screen", () => {
     show();
     const list = await screen.findByRole("list", { name: "Themen" });
     expect(list.className).toContain("grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))]");
+  });
+
+  it("US-QS-18 · issue 1156 tiles of other modules stand after the categories, drawn the same way, and open their layer", async () => {
+    fakeServer({ items: [todayItem] });
+    const user = userEvent.setup();
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/today"]}>
+          <TodayArea
+            api="http://api"
+            token={async () => "tok"}
+            onOpen={() => undefined}
+            tiles={[
+              {
+                id: "news",
+                tile: (draw) => draw(2, "Neu bei Freunden", "news"),
+                layer: (
+                  <LayerSheet id="news" title="Neu bei Freunden">
+                    <p>Clara: 2 × Glücksfeder</p>
+                  </LayerSheet>
+                ),
+              },
+              { id: "locked", tile: () => null, layer: null },
+            ]}
+          />
+          <Address />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+    const tiles = await screen.findByRole("list", { name: "Themen" });
+    const names = within(tiles)
+      .getAllByRole("button")
+      .map((b) => b.textContent);
+    expect(names.at(-1)).toBe("2Neu bei Freunden");
+    expect(names).toHaveLength(4);
+    await user.click(within(tiles).getByRole("button", { name: /Neu bei Freunden$/ }));
+    expect(await dialog("Neu bei Freunden")).toBeTruthy();
+    expect(address()).toBe("/today?sheet=news");
   });
 
   it("US-QS-18 a tile opens its items as a layer by address; Back-able and with the layer heading", async () => {
