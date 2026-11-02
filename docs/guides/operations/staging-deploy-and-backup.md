@@ -594,7 +594,7 @@ The keeper's AI client (Claude, ChatGPT, ...) connects to `https://<APP_HOST>/ap
    - the anonymous registration policies: "Allowed Client Scopes" (default scopes allowed, plus `pflanzen:read|draft|write` and `offline_access`) and "Trusted Hosts" (`client-uris-must-match`, hosts `claude.ai`, `chatgpt.com`, `localhost`, `127.0.0.1`, no sender IP check);
    - the client profile `pkce-s256` (executor `pkce-enforcer`) and the policy `pkce-s256-all-clients` (condition `any-client`): every authorization request needs PKCE with S256.
 
-   `docker-compose.yml` turns on the features `cimd,resource-indicators` (`KC_FEATURES`; both experimental in Keycloak 26.8, an update risk). At the end the job reads the realm's discovery inside the network and fails if `client_id_metadata_document_supported` is not `true` or a `pflanzen:*` scope is missing from `scopes_supported`.
+   `docker-compose.yml` turns on the feature `resource-indicators` only (`KC_FEATURES`; experimental in Keycloak 26.8, an update risk). **`cimd` stays off** until a CIMD client policy is built and verified (open item of TE-16, #181): with `cimd` on, discovery announces `client_id_metadata_document_supported: true`, Claude Code then sends `client_id=https://claude.ai/oauth/claude-code-client-metadata` and Keycloak answers "Client not found" (seen on the test environment on 2026-11-02); with it off, clients register by DCR. At the end the job reads the realm's discovery inside the network and fails if `client_id_metadata_document_supported` is `true` or a `pflanzen:*` scope is missing from `scopes_supported`.
 
    **When it runs.** `deploy.sh` runs it after Keycloak is healthy (after `master-realm.sh`); a failure fails the deploy and rolls it back. It prints names and counts only, never a password or token. **By hand**, e.g. after a change in the admin console: Actions, "Deploy", "Run workflow", task `keycloak-mcp` (deploys nothing; runs the job of the version the host runs now), or on the host, as `deploy`, in the checkout:
 
@@ -622,12 +622,12 @@ The keeper's AI client (Claude, ChatGPT, ...) connects to `https://<APP_HOST>/ap
      | jq '{scopes: [.scopes_supported[] | select(startswith("pflanzen:"))], pkce: .code_challenge_methods_supported, cimd: .client_id_metadata_document_supported}'
    ```
 
-   Expected: `scopes` lists `pflanzen:read`, `pflanzen:draft`, `pflanzen:write`; `cimd` is `true`. `pkce` still reads `["plain","S256"]`: Keycloak 26.8 announces both whatever the client policy says, so check the refusal instead: `curl -s -o /dev/null -w '%{redirect_url}\n' 'https://<AUTH_HOST>/realms/pflanzendex/protocol/openid-connect/auth?response_type=code&client_id=pflanzendex-web&redirect_uri=https://<APP_HOST>/&scope=openid&code_challenge=abcdefghijklmnopqrstuvwxyzabcdefghijklmnopq&code_challenge_method=plain'` ends in `error=invalid_request` and `code+challenge+method+is+not+matching`.
+   Expected: `scopes` lists `pflanzen:read`, `pflanzen:draft`, `pflanzen:write`; `cimd` is `false` or `null` (CIMD off, clients use DCR). `pkce` still reads `["plain","S256"]`: Keycloak 26.8 announces both whatever the client policy says, so check the refusal instead: `curl -s -o /dev/null -w '%{redirect_url}\n' 'https://<AUTH_HOST>/realms/pflanzendex/protocol/openid-connect/auth?response_type=code&client_id=pflanzendex-web&redirect_uri=https://<APP_HOST>/&scope=openid&code_challenge=abcdefghijklmnopqrstuvwxyzabcdefghijklmnopq&code_challenge_method=plain'` ends in `error=invalid_request` and `code+challenge+method+is+not+matching`.
 
    Still by hand:
    - [ ] Optional: a mapper that puts the client's name into the claim `client_name` (else the list "KI-Clients" shows the client id).
    - [ ] Consent page: names client, requested rights and that the AI provider receives what the client retrieves (US-KI-06; theme text).
-   - [ ] CIMD client policy (`client-id-metadata-document` executor, condition `client-id-uri`; spike finding 6): not set by the job, because Claude's real metadata document was still refused in the spike (TE-16).
+   - [ ] CIMD (open item of TE-16, #181): build and verify a CIMD client policy (`client-id-metadata-document` executor, condition `client-id-uri`; spike finding 6) against Claude's real metadata document, which the spike saw refused; only then add `cimd` to `KC_FEATURES` and flip the job's discovery check.
 
 5. **Connect a real client** (Claude: Settings, Connectors, "Add custom connector", URL `https://<APP_HOST>/api/mcp`) and record the result in TE-16 (#181): the spike saw Claude's CIMD document rejected by Keycloak 26.8.0.
 
