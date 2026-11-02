@@ -39,5 +39,6 @@
   "overview.list": "Lichthunger der Arten",
   "overview.facts": "{zone} · Lux-Bedarf {lux}",
   "overview.unknown": "unbekannt",
-  "overview.zoneUnknown": "Lichtzone unbekannt"
+  "overview.zoneUnknown": "Lichtzone unbekannt",
+  "form.cancel": "Abbrechen"
 }

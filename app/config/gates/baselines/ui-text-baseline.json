@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1466,
+  "maxTotal": 1465,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -600,10 +600,6 @@
     {
       "file": "packages/web/src/equipment/overviews/zones-view/zones-view.tsx",
       "count": 8
-    },
-    {
-      "file": "packages/web/src/light/shared/ui/form/form.tsx",
-      "count": 1
     },
     {
       "file": "packages/web/src/light/shared/ui/message/message.tsx",
