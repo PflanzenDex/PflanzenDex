@@ -6,7 +6,7 @@ import {
   openView,
   signInToApp,
   unreadableStatusTexts,
-} from "../../support/display";
+} from "../../support/display/display";
 import { expect, test } from "../../support/fixtures";
 
 // US-QS-12: the system settings "reduce motion", forced colors (Windows contrast themes) and the dark scheme.

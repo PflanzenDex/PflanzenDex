@@ -29,6 +29,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       app: ${{ steps.filter.outputs.app }}
+      one-screen: ${{ steps.filter.outputs.one-screen }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,7 +43,13 @@ jobs:
           base="$PUSH_BEFORE"
           if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; fi
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-            echo "app=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "app=true" >> "$GITHUB_OUTPUT"; echo "one-screen=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # QG-U8: the one-screen run only when the UI, the e2e package or the gate files change (issue 1137).
+          if git diff --name-only "$base" HEAD | grep -qE '^(app/packages/(web|e2e)/|app/config/gates/|Makefile$|\.github/)'; then
+            echo "one-screen=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "one-screen=false" >> "$GITHUB_OUTPUT"
           fi
           if git diff --name-only "$base" HEAD | grep -qE '^(app/|Makefile$|\.github/|\.nvmrc$)'; then
             echo "app=true" >> "$GITHUB_OUTPUT"
@@ -287,6 +294,45 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # QG-U8 (US-QS-15, DS-58, issue 1137): every view and layer fits the window at 360x640 to 1920x1080 and under the
+  # 1920 px width cap. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run with
+  # several workers. Runs for PRs into `dev` and `main` when the UI, the e2e package or the gate files change, and by hand.
+  one-screen:
+    needs: changes
+    if: >-
+      !cancelled() && needs.changes.result == 'success'
+      && (github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true' && github.event.action != 'edited'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      - run: make one-screen
+      - name: Ratio table per screen and size
+        if: always()
+        run: make one-screen-report >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: one-screen-report
+          path: |
+            app/packages/e2e/one-screen-report
+            app/packages/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
   # QG-C1 for the PR title (the squash into `dev` and the merge into `main` use it as the commit message)
   # and QG-U3 (`feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`).
   # Not for drafts: `make claim` opens them with a placeholder title; `ready_for_review` runs this job.
@@ -370,6 +416,7 @@ jobs:
         audit,
         lighthouse,
         e2e,
+        one-screen,
       ]
     if: always()
     runs-on: ubuntu-24.04
@@ -390,8 +437,9 @@ jobs:
           AUDIT: ${{ needs.audit.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
+          ONE_SCREEN: ${{ needs.one-screen.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;

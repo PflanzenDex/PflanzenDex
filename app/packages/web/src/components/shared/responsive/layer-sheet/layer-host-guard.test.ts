@@ -88,4 +88,14 @@ describe("LayerHost guard (US-QS-15)", () => {
       expect(read(frame), frame).toMatch(/<LayerHost[\s>]/);
     }
   });
+
+  // US-QS-15 (issue 1137): the one-screen gate (QG-U8) opens every layer; a layer missing from its register fails here.
+  it("US-QS-15 every layer file is the layerFile of a screen in the register of the one-screen gate", () => {
+    const register = JSON.parse(
+      readFileSync(join(SRC, "../../e2e/support/display/screens.json"), "utf8"),
+    ) as { id: string; layerFile?: string }[];
+    const named = new Set(register.flatMap((s) => (s.layerFile ? [s.layerFile] : [])));
+    expect(Object.keys(PANE_FRAMES).filter((file) => !named.has(file))).toEqual([]);
+    expect([...named].filter((file) => !(file in PANE_FRAMES))).toEqual([]);
+  });
 });

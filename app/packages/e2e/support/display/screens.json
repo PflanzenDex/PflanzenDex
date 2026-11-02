@@ -1,0 +1,1058 @@
+[
+  {
+    "id": "today",
+    "account": "test2",
+    "path": "/today",
+    "title": "Heute"
+  },
+  {
+    "id": "today-sheet-treatments",
+    "account": "test2",
+    "path": "/today?sheet=treatments",
+    "layerFile": "components/routing/areas/today-area/today-area.tsx",
+    "title": "Behandlungen"
+  },
+  {
+    "id": "collection-view-plants-group-phase",
+    "account": "test2",
+    "path": "/collection?view=plants&group=phase",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-species",
+    "account": "test2",
+    "path": "/collection?view=species",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-species-sheet-view",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=view",
+    "layerFile": "components/sammlung-header/view-layer/view-layer.tsx",
+    "title": "Ansicht"
+  },
+  {
+    "id": "collection-view-plants",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-wishlist",
+    "account": "test2",
+    "path": "/collection?view=wishlist",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-equipment",
+    "account": "test2",
+    "path": "/collection?view=equipment",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-species-sheet-progress",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=progress",
+    "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
+    "title": "Fortschritt"
+  },
+  {
+    "id": "collection-view-species-sheet-filters",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=filters",
+    "layerFile": "pokedex/pokedex-browse/pokedex-browse.tsx",
+    "title": "Filter"
+  },
+  {
+    "id": "collection-species-layer",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
+    "layerFile": "pokedex/pokedex-browse/pokedex-browse.tsx",
+    "title": "Frauenhaarfarn"
+  },
+  {
+    "id": "discover",
+    "account": "test2",
+    "path": "/discover",
+    "title": "Entdecken"
+  },
+  {
+    "id": "discover-view-catalog",
+    "account": "test2",
+    "path": "/discover?view=catalog",
+    "title": "Entdecken"
+  },
+  {
+    "id": "friends",
+    "account": "test2",
+    "path": "/friends",
+    "title": "Freunde"
+  },
+  {
+    "id": "friends-sheet-add",
+    "account": "test2",
+    "path": "/friends?sheet=add",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Freund hinzufügen"
+  },
+  {
+    "id": "friends-sheet-help",
+    "account": "test2",
+    "path": "/friends?sheet=help",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Freunde und Freigaben"
+  },
+  {
+    "id": "friends-exchange",
+    "account": "test2",
+    "path": "/friends/exchange",
+    "title": "Tauschbörse"
+  },
+  {
+    "id": "friends-exchange-sheet-offer",
+    "account": "test2",
+    "path": "/friends/exchange?sheet=offer",
+    "layerFile": "swap/pages/exchange/exchange.tsx",
+    "title": "Zum Tausch anbieten"
+  },
+  {
+    "id": "friends-match",
+    "account": "test2",
+    "path": "/friends/match",
+    "title": "Passende Angebote"
+  },
+  {
+    "id": "friends-exchange-part-friends",
+    "account": "test2",
+    "path": "/friends/exchange?part=friends",
+    "title": "Tauschbörse"
+  },
+  {
+    "id": "friends-exchange-part-requests",
+    "account": "test2",
+    "path": "/friends/exchange?part=requests",
+    "title": "Tauschbörse"
+  },
+  {
+    "id": "friends-exchange-part-history",
+    "account": "test2",
+    "path": "/friends/exchange?part=history",
+    "title": "Tauschbörse"
+  },
+  {
+    "id": "account",
+    "account": "test2",
+    "path": "/account",
+    "title": "Konto"
+  },
+  {
+    "id": "account-measured",
+    "account": "test2",
+    "path": "/account/measured",
+    "title": "Was wird gemessen?"
+  },
+  {
+    "id": "account-functions",
+    "account": "test2",
+    "path": "/account/functions",
+    "title": "Was die App kann"
+  },
+  {
+    "id": "account-data",
+    "account": "test2",
+    "path": "/account/data",
+    "title": "Meine Daten"
+  },
+  {
+    "id": "account-dialog-sign-out",
+    "account": "test2",
+    "path": "/account",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Abmelden…",
+        "nth": 0
+      }
+    ],
+    "title": "Abmelden?"
+  },
+  {
+    "id": "account-settings",
+    "account": "test2",
+    "path": "/account/settings",
+    "title": "Einstellungen"
+  },
+  {
+    "id": "collection-view-plants-manage-locations",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations",
+    "title": "Standorte und Lichtzonen"
+  },
+  {
+    "id": "unlock-friends",
+    "account": "test2",
+    "path": "/unlock/friends",
+    "route": "/unlock/:id",
+    "title": "Freunde"
+  },
+  {
+    "id": "today-sheet-plan",
+    "account": "test2",
+    "path": "/today?sheet=plan",
+    "layerFile": "care/treatments/planning/plan-layer/plan-layer.tsx",
+    "title": "Behandlung planen"
+  },
+  {
+    "id": "collection-view-species-sort-difficulty",
+    "account": "test2",
+    "path": "/collection?view=species&sort=difficulty",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-plants-sheet-view",
+    "account": "test2",
+    "path": "/collection?view=plants&sheet=view",
+    "layerFile": "components/sammlung-header/view-layer/view-layer.tsx",
+    "title": "Ansicht"
+  },
+  {
+    "id": "collection-view-plants-sheet-zones",
+    "account": "test2",
+    "path": "/collection?view=plants&sheet=zones",
+    "layerFile": "collection/plants-screen/plant-layers/plant-layers.tsx",
+    "title": "Lichtzonen"
+  },
+  {
+    "id": "collection-view-plants-sheet-archive",
+    "account": "test2",
+    "path": "/collection?view=plants&sheet=archive",
+    "layerFile": "collection/plants-screen/plant-layers/plant-layers.tsx",
+    "title": "Archiv"
+  },
+  {
+    "id": "collection-new",
+    "account": "test2",
+    "path": "/collection/new",
+    "title": "Pflanze anlegen"
+  },
+  {
+    "id": "collection-plant-layer",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
+    "id": "collection-view-wishlist-sheet-new-wish",
+    "account": "test2",
+    "path": "/collection?view=wishlist&sheet=new-wish",
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Neuer Wunsch"
+  },
+  {
+    "id": "collection-view-wishlist-sheet-hints",
+    "account": "test2",
+    "path": "/collection?view=wishlist&sheet=hints",
+    "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
+    "title": "Hinweise"
+  },
+  {
+    "id": "wishlist-wish-layer",
+    "account": "test2",
+    "path": "/collection?view=wishlist",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Offene Kandidaten\"] button",
+        "nth": 0
+      }
+    ],
+    "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
+    "title": "Wunsch"
+  },
+  {
+    "id": "collection-view-equipment-sheet-new",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=new",
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Neues Equipment"
+  },
+  {
+    "id": "collection-view-species-sheet-cards",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=cards",
+    "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
+    "title": "Sammlerkarten"
+  },
+  {
+    "id": "species-profile",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Zum Artprofil"
+      }
+    ],
+    "route": "/discover/species/:id",
+    "title": "Adiantum raddianum"
+  },
+  {
+    "id": "discover-view-suggestions",
+    "account": "test2",
+    "path": "/discover?view=suggestions",
+    "title": "Entdecken"
+  },
+  {
+    "id": "discover-view-catalog-sheet-propose",
+    "account": "test2",
+    "path": "/discover?view=catalog&sheet=propose",
+    "layerFile": "catalog/species-page/species-page.tsx",
+    "title": "Art vorschlagen"
+  },
+  {
+    "id": "discover-view-catalog-sheet-filters",
+    "account": "test2",
+    "path": "/discover?view=catalog&sheet=filters",
+    "layerFile": "catalog/search-view/search-filters/search-filters.tsx",
+    "title": "Filter"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-list-locations",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&list=locations",
+    "title": "Standorte und Lichtzonen"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-sheet-new-zone",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&sheet=new-zone",
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Neue Lichtzone"
+  },
+  {
+    "id": "light-zone-edit",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Zone 2 ändern"
+      }
+    ],
+    "layerFile": "light/zones/zone-layer/zone-layer.tsx",
+    "title": "Lichtzone bearbeiten"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-sheet-hints",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&sheet=hints",
+    "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
+    "title": "Hinweise"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-sheet-reference",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&sheet=reference",
+    "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
+    "title": "Lichthunger und Einstufung"
+  },
+  {
+    "id": "collection-view-plants-group-location",
+    "account": "test2",
+    "path": "/collection?view=plants&group=location",
+    "title": "Sammlung"
+  },
+  {
+    "id": "species-compare",
+    "account": "test2",
+    "path": "/collection?view=species&sort=difficulty",
+    "steps": [
+      {
+        "css": "button[aria-label^=\"Vergleichswerte\"]",
+        "nth": 0
+      }
+    ],
+    "layerFile": "collection/other-pages/difficulty-page/difficulty-page.tsx",
+    "title": "Frauenhaarfarn"
+  },
+  {
+    "id": "collection-plant-overview",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Überblick"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
+    "id": "collection-plant-course",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Verlauf"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
+    "id": "collection-plant-care",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Pflege"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
+    "id": "collection-plant-location",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Standort"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
+    "id": "discover-view-suggestions-zone-2",
+    "account": "test2",
+    "path": "/discover?view=suggestions&zone=2",
+    "title": "Entdecken"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&list=locations&sheet=new-location",
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Neuer Standort"
+  },
+  {
+    "id": "light-location-edit",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&list=locations",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Bad ändern"
+      }
+    ],
+    "layerFile": "light/zones/location-layer/location-layer.tsx",
+    "title": "Standort bearbeiten"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&list=locations&sheet=hints",
+    "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
+    "title": "Hinweise"
+  },
+  {
+    "id": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+    "account": "test2",
+    "path": "/collection?view=plants&manage=locations&list=locations&sheet=reference",
+    "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
+    "title": "Lichthunger und Einstufung"
+  },
+  {
+    "id": "today-sheet-hints",
+    "account": "test3",
+    "path": "/today?sheet=hints",
+    "layerFile": "components/routing/areas/today-area/today-area.tsx",
+    "title": "Fehlt noch"
+  },
+  {
+    "id": "review",
+    "account": "test3",
+    "path": "/review",
+    "title": "Prüfliste"
+  },
+  {
+    "id": "review-show-approved",
+    "account": "test3",
+    "path": "/review?show=approved",
+    "title": "Prüfliste"
+  },
+  {
+    "id": "operator",
+    "account": "test3",
+    "path": "/operator",
+    "title": "Betreiber"
+  },
+  {
+    "id": "collection-view-wishlist-sheet-bought",
+    "account": "test3",
+    "path": "/collection?view=wishlist&sheet=bought",
+    "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
+    "title": "Gekauft"
+  },
+  {
+    "id": "collection-view-wishlist-sheet-discarded",
+    "account": "test3",
+    "path": "/collection?view=wishlist&sheet=discarded",
+    "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
+    "title": "Verworfen"
+  },
+  {
+    "id": "today-sheet-locked",
+    "account": "test",
+    "path": "/today?sheet=locked",
+    "layerFile": "shell/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx",
+    "title": "Weitere Funktionen"
+  },
+  {
+    "id": "friends-sheet-requests",
+    "account": "test",
+    "path": "/friends?sheet=requests",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Anfragen"
+  },
+  {
+    "id": "friends-sheet-news",
+    "account": "test",
+    "path": "/friends?sheet=news",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Neu bei Freunden"
+  },
+  {
+    "id": "today-sheet-watering",
+    "account": "test2",
+    "path": "/today?sheet=watering",
+    "layerFile": "components/routing/areas/today-area/today-area.tsx",
+    "title": "Gießen"
+  },
+  {
+    "id": "collection-view-species-sheet-uncounted",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=uncounted",
+    "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
+    "title": "Noch nicht gezählt"
+  },
+  {
+    "id": "collection-view-equipment-sheet-items",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
+    "title": "Equipment"
+  },
+  {
+    "id": "collection-view-equipment-sheet-costs",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=costs",
+    "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
+    "title": "Kosten"
+  },
+  {
+    "id": "collection-view-equipment-sheet-needs",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=needs",
+    "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
+    "title": "Bedarf"
+  },
+  {
+    "id": "collection-view-equipment-sheet-lamps",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=lamps",
+    "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
+    "title": "Lampen und Zonen"
+  },
+  {
+    "id": "collection-view-equipment-sheet-sensors",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=sensors",
+    "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
+    "title": "Sensoren"
+  },
+  {
+    "id": "collection-view-equipment-sheet-wishes",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=wishes",
+    "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
+    "title": "Equipment-Wünsche"
+  },
+  {
+    "id": "friends-sheet-friends",
+    "account": "test2",
+    "path": "/friends?sheet=friends",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Meine Freunde"
+  },
+  {
+    "id": "friends-sheet-sharing",
+    "account": "test2",
+    "path": "/friends?sheet=sharing",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Was Freunde sehen"
+  },
+  {
+    "id": "friend-collection",
+    "account": "test2",
+    "path": "/friends?sheet=friends",
+    "steps": [
+      {
+        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+      }
+    ],
+    "route": "/friends/:friendId",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Sammlung eines Freundes"
+  },
+  {
+    "id": "account-profile",
+    "account": "test2",
+    "path": "/account/profile",
+    "title": "Profil"
+  },
+  {
+    "id": "account-achievements",
+    "account": "test2",
+    "path": "/account/achievements",
+    "title": "Erfolge"
+  },
+  {
+    "id": "account-reminders",
+    "account": "test2",
+    "path": "/account/reminders",
+    "title": "Erinnerungen"
+  },
+  {
+    "id": "account-ai-clients",
+    "account": "test2",
+    "path": "/account/ai-clients",
+    "title": "KI-Clients"
+  },
+  {
+    "id": "account-settings-sheet-profile",
+    "account": "test2",
+    "path": "/account/settings?sheet=profile",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Profil"
+  },
+  {
+    "id": "account-settings-sheet-notifications",
+    "account": "test2",
+    "path": "/account/settings?sheet=notifications",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Benachrichtigungen"
+  },
+  {
+    "id": "account-settings-sheet-privacy",
+    "account": "test2",
+    "path": "/account/settings?sheet=privacy",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Datenschutz und Empfehlungen"
+  },
+  {
+    "id": "account-settings-sheet-style",
+    "account": "test2",
+    "path": "/account/settings?sheet=style",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Wie nutzt du die App?"
+  },
+  {
+    "id": "account-settings-sheet-wishlist",
+    "account": "test2",
+    "path": "/account/settings?sheet=wishlist",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Wunschliste"
+  },
+  {
+    "id": "account-settings-sheet-light",
+    "account": "test2",
+    "path": "/account/settings?sheet=light",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Licht"
+  },
+  {
+    "id": "account-dialog-delete-account",
+    "account": "test2",
+    "path": "/account/data",
+    "steps": [
+      {
+        "role": "button",
+        "re": "^konto löschen"
+      }
+    ],
+    "title": "Konto löschen?"
+  },
+  {
+    "id": "plant-menu-more",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "button",
+        "re": "^mehr"
+      }
+    ],
+    "title": "Pflanze: Menü Mehr"
+  },
+  {
+    "id": "plant-dialog-marker",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "button",
+        "re": "^mehr"
+      },
+      {
+        "role": "menuitem",
+        "re": "kennzeichen"
+      }
+    ],
+    "title": "Kennzeichen ändern"
+  },
+  {
+    "id": "plant-dialog-caught-date",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "button",
+        "re": "^mehr"
+      },
+      {
+        "role": "menuitem",
+        "re": "fangdatum"
+      }
+    ],
+    "title": "Fangdatum korrigieren"
+  },
+  {
+    "id": "plant-dialog-archive",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "button",
+        "re": "^mehr"
+      },
+      {
+        "role": "menuitem",
+        "re": "archiv"
+      }
+    ],
+    "title": "Pflanze archivieren"
+  },
+  {
+    "id": "plant-measure",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "button",
+        "re": "^messen"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Messen"
+  },
+  {
+    "id": "unlock-unbekannt",
+    "account": "test2",
+    "path": "/unlock/unbekannt",
+    "route": "/unlock/:id",
+    "title": "Freischalten: unbekannt"
+  },
+  {
+    "id": "operator-sheet-zahlen",
+    "account": "test3",
+    "path": "/operator?sheet=zahlen",
+    "layerFile": "account/operator/operator-page/operator-page.tsx",
+    "title": "Betreiber: Zahlen"
+  },
+  {
+    "id": "operator-sheet-einstieg",
+    "account": "test3",
+    "path": "/operator?sheet=einstieg",
+    "layerFile": "account/operator/operator-page/operator-page.tsx",
+    "title": "Betreiber: Einstieg"
+  },
+  {
+    "id": "operator-sheet-kosten",
+    "account": "test3",
+    "path": "/operator?sheet=kosten",
+    "layerFile": "account/operator/operator-page/operator-page.tsx",
+    "title": "Betreiber: Monatliche Kosten"
+  },
+  {
+    "id": "operator-sheet-registrierung",
+    "account": "test3",
+    "path": "/operator?sheet=registrierung",
+    "layerFile": "account/operator/operator-page/operator-page.tsx",
+    "title": "Betreiber: Registrierung"
+  },
+  {
+    "id": "operator-sheet-einladungscodes",
+    "account": "test3",
+    "path": "/operator?sheet=einladungscodes",
+    "layerFile": "account/operator/operator-page/operator-page.tsx",
+    "title": "Betreiber: Einladungscodes"
+  },
+  {
+    "id": "welcome",
+    "account": "anon",
+    "path": "/",
+    "title": "Willkommen (abgemeldet)"
+  },
+  {
+    "id": "welcome-keycloak-anmelden",
+    "account": "anon",
+    "path": "/",
+    "steps": [
+      {
+        "role": "button",
+        "re": "anmelden"
+      }
+    ],
+    "title": "Keycloak: Anmelden",
+    "capExempt": "Keycloak page of the sign-in service, not the app shell (issue 1160 caps the app)"
+  },
+  {
+    "id": "welcome-keycloak-registrieren",
+    "account": "anon",
+    "path": "/",
+    "steps": [
+      {
+        "role": "button",
+        "re": "anmelden"
+      },
+      {
+        "css": "a[href*=registration]"
+      }
+    ],
+    "title": "Keycloak: Registrieren",
+    "capExempt": "Keycloak page of the sign-in service, not the app shell (issue 1160 caps the app)"
+  },
+  {
+    "id": "welcome-keycloak-passwort-vergessen",
+    "account": "anon",
+    "path": "/",
+    "steps": [
+      {
+        "role": "button",
+        "re": "anmelden"
+      },
+      {
+        "css": "a[href*=reset-credentials]"
+      }
+    ],
+    "title": "Keycloak: Passwort vergessen",
+    "capExempt": "Keycloak page of the sign-in service, not the app shell (issue 1160 caps the app)"
+  },
+  {
+    "id": "account-achievements-earned",
+    "account": "test2",
+    "path": "/account/achievements?sheet=earned",
+    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "title": "Erfolge"
+  },
+  {
+    "id": "account-achievements-rhythm",
+    "account": "test2",
+    "path": "/account/achievements?sheet=rhythm",
+    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "title": "Pflegerhythmus"
+  },
+  {
+    "id": "account-achievements-year",
+    "account": "test2",
+    "path": "/account/achievements?sheet=year",
+    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "title": "Jahresrückblick"
+  },
+  {
+    "id": "account-achievements-pause",
+    "account": "test2",
+    "path": "/account/achievements?sheet=pause",
+    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "title": "Pause eintragen"
+  },
+  {
+    "id": "today-tasks",
+    "account": "test2",
+    "path": "/today?sheet=tasks",
+    "layerFile": "today/today-page/today-page.tsx",
+    "title": "Weitere Aufgaben"
+  },
+  {
+    "id": "account-functions-fn-today",
+    "account": "test2",
+    "path": "/account/functions",
+    "steps": [
+      {
+        "role": "button",
+        "re": "^Heute"
+      }
+    ],
+    "layerFile": "shell/function-overview/function-overview.tsx",
+    "title": "Funktion: Heute"
+  },
+  {
+    "id": "species-profile-care",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Zum Artprofil"
+      },
+      {
+        "role": "button",
+        "re": "pflegeprofil"
+      }
+    ],
+    "layerFile": "catalog/species-page/species-page.tsx",
+    "title": "Mein Pflegeprofil",
+    "route": "/discover/species/:id"
+  },
+  {
+    "id": "collection-plants-care-profile",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Pflege"
+      },
+      {
+        "role": "button",
+        "re": "^Pflegeprofil"
+      },
+      {
+        "role": "button",
+        "name": "Pflegeprofil bearbeiten"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
+    "title": "Pflegeprofil"
+  },
+  {
+    "id": "collection-plants-course",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "button",
+        "re": "^messen"
+      },
+      {
+        "role": "button",
+        "re": "verlauf"
+      }
+    ],
+    "layerFile": "care/measure/measure-page/course-layer/course-layer.tsx",
+    "title": "Verlauf: Pflanze"
+  },
+  {
+    "id": "collection-equipment-item",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button"
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "review-case",
+    "account": "test3",
+    "path": "/review",
+    "steps": [
+      {
+        "css": "main ul button"
+      }
+    ],
+    "layerFile": "catalog/review/review-layer/review-layer.tsx",
+    "title": "Prüffall"
+  },
+  {
+    "id": "friend-equipment",
+    "account": "test2",
+    "path": "/friends?sheet=friends",
+    "steps": [
+      {
+        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+      },
+      {
+        "role": "button",
+        "re": "^Geräte"
+      }
+    ],
+    "layerFile": "social/pages/friend-collection/friend-collection.tsx",
+    "title": "Geräte von Clara",
+    "route": "/friends/:friendId"
+  },
+  {
+    "id": "collection",
+    "account": "test2",
+    "path": "/collection",
+    "title": "Sammlung"
+  }
+]

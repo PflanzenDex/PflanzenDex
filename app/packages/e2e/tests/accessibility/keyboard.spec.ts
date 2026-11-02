@@ -9,7 +9,7 @@ import {
   typeInto,
 } from "../../support/keyboard";
 import type { Page } from "@playwright/test";
-import { VIEWS, openView } from "../../support/display";
+import { VIEWS, openView } from "../../support/display/display";
 
 // US-QS-08 Operable by keyboard alone: keyboard-only variants of the everyday flows (US-QS-07) and a keyboard walk
 // over every view of the navigation, on the phone and on desktop. No step clicks or taps.

@@ -5,7 +5,7 @@ import {
   layoutProblems,
   tooltips,
   unreadableStatusTexts,
-} from "../../support/display";
+} from "../../support/display/display";
 
 // US-QS-12: the measurements behind the adaptable display tests must find what they look for, or a green run says
 // nothing. Each one runs against a small page with a known defect and against the same page without it.

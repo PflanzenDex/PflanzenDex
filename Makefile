@@ -12,7 +12,7 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 DB_MEMORY ?= 512m
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -105,6 +105,13 @@ ds-snapshots: ## Rewrite the baselines in app/ds-snapshots (pinned Playwright co
 
 e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
+
+one-screen: $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); ONE_SCREEN_WORKERS=<n>, `npm run one-screen:write` rewrites the baseline; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && npm run one-screen
+
+one-screen-report: ## The page/inner table of the last `make one-screen` run as Markdown (job summary); report only, never fails (QG-U8)
+	@cat $(APP)/packages/e2e/one-screen-report/report.md 2>/dev/null || echo "No one-screen report: run make one-screen first."
 
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
 	cd $(APP) && node tools/check/quality/check-crap.mjs $(ARGS)

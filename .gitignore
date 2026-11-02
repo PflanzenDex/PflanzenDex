@@ -13,6 +13,7 @@ coverage/
 .lighthouseci/
 app/packages/e2e/test-results/
 app/packages/e2e/playwright-report/
+app/packages/e2e/one-screen-report/
 *.tsbuildinfo
 # Database backups hold password hashes and realm keys; the old default folder of backup.sh lay inside the repo.
 app/config/deploy/backups/

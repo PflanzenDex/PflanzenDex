@@ -55,6 +55,8 @@
     "duplicates": "node tools/check/quality/duplicates/check-duplicates.mjs",
     "release-tags": "node tools/check/release/check-release-tags.mjs",
     "e2e": "npm run e2e -w @pflanzendex/e2e",
+    "one-screen": "npm run one-screen -w @pflanzendex/e2e",
+    "one-screen:write": "npm run one-screen:write -w @pflanzendex/e2e",
     "changelog": "node tools/check/release/check-changelog.mjs",
     "storybook": "npm run storybook -w @pflanzendex/web",
     "build-storybook": "npm run build-storybook -w @pflanzendex/web"
