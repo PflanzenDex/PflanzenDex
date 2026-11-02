@@ -144,9 +144,11 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
-      # MCP access (US-KI-07, TE-15/TE-16): client ID metadata documents and RFC 8707 `resource`. Both are experimental
-      # in Keycloak 26.8, so test every Keycloak update against them. The realm settings come from `keycloak-mcp`.
-      KC_FEATURES: cimd,resource-indicators
+      # MCP access (US-KI-07, TE-15/TE-16): RFC 8707 `resource` (experimental in Keycloak 26.8, so test every Keycloak
+      # update against it). The realm settings come from `keycloak-mcp`. `cimd` stays off: once discovery announces it,
+      # Claude Code sends its metadata URL as client_id and Keycloak answers "Client not found" (no CIMD client policy;
+      # the spike saw Claude's document refused). Clients then register by DCR instead. Open item of TE-16 (#181).
+      KC_FEATURES: resource-indicators
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is missing}
       # JVM heap: starting values for a 3 GB host (assumption).

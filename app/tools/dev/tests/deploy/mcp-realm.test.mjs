@@ -199,13 +199,21 @@ test("US-KI-07: refuses a missing or relative resource URL before writing anythi
   assert.deepEqual(writes, []);
 });
 
-test("US-KI-07: discovery check names a missing feature or scope", () => {
+test("US-KI-07: discovery check refuses CIMD and names a missing scope", () => {
   const ok = {
-    client_id_metadata_document_supported: true,
+    client_id_metadata_document_supported: false,
     scopes_supported: ["openid", "pflanzen:read", "pflanzen:draft", "pflanzen:write"],
   };
   assert.deepEqual(checkDiscovery(ok), []);
-  const bad = checkDiscovery({ scopes_supported: ["openid", "pflanzen:read"] });
+  assert.deepEqual(
+    checkDiscovery({ scopes_supported: ok.scopes_supported }),
+    [],
+    "absent field = off",
+  );
+  const bad = checkDiscovery({
+    client_id_metadata_document_supported: true,
+    scopes_supported: ["openid", "pflanzen:read"],
+  });
   assert.equal(bad.length, 2);
   assert.match(bad[0], /cimd/);
   assert.match(bad[1], /pflanzen:draft, pflanzen:write/);

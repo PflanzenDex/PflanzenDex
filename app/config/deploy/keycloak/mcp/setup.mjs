@@ -17,14 +17,16 @@ import { SCOPES } from "./target-state.mjs";
 export const REALM = "pflanzendex";
 
 /**
- * Checks the discovery document of the realm: the features `cimd` and `resource-indicators` are on and the scopes are
- * announced. Returns the problems found (empty = fine). `code_challenge_methods_supported` is not checked: Keycloak
+ * Checks the discovery document of the realm: CIMD is off (clients fall back to DCR; with `cimd` on, Claude Code sends
+ * its metadata URL and Keycloak answers "Client not found", TE-16) and the scopes are announced. Returns the problems found (empty = fine). `code_challenge_methods_supported` is not checked: Keycloak
  * 26.8 announces `plain` there although the client policy refuses it (checked locally on 2026-11-02).
  */
 export function checkDiscovery(doc) {
   const problems = [];
-  if (doc.client_id_metadata_document_supported !== true) {
-    problems.push("client_id_metadata_document_supported is not true (KC_FEATURES lacks cimd)");
+  if (doc.client_id_metadata_document_supported === true) {
+    problems.push(
+      "client_id_metadata_document_supported is true (KC_FEATURES has cimd; keep it off until TE-16)",
+    );
   }
   const missing = Object.keys(SCOPES).filter((s) => !(doc.scopes_supported ?? []).includes(s));
   if (missing.length) problems.push(`scopes_supported lacks ${missing.join(", ")}`);
