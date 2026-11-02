@@ -70,8 +70,11 @@ export function localInstant(date: string, time: string, timeZone: string): Date
   return new Date(wall - offsetMs(first, timeZone));
 }
 
+/** Milliseconds in one calendar day (86 400 000); the single definition for day arithmetic (FR-QG-12). */
+export const MS_PER_DAY = 86_400_000;
+
 /** Whole days from calendar date `from` to calendar date `to` (negative when `to` is earlier); no clock, no zone. */
 export function daysBetween(from: string, to: string): number {
   const ms = (v: string) => Date.parse(`${v}T00:00:00Z`);
-  return Math.round((ms(to) - ms(from)) / 86_400_000);
+  return Math.round((ms(to) - ms(from)) / MS_PER_DAY);
 }

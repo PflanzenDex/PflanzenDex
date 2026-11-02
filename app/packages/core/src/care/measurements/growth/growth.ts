@@ -1,4 +1,5 @@
 import type { MeasurementRow } from "../types";
+import { MS_PER_DAY } from "../../../kernel";
 
 /** What the course says about success: etiolated growth never counts (US-WAC-04). */
 export type GrowthSignal = "etiolated" | "success";
@@ -32,7 +33,6 @@ const usable = (tolerance: number | undefined): number =>
   tolerance !== undefined && Number.isFinite(tolerance) && tolerance >= 0
     ? tolerance
     : GROWTH_DEFAULTS.trendTolerance;
-const MS_PER_DAY = 86_400_000;
 
 /** Whole days between two calendar dates `YYYY-MM-DD` (NFR-08: no time zone involved). */
 function daysBetween(from: string, to: string): number {

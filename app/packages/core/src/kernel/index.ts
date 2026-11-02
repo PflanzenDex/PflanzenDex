@@ -32,7 +32,14 @@ export type {
   IdempotencyStore,
   Context,
 } from "./ports/ports";
-export { localToday, isTimeZone, isCalendarDate, localInstant, daysBetween } from "./input/date";
+export {
+  localToday,
+  isTimeZone,
+  isCalendarDate,
+  localInstant,
+  daysBetween,
+  MS_PER_DAY,
+} from "./input/date";
 export * from "./sources";
 export {
   ALL_FEATURES,

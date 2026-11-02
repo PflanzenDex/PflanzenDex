@@ -3,7 +3,7 @@
 // restarts the current run while the longest run stays, and nothing is shown as "lost" (FR-ACH-06). Only tasks that
 // exist because of the plants' needs count; doing a task earlier than due earns nothing more (FR-ACH-05). Derived, not
 // stored (FR-ACH-02); pure, dates are local calendar dates (NFR-08).
-import { daysBetween } from "../../kernel";
+import { daysBetween, MS_PER_DAY } from "../../kernel";
 
 /** Starting values (assumptions): 1 day of grace, 12 weeks shown. */
 export const RHYTHM_LIMITS = { graceDays: 1, weeks: 12 } as const;
@@ -49,7 +49,6 @@ export interface CareRhythm {
   readonly hasTasks: boolean;
 }
 
-const MS_PER_DAY = 86_400_000;
 const two = (n: number): string => String(n).padStart(2, "0");
 
 export function addDays(date: string, days: number): string {

@@ -1,9 +1,9 @@
-const DAY_MS = 86_400_000;
+import { MS_PER_DAY } from "../../kernel";
 const two = (n: number): string => String(n).padStart(2, "0");
 
 const dayNumber = (date: string): number => {
   const [y, m, d] = date.split("-").map(Number);
-  return Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1) / DAY_MS;
+  return Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1) / MS_PER_DAY;
 };
 
 /** Whole calendar days from `from` to `to` (both `YYYY-MM-DD`); negative if `to` lies before `from` (NFR-08). */
@@ -17,6 +17,6 @@ export function daysBetween(from: string, to: string): number {
  */
 export function addDays(date: string, days: number): string {
   const [y, m, d] = date.split("-").map(Number);
-  const moved = new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1) + days * DAY_MS);
+  const moved = new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1) + days * MS_PER_DAY);
   return `${moved.getUTCFullYear()}-${two(moved.getUTCMonth() + 1)}-${two(moved.getUTCDate())}`;
 }

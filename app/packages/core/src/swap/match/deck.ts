@@ -1,4 +1,12 @@
-import { isTimeZone, localToday, ok, type Result, failed, appError } from "../../kernel";
+import {
+  isTimeZone,
+  localToday,
+  ok,
+  type Result,
+  failed,
+  appError,
+  daysBetween,
+} from "../../kernel";
 import { exchangeList, type ExchangeQuery } from "../exchange";
 import type { ExchangeDependencies, ExchangeOffer } from "../exchange";
 import type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
@@ -138,7 +146,7 @@ export async function matchDeck(
     .sort(deckOrder);
   const cards = matching.filter((c) => {
     const a = given.get(c.offerId);
-    return !a || (a.answer === "later" && daysBefore(a.answeredOn, today) >= LATER_DAYS);
+    return !a || (a.answer === "later" && daysBetween(a.answeredOn, today) >= LATER_DAYS);
   });
   const byId = new Map(list.value.offers.map((o) => [o.offerId, o]));
   const cardById = new Map(matching.map((c) => [c.offerId, c]));
@@ -148,11 +156,6 @@ export async function matchDeck(
   const empty =
     cards.length > 0 ? null : await emptyReason(context.counts, userId, list.value.offers.length);
   return ok({ cards, entries, empty });
-}
-
-/** Whole calendar days from `from` to `to` (both `YYYY-MM-DD`). */
-function daysBefore(from: string, to: string): number {
-  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 }
 
 function stateOf(offer: ExchangeOffer | undefined, card: MatchCard | null): EntryState {
