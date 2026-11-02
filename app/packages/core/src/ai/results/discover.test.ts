@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { appError, choiceField, failed, ok, shape, textField } from "../kernel";
+import { appError, choiceField, failed, ok, shape, textField } from "../../kernel";
 import { aiDiscoverDecide, aiDiscoverSuggestions, type DiscoverSource } from "./discover";
-import { InMemoryAiLog, InMemoryDrafts } from "./test-helpers";
+import { InMemoryAiLog, InMemoryDrafts } from "../test-helpers";
 
 const now = new Date("2026-10-10T08:00:00Z");
 const written: unknown[] = [];

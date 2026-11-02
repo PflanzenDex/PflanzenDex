@@ -1,10 +1,10 @@
 // Discover through the AI client (US-ENT-08): the client reads the same suggestions as the view (order and reasons are
 // computed by the code, KI-R1, KI-R2) and sends "Yes" or "No" like the swipe buttons. With the right "write" the decision
 // runs at once through `discover.decide`, with "create drafts" it arrives as a draft the keeper adopts (KI-R3, KI-R8).
-import { appError, failed, ok, type Result } from "../kernel";
-import type { AiDraft, DraftStore } from "./drafts";
-import { mayCall, type AiRights } from "./rights";
-import type { AiLogStore } from "./status";
+import { appError, failed, ok, type Result } from "../../kernel";
+import type { AiDraft, DraftStore } from "../drafts";
+import { mayCall, type AiRights } from "../rights";
+import type { AiLogStore } from "../status";
 
 /** The discover operations behind a port, so `ai` does not depend on the module `discover`. */
 export interface DiscoverSource {

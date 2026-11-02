@@ -32,6 +32,11 @@ export interface DraftType {
   readonly schema: Schema<unknown>;
   /** Runs the validating operation of the form as the keeper; the key makes a repeat write once. */
   readonly adopt: (userId: string, content: unknown, key: string) => Promise<Result<unknown>>;
+  /**
+   * A refusal the operation would give anyway, checked before the draft is stored (species: `species.duplicate` with
+   * the existing species, US-KI-11), so the client learns it at once instead of the keeper on adoption.
+   */
+  readonly check?: (userId: string, content: unknown) => Promise<Result<unknown>>;
 }
 export type DraftTypes = Readonly<Record<string, DraftType>>;
 

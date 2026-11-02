@@ -10,7 +10,7 @@ import {
   textField,
   type Result,
 } from "../../kernel";
-import type { AiDraft, DraftDependencies } from "../drafts";
+import type { AiDraft, DraftDependencies, DraftType } from "../drafts";
 import { mayCall, type AiRights } from "../rights";
 import type { AiLogStore } from "../status";
 import { TASK_DRAFT_TYPE, type AiTask, type TaskStore } from "../tasks/model";
@@ -69,6 +69,17 @@ async function completeTask(
   await tasks?.transition(call.userId, task.id, change, call.now);
 }
 
+/** The content passes the schema of the target operation and the type's own check (US-KI-11: no duplicate species). */
+async function contentOf(
+  type: DraftType,
+  userId: string,
+  content: unknown,
+): Promise<Result<unknown>> {
+  const checked = type.schema(content);
+  if (!checked.ok || !type.check) return checked;
+  return type.check(userId, content);
+}
+
 /**
  * Stores a draft from the client (KI-R3, KI-R8): the right "create drafts" is checked here again, the type must be
  * known, the source is mandatory, and the content must pass the schema of the target operation, otherwise nothing is
@@ -85,7 +96,7 @@ export async function aiProposeDraft(
   if (!head.ok) return head;
   const type = deps.types[head.value.type];
   if (!type) return invalid("type");
-  const content = type.schema(input["content"]);
+  const content = await contentOf(type, call.userId, input["content"]);
   if (!content.ok) return content;
   const task = await taskOf(deps.tasks, call, head.value.type, head.value.taskId);
   if (!task.ok) return task;

@@ -19,6 +19,7 @@ export {
   speciesHints,
   speciesLoad,
   speciesSearch,
+  speciesExisting,
   speciesPropose,
   speciesSchema,
   normalize,

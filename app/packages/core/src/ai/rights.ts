@@ -50,6 +50,14 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   // Research (US-KI-05): the server checks an image address for reachability and license; the client cannot claim it.
   check_image_source: "read",
   list_tasks: "read",
+  // The catalog and the collection by name (US-KI-11): the same reads as the app's own views (KI-R10, FR-KI-14).
+  search_species: "read",
+  get_species: "read",
+  list_specimens: "read",
+  get_specimen: "read",
+  list_locations: "read",
+  list_light_zones: "read",
+  list_measurements: "read",
   claim_task: "draft",
   decline_task: "draft",
   // Never released via connections (FR-KI-10): friends' data, sharing, swaps, account, connections, partners.
