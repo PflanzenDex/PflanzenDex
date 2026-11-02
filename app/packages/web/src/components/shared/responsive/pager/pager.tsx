@@ -104,7 +104,7 @@ export type PagerProps<T> = {
   /**
    * The page size is the free height of the list region: the whole rows that fit, times the columns of a grid, measured
    * in the layout (US-QS-19, issue 1029). The region must be sized by its frame (flex-1, min-h-0 up to the frame), and
-   * the pager sits below it at the bottom of that frame.
+   * the pager sits below it at the bottom of that frame. The list carries `data-page-fit`, so a layer takes its full height (issue 1156).
    */
   fit?: boolean;
 };
@@ -185,6 +185,7 @@ export function Pager<T>({
     >
       <ul
         ref={list}
+        {...(fit ? { "data-page-fit": "" } : {})}
         style={fitted ? { minHeight: fitted.rowHeight } : undefined}
         aria-label={label}
         className={cn("flex flex-col gap-2", fit && "min-h-0 flex-1 content-start", listClassName)}

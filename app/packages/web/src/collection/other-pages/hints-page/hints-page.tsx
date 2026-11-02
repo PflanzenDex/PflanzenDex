@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Pager } from "@/components/shared/responsive/pager/pager";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
@@ -65,6 +65,8 @@ function HintsList(props: HintsListProps) {
   const { api, onOpen, token } = props;
   const host = props.host === true;
   const Frame = host ? Plain : PageFrame;
+  // In its layer the list pages by the free height, so every region down to it passes the height on (issue 1156).
+  const frameClass = host ? FILL : undefined;
   const again = useInvalidate(KEY);
   const place = useWriteAction(token, again);
   const load = useCallback(
@@ -80,7 +82,7 @@ function HintsList(props: HintsListProps) {
     [api],
   );
   return (
-    <Frame>
+    <Frame {...(frameClass ? { className: frameClass } : {})}>
       <LoadFrame
         queryKey={KEY}
         token={token}
@@ -116,8 +118,10 @@ function HintsList(props: HintsListProps) {
   );
 }
 
-/** Hints per page of the layer (starting value, assumption; US-QS-18). */
+/** Hints per page of the layer until the layout measures its free height (starting value, assumption; US-QS-18, issue 1156). */
 const PAGE_SIZE = 3;
+/** A region between the layer and its paged list: it takes the free height and passes it on (issue 1029). */
+const FILL = "flex min-h-0 flex-1 flex-col";
 
 function HintList(props: {
   host: boolean;
@@ -137,7 +141,10 @@ function HintList(props: {
     />
   );
   return (
-    <section aria-labelledby={props.host ? undefined : "hints-title"}>
+    <section
+      aria-labelledby={props.host ? undefined : "hints-title"}
+      {...(props.host ? { className: FILL } : {})}
+    >
       {!props.host && (
         <h1 id="hints-title" className={TITLE}>
           Hinweise
@@ -157,13 +164,7 @@ function HintList(props: {
             auf die Lichtzonen.
           </Quiet>
           {props.host ? (
-            <Pager
-              items={props.data.hints}
-              pageSize={PAGE_SIZE}
-              label="Fehlende Angaben"
-              getKey={(h) => `${h.specimenId}-${h.kind}`}
-              renderItem={(h) => card(h)}
-            />
+            <HintPages hints={props.data.hints} card={card} />
           ) : (
             <ul className={GRID}>
               {props.data.hints.map((h) => (
@@ -174,5 +175,24 @@ function HintList(props: {
         </>
       )}
     </section>
+  );
+}
+
+/** The hints in the layer of "Heute", as pages that fill its free height (US-QS-18, issue 1156). */
+function HintPages(props: {
+  hints: readonly SpecimenHint[];
+  card: (h: SpecimenHint) => ReactNode;
+}) {
+  return (
+    <Pager
+      items={props.hints}
+      pageSize={PAGE_SIZE}
+      fit
+      param={LAYER_PARAM}
+      replace
+      label="Fehlende Angaben"
+      getKey={(h) => `${h.specimenId}-${h.kind}`}
+      renderItem={(h) => props.card(h)}
+    />
   );
 }

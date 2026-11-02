@@ -98,6 +98,17 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.getByRole("status").className).toContain("whitespace-nowrap");
   });
 
+  it("US-QS-15 · issue 1156 a list that pages by free height is marked, so its layer takes its full height", () => {
+    render(
+      <MemoryRouter>
+        <Pager items={["a"]} pageSize={3} fit label="Pflanzen" renderItem={(t) => t} />
+        <Pager items={["b"]} pageSize={3} label="Andere" renderItem={(t) => t} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("list", { name: "Pflanzen" }).hasAttribute("data-page-fit")).toBe(true);
+    expect(screen.getByRole("list", { name: "Andere" }).hasAttribute("data-page-fit")).toBe(false);
+  });
+
   it("US-QS-15 one page shows no controls", () => {
     render(
       <MemoryRouter>

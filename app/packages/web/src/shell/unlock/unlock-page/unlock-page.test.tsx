@@ -6,7 +6,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { UnlockEntry } from "../model/unlock-api";
 import { UnlocksProvider } from "../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows/locked-rows";
-import { CollapsedLockedRows } from "../locked-rows/collapsed-rows/collapsed-rows";
+import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LockedLayer, LockedTile } from "../locked-rows/collapsed-rows/collapsed-rows";
 import { UnlockPage } from "./unlock-page";
 
 const response = (status: number, body: unknown) =>
@@ -63,6 +64,22 @@ function Address() {
   return null;
 }
 
+/** The tile as "Heute" draws it (count and name in one button) and its layer. */
+function Collapsed() {
+  return (
+    <>
+      <LockedTile
+        tile={(n, label, layer) => (
+          <LayerOpener id={layer}>
+            {n} {label}
+          </LayerOpener>
+        )}
+      />
+      <LockedLayer />
+    </>
+  );
+}
+
 const page = (path: string) =>
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -71,7 +88,7 @@ const page = (path: string) =>
         <Routes>
           <Route path="/unlock/:id" element={<UnlockPage api="http://api" token={token} />} />
           <Route path="/" element={<LockedRows />} />
-          <Route path="/collapsed" element={<CollapsedLockedRows />} />
+          <Route path="/collapsed" element={<Collapsed />} />
           <Route path="/inside" element={<LockedRows only={["wishlist", "ai_access"]} />} />
         </Routes>
       </UnlocksProvider>
@@ -262,19 +279,20 @@ describe("US-QS-18 locked functions on Heute", () => {
     })) as unknown as typeof window.matchMedia;
   });
 
-  it("US-QS-18 the locked functions are one row 'n Funktionen noch nicht geöffnet' that opens a layer with the rows", async () => {
+  it("US-QS-18 the locked functions are one tile 'n Noch nicht geöffnet' that opens a layer with the rows (issue 1156)", async () => {
     server(() => [swapping(), swapping({ id: "wishlist" })]);
     page("/collapsed");
-    const row = await screen.findByRole("button", {
-      name: /^2\u00a0Funktionen noch nicht geöffnet$/,
-    });
+    const row = await screen.findByRole("button", { name: "2 Noch nicht geöffnet" });
     expect(screen.queryByRole("link")).toBeNull();
     await userEvent.click(row);
     const layer = await screen.findByRole("dialog", { name: "Weitere Funktionen" });
     expect(within(layer).getAllByRole("link")).toHaveLength(2);
+    // The rows page by the free height of the layer instead of scrolling it (US-QS-15, issue 1156).
+    const rows = within(layer).getByRole("list", { name: "Noch nicht geöffnet" });
+    expect(rows.hasAttribute("data-page-fit")).toBe(true);
   });
 
-  it("US-QS-18 nothing locked shows no row", async () => {
+  it("US-QS-18 nothing locked shows no tile", async () => {
     server(() => [open("swapping")]);
     page("/collapsed");
     await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());

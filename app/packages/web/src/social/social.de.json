@@ -1,0 +1,13 @@
+{
+  "news.title": "Neu bei Freunden",
+  "news.label": "Neu bei Freunden seit deinem letzten Besuch",
+  "news.loadFailed": "Neuigkeiten von Freunden konnten gerade nicht geladen werden.",
+  "news.headline.one": "Freunde haben 1 neue Pflanze:",
+  "news.headline.other": "Freunde haben {count} neue Pflanzen:",
+  "news.speciesUnknown": "Art unbekannt",
+  "news.asOf": "Stand: {date}",
+  "news.offline": " (keine Verbindung, zuletzt geladener Stand)",
+  "news.okay": "Okay",
+  "news.okayDone": "Okay.",
+  "news.okayFailed": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+}
