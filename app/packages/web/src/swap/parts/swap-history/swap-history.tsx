@@ -7,6 +7,10 @@ import { loadHistory } from "../../api/swaps-api";
 import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { CAUSE_TEXT, STATUS_TEXT } from "../swap-requests/swap-text";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../swap.de.json";
+
+const t = texts(table);
 
 const KEY = ["swap", "history"] as const;
 type Token = () => Promise<string | undefined>;
@@ -18,19 +22,23 @@ const dayText = (iso: string): string =>
   );
 
 function Entry({ e }: { e: HistoryEntry }) {
-  const who = e.friend ?? "einem Freund";
+  const who = e.friend ?? t("history.someone");
   return (
     <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="text-sm text-muted-foreground">{dayText(e.date)}</span>
-      <span className="font-semibold">{e.species ?? "Art unbekannt"}</span>
+      <span className="font-semibold">{e.species ?? t("history.speciesUnknown")}</span>
       <span className="text-sm">
-        {e.direction === "given" ? `Gegeben an ${who}` : `Erhalten von ${who}`}
+        {e.direction === "given" ? t("history.given", { who }) : t("history.received", { who })}
       </span>
       <span className="text-sm">
         {TYPE_TEXT[e.type]} · {MODE_TEXT[e.mode]}
       </span>
       {e.cause && <span className="text-sm text-muted-foreground">{CAUSE_TEXT[e.cause]}.</span>}
-      {e.reason && <span className="text-sm text-muted-foreground">Grund: {e.reason}</span>}
+      {e.reason && (
+        <span className="text-sm text-muted-foreground">
+          {t("history.reason", { reason: e.reason })}
+        </span>
+      )}
       <span className="mt-1">
         <Badge variant={e.status === "handed_over" ? "default" : "outline"}>
           {STATUS_TEXT[e.status]}
@@ -50,27 +58,23 @@ export function SwapHistory(props: { api: string; token: Token }) {
   const size = useCardPageSize();
   const load = useCallback((t: string) => loadHistory(api, t), [api]);
   return (
-    <section aria-labelledby="swap-history-title" className="flex min-w-0 flex-col gap-3">
+    <section
+      aria-labelledby="swap-history-title"
+      className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
+    >
       <h2 id="swap-history-title" className="sr-only">
-        Tauschverlauf
+        {t("history.title")}
       </h2>
-      <LoadFrame
-        queryKey={KEY}
-        token={token}
-        load={load}
-        loadingText="Tauschverlauf wird geladen …"
-      >
+      <LoadFrame queryKey={KEY} token={token} load={load} loadingText={t("history.loading")}>
         {(data: { entries: readonly HistoryEntry[] }) =>
           data.entries.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-3">
-              Noch kein Tausch abgeschlossen. Hier stehen später alle Übergaben und beendeten
-              Anfragen, auch wenn die Freundschaft endet.
-            </p>
+            <p className="rounded-lg border border-dashed border-border p-3">{t("history.none")}</p>
           ) : (
             <Pager
               items={data.entries}
               pageSize={size}
-              label="Tauschverlauf"
+              fit
+              label={t("history.title")}
               getKey={(e) => e.swapId}
               renderItem={(e) => <Entry e={e} />}
             />

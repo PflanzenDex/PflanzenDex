@@ -94,4 +94,14 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
     const { container } = render(<FriendsBanner api="http://api" token={token} quiet />);
     await vi.waitFor(() => expect(container.textContent).toBe(""));
   });
+
+  it("US-SOZ-06 · US-QS-15 · issue 1157 the compact banner is one row with 'Okay' at its end and leaves 'Stand' to the feed", async () => {
+    server(banner());
+    render(<FriendsBanner api="http://api" token={token} compact />);
+    const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
+    expect(region.className).toContain("flex-wrap");
+    expect(region.textContent).toContain("Freunde haben 3 neue Pflanzen:");
+    expect(region.textContent).not.toContain("Stand:");
+    expect(screen.getByRole("button", { name: "Okay" })).toBeTruthy();
+  });
 });
