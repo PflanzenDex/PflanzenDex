@@ -49,6 +49,26 @@ describe("TE-03 · reverse proxy in front of the host", () => {
     expect(proxy).toMatch(/handle \{\s*reverse_proxy web:8080/);
   });
 
+  it("US-KI-07 the app host sends the protected resource metadata to the API and no /.well-known/ to the SPA", () => {
+    const app = proxy.slice(
+      proxy.indexOf("{$CADDY_SCHEME}{$APP_HOST} {"),
+      proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"),
+    );
+    // Root and path-inserted address (RFC 9728) reach the API, which serves both; /api/.well-known/... via /api/*.
+    expect(app).toMatch(
+      /handle \/\.well-known\/oauth-protected-resource\* \{\s*reverse_proxy api:3000\s*\}/,
+    );
+    // Everything else under /.well-known/ (oauth-authorization-server, openid-configuration) is a 404, not HTML.
+    expect(app).toMatch(/handle \/\.well-known\/\* \{\s*respond 404\s*\}/);
+    // A checkout replaces the bind-mounted Caddyfile; the deploy recreates the proxy when it changed (TE-16).
+    const deploy = read("deploy/scripts/deploy.sh");
+    expect(deploy).toContain("exec -T proxy sha256sum /etc/caddy/Caddyfile");
+    expect(deploy).toContain("up -d --no-deps --force-recreate proxy");
+    expect(deploy.indexOf("refresh_proxy || return 1")).toBeGreaterThan(
+      deploy.indexOf("up -d --build"),
+    );
+  });
+
   it("TE-03 routes the sign-in hostname to Keycloak and compresses both hosts (NFR-12)", () => {
     expect(proxy).toMatch(/handle \{\s*reverse_proxy keycloak:8080/);
     expect(proxy.match(/import compress/g)).toHaveLength(2);

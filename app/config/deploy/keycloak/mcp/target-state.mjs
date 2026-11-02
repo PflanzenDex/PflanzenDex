@@ -26,19 +26,23 @@ export const scopeOf = ([name, text]) => ({
   },
 });
 
-// Puts the resource client into `aud`; with the feature `resource-indicators` Keycloak narrows it to the `resource` the
-// client asked for (finding 1; without the mapper: `invalid_target`).
-export const AUDIENCE_MAPPER = {
-  name: "aud-mcp",
+// Puts the resource URL itself into `aud`, the audience the MCP endpoint checks (RFC 8707). A client audience
+// (`included.client.audience`, the spike's mapper) gives `aud: pflanzendex-mcp` whenever the client omits the `resource`
+// parameter, as Claude Code does (TE-16, 2026-11-02); the API refuses that token (`invalid_token`).
+export const AUDIENCE_MAPPER_NAME = "aud-mcp";
+export const audienceMapperOf = (resourceUrl) => ({
+  name: AUDIENCE_MAPPER_NAME,
   protocol: "openid-connect",
   protocolMapper: "oidc-audience-mapper",
   config: {
-    "included.client.audience": RESOURCE_CLIENT_ID,
+    "included.custom.audience": resourceUrl,
     "id.token.claim": "false",
     "access.token.claim": "true",
     "introspection.token.claim": "true",
   },
-};
+});
+// A mapper with this key still adds the client id to `aud`; the steps remove it.
+export const CLIENT_AUDIENCE_KEY = "included.client.audience";
 
 export const resourceClientOf = (resourceUrl) => ({
   clientId: RESOURCE_CLIENT_ID,

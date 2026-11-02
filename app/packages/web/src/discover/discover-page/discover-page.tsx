@@ -4,10 +4,14 @@ import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skelet
 import { LoadFrame } from "../../kernel";
 import { DeckView } from "../deck-view/deck-view";
 import { decideSuggestion, loadSuggestions } from "./discover-api";
+import table from "../discover.de.json";
+import { texts } from "@/lib/text-rules/texts";
+
+const t = texts(table);
 
 const SIGN_IN_NEEDED = {
   ok: false as const,
-  error: { code: "access.not_signed_in", text: "Bitte melde dich an." },
+  error: { code: "access.not_signed_in", text: t("page.signIn") },
 };
 
 /** Placeholder with the layout of a card on a phone: image, name, text, three buttons (DS-52). */
@@ -49,23 +53,25 @@ export function DiscoverPage(props: {
   );
   return (
     <section
-      {...(embedded ? { "aria-label": "Vorschläge" } : { "aria-labelledby": "discover-title" })}
+      {...(embedded
+        ? { "aria-label": t("page.suggestions") }
+        : { "aria-labelledby": "discover-title" })}
       className="flex min-w-0 flex-1 flex-col"
     >
       <LoadFrame
         queryKey={["discover", deck, zone ?? null]}
         token={token}
         load={load}
-        loadingText="Vorschläge werden geladen …"
-        {...(embedded ? {} : { heading: "Entdecken" })}
-        loadingFallback={<DeckSkeleton label="Vorschläge werden geladen …" />}
+        loadingText={t("page.loading")}
+        {...(embedded ? {} : { heading: t("page.title") })}
+        loadingFallback={<DeckSkeleton label={t("page.loading")} />}
         fresh
       >
         {(value: SuggestionDeck) => (
           <>
             {embedded ? null : (
               <h1 id="discover-title" className="mb-2 text-2xl font-semibold">
-                Entdecken
+                {t("page.title")}
               </h1>
             )}
             <DeckView

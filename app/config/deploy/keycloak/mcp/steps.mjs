@@ -2,7 +2,9 @@
 // reads first and writes only what differs, so a second run changes nothing. `kc` is the admin API of the realm:
 // get(path), post(path, body), put(path, body), relative to /admin/realms/<realm>. No dependencies.
 import {
-  AUDIENCE_MAPPER,
+  AUDIENCE_MAPPER_NAME,
+  audienceMapperOf,
+  CLIENT_AUDIENCE_KEY,
   covers,
   DCR_POLICIES,
   DCR_POLICY_TYPE,
@@ -17,13 +19,13 @@ import {
 // Creates `want` when `have` is missing, updates it (keeping the other fields) when it differs. Returns the change.
 async function upsert(
   kc,
-  { have, want, createPath, updatePath, label, merge = (h, w) => ({ ...h, ...w }) },
+  { have, want, createPath, updatePath, label, merge = (h, w) => ({ ...h, ...w }), same = covers },
 ) {
   if (!have) {
     await kc.post(createPath, want);
     return [`created ${label}`];
   }
-  if (covers(have, want)) return [];
+  if (same(have, want)) return [];
   await kc.put(updatePath(have), merge(have, want));
   return [`updated ${label}`];
 }
@@ -34,8 +36,13 @@ const withAttributes = (key) => (have, want) => ({
   [key]: { ...have[key], ...want[key] },
 });
 
+// The audience mapper's config is replaced as a whole, so a client audience of an older run disappears.
+const mapperIsSame = (have, want) => covers(have, want) && !have.config?.[CLIENT_AUDIENCE_KEY];
+const replaceConfig = (have, want) => ({ ...have, ...want, config: { ...want.config } });
+
 // 1. Client scopes as optional realm scopes (finding 3), each with the audience mapper (finding 1).
-async function ensureScopes(kc) {
+async function ensureScopes(kc, resourceUrl) {
+  const mapper = audienceMapperOf(resourceUrl);
   const changes = [];
   let all = await kc.get("/client-scopes");
   for (const want of Object.entries(SCOPES).map(scopeOf)) {
@@ -64,16 +71,17 @@ async function ensureScopes(kc) {
   }
   for (const scope of ours) {
     const path = `/client-scopes/${scope.id}/protocol-mappers/models`;
-    const have = (await kc.get(path)).find((m) => m.name === AUDIENCE_MAPPER.name);
+    const have = (await kc.get(path)).find((m) => m.name === AUDIENCE_MAPPER_NAME);
     const label = `audience mapper on ${scope.name}`;
     changes.push(
       ...(await upsert(kc, {
         have,
-        want: AUDIENCE_MAPPER,
+        want: mapper,
         createPath: path,
         updatePath: (h) => `${path}/${h.id}`,
         label,
-        merge: withAttributes("config"),
+        merge: replaceConfig,
+        same: mapperIsSame,
       })),
     );
   }
@@ -130,7 +138,7 @@ export async function setupMcpRealm(kc, { resourceUrl }) {
   if (!/^https?:\/\/[^/]+\/.+/.test(resourceUrl ?? ""))
     throw new Error(`AI_RESOURCE_URL is not a URL: ${resourceUrl}`);
   return [
-    ...(await ensureScopes(kc)),
+    ...(await ensureScopes(kc, resourceUrl)),
     ...(await ensureResourceClient(kc, resourceUrl)),
     ...(await ensureDcrPolicies(kc)),
     ...(await ensureClientPolicy(kc, {
