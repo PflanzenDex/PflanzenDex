@@ -59,6 +59,10 @@ deploy_ref() {
   wait_healthy keycloak 90 || return 1
   # Brute-force protection in the master realm (#758); idempotent, a no-op after the admin handover.
   ./keycloak/master-realm.sh || return 1
+  # MCP readiness of the app realm (US-KI-07); idempotent. Skipped for a ref that predates the job (rollback).
+  if [ -f ./keycloak/mcp/setup.mjs ]; then
+    "${compose[@]}" run --rm keycloak-mcp || { echo "keycloak-mcp failed; see its output above" >&2; return 1; }
+  fi
   smoke_target
   # The version is only on /health/details, which the proxy does not serve publicly (#759): read it inside the api.
   SMOKE_DETAILS_CMD="${SMOKE_DETAILS_CMD:-${compose[*]} exec -T api wget -qO- http://127.0.0.1:3000/health/details}" \
