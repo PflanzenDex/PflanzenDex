@@ -6,3 +6,4 @@ export {
   careProfileZoneUsageFor,
 } from "./care-profile/care-profile-routes";
 export { specimenZoneUsageFor } from "./markers/location-routes";
+export { collectionReadSourceFor } from "./ai-reads/read-source";

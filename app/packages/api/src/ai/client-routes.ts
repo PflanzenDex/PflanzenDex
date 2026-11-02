@@ -1,6 +1,7 @@
 import {
   AI_SCOPES,
   aiStatus,
+  type CollectionReadSource,
   type DiscoverSource,
   type DraftStore,
   type DraftTypes,
@@ -16,6 +17,7 @@ import type { Pool } from "pg";
 import { errorBody, statusFor } from "../kernel";
 import { clientResearchRoutes } from "./research/client-research-routes";
 import { clientDiscoverRoutes } from "./discover/client-discover-routes";
+import { clientReadRoutes } from "./reads/client-read-routes";
 import { clientTaskRoutes } from "./tasks/client-task-routes";
 import { clientDraftRoutes } from "./drafts/client-draft-routes";
 import { clientAuthentication, type AiEnv } from "./guard/client-auth";
@@ -41,12 +43,14 @@ export interface ClientStores {
   types: DraftTypes;
   tasks: TaskStore;
   discover: DiscoverSource;
+  /** The reads of the catalog and the collection (US-KI-11), over the same functions as the app's routes. */
+  collection: CollectionReadSource;
   sources?: SourceClient;
 }
 
 /**
  * Client side of the AI interface (AI token): the protected resource metadata (RFC 9728), the session of the
- * connection (US-KI-07), the daily status (US-KI-02), research, drafts, Discover and tasks, and the MCP endpoint
+ * connection (US-KI-07), the daily status (US-KI-02), research, drafts, Discover, tasks, the catalog and the collection (US-KI-11), and the MCP endpoint
  * `POST /mcp` that offers them as tools. Every route runs behind the guard of its right (KI-R8).
  */
 export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientStores): Hono<AiEnv> {
@@ -98,6 +102,7 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
   client.route("/", clientResearchRoutes(guard, stores, clock));
   client.route("/", clientDraftRoutes(guard, { drafts, types, log, tasks }, clock));
   client.route("/", clientDiscoverRoutes(guard, { discover, drafts, log }, clock));
+  client.route("/", clientReadRoutes(guard, { collection: stores.collection, log }, clock));
   client.route("/", clientTaskRoutes(guard, { tasks, log }, opt.resource, clock));
   // The MCP endpoint (E-04): JSON-RPC tools over the routes above, with the caller's token and the same guards.
   client.route(
