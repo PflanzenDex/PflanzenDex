@@ -7,6 +7,11 @@ import { useWriteAction } from "../../../../kernel";
 import { Layer } from "./layer/layer";
 import { Outcome } from "./outcome/outcome";
 import { SharingSection } from "./sharing-section/sharing-section";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../../social.de.json";
+
+// `t` names the token in the write callbacks of this file.
+const tx = texts(table);
 
 /** The four layers with lists: requests, news, friends and sharing (US-QS-20), each with the outcome of its own writes. */
 export function ListLayers(props: {
@@ -20,7 +25,7 @@ export function ListLayers(props: {
   const ending = useWriteAction(token, props.onWritten);
   return (
     <>
-      <Layer id="requests" title="Anfragen">
+      <Layer id="requests" title={tx("layers.requests")}>
         <Outcome message={answer.message} error={answer.error} />
         <RequestList
           requests={data.requests}
@@ -29,17 +34,20 @@ export function ListLayers(props: {
             void answer.run(
               (t) => answerFriendRequest(api, t, { requestId: id, decision }),
               decision === "accept"
-                ? `Du bist jetzt mit ${nameOf(
-                    data.requests.incoming.find((r) => r.id === id)?.otherName ?? null,
-                  )} befreundet.`
-                : "Anfrage abgelehnt. Die Person erfährt nur, dass sie nicht angenommen wurde.",
+                ? tx("friends.accepted", {
+                    name: nameOf(
+                      data.requests.incoming.find((r) => r.id === id)?.otherName ?? null,
+                    ),
+                  })
+                : tx("friends.declined"),
             )
           }
         />
       </Layer>
-      <Layer id="news" title="Neu bei Freunden">
-        <div className="flex flex-col gap-3">
-          <FriendsBanner api={api} token={token} />
+      <Layer id="news" title={tx("layers.news")}>
+        {/* One screen (issue 1157): the banner is one row and the feed pages by the free height of the layer. */}
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <FriendsBanner api={api} token={token} compact />
           <FeedBlock
             api={api}
             token={token}
@@ -47,7 +55,7 @@ export function ListLayers(props: {
           />
         </div>
       </Layer>
-      <Layer id="friends" title="Meine Freunde">
+      <Layer id="friends" title={tx("layers.friends")}>
         <Outcome message={ending.message} error={ending.error} />
         <FriendList
           friends={data.friends}
@@ -55,12 +63,12 @@ export function ListLayers(props: {
           onEnd={(f) =>
             void ending.run(
               (t) => endFriendship(api, t, f.id),
-              `Freundschaft mit ${nameOf(f.name)} beendet. Ihr seht nichts mehr voneinander; deine eigenen Daten bleiben.`,
+              tx("friends.ended", { name: nameOf(f.name) }),
             )
           }
         />
       </Layer>
-      <Layer id="sharing" title="Was Freunde sehen">
+      <Layer id="sharing" title={tx("layers.sharing")}>
         <SharingSection data={data} api={api} token={token} onWritten={props.onWritten} />
       </Layer>
     </>
@@ -70,22 +78,11 @@ export function ListLayers(props: {
 /** The layer "Mehr erfahren" (`?sheet=help`): the full explanation of friends and sharing that the screen keeps to one line. */
 export function HelpLayer() {
   return (
-    <Layer id="help" title="Freunde und Freigaben">
+    <Layer id="help" title={tx("layers.help")}>
       <div className="flex flex-col gap-3">
-        <p>
-          Freunde findest du nur über einen Code, den ihr außerhalb der App austauscht. Wer ihn
-          eingibt, schickt dir eine Anfrage; erst wenn du sie annimmst, seid ihr befreundet.
-        </p>
-        <p>
-          Was Freunde von dir sehen, bestimmst du; ohne deine Freigabe sieht niemand etwas. Von
-          einer freigegebenen Pflanze sehen Freunde nur die Art, den Namen, das Fangdatum und ob es
-          ein Steckling ist, nie Standort, Messwerte, Behandlungen, Kennzeichen oder Preise.
-        </p>
-        <p>
-          Ein Zurückziehen gilt ab dem nächsten Abruf; was schon angezeigt wurde, lässt sich nicht
-          zurückholen. „Alles privat“ in den Einstellungen setzt alle Freigaben aus, ohne sie zu
-          löschen.
-        </p>
+        <p>{tx("help.code")}</p>
+        <p>{tx("help.sharing")}</p>
+        <p>{tx("help.withdraw")}</p>
       </div>
     </Layer>
   );

@@ -7,6 +7,10 @@ import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../
 import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { SwapCard } from "./swap-card/swap-card";
 import { swapTitle } from "./swap-text";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../swap.de.json";
+
+const t = texts(table);
 
 const KEY = ["swap", "swaps"] as const;
 type Token = () => Promise<string | undefined>;
@@ -50,7 +54,8 @@ function Section(props: {
     <Pager
       items={props.rows}
       pageSize={props.size}
-      label="Anfragen"
+      fit
+      label={t("requests.title")}
       getKey={(r) => r.s.swapId}
       renderItem={({ s, caption }) => (
         <div className="grid gap-1">
@@ -87,10 +92,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
   };
   if (data.received.length === 0 && data.sent.length === 0)
     return (
-      <p className="rounded-lg border border-dashed border-border p-3">
-        Noch keine Anfragen. Sobald ein Freund dein Angebot anfragt oder du ein Angebot anfragst,
-        siehst du den Stand hier.
-      </p>
+      <p className="rounded-lg border border-dashed border-border p-3">{t("requests.none")}</p>
     );
   return (
     <>
@@ -106,8 +108,8 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
       )}
       <Section
         rows={[
-          ...data.received.map((s) => ({ s, caption: "Anfrage an dich" })),
-          ...data.sent.map((s) => ({ s, caption: "Deine Anfrage" })),
+          ...data.received.map((s) => ({ s, caption: t("requests.received") })),
+          ...data.sent.map((s) => ({ s, caption: t("requests.sent") })),
         ]}
         size={size}
         busy={write.running}
@@ -129,11 +131,14 @@ export function SwapRequests(props: { api: string; token: Token }) {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadSwaps(api, t), [api]);
   return (
-    <section aria-labelledby="swap-requests-title" className="flex min-w-0 flex-col gap-3">
+    <section
+      aria-labelledby="swap-requests-title"
+      className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
+    >
       <h2 id="swap-requests-title" className="sr-only">
-        Anfragen
+        {t("requests.title")}
       </h2>
-      <LoadFrame queryKey={KEY} token={token} load={load} loadingText="Anfragen werden geladen …">
+      <LoadFrame queryKey={KEY} token={token} load={load} loadingText={t("requests.loading")}>
         {(data: SwapOverview) => <Body data={data} api={api} token={token} onWritten={reload} />}
       </LoadFrame>
     </section>

@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1407,
+  "maxTotal": 1343,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -734,10 +734,6 @@
       "count": 11
     },
     {
-      "file": "packages/web/src/social/feed/feed-block/feed-block.tsx",
-      "count": 11
-    },
-    {
       "file": "packages/web/src/social/feed/requests-notice/requests-notice.tsx",
       "count": 4
     },
@@ -756,10 +752,6 @@
     {
       "file": "packages/web/src/social/pages/friends-page/friend-layers/add-friend-layer/add-friend-layer.tsx",
       "count": 2
-    },
-    {
-      "file": "packages/web/src/social/pages/friends-page/friend-layers/friend-layers.tsx",
-      "count": 8
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friend-tiles/friend-tiles.tsx",
@@ -790,10 +782,6 @@
       "count": 13
     },
     {
-      "file": "packages/web/src/swap/pages/exchange/exchange.tsx",
-      "count": 8
-    },
-    {
       "file": "packages/web/src/swap/pages/match/match-card/match-card.tsx",
       "count": 10
     },
@@ -814,10 +802,6 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/swap/parts/friend-offers/friend-offers.tsx",
-      "count": 16
-    },
-    {
       "file": "packages/web/src/swap/parts/friend-offers/request-form/request-form.tsx",
       "count": 7
     },
@@ -834,14 +818,6 @@
       "count": 6
     },
     {
-      "file": "packages/web/src/swap/parts/offer-list/offer-list.tsx",
-      "count": 9
-    },
-    {
-      "file": "packages/web/src/swap/parts/swap-history/swap-history.tsx",
-      "count": 8
-    },
-    {
       "file": "packages/web/src/swap/parts/swap-requests/handover-box/handover-box.tsx",
       "count": 7
     },
@@ -852,10 +828,6 @@
     {
       "file": "packages/web/src/swap/parts/swap-requests/swap-card/swap-card.tsx",
       "count": 17
-    },
-    {
-      "file": "packages/web/src/swap/parts/swap-requests/swap-requests.tsx",
-      "count": 4
     },
     {
       "file": "packages/web/src/today/today-page/today-row/today-row.tsx",

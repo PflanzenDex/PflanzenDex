@@ -17,6 +17,10 @@ import {
 import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { RequestForm } from "./request-form/request-form";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../swap.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -27,12 +31,12 @@ function Filters(props: { value: ExchangeFilters; onChange: (v: ExchangeFilters)
   return (
     <div className="flex flex-wrap items-center gap-x-3">
       <label className="grid gap-1 text-sm font-medium">
-        <span className="sr-only">Art des Angebots</span>
+        <span className="sr-only">{t("friends.typeLabel")}</span>
         <Select
           value={value.type}
           onChange={(e) => props.onChange({ ...value, type: e.target.value as OfferType | "" })}
         >
-          <option value="">Alle Arten</option>
+          <option value="">{t("friends.allTypes")}</option>
           {(Object.keys(TYPE_TEXT) as OfferType[]).map((t) => (
             <option key={t} value={t}>
               {TYPE_TEXT[t]}
@@ -44,7 +48,7 @@ function Filters(props: { value: ExchangeFilters; onChange: (v: ExchangeFilters)
         checked={value.lack}
         onChange={(e) => props.onChange({ ...value, lack: e.target.checked })}
       >
-        Fehlt mir
+        {t("friends.lackFilter")}
       </Checkbox>
     </div>
   );
@@ -67,18 +71,18 @@ function Card(props: {
         <span className="text-sm italic">{o.speciesLatin}</span>
       )}
       <span className="text-sm">
-        {o.ownerName ?? "Ein Freund"} · {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
+        {o.ownerName ?? t("friends.someone")} · {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
       </span>
-      {o.wish && <span className="text-sm">Wunsch: {o.wish}</span>}
-      {o.note && <span className="text-sm">Hinweis: {o.note}</span>}
+      {o.wish && <span className="text-sm">{t("card.wish", { wish: o.wish })}</span>}
+      {o.note && <span className="text-sm">{t("card.note", { note: o.note })}</span>}
       <span className="text-sm text-muted-foreground">{healthText(o.health)}</span>
       {o.phase === "dormancy" && (
-        <span className="text-sm text-muted-foreground">Zurzeit in der Ruhephase.</span>
+        <span className="text-sm text-muted-foreground">{t("card.dormancy")}</span>
       )}
       <span className="mt-1 flex flex-wrap items-center gap-2">
-        {o.lack === true && <Badge variant="default">Fehlt dir</Badge>}
-        {o.onWishlist && <Badge variant="outline">Steht auf deiner Wunschliste</Badge>}
-        {o.requested && <Badge variant="secondary">Angefragt</Badge>}
+        {o.lack === true && <Badge variant="default">{t("friends.lack")}</Badge>}
+        {o.onWishlist && <Badge variant="outline">{t("friends.onWishlist")}</Badge>}
+        {o.requested && <Badge variant="secondary">{t("friends.requested")}</Badge>}
       </span>
       {!o.requested && !props.open && (
         <div className="mt-1">
@@ -86,10 +90,10 @@ function Card(props: {
             type="button"
             size="touch"
             variant="outline"
-            aria-label={`Anfragen: ${title(o)}`}
+            aria-label={t("friends.request", { title: title(o) })}
             onClick={props.onOpen}
           >
-            Anfragen
+            {t("friends.requestButton")}
           </Button>
         </div>
       )}
@@ -121,11 +125,7 @@ function Offers(props: {
     if (write.message) setOpenId(null);
   }, [write.message]);
   if (data.offers.length === 0)
-    return (
-      <p className="rounded-lg border border-dashed border-border p-3">
-        Zurzeit bietet kein Freund etwas an. Lade Freunde ein oder schau später wieder vorbei.
-      </p>
-    );
+    return <p className="rounded-lg border border-dashed border-border p-3">{t("friends.none")}</p>;
   return (
     <>
       {write.message && (
@@ -141,7 +141,8 @@ function Offers(props: {
       <Pager
         items={data.offers}
         pageSize={size}
-        label="Angebote von Freunden"
+        fit
+        label={t("friends.title")}
         getKey={(o) => o.offerId}
         renderItem={(o) => (
           <Card
@@ -154,7 +155,7 @@ function Offers(props: {
             onSend={(input) =>
               void write.run(
                 (t) => requestOffer({ api, token: t }, o.offerId, input),
-                `Deine Anfrage für ${title(o)} ist gesendet. Du siehst die Antwort hier, sobald der Freund sie gegeben hat.`,
+                t("friends.sent", { title: title(o) }),
               )
             }
           />
@@ -177,12 +178,15 @@ export function FriendOffers(props: { api: string; token: Token }) {
   const reload = useInvalidate(key);
   const load = useCallback((t: string) => loadFriendOffers(api, t, filters), [api, filters]);
   return (
-    <section aria-labelledby="friend-offers-title" className="flex min-w-0 flex-col gap-3">
+    <section
+      aria-labelledby="friend-offers-title"
+      className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
+    >
       <h2 id="friend-offers-title" className="sr-only">
-        Angebote von Freunden
+        {t("friends.title")}
       </h2>
       <Filters value={filters} onChange={setFilters} />
-      <LoadFrame queryKey={key} token={token} load={load} loadingText="Angebote werden geladen …">
+      <LoadFrame queryKey={key} token={token} load={load} loadingText={t("friends.loading")}>
         {(data: FriendOffersData) => (
           <Offers data={data} api={api} token={token} onRequested={reload} />
         )}

@@ -1,5 +1,5 @@
 {
-  "maxEntries": 159,
+  "maxEntries": 153,
   "entries": [
     {
       "screen": "account",
@@ -594,12 +594,6 @@
     },
     {
       "screen": "friends-exchange",
-      "size": "1024x768",
-      "page": 1.02,
-      "inner": 1
-    },
-    {
-      "screen": "friends-exchange",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
@@ -639,12 +633,6 @@
     },
     {
       "screen": "friends-exchange-part-requests",
-      "size": "1024x768",
-      "page": 1.24,
-      "inner": 1
-    },
-    {
-      "screen": "friends-exchange-part-requests",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
@@ -654,12 +642,6 @@
       "screen": "friends-exchange-part-requests",
       "size": "360x640@200%",
       "page": 2.76,
-      "inner": 1
-    },
-    {
-      "screen": "friends-exchange-sheet-offer",
-      "size": "1024x768",
-      "page": 1.05,
       "inner": 1
     },
     {
@@ -711,28 +693,10 @@
     },
     {
       "screen": "friends-sheet-news",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.22
-    },
-    {
-      "screen": "friends-sheet-news",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "friends-sheet-news",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.35
-    },
-    {
-      "screen": "friends-sheet-news",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1.14
     },
     {
       "screen": "friends-sheet-requests",
