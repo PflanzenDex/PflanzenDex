@@ -115,7 +115,8 @@ test("US-KI-07: a fresh realm gets scopes, audience mapper, resource client, reg
     );
     const [mapper] = state.mappers[scope.id];
     assert.equal(mapper.protocolMapper, "oidc-audience-mapper");
-    assert.equal(mapper.config["included.client.audience"], "pflanzendex-mcp");
+    assert.equal(mapper.config["included.custom.audience"], URL_MCP, "aud is the resource URL");
+    assert.equal(mapper.config["included.client.audience"], undefined);
   }
   const resource = state.clients.find((c) => c.clientId === "pflanzendex-mcp");
   assert.equal(resource.attributes.resource_url, URL_MCP);
@@ -154,15 +155,55 @@ test("US-KI-07: a second run changes nothing (idempotent)", async () => {
   assert.deepEqual(writes, []);
 });
 
-test("US-KI-07: a changed APP_URL updates only the resource client", async () => {
+test("US-KI-07: a changed APP_URL updates the resource client and the three audience mappers", async () => {
   const { kc, state, writes } = fakeRealm();
   await setupMcpRealm(kc, { resourceUrl: URL_MCP });
   writes.length = 0;
-  const changes = await setupMcpRealm(kc, { resourceUrl: "https://new.example.test/api/mcp" });
-  assert.equal(changes.length, 1, changes.join("\n"));
-  assert.equal(writes.length, 1);
+  const next = "https://new.example.test/api/mcp";
+  const changes = await setupMcpRealm(kc, { resourceUrl: next });
+  assert.equal(changes.length, 4, changes.join("\n"));
+  assert.equal(writes.length, 4);
   const resource = state.clients.find((c) => c.clientId === "pflanzendex-mcp");
-  assert.equal(resource.attributes.resource_url, "https://new.example.test/api/mcp");
+  assert.equal(resource.attributes.resource_url, next);
+  for (const list of Object.values(state.mappers))
+    assert.equal(list[0].config["included.custom.audience"], next);
+});
+
+test("US-KI-07: the old client-audience mapper is replaced by the resource URL, then left alone", async () => {
+  const { kc, state, writes } = fakeRealm();
+  await setupMcpRealm(kc, { resourceUrl: URL_MCP });
+  // The state the first job left on the test realm: aud = the client id `pflanzendex-mcp` (TE-16).
+  for (const list of Object.values(state.mappers))
+    list[0].config = {
+      "included.client.audience": "pflanzendex-mcp",
+      "id.token.claim": "false",
+      "access.token.claim": "true",
+      "introspection.token.claim": "true",
+    };
+  writes.length = 0;
+  const changes = await setupMcpRealm(kc, { resourceUrl: URL_MCP });
+  assert.deepEqual(changes, [
+    "updated audience mapper on pflanzen:read",
+    "updated audience mapper on pflanzen:draft",
+    "updated audience mapper on pflanzen:write",
+  ]);
+  for (const list of Object.values(state.mappers)) {
+    assert.equal(list.length, 1, "updated in place, no second mapper");
+    assert.equal(list[0].config["included.custom.audience"], URL_MCP);
+    assert.equal(list[0].config["included.client.audience"], undefined);
+  }
+  writes.length = 0;
+  assert.deepEqual(await setupMcpRealm(kc, { resourceUrl: URL_MCP }), []);
+  assert.deepEqual(writes, []);
+});
+
+test("US-KI-07: a mapper that has the URL but also a client audience is cleaned", async () => {
+  const { kc, state } = fakeRealm();
+  await setupMcpRealm(kc, { resourceUrl: URL_MCP });
+  const [first] = Object.values(state.mappers);
+  first[0].config["included.client.audience"] = "pflanzendex-mcp";
+  assert.equal((await setupMcpRealm(kc, { resourceUrl: URL_MCP })).length, 1);
+  assert.equal(first[0].config["included.client.audience"], undefined);
 });
 
 test("US-KI-07: a scope that drifted (token scope off) is put back", async () => {
