@@ -7,6 +7,7 @@ import {
   evaluate,
   judgeBaseline,
   judgeScreen,
+  lostScreen,
   type Baseline,
   type Raw,
   type Size,
@@ -105,11 +106,7 @@ test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
   }
 });
 
-function sizeOf(name: string): Size {
-  const found = SIZES.find((s) => s.name === name);
-  if (!found) throw new Error(`unknown size ${name}`);
-  return found;
-}
+const sizeOf = (name: string) => SIZES.find((s) => s.name === name) as Size;
 
 const raw = (over: Partial<Raw>): Raw => ({
   scrollHeight: 640,
@@ -189,4 +186,15 @@ test.describe("QG-U8 self-test: the one-screen judgement", () => {
     const sizes = new Set(SIZES.map((s) => s.name));
     expect(judgeBaseline(readBaseline(), new Set(SCREENS.map((s) => s.id)), sizes)).toEqual([]);
   });
+});
+
+test("QG-U8 self-test: a borderline entry that fits in one run does not flip the gate", () => {
+  const size = sizeOf("360x640");
+  const listed = buildBaseline([evaluate("s", size, raw({ scrollHeight: 650 }))]);
+  expect(judgeScreen([evaluate("s", size, raw({}))], listed)).toEqual([]);
+});
+
+test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
+  expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
+  expect(lostScreen("http://x/today?sheet=plan", "http://x/today")).toBeNull();
 });

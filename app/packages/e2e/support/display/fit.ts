@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { JSHandle, Page } from "@playwright/test";
-import type { Raw } from "./judge";
+import { lostScreen, type Raw } from "./judge";
 
 // Browser side of the one-screen gate (issue 1137): the register, opening a screen, measuring one window size.
 
@@ -54,6 +54,8 @@ function locatorOf(page: Page, step: Step) {
 export async function openScreen(page: Page, base: string, screen: Screen): Promise<void> {
   await page.goto(base + screen.path);
   await settle(page);
+  const lost = lostScreen(base + screen.path, page.url());
+  if (lost) throw new Error(`${screen.id}: ${lost}`);
   for (const step of screen.steps ?? []) {
     const failed = (error: Error) => {
       throw new Error(`${screen.id}: click ${JSON.stringify(step)} failed: ${error.message}`);

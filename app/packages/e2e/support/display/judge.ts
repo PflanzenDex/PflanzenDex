@@ -30,6 +30,8 @@ const WORSE_RATIO = 0.02;
 const CAP_WIDTH = 1921;
 const CENTER_PX = 2;
 const WORSE_PX = 2;
+/** Borderline values move by hundredths between runs (2026-11-02): an entry this close to the limit that fits once is noise. */
+const STALE_MARGIN = 0.03;
 
 export interface Region {
   scrollHeight: number;
@@ -136,13 +138,17 @@ function worse(r: Result, e: BaselineEntry): string | null {
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
+/** Whether a listed entry was clearly over the limit, so that fitting now means it was fixed, not noise. */
+const clearlyOver = (e: BaselineEntry) =>
+  (e.cap ?? 0) > 0 || (e.hOver ?? 0) > 0 || Math.max(e.page, e.inner) > 1 + STALE_MARGIN;
+
 /** The violations of one screen against the baseline: new failures, listed ones that got worse, listed ones that fit now. */
 export function judgeScreen(results: readonly Result[], baseline: Baseline): string[] {
   return results.flatMap((r) => {
     const label = `${r.screen} at ${r.size}`;
     const entry = entryOf(baseline, r);
     if (r.failures.length === 0)
-      return entry
+      return entry && clearlyOver(entry)
         ? [`${label}: fits now, remove it from the baseline (npm run one-screen:write)`]
         : [];
     if (!entry) return [`${label}: ${r.failures.join("; ")}`];
@@ -180,4 +186,12 @@ export function buildBaseline(results: readonly Result[]): Baseline {
       return e;
     });
   return { maxEntries: entries.length, entries };
+}
+
+/** A lost sign-in sends the app back to Heute; measuring that would pass silently (P-10), so name it. */
+export function lostScreen(wantedUrl: string, landedUrl: string): string | null {
+  const wanted = new URL(wantedUrl).pathname;
+  const landed = new URL(landedUrl).pathname;
+  if (wanted === "/" || wanted.startsWith("/today") || !landed.startsWith("/today")) return null;
+  return `opened ${wanted} but landed on ${landed} (signed out?)`;
 }
