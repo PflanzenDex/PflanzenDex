@@ -7,6 +7,7 @@ import {
   leadingTextField,
 } from "@/components/shared/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/lib/use-breakpoint";
+import { cn } from "@/lib/utils";
 import { restoreFocus, useLayer } from "./use-layer";
 import { LayerHostContext } from "./layer-host/layer-host";
 
@@ -73,7 +74,7 @@ function LayerBody({
     <div data-layer-body="" className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Below lg the sheet or dialog around it scrolls, so a sticky bar inside sticks to that; from lg the pane scrolls this region. */}
       {/* A list that pages by free height (`data-page-fit`) needs this region to pass the height down (issue 1156). */}
-      <div className={`min-h-0 flex-1 lg:overflow-y-auto lg:overscroll-contain ${FIT_FLEX}`}>
+      <div className={cn("min-h-0 flex-1 lg:overflow-y-auto lg:overscroll-contain", FIT_FLEX)}>
         {children}
       </div>
       {primaryAction ? <div className="flex flex-col gap-2">{primaryAction}</div> : null}

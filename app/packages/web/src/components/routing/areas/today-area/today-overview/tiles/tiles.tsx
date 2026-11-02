@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/lib/text-rules/texts";
-import table from "@/today/today.de.json";
+import { todayTexts } from "@/today";
 import type { DrawTile, TodayTile } from "../../today-area";
 
-const t = texts(table);
+const t = texts(todayTexts);
 
 /** What a category tile and the summary need of one list (US-QS-18). */
 export type CategoryCount = {
