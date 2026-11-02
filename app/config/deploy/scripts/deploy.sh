@@ -44,6 +44,18 @@ check_db_volume() {
   return 1
 }
 
+# The proxy reads proxy.Caddyfile (a bind mount of one file) only when it starts, and a checkout replaces the file, so
+# `up` leaves a running proxy on the old routes when nothing else about it changed (seen on test: the well-known routes
+# of #1060 were missing, TE-16). Recreate it when the file it serves differs from the checkout.
+refresh_proxy() {
+  local inside outside
+  inside="$("${compose[@]}" exec -T proxy sha256sum /etc/caddy/Caddyfile 2> /dev/null | cut -d' ' -f1)" || true
+  outside="$(sha256sum proxy.Caddyfile | cut -d' ' -f1)"
+  if [ "$inside" = "$outside" ]; then return 0; fi
+  echo "proxy.Caddyfile changed; recreating the proxy"
+  "${compose[@]}" up -d --no-deps --force-recreate proxy || { echo "recreating the proxy failed" >&2; return 1; }
+}
+
 # Builds and starts <ref>, waits for api health, then smoke-tests it. Returns non-zero on any failure.
 deploy_ref() {
   local ref="$1"
@@ -54,6 +66,7 @@ deploy_ref() {
   check_db_volume || return 1
   # The one-shot `migrate` service runs before the api (docker-compose.yml); a failed migration fails this step.
   "${compose[@]}" up -d --build --remove-orphans || { echo "compose up failed (build or migration); logs: ${compose[*]} logs migrate" >&2; return 1; }
+  refresh_proxy || return 1
   wait_healthy api 30 || return 1
   # The sign-in service starts slowly on a small host (first start imports the realm), hence the longer wait.
   wait_healthy keycloak 90 || return 1
