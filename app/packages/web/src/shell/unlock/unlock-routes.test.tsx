@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppRoutes } from "../../routes";
@@ -55,11 +55,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The page's own h1, not the one of the loading skeleton (issue 1097). */
+const pageHeading = () =>
+  waitFor(() => {
+    const h = screen.getByRole("heading", { level: 1 });
+    expect(h.hasAttribute("data-route-fallback")).toBe(false);
+    return h;
+  });
+
 describe("US-ONB-05 routes of locked functions", () => {
   it("US-ONB-05 the address of a locked destination opens the lock page, never a blank page or a redirect", async () => {
     renderAt("/friends", [entry("friends", "locked")]);
-    expect(await screen.findByRole("heading", { level: 1, name: "Freunde" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Jetzt freischalten" })).toBeTruthy();
+    // The loading skeleton names the destination too (issue 1097); the lock page brings its own heading and button.
+    expect(await screen.findByRole("button", { name: "Jetzt freischalten" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Freunde" })).toBeTruthy();
   });
 
   it("US-ONB-05 the exchange shows its own lock page while swapping is locked", async () => {
@@ -69,7 +78,7 @@ describe("US-ONB-05 routes of locked functions", () => {
 
   it("US-ONB-05 / FR-ONB-06 with everything open (style many) the address opens the function as before", async () => {
     renderAt("/friends", [entry("friends", "open")]);
-    await screen.findByRole("heading", { level: 1 });
+    await pageHeading();
     expect(screen.queryByRole("button", { name: "Jetzt freischalten" })).toBeNull();
     expect(screen.queryByText("Noch gesperrt")).toBeNull();
   });
@@ -79,7 +88,7 @@ describe("US-ONB-05 routes of locked functions", () => {
       entry("wishlist", "locked"),
       entry("equipment", "locked"),
     ]);
-    await screen.findByRole("heading", { level: 1 });
+    await pageHeading();
     expect(screen.queryByRole("link", { name: /Wunschliste: lege noch 3 Pflanzen an/ })).toBeNull();
     expect(screen.queryByText(/Noch gesperrt/)).toBeNull();
     expect(screen.queryByRole("link", { name: /Ausrüstung:/ })).toBeNull();
