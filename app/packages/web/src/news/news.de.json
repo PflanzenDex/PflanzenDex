@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "KI-Clients: Dein eigener KI-Client (zum Beispiel Claude oder ChatGPT) kann sich jetzt über die Adresse „https://<deine App>/api/mcp“ mit PflanzenDex verbinden, als eigener Connector. Er sieht dann Werkzeuge für den Tagesstatus, deine Aufträge, Entwürfe, Vorschläge aus „Entdecken“ und die Fotos deiner Messungen, mit genau den Rechten, die du unter „Konto“ → „KI-Clients“ erlaubst. Was er liefert, bleibt ein Entwurf, bis du ihn übernimmst. Der kopierte Auftragstext nennt jetzt auch die Werkzeuge.",
     "Sammlung: Bei „Arten“ wählst du die Anordnung (Pokédex oder Schwierigkeit) jetzt wie bei „Pflanzen“ über den Knopf „Ansicht“ an derselben Stelle. Bei „Wünsche“ und „Geräte“ bleibt der Platz frei, damit beim Wechseln nichts springt.",
     "Suchfelder: Statt des kleinen blauen Kreuzes des Browsers gibt es jetzt in jedem Suchfeld einen eigenen, gut treffbaren Knopf „Suche leeren“. Er erscheint, sobald du etwas getippt hast, leert das Feld und setzt den Cursor wieder hinein.",
     "Seitenleiste am Computer: „Prüfliste“ und „Betreiber“ stehen unter der Überschrift „Verwaltung“, damit klar ist, wozu sie gehören.",

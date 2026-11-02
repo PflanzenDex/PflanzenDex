@@ -105,4 +105,34 @@ describe("US-KI-05 check_image_source", () => {
   it("US-KI-05 without a token the route is closed", async () => {
     expect((await get("nope", FILE)).status).toBe(401);
   });
+
+  it("US-KI-05 the MCP tool check_image_source answers like the route, a foreign host as a tool error with its code", async () => {
+    const call = async (url: string) => {
+      const res = await app.request("/mcp", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${ai("pflanzen:read")}`,
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "check_image_source", arguments: { url } },
+        }),
+      });
+      return ((await res.json()) as { result: Record<string, any> }).result; // eslint-disable-line @typescript-eslint/no-explicit-any
+    };
+    const found = await call(FILE);
+    expect(found["isError"]).toBe(false);
+    expect(found["structuredContent"]).toEqual({
+      checked: true,
+      license: "CC BY 4.0",
+      source: FILE,
+    });
+    const foreign = await call("https://evil.example/a.jpg");
+    expect(foreign["isError"]).toBe(true);
+    expect(foreign["structuredContent"].error.code).toBe("wish.image_source_unsupported");
+  });
 });

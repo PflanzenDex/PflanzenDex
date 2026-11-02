@@ -579,7 +579,24 @@ Each runbook: what you see, what to check, what to do. Restoring a backup and th
 - **You see:** a leaked secret (GitHub secret scanning, QG-S1), unusual sign-ins, or a report through `SECURITY.md`.
 - **Do, in this order:** rotate the affected secret (database password in `.env` on the host, S3 keys) and restart the stack; if tokens may be affected, end all sessions at the sign-in service; take `make backup` and keep the logs; follow `SECURITY.md` for disclosure. Personal data affected: the operator has to decide about the notification duty (GDPR Art. 33, 72 hours).
 
-**Open:** runbooks for the AI interface, reminders and the GDPR deletion follow with their features (KI, MON, US-ACC-04); operator messages for errors and dead jobs (NFR-18) and operating metrics (NFR-16) do not exist yet.
+**Open:** runbooks for reminders and the GDPR deletion follow (the AI interface: see "AI access: the MCP endpoint") with their features (KI, MON, US-ACC-04); operator messages for errors and dead jobs (NFR-18) and operating metrics (NFR-16) do not exist yet.
+
+## AI access: the MCP endpoint (E-04, ADR 0013)
+
+The keeper's AI client (Claude, ChatGPT, ...) connects to `https://<APP_HOST>/api/mcp` (`docs/guides/reference/app.md`, "AI access: the MCP endpoint"). What the operator sets up, as a checklist:
+
+1. **Switch on `ai`.** In production an empty `FEATURES` switches everything off; the endpoint then answers 404 to every signed-in client. Set `FEATURES=ai` (or `social,ai`) in `.env`, or switch it on per account (US-DEV-06).
+2. **`AI_RESOURCE_URL` needs nothing.** `docker-compose.yml` derives it from `APP_URL` (`${APP_URL}/api/mcp`); it is the audience the endpoint expects and the `resource` of its metadata. A GitHub environment variable `AI_RESOURCE_URL` has no effect on the stack. Only browser-based clients that send an `Origin` other than `APP_URL` need `AI_ALLOWED_ORIGINS` (comma-separated, not in the compose file yet); server-side clients send no `Origin`.
+3. **Proxy.** `proxy.Caddyfile` forwards `/api/*` (also `/api/.well-known/oauth-protected-resource`, the address the 401 names) and `/.well-known/oauth-protected-resource*` on the app host to the API. Check after a deploy: `curl -s https://<APP_HOST>/api/.well-known/oauth-protected-resource` and `curl -s https://<APP_HOST>/.well-known/oauth-protected-resource/api/mcp` both return `{"resource":"https://<APP_HOST>/api/mcp", ...}`; `curl -si -X POST https://<APP_HOST>/api/mcp -H 'content-type: application/json' -d '{}'` answers 401 with `WWW-Authenticate: Bearer resource_metadata="https://<APP_HOST>/api/.well-known/oauth-protected-resource"`.
+4. **Keycloak (realm `pflanzendex`; not in the realm file yet, so with `kcadm.sh` or the admin console over the SSH tunnel; spike TE-15 findings 1 to 6):**
+   - [ ] Create the optional client scopes `pflanzen:read`, `pflanzen:draft`, `pflanzen:write` (type OpenID Connect, "Include in token scope" on) and allow them in the client policy "Allowed Client Scopes" of anonymous registration.
+   - [ ] Register the resource: a client (e.g. `pflanzendex-mcp`, bearer-only) with the attribute `resource_url` = `https://<APP_HOST>/api/mcp`, and an **audience mapper** on each `pflanzen:*` scope that adds that URL to `aud` (without it Keycloak answers `invalid_target`; with the `resource-indicators` feature on).
+   - [ ] Enable the features `cimd,resource-indicators` (`KC_FEATURES`; both experimental in 26.8, an update risk).
+   - [ ] Client registration: anonymous DCR with the "Trusted Hosts" policy set to `client-uris-must-match` and the hosts `claude.ai`, `chatgpt.com` (no sender IP check); or a pre-registered public client per AI provider with its redirect URI.
+   - [ ] Restrict PKCE to S256 with a client policy (Keycloak also advertises `plain`).
+   - [ ] Optional: a mapper that puts the client's name into the claim `client_name` (else the list "KI-Clients" shows the client id).
+   - [ ] Consent page: names client, requested rights and that the AI provider receives what the client retrieves (US-KI-06; theme text).
+5. **Connect a real client** (Claude: Settings, Connectors, "Add custom connector", URL `https://<APP_HOST>/api/mcp`) and record the result in TE-16 (#181): the spike saw Claude's CIMD document rejected by Keycloak 26.8.0.
 
 ## Open (needs hardware, a domain or a decision)
 

@@ -130,7 +130,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   bindToday(app, pool, auth, today);
   app.route(
     "/",
-    aiAccessRoutes(pool, auth, opt.ai && { ...opt.ai, features }, {
+    aiAccessRoutes(pool, auth, opt.ai && { version: opt.version, ...opt.ai, features }, {
       status: todayStatusSource(pool, today),
       photo: measurementPhotoSourceFor(pool, opt.media),
       discover: discoverSourceFor(pool, opt.zoneStock),
