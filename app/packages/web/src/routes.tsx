@@ -24,6 +24,7 @@ import {
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import {
   PATHS,
+  destinationHeading,
   type LinkTarget,
   type View,
 } from "./components/shared/navigation/nav-model/navigation/navigation";
@@ -88,7 +89,7 @@ export function AppRoutes(props: {
   const { pathname } = useLocation();
   const locks = useLockPages(api, s.token);
   return (
-    <RouteBoundary resetKey={pathname}>
+    <RouteBoundary resetKey={pathname} heading={destinationHeading(pathname)}>
       <AchievementNewsBanner api={api} token={s.token} />
       <Routes>
         <Route

@@ -89,5 +89,7 @@ function waitFor(find: () => HTMLElement | null, done: (el: HTMLElement | null) 
   return stop;
 }
 
-const mainHeading = () => document.querySelector<HTMLElement>("#inhalt h1");
+// The heading of a route's loading skeleton is not the view's own (issue 1097): focusing it would lose the focus when the page replaces it.
+const mainHeading = () =>
+  document.querySelector<HTMLElement>("#inhalt h1:not([data-route-fallback])");
 const mainRegion = () => document.getElementById("inhalt");

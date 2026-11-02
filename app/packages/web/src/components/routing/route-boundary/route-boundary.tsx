@@ -60,11 +60,16 @@ export class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> 
 /**
  * The one boundary around the routes (DS-08, DS-55): the shell renders at once, the page's skeleton shows while its
  * chunk loads, a failed chunk shows an error with retry. `resetKey` is the address; changing it clears an error.
+ * `heading` names a destination while it loads, so a cold load shows where you are (issue 1097).
  */
-export function RouteBoundary({ resetKey, children }: BoundaryProps) {
+export function RouteBoundary({
+  resetKey,
+  heading,
+  children,
+}: BoundaryProps & { heading?: string | null }) {
   return (
     <ChunkErrorBoundary resetKey={resetKey}>
-      <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
+      <Suspense fallback={<PageSkeleton {...(heading ? { heading } : {})} />}>{children}</Suspense>
     </ChunkErrorBoundary>
   );
 }

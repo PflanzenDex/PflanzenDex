@@ -179,3 +179,18 @@ export function viewTitle(pathname: string): string {
   if (pathname.startsWith("/unlock/")) return pageTitle("Funktion freischalten");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }
+
+/**
+ * The destinations whose page heading is the name of their entry at every width (measured 2026-11-02, issue 1097).
+ * "Konto" is not one: from 1024 px it opens "Einstellungen" with its own heading.
+ */
+const HEADED: readonly View[] = ["today", "collection", "discover", "friends"];
+
+/**
+ * The heading of a destination while its page loads (US-QS-14, DS-55, issue 1097): the name of its entry, which its
+ * page shows as its h1 too; `null` for any other address, whose page names itself.
+ */
+export function destinationHeading(pathname: string): string | null {
+  const entry = ENTRIES.find((e) => HEADED.includes(e.id) && PATHS[e.id] === pathname);
+  return entry?.text ?? null;
+}
