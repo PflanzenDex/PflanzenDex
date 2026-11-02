@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Heute und Artenprofil: Die Ebene „Weitere Aufgaben“ zeigt so viele Aufgaben pro Seite, wie Platz haben, und „Mein Pflegeprofil“ nutzt auf Tablets und am Computer die ganze Breite der Ebene.",
     "Heute: Neues von Freunden und die noch nicht geöffneten Funktionen sind jetzt Kacheln neben „Behandlungen“, „Gießen“ und „Fehlt noch“; ein Tipp öffnet sie als Ebene. Die Ebenen „Fehlt noch“ und „Weitere Funktionen“ zeigen ihre Einträge in Seiten, die genau auf den Bildschirm passen, statt darin zu scrollen.",
     "KI-Clients: Dein KI-Client kann jetzt im Katalog nach Arten suchen (lateinischer oder deutscher Name, Synonym) und deine Pflanzen, Standorte, Lichtzonen und Messungen lesen, jeweils mit Namen statt nur interner Nummern. So sieht er vor einem Vorschlag, dass es eine Art schon gibt; schlägt er sie trotzdem vor, nennt die App ihm die vorhandene Art. Er sieht nur deine eigenen Daten und braucht dafür das Recht „Lesen“.",
     "Große Schrift: Im Katalog werden Wörter wie „Schwierigkeit“ nicht mehr mitten im Wort getrennt. Bei sehr großer Schrift lassen die Treffer dafür das Blatt-Symbol weg.",

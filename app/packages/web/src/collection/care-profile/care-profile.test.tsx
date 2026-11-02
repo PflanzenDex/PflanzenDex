@@ -143,6 +143,17 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
     expect(screen.getByText(/Hinweis der Art: Alle zwei Wochen gießen/)).toBeTruthy();
   });
 
+  it("US-BES-09 · US-QS-15 · issue 1182 the profiles take two columns by the width of their container, not of the window", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    const card = await screen.findByRole("heading", { name: "Bogenhanf" });
+    const list = card.closest("ul") as HTMLElement;
+    // In the 384 px pane of the species profile the container is narrow, so one column; the page keeps two.
+    expect(list.className).toContain("@2xl:grid-cols-2");
+    expect(list.className).not.toContain("lg:grid-cols-2");
+    expect(list.parentElement?.className).toContain("@container");
+  });
+
   it("US-BES-09 shows my deviation where there is one and marks it as mine", async () => {
     fakeServer({
       entries: [
