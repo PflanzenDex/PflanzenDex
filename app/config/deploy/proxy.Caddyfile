@@ -49,6 +49,13 @@
 	handle /.well-known/oauth-protected-resource* {
 		reverse_proxy api:3000
 	}
+	# Every other well-known address (oauth-authorization-server, openid-configuration, ...) is a plain 404, never the
+	# SPA's index page: an MCP client probes these and fails on HTML ("Unrecognized token '<'") instead of falling back
+	# to the authorization server that the metadata names (the sign-in host, TE-16). The web image holds no such files.
+	# Caddy tries the longer path above first.
+	handle /.well-known/* {
+		respond 404
+	}
 	handle_path /api/* {
 		handle /health/* {
 			respond 404
