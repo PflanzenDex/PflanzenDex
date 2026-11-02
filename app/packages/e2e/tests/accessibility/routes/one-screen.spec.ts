@@ -1,8 +1,8 @@
 import { expect } from "@playwright/test";
-import { WEB, test } from "../../support/display/one-screen/sign-in";
-import { readBaseline, saveResults } from "../../support/display/reporter";
-import { measure, openScreen, settle } from "../../support/display/one-screen/fit";
-import { SCREENS, type Screen } from "../../support/display/one-screen/register";
+import { WEB, test } from "../../../support/display/one-screen/sign-in";
+import { readBaseline, saveResults } from "../../../support/display/reporter";
+import { measure, openScreen, settle } from "../../../support/display/one-screen/fit";
+import { SCREENS, type Screen } from "../../../support/display/one-screen/register";
 import {
   SIZES,
   evaluate,
@@ -10,13 +10,13 @@ import {
   type Raw,
   type Size,
   type Result,
-} from "../../support/display/one-screen/judge";
+} from "../../../support/display/one-screen/judge";
 import {
   buildBaseline,
   judgeBaseline,
   judgeScreen,
   lostScreen,
-} from "../../support/display/one-screen/baseline";
+} from "../../../support/display/one-screen/baseline";
 
 // US-QS-15, DS-58, QG-U8 (issue 1137): every screen of the register fits at every size; opened once, resized through the
 // sizes, writes aborted. `make one-screen`; the project "one-screen" is not part of `make e2e`.

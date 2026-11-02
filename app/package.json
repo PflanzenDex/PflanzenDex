@@ -58,6 +58,9 @@
     "e2e": "npm run e2e -w @pflanzendex/e2e",
     "one-screen": "npm run one-screen -w @pflanzendex/e2e",
     "one-screen:write": "npm run one-screen:write -w @pflanzendex/e2e",
+    "a11y-routes": "npm run a11y-routes -w @pflanzendex/e2e",
+    "a11y-routes:write": "npm run a11y-routes:write -w @pflanzendex/e2e",
+    "a11y-routes:baseline": "npm run a11y-routes:baseline -w @pflanzendex/e2e --",
     "changelog": "node tools/check/release/check-changelog.mjs",
     "storybook": "npm run storybook -w @pflanzendex/web",
     "build-storybook": "npm run build-storybook -w @pflanzendex/web"

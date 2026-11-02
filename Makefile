@@ -12,7 +12,7 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 DB_MEMORY ?= 512m
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -112,6 +112,13 @@ one-screen: $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer 
 
 one-screen-report: ## The page/inner table of the last `make one-screen` run as Markdown (job summary); report only, never fails (QG-U8)
 	@cat $(APP)/packages/e2e/one-screen-report/report.md 2>/dev/null || echo "No one-screen report: run make one-screen first."
+
+a11y-routes: $(if $(CI),,db-up) auth-up migrate browsers ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; A11Y_ROUTES_WORKERS=<n>, `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && TAXONOMY_BUILD=off npm run a11y-routes
+
+a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
+	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."
 
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
 	cd $(APP) && node tools/check/quality/check-crap.mjs $(ARGS)
