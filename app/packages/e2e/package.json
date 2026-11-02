@@ -7,10 +7,14 @@
     "typecheck": "tsc --noEmit -p .",
     "e2e": "playwright test --project=mobil --project=desktop",
     "one-screen": "playwright test --project=one-screen --workers=${ONE_SCREEN_WORKERS:-4}",
-    "one-screen:write": "ONE_SCREEN_WRITE=1 npm run one-screen"
+    "one-screen:write": "ONE_SCREEN_WRITE=1 npm run one-screen",
+    "a11y-routes": "playwright test --project=a11y-routes --workers=${A11Y_ROUTES_WORKERS:-4}",
+    "a11y-routes:write": "A11Y_ROUTES_WRITE=1 npm run a11y-routes",
+    "a11y-routes:baseline": "tsx support/display/a11y/baseline-cli.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
-    "@playwright/test": "1.64.1"
+    "@playwright/test": "1.64.1",
+    "tsx": "4.23.15"
   }
 }

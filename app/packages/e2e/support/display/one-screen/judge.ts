@@ -1,5 +1,5 @@
 // The pure part of the one-screen gate (US-QS-15, DS-58, issue 1137, QG-U8): what a measurement means. The comparison
-// with the baseline is in baseline.ts. No browser here, so the self-test in tests/accessibility/one-screen.spec.ts runs
+// with the baseline is in baseline.ts. No browser here, so the self-test in tests/accessibility/routes/one-screen.spec.ts runs
 // without one.
 
 export type SizeKind = "fit" | "cap" | "text200";

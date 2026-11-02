@@ -20,6 +20,7 @@ Closes #
 - [ ] Errors handled (stable `error_code`), nothing swallowed silently (P-10)
 - [ ] Input validated, no secrets in code, access and tenant isolation checked (P-04)
 - [ ] Module boundaries respected, no magic strings
+- [ ] Accessibility (FR-QG-24): if a view, flow or control changed, say here how it was tested by keyboard (Tab path, focus visible, Escape); `make a11y-routes` shows no new finding
 - [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/news/news.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
 - [ ] Spec status and counters in `docs/specs/product/readme.md` updated in this PR
 - [ ] New API routes and core operations named in `docs/guides/reference/app.md`, new shared UI components in the inventory of `docs/guides/reference/design-system.md` (`make reference-check`, US-QG-10)

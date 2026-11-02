@@ -333,6 +333,45 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # QG-U7 (FR-QG-24, issue 467): axe (WCAG 2.2 A and AA, serious and critical) and the keyboard walk over every view and
+  # layer at 390x844 and 1920x1080. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run
+  # with several workers. Runs on the same paths as one-screen (its `changes` output), and by hand.
+  a11y-routes:
+    needs: changes
+    if: >-
+      !cancelled() && needs.changes.result == 'success'
+      && (github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true' && github.event.action != 'edited'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      - run: make a11y-routes
+      - name: Findings per rule and screen
+        if: always()
+        run: make a11y-routes-report >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a11y-routes-report
+          path: |
+            app/packages/e2e/a11y-routes-report
+            app/packages/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
   # QG-C1 for the PR title (the squash into `dev` and the merge into `main` use it as the commit message)
   # and QG-U3 (`feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`).
   # Not for drafts: `make claim` opens them with a placeholder title; `ready_for_review` runs this job.
@@ -417,6 +456,7 @@ jobs:
         lighthouse,
         e2e,
         one-screen,
+        a11y-routes,
       ]
     if: always()
     runs-on: ubuntu-24.04
@@ -438,8 +478,9 @@ jobs:
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
           ONE_SCREEN: ${{ needs.one-screen.result }}
+          A11Y_ROUTES: ${{ needs.a11y-routes.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN" "$A11Y_ROUTES"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;

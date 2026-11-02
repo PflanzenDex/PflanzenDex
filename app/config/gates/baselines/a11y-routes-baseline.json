@@ -1,0 +1,110 @@
+{
+  "maxEntries": 15,
+  "entries": [
+    {
+      "screen": "collection-plants-course",
+      "size": "390x844",
+      "kind": "keyboard",
+      "rule": "not-hidden",
+      "count": 5
+    },
+    {
+      "screen": "collection-plants-course",
+      "size": "1920x1080",
+      "kind": "keyboard",
+      "rule": "not-hidden",
+      "count": 1
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "1920x1080",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 10
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "1920x1080",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 10
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "1920x1080",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 2
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "1920x1080",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 2
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "390x844",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 2
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "1920x1080",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 2
+    },
+    {
+      "screen": "welcome-keycloak-anmelden",
+      "size": "390x844",
+      "kind": "keyboard",
+      "rule": "focus-visible",
+      "count": 2
+    },
+    {
+      "screen": "welcome-keycloak-anmelden",
+      "size": "1920x1080",
+      "kind": "keyboard",
+      "rule": "focus-visible",
+      "count": 2
+    },
+    {
+      "screen": "welcome-keycloak-passwort-vergessen",
+      "size": "390x844",
+      "kind": "keyboard",
+      "rule": "focus-visible",
+      "count": 1
+    },
+    {
+      "screen": "welcome-keycloak-passwort-vergessen",
+      "size": "1920x1080",
+      "kind": "keyboard",
+      "rule": "focus-visible",
+      "count": 1
+    },
+    {
+      "screen": "welcome-keycloak-registrieren",
+      "size": "390x844",
+      "kind": "keyboard",
+      "rule": "focus-visible",
+      "count": 4
+    },
+    {
+      "screen": "welcome-keycloak-registrieren",
+      "size": "1920x1080",
+      "kind": "keyboard",
+      "rule": "focus-visible",
+      "count": 4
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "1920x1080",
+      "kind": "axe",
+      "rule": "label-content-name-mismatch",
+      "count": 2
+    }
+  ]
+}
