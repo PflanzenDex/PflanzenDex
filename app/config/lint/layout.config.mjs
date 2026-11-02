@@ -38,8 +38,9 @@ export default {
     { path: "app", maxUnits: 6 },
     { path: "app/packages/*/src", maxUnits: Infinity },
     { path: "app/packages/*/src/*", maxUnits: 10 },
-    // The gate scripts: one folder per gate (US-QG-07 added db-indexes as the sixth); a seventh needs a new reason.
-    { path: "app/tools/check/code", maxUnits: 6 },
+    // The gate scripts: one folder per gate (US-QG-07 added db-indexes as the sixth, FR-QG-26 the UI text rule as the
+    // seventh: a language rule fits none of the other folders); an eighth needs a new reason.
+    { path: "app/tools/check/code", maxUnits: 7 },
     // One runbook per operational task, looked up by name in an incident; folding them into one file hides them
     // (#985, US-QG-07). 10 is a starting value (assumption); an eleventh needs a new reason or subfolders.
     { path: "docs/guides/operations", maxUnits: 10 },

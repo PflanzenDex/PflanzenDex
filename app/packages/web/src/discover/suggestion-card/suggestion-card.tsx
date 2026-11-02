@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
 import { DifficultyStars, WikipediaSource } from "@/components/collector-card/collector-card";
+import table from "../discover.de.json";
+import { texts } from "@/lib/text-rules/texts";
+
+const t = texts(table);
 
 /** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
 function Picture({ s }: { s: Suggestion }) {
@@ -18,7 +22,7 @@ function Picture({ s }: { s: Suggestion }) {
   return (
     <img
       src={s.imageUrl}
-      alt={`Bild von ${s.species}`}
+      alt={t("card.imageAlt", { species: s.species })}
       className="h-56 min-h-12 w-full shrink rounded-lg object-cover"
     />
   );
@@ -29,11 +33,11 @@ function Picture({ s }: { s: Suggestion }) {
  * voice (WCAG 3.1.2) and a visible hint names a foreign language; where it is unknown no language is claimed (P-08).
  */
 function Summary({ s, more }: { s: Suggestion; more: boolean }) {
-  if (s.summary === null) return <p className="m-0 text-sm">Keine Beschreibung vorhanden.</p>;
+  if (s.summary === null) return <p className="m-0 text-sm">{t("card.noSummary")}</p>;
   const foreign = s.summaryLanguage === "en";
   return (
     <div className="grid gap-1">
-      {foreign && <p className="m-0 text-xs text-muted-foreground">Text auf Englisch</p>}
+      {foreign && <p className="m-0 text-xs text-muted-foreground">{t("card.foreignLanguage")}</p>}
       <p
         {...(s.summaryLanguage === null ? {} : { lang: s.summaryLanguage })}
         className={cn("m-0 text-sm", !more && "line-clamp-3")}
@@ -47,14 +51,19 @@ function Summary({ s, more }: { s: Suggestion; more: boolean }) {
 function Facts({ s }: { s: Suggestion }) {
   return (
     <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-      <dt className="text-muted-foreground">Lichtzone</dt>
-      <dd className="m-0">{s.lightZone === null ? UNKNOWN : `Zone ${s.lightZone}`}</dd>
-      <dt className="text-muted-foreground">Schwierigkeit</dt>
+      <dt className="text-muted-foreground">{t("card.zone")}</dt>
+      <dd className="m-0">
+        {s.lightZone === null ? UNKNOWN : t("card.zoneValue", { zone: s.lightZone })}
+      </dd>
+      <dt className="text-muted-foreground">{t("card.difficulty")}</dt>
       <dd className="m-0">
         {s.difficulty === null ? (
           UNKNOWN
         ) : (
-          <DifficultyStars level={s.difficulty} label={`${s.difficulty} von 3`} />
+          <DifficultyStars
+            level={s.difficulty}
+            label={t("card.difficultyLabel", { level: s.difficulty })}
+          />
         )}
       </dd>
       {attributeRows(s.attributes).flatMap(([name, value]) => [
@@ -75,8 +84,8 @@ function Details({ s, more }: { s: Suggestion; more: boolean }) {
     <div className={cn("grid gap-3", !more && "hidden")}>
       <Facts s={s} />
       <AttributeSources sources={s.attributeSources ?? []} />
-      <section aria-label="Gründe">
-        <h3 className="m-0 mb-1 text-sm font-semibold">Warum diese Art?</h3>
+      <section aria-label={t("card.reasonsLabel")}>
+        <h3 className="m-0 mb-1 text-sm font-semibold">{t("card.reasonsTitle")}</h3>
         <ul className="m-0 grid list-disc gap-1 pl-5 text-sm">
           {s.reasons.map((r) => (
             <li key={r}>{r}</li>
@@ -123,13 +132,13 @@ export function SuggestionCard(props: {
       <div>
         {s.exploration && (
           <Badge variant="secondary" className="mb-1">
-            Mal etwas anderes
+            {t("card.exploration")}
           </Badge>
         )}
         <h2 id="suggestion-title" tabIndex={-1} className="m-0 scroll-mb-24 text-xl font-semibold">
           {s.species}
         </h2>
-        <p className="m-0 text-base">{s.germanName ?? "Deutscher Name unbekannt"}</p>
+        <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>
       </div>
       <Summary s={s} more={more} />
       <Button
@@ -139,11 +148,11 @@ export function SuggestionCard(props: {
         className="w-fit"
         onClick={() => setMore((m) => !m)}
       >
-        {more ? "Weniger" : "Mehr"}
+        {more ? t("card.less") : t("card.more")}
       </Button>
       <Details s={s} more={more} />
       <WikipediaSource
-        label="Bild und Text"
+        label={t("card.sourceLabel")}
         sourceUrl={s.sourceUrl}
         shown={s.summary !== null || s.imageUrl !== null}
         className="inline-flex min-h-11 items-center"

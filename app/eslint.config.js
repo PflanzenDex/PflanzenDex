@@ -7,6 +7,7 @@ import sonarjs from "eslint-plugin-sonarjs";
 import security from "eslint-plugin-security";
 import { minimatch } from "minimatch";
 import { walkCode, hasMarker } from "./tools/check/code/check-boundaries.mjs";
+import uiText from "./tools/check/code/ui-text/eslint-ui-text.mjs";
 
 // Files with `MAX_LINES_IGNORE: <reason>` in their first 5 lines are exempt from max-lines (US-QG-03).
 // Thresholds live once in quality-limits.json (FR-QG-16); per-area overrides are merged over `default`.
@@ -54,6 +55,31 @@ const baselineOverrides = [...new Set(baseline.map((e) => e.file))].map((file) =
   }
   return { files: [file], rules };
 });
+
+// UI texts come from message tables (FR-QG-26, QG-C8). Known literals are counted per file in ui-text-baseline.json;
+// a listed file may keep up to its count. tools/check/code/ui-text/check-ui-text.mjs runs with UI_TEXT_BASELINE=off and
+// keeps the list exact. Tests, stories and the story harness hold sample data, not UI texts.
+const uiTextFiles = ["packages/web/src/**/*.ts", "packages/web/src/**/*.tsx"];
+const uiTextIgnores = [
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/*.stories.tsx",
+  "packages/web/src/lib/page-stories/**",
+  "packages/web/src/lib/test-setup/**",
+];
+const uiTextBaseline =
+  process.env.UI_TEXT_BASELINE === "off"
+    ? []
+    : JSON.parse(
+        fs.readFileSync(
+          new URL("./config/gates/baselines/ui-text-baseline.json", import.meta.url),
+          "utf8",
+        ),
+      ).entries;
+const uiTextOverrides = uiTextBaseline.map((e) => ({
+  files: [e.file],
+  rules: { "ui-text/no-literal-text": ["error", { max: e.count }] },
+}));
 
 // Files with `COMPLEXITY_IGNORE: <reason>` in the first 5 lines are exempt from the function metric rules (US-QG-08).
 const complexityIgnored = walkCode("packages")
@@ -109,6 +135,13 @@ export default defineConfig([
     },
   },
   ...baselineOverrides,
+  {
+    files: uiTextFiles,
+    ignores: uiTextIgnores,
+    plugins: { "ui-text": uiText },
+    rules: { "ui-text/no-literal-text": "error" },
+  },
+  ...uiTextOverrides,
   ...(maxLinesIgnored.length ? [{ files: maxLinesIgnored, rules: { "max-lines": "off" } }] : []),
   ...(complexityIgnored.length
     ? [
