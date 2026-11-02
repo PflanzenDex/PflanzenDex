@@ -35,10 +35,12 @@ export type OperationClass = "read" | "draft" | "write" | "never";
  * not released. Later stories add their operations here; a test checks that the class matches the right.
  */
 export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
-  // Released (US-KI-02 adds `status`, US-KI-01 the reversible writes).
+  // Released (US-KI-02 adds `status`, US-KI-01 the reversible writes). `session` tells the client its own rights.
+  session: "read",
   status: "read",
   // Content results are drafts (KI-R3): the keeper adopts them in the app.
   propose_draft: "draft",
+  draft_types: "read",
   measurement_photo: "read",
   // Tasks from the app (US-KI-08): the client lists them, takes one over or declines it; the result is a draft.
   // Discover (US-ENT-08): the deck is read; "Yes"/"No" needs the right to draft, and runs at once only with "write".

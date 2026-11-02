@@ -69,6 +69,11 @@ const app = createApp({
     resource: aiResource,
     issuer,
     verifier: createTokenVerifier({ issuer, audience: aiResource, ...jwks }),
+    // Browser origins the MCP endpoint accepts besides its own (comma-separated); requests without Origin pass.
+    allowedOrigins: (process.env["AI_ALLOWED_ORIGINS"] ?? "")
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean),
   },
   version: process.env["APP_VERSION"],
   commit: process.env["GIT_SHA"],

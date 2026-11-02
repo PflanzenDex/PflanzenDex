@@ -39,6 +39,10 @@ export interface AiAccessOptions {
   readonly dailyLimit?: number;
   /** Replaces the PostgreSQL adapter (tests only). */
   readonly connections?: ConnectionStore;
+  /** Further browser origins the MCP endpoint accepts besides the interface's own (`AI_ALLOWED_ORIGINS`). */
+  readonly allowedOrigins?: readonly string[];
+  /** The app version the MCP endpoint reports as its server version. */
+  readonly version?: string | undefined;
   /** The feature switch (US-DEV-06): while "ai" is off for the account every route of the interface answers 404. */
   readonly features?: FeatureAccess;
 }
@@ -51,8 +55,9 @@ export interface AiAccessOptions {
  * and `POST /ai/connections/:id/allow-again` change them. Managing connections is never released to a connection itself
  * (FR-KI-10): the AI audience has no route here.
  *
- * Client side (AI token): `GET /mcp/session` tells a connected client its name and effective rights;
- * `/.well-known/oauth-protected-resource` (RFC 9728) points the client to the authorization server.
+ * Client side (AI token): `POST /mcp` is the MCP endpoint (JSON-RPC tools over the routes below); `GET /mcp/session`
+ * tells a connected client its name and effective rights; `/.well-known/oauth-protected-resource` (RFC 9728) points the
+ * client to the authorization server.
  */
 export function aiAccessRoutes(
   pool: Pool,

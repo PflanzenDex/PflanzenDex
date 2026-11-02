@@ -7,7 +7,7 @@ import {
 } from "@pflanzendex/core";
 import { Hono } from "hono";
 import { errorBody, statusFor } from "../../kernel";
-import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../client-auth";
+import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
 
 /** Draft routes of the AI client (AI token): deliver a draft (right "create drafts") and list the known types. */
 export function clientDraftRoutes(

@@ -25,3 +25,17 @@ A module **`ai`** (`core/src/ai`, `db/src/ai`, `api/src/ai`, `web/src/ai`) with 
 - Reading and writing operations of the later stories (KI-01, KI-02, ...) use `clientAuthentication(options, rightNeeded(op))` and `authorizeClient`; they never create a second path to the data (KI-R1).
 - **User tasks** (they need the production sign-in service or real accounts): create the optional realm scopes `pflanzen:read|draft|write`, the audience mapper and the client registration with `resource_url` (spike TE-15 findings 1 to 3, 5, 6); restrict PKCE to S256; a consent page that names client, requested rights and that the keeper's AI provider receives the retrieved data (US-KI-06); optionally a `client_name` mapper; set `AI_RESOURCE_URL`; connect real clients and fix the Keycloak CIMD/DCR gaps (TE-16).
 - Revisit when immediate revocation of the token itself is needed (introspection, ADR 0009) or when the sign-in service gets a consent step of its own.
+
+## Addendum (2026-10-30): the MCP endpoint, own code instead of the SDK
+
+**Context.** Only REST routes under `/mcp/*` existed; `POST /mcp` answered 404, so no real MCP client could connect (#1059). The current MCP revision is `2026-07-28` (stateless, version per request in `_meta` and headers, `server/discover`, no sessions, no GET stream); clients that speak the handshake-based revisions (`2025-11-25` and earlier) are still the common case.
+
+**Decision.** `POST /mcp` is a small own implementation in `api/src/ai/mcp` (about 500 lines with the tool catalog), not the official `@modelcontextprotocol/sdk`:
+
+- The SDK (1.32.2, checked 2026-10-30) speaks only up to `2025-11-25`; the current revision would need our own code anyway.
+- It brings 17 runtime dependencies (among them `express`, `cors`, `express-rate-limit`, `raw-body`, `cross-spawn`, `eventsource`, `ajv`, `zod`) into the API for what is here one POST route: more supply-chain surface for the audit and Renovate gates, a second web framework next to Hono, and a second validation library next to the core schemas.
+- We need none of its parts that are hard: no SSE, no sessions, no server-to-client requests, no resumability; the transport is "one JSON request, one JSON answer".
+
+The endpoint is dual-era: modern `2026-07-28` and legacy `2025-11-25`, `2025-06-18`, `2025-03-26` through `initialize` (free: same tool shapes, stateless). Batches (allowed only in `2025-03-26`) are refused. Each tool is an adapter over its existing route: it calls the route in-process with the caller's token, so guard, rights, tenant isolation, log and daily limit stay in one place (KI-R1, KI-R8); the right of a tool comes from `AI_OPERATION_CLASSES` (`session` and `draft_types` added as `read`). The 401 challenge names `<interface prefix>/.well-known/oauth-protected-resource` (behind the proxy `/api/.well-known/...`), and the API also serves the RFC 9728 path-inserted address, which the proxy forwards.
+
+**Consequences.** Protocol contract tests and an end-to-end client flow over HTTP with signed tokens replace the SDK's conformance (`docs/guides/reference/app.md`). A protocol revision is our change to make: revisit when we need streaming, server-to-client input (MRTR, elicitation) or `subscriptions/listen`, or when an SDK supports the current revision on Web-standard `Request` with few dependencies.
