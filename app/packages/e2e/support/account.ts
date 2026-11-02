@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Test accounts are created through the Keycloak admin API (verified email, final password), so the flows
 // under test start at the login page. Registration with mail confirmation is covered by docs/records/test-logs/acc-01.md.
@@ -15,13 +18,20 @@ export interface TestAccount {
 function adminPassword(): string {
   const fromEnv = process.env["KC_ADMIN_PASSWORD"];
   if (fromEnv) return fromEnv;
-  const file = new URL("../../../config/dev/.env", import.meta.url);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed path next to this file
+  // Only the main checkout holds the `.env` of the shared Keycloak (`make auth-up`, issue 1187); a worktree reads it there.
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const common = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+    cwd: here,
+    encoding: "utf8",
+  }).trim();
+  const file = join(dirname(resolve(here, common)), "app", "config", "dev", ".env");
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed path in the main checkout, no user input
   const line = fs
     .readFileSync(file, "utf8")
     .split("\n")
     .find((l) => l.startsWith("KC_ADMIN_PASSWORD="));
-  if (!line) throw new Error("KC_ADMIN_PASSWORD missing: run `make auth-up` first");
+  if (!line)
+    throw new Error("KC_ADMIN_PASSWORD missing: run `make auth-up` in the main checkout first");
   return line.slice("KC_ADMIN_PASSWORD=".length).trim();
 }
 
