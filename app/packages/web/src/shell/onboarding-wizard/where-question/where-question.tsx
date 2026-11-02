@@ -147,7 +147,7 @@ export function WhereQuestion(props: {
       )}
       {error && <p role="alert">{error}</p>}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button type="button" variant="secondary" disabled={saving} onClick={() => void save()}>
+        <Button type="button" disabled={saving} onClick={() => void save()}>
           Hier steht sie
         </Button>
         <Button type="button" variant="ghost" onClick={() => props.onDone()}>

@@ -13,7 +13,10 @@ export function zoneInsightText(distribution: Distribution): string {
   return names.length > 0 ? `Dünnste Zone: ${names.join(", ")}` : "Lichtzonen ansehen";
 }
 
-/** The insight row of the plants (US-QS-19): one line, a target of at least 44 px, opens the layer "zones". */
+/**
+ * The insight row of the plants (US-QS-19): one line, a target of at least 44 px, opens the layer "zones". At a larger
+ * text size it wraps at whole words only and never gets narrower than its longest word (issue 1113).
+ */
 export function ZoneInsightRow({ distribution }: { distribution: Distribution }) {
   const { openLayer, open } = useLayer(ZONES_LAYER);
   return (
@@ -24,10 +27,10 @@ export function ZoneInsightRow({ distribution }: { distribution: Distribution })
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="min-w-0 flex-1 justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
+      className="flex-1 justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
     >
       <Gauge aria-hidden="true" className="size-4 shrink-0" />
-      <span className="truncate">{zoneInsightText(distribution)}</span>
+      <span className="break-normal">{zoneInsightText(distribution)}</span>
     </Button>
   );
 }

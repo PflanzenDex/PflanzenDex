@@ -6,7 +6,7 @@ import { prepareStories } from "../../harness/story-test-helpers";
 import * as stories from "./heute.stories";
 
 prepareStories();
-const { Phone, NothingDue } = composeStories(stories);
+const { Phone, NothingDue, PhaseFirst } = composeStories(stories);
 
 describe("US-QS-14 · page story Heute", () => {
   afterEach(cleanup);
@@ -18,6 +18,22 @@ describe("US-QS-14 · page story Heute", () => {
     expect((await screen.findAllByText(/Läuse/)).length).toBeGreaterThan(0);
     expect(await screen.findByRole("button", { name: /Fehlt noch$/ })).toBeTruthy();
     expect(screen.queryByText(/wird geladen/)).toBeNull();
+  });
+
+  it("US-QS-18 the story with a treatment first has one Behandlungen entry, no tile and further tasks inline", async () => {
+    await Phone.run();
+    expect(
+      await screen.findByRole("button", { name: /^Behandlungen 2 · 1.überfällig$/ }),
+    ).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Zu Pflegephasen: Efeu" })).toBeTruthy();
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+  });
+
+  it("US-QS-18 the story with another item first shows the Behandlungen tile once", async () => {
+    await PhaseFirst.run();
+    expect(await screen.findByRole("button", { name: /^2Behandlungen$/ })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
   });
 
   it("US-QS-14 · the empty story says that nothing is due and offers the collection", async () => {

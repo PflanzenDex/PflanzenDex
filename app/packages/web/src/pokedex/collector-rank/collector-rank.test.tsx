@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { CollectorRank } from "./collector-rank";
+import { MemoryRouter } from "react-router";
+import { CollectorRank, ProgressRow } from "./collector-rank";
 
 afterEach(cleanup);
 
@@ -39,5 +40,19 @@ describe("US-POK-10 collector rank and progress", () => {
     expect(screen.getByText("Botaniker")).toBeTruthy();
     expect(screen.getByText("Höchster Rang erreicht")).toBeTruthy();
     expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+});
+
+describe("US-POK-10 the progress row reads as a button (issue 1045)", () => {
+  it("US-POK-10 the row is an outline button that opens the layer, not a grey pill", () => {
+    render(
+      <MemoryRouter>
+        <ProgressRow caught={3} uncounted={0} />
+      </MemoryRouter>,
+    );
+    const button = screen.getByRole("button", { name: /gefangen/ });
+    expect(button.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(button.className).toContain("text-primary");
+    expect(button.className).not.toContain("border-border");
   });
 });

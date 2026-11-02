@@ -7,11 +7,15 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
+import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { ViewLayer } from "@/components/sammlung-header/view-layer/view-layer";
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
-import { Button } from "@/components/ui/button/button";
+import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
+import { cn } from "@/lib/utils";
 import {
   PLANT_GROUPS,
+  SPECIES_SORTS,
   useManage,
   usePlantGroup,
   useSammlungView,
@@ -62,18 +66,12 @@ export function CollectionArea(props: {
   const managing = view === "plants" && manage.open && !props.newSpecies;
   const own = view === "plants" && (measure !== null || fullView || managing);
   const plantsOnScreen = view === "plants" && !own;
+  // One screen (US-QS-19, issue 1029): the frame fills the viewport and the list region takes the free height below it.
+  const fit = !own || managing;
   return (
-    <div className="flex min-h-0 gap-4" {...(own ? {} : { "data-fit-screen": "" })}>
-      <div className="min-w-0 flex-1">
-        {own ? null : (
-          <AreaHeader
-            view={view}
-            caption={caption}
-            onChoose={choose}
-            sort={sort}
-            onSort={chooseSort}
-          />
-        )}
+    <LayerHost className="min-h-0" {...(fit ? { "data-fit-screen": "", "data-fit-fill": "" } : {})}>
+      <div className={cn("min-w-0 flex-1", fit && "flex min-h-0 flex-col")}>
+        {own ? null : <AreaHeader view={view} caption={caption} onChoose={choose} />}
         <Suspense fallback={<PageSkeleton />}>
           <ModeBody
             {...props}
@@ -92,7 +90,15 @@ export function CollectionArea(props: {
       {plantsOnScreen ? (
         <GroupLayer group={group} onGroup={chooseGroup} onManage={() => manage.setOpen(true)} />
       ) : null}
-    </div>
+      {view === "species" ? (
+        <ViewLayer
+          group={sort}
+          options={SPECIES_SORTS}
+          onGroup={chooseSort}
+          label="Anordnung der Arten"
+        />
+      ) : null}
+    </LayerHost>
   );
 }
 
@@ -104,7 +110,7 @@ function GroupLayer(props: {
 }) {
   return (
     <Suspense fallback={null}>
-      <PlantsViewLayer options={PLANT_GROUPS} {...props} />
+      <PlantsViewLayer options={PLANT_GROUPS} label="Gruppierung der Pflanzen" {...props} />
     </Suspense>
   );
 }
@@ -146,18 +152,13 @@ function ModeBody(p: ModeProps) {
     );
   if (p.managing)
     return (
-      <div className="flex min-w-0 flex-col gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="self-start"
-          onClick={p.onCloseManage}
-        >
-          Zurück zur Sammlung
-        </Button>
-        <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} />
-      </div>
+      <FullView
+        headingId="light-title"
+        title="Standorte und Lichtzonen"
+        back={{ label: "Zurück zur Sammlung", onBack: p.onCloseManage }}
+      >
+        <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} hosted />
+      </FullView>
     );
   if (p.measure)
     return (

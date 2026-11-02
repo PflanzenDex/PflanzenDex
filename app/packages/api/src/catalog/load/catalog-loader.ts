@@ -14,10 +14,10 @@ export const OPERATOR_SUBJECT = "catalog-load";
 /**
  * Marks every loaded species (P-08): names and family are operator-entered taxonomic facts; difficulty, default level
  * and lux need stay unknown (null) until a value with a source is entered (#1003). The fill job adds sourced fields later.
- * Same text as migration 0095 writes into rows it cleared.
+ * The text is shown to users, so it is German (US-QS-24); migration 0098 renames the rows written before.
  */
 export const START_SOURCE =
-  "Curated start catalog (operator): names and family are taxonomic facts, entered by the operator; difficulty and light need unknown until a source is given";
+  "Kuratierter Startkatalog (Betreiber): Namen und Familie sind taxonomische Fakten, vom Betreiber eingetragen; Schwierigkeit und Lichtbedarf unbekannt, bis eine Quelle genannt wird";
 /** The operator releases its own entries as CC0 (names and taxonomy are facts). Assumption, revisable by the PO (E-25). */
 export const START_LICENSE = "CC0-1.0";
 

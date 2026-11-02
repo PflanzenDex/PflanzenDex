@@ -37,6 +37,20 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
     return () => void loaded.then((m) => m.dispose());
   }, []);
 
+  // The kind of input used last, on the page root (US-QS-15): tokens.css draws no frame on a heading focused after a
+  // tap or click; a key press brings the browser's focus ring back.
+  useEffect(() => {
+    const root = document.documentElement;
+    const pointer = () => root.setAttribute("data-input", "pointer");
+    const keyboard = () => root.setAttribute("data-input", "keyboard");
+    document.addEventListener("pointerdown", pointer, true);
+    document.addEventListener("keydown", keyboard, true);
+    return () => {
+      document.removeEventListener("pointerdown", pointer, true);
+      document.removeEventListener("keydown", keyboard, true);
+    };
+  }, []);
+
   useEffect(() => {
     document.title = title;
     const left = previous.current;

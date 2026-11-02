@@ -3,9 +3,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../kernel";
-import { OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
+import { OPTIONAL_FIELDS, OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
 import {
   EMPTY_FIELDS,
   equipmentSchema,
@@ -49,6 +50,17 @@ function usePrefill(
   }, [prefill, form]);
 }
 
+/** Sticky: the form may scroll inside the layer while the save button stays visible. */
+function SaveBar({ pending }: { pending: boolean }) {
+  return (
+    <div className="sticky bottom-0 bg-card py-2">
+      <Button type="submit" size="touch" className="w-full" disabled={pending}>
+        {pending ? "Speichert …" : "Equipment speichern"}
+      </Button>
+    </div>
+  );
+}
+
 /** The form to record equipment (US-EQU-01): only type and name are required, the rest stays unknown (P-08). */
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
@@ -71,11 +83,9 @@ export function EquipmentForm(props: {
   const submit = form.handleSubmit(async (values) => {
     if (await props.onSend(toEquipmentInput(values))) form.reset(EMPTY_FIELDS);
   });
+  // No heading here: the layer "Neues Equipment" already names the form (US-QS-24, issue 1032).
   return (
-    <section aria-labelledby="equipment-form-title" className="mt-7 flex flex-col gap-3">
-      <h2 id="equipment-form-title" className="text-xl font-semibold">
-        Equipment erfassen
-      </h2>
+    <section aria-label="Equipment erfassen" className="flex flex-col gap-3">
       {props.message && !refused && (
         <p role="status" className="rounded-lg border border-border p-3">
           {props.message}
@@ -95,10 +105,10 @@ export function EquipmentForm(props: {
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
-          <OptionalFields control={form.control} />
-          <Button type="submit" size="touch" disabled={pending}>
-            {pending ? "Speichert …" : "Equipment speichern"}
-          </Button>
+          <FormMoreFields control={form.control} names={OPTIONAL_FIELDS}>
+            <OptionalFields control={form.control} />
+          </FormMoreFields>
+          <SaveBar pending={pending} />
         </FormRoot>
       </Form>
     </section>

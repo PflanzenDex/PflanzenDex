@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/display/label/label";
 import { Select } from "@/components/ui/fields/select/select";
 import { loadCards } from "../../../collection";
 import { loadLocations, loadZones } from "../../../light";
-import { zoneLabel } from "@pflanzendex/core";
+import { cuttingLight, zoneLabel } from "@pflanzendex/core";
 
 type Token = () => Promise<string | undefined>;
 
@@ -31,7 +31,10 @@ async function loadPlaces(api: string, token: Token): Promise<Places | null> {
         .sort((a, b) => (a.caughtAt ?? "").localeCompare(b.caughtAt ?? ""))
         .at(-1)
     : undefined;
-  const suggested = l.value.find((x) => x.name === last?.location)?.id ?? "";
+  // A place under cutting light is no suggestion for a plant that is not a cutting (issue 1045, US-BES-04).
+  const cutting = cuttingLight(z.value);
+  const place = l.value.find((x) => x.name === last?.location);
+  const suggested = place && place.lightZoneId !== cutting?.id ? place.id : "";
   return { locations: l.value, zones: z.value, suggested };
 }
 

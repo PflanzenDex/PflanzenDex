@@ -1,5 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as React from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Dialog = DialogPrimitive.Root;
@@ -30,7 +31,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         )}
         {...props}
       >
-        <DialogPrimitive.Title className="text-lg font-semibold leading-none">
+        <DialogPrimitive.Title tabIndex={-1} className="text-lg font-semibold leading-none">
           {title}
         </DialogPrimitive.Title>
         {description ? (
@@ -43,7 +44,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           aria-label={closeLabel}
           className="absolute right-2 top-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-control forced-colors:border forced-colors:border-[color:ButtonText] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         >
-          <span aria-hidden="true">×</span>
+          <X aria-hidden="true" className="size-5" />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>

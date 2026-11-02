@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { DistributionView } from "../../insights/distribution-view/distribution-view";
 import { ArchivedList } from "../../archived/archived-list/archived-list";
 import { PlantLayer } from "./plant-layer/plant-layer";
+import { CareProfileLayer, careProfileLayerId } from "./plant-layer/plant-care-tab/plant-care-tab";
 import { plantLayerId } from "../rows/plant-tile/plant-tile";
 import { ZONES_LAYER } from "../rows/zone-insight/zone-insight";
 import { ARCHIVE_LAYER, type LayerProps } from "./layer-ids";
@@ -30,7 +31,9 @@ function ArchiveLayer(props: LayerProps) {
 /** The layers of the plants: the light zones, the archive and the plant of a chosen tile with its tabs (US-QS-19, US-QS-23). */
 export function PlantLayers(props: LayerProps) {
   const [params] = useSearchParams();
-  const plant = props.cards.find((c) => plantLayerId(c.id) === params.get("sheet"));
+  const sheet = params.get("sheet");
+  const plant = props.cards.find((c) => plantLayerId(c.id) === sheet);
+  const profile = props.cards.find((c) => careProfileLayerId(c.id) === sheet);
   return (
     <>
       <LayerSheet id={ZONES_LAYER} title="Lichtzonen">
@@ -58,6 +61,7 @@ export function PlantLayers(props: LayerProps) {
           onLightZone={props.onLightZone}
         />
       ) : null}
+      {profile ? <CareProfileLayer card={profile} access={props.photoAccess} /> : null}
     </>
   );
 }

@@ -1,9 +1,10 @@
+import { Leaf } from "lucide-react";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Button } from "@/components/ui/button/button";
 import { badge, difficultyText } from "../../shared/text";
 
-/** Hits per page: three compact rows fit a 360 x 640 px screen with the search above (starting value, assumption; US-QS-21). */
+/** Hits per page without a layout: three compact rows fit a 360 x 640 px screen with the search above (starting value, assumption; US-QS-21). With a layout the page takes the free height (issue 1029). */
 export const HITS_PER_PAGE = 3;
 
 const FOUND: Record<NameField, string> = {
@@ -28,15 +29,24 @@ function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
       <Button
         type="button"
         variant="ghost"
-        className="grid h-auto min-h-14 w-full justify-items-start gap-0 px-3.5 py-2 text-left font-normal"
+        className="flex h-auto min-h-14 w-full justify-start gap-3 px-3.5 py-2 text-left font-normal"
         onClick={() => onOpen(t.id)}
       >
-        <span className="text-base font-semibold">
-          <i>{t.latinName}</i>
+        {/* A fixed thumbnail slot keeps every name on the same left edge; species carry no photo yet, so no image is invented. */}
+        <span
+          aria-hidden="true"
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+        >
+          <Leaf className="size-5" />
         </span>
-        <span className="break-words text-sm text-muted-foreground">
-          {t.germanName ? `${t.germanName} · ` : ""}
-          {fact(t)}
+        <span className="grid min-w-0 flex-1 justify-items-start gap-0">
+          <span className="text-base font-semibold [overflow-wrap:anywhere]">
+            <i>{t.latinName}</i>
+          </span>
+          <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+            {t.germanName ? `${t.germanName} · ` : ""}
+            {fact(t)}
+          </span>
         </span>
       </Button>
     </div>
@@ -54,6 +64,7 @@ export function HitList(props: {
     <Pager
       items={props.hit}
       pageSize={HITS_PER_PAGE}
+      fit
       label="Treffer"
       resetKey={props.resetKey}
       getKey={(t) => t.id}

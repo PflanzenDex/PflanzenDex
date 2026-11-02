@@ -63,7 +63,9 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
               aria-hidden="true"
               className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted"
             />
-            <Drawer.Title className="px-4 pt-3 text-lg font-semibold">{title}</Drawer.Title>
+            <Drawer.Title tabIndex={-1} className="px-4 pt-3 text-lg font-semibold">
+              {title}
+            </Drawer.Title>
             {description ? (
               <Drawer.Description className="px-4 text-sm text-muted-foreground">
                 {description}

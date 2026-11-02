@@ -30,6 +30,13 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
 });
 const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} onSwipe={() => undefined} />);
 
+describe("US-QS-21 the German name scales with the text size (issue 1019)", () => {
+  it("US-QS-21 the German name is set in a rem size, not inherited, so 200 % text scales it with the title", () => {
+    show(suggestion({ germanName: "Zebra-Haworthie" }));
+    expect(screen.getByText("Zebra-Haworthie").className).toContain("text-base");
+  });
+});
+
 describe("US-QS-14 difficulty stars have a text alternative", () => {
   it("US-QS-14 hides the stars and reads the level as text, without an aria-label on the dd", () => {
     show(suggestion({ difficulty: 2 }));

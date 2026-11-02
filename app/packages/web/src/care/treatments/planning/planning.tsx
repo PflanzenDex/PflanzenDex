@@ -1,7 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
-import { Button } from "@/components/ui/button/button";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN, type ApiError, type Request } from "../../../kernel";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
@@ -15,8 +13,11 @@ import {
 } from "../../shared/api/treatments-api";
 
 type Token = () => Promise<string | undefined>;
-/** One request at a time (a double tap sends one); a refusal stays visible, a success says what was planned. */
-export function usePlanning(api: string, token: Token, onPlanned: () => void) {
+/**
+ * One request at a time (a double tap sends one); a refusal stays visible, a success says what was planned (`onPlanned`
+ * gets that text, so a layer that closes after the save can still confirm it).
+ */
+export function usePlanning(api: string, token: Token, onPlanned: (message: string) => void) {
   const busy = useRef(false);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -31,13 +32,19 @@ export function usePlanning(api: string, token: Token, onPlanned: () => void) {
       busy.current = false;
       setRunning(false);
       setError(r.ok ? null : r.error);
-      setMessage(r.ok ? treatmentsPlannedText(r.value) : null);
-      if (r.ok) onPlanned();
+      const text = r.ok ? treatmentsPlannedText(r.value) : null;
+      setMessage(text);
+      if (text !== null) onPlanned(text);
       return r.ok;
     },
     [api, token, onPlanned],
   );
-  return { running, message, error, send };
+  /** Forgets the last attempt (a closed layer must not show an old refusal when it opens again). */
+  const reset = useCallback(() => {
+    setMessage(null);
+    setError(null);
+  }, []);
+  return { running, message, error, send, reset };
 }
 
 const LOADING = "Pflanzen werden geladen …";
@@ -47,8 +54,6 @@ export function Planning(props: {
   request: Request<readonly TreatableSpecimen[]>;
   planning: ReturnType<typeof usePlanning>;
   focusRef: React.MutableRefObject<HTMLInputElement | null>;
-  /** The message of a success is shown by the host (the form is in a modal that closes). */
-  quiet?: boolean;
 }) {
   const { request, planning } = props;
   const specimens = request.value ?? [];
@@ -67,7 +72,7 @@ export function Planning(props: {
       }
       offline={request.offline}
     >
-      {planning.message && !props.quiet && <StatusNote>{planning.message}</StatusNote>}
+      {planning.message && <StatusNote>{planning.message}</StatusNote>}
       {planning.error && <RefusalAlert error={planning.error} />}
       <TreatmentForm
         specimens={specimens}
@@ -76,69 +81,5 @@ export function Planning(props: {
         focusRef={props.focusRef}
       />
     </RequestState>
-  );
-}
-
-/** The planning form in a sheet or dialog (US-QS-14): it closes after a successful save, the section says what was planned. */
-function PlanModal(props: {
-  request: Request<readonly TreatableSpecimen[]>;
-  planning: ReturnType<typeof usePlanning>;
-  focusRef: React.MutableRefObject<HTMLInputElement | null>;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const { planning } = props;
-  const send = async (input: TreatmentInput) => {
-    const ok = await planning.send(input);
-    if (ok) props.onOpenChange(false);
-    return ok;
-  };
-  return (
-    <ResponsiveModal
-      title="Behandlung planen"
-      closeLabel="Schließen"
-      open={props.open}
-      onOpenChange={props.onOpenChange}
-    >
-      <Planning
-        request={props.request}
-        planning={{ ...planning, send }}
-        focusRef={props.focusRef}
-        quiet
-      />
-    </ResponsiveModal>
-  );
-}
-
-/** In a section of "Heute": the button that opens the form in its sheet or dialog (US-QS-14). */
-export function HostPlanning(props: {
-  canPlan: boolean;
-  onPlan: () => void;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  request: Request<readonly TreatableSpecimen[]>;
-  planning: ReturnType<typeof usePlanning>;
-  focusRef: React.MutableRefObject<HTMLInputElement | null>;
-}) {
-  return (
-    <>
-      {props.canPlan && (
-        <Button
-          type="button"
-          variant="outline"
-          className="self-start rounded-full"
-          onClick={props.onPlan}
-        >
-          Behandlung planen
-        </Button>
-      )}
-      <PlanModal
-        request={props.request}
-        planning={props.planning}
-        focusRef={props.focusRef}
-        open={props.open}
-        onOpenChange={props.onOpenChange}
-      />
-    </>
   );
 }

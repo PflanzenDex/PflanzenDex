@@ -31,6 +31,18 @@ export const test = base.extend<{ account: TestAccount }>({
 });
 
 /** From any signed-in view: the Sammlung, the layer "Ansicht", then "Standorte und Lichtzonen verwalten" (US-QS-19). */
+/** On a phone one list shows at a time (US-QS-19): the segment "Standorte (n)" is chosen when it is there. */
+export async function showLocations(page: Page): Promise<void> {
+  const segment = page.getByRole("button", { name: /^Standorte \(\d+\)$/ });
+  if (await segment.isVisible()) await segment.click();
+}
+
+/** The "+" of the locations: opens the create layer of a location (US-QS-19). */
+export async function addLocation(page: Page): Promise<void> {
+  await showLocations(page);
+  await page.getByRole("button", { name: "Neuer Standort" }).click();
+}
+
 export async function openLocations(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
   await page.getByRole("button", { name: "Ansicht" }).click();

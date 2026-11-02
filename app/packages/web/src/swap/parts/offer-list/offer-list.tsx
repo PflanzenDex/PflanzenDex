@@ -1,6 +1,8 @@
 import type { OfferView } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
+import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 
 const STATUS_TEXT = {
@@ -20,9 +22,10 @@ export function OfferList(props: {
   busy: boolean;
   onWithdraw: (o: OfferView) => void;
 }) {
+  const size = useCardPageSize();
   return (
     <section aria-labelledby="offer-list-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="offer-list-title" className="text-xl font-semibold">
+      <h2 id="offer-list-title" className="sr-only">
         Meine Angebote
       </h2>
       {props.offers.length === 0 ? (
@@ -31,11 +34,15 @@ export function OfferList(props: {
           Tausch an.
         </p>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Meine Angebote">
-          {props.offers.map((o) => {
+        <Pager
+          items={props.offers}
+          pageSize={size}
+          label="Meine Angebote"
+          getKey={(o) => o.id}
+          renderItem={(o) => {
             const active = o.status === "open" || o.status === "reserved";
             return (
-              <li key={o.id} className="grid break-words rounded-lg border border-border p-3">
+              <div className="grid break-words rounded-lg border border-border p-3">
                 <span className="font-semibold">{o.specimenName ?? "Pflanze unbekannt"}</span>
                 <span className="text-sm">
                   {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
@@ -61,10 +68,10 @@ export function OfferList(props: {
                     </Button>
                   )}
                 </span>
-              </li>
+              </div>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
     </section>
   );

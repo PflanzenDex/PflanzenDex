@@ -1,20 +1,25 @@
 import { useCallback, useMemo, useRef } from "react";
 import { GrowthMomentNote, useGrowthMoments } from "@/achievements";
-import { Button } from "@/components/ui/button/button";
+import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
+import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LoadFrame, useInvalidate } from "../../../kernel";
 import { MeasureForm } from "../measure-form/measure-form";
-import { MeasurementList } from "../measurement-list/measurement-list";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementHeader } from "../measurement-header/measurement-header";
 import { MeasurePageSkeleton } from "./measure-page.skeleton";
+import { CourseLayer } from "./course-layer/course-layer";
 import { useMeasureSend } from "../measurement-header/measurement-photo";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 
 type Token = () => Promise<string | undefined>;
 
+/** The loading text of the measure page (also its skeleton label). */
+const LOADING = "Messungen werden geladen …";
+
 /**
- * Measure (US-WAC-01): what to measure, last measurement, last rating, input form (quality with the etiolation signs
- * of the species, US-WAC-02) and course of a specimen. Every view says what to do next (P-09).
+ * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Verlauf (n)", the
+ * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Verlauf"
+ * (US-QS-15). Every view says what to do next (P-09).
  */
 export function MeasurePage(props: {
   api: string;
@@ -26,6 +31,7 @@ export function MeasurePage(props: {
   const key = useMemo(() => ["care", "measurements", specimen.id], [specimen.id]);
   const invalidate = useInvalidate(key);
   const valueRef = useRef<HTMLInputElement | null>(null);
+  const course = `verlauf-${specimen.id}`;
   const load = useCallback(
     (t: string) => loadMeasurementView(api, t, specimen.id),
     [api, specimen.id],
@@ -37,39 +43,41 @@ export function MeasurePage(props: {
     invalidate,
   });
   const moments = useGrowthMoments(api, token, specimen.id);
-  const loading = "Messungen werden geladen …";
   return (
-    <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-4">
-      <h1 id="measure-title" className="text-2xl font-semibold [overflow-wrap:anywhere]">
-        Messen: {specimen.name}
-      </h1>
+    <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
+      <PageHeader
+        headingId="measure-title"
+        title={`Messen: ${specimen.name}`}
+        back={{ label: "Zurück zur Sammlung", onBack: props.onBack }}
+      />
       <LoadFrame
         queryKey={key}
         token={token}
         load={load}
-        loadingText={loading}
-        loadingFallback={<MeasurePageSkeleton label={loading} />}
+        loadingText={LOADING}
+        loadingFallback={<MeasurePageSkeleton label={LOADING} />}
       >
         {(view) => (
           <>
-            <MeasurementHeader view={view} />
+            <MeasurementHeader
+              view={view}
+              action={<LayerOpener id={course}>Verlauf ({view.measurements.length})</LayerOpener>}
+            />
             {saved && <StatusNote>Gespeichert: {saved}.</StatusNote>}
             <GrowthMomentNote moments={moments} justSaved={Boolean(saved)} />
             {photoRefusal && <RefusalAlert error={photoRefusal} />}
             <MeasureForm unit="cm" signs={view.etiolationSigns} onSend={send} focusRef={valueRef} />
-            <MeasurementList
-              measurements={view.measurements}
-              records={moments?.records}
+            <CourseLayer
+              id={course}
+              name={specimen.name}
+              view={view}
               photo={{ api, token, specimenId: specimen.id }}
+              records={moments?.records}
               onPhotoSaved={invalidate}
-              onAdd={() => valueRef.current?.focus()}
             />
           </>
         )}
       </LoadFrame>
-      <Button type="button" variant="secondary" size="touch" onClick={props.onBack}>
-        Zurück zur Sammlung
-      </Button>
     </section>
   );
 }

@@ -11,6 +11,12 @@ export const TreatmentsPage = lazyPage(() =>
     default: m.TreatmentsPage,
   })),
 );
+/** The layer "Behandlung planen" above "Heute" (`?sheet=plan`, US-QS-18); it loads its plants only while open. */
+export const PlanLayer = lazyPage(() =>
+  import("./treatments/planning/plan-layer/plan-layer").then((m) => ({
+    default: m.PlanLayer,
+  })),
+);
 export const PlantGrowth = lazyPage(() =>
   import("./plant-detail/plant-growth/plant-growth").then((m) => ({ default: m.PlantGrowth })),
 );

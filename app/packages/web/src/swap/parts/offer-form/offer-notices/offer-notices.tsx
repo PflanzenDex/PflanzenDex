@@ -1,6 +1,7 @@
 import type { OfferPreview } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { healthText } from "../health-text";
 
 /**
@@ -46,7 +47,7 @@ export function OfferNotices(props: {
           Ich bestätige: Es läuft noch eine Behandlung, ich möchte es trotzdem anbieten.
         </Checkbox>
       )}
-      <p className="rounded-lg border border-border p-3 text-sm">{p.notice}</p>
+      <MoreHelp more={p.notice}>Manche Arten sind geschützt.</MoreHelp>
     </div>
   );
 }

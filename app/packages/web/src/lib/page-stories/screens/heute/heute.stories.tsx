@@ -1,6 +1,6 @@
 import type { Meta } from "@storybook/react-vite";
 import { TodayArea } from "@/components/routing/areas/shared/lazy-areas";
-import { todayEmpty, todayRoutes } from "../../data/today-data";
+import { todayEmpty, todayPhaseFirst, todayRoutes } from "../../data/today-data";
 import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
@@ -16,3 +16,4 @@ export const PhoneDark = heute.phoneDark;
 export const Desktop = heute.desktop;
 export const DesktopDark = heute.desktopDark;
 export const NothingDue = screenStory({ path: "/today", routes: todayEmpty, screen });
+export const PhaseFirst = screenStory({ path: "/today", routes: todayPhaseFirst, screen });

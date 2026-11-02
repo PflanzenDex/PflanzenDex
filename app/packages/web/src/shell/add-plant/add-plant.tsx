@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { FIRST_PLANT_STEPS, type Species } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { PATHS } from "../../components/shared/navigation/nav-model/navigation/navigation";
+import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
 import { SaveStep } from "../onboarding-wizard/save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import { useFirstPlant } from "../onboarding-wizard/use-first-plant";
@@ -32,7 +33,7 @@ function Done(props: { name: string; onAnother: () => void }) {
         <Button type="button" onClick={() => void navigate(PATHS.collection)}>
           Zur Sammlung
         </Button>
-        <Button type="button" variant="secondary" onClick={props.onAnother}>
+        <Button type="button" variant="outline" onClick={props.onAnother}>
           Noch eine Pflanze
         </Button>
       </div>
@@ -57,10 +58,10 @@ function Buttons(props: { f: Plant; species: Species | null; onMore: (s: Species
       <Button type="button" disabled={f.saving || f.zones === null} onClick={() => void f.save()}>
         {FIRST_PLANT_STEPS[1]?.actionLabel}
       </Button>
-      <Button type="button" variant="secondary" onClick={() => f.setIndex(0)}>
+      <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
         Zurück
       </Button>
-      <Button type="button" variant="link" onClick={() => props.onMore(species)}>
+      <Button type="button" variant="ghost" onClick={() => props.onMore(species)}>
         Mehr Angaben
       </Button>
     </div>
@@ -115,9 +116,12 @@ function Flow(props: Props & { onAnother: () => void }) {
 export function AddPlant(props: Props) {
   const [round, setRound] = useState(0);
   return (
-    <div className="flex flex-col gap-3">
-      <h1 className="text-2xl font-semibold">Pflanze anlegen</h1>
+    <FullView
+      headingId="add-plant-title"
+      title="Pflanze anlegen"
+      back={{ label: "Zurück zur Sammlung", to: PATHS.collection }}
+    >
       <Flow key={round} {...props} onAnother={() => setRound((r) => r + 1)} />
-    </div>
+    </FullView>
   );
 }

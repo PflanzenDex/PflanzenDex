@@ -72,4 +72,31 @@ describe("Tabs (US-QS-07, DS-34)", () => {
     expect(cls).toContain("min-h-[44px]");
     expect(cls).toContain("focus-visible:ring-2");
   });
+
+  it("US-QS-21 wrap breaks the tabs onto more lines instead of scrolling the list sideways", () => {
+    render(<Tabs label="x" tabs={tabs} wrap />);
+    const list = screen.getByRole("tablist").className;
+    expect(list).toContain("flex-wrap");
+    expect(list).not.toContain("overflow-x-auto");
+  });
+
+  it("US-QS-21 without wrap the tab list keeps one line and scrolls sideways (the default)", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    const list = screen.getByRole("tablist").className;
+    expect(list).toContain("overflow-x-auto");
+    expect(list).not.toContain("flex-wrap");
+  });
+
+  it("US-QS-21 the panel takes the classes of its caller", () => {
+    render(<Tabs label="x" tabs={tabs} panelClassName="min-h-0 flex-1" />);
+    expect(screen.getByRole("tabpanel").className).toContain("flex-1");
+  });
+});
+
+describe("US-QS-07 the selected tab in dark mode (issue 1045)", () => {
+  it("US-QS-07 the selected tab is the green intent fill, not a card that disappears on the track", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    expect(screen.getByRole("tab", { name: "Licht" }).className).toContain("bg-accent");
+    expect(screen.getByRole("tab", { name: "Boden" }).className).not.toContain("bg-accent");
+  });
 });

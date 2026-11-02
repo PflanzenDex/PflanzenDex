@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
 import { Label } from "@/components/ui/display/label/label";
 import { errorText } from "@/lib/error-text";
 
@@ -61,6 +62,10 @@ function HitList(props: {
             aria-pressed={props.chosen === h.id}
             onClick={() => props.onPick(h.id)}
           >
+            {/* The chosen hit says so in words and a mark, not by its colour alone (issue 1045). */}
+            {props.chosen === h.id ? (
+              <Check aria-hidden="true" className="size-4 shrink-0" />
+            ) : null}
             <i>{h.latinName}</i>
             {h.germanName ? ` (${h.germanName})` : ""}
           </Button>
@@ -108,12 +113,12 @@ export function SpeciesStep(props: {
         {props.title ?? "Deine erste Pflanze"}
       </h2>
       <Label htmlFor="first-plant-search">Name der Pflanze</Label>
-      <Input
+      <SearchInput
         id="first-plant-search"
-        type="search"
         autoComplete="off"
         value={text}
         onChange={(e) => props.onText(e.target.value)}
+        onClear={() => props.onText("")}
       />
       <p className="m-0 text-sm text-muted-foreground">
         Tippe den Namen deiner Pflanze, wir suchen die Art.

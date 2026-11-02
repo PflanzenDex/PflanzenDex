@@ -15,7 +15,7 @@ import type { EquipmentPrefill } from "../../../../overviews/wishes-view/wishes-
 import { ZonesView } from "../../../../overviews/zones-view/zones-view";
 import type { useLampActions } from "../../../lamp-actions/lamp-actions";
 import type { useWishActions } from "../../../../overviews/wishes-view/use-wish-actions";
-import { ItemCard } from "../../item-card/item-card";
+import { ItemLayer, ItemRow } from "../../item-layer/item-layer";
 import {
   COSTS_LAYER,
   ITEMS_LAYER,
@@ -27,6 +27,9 @@ import {
 } from "../../tiles/equipment-tiles/equipment-tiles";
 import { zoneLabel } from "@pflanzendex/core";
 
+/** Rows per page of the list of what I own (starting value, assumption; the page size from the free height is #1029). */
+const ITEMS_PER_PAGE = 6;
+
 type Lamps = ReturnType<typeof useLampActions>;
 type Wishes = ReturnType<typeof useWishActions>;
 
@@ -36,7 +39,7 @@ function Nothing(props: { title: string; description: string }) {
 }
 
 function Items(props: { data: EquipmentData; lamps: Lamps }) {
-  const { data, lamps } = props;
+  const { data } = props;
   const zoneNames = new Map(data.zones.zones.map((z) => [z.zoneId, zoneLabel(z.name)]));
   if (data.items.length === 0)
     return (
@@ -48,19 +51,11 @@ function Items(props: { data: EquipmentData; lamps: Lamps }) {
   return (
     <Pager
       items={data.items}
-      pageSize={2}
+      pageSize={ITEMS_PER_PAGE}
       label="Dein Equipment"
       param={LAYER_PARAM}
       getKey={(item) => item.id}
-      renderItem={(item) => (
-        <ItemCard
-          item={item}
-          zone={zoneNames.get(item.lightZoneId ?? "")}
-          maintenance={lamps.maintenance}
-          supply={lamps.supply}
-          sharing={lamps.sharing}
-        />
-      )}
+      renderItem={(item) => <ItemRow item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />}
     />
   );
 }
@@ -129,6 +124,7 @@ export function EquipmentLayers(props: {
           <Items data={data} lamps={lamps} />
         </div>
       </LayerSheet>
+      <ItemLayer data={data} lamps={lamps} />
       <LayerSheet id={COSTS_LAYER} title="Kosten">
         <CostsPart data={data} />
       </LayerSheet>

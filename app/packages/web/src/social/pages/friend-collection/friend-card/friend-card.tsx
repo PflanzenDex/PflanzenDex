@@ -20,24 +20,21 @@ export function FriendCard(props: { card: Card; busy: boolean; onWish: (card: Ca
   const { card } = props;
   const o = ownership(card.iHave);
   return (
-    <li
+    <div
       data-have={card.iHave === null ? "unknown" : String(card.iHave)}
       className={cn(
-        "grid min-w-0 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
+        "grid h-full min-w-0 content-start gap-0.5 break-words rounded-card bg-card p-2 text-sm text-card-foreground shadow-elevation-1",
       )}
     >
-      <span aria-hidden="true" className="text-4xl">
-        🌱
-      </span>
       <span className="font-semibold">{card.speciesLatin ?? "Art unbekannt"}</span>
       {card.speciesGerman !== null && <span>{card.speciesGerman}</span>}
-      <span className="text-sm">
+      <span className="text-xs">
         {card.specimens === 1 ? "1 Pflanze" : `${card.specimens} Pflanzen`}
         {card.cuttings > 0
           ? `, davon ${card.cuttings === 1 ? "1 Steckling" : `${card.cuttings} Stecklinge`}`
           : ""}
       </span>
-      <span className="text-sm text-muted-foreground">
+      <span className="text-xs text-muted-foreground">
         {card.firstCaught === null
           ? "Fangdatum unbekannt"
           : `Gefangen seit ${dateText(`${card.firstCaught}T12:00:00`)}`}
@@ -59,6 +56,6 @@ export function FriendCard(props: { card: Card; busy: boolean; onWish: (card: Ca
           </Button>
         </span>
       )}
-    </li>
+    </div>
   );
 }

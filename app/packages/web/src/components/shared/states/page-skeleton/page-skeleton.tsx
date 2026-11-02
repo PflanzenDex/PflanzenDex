@@ -9,7 +9,11 @@ export type PageSkeletonProps = {
 /** Suspense fallback of route-level pages (US-QS-07, DS-55, DS-56): a growing sprout beside a heading block and three card blocks, no numbers (P-08). */
 export function PageSkeleton({ label = "Lädt…" }: PageSkeletonProps) {
   return (
-    <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-4 p-4 py-6">
+    // Capped like the content of a page, so the skeleton of a destination with layers keeps its width (US-QS-15, #1027).
+    <SkeletonGroup
+      label={label}
+      className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-4 p-4 py-6"
+    >
       <div className="flex items-center gap-3">
         <PlantLoader decorative size="lg" />
         <Skeleton className="h-8 w-2/3 max-w-xs" />

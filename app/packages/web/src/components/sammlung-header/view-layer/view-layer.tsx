@@ -5,20 +5,22 @@ import { Button } from "@/components/ui/button/button";
 export const VIEW_LAYER = "view";
 
 /**
- * The layer "Ansicht" of the plants (US-QS-19): how the plants are grouped (still `group=` in the address) and the way
- * to the management of locations and light zones. There is no sorting yet, so there is no control for it. Takes data
- * and callbacks only (DS-44); the area wires the address.
+ * The layer "Ansicht" of the Sammlung (US-QS-19, issue 1096): how the plants are grouped (`group=`, with the way to the
+ * management of locations and light zones) or how the species are arranged (`sort=`). Takes data and callbacks only
+ * (DS-44); the area wires the address.
  */
 export function ViewLayer<G extends string>(props: {
   group: G;
   options: readonly { value: G; label: string }[];
   onGroup: (g: G) => void;
-  onManage: () => void;
+  /** The name of the group of choices, e.g. "Gruppierung der Pflanzen". */
+  label: string;
+  onManage?: () => void;
 }) {
   return (
     <LayerSheet id={VIEW_LAYER} title="Ansicht">
       <div className="flex flex-col gap-4">
-        <div role="group" aria-label="Gruppierung der Pflanzen" className="flex flex-col gap-2">
+        <div role="group" aria-label={props.label} className="flex flex-col gap-2">
           {props.options.map((o) => {
             const selected = o.value === props.group;
             return (
@@ -36,9 +38,11 @@ export function ViewLayer<G extends string>(props: {
             );
           })}
         </div>
-        <Button type="button" variant="outline" onClick={props.onManage}>
-          Standorte und Lichtzonen verwalten
-        </Button>
+        {props.onManage ? (
+          <Button type="button" variant="outline" onClick={props.onManage}>
+            Standorte und Lichtzonen verwalten
+          </Button>
+        ) : null}
       </div>
     </LayerSheet>
   );

@@ -2,6 +2,7 @@ import * as React from "react";
 import { useLocation, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
+import { pageAfterResize, usePageFit } from "./use-page-fit";
 
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
@@ -32,7 +33,14 @@ function useSwipe(page: number, pages: number, go: (target: number) => void) {
   };
 }
 
-/** "Zurück", the position and "Weiter" (US-QS-15). */
+/**
+ * A disabled page button keeps its text and border neutral: the outline green at half opacity fell to about 1.8:1
+ * (issue 1045). It is still disabled and shows no action (DS-39, DS-65).
+ */
+const DISABLED_PAGE_BUTTON =
+  "disabled:border-border disabled:text-muted-foreground disabled:opacity-100";
+
+/** "Zurück", the position and "Weiter" (US-QS-15). The caption never wraps: a page number and its count stay together (US-QS-24). */
 function PagerBar({
   page,
   pages,
@@ -43,14 +51,30 @@ function PagerBar({
   go: (target: number) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <Button type="button" variant="outline" disabled={page <= 1} onClick={() => go(page - 1)}>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        className={DISABLED_PAGE_BUTTON}
+        disabled={page <= 1}
+        onClick={() => go(page - 1)}
+      >
         Zurück
       </Button>
-      <p role="status" aria-live="polite" className="text-sm tabular-nums text-muted-foreground">
+      <p
+        role="status"
+        aria-live="polite"
+        className="whitespace-nowrap text-sm tabular-nums text-muted-foreground"
+      >
         Seite {page} von {pages}
       </p>
-      <Button type="button" variant="outline" disabled={page >= pages} onClick={() => go(page + 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className={DISABLED_PAGE_BUTTON}
+        disabled={page >= pages}
+        onClick={() => go(page + 1)}
+      >
         Weiter
       </Button>
     </div>
@@ -59,7 +83,10 @@ function PagerBar({
 
 export type PagerProps<T> = {
   items: readonly T[];
-  /** Whole entries per page; the caller sizes it to its region. */
+  /**
+   * Whole entries per page. Without `fit` the caller sizes it to its region; with `fit` it is the starting value until
+   * the layout measures the region.
+   */
   pageSize: number;
   renderItem: (item: T, index: number) => React.ReactNode;
   /** Stable key of an item; defaults to its index. */
@@ -74,11 +101,33 @@ export type PagerProps<T> = {
   param?: string;
   /** Replaces the history entry instead of pushing one, so Back leaves a layer in one step. */
   replace?: boolean;
+  /**
+   * The page size is the free height of the list region: the whole rows that fit, times the columns of a grid, measured
+   * in the layout (US-QS-19, issue 1029). The region must be sized by its frame (flex-1, min-h-0 up to the frame), and
+   * the pager sits below it at the bottom of that frame.
+   */
+  fit?: boolean;
 };
 
 function parsePage(raw: string | null): number {
   const n = Number(raw);
   return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
+/** The page in the address: the current one, and `go` to write another. Keeps the history state, so a layer closes by going back (`useLayer`). */
+function usePageAddress(param: string, replaceEntry: boolean) {
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const go = React.useCallback(
+    (target: number, replace = false) => {
+      const next = new URLSearchParams(params);
+      if (target <= 1) next.delete(param);
+      else next.set(param, String(target));
+      setParams(next, { replace: replace || replaceEntry, state: location.state });
+    },
+    [params, setParams, param, replaceEntry, location.state],
+  );
+  return { params, go };
 }
 
 /**
@@ -88,7 +137,7 @@ function parsePage(raw: string | null): number {
  */
 export function Pager<T>({
   items,
-  pageSize,
+  pageSize: startingSize,
   renderItem,
   getKey,
   label,
@@ -96,28 +145,27 @@ export function Pager<T>({
   resetKey,
   param = PARAM,
   replace: replaceEntry = false,
+  fit = false,
 }: PagerProps<T>) {
-  const [params, setParams] = useSearchParams();
-  const location = useLocation();
+  const { params, go } = usePageAddress(param, replaceEntry);
+  const list = React.useRef<HTMLUListElement>(null);
+  const fitted = usePageFit(list, fit);
+  const measured = fitted?.size ?? null;
+  const pageSize = measured ?? startingSize;
   const pages = Math.max(1, Math.ceil(items.length / pageSize));
   const raw = parsePage(params.get(param));
   const page = Math.min(raw, pages);
 
-  const go = React.useCallback(
-    (target: number, replace = false) => {
-      const next = new URLSearchParams(params);
-      if (target <= 1) next.delete(param);
-      else next.set(param, String(target));
-      // Keep the history state: a layer opened by the app closes by going back (`useLayer`).
-      setParams(next, { replace: replace || replaceEntry, state: location.state });
-    },
-    [params, setParams, param, replaceEntry, location.state],
-  );
-
-  // A page outside the range is corrected in the address as well.
+  // The address follows the page (see pageAfterResize, issue 1029). Passive, not a layout effect: the router subscribes to
+  // the address in its own layout effect, after the children's, so a navigation made earlier would be lost on mount.
+  const measuredBefore = React.useRef<number | null>(null);
   React.useEffect(() => {
-    if (params.has(param) && raw !== page) go(page, true);
-  }, [params, raw, page, go, param]);
+    const before = measuredBefore.current;
+    measuredBefore.current = measured;
+    if (fit && measured === null) return; // no layout yet: the starting value must not rewrite the address
+    const target = pageAfterResize({ before, measured, raw, count: items.length, page });
+    if (params.has(param) && raw !== target) go(target, true);
+  });
 
   const lastKey = React.useRef(resetKey);
   React.useEffect(() => {
@@ -131,8 +179,16 @@ export function Pager<T>({
   const first = (page - 1) * pageSize;
 
   return (
-    <div className="flex flex-col gap-3 [touch-action:pan-y]" {...swipe}>
-      <ul aria-label={label} className={cn("flex flex-col gap-2", listClassName)}>
+    <div
+      className={cn("flex flex-col gap-3 [touch-action:pan-y]", fit && "min-h-0 flex-1")}
+      {...swipe}
+    >
+      <ul
+        ref={list}
+        style={fitted ? { minHeight: fitted.rowHeight } : undefined}
+        aria-label={label}
+        className={cn("flex flex-col gap-2", fit && "min-h-0 flex-1 content-start", listClassName)}
+      >
         {visible.map((item, i) => (
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}

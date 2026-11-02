@@ -12,6 +12,7 @@ import {
   FormRoot,
 } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { currentTimeZone } from "../../../kernel";
 import { Field } from "../../shared/field/field";
 import {
@@ -65,6 +66,30 @@ function Choice(props: {
   );
 }
 
+/** The reason, the optional agent and the first date of a plan (US-BEH-01); the planning layer shows them as one view. */
+export function TermFields({ control }: { control: Control<TreatmentFields> }) {
+  return (
+    <>
+      <Field control={control} name="reason" label="Grund">
+        {(field) => (
+          <Input
+            {...field}
+            autoComplete="off"
+            maxLength={TREATMENT_LIMITS.reason.max}
+            placeholder="zum Beispiel Wollläuse"
+          />
+        )}
+      </Field>
+      <Field control={control} name="agent" label="Mittel (optional)">
+        {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
+      </Field>
+      <Field control={control} name="date" label="Datum">
+        {(field) => <DateField {...field} />}
+      </Field>
+    </>
+  );
+}
+
 function BasicFields(props: {
   control: Control<TreatmentFields>;
   specimens: readonly TreatableSpecimen[];
@@ -82,27 +107,13 @@ function BasicFields(props: {
           </FormItem>
         )}
       />
-      <Field control={control} name="reason" label="Grund">
-        {(field) => (
-          <Input
-            {...field}
-            autoComplete="off"
-            maxLength={TREATMENT_LIMITS.reason.max}
-            placeholder="zum Beispiel Wollläuse"
-          />
-        )}
-      </Field>
-      <Field control={control} name="agent" label="Mittel (optional)">
-        {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
-      </Field>
-      <Field control={control} name="date" label="Datum">
-        {(field) => <Input {...field} type="date" />}
-      </Field>
+      <TermFields control={control} />
     </>
   );
 }
 
-function CourseFields({ control }: { control: Control<TreatmentFields> }) {
+/** "Kur planen": the count and the interval, only while the course is on (US-BEH-01). */
+export function CourseFields({ control }: { control: Control<TreatmentFields> }) {
   const isCourse = useWatch({ control, name: "isCourse" });
   return (
     <>

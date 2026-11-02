@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/connections-api";
 
@@ -46,7 +47,7 @@ function Draft(props: {
 }) {
   const { api, row, busy, run } = props;
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-border p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <strong className="break-all">{title(row)}</strong>
         <span>{STATUS_TEXT[row.status]}</span>
@@ -80,7 +81,7 @@ function Draft(props: {
           </Button>
         </div>
       )}
-    </li>
+    </div>
   );
 }
 
@@ -96,11 +97,16 @@ function List(props: { api: string; token: Token; rows: readonly AiDraftRow[] })
       {props.rows.length === 0 ? (
         <p className="m-0">Keine Entwürfe vorhanden.</p>
       ) : (
-        <ul aria-label="KI-Entwürfe" className="m-0 flex list-none flex-col gap-2 p-0">
-          {props.rows.map((row) => (
-            <Draft key={row.id} api={props.api} row={row} busy={write.running} run={write.run} />
-          ))}
-        </ul>
+        <Pager
+          items={props.rows}
+          pageSize={2}
+          label="KI-Entwürfe"
+          param={LAYER_PARAM}
+          getKey={(row) => row.id}
+          renderItem={(row) => (
+            <Draft api={props.api} row={row} busy={write.running} run={write.run} />
+          )}
+        />
       )}
       {write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3">

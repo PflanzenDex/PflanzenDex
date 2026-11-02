@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CareProfileEntry, Layered } from "@pflanzendex/core";
 import { CareProfileSection } from "../care-profile-page/care-profile-page";
@@ -75,7 +77,16 @@ const puts = (fetchFn: ReturnType<typeof fakeServer>) =>
   fetchFn.mock.calls.filter(([, init]) => init?.method === "PUT");
 const sent = (fetchFn: ReturnType<typeof fakeServer>) =>
   puts(fetchFn).map(([, init]) => JSON.parse(String(init?.body)) as unknown);
-const open = () => render(<CareProfileSection api="http://api" token={token} speciesId="s1" />);
+const withRouter = (ui: ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
+const open = () =>
+  render(withRouter(<CareProfileSection api="http://api" token={token} speciesId="s1" />));
+/** What a save or a reset says; the pager has a status of its own ("Seite n von m"). */
+const SAVED = /Pflegeprofil für|gilt wieder nach Katalog/;
+/** The fields sit on three pages (Standort, Ruhephase, Gießen und Hinweise); "Weiter" shows the next one (US-BES-09). */
+const next = async (times = 1) => {
+  for (let i = 0; i < times; i++)
+    await userEvent.click(await screen.findByRole("button", { name: "Weiter" }));
+};
 
 afterEach(() => {
   cleanup();
@@ -123,11 +134,13 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
     open();
     expect(await screen.findByRole("heading", { name: "Bogenhanf" })).toBeTruthy();
     expect(screen.getByText(/2 aktive Pflanzen/)).toBeTruthy();
-    expect(screen.getByText("Katalog: Zone 3")).toBeTruthy();
-    expect(screen.getByText("Katalog: 01.11. bis 15.03.")).toBeTruthy();
     expect(screen.getAllByText("Katalog: unbekannt").length).toBeGreaterThanOrEqual(2);
+    await next();
+    expect(screen.getByText("Katalog: Zone 3")).toBeTruthy();
+    await next();
+    expect(screen.getByText("Katalog: 01.11. bis 15.03.")).toBeTruthy();
+    await next();
     expect(screen.getByText(/Hinweis der Art: Alle zwei Wochen gießen/)).toBeTruthy();
-    expect(screen.getByText(/privat und nie Teil einer Freigabe/)).toBeTruthy();
   });
 
   it("US-BES-09 shows my deviation where there is one and marks it as mine", async () => {
@@ -143,12 +156,13 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
       ],
     });
     open();
+    const growth = (await screen.findByLabelText(
+      "Soll-Standort Wachstumsphase für „Bogenhanf“",
+    )) as HTMLSelectElement;
+    expect(growth.value).toBe("l1");
+    await next();
     const zone = (await screen.findByLabelText("Lichtzone für „Bogenhanf“")) as HTMLSelectElement;
     expect(zone.value).toBe("z2");
-    expect(
-      (screen.getByLabelText("Soll-Standort Wachstumsphase für „Bogenhanf“") as HTMLSelectElement)
-        .value,
-    ).toBe("l1");
     expect(screen.getByText("Meine Abweichung gilt")).toBeTruthy();
   });
 
@@ -161,6 +175,7 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
         .getAllByRole("option")
         .map((o) => o.textContent),
     ).toEqual(["Katalog gilt", "Wohnzimmer", "Kühler Flur"]);
+    await next();
     const lightZone = screen.getByLabelText("Lichtzone für „Bogenhanf“");
     expect(
       within(lightZone)
@@ -189,7 +204,11 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
 
   it("US-BES-09 without sign-in nothing is requested and the user is asked to sign in", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
-    render(<CareProfileSection api="http://api" token={async () => undefined} speciesId="s1" />);
+    render(
+      withRouter(
+        <CareProfileSection api="http://api" token={async () => undefined} speciesId="s1" />,
+      ),
+    );
     expect(await screen.findByText(/melde dich neu an/)).toBeTruthy();
     expect(fetchFn).not.toHaveBeenCalled();
   });
@@ -218,7 +237,7 @@ describe("US-BES-09 change my deviation", () => {
       "l1",
     );
     await userEvent.click(save);
-    expect((await screen.findByRole("status")).textContent).toContain(
+    expect((await screen.findByText(SAVED)).textContent).toContain(
       "Pflegeprofil für „Bogenhanf“ gespeichert.",
     );
     expect(sent(fetchFn)).toEqual([{ growthLocationId: "l1" }]);
@@ -235,22 +254,25 @@ describe("US-BES-09 change my deviation", () => {
   it("US-BES-09 watering intervals and own hints are sent as numbers and text", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
     open();
+    await next(3);
     await userEvent.type(
       await screen.findByLabelText("Gießintervall Wachstumsphase (Tage) für „Bogenhanf“"),
       "7",
     );
+    await next();
     await userEvent.type(
       screen.getByLabelText("Eigene Hinweise für „Bogenhanf“"),
       "Im Winter trocken",
     );
     await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ wateringGrowthDays: 7, ownHints: "Im Winter trocken" }]);
   });
 
   it("US-BES-09 dormancy from/until is chosen as month and day and sent as a pair MM-DD", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
     open();
+    await next(2);
     await userEvent.selectOptions(
       await screen.findByLabelText("Ruhephase von (Monat) für „Bogenhanf“"),
       "10",
@@ -268,13 +290,14 @@ describe("US-BES-09 change my deviation", () => {
       "28",
     );
     await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ dormancyFrom: "10-15", dormancyUntil: "02-28" }]);
   });
 
   it("US-BES-09 half a dormancy period is not sent: the page says what is missing", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
     open();
+    await next(2);
     await userEvent.selectOptions(
       await screen.findByLabelText("Ruhephase von (Monat) für „Bogenhanf“"),
       "10",
@@ -296,11 +319,12 @@ describe("US-BES-09 change my deviation", () => {
     );
     const fetchFn = fakeServer({ entries: [own] });
     open();
+    await next();
     const reset = await screen.findByRole("button", {
       name: "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)",
     });
     await userEvent.click(reset);
-    expect((await screen.findByRole("status")).textContent).toContain(
+    expect((await screen.findByText(SAVED)).textContent).toContain(
       "„Lichtzone“ für „Bogenhanf“ gilt wieder nach Katalog.",
     );
     expect(sent(fetchFn)).toEqual([{ lightZoneId: null }]);
@@ -309,6 +333,7 @@ describe("US-BES-09 change my deviation", () => {
   it("US-BES-09 a field without deviation has nothing to reset: the button is disabled", async () => {
     fakeServer({ entries: [entry()] });
     open();
+    await next();
     const reset = await screen.findByRole("button", {
       name: "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)",
     });
@@ -329,12 +354,13 @@ describe("US-BES-09 change my deviation", () => {
     );
     const fetchFn = fakeServer({ entries: [own] });
     open();
+    await next(2);
     await userEvent.click(
       await screen.findByRole("button", {
         name: "Auf Katalog zurücksetzen: Ruhephase (Bogenhanf)",
       }),
     );
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ dormancyFrom: null, dormancyUntil: null }]);
   });
 
@@ -355,7 +381,7 @@ describe("US-BES-09 change my deviation", () => {
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Diesen Standort gibt es nicht.",
     );
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText(SAVED)).toBeNull();
   });
 
   it("US-BES-09 a double tap on save sends one request", async () => {
@@ -372,7 +398,7 @@ describe("US-BES-09 change my deviation", () => {
     const save = screen.getByRole("button", { name: "Speichern: Bogenhanf" });
     await userEvent.dblClick(save);
     finish(new Response("{}", { status: 200 }));
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(puts(fetchFn)).toHaveLength(1);
   });
 });

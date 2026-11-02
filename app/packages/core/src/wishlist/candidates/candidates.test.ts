@@ -86,7 +86,7 @@ describe("US-WUN-01 what a candidate shows", () => {
       title: "Zebra-Haworthie (Haworthia fasciata)",
       zone: { id: Z3, name: "Lampe 3" },
       stock: 1,
-      zoneText: "Zone 3 — 1 Pflanze",
+      zoneText: "Zone 3 · 1 Pflanze",
       difficulty: 2,
       reasoning: "Bleibt klein und mag helles Licht.",
       image: {
@@ -115,7 +115,7 @@ describe("US-WUN-01 what a candidate shows", () => {
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
     wishes.seed("anna", { id: "b", name: "Bryophyllum" });
     const list = (await candidates()).candidates;
-    expect(list.map((c) => c.zoneText)).toEqual(["Zone 2 — 0 Pflanzen", "Ziel-Zone unbekannt"]);
+    expect(list.map((c) => c.zoneText)).toEqual(["Zone 2 · 0 Pflanzen", "Ziel-Zone unbekannt"]);
   });
 
   it("US-WUN-01 explains why: the thinnest zone is named, other zones point to where room is left", async () => {

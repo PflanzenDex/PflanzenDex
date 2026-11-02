@@ -229,18 +229,48 @@ describe("US-QS-23 the other tabs", () => {
     expect(within(layer).getByText("Verlauf der Messungen")).toBeTruthy();
   });
 
-  it("US-QS-23 Pflege shows the treatments of the care module and the own care profile", async () => {
+  it("US-QS-23 Pflege shows the treatments of the care module first, the own profile is a second part", async () => {
     setViewportWidth(360);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({ profiles: [], locations: [], zones: [] })),
-    );
     show([card()]);
     const layer = await open();
     await userEvent.click(within(layer).getByRole("tab", { name: "Pflege" }));
     expect(within(layer).getByText("Behandlungen der Pflanze")).toBeTruthy();
+    expect(within(layer).queryByRole("heading", { name: "Eigenes Pflegeprofil" })).toBeNull();
+    await userEvent.click(within(layer).getByRole("button", { name: "Pflegeprofil" }));
+    expect(screen.getByTestId("address").textContent).toBe(
+      "?sheet=plant-e1&tab=pflege&teil=profil",
+    );
+    expect(within(layer).queryByText("Behandlungen der Pflanze")).toBeNull();
     expect(within(layer).getByRole("heading", { name: "Eigenes Pflegeprofil" })).toBeTruthy();
+  });
+
+  it("US-BES-09 the own care profile opens its own layer and Back returns to the plant in the same part", async () => {
+    setViewportWidth(360);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: [], locations: [], zones: [] })),
+    );
+    show([card()], {}, "/?sheet=plant-e1&tab=pflege&teil=profil");
+    const layer = await screen.findByRole("dialog", { name: "Aloe" });
+    await userEvent.click(within(layer).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
+    const profile = await screen.findByRole("dialog", { name: "Pflegeprofil" });
+    expect(screen.getByTestId("address").textContent).toBe(
+      "?sheet=profil-e1&tab=pflege&teil=profil",
+    );
+    expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art.")).toBeTruthy();
+    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
+    act(() => screen.getByRole("button", { name: "Browser zurück", hidden: true }).click());
+    const back = await screen.findByRole("dialog", { name: "Aloe" });
+    expect(within(back).getByRole("button", { name: "Pflegeprofil", pressed: true })).toBeTruthy();
     vi.unstubAllGlobals();
+  });
+
+  it("US-QS-23 a copied link restores the part of Pflege", async () => {
+    setViewportWidth(360);
+    show([card()], {}, "/?sheet=plant-e1&tab=pflege&teil=profil");
+    const layer = await screen.findByRole("dialog", { name: "Aloe" });
+    expect(within(layer).getByRole("button", { name: "Pflegeprofil", pressed: true })).toBeTruthy();
+    expect(within(layer).getByRole("heading", { name: "Eigenes Pflegeprofil" })).toBeTruthy();
   });
 
   it("US-QS-23 Standort shows location and zone with its source and the actions to change them", async () => {

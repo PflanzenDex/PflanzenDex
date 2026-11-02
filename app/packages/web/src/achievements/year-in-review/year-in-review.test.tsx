@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
 import { YearInReviewSection } from "./year-in-review";
@@ -35,6 +36,7 @@ const answer = (over: object = {}) => ({
   ...over,
 });
 
+/** The row "Jahresrückblick" with its layer open by address (`?sheet=year`): the year loads only while it is open. */
 function show(body: unknown, status = 200) {
   const fetchFn = vi.fn<typeof fetch>(async (url) => {
     expect(new URL(String(url)).pathname).toBe("/achievements/year");
@@ -43,7 +45,9 @@ function show(body: unknown, status = 200) {
   vi.stubGlobal("fetch", fetchFn);
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <YearInReviewSection api="http://api" token={token} />
+      <MemoryRouter initialEntries={["/?sheet=year"]}>
+        <YearInReviewSection api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   return fetchFn;
@@ -85,10 +89,11 @@ describe("US-ACH-07 year in review", () => {
   it("US-ACH-08 calm mode or a failed read shows nothing", async () => {
     show({ calmMode: true });
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
-    expect(screen.queryByRole("region", { name: "Jahresrückblick" })).toBeNull();
+    expect(screen.queryByText(/Arten gefangen/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Vorjahr" })).toBeNull();
     cleanup();
     show({ error: { code: "x" } }, 500);
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
-    expect(screen.queryByRole("region", { name: "Jahresrückblick" })).toBeNull();
+    expect(screen.queryByText(/Arten gefangen/)).toBeNull();
   });
 });

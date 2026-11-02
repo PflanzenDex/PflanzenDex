@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
 import { Inbox } from "./inbox";
@@ -15,7 +16,9 @@ const show = (reminders: unknown[]) => {
   );
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <Inbox api="http://api" token={token} />
+      <MemoryRouter>
+        <Inbox api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 };

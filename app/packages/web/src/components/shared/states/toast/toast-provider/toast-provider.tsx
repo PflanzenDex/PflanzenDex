@@ -34,7 +34,8 @@ export function useToast(): ToastApi {
 /**
  * Owns the toast queue and the viewport (US-QS-07). Both live regions (plain `aria-live`, no role, so an empty region never counts as an alert or status) exist before the first toast, because a screen
  * reader only notices changes in a region it already knows: confirmations in the polite one, errors in the assertive
- * one. The viewport stacks above the bottom bar on a phone and sits bottom right from `md`.
+ * one. The viewport stacks above the bottom bar on a phone and sits bottom right from `md`; it lies above an open layer
+ * (its overlay and drawer are `z-50`), so an undo offered there can be seen and taken (US-QS-07, issue 1028).
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
@@ -60,7 +61,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-x-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] z-50 flex flex-col gap-2 md:inset-x-auto md:bottom-6 md:right-6 md:w-96">
+      <div className="pointer-events-none fixed inset-x-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] z-[60] flex flex-col gap-2 md:inset-x-auto md:bottom-6 md:right-6 md:w-96">
         <div aria-live="polite" className="flex flex-col gap-2">
           {render("success")}
         </div>

@@ -11,7 +11,7 @@ import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { Input } from "@/components/ui/fields/input/input";
 import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
 import { OCCASIONS, type Occasion } from "../api/account-api";
-import type { ProfileFields as Fields } from "../schemas";
+import { formatLux, parseLux, type ProfileFields as Fields } from "../schemas";
 
 export const OCCASION_TEXT: Record<Occasion, string> = {
   phase: "Pflegephasen",
@@ -52,25 +52,52 @@ export function BufferField({ control }: FieldProps) {
   );
 }
 
-/** The thresholds of the position recommendation in the light overview (US-LIC-03, FR-LIC-05). */
+/** The labels of the four thresholds, from the highest to the lowest (US-LIC-03, FR-LIC-05). */
+const POSITION_LABELS = [
+  "Direkt unter der Lampe ab",
+  "Sehr nah ab",
+  "Nah ab",
+  "Mittlerer Abstand ab",
+] as const;
+
+/** The four thresholds of the position recommendation: one labelled field each, German grouping, the unit Lux. */
 export function ThresholdsField({ control }: FieldProps) {
   return (
-    <FormField
-      control={control}
-      name="positionThresholds"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Schwellen der Positionsempfehlung (Lux)</FormLabel>
-          <FormControl>
-            <Input {...field} inputMode="numeric" autoComplete="off" />
-          </FormControl>
-          <MoreHelp more={`Vorgabe: ${DEFAULTS.join(", ")} (eine Annahme).`}>
-            Vier Lux-Werte von hoch nach niedrig.
-          </MoreHelp>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <fieldset className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+      <legend className="p-0 text-sm font-medium">Schwellen der Positionsempfehlung</legend>
+      <MoreHelp more={`Vorgabe: ${DEFAULTS.map(formatLux).join(", ")} Lux (eine Annahme).`}>
+        Vier Lux-Werte von hoch nach niedrig.
+      </MoreHelp>
+      {POSITION_LABELS.map((label, i) => (
+        <FormField
+          key={label}
+          control={control}
+          name={`positionThresholds.${i}`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{label}</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Input
+                    {...field}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className="tabular-nums"
+                    onBlur={() => {
+                      const n = parseLux(field.value);
+                      if (n !== null) field.onChange(formatLux(n));
+                      field.onBlur();
+                    }}
+                  />
+                </FormControl>
+                <span className="whitespace-nowrap">Lux</span>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ))}
+    </fieldset>
   );
 }
 

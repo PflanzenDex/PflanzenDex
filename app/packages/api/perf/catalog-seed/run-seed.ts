@@ -1,5 +1,5 @@
 import { openPool, testDatabaseUrl } from "@pflanzendex/db";
-import { assertSeedAllowed, SeedRefused } from "../demo-seed/guard/guard.ts";
+import { assertSeedAllowed, SeedRefused } from "../demo-seed/access/guard.ts";
 import { seedCatalog } from "./seed-catalog.ts";
 import { SEED_SPECIES } from "./species-list.ts";
 

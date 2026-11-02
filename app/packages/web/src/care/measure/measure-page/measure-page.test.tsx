@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { MeasurePage } from "./measure-page";
@@ -74,7 +75,11 @@ function fakeServer(
 }
 
 const show = (token: () => Promise<string | undefined> = async () => "tok", onBack = vi.fn()) =>
-  render(<MeasurePage api="http://api" token={token} specimen={specimen} onBack={onBack} />);
+  render(
+    <MemoryRouter>
+      <MeasurePage api="http://api" token={token} specimen={specimen} onBack={onBack} />
+    </MemoryRouter>,
+  );
 
 beforeEach(() => {
   URL.createObjectURL = vi.fn(() => "blob:photo");
@@ -85,11 +90,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The course lives in its own layer "Verlauf", opened from the fact line (US-WAC-01, US-QS-15). */
+const openCourse = async () =>
+  userEvent.click(await screen.findByRole("button", { name: /^Verlauf \(/ }));
+
 describe("US-WAC-01 Seite Messen", () => {
   it('US-WAC-01 shows "Was messen?" after loading and the empty course with next step (P-09)', async () => {
     fakeServer();
     show();
     expect(screen.getByRole("status").textContent).toContain("werden geladen");
+    expect((await screen.findAllByText("noch keine Messung")).length).toBeGreaterThan(0);
+    await openCourse();
     expect(await screen.findByText("Noch keine Messung")).toBeTruthy();
     expect(screen.getByText("Trage oben den ersten Messwert ein.")).toBeTruthy();
     expect(screen.getByText(/Höhe\./)).toBeTruthy();
@@ -98,9 +109,10 @@ describe("US-WAC-01 Seite Messen", () => {
   it('US-WAC-03 shows rate and trend of the view; with one measurement "noch keine Rate"', async () => {
     fakeServer();
     show();
-    await screen.findByText("Noch keine Messung");
+    await screen.findAllByText("noch keine Messung");
     await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await openCourse();
     expect(await screen.findByText("1 Messung — noch keine Rate")).toBeTruthy();
   });
 
@@ -110,6 +122,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    await openCourse();
     expect(
       await screen.findByRole("heading", { level: 3, name: "12,5\u00a0cm · 01.10.2026" }),
     ).toBeTruthy();
@@ -136,7 +149,7 @@ describe("US-WAC-01 Seite Messen", () => {
   it("US-WAC-02 without etiolation signs of the species there is no disclosure, nothing invented (P-08)", async () => {
     fakeServer({ signs: null });
     show();
-    await screen.findByText("Noch keine Messung");
+    await screen.findAllByText("noch keine Messung");
     expect(screen.queryByText("Wie erkennen?")).toBeNull();
   });
 
@@ -184,7 +197,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     expect((await screen.findByRole("alert")).textContent).toContain("Das hat nicht geklappt.");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByText("Verlauf")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Verlauf \(/ })).toBeTruthy();
   });
 
   it("US-WAC-01 without sign-in while loading: error text, no call to the API", async () => {
@@ -223,11 +236,14 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(document.activeElement).toBe(field);
   });
 
-  it("US-WAC-01 · DS-26 the empty course offers an action that focuses the value field", async () => {
+  it("US-WAC-01 · DS-26 the empty course offers an action that closes the course, the form with the value field stays in view", async () => {
     fakeServer();
     show();
+    await openCourse();
     await userEvent.click(await screen.findByRole("button", { name: "Messwert eintragen" }));
-    expect(document.activeElement).toBe(screen.getByLabelText(/Messwert \(/));
+    // The course layer closes; the focus returns to its opener, the value field is right above the course (P-09).
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByLabelText(/Messwert \(/)).toBeTruthy();
   });
 });
 
@@ -241,6 +257,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     show();
     await fillValue("12,5");
     await save();
+    await openCourse();
     expect(
       await screen.findByRole("img", { name: "Foto der Messung vom 01.10.2026" }),
     ).toBeTruthy();
@@ -269,6 +286,32 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await save();
     await screen.findByText(/Gespeichert:/);
     expect(photoPosts).toHaveLength(0);
+  });
+
+  it("US-QS-24 the optional note and photo sit behind Mehr Angaben, closed; the save button sits in a sticky footer", async () => {
+    fakeServer();
+    show();
+    await screen.findAllByText("noch keine Messung");
+    const more = screen.getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(more.contains(screen.getByLabelText(/Foto/))).toBe(true);
+    expect(more.contains(screen.getByLabelText("Notiz (optional)"))).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Messung speichern" }).parentElement?.className,
+    ).toContain("sticky");
+  });
+
+  it("US-QS-24 a refused photo opens Mehr Angaben, so its message is never hidden (P-10)", async () => {
+    fakeServer();
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent
+      .setup({ applyAccept: false })
+      .upload(screen.getByLabelText(/Foto/), new File(["x"], "x.pdf", { type: "application/pdf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("JPEG, PNG oder WebP");
+    expect(alert.closest("details")?.open).toBe(true);
   });
 
   it("a file that is not an image is rejected before sending and writes nothing", async () => {
@@ -310,6 +353,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     setViewportWidth(1024);
     const { photoPosts } = fakeServer({ existing: [measurement] });
     show();
+    await openCourse();
     await pick(/Foto hinzufügen/);
     await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
     expect(photoPosts[0]?.url).toContain("date=2026-10-01");
@@ -326,6 +370,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
         ++calls === 1 ? exists() : response(201, { photo: "q.jpg", replaced: true }),
     });
     show();
+    await openCourse();
     await pick(/Foto ersetzen/);
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain(ERROR_TEXTS["measurement.photo_exists"]);
@@ -342,6 +387,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
       photoSave: exists,
     });
     show();
+    await openCourse();
     await pick(/Foto ersetzen/);
     await screen.findByRole("dialog");
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
@@ -357,6 +403,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
         response(415, { error: { code: "media.type_unsupported", text: "raw server text" } }),
     });
     show();
+    await openCourse();
     await pick(/Foto hinzufügen/);
     expect((await screen.findByRole("alert")).textContent).toContain(
       ERROR_TEXTS["media.type_unsupported"],
@@ -371,7 +418,22 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
       ],
     });
     show();
+    await openCourse();
     await screen.findAllByRole("heading", { level: 3 });
     expect(screen.getAllByLabelText(/Foto hinzufügen/)).toHaveLength(1);
+  });
+});
+
+describe("US-QS-14 · US-QS-15 the measure page is a sub-page with one page header", () => {
+  it("US-QS-14 has one h1, and its back control sits in that page header", async () => {
+    fakeServer();
+    show();
+    const title = await screen.findByRole("heading", { level: 1, name: /^Messen: / });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const header = title.closest("[data-page-header]") as HTMLElement | null;
+    expect(header).not.toBeNull();
+    expect(
+      within(header as HTMLElement).getByRole("button", { name: "Zurück zur Sammlung" }),
+    ).toBeTruthy();
   });
 });

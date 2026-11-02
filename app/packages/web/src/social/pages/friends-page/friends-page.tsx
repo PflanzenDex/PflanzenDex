@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LoadFrame, useInvalidate, useRequest } from "../../../kernel";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
 import { loadBanner } from "../../api/feed-api";
@@ -75,7 +75,9 @@ function Tiles(props: {
   const { counts, options } = props;
   const note = options.swapMark ? { note: options.swapMark } : {};
   return (
-    <div className="grid grid-cols-2 gap-2">
+    // Two tiles per row while a label fits (9 rem, starting value at normal text); at a larger text size one per row, so
+    // no label runs into its neighbour (issue 1019).
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
       <LayerTile id="requests" name="Anfragen" count={options.calm ? "hidden" : props.open} />
       <LayerTile id="news" name="Neu bei Freunden" count={counts.news} />
       <LinkTile
@@ -115,6 +117,7 @@ function Body(props: {
       <Button
         type="button"
         size="touch"
+        className="sm:self-start"
         aria-haspopup="dialog"
         aria-expanded={add.open}
         onClick={(event) => add.openLayer(event.currentTarget)}
@@ -159,7 +162,7 @@ export function FriendsPage(props: {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
-    <div className="min-w-0" data-fit-screen="">
+    <LayerHost data-fit-screen="">
       <section aria-labelledby="friends-title" className="flex min-w-0 flex-col gap-3">
         <h1 id="friends-title" className="text-2xl font-semibold">
           Freunde
@@ -176,6 +179,6 @@ export function FriendsPage(props: {
           )}
         </LoadFrame>
       </section>
-    </div>
+    </LayerHost>
   );
 }

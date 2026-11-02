@@ -118,6 +118,20 @@ describe("US-BES-01 search", () => {
   });
 });
 
+describe("US-QS-21 the search row at a larger text size (issue 1019)", () => {
+  it("US-QS-21 the field keeps a 10 rem basis, the Filter opener and the proposal never shrink, and the rows wrap instead of squeezing the field", () => {
+    search(many(2));
+    const field = screen.getByRole("search");
+    expect(field.className).toContain("basis-40");
+    expect(field.className).toContain("min-w-0");
+    expect(field.parentElement?.className).toContain("flex-wrap");
+    expect(screen.getByRole("button", { name: /^Filter/ }).className).toContain("shrink-0");
+    const propose = screen.getByRole("button", { name: "Art vorschlagen" });
+    expect(propose.className).toContain("shrink-0");
+    expect(propose.parentElement?.className).toContain("flex-wrap");
+  });
+});
+
 describe("US-QS-21 the catalog list is paged", () => {
   it("US-QS-21 shows one page of compact results with name, scientific name and one fact", () => {
     search(many(45));
@@ -128,6 +142,17 @@ describe("US-QS-21 the catalog list is paged", () => {
       HITS_PER_PAGE,
     );
     expect(screen.queryByText("Mehr laden")).toBeNull();
+  });
+
+  it("US-QS-21 every result row has a thumbnail slot of one fixed size, so the names share one left edge", () => {
+    search(many(3));
+    const rows = within(screen.getByRole("list", { name: "Treffer" })).getAllByRole("button");
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      const slot = row.querySelector('[aria-hidden="true"]');
+      expect(slot?.className).toContain("size-10");
+      expect(slot?.className).toContain("shrink-0");
+    }
   });
 
   it("US-QS-21 a short list has no pager", () => {

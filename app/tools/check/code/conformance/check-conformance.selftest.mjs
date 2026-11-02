@@ -5,9 +5,11 @@ import assert from "node:assert/strict";
 import os from "node:os";
 import path from "node:path";
 import { after, before, beforeEach, describe, it } from "node:test";
+import fs from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "playwright";
-import { runConformance, settleBeforeAxe } from "./check-conformance.mjs";
+import { runConformance, serve, settleBeforeAxe, waitForStory } from "./check-conformance.mjs";
+import { INTERACTIVE, probeTargets, tabThrough } from "./conformance-probes.mjs";
 
 describe("QG-U5 · conformance run catches", () => {
   const outDir = path.join(os.tmpdir(), `conformance-fixtures-${process.pid}`);
@@ -94,5 +96,59 @@ describe("QG-U9 · conformance run waits for colour transitions before axe", () 
     const violations = await contrast();
     assert.equal(violations.length, 1);
     assert.equal(violations[0].id, "color-contrast");
+  });
+});
+
+// DS-37 (issue 1122): the focus ring fades in over 600 ms, like the ring of the app's controls. The probe must read the
+// settled ring after Tab, not a frame of the transition, or the result depends on machine load.
+const focusRingPage = `<!doctype html><html lang="en"><body style="margin:0">
+<style>button{outline:none;box-shadow:0 0 0 0 rgb(27 107 74 / 0);transition:box-shadow 600ms linear}
+button:focus-visible{box-shadow:0 0 0 4px rgb(27 107 74)}</style>
+<main><button style="width:48px;height:48px">Ok</button></main></body></html>`;
+
+describe("DS-37 · conformance run reads the settled focus ring", () => {
+  it("DS-37 · after Tab the probe sees the finished ring, whatever the load", async () => {
+    const browser = await chromium.launch();
+    try {
+      const page = await (await browser.newContext()).newPage();
+      await page.setContent(focusRingPage);
+      const targets = await page.evaluate(probeTargets, INTERACTIVE);
+      const reached = await tabThrough(page, targets.length);
+      assert.equal(reached.get(0)?.boxShadow, "rgb(27, 107, 74) 0px 0px 0px 4px");
+    } finally {
+      await browser.close();
+    }
+  });
+});
+
+// Issue 1131: an overlay whose code arrives late (like the open sheet story) must be in the page before the probe.
+describe("QG-U5 · conformance run waits for late overlays", () => {
+  it("QG-U5 · a dialog that opens after a slow script load is present when the probe starts", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "conformance-late-"));
+    fs.writeFileSync(
+      path.join(dir, "index.html"),
+      `<!doctype html><html lang="en"><body><main><p>Story</p></main>
+<script>import("./late.js");</script></body></html>`,
+    );
+    fs.writeFileSync(
+      path.join(dir, "late.js"),
+      `const d = document.createElement("div"); d.setAttribute("role", "dialog"); d.textContent = "Sheet"; document.body.append(d);`,
+    );
+    const { server, url } = await serve(dir);
+    const browser = await chromium.launch();
+    try {
+      const page = await (await browser.newContext()).newPage();
+      await page.route("**/late.js", async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        await route.continue();
+      });
+      await page.goto(url);
+      await waitForStory(page);
+      assert.equal(await page.locator("[role=dialog]").count(), 1);
+    } finally {
+      await browser.close();
+      server.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

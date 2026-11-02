@@ -1,4 +1,4 @@
-import { expect, test } from "../../support/fixtures";
+import { expect, showLocations, test } from "../../support/fixtures";
 import {
   chooseByArrows,
   keyboardWalk,
@@ -35,6 +35,7 @@ async function specimenByKeyboard(page: Page, species: string): Promise<void> {
   await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
   await chooseByArrows(page, form.getByLabel(/^Standard-Stufe/), 3);
   await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
+  await press(page, form.getByRole("button", { name: "Weiter" }));
   await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
   await typeInto(page, form.getByLabel(/^Vergeilung-Anzeichen/), "Die Rosette streckt sich.");
   await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
@@ -108,7 +109,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     await locationsByKeyboard(page);
     await press(page, page.getByRole("button", { name: "Standard-Zonen übernehmen" }));
     await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
-    await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
+    await showLocations(page);
+    await press(page, page.getByRole("button", { name: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Fensterbank");
     await chooseByArrows(page, form.getByLabel("Lichtzone"), 2);
@@ -141,8 +143,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Aloe polyphylla");
     await openByKeyboard(page, "Heute");
-    // The treatments are a layer above the overview of "Heute" (US-QS-18): the tile, named by its count and topic, opens it.
-    await press(page, page.getByRole("button", { name: /Behandeln$/ }));
+    // The treatments are a layer above the overview of "Heute" (US-QS-18): the one "Behandlungen" entry (tile or row action), named by its count and topic, opens it.
+    await press(page, page.getByRole("button", { name: /^(\d+Behandlungen|Behandlungen \d+.*)$/ }));
     await press(page, page.getByRole("button", { name: "Behandlung planen" }).first());
     const plan = page.getByRole("form", { name: /Behandlung planen/ });
     await press(page, plan.getByRole("checkbox").first(), "Space");
@@ -161,7 +163,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     test.setTimeout(120_000);
     await signInByKeyboard(page, account);
     await locationsByKeyboard(page);
-    await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
+    await showLocations(page);
+    await press(page, page.getByRole("button", { name: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Regal");
     await press(page, form.getByRole("button", { name: "Standort anlegen" }));

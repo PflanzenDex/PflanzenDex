@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "../../equipment-page/equipment-page";
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
@@ -12,9 +13,11 @@ Element.prototype.releasePointerCapture ??= () => undefined;
 /** The wishes are a layer of the equipment (US-QS-22), so the page renders in a router that opens it. */
 const view = (url = "/?sheet=wishes") =>
   render(
-    <MemoryRouter initialEntries={[url]}>
-      <EquipmentPage api="http://api" token={token} />
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[url]}>
+        <EquipmentPage api="http://api" token={token} />
+      </MemoryRouter>
+    </ToastProvider>,
   );
 
 const response = (status: number, body: unknown) =>

@@ -1,4 +1,8 @@
 import { errorText } from "@/lib/error-text";
+import {
+  useToast,
+  type ToastApi,
+} from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { useWriteAction } from "../../../kernel";
 import {
   describeLamp,
@@ -8,6 +12,8 @@ import {
   setLampZone,
   type EquipmentStatus,
 } from "../../equipment-api";
+import { STATUS_LABELS, SUPPLY_LABELS } from "../../labels";
+import { saveWithUndo } from "./save-with-undo";
 import {
   linkAgent,
   markChecked,
@@ -28,8 +34,8 @@ type LampRef = { id: string; name: string };
 
 type Write = ReturnType<typeof useWriteAction>;
 
-/** The writes on a lamp (US-EQU-02): move it to another zone, set its state. */
-function zoneWrites(api: string, write: Write) {
+/** The writes on a lamp (US-EQU-02): move it to another zone, set its state (with "Rückgängig", US-QS-07). */
+function zoneWrites(api: string, write: Write, toast: ToastApi) {
   return {
     busy: write.running,
     onZone: (lamp: LampRef, lightZoneId: string) =>
@@ -37,11 +43,15 @@ function zoneWrites(api: string, write: Write) {
         (t) => setLampZone(api, t, { id: lamp.id, lightZoneId }),
         `Lampe „${lamp.name}“ umgezogen.`,
       ),
-    onStatus: (lamp: LampRef, status: EquipmentStatus) =>
-      void write.run(
-        (t) => setEquipmentStatus(api, t, { id: lamp.id, status }),
-        `Zustand von „${lamp.name}“ gespeichert.`,
-      ),
+    onStatus: (lamp: LampRef & { status: EquipmentStatus }, status: EquipmentStatus) =>
+      void saveWithUndo(write, toast, {
+        before: lamp.status,
+        after: status,
+        send: (value) => (t) => setEquipmentStatus(api, t, { id: lamp.id, status: value }),
+        said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
+        saved: `Zustand von „${lamp.name}“ gespeichert.`,
+        undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
+      }),
   };
 }
 
@@ -88,15 +98,21 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
   };
 }
 
-/** The writes on a consumable (US-EQU-05): its supply and the link of a plant agent. */
-function supplyWrites(api: string, write: Write): SupplyActions {
+/** The writes on a consumable (US-EQU-05): its supply (with "Rückgängig", US-QS-07) and the link of a plant agent. */
+function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions {
   return {
     busy: write.running,
-    onSupply: (item, supply) =>
-      void write.run(
-        (t) => setSupply(api, t, { id: item.id, supply }),
-        `Vorrat von „${item.name}“ gespeichert.`,
-      ),
+    onSupply: (item, supply) => {
+      if (item.supply === null) return;
+      void saveWithUndo(write, toast, {
+        before: item.supply,
+        after: supply,
+        send: (value) => (t) => setSupply(api, t, { id: item.id, supply: value }),
+        said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
+        saved: `Vorrat von „${item.name}“ gespeichert.`,
+        undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
+      });
+    },
     onLink: (item, agentLink) =>
       void write.run(
         (t) => linkAgent(api, t, { id: item.id, agentLink }),
@@ -146,11 +162,12 @@ export function useLampActions(
   shared: readonly { equipmentId: string; note: string | null }[],
 ) {
   const write = useWriteAction(token, onWritten);
+  const toast = useToast();
   return {
-    actions: zoneWrites(api, write),
+    actions: zoneWrites(api, write, toast),
     light: lightWrites(api, write),
     maintenance: maintenanceWrites(api, write),
-    supply: supplyWrites(api, write),
+    supply: supplyWrites(api, write, toast),
     sensors: sensorWrites(api, write),
     sharing: sharingWrites(api, write, new Map(shared.map((r) => [r.equipmentId, r.note]))),
     message: write.message,

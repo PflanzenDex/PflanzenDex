@@ -39,7 +39,7 @@ export function GroupChoices({
     <div
       role="group"
       aria-label={label}
-      className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1"
+      className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 md:flex-wrap md:overflow-visible"
     >
       {choices.map((c) => {
         const selected = c.key === chosen?.key;

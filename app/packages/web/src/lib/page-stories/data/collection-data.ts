@@ -159,3 +159,30 @@ export const collectionEmpty = {
   "/pokedex/ownership": { ownership: { caught: [], unidentified: [] } },
   "/wishes/candidates": { ...candidates, candidates: [] },
 };
+
+/** A long collection like the demo account Ben's (50 plants): enough for several pages of tiles (US-QS-19, issue 1108). */
+const many: SpecimenCard[] = [
+  ...cards,
+  ...[
+    ["d", "Efeutute", "Epipremnum aureum"],
+    ["e", "Gummibaum", "Ficus elastica"],
+    ["f", "Glücksfeder", "Zamioculcas zamiifolia"],
+    ["g", "Grünlilie", "Chlorophytum comosum"],
+    ["h", "Einblatt", "Spathiphyllum wallisii"],
+    ["i", "Geigenfeige", "Ficus lyrata"],
+    ["j", "Kentiapalme", "Howea forsteriana"],
+    ["k", "Pfeilwurz", "Maranta leuconeura"],
+    ["l", "Philodendron", "Philodendron hederaceum"],
+    ["m", "Elefantenfuß", "Beaucarnea recurvata"],
+    ["n", "Drachenbaum", "Dracaena marginata"],
+    ["o", "Korbmarante", "Calathea orbifolia"],
+  ].map(([id, name, species]) =>
+    card(id ?? "", name ?? "", species ?? "", ["Zone 3", "Fensterbank Süd"]),
+  ),
+];
+
+export const collectionMany = {
+  ...collectionRoutes,
+  "/specimens/cards": { cards: many },
+  "/specimens/count": { count: many.length, archived: 0 },
+};

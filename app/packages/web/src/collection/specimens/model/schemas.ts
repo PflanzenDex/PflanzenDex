@@ -45,6 +45,14 @@ export const catchDateSchema = z.object({
 });
 export type CatchDateFields = z.infer<typeof catchDateSchema>;
 
+export const REPOT_DATE_MISSING = "Bitte gib ein Datum an: heute oder ein früheres Datum.";
+
+/** The form to pot a cutting (US-BES-04); the server checks the date again (P-03). */
+export const repotSchema = z.object({
+  date: z.string().min(1, REPOT_DATE_MISSING),
+});
+export type RepotFields = z.infer<typeof repotSchema>;
+
 export const OTHER_REASON = "other";
 
 /** The form to archive a specimen (US-BES-07): a reason from the list, or an own one. */

@@ -1,5 +1,6 @@
 // Line rules of the design system gate (docs/guides/reference/design-system.md); used by check-design-system.mjs.
 import { rawControlLines } from "./check-design-system-ast.mjs";
+import { DS37_EXCEPTION, outlineLines } from "./check-design-system-css.mjs";
 
 // DS-33: tokens.css is the only stylesheet under src/.
 export const TOKEN_FILE = "styles/tokens.css";
@@ -61,11 +62,6 @@ export const RULES = [
     languages: ["css", "tsx"],
     test: (line, file) => file !== TOKEN_FILE && /@apply\b|<style[\s>]/.test(line),
   },
-  {
-    id: "DS-37",
-    languages: ["css"],
-    test: (line) => /outline\s*:\s*(?:none|0)\b/.test(line),
-  },
 ];
 
 const RESERVED_DIRS = new Set(["components", "lib", "platform", "styles"]);
@@ -110,6 +106,12 @@ const TERNARY_OR_AND = /(?<!\?)\?(?![?.])|&&/;
 
 // File rules see the whole file; each returns the 1-based lines of its violations.
 export const FILE_RULES = [
+  {
+    // DS-37: no `outline: none` or `0` in any stylesheet, except the owner-decided selector (DS37_EXCEPTION) in tokens.css.
+    id: "DS-37",
+    applies: (file) => file.endsWith(".css"),
+    lines: (content, file) => outlineLines(content, file === TOKEN_FILE ? DS37_EXCEPTION : null),
+  },
   {
     id: "DS-48",
     applies: (file) => file.endsWith(".tsx") && !file.startsWith("components/ui/"),

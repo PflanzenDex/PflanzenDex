@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import type { Distribution, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { openPlant } from "../specimens/tests/plants-test-helpers";
@@ -128,12 +128,65 @@ describe("US-QS-19 tiles of the plants", () => {
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 
+  it("US-QS-19 at 360 x 640 two tile columns fit the 294 px list: the column minimum 8.75 rem leaves room for two and the gap, so a page holds 6 tiles in 3 rows (issue 1108)", () => {
+    screenWith(many(8));
+    const grid = screen.getAllByRole("listitem")[0]?.parentElement;
+    const min = /minmax\(min\(([\d.]+)rem,100%\),1fr\)/.exec(grid?.className ?? "")?.[1];
+    expect(min).toBeDefined();
+    // Two columns and the 0.5 rem gap at 16 px per rem, within the list width the page story measures at 360 px.
+    expect((2 * Number(min) + 0.5) * 16).toBeLessThanOrEqual(294);
+    expect(grid?.className).toContain("gap-2");
+  });
+
+  it("US-QS-19 at 200 % text the insight row wraps at whole words: the row may wrap, the insight never gets narrower than its longest word, and the section grows with its content (issue 1113)", () => {
+    screenWith(many(8));
+    const insight = screen.getByRole("button", { name: /Lichtzonen ansehen|Dünnste Zone/ });
+    expect(insight.className).not.toContain("min-w-0");
+    expect(insight.querySelector("span.break-normal")).not.toBeNull();
+    expect(insight.parentElement?.className).toContain("flex-wrap");
+    const section = screen.getByRole("region", { name: "Pflanzen" });
+    expect(section.className).not.toContain("min-h-0");
+  });
+
   it("US-QS-19 a swipe turns the page", () => {
     screenWith(many(8));
     const list = screen.getByRole("list", { name: "Pflanzen" });
     fireEvent.pointerDown(list, { clientX: 200, clientY: 10 });
     fireEvent.pointerUp(list, { clientX: 100, clientY: 10 });
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
+  });
+});
+
+describe("US-QS-19 page size fills the free height of the region (tiles)", () => {
+  // jsdom has no layout: the list region and its tiles get a height (a tile is 100 px, the list has no gap in jsdom).
+  let region = 0;
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      const height = this.tagName === "UL" ? region : this.tagName === "LI" ? 100 : 0;
+      return { height, width: 0, top: 0, left: 0, right: 0, bottom: height, x: 0, y: 0 } as DOMRect;
+    });
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-19 the tiles fill the free height of the region: whole rows per page, the pager below", () => {
+    region = 532;
+    screenWith(many(8));
+    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
   });
 });
 

@@ -1,17 +1,20 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
-import { useCallback, useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button/button";
+import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { FormRoot } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { Label } from "@/components/ui/display/label/label";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
+import { TimeFields } from "./time-fields/time-fields";
 
 type Token = () => Promise<string | undefined>;
 
 const KEY = ["monitoring", "settings"] as const;
 const { min, max } = REMINDER_LIMITS.measurementDays;
+
+/** The id of the form of "Wann erinnern?": its footer button submits it from outside the scroll region (US-QS-15). */
+export const TIMES_FORM = "reminder-times-form";
+/** The id of the form of "Pausen je Anlass". */
+export const PAUSES_FORM = "reminder-pauses-form";
 
 /** A complaint about the input that the server would refuse too, in words that name the fix (P-09); `null` when fine. */
 function complaint(quietFrom: string, quietTo: string, days: string): string | null {
@@ -28,78 +31,8 @@ const Alert = ({ text }: { text: string }) => (
   </p>
 );
 
-type TimeFieldsProps = {
-  sendTime: string;
-  quiet: readonly [string, string];
-  days: string;
-  on: {
-    sendTime: (v: string) => void;
-    quiet: (from: string, to: string) => void;
-    days: (v: string) => void;
-  };
-};
-
-/** Time of the daily check, quiet hours and the days of an overdue measurement. */
-function TimeFields({ sendTime, quiet, days, on }: TimeFieldsProps) {
-  return (
-    <>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="reminder-time">Uhrzeit der täglichen Prüfung</Label>
-        <Input
-          id="reminder-time"
-          type="time"
-          value={sendTime}
-          required
-          onChange={(e) => on.sendTime(e.target.value)}
-          aria-describedby="reminder-time-hint"
-        />
-        <p id="reminder-time-hint" className="m-0 text-sm text-muted-foreground">
-          In deiner Zeitzone. Es kommt höchstens eine Erinnerung am Tag, und nur, wenn etwas zu tun
-          ist.
-        </p>
-      </div>
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="mb-1 text-sm font-medium">Erinnerungspause</legend>
-        <div className="flex flex-wrap gap-3">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="quiet-from">Von</Label>
-            <Input
-              id="quiet-from"
-              type="time"
-              value={quiet[0]}
-              onChange={(e) => on.quiet(e.target.value, quiet[1])}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="quiet-to">Bis</Label>
-            <Input
-              id="quiet-to"
-              type="time"
-              value={quiet[1]}
-              onChange={(e) => on.quiet(quiet[0], e.target.value)}
-            />
-          </div>
-        </div>
-        <p className="m-0 text-sm text-muted-foreground">
-          In dieser Zeit kommt nichts an; die Erinnerung wartet bis zum Ende. Beide Zeiten leer:
-          keine Pause.
-        </p>
-      </fieldset>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="measurement-days">Messung überfällig nach (Tagen)</Label>
-        <Input
-          id="measurement-days"
-          inputMode="numeric"
-          autoComplete="off"
-          value={days}
-          onChange={(e) => on.days(e.target.value)}
-        />
-      </div>
-    </>
-  );
-}
-
-function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
+/** Saves the whole settings: the fields of this form change, the others keep the stored value (US-MON-08). */
+function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }) {
   const { saved } = props;
   const [sendTime, setSendTime] = useState(saved.sendTime);
   const [quiet, setQuiet] = useState<readonly [string, string]>([
@@ -107,7 +40,6 @@ function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
     saved.quietTo ?? "",
   ]);
   const [days, setDays] = useState(String(saved.measurementDays));
-  const [paused, setPaused] = useState<Paused>(saved.paused);
   const [problem, setProblem] = useState<string | null>(null);
   const write = useWriteAction(props.token, useInvalidate(KEY));
 
@@ -117,21 +49,21 @@ function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
     setProblem(found);
     if (found !== null) return;
     const next: ReminderSettings = {
+      ...saved,
       sendTime,
       quietFrom: quiet[0] === "" ? null : quiet[0],
       quietTo: quiet[1] === "" ? null : quiet[1],
-      paused,
       measurementDays: Number(days),
     };
     void write.run((t) => saveReminderSettings(props.api, t, next), "Erinnerungen gespeichert.");
   };
-  const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));
 
   return (
     <FormRoot
+      id={TIMES_FORM}
       aria-label="Erinnerungen einstellen"
       onSubmit={submit}
-      className="flex max-w-xl flex-col gap-4"
+      className="flex min-w-0 flex-col gap-4"
     >
       <TimeFields
         sendTime={sendTime}
@@ -139,7 +71,6 @@ function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
         days={days}
         on={{ sendTime: setSendTime, quiet: (f, t) => setQuiet([f, t]), days: setDays }}
       />
-      <PauseRows paused={paused} onChange={pause} />
       {problem !== null && <Alert text={problem} />}
       {write.error && <Alert text={write.error.text} />}
       {write.message && (
@@ -147,25 +78,69 @@ function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
           {write.message}
         </p>
       )}
-      <Button type="submit" size="touch" disabled={write.running}>
-        {write.running ? "Speichert …" : "Erinnerungen speichern"}
-      </Button>
     </FormRoot>
   );
 }
 
-/** Reminder settings (US-MON-08): time, quiet hours, days of an overdue measurement and a pause per occasion. */
-export function ReminderSettingsForm(props: { api: string; token: Token }) {
+/** Saves the whole settings with the pauses changed; the time and the quiet hours keep the stored value. */
+function PausesForm(props: { api: string; token: Token; saved: ReminderSettings }) {
+  const { saved } = props;
+  const [paused, setPaused] = useState<Paused>(saved.paused);
+  const write = useWriteAction(props.token, useInvalidate(KEY));
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const next: ReminderSettings = { ...saved, paused };
+    void write.run((t) => saveReminderSettings(props.api, t, next), "Pausen gespeichert.");
+  };
+  const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));
+
+  return (
+    <FormRoot
+      id={PAUSES_FORM}
+      aria-label="Pausen je Anlass einstellen"
+      onSubmit={submit}
+      className="flex min-w-0 flex-col gap-4"
+    >
+      <PauseRows paused={paused} onChange={pause} />
+      {write.error && <Alert text={write.error.text} />}
+      {write.message && (
+        <p role="status" className="rounded-lg border border-border p-3">
+          {write.message}
+        </p>
+      )}
+    </FormRoot>
+  );
+}
+
+/** Loads the settings for one form of a layer; the form is shown once they are there (P-10: a failure is named). */
+function WithSettings(props: {
+  api: string;
+  token: Token;
+  loading: string;
+  children: (saved: ReminderSettings) => ReactNode;
+}) {
   const load = useCallback((t: string) => loadReminderSettings(props.api, t), [props.api]);
   return (
-    <LoadFrame
-      queryKey={KEY}
-      fresh
-      token={props.token}
-      load={load}
-      loadingText="Erinnerungseinstellungen werden geladen …"
-    >
-      {(saved) => <Form api={props.api} token={props.token} saved={saved} />}
+    <LoadFrame queryKey={KEY} fresh token={props.token} load={load} loadingText={props.loading}>
+      {(saved) => props.children(saved)}
     </LoadFrame>
+  );
+}
+
+/** "Wann erinnern?" (US-MON-08): the time of the daily check, the quiet hours and the days of an overdue measurement. */
+export function ReminderTimesForm(props: { api: string; token: Token }) {
+  return (
+    <WithSettings {...props} loading="Erinnerungseinstellungen werden geladen …">
+      {(saved) => <TimesForm api={props.api} token={props.token} saved={saved} />}
+    </WithSettings>
+  );
+}
+
+/** "Pausen je Anlass" (US-MON-08): a pause per occasion, in pages inside its layer. */
+export function ReminderPausesForm(props: { api: string; token: Token }) {
+  return (
+    <WithSettings {...props} loading="Pausen werden geladen …">
+      {(saved) => <PausesForm api={props.api} token={props.token} saved={saved} />}
+    </WithSettings>
   );
 }

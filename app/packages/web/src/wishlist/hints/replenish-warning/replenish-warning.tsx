@@ -11,7 +11,7 @@ import { zoneLabel } from "@pflanzendex/core";
 export function ReplenishWarning({ replenishment }: { replenishment: Replenishment }) {
   if (replenishment.zones.length === 0) return null;
   return (
-    <div role="status" className="rounded-lg border border-destructive p-3">
+    <div role="status" className="rounded-lg border border-border p-3">
       <ul className="m-0 list-none p-0">
         {replenishment.zones.map((z) => (
           <li key={z.zoneId} className="flex flex-wrap items-center gap-2 font-semibold">

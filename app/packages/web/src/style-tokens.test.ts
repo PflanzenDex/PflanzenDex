@@ -1,7 +1,7 @@
 // US-QS-14 · ADR 0011 decisions 2 to 5: the Greenhouse tokens (colour values, type scale, radius, elevation, motion);
 // ADR 0017: neutral surfaces, green only for intent.
 // The contrast of every pair is in style-contrast.test.ts; this file pins the values and the structure of tokens.css.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(new URL("./styles/tokens.css", import.meta.url), "utf8");
@@ -194,5 +194,50 @@ describe("US-QS-15 the one-screen frame rule is valid CSS", () => {
     expect(selectors.length).toBeGreaterThan(0);
     for (const sel of selectors) expect(sel).not.toMatch(/:has\([^)]*:has\(/);
     expect(css).toContain("div:has(> div > main [data-fit-screen])");
+  });
+});
+
+describe("US-QS-15 the filling view at a larger text size (issue 1113)", () => {
+  const rule = (media: string) => {
+    const at = media ? css.indexOf(media) : 0;
+    const from = css.indexOf("main > div > [data-fit-fill] {", at);
+    return css.slice(from, css.indexOf("}", from));
+  };
+  const shell = readFileSync(
+    new URL("./components/shared/navigation/app-shell/app-shell.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("US-QS-15 the filling view scrolls inside itself, so its last line ends above the bottom bar, and reaches into the padding of main by as much as it pads itself", () => {
+    const base = rule("");
+    expect(base).toContain("overflow-y: auto;");
+    expect(base).toContain("height: calc(100% + 1rem);");
+    expect(base).toContain("margin: -0.5rem -1rem;");
+    expect(base).toContain("padding: 0.5rem 1rem;");
+    expect(rule("@media (width >= 48rem)")).toContain("margin-inline: -1.5rem;");
+    expect(rule("@media (width >= 80rem)")).toContain("margin-inline: -2.5rem;");
+    // The bleed matches the side padding of main: 1 rem, 1.5 rem from md, 2.5 rem from xl.
+    expect(shell).toMatch(/className="flex-1 px-4 [^"]*md:px-6[^"]*xl:px-10"/);
+  });
+});
+
+/** Every source file below `dir` without its tests and stories. */
+function appSources(dir: URL): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const at = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, dir);
+    if (entry.isDirectory()) return appSources(at);
+    return /\.tsx?$/.test(entry.name) && !/\.(test|stories)\.tsx?$/.test(entry.name)
+      ? [at.pathname]
+      : [];
+  });
+}
+
+describe("US-QS-15 no fixed pixel text size (issue 1019)", () => {
+  it("US-QS-15 every text size is rem-based: no class like text-[15px] and no px font size in a style object, so 200 % text scales all text", () => {
+    const offenders = appSources(new URL("./", import.meta.url)).filter((file) => {
+      const text = readFileSync(file, "utf8");
+      return /text-\[[\d.]+px\]/.test(text) || /fontSize:\s*["']?[\d.]+px/.test(text);
+    });
+    expect(offenders.map((file) => file.slice(file.indexOf("/src/") + 5))).toEqual([]);
   });
 });

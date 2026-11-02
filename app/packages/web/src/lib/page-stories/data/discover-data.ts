@@ -90,6 +90,8 @@ export const discoverRoutes = {
       hit("art-g", "Gasteria carinata", "Ochsenzunge"),
     ],
   },
+  // The profile of a catalog hit (`/species/<id>`, US-QS-21): without it the page story shows the error state.
+  "/species/art-a": hit("art-a", "Aloe vera", "Echte Aloe"),
   "/pokedex/ownership": { ownership: { caught: [], unidentified: [] } },
 };
 

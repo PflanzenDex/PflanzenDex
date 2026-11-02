@@ -2,9 +2,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
 import { AiClientsSection } from "./clients-section";
+import { AiSection } from "../ai-section/ai-section";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -40,7 +42,9 @@ function fakeServer(rows: Record<string, unknown>[]) {
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <AiClientsSection api="http://api" token={token} />
+      <MemoryRouter>
+        <AiClientsSection api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 afterEach(() => {
@@ -49,12 +53,26 @@ afterEach(() => {
 });
 
 describe("US-KI-07 connected AI clients", () => {
-  it("US-KI-07 says where the data goes, shows the address and that nothing is connected yet", async () => {
+  it("US-KI-07 says where the data goes and that nothing is connected yet", async () => {
     fakeServer([]);
     show();
     expect(await screen.findByText("Noch ist kein KI-Client verbunden.")).toBeTruthy();
     expect(screen.getByText(/Der Anbieter deines KI-Clients erhält die Daten/)).toBeTruthy();
-    expect(screen.getByText("http://api/mcp")).toBeTruthy();
+  });
+
+  it("US-KI-07 the layer of how to connect shows the address of the interface, in its own layer", async () => {
+    fakeServer([]);
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter initialEntries={["/?sheet=howto"]}>
+          <AiSection api="http://api" token={token} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText("http://api/mcp")).toBeTruthy();
+    expect(
+      screen.getByText("So verbindest du einen KI-Client", { selector: "strong" }),
+    ).toBeTruthy();
   });
 
   it("US-KI-07 lists name, rights, since and last use", async () => {

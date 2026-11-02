@@ -1,7 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { findLayout } from "./layout-rules.mjs";
-import { unitCount, isIgnored } from "./layout-tree.mjs";
+import { unitCount, isIgnored, globMatch } from "./layout-tree.mjs";
+import layoutConfig from "../../../../config/lint/layout.config.mjs";
 
 const config = {
   maxUnits: 5,
@@ -105,5 +106,37 @@ describe("US-QG-09 LY-5 repo root", () => {
   });
   it("does not count whitelisted root files towards the limit", () => {
     assert.deepEqual(run(["README.md", "Makefile", "app/a.ts", "docs/a.md"]), []);
+  });
+});
+
+describe("US-QG-09 LY-3 exemption for Keycloak message bundles (owner decision 2026-10-30, #1077)", () => {
+  const theme = "app/config/dev/keycloak-theme/pflanzendex/login";
+  it("accepts the message bundles of a Keycloak login theme with the layout config of the repo", () => {
+    const bundles = [
+      `${theme}/messages/messages_de.properties`,
+      `${theme}/messages/messages_pt_BR.properties`,
+    ];
+    assert.deepEqual(findLayout(bundles, layoutConfig), []);
+  });
+  it("still fails other non-kebab names in the same theme", () => {
+    const f = findLayout(
+      [`${theme}/resources/css/Brand_Styles.css`, `${theme}/messages/notes_de.properties`],
+      layoutConfig,
+    );
+    assert.deepEqual(rules(f).sort(), [`LY-3 ${theme}/messages`, `LY-3 ${theme}/resources/css`]);
+  });
+  it("does not exempt a message bundle outside the sign-in theme", () => {
+    const f = findLayout(["app/packages/web/src/messages_de.properties"], layoutConfig);
+    assert.deepEqual(rules(f), ["LY-3 app/packages/web/src"]);
+  });
+});
+
+describe("US-QG-09 LY-3 exemption pattern", () => {
+  it("matches whole paths: ** spans segments, * stays inside one segment", () => {
+    assert.equal(globMatch("a/**/m/x_*.p", "a/b/c/m/x_de.p"), true);
+    assert.equal(globMatch("a/**/m/x_*.p", "a/m/x_.p"), true);
+    assert.equal(globMatch("a/**/m/x_*.p", "a/b/m/y_de.p"), false);
+    assert.equal(globMatch("a/*/m", "a/b/c/m"), false);
+    assert.equal(globMatch("a/*/m", "a/b/m"), true);
   });
 });

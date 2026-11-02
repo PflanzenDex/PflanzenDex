@@ -1,18 +1,22 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { UNLOCK_FUNCTIONS } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   navItems,
   PATHS,
 } from "../../components/shared/navigation/nav-model/navigation/navigation";
 import { createWrite } from "../../kernel";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { UnlocksProvider } from "../unlock/model/unlocks/unlocks";
 import { FUNCTION_EMPTY, FUNCTION_NAMES, functionAddress } from "../unlock/model/unlock-texts";
 import FunctionOverview from "./function-overview";
 import { FUNCTION_PURPOSES } from "./function-purposes";
+
+// A phone (US-QS-15): the list is in pages of four and each function opens as a layer.
+beforeAll(() => setViewportWidth(390));
 
 const json = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -58,7 +62,44 @@ function show(functions: unknown[], status = 200) {
   return posts;
 }
 
-const names = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+/** The rows of the list over all pages, in order: name and state word; the list is back on its first page after. */
+async function rows(): Promise<{ name: string; state: string }[]> {
+  const out: { name: string; state: string }[] = [];
+  const list = () => screen.findByRole("list", { name: "Funktionen" });
+  for (;;) {
+    for (const b of within(await list()).getAllByRole("button")) {
+      out.push({
+        name: b.querySelector(".font-semibold")?.textContent ?? "",
+        state: b.querySelector(".text-muted-foreground")?.textContent ?? "",
+      });
+    }
+    const next = screen.getByRole("button", { name: "Weiter" }) as HTMLButtonElement;
+    if (next.disabled) break;
+    await userEvent.click(next);
+  }
+  for (;;) {
+    const prev = screen.getByRole("button", { name: "Zurück" }) as HTMLButtonElement;
+    if (prev.disabled) return out;
+    await userEvent.click(prev);
+  }
+}
+
+/** Opens the layer of one function: the list is searched from its first page, the row is chosen by its name. */
+async function openFunction(name: string) {
+  for (;;) {
+    const list = await screen.findByRole("list", { name: "Funktionen" });
+    const row = within(list)
+      .queryAllByRole("button")
+      .find((b) => b.querySelector(".font-semibold")?.textContent === name);
+    if (row) {
+      await userEvent.click(row);
+      return;
+    }
+    const next = screen.getByRole("button", { name: "Weiter" }) as HTMLButtonElement;
+    if (next.disabled) throw new Error(`no row ${name}`);
+    await userEvent.click(next);
+  }
+}
 
 afterEach(() => {
   cleanup();
@@ -79,30 +120,31 @@ describe("US-QS-17 the version in Was die App kann", () => {
 });
 
 describe("US-ONB-06 function overview", () => {
-  it("US-ONB-06 lists every function in registry order with state, purpose and a link", async () => {
+  it("US-ONB-06 lists every function in registry order with its state; its layer has purpose, way and link", async () => {
     show(few);
-    await screen.findByText("Freunde");
-    expect(names()).toEqual(allIds.map((id) => FUNCTION_NAMES[id as keyof typeof FUNCTION_NAMES]));
-    const row = screen.getByText("Tauschen").closest("li") as HTMLElement;
-    expect(within(row).getByText("Freischaltbar")).toBeTruthy();
-    expect(within(row).getByText(/Öffnet sich von selbst: lege noch 3 Pflanzen an/)).toBeTruthy();
-    expect(within(row).getByText(FUNCTION_PURPOSES["swapping"] ?? "")).toBeTruthy();
-    expect(
-      within(row).getByRole("link", { name: "Tauschen: Seite ansehen" }).getAttribute("href"),
-    ).toBe("/unlock/swapping");
-    const open = screen.getByText("Heute").closest("li") as HTMLElement;
-    expect(within(open).getByText("Aktiv")).toBeTruthy();
-    expect(within(open).getByRole("link", { name: "Heute öffnen" }).getAttribute("href")).toBe(
-      "/today",
+    const list = await rows();
+    expect(list.map((r) => r.name)).toEqual(
+      allIds.map((id) => FUNCTION_NAMES[id as keyof typeof FUNCTION_NAMES]),
     );
+    expect(list.find((r) => r.name === "Tauschen")?.state).toBe("Freischaltbar");
+    expect(list.find((r) => r.name === "Heute")?.state).toBe("Aktiv");
+    await openFunction("Tauschen");
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText(/Öffnet sich von selbst: lege noch 3 Pflanzen an/),
+    ).toBeTruthy();
+    expect(within(dialog).getByText(FUNCTION_PURPOSES["swapping"] ?? "")).toBeTruthy();
+    expect(
+      within(dialog).getByRole("link", { name: "Tauschen: Seite ansehen" }).getAttribute("href"),
+    ).toBe("/unlock/swapping");
   });
 
   it("US-ONB-06 shows the same list for style many, all aktiv, and says Alles ist offen with the next step", async () => {
     show(many);
     await screen.findByText(/Alles ist offen/);
-    expect(names()).toHaveLength(allIds.length);
-    expect(screen.getAllByText("Aktiv")).toHaveLength(allIds.length);
-    expect(screen.queryByText("Freischaltbar")).toBeNull();
+    const list = await rows();
+    expect(list).toHaveLength(allIds.length);
+    expect(list.every((r) => r.state === "Aktiv")).toBe(true);
     expect(screen.getByRole("link", { name: "Weiter zu Heute" }).getAttribute("href")).toBe(
       "/today",
     );
@@ -110,12 +152,11 @@ describe("US-ONB-06 function overview", () => {
 
   it("US-ONB-06 style few and many list the same functions in the same order", async () => {
     show(few);
-    await screen.findByText("Freunde");
-    const fewNames = names();
+    const fewNames = (await rows()).map((r) => r.name);
     cleanup();
     show(many);
     await screen.findByText(/Alles ist offen/);
-    expect(names()).toEqual(fewNames);
+    expect((await rows()).map((r) => r.name)).toEqual(fewNames);
   });
 
   it("US-ONB-06 does not list functions the operator switched off or calm mode hides", async () => {
@@ -129,9 +170,10 @@ describe("US-ONB-06 function overview", () => {
       ),
     );
     await screen.findByText(/Alles ist offen/);
-    expect(names()).not.toContain("Freunde");
-    expect(names()).not.toContain("Jahresrückblick");
-    expect(names()).toContain("Tauschen");
+    const names = (await rows()).map((r) => r.name);
+    expect(names).not.toContain("Freunde");
+    expect(names).not.toContain("Jahresrückblick");
+    expect(names).toContain("Tauschen");
   });
 
   it("US-ONB-06 · US-ACH-08 switching calm mode on removes the achievement functions at once, without a reload", async () => {
@@ -160,25 +202,29 @@ describe("US-ONB-06 function overview", () => {
         </UnlocksProvider>
       </MemoryRouter>,
     );
-    await screen.findByText("Jahresrückblick");
+    expect((await rows()).map((r) => r.name)).toContain("Jahresrückblick");
     await createWrite("http://api.test", "tok")("PUT", "/achievements/settings/calm-mode", {
       calmMode: true,
     });
-    await waitFor(() => expect(names()).not.toContain("Jahresrückblick"));
-    expect(names()).not.toContain("Jahrestage");
-    expect(names()).not.toContain("Pflegerhythmus");
+    await vi.waitFor(async () =>
+      expect((await rows()).map((r) => r.name)).not.toContain("Jahresrückblick"),
+    );
+    const names = (await rows()).map((r) => r.name);
+    expect(names).not.toContain("Jahrestage");
+    expect(names).not.toContain("Pflegerhythmus");
   });
 
-  it("US-ONB-06 unlocks with one tap and says what may still be empty", async () => {
+  it("US-ONB-06 unlocks with one tap in its layer and says what may still be empty", async () => {
     const posts = show(few);
-    const row = (await screen.findByText("Tauschen")).closest("li") as HTMLElement;
+    await openFunction("Tauschen");
+    const dialog = await screen.findByRole("dialog");
     await userEvent.click(
-      within(row).getByRole("button", { name: "Tauschen: Jetzt freischalten" }),
+      within(dialog).getByRole("button", { name: "Tauschen: Jetzt freischalten" }),
     );
     expect(posts).toEqual(["/onboarding/unlocks/swapping"]);
-    expect((await screen.findByRole("status")).textContent).toContain(
-      `Tauschen ist jetzt freigeschaltet. ${FUNCTION_EMPTY.swapping}`,
-    );
+    expect(
+      await screen.findByText(`Tauschen ist jetzt freigeschaltet. ${FUNCTION_EMPTY.swapping}`),
+    ).toBeTruthy();
   });
 
   it("US-ONB-06 keeps a failure visible with a retry", async () => {

@@ -13,7 +13,10 @@ import {
 } from "../nav-model/nav-item";
 import { NavNote } from "../nav-model/nav-note/nav-note";
 
-/** The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar. */
+/**
+ * The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar, and
+ * the role entries stand under the heading "Verwaltung" there (issue 1093).
+ */
 const PRIMARY = 4;
 
 /**
@@ -61,6 +64,46 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
   );
 }
 
+type Run = { group: string | undefined; items: { item: NavItem; index: number }[] };
+
+/** Consecutive items of the same group form one run; a run with a group gets its heading (issue 1093). */
+function runs(items: NavItem[]): Run[] {
+  const out: Run[] = [];
+  items.forEach((item, index) => {
+    const last = out.at(-1);
+    if (last && last.group === item.group) last.items.push({ item, index });
+    else out.push({ group: item.group, items: [{ item, index }] });
+  });
+  return out;
+}
+
+const groupId = (group: string) => `nav-group-${group.toLowerCase()}`;
+
+/** One entry of the sidebar; a hairline stands before the first entry after the primary ones. */
+function SidebarLink({ item, index, total }: { item: NavItem; index: number; total: number }) {
+  return (
+    <Fragment>
+      {index === PRIMARY && total > PRIMARY ? <hr className="my-2 shrink-0 border-border" /> : null}
+      <NavLink
+        to={item.href}
+        end={item.href === "/"}
+        className={({ isActive }) =>
+          cn(
+            "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-base font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            isActive
+              ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
+              : "text-muted-foreground hover:bg-muted",
+          )
+        }
+      >
+        {item.icon}
+        <span className="min-w-0 break-words">{item.label}</span>
+        <NavNote text={item.note} inline />
+      </NavLink>
+    </Fragment>
+  );
+}
+
 /**
  * Labelled sidebar from `xl` (1280 px, US-QS-14, ADR 0011 decision 6, DS-25): 248 px wide, product name on top,
  * all destinations from the one `items` list (DS-44). The active item has the accent fill, a semibold label and
@@ -87,29 +130,32 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
         <span className="text-xl font-bold">{DISPLAY_NAME}</span>
       </Link>
       <div className="flex min-h-0 flex-1 scroll-py-3 flex-col gap-1 overflow-y-auto pb-3">
-        {items.map((item, index) => (
-          <Fragment key={item.href}>
-            {index === PRIMARY && items.length > PRIMARY ? (
-              <hr className="my-2 shrink-0 border-border" />
-            ) : null}
-            <NavLink
-              to={item.href}
-              end={item.href === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-[15px] font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isActive
-                    ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
-                    : "text-muted-foreground hover:bg-muted",
-                )
-              }
+        {runs(items).map((run) =>
+          run.group ? (
+            <div
+              key={run.group}
+              role="group"
+              aria-labelledby={groupId(run.group)}
+              className="flex shrink-0 flex-col gap-1"
             >
-              {item.icon}
-              <span className="min-w-0 break-words">{item.label}</span>
-              <NavNote text={item.note} inline />
-            </NavLink>
-          </Fragment>
-        ))}
+              <p
+                id={groupId(run.group)}
+                className="mt-2 px-3 text-xs font-semibold text-muted-foreground"
+              >
+                {run.group}
+              </p>
+              {run.items.map(({ item, index }) => (
+                <SidebarLink key={item.href} item={item} index={index} total={items.length} />
+              ))}
+            </div>
+          ) : (
+            <Fragment key={run.items[0]?.item.href}>
+              {run.items.map(({ item, index }) => (
+                <SidebarLink key={item.href} item={item} index={index} total={items.length} />
+              ))}
+            </Fragment>
+          ),
+        )}
       </div>
     </nav>
   );

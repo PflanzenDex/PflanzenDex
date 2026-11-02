@@ -1,0 +1,31 @@
+# Fills the node_modules cache on `dev` (issue 1123). Caches are scoped to their branch: a PR reads its own and its base
+# branch's, never another PR's, and ci.yml does not run on pushes to `dev`. Without this workflow every PR's first run
+# would miss and reinstall. It installs once per lock file change on `dev`; the cache action saves on a miss.
+name: Dependency cache
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - app/package-lock.json
+      - .nvmrc
+      - .github/actions/setup-app/**
+      - .github/workflows/deps-cache.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deps-cache-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app

@@ -84,7 +84,7 @@ export function ProgressRow(props: {
   return (
     <LayerOpener
       id={PROGRESS_LAYER}
-      className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal border-border py-1 text-left text-foreground"
+      className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal py-1 text-left"
     >
       <span className="font-semibold">{`${NAME[p.rank]} · ${caught}${uncounted}`}</span>
     </LayerOpener>

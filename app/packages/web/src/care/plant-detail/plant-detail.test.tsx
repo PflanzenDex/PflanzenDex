@@ -204,7 +204,11 @@ describe("US-QS-23 Pflege", () => {
       }),
   };
   const show = () =>
-    render(<PlantCare api={API} token={TOKEN} specimen={{ id: "e1", name: "Aloe" }} />);
+    render(
+      <MemoryRouter>
+        <PlantCare api={API} token={TOKEN} specimen={{ id: "e1", name: "Aloe" }} />
+      </MemoryRouter>,
+    );
 
   it("US-QS-23 lists the open treatments of this plant only, the done ones as history", async () => {
     server(base);

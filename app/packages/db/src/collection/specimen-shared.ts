@@ -68,6 +68,35 @@ export async function setCaughtAt(
   });
 }
 
+/**
+ * One statement: only a cutting becomes a plant (US-BES-04). Plants and archived specimens stay unchanged and report
+ * `not_a_cutting`; foreign specimens are invisible to the row rule. A chosen day before the catch date changes nothing
+ * and reports `before_caught` (issue 1103); without a catch date, or without a chosen day, nothing is compared.
+ */
+export async function repotCutting(
+  pool: Pool,
+  userId: string,
+  id: string,
+  days: { readonly date: string | null; readonly chosenDate: string | null },
+): Promise<SpecimenRow | "not_found" | "not_a_cutting" | "before_caught"> {
+  return withAccount(pool, userId, async (c) => {
+    const r = await c.query<SpecimenRow>(
+      `update specimen set status = 'plant', repotted_at = $2::date
+        where id = $1 and status = 'cutting'
+          and ($3::date is null or caught_at is null or caught_at <= $3::date)
+        returning ${COLUMNS}`,
+      [id, days.date, days.chosenDate],
+    );
+    if (r.rows[0]) return r.rows[0];
+    const there = await c.query<{ status: string }>("select status from specimen where id = $1", [
+      id,
+    ]);
+    if (!there.rows[0]) return "not_found";
+    // The update matched only cuttings, so a cutting it did not take is refused by the catch date.
+    return there.rows[0].status === "cutting" ? "before_caught" : "not_a_cutting";
+  });
+}
+
 /** A specimen of the marker assignments that is unknown, foreign, archived or already has a marker: the transaction is undone. */
 export class UnknownSpecimen extends Error {}
 

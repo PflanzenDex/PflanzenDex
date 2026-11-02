@@ -101,6 +101,13 @@ describe("US-QS-17 the index of Konto", () => {
     expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();
   });
 
+  it("US-QS-17 Abmelden… is a row with the same chevron as the sections (issue 1045)", async () => {
+    show();
+    const button = await screen.findByRole("button", { name: "Abmelden…" });
+    expect(button.querySelector("svg")).not.toBeNull();
+    expect(button.className).toContain("border-transparent");
+  });
+
   it("US-QS-17 · P-08 a value that cannot be read says unbekannt", async () => {
     fakeServer({ profile: null, achievements: null, connections: null });
     show();

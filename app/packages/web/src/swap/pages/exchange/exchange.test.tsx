@@ -71,9 +71,9 @@ function server(opts: { offers?: unknown[]; preview?: unknown } = {}) {
   );
   return calls;
 }
-const view = () =>
+const view = (path = "/") =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <ExchangePage api="http://api" token={token} />
     </MemoryRouter>,
   );
@@ -83,7 +83,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
+describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 an empty list says what to do next (P-09)", async () => {
     server();
     view();
@@ -93,12 +93,27 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     );
   });
 
-  it("US-SOZ-08 · P-09 the offer dialog stands above the lists", async () => {
+  it("US-SOZ-08 · US-QS-20 the form is a layer behind 'Zum Tausch anbieten', not stacked above the list", async () => {
     server();
     view();
-    const empty = await screen.findByText(/Du hast noch nichts angeboten/);
-    const dialog = screen.getByLabelText(/Pflanze/, { selector: "select" });
-    expect(dialog.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await screen.findByText(/Du hast noch nichts angeboten/);
+    expect(screen.queryByLabelText("Pflanze", { selector: "select" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Zum Tausch anbieten" }));
+    expect(await screen.findByLabelText("Pflanze", { selector: "select" })).toBeTruthy();
+  });
+
+  it("US-QS-20 my offers are paged and the other parts open one at a time behind a switch", async () => {
+    server({
+      offers: [1, 2, 3, 4].map((n) => offer({ id: `o${n}`, specimenName: `Pflanze ${n}` })),
+    });
+    view();
+    const list = await screen.findByRole("list", { name: "Meine Angebote" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Tauschverlauf" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Verlauf" }));
+    expect(await screen.findByRole("heading", { name: "Tauschverlauf" })).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Meine Angebote" })).toBeNull();
   });
 
   it("US-SOZ-08 lists my offers with type, mode, wish, health details without agent and the dormancy phase", async () => {
@@ -128,7 +143,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
 
   it("US-SOZ-08 the dialog offers only active specimens and shows the plant law notice for the chosen one", async () => {
     server();
-    view();
+    view("/?sheet=offer");
     const select = await screen.findByLabelText("Pflanze");
     expect(within(select).queryByRole("option", { name: "Aloe" })).toBeNull();
     await userEvent.selectOptions(select, "s1");
@@ -136,9 +151,25 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     expect(screen.getByText("Keine Behandlung bekannt")).toBeTruthy();
   });
 
+  it("US-QS-24 the offer form: the wish and the note sit behind Mehr Angaben, the offer button sits in a sticky footer, and no heading repeats the layer title", async () => {
+    server();
+    view("/?sheet=offer");
+    await screen.findByLabelText("Pflanze");
+    const region = screen.getByRole("region", { name: "Zum Tausch anbieten" });
+    expect(within(region).queryByRole("heading")).toBeNull();
+    const more = screen
+      .getByLabelText("Wunsch (optional)")
+      .closest("details") as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(more.contains(screen.getByLabelText("Hinweis (optional)"))).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Angebot erstellen" }).parentElement?.className,
+    ).toContain("sticky");
+  });
+
   it("US-SOZ-08 a private specimen cannot be offered until it is shared; the dialog sets the sharing", async () => {
     const calls = server({ preview: preview({ shared: false }) });
-    view();
+    view("/?sheet=offer");
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText(/nicht für Freunde freigegeben/)).toBeTruthy();
     expect(
@@ -158,7 +189,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     const calls = server({
       preview: preview({ health: { treatmentOpen: true, lastTreated: null } }),
     });
-    view();
+    view("/?sheet=offer");
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText("Behandlung offen")).toBeTruthy();
     const button = screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement;
@@ -179,11 +210,26 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
 
   it("US-SOZ-08 a specimen with an open offer cannot be offered twice", async () => {
     server({ preview: preview({ offered: true }) });
-    view();
+    view("/?sheet=offer");
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText(/schon ein offenes Angebot/)).toBeTruthy();
     expect(
       (screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement).disabled,
     ).toBe(true);
+  });
+});
+
+describe("US-QS-14 · US-QS-15 the exchange is a sub-page with one page header", () => {
+  it("US-QS-14 has exactly one h1 while the exchange loads, and its page header names the way back", async () => {
+    server();
+    view();
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Tauschbörse",
+    ]);
+    expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
+      "/friends",
+    );
+    expect(await screen.findByText(/Du hast noch nichts angeboten/)).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 });

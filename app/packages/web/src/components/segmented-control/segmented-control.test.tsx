@@ -59,3 +59,32 @@ describe("US-QS-14 segmented control", () => {
     expect(labels[1]?.querySelector("svg")).toBeNull();
   });
 });
+
+describe("US-QS-14 segmented control on phones and in dark mode (issue 1045)", () => {
+  it("US-QS-14 the selected segment is green intent, readable in both modes", () => {
+    render(
+      <SegmentedControl
+        label="Ansicht der Sammlung"
+        options={[
+          { value: "plants", label: "Pflanzen" },
+          { value: "species", label: "Arten" },
+        ]}
+        value="species"
+        onChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Arten" }).className).toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Pflanzen" }).className).not.toContain("bg-accent");
+  });
+});
+
+describe("US-QS-15 the switch at a larger text size (issue 1019)", () => {
+  it("US-QS-15 the choices stay in one row that scrolls sideways inside its own box, and no choice shrinks or wraps", () => {
+    const { container } = render(<Host />);
+    const group = container.querySelector('[role="group"]');
+    expect(group?.className).toContain("overflow-x-auto");
+    expect(group?.className).not.toContain("flex-wrap");
+    for (const choice of container.querySelectorAll("button"))
+      expect(choice.className).toContain("shrink-0");
+  });
+});

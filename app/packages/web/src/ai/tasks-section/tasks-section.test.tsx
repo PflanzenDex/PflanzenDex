@@ -2,9 +2,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
-import { TasksSection } from "./tasks-section";
+import { NewTaskPart, TasksSection } from "./tasks-section";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -40,7 +41,19 @@ function fakeServer(rows: Record<string, unknown>[], clientConnected = true) {
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <TasksSection api="http://api" token={token} />
+      <MemoryRouter>
+        <TasksSection api="http://api" token={token} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+/** The new-task layer (US-QS-17), and with `list` the task list beside it, as the keeper has them in two layers. */
+const showNew = (list = false) =>
+  render(
+    <QueryClientProvider client={createQueryClient()}>
+      <MemoryRouter>
+        <NewTaskPart api="http://api" token={token} />
+        {list && <TasksSection api="http://api" token={token} />}
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 afterEach(() => {
@@ -77,7 +90,7 @@ describe("US-KI-08 tasks to the AI client", () => {
   it("US-KI-08 without a connected client it says so, blocks the task and still offers the text", async () => {
     const calls = fakeServer([], false);
     const user = userEvent.setup();
-    show();
+    showNew();
     expect(await screen.findByText(/kein KI-Client verbunden/)).toBeTruthy();
     expect(
       (screen.getByRole("button", { name: "Auftrag anlegen" }) as HTMLButtonElement).disabled,
@@ -92,7 +105,7 @@ describe("US-KI-08 tasks to the AI client", () => {
   it("US-KI-08 creates and withdraws a task by the keeper's action", async () => {
     const calls = fakeServer([row()]);
     const user = userEvent.setup();
-    show();
+    showNew(true);
     await user.type(await screen.findByLabelText("Name der Art"), "Haworthia");
     await user.click(screen.getByRole("button", { name: "Auftrag anlegen" }));
     await user.click(

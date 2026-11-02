@@ -2,8 +2,22 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { AchievementsOverviewSection } from "./overview";
+
+beforeAll(() => {
+  // jsdom has no matchMedia; a wide screen shows the layer as a pane beside the list (US-QS-15), not as a modal.
+  window.matchMedia = ((query: string) => ({
+    matches: true,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+    onchange: null,
+  })) as unknown as typeof window.matchMedia;
+});
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -24,13 +38,14 @@ const step = (key: string, specimenName: string | null = null) => ({
   specimenName,
 });
 
-function serve(body: unknown, status = 200) {
+/** The overview at an address: the layer "Erfolge" is open by default (US-QS-15), inline texts show at any address. */
+function serve(body: unknown, at = "/?sheet=earned") {
   vi.stubGlobal(
     "fetch",
-    vi.fn<typeof fetch>(async () => response(status, body)),
+    vi.fn<typeof fetch>(async () => response(200, body)),
   );
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[at]}>
       <AchievementsOverviewSection api="http://api" token={token} />
     </MemoryRouter>,
   );
@@ -73,32 +88,37 @@ describe("US-ACH-02 achievements overview", () => {
         empty("collecting"),
       ],
     });
-    const care = await screen.findByRole("region", { name: "Pflege" });
-    expect(within(care).getByText("Steckling bewurzelt")).toBeTruthy();
-    expect(care.textContent).toContain("Erreicht am 04.05.2026 mit Aloe 1");
-    expect(care.textContent).toContain(
+    const list = await screen.findByRole("list", { name: "Erfolge" });
+    expect(within(list).getByText("Steckling bewurzelt")).toBeTruthy();
+    expect(list.textContent).toContain("Erreicht am 04.05.2026 mit Aloe 1");
+    expect(list.textContent).toContain(
       "Nächster Schritt: Hake das letzte offene Datum der Kur bei Aloe 2 ab.",
     );
-    const growth = screen.getByRole("region", { name: "Wachstum" });
-    expect(growth.textContent).toContain("Es gibt noch keine Messung.");
+    await userEvent.click(screen.getByRole("button", { name: /^Wachstum/ }));
+    expect((await screen.findByRole("list", { name: "Erfolge" })).textContent).toContain(
+      "Es gibt noch keine Messung.",
+    );
     expect(screen.queryByText(/Dein erster Schritt/)).toBeNull();
   });
 
   it("US-ACH-02 the group Sammeln links to the Pokédex and shows no achievements of its own", async () => {
     serve({ calmMode: false, earnedCount: 0, firstStep: null, groups: [empty("collecting")] });
-    const group = await screen.findByRole("region", { name: "Sammeln" });
-    expect(within(group).getByRole("link", { name: "Pokédex" }).getAttribute("href")).toBe(
+    expect((await screen.findByRole("link", { name: "Pokédex" })).getAttribute("href")).toBe(
       "/collection?view=species",
     );
+    expect(screen.queryByRole("button", { name: /^Sammeln/ })).toBeNull();
   });
 
   it("US-ACH-02 without data the overview names the first step instead of an empty list", async () => {
-    serve({
-      calmMode: false,
-      earnedCount: 0,
-      firstStep: step("first-measurement-photo.next"),
-      groups: [empty("care")],
-    });
+    serve(
+      {
+        calmMode: false,
+        earnedCount: 0,
+        firstStep: step("first-measurement-photo.next"),
+        groups: [empty("care")],
+      },
+      "/",
+    );
     expect(
       await screen.findByText(
         "Dein erster Schritt: Miss eine Pflanze und füge der Messung ein Foto hinzu.",
@@ -108,14 +128,15 @@ describe("US-ACH-02 achievements overview", () => {
 
   it("US-ACH-02 no percentage, no score, no comparison with others is shown", async () => {
     serve({ calmMode: false, earnedCount: 0, firstStep: null, groups: [empty("care")] });
-    await screen.findByRole("region", { name: "Pflege" });
+    await screen.findByRole("button", { name: /^Pflege/ });
     expect(document.body.textContent).not.toMatch(/%|Punkte|Rang \d|seltener/);
   });
 
   it("US-ACH-08 in calm mode nothing of the overview is shown", async () => {
     serve({ calmMode: true });
-    await vi.waitFor(() => expect(screen.queryByRole("status")).toBeNull());
-    expect(screen.queryByRole("region")).toBeNull();
+    await vi.waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });
 

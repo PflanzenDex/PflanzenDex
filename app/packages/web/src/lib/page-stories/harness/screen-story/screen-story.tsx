@@ -23,7 +23,10 @@ function frame(client: QueryClient, path: string, screen: ReactElement) {
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[path]}>
         <AppShell titleOf={viewTitle} items={navItems({})}>
-          <div className="mx-auto w-full max-w-180">{screen}</div>
+          {/* The page frame of the app: the width cap is lifted for a destination with layers (US-QS-15, #1027). */}
+          <div className="mx-auto w-full max-w-180 has-[[data-layer-host]]:max-w-none">
+            {screen}
+          </div>
         </AppShell>
       </MemoryRouter>
     </QueryClientProvider>

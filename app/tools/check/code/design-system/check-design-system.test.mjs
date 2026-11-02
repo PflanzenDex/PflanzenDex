@@ -73,6 +73,32 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
     assert.equal(scan(dir).size, 0);
   });
 
+  it("US-QS-15 · DS-37 allows outline none only under the owner's exact selector in tokens.css", () => {
+    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const exact =
+      '@layer base {\n  :root:not([data-input="keyboard"]) :is(h1, main)[tabindex="-1"]:focus {\n    outline: none;\n  }\n}\n';
+    assert.equal(scan(web({ ...base, "src/styles/tokens.css": exact })).size, 0);
+    const widened = exact.replace(":is(h1, main)", ":is(h1, main, button)");
+    assert.deepEqual(
+      [...scan(web({ ...base, "src/styles/tokens.css": widened })).keys()],
+      ["DS-37|styles/tokens.css"],
+    );
+    const elsewhere = "h1 { outline: none; }\n";
+    assert.deepEqual(
+      [...scan(web({ ...base, "src/styles/tokens.css": elsewhere })).keys()],
+      ["DS-37|styles/tokens.css"],
+    );
+    const outside = web({ ...base, "src/a.css": exact });
+    assert.ok(scan(outside).has("DS-37|a.css"));
+  });
+
+  it("US-QS-15 · DS-37 reads blocks by braces: comments and the forced-colors ring are not violations", () => {
+    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const css =
+      "/* outline: none is explained here */\n@media (forced-colors: active) {\n  :focus-visible {\n    outline: 2px solid Highlight;\n    outline-offset: 2px;\n  }\n}\n";
+    assert.equal(scan(web({ ...base, "src/styles/tokens.css": css })).size, 0);
+  });
+
   it("QG-U4 · no css outside styles: a new module stylesheet fails, tokens.css passes", () => {
     const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
     const bad = web({ ...base, "src/wishlist/wishlist.css": ".a { margin: 0; }\n" });

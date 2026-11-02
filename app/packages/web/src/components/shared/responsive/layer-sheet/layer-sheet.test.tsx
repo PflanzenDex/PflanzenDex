@@ -2,11 +2,11 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "@/components/routing/route-focus/route-focus";
-import { LayerOpener, LayerSheet } from "./layer-sheet";
+import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -23,10 +23,12 @@ function Back() {
 function Example({ at = "/" }: { at?: string }) {
   return (
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
-      <LayerOpener id="licht">Licht</LayerOpener>
-      <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Speichern</button>}>
-        <p>Inhalt</p>
-      </LayerSheet>
+      <LayerHost>
+        <LayerOpener id="licht">Licht</LayerOpener>
+        <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Speichern</button>}>
+          <p>Inhalt</p>
+        </LayerSheet>
+      </LayerHost>
       <Back />
     </MemoryRouter>
   );
@@ -137,5 +139,132 @@ describe("LayerSheet (US-QS-15)", () => {
     expect(screen.getByRole("dialog", { name: "Lichtzonen" }).className).toContain(
       "-translate-x-1/2",
     );
+  });
+
+  it("US-QS-15 from 1024 px the pane takes the frame's second column, beside the content and top-aligned with it", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn");
+    render(<Example at="/?sheet=licht" />);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    expect(pane.hasAttribute("data-layer-pane")).toBe(true);
+    // A layer inside a frame never triggers the dev warning, so a regression fails here (US-QS-15).
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+    const slot = pane.parentElement;
+    const frame = slot?.parentElement;
+    expect(frame).toBeTruthy();
+    // The frame's first child is the content column (the opener sits in it), the slot is the second one.
+    expect(frame?.firstElementChild?.contains(screen.getByRole("button", { name: "Licht" }))).toBe(
+      true,
+    );
+    expect(slot?.previousElementSibling).toBe(frame?.firstElementChild);
+  });
+
+  it("US-QS-15 · US-QS-18 the content column is at most 720 px and centred, so the pane beside it takes the rest of the frame", () => {
+    setViewportWidth(1440);
+    render(<Example at="/?sheet=licht" />);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const content = pane.parentElement?.previousElementSibling as HTMLElement;
+    expect(content.contains(screen.getByRole("button", { name: "Licht" }))).toBe(true);
+    // The cap is the content's own (DS-59): a pane never shrinks the frame below the content (US-QS-15, #1027).
+    expect(content.className).toContain("max-w-180");
+    expect(content.className).toContain("mx-auto");
+    // The column takes the frame's width: a centred box without it shrinks to its widest content (issue 1019).
+    expect(content.className).toContain("w-full");
+  });
+
+  it("US-QS-15 a layer in a component deep inside the frame still opens in the frame's pane, not in its own place", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn");
+    function Deep() {
+      return (
+        <section>
+          <div>
+            <p>Tiefe Liste</p>
+            <LayerSheet id="licht" title="Lichtzonen">
+              <p>Inhalt</p>
+            </LayerSheet>
+          </div>
+        </section>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/?sheet=licht"]}>
+        <LayerHost>
+          <Deep />
+        </LayerHost>
+      </MemoryRouter>,
+    );
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const frame = pane.parentElement?.parentElement;
+    expect(frame?.firstElementChild?.contains(screen.getByText("Tiefe Liste"))).toBe(true);
+    expect(frame?.lastElementChild).toBe(pane.parentElement);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("US-QS-15: a layer opens with focus on its title, not on a destructive control", async () => {
+    // The first control of the layer is destructive, as "Freundschaft beenden" is in "Meine Freunde" (issue 1028).
+    for (const width of [360, 800, 1440]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/?sheet=friends"]}>
+          <LayerHost>
+            <LayerSheet id="friends" title="Meine Freunde">
+              <button type="button">Freundschaft beenden</button>
+            </LayerSheet>
+          </LayerHost>
+        </MemoryRouter>,
+      );
+      const title = await screen.findByRole("heading", { name: "Meine Freunde" });
+      await waitFor(() => expect(document.activeElement).toBe(title));
+      expect(document.activeElement).not.toBe(
+        screen.getByRole("button", { name: "Freundschaft beenden" }),
+      );
+      unmount();
+    }
+  });
+
+  it("US-QS-15: a layer that starts with a text field keeps the focus in it, also in the desktop pane", async () => {
+    // Owner decision of 31.10. (issue 1104): the wish form starts in its species search on every width.
+    for (const width of [360, 800, 1440]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/?sheet=new-wish"]}>
+          <LayerHost>
+            <LayerSheet id="new-wish" title="Neuer Wunsch">
+              <label>
+                Art suchen
+                <input type="search" />
+              </label>
+              <button type="button">Wunsch speichern</button>
+            </LayerSheet>
+          </LayerHost>
+        </MemoryRouter>,
+      );
+      const field = await screen.findByLabelText("Art suchen");
+      await waitFor(() => expect(document.activeElement).toBe(field));
+      unmount();
+    }
+  });
+
+  it("US-QS-15 a LayerSheet outside a LayerHost warns in dev when it opens beside the content", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      render(
+        <MemoryRouter initialEntries={["/?sheet=licht"]}>
+          <LayerSheet id="licht" title="Lichtzonen">
+            <p>Inhalt</p>
+          </LayerSheet>
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("complementary", { name: "Lichtzonen" })).toBeTruthy();
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('"licht" renders outside a LayerHost'),
+      );
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

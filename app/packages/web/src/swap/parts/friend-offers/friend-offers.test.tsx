@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FriendOffers } from "./friend-offers";
 
@@ -62,7 +63,12 @@ function server(opts: { offers?: unknown[]; post?: () => Promise<Response> } = {
   );
   return { gets, posts };
 }
-const show = () => render(<FriendOffers api="http://api" token={token} />);
+const show = () =>
+  render(
+    <MemoryRouter>
+      <FriendOffers api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(() => {
   cleanup();
@@ -109,7 +115,7 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     await screen.findByRole("list", { name: "Angebote von Freunden" });
     await userEvent.selectOptions(screen.getByLabelText("Art des Angebots"), "plant");
     await vi.waitFor(() => expect(gets.at(-1)).toContain("type=plant"));
-    await userEvent.click(screen.getByLabelText("Nur Arten, die mir fehlen"));
+    await userEvent.click(screen.getByLabelText("Fehlt mir"));
     await vi.waitFor(() => expect(gets.at(-1)).toContain("lack=true"));
   });
 

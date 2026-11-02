@@ -125,7 +125,7 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
       />
     ),
     verlauf: p.slots?.history ? slot(p.slots.history) : <Measurement card={card} />,
-    pflege: <PlantCareTab card={card} access={p.photoAccess} care={slot(p.slots?.care)} />,
+    pflege: <PlantCareTab card={card} care={slot(p.slots?.care)} />,
     standort: (
       <PlantLocation
         card={card}

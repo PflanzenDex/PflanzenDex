@@ -34,6 +34,86 @@ function SwitchAction(props: {
   );
 }
 
+/** The first hint as a chip; further hints are counted and stay reachable as text and title (P-10). */
+function HintChip({ hints }: { hints: readonly string[] }) {
+  if (hints.length === 0) return null;
+  return (
+    <p
+      title={hints.join(" ")}
+      className="mt-1 w-fit rounded-full border border-warning-border bg-warning px-2 py-0.5 text-xs font-semibold text-warning-foreground"
+    >
+      {hints[0]}
+      {hints.length > 1 && (
+        <>
+          {" "}
+          <span>+{hints.length - 1} weitere</span>
+          <span className="sr-only">: {hints.slice(1).join(" ")}</span>
+        </>
+      )}
+    </p>
+  );
+}
+
+/**
+ * The compact card of the paged grouping (US-QS-19): the name, one line of facts, one line of the place, one hint and the
+ * one action, so a page of cards fits the window. Every fact of the full card stays, only the boxes and repeats go.
+ */
+function CompactEntry(props: {
+  row: PhasesRow;
+  locations: readonly LightLocation[];
+  busy: boolean;
+  onConfirm: Confirm | undefined;
+}) {
+  const { row: z, locations } = props;
+  const status = phaseStatus(z);
+  const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
+  const here = locationText(locations, z.locationId);
+  const target = locationText(locations, z.targetLocationId);
+  const hints = [
+    z.nextChange === null ? "Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art." : null,
+    status === "location_missing" && !canSwitch
+      ? "Weise der Pflanze unter „Hinweise“ einen Standort zu."
+      : null,
+    status === "in_place" && z.targetLocationId === null
+      ? `Wähle im Pflegeprofil der Art einen Soll-Standort für die ${PHASE_TEXT[z.phase]}.`
+      : null,
+  ].filter((h): h is string => h !== null);
+  return (
+    <div className={`${CARD_CLASSES} flex flex-col gap-0 px-3 py-1 text-xs leading-tight`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-2">
+        <h3 className="min-w-[8ch] flex-1 text-base font-semibold">{z.name}</h3>
+        {canSwitch && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="shrink-0 px-3"
+            disabled={props.busy}
+            aria-label={`Jetzt umgestellt: ${z.name}`}
+            onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
+          >
+            Jetzt umgestellt
+          </Button>
+        )}
+      </div>
+      <p>
+        <span>Soll-Phase heute: {PHASE_TEXT[z.phase]}</span> ·{" "}
+        <span>{nextChangeText(z.nextChange)}</span>
+      </p>
+      {status === "location_missing" ? (
+        <p className="font-semibold text-warning-foreground">
+          Standort fehlt · Soll-Standort: {target}
+        </p>
+      ) : (
+        <p className={status === "deviation" ? "font-semibold" : "text-muted-foreground"}>
+          Standort: {here} · Soll-Standort: {target}
+          {status === "deviation" ? " · Weicht ab" : ""}
+        </p>
+      )}
+      <HintChip hints={hints} />
+    </div>
+  );
+}
+
 export function Entry(props: {
   row: PhasesRow;
   locations: readonly LightLocation[];
@@ -42,6 +122,7 @@ export function Entry(props: {
   /** A `div` instead of a list item, for a host that already wraps the entry in one (US-QS-19). */
   bare?: boolean;
 }) {
+  if (props.bare) return <CompactEntry {...props} />;
   const { row: z, locations } = props;
   const Root = props.bare ? "div" : "li";
   const status = phaseStatus(z);

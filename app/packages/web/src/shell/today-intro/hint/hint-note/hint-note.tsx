@@ -37,7 +37,7 @@ export function HintNote(props: {
       className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-3 py-2"
     >
       <p className="m-0 min-w-0 flex-1">{HINT_TEXTS[occasion]}</p>
-      <Button type="button" variant="secondary" onClick={() => void dismiss()}>
+      <Button type="button" variant="ghost" onClick={() => void dismiss()}>
         Okay
       </Button>
       {failed && (

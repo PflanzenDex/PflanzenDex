@@ -218,7 +218,7 @@ describe("US-BES-07 archive and restore", () => {
       await screen.findByRole("button", { name: "Fangdatum korrigieren: Alter Ficus" }),
     );
     const field = (await screen.findByLabelText("Fangdatum")) as HTMLInputElement;
-    expect(field.value).toBe("2026-01-05");
+    expect(field.value).toBe("05.01.2026");
     fireEvent.change(field, { target: { value: "2025-12-24" } });
     await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));

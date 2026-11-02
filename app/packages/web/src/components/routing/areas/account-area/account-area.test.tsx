@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/kernel";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { AccountArea } from "./account-area";
@@ -155,28 +155,37 @@ describe("US-DEV-06 Konto without the AI function", () => {
 });
 
 describe("US-QS-17 Konto with its sections as views", () => {
+  it("US-QS-17 · US-QS-15 Konto is one screen: its frame carries data-fit-screen, so main scrolls inside itself at a larger text size (DS-61, issue 1019)", async () => {
+    fakeServer();
+    show("/account");
+    await screen.findByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+
   it("US-QS-17 · US-ACC-01 a section has one h1 with its name and a way back Konto", async () => {
     fakeServer();
     show("/account/reminders");
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Erinnerungen",
     ]);
-    expect(screen.getByRole("link", { name: "Konto" }).getAttribute("href")).toBe("/account");
+    expect(screen.getByRole("link", { name: "Zurück zu Konto" }).getAttribute("href")).toBe(
+      "/account",
+    );
     await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
-  it("US-QS-17 · US-ACC-01 the section Profil shows name, e-mail and both ways to sign out", async () => {
+  it("US-QS-17 · US-ACC-01 the section Profil shows name and e-mail and no sign-out that skips the confirmation (issue 1098)", async () => {
     fakeServer();
     const signOut = vi.fn();
     show("/account/profile", { signOut });
     const profileSection = screen.getByRole("region", { name: "Profil" });
     expect(await within(profileSection).findByText("Hallo, Lena")).toBeTruthy();
     expect(within(profileSection).getByText("lena@example.test")).toBeTruthy();
-    await userEvent.click(within(profileSection).getByRole("button", { name: "Abmelden" }));
-    expect(signOut).toHaveBeenCalledOnce();
-    expect(
-      within(profileSection).getByRole("button", { name: "Auf allen Geräten abmelden" }),
-    ).toBeTruthy();
+    // The one way out is "Abmelden…" in the index, which asks first; nothing signs out with a single tap.
+    expect(within(profileSection).queryByRole("button", { name: /abmelden/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Abmelden" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Auf allen Geräten abmelden" })).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
   });
 
   it("US-QS-17 · US-ACC-01 a sign-in error stays visible in the section Profil", async () => {
@@ -318,9 +327,141 @@ describe("US-QS-17 the address names a section", () => {
     await userEvent.click(row);
     const heading = await screen.findByRole("heading", { level: 1, name: "Erinnerungen" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    await userEvent.click(screen.getByRole("link", { name: "Konto" }));
+    await userEvent.click(screen.getByRole("link", { name: "Zurück zu Konto" }));
     await waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole("link", { name: /^Erinnerungen/ })),
     );
+  });
+});
+
+describe("US-QS-15 · US-QS-17 Konto opens Einstellungen in the pane on a wide screen", () => {
+  afterEach(() => setViewportWidth(390));
+
+  /** The column of the index: the wrapper of its navigation. */
+  const indexColumn = () =>
+    screen.getByRole("navigation", { name: "Abschnitte von Konto" }).parentElement as HTMLElement;
+
+  it("US-QS-15 · US-QS-17 from 1280 px /account shows Einstellungen in the pane beside the index, never the placeholder (#1027)", async () => {
+    setViewportWidth(1280);
+    fakeServer();
+    show("/account");
+    expect(await screen.findByRole("heading", { level: 1, name: "Einstellungen" })).toBeTruthy();
+    expect(screen.queryByText("Wähle links einen Abschnitt.")).toBeNull();
+    expect(screen.getByTestId("address").textContent).toBe("/account");
+    expect(indexColumn().className).not.toContain("hidden");
+  });
+
+  it("US-QS-15 · US-QS-17 at 1024 px the index stays visible beside the default Einstellungen (#1027)", async () => {
+    setViewportWidth(1024);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(indexColumn().className).not.toContain("hidden");
+  });
+
+  it("US-QS-17 the default Einstellungen takes no focus on arrival (#1027)", async () => {
+    setViewportWidth(1280);
+    fakeServer();
+    show("/account");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(document.activeElement).not.toBe(heading);
+  });
+
+  it("US-QS-17 · US-QS-15 below 1024 px /account shows the index alone, no section", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account");
+    expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "Einstellungen" })).toBeNull();
+  });
+
+  it("US-QS-15 · US-QS-17 a section beside the index keeps its layer frame free to widen from 1024 px (nested frame, #1027)", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account/reminders");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Erinnerungen" });
+    const frame = heading.closest("[data-layer-host]") as HTMLElement;
+    const content = frame.firstElementChild as HTMLElement;
+    expect(content.className).toContain("lg:max-w-none");
+  });
+});
+
+describe("US-QS-15 the index yields while a settings layer is open, from 1280 px", () => {
+  beforeEach(() => setViewportWidth(1280));
+  afterEach(() => setViewportWidth(390));
+
+  /** The column of the index: the wrapper of its navigation; it is shown beside the section with `xl:block`. */
+  const indexColumn = () =>
+    screen.getByRole("navigation", { name: "Abschnitte von Konto" }).parentElement as HTMLElement;
+  const shownBesideSection = () => indexColumn().className.includes("xl:block");
+
+  it("US-QS-15 an open settings layer hides the index beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=profile");
+    await screen.findByRole("complementary", { name: "Profil" });
+    expect(shownBesideSection()).toBe(false);
+  });
+
+  it("US-QS-15 an address with an unknown sheet keeps the index beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=bogus");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(shownBesideSection()).toBe(true);
+  });
+
+  it("US-QS-15 a settings layer address of another section keeps the index beside it", async () => {
+    fakeServer();
+    show("/account/profile?sheet=profile");
+    await screen.findByRole("heading", { level: 1 });
+    expect(shownBesideSection()).toBe(true);
+  });
+
+  it("US-QS-15 closing the settings layer brings the index back beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=profile");
+    const pane = await screen.findByRole("complementary", { name: "Profil" });
+    await userEvent.click(within(pane).getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(shownBesideSection()).toBe(true));
+  });
+});
+
+describe("US-QS-14 · US-QS-17 Konto has exactly one h1 on every width", () => {
+  afterEach(() => setViewportWidth(390));
+
+  const headings1 = () => screen.queryAllByRole("heading", { level: 1 }).map((h) => h.textContent);
+
+  it("US-QS-14 · US-QS-17 on a wide screen the index and the default section have one h1 (desktop Konto)", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(headings1()).toEqual(["Einstellungen"]);
+  });
+
+  it("US-QS-14 · US-QS-17 on a wide screen a section beside the index keeps one h1, its name", async () => {
+    setViewportWidth(1440);
+    fakeServer();
+    show("/account/profile");
+    await screen.findByRole("region", { name: "Profil" });
+    expect(headings1()).toEqual(["Profil"]);
+  });
+
+  it("US-QS-14 · US-QS-17 on a phone the section Profil has one h1 and the page header's way back", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account/profile");
+    await screen.findByRole("region", { name: "Profil" });
+    expect(headings1()).toEqual(["Profil"]);
+    expect(screen.getByRole("link", { name: "Zurück zu Konto" }).getAttribute("href")).toBe(
+      "/account",
+    );
+  });
+
+  it("US-QS-14 the index on a phone keeps the one h1 Konto", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    show("/account");
+    await screen.findByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(headings1()).toEqual(["Konto"]);
   });
 });

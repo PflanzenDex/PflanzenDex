@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  */
 export function SectionLabel(props: { id: string; children: ReactNode }) {
   return (
-    <h2 id={props.id} className="text-[13px] font-semibold text-muted-foreground">
+    <h2 id={props.id} className="text-label font-semibold text-muted-foreground">
       {props.children}
     </h2>
   );

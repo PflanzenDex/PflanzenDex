@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button/button";
+import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
 import { dateText, valueText } from "@/lib/format";
 import { useStoredPhoto } from "@/lib/use-stored-photo";
 import { useRequest } from "../../kernel";
@@ -26,7 +27,7 @@ function Photo(props: { api: string; token: Token; url: string; photo: YearPhoto
       <img
         src={state}
         alt={`${props.label} vom ${dateText(props.photo.date)}`}
-        className="max-h-40 w-auto max-w-full rounded-lg object-contain"
+        className="max-h-32 w-auto max-w-full rounded-lg object-contain"
       />
       <figcaption className="text-sm text-muted-foreground">
         {props.label}, {dateText(props.photo.date)}
@@ -50,7 +51,7 @@ function Facts({ v }: { v: Year }) {
       <ul className="m-0 flex list-none flex-col gap-1 p-0">
         {FACTS.map(([key, label, basis]) => (
           <li key={key}>
-            <span className="font-bold">{v.counts[key]}</span> {label}{" "}
+            <span className="font-bold tabular-nums">{v.counts[key]}</span> {label}{" "}
             <span className="text-sm text-muted-foreground">({basis})</span>
           </li>
         ))}
@@ -99,14 +100,8 @@ function Photos(props: { api: string; token: Token; photos: NonNullable<Year["ph
   );
 }
 
-/**
- * The year in review (US-ACH-07) in the section "Erfolge": counted facts of one calendar year from the own data, each
- * with its basis, the largest healthy growth by the specimen's own rate and the first and last photo of the year.
- * Unknown stays "unbekannt" and says what is needed (P-08); an empty year says what would fill it (P-09). No percentage,
- * no "besser als letztes Jahr", no comparison with others (FR-ACH-04); private, never shared in this epic (P-05).
- * Calm mode, a read error or an unexpected answer show nothing (US-ACH-08).
- */
-export function YearInReviewSection(props: { api: string; token: Token }) {
+/** The layer's content: the year is loaded only while the layer is open (US-QS-15). */
+function YearBody(props: { api: string; token: Token }) {
   const { api, token } = props;
   const [year, setYear] = useState<number | null>(null);
   const load = useCallback((t: string) => loadYear(api, t, year), [api, year]);
@@ -117,18 +112,25 @@ export function YearInReviewSection(props: { api: string; token: Token }) {
     keepPrevious: true,
   });
   const v = r.value;
-  if (!v || v.calmMode || !v.counts) return null;
+  if (!v) {
+    return r.status === "pending" ? (
+      <p role="status" className="m-0 text-sm">
+        Jahresrückblick wird geladen …
+      </p>
+    ) : null;
+  }
+  if (v.calmMode || !v.counts) return null;
   const running = new Date().getFullYear();
   return (
-    <section aria-label="Jahresrückblick" className="flex min-w-0 max-w-xl flex-col gap-2">
-      <h3 className="m-0 text-lg font-semibold">{`Jahresrückblick ${v.year}`}</h3>
+    <div className="flex min-w-0 flex-col gap-3">
+      <p className="m-0 font-semibold">{`Jahresrückblick ${v.year}`}</p>
       <div className="flex gap-2">
-        <Button type="button" variant="secondary" onClick={() => setYear(v.year - 1)}>
+        <Button type="button" variant="outline" onClick={() => setYear(v.year - 1)}>
           Vorjahr
         </Button>
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
           disabled={v.year >= running}
           onClick={() => setYear(v.year + 1 >= running ? null : v.year + 1)}
         >
@@ -137,6 +139,21 @@ export function YearInReviewSection(props: { api: string; token: Token }) {
       </div>
       <Facts v={v} />
       {v.photos && <Photos api={api} token={token} photos={v.photos} />}
-    </section>
+    </div>
+  );
+}
+
+/**
+ * The year in review (US-ACH-07) as the row "Jahresrückblick" and its layer: counted facts of one calendar year from the
+ * own data, each with its basis, the largest healthy growth by the specimen's own rate and the first and last photo of
+ * the year. Unknown stays "unbekannt" and says what is needed (P-08); an empty year says what would fill it (P-09). No
+ * percentage, no "besser als letztes Jahr", no comparison with others (FR-ACH-04); private, never shared in this epic
+ * (P-05). Calm mode, a read error or an unexpected answer show nothing (US-ACH-08).
+ */
+export function YearInReviewSection(props: { api: string; token: Token }) {
+  return (
+    <LayerPart id="year" title="Jahresrückblick" value="Zahlen und Fotos aus deinen Daten">
+      <YearBody api={props.api} token={props.token} />
+    </LayerPart>
   );
 }

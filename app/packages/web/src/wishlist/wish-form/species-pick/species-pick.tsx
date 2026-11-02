@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SpeciesHit } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
 import { Label } from "@/components/ui/display/label/label";
 import { searchSpecies } from "../../../catalog";
 
@@ -44,12 +44,12 @@ export function SpeciesPick(props: {
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor="wish-species-search">Art suchen</Label>
-      <Input
+      <SearchInput
         id="wish-species-search"
-        type="search"
         autoComplete="off"
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onClear={() => setText("")}
       />
       <p role="status" className="m-0 text-sm text-muted-foreground">
         {props.chosen ? `Gewählt: ${props.chosen}` : "Tippe einen Namen und wähle eine Art."}

@@ -7,15 +7,22 @@ APP := app
 DB_PORT := $(or $(PFLANZENDEX_TEST_DB_PORT),54329)
 DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
+# Memory cap of the local test database: one per worktree on a small dev box (#1084, starting value, assumption).
+# Local only: CI provides its own database service, production uses config/deploy. Override with DB_MEMORY=1g.
+DB_MEMORY ?= 512m
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-setup: ## Install dependencies (npm ci, or npm install without a lock file)
-	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# node_modules that already match package-lock.json (the check-deps stamp) are kept: in CI they come from the
+# node_modules cache (issue 1123, measured saving 30-50 s per job). FRESH=1 always reinstalls.
+setup: ## Install dependencies (npm ci, or npm install without a lock file); skipped when node_modules matches the lock file (FRESH=1 forces)
+	cd $(APP) && if [ -z "$(FRESH)" ] && [ -f package-lock.json ] && node tools/check/supply/check-deps.mjs 2>/dev/null; then \
+	  echo "setup: node_modules matches package-lock.json, npm ci skipped (FRESH=1 reinstalls)"; \
+	elif [ -f package-lock.json ]; then npm ci; else npm install; fi
 	cd $(APP) && node tools/check/supply/check-deps.mjs --stamp
 	$(if $(CI),,$(MAKE) hooks)
 
@@ -46,7 +53,7 @@ docs-check: ## Lint markdown and check relative links (QG-U2)
 	cd $(APP) && npm run docs
 
 db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running
-	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
+	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory $(DB_MEMORY) \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
 
@@ -87,7 +94,7 @@ coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet ch
 browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
 	cd $(APP) && npx --no-install playwright install $(if $(CI),--with-deps) chromium
 
-conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
+conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px; 8 pages at once, CONFORMANCE_PAGES=<n> overrides (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
 
 ds-snapshots-check: ## Visual regression of the components/ui stories against the baselines in app/packages/web/.storybook/snapshots, 360 px, light and dark, in the pinned Playwright container; also runs its self-test (QG-U5, US-QS-07; needs Docker)
@@ -165,6 +172,27 @@ gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundar
 
 ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
 	cd $(APP) && npm run ci
+
+# The three parts of `make ci`; CI runs them as parallel jobs (US-QG-02, #1118), locally `make ci` runs all three.
+ci-gates: secrets workflows ## Part 1 of `make ci`: secrets, workflows and the fast gates
+	cd $(APP) && npm run ci:gates
+
+ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and the ratchet, then the CRAP check
+	cd $(APP) && npm run ci:tests
+
+# Part 2 in CI as three jobs (issue 1125): the web suite runs beside the others, the ratchet and CRAP check read both
+# coverage outputs afterwards. Together they are exactly `make ci-tests`.
+ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests
+	cd $(APP) && npm run ci:tests:base
+
+ci-tests-web: ## Part 2b: web tests with coverage
+	cd $(APP) && npm run ci:tests:web
+
+ci-coverage: ## Part 2c: coverage ratchet and CRAP check over the coverage of all packages (run 2a and 2b first)
+	cd $(APP) && npm run ci:coverage
+
+ci-ui: ## Part 3 of `make ci`: build, initial JS budget and the blocking conformance run (needs `make browsers`)
+	cd $(APP) && npm run ci:ui
 
 release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
 	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }

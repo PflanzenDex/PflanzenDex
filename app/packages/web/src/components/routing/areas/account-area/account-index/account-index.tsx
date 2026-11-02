@@ -16,7 +16,7 @@ import { useAccountValues } from "./account-values";
 type Token = () => Promise<string | undefined>;
 
 const ROW =
-  "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-[15px] text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-base text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
 
 function Row(props: {
@@ -43,6 +43,7 @@ function SignOutRow(props: { onSignOut: () => void; onEverywhereSignOut: () => v
   const [open, setOpen] = useState(false);
   return (
     <>
+      {/* The same row as the sections, with its chevron, so it reads as an action of the list and not as plain text (issue 1045). */}
       <Button
         type="button"
         variant="ghost"
@@ -50,6 +51,10 @@ function SignOutRow(props: { onSignOut: () => void; onEverywhereSignOut: () => v
         onClick={() => setOpen(true)}
       >
         Abmelden…
+        <ChevronRight
+          aria-hidden="true"
+          className="ml-auto size-4 shrink-0 text-muted-foreground"
+        />
       </Button>
       <ResponsiveModal title="Abmelden?" closeLabel="Schließen" open={open} onOpenChange={setOpen}>
         <div className="flex flex-col gap-3">

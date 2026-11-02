@@ -77,7 +77,8 @@ export function TreatmentHistory(props: {
   const choice = useRef<HTMLSelectElement>(null);
   return (
     <section aria-labelledby="treatment-history-title" className="flex flex-col gap-3">
-      <Title id="treatment-history-title" className="text-xl font-semibold">
+      {/* In a layer the segment "Erledigt" names the part; the heading stays for screen readers (US-QS-18, A-05). */}
+      <Title id="treatment-history-title" className={host ? "sr-only" : "text-xl font-semibold"}>
         Erledigte Behandlungen
       </Title>
       <div className="flex max-w-xl flex-col gap-2">

@@ -17,6 +17,15 @@ import { NavNote } from "../nav-model/nav-note/nav-note";
 const BAR_SLOTS = 5;
 
 /**
+ * The words under the icons (US-QS-15, owner decision 2026-11-01, issue 1107): a label never breaks inside a word. The
+ * bar is a size container; once its inner width is below 21.75 rem (five slots of the longest label, "Sammlung" at
+ * 4 rem, plus their padding and gaps), a label no longer fits its slot, so all labels leave the view and stay the
+ * accessible name, and the bar shows icons only. The query is in rem, so a larger text size reaches it on a wider
+ * screen (from about 110 % text at 360 px); at 100 % text the bar keeps its one line of labels.
+ */
+const barText = "flex max-w-full flex-col items-center gap-1 @max-[21.75rem]:sr-only";
+
+/**
  * The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). Choosing a
  * destination closes the drawer, so the new page is not left behind an overlay that holds the focus (US-QS-08).
  */
@@ -40,7 +49,9 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           <span className={stackedPill(active)}>
             <Ellipsis aria-hidden="true" />
           </span>
-          <span>Mehr</span>
+          <span className={barText}>
+            <span className="whitespace-nowrap">Mehr</span>
+          </span>
         </Button>
       </SheetTrigger>
       <SheetContent title="Mehr">
@@ -85,7 +96,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
     <nav
       aria-label="Navigation unten"
       data-bottom-bar
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="@container fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {inBar.map((item) => (
         <NavLink
@@ -97,8 +108,10 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
           {({ isActive: active }) => (
             <>
               <span className={stackedPill(active)}>{item.icon}</span>
-              <span className="max-w-full break-words hyphens-auto">{item.label}</span>
-              <NavNote text={item.note} />
+              <span className={barText}>
+                <span className="whitespace-nowrap">{item.label}</span>
+                <NavNote text={item.note} />
+              </span>
             </>
           )}
         </NavLink>

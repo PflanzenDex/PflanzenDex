@@ -1,5 +1,10 @@
 import type { Recommendation } from "@pflanzendex/core";
 import { useFeature } from "@/kernel";
+import { Pager } from "@/components/shared/responsive/pager/pager";
+
+/** Recommendations per page; they page apart from the needs above them (starting value, assumption). */
+const PER_PAGE = 2;
+const PARAM = "rpage";
 
 const date = (iso: string) => iso.split("-").reverse().join(".");
 const eur = (cents: number) => `${(cents / 100).toFixed(2).replace(".", ",")} €`;
@@ -24,7 +29,7 @@ function Block(props: { recommendations: readonly Recommendation[]; needCount: n
       aria-labelledby="equipment-recommendations-title"
       className="flex min-w-0 flex-col gap-3"
     >
-      <h2 id="equipment-recommendations-title" className="text-xl font-semibold">
+      <h2 id="equipment-recommendations-title" className="text-base font-semibold">
         Empfehlungen zu deinem Bedarf
       </h2>
       {recommendations.length === 0 ? (
@@ -34,12 +39,14 @@ function Block(props: { recommendations: readonly Recommendation[]; needCount: n
             : "Zu deinem Bedarf liegt noch keine Produktempfehlung vor. Nächster Schritt: Such selbst nach einem passenden Produkt und kaufe dort, wo du magst."}
         </p>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
-          {recommendations.map((r) => (
-            <li
-              key={`${r.needId}:${r.productId}`}
-              className="min-w-0 rounded-lg border border-border p-3"
-            >
+        <Pager
+          items={recommendations}
+          pageSize={PER_PAGE}
+          label="Empfehlungen"
+          param={PARAM}
+          getKey={(r) => `${r.needId}:${r.productId}`}
+          renderItem={(r) => (
+            <div className="min-w-0 rounded-lg border border-border p-3">
               <p className="m-0 text-xs font-semibold uppercase text-muted-foreground">{r.label}</p>
               <h3 className="m-0 break-words font-semibold">{r.name}</h3>
               <p className="m-0 text-sm text-muted-foreground">{r.manufacturer}</p>
@@ -54,9 +61,9 @@ function Block(props: { recommendations: readonly Recommendation[]; needCount: n
                 </p>
               ) : null}
               <p className="m-0 mt-1 text-sm">{r.nextAction}</p>
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        />
       )}
     </section>
   );

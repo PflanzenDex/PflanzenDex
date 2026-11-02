@@ -1,4 +1,5 @@
-// Test helper (jsdom has no layout): a controllable `matchMedia` for `(min-width: Npx)` queries.
+// Test helper (jsdom has no layout): a controllable `matchMedia` for `(min-width: Npx)` queries; a `(max-height: Npx)` query
+// never matches (the viewport counts as tall), so views take their normal page size.
 type Listener = () => void;
 const listeners = new Set<Listener>();
 let width = 1024;
@@ -8,7 +9,7 @@ export function setViewportWidth(next: number): void {
   window.matchMedia = ((query: string) => {
     const min = Number(/min-width:\s*(\d+)px/.exec(query)?.[1] ?? 0);
     return {
-      matches: width >= min,
+      matches: /max-height/.test(query) ? false : width >= min,
       media: query,
       addEventListener: (_: string, l: Listener) => listeners.add(l),
       removeEventListener: (_: string, l: Listener) => listeners.delete(l),

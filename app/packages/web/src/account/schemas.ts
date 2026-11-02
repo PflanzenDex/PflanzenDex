@@ -8,11 +8,25 @@ import {
 import { z } from "zod";
 import { OCCASIONS, type AccountProfile } from "./api/account-api";
 
-/** "50000, 15000, 8000, 4000" to the four numbers; `null` while the text is not four whole numbers in the limits, descending. */
-export function parseThresholds(text: string): number[] | null {
-  const parts = text.split(/[\s,;]+/).filter((x) => x !== "");
-  if (parts.length !== THRESHOLDS.count || !parts.every((x) => /^\d+$/.test(x))) return null;
-  const numbers = parts.map(Number);
+/** A whole lux value as typed: digits, with or without German grouping ("10000", "10.000"); `null` otherwise. */
+export function parseLux(text: string): number | null {
+  const compact = text.replace(/\s/g, "");
+  const [head = "", ...groups] = compact.split(".");
+  const valid =
+    groups.length === 0
+      ? /^\d+$/.test(head)
+      : /^\d{1,3}$/.test(head) && groups.every((g) => /^\d{3}$/.test(g));
+  return valid ? Number(compact.replace(/\./g, "")) : null;
+}
+
+/** 10000 as "10.000" (German grouping, US-LIC-03). */
+export const formatLux = (n: number): string => n.toLocaleString("de-DE");
+
+/** The four fields as numbers; `null` while one is not a whole number in the limits or they do not descend. */
+export function parseThresholds(texts: readonly string[]): number[] | null {
+  const parsed = texts.map(parseLux);
+  if (parsed.length !== THRESHOLDS.count || parsed.some((n) => n === null)) return null;
+  const numbers = parsed as number[];
   const ok = numbers.every(
     (n, i) =>
       n >= THRESHOLDS.min && n <= THRESHOLDS.max && (i === 0 || n < (numbers[i - 1] as number)),
@@ -35,13 +49,28 @@ export const profileSchema = z.object({
     const n = Number(text);
     return /^\d+$/.test(text.trim()) && n >= BUFFER.min && n <= BUFFER.max;
   }, `Gib eine ganze Zahl von ${BUFFER.min} bis ${BUFFER.max} ein.`),
-  /** Four whole lux values, descending, as one text (US-LIC-03); the server decides again (P-03). */
-  positionThresholds: z
-    .string()
-    .refine(
-      (text) => parseThresholds(text) !== null,
-      `Gib vier ganze Lux-Werte von ${THRESHOLDS.min} bis ${THRESHOLDS.max} ein, von hoch nach niedrig, getrennt durch Kommas.`,
-    ),
+  /** Four whole lux values, one field each, descending (US-LIC-03); the server decides again (P-03). */
+  positionThresholds: z.array(z.string()).superRefine((texts, ctx) => {
+    let above: number | null = null;
+    texts.forEach((text, i) => {
+      const n = parseLux(text);
+      if (n === null || n < THRESHOLDS.min || n > THRESHOLDS.max) {
+        ctx.addIssue({
+          code: "custom",
+          path: [i],
+          message: `Gib eine ganze Zahl von ${formatLux(THRESHOLDS.min)} bis ${formatLux(THRESHOLDS.max)} Lux ein.`,
+        });
+        return;
+      }
+      if (above !== null && n >= above)
+        ctx.addIssue({
+          code: "custom",
+          path: [i],
+          message: "Der Wert muss kleiner sein als der Wert darüber.",
+        });
+      above = n;
+    });
+  }),
   notifications: z.object({
     phase: z.boolean(),
     treatment: z.boolean(),
@@ -64,7 +93,7 @@ export const toProfileFields = (p: AccountProfile, deviceZone: string | null): P
   noRecommendations: p.noRecommendations,
   rarityConsent: p.rarityConsent,
   replenishBuffer: String(p.replenishBuffer),
-  positionThresholds: (p.positionThresholds ?? POSITION_THRESHOLD_DEFAULTS).join(", "),
+  positionThresholds: (p.positionThresholds ?? POSITION_THRESHOLD_DEFAULTS).map(formatLux),
   notifications: { ...p.notifications },
 });
 
@@ -87,8 +116,8 @@ export function toProfile(f: ProfileFields, saved: AccountProfile): AccountProfi
 }
 
 /** Standard values stay "not set" (`null`) while the keeper did not change them (P-08: the default is no own number). */
-function thresholdsToSave(text: string, stored: number[] | null): number[] | null {
-  const numbers = parseThresholds(text);
+function thresholdsToSave(texts: readonly string[], stored: number[] | null): number[] | null {
+  const numbers = parseThresholds(texts);
   if (numbers === null) return stored;
   return stored === null && sameNumbers(numbers, POSITION_THRESHOLD_DEFAULTS) ? null : numbers;
 }

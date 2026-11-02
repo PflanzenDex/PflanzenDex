@@ -135,10 +135,12 @@ export class InMemorySpecimens implements SpecimenStore {
     }) as SpecimenRow;
   }
 
-  async repot(userId: string, id: string, date: string | null) {
+  async repot(userId: string, id: string, date: string | null, chosenDate: string | null) {
     const z = await this.find(userId, id);
     if (!z) return "not_found" as const;
     if (z.status !== "cutting") return "not_a_cutting" as const;
+    if (chosenDate !== null && z.caughtAt !== null && z.caughtAt > chosenDate)
+      return "before_caught" as const;
     return this.replace(userId, id, { status: "plant", repottedAt: date }) as SpecimenRow;
   }
 

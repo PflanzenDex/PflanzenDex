@@ -248,7 +248,7 @@ describe("US-BES-04 cutting in the database", () => {
       status: "cutting",
     });
     if (typeof z === "string") throw new Error(z);
-    const r = await specimens.repot(anna, z.id, null);
+    const r = await specimens.repot(anna, z.id, null, null);
     expect(r).toEqual({ ...z, status: "plant" });
     expect(await specimens.find(anna, z.id)).toEqual({ ...z, status: "plant" });
   });
@@ -262,8 +262,8 @@ describe("US-BES-04 cutting in the database", () => {
     });
     if (typeof plant === "string" || typeof archived === "string") throw new Error("create");
     await specimens.archive(anna, archived.id, "abgegeben", "2026-10-03");
-    expect(await specimens.repot(anna, plant.id, null)).toBe("not_a_cutting");
-    expect(await specimens.repot(anna, archived.id, null)).toBe("not_a_cutting");
+    expect(await specimens.repot(anna, plant.id, null, null)).toBe("not_a_cutting");
+    expect(await specimens.repot(anna, archived.id, null, null)).toBe("not_a_cutting");
     expect((await specimens.find(anna, archived.id))?.status).toBe("archived");
     expect(await specimens.find(anna, plant.id)).toEqual(plant);
   });
@@ -275,12 +275,51 @@ describe("US-BES-04 cutting in the database", () => {
       status: "cutting",
     });
     if (typeof z === "string") throw new Error(z);
-    expect(await specimens.repot(ben, z.id, null)).toBe("not_found");
+    expect(await specimens.repot(ben, z.id, null, null)).toBe("not_found");
     expect((await specimens.find(anna, z.id))?.status).toBe("cutting");
   });
 
   it("US-BES-04: an unknown id is not found", async () => {
-    expect(await specimens.repot(anna, randomUUID(), null)).toBe("not_found");
+    expect(await specimens.repot(anna, randomUUID(), null, null)).toBe("not_found");
+  });
+
+  it("US-BES-04: a chosen day before the catch date answers before_caught and writes nothing; the catch day itself is allowed", async () => {
+    const z = await specimens.create(anna, {
+      ...values,
+      name: "Steckling Vor Fang",
+      status: "cutting",
+    });
+    if (typeof z === "string") throw new Error(z);
+    expect(await specimens.repot(anna, z.id, "2026-10-02", "2026-10-02")).toBe("before_caught");
+    expect(await specimens.find(anna, z.id)).toEqual(z);
+    expect(await specimens.repot(anna, z.id, "2026-10-03", "2026-10-03")).toMatchObject({
+      status: "plant",
+      repottedAt: "2026-10-03",
+    });
+  });
+
+  it("US-BES-04, P-04: a foreign cutting is not_found even when the chosen day is before its catch date", async () => {
+    const z = await specimens.create(anna, {
+      ...values,
+      name: "Steckling Fremd Fang",
+      status: "cutting",
+    });
+    if (typeof z === "string") throw new Error(z);
+    expect(await specimens.repot(ben, z.id, "2026-10-02", "2026-10-02")).toBe("not_found");
+  });
+
+  it("US-BES-04: a cutting without a catch date accepts any chosen day (unknown, P-08)", async () => {
+    const z = await specimens.create(anna, {
+      ...values,
+      name: "Steckling ohne Fang",
+      caughtAt: null,
+      status: "cutting",
+    });
+    if (typeof z === "string") throw new Error(z);
+    expect(await specimens.repot(anna, z.id, "1900-01-01", "1900-01-01")).toMatchObject({
+      status: "plant",
+      repottedAt: "1900-01-01",
+    });
   });
 });
 
@@ -363,15 +402,15 @@ describe("US-SOZ-05 the day of the repot", () => {
     const dated = await make("Datiert");
     const undated = await make("Undatiert");
     const repo = new SpecimenPostgres(pool);
-    expect(await repo.repot(anna, dated, "2026-10-10")).toMatchObject({
+    expect(await repo.repot(anna, dated, "2026-10-10", "2026-10-10")).toMatchObject({
       status: "plant",
       repottedAt: "2026-10-10",
     });
-    expect(await repo.repot(anna, undated, null)).toMatchObject({
+    expect(await repo.repot(anna, undated, null, null)).toMatchObject({
       status: "plant",
       repottedAt: null,
     });
-    expect(await repo.repot(anna, dated, "2026-10-11")).toBe("not_a_cutting");
+    expect(await repo.repot(anna, dated, "2026-10-11", "2026-10-11")).toBe("not_a_cutting");
     expect((await repo.find(anna, dated))?.repottedAt).toBe("2026-10-10");
   });
 });

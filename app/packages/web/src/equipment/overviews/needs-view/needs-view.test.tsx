@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render as plainRender, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { NeedsView } from "./needs-view";
 
 afterEach(cleanup);
+
+const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("US-EQU-07 what is missing", () => {
   it("US-EQU-07 shows reason, source and next action of every item", () => {

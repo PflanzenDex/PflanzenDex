@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HINT_MAX_WORDS } from "@pflanzendex/core";
 import { HINT_TEXTS } from "./hint/hint-texts";
@@ -112,17 +113,20 @@ const LOOKUP = {
   load: (api: string, _t: string, id: string) => get(`${api}/species/${id}`),
 };
 const open = vi.fn();
+// The intro lives on the route "Heute", so it runs inside a router (the stale `?sheet` of US-QS-18 is cleaned there).
 const view = () =>
   render(
-    <TodayIntro
-      lookup={LOOKUP}
-      api="http://api"
-      token={token}
-      onOpen={open}
-      fallback={<p role="status">Heute wird geladen …</p>}
-    >
-      <p>Aufgaben des Tages</p>
-    </TodayIntro>,
+    <MemoryRouter>
+      <TodayIntro
+        lookup={LOOKUP}
+        api="http://api"
+        token={token}
+        onOpen={open}
+        fallback={<p role="status">Heute wird geladen …</p>}
+      >
+        <p>Aufgaben des Tages</p>
+      </TodayIntro>
+    </MemoryRouter>,
   );
 const world = (over: Partial<World> = {}): World => ({
   zones: ZONES,

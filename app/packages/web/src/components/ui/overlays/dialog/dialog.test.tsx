@@ -46,6 +46,16 @@ describe("Dialog (US-QS-07, DS-23, DS-40)", () => {
     }
   });
 
+  it("US-QS-07 · DS-23 the close control is a 20 px icon, not a text glyph that shrinks on desktop (issue 1045)", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const close = screen.getByRole("button", { name: "Schließen" });
+    expect(close.textContent).toBe("");
+    const icon = close.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("class")).toContain("size-5");
+  });
+
   it("US-QS-07 · DS-23 the close button keeps a 44 px target and closes the dialog", async () => {
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));

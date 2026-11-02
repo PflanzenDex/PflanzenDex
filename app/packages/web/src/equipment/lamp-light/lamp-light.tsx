@@ -4,6 +4,7 @@ import { LimitForm } from "./limit-form/limit-form";
 import { MeasureForm } from "./measure-form/measure-form";
 import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { keepTogether } from "@/lib/format";
 import { zoneLabel } from "@pflanzendex/core";
 
@@ -15,6 +16,8 @@ export interface LampLightActions {
 }
 
 const UNKNOWN = "unbekannt";
+/** Lamps per page of the layer (starting value, assumption; the page size from the free height is #1029). */
+const LAMPS_PER_PAGE = 2;
 
 /** The measured value apart from the manufacturer's statement; without a measurement the zone value applies (FR-LIC-06). */
 function Values({ lamp }: { lamp: LampLight }) {
@@ -66,44 +69,51 @@ function History({ lamp }: { lamp: LampLight }) {
 }
 
 function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightActions }) {
+  const where = lamp.zone ? zoneLabel(lamp.zone.name) : "ohne Zone";
   return (
-    <li className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-3">
-      <div>
-        <h3 className="break-words font-semibold">{lamp.name}</h3>
-        <p className="text-sm text-muted-foreground">
-          {lamp.zone
-            ? `${zoneLabel(lamp.zone.name)} · Obergrenze ${lux(lamp.zone.luxCeiling)}`
-            : "ohne Zone"}
-        </p>
+    <details
+      className="min-w-0 rounded-lg border border-border"
+      open={lamp.check ? true : undefined}
+    >
+      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 p-3">
+        <span className="break-words font-semibold">{lamp.name}</span>
+        <span className="text-sm text-muted-foreground">
+          {lamp.powerW === null ? UNKNOWN : `${lamp.powerW} W`} · {where}
+        </span>
+      </summary>
+      <div className="flex flex-col gap-3 px-3 pb-3">
+        {lamp.zone ? (
+          <p className="text-sm text-muted-foreground">Obergrenze {lux(lamp.zone.luxCeiling)}</p>
+        ) : null}
+        {lamp.check ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+          >
+            <strong>Zone prüfen.</strong> {lamp.check.text} <strong>{lamp.check.nextAction}</strong>
+          </p>
+        ) : null}
+        <Values lamp={lamp} />
+        <History lamp={lamp} />
+        <MeasureForm
+          lampName={lamp.name}
+          busy={actions.busy}
+          onSend={(input) => actions.onMeasure(lamp, input)}
+        />
+        <details>
+          <summary className="cursor-pointer text-sm">Herstellerangabe ändern</summary>
+          <div className="mt-2">
+            <DataForm
+              lampName={lamp.name}
+              powerW={lamp.powerW}
+              luxStatement={lamp.manufacturerLux}
+              busy={actions.busy}
+              onSend={(data) => actions.onData(lamp, data)}
+            />
+          </div>
+        </details>
       </div>
-      {lamp.check ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-        >
-          <strong>Zone prüfen.</strong> {lamp.check.text} <strong>{lamp.check.nextAction}</strong>
-        </p>
-      ) : null}
-      <Values lamp={lamp} />
-      <History lamp={lamp} />
-      <MeasureForm
-        lampName={lamp.name}
-        busy={actions.busy}
-        onSend={(input) => actions.onMeasure(lamp, input)}
-      />
-      <details>
-        <summary className="cursor-pointer text-sm">Herstellerangabe ändern</summary>
-        <div className="mt-2">
-          <DataForm
-            lampName={lamp.name}
-            powerW={lamp.powerW}
-            luxStatement={lamp.manufacturerLux}
-            busy={actions.busy}
-            onSend={(data) => actions.onData(lamp, data)}
-          />
-        </div>
-      </details>
-    </li>
+    </details>
   );
 }
 
@@ -121,20 +131,30 @@ export function LampLightView({
   if (view.lamps.length === 0) return null;
   return (
     <section aria-labelledby="lamp-light-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="lamp-light-title" className="text-xl font-semibold">
+      <h2 id="lamp-light-title" className="sr-only">
         Lichtstärke der Lampen
       </h2>
-      <LimitForm
-        key={String(view.limit)}
-        limit={view.limit}
-        busy={actions.busy}
-        onSend={actions.onLimit}
+      <Pager
+        items={view.lamps}
+        pageSize={LAMPS_PER_PAGE}
+        label="Lichtstärke je Lampe"
+        param={LAYER_PARAM}
+        getKey={(l) => l.id}
+        renderItem={(l) => <LampCard lamp={l} actions={actions} />}
       />
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 lg:grid-cols-2">
-        {view.lamps.map((l) => (
-          <LampCard key={l.id} lamp={l} actions={actions} />
-        ))}
-      </ul>
+      <details className="rounded-lg border border-border">
+        <summary className="cursor-pointer p-3 text-sm">
+          Abweichungsgrenze {view.limit === null ? "(nicht festgelegt)" : `(${view.limit} %)`}
+        </summary>
+        <div className="px-3 pb-3">
+          <LimitForm
+            key={String(view.limit)}
+            limit={view.limit}
+            busy={actions.busy}
+            onSend={actions.onLimit}
+          />
+        </div>
+      </details>
     </section>
   );
 }
