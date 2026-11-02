@@ -109,6 +109,16 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(onOpen).toHaveBeenCalledWith("care_phases");
   });
 
+  it("US-QS-18 · issue 1182 the rows of the layer page by its free height, so the pager stays inside the pane", async () => {
+    fakeServer(() =>
+      response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, PHASE, INCOMPLETE] }),
+    );
+    render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />, "/today?sheet=tasks");
+    const layer = await screen.findByRole("dialog", { name: "Weitere Aufgaben" });
+    const list = await within(layer).findByRole("list", { name: "Weitere Aufgaben" });
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
+  });
+
   it("US-QS-18 the further tasks list no treatment: they are counted in the one Behandlungen entry", async () => {
     const DUE = item("treatment_due", "treatments", "Farn", "„Farn“: Dünger – heute fällig.", "x");
     fakeServer(() =>

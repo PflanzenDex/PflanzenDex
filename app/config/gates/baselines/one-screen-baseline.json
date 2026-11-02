@@ -1,5 +1,5 @@
 {
-  "maxEntries": 180,
+  "maxEntries": 178,
   "entries": [
     {
       "screen": "account",
@@ -1062,12 +1062,6 @@
     },
     {
       "screen": "species-profile-care",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1
-    },
-    {
-      "screen": "species-profile-care",
       "size": "2560x1440",
       "page": 0,
       "inner": 0,
@@ -1127,12 +1121,6 @@
       "page": 0,
       "inner": 0,
       "cap": 639
-    },
-    {
-      "screen": "today-tasks",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.02
     },
     {
       "screen": "today-tasks",
