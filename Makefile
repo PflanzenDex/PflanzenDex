@@ -10,6 +10,10 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 # Memory cap of the local test database: one per worktree on a small dev box (#1084, starting value, assumption).
 # Local only: CI provides its own database service, production uses config/deploy. Override with DB_MEMORY=1g.
 DB_MEMORY ?= 512m
+# The local auth server (Keycloak, mail catcher) is one container set shared by every checkout, so it always runs with
+# the main checkout's compose file and app/config/dev/.env, also from a worktree (issue 1187, tools/keycloak/dev-env.mjs).
+AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/config/dev
+AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
 .PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
@@ -66,14 +70,13 @@ migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 migration: ## New migration with the next free number, seen from origin/dev and all open PRs (NAME=<module>_<short_name>, issue #831)
 	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$(NAME)"
 
-auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/config/dev/.env (not in the repo)
-	@test -f $(APP)/config/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/config/dev/.env
-	docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env up -d
+auth-up: ## Start the shared auth server (Keycloak) and mail catcher; admin password in the main checkout's app/config/dev/.env (not in the repo, only the main checkout creates it; refuses on a password mismatch)
+	cd $(APP) && node tools/keycloak/auth-up.mjs
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
 	@echo "Keycloak: http://localhost:18081 (realm pflanzendex), mail: http://localhost:18025"
 
 auth-down: ## Remove the auth server and mail catcher
-	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env down -v
+	-$(AUTH_COMPOSE) down -v
 
 start: auth-up db-up ## Start everything for local work: auth server, database, API and web; prints URLs and test accounts
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test || { echo "Keycloak or the database is not responding"; exit 1; }
@@ -82,7 +85,7 @@ start: auth-up db-up ## Start everything for local work: auth server, database, 
 	$(MAKE) dev
 
 stop: ## Stop the local auth server, mail catcher and database containers (data is kept)
-	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env stop
+	-$(AUTH_COMPOSE) stop
 	-docker stop $(DB_CONTAINER)
 
 test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check scripts
