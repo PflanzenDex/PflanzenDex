@@ -17,6 +17,8 @@ type Token = () => Promise<string | undefined>;
 
 const ROW =
   "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-base text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+/** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
+const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
 
 function Row(props: {
@@ -100,7 +102,7 @@ export function AccountIndex(props: {
   const name = props.account.displayName || props.account.email;
   return (
     <nav aria-label="Abschnitte von Konto">
-      <ul className="m-0 flex list-none flex-col gap-0 p-0">
+      <ul className={LIST}>
         <li>
           <Row to="profile" id={rowId("profile")} current={props.current === "profile"}>
             <span

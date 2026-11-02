@@ -108,6 +108,18 @@ describe("US-QS-17 the index of Konto", () => {
     expect(button.className).toContain("border-transparent");
   });
 
+  it("US-QS-17 · issue 1099 the rows bleed into the gutter by their bar and padding, so their content lines up with the heading", async () => {
+    show();
+    const list = screen
+      .getByRole("navigation", { name: "Abschnitte von Konto" })
+      .querySelector("ul");
+    expect(list?.className).toContain("-mx-[calc(0.75rem+4px)]");
+    const row = await screen.findByRole("button", { name: "Abmelden…" });
+    // The bleed is the row's 4 px bar plus its 0.75 rem padding.
+    expect(row.className).toContain("border-l-4");
+    expect(row.className).toContain("px-3");
+  });
+
   it("US-QS-17 · P-08 a value that cannot be read says unbekannt", async () => {
     fakeServer({ profile: null, achievements: null, connections: null });
     show();

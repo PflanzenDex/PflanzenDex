@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Konto: Die Zeilen der Übersicht beginnen jetzt bündig mit der Überschrift „Konto“, auch die erste mit deinem Profil.",
     "Laden: Öffnest du „Heute“, „Sammlung“, „Entdecken“ oder „Freunde“ direkt über die Adresse oder lädst die Seite neu, steht die Überschrift schon da, während der Rest noch lädt.",
     "KI-Clients: Dein eigener KI-Client (zum Beispiel Claude oder ChatGPT) kann sich jetzt über die Adresse „https://<deine App>/api/mcp“ mit PflanzenDex verbinden, als eigener Connector. Er sieht dann Werkzeuge für den Tagesstatus, deine Aufträge, Entwürfe, Vorschläge aus „Entdecken“ und die Fotos deiner Messungen, mit genau den Rechten, die du unter „Konto“ → „KI-Clients“ erlaubst. Was er liefert, bleibt ein Entwurf, bis du ihn übernimmst. Der kopierte Auftragstext nennt jetzt auch die Werkzeuge.",
     "Sammlung: Bei „Arten“ wählst du die Anordnung (Pokédex oder Schwierigkeit) jetzt wie bei „Pflanzen“ über den Knopf „Ansicht“ an derselben Stelle. Bei „Wünsche“ und „Geräte“ bleibt der Platz frei, damit beim Wechseln nichts springt.",
