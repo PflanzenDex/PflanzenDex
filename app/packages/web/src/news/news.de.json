@@ -1,6 +1,7 @@
 {
   "unreleased": [
     "Standorte und Lichtzonen: Die Listen der Lichtzonen und Standorte zeigen so viele Zeilen pro Seite, wie Platz haben, auch wenn daneben eine Ebene offen ist. „Lichthunger“ zeigt die Arten als kurze Zeilen in Seiten statt als breite Tabelle; der nächste Schritt für Arten ohne Lux-Bedarf steht einmal darüber.",
+    "Seiten in Listen: Ändert sich Fenstergröße und Schriftgröße gleichzeitig, etwa beim Drehen des Handys mit großer Schrift, zeigt die Sammlung nicht mehr „Die Seite konnte nicht geladen werden.“. Die Liste bleibt dann bei der kleineren Seitengröße, die sicher passt.",
     "Heute und Artenprofil: Die Ebene „Weitere Aufgaben“ zeigt so viele Aufgaben pro Seite, wie Platz haben, und „Mein Pflegeprofil“ nutzt auf Tablets und am Computer die ganze Breite der Ebene.",
     "Heute: Neues von Freunden und die noch nicht geöffneten Funktionen sind jetzt Kacheln neben „Behandlungen“, „Gießen“ und „Fehlt noch“; ein Tipp öffnet sie als Ebene. Die Ebenen „Fehlt noch“ und „Weitere Funktionen“ zeigen ihre Einträge in Seiten, die genau auf den Bildschirm passen, statt darin zu scrollen.",
     "KI-Clients: Dein KI-Client kann jetzt im Katalog nach Arten suchen (lateinischer oder deutscher Name, Synonym) und deine Pflanzen, Standorte, Lichtzonen und Messungen lesen, jeweils mit Namen statt nur interner Nummern. So sieht er vor einem Vorschlag, dass es eine Art schon gibt; schlägt er sie trotzdem vor, nennt die App ihm die vorhandene Art. Er sieht nur deine eigenen Daten und braucht dafür das Recht „Lesen“.",
