@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Standorte und Lichtzonen: Die Listen der Lichtzonen und Standorte zeigen so viele Zeilen pro Seite, wie Platz haben, auch wenn daneben eine Ebene offen ist. „Lichthunger“ zeigt die Arten als kurze Zeilen in Seiten statt als breite Tabelle; der nächste Schritt für Arten ohne Lux-Bedarf steht einmal darüber.",
     "Freunde: Die Tauschbörse passt jetzt auf jeden Bildschirm und zeigt so viele Karten pro Seite, wie Platz haben. In „Neu bei Freunden“ ist der Hinweis auf neue Pflanzen eine Zeile mit „Okay“, und die Filter öffnest du mit „Filter“.",
     "Sammlung: Wünsche, „Gekauft“, „Verworfen“, „Bedarf“ und die Sammlerkarten zeigen ihre Einträge in Seiten, die genau auf den Bildschirm passen. Die Equipment-Wünsche wählst du jetzt über „Offen | Gekauft | Verworfen“, und „Equipment-Wunsch erfassen“ öffnet das Formular als eigene Ebene. Auf kleinen Handys zeigt eine Sammlerkarte ein kleineres Bild und fasst unbekannte Angaben in einer Zeile zusammen.",
     "Seiten in Listen: Ändert sich Fenstergröße und Schriftgröße gleichzeitig, etwa beim Drehen des Handys mit großer Schrift, zeigt die Sammlung nicht mehr „Die Seite konnte nicht geladen werden.“. Die Liste bleibt dann bei der kleineren Seitengröße, die sicher passt.",

@@ -9,6 +9,8 @@ import {
 } from "react-hook-form";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button/button";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../../light.de.json";
 import {
   FormControl,
   FormField,
@@ -19,6 +21,8 @@ import {
 import { Select } from "@/components/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
 import { ALERT_CLASSES, useServerRefusal } from "../../texts";
+
+const t = texts(table);
 
 /**
  * A form that saves through an operation: validates with its zod schema (focus goes to the first invalid field),
@@ -78,15 +82,18 @@ export function FormButtons(props: {
       </Button>
       {props.onCancel && (
         <Button type="button" variant="secondary" onClick={props.onCancel}>
-          Abbrechen
+          {t("form.cancel")}
         </Button>
       )}
     </div>
   );
 }
 
-/** Two columns from `md`, one on a phone. */
-export const FORM_GRID = "grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2";
+/**
+ * Two columns from `md`, one on a phone. A 12 px gap: with 16 px the zone form was 2 px taller than its sheet at
+ * 360 x 640 (issue 1182).
+ */
+export const FORM_GRID = "grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2";
 
 /** One labelled select of a form; the options are passed as children. */
 export function SelectField<T extends FieldValues>(props: {
