@@ -360,7 +360,7 @@ The master realm controls every realm. It is blocked on the public name, but eve
 2. Open the admin console over the SSH tunnel (above) and sign in as `<name>`. Keycloak asks to set up the authenticator app right away (`CONFIGURE_TOTP`). Sign out and in again to check that the code is asked for.
 3. As `<name>`, in the console: realm `master` > Users > `admin` > Delete. (With kcadm: `$c get users -r master -q username=admin -q exact=true --fields id`, then `$c delete users/<id> -r master`.)
 4. Still as `<name>`: realm `master` > Realm settings > Security defenses > Brute force detection is on ("Lockout temporarily", 5 failures).
-5. Replace `KEYCLOAK_ADMIN_PASSWORD` in `.env` with a new random value (`openssl rand -hex 24`) and keep it nowhere else. The compose file still requires the variable, because Keycloak creates a bootstrap admin from it whenever its database is empty (a restore into a new volume, the re-import above); on an existing database it is not used, so the old password no longer opens anything.
+5. Replace `KEYCLOAK_ADMIN_PASSWORD` in `.env` with a new random value (`openssl rand -hex 24`) and keep it nowhere else. The compose file still requires the variable, because Keycloak creates a bootstrap admin from it whenever its database is empty (a restore into a new volume, the re-import above); on an existing database it is not used, so the old password no longer opens anything. Before the next deploy, give the one-shot `keycloak-mcp` its own user (`KEYCLOAK_SETUP_*`, see "AI access: the MCP endpoint"), or the deploy fails at that step.
 
 Checked on 2026-10-20 with Keycloak 26.8.0 in a local container: the script turned the protection on (it was off with `failureFactor` 30), a second run changed nothing, steps 1 and 3 worked with kcadm, and after deleting `admin` the script printed the handover message and exited 0. Step 2 (TOTP in the browser) and the run on the test environment are still to do. If every admin is locked out, Keycloak can create a temporary admin with `kc.sh bootstrap-admin user` against the same database (Keycloak documentation "Recovering the admin account"; not tried here).
 
@@ -588,14 +588,47 @@ The keeper's AI client (Claude, ChatGPT, ...) connects to `https://<APP_HOST>/ap
 1. **Switch on `ai`.** In production an empty `FEATURES` switches everything off; the endpoint then answers 404 to every signed-in client. Set `FEATURES=ai` (or `social,ai`) in `.env`, or switch it on per account (US-DEV-06).
 2. **`AI_RESOURCE_URL` needs nothing.** `docker-compose.yml` derives it from `APP_URL` (`${APP_URL}/api/mcp`); it is the audience the endpoint expects and the `resource` of its metadata. A GitHub environment variable `AI_RESOURCE_URL` has no effect on the stack. Only browser-based clients that send an `Origin` other than `APP_URL` need `AI_ALLOWED_ORIGINS` (comma-separated, not in the compose file yet); server-side clients send no `Origin`.
 3. **Proxy.** `proxy.Caddyfile` forwards `/api/*` (also `/api/.well-known/oauth-protected-resource`, the address the 401 names) and `/.well-known/oauth-protected-resource*` on the app host to the API. Check after a deploy: `curl -s https://<APP_HOST>/api/.well-known/oauth-protected-resource` and `curl -s https://<APP_HOST>/.well-known/oauth-protected-resource/api/mcp` both return `{"resource":"https://<APP_HOST>/api/mcp", ...}`; `curl -si -X POST https://<APP_HOST>/api/mcp -H 'content-type: application/json' -d '{}'` answers 401 with `WWW-Authenticate: Bearer resource_metadata="https://<APP_HOST>/api/.well-known/oauth-protected-resource"`.
-4. **Keycloak (realm `pflanzendex`; not in the realm file yet, so with `kcadm.sh` or the admin console over the SSH tunnel; spike TE-15 findings 1 to 6):**
-   - [ ] Create the optional client scopes `pflanzen:read`, `pflanzen:draft`, `pflanzen:write` (type OpenID Connect, "Include in token scope" on) and allow them in the client policy "Allowed Client Scopes" of anonymous registration.
-   - [ ] Register the resource: a client (e.g. `pflanzendex-mcp`, bearer-only) with the attribute `resource_url` = `https://<APP_HOST>/api/mcp`, and an **audience mapper** on each `pflanzen:*` scope that adds that URL to `aud` (without it Keycloak answers `invalid_target`; with the `resource-indicators` feature on).
-   - [ ] Enable the features `cimd,resource-indicators` (`KC_FEATURES`; both experimental in 26.8, an update risk).
-   - [ ] Client registration: anonymous DCR with the "Trusted Hosts" policy set to `client-uris-must-match` and the hosts `claude.ai`, `chatgpt.com` (no sender IP check); or a pre-registered public client per AI provider with its redirect URI.
-   - [ ] Restrict PKCE to S256 with a client policy (Keycloak also advertises `plain`).
+4. **Keycloak (realm `pflanzendex`): the one-shot `keycloak-mcp` does it.** `app/config/deploy/keycloak/mcp/` (US-KI-07, spike TE-15 findings 1 to 6) runs inside the compose network and sets, idempotently (it reads first and writes only what differs; a second run prints `mcp realm: ready (no change)`):
+   - the optional realm scopes `pflanzen:read`, `pflanzen:draft`, `pflanzen:write` ("Include in token scope" on), each with the audience mapper `aud-mcp` (audience `pflanzendex-mcp`; without it Keycloak answers `invalid_target`);
+   - the resource client `pflanzendex-mcp` (no flows) with `resource_url` = `${APP_URL}/api/mcp`;
+   - the anonymous registration policies: "Allowed Client Scopes" (default scopes allowed, plus `pflanzen:read|draft|write` and `offline_access`) and "Trusted Hosts" (`client-uris-must-match`, hosts `claude.ai`, `chatgpt.com`, `localhost`, `127.0.0.1`, no sender IP check);
+   - the client profile `pkce-s256` (executor `pkce-enforcer`) and the policy `pkce-s256-all-clients` (condition `any-client`): every authorization request needs PKCE with S256.
+
+   `docker-compose.yml` turns on the features `cimd,resource-indicators` (`KC_FEATURES`; both experimental in Keycloak 26.8, an update risk). At the end the job reads the realm's discovery inside the network and fails if `client_id_metadata_document_supported` is not `true` or a `pflanzen:*` scope is missing from `scopes_supported`.
+
+   **When it runs.** `deploy.sh` runs it after Keycloak is healthy (after `master-realm.sh`); a failure fails the deploy and rolls it back. It prints names and counts only, never a password or token. **By hand**, e.g. after a change in the admin console: Actions, "Deploy", "Run workflow", task `keycloak-mcp` (deploys nothing; runs the job of the version the host runs now), or on the host, as `deploy`, in the checkout:
+
+   ```bash
+   cd app/config/deploy && docker compose --env-file .env run --rm keycloak-mcp
+   ```
+
+   **Sign-in of the job.** It signs in to the master realm with `KEYCLOAK_SETUP_USER`/`KEYCLOAK_SETUP_PASSWORD` if set, else with the bootstrap admin (`KEYCLOAK_ADMIN_*`). After the admin handover (above) the bootstrap admin is gone and the job fails with `cannot sign in`; then give it a user of its own that can change only the app realm (password only, it signs in without a person), as the named admin:
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh"
+   $c config credentials --server http://localhost:8080 --realm master --user <name>
+   $c create users -r master -s username=pflanzendex-setup -s enabled=true
+   $c set-password -r master --username pflanzendex-setup
+   $c add-roles -r master --uusername pflanzendex-setup --cclientid pflanzendex-realm \
+     --rolename manage-realm --rolename manage-clients --rolename view-realm --rolename view-clients
+   ```
+
+   Then set `KEYCLOAK_SETUP_USER=pflanzendex-setup` (GitHub variable) and `KEYCLOAK_SETUP_PASSWORD` (GitHub secret, or the host `.env`). Checked on 2026-11-02 against Keycloak 26.8.1 in a local container: a fresh import of the realm file got 14 changes, a second run none, the restricted user above was enough for every step, anonymous registration with `pflanzen:read pflanzen:write offline_access` and a `localhost` redirect answered 201, a redirect to another host 403, and an authorization request with `code_challenge_method=plain` or without PKCE was refused (`invalid_request`).
+
+   **Acceptance check after a deploy** (public, no host access needed):
+
+   ```bash
+   curl -s https://<AUTH_HOST>/realms/pflanzendex/.well-known/openid-configuration \
+     | jq '{scopes: [.scopes_supported[] | select(startswith("pflanzen:"))], pkce: .code_challenge_methods_supported, cimd: .client_id_metadata_document_supported}'
+   ```
+
+   Expected: `scopes` lists `pflanzen:read`, `pflanzen:draft`, `pflanzen:write`; `cimd` is `true`. `pkce` still reads `["plain","S256"]`: Keycloak 26.8 announces both whatever the client policy says, so check the refusal instead: `curl -s -o /dev/null -w '%{redirect_url}\n' 'https://<AUTH_HOST>/realms/pflanzendex/protocol/openid-connect/auth?response_type=code&client_id=pflanzendex-web&redirect_uri=https://<APP_HOST>/&scope=openid&code_challenge=abcdefghijklmnopqrstuvwxyzabcdefghijklmnopq&code_challenge_method=plain'` ends in `error=invalid_request` and `code+challenge+method+is+not+matching`.
+
+   Still by hand:
    - [ ] Optional: a mapper that puts the client's name into the claim `client_name` (else the list "KI-Clients" shows the client id).
    - [ ] Consent page: names client, requested rights and that the AI provider receives what the client retrieves (US-KI-06; theme text).
+   - [ ] CIMD client policy (`client-id-metadata-document` executor, condition `client-id-uri`; spike finding 6): not set by the job, because Claude's real metadata document was still refused in the spike (TE-16).
+
 5. **Connect a real client** (Claude: Settings, Connectors, "Add custom connector", URL `https://<APP_HOST>/api/mcp`) and record the result in TE-16 (#181): the spike saw Claude's CIMD document rejected by Keycloak 26.8.0.
 
 ## Open (needs hardware, a domain or a decision)

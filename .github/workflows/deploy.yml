@@ -8,6 +8,8 @@
 # The guard runs on the runner before anything connects. Secrets and variables live in the GitHub environments
 # `test` and `prod` (same names in both), never in the repo.
 # Setup: docs/guides/operations/staging-deploy-and-backup.md, section "Deploying with GitHub Actions (TE-19)".
+# Task `keycloak-mcp` deploys nothing: it runs only the one-shot `keycloak-mcp` (MCP readiness of the realm, US-KI-07)
+# on the version the host runs now. Every deploy runs it anyway (deploy.sh); this is for a realm changed by hand.
 name: Deploy
 
 on:
@@ -23,6 +25,12 @@ on:
         description: "Branch, tag or commit of this repository (default: the branch this workflow is run from)"
         type: string
         required: false
+      task:
+        description: "deploy: the ref, as always. keycloak-mcp: only the realm setup for MCP, on the running version"
+        type: choice
+        options: [deploy, keycloak-mcp]
+        default: deploy
+        required: true
 
 # One deploy per environment at a time; a running deploy is never cancelled (it could stop in the middle of a migration).
 concurrency:
@@ -118,6 +126,7 @@ jobs:
           SECRET_DB_OWNER_PASSWORD: ${{ secrets.DB_OWNER_PASSWORD }}
           SECRET_KEYCLOAK_DB_PASSWORD: ${{ secrets.KEYCLOAK_DB_PASSWORD }}
           SECRET_KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
+          SECRET_KEYCLOAK_SETUP_PASSWORD: ${{ secrets.KEYCLOAK_SETUP_PASSWORD }}
           SECRET_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SECRET_MAIL_UI_HASH: ${{ secrets.MAIL_UI_HASH }}
           # 1 only for the one deploy after the rotation steps of the runbook ("Rotating a password"), then delete it.
@@ -186,17 +195,23 @@ jobs:
           VERSION: ${{ steps.target.outputs.version }}
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
+          TASK: ${{ inputs.task }}
         run: |
           set -euo pipefail
           repo_path="${DEPLOY_REPO_PATH:-/opt/pflanzendex}"
-          remote="cd $(printf '%q' "$repo_path") && app/config/deploy/scripts/deploy.sh $(printf '%q' "$SHA")"
+          case "${TASK:-deploy}" in
+            deploy) remote="cd $(printf '%q' "$repo_path") && app/config/deploy/scripts/deploy.sh $(printf '%q' "$SHA")" ;;
+            # The admin password stays in the host's .env; the job prints names and counts only.
+            keycloak-mcp) remote="cd $(printf '%q' "$repo_path")/app/config/deploy && docker compose --env-file .env run --rm keycloak-mcp" ;;
+            *) echo "::error::Unknown task."; exit 1 ;;
+          esac
           status=0
           ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new \
             "deploy@$DEPLOY_HOST" -- "$remote" > "$RUNNER_TEMP/deploy.log" 2>&1 || status=$?
           echo "--- last 60 lines of the deploy output ---"
           tail -n 60 "$RUNNER_TEMP/deploy.log"
           {
-            echo "### Deploy to $TARGET_ENV"
+            echo "### ${TASK:-deploy} on $TARGET_ENV"
             echo "Commit: \`$SHA\` (release: $VERSION)"
             echo
             if [ "$status" -eq 0 ]; then
