@@ -24,3 +24,4 @@ Until now specs, glossary, domain identifiers (`konto`, `exemplar`, `mitKonto`),
 - Test databases created before this change must be recreated (`make db-down db-up`) or migrated with `make migrate`; `0012` converts existing data in place.
 - Anyone reading old pull requests, issues or the first git history meets German names. `git log --follow` works across the renames.
 - New code, specs and docs follow the rule in `CLAUDE.md` ("Language"): English except UI texts and quoted prototype terms; never mix languages within one file.
+- Addendum (2026-11-02, issue 1140): the message-table part of the rule is enforced by FR-QG-26 (gate QG-C8). Each feature keeps its UI texts in `web/src/<feature>/<feature>.de.json`, read through `texts()`; the ESLint rule `ui-text/no-literal-text` reports a literal, and the files that still hold literals are counted in a baseline that only shrinks.

@@ -8,6 +8,10 @@ import type { Response } from "../../kernel";
 import { CATALOG_ADDRESS } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { cn } from "@/lib/utils";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
+import table from "../discover.de.json";
+import { texts } from "@/lib/text-rules/texts";
+
+const t = texts(table);
 
 /** What the keeper decided on a card (US-ENT-04): "Ja" and "Nein" are written at once, "Später" writes nothing. */
 type Decision = "no" | "later" | "yes";
@@ -42,7 +46,7 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
           className="min-w-24 flex-1"
           onClick={() => props.onDecide("no")}
         >
-          Nein
+          {t("deck.no")}
         </Button>
         <Button
           variant="secondary"
@@ -50,10 +54,10 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
           className="min-w-24 flex-1"
           onClick={() => props.onDecide("later")}
         >
-          Später
+          {t("deck.later")}
         </Button>
         <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
-          Ja
+          {t("deck.yes")}
         </Button>
       </div>
     </div>
@@ -101,14 +105,18 @@ function ZoneNotice(props: {
   const { shortfall } = filter;
   return (
     <div className="grid gap-2">
-      <p className="m-0 font-semibold">{`Vorschläge für ${filter.name ?? `Zone ${filter.zone}`}`}</p>
+      <p className="m-0 font-semibold">
+        {t("deck.zone.title", {
+          name: filter.name ?? t("deck.zone.fallback", { zone: filter.zone }),
+        })}
+      </p>
       {shortfall !== null && (
         <Banner variant="warning">
           <p className="m-0">{shortfall.text}</p>
           <p className="m-0">{shortfall.nextAction}</p>
           {offerProposal && (
             <Button asChild variant="outline" size="touch" className="mt-2">
-              <a href={CATALOG_ADDRESS}>Art vorschlagen</a>
+              <a href={CATALOG_ADDRESS}>{t("deck.propose")}</a>
             </Button>
           )}
         </Banner>
@@ -142,23 +150,23 @@ function Cards(props: {
         title={deck.empty.text}
         description={deck.empty.nextAction}
         titleRef={endTitle}
-        action={{ label: "Art vorschlagen", href: CATALOG_ADDRESS }}
+        action={{ label: t("deck.propose"), href: CATALOG_ADDRESS }}
       />
     );
   const current = deck.suggestions[position];
   if (current === undefined)
     return (
       <EmptyState
-        title={`Für heute durch. ${saved} neu auf der Wunschliste.`}
-        description="Weitere Vorschläge gibt es mit einem neuen Stapel."
+        title={t("deck.end.title", { saved })}
+        description={t("deck.end.description")}
         titleRef={endTitle}
-        action={{ label: "Neuer Stapel", onClick: props.onNewDeck }}
+        action={{ label: t("deck.newDeck"), onClick: props.onNewDeck }}
       />
     );
   return (
     <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
-        {`Vorschlag ${position + 1} von ${deck.suggestions.length}`}
+        {t("deck.position", { position: position + 1, total: deck.suggestions.length })}
       </p>
       <SuggestionCard
         key={current.species}
@@ -166,9 +174,7 @@ function Cards(props: {
         onSwipe={(side) => void decide(current.species, side === "right" ? "yes" : "no")}
       />
       {error !== null && <Banner variant="error">{error}</Banner>}
-      <p className="sr-only">
-        „Ja“ legt die Art auf die Wunschliste, „Nein“ verwirft sie dort, „Später“ speichert nichts.
-      </p>
+      <p className="sr-only">{t("deck.hint")}</p>
       <Actions onDecide={(d) => void decide(current.species, d)} />
     </div>
   );
