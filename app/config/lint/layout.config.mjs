@@ -44,6 +44,9 @@ export default {
     // One runbook per operational task, looked up by name in an incident; folding them into one file hides them
     // (#985, US-QG-07). 10 is a starting value (assumption); an eleventh needs a new reason or subfolders.
     { path: "docs/guides/operations", maxUnits: 10 },
+    // One ratchet file per gate (FR-QG-17); every new gate brings its own (issue 1137 added the sixth), so the folder is
+    // a collection with a strict name instead of a unit limit.
+    { path: "app/config/gates/baselines", collection: /^[a-z0-9-]+-baseline\.json$/ },
     {
       path: "app/packages/db/migrations",
       collection: /^\d{4}_[a-z0-9_]+\.sql$/,

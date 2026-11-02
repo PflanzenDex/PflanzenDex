@@ -1,24 +1,21 @@
 import { expect, type Page } from "@playwright/test";
-import type { TestAccount } from "./account";
+import type { TestAccount } from "../account";
+import { SCREENS } from "./one-screen/register";
 
 // Helpers for the adaptable display checks (US-QS-12): every view, measured in the real browser.
 
-/** The views every account can open (the role-bound review and operator views redirect to the start view). */
-export const VIEWS = [
-  "/",
-  "/species",
-  "/collection",
-  "/treatments",
-  "/hints",
-  "/care-phases",
-  "/care-profile",
-  "/difficulty",
-  "/pokedex",
-  "/wishlist",
-  "/light",
-  "/account",
-  "/settings",
-] as const;
+/**
+ * The views every account can open, derived from the register of the one-screen gate (issue 1137): destinations that need
+ * no click and no query and are routes of their own (the role-bound review and operator views and the lock pages are not).
+ */
+export const VIEWS: readonly string[] = SCREENS.filter(
+  (s) =>
+    s.account === "test2" &&
+    !s.steps &&
+    !s.path.includes("?") &&
+    !s.route &&
+    !s.path.startsWith("/review"),
+).map((s) => s.path);
 
 /** WCAG 1.4.12: the text spacing a user may set (line height 1.5, paragraphs 2, letters 0.12, words 0.16). */
 export const TEXT_SPACING_CSS = `

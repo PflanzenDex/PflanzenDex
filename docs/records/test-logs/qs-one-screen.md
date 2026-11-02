@@ -74,6 +74,26 @@ The four ❌ are tracked in #1019. An earlier check that injected the text size 
 - ⏭️ Keyboard and screen reader by hand (covered by unit tests and the conformance run; #636).
 - ⏭️ A real phone (Safari iOS, Chrome Android; #638).
 
+## 5. The automated gate QG-U8 (issue 1137): method and first full run
+
+**Method.** The one-off scripts of sections 1 to 3 became `make one-screen` (Playwright project `one-screen` in `app/packages/e2e`, register `support/display/screens.json`). The register has 121 screens (views, layers, dialogs, menus and the Keycloak sign-in pages) with the account that sees them (`test2` full collection, `test3` Prüfliste, Betreiber, Gekauft/Verworfen, `test` locked features, requests and news, `anon` for the welcome page), an optional click path for everything an id cannot reach and, for layers, the source file that renders the `LayerSheet`. Each screen is opened once (390x844, no `aria-busy`, 900 ms for the Vaul slide-in) and the same page is resized through 360x640, 390x844, 768x1024, 1024x768, 1920x1080 (fit), 2560x1440 (width cap only) and 360x640 with `html { font-size: 200% }` (page and sideways only). Per size: page = scroll height / window height, inner = largest scroll height / client height of any visible element with `overflow-y: auto|scroll` and at least 80 px height; a screen fits when the page is at most 1 px taller than the window, every such region at most 1 px taller than itself and nothing scrolls sideways. At 2560 px the union of the boxes that paint (own text, media, controls, a background, a border; `aria-hidden` subtrees excluded) must be at most 1921 px wide and centred within 2 px. Writes to the API are aborted, sign-in happens once per worker and account. The 200 % style is added after the page has loaded (section 3 set it before loading): the page-level result is the same, but the layout of the first paint is not.
+
+**Data.** PostgreSQL 18, all migrations, demo seed `DEMO_SEED_PROFILE=states` (Ben, Clara, Anna), `TAXONOMY_BUILD=off` (the Pokédex tree comes from foreign servers after the API starts; on CI it was not there yet when the cards were measured, so the gate runs without it and the CI run is the reference for the baseline), API and web as in section 1. Date 2026-11-02, Chromium via Playwright 1.64.
+
+**First full run** (4 workers, 3 min 41 s wall clock; the second run, against the written baseline, took 3 min 42 s and passed with the same 201 entries). Failing screens per size:
+
+| Size            | Screens | Failing | Note                                                                                                                                    |
+| --------------- | ------: | ------: | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 360x640         |     121 |      23 | inner regions of layers (equipment, wishes, light zones) and the course layer (2.61)                                                    |
+| 390x844         |     121 |       7 | inner only, e.g. course layer 1.91, Sammlerkarten 1.46                                                                                  |
+| 768x1024        |     121 |       4 | course layer 1.51, "Lichthunger und Einstufung" 1.03, Sammlerkarten                                                                     |
+| 1024x768        |     121 |      19 | layers of Standorte and Lichtzonen, Gekauft/Verworfen and the course layer run out of height at 768 px; "Tauschen" grows to 1.24        |
+| 1920x1080       |     121 |       4 | course layer (page 1.27), "Lichthunger und Einstufung" 1.35, Sammlerkarten 1.06                                                         |
+| 2560x1440       |     121 |     117 | the app is not capped yet (issue 1160): the shell paints the full width; only the sign-in service pages and the "Abmelden?" dialog pass |
+| 360x640 @ 200 % |     121 |      27 | the page itself grows (up to 3.34 screens) instead of only a region scrolling; no sideways overflow                                     |
+
+All 201 failures are the baseline `app/config/gates/baselines/one-screen-baseline.json` (`maxEntries` 201, it only shrinks). The gate was tried with a 3000 px tall element in `index.html`: `today` and `collection` failed with "today at 360x640: page 5.69 (3640 px of 640 px), lowest: div#root ..." for every size, then the change was reverted. The web unit tests fail for a layer file of `PANE_FRAMES` or a route without a register entry.
+
 ## Result per story
 
 | Story    | Fit | Desktop | 200 % text                   | Status | Gap                                                   |

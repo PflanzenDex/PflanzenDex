@@ -503,7 +503,7 @@ describe("US-DEV-07 · PostgreSQL 18 in the stack", () => {
     const majors = texts.flatMap((text) =>
       [...text.matchAll(/postgres:(\d+)[.\d]*-alpine/g)].map((m) => m[1]),
     );
-    expect(majors).toHaveLength(9);
+    expect(majors).toHaveLength(10);
     expect(new Set(majors)).toEqual(new Set(["18"]));
   });
 
