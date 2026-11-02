@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "KI-Clients: Dein KI-Client kann jetzt im Katalog nach Arten suchen (lateinischer oder deutscher Name, Synonym) und deine Pflanzen, Standorte, Lichtzonen und Messungen lesen, jeweils mit Namen statt nur interner Nummern. So sieht er vor einem Vorschlag, dass es eine Art schon gibt; schlägt er sie trotzdem vor, nennt die App ihm die vorhandene Art. Er sieht nur deine eigenen Daten und braucht dafür das Recht „Lesen“.",
     "Große Schrift: Im Katalog werden Wörter wie „Schwierigkeit“ nicht mehr mitten im Wort getrennt. Bei sehr großer Schrift lassen die Treffer dafür das Blatt-Symbol weg.",
     "Konto: Die Zeilen der Übersicht beginnen jetzt bündig mit der Überschrift „Konto“, auch die erste mit deinem Profil.",
     "Laden: Öffnest du „Heute“, „Sammlung“, „Entdecken“ oder „Freunde“ direkt über die Adresse oder lädst die Seite neu, steht die Überschrift schon da, während der Rest noch lädt.",
