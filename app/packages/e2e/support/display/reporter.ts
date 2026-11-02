@@ -12,8 +12,8 @@ const cell = (r: Result | undefined, baseline: Baseline): string => {
   if (!r) return "-";
   const mark = r.failures.length === 0 ? "" : entryOf(baseline, r) ? " (listed)" : " **NEW**";
   if (r.size.startsWith("2560")) return (r.cap > 0 ? `cap +${r.cap} px` : "ok") + mark;
-  const extra = r.hOver > 0 ? ` h+${r.hOver}` : "";
-  return `${r.page.toFixed(2)}/${r.inner.toFixed(2)}${extra}${mark}`;
+  const f = (n: number) => n.toFixed(2);
+  return `${f(r.page)}/${f(r.inner)} \u2194 ${f(r.pageX)}/${f(r.innerX)}${mark}`;
 };
 
 /** The table for the job summary: page/inner per screen and size, failures marked. */
@@ -22,7 +22,7 @@ function reportMarkdown(results: readonly Result[], baseline: Baseline): string 
   const lines = [
     "## One screen (US-QS-15, QG-U8)",
     "",
-    "Cells show page/inner (height of the content divided by the height of the window or region); both must be at most 1.00 (1 px tolerance).",
+    "Cells show page/inner (height of the content divided by the height of the window or region) and, after the arrow, page/inner sideways (width likewise); all must be at most 1.00 (1 px tolerance).",
     "",
     "| size | measured | failing | listed in the baseline |",
     "| --- | --- | --- | --- |",

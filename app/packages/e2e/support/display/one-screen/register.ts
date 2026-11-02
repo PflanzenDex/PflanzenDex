@@ -13,7 +13,8 @@ export interface Step {
 }
 
 // One screen: a view, layer, dialog or sign-in page. `route`: the route pattern when a click leads elsewhere; `layerFile`:
-// the source file of its LayerSheet; `capExempt`: why the 1920 px cap does not apply; `unstable`: why its content
+// the source file of its LayerSheet; `capExempt`: why the 1920 px cap does not apply; `sidewaysExempt`: why a region of it deliberately scrolls
+// sideways (the page itself never may); `unstable`: why its content
 // changes between runs (it is never reported as fitting now, only as new or worse).
 export interface Screen {
   id: string;
@@ -24,6 +25,7 @@ export interface Screen {
   layerFile?: string;
   title?: string;
   capExempt?: string;
+  sidewaysExempt?: string;
   unstable?: string;
 }
 
