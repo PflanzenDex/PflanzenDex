@@ -4,7 +4,9 @@ import { LayerOpener, useLayer } from "@/components/shared/responsive/layer-shee
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
 import { Button } from "@/components/ui/button/button";
+import { texts } from "@/lib/text-rules/texts";
 import type { Wishlist } from "../../../wishlist-api";
+import table from "../../../wishlist.de.json";
 import { WishRow } from "../../rows/wish-row/wish-row";
 import {
   BOUGHT_LAYER,
@@ -14,6 +16,8 @@ import {
   hintCount,
 } from "../../layers/wishlist-layers/wishlist-layers";
 
+const t = texts(table);
+
 export function Candidates(props: {
   list: CandidateList;
   onBuy: (c: Candidate) => void;
@@ -21,6 +25,7 @@ export function Candidates(props: {
   busy: boolean;
 }) {
   const { list } = props;
+  // The starting value until the layout measures the free height; then the page holds the whole rows that fit (issue 1154).
   const size = useRowPageSize();
   if (list.candidates.length === 0)
     return <EmptyState title={list.hint.text} description={list.hint.nextAction} />;
@@ -30,7 +35,8 @@ export function Candidates(props: {
       <Pager
         items={list.candidates}
         pageSize={size}
-        label="Offene Kandidaten"
+        fit
+        label={t("candidates.label")}
         getKey={(c) => c.id}
         renderItem={(c, i) => (
           <WishRow
@@ -58,15 +64,19 @@ export function Controls(props: { data: Wishlist }) {
         aria-haspopup="dialog"
         onClick={(e) => create.openLayer(e.currentTarget)}
       >
-        Wunsch erfassen
+        {t("controls.create")}
       </Button>
-      {hints > 0 ? <LayerOpener id={HINTS_LAYER}>{`Hinweise (${hints})`}</LayerOpener> : null}
+      {hints > 0 ? (
+        <LayerOpener id={HINTS_LAYER}>{t("controls.hints", { count: hints })}</LayerOpener>
+      ) : null}
       {data.bought.bought.length > 0 ? (
-        <LayerOpener id={BOUGHT_LAYER}>{`Gekauft (${data.bought.bought.length})`}</LayerOpener>
+        <LayerOpener id={BOUGHT_LAYER}>
+          {t("controls.bought", { count: data.bought.bought.length })}
+        </LayerOpener>
       ) : null}
       {data.discarded.discarded.length > 0 ? (
         <LayerOpener id={DISCARDED_LAYER}>
-          {`Verworfen (${data.discarded.discarded.length})`}
+          {t("controls.discarded", { count: data.discarded.discarded.length })}
         </LayerOpener>
       ) : null}
     </div>

@@ -54,6 +54,11 @@ export function FactGrid({ facts, next, className }: FactGridProps) {
   );
 }
 
+/** The neutral next step of a fold without one of its own (P-09, US-QS-24). */
+export function FoldNext() {
+  return <span>Ergänzen, sobald du die Angaben kennst.</span>;
+}
+
 /** One line: the count opens the names of the missing facts, the next step stands beside it (US-QS-24). */
 function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React.ReactNode }) {
   return (
@@ -66,7 +71,7 @@ function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React
         <p className="m-0 break-words pb-2 text-foreground">{labels.join(", ")}</p>
       </details>
       <span aria-hidden="true">·</span>
-      {next ?? <span>Ergänzen, sobald du die Angaben kennst.</span>}
+      {next ?? <FoldNext />}
     </div>
   );
 }

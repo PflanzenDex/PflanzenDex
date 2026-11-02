@@ -1,10 +1,23 @@
 // @vitest-environment jsdom
 import type { CollectorCard as Card } from "@pflanzendex/core";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectorCard } from "./collector-card";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+/** A window of the given height for the `max-height` query of a short screen. */
+function windowHeight(px: number) {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: /max-height: 700px/.test(query) && px <= 700,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+}
 
 const card = (extra: Partial<Card> = {}): Card => ({
   number: 7,
@@ -216,5 +229,38 @@ describe("US-POK-14 rarity in PflanzenDex on the card", () => {
       expect(screen.getByText(text)).toBeTruthy();
       cleanup();
     }
+  });
+});
+
+describe("US-POK-01 · US-QS-24 the card on a short screen (issue 1154)", () => {
+  const unknownCard = card({ difficulty: null, lightZone: null });
+
+  it("US-QS-24 · issue 1154 on a screen at most 700 px high the unknown lines fold into one line with a next step", () => {
+    windowHeight(640);
+    show(unknownCard);
+    // Difficulty, light zone, both rarity values in nature and the share in PflanzenDex are unknown.
+    expect(screen.getByText("5 Angaben fehlen")).toBeTruthy();
+    expect(screen.getByText("Ergänzen, sobald du die Angaben kennst.")).toBeTruthy();
+    const fold = screen.getByText("5 Angaben fehlen").closest("details") as HTMLElement;
+    expect(fold.textContent).toContain("Schwierigkeit unbekannt");
+    expect(fold.textContent).toContain("Lichtzone unbekannt");
+    // Known facts stay outside the fold.
+    expect(fold.textContent).not.toContain("Gattung: 800 Arten");
+    expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
+  });
+
+  it("US-POK-01 · issue 1154 on a taller screen every line shows as before, without a fold", () => {
+    windowHeight(844);
+    show(unknownCard);
+    expect(screen.queryByText(/Angaben fehlen/)).toBeNull();
+    expect(screen.getByText("Schwierigkeit unbekannt").closest("details")).toBeNull();
+  });
+
+  it("US-POK-01 · issue 1154 the picture and the summary are smaller on a short screen only", () => {
+    show(card());
+    expect(screen.getByRole("img").className).toContain("[@media(max-height:700px)]:h-20");
+    expect(screen.getByText("Ein Baum.").className).toContain(
+      "[@media(max-height:700px)]:line-clamp-2",
+    );
   });
 });

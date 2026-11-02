@@ -12,6 +12,10 @@ import { ZoneForm } from "../../../zones/zones-view/zones-view";
 import type { LightData, LightOverview, Response } from "../../../shared/light-api/light-api";
 import { refusalText } from "../../../shared/texts";
 import type { LightActions } from "../light-view";
+import { texts } from "@/lib/text-rules/texts";
+import table from "../../../light.de.json";
+
+const t = texts(table);
 
 /** The layers of the management of locations and light zones (US-QS-19); each opens from the page by its id. */
 export const NEW_ZONE = "new-zone";
@@ -26,7 +30,7 @@ export function CreateLayers(props: { data: LightData; actions: LightActions }) 
   const location = useLayer(NEW_LOCATION);
   return (
     <>
-      <LayerSheet id={NEW_ZONE} title="Neue Lichtzone">
+      <LayerSheet id={NEW_ZONE} title={t("lists.newZone")}>
         <ZoneForm
           onSave={async (e) => {
             const f = await actions.zoneCreate(e);
@@ -36,7 +40,7 @@ export function CreateLayers(props: { data: LightData; actions: LightActions }) 
           onCancel={zone.closeLayer}
         />
       </LayerSheet>
-      <LayerSheet id={NEW_LOCATION} title="Neuer Standort">
+      <LayerSheet id={NEW_LOCATION} title={t("lists.newLocation")}>
         <LocationForm
           zones={data.zones}
           onSave={async (e) => {
@@ -55,12 +59,11 @@ export function CreateLayers(props: { data: LightData; actions: LightActions }) 
 export function HintsLayer({ data }: { data: LightData }) {
   const open = data.locations.filter((l) => l.lightZoneId === null);
   return (
-    <LayerSheet id={HINTS} title="Hinweise">
+    <LayerSheet id={HINTS} title={t("layers.hints")}>
       <div className="flex flex-col gap-4">
         {open.length > 0 && (
-          <Banner variant="warning" title="Lichtzone unbekannt">
-            Für {open.map((l) => l.name).join(", ")} fehlt die Lichtzone. Weise sie mit „Ändern“ zu,
-            damit die Hinweise zum Licht stimmen.
+          <Banner variant="warning" title={t("hints.unknownZone")}>
+            {t("hints.unknownZoneText", { names: open.map((l) => l.name).join(", ") })}
           </Banner>
         )}
         <ul className="m-0 flex list-disc flex-col gap-2 pl-5">
@@ -85,24 +88,20 @@ function OverviewSection(props: {
   return (
     <section aria-labelledby="overview-error" className="flex min-w-0 flex-col gap-3">
       <h2 id="overview-error" className="text-xl font-semibold">
-        Lichthunger
+        {t("overview.title")}
       </h2>
       <EmptyState
         variant="error"
-        title="Lichthunger konnte nicht geladen werden"
+        title={t("reference.loadFailed")}
         description={refusalText(o.error)}
-        action={{ label: "Erneut versuchen", onClick: props.onRetry }}
+        action={{ label: t("reference.retry"), onClick: props.onRetry }}
       />
     </section>
   );
 }
 
 type Topic = "overview" | "rules" | "derive";
-const TOPICS: readonly { value: Topic; label: string }[] = [
-  { value: "overview", label: "Lichthunger" },
-  { value: "rules", label: "Regeln" },
-  { value: "derive", label: "Art" },
-];
+const TOPICS: readonly Topic[] = ["overview", "rules", "derive"];
 
 /**
  * The reference of the light (US-LIC-03, US-LIC-04, US-LIC-01) as three segments, one part at a time, so each fits a
@@ -118,11 +117,12 @@ export function ReferenceLayer(props: {
 }) {
   const [topic, setTopic] = useState<Topic>("overview");
   return (
-    <LayerSheet id={REFERENCE} title="Lichthunger und Einstufung">
-      <div className="flex flex-col gap-4">
+    <LayerSheet id={REFERENCE} title={t("layers.reference")}>
+      {/* The species of "Lichthunger" page by the free height of the layer (issue 1155). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
         <SegmentedControl
-          label="Teil der Lichtangaben"
-          options={TOPICS}
+          label={t("reference.parts")}
+          options={TOPICS.map((value) => ({ value, label: t(`reference.${value}`) }))}
           value={topic}
           onChange={setTopic}
         />
@@ -137,13 +137,10 @@ export function ReferenceLayer(props: {
         {topic === "derive" && (
           <section aria-labelledby="assignment" className="flex min-w-0 flex-col gap-3">
             <h2 id="assignment" className="text-xl font-semibold">
-              Zone einer Art ermitteln
+              {t("derive.title")}
             </h2>
-            <MoreHelp
-              className="text-sm text-muted-foreground"
-              more="Stecklingslicht ist nie das Ziel für erwachsene Pflanzen."
-            >
-              Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen.
+            <MoreHelp className="text-sm text-muted-foreground" more={t("derive.more")}>
+              {t("derive.text")}
             </MoreHelp>
             <DerivationForm onDerive={props.actions.zoneDerive} />
           </section>

@@ -437,6 +437,18 @@ describe("US-LIC-05 · DS-48 forms and refusals", () => {
 });
 
 describe("US-QS-19 management on one screen", () => {
+  it("US-QS-19 · issue 1155 the zones and the locations page by the free height of the view", async () => {
+    setViewportWidth(1024);
+    fakeServer({ zones: [zone], locations: [location] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    for (const name of ["Lichtzonen", "Standorte"]) {
+      const list = await screen.findByRole("list", { name });
+      expect(list.hasAttribute("data-page-fit")).toBe(true);
+    }
+  });
+
   const locationsSeven = Array.from({ length: 7 }, (_, i) => ({
     id: `s${i + 1}`,
     name: `Standort ${i + 1}`,
@@ -492,7 +504,7 @@ describe("US-QS-19 management on one screen", () => {
     ).toBeTruthy();
   });
 
-  it("US-QS-19 the reference layer shows one part at a time; on a phone the overview pages one row a page", async () => {
+  it("US-QS-19 the reference layer shows one part at a time; the overview pages by the free height (issue 1155)", async () => {
     setViewportWidth(360);
     const { fetchFn } = fakeServer({ zones: [zone], locations: [] });
     const normal = fetchFn.getMockImplementation() as typeof fetch;
@@ -515,13 +527,11 @@ describe("US-QS-19 management on one screen", () => {
     expect(
       (await screen.findByRole("button", { name: "Lichthunger" })).getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
-    expect(screen.getByText("Art a")).toBeTruthy();
-    expect(screen.queryByText("Art b")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByText("Art b")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByText("Art c")).toBeTruthy();
+    // The species page by the free height of the layer (issue 1155); jsdom has no layout, so the starting value holds all three.
+    const list = screen.getByRole("list", { name: "Lichthunger der Arten" });
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    for (const name of ["Art a", "Art b", "Art c"])
+      expect(within(list).getByText(name)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Regeln" }));
     expect(screen.queryByText("Art c")).toBeNull();
     expect(screen.getByRole("heading", { name: "Einstufungsregeln" })).toBeTruthy();

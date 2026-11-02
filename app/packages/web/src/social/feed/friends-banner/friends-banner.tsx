@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Banner, BannerItem } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
+import { cn } from "@/lib/utils";
 import { texts } from "@/lib/text-rules/texts";
 import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
@@ -50,22 +51,27 @@ export function useNewPlants(api: string, token: Token) {
   return { status: r.status, offline: r.offline, news, okay };
 }
 
-/** What is new, when it was read, and "Okay" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Okay". */
+/**
+ * What is new, when it was read, and "Okay" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Okay". `compact` is
+ * one row with "Okay" at its end and no "Stand" line, for a place that says "Stand" itself (the layer "Neu bei Freunden",
+ * owner decision 2026-11-02, issue 1157); without a network the "Stand" stays, so an old copy is still recognizable.
+ */
 export function NewPlantsBody(props: {
   api: string;
   news: Banner;
   offline: boolean;
   okay: ReturnType<typeof useNewPlants>["okay"];
   onSeen?: () => void;
+  compact?: boolean;
 }) {
-  const { news, okay } = props;
+  const { news, okay, compact } = props;
   const seen = async () => {
     await okay.run((tk) => markFeedSeen(props.api, tk, news.asOf), t("news.okayDone"));
     props.onSeen?.();
   };
   return (
     <>
-      <p>
+      <p className={compact ? "min-w-0 flex-1 basis-48" : undefined}>
         <strong>
           {news.count === 1
             ? t("news.headline.one")
@@ -73,14 +79,16 @@ export function NewPlantsBody(props: {
         </strong>{" "}
         {news.items.map(itemText).join(", ")}
       </p>
-      <p className="text-sm text-muted-foreground">
-        {t("news.asOf", { date: dateText(news.asOf) })}
-        {props.offline ? t("news.offline") : ""}
-      </p>
-      <div>
+      {compact && !props.offline ? null : (
+        <p className="text-sm text-muted-foreground">
+          {t("news.asOf", { date: dateText(news.asOf) })}
+          {props.offline ? t("news.offline") : ""}
+        </p>
+      )}
+      <div className={compact ? "shrink-0" : undefined}>
         <Button
           type="button"
-          size="touch"
+          size={compact ? "default" : "touch"}
           disabled={okay.running || props.offline}
           onClick={() => void seen()}
         >
@@ -102,7 +110,7 @@ export function NewPlantsBody(props: {
  * "Stand: DD.MM.YYYY" tells when the data is from, so an older copy shown without a network is recognizable (FR-SOZ-03).
  * Without news (and on the very first visit) nothing is shown. `quiet` keeps a failed load from adding a second error.
  */
-function NewPlantsBanner(props: { api: string; token: Token; quiet?: boolean }) {
+function NewPlantsBanner(props: { api: string; token: Token; quiet?: boolean; compact?: boolean }) {
   const { status, offline, news, okay } = useNewPlants(props.api, props.token);
   if (status === "error")
     return props.quiet ? null : (
@@ -114,9 +122,18 @@ function NewPlantsBanner(props: { api: string; token: Token; quiet?: boolean }) 
   return (
     <section
       aria-label={t("news.label")}
-      className="flex min-w-0 flex-col gap-2 rounded-lg border-2 border-primary p-3"
+      className={cn(
+        "flex min-w-0 gap-2 rounded-lg border-2 border-primary p-3",
+        props.compact ? "flex-wrap items-center gap-x-3 gap-y-1" : "flex-col",
+      )}
     >
-      <NewPlantsBody api={props.api} news={news} offline={offline} okay={okay} />
+      <NewPlantsBody
+        api={props.api}
+        news={news}
+        offline={offline}
+        okay={okay}
+        {...(props.compact ? { compact: true } : {})}
+      />
     </section>
   );
 }
@@ -133,6 +150,8 @@ export function FriendsBanner(props: {
   requests?: boolean;
   /** `false` leaves the banner about new plants out (issue 1156). */
   news?: boolean;
+  /** One row with "Okay" at its end, for the layer "Neu bei Freunden" (issue 1157). */
+  compact?: boolean;
 }) {
   return (
     <>
@@ -142,6 +161,7 @@ export function FriendsBanner(props: {
           api={props.api}
           token={props.token}
           {...(props.quiet ? { quiet: true } : {})}
+          {...(props.compact ? { compact: true } : {})}
         />
       )}
     </>

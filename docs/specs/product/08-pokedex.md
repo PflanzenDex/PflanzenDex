@@ -21,6 +21,7 @@ Acceptance criteria:
 - If the short text is missing: "No description available."
 - Species-poor (genus ≤ 10 species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
 - Source link on every card with an image source (CC BY-SA).
+- Given the layer "Sammlerkarten", then the cards page by the free height of the layer (US-QS-15). Given a window at most 700 px high (starting value, assumption), then a card shows its image 80 px high, its short text in two lines (the full text is in the species profile), and its unknown facts and rarity values folded into one line "n Angaben fehlen" with the next step (US-QS-24), so one card fits a 360×640 phone; taller windows show the card unchanged (decision of the owner, 2026-11-02, issue 1154).
 
 Status 🟨: the cards of the taxonomy tree work (`GET /pokedex/cards`, caught derived live from the specimens, missing cards, species-poor badge and rarity frame, Wikipedia image as a link only, P-05). Missing: the latest measurement photo of an active specimen (WAC-05, storage TE-05; the Wikipedia image link or a neutral sprout is shown) and the family icons (FR-POK-10); caught species that are not in the tree are not shown as cards (FR-POK-04 hints).
 
