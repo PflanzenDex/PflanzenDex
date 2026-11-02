@@ -1,3 +1,4 @@
+import { MS_PER_DAY } from "../../kernel";
 // Anniversaries with the plant (US-ACH-06): derived from the catch date, never stored (FR-ACH-02). An anniversary is
 // every half year after the catch date; it stays visible until the end of that week (Sunday, assumption), then it is
 // gone, while the specimen's history still shows its age (P-10). Pure; dates are local calendar dates (NFR-08).
@@ -23,7 +24,6 @@ export interface Anniversary {
   readonly caughtOn: string;
 }
 
-const MS_PER_DAY = 86_400_000;
 const parts = (d: string): [number, number, number] =>
   d.split("-").map(Number) as [number, number, number];
 
