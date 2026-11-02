@@ -1,9 +1,9 @@
 // The species catalog through the AI interface (US-KI-11): search by Latin name, German name or synonym (the same search
 // as the catalog of the app, US-BES-01) and one species by id or name, so a client sees "this species exists" before it
 // proposes one. Only what the account may see: approved species and its own proposals (FR-BES-11, P-04).
-import { appError, failed, isId, ok, shape, textField, type Result } from "../../kernel";
-import type { AiLogStore } from "../status";
-import { normalizeName, referenceError, resolveName, type Named } from "./naming";
+import { appError, failed, isId, ok, shape, textField, type Result } from "../../../kernel";
+import type { AiLogStore } from "../../status";
+import { normalizeName, referenceError, resolveName, type Named } from "../naming";
 import {
   PAGE_FIELDS,
   pageOf,
@@ -12,7 +12,7 @@ import {
   type Page,
   type ReadCall,
   type SpeciesItem,
-} from "./types";
+} from "../types";
 
 export interface ReadDependencies {
   readonly source: CollectionReadSource;

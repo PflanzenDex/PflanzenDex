@@ -72,7 +72,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | MON Reminders/sensors          | 8       | 0      | 6       | 2      | 0 · 0 · 8                 | 0                      | 8       |
 | SOZ Social                     | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                  | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
-| KI AI access                   | 17      | 1      | 9       | 7      | 0 · 3 · 20                | 3                      | 14      |
+| KI AI access                   | 17      | 1      | 10      | 6      | 0 · 3 · 20                | 3                      | 14      |
 | QS Cross-cutting               | 24      | 0      | 21      | 3      | 0 · 0 · 0                 | 6                      | 18      |
 | MIG Migration (dropped)        | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                   | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
@@ -81,7 +81,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 5      | 3       | 0      | 1 · 0 · 9                 | 0                      | 8       |
-| **Total**                      | **186** | **37** | **130** | **19** |                           | **50**                 | **136** |
+| **Total**                      | **186** | **37** | **131** | **18** |                           | **50**                 | **136** |
 
 <!-- spec-status:end -->
 

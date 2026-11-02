@@ -10,10 +10,10 @@ import {
   shape,
   textField,
   timeZoneField,
-} from "../../kernel";
+} from "../../../kernel";
 import { resolveSpecies, type ReadDependencies } from "./catalog-reads";
-import { referenceError, resolveName, type Named } from "./naming";
-import { PAGE_FIELDS, pageOf, readCall, type ReadCall, type SpecimenItem } from "./types";
+import { referenceError, resolveName, type Named } from "../naming";
+import { PAGE_FIELDS, pageOf, readCall, type ReadCall, type SpecimenItem } from "../types";
 import { collectionView, type CollectionView, type SpecimenOut } from "./views";
 
 const ref = (field: string) => orNull(textField(field, { min: 1, max: 200 }));
@@ -55,7 +55,7 @@ function resolvePlace(view: CollectionView, kind: "location" | "lightZone", valu
 }
 
 /** A specimen reference among the account's specimens: the active ones first, then the archive (US-BES-07). */
-function resolveSpecimen(rows: readonly SpecimenItem[], value: string) {
+export function resolveSpecimen(rows: readonly SpecimenItem[], value: string) {
   const active = rows.filter((s) => s.status !== "archived");
   const first = resolveName(named(active), value);
   const r = first.kind === "none" ? resolveName(named(rows), value) : first;

@@ -58,7 +58,21 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
   routes.post("/pokedex/seen", async (c) =>
     write(c, writeDeps, markSeen, { input: await body(c) }),
   );
-  // Collector cards (US-POK-01): the shared taxonomy tree against the derived ownership; caught is never stored.
+  const cards = collectorCardsFor(pool);
+  routes.get("/pokedex/cards", async (c) => {
+    const timeZone = zoneOf(c);
+    if (timeZone === null) return invalidZone(c);
+    return c.json(await cards(c.get("account").id, timeZone));
+  });
+  return routes;
+}
+
+/**
+ * Collector cards (US-POK-01) as `GET /pokedex/cards` answers them, for the route and the AI client (US-KI-12): the
+ * shared taxonomy tree against the derived ownership; caught is never stored (P-01).
+ */
+export function collectorCardsFor(pool: Pool) {
+  const deps = { specimens: new SpecimenPostgres(pool), species: new SpeciesPostgres(pool) };
   const taxa = new TaxonomyPostgres(pool);
   const tree = {
     tree: () => taxa.tree(),
@@ -74,12 +88,8 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
         userId,
       ),
   };
-  routes.get("/pokedex/cards", async (c) => {
-    const timeZone = zoneOf(c);
-    if (timeZone === null) return invalidZone(c);
-    const userId = c.get("account").id;
+  return async (userId: string, timeZone: string) => {
     const { caught } = await pokedexOwnership(deps, userId, timeZone);
-    return c.json({ cards: await readCollectorCards(tree, userId, caught) });
-  });
-  return routes;
+    return { cards: await readCollectorCards(tree, userId, caught) };
+  };
 }

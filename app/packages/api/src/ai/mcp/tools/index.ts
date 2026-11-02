@@ -4,18 +4,21 @@
 // here reads or writes data itself.
 import { rightNeeded, type AiRights } from "@pflanzendex/core";
 import { ACCOUNT_TOOLS } from "./sets/account-tools";
+import { AREA_TOOLS } from "./sets/area-tools";
 import { COLLECTION_TOOLS } from "./sets/collection-tools";
 import { RESEARCH_TOOLS } from "./sets/research-tools";
 import type { McpTool } from "./schema";
 
 export { checkArguments } from "./schema";
 export type { McpTool } from "./schema";
+export { NOT_RELEASED_TOOLS } from "./sets/area-tools";
 
 /** The tools in a fixed order (deterministic `tools/list`). */
 export const MCP_TOOLS: readonly McpTool[] = [
   ...ACCOUNT_TOOLS,
   ...RESEARCH_TOOLS,
   ...COLLECTION_TOOLS,
+  ...AREA_TOOLS,
 ];
 
 /** The right a tool needs, from the one table of classes (FR-KI-12); a tool without a released class is a bug. */
