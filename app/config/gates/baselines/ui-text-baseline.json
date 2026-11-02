@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1436,
+  "maxTotal": 1428,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -864,10 +864,6 @@
     {
       "file": "packages/web/src/swap/parts/swap-requests/swap-card/swap-card.tsx",
       "count": 17
-    },
-    {
-      "file": "packages/web/src/today/today-page/today-page.tsx",
-      "count": 8
     },
     {
       "file": "packages/web/src/today/today-page/today-row/today-row.tsx",
