@@ -90,7 +90,7 @@ State of implementation: the processing and storing half works (release R1). `PO
 | ID        | Requirement                                                                                                                                            | Status |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
 | FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                        | ✅     |
-| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                           | ✅     |
+| FR-WAC-03 | The trend threshold ±10 % <!-- const: GROWTH_DEFAULTS.trendTolerance scale=100 --> is a default, centrally configurable in the logic.                  | ✅     |
 | FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.) | ✅     |
 | FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                | ✅     |
 | FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings use the same interval (E-11, decided by the PO).     | ⬜     |

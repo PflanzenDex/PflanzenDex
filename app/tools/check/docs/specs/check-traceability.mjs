@@ -4,8 +4,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MODULE_CONFIG } from "../../../config/lint/modules.config.mjs";
-import { storiesByModule } from "../code/modules/module-report.mjs";
+import { MODULE_CONFIG } from "../../../../config/lint/modules.config.mjs";
+import { storiesByModule } from "../../code/modules/module-report.mjs";
 
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;
 const DEF = /^(?:#{2,4}\s+|\|\s*\*{0,2})((?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/;
@@ -135,7 +135,7 @@ export function run(root) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { stories, errors, hints, refs, byModule } = run(
-    fileURLToPath(new URL("../../../..", import.meta.url)),
+    fileURLToPath(new URL("../../../../..", import.meta.url)),
   );
   console.log(
     `check-traceability: stories per module (report only): ${byModule.counts.map(([m, n]) => `${m} ${n}`).join(", ")}`,

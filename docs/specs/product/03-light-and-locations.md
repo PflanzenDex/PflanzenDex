@@ -52,16 +52,16 @@ Acceptance criteria:
 - One row per species with at least one active specimen and a set lux demand, sorted descending by demand.
 - Position mapping by lux demand:
 
-  | Demand   | Position                 |
-  | -------- | ------------------------ |
-  | ≥ 50,000 | directly under the lamp  |
-  | ≥ 15,000 | very close (~10 cm)      |
-  | ≥ 8,000  | close (~20–30 cm)        |
-  | ≥ 4,000  | medium distance (~40 cm) |
-  | below    | may stand further away   |
+  | Demand                                                 | Position                 |
+  | ------------------------------------------------------ | ------------------------ |
+  | ≥ 50,000 <!-- const: POSITION_THRESHOLD_DEFAULTS.0 --> | directly under the lamp  |
+  | ≥ 15,000 <!-- const: POSITION_THRESHOLD_DEFAULTS.1 --> | very close (~10 cm)      |
+  | ≥ 8,000 <!-- const: POSITION_THRESHOLD_DEFAULTS.2 -->  | close (~20–30 cm)        |
+  | ≥ 4,000 <!-- const: POSITION_THRESHOLD_DEFAULTS.3 -->  | medium distance (~40 cm) |
+  | below                                                  | may stand further away   |
 
 - Columns: plant, zone, lux demand (locale-formatted), position. The thresholds are defaults and adjustable.
-- The four thresholds are an account setting in Account > Settings (`account.update_profile`, `positionThresholds`): four whole lux values from 1 to 200,000, strictly descending; not set means the defaults of the table (assumption, starting values, decided by the PO). The four values are shown as four labelled fields, each with the unit Lux and German grouping (10.000); the stored format does not change. The light overview uses the thresholds of the asking account only (P-04); an invalid input is refused with the field named (P-10).
+- The four thresholds are an account setting in Account > Settings (`account.update_profile`, `positionThresholds`): four whole lux values from 1 <!-- const: POSITION_THRESHOLD_LIMITS.min --> to 200,000 <!-- const: POSITION_THRESHOLD_LIMITS.max -->, strictly descending; not set means the defaults of the table (assumption, starting values, decided by the PO). The four values are shown as four labelled fields, each with the unit Lux and German grouping (10.000); the stored format does not change. The light overview uses the thresholds of the asking account only (P-04); an invalid input is refused with the field named (P-10).
 
 ### US-LIC-04 · Look up the classification rules · ✅ (prototype ✅)
 
