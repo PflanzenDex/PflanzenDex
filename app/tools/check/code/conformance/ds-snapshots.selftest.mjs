@@ -7,11 +7,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
+import { expectedPageBaselines } from "./ds-snapshots.lib.mjs";
 import { runCatalog } from "./ds-snapshots.mjs";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ds-snapshots-selftest-"));
 const dirs = (name) => ({
   snapshotDir: path.join(tmp, name, "baselines"),
+  pageSnapshotDir: path.join(tmp, name, "page-baselines"),
   outputDir: path.join(tmp, name, "results"),
 });
 const hashes = (dir) =>
@@ -49,8 +51,22 @@ describe("QG-U5 · US-QS-07 · visual regression catches", () => {
     assert.deepEqual(hashes(b.snapshotDir), first);
   });
 
+  it("QG-U5 · FR-QG-27 · two runs on an unchanged tree produce identical page screenshots at all five sizes", () => {
+    const first = hashes(a.pageSnapshotDir);
+    assert.deepEqual(
+      Object.keys(first).sort(),
+      expectedPageBaselines(["ds-snapshot-fixture-page--default"]).sort(),
+    );
+    assert.deepEqual(hashes(b.pageSnapshotDir), first);
+    assert.equal(
+      new Set(Object.values(first)).size > 5,
+      true,
+      "sizes must render different pictures",
+    );
+  });
+
   it("QG-U5 · US-QS-07 · the unchanged tree passes the comparison", () => {
-    const r = runCatalog({ fixtures: true, snapshotDir: a.snapshotDir, outputDir: b.outputDir });
+    const r = runCatalog({ fixtures: true, ...a, outputDir: b.outputDir });
     assert.equal(r.status, 0);
     assert.deepEqual(r.findings, []);
   });
@@ -59,21 +75,27 @@ describe("QG-U5 · US-QS-07 · visual regression catches", () => {
     const out = dirs("c").outputDir;
     const r = runCatalog({
       fixtures: true,
-      snapshotDir: a.snapshotDir,
+      ...a,
       outputDir: out,
       storyArgs: "padding:16", // the fixture's default is 12
     });
     assert.notEqual(r.status, 0);
     assert.ok(find(out, "-diff.png").length > 0, `no diff image in ${out}`);
+    // The page fixture takes the same arg: its pictures differ at a page size too (FR-QG-27) and leave a diff.
+    assert.ok(
+      find(out, "-diff.png").some((f) => /fixture-page.*\d+x\d+/.test(f)),
+      `no page diff image in ${out}`,
+    );
   });
 
   it("QG-U5 · US-QS-07 · a missing baseline is reported", () => {
     const r = runCatalog({
       fixtures: true,
       snapshotDir: path.join(tmp, "empty"),
+      pageSnapshotDir: path.join(tmp, "empty-pages"),
       outputDir: b.outputDir,
     });
     assert.notEqual(r.status, 0);
-    assert.equal(r.findings.length, 2);
+    assert.equal(r.findings.length, 2 + 10); // the new page without baselines fails (FR-QG-27)
   });
 });

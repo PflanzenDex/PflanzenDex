@@ -82,7 +82,12 @@ export function screenStory(options: ScreenOptions): StoryObj {
 
 const desktop = { value: "desktop", isRotated: false };
 
-/** The four reference states of a screen: phone (360 px) and desktop (1280 px), each in light and dark. */
+/**
+ * The four reference states of a screen: phone (360 px) and desktop (1280 px), each in light and dark. Name the
+ * exports `<State>Phone`, `<State>PhoneDark`, `<State>Desktop`, `<State>DesktopDark`: the visual regression (FR-QG-27)
+ * snapshots only the phone story, at every size and scheme, and recognises the other three by that name, because the
+ * globals they set would override the scheme of the screenshot run (Storybook cannot index a tag set at runtime).
+ */
 export function variants(base: StoryObj) {
   return {
     phone: base,
