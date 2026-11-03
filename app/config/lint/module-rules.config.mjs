@@ -64,3 +64,27 @@ export const GLOBAL_REFERENCE_TABLES = {
       "The shared species catalog (E-02) has no account_id by design, so the tenant-safe (account_id, id) form cannot exist; Specimens and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
   },
 };
+
+// AB-15 (FR-QG-23): the web layer of a path below `packages/web/src/`, the single mapping for the layers app, shared and the
+// modules (direction app -> modules -> shared). [prefix, layer], the first match wins; `null` = not checked. The target
+// folders come first; the current folders follow until the moves of FR-QG-23 steps 2 to 4 are done (then they disappear
+// from this list). A root file of `src/` belongs to `app`; a folder named like a registered module is that module.
+export const WEB_LAYERS = [
+  ["app/", "app"],
+  ["shared/", "shared"],
+  ["styles/", null],
+  ["components/shared/navigation/app-shell/full-view/", "shared"], // page frames that modules use: shared/patterns
+  ["components/shared/navigation/app-shell/page-header/", "shared"],
+  ["components/shared/navigation/", "app"],
+  ["components/shared/shell/", "app"],
+  ["components/routing/areas/", "app"],
+  ["components/routing/legacy-routes/", "app"],
+  ["components/routing/", "shared"], // lazy-page, route-boundary, route-focus: shared/platform
+  ["components/sammlung-header/", "app"],
+  ["components/collector-card", "pokedex"], // collector-card and collector-cards: step 4 moves them into the module
+  ["components/", "shared"], // ui, shared, data-display, sheet-panel, segmented-control, section-label
+  ["kernel/", "shared"],
+  ["platform/", "shared"],
+  ["lib/", "shared"],
+  ["shell/", "app"],
+];

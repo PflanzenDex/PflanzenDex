@@ -1,5 +1,7 @@
 // Module graph checks of AB-8 and AB-12 (cycles, a module importing every other), part of check-modules.mjs.
+import fs from "node:fs";
 import path from "node:path";
+import { WEB_LAYERS } from "../../../../../config/lint/module-rules.config.mjs";
 
 const CONFIG_FILE = "config/lint/modules.config.mjs";
 
@@ -56,4 +58,70 @@ export function checkAllModules({ add, cfg }, edges) {
       );
     }
   }
+}
+
+/** Layer of a path below `packages/web/src/` (AB-15): "app", "shared", a module name or null (not checked). */
+export function webLayerOf(rel, modules) {
+  if (!rel.includes("/")) return /\.d\.ts$/.test(rel) ? null : "app";
+  const hit = WEB_LAYERS.find(([prefix]) => rel.startsWith(prefix));
+  if (hit) return hit[1];
+  const folder = rel.split("/")[0];
+  return modules.some((m) => m.name === folder) ? folder : null;
+}
+
+const toRel = (src, abs) => {
+  const isDir = fs.existsSync(abs) && fs.statSync(abs).isDirectory();
+  return path.relative(src, abs).split(path.sep).join("/") + (isDir ? "/" : "");
+};
+const describe = (layer) => (layer === "app" || layer === "shared" ? layer : `module ${layer}`);
+
+// Findings of one file: [line, spec, target layer] for every import that breaks the direction.
+function layerImports({ src, file, fromLayer, modules, h }) {
+  const out = [];
+  for (const { spec, line } of h.importsOf(fs.readFileSync(file, "utf8"))) {
+    if (!spec.startsWith(".") && !spec.startsWith("@/")) continue;
+    const abs = spec.startsWith("@/")
+      ? path.join(src, spec.slice(2))
+      : path.resolve(path.dirname(file), spec);
+    const to = toRel(src, abs);
+    const toLayer = to.startsWith("..") ? null : webLayerOf(to, modules);
+    const bad = fromLayer === "shared" ? toLayer && toLayer !== "shared" : toLayer === "app";
+    if (bad) out.push([line, spec, toLayer]);
+  }
+  return out;
+}
+
+/**
+ * AB-15, report only (blocking in FR-QG-23 step 5): shared imports no module and not app, a module imports not app.
+ * Returns the findings as text lines (rule ID, file, line); they are printed, never added to the violations.
+ */
+export function webLayerFindings({ appDir, cfg, h }) {
+  const src = path.join(appDir, "packages", "web", "src");
+  if (!fs.existsSync(src)) return [];
+  const out = [];
+  for (const file of h.walkCode(src)) {
+    const from = path.relative(src, file).split(path.sep).join("/");
+    const fromLayer = webLayerOf(from, cfg.MODULES);
+    if (fromLayer === "app" || fromLayer === null) continue;
+    for (const [line, spec, toLayer] of layerImports({
+      src,
+      file,
+      fromLayer,
+      modules: cfg.MODULES,
+      h,
+    }))
+      out.push(
+        `AB-15 packages/web/src/${from}:${line} ${describe(fromLayer)} -> ${describe(toLayer)}: "${spec}"`,
+      );
+  }
+  return out;
+}
+
+/** The AB-15 findings as printed by check-boundaries: a headline and one line per finding. */
+export function webLayerReport(ctx) {
+  const found = webLayerFindings(ctx);
+  return [
+    `AB-15 web layers (report only): ${found.length} finding(s)`,
+    ...found.map((l) => `  ${l}`),
+  ].join("\n");
 }
