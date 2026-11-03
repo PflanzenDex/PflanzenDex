@@ -7,7 +7,7 @@
 //          allowed dependency on its owner, a plain `(id)` target and `on delete restrict`
 import fs from "node:fs";
 import path from "node:path";
-import { locate, moduleOf } from "./check-modules.mjs";
+import { locate, moduleOf } from "../check-modules.mjs";
 
 const lineOf = (text, index) => text.slice(0, index).split("\n").length;
 const tableOwners = (cfg) => new Map(cfg.MODULES.flatMap((m) => m.tables.map((t) => [t, m.name])));
