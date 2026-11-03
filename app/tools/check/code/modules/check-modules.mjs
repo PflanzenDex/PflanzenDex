@@ -11,8 +11,8 @@
 // Folders named like a module are checked as soon as they exist; without them the checks are idle.
 import fs from "node:fs";
 import path from "node:path";
-import { checkAllModules, checkCycles } from "./check-modules-graph.mjs";
-import { checkKernelGlossary, checkPortContracts } from "./check-modules-contracts.mjs";
+import { checkAllModules, checkCycles } from "./rules/check-modules-graph.mjs";
+import { checkKernelGlossary, checkPortContracts } from "./rules/check-modules-contracts.mjs";
 
 export const LAYERS = ["core", "db", "api", "web"];
 const posix = (p) => p.split(path.sep).join("/");
