@@ -5,7 +5,7 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { loadLocations, loadZones } from "../../light";
 import { loadCareProfiles, saveCareProfile } from "../care-profile/care-profile-api";
 import { CareProfileSectionSkeleton } from "./care-profile-page.skeleton";

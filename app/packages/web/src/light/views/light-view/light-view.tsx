@@ -12,7 +12,7 @@ import { ManageLists, Notices } from "./manage-lists/manage-lists";
 import type { ZoneInput } from "../../zones/zones-view/zones-view";
 import type { LocationInput } from "../../zones/locations-view/locations-view";
 import type { Derive } from "../../zones/derivation-view/derivation-view";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../light.de.json";
 
 const t = texts(table);

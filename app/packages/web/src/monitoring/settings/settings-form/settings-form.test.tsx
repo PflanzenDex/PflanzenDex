@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../../kernel";
+import { createQueryClient } from "../../../shared/data";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RemindersSection } from "../../reminders-section/reminders-section";
 

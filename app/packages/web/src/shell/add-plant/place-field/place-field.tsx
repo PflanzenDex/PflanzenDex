@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
 import { loadCards } from "../../../collection";
 import { loadLocations, loadZones } from "../../../light";
 import { cuttingLight, zoneLabel } from "@pflanzendex/core";

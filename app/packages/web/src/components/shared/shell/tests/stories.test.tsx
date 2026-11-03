@@ -3,17 +3,17 @@ import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../../.storybook/preview";
-import { setViewportWidth } from "@/lib/viewport-mock";
-import * as banner from "../../states/banner/banner.stories";
-import * as emptyState from "../../empty-state/empty-state.stories";
-import * as pageSkeleton from "../../states/page-skeleton/page-skeleton.stories";
-import * as plantLoader from "../../states/plant-loader/plant-loader.stories";
-import * as requestState from "../../states/request-state/request-state.stories";
-import * as layerSheet from "../../responsive/layer-sheet/layer-sheet.stories";
-import * as pager from "../../responsive/pager/pager.stories";
-import * as responsiveModal from "../../responsive/responsive-modal/responsive-modal.stories";
-import * as responsiveTable from "../../responsive/responsive-table/responsive-table.stories";
-import * as toast from "../../states/toast/toast.stories";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import * as banner from "../../../../shared/patterns/states/banner/banner.stories";
+import * as emptyState from "../../../../shared/patterns/elements/empty-state/empty-state.stories";
+import * as pageSkeleton from "../../../../shared/patterns/states/page-skeleton/page-skeleton.stories";
+import * as plantLoader from "../../../../shared/patterns/states/plant-loader/plant-loader.stories";
+import * as requestState from "../../../../shared/patterns/states/request-state/request-state.stories";
+import * as layerSheet from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.stories";
+import * as pager from "../../../../shared/patterns/responsive/pager/pager.stories";
+import * as responsiveModal from "../../../../shared/patterns/responsive/responsive-modal/responsive-modal.stories";
+import * as responsiveTable from "../../../../shared/patterns/responsive/responsive-table/responsive-table.stories";
+import * as toast from "../../../../shared/patterns/states/toast/toast.stories";
 
 setProjectAnnotations([preview]);
 

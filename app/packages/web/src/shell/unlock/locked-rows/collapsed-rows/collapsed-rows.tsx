@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/lib/text-rules/texts";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../shell.de.json";
 import { isShownLocked } from "../../model/unlock-texts";
 import { useUnlocks } from "../../model/unlocks/unlocks";

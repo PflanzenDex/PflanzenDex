@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { accountAddress } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { Button } from "@/components/ui/button/button";
-import { useInvalidate, useRequest, WRITE_SUCCEEDED } from "../../kernel";
+import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
+import { Button } from "@/shared/ui/button/button";
+import { useInvalidate, useRequest, WRITE_SUCCEEDED } from "../../shared/data";
 import { loadNews, markSeen } from "../achievements-api";
 import { ACHIEVEMENT_NAMES } from "../overview/texts";
 

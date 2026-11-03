@@ -15,7 +15,7 @@ const ignores = [
   "**/*.fake.ts",
   "**/test-global-setup.ts",
   "packages/web/src/lib/page-stories/**",
-  "packages/web/src/lib/test-setup/**",
+  "packages/web/src/shared/testing/test-setup/**",
 ];
 const numberFiles = ["packages/core/src/**/*.ts", "packages/api/src/**/*.ts"];
 const enumFiles = [...numberFiles, "packages/web/src/**/*.ts", "packages/web/src/**/*.tsx"];

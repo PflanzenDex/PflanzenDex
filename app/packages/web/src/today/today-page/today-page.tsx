@@ -1,14 +1,14 @@
 import { useCallback, type ReactNode } from "react";
 import type { TodayList } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { useIsMd } from "@/lib/use-breakpoint";
-import { dateText } from "@/lib/format";
-import { LoadFrame, useRequest } from "../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { dateText } from "@/shared/lib/format";
+import { LoadFrame, useRequest } from "../../shared/data";
 import { loadToday } from "../today-api";
 import { isTreatment, TodayRow, type TodayDestination } from "./today-row/today-row";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../today.de.json";
 
 const t = texts(table);

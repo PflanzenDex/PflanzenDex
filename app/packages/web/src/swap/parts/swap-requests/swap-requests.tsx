@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { errorText } from "@/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { errorText } from "@/shared/lib/error-text";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
-import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
+import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { SwapCard } from "./swap-card/swap-card";
 import { swapTitle } from "./swap-text";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 
 const t = texts(table);

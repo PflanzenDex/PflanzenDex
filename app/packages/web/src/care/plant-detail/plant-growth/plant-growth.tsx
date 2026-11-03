@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { GrowthTrend } from "@pflanzendex/core";
-import { LoadFrame } from "../../../kernel";
+import { LoadFrame } from "../../../shared/data";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { growthLines } from "../../measure/measurement-header/growth-summary/growth-text";
 

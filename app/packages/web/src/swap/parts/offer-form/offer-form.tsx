@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { errorText } from "@/lib/error-text";
-import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { errorText } from "@/shared/lib/error-text";
+import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { createOffer, loadPreview, shareSpecimen, type OwnSpecimenRow } from "../../api/offers-api";
 import { OfferFields, type OfferFieldValues } from "./offer-fields/offer-fields";
 import { OfferNotices } from "./offer-notices/offer-notices";

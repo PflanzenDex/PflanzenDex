@@ -1,6 +1,6 @@
 import { equipmentCosts, type EquipmentRow } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { texts } from "@/lib/text-rules/texts";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 import { TYPE_LABELS } from "../../labels";
 

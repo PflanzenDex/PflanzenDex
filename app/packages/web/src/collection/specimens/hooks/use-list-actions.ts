@@ -1,4 +1,4 @@
-import { useInvalidate, useWriteAction } from "../../../kernel";
+import { useInvalidate, useWriteAction } from "../../../shared/data";
 import type {
   CatchDateTarget,
   useCatchDate,

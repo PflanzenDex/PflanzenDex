@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef } from "react";
 import { GrowthMomentNote, useGrowthMoments } from "@/achievements";
-import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LoadFrame, useInvalidate } from "../../../kernel";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LoadFrame, useInvalidate } from "../../../shared/data";
 import { MeasureForm } from "../measure-form/measure-form";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementHeader } from "../measurement-header/measurement-header";

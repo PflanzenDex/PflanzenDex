@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button/button";
-import { errorText } from "@/lib/error-text";
-import { useInvalidate, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { errorText } from "@/shared/lib/error-text";
+import { useInvalidate, useWriteAction } from "../../../shared/data";
 import { markWatered } from "../../api/reminders-api";
 
 /**

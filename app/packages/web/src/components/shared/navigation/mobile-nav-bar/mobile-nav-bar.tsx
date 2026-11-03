@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Ellipsis } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/overlays/sheet/sheet";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
+import { cn } from "@/shared/lib/utils";
 import {
   isActivePath,
   stackedItem,
   stackedLabel,
   stackedPill,
   type NavItem,
-} from "../nav-model/nav-item";
-import { NavNote } from "../nav-model/nav-note/nav-note";
+} from "../../../../shared/patterns/navigation/nav-item";
+import { NavNote } from "../../../../shared/patterns/navigation/nav-note/nav-note";
 
 /** At most 5 slots in the bar (DS-25): 5 destinations, or 4 plus "Mehr". */
 const BAR_SLOTS = 5;

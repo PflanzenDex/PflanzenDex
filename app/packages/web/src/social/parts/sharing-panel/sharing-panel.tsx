@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
-import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Button } from "@/components/ui/button/button";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Button } from "@/shared/ui/button/button";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 
 type Specimen = Pick<SpecimenRow, "id" | "speciesId" | "name" | "status">;
 

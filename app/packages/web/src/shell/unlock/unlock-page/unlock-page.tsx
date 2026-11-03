@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
-import { errorText } from "@/lib/error-text";
-import { useInvalidate, useWriteAction } from "../../../kernel";
-import {
-  PATHS,
-  accountAddress,
-} from "../../../components/shared/navigation/nav-model/navigation/navigation";
+import { Button } from "@/shared/ui/button/button";
+import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
+import { errorText } from "@/shared/lib/error-text";
+import { useInvalidate, useWriteAction } from "../../../shared/data";
+import { PATHS, accountAddress } from "../../../shared/patterns/navigation/navigation/navigation";
 import type { UnlockFunctionId } from "@pflanzendex/core";
 import { FUNCTION_PURPOSES } from "../../function-overview/function-purposes";
 import { unlockFunction } from "../model/unlock-api";

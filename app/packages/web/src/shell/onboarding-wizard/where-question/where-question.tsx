@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { errorText } from "@/lib/error-text";
+import { Button } from "@/shared/ui/button/button";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { errorText } from "@/shared/lib/error-text";
 import { setSpecimenLocation } from "../../../collection";
-import { createWrite } from "../../../kernel";
+import { createWrite } from "../../../shared/data";
 import { loadLocations, loadZones } from "../../../light";
 import { zoneLabel } from "@pflanzendex/core";
 

@@ -1,5 +1,5 @@
 import type { ReviewEntry } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
+import { Badge } from "@/shared/ui/display/badge/badge";
 import { ageText, issueText } from "../../review-text";
 import {
   growthText,

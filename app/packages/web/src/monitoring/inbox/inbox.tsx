@@ -1,8 +1,8 @@
 import type { ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame } from "../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame } from "../../shared/data";
 import { loadInbox } from "../api/reminders-api";
 
 const STATUS_TEXT: Record<ReminderStatus, string> = {

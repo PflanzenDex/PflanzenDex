@@ -1,9 +1,9 @@
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { useState } from "react";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LightOverviewView } from "../../light-overview-view/light-overview-view";
 import { RulesView } from "../../rules-view";
 import { DerivationForm } from "../../../zones/derivation-view/derivation-view";
@@ -12,7 +12,7 @@ import { ZoneForm } from "../../../zones/zones-view/zones-view";
 import type { LightData, LightOverview, Response } from "../../../shared/light-api/light-api";
 import { refusalText } from "../../../shared/texts";
 import type { LightActions } from "../light-view";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../light.de.json";
 
 const t = texts(table);

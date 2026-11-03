@@ -10,9 +10,9 @@ import {
   InvitationPage,
   type State,
 } from "../../account";
-import { FeaturesProvider, useClearOnSignOut } from "../../kernel";
-import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { FeaturesProvider, useClearOnSignOut } from "../../shared/data";
+import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { AppShell } from "../../components/shared/navigation/app-shell/app-shell";
 import {
   pageTitle,
@@ -21,7 +21,7 @@ import {
   viewAddress,
   viewTitle,
   type LinkTarget,
-} from "../../components/shared/navigation/nav-model/navigation/navigation";
+} from "../../shared/patterns/navigation/navigation/navigation";
 import { PathNotes } from "../../wishlist";
 import { useWishHandOver } from "../../wish-to-specimen";
 import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../unlock";

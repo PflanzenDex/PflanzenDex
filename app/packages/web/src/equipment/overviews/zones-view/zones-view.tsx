@@ -1,6 +1,6 @@
 import type { Lamp, ZoneEquipment, ZoneEquipmentView } from "@pflanzendex/core";
 import { EQUIPMENT_STATUSES, zoneLabel } from "@pflanzendex/core";
-import { Select } from "@/components/ui/fields/select/select";
+import { Select } from "@/shared/ui/fields/select/select";
 import { STATUS_LABELS } from "../../labels";
 import type { EquipmentStatus } from "../../equipment-api";
 

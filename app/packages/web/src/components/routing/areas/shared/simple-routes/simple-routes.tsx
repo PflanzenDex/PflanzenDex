@@ -4,13 +4,13 @@ import { OperatorPage } from "@/account";
 import { ReviewPage } from "@/catalog";
 import { FriendCollectionPage, FriendsPage } from "@/social";
 import { ExchangePage, MatchPage } from "@/swap";
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import {
   EXCHANGE_PATH,
   MATCH_PATH,
   PATHS,
   type View,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+} from "@/shared/patterns/navigation/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 

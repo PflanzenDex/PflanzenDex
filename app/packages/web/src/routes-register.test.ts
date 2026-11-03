@@ -9,7 +9,7 @@ import {
   MATCH_PATH,
   PATHS,
   PROFILE_BASE,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+} from "@/shared/patterns/navigation/navigation/navigation";
 
 // US-QS-15 (issue 1137): the one-screen gate (QG-U8) measures every route; a route missing from its register fails here.
 describe("US-QS-15 every route is in the register of the one-screen gate", () => {

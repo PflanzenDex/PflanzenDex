@@ -2,7 +2,7 @@
 // names are, and which baselines are missing or stale. No browser and no Docker in here, so they are unit tested.
 export const SCHEMES = ["light", "dark"];
 export const VIEWPORT = { width: 360, height: 640 };
-export const UI_IMPORT = "./src/components/ui/";
+export const UI_IMPORT = "./src/shared/ui/";
 export const FIXTURE_PREFIX = "ds-snapshot-fixture-";
 export const PAGE_IMPORT = "./src/lib/page-stories/";
 export const PAGE_FIXTURE_PREFIX = "ds-snapshot-fixture-page";
@@ -17,7 +17,7 @@ export const PAGE_SIZES = [
   { width: 1920, height: 1080 },
 ];
 
-/** Ids of the stories that are snapshotted: `components/ui` only (or only the self-test fixture). */
+/** Ids of the stories that are snapshotted: `shared/ui` only (or only the self-test fixture). */
 export function snapshotStoryIds(index, { fixtures = false } = {}) {
   return Object.values(index.entries)
     .filter((e) => e.type === "story")

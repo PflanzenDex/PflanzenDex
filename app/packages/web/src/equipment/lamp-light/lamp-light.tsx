@@ -4,8 +4,8 @@ import { LimitForm } from "./limit-form/limit-form";
 import { MeasureForm } from "./measure-form/measure-form";
 import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { keepTogether } from "@/lib/format";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { keepTogether } from "@/shared/lib/format";
 import { zoneLabel } from "@pflanzendex/core";
 
 export interface LampLightActions {

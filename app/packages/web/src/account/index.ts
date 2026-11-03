@@ -1,5 +1,5 @@
 // Public interface of the `account` module (ADR 0003): sign-in, session, account view.
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 /**
  * The `?sheet=` ids of the settings layers, one per group (US-QS-17, US-QS-15). Defined here, a light public constant,
  * so the Konto area reads them without loading the settings page (the page is a lazy part).

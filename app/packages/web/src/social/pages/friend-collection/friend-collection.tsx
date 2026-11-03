@@ -4,15 +4,15 @@ import {
   LayerHost,
   LayerSheet,
   useLayer,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { Button } from "@/components/ui/button/button";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
-import { LoadFrame, useRequest, useWriteAction } from "../../../kernel";
-import { errorText } from "@/lib/error-text";
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { Button } from "@/shared/ui/button/button";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { LoadFrame, useRequest, useWriteAction } from "../../../shared/data";
+import { errorText } from "@/shared/lib/error-text";
 import { addToWishlist, loadFriendCollection } from "../../api/friends-api";
 import { nameOf } from "../../parts/request-list/request-list";
 import { FriendEquipment } from "./friend-equipment/friend-equipment";

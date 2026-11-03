@@ -10,7 +10,7 @@ import type {
   WishRow,
   WishVisibilityResult,
 } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, type Response } from "../shared/data";
 
 /** Loads the open candidates sorted by space need (US-WUN-01); derived on every request, never stored. */
 function loadCandidates(

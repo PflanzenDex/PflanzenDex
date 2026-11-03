@@ -1,8 +1,8 @@
 import type { QueryKey } from "@tanstack/react-query";
-import { useInvalidate } from "../../../kernel";
+import { useInvalidate } from "../../../shared/data";
 import { OnboardingWizard } from "../../onboarding-wizard/onboarding-wizard";
 import type { SpeciesLookup } from "../../onboarding-wizard/species-step/species-step";
-import type { LinkTarget } from "../../../components/shared/navigation/nav-model/navigation/navigation";
+import type { LinkTarget } from "../../../shared/patterns/navigation/navigation/navigation";
 
 /** The guide of a new account (US-ONB-01) in place of the day's tasks. */
 export function FirstPlantGuide(props: {

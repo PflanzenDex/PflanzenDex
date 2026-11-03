@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { ArchivedEntry, Distribution, LightLocation, SpecimenCard } from "@pflanzendex/core";
-import type { PhotoAccess } from "@/lib/use-stored-photo";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 
 export const ARCHIVE_LAYER = "archive";
 

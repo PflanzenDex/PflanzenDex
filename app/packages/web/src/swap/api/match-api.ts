@@ -1,5 +1,5 @@
 import type { EmptyReason, MatchCard, MatchEntry, MatchYesResult } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 

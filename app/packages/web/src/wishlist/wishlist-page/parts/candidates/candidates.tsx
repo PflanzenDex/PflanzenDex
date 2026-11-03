@@ -1,10 +1,10 @@
 import type { Candidate, CandidateList } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerOpener, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
-import { Button } from "@/components/ui/button/button";
-import { texts } from "@/lib/text-rules/texts";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { Wishlist } from "../../../wishlist-api";
 import table from "../../../wishlist.de.json";
 import { WishRow } from "../../rows/wish-row/wish-row";

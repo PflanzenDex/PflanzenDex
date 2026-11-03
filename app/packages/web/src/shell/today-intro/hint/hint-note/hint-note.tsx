@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { saveHint } from "../hint-api";
 import { HINT_TEXTS } from "../hint-texts";
 

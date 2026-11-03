@@ -9,9 +9,9 @@ import {
   FormItem,
   FormLabel,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Select } from "@/components/ui/fields/select/select";
-import type { ApiError } from "../../../../kernel";
+} from "@/shared/ui/fields/form/form";
+import { Select } from "@/shared/ui/fields/select/select";
+import type { ApiError } from "../../../../shared/data";
 import { loadCards } from "../../../specimens/cards/cards-api";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";

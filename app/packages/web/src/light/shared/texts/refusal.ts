@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
-import { errorText } from "@/lib/error-text";
+import { errorText } from "@/shared/lib/error-text";
 import type { ApiError } from "../light-api/light-api";
 
 /**

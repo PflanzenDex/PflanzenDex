@@ -1,4 +1,4 @@
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 
 /** The destinations "Heute" and "Konto" with their sections are their own lazy parts: the shell does not carry them (DS-08, US-QS-14). */
 export const TodayArea = lazyPage(() =>

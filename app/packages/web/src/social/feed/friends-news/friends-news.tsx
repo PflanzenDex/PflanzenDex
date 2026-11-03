@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/lib/text-rules/texts";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { NewPlantsBody, useNewPlants } from "../friends-banner/friends-banner";
 import table from "../../social.de.json";
 

@@ -1,5 +1,5 @@
 import type { MeasurementView } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { MeasurementFacts } from "../../measurement-header/measurement-header";
 import { MeasurementList } from "../../measurement-list/measurement-list";
 

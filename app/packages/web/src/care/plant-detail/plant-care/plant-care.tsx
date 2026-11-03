@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
   completeTreatment,
   loadOpenTreatments,
@@ -9,7 +9,7 @@ import {
 } from "../../shared/api/treatments-api";
 import { historyKey, OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
-import { Pager } from "@/components/shared/responsive/pager/pager";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { dateText } from "../../shared/text";
 import { OpenRow } from "./open-row/open-row";
 import { usePlanning } from "../../treatments/planning/planning";

@@ -1,5 +1,5 @@
 import type { Banner, Feed, OpenRequests } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 export interface FeedFilter {
   /** The friendship id, or `null` for all friends. */

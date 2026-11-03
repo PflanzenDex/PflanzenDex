@@ -8,7 +8,7 @@ import type {
   GrowthMeasure,
 } from "@pflanzendex/core";
 
-import { UNKNOWN, dateText, valueText } from "@/lib/format";
+import { UNKNOWN, dateText, valueText } from "@/shared/lib/format";
 
 export { UNKNOWN, dateText, valueText };
 

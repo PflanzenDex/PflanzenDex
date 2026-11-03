@@ -418,15 +418,15 @@
       "count": 3
     },
     {
-      "file": "packages/web/src/components/data-display/panels/pagination/load-more/load-more.tsx",
+      "file": "packages/web/src/shared/patterns/display/panels/pagination/load-more/load-more.tsx",
       "count": 3
     },
     {
-      "file": "packages/web/src/components/data-display/panels/pagination/pagination.tsx",
+      "file": "packages/web/src/shared/patterns/display/panels/pagination/pagination.tsx",
       "count": 6
     },
     {
-      "file": "packages/web/src/components/data-display/progress/step-indicator/step-indicator.tsx",
+      "file": "packages/web/src/shared/patterns/display/progress/step-indicator/step-indicator.tsx",
       "count": 1
     },
     {
@@ -486,39 +486,39 @@
       "count": 2
     },
     {
-      "file": "packages/web/src/components/shared/responsive/pager/pager.tsx",
+      "file": "packages/web/src/shared/patterns/responsive/pager/pager.tsx",
       "count": 4
     },
     {
-      "file": "packages/web/src/components/shared/responsive/responsive-table/fact-grid/fact-grid.tsx",
+      "file": "packages/web/src/shared/patterns/responsive/responsive-table/fact-grid/fact-grid.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/shared/states/request-state/request-state.tsx",
+      "file": "packages/web/src/shared/patterns/states/request-state/request-state.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/shared/states/toast/toast-item/toast-item.tsx",
+      "file": "packages/web/src/shared/patterns/states/toast/toast-item/toast-item.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/display/more-help/more-help.tsx",
+      "file": "packages/web/src/shared/ui/display/more-help/more-help.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/fields/input/native-fields/date-field/date-field.tsx",
+      "file": "packages/web/src/shared/ui/fields/input/native-fields/date-field/date-field.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/fields/input/native-fields/file-field/file-field.tsx",
+      "file": "packages/web/src/shared/ui/fields/input/native-fields/file-field/file-field.tsx",
       "count": 4
     },
     {
-      "file": "packages/web/src/components/ui/fields/input/search-input/search-input.tsx",
+      "file": "packages/web/src/shared/ui/fields/input/search-input/search-input.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/overlays/sheet/sheet.tsx",
+      "file": "packages/web/src/shared/ui/overlays/sheet/sheet.tsx",
       "count": 3
     },
     {

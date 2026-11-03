@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the operator page on a phone: five topic rows, one per layer (DS-52, DS-53). */
 export function OperatorPageSkeleton({ label }: { label: string }) {

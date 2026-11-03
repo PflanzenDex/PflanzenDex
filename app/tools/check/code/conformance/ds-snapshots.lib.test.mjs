@@ -15,15 +15,15 @@ import {
 const entry = (id, importPath, type = "story") => ({ id, importPath, type });
 const index = {
   entries: {
-    a: entry("ui-button--default", "./src/components/ui/button.stories.tsx"),
-    b: entry("shared-appshell--default", "./src/components/shared/app-shell.stories.tsx"),
-    c: entry("ui-button--docs", "./src/components/ui/button.stories.tsx", "docs"),
+    a: entry("ui-button--default", "./src/shared/ui/button.stories.tsx"),
+    b: entry("shared-appshell--default", "./src/shared/patterns/app-shell.stories.tsx"),
+    c: entry("ui-button--docs", "./src/shared/ui/button.stories.tsx", "docs"),
     d: entry("ds-snapshot-fixture-padding--default", "./.storybook/conformance-fixtures/p.tsx"),
   },
 };
 
 describe("QG-U5 · US-QS-07 · snapshot stories and baselines", () => {
-  it("QG-U5 · snapshots only the stories of components/ui, not shared, docs or fixtures", () => {
+  it("QG-U5 · snapshots only the stories of shared/ui, not shared/patterns, docs or fixtures", () => {
     assert.deepEqual(snapshotStoryIds(index), ["ui-button--default"]);
   });
 
@@ -66,7 +66,7 @@ describe("QG-U5 · FR-QG-27 · page states and their baselines", () => {
         ...entry("seiten-heute--phone-dark", "./src/lib/page-stories/screens/heute/h.stories.tsx"),
       },
       c: entry("seiten-heute--nothing-due", "./src/lib/page-stories/screens/heute/h.stories.tsx"),
-      d: entry("ui-button--default", "./src/components/ui/button.stories.tsx"),
+      d: entry("ui-button--default", "./src/shared/ui/button.stories.tsx"),
       e: entry("ds-snapshot-fixture-page--default", "./.storybook/conformance-fixtures/page.tsx"),
       f: entry("ds-snapshot-fixture-padding--default", "./.storybook/conformance-fixtures/p.tsx"),
     },

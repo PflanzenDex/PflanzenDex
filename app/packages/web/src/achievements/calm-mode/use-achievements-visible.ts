@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useRequest } from "../../kernel";
+import { useRequest } from "../../shared/data";
 import { loadAchievementSettings } from "../achievements-api";
 
 /**

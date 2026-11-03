@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 
 /**
  * One compact row of a zone or a location (US-QS-19): the name, one line of facts and one "Ändern" that opens the

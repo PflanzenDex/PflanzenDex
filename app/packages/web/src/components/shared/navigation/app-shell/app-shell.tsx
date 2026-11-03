@@ -1,13 +1,13 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
-import { AnnouncerProvider } from "@/platform/announcer/announcer";
-import { useOnline } from "@/platform/network";
-import { RouteFocus } from "@/components/routing/route-focus/route-focus";
-import { Banner } from "../../states/banner/banner";
-import { ToastProvider } from "../../states/toast/toast-provider/toast-provider";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { useOnline } from "@/shared/platform/browser/network";
+import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
+import { Banner } from "../../../../shared/patterns/states/banner/banner";
+import { ToastProvider } from "../../../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { GlobalHeader } from "../global-header/global-header";
 import { SideNav } from "../side-nav/side-nav";
 import { MobileNavBar } from "../mobile-nav-bar/mobile-nav-bar";
-import type { NavItem } from "../nav-model/nav-item";
+import type { NavItem } from "../../../../shared/patterns/navigation/nav-item";
 
 const MAIN_ID = "inhalt";
 

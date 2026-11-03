@@ -5,10 +5,10 @@ import {
   LayerOpener,
   LayerSheet,
   useLayer,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
-import type { ApiError, Request } from "../../kernel";
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { OFFLINE_NOTE } from "@/shared/patterns/states/request-state/request-state";
+import type { ApiError, Request } from "../../shared/data";
 import { useOpenId, useProfile, useSearch, useSend } from "../species-hooks";
 import { SpeciesProfile } from "../profile-view/profile-view";
 import { SpeciesSearch } from "../search-view/search-view";

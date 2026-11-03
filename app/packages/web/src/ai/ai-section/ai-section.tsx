@@ -1,4 +1,4 @@
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { AiClientsSection } from "../clients-section/clients-section";
 import { HowTo } from "../clients-section/how-to/how-to";
 import { LogSection } from "../log-section/log-section";

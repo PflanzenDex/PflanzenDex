@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
-import { SegmentedControl, type SegmentedOption } from "../segmented-control/segmented-control";
+import {
+  SegmentedControl,
+  type SegmentedOption,
+} from "../../shared/patterns/elements/segmented-control/segmented-control";
 
 /**
  * The title area of the destination "Sammlung" (US-QS-14): the one main heading, a small count line when the shown

@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { DifficultyPage } from "./difficulty-page";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */

@@ -3,8 +3,8 @@ import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import { DiscoverPage } from "@/discover";
 import { SpeciesPage } from "@/catalog";
-import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
-import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView } from "./discover-view";
 

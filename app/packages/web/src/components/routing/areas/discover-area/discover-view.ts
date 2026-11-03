@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router";
-import { readStored, writeStored } from "@/platform/storage";
-import { useAnnounce } from "@/platform/announcer/context";
+import { readStored, writeStored } from "@/shared/platform/browser/storage";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 
 export type DiscoverView = "suggestions" | "catalog";
 

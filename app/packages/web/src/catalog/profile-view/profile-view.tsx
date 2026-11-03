@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { Leaf } from "lucide-react";
 import { speciesHints, type Species } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
-import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import {
   FactGrid,
   type Fact,
-} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
-import { Tabs } from "@/components/data-display/panels/tabs/tabs";
+} from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import {
   STATUS,
   UNKNOWN,

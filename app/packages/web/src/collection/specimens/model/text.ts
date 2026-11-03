@@ -1,9 +1,9 @@
 import { zoneLabel } from "@pflanzendex/core";
 import type { SpecimenCard, ZoneSource } from "@pflanzendex/core";
-import type { ApiError } from "../../../kernel";
-import { UNKNOWN } from "@/lib/format";
+import type { ApiError } from "../../../shared/data";
+import { UNKNOWN } from "@/shared/lib/format";
 
-export { UNKNOWN, dateText, valueText } from "@/lib/format";
+export { UNKNOWN, dateText, valueText } from "@/shared/lib/format";
 
 export interface NameConflict {
   name: string;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { loadLocations } from "../../../light";
-import { LoadFrame, useInvalidate, type Response } from "../../../kernel";
+import { LoadFrame, useInvalidate, type Response } from "../../../shared/data";
 import { PhasesList } from "../phases-list/phases-list";
 import { PhasesPaged } from "../phases-paged/phases-paged";
 import { loadCarePhases } from "../../shared/api/care-phases-api";

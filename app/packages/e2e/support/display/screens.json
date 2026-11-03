@@ -908,28 +908,28 @@
     "id": "account-achievements-earned",
     "account": "test2",
     "path": "/account/achievements?sheet=earned",
-    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Erfolge"
   },
   {
     "id": "account-achievements-rhythm",
     "account": "test2",
     "path": "/account/achievements?sheet=rhythm",
-    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Pflegerhythmus"
   },
   {
     "id": "account-achievements-year",
     "account": "test2",
     "path": "/account/achievements?sheet=year",
-    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Jahresrückblick"
   },
   {
     "id": "account-achievements-pause",
     "account": "test2",
     "path": "/account/achievements?sheet=pause",
-    "layerFile": "components/shared/responsive/layer-sheet/layer-part/layer-part.tsx",
+    "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Pause eintragen"
   },
   {

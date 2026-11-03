@@ -1,5 +1,5 @@
 import type { AiConnection, AiRights } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../kernel";
+import { call, createWrite, type Response } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 

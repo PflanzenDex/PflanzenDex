@@ -1,17 +1,14 @@
-import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Navigate, useLocation, useSearchParams } from "react-router";
-import { useFeature } from "@/kernel";
-import { useIsLg } from "@/lib/use-breakpoint";
-import { useAnnounce } from "@/platform/announcer/context";
+import { useFeature } from "@/shared/data";
+import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
-import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { headingId } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { SETTINGS_LAYER_IDS, type Account } from "@/account";
-import {
-  PATHS,
-  type AccountSection,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { PATHS, type AccountSection } from "@/shared/patterns/navigation/navigation/navigation";
 import { AccountIndex } from "./account-index/account-index";
 import {
   ACCOUNT_SECTIONS,

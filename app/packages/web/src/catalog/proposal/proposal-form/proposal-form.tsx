@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import type { ApiError } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import type { ApiError } from "../../../shared/data";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
 import { refusalText } from "../../shared/refusal";

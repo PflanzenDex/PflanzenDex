@@ -1,5 +1,5 @@
 import { phaseStatus, type LightLocation, type PhasesRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { CARD_CLASSES, WARNING_CLASSES } from "../../../shared/notices/notices";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";

@@ -520,11 +520,11 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/components/shared/navigation/nav-model/navigation/navigation.tsx",
+      "file": "packages/web/src/shared/patterns/navigation/navigation/navigation.tsx",
       "enums": 2
     },
     {
-      "file": "packages/web/src/components/shared/states/request-state/request-state.tsx",
+      "file": "packages/web/src/shared/patterns/states/request-state/request-state.tsx",
       "enums": 1
     },
     {

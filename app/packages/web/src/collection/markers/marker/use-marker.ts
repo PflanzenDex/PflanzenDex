@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { ApiError } from "../../../kernel";
+import type { ApiError } from "../../../shared/data";
 import { markSpecimen } from "../../specimens/model/specimens-api";
 import { SIGN_IN, type Token } from "../../specimens/hooks/use-collection";
 

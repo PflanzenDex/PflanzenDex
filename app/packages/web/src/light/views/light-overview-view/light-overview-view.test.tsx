@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LightOverviewView } from "./light-overview-view";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 

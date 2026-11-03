@@ -1,7 +1,4 @@
-import {
-  PATHS,
-  type AccountSection,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { PATHS, type AccountSection } from "@/shared/patterns/navigation/navigation/navigation";
 
 /** The path segment of each section (US-QS-17); `accountAddress` derives the same segments. */
 export const ACCOUNT_SECTIONS = {

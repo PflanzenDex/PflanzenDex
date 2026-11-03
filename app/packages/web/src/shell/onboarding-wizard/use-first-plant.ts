@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
-import { errorText } from "@/lib/error-text";
+import { errorText } from "@/shared/lib/error-text";
 import { createSpecimen } from "../../collection";
-import { SIGN_IN } from "../../kernel";
+import { SIGN_IN } from "../../shared/data";
 import { useOwnZones } from "./save-step/save-step";
 
 type Token = () => Promise<string | undefined>;

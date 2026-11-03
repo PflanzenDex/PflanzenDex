@@ -1,5 +1,5 @@
 import type { DifficultyOverview } from "@pflanzendex/core";
-import { call, type Response } from "../../../kernel";
+import { call, type Response } from "../../../shared/data";
 
 /** Loads the species of the account compared by difficulty (US-BES-05); derived, never stored. */
 export async function loadDifficulty(

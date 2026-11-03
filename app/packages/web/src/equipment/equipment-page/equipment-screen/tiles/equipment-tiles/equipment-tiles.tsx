@@ -1,5 +1,5 @@
 import { equipmentCosts } from "@pflanzendex/core";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { EquipmentData } from "../../../../equipment-api";
 
 export const ITEMS_LAYER = "items";

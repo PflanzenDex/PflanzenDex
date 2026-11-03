@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { FriendsBanner } from "../friends-banner/friends-banner";
 import { FriendsNewsLayer, FriendsNewsTile } from "./friends-news";
 

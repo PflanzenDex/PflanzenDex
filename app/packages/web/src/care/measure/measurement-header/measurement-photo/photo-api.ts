@@ -1,6 +1,6 @@
 import { MEDIA_LIMITS } from "@pflanzendex/core";
-import { currentTimeZone, type ApiError, type Response } from "../../../../kernel";
-import { GENERIC_ERROR_TEXT } from "@/lib/error-text";
+import { currentTimeZone, type ApiError, type Response } from "../../../../shared/data";
+import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
 
 type FetchFn = typeof fetch;
 export interface UploadAccess {

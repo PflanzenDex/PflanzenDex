@@ -1,4 +1,4 @@
-import { call, createWrite, currentTimeZone, type Response } from "../../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
 
 /** The one hint that may show now (or none) and the stored end of the first-plant guide (US-ONB-07, DM-ONB-03). */
 export type HintState = { hint: string | null; guideEnded: boolean };

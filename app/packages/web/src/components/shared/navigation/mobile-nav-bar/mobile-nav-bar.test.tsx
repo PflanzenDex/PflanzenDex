@@ -2,7 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
-import type { NavItem } from "../nav-model/nav-item";
+import type { NavItem } from "../../../../shared/patterns/navigation/nav-item";
 import { MobileNavBar } from "./mobile-nav-bar";
 
 afterEach(cleanup);

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { useFeature } from "../../../kernel";
+import { useFeature } from "../../../shared/data";
 
 const Switch = lazy(() => import("../friends-switch/friends-switch"));
 

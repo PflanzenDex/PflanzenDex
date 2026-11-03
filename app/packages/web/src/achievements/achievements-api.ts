@@ -1,4 +1,4 @@
-import { call, createWrite, currentTimeZone, type Response } from "../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../shared/data";
 
 /** The settings of the achievements of the account (DM-ACH-03); the same shape the API returns. */
 export type AchievementSettings = { calmMode: boolean };

@@ -1,8 +1,8 @@
 import type { TreatmentRow } from "@pflanzendex/core";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { LoadFrame } from "../../../kernel";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { LoadFrame } from "../../../shared/data";
 import { historyKey } from "../../shared/api/query-keys";
 import { CARD_CLASSES, LIST_CLASSES } from "../../shared/notices/notices";
 import { dateText } from "../../shared/text";

@@ -4,8 +4,8 @@ import {
   LayerHost,
   LayerSheet,
   useLayer,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
@@ -15,7 +15,7 @@ import {
   todayAddress,
   type LinkTarget,
   type TodaySection,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+} from "@/shared/patterns/navigation/navigation/navigation";
 import { TodayOverview } from "./today-overview/today-overview";
 
 type Token = () => Promise<string | undefined>;

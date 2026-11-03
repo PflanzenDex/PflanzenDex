@@ -1,6 +1,6 @@
 import type { ReviewEntry } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ageText, flagsOf, isBatch } from "../review-text";
 
 /** The layer id of a case: the address holds `?sheet=case-<id>` while it is open (US-QS-15). */

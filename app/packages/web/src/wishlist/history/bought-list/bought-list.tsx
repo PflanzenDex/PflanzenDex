@@ -1,5 +1,5 @@
 import type { BoughtList as Bought } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { CreateSpecimenButton, type WishToPlant } from "../../actions/actions";
 
 /**

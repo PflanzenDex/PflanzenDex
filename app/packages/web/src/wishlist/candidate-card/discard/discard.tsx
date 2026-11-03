@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 
 /** "Verwerfen" asks before it writes: the wish stays stored under "Verworfen", but there is no way back yet (P-10). */
 export function Discard(props: {

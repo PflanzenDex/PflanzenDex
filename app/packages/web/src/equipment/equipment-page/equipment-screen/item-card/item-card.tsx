@@ -1,5 +1,5 @@
 import type { EquipmentRow } from "../../../equipment-api";
-import { useFeature } from "../../../../kernel";
+import { useFeature } from "../../../../shared/data";
 import { STATUS_LABELS, TYPE_LABELS } from "../../../labels";
 import { Maintenance, type MaintenanceActions } from "../../parts/maintenance/maintenance";
 import { Supply, type SupplyActions } from "../../parts/supply/supply";

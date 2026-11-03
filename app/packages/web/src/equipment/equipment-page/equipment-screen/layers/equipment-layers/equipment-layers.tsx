@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import type { ApiError } from "../../../../../kernel";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import type { ApiError } from "../../../../../shared/data";
 import { EquipmentForm } from "../../../../equipment-form/equipment-form";
 import type { EquipmentData, EquipmentInput } from "../../../../equipment-api";
 import { LampLightView } from "../../../../lamp-light/lamp-light";
@@ -27,7 +27,7 @@ import {
   WISHES_LAYER,
 } from "../../tiles/equipment-tiles/equipment-tiles";
 import { zoneLabel } from "@pflanzendex/core";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../../equipment.de.json";
 
 const t = texts(table);

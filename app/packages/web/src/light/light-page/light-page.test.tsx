@@ -3,8 +3,8 @@ import { cleanup, render as plainRender, screen, within } from "@testing-library
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
-import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LightPage } from "./light-page";
 
 /** The page lives inside the app shell, which owns the toast provider (US-QS-14). */
