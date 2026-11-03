@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -176,6 +176,9 @@ dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1
 
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
 	cd $(APP) && npm run layout
+
+layout-fix: ## Fix the layout of DIR=<dir> or move files: ARGS="--move <from>=<to>"; dry run, APPLY=1 applies (FR-QG-23)
+	cd $(APP) && node tools/layout-fix/layout-fix.mjs $(DIR) $(if $(APPLY),--apply) $(ARGS)
 
 layout-baseline: ## Create or lower app/config/gates/baselines/layout-baseline.json, never enlarge it (FR-QG-22)
 	cd $(APP) && npm run layout -- --write-baseline
