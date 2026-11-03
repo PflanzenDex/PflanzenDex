@@ -35,7 +35,7 @@ IDs are never renumbered.
 - **Symptom:** The DoD asks for coverage of at least 70 %, CI enforces 75 %; people pass the DoD and fail CI, or the reverse.
 - **Cause:** The threshold was written down in two places and changed in one.
 - **Fix:** State each threshold once, in the gate configuration; documents refer to it instead of repeating the number (FR-QG-18).
-- **Can it become a gate?** Yes: a script that fails when the DoD contains a number differing from the configuration. Not implemented yet.
+- **Can it become a gate?** Yes, and it is one: `npm run dod-numbers` (`app/tools/check/docs/specs/spec-numbers/check-dod-numbers.mjs`, QG-U11, FR-QG-18) fails when a DoD document repeats a threshold without a `<!-- gate: file#path -->` marker or with a number differing from the configuration.
 - **Source:** Finding from the Tombola project, recorded in FR-QG-18 in `docs/specs/product/18-architecture-and-quality-gates.md`.
 
 ## PF-004 Caddy does not start with every capability dropped
