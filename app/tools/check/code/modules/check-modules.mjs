@@ -66,7 +66,9 @@ function checkRegister({ appDir, add, cfg }) {
       add("AB-12", file, 0, `${m.name} may depend on every other module: only the root may`);
 }
 
-const DESIGN_SYSTEM_FOLDERS = ["components", "lib", "shared", "styles"]; // no modules: docs/guides/reference/design-system.md section 1 (shared: FR-QG-23 step 2)
+// No modules: docs/guides/reference/design-system.md section 1. shared (FR-QG-23 step 2) and app (step 3, the composition root)
+// are layers, components holds the collector cards until step 4 moves them into pokedex.
+const DESIGN_SYSTEM_FOLDERS = ["app", "components", "shared", "styles"];
 function checkFolders({ appDir, add, cfg, h }) {
   const seen = new Set();
   for (const pkg of LAYERS) {

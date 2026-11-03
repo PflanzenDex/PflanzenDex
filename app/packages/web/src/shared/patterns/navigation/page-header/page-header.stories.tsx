@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "@/shared/ui/button/button";
-import { withRouter } from "../../../../components/shared/shell/shell.fixtures";
+import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { PageHeader } from "./page-header";
 
 // Catalog of the header of a sub-page (TE-18, DS-64): the chevron back, the one h1, at most one action.

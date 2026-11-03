@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { withRouter } from "../../../../components/shared/shell/shell.fixtures";
+import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { FullView } from "./full-view";
 
 // Catalog of the frame of a sub-page (TE-18, DS-64): the header first, then the content region, no card around the h1.

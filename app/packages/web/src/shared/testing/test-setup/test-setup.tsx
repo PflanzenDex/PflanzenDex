@@ -1,5 +1,5 @@
 // Vitest setup: every `render` of a page gets the data layer (one fresh query client per render, no retries), so
-// pages are tested the way main.tsx runs them without each test repeating the provider.
+// pages are tested the way app/main.tsx runs them without each test repeating the provider.
 import { QueryClientProvider } from "@tanstack/react-query";
 import { configure } from "@testing-library/dom";
 import type { ReactNode } from "react";

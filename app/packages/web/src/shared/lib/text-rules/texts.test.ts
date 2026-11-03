@@ -40,8 +40,10 @@ describe("FR-QG-26 every feature message table is a flat table of German texts",
   it.each(tables)(
     "FR-QG-26 %s holds only non-empty strings, named after its feature",
     (file, table) => {
-      const [feature] = file.split("/");
-      expect(file).toBe(`${feature}/${feature}.de.json`);
+      // The table sits in its feature folder and is named after it; the feature folder may lie below app/ (flows).
+      const parts = file.split("/");
+      const feature = parts.at(-2);
+      expect(file).toBe(`${parts.slice(0, -1).join("/")}/${feature}.de.json`);
       expect(typeof table).toBe("object");
       for (const [key, text] of Object.entries(table as object)) {
         for (const part of key.split(".")) expect(part, key).toMatch(/^[a-z][a-zA-Z0-9]*$/);

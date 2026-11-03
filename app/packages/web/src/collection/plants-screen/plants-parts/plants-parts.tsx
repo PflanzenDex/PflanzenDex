@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { ViewLayer } from "@/components/sammlung-header/view-layer/view-layer";
+import { ViewLayer } from "@/app/destinations/collection-area/sammlung-header/view-layer/view-layer";
 
 type Group = "all" | "phase" | "location";
 

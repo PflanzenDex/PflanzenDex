@@ -64,9 +64,11 @@ export const RULES = [
   },
 ];
 
-// Component files (FR-QG-23 step 2): components/, shared/ui, shared/patterns and the routing frames moved to shared/platform/routing.
+// Component files (FR-QG-23 step 2, step 3): components/ (the collector cards until step 4), shared/ui, shared/patterns and the
+// routing frames moved to shared/platform/routing. Step 3 moved the former components/ parts to app/: the destinations,
+// the legacy routes, the app-shell components of app/frame and the shell fixtures of app/stories stay in scope.
 const COMPONENT_FILE =
-  /^(?:components\/|shared\/(?:ui|patterns)\/|shared\/platform\/routing\/(?:lazy-page|route-boundary|route-focus)\/)/;
+  /^(?:components\/|app\/(?:destinations|legacy-routes|stories\/shell|frame\/(?:app-shell|global-header|mobile-nav-bar|side-nav))\/|shared\/(?:ui|patterns)\/|shared\/platform\/routing\/(?:lazy-page|route-boundary|route-focus)\/)/;
 const isComponentFile = (file) => COMPONENT_FILE.test(file);
 
 // Blank out comments and string/template contents (keeps length and newlines) so structure can be matched.

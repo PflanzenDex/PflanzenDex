@@ -14,7 +14,9 @@ const ignores = [
   "**/*-test-helpers.ts",
   "**/*.fake.ts",
   "**/test-global-setup.ts",
-  "packages/web/src/lib/page-stories/**",
+  "packages/web/src/app/stories/harness/**",
+  "packages/web/src/app/stories/data/**",
+  "packages/web/src/app/stories/screens/**",
   "packages/web/src/shared/testing/test-setup/**",
 ];
 const numberFiles = ["packages/core/src/**/*.ts", "packages/api/src/**/*.ts"];

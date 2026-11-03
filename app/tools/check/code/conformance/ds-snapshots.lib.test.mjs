@@ -59,13 +59,13 @@ describe("QG-U5 · FR-QG-27 · page states and their baselines", () => {
   const pages = {
     entries: {
       a: {
-        ...entry("seiten-heute--phone", "./src/lib/page-stories/screens/heute/h.stories.tsx"),
+        ...entry("seiten-heute--phone", "./src/app/stories/screens/heute/h.stories.tsx"),
         tags: ["dev"],
       },
       b: {
-        ...entry("seiten-heute--phone-dark", "./src/lib/page-stories/screens/heute/h.stories.tsx"),
+        ...entry("seiten-heute--phone-dark", "./src/app/stories/screens/heute/h.stories.tsx"),
       },
-      c: entry("seiten-heute--nothing-due", "./src/lib/page-stories/screens/heute/h.stories.tsx"),
+      c: entry("seiten-heute--nothing-due", "./src/app/stories/screens/heute/h.stories.tsx"),
       d: entry("ui-button--default", "./src/shared/ui/button.stories.tsx"),
       e: entry("ds-snapshot-fixture-page--default", "./.storybook/conformance-fixtures/page.tsx"),
       f: entry("ds-snapshot-fixture-padding--default", "./.storybook/conformance-fixtures/p.tsx"),

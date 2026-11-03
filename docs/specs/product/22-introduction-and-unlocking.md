@@ -12,7 +12,7 @@ Delimitation from ACH: no levels, ranks, titles, points or badges for using the 
 
 ## Problem
 
-Found in the code of the current onboarding (`app/packages/web/src/shell/onboarding-wizard`, `app/packages/core/src/account/onboarding.ts`, `app/packages/web/src/shell/today-intro`, formerly `shell/start-page`):
+Found in the code of the current onboarding (`app/packages/web/src/app/flows/onboarding/onboarding-wizard`, `app/packages/core/src/account/onboarding.ts`, `app/packages/web/src/app/flows/onboarding/today-intro`, formerly `shell/start-page`):
 
 1. **Wrong order:** the wizard asks locations, then light zones, then the first plant (`onboardingSteps`). The keeper must understand the structure of the app (what is a light zone, which lamp level?) before the first experience, and the third step is only a button that leaves the wizard for the species catalog. The reward comes last, the work first.
 2. **Explanation instead of doing:** every step needs an intro text ("Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später …"). A step that needs such a text is badly designed; sensible defaults would make the questions unnecessary.
