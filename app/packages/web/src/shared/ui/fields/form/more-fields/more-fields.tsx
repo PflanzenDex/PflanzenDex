@@ -47,7 +47,11 @@ export function MoreFields({
       >
         {label}
       </summary>
-      <div ref={box} className="grid gap-4 px-3 pb-3">
+      {/*
+        One column that may shrink (US-QS-15, DS-61): an auto column grows to the widest min-content of a field, so a
+        textarea at a large text size pushed the group past the edge of the phone.
+      */}
+      <div ref={box} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 px-3 pb-3">
         {children}
       </div>
     </details>

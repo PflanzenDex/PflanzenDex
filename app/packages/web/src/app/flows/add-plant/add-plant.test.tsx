@@ -192,6 +192,13 @@ describe("US-QS-14 · US-ONB-01 Pflanze anlegen is a full-view page with one pag
     ).toBe("/collection");
   });
 
+  it("US-QS-15 the page is one screen (DS-61): its frame marks the fit, so at a large text size only the content region scrolls", () => {
+    server();
+    view();
+    const title = screen.getByRole("heading", { level: 1, name: "Pflanze anlegen" });
+    expect(title.closest("[data-fit-screen]")).not.toBeNull();
+  });
+
   it("US-QS-14 the step's back is an outline button and 'Mehr Angaben' a ghost button, no filled grey one (ADR 0017)", async () => {
     server();
     view();

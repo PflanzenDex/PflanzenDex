@@ -58,6 +58,14 @@ describe("US-QS-24 the shared disclosure Mehr Angaben (issue 1032)", () => {
     expect(disclosure(container).open).toBe(false);
   });
 
+  it("US-QS-15 the group is one column that may shrink, so a wide field wraps inside it at a large text size (DS-61)", async () => {
+    const { container } = render(<Harness />);
+    await userEvent.click(screen.getByText("Mehr Angaben"));
+    const group = disclosure(container).querySelector(":scope > div") as HTMLElement;
+    expect(group.className).toContain("min-w-0");
+    expect(group.className).toContain("grid-cols-[minmax(0,1fr)]");
+  });
+
   it("US-QS-15 opens by itself when a hidden field holds a value", async () => {
     const { container } = render(<Harness />);
     await userEvent.click(screen.getByRole("button", { name: "Hinweis setzen" }));
