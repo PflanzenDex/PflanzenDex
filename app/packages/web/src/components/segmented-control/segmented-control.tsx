@@ -18,7 +18,8 @@ export type SegmentedControlProps<V extends string> = {
  * every segment, Enter and Space choose, and screen readers say which one is pressed. Every segment is a 44 px target;
  * the selected one is a raised pill with a check mark and a visible focus ring, so colour is never the only sign.
  * The choices stay in one row: at a larger text size the row scrolls sideways inside its own box instead of running past
- * the right edge or taking the height of the screen (issue 1019). Every choice keeps its width.
+ * the right edge or taking the height of the screen (issue 1019). Every choice keeps its width. `data-scroll-x="row"` tells
+ * the one-screen gate that this row may scroll sideways at 200 % text (issue 1183); at normal text size it must fit.
  */
 export function SegmentedControl<V extends string>(props: SegmentedControlProps<V>) {
   const { options, value, onChange } = props;
@@ -26,6 +27,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
     <div
       role="group"
       aria-label={props.label}
+      data-scroll-x="row"
       className={cn(
         "inline-flex w-fit max-w-full gap-1 overflow-x-auto overscroll-x-contain rounded-full bg-muted p-1 [scrollbar-width:none]",
         props.className,

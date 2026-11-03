@@ -25,11 +25,21 @@ export function sidewaysSelfTests(
       expect(page.failures[0]).toContain("table");
     });
 
-    test("QG-U8 at 200 % text an inner sideways region fails, an inner vertical region does not", () => {
+    test("QG-U8 at 200 % text a marked row may scroll sideways, an unmarked region may not (issue 1183)", () => {
       const zoomed = sizeOf("360x640@200%");
       const tall = { scrollHeight: 900, clientHeight: 300, el: "div" };
       expect(evaluate("s", zoomed, raw({ region: tall })).failures).toEqual([]);
-      expect(evaluate("s", zoomed, raw({ regionX: wide })).failures[0]).toContain("inner sideways");
+      // Only the marked row scrolls: the unmarked search finds nothing.
+      expect(evaluate("s", zoomed, raw({ regionX: wide, regionXUnmarked: null })).failures).toEqual(
+        [],
+      );
+      const unmarked = raw({ regionX: wide, regionXUnmarked: wide });
+      expect(evaluate("s", zoomed, unmarked).failures[0]).toContain("inner sideways");
+    });
+
+    test("QG-U8 at normal text size even a marked row must not scroll sideways (issue 1183)", () => {
+      const r = evaluate("s", size, raw({ regionX: wide, regionXUnmarked: null }));
+      expect(r.failures[0]).toContain("inner sideways");
     });
 
     test("QG-U8 sidewaysExempt skips only the inner region, not the page", () => {

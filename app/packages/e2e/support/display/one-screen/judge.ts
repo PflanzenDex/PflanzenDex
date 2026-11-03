@@ -48,6 +48,8 @@ export interface Raw {
   innerWidth: number;
   region: Region | null;
   regionX: RegionX | null;
+  /** The largest sideways region outside rows marked `data-scroll-x="row"` (judged at 200 % text). */
+  regionXUnmarked?: RegionX | null;
   pageEl: string;
   hEl: string;
   paint: {
@@ -99,15 +101,17 @@ function capOver(raw: Raw): { over: number; text: string } {
 
 const fmt = (n: number) => n.toFixed(2);
 
-// Sideways, nothing scrolls at any size, at 200 % text too (WCAG 1.4.10): the page and the largest inner region.
-// `exemptX` (register: sidewaysExempt) skips only the inner region.
+// Sideways (owner decision on issue 1183): the page never scrolls sideways. At the normal sizes no inner region does
+// either; at 200 % text a row marked `data-scroll-x="row"` (segmented control, tab strip, chip row) may scroll inside its
+// own box (DS-63), every other region may not. `exemptX` (register: sidewaysExempt) skips only the inner region.
 function sideways(
   raw: Raw,
   exemptX: boolean,
+  largeText: boolean,
 ): { pageX: number; innerX: number; failures: string[] } {
   const failures: string[] = [];
   const pageX = raw.scrollWidth / raw.innerWidth;
-  const rx = exemptX ? null : raw.regionX;
+  const rx = exemptX ? null : largeText ? (raw.regionXUnmarked ?? null) : raw.regionX;
   const innerX = rx ? rx.scrollWidth / rx.clientWidth : 1;
   if (raw.scrollWidth > raw.innerWidth + TOLERANCE_PX)
     failures.push(
@@ -140,7 +144,7 @@ export function evaluate(screen: string, size: Size, raw: Raw, sidewaysExempt = 
     failures.push(
       `inner ${inner.toFixed(2)} (${raw.region.scrollHeight} px of ${raw.region.clientHeight} px): ${raw.region.el}`,
     );
-  const x = sideways(raw, sidewaysExempt);
+  const x = sideways(raw, sidewaysExempt, size.kind === "text200");
   failures.push(...x.failures);
   return {
     screen,
