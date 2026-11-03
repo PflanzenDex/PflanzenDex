@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame } from "../../kernel";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame } from "../../shared/data";
 import { loadLog, type AiLogEntry } from "../api/connections-api";
 
 type Token = () => Promise<string | undefined>;

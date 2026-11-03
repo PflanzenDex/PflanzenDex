@@ -31,8 +31,8 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   it("passes a compliant package", () => {
     const dir = web({
       "package.json": stack,
-      "src/lib/utils.ts": "export {};\n",
-      "src/components/ui/button.tsx": 'export const B = () => <button className="h-dvh" />;\n',
+      "src/shared/lib/utils.ts": "export {};\n",
+      "src/shared/ui/button.tsx": 'export const B = () => <button className="h-dvh" />;\n',
       "src/care/a.tsx": 'import { x } from "@/light";\n',
     });
     assert.equal(scan(dir).size, 0);
@@ -41,8 +41,8 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   it("flags desktop-first queries, vh, colors, inline style, outline and raw controls", () => {
     const dir = web({
       "package.json": stack,
-      "src/lib/utils.ts": "",
-      "src/components/ui/x.ts": "",
+      "src/shared/lib/utils.ts": "",
+      "src/shared/ui/x.ts": "",
       "src/a.css":
         "@media (max-width: 600px) { a { color: #fff; outline: none; height: 100vh } }\n",
       "src/b.tsx":
@@ -65,8 +65,8 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   it("allows CSS-variable inline style and tokens in the token file", () => {
     const dir = web({
       "package.json": stack,
-      "src/lib/utils.ts": "",
-      "src/components/ui/x.ts": "",
+      "src/shared/lib/utils.ts": "",
+      "src/shared/ui/x.ts": "",
       "src/styles/tokens.css": ":root { --a: #fff; }\n",
       "src/b.tsx": 'export const B = () => <i style={{ "--value": 3 }} />;\n',
     });
@@ -74,7 +74,7 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   });
 
   it("US-QS-15 · DS-37 allows outline none only under the owner's exact selector in tokens.css", () => {
-    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const base = { "package.json": stack, "src/shared/lib/utils.ts": "", "src/shared/ui/x.ts": "" };
     const exact =
       '@layer base {\n  :root:not([data-input="keyboard"]) :is(h1, main)[tabindex="-1"]:focus {\n    outline: none;\n  }\n}\n';
     assert.equal(scan(web({ ...base, "src/styles/tokens.css": exact })).size, 0);
@@ -93,14 +93,14 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   });
 
   it("US-QS-15 · DS-37 reads blocks by braces: comments and the forced-colors ring are not violations", () => {
-    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const base = { "package.json": stack, "src/shared/lib/utils.ts": "", "src/shared/ui/x.ts": "" };
     const css =
       "/* outline: none is explained here */\n@media (forced-colors: active) {\n  :focus-visible {\n    outline: 2px solid Highlight;\n    outline-offset: 2px;\n  }\n}\n";
     assert.equal(scan(web({ ...base, "src/styles/tokens.css": css })).size, 0);
   });
 
   it("QG-U4 · no css outside styles: a new module stylesheet fails, tokens.css passes", () => {
-    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const base = { "package.json": stack, "src/shared/lib/utils.ts": "", "src/shared/ui/x.ts": "" };
     const bad = web({ ...base, "src/wishlist/wishlist.css": ".a { margin: 0; }\n" });
     assert.deepEqual([...scan(bad).keys()], ["DS-33|wishlist/wishlist.css"]);
     const empty = web({ ...base, "src/wishlist/empty.css": "" });
@@ -115,8 +115,8 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   it("QG-U4 · no css outside styles: @apply and style tags in components fail", () => {
     const dir = web({
       "package.json": stack,
-      "src/lib/utils.ts": "",
-      "src/components/ui/x.ts": "",
+      "src/shared/lib/utils.ts": "",
+      "src/shared/ui/x.ts": "",
       "src/a.tsx": 'export const A = () => <style>{".a { @apply p-2; }"}</style>;\n',
     });
     assert.deepEqual([...scan(dir).keys()], ["DS-33|a.tsx"]);
@@ -125,26 +125,26 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   it("checks layer imports", () => {
     const dir = web({
       "package.json": stack,
-      "src/lib/utils.ts": "",
-      "src/components/ui/x.tsx": 'import { a } from "@/care";\n',
-      "src/components/shared/y.tsx": 'import { a } from "@/care";\n',
+      "src/shared/lib/utils.ts": "",
+      "src/shared/ui/x.tsx": 'import { a } from "@/care";\n',
+      "src/shared/patterns/y.tsx": 'import { a } from "@/care";\n',
       "src/care/z.tsx": 'import { a } from "@/light/deep/file";\n',
     });
     const keys = [...scan(dir).keys()].sort();
     assert.deepEqual(keys, [
-      "DS-01|components/ui/x.tsx",
-      "DS-02|components/shared/y.tsx",
+      "DS-01|shared/ui/x.tsx",
+      "DS-02|shared/patterns/y.tsx",
       "DS-42|care/z.tsx",
     ]);
   });
 
-  it("flags SPA-irrelevant directives and device APIs outside platform/ (DS-07, DS-10)", () => {
+  it("flags SPA-irrelevant directives and device APIs outside shared/platform/ (DS-07, DS-10)", () => {
     const dir = web({
       "package.json": stack,
-      "src/lib/utils.ts": "",
-      "src/components/ui/x.ts": "",
+      "src/shared/lib/utils.ts": "",
+      "src/shared/ui/x.ts": "",
       "src/a.tsx": '"use client";\nexport const a = () => localStorage.getItem("k");\n',
-      "src/platform/storage.tsx": 'export const s = () => localStorage.getItem("k");\n',
+      "src/shared/platform/storage.tsx": 'export const s = () => localStorage.getItem("k");\n',
     });
     assert.deepEqual([...scan(dir).keys()].sort(), ["DS-07|a.tsx", "DS-10|a.tsx"]);
   });
@@ -152,7 +152,7 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   it("reports the missing design system stack (DS-57)", () => {
     const keys = [...scan(web({ "package.json": "{}" })).keys()];
     assert.ok(keys.includes("DS-57|dependency:tailwindcss"));
-    assert.ok(keys.includes("DS-57|missing:src/components/ui"));
+    assert.ok(keys.includes("DS-57|missing:src/shared/ui"));
   });
 
   it("ratchets: new and grown violations fail, fixed ones must leave the baseline", () => {
@@ -173,7 +173,7 @@ describe("design system gate (docs/guides/reference/design-system.md section 6)"
   });
 
   const good = `import { cva } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 const v = cva("base", {
   variants: { variant: { a: "x", b: "y" } },
   defaultVariants: { variant: "a" },
@@ -184,8 +184,8 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
 `;
   const ui = (content, name = "c") => ({
     "package.json": stack,
-    "src/lib/utils.ts": "",
-    [`src/components/ui/${name}.tsx`]: content,
+    "src/shared/lib/utils.ts": "",
+    [`src/shared/ui/${name}.tsx`]: content,
   });
   const run = (files) => {
     const locations = new Map();
@@ -202,16 +202,16 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     const src =
       'export const C = ({ isOn }: { isOn: boolean }) => (\n  <i className={isOn ? "a" : "b"} />\n);\n';
     const { keys, locations, counts } = run(ui(src));
-    assert.deepEqual(keys, ["DS-34|components/ui/c.tsx"]);
-    assert.deepEqual(locations.get("DS-34|components/ui/c.tsx"), [2]);
+    assert.deepEqual(keys, ["DS-34|shared/ui/c.tsx"]);
+    assert.deepEqual(locations.get("DS-34|shared/ui/c.tsx"), [2]);
     const [problem] = compare(counts, [], locations);
-    assert.match(problem, /DSB-1 DS-34 components\/ui\/c\.tsx.*line 2/);
+    assert.match(problem, /DSB-1 DS-34 shared\/ui\/c\.tsx.*line 2/);
   });
 
   it("QG-U4 · DS-34 fails && inside cn() in className, but allows it with cva", () => {
     const bad =
       'export const C = ({ on }: { on: boolean }) => (\n  <i className={cn("a",\n on && "b")} />\n);\n';
-    assert.deepEqual(run(ui(bad)).keys, ["DS-34|components/ui/c.tsx"]);
+    assert.deepEqual(run(ui(bad)).keys, ["DS-34|shared/ui/c.tsx"]);
     assert.deepEqual(
       run(ui(`${good}const x = (on: boolean) => <i className={cn(on && "b")} />;\n`)).keys,
       [],
@@ -227,42 +227,39 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
   it("QG-U4 · DS-34 fails variant/size props without cva", () => {
     const src = 'type P = {\n  variant?: "a" | "b";\n};\nexport const C = (_: P) => <i />;\n';
     const { keys, locations } = run(ui(src));
-    assert.deepEqual(keys, ["DS-34|components/ui/c.tsx"]);
+    assert.deepEqual(keys, ["DS-34|shared/ui/c.tsx"]);
     assert.deepEqual(locations.get(keys[0]), [2]);
   });
 
-  it("QG-U4 · DS-34 does not apply outside components/ui or to stories", () => {
+  it("QG-U4 · DS-34 does not apply outside shared/ui or to stories", () => {
     const src = 'export const C = ({ o }: { o: boolean }) => <i className={o ? "a" : "b"} />;\n';
     const files = {
       ...ui("", "ok"),
-      "src/components/shared/s.tsx": src,
-      "src/components/ui/c.stories.tsx": src,
+      "src/shared/patterns/s.tsx": src,
+      "src/shared/ui/c.stories.tsx": src,
     };
     assert.deepEqual(run(files).keys, []);
   });
 
-  it("QG-U4 · DS-31 fails template literals and concatenation in className under components/", () => {
+  it("QG-U4 · DS-31 fails template literals and concatenation in className under shared/ui and shared/patterns", () => {
     const files = {
       ...ui("", "ok"),
-      "src/components/ui/t.tsx":
+      "src/shared/ui/t.tsx":
         "export const T = ({ a }: { a: string }) => <i className={`x ${a}`} />;\n",
-      "src/components/shared/c.tsx":
+      "src/shared/patterns/c.tsx":
         'export const C = ({ a }: { a: string }) => <i className={"x " + a} />;\n',
-      "src/components/shared/ok.tsx": 'export const O = () => <i className={cn("x")} />;\n',
+      "src/shared/patterns/ok.tsx": 'export const O = () => <i className={cn("x")} />;\n',
       "src/care/other.tsx":
         "export const D = ({ a }: { a: string }) => <i className={`x ${a}`} />;\n",
     };
-    assert.deepEqual(run(files).keys, [
-      "DS-31|components/shared/c.tsx",
-      "DS-31|components/ui/t.tsx",
-    ]);
+    assert.deepEqual(run(files).keys, ["DS-31|shared/patterns/c.tsx", "DS-31|shared/ui/t.tsx"]);
   });
 
   it("QG-U4 · DS-35 fails a cva call without defaultVariants and names the line", () => {
     const src =
       'import { cva } from "class-variance-authority";\n\nconst v = cva("base", {\n  variants: { a: { b: "c" } },\n});\nexport const C = () => <i className={v()} />;\n';
     const { keys, locations } = run(ui(src));
-    assert.deepEqual(keys, ["DS-35|components/ui/c.tsx"]);
+    assert.deepEqual(keys, ["DS-35|shared/ui/c.tsx"]);
     assert.deepEqual(locations.get(keys[0]), [3]);
   });
 
@@ -273,7 +270,7 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
   it("QG-U4 · DS-36 fails a ui component that accepts className but never calls cn()", () => {
     const src =
       "export const C = ({ className }: { className?: string }) => <i className={className} />;\n";
-    assert.deepEqual(run(ui(src)).keys, ["DS-36|components/ui/c.tsx"]);
+    assert.deepEqual(run(ui(src)).keys, ["DS-36|shared/ui/c.tsx"]);
     assert.deepEqual(run(ui('export const C = () => <i className="x" />;\n')).keys, []);
   });
 
@@ -335,20 +332,14 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     assert.deepEqual(run(ui(inUi)).keys, []);
   });
 
-  it("DS-48 issue 564 · an interactive role on a component imported from components/ui is allowed", () => {
+  it("DS-48 issue 564 · an interactive role on a component imported from shared/ui is allowed", () => {
     const imp = (line, jsx) => `${line}\nexport const A = () => ${jsx};\n`;
     const ok = {
-      alias: imp('import { Button } from "@/components/ui/button";', '<Button role="tab" />'),
-      aliasMenu: imp(
-        'import { Button } from "@/components/ui/button";',
-        '<Button role="menuitem" />',
-      ),
-      renamed: imp('import { Button as B } from "@/components/ui/button";', '<B role="option" />'),
-      relative: imp(
-        'import { Button } from "../../components/ui/button";',
-        '<Button role="tab" />',
-      ),
-      defaultImport: imp('import Chip from "@/components/ui/chip";', '<Chip role="tab" />'),
+      alias: imp('import { Button } from "@/shared/ui/button";', '<Button role="tab" />'),
+      aliasMenu: imp('import { Button } from "@/shared/ui/button";', '<Button role="menuitem" />'),
+      renamed: imp('import { Button as B } from "@/shared/ui/button";', '<B role="option" />'),
+      relative: imp('import { Button } from "../../shared/ui/button";', '<Button role="tab" />'),
+      defaultImport: imp('import Chip from "@/shared/ui/chip";', '<Chip role="tab" />'),
     };
     for (const [name, src] of Object.entries(ok)) {
       assert.deepEqual(run({ ...ui("", "ok"), "src/w/a.tsx": src }).keys, [], name);
@@ -357,7 +348,7 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
 
   it("DS-48 issue 564 · raw controls and roles on other elements stay flagged", () => {
     const imp = (line, jsx) => `${line}\nexport const A = () => ${jsx};\n`;
-    const btn = 'import { Button } from "@/components/ui/button";';
+    const btn = 'import { Button } from "@/shared/ui/button";';
     const bad = {
       div: imp(btn, '<div role="tab" />'),
       span: imp(btn, '<span role="menuitem" />'),
@@ -367,16 +358,13 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
       rawInput: imp(btn, '<input role="combobox" />'),
       otherImport: imp('import { Button } from "./button";', '<Button role="tab" />'),
       sharedImport: imp(
-        'import { Button } from "@/components/shared/button";',
+        'import { Button } from "@/shared/patterns/button";',
         '<Button role="tab" />',
       ),
       libImport: imp('import { Button } from "some-lib";', '<Button role="tab" />'),
       notImported: '<Button role="tab" />',
-      typeOnly: imp(
-        'import type { Button } from "@/components/ui/button";',
-        '<Button role="tab" />',
-      ),
-      shadowedName: imp('import { Button } from "@/components/ui/button";', '<Other role="tab" />'),
+      typeOnly: imp('import type { Button } from "@/shared/ui/button";', '<Button role="tab" />'),
+      shadowedName: imp('import { Button } from "@/shared/ui/button";', '<Other role="tab" />'),
       prefixPath: imp(
         'import { Button } from "@/components/uikit/button";',
         '<Button role="tab" />',
@@ -430,7 +418,7 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     );
   });
 
-  it("QG-U4 · raw controls in components/ui pass", () => {
+  it("QG-U4 · raw controls in shared/ui pass", () => {
     const src =
       "export const C = () => (\n  <div>\n    <button />\n    <input />\n    <select />\n    <textarea />\n  </div>\n);\n";
     assert.deepEqual(run(ui(src)).keys, []);

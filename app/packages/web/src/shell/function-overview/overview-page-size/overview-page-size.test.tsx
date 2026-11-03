@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { useOverviewPageSize } from "./overview-page-size";
 
 /** jsdom has no layout: the window height is set by hand (US-QS-17). */

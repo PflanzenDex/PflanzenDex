@@ -1,12 +1,12 @@
 import { Plus } from "lucide-react";
 import { useSearchParams } from "react-router";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerOpener, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 import { zoneLabel } from "@pflanzendex/core";
 import type { LightData } from "../../../shared/light-api/light-api";
 import { lux, kindText, zoneName } from "../../../shared/texts";
@@ -15,7 +15,7 @@ import { locationLayerId } from "../../../zones/location-layer/location-layer";
 import { HINTS, NEW_LOCATION, NEW_ZONE, REFERENCE } from "../light-layers/light-layers";
 import type { LightActions } from "../light-view";
 import { LightRow } from "../light-row/light-row";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../light.de.json";
 
 const t = texts(table);

@@ -1,4 +1,4 @@
-import { call, currentTimeZone, type Response } from "../../kernel";
+import { call, currentTimeZone, type Response } from "../../shared/data";
 
 /** The count of the open offers of friends (US-SOZ-09): the same request as the list of the exchange, only its length is used. */
 export async function loadOpenOffersCount(

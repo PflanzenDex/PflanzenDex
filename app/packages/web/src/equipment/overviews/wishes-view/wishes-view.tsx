@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { Button } from "@/components/ui/button/button";
-import { texts } from "@/lib/text-rules/texts";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 import { TYPE_LABELS } from "../../labels";
 import type { EquipmentWishInput, EquipmentWishList, EquipmentWishRow } from "./wishes-api";

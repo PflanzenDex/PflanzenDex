@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
 import type { LightZone, Species, Specimen } from "@pflanzendex/core";
-import { useRequest } from "../../../kernel";
+import { useRequest } from "../../../shared/data";
 import { loadZones } from "../../../light";
-import type { ApiError } from "../../../kernel";
+import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
 import { createSpecimen } from "../model/specimens-api";
 import { SIGN_IN, type Token } from "../hooks/use-collection";

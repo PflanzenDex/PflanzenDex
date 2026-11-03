@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../kernel";
+import { createQueryClient } from "../../shared/data";
 import { YearInReviewSection } from "./year-in-review";
 
 afterEach(() => {

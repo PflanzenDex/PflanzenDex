@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import type { PhotoAccess } from "@/lib/use-stored-photo";
+import { Button } from "@/shared/ui/button/button";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Photo, Quiet } from "../../../../specimens/cards/parts/parts";
 import {
   Measurement,

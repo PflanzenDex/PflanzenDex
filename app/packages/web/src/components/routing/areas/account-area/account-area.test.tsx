@@ -3,8 +3,8 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { FeaturesProvider } from "@/kernel";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { FeaturesProvider } from "@/shared/data";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AccountArea } from "./account-area";
 
 const response = (status: number, body: unknown) =>

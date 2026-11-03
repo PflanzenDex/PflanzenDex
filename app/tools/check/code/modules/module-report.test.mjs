@@ -12,7 +12,7 @@ describe("module report (FR-QG-19, report only)", () => {
   it("maps a path to its module and ignores root and unmoduled files", () => {
     assert.equal(moduleOfPath("/x/app/packages/core/src/light/zones.ts", MODULES), "light");
     assert.equal(moduleOfPath("packages/db/src/index.ts", MODULES), null);
-    assert.equal(moduleOfPath("packages/web/src/lib/utils.ts", MODULES), null);
+    assert.equal(moduleOfPath("packages/web/src/shared/lib/utils.ts", MODULES), null);
   });
 
   it("sums line coverage per module over all packages", () => {

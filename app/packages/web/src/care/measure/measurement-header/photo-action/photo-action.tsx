@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { FileField } from "@/components/ui/fields/input/native-fields/file-field/file-field";
-import { Label } from "@/components/ui/display/label/label";
-import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
-import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../../../../kernel";
-import type { PhotoAccess } from "@/lib/use-stored-photo";
+import { Button } from "@/shared/ui/button/button";
+import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
+import { Label } from "@/shared/ui/display/label/label";
+import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
+import { errorText } from "@/shared/lib/error-text";
+import type { ApiError } from "../../../../shared/data";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { RefusalAlert } from "../../../shared/notices/notices";
 import { photoProblem, uploadPhoto } from "../measurement-photo";
 import { MEDIA_LIMITS } from "@pflanzendex/core";

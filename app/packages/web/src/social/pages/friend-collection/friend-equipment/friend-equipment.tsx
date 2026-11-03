@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { SharedDevice } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame } from "../../../../kernel";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame } from "../../../../shared/data";
 import { loadFriendEquipment } from "../../../api/friends-api";
 
 /** The German names of the equipment types (the codes stay English; the same names as under "Equipment"). */

@@ -8,8 +8,8 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { z } from "zod";
-import { Button } from "@/components/ui/button/button";
-import { texts } from "@/lib/text-rules/texts";
+import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../light.de.json";
 import {
   FormControl,
@@ -17,8 +17,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/fields/form/form";
-import { Select } from "@/components/ui/fields/select/select";
+} from "@/shared/ui/fields/form/form";
+import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
 import { ALERT_CLASSES, useServerRefusal } from "../../texts";
 

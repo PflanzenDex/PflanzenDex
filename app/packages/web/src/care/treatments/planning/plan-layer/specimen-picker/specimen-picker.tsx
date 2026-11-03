@@ -1,11 +1,11 @@
 import { useState, type MutableRefObject } from "react";
 import type { ControllerRenderProps, Control } from "react-hook-form";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { FormField, FormItem, FormMessage } from "@/components/ui/fields/form/form";
-import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
-import { Select } from "@/components/ui/fields/select/select";
-import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
-import { useIsMd } from "@/lib/use-breakpoint";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { FormField, FormItem, FormMessage } from "@/shared/ui/fields/form/form";
+import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import type { TreatableSpecimen } from "../../../../shared/api/treatments-api";
 import type { TreatmentFields } from "../../../../shared/schemas";
 

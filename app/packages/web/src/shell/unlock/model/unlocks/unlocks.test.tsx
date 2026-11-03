@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWrite } from "../../../../kernel";
+import { createWrite } from "../../../../shared/data";
 import { UnlocksProvider, useUnlocks } from "./unlocks";
 
 const json = (status: number, body: unknown) =>

@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
-import { SectionLabel } from "@/components/section-label/section-label";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { SectionLabel } from "@/shared/patterns/elements/section-label/section-label";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { headingId } from "./use-section-anchor";
 
 /**

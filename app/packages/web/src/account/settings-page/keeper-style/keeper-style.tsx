@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { LoadFrame, useInvalidate } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { LoadFrame, useInvalidate } from "../../../shared/data";
 import { loadKeeperStyle, type KeeperStyleState } from "./keeper-style-api";
 import { Refusal, StyleButtons, StyleSelect, useSaveStyle } from "./style-parts/style-parts";
 

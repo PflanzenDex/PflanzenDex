@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { SIGN_IN, setProfileTimeZone, type ApiError } from "../../../kernel";
+import { SIGN_IN, setProfileTimeZone, type ApiError } from "../../../shared/data";
 import { saveProfile, type AccountProfile } from "../../api/account-api";
 
 type Token = () => Promise<string | undefined>;

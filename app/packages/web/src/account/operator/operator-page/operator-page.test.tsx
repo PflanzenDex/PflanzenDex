@@ -388,7 +388,7 @@ describe("US-ACC-05 invitation codes", () => {
   });
 
   it("US-ACC-05 shows the expiry in the time zone of the profile", async () => {
-    const { setProfileTimeZone } = await import("../../../kernel");
+    const { setProfileTimeZone } = await import("../../../shared/data");
     setProfileTimeZone("Pacific/Auckland");
     current = overview({
       invitations: [

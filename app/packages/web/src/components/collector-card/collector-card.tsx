@@ -1,12 +1,12 @@
 import { Fragment } from "react";
 import type { CollectorCard as Card } from "@pflanzendex/core";
-import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
+import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
 import {
   FoldNext,
   missingText,
-} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { cn } from "@/lib/utils";
+} from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { cn } from "@/shared/lib/utils";
 import { catchText } from "./catch-text";
 import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
 

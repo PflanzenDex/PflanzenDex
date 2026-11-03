@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { AnnouncerProvider } from "@/platform/announcer/announcer";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { DiscoverArea } from "./discover-area";
 import { DISCOVER_VIEW_KEY } from "./discover-view";
 

@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
 import { DistributionView } from "../../insights/distribution-view/distribution-view";
 import { ArchivedList } from "../../archived/archived-list/archived-list";
 import { PlantLayer } from "./plant-layer/plant-layer";

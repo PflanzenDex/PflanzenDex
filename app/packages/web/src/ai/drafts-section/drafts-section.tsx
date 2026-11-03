@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/connections-api";
 
 type Token = () => Promise<string | undefined>;

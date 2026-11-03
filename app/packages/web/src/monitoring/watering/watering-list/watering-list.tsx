@@ -1,10 +1,10 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { keepTogether } from "@/lib/format";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Button } from "@/shared/ui/button/button";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { keepTogether } from "@/shared/lib/format";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
 import { loadWateringDue, markWatered, type WateringDueRow } from "../../api/reminders-api";
 

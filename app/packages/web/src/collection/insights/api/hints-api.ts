@@ -1,5 +1,5 @@
 import type { SpecimenHint } from "@pflanzendex/core";
-import { call, type Response } from "../../../kernel";
+import { call, type Response } from "../../../shared/data";
 
 /** Loads the hints about incomplete specimens of the account (US-BES-08); derived, never stored. */
 export async function loadSpecimenHints(

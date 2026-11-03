@@ -1,7 +1,7 @@
 import type { AttributeSource, SuggestionAttributes } from "@pflanzendex/core";
-import { dateText } from "@/lib/format";
+import { dateText } from "@/shared/lib/format";
 import table from "../../discover.de.json";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
 

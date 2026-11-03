@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useWriteAction } from "../../kernel";
+import { useWriteAction } from "../../shared/data";
 import { confirmPhaseSwitch } from "../shared/api/care-phases-api";
 
 /**

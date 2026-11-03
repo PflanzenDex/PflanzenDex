@@ -1,14 +1,14 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LayerOpenRow } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { Pager } from "@/components/shared/responsive/pager/pager";
+import { Button } from "@/shared/ui/button/button";
+import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
-import { errorText } from "@/lib/error-text";
-import { useInvalidate, useWriteAction } from "../../kernel";
-import { PATHS } from "../../components/shared/navigation/nav-model/navigation/navigation";
+import { errorText } from "@/shared/lib/error-text";
+import { useInvalidate, useWriteAction } from "../../shared/data";
+import { PATHS } from "../../shared/patterns/navigation/navigation/navigation";
 import { unlockFunction, type UnlockEntry } from "../unlock/model/unlock-api";
 import {
   functionAddress,

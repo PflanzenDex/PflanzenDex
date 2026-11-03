@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { useInvalidate } from "../../kernel";
-import { RequestState } from "@/components/shared/states/request-state/request-state";
+import { useInvalidate } from "../../shared/data";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
 import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
 import { refusalText } from "../specimens/model/refusal";

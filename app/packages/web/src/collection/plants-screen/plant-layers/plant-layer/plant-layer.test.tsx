@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
 import type { PlantSlots } from "../layer-ids";

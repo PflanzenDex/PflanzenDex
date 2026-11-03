@@ -5,7 +5,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/fields/form/form";
+} from "@/shared/ui/fields/form/form";
 
 /** One labelled field of a form with its message (DS-47): the render prop gets the control's props and returns the control. */
 export function Field<T extends FieldValues, N extends FieldPath<T>>(props: {

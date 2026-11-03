@@ -3,8 +3,8 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { TodayArea } from "./today-area";
 
 const response = (status: number, body: unknown) =>

@@ -1,5 +1,5 @@
-import { errorText } from "@/lib/error-text";
-import { SIGN_IN, type ApiError } from "../../../../../kernel";
+import { errorText } from "@/shared/lib/error-text";
+import { SIGN_IN, type ApiError } from "../../../../../shared/data";
 
 /** What the last write did: a notice, or the German text of its refusal (P-10). */
 export function Outcome(props: { message: string | null; error: ApiError | null }) {

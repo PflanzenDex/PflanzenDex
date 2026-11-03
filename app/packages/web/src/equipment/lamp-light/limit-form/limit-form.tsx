@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { FormRoot } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
+import { Button } from "@/shared/ui/button/button";
+import { FormRoot } from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
 import { wholeNumber } from "../parse";
 
 /**

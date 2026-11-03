@@ -29,7 +29,7 @@ vi.mock("oidc-client-ts", () => ({
 }));
 
 import { BrowserRouter, MemoryRouter } from "react-router";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { App } from "./app";
 import { EMPTY_DISTRIBUTION } from "../../collection/insights/distribution-test-helpers";
 

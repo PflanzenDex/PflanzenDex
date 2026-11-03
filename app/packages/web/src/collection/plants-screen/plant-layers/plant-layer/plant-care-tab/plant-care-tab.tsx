@@ -1,9 +1,9 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import type { PhotoAccess } from "@/lib/use-stored-photo";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet } from "../../../../specimens/cards/parts/parts";
 
 const CareProfile = lazy(() =>

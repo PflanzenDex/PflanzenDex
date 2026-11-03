@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { useRequest } from "../../kernel";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { useRequest } from "../../shared/data";
 import { loadDeletion, type DeletionState } from "../privacy-api";
 import { DELETION_KEY, useDeletionAction } from "./use-deletion-action/use-deletion-action";
 import { DeletionBody, DeletionFooter, day, type Step } from "./deletion-steps/deletion-steps";

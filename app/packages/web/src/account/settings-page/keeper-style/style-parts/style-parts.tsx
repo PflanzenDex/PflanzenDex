@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Select } from "@/components/ui/fields/select/select";
-import { errorText } from "@/lib/error-text";
-import { SIGN_IN, type ApiError } from "../../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Select } from "@/shared/ui/fields/select/select";
+import { errorText } from "@/shared/lib/error-text";
+import { SIGN_IN, type ApiError } from "../../../../shared/data";
 import { saveKeeperStyle, type KeeperStyle, type KeeperStyleState } from "../keeper-style-api";
 
 type Token = () => Promise<string | undefined>;

@@ -2,8 +2,8 @@ import { useCallback } from "react";
 import { loadProfile } from "@/account";
 import { loadAchievements } from "@/achievements";
 import { loadConnections } from "@/ai";
-import { useFeature, useRequest } from "@/kernel";
-import type { AccountSection } from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { useFeature, useRequest } from "@/shared/data";
+import type { AccountSection } from "@/shared/patterns/navigation/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 

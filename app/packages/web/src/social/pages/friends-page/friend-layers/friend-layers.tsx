@@ -3,11 +3,11 @@ import { FeedBlock } from "../../../feed/feed-block/feed-block";
 import { FriendsBanner } from "../../../feed/friends-banner/friends-banner";
 import { FriendList } from "../../../parts/friend-list/friend-list";
 import { nameOf, RequestList } from "../../../parts/request-list/request-list";
-import { useWriteAction } from "../../../../kernel";
+import { useWriteAction } from "../../../../shared/data";
 import { Layer } from "./layer/layer";
 import { Outcome } from "./outcome/outcome";
 import { SharingSection } from "./sharing-section/sharing-section";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../social.de.json";
 
 // `t` names the token in the write callbacks of this file.

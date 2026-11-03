@@ -1,4 +1,4 @@
-import { dateText, keepTogether } from "@/lib/format";
+import { dateText, keepTogether } from "@/shared/lib/format";
 import type { GrowthMoments } from "../use-growth-moments";
 
 const number = (n: number): string => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });

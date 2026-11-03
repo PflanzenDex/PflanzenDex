@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import type { Candidate, CandidateList, ZoneStock } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import type { ApiError } from "../../../../kernel";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import type { ApiError } from "../../../../shared/data";
 import { CandidateCard } from "../../../candidate-card/candidate-card";
 import { BoughtList } from "../../../history/bought-list/bought-list";
 import { DiscardedList } from "../../../history/discarded-list/discarded-list";
@@ -13,7 +13,7 @@ import { WishForm } from "../../../wish-form/wish-form";
 import type { WishInput, Wishlist } from "../../../wishlist-api";
 import type { WishToPlant } from "../../../actions/actions";
 import { wishLayerId } from "../../rows/wish-row/wish-row";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../wishlist.de.json";
 
 const t = texts(table);

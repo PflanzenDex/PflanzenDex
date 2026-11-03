@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { deliverBuffered } from "@/platform/announcer/outbox";
-import { AnnouncerProvider } from "@/platform/announcer/announcer";
+import { deliverBuffered } from "@/shared/platform/announcer/outbox";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
 

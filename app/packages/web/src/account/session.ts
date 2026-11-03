@@ -7,7 +7,7 @@ import {
   type SetStateAction,
 } from "react";
 import type { UserManager, User } from "oidc-client-ts";
-import { setProfileTimeZone } from "../kernel";
+import { setProfileTimeZone } from "../shared/data";
 import {
   signOutEverywhere,
   apiUrl,

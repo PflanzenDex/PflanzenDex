@@ -1,16 +1,16 @@
 import { useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { OfferView } from "@pflanzendex/core";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import {
   LayerHost,
   LayerSheet,
   useLayer,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
-import { errorText } from "@/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { errorText } from "@/shared/lib/error-text";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadExchange, withdrawOffer, type ExchangeData } from "../../api/offers-api";
 import { SwapRequests } from "../../parts/swap-requests/swap-requests";
 import { FriendOffers } from "../../parts/friend-offers/friend-offers";
@@ -18,7 +18,7 @@ import { SwapHistory } from "../../parts/swap-history/swap-history";
 import { OfferForm } from "../../parts/offer-form/offer-form";
 import { OfferList } from "../../parts/offer-list/offer-list";
 import { ExchangeSkeleton } from "./exchange.skeleton";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 
 const t = texts(table);

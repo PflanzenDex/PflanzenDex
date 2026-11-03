@@ -1,4 +1,4 @@
-// DS-48 (docs/guides/reference/design-system.md): AST detection of raw controls outside components/ui, used by check-design-system-rules.mjs.
+// DS-48 (docs/guides/reference/design-system.md): AST detection of raw controls outside shared/ui, used by check-design-system-rules.mjs.
 import ts from "typescript";
 
 const RAW_TAGS = new Set(["button", "input", "select", "textarea", "form"]);
@@ -34,10 +34,10 @@ function staticValue(attr) {
 }
 const openingOf = (node) => (ts.isJsxElement(node) ? node.openingElement : node);
 
-// DS-48 (issue 564): local names of components imported from components/ui (the `@/components/ui/...`
-// alias or a relative path through a `components/ui` folder). Such a primitive renders a real
+// DS-48 (issue 564): local names of components imported from shared/ui (the `@/shared/ui/...`
+// alias or a relative path through a `shared/ui` folder). Such a primitive renders a real
 // control, so an interactive `role` on it is allowed (Tabs, Menu); only these exact local names count.
-const UI_SOURCE = /(^|\/)components\/ui(\/|$)/;
+const UI_SOURCE = /(^|\/)shared\/ui(\/|$)/;
 function uiImportNames(source) {
   const names = new Set();
   for (const stmt of source.statements) {
@@ -67,7 +67,7 @@ function rawControl(opening, uiNames) {
   return undefined;
 }
 
-// DS-48: raw controls outside components/ui, found in the TypeScript AST. The direct children of
+// DS-48: raw controls outside shared/ui, found in the TypeScript AST. The direct children of
 // an element with `asChild` are exempt: the parent primitive renders them (Radix Slot).
 export function rawControlLines(content, file = "file.tsx") {
   const source = ts.createSourceFile(

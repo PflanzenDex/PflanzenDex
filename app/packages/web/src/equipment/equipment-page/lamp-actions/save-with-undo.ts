@@ -1,5 +1,5 @@
-import type { ToastApi } from "@/components/shared/states/toast/toast-provider/toast-provider";
-import type { Response, useWriteAction } from "../../../kernel";
+import type { ToastApi } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import type { Response, useWriteAction } from "../../../shared/data";
 
 type Write = ReturnType<typeof useWriteAction>;
 type Send = (token: string) => Promise<Response<unknown>>;

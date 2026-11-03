@@ -1,13 +1,13 @@
 import type { EmptyReason, MatchCard as Card } from "@pflanzendex/core";
 import { Link } from "react-router";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import {
   EXCHANGE_PATH,
   PATHS,
   WISHLIST_MODE_ADDRESS,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { Button } from "@/components/ui/button/button";
+} from "@/shared/patterns/navigation/navigation/navigation";
+import { Button } from "@/shared/ui/button/button";
 import { cardTitle as title } from "../deck-state";
 
 export type Answer = "no" | "later" | "yes";

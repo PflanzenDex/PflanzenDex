@@ -1,7 +1,7 @@
 import type { Distribution } from "@pflanzendex/core";
 import { Gauge } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { zoneLabel } from "@pflanzendex/core";
 
 /** The id of the layer with the distribution per light zone (`?sheet=zones`, US-QS-19). */

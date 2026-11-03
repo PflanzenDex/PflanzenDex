@@ -1,5 +1,5 @@
 // Public interface of the `catalog` module (ADR 0003): pages for the species catalog and its review.
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const SpeciesPage = lazyPage(() =>
   import("./species-page/species-page").then((m) => ({ default: m.SpeciesPage })),
 );

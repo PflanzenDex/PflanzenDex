@@ -1,5 +1,5 @@
 import type { SpecimenCard } from "@pflanzendex/core";
-import { call, currentTimeZone, type Response } from "../../../kernel";
+import { call, currentTimeZone, type Response } from "../../../shared/data";
 
 /** Loads the cards of the own specimens; the device's time zone determines "today" for the due date (NFR-08). */
 export async function loadCards(

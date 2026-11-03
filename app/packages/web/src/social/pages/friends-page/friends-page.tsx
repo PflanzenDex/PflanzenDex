@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LayerHost, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LoadFrame, useInvalidate, useRequest } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LoadFrame, useInvalidate, useRequest } from "../../../shared/data";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
 import { loadBanner } from "../../api/feed-api";
 import { loadMatchingCount, loadOpenOffersCount } from "../../api/offer-counts-api";

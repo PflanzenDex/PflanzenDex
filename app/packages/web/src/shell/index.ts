@@ -1,6 +1,6 @@
 // Public interface of the module `shell` (ADR 0003): the app root and the onboarding parts of "Heute".
 // The onboarding forms are their own chunks: they load only when they apply (#451, DS-08, QG-U6).
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 
 export { App } from "./app/app";
 export const TodayIntro = lazyPage(() =>

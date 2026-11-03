@@ -1,6 +1,6 @@
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
 import { Discard } from "../../../candidate-card/discard/discard";
 

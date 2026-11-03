@@ -1,8 +1,8 @@
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { VIEW_LAYER } from "@/components/sammlung-header/view-layer/view-layer";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { buttonVariants } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { buttonVariants } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 import { SAMMLUNG_VIEWS, type SammlungView } from "../../../../../sammlung-view";
 
 /**

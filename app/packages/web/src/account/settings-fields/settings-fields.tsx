@@ -6,9 +6,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/fields/form/form";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { Input } from "@/components/ui/fields/input/input";
+} from "@/shared/ui/fields/form/form";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Input } from "@/shared/ui/fields/input/input";
 import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
 import { OCCASIONS, type Occasion } from "../api/account-api";
 import { formatLux, parseLux, type ProfileFields as Fields } from "../schemas";

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Banner, BannerItem } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
-import { texts } from "@/lib/text-rules/texts";
-import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";

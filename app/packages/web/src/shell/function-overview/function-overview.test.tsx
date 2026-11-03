@@ -4,12 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { UNLOCK_FUNCTIONS } from "@pflanzendex/core";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import {
-  navItems,
-  PATHS,
-} from "../../components/shared/navigation/nav-model/navigation/navigation";
-import { createWrite } from "../../kernel";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { navItems, PATHS } from "../../shared/patterns/navigation/navigation/navigation";
+import { createWrite } from "../../shared/data";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { UnlocksProvider } from "../unlock/model/unlocks/unlocks";
 import { FUNCTION_EMPTY, FUNCTION_NAMES, functionAddress } from "../unlock/model/unlock-texts";
 import FunctionOverview from "./function-overview";

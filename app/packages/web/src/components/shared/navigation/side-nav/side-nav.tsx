@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { Leaf } from "lucide-react";
 import { Link, NavLink } from "react-router";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
   BRAND_HREF,
   BRAND_LINK_LABEL,
@@ -10,8 +10,8 @@ import {
   stackedLabel,
   stackedPill,
   type NavItem,
-} from "../nav-model/nav-item";
-import { NavNote } from "../nav-model/nav-note/nav-note";
+} from "../../../../shared/patterns/navigation/nav-item";
+import { NavNote } from "../../../../shared/patterns/navigation/nav-note/nav-note";
 
 /**
  * The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar, and

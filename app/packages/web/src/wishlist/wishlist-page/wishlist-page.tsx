@@ -1,9 +1,9 @@
 import { useCallback, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { texts } from "@/lib/text-rules/texts";
+import { cn } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../wishlist.de.json";
-import { LoadFrame, useInvalidate } from "../../kernel";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LoadFrame, useInvalidate } from "../../shared/data";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { WriteOutcome, type WishToPlant } from "../actions/actions";
 import { loadWishlist, type Wishlist } from "../wishlist-api";
 import { Candidates, Controls } from "./parts/candidates/candidates";

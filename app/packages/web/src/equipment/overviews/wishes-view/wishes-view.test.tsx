@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "../../equipment-page/equipment-page";
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.

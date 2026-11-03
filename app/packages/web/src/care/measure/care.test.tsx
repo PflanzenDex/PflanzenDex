@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
-import { createQueryClient } from "../../kernel";
+import { createQueryClient } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";

@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState, type ReactNode } from "react";
 import { useForm, type Control, type Path } from "react-hook-form";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { deviceTimeZone, type ApiError } from "../../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { ALERT_CLASSES, useServerRefusal } from "../../../refusal";
 import {

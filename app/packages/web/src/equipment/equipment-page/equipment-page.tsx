@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router";
-import { LoadFrame, useFeature, useInvalidate } from "../../kernel";
-import { Button } from "@/components/ui/button/button";
+import { LoadFrame, useFeature, useInvalidate } from "../../shared/data";
+import { Button } from "@/shared/ui/button/button";
 import { loadEquipment, type EquipmentData } from "../equipment-api";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
 import { useWishActions } from "../overviews/wishes-view/use-wish-actions";

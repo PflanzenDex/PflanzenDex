@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWriteAction } from "../../../../../kernel";
+import { useWriteAction } from "../../../../../shared/data";
 import {
   setSpeciesSharing,
   setSpecimenSharing,

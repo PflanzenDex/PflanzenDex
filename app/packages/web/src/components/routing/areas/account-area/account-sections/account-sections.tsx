@@ -11,11 +11,11 @@ import {
 } from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import {
   MANAGE_ADDRESS,
   type AccountSection,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+} from "@/shared/patterns/navigation/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 /** Renders the locked rows of some functions inside a section (US-ONB-05); wired by the app. */

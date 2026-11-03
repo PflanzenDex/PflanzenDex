@@ -5,8 +5,8 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./components/routing/areas/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
-import { ToastProvider } from "./components/shared/states/toast/toast-provider/toast-provider";
-import { AnnouncerProvider } from "./platform/announcer/announcer";
+import { ToastProvider } from "./shared/patterns/states/toast/toast-provider/toast-provider";
+import { AnnouncerProvider } from "./shared/platform/announcer/announcer";
 import "./collection/specimens/tests/plants-test-helpers";
 
 const response = (status: number, body: unknown) =>

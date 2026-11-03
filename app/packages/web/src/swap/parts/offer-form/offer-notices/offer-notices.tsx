@@ -1,7 +1,7 @@
 import type { OfferPreview } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { Button } from "@/shared/ui/button/button";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { healthText } from "../health-text";
 
 /**

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { SIGN_IN, type ApiError } from "../../../../kernel";
+import { SIGN_IN, type ApiError } from "../../../../shared/data";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { uploadPhoto } from "./photo-api";

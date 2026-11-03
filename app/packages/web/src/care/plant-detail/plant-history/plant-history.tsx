@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame } from "../../../kernel";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame } from "../../../shared/data";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementPhoto } from "../../measure/measurement-header/measurement-photo";
 import { CARD_CLASSES } from "../../shared/notices/notices";

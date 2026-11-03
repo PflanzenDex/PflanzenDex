@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { errorText } from "@/lib/error-text";
-import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../kernel";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { errorText } from "@/shared/lib/error-text";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../shared/data";
 import {
   loadAchievementSettings,
   setCalmMode,

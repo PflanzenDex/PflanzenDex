@@ -1,5 +1,5 @@
 import type { TodayList } from "@pflanzendex/core";
-import { call, currentTimeZone, type Response } from "../kernel";
+import { call, currentTimeZone, type Response } from "../shared/data";
 
 /**
  * Loads the central "Today" list (TE-07). The profile's time zone (US-ACC-02; the device's as fallback) decides what

@@ -6,7 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { UnlockEntry } from "../model/unlock-api";
 import { UnlocksProvider } from "../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows/locked-rows";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LockedLayer, LockedTile } from "../locked-rows/collapsed-rows/collapsed-rows";
 import { UnlockPage } from "./unlock-page";
 

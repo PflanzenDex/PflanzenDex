@@ -1,5 +1,5 @@
 import type { SensorView } from "@pflanzendex/core";
-import { Select } from "@/components/ui/fields/select/select";
+import { Select } from "@/shared/ui/fields/select/select";
 
 export interface SensorActions {
   busy: boolean;

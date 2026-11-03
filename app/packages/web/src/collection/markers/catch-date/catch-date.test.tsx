@@ -5,7 +5,7 @@ import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setProfileTimeZone, type ApiError } from "../../../kernel";
+import { setProfileTimeZone, type ApiError } from "../../../shared/data";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { CreateForm } from "../../specimens/create/create-form/create-form";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";

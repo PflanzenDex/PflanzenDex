@@ -1,8 +1,8 @@
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
-import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
-import { errorText } from "@/lib/error-text";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
+import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { errorText } from "@/shared/lib/error-text";
 import { isPlainHttps } from "../schemas";
 import { Discard } from "./discard/discard";
 import { LazyFriendsSwitch } from "./lazy-friends-switch/lazy-friends-switch";

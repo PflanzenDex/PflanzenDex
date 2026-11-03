@@ -1,6 +1,6 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { keepTogether, overdueChip } from "@/lib/format";
+import { Button } from "@/shared/ui/button/button";
+import { keepTogether, overdueChip } from "@/shared/lib/format";
 import { ATTENTION_CLASSES } from "../../../shared/notices";
 import { dateText } from "../../../shared/text";
 

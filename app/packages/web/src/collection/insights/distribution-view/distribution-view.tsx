@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { NotCounted, Distribution } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
 import { zoneLabel } from "@pflanzendex/core";
 

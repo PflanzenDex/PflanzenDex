@@ -1,4 +1,4 @@
-import { call, currentTimeZone, type Response } from "../../kernel";
+import { call, currentTimeZone, type Response } from "../../shared/data";
 
 export type YearPhoto = { measurementId: string; date: string };
 export type YearAnswer =

@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "./equipment-page";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. The toast provider is the app shell's (US-QS-07). */

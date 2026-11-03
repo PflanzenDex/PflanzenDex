@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { RequestState } from "@/components/shared/states/request-state/request-state";
-import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
-import { useInvalidate, useRequest, type ApiError } from "@/kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
+import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useInvalidate, useRequest, type ApiError } from "@/shared/data";
 import { OPEN_KEY, SPECIMENS_KEY } from "../../../shared/api/query-keys";
 import { RefusalAlert } from "../../../shared/notices/notices";
 import { loadTreatableSpecimens, type TreatmentInput } from "../../../shared/api/treatments-api";

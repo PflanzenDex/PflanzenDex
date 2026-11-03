@@ -1,9 +1,9 @@
 import { zoneLabel } from "@pflanzendex/core";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
-import { Button } from "@/components/ui/button/button";
-import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { UNKNOWN } from "../../../specimens/model/text";
 
 /** The layer of one plant is named after the plant: `?sheet=plant-<id>` (US-QS-19). */
