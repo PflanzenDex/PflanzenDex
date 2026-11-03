@@ -1,6 +1,6 @@
 import type { Control } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import type { CareProfileFields } from "../../../../specimens/model/schemas";
 import {
   Days,

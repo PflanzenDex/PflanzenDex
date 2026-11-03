@@ -3,8 +3,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
-import { currentTimeZone, setProfileTimeZone } from "../../kernel";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { currentTimeZone, setProfileTimeZone } from "../../shared/data";
 import { SettingsPage } from "./settings-page";
 
 const response = (status: number, body: unknown) =>

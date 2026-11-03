@@ -1,5 +1,5 @@
 // Public interface of the module `care` (ADR 0003): page "Measure" of a specimen, and the parts of the plant layer (US-QS-23).
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const MeasurePage = lazyPage(() =>
   import("./measure/measure-page/measure-page").then((m) => ({ default: m.MeasurePage })),
 );

@@ -1,5 +1,5 @@
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
 
 /** The id of the layer "Ansicht" (`?sheet=view`, US-QS-19). */
 export const VIEW_LAYER = "view";

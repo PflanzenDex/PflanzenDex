@@ -4,14 +4,14 @@ import { CareProfileSection } from "@/collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "@/catalog";
 import type { WishToPlant } from "@/wishlist";
 import { AddPlant, ContextHint } from "@/shell";
-import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AreaSection } from "../../shared/area-section/area-section";
 import { CollectionArea, DiscoverArea } from "../../shared/lazy-areas";
 import {
   ADD_PLANT_PATH,
   PATHS,
   PROFILE_BASE,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+} from "@/shared/patterns/navigation/navigation/navigation";
 
 /** The start page and the further-plant flow find species through the catalog without importing it (ADR 0003). */
 export const SPECIES_LOOKUP = { search: searchSpecies, load: loadSpecies };

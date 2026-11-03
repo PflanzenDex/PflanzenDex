@@ -3,15 +3,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronRight } from "lucide-react";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Button } from "@/shared/ui/button/button";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { instantText } from "../../api/access-api";
 import { BUSY_LOOK } from "../operator-cost/operator-cost";
-import { TextField } from "@/components/ui/fields/input/input";
+import { TextField } from "@/shared/ui/fields/input/input";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../schemas";
 
 const STATUS_TEXT: Record<InvitationStatus, string> = {

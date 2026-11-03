@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { NewTask } from "./new-task/new-task";
-import { Button } from "@/components/ui/button/button";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { copyText } from "@/platform/clipboard";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { copyText } from "@/shared/platform/browser/clipboard";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { cancelTask, loadTasks, type AiTaskRow } from "../api/connections-api";
 
 type Token = () => Promise<string | undefined>;

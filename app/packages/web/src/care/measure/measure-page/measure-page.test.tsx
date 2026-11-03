@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { MeasurePage } from "./measure-page";
 
 const response = (status: number, body: unknown) =>

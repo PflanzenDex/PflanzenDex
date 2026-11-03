@@ -3,12 +3,9 @@ import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router";
 import type { ReactElement } from "react";
-import { createQueryClient } from "@/kernel";
+import { createQueryClient } from "@/shared/data";
 import { AppShell } from "@/components/shared/navigation/app-shell/app-shell";
-import {
-  navItems,
-  viewTitle,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { navItems, viewTitle } from "@/shared/patterns/navigation/navigation/navigation";
 import { fakeFetch, type Routes } from "../fake-api.fixtures";
 
 // The page stories render the real screen inside the real page frame (US-QS-14). Server state lives in a query client

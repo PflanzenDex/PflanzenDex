@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError, LightZone } from "../../shared/light-api/light-api";
 import { ErrorMessage } from "../../shared/ui/message/message";
 import { ZoneForm, type ZoneInput } from "../zones-view/zones-view";

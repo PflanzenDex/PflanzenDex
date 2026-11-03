@@ -66,7 +66,7 @@ const uiTextIgnores = [
   "**/*.test.tsx",
   "**/*.stories.tsx",
   "packages/web/src/lib/page-stories/**",
-  "packages/web/src/lib/test-setup/**",
+  "packages/web/src/shared/testing/test-setup/**",
 ];
 const uiTextBaseline =
   process.env.UI_TEXT_BASELINE === "off"

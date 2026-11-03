@@ -1,9 +1,9 @@
 import type { IntroductionFigure, IntroductionFigures } from "@pflanzendex/core";
 import { useCallback } from "react";
-import { LoadFrame } from "../../../kernel";
+import { LoadFrame } from "../../../shared/data";
 import { loadIntroduction } from "../../api/access-api";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { keepTogether } from "@/lib/format";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { keepTogether } from "@/shared/lib/format";
 
 type Token = () => Promise<string | undefined>;
 

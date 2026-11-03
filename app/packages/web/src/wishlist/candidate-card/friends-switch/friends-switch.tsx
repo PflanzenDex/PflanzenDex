@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { useRequest, useInvalidate, useWriteAction } from "../../../kernel";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { errorText } from "@/lib/error-text";
+import { useRequest, useInvalidate, useWriteAction } from "../../../shared/data";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { errorText } from "@/shared/lib/error-text";
 import { loadVisibleToFriends, setWishVisibleToFriends } from "../../wishlist-api";
 
 const KEY = ["wishlist", "visible-to-friends"] as const;

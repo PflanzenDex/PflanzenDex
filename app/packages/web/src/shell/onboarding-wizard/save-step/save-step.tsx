@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { zoneDerive, type LightZone, type Species, zoneLabel } from "@pflanzendex/core";
-import { Select } from "@/components/ui/fields/select/select";
-import { Label } from "@/components/ui/display/label/label";
-import { createWrite } from "../../../kernel";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Label } from "@/shared/ui/display/label/label";
+import { createWrite } from "../../../shared/data";
 import { loadZones } from "../../../light";
 import { ensureHome } from "../where-question/where-question";
 

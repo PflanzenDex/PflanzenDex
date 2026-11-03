@@ -1,11 +1,11 @@
 import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
-import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { cn } from "@/lib/utils";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { cn } from "@/shared/lib/utils";
 
 export const FILTER_LAYER = "filters";
 

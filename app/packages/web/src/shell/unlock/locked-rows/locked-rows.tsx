@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { texts } from "@/lib/text-rules/texts";
-import { cn } from "@/lib/utils";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { cn } from "@/shared/lib/utils";
 import table from "../../shell.de.json";
 import { isShownLocked, lockAddress, lockMark, lockLine } from "../model/unlock-texts";
 import type { UnlockEntry } from "../model/unlock-api";

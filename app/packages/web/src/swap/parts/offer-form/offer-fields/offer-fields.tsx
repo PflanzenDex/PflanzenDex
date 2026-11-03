@@ -1,8 +1,8 @@
 import type { OfferMode, OfferType } from "@pflanzendex/core";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { MoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
-import { Textarea } from "@/components/ui/fields/textarea/textarea";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { MoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
+import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import type { OwnSpecimenRow } from "../../../api/offers-api";
 import { MODE_TEXT, TYPE_TEXT } from "../health-text";
 

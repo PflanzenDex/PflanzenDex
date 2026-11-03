@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { errorText } from "@/lib/error-text";
-import { useWriteAction, type ApiError, type Response } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { errorText } from "@/shared/lib/error-text";
+import { useWriteAction, type ApiError, type Response } from "../../shared/data";
 import { buyWish, discardWish, storeWishImage } from "../wishlist-api";
 
 type Token = () => Promise<string | undefined>;

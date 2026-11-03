@@ -1,6 +1,6 @@
 // Public interface of the `collection` module (ADR 0003): page for collection and create specimen, and the parts of the
 // plants that the app wires around it (the opener "Ansicht" and its layer, US-QS-19).
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const CollectionPage = lazyPage(() =>
   import("./collection-page/collection-page").then((m) => ({ default: m.CollectionPage })),
 );

@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button/button";
-import { SPECIES_ENTRY_ROW } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import { Button } from "@/shared/ui/button/button";
+import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { catchText } from "@/components/collector-card/catch-text";
 

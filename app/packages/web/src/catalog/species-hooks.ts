@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
-import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../kernel";
+import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../shared/data";
 import { loadSpecies, propose, searchSpecies } from "./species-api";
 
 type Token = () => Promise<string | undefined>;

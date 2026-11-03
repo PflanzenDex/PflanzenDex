@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button/button";
-import { copyText } from "@/platform/clipboard";
+import { Button } from "@/shared/ui/button/button";
+import { copyText } from "@/shared/platform/browser/clipboard";
 
 /** How to connect an AI client: the address of the interface and the steps (US-KI-07). */
 export function HowTo({ address }: { address: string }) {

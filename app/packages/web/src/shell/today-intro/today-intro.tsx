@@ -1,12 +1,12 @@
 import { Suspense, type ReactNode } from "react";
 import { isNewAccount, type OnboardingCounts } from "@pflanzendex/core";
 import { loadSpecimenCount } from "../../collection";
-import { useFeature, useRequest } from "../../kernel";
+import { useFeature, useRequest } from "../../shared/data";
 import { FriendsBanner } from "../../social";
 import { HintNote } from "./hint";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
-import type { LinkTarget } from "../../components/shared/navigation/nav-model/navigation/navigation";
+import type { LinkTarget } from "../../shared/patterns/navigation/navigation/navigation";
 import { useGuideEnd, useHints } from "./use-hints";
 
 type Token = () => Promise<string | undefined>;

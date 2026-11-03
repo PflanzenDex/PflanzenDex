@@ -1,13 +1,13 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { currentTimeZone, LoadFrame } from "../../../kernel";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { currentTimeZone, LoadFrame } from "../../../shared/data";
 import { loadHistory } from "../../api/swaps-api";
-import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
+import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { CAUSE_TEXT, STATUS_TEXT } from "../swap-requests/swap-text";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 
 const t = texts(table);

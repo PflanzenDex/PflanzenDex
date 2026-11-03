@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
-import { NavNote } from "@/components/shared/navigation/nav-model/nav-note/nav-note";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { NavNote } from "@/shared/patterns/navigation/nav-note/nav-note";
 
 /** A count that is still loading, failed to load, or is known (P-10); calm mode passes `hidden` (US-ACH-08). */
 export type TileCount = number | "loading" | "error" | "hidden";

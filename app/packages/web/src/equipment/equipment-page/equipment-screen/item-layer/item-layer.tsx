@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router";
 import { zoneLabel } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { EquipmentData, EquipmentRow } from "../../../equipment-api";
 import { STATUS_LABELS, TYPE_LABELS } from "../../../labels";
 import type { useLampActions } from "../../lamp-actions/lamp-actions";

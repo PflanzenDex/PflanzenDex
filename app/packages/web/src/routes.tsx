@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router";
-import { useFeature } from "./kernel";
+import { useFeature } from "./shared/data";
 import { FriendsNewsLayer, FriendsNewsTile } from "./social";
 import {
   handOverRoutes,
@@ -19,7 +19,7 @@ import {
   lockMark,
   useUnlocks,
 } from "./shell";
-import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
+import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { AccountArea, TodayArea } from "@/components/routing/areas/shared/lazy-areas";
 import type { DrawTile, TodayTile } from "@/components/routing/areas/today-area/today-area";
 import {
@@ -32,7 +32,7 @@ import {
   destinationHeading,
   type LinkTarget,
   type View,
-} from "./components/shared/navigation/nav-model/navigation/navigation";
+} from "./shared/patterns/navigation/navigation/navigation";
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */

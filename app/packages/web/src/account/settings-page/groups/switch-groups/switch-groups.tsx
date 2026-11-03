@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { useFeature, type ApiError } from "../../../../kernel";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { ALERT_CLASSES, refusalText } from "../../../refusal";
 import { OCCASION_TEXT, visibleOccasions } from "../../../settings-fields/settings-fields";

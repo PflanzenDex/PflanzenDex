@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button/button";
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
+import { Button } from "@/shared/ui/button/button";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { Inbox } from "../inbox/inbox";
 import {
   PAUSES_FORM,

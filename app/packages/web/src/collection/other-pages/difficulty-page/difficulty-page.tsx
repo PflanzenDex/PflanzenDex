@@ -1,18 +1,18 @@
 import { useCallback, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { profileAddress } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { profileAddress } from "@/shared/patterns/navigation/navigation/navigation";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import {
   FactGrid,
   unknownInEvery,
-} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
-import { Button } from "@/components/ui/button/button";
-import { SPECIES_ENTRY_ROW } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { LoadFrame } from "../../../kernel";
+} from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { Button } from "@/shared/ui/button/button";
+import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";

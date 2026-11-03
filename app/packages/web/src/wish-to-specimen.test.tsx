@@ -23,7 +23,7 @@ vi.mock("oidc-client-ts", () => ({
   },
 }));
 
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { App } from "./shell/app/app";
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 

@@ -1,8 +1,8 @@
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 import { zoneLabel } from "@pflanzendex/core";
-import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
-import { texts } from "@/lib/text-rules/texts";
+import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../light.de.json";
 
 const t = texts(table);

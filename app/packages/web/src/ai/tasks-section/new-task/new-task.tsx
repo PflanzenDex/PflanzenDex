@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
-import { Select } from "@/components/ui/fields/select/select";
-import { copyText } from "@/platform/clipboard";
-import { useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Input } from "@/shared/ui/fields/input/input";
+import { Select } from "@/shared/ui/fields/select/select";
+import { copyText } from "@/shared/platform/browser/clipboard";
+import { useWriteAction } from "../../../shared/data";
 import { createTask, previewTask, type AiTaskType } from "../../api/connections-api";
 
 type Token = () => Promise<string | undefined>;

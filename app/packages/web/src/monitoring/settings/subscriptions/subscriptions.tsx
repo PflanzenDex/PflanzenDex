@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";
 
 type Token = () => Promise<string | undefined>;

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/lib/text-rules/texts";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { todayTexts } from "@/today";
 import type { DrawTile, TodayTile } from "../../today-area";
 

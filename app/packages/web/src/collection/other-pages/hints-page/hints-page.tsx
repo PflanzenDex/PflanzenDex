@@ -1,8 +1,8 @@
 import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
   GRID,

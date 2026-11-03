@@ -10,7 +10,7 @@ import {
   WISHLIST_MODE_ADDRESS,
   accountAddress,
   todayAddress,
-} from "../../../components/shared/navigation/nav-model/navigation/navigation";
+} from "../../../shared/patterns/navigation/navigation/navigation";
 import type { UnlockEntry } from "./unlock-api";
 
 /** The mark next to a locked entry: text, never colour or an icon alone (NFR-13). */

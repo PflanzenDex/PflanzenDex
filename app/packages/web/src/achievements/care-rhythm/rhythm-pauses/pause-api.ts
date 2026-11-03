@@ -1,4 +1,4 @@
-import { createWrite, type Response } from "../../../kernel";
+import { createWrite, type Response } from "../../../shared/data";
 import type { RhythmPauseItem } from "../../achievements-api";
 
 /** Adds an explicit pause of the care rhythm (US-ACH-04): at most 4 weeks, local calendar dates. */

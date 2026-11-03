@@ -1,10 +1,10 @@
 import type { OfferView } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
-import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 
 const t = texts(table);

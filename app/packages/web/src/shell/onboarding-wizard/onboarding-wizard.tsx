@@ -1,6 +1,6 @@
 import { Suspense, useState } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../account";
 import { SaveStep } from "./save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "./species-step/species-step";

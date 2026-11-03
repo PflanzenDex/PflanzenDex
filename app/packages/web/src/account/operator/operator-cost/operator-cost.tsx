@@ -1,7 +1,7 @@
 import type { CostPerUser, OperatorCostFigure } from "@pflanzendex/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import {
   Form,
   FormControl,
@@ -10,9 +10,9 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { TextField } from "@/components/ui/fields/input/input";
-import { MonthField } from "@/components/ui/fields/input/native-fields/month-field/month-field";
+} from "@/shared/ui/fields/form/form";
+import { TextField } from "@/shared/ui/fields/input/input";
+import { MonthField } from "@/shared/ui/fields/input/native-fields/month-field/month-field";
 import { costSchema, parseAmount, type CostFields } from "../../schemas";
 
 /**

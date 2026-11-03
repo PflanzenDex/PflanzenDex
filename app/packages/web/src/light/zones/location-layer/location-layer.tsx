@@ -1,4 +1,4 @@
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError, LightLocation, LightZone } from "../../shared/light-api/light-api";
 import { LocationForm, type LocationInput } from "../locations-view/locations-view";
 

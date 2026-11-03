@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SwapSide } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { Button } from "@/shared/ui/button/button";
+import { Input } from "@/shared/ui/fields/input/input";
 import { swapTitle } from "../swap-text";
 
 /**

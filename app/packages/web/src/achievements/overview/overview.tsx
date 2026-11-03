@@ -1,18 +1,15 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
-import {
-  PATHS,
-  SPECIES_MODE_ADDRESS,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { Button } from "@/components/ui/button/button";
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
+import { PATHS, SPECIES_MODE_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Button } from "@/shared/ui/button/button";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import {
   PagedGroups,
   type PagedGroup,
-} from "@/components/shared/responsive/paged-groups/paged-groups";
-import { errorText } from "@/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+} from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import { errorText } from "@/shared/lib/error-text";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import {
   loadAchievements,
   markSeen,

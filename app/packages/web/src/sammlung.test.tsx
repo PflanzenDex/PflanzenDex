@@ -5,7 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./components/routing/areas/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
-import { AnnouncerProvider } from "./platform/announcer/announcer";
+import { AnnouncerProvider } from "./shared/platform/announcer/announcer";
 import { VIEW_KEY } from "./sammlung-view";
 
 const response = (status: number, body: unknown) =>

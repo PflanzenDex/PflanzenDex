@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
+import { Button } from "@/shared/ui/button/button";
+import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "../../model/refusal";
 import { dateText } from "../../model/text";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 /**
  * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page

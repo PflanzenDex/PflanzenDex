@@ -11,7 +11,7 @@ import {
   PATHS,
   profileAddress,
   viewTitle,
-} from "./components/shared/navigation/nav-model/navigation/navigation";
+} from "./shared/patterns/navigation/navigation/navigation";
 
 beforeAll(() => {
   // jsdom has no matchMedia, the bottom bar's drawer reads it.

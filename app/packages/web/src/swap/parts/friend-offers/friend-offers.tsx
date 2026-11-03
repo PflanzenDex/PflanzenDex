@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ExchangeOffer, OfferType } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { Select } from "@/components/ui/fields/select/select";
-import { errorText } from "@/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Select } from "@/shared/ui/fields/select/select";
+import { errorText } from "@/shared/lib/error-text";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
   loadFriendOffers,
   requestOffer,
@@ -14,10 +14,10 @@ import {
   type FriendOffersData,
   type RequestInput,
 } from "../../api/exchange-api";
-import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
+import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { RequestForm } from "./request-form/request-form";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 
 const t = texts(table);

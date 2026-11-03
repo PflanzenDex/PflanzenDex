@@ -1,11 +1,11 @@
 import type { ReviewEntry } from "@pflanzendex/core";
 import { useState } from "react";
 import { useLocation, useSearchParams } from "react-router";
-import { Tabs } from "@/components/data-display/panels/tabs/tabs";
-import { Button } from "@/components/ui/button/button";
-import { Label } from "@/components/ui/display/label/label";
-import { Textarea } from "@/components/ui/fields/textarea/textarea";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
+import { Button } from "@/shared/ui/button/button";
+import { Label } from "@/shared/ui/display/label/label";
+import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { caseSheet } from "../review-entry/review-entry";
 import { isBatch } from "../review-text";
 import { LayerFacts } from "./layer-facts/layer-facts";

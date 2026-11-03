@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 
 /**
  * Placeholder with the layout of two open treatments on a phone (DS-52, DS-53). It is decorative: the page announces

@@ -298,7 +298,7 @@ describe("module boundaries (FR-QG-19)", () => {
         /^AB-13 config\/lint\/modules\.config\.mjs transition entry core\/alt is stale/,
       );
     });
-    for (const f of ["components", "lib", "platform", "styles"])
+    for (const f of ["components", "lib", "shared", "styles"])
       it(`QG-U4 · AB-13 the reserved design system folder web/${f} is no module candidate`, () => {
         assert.deepEqual(run({ [`packages/web/src/${f}/x.ts`]: "export const x = 1;\n" }), []);
       });

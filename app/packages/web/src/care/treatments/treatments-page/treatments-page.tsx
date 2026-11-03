@@ -1,13 +1,13 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { OpenCount as OpenCountOf, type OpenCount } from "../../shared/api/open-count/open-count";
-import { useInvalidate, useRequest } from "../../../kernel";
+import { useInvalidate, useRequest } from "../../../shared/data";
 import { OPEN_KEY, SPECIMENS_KEY } from "../../shared/api/query-keys";
 import { OpenTreatments } from "../open-treatments/open-treatments";
 import { TreatmentHistory } from "../treatment-history/treatment-history";
 import { Planning, usePlanning } from "../planning/planning";
 import { loadTreatableSpecimens } from "../../shared/api/treatments-api";
-import { Button } from "@/components/ui/button/button";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
+import { Button } from "@/shared/ui/button/button";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 
 type Token = () => Promise<string | undefined>;
 type View = "open" | "done";

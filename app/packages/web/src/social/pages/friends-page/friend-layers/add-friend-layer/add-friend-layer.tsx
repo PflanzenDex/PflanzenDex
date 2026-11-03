@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useWriteAction, type ApiError } from "../../../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { useWriteAction, type ApiError } from "../../../../../shared/data";
 import { createFriendCode, sendFriendRequest } from "../../../../api/friends-api";
 import { CodeForm } from "../../../../parts/code-form/code-form";
 import { InviteCard } from "../../../../parts/invite-card/invite-card";

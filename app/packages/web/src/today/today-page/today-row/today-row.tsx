@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import type { TodayItem, TodayKind, TodayTarget } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
-import { keepTogether, overdueChip, withoutOverdue } from "@/lib/format";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
+import { keepTogether, overdueChip, withoutOverdue } from "@/shared/lib/format";
 
 /** Where an action leads: the app wires the destination to a view (the modules do not know each other). */
 export type TodayDestination = TodayTarget | "collection";

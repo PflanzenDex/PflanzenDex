@@ -1,5 +1,5 @@
 import type { UserManagerSettings } from "oidc-client-ts";
-import { call, createWrite, type Response } from "../../kernel";
+import { call, createWrite, type Response } from "../../shared/data";
 
 export type Account = {
   id: string;

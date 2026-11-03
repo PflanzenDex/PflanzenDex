@@ -1,7 +1,7 @@
 import { Leaf } from "lucide-react";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Button } from "@/components/ui/button/button";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Button } from "@/shared/ui/button/button";
 import { badge, difficultyText } from "../../shared/text";
 
 /** Hits per page without a layout: three compact rows fit a 360 x 640 px screen with the search above (starting value, assumption; US-QS-21). With a layout the page takes the free height (issue 1029). */

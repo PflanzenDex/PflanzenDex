@@ -1,7 +1,7 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
-import { FormRoot } from "@/components/ui/fields/form/form";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { FormRoot } from "@/shared/ui/fields/form/form";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
 import { TimeFields } from "./time-fields/time-fields";

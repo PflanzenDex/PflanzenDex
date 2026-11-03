@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { ApiError } from "../../../kernel";
+import type { ApiError } from "../../../shared/data";
 import { archiveSpecimen, restoreSpecimen } from "../../archived/archived-api";
 import { SIGN_IN, type Token } from "./use-collection";
 

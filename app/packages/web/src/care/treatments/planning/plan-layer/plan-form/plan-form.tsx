@@ -2,10 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday } from "@pflanzendex/core";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { currentTimeZone } from "@/kernel";
-import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { currentTimeZone } from "@/shared/data";
+import { cn } from "@/shared/lib/utils";
 import { CourseFields, TermFields } from "../../../treatment-form/treatment-form";
 import type { TreatableSpecimen, TreatmentInput } from "../../../../shared/api/treatments-api";
 import {

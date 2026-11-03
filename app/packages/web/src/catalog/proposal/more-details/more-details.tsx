@@ -1,5 +1,5 @@
 import type { Control } from "react-hook-form";
-import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
+import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { AreaField, TextField } from "../field-controls/field-controls";
 import { LightStepFields } from "../required-fields/required-fields";
 import type { ProposalFields } from "../../shared/schemas";

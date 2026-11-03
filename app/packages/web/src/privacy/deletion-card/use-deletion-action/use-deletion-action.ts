@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { SIGN_IN, useInvalidate, type ApiError } from "../../../kernel";
+import { SIGN_IN, useInvalidate, type ApiError } from "../../../shared/data";
 import { requestDeletion, type DeletionState } from "../../privacy-api";
 
 type Token = () => Promise<string | undefined>;

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
-import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
-import { RequestState } from "@/components/shared/states/request-state/request-state";
-import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../../kernel";
+import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
+import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../../shared/data";
 import { LightView, type LightActions } from "../views/light-view/light-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
 import { refusalText } from "../shared/texts";

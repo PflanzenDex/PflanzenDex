@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the plants on a phone: the insight row and a page of tiles (DS-52, DS-53, US-QS-19). */
 export function CollectionPageSkeleton({ label }: { label: string }) {

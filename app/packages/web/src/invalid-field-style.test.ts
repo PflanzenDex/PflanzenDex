@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fieldClasses } from "./components/ui/fields/input/input";
+import { fieldClasses } from "./shared/ui/fields/input/input";
 
 // US-ACC-02: a refused field gets a visible marker, but marking it must not move the layout (issue 297). The real
 // height check runs in the browser (test log); here the classes are pinned: colour and inset ring, no border width.

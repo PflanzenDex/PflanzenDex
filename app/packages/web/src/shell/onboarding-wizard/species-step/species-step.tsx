@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
-import { Label } from "@/components/ui/display/label/label";
-import { errorText } from "@/lib/error-text";
+import { Button } from "@/shared/ui/button/button";
+import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+import { Label } from "@/shared/ui/display/label/label";
+import { errorText } from "@/shared/lib/error-text";
 
 type Token = () => Promise<string | undefined>;
 type Found<T> = { ok: true; value: T } | { ok: false; error: { code: string } };

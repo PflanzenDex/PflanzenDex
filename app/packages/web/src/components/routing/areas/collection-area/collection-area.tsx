@@ -6,13 +6,13 @@ import { CarePhasesPage, MeasurePage } from "@/care";
 import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
-import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
-import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ViewLayer } from "@/components/sammlung-header/view-layer/view-layer";
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
-import { cn } from "@/lib/utils";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { cn } from "@/shared/lib/utils";
 import {
   PLANT_GROUPS,
   SPECIES_SORTS,

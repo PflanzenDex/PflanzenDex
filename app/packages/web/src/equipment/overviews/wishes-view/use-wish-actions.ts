@@ -1,4 +1,4 @@
-import { useWriteAction } from "../../../kernel";
+import { useWriteAction } from "../../../shared/data";
 import type { WishActions } from "./wishes-view";
 import {
   buyEquipmentWish,

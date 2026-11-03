@@ -6,10 +6,10 @@ import {
 } from "@pflanzendex/core";
 import { useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { PagedGroups } from "@/components/shared/responsive/paged-groups/paged-groups";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import {
   SPECIES_LIST,
   SpeciesPager,

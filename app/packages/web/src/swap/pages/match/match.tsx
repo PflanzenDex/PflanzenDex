@@ -1,8 +1,8 @@
 import { useCallback } from "react";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { EXCHANGE_PATH } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
-import { LoadFrame, type Response } from "../../../kernel";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { LoadFrame, type Response } from "../../../shared/data";
 import {
   answerYes,
   loadMatchDeck,

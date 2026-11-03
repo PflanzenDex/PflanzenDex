@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate } from "../../../kernel";
+import { LoadFrame, useInvalidate } from "../../../shared/data";
 import { loadLocations } from "../../../light";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
 import { Entry } from "../../phases/phases-list/entry/entry";

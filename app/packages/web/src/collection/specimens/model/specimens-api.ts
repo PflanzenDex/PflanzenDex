@@ -1,5 +1,5 @@
 import type { Specimen } from "@pflanzendex/core";
-import { createWrite, currentTimeZone, type Response } from "../../../kernel";
+import { createWrite, currentTimeZone, type Response } from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 

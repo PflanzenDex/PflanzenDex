@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router";
-import { useFeature } from "@/kernel";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button/button";
-import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
+import { useFeature } from "@/shared/data";
+import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button/button";
+import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import {
   accountAddress,
   type AccountSection,
-} from "@/components/shared/navigation/nav-model/navigation/navigation";
+} from "@/shared/patterns/navigation/navigation/navigation";
 import type { Account } from "@/account";
 import { SECTIONS, rowId } from "../account-model/account-model";
 import { useAccountValues } from "./account-values";

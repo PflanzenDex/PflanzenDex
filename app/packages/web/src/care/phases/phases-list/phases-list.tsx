@@ -4,8 +4,8 @@ import {
   type PhaseStatus,
   type PhasesRow,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Button } from "@/shared/ui/button/button";
 import { LIST_CLASSES } from "../../shared/notices/notices";
 import { locationText } from "../../shared/text";
 import { switchGroups, switchedText } from "../phase-groups";

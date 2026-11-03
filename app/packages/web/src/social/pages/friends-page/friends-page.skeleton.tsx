@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the screen on a phone: the action, four tiles, two rows (DS-52, DS-53). */
 export function FriendsPageSkeleton({ label }: { label: string }) {

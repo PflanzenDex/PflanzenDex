@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { FIRST_PLANT_STEPS, type Species } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { PATHS } from "../../components/shared/navigation/nav-model/navigation/navigation";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
+import { Button } from "@/shared/ui/button/button";
+import { PATHS } from "../../shared/patterns/navigation/navigation/navigation";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { SaveStep } from "../onboarding-wizard/save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import { useFirstPlant } from "../onboarding-wizard/use-first-plant";

@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { HintsPage } from "@/collection";
 import { TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
 import { TodayPage, type TodayDestination } from "@/today";
-import type { LinkTarget } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import type { LinkTarget } from "@/shared/patterns/navigation/navigation/navigation";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { TodayTile } from "../today-area";
 import { Tiles, type CategoryCount } from "./tiles/tiles";
 

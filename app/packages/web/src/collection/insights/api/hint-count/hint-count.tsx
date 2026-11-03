@@ -1,6 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { loadLocations } from "../../../../light";
-import { useRequest } from "../../../../kernel";
+import { useRequest } from "../../../../shared/data";
 import { loadSpecimenHints } from "../hints-api";
 
 export const HINTS_KEY = ["collection", "hints"] as const;

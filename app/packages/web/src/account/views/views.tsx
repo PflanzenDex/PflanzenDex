@@ -1,7 +1,7 @@
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { DISPLAY_NAME } from "@/components/shared/navigation/nav-model/nav-item";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Button } from "@/shared/ui/button/button";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DISPLAY_NAME } from "@/shared/patterns/navigation/nav-item";
 import { AuthFrame } from "./auth-frame/auth-frame";
 
 type Action = () => void;

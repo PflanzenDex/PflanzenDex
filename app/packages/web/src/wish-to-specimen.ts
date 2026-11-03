@@ -3,10 +3,7 @@ import { useLocation } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { loadSpecies, searchSpecies } from "./catalog";
 import { linkWishSpecimen, type PathNotice as Notice, type WishToPlant } from "./wishlist";
-import {
-  PATHS,
-  PROFILE_BASE,
-} from "./components/shared/navigation/nav-model/navigation/navigation";
+import { PATHS, PROFILE_BASE } from "./shared/patterns/navigation/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 
@@ -29,7 +26,7 @@ const NOT_IN_CATALOG = (w: WishToPlant) =>
 
 /** The German texts of all error codes are a big table: it loads with the first failure, not with the shell (DS-08). */
 async function failureText(w: WishToPlant, code: string | undefined): Promise<string> {
-  const { errorText } = await import("@/lib/error-text");
+  const { errorText } = await import("@/shared/lib/error-text");
   return `Die Pflanze ist angelegt, aber die Verknüpfung mit dem Wunsch „${w.title}“ hat nicht geklappt. ${errorText(code)}`;
 }
 

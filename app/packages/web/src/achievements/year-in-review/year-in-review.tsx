@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { dateText, valueText } from "@/lib/format";
-import { useStoredPhoto } from "@/lib/use-stored-photo";
-import { useRequest } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { dateText, valueText } from "@/shared/lib/format";
+import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
+import { useRequest } from "../../shared/data";
 import { loadYear, type YearAnswer, type YearPhoto } from "./year-api";
 
 type Token = () => Promise<string | undefined>;

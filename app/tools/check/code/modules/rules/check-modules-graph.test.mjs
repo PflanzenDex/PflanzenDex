@@ -52,11 +52,12 @@ describe("FR-QG-23 AB-15 web layers", () => {
 
   it("FR-QG-23 AB-15: the current folders map to their target layers", () => {
     const m = cfg.MODULES;
-    assert.equal(webLayerOf("components/ui/button/button.tsx", m), "shared");
+    assert.equal(webLayerOf("shared/ui/button/button.tsx", m), "shared");
+    assert.equal(webLayerOf("shared/patterns/navigation/page-header/x.tsx", m), "shared");
     assert.equal(webLayerOf("components/shared/navigation/side-nav/x.tsx", m), "app");
     assert.equal(webLayerOf("components/collector-cards/x.tsx", m), "pokedex");
     assert.equal(webLayerOf("components/routing/areas/x.tsx", m), "app");
-    assert.equal(webLayerOf("kernel/index.ts", m), "shared");
+    assert.equal(webLayerOf("shared/data/index.ts", m), "shared");
     assert.equal(webLayerOf("main.tsx", m), "app");
     assert.equal(webLayerOf("care/form.tsx", m), "care");
   });

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { HITS_PER_PAGE } from "./hit-list/hit-list";
 import { SpeciesSearch } from "./search-view";
 
