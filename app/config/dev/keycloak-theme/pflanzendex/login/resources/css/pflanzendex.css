@@ -85,10 +85,13 @@
   line-height: 1.45;
 }
 
+/* One screen (US-QS-15, DS-61, NFR-13): the page is the viewport. At a large text size the form column (.pdx-content)
+   scrolls inside its own region and the page does not; the band above it keeps its height. */
 .pdx-page {
-  min-height: 100dvh;
+  height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   align-content: start;
 }
 
@@ -132,12 +135,18 @@
   align-items: center;
   padding: 8px 16px 12px;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .pdx-card {
   width: 100%;
   max-width: 26rem;
   min-width: 0;
+  flex-shrink: 0;
+  /* A word longer than the card (a heading at a large text size on a narrow card) breaks instead of scrolling sideways. */
+  overflow-wrap: break-word;
 }
 
 .pdx-brand {
@@ -556,13 +565,19 @@ a {
 @media (min-width: 768px) {
   .pdx-page {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     align-content: stretch;
   }
 
+  /* The panel and the form are the two regions of the one screen. Centred, but an overflow starts at the top (safe),
+     so it can still be scrolled to; a browser without `safe` keeps the centring alone. */
   .pdx-side {
-    min-height: 100dvh;
+    justify-content: center;
+    justify-content: safe center;
     padding: 48px;
     gap: 32px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .pdx-drawing {
@@ -578,7 +593,7 @@ a {
 
   .pdx-content {
     justify-content: center;
-    min-height: 100dvh;
+    justify-content: safe center;
     padding: 48px;
   }
 

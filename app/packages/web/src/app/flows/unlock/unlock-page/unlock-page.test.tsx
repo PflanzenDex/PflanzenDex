@@ -332,3 +332,37 @@ describe("US-QS-14 · US-ONB-05 the unlock pages are one card with buttons", () 
     expect(within(card).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 });
+
+describe("US-QS-15 the unlock pages are one screen (DS-61, NFR-13)", () => {
+  it("US-QS-15 a locked function's card is the one-screen frame: at 200 % text only its content region scrolls", async () => {
+    server(() => [swapping()]);
+    page("/unlock/swapping");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Tauschen" });
+    expect(heading.closest("section")?.hasAttribute("data-fit-screen")).toBe(true);
+  });
+
+  it("US-QS-15 an open function's card is the one-screen frame too", async () => {
+    server(() => [open("friends")]);
+    page("/unlock/friends");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Freunde" });
+    expect(heading.closest("section")?.hasAttribute("data-fit-screen")).toBe(true);
+  });
+
+  it("US-QS-15 an unknown function and a failed load are one-screen frames too", async () => {
+    server(() => [open("friends")]);
+    page("/unlock/nonsense");
+    const unknown = await screen.findByRole("heading", { level: 1 });
+    expect(unknown.closest("section")?.hasAttribute("data-fit-screen")).toBe(true);
+    cleanup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(500, { error: { code: "input.invalid", text: "x" } }),
+      ),
+    );
+    page("/unlock/swapping");
+    await screen.findByRole("alert");
+    const failed = screen.getByRole("heading", { level: 1 });
+    expect(failed.closest("section")?.hasAttribute("data-fit-screen")).toBe(true);
+  });
+});
