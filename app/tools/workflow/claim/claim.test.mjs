@@ -147,6 +147,16 @@ test("US-DEV-08: re-running after a half claim of the caller continues", async (
   assert.equal(result.branch, "feat/bes-06-delete-specimen");
 });
 
+test("FR-DEV-10: a needs-triage issue is refused by make claim and nothing is written", async () => {
+  const triage = { ...issue, labels: [{ name: "story" }, { name: "needs-triage" }] };
+  const client = fake({ issues: [triage] });
+  await assert.rejects(
+    claim(client, 62, quiet),
+    (e) => e instanceof ClaimRefused && /needs-triage/.test(e.message),
+  );
+  assert.ok(!client.calls.some((c) => /issue edit|git push|pr create/.test(c)));
+});
+
 test("US-DEV-08: a half claim of the caller with a branch on origin is still refused", async () => {
   const mine = { ...issue, assignees: [{ login: "max" }] };
   const branches = "sha1\trefs/heads/feat/bes-06-delete-specimen\n";
