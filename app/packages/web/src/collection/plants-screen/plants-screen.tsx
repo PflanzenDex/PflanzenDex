@@ -4,7 +4,7 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
-import { groupByLocation } from "@/app/destinations/collection-area/sammlung-header/location-groups/group-by-location";
+import { groupByLocation } from "./rows/location-groups/group-by-location";
 import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { TITLE } from "../specimens/cards/parts/parts";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";

@@ -1,5 +1,5 @@
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
-import { VIEW_LAYER } from "@/app/destinations/collection-area/sammlung-header/view-layer/view-layer";
+import { VIEW_LAYER } from "@/collection";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { buttonVariants } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";

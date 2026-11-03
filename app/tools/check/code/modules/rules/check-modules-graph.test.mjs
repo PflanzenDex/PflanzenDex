@@ -55,7 +55,7 @@ describe("FR-QG-23 AB-15 web layers", () => {
     assert.equal(webLayerOf("shared/ui/button/button.tsx", m), "shared");
     assert.equal(webLayerOf("shared/patterns/navigation/page-header/x.tsx", m), "shared");
     assert.equal(webLayerOf("app/frame/side-nav/x.tsx", m), "app");
-    assert.equal(webLayerOf("components/collector-cards/x.tsx", m), "pokedex");
+    assert.equal(webLayerOf("pokedex/pokedex-cards/collector-cards/x.tsx", m), "pokedex");
     assert.equal(webLayerOf("app/destinations/x.tsx", m), "app");
     assert.equal(webLayerOf("app/flows/unlock/x.tsx", m), "app");
     assert.equal(webLayerOf("shared/data/index.ts", m), "shared");

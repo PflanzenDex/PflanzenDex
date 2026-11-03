@@ -50,7 +50,6 @@ src/
 │   ├── platform/                # adapters for device/browser APIs (section 1.3)
 │   ├── lib/                     # cn() and other pure helpers (utils.ts)
 │   └── testing/                 # shared test setup and the router decorator of stories (story-frame/)
-├── components/                  # collector cards until FR-QG-23 step 4 (then the pokedex module)
 ├── styles/
 │   └── tokens.css               # design tokens (section 3)
 └── <module>/                    # e.g. collection/, care/, light/, wishlist/, pokedex/

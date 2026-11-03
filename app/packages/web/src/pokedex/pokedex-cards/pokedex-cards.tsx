@@ -4,7 +4,7 @@ import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import type { CaughtSpecies } from "@pflanzendex/core";
-import { catchText } from "@/components/collector-card/catch-text";
+import { catchText } from "./collector-card/catch-text";
 
 /** Layout of an entry that is not a button, e.g. a specimen that does not count yet. */
 export const CARD =

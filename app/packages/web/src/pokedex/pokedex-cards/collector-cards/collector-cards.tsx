@@ -1,7 +1,7 @@
 import type { CollectorCard as Card } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { call, currentTimeZone, LoadFrame, type Response } from "@/shared/data";
-import { CollectorCard } from "@/components/collector-card/collector-card";
+import { CollectorCard } from "../collector-card/collector-card";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 
 /** Loads the collector cards (US-POK-01): the taxonomy tree with the derived ownership, in the zone of the profile. */

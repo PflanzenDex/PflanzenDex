@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CollectionPage, DifficultyPage, PlantsViewLayer } from "@/collection";
+import { CollectionPage, DifficultyPage, PlantsViewLayer, ViewLayer } from "@/collection";
 import { LightPage } from "@/light";
 import { CarePhasesPage, MeasurePage } from "@/care";
 import { PokedexPage } from "@/pokedex";
@@ -8,7 +8,6 @@ import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { ViewLayer } from "@/app/destinations/collection-area/sammlung-header/view-layer/view-layer";
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";

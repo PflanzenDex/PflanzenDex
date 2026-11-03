@@ -365,10 +365,7 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
       notImported: '<Button role="tab" />',
       typeOnly: imp('import type { Button } from "@/shared/ui/button";', '<Button role="tab" />'),
       shadowedName: imp('import { Button } from "@/shared/ui/button";', '<Other role="tab" />'),
-      prefixPath: imp(
-        'import { Button } from "@/components/uikit/button";',
-        '<Button role="tab" />',
-      ),
+      prefixPath: imp('import { Button } from "@/shared/uikit/button";', '<Button role="tab" />'),
     };
     for (const [name, src] of Object.entries(bad)) {
       const source = src.includes("import") ? src : `export const A = () => ${src};\n`;

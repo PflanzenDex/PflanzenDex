@@ -28,7 +28,7 @@
     "id": "collection-view-species-sheet-view",
     "account": "test2",
     "path": "/collection?view=species&sheet=view",
-    "layerFile": "app/destinations/collection-area/sammlung-header/view-layer/view-layer.tsx",
+    "layerFile": "collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
     "title": "Ansicht"
   },
   {
@@ -212,7 +212,7 @@
     "id": "collection-view-plants-sheet-view",
     "account": "test2",
     "path": "/collection?view=plants&sheet=view",
-    "layerFile": "app/destinations/collection-area/sammlung-header/view-layer/view-layer.tsx",
+    "layerFile": "collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
     "title": "Ansicht"
   },
   {

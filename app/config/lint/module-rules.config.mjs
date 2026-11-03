@@ -68,11 +68,10 @@ export const GLOBAL_REFERENCE_TABLES = {
 // AB-15 (FR-QG-23): the web layer of a path below `packages/web/src/`, the single mapping for the layers app, shared and the
 // modules (direction app -> modules -> shared). [prefix, layer], the first match wins; `null` = not checked. A root file of
 // `src/` belongs to `app`; a folder named like a registered module is that module, any other folder is not checked.
-// Step 3 is done: main, routes, the frame, destinations, flows, tests and stories are below `app/`. The collector cards
-// still sit in components/ and move into the pokedex module in step 4 (then this entry goes).
+// Steps 1 to 4 are done: main, routes, the frame, destinations, flows, tests and stories are below `app/`, and the collector
+// cards are in the pokedex module (`components/` no longer exists).
 export const WEB_LAYERS = [
   ["app/", "app"],
   ["shared/", "shared"],
   ["styles/", null],
-  ["components/collector-card", "pokedex"], // collector-card and collector-cards: step 4 moves them into the module
 ];

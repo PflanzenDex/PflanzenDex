@@ -2,8 +2,9 @@
 // modules only through their index. Used by check-design-system.mjs for every import line of a .tsx file.
 
 // Design-system folders that hold no module (FR-QG-23 step 2: shared/ holds ui, patterns, platform, lib and testing;
-// step 3: app/ is the composition root, which is no module either, so deep imports into it are not checked for DS-42).
-const RESERVED_DIRS = new Set(["app", "components", "shared", "styles"]);
+// step 3: app/ is the composition root, which is no module either, so deep imports into it are not checked for DS-42;
+// step 4 removed components/, the collector cards are in the pokedex module).
+const RESERVED_DIRS = new Set(["app", "shared", "styles"]);
 const IMPORT = /(?:from|import)\s*\(?\s*["']@\/([^"']+)["']/;
 
 // The target of an `@/` import: its top folder and the rest below it. shared/data is the former kernel: for these rules it
