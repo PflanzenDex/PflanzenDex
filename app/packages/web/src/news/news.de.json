@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Artenprofil: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite. Die Angaben zur Art stehen dabei untereinander, der Name über dem Wert, statt den Wert aus der Spalte zu drücken.",
     "Betreiber: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite.",
     "Freunde und Tauschbörse: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite. Der Knopf „Zum Tausch anbieten“ rutscht dabei unter den Titel, statt ihn zu zerhacken.",
     "Großer Bildschirm: Auf Monitoren breiter als Full HD bleibt die App 1920 Pixel breit und steht in der Mitte, statt sich über die ganze Breite zu ziehen. Meldungen erscheinen am rechten Rand der App.",
