@@ -28,7 +28,8 @@ export function Plain({ children, className }: { children: ReactNode; className?
   return <div className={cn("min-w-0", className)}>{children}</div>;
 }
 
-export const TITLE = "mb-2 text-2xl font-semibold";
+/** A form's heading: a long word breaks instead of running past the edge at a large text size (US-QS-15, DS-61). */
+export const TITLE = "mb-2 break-words text-2xl font-semibold";
 export const SUBTITLE = "mb-1 text-xl font-semibold";
 
 /** Layout of the card grids (upward only, DS-12): one column on a phone, more as there is room. */

@@ -1,17 +1,11 @@
 {
-  "maxEntries": 53,
+  "maxEntries": 47,
   "entries": [
     {
       "screen": "collection-equipment-item",
       "size": "360x640",
       "page": 1,
       "inner": 1.04
-    },
-    {
-      "screen": "collection-new",
-      "size": "360x640@200%",
-      "page": 1.55,
-      "inner": 1
     },
     {
       "screen": "collection-plants-course",
@@ -33,12 +27,6 @@
     },
     {
       "screen": "collection-plants-course",
-      "size": "360x640@200%",
-      "page": 2.16,
-      "inner": 7.2
-    },
-    {
-      "screen": "collection-plants-course",
       "size": "390x844",
       "page": 1,
       "inner": 1.91
@@ -54,30 +42,6 @@
       "size": "360x640",
       "page": 1,
       "inner": 1.11
-    },
-    {
-      "screen": "plant-dialog-archive",
-      "size": "360x640@200%",
-      "page": 1.92,
-      "inner": 1
-    },
-    {
-      "screen": "plant-dialog-caught-date",
-      "size": "360x640@200%",
-      "page": 2.09,
-      "inner": 1
-    },
-    {
-      "screen": "plant-dialog-marker",
-      "size": "360x640@200%",
-      "page": 2.03,
-      "inner": 1
-    },
-    {
-      "screen": "plant-measure",
-      "size": "360x640@200%",
-      "page": 2.16,
-      "inner": 1
     },
     {
       "screen": "review-case",
