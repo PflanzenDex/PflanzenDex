@@ -70,7 +70,8 @@ function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
 /**
  * Page frame (US-QS-07, US-QS-14, DS-21, DS-22, DS-25): below `md` the brand header, the content and the bottom bar;
  * from `md` a navigation rail, from `xl` a labelled sidebar next to the content. `min-h-dvh`, no horizontal scroll,
- * and `main` keeps bottom padding for the bar (below `md`) plus the safe area. Gutters 16, 24 and 40 px.
+ * and `main` keeps bottom padding for the bar (below `md`) plus the safe area. Gutters 16, 24 and 40 px. Above 1920 px
+ * (`max-w-480`) the frame keeps its 1920 px layout and is centred; the page colour fills the sides (US-QS-14, issue 1160).
  * One `items` list is the single source of destinations for bar, rail and sidebar. The skip link comes first (US-QS-08).
  */
 export function AppShell({
@@ -90,7 +91,7 @@ export function AppShell({
       <ToastProvider>
         <div
           ref={shell}
-          className="flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground md:flex-row"
+          className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row"
         >
           <a
             href={`#${MAIN_ID}`}

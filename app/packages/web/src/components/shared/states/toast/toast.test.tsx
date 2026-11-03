@@ -163,4 +163,10 @@ describe("Toast (US-QS-07, P-10)", () => {
       "min-h-[44px]",
     );
   });
+
+  it("US-QS-14 · from md the viewport keeps to the right edge of the centred 1920 px column (issue 1160)", () => {
+    setup();
+    const viewport = region("polite").parentElement as HTMLElement;
+    expect(viewport.className).toContain("md:right-[max(1.5rem,calc((100vw-120rem)/2+1.5rem))]");
+  });
 });

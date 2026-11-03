@@ -240,6 +240,14 @@ describe("AppShell (US-QS-07, DS-21, DS-22, DS-25)", () => {
     );
   });
 
+  it("US-QS-14 above 1920 px the whole frame keeps its 1920 px layout and is centred (issue 1160)", () => {
+    const { container } = at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
+    const root = container.firstElementChild as HTMLElement;
+    for (const cls of ["mx-auto", "w-full", "max-w-480"]) expect(root.className).toContain(cls);
+    expect(root.contains(sidebar())).toBe(true);
+    expect(root.contains(screen.getByRole("main"))).toBe(true);
+  });
+
   it("US-QS-14 · DS-22 main keeps bottom padding for the sticky bar and safe area, gutters 16, 24 and 40 px", () => {
     at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
     const main = screen.getByRole("main");
