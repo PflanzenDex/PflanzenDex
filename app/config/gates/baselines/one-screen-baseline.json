@@ -1,5 +1,5 @@
 {
-  "maxEntries": 45,
+  "maxEntries": 40,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -48,36 +48,6 @@
       "size": "360x640",
       "page": 1,
       "inner": 1.17
-    },
-    {
-      "screen": "unlock-friends",
-      "size": "360x640@200%",
-      "page": 1.62,
-      "inner": 1
-    },
-    {
-      "screen": "unlock-unbekannt",
-      "size": "360x640@200%",
-      "page": 1.81,
-      "inner": 1
-    },
-    {
-      "screen": "welcome-keycloak-anmelden",
-      "size": "360x640@200%",
-      "page": 1.35,
-      "inner": 1
-    },
-    {
-      "screen": "welcome-keycloak-passwort-vergessen",
-      "size": "360x640@200%",
-      "page": 1.45,
-      "inner": 1
-    },
-    {
-      "screen": "welcome-keycloak-registrieren",
-      "size": "360x640@200%",
-      "page": 1.45,
-      "inner": 1
     },
     {
       "screen": "account-achievements-earned",

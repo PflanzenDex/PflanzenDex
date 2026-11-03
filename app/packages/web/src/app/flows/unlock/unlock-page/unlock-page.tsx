@@ -35,7 +35,7 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
     return <PlantLoader label="Funktion wird geladen …" size="lg" className="mx-auto my-8 flex" />;
   if (props.status === "error")
     return (
-      <section aria-labelledby="unlock-title" className={CARD}>
+      <section aria-labelledby="unlock-title" data-fit-screen="" className={CARD}>
         <h1 id="unlock-title" className="text-2xl font-semibold">
           {props.name}
         </h1>
@@ -50,7 +50,7 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
       </section>
     );
   return (
-    <section aria-labelledby="unlock-title" className={CARD}>
+    <section aria-labelledby="unlock-title" data-fit-screen="" className={CARD}>
       <h1 id="unlock-title" className="text-2xl font-semibold">
         Diese Funktion gibt es hier nicht
       </h1>
@@ -150,7 +150,7 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
   const locked = entry.state === "locked" && entry.announced;
   // One card with its heading and its buttons, like the other states of this page (issue 1031, US-QS-14).
   return (
-    <section aria-labelledby="unlock-title" className={CARD}>
+    <section aria-labelledby="unlock-title" data-fit-screen="" className={CARD}>
       <h1 ref={heading} tabIndex={-1} id="unlock-title" className="text-2xl font-semibold">
         {name}
       </h1>
