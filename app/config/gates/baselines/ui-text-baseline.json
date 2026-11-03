@@ -406,15 +406,15 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/components/collector-card/collector-card.tsx",
+      "file": "packages/web/src/pokedex/pokedex-cards/collector-card/collector-card.tsx",
       "count": 13
     },
     {
-      "file": "packages/web/src/components/collector-card/rarity-note/rarity-note.tsx",
+      "file": "packages/web/src/pokedex/pokedex-cards/collector-card/rarity-note/rarity-note.tsx",
       "count": 7
     },
     {
-      "file": "packages/web/src/components/collector-cards/collector-cards.tsx",
+      "file": "packages/web/src/pokedex/pokedex-cards/collector-cards/collector-cards.tsx",
       "count": 3
     },
     {
@@ -470,7 +470,7 @@
       "count": 2
     },
     {
-      "file": "packages/web/src/app/destinations/collection-area/sammlung-header/view-layer/view-layer.tsx",
+      "file": "packages/web/src/collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
       "count": 2
     },
     {

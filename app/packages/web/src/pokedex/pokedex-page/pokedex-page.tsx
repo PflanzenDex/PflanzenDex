@@ -1,6 +1,6 @@
 import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
-import { CollectorCards } from "@/components/collector-cards/collector-cards";
+import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame } from "../../shared/data";

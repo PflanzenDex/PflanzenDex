@@ -5,7 +5,7 @@ import { Badge } from "@/shared/ui/display/badge/badge";
 import { cn } from "@/shared/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
-import { DifficultyStars, WikipediaSource } from "@/components/collector-card/collector-card";
+import { DifficultyStars, WikipediaSource } from "@/pokedex";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
 

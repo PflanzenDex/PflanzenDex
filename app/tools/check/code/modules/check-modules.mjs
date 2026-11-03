@@ -67,8 +67,8 @@ function checkRegister({ appDir, add, cfg }) {
 }
 
 // No modules: docs/guides/reference/design-system.md section 1. shared (FR-QG-23 step 2) and app (step 3, the composition root)
-// are layers, components holds the collector cards until step 4 moves them into pokedex.
-const DESIGN_SYSTEM_FOLDERS = ["app", "components", "shared", "styles"];
+// are layers; components/ is gone since step 4 moved the collector cards into pokedex.
+const DESIGN_SYSTEM_FOLDERS = ["app", "shared", "styles"];
 function checkFolders({ appDir, add, cfg, h }) {
   const seen = new Set();
   for (const pkg of LAYERS) {
