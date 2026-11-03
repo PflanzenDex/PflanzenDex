@@ -37,10 +37,12 @@ export function FactGrid({ facts, next, className }: FactGridProps) {
   const known = facts.filter((f) => !isUnknown(f.value));
   const unknown = facts.filter((f) => isUnknown(f.value)).map((f) => f.label);
   return (
-    <div className={cn("grid min-w-0 gap-2 text-sm", className)}>
+    <div className={cn("@container grid min-w-0 gap-2 text-sm", className)}>
       {known.length > 0 ? (
         // The value column may shrink below its longest word, so a long value wraps and never runs past the panel (issue 1019).
-        <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 [overflow-wrap:anywhere]">
+        // In a box narrower than 12 rem (a container query in rem, so it follows the text size) each label stands above its
+        // value: at 200 % text the label column alone takes the room of the value, which then ran past the box (US-QS-15, issue 1180).
+        <dl className="m-0 grid grid-cols-1 gap-x-3 gap-y-2 [overflow-wrap:anywhere] @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
           {known.map((f, index) => (
             <div key={`${index}-${f.label}`} className="contents">
               <dt className="font-semibold">{f.label}</dt>
@@ -64,7 +66,8 @@ function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
       <details className="min-w-0">
-        <summary className="inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        {/* `relative`: the sr-only name list is absolutely positioned; without a positioned box it escapes an inner scroll region and makes the page scroll (US-QS-15, DS-61). */}
+        <summary className="relative inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
           <span>{missingText(labels.length)}</span>
           <span className="sr-only"> (Namen anzeigen)</span>
         </summary>

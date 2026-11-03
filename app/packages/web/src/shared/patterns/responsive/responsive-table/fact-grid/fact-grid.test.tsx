@@ -197,3 +197,25 @@ describe("US-QS-24 unknownInEvery hides a column that is unknown for every row",
     expect(unknownInEvery([] as Row[], factsOfRow)).toEqual([]);
   });
 });
+
+describe("US-QS-15 FactGrid at a large text size (DS-61, NFR-13, issue 1180)", () => {
+  it("US-QS-15 a label stands above its value by default and beside it only from 12 rem of box width", () => {
+    const { container } = render(<FactGrid facts={facts} />);
+    const dl = container.querySelector("dl") as HTMLElement;
+    expect(dl.className).toContain("grid-cols-1");
+    expect(dl.className).toContain("@min-[12rem]:grid-cols-[auto_minmax(0,1fr)]");
+  });
+
+  it("US-QS-15 the stacking follows the box, not the window: the wrapper is the container of the query", () => {
+    const { container } = render(<FactGrid facts={facts} />);
+    const wrapper = container.querySelector("dl")?.parentElement as HTMLElement;
+    expect(wrapper.className).toContain("@container");
+  });
+
+  it("US-QS-15 the summary of the fold is a positioned box, so its screen-reader text stays inside it", () => {
+    const { container } = render(<FactGrid facts={facts} />);
+    const summary = container.querySelector("summary") as HTMLElement;
+    expect(summary.className).toContain("relative");
+    expect(summary.querySelector(".sr-only")?.textContent).toBe(" (Namen anzeigen)");
+  });
+});
