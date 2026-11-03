@@ -176,6 +176,7 @@ export function PlantLayer(props: Props) {
         </div>
         <Tabs
           label="Bereiche der Pflanze"
+          wrap
           tabs={tabContents(props, tab, closeLayer)}
           value={tab.tab}
           onValueChange={tab.choose}

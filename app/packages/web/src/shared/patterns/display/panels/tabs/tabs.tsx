@@ -57,11 +57,11 @@ function TabButton(props: TabButtonProps) {
       className={cn(
         "flex-1 rounded-full font-semibold",
         // Wrap: a tab is never narrower than its label, so the label breaks inside the tab or the strip breaks onto
-        // another line (NFR-13, text at 200 %). The narrower padding keeps the widest label at normal size within the
-        // equal share of a 360 px phone, so the tabs stay equally wide there. Otherwise the label stays on one line in a
-        // tab of at least 44 px.
+        // another line (NFR-13, text at 200 %). The narrower padding (8 px a side) keeps the widest label of the layers
+        // at normal size within the equal share of a 360 px phone, so the tabs stay equally wide there. Otherwise the
+        // label stays on one line in a tab of at least 44 px.
         wrap
-          ? "min-w-fit max-w-full whitespace-normal px-3"
+          ? "min-w-fit max-w-full whitespace-normal px-2"
           : "min-w-[44px] whitespace-nowrap px-4",
         active
           ? "bg-accent text-accent-foreground shadow-elevation-1 hover:bg-accent forced-colors:border-[color:Highlight]"
