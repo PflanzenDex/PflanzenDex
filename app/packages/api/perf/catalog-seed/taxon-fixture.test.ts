@@ -1,6 +1,8 @@
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { collectorCards } from "@pflanzendex/core";
 import { holdTaxonLock, migrate, openFixturePool, TaxonomyPostgres } from "@pflanzendex/db";
+import { BEN_SPECIMENS } from "../demo-seed/accounts/ben/ben-plants.ts";
 import { SEED_SPECIES } from "./species-list.ts";
 import { seedTaxonFixture, taxonFixtureRows, TAXON_FIXTURE_FINGERPRINT } from "./taxon-fixture.ts";
 
@@ -53,6 +55,10 @@ describe("US-QS-15 the demo seed brings a Pokédex tree (issue 1164)", () => {
       });
       expect(monstera).toMatchObject({ summary: null, imageUrl: null, genusSpeciesCount: null });
       expect(monstera?.natureRarity).toEqual({ iucn: null, occurrences: null });
+      // The Sammlerkarten layer draws one card per tree row; every species Ben keeps has its row.
+      expect(collectorCards(tree, [], [])).toHaveLength(SEED_SPECIES.length);
+      const names = new Set(tree.map((t) => t.latinName));
+      for (const plant of BEN_SPECIMENS) expect(names).toContain(plant.latin);
       const fp = await c.query<{ f: string; ott: string | null }>(
         "select catalog_fingerprint as f, ott_id as ott from taxon limit 1",
       );
