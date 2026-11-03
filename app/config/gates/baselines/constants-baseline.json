@@ -512,11 +512,11 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/components/routing/areas/collection-area/collection-area.tsx",
+      "file": "packages/web/src/app/destinations/collection-area/collection-area.tsx",
       "enums": 4
     },
     {
-      "file": "packages/web/src/components/routing/areas/today-area/today-area.tsx",
+      "file": "packages/web/src/app/destinations/today-area/today-area.tsx",
       "enums": 1
     },
     {
@@ -572,19 +572,19 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/sammlung-view.ts",
+      "file": "packages/web/src/app/sammlung-view.ts",
       "enums": 5
     },
     {
-      "file": "packages/web/src/shell/app/app.tsx",
+      "file": "packages/web/src/app/frame/app/app.tsx",
       "enums": 1
     },
     {
-      "file": "packages/web/src/shell/today-intro/today-intro.tsx",
+      "file": "packages/web/src/app/flows/onboarding/today-intro/today-intro.tsx",
       "enums": 2
     },
     {
-      "file": "packages/web/src/shell/today-intro/use-hints.ts",
+      "file": "packages/web/src/app/flows/onboarding/today-intro/use-hints.ts",
       "enums": 2
     },
     {

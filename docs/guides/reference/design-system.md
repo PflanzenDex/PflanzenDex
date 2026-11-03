@@ -23,7 +23,7 @@ This document describes the **target** UI stack. The `web` package does not matc
 
 The gap is tracked as issues (label `design-system`), every deviation is listed in `app/config/gates/baselines/quality-ds-baseline.json` and may only shrink (ratchet, section 6).
 
-**Paths and aliases.** `@/` means `app/packages/web/src/`. A module is a top-level folder of `src/` other than `components`, `lib`, `shared` and `styles`; its name and allowed dependencies come from ADR 0003 and `app/config/lint/modules.config.mjs`. This file never defines its own module list.
+**Paths and aliases.** `@/` means `app/packages/web/src/`. A module is a top-level folder of `src/` other than `app`, `components`, `shared` and `styles`; its name and allowed dependencies come from ADR 0003 and `app/config/lint/modules.config.mjs`. This file never defines its own module list.
 
 ---
 
@@ -33,16 +33,24 @@ The gap is tracked as issues (label `design-system`), every deviation is listed 
 
 ```
 src/
-├── main.tsx                     # bootstrap: providers, router, service worker registration
-├── shared/                      # layer-neutral code, imports no module (FR-QG-23 step 2)
+├── app/                         # composition root (FR-QG-23 step 3): the only layer that combines several modules
+│   ├── main.tsx                 # bootstrap: providers, router, service worker registration
+│   ├── routes.tsx               # route table: composes module index.ts exports and shared components (DS-05)
+│   ├── title.ts, sammlung-view.ts
+│   ├── frame/                   # AppShell and its parts (app-shell, global-header, mobile-nav-bar, side-nav), the app root (app/)
+│   ├── destinations/            # the areas: today-area, collection-area, discover-area, account-area; area-parts/
+│   ├── flows/                   # onboarding, unlock, add-plant; index.ts is their public interface
+│   ├── legacy-routes/           # redirects of the old addresses
+│   ├── stories/                 # page stories (harness, data, screens) and the shell story fixtures
+│   └── tests/                   # cross-cutting tests (styles, layout, sammlung, route register)
+├── shared/                      # layer-neutral code, imports no module and not app (FR-QG-23 step 2)
 │   ├── ui/                      # atomic primitives, NO domain logic (button/, fields/, overlays/, display/)
 │   ├── patterns/                # composites: responsive/, states/, elements/, navigation/, display/
 │   ├── data/                    # the former kernel: request hooks, features, load frame, time zone
 │   ├── platform/                # adapters for device/browser APIs (section 1.3)
 │   ├── lib/                     # cn() and other pure helpers (utils.ts)
-│   └── testing/                 # shared test setup
-├── components/                  # app shell until FR-QG-23 step 4: navigation/ (app bar, mobile nav, side nav), shell/, routing/
-├── lib/                         # page stories until FR-QG-23 step 3
+│   └── testing/                 # shared test setup and the router decorator of stories (story-frame/)
+├── components/                  # collector cards until FR-QG-23 step 4 (then the pokedex module)
 ├── styles/
 │   └── tokens.css               # design tokens (section 3)
 └── <module>/                    # e.g. collection/, care/, light/, wishlist/, pokedex/
@@ -56,14 +64,14 @@ src/
 
 ### 1.2 Placement rules
 
-| ID    | Rule                                                                                                                                                                                                                                                                                                                                                                     |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| DS-01 | `shared/ui` holds atomic, lightly styled primitives only (Button, Input, Label, Textarea, Select, Checkbox, Sheet, Dialog, Table, Skeleton, Badge, Form). It MUST NOT import from `shared/patterns`, from any module, from `core`, or from API code. It knows no domain term (no "specimen", "zone", "wish"). 🔒                                                         |
-| DS-02 | `shared/patterns` holds composites used by **two or more** modules or by the app shell (GlobalHeader, AppShell, MobileNavBar, ResponsiveModal, ResponsiveTable, EmptyState; the app-shell ones still sit in `components/shared` until FR-QG-23 step 4). It MAY import `shared/ui`, `shared/patterns`, `shared/lib`, `shared/platform`. It MUST NOT import any module. 🔒 |
-| DS-03 | A module's components live in its folder. They MAY import `shared/ui`, `shared/patterns`, `shared/lib`, `shared/platform` and the module's own files.                                                                                                                                                                                                                    |
-| DS-04 | A module component MUST NOT be imported from another module. If a second module needs it, move it to `shared/patterns` (if it has no domain rule) or expose data through the module's `index.ts` and let the consumer render it (section 4.1). 🔒                                                                                                                        |
-| DS-05 | The router (in `main.tsx` or `routes.tsx`) composes module `index.ts` exports and shared components. It contains no business logic.                                                                                                                                                                                                                                      |
-| DS-06 | Promotion rule: write it in the module first. Move it to `shared` when a **second** module needs it, to `ui` when it has no domain-specific text, data or behavior left. Do not pre-build shared components "just in case".                                                                                                                                              |
+| ID    | Rule                                                                                                                                                                                                                                                                                                                                                       |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-01 | `shared/ui` holds atomic, lightly styled primitives only (Button, Input, Label, Textarea, Select, Checkbox, Sheet, Dialog, Table, Skeleton, Badge, Form). It MUST NOT import from `shared/patterns`, from any module, from `core`, or from API code. It knows no domain term (no "specimen", "zone", "wish"). 🔒                                           |
+| DS-02 | `shared/patterns` holds composites used by **two or more** modules or by the app shell (GlobalHeader, AppShell, MobileNavBar, ResponsiveModal, ResponsiveTable, EmptyState; the app-shell ones sit in `app/frame` since FR-QG-23 step 3). It MAY import `shared/ui`, `shared/patterns`, `shared/lib`, `shared/platform`. It MUST NOT import any module. 🔒 |
+| DS-03 | A module's components live in its folder. They MAY import `shared/ui`, `shared/patterns`, `shared/lib`, `shared/platform` and the module's own files.                                                                                                                                                                                                      |
+| DS-04 | A module component MUST NOT be imported from another module. If a second module needs it, move it to `shared/patterns` (if it has no domain rule) or expose data through the module's `index.ts` and let the consumer render it (section 4.1). 🔒                                                                                                          |
+| DS-05 | The router (`app/routes.tsx`) composes module `index.ts` exports and shared components. It contains no business logic.                                                                                                                                                                                                                                     |
+| DS-06 | Promotion rule: write it in the module first. Move it to `shared` when a **second** module needs it, to `ui` when it has no domain-specific text, data or behavior left. Do not pre-build shared components "just in case".                                                                                                                                |
 
 ### 1.3 Client runtime rules (SPA, PWA, native shell)
 
@@ -87,7 +95,7 @@ export type { SpecimenView } from "./specimen-view";
 ```
 
 ```tsx
-// main.tsx (router excerpt)
+// app/routes.tsx (router excerpt)
 <Suspense fallback={<PageSkeleton />}>
   <Routes>
     <Route path="/collection" element={<CollectionPage />} />
@@ -540,7 +548,7 @@ export function SpecimenCardSkeleton() {
 
 ### 4.4 Component inventory
 
-Every component in `shared/ui`, in the shared patterns (responsive, states, empty-state, navigation) and in `components/shared` that exists today. Look here before you build a new one; a new component gets its row in the same PR (`make reference-check`, rule RF-3, US-QG-10). The path is relative to `app/packages/web/src/`.
+Every component in `shared/ui`, in the shared patterns (responsive, states, empty-state, navigation) and the app-shell components in `app/frame` that exist today. Look here before you build a new one; a new component gets its row in the same PR (`make reference-check`, rule RF-3, US-QG-10). The path is relative to `app/packages/web/src/`.
 
 | Component         | Path                                                 | Use it for                                                                                                                                                                                                                                                                                                       |
 | ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -564,12 +572,12 @@ Every component in `shared/ui`, in the shared patterns (responsive, states, empt
 | `Sheet`           | `shared/ui/overlays/sheet/`                          | bottom sheet, loaded on demand (DS-08)                                                                                                                                                                                                                                                                           |
 | `SheetPanel`      | `shared/ui/overlays/sheet/sheet-panel/`              | the body of `Sheet`, a separate chunk that `Sheet` loads on demand (DS-08); used only by `Sheet`                                                                                                                                                                                                                 |
 | `EmptyState`      | `shared/patterns/elements/empty-state/`              | empty or error state of a list or view with the next action (DS-26, P-09)                                                                                                                                                                                                                                        |
-| `AppShell`        | `components/shared/navigation/app-shell/`            | the frame of every signed-in page: header, sidebar, bottom bar; a destination makes it one screen with `data-fit-screen` (DS-61)                                                                                                                                                                                 |
+| `AppShell`        | `app/frame/app-shell/`                               | the frame of every signed-in page: header, sidebar, bottom bar; a destination makes it one screen with `data-fit-screen` (DS-61)                                                                                                                                                                                 |
 | `PageHeader`      | `shared/patterns/navigation/page-header/`            | the header of a sub-page: an icon chevron back to the parent, named "Zurück zu …" (ghost, 44 px), the one h1 and at most one action in one row (US-QS-14, DS-64)                                                                                                                                                 |
 | `FullView`        | `shared/patterns/navigation/full-view/`              | the frame of a sub-page or full-view page: `PageHeader` first, then the content region below it, no card around the h1 (US-QS-14, US-QS-15, DS-64)                                                                                                                                                               |
-| `GlobalHeader`    | `components/shared/navigation/global-header/`        | the top bar below `md` (DS-25)                                                                                                                                                                                                                                                                                   |
-| `MobileNavBar`    | `components/shared/navigation/mobile-nav-bar/`       | the bottom bar, at most 5 slots (DS-25); icons only when a label no longer fits its slot (issue 1107)                                                                                                                                                                                                            |
-| `SideNav`         | `components/shared/navigation/side-nav/`             | the sidebar from `md`; items with a `group` stand under that heading in the labelled sidebar ("Verwaltung", issue 1093)                                                                                                                                                                                          |
+| `GlobalHeader`    | `app/frame/global-header/`                           | the top bar below `md` (DS-25)                                                                                                                                                                                                                                                                                   |
+| `MobileNavBar`    | `app/frame/mobile-nav-bar/`                          | the bottom bar, at most 5 slots (DS-25); icons only when a label no longer fits its slot (issue 1107)                                                                                                                                                                                                            |
+| `SideNav`         | `app/frame/side-nav/`                                | the sidebar from `md`; items with a `group` stand under that heading in the labelled sidebar ("Verwaltung", issue 1093)                                                                                                                                                                                          |
 | `NavNote`         | `shared/patterns/navigation/nav-note/`               | the text mark of a destination that is not open yet (US-ONB-05)                                                                                                                                                                                                                                                  |
 | `Navigation`      | `shared/patterns/navigation/navigation/`             | the navigation model: views, link targets and paths, not a visible component                                                                                                                                                                                                                                     |
 | `ResponsiveModal` | `shared/patterns/responsive/responsive-modal/`       | content a phone user fills in: bottom sheet below `md`, dialog from `md` (DS-23); a layer focuses its title first (`focusModalTitle`, US-QS-15, issue 1028)                                                                                                                                                      |

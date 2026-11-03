@@ -1,4 +1,4 @@
-// Gate QG-U5 (US-QS-07): every component in shared/ui, shared/patterns and components/shared has a story that covers
+// Gate QG-U5 (US-QS-07): every component in shared/ui, shared/patterns and app/frame has a story that covers
 // its variants and states. The script checks mechanically that the required exports exist; whether a story
 // is meaningful stays a review question. There is no baseline and no exception list.
 //   <name>.tsx            needs <name>.stories.tsx next to it
@@ -13,8 +13,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Folders below src/ (FR-QG-23 step 2): shared/ui, shared/patterns, and the app-shell components still in components/shared.
-export const COMPONENT_DIRS = ["shared/ui", "shared/patterns", "components/shared"];
+// Folders below src/ (FR-QG-23 steps 2 and 3): shared/ui, shared/patterns, and the app-shell components of app/frame (formerly
+// components/shared; the scope is the same: only the files directly in a folder are checked, as before).
+export const COMPONENT_DIRS = ["shared/ui", "shared/patterns", "app/frame"];
 
 const stripComments = (s) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");

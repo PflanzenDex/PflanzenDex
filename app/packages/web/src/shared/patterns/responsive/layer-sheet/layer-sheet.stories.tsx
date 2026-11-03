@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { withRouter } from "../../../../components/shared/shell/shell.fixtures";
+import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { Button } from "@/shared/ui/button/button";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 

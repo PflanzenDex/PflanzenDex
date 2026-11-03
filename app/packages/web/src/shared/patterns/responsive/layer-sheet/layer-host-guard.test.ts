@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 /** The `src` folder, found from this file (shared/patterns/responsive/layer-sheet). */
 const SRC = fileURLToPath(new URL("../../../../", import.meta.url));
 
-const AREA = "components/routing/areas";
+const AREA = "app/destinations";
 const COLLECTION = `${AREA}/collection-area/collection-area.tsx`;
 const DISCOVER = `${AREA}/discover-area/discover-area.tsx`;
 const TODAY = `${AREA}/today-area/today-area.tsx`;
@@ -26,7 +26,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   ],
   "account/settings-page/settings-page.tsx": ["account/settings-page/settings-page.tsx"],
   "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx": [ACCOUNT],
-  "shell/function-overview/function-overview.tsx": [ACCOUNT],
+  "app/flows/onboarding/function-overview/function-overview.tsx": [ACCOUNT],
   "catalog/review/review-layer/review-layer.tsx": ["catalog/review/review-page/review-page.tsx"],
   "catalog/search-view/search-filters/search-filters.tsx": [DISCOVER],
   "catalog/species-page/species-page.tsx": [DISCOVER, PROFILE],
@@ -37,8 +37,8 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   ],
   "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx": [COLLECTION],
   "collection/plants-screen/plant-layers/plant-layers.tsx": [COLLECTION],
-  "components/routing/areas/today-area/today-area.tsx": [TODAY],
-  "components/sammlung-header/view-layer/view-layer.tsx": [COLLECTION],
+  "app/destinations/today-area/today-area.tsx": [TODAY],
+  "app/destinations/collection-area/sammlung-header/view-layer/view-layer.tsx": [COLLECTION],
   "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx": [COLLECTION],
   "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx": [
     COLLECTION,
@@ -49,7 +49,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "light/views/light-view/light-layers/light-layers.tsx": [COLLECTION],
   "light/zones/location-layer/location-layer.tsx": [COLLECTION],
   "light/zones/zone-layer/zone-layer.tsx": [COLLECTION],
-  "shell/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx": [TODAY],
+  "app/flows/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx": [TODAY],
   "social/feed/friends-news/friends-news.tsx": [TODAY],
   "social/pages/friends-page/friend-layers/layer/layer.tsx": [
     "social/pages/friends-page/friends-page.tsx",

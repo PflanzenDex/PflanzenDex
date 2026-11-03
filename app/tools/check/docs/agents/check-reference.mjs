@@ -5,7 +5,7 @@
 // This check fails when
 //   RF-1  an API route is not named in docs/guides/reference/app.md as `METHOD /path` (parameter names may differ),
 //   RF-2  a core operation (`defineOperation({ name })`) is not named in app.md as `domain.verb`,
-//   RF-3  a shared component (shared/ui, shared/patterns, components/shared) is not named in docs/guides/reference/design-system.md
+//   RF-3  a shared component (shared/ui, shared/patterns, app/frame) is not named in docs/guides/reference/design-system.md
 //         as `Name` or `<Name`,
 //   RF-4  a baseline entry is documented now or no longer exists in the code (delete the entry),
 //   RF-5  the baseline holds an entry that the baseline on dev does not have (it only shrinks).

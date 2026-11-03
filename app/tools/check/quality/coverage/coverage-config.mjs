@@ -15,7 +15,7 @@ export function coverageFor(pkg) {
     reporter: ["text-summary", "json-summary", "json", "lcov"],
     reportsDirectory: "coverage",
     include: ["src/**/*.{ts,tsx}"],
-    exclude: ["**/*.test.{ts,tsx}", "**/*.d.ts", "src/main.ts", "src/main.tsx"],
+    exclude: ["**/*.test.{ts,tsx}", "**/*.d.ts", "src/app/main.ts", "src/app/main.tsx"],
     ...(thresholds ? { thresholds } : {}),
   };
 }
