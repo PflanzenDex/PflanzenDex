@@ -90,6 +90,17 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+/** The strip wraps, or stays one row that scrolls sideways; such a row is marked for the one-screen gate (issue 1183). */
+function stripLayout(wrap: boolean | undefined) {
+  return {
+    "data-scroll-x": wrap ? undefined : "row",
+    className: cn(
+      "flex w-full gap-1 bg-muted p-1",
+      wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto rounded-full",
+    ),
+  };
+}
+
 /**
  * Tabs (US-QS-07, DS-34): a real `tablist` with roving tabindex. Tab reaches the selected tab only, Left and Right move
  * (wrapping), Home and End jump to the ends, and a moved focus selects at once (automatic activation). The panel is
@@ -129,10 +140,7 @@ export function Tabs(props: TabsProps) {
         aria-label={props.label}
         aria-orientation="horizontal"
         onKeyDown={onKeyDown}
-        className={cn(
-          "flex w-full gap-1 bg-muted p-1",
-          props.wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto rounded-full",
-        )}
+        {...stripLayout(props.wrap)}
       >
         {tabs.map((t) => (
           <TabButton
