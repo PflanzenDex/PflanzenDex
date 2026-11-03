@@ -53,5 +53,5 @@ cd app && DEMO_SEED_SUBJECTS="$SUBJECTS" DEMO_SEED_PROFILE=states PFLANZENDEX_EN
 - Run one measurement at a time: parallel runs share the dev servers and the clicks time out.
 - A Keycloak session ends after about 20 minutes and the app then lands on `/today`; check the `url` of a result before trusting it.
 - Values within a few hundredths of the limit move between runs; the CI job decides.
-- With `TAXONOMY_BUILD=off` (as in CI) the collector cards are empty until a Pokédex tree exists (#1164); measure that layer against a database that has one.
+- The states seed writes a Pokédex tree fixture into an empty `taxon` table (#1164), so the collector cards have content with `TAXONOMY_BUILD=off`, as in CI. A database seeded before that needs the states seed again.
 - The tools block every API write, so measuring never changes the demo data.
