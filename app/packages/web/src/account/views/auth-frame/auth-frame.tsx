@@ -53,11 +53,12 @@ function ShelfDrawing() {
 /**
  * The frame of the entry pages (US-QS-14): on a wide screen a calm panel with the drawing and the value lines on the
  * left and the content on the right; on a phone a band with the drawing above the content. The sign-in theme of the
- * Keycloak pages uses the same frame, the same tokens and the same German texts.
+ * Keycloak pages uses the same frame, the same tokens and the same German texts. Above 1920 px it keeps its 1920 px
+ * layout, centred, like the app shell; its page colour makes the whole column the painted area (US-QS-14, issue 1160).
  */
 export function AuthFrame(props: { children: ReactNode }) {
   return (
-    <div className="grid min-h-dvh grid-cols-1 content-start md:grid-cols-2 md:content-stretch">
+    <div className="mx-auto grid min-h-dvh w-full max-w-480 grid-cols-1 content-start bg-background md:grid-cols-2 md:content-stretch">
       <div className="flex flex-col items-center justify-center gap-3 bg-muted px-4 py-1.5 md:gap-8 md:p-12">
         <ShelfDrawing />
         <ul className="hidden list-none text-lg leading-snug text-muted-foreground md:block md:max-w-[440px]">
