@@ -11,6 +11,7 @@ import {
   type Size,
   type Result,
 } from "../../../support/display/one-screen/judge";
+import { sidewaysSelfTests } from "./one-screen-sideways";
 import {
   buildBaseline,
   judgeBaseline,
@@ -38,7 +39,7 @@ async function measureAll(
     await settle(page, 400);
     const withPaint = size.kind === "cap" && !screen.capExempt;
     const raw: Raw = await measure(page, withPaint);
-    results.push(evaluate(screen.id, size, raw));
+    results.push(evaluate(screen.id, size, raw, Boolean(screen.sidewaysExempt)));
   }
   return results;
 }
@@ -79,7 +80,7 @@ const sizeOf = (name: string) => SIZES.find((s) => s.name === name) as Size;
 
 const raw = (over: Partial<Raw>): Raw => ({
   ...{ scrollHeight: 640, innerHeight: 640, scrollWidth: 360, innerWidth: 360, region: null },
-  ...{ pageEl: "main", hEl: "div", paint: null },
+  ...{ pageEl: "main", hEl: "div", regionX: null, paint: null },
   ...over,
 });
 
@@ -169,6 +170,8 @@ test("QG-U8 self-test: at 200 % text a taller region is no regression, a taller 
   const page = evaluate("s", zoomed, raw({ scrollHeight: 1400, region: region(600) }));
   expect(judgeScreen([page], listed)[0]).toContain("worse");
 });
+
+sidewaysSelfTests(raw, sizeOf);
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");

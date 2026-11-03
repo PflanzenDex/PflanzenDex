@@ -1,5 +1,5 @@
 {
-  "maxEntries": 35,
+  "maxEntries": 68,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -71,31 +71,36 @@
       "screen": "friends-exchange",
       "size": "360x640@200%",
       "page": 2.98,
-      "inner": 1
+      "inner": 1,
+      "innerX": 1.24
     },
     {
       "screen": "friends-exchange-part-friends",
       "size": "360x640@200%",
       "page": 2.88,
-      "inner": 1
+      "inner": 1,
+      "innerX": 1.24
     },
     {
       "screen": "friends-exchange-part-history",
       "size": "360x640@200%",
       "page": 2.45,
-      "inner": 1
+      "inner": 1,
+      "innerX": 1.24
     },
     {
       "screen": "friends-exchange-part-requests",
       "size": "360x640@200%",
       "page": 2.76,
-      "inner": 1
+      "inner": 1,
+      "innerX": 1.24
     },
     {
       "screen": "friends-exchange-sheet-offer",
       "size": "360x640@200%",
       "page": 2.98,
-      "inner": 2.22
+      "inner": 2.22,
+      "innerX": 1.24
     },
     {
       "screen": "friends-match",
@@ -173,13 +178,15 @@
       "screen": "species-profile",
       "size": "360x640@200%",
       "page": 3.34,
-      "inner": 6.14
+      "inner": 6.14,
+      "innerX": 1.1
     },
     {
       "screen": "species-profile-care",
       "size": "360x640@200%",
       "page": 3.34,
-      "inner": 6.14
+      "inner": 6.14,
+      "innerX": 1.1
     },
     {
       "screen": "unlock-friends",
@@ -210,6 +217,237 @@
       "size": "360x640@200%",
       "page": 1.45,
       "inner": 1
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "innerX": 1.11
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "innerX": 1.01
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.41,
+      "innerX": 1.03
+    },
+    {
+      "screen": "account-achievements-pause",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.3,
+      "innerX": 1.03
+    },
+    {
+      "screen": "account-achievements-rhythm",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.3,
+      "innerX": 1.03
+    },
+    {
+      "screen": "account-achievements-year",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.47,
+      "innerX": 1.18
+    },
+    {
+      "screen": "account-achievements",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.3,
+      "innerX": 1.03
+    },
+    {
+      "screen": "account-settings-sheet-light",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "account-settings-sheet-notifications",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "account-settings-sheet-privacy",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "account-settings-sheet-profile",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "account-settings-sheet-style",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "account-settings-sheet-wishlist",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "account-settings",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-equipment-item",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.77,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.28,
+      "innerX": 1.07
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.7,
+      "innerX": 1.07
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.73,
+      "innerX": 1.07
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.36,
+      "innerX": 1.07
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.73,
+      "innerX": 1.07
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.26,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment-sheet-new",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment-sheet-sensors",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-equipment",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.69,
+      "innerX": 1.02
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "innerX": 3.17
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "innerX": 2.88
+    },
+    {
+      "screen": "friends-sheet-add",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.6,
+      "innerX": 1.21
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.73,
+      "innerX": 1.07
+    },
+    {
+      "screen": "review-case",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.79,
+      "innerX": 1.49
     }
   ]
 }

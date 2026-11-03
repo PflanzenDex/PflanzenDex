@@ -11,20 +11,21 @@ const STALE_MARGIN = 0.03;
 export const entryOf = (baseline: Baseline, r: Result) =>
   baseline.entries.find((e) => e.screen === r.screen && e.size === r.size);
 
-// At 200 % text only the region may scroll (DS-61), so its inner ratio is no criterion there and is not compared.
+// At 200 % text the region may scroll vertically (DS-61), so its inner ratio is not compared there; sideways always is.
 function worse(r: Result, e: BaselineEntry): string | null {
   const parts: string[] = [];
   const textRun = r.size.endsWith("@200%");
   if (r.page > e.page + WORSE_RATIO) parts.push(`page ${r.page} > ${e.page}`);
   if (!textRun && r.inner > e.inner + WORSE_RATIO) parts.push(`inner ${r.inner} > ${e.inner}`);
-  if (r.hOver > (e.hOver ?? 0)) parts.push(`sideways ${r.hOver} px > ${e.hOver ?? 0} px`);
+  if (r.pageX > (e.pageX ?? 1) + WORSE_RATIO) parts.push(`pageX ${r.pageX} > ${e.pageX ?? 1}`);
+  if (r.innerX > (e.innerX ?? 1) + WORSE_RATIO) parts.push(`innerX ${r.innerX} > ${e.innerX ?? 1}`);
   if (r.cap > (e.cap ?? 0) + WORSE_PX) parts.push(`cap ${r.cap} px > ${e.cap ?? 0} px`);
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
 /** Whether a listed entry was clearly over the limit, so that fitting now means it was fixed, not noise. */
 const clearlyOver = (e: BaselineEntry) =>
-  (e.cap ?? 0) > 0 || (e.hOver ?? 0) > 0 || Math.max(e.page, e.inner) > 1 + STALE_MARGIN;
+  (e.cap ?? 0) > 0 || Math.max(e.page, e.inner, e.pageX ?? 1, e.innerX ?? 1) > 1 + STALE_MARGIN;
 
 /** The violations of one screen against the baseline: new failures, listed ones that got worse, listed ones that fit now. */
 export function judgeScreen(
@@ -69,7 +70,8 @@ export function buildBaseline(results: readonly Result[]): Baseline {
     .filter((r) => r.failures.length > 0)
     .map((r): BaselineEntry => {
       const e: BaselineEntry = { screen: r.screen, size: r.size, page: r.page, inner: r.inner };
-      if (r.hOver > 0) e.hOver = r.hOver;
+      if (r.pageX > 1) e.pageX = r.pageX;
+      if (r.innerX > 1) e.innerX = r.innerX;
       if (r.cap > 0) e.cap = r.cap;
       return e;
     });
