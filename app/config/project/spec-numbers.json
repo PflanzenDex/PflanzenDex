@@ -1,0 +1,21 @@
+{
+  "$comment": "FR-QG-13: constants of @pflanzendex/core whose number the product spec must keep marked (<!-- const: NAME -->). Only grows.",
+  "constants": [
+    "REPLENISH_BUFFER_LIMITS.min",
+    "REPLENISH_BUFFER_LIMITS.max",
+    "REPLENISH_BUFFER_LIMITS.default",
+    "GROWTH_DEFAULTS.trendTolerance",
+    "COLLECTOR_RANKS.1.from",
+    "COLLECTOR_RANKS.2.from",
+    "COLLECTOR_RANKS.3.from",
+    "COLLECTOR_RANKS.4.from",
+    "COLLECTOR_RANKS.5.from",
+    "SPECIES_POOR_MAX",
+    "POSITION_THRESHOLD_DEFAULTS.0",
+    "POSITION_THRESHOLD_DEFAULTS.1",
+    "POSITION_THRESHOLD_DEFAULTS.2",
+    "POSITION_THRESHOLD_DEFAULTS.3",
+    "POSITION_THRESHOLD_LIMITS.min",
+    "POSITION_THRESHOLD_LIMITS.max"
+  ]
+}

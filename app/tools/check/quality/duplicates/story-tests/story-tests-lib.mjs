@@ -1,5 +1,5 @@
 // Pure logic of the story-to-test report (US-QS-02, US-QG-04). No I/O: callers pass file texts.
-import { parseStories } from "../../../docs/check-traceability.mjs";
+import { parseStories } from "../../../docs/specs/check-traceability.mjs";
 
 const ID = "(?:US|FR|DM)-[A-Z]+-\\d+|NFR-\\d+";
 const STATUS = /^(⬜|🟨|✅)/u;
