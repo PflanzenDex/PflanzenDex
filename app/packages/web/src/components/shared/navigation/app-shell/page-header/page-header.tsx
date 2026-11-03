@@ -68,18 +68,18 @@ export function PageHeader(props: PageHeaderProps) {
   const { title, back, action, className } = props;
   const Heading = props.heading ?? "h1";
   return (
-    <div data-page-header="" className={cn("flex min-w-0 items-center gap-2", className)}>
+    <div data-page-header="" className={cn("flex min-w-0 flex-wrap items-center gap-2", className)}>
       {back ? <BackControl back={back} /> : null}
       <Heading
         {...(props.headingId ? { id: props.headingId } : {})}
         className={cn(
-          "min-w-0 flex-1 font-semibold [overflow-wrap:anywhere]",
+          "min-w-20 flex-1 font-semibold [overflow-wrap:anywhere]",
           Heading === "h1" ? "text-2xl" : "text-xl",
         )}
       >
         {title}
       </Heading>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="min-w-0 max-w-full shrink-0 [&>*]:max-w-full">{action}</div> : null}
     </div>
   );
 }

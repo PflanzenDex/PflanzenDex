@@ -433,4 +433,10 @@ describe("US-QS-14 · US-QS-15 the matching offers are a sub-page with one page 
       "/friends/exchange",
     );
   });
+
+  it("US-QS-15 the frame is one screen, so at a large text size only the content region scrolls (DS-61)", () => {
+    server([card(1)]);
+    open();
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
 });

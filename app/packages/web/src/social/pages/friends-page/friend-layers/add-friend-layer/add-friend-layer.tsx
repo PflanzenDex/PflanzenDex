@@ -47,7 +47,7 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
   return (
     <Layer id="add" title="Freund hinzufügen">
       <div className="flex min-w-0 flex-col gap-4">
-        <div role="tablist" aria-label="Freund hinzufügen" className="flex gap-2">
+        <div role="tablist" aria-label="Freund hinzufügen" className="flex flex-wrap gap-2">
           {tabs.map((t) => (
             <Button
               key={t.id}
@@ -57,7 +57,7 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
               aria-selected={tab === t.id}
               aria-controls={`add-panel-${t.id}`}
               variant={tab === t.id ? "secondary" : "ghost"}
-              className="flex-1"
+              className="max-w-full flex-1"
               onClick={() => setTab(t.id)}
             >
               {t.label}

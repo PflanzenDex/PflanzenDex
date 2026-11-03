@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Freunde und Tauschbörse: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite. Der Knopf „Zum Tausch anbieten“ rutscht dabei unter den Titel, statt ihn zu zerhacken.",
     "Großer Bildschirm: Auf Monitoren breiter als Full HD bleibt die App 1920 Pixel breit und steht in der Mitte, statt sich über die ganze Breite zu ziehen. Meldungen erscheinen am rechten Rand der App.",
     "Standorte und Lichtzonen: Die Listen der Lichtzonen und Standorte zeigen so viele Zeilen pro Seite, wie Platz haben, auch wenn daneben eine Ebene offen ist. „Lichthunger“ zeigt die Arten als kurze Zeilen in Seiten statt als breite Tabelle; der nächste Schritt für Arten ohne Lux-Bedarf steht einmal darüber.",
     "Freunde: Die Tauschbörse passt jetzt auf jeden Bildschirm und zeigt so viele Karten pro Seite, wie Platz haben. In „Neu bei Freunden“ ist der Hinweis auf neue Pflanzen eine Zeile mit „Okay“, und die Filter öffnest du mit „Filter“.",

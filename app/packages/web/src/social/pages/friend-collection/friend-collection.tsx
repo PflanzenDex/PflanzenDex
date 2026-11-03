@@ -117,7 +117,7 @@ function Body(props: {
           label={`Sammlung von ${name}`}
           resetKey={filter}
           getKey={(c) => c.speciesLatin ?? `${c.speciesGerman}-${c.firstCaught}`}
-          listClassName="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
+          listClassName="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4"
           renderItem={(c) => (
             <FriendCard
               card={c}
@@ -154,7 +154,7 @@ export function FriendCollectionPage(props: {
   const equipment = useLayer(EQUIPMENT_LAYER);
   const title = collectionTitle(loaded.value?.friend.name ?? null);
   return (
-    <LayerHost>
+    <LayerHost data-fit-screen="">
       <FullView
         headingId="friend-collection-title"
         title={title}
