@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { checkProject } from "../check-boundaries.mjs";
-import { kernelExports } from "./check-modules-sql.mjs";
+import { kernelExports } from "./rules/check-modules-sql.mjs";
 import { MODULE_CONFIG as REAL } from "../../../../config/lint/modules.config.mjs";
 
 // Module rules AB-7 to AB-14 (FR-QG-19): each rule has a clean case and a violating fixture.
