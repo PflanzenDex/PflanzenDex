@@ -45,35 +45,64 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The API of one plant (Bogenhanf) with its measurements, locations and archive. */
+function stubCollection() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/locations") return response(200, { locations: [] });
+      if (path === "/specimens/archived") return response(200, { archived: [] });
+      if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+      if (path === "/specimens/e1/measurements") return response(200, emptyView);
+      return response(200, { cards: [card] });
+    }),
+  );
+}
+
+function renderArea() {
+  render(
+    <MemoryRouter>
+      <CollectionArea
+        api="http://api"
+        token={async () => "tok"}
+        newSpecies={null}
+        onSpeciesChoose={() => {}}
+        onCompleted={() => {}}
+      />
+    </MemoryRouter>,
+  );
+}
+
 describe("US-WAC-01 collection wired with measuring", () => {
   it("US-WAC-01 measuring on the specimen opens the measure view, back leads to the collection", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn<typeof fetch>(async (url) => {
-        const path = new URL(String(url)).pathname;
-        if (path === "/locations") return response(200, { locations: [] });
-        if (path === "/specimens/archived") return response(200, { archived: [] });
-        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-        if (path === "/specimens/e1/measurements") return response(200, emptyView);
-        return response(200, { cards: [card] });
-      }),
-    );
-    render(
-      <MemoryRouter>
-        <CollectionArea
-          api="http://api"
-          token={async () => "tok"}
-          newSpecies={null}
-          onSpeciesChoose={() => {}}
-          onCompleted={() => {}}
-        />
-      </MemoryRouter>,
-    );
+    stubCollection();
+    renderArea();
     // The collection page is a lazy part; its first import can take longer than the default second under load.
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {
+  it("US-QS-15 the measure view sits in the frame of the area, so at a large text size its content scrolls inside it", async () => {
+    stubCollection();
+    renderArea();
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    const heading = await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    expect(heading.closest("[data-fit-screen]")).not.toBeNull();
+  });
+
+  it("US-QS-15 a form of a plant (the marker) sits in the frame of the area too", async () => {
+    stubCollection();
+    renderArea();
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
+    const heading = await screen.findByRole("heading", { name: "Kennzeichen ändern" });
+    expect(heading.closest("[data-fit-screen]")).not.toBeNull();
   });
 });

@@ -12,7 +12,6 @@ import { ViewLayer } from "@/app/destinations/collection-area/sammlung-header/vi
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import { cn } from "@/shared/lib/utils";
 import {
   PLANT_GROUPS,
   SPECIES_SORTS,
@@ -66,11 +65,12 @@ export function CollectionArea(props: {
   const managing = view === "plants" && manage.open && !props.newSpecies;
   const own = view === "plants" && (measure !== null || fullView || managing);
   const plantsOnScreen = view === "plants" && !own;
-  // One screen (US-QS-19, issue 1029): the frame fills the viewport and the list region takes the free height below it.
-  const fit = !own || managing;
+  // One screen (US-QS-19, issue 1029, US-QS-15): every mode of the area is one frame, the list, a form and the
+  // measure page alike. Their content takes the free height below the header and scrolls inside the frame at a
+  // large text size.
   return (
-    <LayerHost className="min-h-0" {...(fit ? { "data-fit-screen": "", "data-fit-fill": "" } : {})}>
-      <div className={cn("min-w-0 flex-1", fit && "flex min-h-0 flex-col")}>
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {own ? null : <AreaHeader view={view} caption={caption} onChoose={choose} />}
         <Suspense fallback={<PageSkeleton />}>
           <ModeBody

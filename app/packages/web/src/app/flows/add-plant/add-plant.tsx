@@ -118,13 +118,16 @@ function Flow(props: Props & { onAnother: () => void }) {
  */
 export function AddPlant(props: Props) {
   const [round, setRound] = useState(0);
+  // One screen (US-QS-15, DS-61): the frame takes the viewport and the step scrolls inside it at a large text size.
   return (
-    <FullView
-      headingId="add-plant-title"
-      title="Pflanze anlegen"
-      back={{ label: "Zurück zur Sammlung", to: PATHS.collection }}
-    >
-      <Flow key={round} {...props} onAnother={() => setRound((r) => r + 1)} />
-    </FullView>
+    <div data-fit-screen="" className="flex min-w-0 flex-col">
+      <FullView
+        headingId="add-plant-title"
+        title="Pflanze anlegen"
+        back={{ label: "Zurück zur Sammlung", to: PATHS.collection }}
+      >
+        <Flow key={round} {...props} onAnother={() => setRound((r) => r + 1)} />
+      </FullView>
+    </div>
   );
 }
