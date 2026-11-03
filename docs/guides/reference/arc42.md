@@ -140,7 +140,7 @@ flowchart TB
 | ------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------- |
 | `core`  | Domain logic: schemas, validating operations (`defineOperation`), ports, derived values, error codes           | No I/O (AB-1, PRIN-001)      |
 | `api`   | HTTP routes per module, authentication, idempotency, MCP adapter, wiring of adapters (`createApp`), job worker | Uses `core` only via package |
-| `db`    | PostgreSQL adapters implementing the ports, migrations (65 so far), row rules, SQL functions                   | Own tables per module (AB-9) |
+| `db`    | PostgreSQL adapters implementing the ports, migrations (94 so far), row rules, SQL functions                   | Own tables per module (AB-9) |
 | `web`   | Mobile-first PWA: routes, components (Storybook), API clients per module, offline handling                     | No import of `api` or `db`   |
 
 Details per package: `docs/guides/reference/app.md` and the path rules in `.claude/rules/`.
@@ -167,7 +167,7 @@ flowchart TB
     collection
   end
   subgraph master [Master data]
-    account; catalog; light; achievements
+    account; privacy; catalog; light; achievements
   end
   subgraph base [Kernel]
     kernel; jobs; media
@@ -183,6 +183,7 @@ The layers are a reading aid. The binding rule is the matrix: a module may impor
 | `jobs`         | Job queue on PostgreSQL                                   | `JobQueue`                                                     |
 | `media`        | Photo storage and processing                              | `ObjectStore`, `ImageProcessor`                                |
 | `account`      | Accounts, profile, invitations (ACC)                      | –                                                              |
+| `privacy`      | Export and deletion of all data of one account (ACC)      | `AccountDataSource`                                            |
 | `catalog`      | Shared species catalog, enrichment, corrections (BES)     | `SpeciesRepointer`                                             |
 | `light`        | Light zones and locations (LIC)                           | `ZoneUsage`                                                    |
 | `collection`   | Specimens, cuttings, archive (BES)                        | `TargetLocationSource`, `MeasurementSource`, `TreatmentSource` |
@@ -239,7 +240,7 @@ Notes: a foreign or unknown specimen yields the same `specimen.not_found` (no in
 
 ### 6.3 Background jobs
 
-The job worker runs in the API process and takes jobs from the PostgreSQL queue (`JobQueue`, each job handed out once even with several processes). Periodic checks enqueue work: the taxonomy build when the catalog differs from the stored tree (hourly) and due reminders (every 5 minutes, starting value). External sources are fetched throttled and cached; a failed job is visible to the operator and blocks no user function (NFR-17, NFR-18).
+The job worker runs in the API process and takes jobs from the PostgreSQL queue (`JobQueue`, each job handed out once even with several processes). Periodic checks enqueue work: the taxonomy build when the catalog differs from the stored tree (hourly), due reminders (every 5 minutes, starting value; delivered by Web Push once the operator sets the VAPID keys, ADR 0015) and, only when switched on (`CATALOG_FILL=on`, `ATTRIBUTE_FILL=on`), the catalog fill from open sources and the attribute fill. On start the API refuses a database role that is a superuser or has `BYPASSRLS` (`DB_ROLE_CHECK=enforce`), because such a role would bypass the row rules. External sources are fetched throttled and cached; a failed job is visible to the operator and blocks no user function (NFR-17, NFR-18).
 
 ## 7. Deployment view
 
@@ -249,12 +250,12 @@ flowchart LR
   aic([AI client])
   gh[GitHub<br/>CI, release tag]
   subgraph host [Linux host, Docker Compose - app/config/deploy]
-    proxy[proxy<br/>Caddy 2, TLS, security headers]
+    proxy[proxy<br/>Caddy, TLS, security headers]
     web[web<br/>Caddy, static PWA build]
-    api[api<br/>Node.js 24: Hono, MCP, job worker]
-    kc[keycloak<br/>Keycloak 26.8]
-    db[(db<br/>PostgreSQL 16<br/>databases app + keycloak)]
-    mig[migrate<br/>one-off]
+    api[api<br/>Node.js 26: Hono, MCP, job worker]
+    kc[keycloak<br/>Keycloak 26.8.1]
+    db[(db<br/>PostgreSQL 18.6<br/>databases app + keycloak)]
+    oneoff[one-off jobs<br/>db-roles, keycloak-db,<br/>migrate, keycloak-mcp]
   end
   src[Open sources]
   s3[(S3 object store)]
@@ -267,21 +268,25 @@ flowchart LR
   api -- SQL --> db
   kc -- JDBC --> db
   api -- JWKS --> kc
-  mig --> db
+  oneoff --> db
+  oneoff --> kc
   api --> src
   api --> s3
   kc --> smtp
   gh -. "make deploy: backup, build, smoke test" .-> host
 ```
 
-| Node / container | Image                       | Notes                                                                     |
-| ---------------- | --------------------------- | ------------------------------------------------------------------------- |
-| `proxy`          | `caddy:2-alpine`            | Only public entry (80/443); TLS, CSP and security headers                 |
-| `web`            | built from `web.Dockerfile` | Static PWA build served by Caddy                                          |
-| `api`            | built from `api.Dockerfile` | Hono API, MCP endpoint, job worker in one process                         |
-| `keycloak`       | `keycloak:26.8.0`           | Realm `pflanzendex` imported on start; admin port bound to localhost only |
-| `db`             | `postgres:16-alpine`        | Volume `dbdata`; separate database and user for Keycloak                  |
-| `migrate`        | API image                   | Runs forward-only migrations once before the API starts                   |
+| Node / container | Image                                    | Notes                                                                                                             |
+| ---------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `proxy`          | Caddy stage of the web image             | Only public entry (80/443); TLS, CSP and security headers; unprivileged user                                      |
+| `web`            | built from `web.Dockerfile`              | Static PWA build served by Caddy                                                                                  |
+| `api`            | built from `api.Dockerfile` (Node.js 26) | Hono API, MCP endpoint, job worker in one process; refuses a superuser or `BYPASSRLS` role                        |
+| `keycloak`       | `keycloak:26.8.1`                        | Realm `pflanzendex` imported on first start; admin console only on the host's loopback (SSH tunnel)               |
+| `db`             | `postgres:18.6-alpine`                   | Volume `dbdata`; separate database and role for Keycloak                                                          |
+| `keycloak-db`    | `postgres:18.6-alpine`                   | One-off: creates Keycloak's own role and database, without rights on the app database                             |
+| `db-roles`       | `postgres:18.6-alpine`                   | One-off: makes the schema owner a plain role (no superuser, no `BYPASSRLS`) and creates the application role      |
+| `migrate`        | API image                                | One-off: applies forward-only migrations under an advisory lock before the API starts; a failure fails the deploy |
+| `keycloak-mcp`   | `node:26-alpine`                         | One-off (profile `setup`): prepares the realm for the MCP endpoint (scopes, resource client, PKCE)                |
 
 Release and rollback: `docs/guides/operations/release-and-rollback.md`; staging and backup: `docs/guides/operations/staging-deploy-and-backup.md`.
 
@@ -323,6 +328,10 @@ Decisions are recorded as ADRs in `docs/adr/` and as decisions E-nn in `16-relea
 | 0012 | Swap as its own module                                             |
 | 0013 | AI module: connections, rights and revocation in the app           |
 | 0014 | Achievements as their own module                                   |
+| 0015 | Reminders as standard web push, without a push vendor              |
+| 0016 | Cuttings use the same measuring interval as plants                 |
+| 0017 | Neutral surfaces, green only for intent                            |
+| 0018 | Bundle budget: ceiling of 140 kB, goal of 125 kB                   |
 
 ## 10. Quality requirements
 
@@ -360,7 +369,7 @@ The risk register is in `16-releases-and-decisions.md` ("Technical risks"); the 
 | R-05: sensitive data (locations, photos)                                   | Private by default, EXIF/GPS removed, isolation tests                                               |
 | E-03: connection of Claude and ChatGPT via Keycloak not proven             | Experimental Keycloak features accepted; spike results in `docs/records/spikes/`                    |
 | Debt: layout baseline                                                      | Existing layout violations are listed in a baseline that may only shrink (FR-QG-21)                 |
-| Debt: reminder delivery is a stub                                          | Web push keys and a mail account are still open (E-10)                                              |
+| Debt: reminder delivery depends on operator setup                          | Web Push works once the operator sets the VAPID keys (ADR 0015); without them delivery is a stub    |
 
 ## 12. Glossary
 
