@@ -1,5 +1,5 @@
 {
-  "maxEntries": 68,
+  "maxEntries": 59,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -54,59 +54,6 @@
       "size": "360x640",
       "page": 1,
       "inner": 1.11
-    },
-    {
-      "screen": "friend-collection",
-      "size": "360x640@200%",
-      "page": 2.63,
-      "inner": 1
-    },
-    {
-      "screen": "friend-equipment",
-      "size": "360x640@200%",
-      "page": 2.63,
-      "inner": 1.26
-    },
-    {
-      "screen": "friends-exchange",
-      "size": "360x640@200%",
-      "page": 2.98,
-      "inner": 1,
-      "innerX": 1.24
-    },
-    {
-      "screen": "friends-exchange-part-friends",
-      "size": "360x640@200%",
-      "page": 2.88,
-      "inner": 1,
-      "innerX": 1.24
-    },
-    {
-      "screen": "friends-exchange-part-history",
-      "size": "360x640@200%",
-      "page": 2.45,
-      "inner": 1,
-      "innerX": 1.24
-    },
-    {
-      "screen": "friends-exchange-part-requests",
-      "size": "360x640@200%",
-      "page": 2.76,
-      "inner": 1,
-      "innerX": 1.24
-    },
-    {
-      "screen": "friends-exchange-sheet-offer",
-      "size": "360x640@200%",
-      "page": 2.98,
-      "inner": 2.22,
-      "innerX": 1.24
-    },
-    {
-      "screen": "friends-match",
-      "size": "360x640@200%",
-      "page": 2.6,
-      "inner": 1
     },
     {
       "screen": "operator",
@@ -427,13 +374,6 @@
       "page": 1,
       "inner": 1,
       "innerX": 2.88
-    },
-    {
-      "screen": "friends-sheet-add",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.6,
-      "innerX": 1.21
     },
     {
       "screen": "plant-menu-more",

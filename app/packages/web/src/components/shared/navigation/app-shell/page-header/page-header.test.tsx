@@ -73,4 +73,18 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
     expect(screen.getByRole("heading", { level: 2, name: "Profil" })).toBeTruthy();
   });
+
+  it("US-QS-15 at a large text size the action wraps below the title instead of squeezing it to nothing", () => {
+    inRouter(
+      <PageHeader
+        title="Tauschbörse"
+        action={<button type="button">Zum Tausch anbieten</button>}
+      />,
+    );
+    const row = document.querySelector("[data-page-header]");
+    expect(row?.className).toContain("flex-wrap");
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className).toContain("min-w-20");
+    expect(screen.getByRole("button").parentElement?.className).toContain("max-w-full");
+  });
 });

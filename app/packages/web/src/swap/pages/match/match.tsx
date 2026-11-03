@@ -65,34 +65,37 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
   const load = useCallback((t: string) => loadMatchDeck(api, t), [api]);
   const { yes, answer, undo } = useWrites(api, token);
   return (
-    <FullView
-      headingId="match-page-title"
-      title="Passende Angebote"
-      back={{ label: "Zurück zur Tauschbörse", to: EXCHANGE_PATH }}
-    >
-      <p className="text-muted-foreground [@media(max-height:700px)]:hidden">
-        Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.
-      </p>
-      <LoadFrame
-        queryKey={KEY}
-        token={token}
-        load={load}
-        loadingText="Angebote werden geladen …"
-        loadingFallback={<DeckSkeleton label="Angebote werden geladen …" />}
-        fresh
+    // One screen (US-QS-15, DS-61): the page does not scroll, the content region does at a large text size.
+    <div data-fit-screen="" className="flex min-w-0 flex-col">
+      <FullView
+        headingId="match-page-title"
+        title="Passende Angebote"
+        back={{ label: "Zurück zur Tauschbörse", to: EXCHANGE_PATH }}
       >
-        {(deck: DeckData) => (
-          <MatchDeck
-            cards={deck.cards}
-            entries={deck.entries}
-            empty={deck.empty ?? null}
-            calm={props.calm ?? false}
-            onYes={yes}
-            onAnswer={answer}
-            onUndo={undo}
-          />
-        )}
-      </LoadFrame>
-    </FullView>
+        <p className="text-muted-foreground [@media(max-height:700px)]:hidden">
+          Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.
+        </p>
+        <LoadFrame
+          queryKey={KEY}
+          token={token}
+          load={load}
+          loadingText="Angebote werden geladen …"
+          loadingFallback={<DeckSkeleton label="Angebote werden geladen …" />}
+          fresh
+        >
+          {(deck: DeckData) => (
+            <MatchDeck
+              cards={deck.cards}
+              entries={deck.entries}
+              empty={deck.empty ?? null}
+              calm={props.calm ?? false}
+              onYes={yes}
+              onAnswer={answer}
+              onUndo={undo}
+            />
+          )}
+        </LoadFrame>
+      </FullView>
+    </div>
   );
 }
