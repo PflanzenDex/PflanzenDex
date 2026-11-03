@@ -28,15 +28,19 @@ export function findProblems(files) {
   return problems;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+export function readSpecFiles() {
   const dir = fileURLToPath(new URL("../../../../../docs/specs/product", import.meta.url));
-  const files = Object.fromEntries(
+  return Object.fromEntries(
     fs
       .readdirSync(dir)
       .filter((n) => n.endsWith(".md"))
       .sort()
       .map((n) => [n, fs.readFileSync(path.join(dir, n), "utf8")]),
   );
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const files = readSpecFiles();
   const problems = findProblems(files);
   problems.forEach((p) => console.error(`check-specs: ${p}`));
   if (problems.length) process.exit(1);

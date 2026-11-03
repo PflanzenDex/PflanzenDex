@@ -34,7 +34,7 @@
     "ds-snapshots:update": "node tools/check/code/conformance/ds-snapshots.mjs --update",
     "health": "node tools/dev/health-summary.mjs",
     "docs": "cd .. && npx markdownlint-cli2 \"docs/**/*.md\" \"CLAUDE.md\" --config \".markdownlint-cli2.jsonc\" && cd app && node tools/check/docs/check-links.mjs",
-    "specs": "node tools/check/docs/specs/check-specs.mjs && node tools/check/docs/specs/check-traceability.mjs",
+    "specs": "node tools/check/docs/specs/check-specs.mjs && node tools/check/docs/specs/check-traceability.mjs && node tools/check/docs/specs/check-spec-refs.mjs && node tools/dev/agent/spec-status.mjs --check",
     "spec-numbers": "node --import tsx tools/check/docs/specs/spec-numbers/check-spec-numbers.mjs",
     "principles": "node tools/check/docs/check-principles.mjs",
     "test": "npm run test --workspaces --if-present && node --test \"tools/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\"",
