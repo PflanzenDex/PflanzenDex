@@ -17,7 +17,7 @@ const files = {
   [`${W}/pokedex/index.ts`]: "export const x = 1;\n",
   [`${W}/app/routes.tsx`]:
     'import { c } from "../care";\nimport { B } from "../shared/ui/button";\n',
-  [`${W}/lib/a.ts`]: 'import { B } from "../shared/ui/button";\n',
+  [`${W}/app/a.ts`]: 'import { B } from "../shared/ui/button";\n',
 };
 function findings(patch = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "web-layers-"));
@@ -54,9 +54,10 @@ describe("FR-QG-23 AB-15 web layers", () => {
     const m = cfg.MODULES;
     assert.equal(webLayerOf("shared/ui/button/button.tsx", m), "shared");
     assert.equal(webLayerOf("shared/patterns/navigation/page-header/x.tsx", m), "shared");
-    assert.equal(webLayerOf("components/shared/navigation/side-nav/x.tsx", m), "app");
+    assert.equal(webLayerOf("app/frame/side-nav/x.tsx", m), "app");
     assert.equal(webLayerOf("components/collector-cards/x.tsx", m), "pokedex");
-    assert.equal(webLayerOf("components/routing/areas/x.tsx", m), "app");
+    assert.equal(webLayerOf("app/destinations/x.tsx", m), "app");
+    assert.equal(webLayerOf("app/flows/unlock/x.tsx", m), "app");
     assert.equal(webLayerOf("shared/data/index.ts", m), "shared");
     assert.equal(webLayerOf("main.tsx", m), "app");
     assert.equal(webLayerOf("care/form.tsx", m), "care");

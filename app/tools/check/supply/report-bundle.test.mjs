@@ -116,7 +116,7 @@ describe("QG-U6 · report: grouping per package", () => {
 
   test("QG-U6 · FR-QG-10 own code groups by workspace package and first directory", () => {
     assert.equal(g("../../src/wishlist/history/x.ts"), "web/wishlist");
-    assert.equal(g("../../src/main.tsx"), "web/(src root)");
+    assert.equal(g("../../src/vite-env.d.ts"), "web/(src root)");
     assert.equal(g("../../../core/src/pokedex/rank/x.ts"), "core/pokedex");
   });
 

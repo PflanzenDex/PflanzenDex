@@ -4,7 +4,7 @@ export const SCHEMES = ["light", "dark"];
 export const VIEWPORT = { width: 360, height: 640 };
 export const UI_IMPORT = "./src/shared/ui/";
 export const FIXTURE_PREFIX = "ds-snapshot-fixture-";
-export const PAGE_IMPORT = "./src/lib/page-stories/";
+export const PAGE_IMPORT = "./src/app/stories/";
 export const PAGE_FIXTURE_PREFIX = "ds-snapshot-fixture-page";
 /** Dark and desktop variants of a page story (`variants()`): they set their own globals and are no pages of their own. */
 export const PAGE_VARIANT_ID = /-(phone-dark|desktop|desktop-dark)$/;

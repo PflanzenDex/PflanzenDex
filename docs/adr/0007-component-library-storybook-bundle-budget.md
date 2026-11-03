@@ -54,7 +54,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 ## Decision 3 · Rule: every shared component has stories
 
 - **Status:** proposed, owner confirms in the ADR PR review.
-- **Decision:** every component in `shared/ui`, `shared/patterns` and `components/shared` has a `*.stories.tsx` file covering all variants and sizes, and the states default, focus, disabled, invalid and loading (where the component has them), each in light and dark.
+- **Decision:** every component in `shared/ui`, `shared/patterns` and `app/frame` has a `*.stories.tsx` file covering all variants and sizes, and the states default, focus, disabled, invalid and loading (where the component has them), each in light and dark.
 - **Reason:** the catalog is only trustworthy if it is complete; the states listed are the ones that break most often on a phone and in dark mode, and they are where DS-15 to DS-20 are checked.
 - **Alternatives:** stories only for "important" components (rejected: the cut is arbitrary and drifts); stories required by review only (rejected: not enforceable, see AGENTS.md on gates over goodwill).
 - **Consequences:**

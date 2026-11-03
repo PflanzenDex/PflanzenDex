@@ -165,13 +165,6 @@ const MODULES = [
     ports: [],
   },
   {
-    name: "shell", // web app root, start page, onboarding (US-QG-07); nothing imports it except main and routes
-    epics: [],
-    tables: [],
-    dependsOn: ["kernel", "account", "collection", "light", "social", "wishlist", "care", "today"],
-    ports: [],
-  },
-  {
     name: "ai",
     // The keeper's AI client (ADR 0013, epic KI). Further tables follow with their stories.
     epics: ["KI"],

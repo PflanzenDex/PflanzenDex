@@ -65,7 +65,9 @@ const uiTextIgnores = [
   "**/*.test.ts",
   "**/*.test.tsx",
   "**/*.stories.tsx",
-  "packages/web/src/lib/page-stories/**",
+  "packages/web/src/app/stories/harness/**",
+  "packages/web/src/app/stories/data/**",
+  "packages/web/src/app/stories/screens/**",
   "packages/web/src/shared/testing/test-setup/**",
 ];
 const uiTextBaseline =
