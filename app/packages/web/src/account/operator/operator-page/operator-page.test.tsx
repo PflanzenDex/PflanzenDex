@@ -454,6 +454,12 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(within(dialog).getByText("Seite 2 von 2")).toBeTruthy();
   });
+
+  it("US-QS-15 the page is one screen (DS-61): its frame marks the fit, so at a large text size only the content region scrolls", async () => {
+    show();
+    const heading = await screen.findByRole("heading", { name: "Betreiber" });
+    expect(heading.closest("[data-fit-screen]")).not.toBeNull();
+  });
 });
 
 describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {

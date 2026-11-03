@@ -168,14 +168,15 @@ function Layers(props: {
 
 /**
  * The operator area (US-ACC-05, US-QS-15): one row per topic with its current value; each topic opens as a layer. No
- * content of any account (P-05). On a wide screen the layer stands beside the rows.
+ * content of any account (P-05). On a wide screen the layer stands beside the rows. One screen (US-QS-15, DS-61): the
+ * page does not scroll, its content region does at a large text size.
  */
 export function OperatorPage(props: { api: string; token: Token }) {
   const { api, token } = props;
   const actions = useOperatorActions(api, token);
   const load = useCallback((t: string) => loadOverview(api, t), [api]);
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div data-fit-screen="" className="flex min-w-0 flex-col gap-4">
       <h1 className="text-2xl font-semibold">Betreiber</h1>
       <LoadFrame
         queryKey={[...OPERATOR_KEY, "overview"]}
