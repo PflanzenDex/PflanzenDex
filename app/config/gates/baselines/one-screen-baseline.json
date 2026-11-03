@@ -1,5 +1,5 @@
 {
-  "maxEntries": 59,
+  "maxEntries": 53,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -54,42 +54,6 @@
       "size": "360x640",
       "page": 1,
       "inner": 1.11
-    },
-    {
-      "screen": "operator",
-      "size": "360x640@200%",
-      "page": 1.95,
-      "inner": 1
-    },
-    {
-      "screen": "operator-sheet-einladungscodes",
-      "size": "360x640@200%",
-      "page": 1.95,
-      "inner": 1.17
-    },
-    {
-      "screen": "operator-sheet-einstieg",
-      "size": "360x640@200%",
-      "page": 1.95,
-      "inner": 2.39
-    },
-    {
-      "screen": "operator-sheet-kosten",
-      "size": "360x640@200%",
-      "page": 1.95,
-      "inner": 2
-    },
-    {
-      "screen": "operator-sheet-registrierung",
-      "size": "360x640@200%",
-      "page": 1.95,
-      "inner": 1.08
-    },
-    {
-      "screen": "operator-sheet-zahlen",
-      "size": "360x640@200%",
-      "page": 1.95,
-      "inner": 1.82
     },
     {
       "screen": "plant-dialog-archive",
