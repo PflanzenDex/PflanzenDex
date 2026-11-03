@@ -19,13 +19,20 @@ const NUMBER = /(?<![\w.#/-])\d[\d.,]*(?![\w/-])/g;
 const MARKER_AFTER = /^\s*%?\s*[A-Za-z]*\**\s*<!--\s*gate:/;
 
 const blank = (s) => s.replace(/`[^`]*`/g, (c) => " ".repeat(c.length));
+// The prose of a line without its markers (a marker's path such as `maxUnits` is no topic word). Split on the
+// delimiters instead of a comment regex: this reads Markdown, it sanitizes nothing.
+const prose = (line) =>
+  line
+    .split("<!--")
+    .map((part, i) => (i === 0 ? part : part.split("-->").slice(1).join(" ")))
+    .join(" ");
 
 export function findUnmarked(files) {
   const problems = [];
   for (const [file, text] of Object.entries(files))
     text.split("\n").forEach((raw, i) => {
       const line = blank(raw);
-      const topic = TOPIC.test(line.replace(/<!--.*?-->/g, ""));
+      const topic = TOPIC.test(prose(line));
       for (const m of line.matchAll(NUMBER)) {
         const rest = line.slice(m.index + m[0].length);
         const percent = /^\s*%/.test(rest);
