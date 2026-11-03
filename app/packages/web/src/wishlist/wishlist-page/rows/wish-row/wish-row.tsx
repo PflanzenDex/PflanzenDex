@@ -24,6 +24,7 @@ export function WishRow(props: {
   return (
     <div
       data-priority={c.priority.kind}
+      data-scroll-x="row"
       className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-card border border-border bg-card p-2 text-card-foreground"
     >
       <Button
