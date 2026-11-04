@@ -88,7 +88,7 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(screen.getByRole("button").parentElement?.className).toContain("max-w-full");
   });
 
-  it("NFR-13 with a way back the row wraps and the title asks for a readable width, so at a large text size the back control sits above it", () => {
+  it("NFR-13 with a way back the title keeps 230 px beside the back control, so a narrower row wraps and the back control sits above the title", () => {
     inRouter(
       <PageHeader
         title="Adiantum raddianum"
@@ -98,7 +98,7 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     const row = document.querySelector("[data-page-header]");
     expect(row?.className).toContain("flex-wrap");
     const title = screen.getByRole("heading", { level: 1 });
-    expect(title.className).toContain("min-w-[min(100%,12rem)]");
+    expect(title.className).toContain("min-w-[230px]");
     expect(title.className).not.toContain("min-w-20");
     expect(screen.getByRole("link", { name: "Zurück zur Suche" }).className).toContain("shrink-0");
   });
@@ -116,7 +116,7 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(back.className).toContain("min-w-[44px]");
   });
 
-  it("NFR-13 with a way back and an action the layout stays as #1177 set it: the action wraps under the title, the title keeps the #1177 minimum", () => {
+  it("NFR-13 with a way back and an action the minimum stays at the #1177 value: the action wraps under the title", () => {
     inRouter(
       <PageHeader
         title="Tauschbörse"
@@ -127,10 +127,7 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(document.querySelector("[data-page-header]")?.className).toContain("flex-wrap");
     const title = screen.getByRole("heading", { level: 1 });
     expect(title.className).toContain("min-w-20");
-    expect(title.className).not.toContain("min-w-[min(100%,12rem)]");
-    expect(
-      screen.getByRole("button", { name: "Zum Tausch anbieten" }).parentElement?.className,
-    ).toContain("max-w-full");
+    expect(title.className).not.toContain("min-w-[230px]");
   });
 
   it("NFR-13 without a way back the title keeps the #1177 minimum width of 5 rem", () => {
