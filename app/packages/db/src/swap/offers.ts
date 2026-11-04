@@ -58,6 +58,14 @@ export class OffersPostgres {
     return r.rows;
   }
 
+  /** Whether the account has any offer, whatever its status (as `list`, NFR-12). */
+  async hasAny(userId: string): Promise<boolean> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ found: boolean }>("select exists(select 1 from offer) as found"),
+    );
+    return r.rows[0]?.found === true;
+  }
+
   /**
    * Withdraws an open or reserved offer; `"not_found"` for an unknown or foreign id, `"not_active"` when it is handed over
    * already, and an offer that is withdrawn already answers with itself (nothing is written twice).

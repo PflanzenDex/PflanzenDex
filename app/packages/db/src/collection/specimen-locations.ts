@@ -87,3 +87,23 @@ export async function zoneUsers(
   );
   return r.rows;
 }
+
+/**
+ * What the unlock rules read of the specimens (NFR-12, US-ONB-04): the active count and the instant of the first
+ * specimen ever created, archived ones included (history stays), in one row instead of the whole list. `created_at` is
+ * not null (migration 0007), so every specimen has a creation date. Runs as the account of the caller (P-04); writes
+ * nothing.
+ */
+export async function unlockSummaryOf(
+  pool: Pool,
+  userId: string,
+): Promise<{ active: number; firstCreatedAt: string | null }> {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ active: number; firstCreatedAt: string | null }>(
+      `select count(*) filter (where status <> 'archived')::int as active,
+              to_char(min(created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "firstCreatedAt"
+         from specimen`,
+    ),
+  );
+  return r.rows[0] ?? { active: 0, firstCreatedAt: null };
+}

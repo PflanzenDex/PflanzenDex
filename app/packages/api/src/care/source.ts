@@ -2,6 +2,7 @@ import {
   appError,
   careProfileTargetLocation,
   failed,
+  imageReader,
   measurementPhotoById,
   type ObjectStore,
   type PhotoSource,
@@ -45,6 +46,6 @@ export function measurementPhotoSourceFor(
   };
   return async (userId, measurementId) =>
     media
-      ? measurementPhotoById({ ...deps, objects: media.store }, userId, measurementId)
+      ? measurementPhotoById({ ...deps, images: imageReader(media.store) }, userId, measurementId)
       : failed(appError("media.storage_unavailable"));
 }

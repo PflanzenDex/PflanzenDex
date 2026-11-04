@@ -97,6 +97,24 @@ describe("US-BES-09 the care profile feeds the port PhaseLocationSource (FR-PHA-
   });
 });
 
+describe("NFR-12 the target source answers from the profiles the phase list has loaded", () => {
+  it("NFR-12 with a loaded map it reads no profile; a species missing from the map has none", async () => {
+    await profile("anna", WINTER, { growthLocationId: LIVING });
+    let reads = 0;
+    const counted = {
+      list: async (userId: string) => {
+        reads += 1;
+        return profiles.list(userId);
+      },
+    };
+    const loaded = new Map((await profiles.list("anna")).map((p) => [p.speciesId, p] as const));
+    const source = careProfileLocations(counted);
+    expect(await source.phaseLocation("anna", WINTER, "growth", loaded)).toBe(LIVING);
+    expect(await source.phaseLocation("anna", NONE, "growth", loaded)).toBeNull();
+    expect(reads).toBe(0);
+  });
+});
+
 describe("US-BES-09 the care profile feeds the port TargetLocationSource (FR-PHA-05)", () => {
   it("US-BES-09 the target of today follows the effective phase, the growth location is always the growth one", async () => {
     await profile("anna", WINTER, { growthLocationId: LIVING, dormancyLocationId: COLD });

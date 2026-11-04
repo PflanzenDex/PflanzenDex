@@ -1,1 +1,6 @@
-{}
+{
+  "GET /feed": "specimen and species rows read once for each shared specimen (#1238); account data and friend shares read twice (#1240)",
+  "GET /friends": "specimen and species rows read once for each shared specimen (#1238); account data and friend shares read twice (#1240)",
+  "GET /friends/:id/collection": "specimen and species rows read once for each shared specimen (#1238)",
+  "GET /friends/:id/shared": "specimen and species rows read once for each shared specimen (#1238)"
+}

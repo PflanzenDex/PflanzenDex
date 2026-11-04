@@ -5,20 +5,30 @@ import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
 import { setSpecimenLocation } from "../../../../../collection";
-import { createWrite } from "../../../../../shared/data";
-import { loadLocations, loadZones } from "../../../../../light";
+import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
+import { refreshLight, sharedLocations, sharedZones } from "../../../../../light";
 import { zoneLabel } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./where-question.de.json";
 
+const ui = texts(table);
 type Token = () => Promise<string | undefined>;
+
+/** The note after a save: the place and, when it has one, its light zone (P-10). */
+const savedText = (name: string, zone: LightZone | undefined) =>
+  ui("saved", { name, zone: zone ? `, ${zoneLabel(zone.name)}` : "" });
 
 /**
  * Makes sure the account has a place for the first plant: the server lays out the default location "Zuhause" only for
  * an account without locations and refuses otherwise (US-ONB-02); the refusal is the normal case, so it is ignored.
+ * A location that was laid out refreshes the shared light data (issue 1244).
  */
-export async function ensureHome(api: string, token: string): Promise<void> {
-  const own = await loadLocations(api, token);
-  if (own.ok && own.value.length === 0)
-    await createWrite(api, token)("POST", "/locations/defaults", {});
+export async function ensureHome(client: QueryClient, api: string, token: string): Promise<void> {
+  const own = await sharedLocations(client, api, token);
+  if (own.ok && own.value.length === 0) {
+    const made = await createWrite(api, token)("POST", "/locations/defaults", {});
+    if (made.ok) await refreshLight(client);
+  }
 }
 
 interface Places {
@@ -28,19 +38,23 @@ interface Places {
 
 function usePlaces(api: string, token: Token): Places | null {
   const [places, setPlaces] = useState<Places | null>(null);
+  const client = useQueryClient();
   useEffect(() => {
     let current = true;
     void (async () => {
       const t = await token();
       if (!t) return;
-      await ensureHome(api, t);
-      const [l, z] = await Promise.all([loadLocations(api, t), loadZones(api, t)]);
+      await ensureHome(client, api, t);
+      const [l, z] = await Promise.all([
+        sharedLocations(client, api, t),
+        sharedZones(client, api, t),
+      ]);
       if (current && l.ok && z.ok) setPlaces({ locations: l.value, zones: z.value });
     })();
     return () => {
       current = false;
     };
-  }, [api, token]);
+  }, [api, token, client]);
   return places;
 }
 
@@ -58,13 +72,13 @@ function ZoneChoice(props: {
 }) {
   return (
     <>
-      <Label htmlFor="first-plant-location-zone">{`Licht bei ${props.name}`}</Label>
+      <Label htmlFor="first-plant-location-zone">{ui("zoneFor", { name: props.name })}</Label>
       <Select
         id="first-plant-location-zone"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
-        <option value="">Keine Angabe</option>
+        <option value="">{ui("noZone")}</option>
         {props.zones.map((z) => (
           <option key={z.id} value={z.id}>
             {zoneLabel(z.name)}
@@ -77,6 +91,7 @@ function ZoneChoice(props: {
 
 /** Sets the location of the plant; a location without a light zone gets the zone the keeper names (their own choice, never invented). */
 async function placeSpecimen(
+  client: QueryClient,
   p: { api: string; token: Token; specimenId: string },
   chosen: LightLocation,
   zoneId: string,
@@ -85,11 +100,14 @@ async function placeSpecimen(
   if (!t) return { ok: false as const, error: { code: "access.not_signed_in" } };
   const set = await setSpecimenLocation(p.api, t, { id: p.specimenId, locationId: chosen.id });
   if (!set.ok || chosen.lightZoneId !== null || !zoneId) return set;
-  return createWrite(p.api, t)("PUT", `/locations/${chosen.id}`, {
+  const named = await createWrite(p.api, t)("PUT", `/locations/${chosen.id}`, {
     name: chosen.name,
     kind: chosen.kind,
     lightZoneId: zoneId,
   });
+  // The location now stands under a light zone: the shared copies of the light data are asked again (issue 1244).
+  if (named.ok) await refreshLight(client);
+  return named;
 }
 
 /**
@@ -105,6 +123,7 @@ export function WhereQuestion(props: {
   onDone: (note?: string) => void;
 }) {
   const places = usePlaces(props.api, props.token);
+  const client = useQueryClient();
   const [locationId, setLocationId] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -114,21 +133,21 @@ export function WhereQuestion(props: {
   const save = async () => {
     if (!chosen) return;
     setSaving(true);
-    const r = await placeSpecimen(props, chosen, zoneId);
+    const r = await placeSpecimen(client, props, chosen, zoneId);
     setSaving(false);
     if (!r.ok) return setError(errorText(r.error.code));
     const zone = places.zones.find((z) => z.id === (chosen.lightZoneId ?? zoneId));
-    props.onDone(`Standort gespeichert: ${chosen.name}${zone ? `, ${zoneLabel(zone.name)}` : ""}.`);
+    props.onDone(savedText(chosen.name, zone));
   };
   return (
     <section className="flex flex-col gap-3">
       {places.locations.length === 1 && chosen ? (
         <p className="m-0">
-          Wo steht sie? <strong>{zoneOf(chosen, places.zones)}</strong>
+          {ui("where")} <strong>{zoneOf(chosen, places.zones)}</strong>
         </p>
       ) : (
         <>
-          <Label htmlFor="first-plant-location">Wo steht sie?</Label>
+          <Label htmlFor="first-plant-location">{ui("where")}</Label>
           <Select
             id="first-plant-location"
             value={chosen?.id ?? ""}
@@ -148,10 +167,10 @@ export function WhereQuestion(props: {
       {error && <p role="alert">{error}</p>}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button type="button" disabled={saving} onClick={() => void save()}>
-          Hier steht sie
+          {ui("save")}
         </Button>
         <Button type="button" variant="ghost" onClick={() => props.onDone()}>
-          Später
+          {ui("later")}
         </Button>
       </div>
     </section>

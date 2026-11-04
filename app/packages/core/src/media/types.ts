@@ -7,6 +7,9 @@ export const MEDIA_LIMITS = {
   /** Long side of a stored image in px, JPEG quality: set by US-WAC-06. */
   maxEdgePx: 1600,
   jpegQuality: 82,
+  /** Long side of the thumbnail in px (tiles and cards show 56 to 96 px, NFR-12); its quality is an assumption. */
+  thumbEdgePx: 256,
+  thumbJpegQuality: 80,
   /** Largest accepted upload in bytes (assumption: a current phone photo is 2 to 8 MB). */
   uploadMaxBytes: 15 * 1024 * 1024,
   /** Largest processed object the store accepts (assumption: 1600 px at quality 82 stays well below 1 MB). */
@@ -47,13 +50,21 @@ export interface ObjectStore {
   deleteAll(accountId: string): Promise<Result<number>>;
 }
 
-/** An image after processing: JPEG, rotated upright, shrunk, free of EXIF/GPS and all other metadata. */
-export interface ProcessedImage {
+/** One JPEG of an image: rotated upright, shrunk, free of EXIF/GPS and all other metadata. */
+export interface ImageVariant {
   readonly bytes: Uint8Array;
   readonly contentType: typeof MEDIA_LIMITS.storedType;
   readonly width: number;
   readonly height: number;
 }
+
+/** An image after processing: the stored copy and its thumbnail, made in the same step (NFR-12). */
+export interface ProcessedImage extends ImageVariant {
+  readonly thumbnail: ImageVariant;
+}
+
+/** The size an image is read in (NFR-12): the stored copy, or the thumbnail that tiles and cards ask for. */
+export type ImageSize = "full" | "thumb";
 
 /** Port of the processing stage. Unreadable input is `media.not_an_image`. */
 export interface ImageProcessor {

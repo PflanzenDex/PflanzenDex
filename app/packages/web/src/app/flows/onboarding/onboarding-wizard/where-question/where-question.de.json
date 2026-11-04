@@ -1,0 +1,8 @@
+{
+  "zoneFor": "Licht bei {name}",
+  "noZone": "Keine Angabe",
+  "where": "Wo steht sie?",
+  "saved": "Standort gespeichert: {name}{zone}.",
+  "save": "Hier steht sie",
+  "later": "Später"
+}

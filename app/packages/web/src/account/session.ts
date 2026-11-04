@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { UserManager, User } from "oidc-client-ts";
 import { setProfileTimeZone } from "../shared/data";
+import { clearPhotoCache } from "../shared/platform/browser/use-stored-photo";
 import {
   signOutEverywhere,
   apiUrl,
@@ -112,6 +113,7 @@ function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetSta
         if (user) await signOutEverywhere(mgr.settings.authority, user.access_token);
         await mgr.removeUser();
         setProfileTimeZone(null);
+        clearPhotoCache(); // the page goes on: no picture of the signed-out keeper stays in memory (P-05)
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });
       } catch {
         setState((z) =>

@@ -5,7 +5,7 @@ import { withAccount, migrate, openOwnerPool, openFixturePool } from "../kernel/
 import { findSchemaViolations } from "../schema-check.ts";
 import { assignRole } from "../fixtures.ts";
 import { SpeciesPostgres, ReviewPostgres } from "./index.ts";
-import type { SpeciesName, SpeciesValues } from "./species.ts";
+import type { SpeciesName, SpeciesValues } from "./species/species.ts";
 
 // US-BES-01, FR-BES-02, FR-BES-11, E-02: species catalog with private proposals (real PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -380,5 +380,14 @@ describe("species catalog and review status (TE-08)", () => {
     const many = await new SpeciesPostgres(counted).findMany(anna, made);
     expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
     expect(statements).toBe(afterFew);
+  });
+});
+
+describe("NFR-12 species search by Latin name", () => {
+  it("NFR-12 the index species_latin_name serves the ordered search", async () => {
+    const { rows } = await admin.query<{ indexdef: string }>(
+      "select indexdef from pg_indexes where schemaname = 'public' and indexname = 'species_latin_name'",
+    );
+    expect(rows[0]?.indexdef).toContain("(latin_name)");
   });
 });

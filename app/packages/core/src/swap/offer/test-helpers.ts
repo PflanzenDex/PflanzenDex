@@ -73,13 +73,18 @@ export class InMemoryOwnSpecimens implements OwnSpecimens {
   async find(userId: string, id: string) {
     return this.byOwner[userId]?.find((s) => s.id === id) ?? null;
   }
+  async findMany(userId: string, ids: readonly string[]) {
+    return Promise.all(ids.map((id) => this.find(userId, id)));
+  }
 }
 
 export class StubPhases implements PhaseHints {
-  constructor(
-    private readonly table: Readonly<Record<string, "growth" | "dormancy" | null>> = {},
-  ) {}
-  async phaseOf(_userId: string, specimenId: string) {
-    return this.table[specimenId] ?? null;
+  constructor(private readonly table: Readonly<Record<string, "growth" | "dormancy">> = {}) {}
+  async phasesOf(_userId: string, specimenIds: readonly string[]) {
+    return new Map(
+      specimenIds.flatMap((id) =>
+        this.table[id] ? [[id, this.table[id] as "growth" | "dormancy"] as const] : [],
+      ),
+    );
   }
 }

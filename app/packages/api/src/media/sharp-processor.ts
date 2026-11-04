@@ -5,9 +5,10 @@ import type { ImageProcessor } from "@pflanzendex/core";
 const READABLE = new Set(["jpeg", "png", "webp"]);
 
 /**
- * The processing stage (FR-WAC-09, QG-D3): rotate by the EXIF orientation, shrink to the maximum edge, re-encode as
- * JPEG. sharp writes no metadata unless asked (`keepMetadata`/`withExif` are never called), so EXIF, GPS, XMP, IPTC and
- * the ICC profile are gone; the decoded pixels are re-encoded, never copied byte for byte.
+ * The processing stage (FR-WAC-09, QG-D3, NFR-12): rotate by the EXIF orientation, shrink to the maximum edge, re-encode
+ * as JPEG. The thumbnail is made from that stored copy in the same step. sharp writes no metadata unless asked
+ * (`keepMetadata`/`withExif` are never called), so EXIF, GPS, XMP, IPTC and the ICC profile are gone; the decoded pixels
+ * are re-encoded, never copied byte for byte.
  */
 export function createSharpProcessor(
   options: { readonly maxPixels?: number } = {},
@@ -30,6 +31,16 @@ export function createSharpProcessor(
           .flatten({ background: "#ffffff" })
           .jpeg({ quality: MEDIA_LIMITS.jpegQuality })
           .toBuffer({ resolveWithObject: true });
+        // The thumbnail is cut from the stored copy, which is already upright and free of metadata.
+        const small = await sharp(data)
+          .resize({
+            width: MEDIA_LIMITS.thumbEdgePx,
+            height: MEDIA_LIMITS.thumbEdgePx,
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .jpeg({ quality: MEDIA_LIMITS.thumbJpegQuality })
+          .toBuffer({ resolveWithObject: true });
         return {
           ok: true,
           value: {
@@ -37,6 +48,12 @@ export function createSharpProcessor(
             contentType: MEDIA_LIMITS.storedType,
             width: info.width,
             height: info.height,
+            thumbnail: {
+              bytes: new Uint8Array(small.data),
+              contentType: MEDIA_LIMITS.storedType,
+              width: small.info.width,
+              height: small.info.height,
+            },
           },
         };
       } catch (cause) {

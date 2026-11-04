@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { withAccount } from "../../kernel/index.ts";
+import { withAccount, withLongAccount } from "../../kernel/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface DeletionRequestRow {
@@ -45,7 +45,7 @@ export class AccountDeletionPostgres {
   async erase(userId: string, now: Date): Promise<{ subject: string | null } | null> {
     const due = await this.find(userId);
     if (!due || due.dueAt.getTime() > now.getTime()) return null;
-    const r = await withAccount(this.pool, userId, (c) =>
+    const r = await withLongAccount(this.pool, userId, (c) =>
       c.query<{ subject: string | null }>("select subject from erase_account()"),
     );
     return r.rows[0] ?? null;

@@ -16,8 +16,8 @@ import {
 /** The ports of the care rhythm: the own specimens, treatments and measurements only (P-04). */
 export interface RhythmSources {
   readonly specimens: Pick<SpecimenStore, "list">;
-  readonly treatments: Pick<TreatmentStore, "open" | "done">;
-  readonly measurements: Pick<MeasurementStore, "list">;
+  readonly treatments: Pick<TreatmentStore, "open" | "doneMany">;
+  readonly measurements: Pick<MeasurementStore, "listMany">;
   readonly pauses: Pick<RhythmPauseStore, "listPauses">;
   readonly species: SpeciesSource;
   readonly profiles: CareProfileReader;
@@ -68,18 +68,21 @@ export async function achievementsRhythm(
 ) {
   const rows = await src.specimens.list(userId);
   const ids = rows.map((r) => r.id);
+  // One read per kind for all specimens (NFR-12); the loop does not use the measurements of archived specimens.
   const open = await src.treatments.open(userId, ids);
+  const done = await src.treatments.doneMany(userId, ids);
+  const measured = await src.measurements.listMany(userId, ids);
   const { measurementDays } = await src.reminders.settings(userId);
   const tasks: RhythmTask[] = [];
   for (const r of rows) {
     const archived = r.archivedAt;
     const keep = (t: RhythmTask) => archived === null || t.doneOn !== null || t.dueOn < archived;
-    const treatments = [...(open.get(r.id) ?? []), ...(await src.treatments.done(userId, r.id))];
+    const treatments = [...(open.get(r.id) ?? []), ...(done.get(r.id) ?? [])];
     tasks.push(
       ...treatments.map((t) => ({ dueOn: t.dueAt, doneOn: t.done ? t.doneAt : null })).filter(keep),
     );
     if (r.status === "archived") continue;
-    const dates = (await src.measurements.list(userId, r.id)).map((m) => m.date).sort();
+    const dates = (measured.get(r.id) ?? []).map((m) => m.date).sort();
     const starts = [...(r.caughtAt ? [r.caughtAt] : []), ...dates];
     // Each start (the catch date, then every measurement) opens a task that the next measurement closes.
     const shift = r.caughtAt ? 0 : 1;

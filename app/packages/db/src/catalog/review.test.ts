@@ -199,3 +199,53 @@ describe("US-BES-10 merge lock", () => {
     expect(still.rows[0]?.status).toBe("proposal");
   });
 });
+
+describe("NFR-12 review lists keep their order with the partial indexes", () => {
+  it("NFR-12 the partial indexes carry the predicates of the two review lists", async () => {
+    const { rows } = await admin.query<{ indexname: string; indexdef: string }>(
+      "select indexname, indexdef from pg_indexes where schemaname = 'public' and indexname in ('review_case_open', 'review_case_curated_species')",
+    );
+    const def = Object.fromEntries(rows.map((r) => [r.indexname, r.indexdef]));
+    expect(def.review_case_open).toContain("(created_at, id) WHERE");
+    expect(def.review_case_open).toContain("'proposal'::text");
+    expect(def.review_case_open).toContain("'ai_unreviewed'::text");
+    expect(def.review_case_curated_species).toContain("(created_at DESC, id) WHERE");
+    expect(def.review_case_curated_species).toContain("'curated'::text");
+    expect(def.review_case_curated_species).toContain("'species'::text");
+  });
+
+  it("NFR-12 open cases come oldest first, curated batches newest first, whatever the insert order", async () => {
+    // Dates far in the future make these rows the newest batches; the rows are removed again afterwards.
+    const inserted: string[] = [];
+    try {
+      const proposal = (created: string) =>
+        withAccount(pool, keeper, (c) =>
+          c.query<{ id: string }>(
+            "insert into review_case (account_id, object_kind, object_id, status, created_at) values ($1, 'species', $2, 'proposal', $3) returning id",
+            [keeper, randomUUID(), created],
+          ),
+        );
+      const batch = (created: string) =>
+        withAccount(pool, operator, (c) =>
+          c.query<{ id: string }>(
+            "insert into review_case (account_id, object_kind, object_id, status, created_at) values ($1, 'species', $2, 'curated', $3) returning id",
+            [operator, randomUUID(), created],
+          ),
+        );
+      // Inserted out of order on purpose: the order has to come from created_at.
+      const p3 = (await proposal("2090-03-01T10:00:20Z")).rows[0]?.id ?? "";
+      const p1 = (await proposal("2090-03-01T10:00:00Z")).rows[0]?.id ?? "";
+      const p2 = (await proposal("2090-03-01T10:00:10Z")).rows[0]?.id ?? "";
+      const b2 = (await batch("2090-06-02T10:00:00Z")).rows[0]?.id ?? "";
+      const b3 = (await batch("2090-06-03T10:00:00Z")).rows[0]?.id ?? "";
+      const b1 = (await batch("2090-06-01T10:00:00Z")).rows[0]?.id ?? "";
+      inserted.push(p1, p2, p3, b1, b2, b3);
+      const ours = (await store.listForReview(reviewer))
+        .map((r) => r.id)
+        .filter((id) => inserted.includes(id));
+      expect(ours).toEqual([p1, p2, p3, b3, b2, b1]);
+    } finally {
+      await admin.query("delete from review_case where id = any($1)", [inserted]);
+    }
+  });
+});

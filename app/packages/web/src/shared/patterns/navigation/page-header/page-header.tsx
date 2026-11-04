@@ -26,6 +26,21 @@ export type PageHeaderProps = {
   className?: string;
 };
 
+/**
+ * The minimum width of the title (NFR-13). With an action the title is at least its longest word and no word breaks
+ * inside (issue 1230): the row wraps and the action goes under the title (issue 1177). The longest word grows with the
+ * text, so the action wraps instead of squeezing the title. A title beside a way back without an action claims 230 px or
+ * its longest word, whichever is more: when the row cannot give that, it wraps and the back control sits above the title
+ * (issues 1226, 1254). The 230 px do not grow with the text, the longest word does; `break-word` keeps that word in the
+ * minimum (`anywhere` would remove it) and `max-w-full` caps it, so only a word wider than the whole column breaks. Any
+ * other title keeps 5 rem.
+ */
+function titleMinimum(hasBack: boolean, hasAction: boolean): string {
+  if (hasAction) return "min-w-min flex-1 [overflow-wrap:normal]";
+  if (hasBack) return "max-w-full grow basis-[230px] [overflow-wrap:break-word]";
+  return "min-w-20 flex-1 [overflow-wrap:anywhere]";
+}
+
 function BackControl(props: { back: PageBack }) {
   const { back } = props;
   const classes = cn("shrink-0", back.className);
@@ -73,13 +88,7 @@ export function PageHeader(props: PageHeaderProps) {
       <Heading
         {...(props.headingId ? { id: props.headingId } : {})}
         className={cn(
-          // A title beside a way back claims 230 px or its longest word, whichever is more (NFR-13): when the row cannot give
-          // that, it wraps and the back control sits above the title. The 230 px do not grow with the text, the longest word
-          // does; `break-word` keeps that word in the minimum (`anywhere` would remove it) and `max-w-full` caps it, so only a
-          // word wider than the whole column breaks. With an action (#1177) and without a way back the minimum stays 5 rem.
-          back && !action
-            ? "max-w-full grow basis-[230px] [overflow-wrap:break-word]"
-            : "min-w-20 flex-1 [overflow-wrap:anywhere]",
+          titleMinimum(Boolean(back), Boolean(action)),
           "font-semibold",
           Heading === "h1" ? "text-2xl" : "text-xl",
         )}

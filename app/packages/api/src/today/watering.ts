@@ -14,6 +14,7 @@ import {
   WateringPostgres,
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
+import { sharedFindMany, sharedReads } from "../kernel";
 
 /**
  * The plants that are due to be watered today (US-MON-05), for the list in the app and for the reminders. The interval
@@ -28,12 +29,13 @@ export async function wateringDueFor(
   timeZone: string,
   now: Date,
 ): Promise<readonly WateringDue[]> {
-  const specimens = new SpecimenPostgres(pool);
-  const profiles = new CareProfilePostgres(pool);
+  // Shared reads (NFR-12): the phases and the intervals read the same specimens and profiles once per GET request.
+  const specimens = sharedReads(new SpecimenPostgres(pool), "specimen", ["list"]);
+  const profiles = sharedReads(new CareProfilePostgres(pool), "care-profile", ["list"]);
   const phases = await carePhasesList(
     {
       specimens,
-      species: new SpeciesPostgres(pool),
+      species: sharedFindMany(new SpeciesPostgres(pool), "species"),
       profiles,
       // The target locations are not needed here; the phase does not depend on them.
       targets: { phaseLocation: async () => null },

@@ -8,7 +8,7 @@ import {
   type NewSpecimen,
   type SpecimenRow,
 } from "../collection/index.ts";
-import { asAccount } from "../kernel/index.ts";
+import { asAccount, enterApplicationRole, poolLimits } from "../kernel/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export type HandoverOutcome =
@@ -133,8 +133,7 @@ export async function runHandover<T>(
   const client = await pool.connect();
   try {
     await client.query("begin");
-    await client.query("set local role pflanzendex_app");
-    await client.query("select set_config('app.account_id', $1, true)", [userId]);
+    await enterApplicationRole(client, poolLimits(pool), [["app.account_id", userId]]);
     const r = await work(new HandoverSession(client));
     await client.query(r.commit ? "commit" : "rollback");
     return r.value;
