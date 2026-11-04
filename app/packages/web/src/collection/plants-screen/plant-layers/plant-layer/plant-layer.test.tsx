@@ -113,6 +113,27 @@ describe("US-QS-23 a plant opens as a layer with tabs", () => {
       expect(tab.className.split(" ")).toContain("min-w-fit");
   });
 
+  it("NFR-13 a long chip wraps inside its pill, so the header keeps the Mehr button beside the chips at 200 % text", async () => {
+    setViewportWidth(360);
+    show(
+      [
+        card({
+          location: "Wohnzimmer Fenster Süd hinter dem Vorhang",
+          treatment: { reason: "Neem", dueDate: { kind: "soon", days: 2, text: "in 2 Tg." } },
+        }),
+      ],
+      { onArchive: vi.fn() },
+    );
+    const layer = await open();
+    const chips = within(layer).getByRole("list", { name: "Auf einen Blick" });
+    for (const text of ["Zone 3", "Wohnzimmer Fenster Süd hinter dem Vorhang", "Behandeln"]) {
+      const classes = within(chips).getByText(text).className.split(" ");
+      expect(classes).toContain("whitespace-normal");
+      expect(classes).not.toContain("whitespace-nowrap");
+    }
+    expect(within(layer).getByRole("button", { name: "Mehr" })).toBeTruthy();
+  });
+
   it("US-QS-23 · P-08 an unknown zone and location read unbekannt in the chips", async () => {
     setViewportWidth(360);
     show([card({ lightZone: null, lightZoneSource: null, location: null })]);

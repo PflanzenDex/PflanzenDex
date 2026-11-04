@@ -7,20 +7,23 @@ import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
 import { plantLayerId } from "../../rows/plant-tile/plant-tile";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
+import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
 import { MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
 
+const t = texts(table);
 const TAB_PARAM = "tab";
 /** The tabs and their values in the address (`&tab=`); an absent or unknown value means the overview (US-QS-23). */
 const TABS = [
-  { value: "ueberblick", label: "Überblick" },
-  { value: "verlauf", label: "Verlauf" },
-  { value: "pflege", label: "Pflege" },
-  { value: "standort", label: "Standort" },
+  { value: "ueberblick", label: t("tabs.overview") },
+  { value: "verlauf", label: t("tabs.history") },
+  { value: "pflege", label: t("tabs.care") },
+  { value: "standort", label: t("tabs.location") },
 ] as const;
 
 /**
@@ -53,21 +56,28 @@ function closing<E>(
     : undefined;
 }
 
-/** Light zone, location and the open treatment as text chips (P-08: unknown reads as such). */
+/**
+ * Light zone, location and the open treatment as text chips (P-08: unknown reads as such). A long chip wraps inside its
+ * pill, so the row keeps the "Mehr" button inside the window at 200 % text (NFR-13, issue 1228).
+ */
 function Chips({ card }: { card: SpecimenCard }) {
   return (
-    <ul aria-label="Auf einen Blick" className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+    <ul aria-label={t("chips.label")} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
       <li>
-        <Badge variant="outline">
-          {card.lightZone ? zoneLabel(card.lightZone) : "Zone unbekannt"}
+        <Badge variant="outline" className="whitespace-normal">
+          {card.lightZone ? zoneLabel(card.lightZone) : t("chips.zoneUnknown")}
         </Badge>
       </li>
       <li>
-        <Badge variant="outline">{card.location ?? "Standort unbekannt"}</Badge>
+        <Badge variant="outline" className="whitespace-normal">
+          {card.location ?? t("chips.locationUnknown")}
+        </Badge>
       </li>
       {card.treatment ? (
         <li>
-          <Badge variant="warning">Behandeln</Badge>
+          <Badge variant="warning" className="whitespace-normal">
+            {t("chips.treatment")}
+          </Badge>
         </li>
       ) : null}
     </ul>
@@ -79,10 +89,10 @@ function moreItems(card: SpecimenCard, h: Handlers, close: () => void): MenuItem
   const run = (act: ((e: SpecimenCard) => void) | undefined, label: string): MenuItem[] =>
     act ? [{ label, onSelect: () => closing(close, act)?.(card) }] : [];
   return [
-    ...run(card.status === "cutting" ? h.onRepot : undefined, "Eingetopft"),
-    ...run(h.onMark, "Kennzeichen"),
-    ...run(h.onCatchDate, "Fangdatum"),
-    ...run(h.onArchive, "Archivieren"),
+    ...run(card.status === "cutting" ? h.onRepot : undefined, t("menu.repot")),
+    ...run(h.onMark, t("menu.mark")),
+    ...run(h.onCatchDate, t("menu.catchDate")),
+    ...run(h.onArchive, t("menu.archive")),
   ];
 }
 
@@ -93,7 +103,7 @@ function Slot(props: { render?: SlotRender | undefined; card: SpecimenCard; meas
     <Suspense
       fallback={
         <p role="status" className="text-sm text-muted-foreground">
-          Lädt …
+          {t("slot.loading")}
         </p>
       }
     >
@@ -172,10 +182,10 @@ export function PlantLayer(props: Props) {
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <Chips card={card} />
-          {items.length > 0 ? <Menu label="Mehr" items={items} /> : null}
+          {items.length > 0 ? <Menu label={t("menu.label")} items={items} /> : null}
         </div>
         <Tabs
-          label="Bereiche der Pflanze"
+          label={t("tabs.label")}
           wrap
           tabs={tabContents(props, tab, closeLayer)}
           value={tab.tab}
