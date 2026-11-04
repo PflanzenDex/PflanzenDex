@@ -6,6 +6,8 @@ export type CountingPool = {
   pool: Pool;
   /** Statements since the last `reset`, including `begin`, `commit` and the account setup of `withAccount`. */
   count: () => number;
+  /** The text of those statements in the order sent, for tests that look for one statement (NFR-12). */
+  statements: () => readonly string[];
   reset: () => void;
 };
 
@@ -16,6 +18,7 @@ export type CountingPool = {
  */
 export function countingPool(pool: Pool): CountingPool {
   let n = 0;
+  let texts: string[] = [];
   const counted = <T extends Pool | PoolClient>(target: T): T =>
     new Proxy(target, {
       get(obj, prop) {
@@ -23,6 +26,8 @@ export function countingPool(pool: Pool): CountingPool {
         if (prop === "query") {
           return (...args: unknown[]) => {
             n += 1;
+            const sql = args[0];
+            texts.push(typeof sql === "string" ? sql : ((sql as { text?: string })?.text ?? ""));
             return (value as (...a: unknown[]) => unknown).apply(obj, args);
           };
         }
@@ -36,8 +41,10 @@ export function countingPool(pool: Pool): CountingPool {
   return {
     pool: counted(pool),
     count: () => n,
+    statements: () => [...texts],
     reset: () => {
       n = 0;
+      texts = [];
     },
   };
 }
