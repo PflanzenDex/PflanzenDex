@@ -1,5 +1,5 @@
 {
-  "maxEntries": 39,
+  "maxEntries": 33,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -155,41 +155,6 @@
       "innerX": 1.02
     },
     {
-      "screen": "collection-plant-care",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 3.28,
-      "innerX": 1.07
-    },
-    {
-      "screen": "collection-plant-course",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.7,
-      "innerX": 1.07
-    },
-    {
-      "screen": "collection-plant-layer",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.73,
-      "innerX": 1.07
-    },
-    {
-      "screen": "collection-plant-location",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.36,
-      "innerX": 1.07
-    },
-    {
-      "screen": "collection-plant-overview",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.73,
-      "innerX": 1.07
-    },
-    {
       "screen": "collection-view-equipment-sheet-costs",
       "size": "360x640@200%",
       "page": 1,
@@ -258,13 +223,6 @@
       "page": 1,
       "inner": 1,
       "innerX": 2.88
-    },
-    {
-      "screen": "plant-menu-more",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.73,
-      "innerX": 1.07
     }
   ]
 }
