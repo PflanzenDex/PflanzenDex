@@ -83,6 +83,22 @@ export class FriendsPostgres {
     return r.rows;
   }
 
+  /**
+   * Whether the account has a friend or an open request: the rows of `friends` and `openRequests` together, answered
+   * by one `exists` (NFR-12). Ended friendships and declined requests the account received do not count.
+   */
+  async hasFriendsOrRequests(userId: string): Promise<boolean> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ found: boolean }>(
+        `select exists(
+           select 1 from friendship
+            where status = 'confirmed' or status = 'requested' or (status = 'declined' and direction = 'sent')
+         ) as found`,
+      ),
+    );
+    return r.rows[0]?.found === true;
+  }
+
   async answer(userId: string, requestId: string, accept: boolean): Promise<AnswerOutcome> {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<{ outcome: AnswerOutcome }>("select outcome from answer_friendship($1, $2)", [

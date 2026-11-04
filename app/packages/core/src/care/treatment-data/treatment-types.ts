@@ -67,4 +67,13 @@ export interface TreatmentStore {
     readonly open: ReadonlyMap<string, readonly TreatmentRow[]>;
     readonly lastDone: ReadonlyMap<string, TreatmentRow>;
   }>;
+
+  /**
+   * Done treatments of the named specimens of the account, in the order of `done` per specimen (NFR-12: one read for all
+   * IDs instead of one per specimen). Specimens without a done treatment, and foreign ones, are missing from the answer.
+   */
+  doneMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly TreatmentRow[]>>;
 }

@@ -59,6 +59,18 @@ export class InMemoryTreatments implements TreatmentStore {
     return { open: await this.open(userId, specimenIds), lastDone };
   }
 
+  async doneMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly TreatmentRow[]>> {
+    const found = new Map<string, readonly TreatmentRow[]>();
+    for (const id of specimenIds) {
+      const rows = await this.done(userId, id);
+      if (rows.length > 0) found.set(id, rows);
+    }
+    return found;
+  }
+
   async open(
     userId: string,
     specimenIds: readonly string[],

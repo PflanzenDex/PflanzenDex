@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
 import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
@@ -294,5 +294,45 @@ describe("NFR-12 open and the latest done treatment per specimen", () => {
     expect(few.lastDone.size).toBe(2);
     expect(many.lastDone.size).toBe(6);
     expect(statements).toBe(afterFew);
+  });
+});
+
+describe("NFR-12 done treatments of many specimens in one read", () => {
+  async function ticked(account: string, specimenId: string, dueAt: string, doneAt: string) {
+    const r = await treatments.createMany(account, [values({ specimenId, dueAt })]);
+    if (typeof r === "string") throw new Error(r);
+    const id = (r[0] as { id: string }).id;
+    await treatments.complete(account, id, doneAt);
+    return id;
+  }
+
+  it("NFR-12 returns per specimen what done returns, in the same order; open treatments and specimens without done ones are missing", async () => {
+    const a = await specimen(anna, "Erledigt viele A");
+    const b = await specimen(anna, "Erledigt viele B");
+    const none = await specimen(anna, "Erledigt viele ohne");
+    await ticked(anna, a, "2026-10-01", "2026-10-02");
+    await ticked(anna, a, "2026-10-08", "2026-10-09");
+    await treatments.createMany(anna, [values({ specimenId: a, dueAt: "2026-10-15" })]);
+    await ticked(anna, b, "2026-10-03", "2026-10-04");
+    const many = await treatments.doneMany(anna, [a, b, none]);
+    expect([...many.keys()].sort()).toEqual([a, b].sort());
+    expect(many.get(a)).toEqual(await treatments.done(anna, a));
+    expect(many.get(b)).toEqual(await treatments.done(anna, b));
+    expect(many.get(a)?.map((t) => t.dueAt)).toEqual(["2026-10-08", "2026-10-01"]);
+    expect(many.get(a)?.every((t) => t.done)).toBe(true);
+  });
+
+  it("NFR-12 P-04 another account gets nothing for these specimens; without IDs no query is sent", async () => {
+    const e = await specimen(anna, "Erledigt viele fremd");
+    await ticked(anna, e, "2026-10-01", "2026-10-02");
+    expect(await treatments.doneMany(ben, [e])).toEqual(new Map());
+    expect((await treatments.doneMany(anna, [e])).get(e)).toHaveLength(1);
+    const connect = vi.spyOn(pool, "connect");
+    try {
+      expect((await treatments.doneMany(anna, [])).size).toBe(0);
+      expect(connect).not.toHaveBeenCalled();
+    } finally {
+      connect.mockRestore();
+    }
   });
 });

@@ -200,3 +200,23 @@ Statement counts are the same before and after for every endpoint: the request f
 | `perf:concurrency` after  | no limit, pool 4 to 16                                  | 94 MiB              |
 
 The owner database had no temporary file (`pg_stat_database.temp_files` = 0) after all concurrency runs, so `work_mem` 4 MB was not too small for this workload. The measured dataset is small (27 MB, 32 accounts, 3,200 specimens); a larger database fills the buffer pool up to `shared_buffers` (128 MB) and each connection adds its own memory. The limit of 384 MB is therefore a starting value (assumption) with about four times the measured peak, not a measured maximum.
+
+---
+
+## 10. Unlock facts: one aggregate and existence checks (issue #1241)
+
+**Change:** `GET /onboarding/unlocks` is loaded on every signed-in page (`UnlocksProvider`) and refetched after every write. It read every specimen to collect the dates and the active count, read the lists of wishes, friends, requests, offers, swaps and equipment only for their length, and awaited the other reads one after another. Now one aggregate over `specimen` gives the active count and the earliest `created_at`, one `exists` per module answers the existing-data question on the same rows under the same row rules, and `Promise.all` runs the independent reads. The lock rules get the same facts, so the answer does not change; `unlock-sources.test.ts` compares every source with the old list-based answer on data with the edge cases (archived specimens, a date that differs by time zone, ended and declined friendships, a withdrawn offer, a canceled swap, retired equipment, a second account).
+
+**Environment:** Intel Core Ultra 7 255H (16 cores), Node v24.21.0, PostgreSQL 18.6 in Docker, date 2026-11-04. The machine was shared with other sessions during the first run (load average up to 12). Same method as section 1: 1,000 specimens over 60 species, 3 warm-up and 30 timed calls, one counted call. The "before" rows are the code before the change (the branch's HEAD), run twice; the "after" row is the final code.
+
+| Request                              | Run                    | 100: median / p95 (ms) | 1,000: median / p95 (ms) | SQL stmts (payload) at 100 and 1,000 |
+| ------------------------------------ | ---------------------- | ---------------------- | ------------------------ | ------------------------------------ |
+| `GET /onboarding/unlocks?timeZone=…` | before, run 1          | 10.0 / 13.0            | 38.5 / 100.3             | 66 (14)                              |
+| `GET /onboarding/unlocks?timeZone=…` | before, run 2 (paired) | 14.3 / 19.4            | 42.5 / 79.7              | 66 (14)                              |
+| `GET /onboarding/unlocks?timeZone=…` | after                  | 5.6 / 7.8              | 5.1 / 7.8                | 56 (12)                              |
+
+- The gap between 100 and 1,000 specimens is gone: the median is 5.6 ms at 100 and 5.1 ms at 1,000 specimens, against the target of under 20 ms at 1,000.
+- The statement count drops from 66 to 56 (payload 14 to 12): five existence checks replace the seven lists, and one summary row replaces the specimen list. Both counts are exact for this shape.
+- The other endpoints were not changed. Their timings moved by up to 2x between runs on this shared machine, so they are not compared here.
+
+**Limits (P-08):** one machine, one run per state (plus the paired "before" run), no concurrent users, no network. The first attempt wrote its rows into the schema database of the test suite and made the catalog tests time out; the perf harness is meant for a throw-away database (section 6). The rows were removed and the suite passes on the reset database.

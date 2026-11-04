@@ -122,6 +122,31 @@ export class TreatmentsPostgres {
     return { open, lastDone };
   }
 
+  /**
+   * Done treatments of several specimens in one statement (NFR-12). Per specimen the order is the one of `done`: the
+   * statement sorts by the same keys, and grouping keeps that order. Foreign IDs return nothing (P-04); no IDs, no query.
+   */
+  async doneMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly TreatmentRow[]>> {
+    if (specimenIds.length === 0) return new Map();
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<TreatmentRow>(
+        `select ${COLUMNS} from treatment where specimen_id = any($1) and done
+         order by done_at desc, due_at desc, id`,
+        [specimenIds],
+      ),
+    );
+    const grouped = new Map<string, TreatmentRow[]>();
+    for (const row of r.rows) {
+      const own = grouped.get(row.specimenId);
+      if (own) own.push(row);
+      else grouped.set(row.specimenId, [row]);
+    }
+    return grouped;
+  }
+
   /** Open treatments, earliest first; one query for all IDs. Foreign IDs return nothing (row rules, P-04). */
   async open(
     userId: string,

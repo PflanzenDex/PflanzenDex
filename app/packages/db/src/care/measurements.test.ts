@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
 import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
@@ -269,5 +269,36 @@ describe("US-KI-04 assess a measurement in the database", () => {
       await measurements.assess(ben, z.id, { quality: "etiolated", note: null, ratedBy: "keeper" }),
     ).toBe(false);
     expect((await measurements.get(anna, z.id))?.quality).toBe("healthy");
+  });
+});
+
+describe("NFR-12 measurements of many specimens in one read", () => {
+  it("NFR-12 returns per specimen what list returns, in the same order; specimens without measurements are missing", async () => {
+    const a = await specimen(anna, "Viele A");
+    const b = await specimen(anna, "Viele B");
+    const none = await specimen(anna, "Viele ohne");
+    await measurements.create(anna, values({ specimenId: a, date: "2026-09-01", value: 8 }));
+    await measurements.create(anna, values({ specimenId: a, date: "2026-10-01", value: 20 }));
+    await measurements.create(anna, values({ specimenId: a, date: "2026-10-01", value: 21 }));
+    await measurements.create(anna, values({ specimenId: b, date: "2026-10-02", value: 5 }));
+    const many = await measurements.listMany(anna, [a, b, none]);
+    expect([...many.keys()].sort()).toEqual([a, b].sort());
+    expect(many.get(a)).toEqual(await measurements.list(anna, a));
+    expect(many.get(b)).toEqual(await measurements.list(anna, b));
+    expect(many.get(a)?.map((m) => m.value)).toEqual([21, 20, 8]);
+  });
+
+  it("NFR-12 P-04 another account gets nothing for these specimens; without IDs no query is sent", async () => {
+    const e = await specimen(anna, "Viele fremd");
+    await measurements.create(anna, values({ specimenId: e }));
+    expect(await measurements.listMany(ben, [e])).toEqual(new Map());
+    expect((await measurements.listMany(anna, [e])).get(e)).toHaveLength(1);
+    const connect = vi.spyOn(pool, "connect");
+    try {
+      expect((await measurements.listMany(anna, [])).size).toBe(0);
+      expect(connect).not.toHaveBeenCalled();
+    } finally {
+      connect.mockRestore();
+    }
   });
 });

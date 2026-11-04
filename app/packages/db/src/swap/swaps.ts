@@ -188,4 +188,12 @@ export class SwapsPostgres {
     );
     return r.rows;
   }
+
+  /** Whether the account has any swap row, whatever its status (as `list`, NFR-12). */
+  async hasAny(userId: string): Promise<boolean> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ found: boolean }>("select exists(select 1 from swap) as found"),
+    );
+    return r.rows[0]?.found === true;
+  }
 }

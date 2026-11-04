@@ -40,6 +40,14 @@ export interface MeasurementStore {
   /** All measurements of the specimen, newest first (date, with the same date the one recorded last). */
   list(userId: string, specimenId: string): Promise<readonly MeasurementRow[]>;
   /**
+   * The measurements of each named specimen of the account, in the order of `list` per specimen (NFR-12: one read for
+   * all IDs instead of one per specimen). Specimens without measurements, and foreign ones, are missing from the answer.
+   */
+  listMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly MeasurementRow[]>>;
+  /**
    * The last measurement of each named specimen of the account (latest date, with the same date the one recorded
    * last); specimens without a measurement or of another account are missing from the answer.
    */
