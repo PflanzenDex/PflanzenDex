@@ -87,6 +87,26 @@ describe("Tabs (US-QS-07, DS-34)", () => {
     expect(list).not.toContain("flex-wrap");
   });
 
+  it("NFR-13 wrap lets every label break inside its tab: a tab is never narrower than its label", () => {
+    render(<Tabs label="x" tabs={tabs} wrap />);
+    for (const tab of screen.getAllByRole("tab")) {
+      const classes = tab.className.split(" ");
+      expect(classes).toContain("min-w-fit");
+      expect(classes).toContain("whitespace-normal");
+      expect(classes).not.toContain("whitespace-nowrap");
+    }
+  });
+
+  it("NFR-13 without wrap a label stays on one line in a tab of at least 44 px", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    for (const tab of screen.getAllByRole("tab")) {
+      const classes = tab.className.split(" ");
+      expect(classes).toContain("whitespace-nowrap");
+      expect(classes).toContain("min-w-[44px]");
+      expect(classes).not.toContain("whitespace-normal");
+    }
+  });
+
   it("US-QS-21 the panel takes the classes of its caller", () => {
     render(<Tabs label="x" tabs={tabs} panelClassName="min-h-0 flex-1" />);
     expect(screen.getByRole("tabpanel").className).toContain("flex-1");
