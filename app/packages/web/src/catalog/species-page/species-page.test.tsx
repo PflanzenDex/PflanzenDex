@@ -300,6 +300,17 @@ describe("US-QS-14 · US-BES-09 a section of another module below the profile", 
   });
 });
 
+describe("NFR-13 the action bar of the profile at a larger text size (issue 1217)", () => {
+  it("NFR-13 the opener of my care profile grows with its label: a minimum height instead of a fixed one, the same side padding at any text size", async () => {
+    fakeServer();
+    render(page({ openId: "a1", profileSection: () => null }));
+    const opener = await screen.findByRole("button", { name: "Mein Pflegeprofil" });
+    expect(opener.className).toContain("min-h-12");
+    expect(opener.className).not.toMatch(/(^| )h-12( |$)/);
+    expect(opener.className).toContain("px-[20px]");
+  });
+});
+
 describe("US-BES-01 the page starts with the search", () => {
   it("the page starts with the search and loads, without inventing anything", () => {
     fakeServer();
