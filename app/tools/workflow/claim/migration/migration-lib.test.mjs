@@ -43,12 +43,13 @@ test("US-DEV-07: the stub names the module and the story of the branch", () => {
 });
 
 test("US-DEV-07: collect counts dev, other PR branches and their reservations, not the own branch", () => {
+  // Numbers far above the real migrations, which `collect` reads from origin/dev as well.
   const prs = [
-    { headRefName: "a", body: "- **Migration number:** 0090" },
-    { headRefName: "mine", body: "- **Migration number:** 0091" },
+    { headRefName: "a", body: "- **Migration number:** 9990" },
+    { headRefName: "mine", body: "- **Migration number:** 9991" },
   ];
   const { taken, own } = collect({ cwd: process.cwd(), branch: "mine", prs });
-  assert.ok(taken.includes(90));
-  assert.ok(!taken.includes(91));
-  assert.equal(own, 91);
+  assert.ok(taken.includes(9990));
+  assert.ok(!taken.includes(9991));
+  assert.equal(own, 9991);
 });

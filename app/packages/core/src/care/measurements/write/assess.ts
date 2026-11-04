@@ -72,6 +72,6 @@ export async function measurementPhotoById(
 ) {
   const m = await deps.measurements.get(userId, measurementId.toLowerCase());
   return m
-    ? measurementPhotoFile(deps, userId, m.specimenId, m.id)
+    ? measurementPhotoFile(deps, userId, { specimenId: m.specimenId, measurementId: m.id })
     : failed(appError("measurement.not_found"));
 }

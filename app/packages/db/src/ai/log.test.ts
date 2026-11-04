@@ -83,3 +83,36 @@ describe("US-KI-06 count for the daily limit", () => {
     expect(await log.countSince(b, conn.id, new Date("2026-10-01T00:00:00Z"))).toBe(0);
   });
 });
+
+describe("NFR-12 count for the daily limit with the index ai_log_connection_day", () => {
+  it("NFR-12 the index covers account, connection and creation time in this order", async () => {
+    const { rows } = await admin.query<{ indexdef: string }>(
+      "select indexdef from pg_indexes where schemaname = 'public' and indexname = 'ai_log_connection_day'",
+    );
+    expect(rows[0]?.indexdef).toContain("(account_id, connection_id, created_at)");
+  });
+
+  it("NFR-12 the count of one connection ignores the calls of its sibling connections", async () => {
+    const a = await newAccount();
+    const connections = new ConnectionsPostgres(pool);
+    const first = await connections.create(
+      a,
+      { clientId: "first", clientName: "First", rights: "read" },
+      now,
+    );
+    const second = await connections.create(
+      a,
+      { clientId: "second", clientName: "Second", rights: "read" },
+      now,
+    );
+    const log = new AiLogPostgres(pool);
+    const day = new Date("2026-10-10T00:00:00Z");
+    const at = (s: number) => new Date(day.getTime() + s * 1000);
+    for (let s = 1; s <= 3; s++)
+      await log.record(a, { connectionId: first.id, operation: "status", effect: "x" }, at(s));
+    for (let s = 1; s <= 5; s++)
+      await log.record(a, { connectionId: second.id, operation: "status", effect: "x" }, at(s));
+    expect(await log.countSince(a, first.id, day)).toBe(3);
+    expect(await log.countSince(a, second.id, day)).toBe(5);
+  });
+});

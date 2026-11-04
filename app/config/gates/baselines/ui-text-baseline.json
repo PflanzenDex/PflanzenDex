@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1315,
+  "maxTotal": 1313,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -136,10 +136,6 @@
     {
       "file": "packages/web/src/care/measure/measurement-header/measurement-header.tsx",
       "count": 8
-    },
-    {
-      "file": "packages/web/src/care/measure/measurement-header/measurement-photo/measurement-photo.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/care/measure/measurement-header/photo-action/photo-action.tsx",
