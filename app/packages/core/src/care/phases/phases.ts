@@ -6,7 +6,7 @@ import {
   type SpecimenStore,
 } from "../../collection";
 import { carePhase, nextPhaseChange, type CarePhase, type NextPhaseChange } from "./phase";
-import type { PhaseLocationSource } from "./phase-location";
+import { NO_PHASE_LOCATION, type PhaseLocationSource } from "./phase-location";
 import { deviationsFirst } from "./phase-status";
 
 export interface PhasesDependencies {
@@ -60,7 +60,7 @@ export async function phaseRows(
       const phase = carePhase(period.from, period.until, today);
       return [
         deps.targets
-          .phaseLocation(userId, z.speciesId, phase)
+          .phaseLocation(userId, z.speciesId, phase, own)
           .then((targetLocationId): PhasesRow => ({
             specimenId: z.id,
             name: z.name,
@@ -89,4 +89,29 @@ export async function carePhasesList(
       appError("input.invalid", { details: [{ field: "timeZone", code: "input.invalid" }] }),
     );
   return ok(await phaseRows(deps, userId, localToday(deps.clock(), timeZone)));
+}
+
+/**
+ * The care phase today of the named specimens of the account, read from the same rows as the phase list, so an offer
+ * and the list can never disagree. Only the phase is asked: the targets are not read, so the statements do not grow with
+ * the specimens (NFR-12). A specimen without a phase (a cutting, an archived one, a species without dormancy period, a
+ * foreign one) is missing from the map, which means `null` (P-08). `timeZone` decides "today" (NFR-08) and is checked
+ * by the caller.
+ */
+export async function carePhasesOf(
+  deps: Omit<PhasesDependencies, "targets">,
+  userId: string,
+  specimenIds: readonly string[],
+  timeZone: string,
+): Promise<ReadonlyMap<string, CarePhase>> {
+  if (specimenIds.length === 0) return new Map();
+  const rows = await phaseRows(
+    { ...deps, targets: NO_PHASE_LOCATION },
+    userId,
+    localToday(deps.clock(), timeZone),
+  );
+  const wanted = new Set(specimenIds);
+  return new Map(
+    rows.filter((r) => wanted.has(r.specimenId)).map((r) => [r.specimenId, r.phase] as const),
+  );
 }

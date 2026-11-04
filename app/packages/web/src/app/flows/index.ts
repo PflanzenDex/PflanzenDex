@@ -13,8 +13,8 @@ export const UnlockPage = lazyPage(() =>
 export const FunctionOverview = lazyPage(
   () => import("./onboarding/function-overview/function-overview"),
 );
-/** `LockedRows` also serves the locked parts inside a destination (US-ONB-05); the routes wire it into the areas. */
-export { useUnlocks, isShownLocked, lockMark, LockedRows, LockedLayer, LockedTile } from "./unlock";
+/** The routes import the locked rows from `./unlock/locked-rows` (US-ONB-05), so the shell does not load them (NFR-12). */
+export { useUnlocks, isShownLocked, lockMark } from "./unlock";
 /** The calm hint of other views (US-ONB-07) is its own chunk: it loads only when an occasion applies (DS-08). */
 export const ContextHint = lazyPage(() =>
   import("./onboarding/today-intro/hint/context-hint/context-hint").then((m) => ({

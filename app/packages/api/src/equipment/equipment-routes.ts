@@ -14,7 +14,7 @@ import {
 import { EquipmentPostgres, IdempotencyPostgres, ZonePostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv, type FeatureAccess } from "../kernel";
+import { body, sharedReads, write, type AuthEnv, type FeatureAccess } from "../kernel";
 import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
 import { addNeedRoutes } from "./needs";
@@ -49,7 +49,8 @@ export function equipmentRoutes(
   features?: FeatureAccess,
   products: readonly ProductEntry[] = [],
 ): Hono<AuthEnv> {
-  const equipment = new EquipmentPostgres(pool);
+  // The list is shared inside a GET request (NFR-12): needs and recommendations read it twice otherwise.
+  const equipment = sharedReads(new EquipmentPostgres(pool), "equipment", ["list"]);
   const record = equipmentRecord({ equipment });
   const setZone = equipmentSetZone({ equipment });
   const setStatus = equipmentSetStatus({ equipment });

@@ -1,8 +1,8 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { Dialog, DialogContent, DialogTrigger } from "@/shared/ui/overlays/dialog/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { DialogPart, preloadDialog } from "./dialog-part/dialog-part";
 
 const TEXT_FIELD =
   "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])";
@@ -43,6 +43,25 @@ export type ResponsiveModalProps = {
 };
 
 /**
+ * The children render once into a stable node that moves into whichever container is open, so their state survives a
+ * viewport change across `md` (DS-23). `body` is the container's slot; `host` is what the children render into.
+ */
+function useHost() {
+  const [host] = React.useState(() => {
+    const node = document.createElement("div");
+    node.className = "contents";
+    return node;
+  });
+  const slot = React.useCallback(
+    (el: HTMLDivElement | null) => {
+      el?.appendChild(host);
+    },
+    [host],
+  );
+  return { host, body: <div ref={slot} className="contents" /> };
+}
+
+/**
  * Modal for content a phone user fills in (US-QS-07, DS-23): bottom sheet below `md`, centered dialog from `md`.
  * The children are rendered once into a stable host node that moves between the two containers,
  * so their state survives a viewport change across `md`.
@@ -64,35 +83,32 @@ export function ResponsiveModal({
     setInner(next);
     onOpenChange?.(next);
   };
+  const [opened, setOpened] = React.useState(open);
+  if (open && !opened) setOpened(true);
 
-  const [host] = React.useState(() => {
-    const node = document.createElement("div");
-    node.className = "contents";
-    return node;
-  });
-  const slot = React.useCallback(
-    (el: HTMLDivElement | null) => {
-      el?.appendChild(host);
-    },
-    [host],
-  );
+  React.useEffect(() => {
+    if (!isMd) return;
+    const id = window.setTimeout(preloadDialog, 1500);
+    return () => window.clearTimeout(id);
+  }, [isMd]);
+
+  const { host, body } = useHost();
   const copy = description ? { description } : {};
-  const body = <div ref={slot} className="contents" />;
 
   return (
     <>
       {isMd ? (
-        <Dialog open={open} onOpenChange={setOpen}>
-          {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-          <DialogContent
-            title={title}
-            {...copy}
-            {...(closeLabel ? { closeLabel } : {})}
-            {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
-          >
-            {body}
-          </DialogContent>
-        </Dialog>
+        <DialogPart
+          title={title}
+          description={description}
+          closeLabel={closeLabel}
+          trigger={trigger}
+          open={open}
+          opened={opened}
+          onOpenChange={setOpen}
+          onOpenAutoFocus={onOpenAutoFocus}
+          body={body}
+        />
       ) : (
         <Sheet open={open} onOpenChange={setOpen}>
           {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}

@@ -188,6 +188,7 @@ export class TaxonomyPostgres {
       await c.query("delete from taxon");
       for (const t of build.taxa) await c.query(INSERT, resolvedRow(t, build));
       for (const f of build.failures) await c.query(INSERT, failedRow(f, build));
+      await c.query("analyze taxon"); // NFR-12: planner statistics of the new tree
       await c.query("commit");
     } catch (error) {
       await c.query("rollback");

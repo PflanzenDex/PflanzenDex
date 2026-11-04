@@ -13,19 +13,21 @@ import {
   ZonePostgres,
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
+import { sharedFindMany, sharedReads } from "./kernel";
 
 /**
  * Wiring in the app root (ADR 0003): the port "stock per light zone" of the wishlist is answered by the light
  * distribution of the collection (US-LIC-02), so both count specimens the same way (zones 2 to 4, `isActive`, cutting
- * light and unknown zones left out). Neither module knows the other; only the app root does.
+ * light and unknown zones left out). Neither module knows the other; only the app root does. Its reads share the
+ * request scope of a GET handler (NFR-12), so a status that reads the stock too does not send them twice.
  */
 export function zoneStockFor(pool: Pool): ZoneStockSource {
   const deps = {
-    specimens: new SpecimenPostgres(pool),
-    species: new SpeciesPostgres(pool),
-    locations: new LocationPostgres(pool),
-    zones: new ZonePostgres(pool),
-    profiles: new CareProfilePostgres(pool),
+    specimens: sharedReads(new SpecimenPostgres(pool), "specimen", ["list"]),
+    species: sharedFindMany(new SpeciesPostgres(pool), "species"),
+    locations: sharedReads(new LocationPostgres(pool), "location", ["list"]),
+    zones: sharedReads(new ZonePostgres(pool), "zone", ["list"]),
+    profiles: sharedReads(new CareProfilePostgres(pool), "care-profile", ["list"]),
   };
   const accounts = new ProfilePostgres(pool);
   return {

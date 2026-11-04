@@ -23,6 +23,7 @@ function Picture({ s }: { s: Suggestion }) {
     <img
       src={s.imageUrl}
       alt={t("card.imageAlt", { species: s.species })}
+      loading="lazy"
       className="h-56 min-h-12 w-full shrink rounded-lg object-cover"
     />
   );

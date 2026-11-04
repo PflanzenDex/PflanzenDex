@@ -9,7 +9,8 @@ import {
   deleteSpeciesAsApplication,
 } from "../fixtures.ts";
 import { LocationPostgres } from "../light/index.ts";
-import { SpecimenPostgres } from "./index.ts";
+import { createFixtureSpecimen } from "../fixtures.ts";
+import { SpecimenPostgres, unlockSummaryOf } from "./index.ts";
 
 // US-BES-02, DM-BES-02, P-04: Exemplare je Konto (echte PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -323,6 +324,32 @@ describe("US-BES-04 cutting in the database", () => {
   });
 });
 
+describe("NFR-12 the summary the unlock rules read", () => {
+  it("NFR-12 counts the active specimens, keeps the first date of an archived one, and only its own (P-04)", async () => {
+    const fresh = randomUUID();
+    await admin.query("insert into account (id) values ($1)", [fresh]);
+    try {
+      expect(await unlockSummaryOf(pool, fresh)).toEqual({ active: 0, firstCreatedAt: null });
+      const first = await createFixtureSpecimen(pool, fresh, "Erste");
+      await createFixtureSpecimen(pool, fresh, "Zweite");
+      await admin.query(
+        "update specimen set created_at = '2026-01-02T23:30:00Z', status = 'archived', archived_at = now(), archived_reason = 'eingegangen' where id = $1",
+        [first],
+      );
+      expect(await unlockSummaryOf(pool, fresh)).toEqual({
+        active: 1,
+        firstCreatedAt: "2026-01-02T23:30:00Z",
+      });
+      expect(await unlockSummaryOf(pool, randomUUID())).toEqual({
+        active: 0,
+        firstCreatedAt: null,
+      });
+    } finally {
+      await admin.query("delete from account where id = $1", [fresh]);
+    }
+  });
+});
+
 describe("US-ACC-03 count of the active specimens (start page)", () => {
   it("US-ACC-03 counts the active specimens of the account only, archived ones not, and writes nothing", async () => {
     const carla = randomUUID();
@@ -414,3 +441,97 @@ describe("US-SOZ-05 the day of the repot", () => {
     expect((await repo.find(anna, dated))?.repottedAt).toBe("2026-10-10");
   });
 });
+
+describe("NFR-12 specimens in one read", () => {
+  it("NFR-12 findMany equals find per ID: same order, foreign and unknown IDs are null", async () => {
+    const mine = await specimens.create(anna, { ...values, name: "Viele eigen" });
+    const theirs = await specimens.create(ben, { ...values, name: "Viele fremd" });
+    if (typeof mine === "string" || typeof theirs === "string") throw new Error("seed");
+    const ids = [mine.id, theirs.id, randomUUID(), mine.id.toUpperCase()];
+    for (const user of [anna, ben])
+      expect(await specimens.findMany(user, ids)).toEqual(
+        await Promise.all(ids.map((id) => specimens.find(user, id))),
+      );
+    expect((await specimens.findMany(anna, ids)).map((x) => x?.id ?? null)).toEqual([
+      mine.id,
+      null,
+      null,
+      mine.id,
+    ]);
+    expect(await specimens.findMany(anna, [])).toEqual([]);
+  });
+
+  it("NFR-12 findMany needs one statement for any number of specimens", async () => {
+    const made = [];
+    for (let i = 0; i < 6; i++) {
+      const z = await specimens.create(anna, { ...values, name: `Zaehl ${i} ${randomUUID()}` });
+      if (typeof z === "string") throw new Error(z);
+      made.push(z.id);
+    }
+    let statements = 0;
+    const counted = new Proxy(pool, {
+      get(target, prop) {
+        if (prop === "connect")
+          return async () => {
+            const c = await target.connect();
+            return new Proxy(c, {
+              get(client, p) {
+                const v = Reflect.get(client, p, client) as unknown;
+                if (p !== "query") return typeof v === "function" ? v.bind(client) : v;
+                return (...a: unknown[]) => (
+                  statements++,
+                  (v as (...x: unknown[]) => unknown).apply(client, a)
+                );
+              },
+            });
+          };
+        const v = Reflect.get(target, prop, target) as unknown;
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    });
+    const few = await new SpecimenPostgres(counted).findMany(anna, made.slice(0, 2));
+    const afterFew = statements;
+    statements = 0;
+    const many = await new SpecimenPostgres(counted).findMany(anna, made);
+    expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
+    expect(statements).toBe(afterFew);
+  });
+
+  it("NFR-12 findMany equals find for archived and foreign specimens; no IDs send no statement", async () => {
+    const made = await specimens.create(anna, { ...values, name: `Archiv ${randomUUID()}` });
+    if (typeof made === "string") throw new Error(made);
+    expect(await specimens.archive(anna, made.id, "eingegangen", "2026-10-05")).toMatchObject({
+      status: "archived",
+    });
+    const ids = [made.id, randomUUID()];
+    for (const user of [anna, ben])
+      expect(await specimens.findMany(user, ids)).toEqual(
+        await Promise.all(ids.map((id) => specimens.find(user, id))),
+      );
+    // The archived specimen is returned by find and by findMany alike; a foreign one is null for the other account.
+    expect((await specimens.findMany(anna, ids))[0]).toMatchObject({
+      id: made.id,
+      status: "archived",
+    });
+    expect(await specimens.findMany(ben, [made.id])).toEqual([null]);
+    const counted = countedPool(pool);
+    expect(await new SpecimenPostgres(counted.pool).findMany(anna, [])).toEqual([]);
+    expect(counted.count()).toBe(0);
+  });
+});
+
+/** The pool with a count of the statements sent through it and its connections (NFR-12, US-QG-07). */
+function countedPool(target: Pool): { pool: Pool; count: () => number } {
+  let n = 0;
+  const wrap = <T extends object>(obj: T): T =>
+    new Proxy(obj, {
+      get(o, prop) {
+        const v = Reflect.get(o, prop, o) as unknown;
+        if (prop === "query")
+          return (...a: unknown[]) => (n++, (v as (...x: unknown[]) => unknown).apply(o, a));
+        if (prop === "connect") return async () => wrap(await (v as () => Promise<object>).call(o));
+        return typeof v === "function" ? v.bind(o) : v;
+      },
+    });
+  return { pool: wrap(target), count: () => n };
+}

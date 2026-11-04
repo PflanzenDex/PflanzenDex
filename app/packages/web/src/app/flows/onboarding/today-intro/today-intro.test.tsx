@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useEffect } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
@@ -137,6 +138,21 @@ const world = (over: Partial<World> = {}): World => ({
 const paths = () =>
   (fetch as ReturnType<typeof vi.fn>).mock.calls.map(([u]) => new URL(String(u)).pathname);
 
+/**
+ * The tasks are mounted while the intro decides (issue 1244), so their text is in the DOM before they are shown: what
+ * counts is that they are not hidden.
+ */
+const tasksHidden = () => {
+  const el = screen.queryByText("Aufgaben des Tages");
+  return el === null || el.closest("[hidden]") !== null;
+};
+const tasksShown = () =>
+  vi.waitFor(() => {
+    const el = screen.getByText("Aufgaben des Tages");
+    if (el.closest("[hidden]") !== null) throw new Error("the tasks are still hidden");
+    return el;
+  });
+
 async function pickSpecies() {
   await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
@@ -271,14 +287,14 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
   it("US-QS-16 · US-ONB-01 skipping shows the day's tasks in place of the guide and no card about locations or light zones", async () => {
     fakeServer(world({ zones: [] }));
     view();
-    expect(screen.queryByText("Aufgaben des Tages")).toBeNull();
+    expect(tasksHidden()).toBe(true);
     await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByText(/Standort|Lichtzone/)).toBeNull();
     cleanup();
     view();
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
 
@@ -298,21 +314,21 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     cleanup();
     // another device of the same account: the guide stays ended
     view();
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
 
   it("US-ONB-07 a guide that ended on another device does not come back here", async () => {
     fakeServer(world({ guideEnded: true }));
     view();
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
 
   it("US-ONB-01 a returning keeper (all plants archived) gets the day's tasks, not the flow (#291)", async () => {
     fakeServer(world({ archived: 2 }));
     view();
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByText(/Schritt 1 von/)).toBeNull();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
@@ -400,7 +416,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
   it("US-ONB-02 Heute shows no permanent card about missing locations or light zones", async () => {
     fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
     view();
-    await screen.findByText("Aufgaben des Tages");
+    await tasksShown();
     expect(screen.queryByText(/noch keinen Standort|keine Lichtzonen/)).toBeNull();
   });
 });
@@ -481,7 +497,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
   it("US-ONB-07 no hint is due (dismissed, expired, calm mode or style many): no note", async () => {
     fakeServer(world({ cards: [{ id: "e1" }], hint: null }));
     view();
-    await screen.findByText("Aufgaben des Tages");
+    await tasksShown();
     expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
   });
 
@@ -511,7 +527,7 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
   it("US-QS-16 · US-ACC-03 with a plant Heute shows the tasks, without hints about setup", async () => {
     fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
     view();
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByLabelText("Hinweise zur Einrichtung")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Start" })).toBeNull();
   });
@@ -519,7 +535,7 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
   it("US-ACC-03 Heute counts the specimens with the count route, it does not load the card list", async () => {
     fakeServer(world({ cards: [{ id: "e1" }] }));
     view();
-    await screen.findByText("Aufgaben des Tages");
+    await tasksShown();
     expect(paths()).toContain("/specimens/count");
     expect(paths()).not.toContain("/specimens/cards");
   });
@@ -532,6 +548,51 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
       ),
     );
     view();
-    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
+    expect(await tasksShown()).toBeTruthy();
+  });
+});
+
+describe("NFR-12 Heute does not wait for the count before its tasks load", () => {
+  it("NFR-12 the tasks request while the count is still on its way, and show with their data once the count decides", async () => {
+    fakeServer(world({ cards: [{ id: "e1" }] }));
+    const serve = fetch;
+    const order: string[] = [];
+    let release!: () => void;
+    const counted = new Promise<void>((done) => (release = done));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        order.push(`request ${path}`);
+        if (path === "/specimens/count") {
+          await counted;
+          order.push("count answered");
+        }
+        return serve(url, init);
+      }),
+    );
+    // A task that asks for its data on its own, as the real tasks do.
+    function Task() {
+      useEffect(() => void fetch("http://api/today"), []);
+      return <p>Aufgaben des Tages</p>;
+    }
+    render(
+      <MemoryRouter>
+        <TodayIntro
+          lookup={LOOKUP}
+          api="http://api"
+          token={token}
+          onOpen={open}
+          fallback={<p role="status">Heute wird geladen …</p>}
+        >
+          <Task />
+        </TodayIntro>
+      </MemoryRouter>,
+    );
+    await vi.waitFor(() => expect(order).toContain("request /today"));
+    expect(tasksHidden()).toBe(true);
+    release();
+    expect(await tasksShown()).toBeTruthy();
+    expect(order.indexOf("request /today")).toBeLessThan(order.indexOf("count answered"));
   });
 });

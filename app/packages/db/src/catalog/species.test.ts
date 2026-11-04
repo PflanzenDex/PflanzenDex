@@ -5,7 +5,7 @@ import { withAccount, migrate, openOwnerPool, openFixturePool } from "../kernel/
 import { findSchemaViolations } from "../schema-check.ts";
 import { assignRole } from "../fixtures.ts";
 import { SpeciesPostgres, ReviewPostgres } from "./index.ts";
-import type { SpeciesName, SpeciesValues } from "./species.ts";
+import type { SpeciesName, SpeciesValues } from "./species/species.ts";
 
 // US-BES-01, FR-BES-02, FR-BES-11, E-02: species catalog with private proposals (real PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -380,5 +380,66 @@ describe("species catalog and review status (TE-08)", () => {
     const many = await new SpeciesPostgres(counted).findMany(anna, made);
     expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
     expect(statements).toBe(afterFew);
+  });
+});
+
+describe("NFR-12 species search by Latin name", () => {
+  it("NFR-12 the index species_latin_name serves the ordered search", async () => {
+    const { rows } = await admin.query<{ indexdef: string }>(
+      "select indexdef from pg_indexes where schemaname = 'public' and indexname = 'species_latin_name'",
+    );
+    expect(rows[0]?.indexdef).toContain("(latin_name)");
+  });
+});
+
+describe("NFR-12 names of the own collection in one statement", () => {
+  /** The pool with a count of the statements sent through it and its connections (NFR-12). */
+  function countedPool(target: Pool): { pool: Pool; count: () => number } {
+    let n = 0;
+    const wrap = <T extends object>(obj: T): T =>
+      new Proxy(obj, {
+        get(o, prop) {
+          const v = Reflect.get(o, prop, o) as unknown;
+          if (prop === "query")
+            return (...a: unknown[]) => (n++, (v as (...x: unknown[]) => unknown).apply(o, a));
+          if (prop === "connect")
+            return async () => wrap(await (v as () => Promise<object>).call(o));
+          return typeof v === "function" ? v.bind(o) : v;
+        },
+      });
+    return { pool: wrap(target), count: () => n };
+  }
+
+  it("NFR-12 latinNamesOf gives the names find gives for the given species; invisible ones are left out", async () => {
+    const mine = await create(anna, values(name("Aloe kollektion-eigen ")));
+    const shared = await create(anna, values(name("Aloe kollektion-frei ")));
+    await approve(shared.id);
+    const theirs = await create(ben, values(name("Aloe kollektion-fremd ")));
+    const ids = [mine.id, shared.id, theirs.id, randomUUID()];
+    const forAnna = await species.latinNamesOf(anna, ids);
+    expect([...forAnna].sort()).toEqual([mine.latinName, shared.latinName].sort());
+    expect([...(await species.latinNamesOf(ben, ids))].sort()).toEqual(
+      [shared.latinName, theirs.latinName].sort(),
+    );
+    // The same names as the per-species `find` that this read replaces.
+    const viaFind = (await Promise.all(ids.map((id) => species.find(anna, id)))).flatMap((s) =>
+      s ? [s.latinName] : [],
+    );
+    expect([...forAnna].sort()).toEqual([...viaFind].sort());
+    expect(await species.latinNamesOf(anna, [])).toEqual([]);
+  });
+
+  it("NFR-12 latinNamesOf needs one statement for any number of species", async () => {
+    const made: string[] = [];
+    for (let i = 0; i < 6; i++)
+      made.push((await create(anna, values(name(`Aloe kollektion${i} `)))).id);
+    const counted = countedPool(pool);
+    const reader = new SpeciesPostgres(counted.pool);
+    const before = counted.count();
+    await reader.latinNamesOf(anna, made.slice(0, 2));
+    const few = counted.count() - before;
+    const middle = counted.count();
+    await reader.latinNamesOf(anna, made);
+    expect(counted.count() - middle).toBe(few);
   });
 });

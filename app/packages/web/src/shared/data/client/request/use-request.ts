@@ -31,12 +31,15 @@ export function useRequest<T>(props: {
   enabled?: boolean;
   /** While the key changes (a new search text) the last result stays on screen until the new one is there. */
   keepPrevious?: boolean;
+  /** Reference data only (`REFERENCE_STALE_TIME`, issue 1244): a fresh copy is shown without a request. */
+  staleTime?: number;
 }): Request<T> {
-  const { queryKey, token, load, fresh, enabled, keepPrevious } = props;
+  const { queryKey, token, load, fresh, enabled, keepPrevious, staleTime } = props;
   const q = useQuery({
     queryKey,
     ...(fresh ? { gcTime: 0 } : {}),
     ...(enabled === undefined ? {} : { enabled }),
+    ...(staleTime === undefined ? {} : { staleTime }),
     ...(keepPrevious ? { placeholderData: keepPreviousData } : {}),
     queryFn: async () => {
       const t = await token();

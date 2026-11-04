@@ -9,7 +9,7 @@ import {
   ReviewPostgres,
   SpeciesPostgres,
 } from "../index.ts";
-import type { SpeciesName, SpeciesValues } from "../species.ts";
+import type { SpeciesName, SpeciesValues } from "../species/species.ts";
 
 // US-ENT-09 part 2, DM-BES-05: claims read out of the stored Wikidata answers; nothing is asked from any server.
 let owner: Pool;

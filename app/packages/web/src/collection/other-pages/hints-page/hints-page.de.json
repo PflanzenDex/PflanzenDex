@@ -1,0 +1,9 @@
+{
+  "loading": "Hinweise werden geladen …",
+  "heading": "Hinweise",
+  "emptyTitle": "Keine Hinweise",
+  "emptyDescription": "Jede Pflanze hat eine Art, einen Standort und eine Lichtzone.",
+  "toCollection": "Zur Sammlung",
+  "quiet": "Diese Pflanzen sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.",
+  "pager": "Fehlende Angaben"
+}

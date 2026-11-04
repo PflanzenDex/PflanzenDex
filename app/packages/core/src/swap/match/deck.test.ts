@@ -35,8 +35,7 @@ function setup(
     swaps: new InMemoryExchange({ anna: offers }),
     facts,
     treatments: {
-      open: async () => new Map(),
-      done: async () => [],
+      openAndLastDone: async () => ({ open: new Map(), lastDone: new Map() }),
     } as unknown as ExchangeDependencies["treatments"],
     phases: new StubPhases({}),
     mine: { latinNamesOf: async () => [] },

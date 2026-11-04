@@ -47,8 +47,6 @@ export function friendRoutes(
   const end = friendEnd({ friends, ...(afterEnd ? { afterEnd } : {}) });
   const sharing = new SharingPostgres(pool);
   const ports = sharingPorts(pool);
-  const sharedSpecies = (viewerId: string, ownerId: string) =>
-    sharedSpeciesCount({ sharing, ...ports }, viewerId, ownerId);
   const routes = new Hono<AuthEnv>();
   routes.post("/friends/invitations", async (c) => {
     const response = await write(c, deps, invite, { input: {}, success: 201 });
@@ -69,8 +67,14 @@ export function friendRoutes(
   );
   routes.get("/friends/:id/shared", friendSharedRoute(pool));
   routes.get("/friends/:id/collection", friendCollectionRoute(pool));
-  routes.get("/friends", async (c) =>
-    c.json(await friendList({ friends, sharedSpecies }, c.get("account").id)),
-  );
+  routes.get("/friends", async (c) => {
+    const me = c.get("account").id;
+    // The viewer's own species names are read once for the whole list, not once per friend (NFR-12, #1238).
+    let names: ReturnType<typeof ports.mine.latinNamesOf> | undefined;
+    const mine = { latinNamesOf: (userId: string) => (names ??= ports.mine.latinNamesOf(userId)) };
+    const sharedSpecies = (viewerId: string, ownerId: string) =>
+      sharedSpeciesCount({ sharing, ...ports, mine }, viewerId, ownerId);
+    return c.json(await friendList({ friends, sharedSpecies }, me));
+  });
   return routes;
 }
