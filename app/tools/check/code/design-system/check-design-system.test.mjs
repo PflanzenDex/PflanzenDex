@@ -249,10 +249,44 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
       "src/shared/patterns/c.tsx":
         'export const C = ({ a }: { a: string }) => <i className={"x " + a} />;\n',
       "src/shared/patterns/ok.tsx": 'export const O = () => <i className={cn("x")} />;\n',
-      "src/care/other.tsx":
-        "export const D = ({ a }: { a: string }) => <i className={`x ${a}`} />;\n",
     };
     assert.deepEqual(run(files).keys, ["DS-31|shared/patterns/c.tsx", "DS-31|shared/ui/t.tsx"]);
+  });
+
+  it("FR-QG-20 · DS-31 fails a template literal in a module component and names the line", () => {
+    const src = "export const X = ({ a }: { a: string }) => (\n  <i className={`x ${a}`} />\n);\n";
+    const { keys, locations } = run({ ...ui("", "ok"), "src/care/x/x.tsx": src });
+    assert.deepEqual(keys, ["DS-31|care/x/x.tsx"]);
+    assert.deepEqual(locations.get("DS-31|care/x/x.tsx"), [2]);
+  });
+
+  it("FR-QG-20 · DS-31 fails concatenation in a module component and passes cn()", () => {
+    const concat = 'export const X = ({ a }: { a: string }) => <i className={"x " + a} />;\n';
+    assert.deepEqual(run({ ...ui("", "ok"), "src/wishlist/x/x.tsx": concat }).keys, [
+      "DS-31|wishlist/x/x.tsx",
+    ]);
+    const merged = 'export const X = ({ a }: { a: string }) => <i className={cn("x", a)} />;\n';
+    assert.deepEqual(run({ ...ui("", "ok"), "src/wishlist/x/x.tsx": merged }).keys, []);
+  });
+
+  it("FR-QG-20 · DS-35 fails a module cva() without defaultVariants and names the line", () => {
+    const src =
+      'import { cva } from "class-variance-authority";\n\nconst v = cva("base", {\n  variants: { a: { b: "c" } },\n});\nexport const C = () => <i className={v()} />;\n';
+    const { keys, locations } = run({ ...ui("", "ok"), "src/collection/x/x.tsx": src });
+    assert.deepEqual(keys, ["DS-35|collection/x/x.tsx"]);
+    assert.deepEqual(locations.get(keys[0]), [3]);
+  });
+
+  it("FR-QG-20 · DS-35 passes a module cva() with defaultVariants", () => {
+    const src =
+      'import { cva } from "class-variance-authority";\n\nconst v = cva("base", {\n  variants: { a: { b: "c" } },\n  defaultVariants: { a: "b" },\n});\nexport const C = () => <i className={v()} />;\n';
+    assert.deepEqual(run({ ...ui("", "ok"), "src/collection/x/x.tsx": src }).keys, []);
+  });
+
+  it("FR-QG-20 · DS-31 and DS-35 skip a module story file", () => {
+    const src =
+      'import { cva } from "class-variance-authority";\nconst v = cva("base", { variants: { a: { b: "c" } } });\nexport const S = () => <i className={`x ${v()}`} />;\n';
+    assert.deepEqual(run({ ...ui("", "ok"), "src/care/x/x.stories.tsx": src }).keys, []);
   });
 
   it("QG-U4 · DS-35 fails a cva call without defaultVariants and names the line", () => {

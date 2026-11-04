@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { cn } from "@/shared/lib/utils";
 import { LoadFrame } from "../../../shared/data";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementPhoto } from "../../measure/measurement-header/measurement-photo";
@@ -18,7 +19,7 @@ function Entry(props: {
 }) {
   const { row } = props;
   return (
-    <div className={`${CARD_CLASSES} grid gap-1`}>
+    <div className={cn(CARD_CLASSES, "grid gap-1")}>
       <p className="font-semibold">
         {valueText(row.value)} · {dateText(row.date)}
       </p>

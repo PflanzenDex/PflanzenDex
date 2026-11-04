@@ -64,13 +64,9 @@ export const RULES = [
   },
 ];
 
-// Component files (FR-QG-23 step 2, step 3): shared/ui, shared/patterns and the routing frames moved to shared/platform/routing.
-// Step 3 moved the former components/ parts to app/: the destinations, the legacy routes, the app-shell components of
-// app/frame and the shell fixtures of app/stories stay in scope. Step 4 moved the collector cards into pokedex; like every
-// other module component they are not in scope here.
-const COMPONENT_FILE =
-  /^(?:app\/(?:destinations|legacy-routes|stories\/shell|frame\/(?:app-shell|global-header|mobile-nav-bar|side-nav))\/|shared\/(?:ui|patterns)\/|shared\/platform\/routing\/(?:lazy-page|route-boundary|route-focus)\/)/;
-const isComponentFile = (file) => COMPONENT_FILE.test(file);
+// DS-31 and DS-35 (FR-QG-20) apply to every non-story .tsx file below web/src: shared components, app/ and the
+// components of every domain module alike.
+const isTsx = (file) => file.endsWith(".tsx");
 
 // Blank out comments and string/template contents (keeps length and newlines) so structure can be matched.
 const LITERALS =
@@ -110,7 +106,7 @@ export const FILE_RULES = [
   {
     // DS-31: class names flow through cn(), never template literals or concatenation.
     id: "DS-31",
-    applies: (file) => isComponentFile(file) && notStory(file),
+    applies: (file) => isTsx(file) && notStory(file),
     lines: (content) => {
       const found = [];
       content.split("\n").forEach((line, i) => {
@@ -162,7 +158,7 @@ export const FILE_RULES = [
   {
     // DS-35: every cva() call sets defaultVariants.
     id: "DS-35",
-    applies: (file) => isComponentFile(file) && notStory(file),
+    applies: (file) => isTsx(file) && notStory(file),
     lines: (content) => {
       const code = blank(content);
       const found = [];

@@ -7,6 +7,7 @@ import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-par
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
 import { errorText } from "@/shared/lib/error-text";
+import { cn } from "@/shared/lib/utils";
 import { useInvalidate, useWriteAction } from "../../../../shared/data";
 import { PATHS } from "../../../../shared/patterns/navigation/navigation/navigation";
 import { unlockFunction, type UnlockEntry } from "../../unlock/model/unlock-api";
@@ -86,7 +87,7 @@ function FunctionLayer(props: {
         <Link
           to={locked ? lockAddress(entry.id) : functionAddress(entry.id)}
           aria-label={locked ? `${name}: Seite ansehen` : `${name} öffnen`}
-          className={`${LINK} self-start`}
+          className={cn(LINK, "self-start")}
         >
           {locked ? "Ansehen" : "Öffnen"}
         </Link>

@@ -10,6 +10,7 @@ import {
 import type { z } from "zod";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { cn } from "@/shared/lib/utils";
 import table from "../../../light.de.json";
 import {
   FormControl,
@@ -62,7 +63,7 @@ export function RefusalAlert<F extends FieldValues>({ sent }: { sent: Sent<F> })
       role="alert"
       tabIndex={-1}
       ref={sent.alertRef}
-      className={`${ALERT_CLASSES} md:col-span-2`}
+      className={cn(ALERT_CLASSES, "md:col-span-2")}
     >
       <p>{sent.alertText}</p>
     </div>

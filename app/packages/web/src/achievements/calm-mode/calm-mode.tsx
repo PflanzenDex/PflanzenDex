@@ -3,6 +3,7 @@ import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { errorText } from "@/shared/lib/error-text";
+import { cn } from "@/shared/lib/utils";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../shared/data";
 import {
   loadAchievementSettings,
@@ -53,7 +54,7 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
         {calm ? "Erfolge und Rückblicke sind ausgeblendet." : "Blendet Erfolge und Rückblicke aus."}
       </MoreHelp>
       {error && (
-        <p role="alert" className={`${ALERT} mt-2`}>
+        <p role="alert" className={cn(ALERT, "mt-2")}>
           {error.code === "network.not_reachable" ? error.text : errorText(error.code)}
         </p>
       )}
