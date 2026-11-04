@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
+import { cn } from "@/shared/lib/utils";
 import { SIGN_IN, type ApiError } from "../../../../shared/data";
 import { saveKeeperStyle, type KeeperStyle, type KeeperStyleState } from "../keeper-style-api";
 
@@ -56,7 +57,7 @@ export function useSaveStyle(
 export function Refusal(props: { error: ApiError | null }) {
   if (!props.error) return null;
   return (
-    <p role="alert" className={`${ALERT} mt-2`}>
+    <p role="alert" className={cn(ALERT, "mt-2")}>
       {props.error.code === "network.not_reachable"
         ? props.error.text
         : errorText(props.error.code)}

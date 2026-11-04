@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../shared/data";
 import { duplicate } from "../form";
@@ -60,7 +61,7 @@ function RefusalNotice(props: {
   return (
     <>
       {error && !props.namesField && (
-        <div role="alert" tabIndex={-1} ref={props.alertRef} className={`${ALERT} md:col-span-2`}>
+        <div role="alert" tabIndex={-1} ref={props.alertRef} className={cn(ALERT, "md:col-span-2")}>
           <p>{refusalText(error)}</p>
         </div>
       )}

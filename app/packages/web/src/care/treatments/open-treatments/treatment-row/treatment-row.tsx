@@ -1,6 +1,7 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { keepTogether, overdueChip } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
 import { ATTENTION_CLASSES } from "../../../shared/notices";
 import { dateText } from "../../../shared/text";
 
@@ -28,7 +29,10 @@ export function Row(props: {
         </p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <p
-            className={`w-fit rounded-control px-2.5 py-0.5 text-label font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
+            className={cn(
+              "w-fit rounded-control px-2.5 py-0.5 text-label font-semibold",
+              CHIP.has(row.status.kind) && ATTENTION_CLASSES,
+            )}
           >
             {overdueChip(row.status.text) ?? keepTogether(row.status.text)}
           </p>

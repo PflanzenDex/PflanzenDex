@@ -22,6 +22,7 @@ const qualityMark = cva("", {
   variants: {
     quality: { healthy: "", etiolated: "border-b-2 border-warning-border bg-warning px-1" },
   },
+  defaultVariants: { quality: "healthy" },
 });
 const dueMark = cva("", {
   variants: {
@@ -31,6 +32,7 @@ const dueMark = cva("", {
       soon: "",
     },
   },
+  defaultVariants: { kind: "soon" },
 });
 
 export function Measurement({ card }: { card: SpecimenCard }) {

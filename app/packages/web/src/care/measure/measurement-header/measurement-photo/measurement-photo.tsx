@@ -1,5 +1,6 @@
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { dateText } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "../../../shared/notices/notices";
 
@@ -36,7 +37,10 @@ export function MeasurementPhoto(
     <img
       src={state}
       alt={`Foto der Messung vom ${dateText(date)}`}
-      className={`${props.compact ? "max-h-24" : "max-h-64"} w-auto max-w-full rounded-lg object-contain`}
+      className={cn(
+        props.compact ? "max-h-24" : "max-h-64",
+        "w-auto max-w-full rounded-lg object-contain",
+      )}
     />
   );
 }

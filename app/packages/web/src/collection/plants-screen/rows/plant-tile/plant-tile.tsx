@@ -27,6 +27,7 @@ const stateMark = cva("w-fit rounded-sm px-1 text-xs font-semibold", {
   variants: {
     attention: { true: "border-b-2 border-warning-border bg-warning text-warning-foreground" },
   },
+  defaultVariants: { attention: false },
 });
 
 function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {

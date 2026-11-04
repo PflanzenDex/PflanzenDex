@@ -13,6 +13,7 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { MonthField } from "@/shared/ui/fields/input/native-fields/month-field/month-field";
+import { cn } from "@/shared/lib/utils";
 import { costSchema, parseAmount, type CostFields } from "../../schemas";
 
 /**
@@ -98,7 +99,7 @@ export function CostForm(props: {
           <Button
             type="submit"
             size="touch"
-            className={`w-full ${BUSY_LOOK}`}
+            className={cn("w-full", BUSY_LOOK)}
             aria-disabled={props.running || undefined}
             aria-busy={props.running || undefined}
           >
