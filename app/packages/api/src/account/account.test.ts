@@ -99,6 +99,37 @@ describe("GET /account (US-ACC-01)", () => {
     expect(a.email).not.toBe(b.email);
   });
 
+  it("NFR-12: a GET within the hour writes no account data; after an hour it refreshes last_active_at", async () => {
+    const sub = `api-${randomUUID()}`;
+    try {
+      const app = createApp({ reviewer, pool });
+      const first = await account(app, using(`valid:${sub}:no`));
+      const row = async () => {
+        const r = await admin.query<{ updated_at: Date; last_active_at: Date }>(
+          "select updated_at, last_active_at from account_data where account_id = $1",
+          [first.id],
+        );
+        if (r.rows.length !== 1) throw new Error("account_data row missing");
+        return r.rows[0] as { updated_at: Date; last_active_at: Date };
+      };
+      const written = await row();
+      await account(app, using(`valid:${sub}:no`));
+      expect(await row()).toEqual(written);
+      // last_active_at feeds the "active users" count by day (migration 0018): an hour-old stamp is refreshed.
+      await admin.query(
+        "update account_data set last_active_at = now() - interval '2 hours' where account_id = $1",
+        [first.id],
+      );
+      const stale = await row();
+      await account(app, using(`valid:${sub}:no`));
+      expect((await row()).last_active_at.getTime()).toBeGreaterThan(
+        stale.last_active_at.getTime(),
+      );
+    } finally {
+      await admin.query("delete from account where subject = $1", [sub]);
+    }
+  });
+
   it("/health stays reachable without sign-in", async () => {
     const res = await createApp({ reviewer, pool }).request("/health");
     expect(res.status).toBe(200);

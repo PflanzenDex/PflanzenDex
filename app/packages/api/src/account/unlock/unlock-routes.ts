@@ -64,7 +64,7 @@ export function unlockRoutes(
   const routes = new Hono<AuthEnv>();
   styleRoutes(routes, auth, { styles, unlocks, facts, deps, clock });
   hintRoutes(routes, auth, { hints, context: hintContext, deps, clock });
-  routes.use("/onboarding/unlocks", auth).use("/onboarding/unlocks/*", auth);
+  routes.use("/onboarding/unlocks/*", auth);
   routes.get("/onboarding/unlocks", async (c) => {
     const timeZone = c.req.query("timeZone");
     if (!isTimeZone(timeZone)) return badZone(c);

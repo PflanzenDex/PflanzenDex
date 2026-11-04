@@ -35,7 +35,7 @@ export function achievementsRoutes(
 ): Hono<AuthEnv> {
   const w = achievementsWiring(pool, clock);
   const routes = new Hono<AuthEnv>();
-  for (const path of ACHIEVEMENT_PATHS) routes.use(path, auth).use(`${path}/*`, auth);
+  for (const path of ACHIEVEMENT_PATHS) routes.use(`${path}/*`, auth);
   const keeperRead =
     (answer: (keeper: Keeper, c: Ctx) => Promise<object | Response>) => async (c: Ctx) => {
       const userId = c.get("account").id;

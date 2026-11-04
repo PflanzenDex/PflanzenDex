@@ -69,7 +69,7 @@ export function discoverRoutes(
   const { deps, decide } = discoverDependencies(pool, stock);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
-  for (const path of DISCOVER_PATHS) routes.use(path, auth).use(`${path}/*`, auth);
+  for (const path of DISCOVER_PATHS) routes.use(`${path}/*`, auth);
   routes.get("/discover/suggestions", async (c) => {
     const timeZone = c.req.query("timeZone");
     const deck = Number(c.req.query("deck") ?? "1");
