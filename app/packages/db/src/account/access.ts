@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from "pg";
-import { withAccount } from "../kernel/index.ts";
+import { enterApplicationRole, poolLimits, withAccount } from "../kernel/index.ts";
 
 // Same shapes as the interface AccessStore in `core` (structurally equal; `db` does not import `core`).
 type Role = "operator" | "reviewer";
@@ -112,8 +112,7 @@ export class AccessPostgres {
     const client = await this.pool.connect();
     try {
       await client.query("begin");
-      await client.query("set local role pflanzendex_app");
-      await client.query("select set_config('app.subject', $1, true)", [subject]);
+      await enterApplicationRole(client, poolLimits(this.pool), [["app.subject", subject]]);
       const known = await client.query("select 1 from account where subject = $1", [subject]);
       if (known.rowCount) return await finish(client, "existing");
       const used = await client.query<{ ok: boolean }>("select redeem_invitation($1) as ok", [

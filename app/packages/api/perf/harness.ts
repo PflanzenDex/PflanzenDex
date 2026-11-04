@@ -13,12 +13,17 @@ export type Reply = { status: number; bytes: number; body: Record<string, any> }
 const FRAME = /^(begin|commit|rollback|set local role|select set_config)/i;
 
 export class Harness {
-  readonly owner: Pool = openOwnerPool();
+  readonly owner: Pool;
   /** Superuser pool: shared catalog rows, `analyze`, cleanup. */
   readonly admin: Pool = openFixturePool();
   counts: Counts = { total: 0, payload: 0 };
   private app!: ReturnType<typeof createApp>;
   private readonly seen = new WeakSet<object>();
+
+  /** `owner` is the connection the API runs on; the concurrency measurement passes a pool of its own size (#1242). */
+  constructor(owner: Pool = openOwnerPool()) {
+    this.owner = owner;
+  }
 
   async start(): Promise<void> {
     await ensureTestOwnerDatabase();

@@ -1,4 +1,5 @@
 import pg from "pg";
+import { REQUEST_LIMITS, setPoolLimits, type PoolConfig } from "./limits.ts";
 
 // Default for the local test database from `make db-up`; CI sets the variable (E-01: self-hosting, Docker).
 export const TEST_DB_STANDARD = "postgres://postgres:postgres@127.0.0.1:54329/pflanzendex_test";
@@ -32,8 +33,32 @@ export function testOwnerUrl(): string {
   return url.toString();
 }
 
-export function openPool(url: string = testDatabaseUrl(), allowExitOnIdle = false): pg.Pool {
-  return new pg.Pool({ connectionString: url, max: 4, allowExitOnIdle });
+/**
+ * Opens a pool. The defaults are the test pool (4 connections, no wait limit, `REQUEST_LIMITS`); the production pool gets
+ * its settings from `poolConfigFromEnv` (NFR-12, #1242).
+ */
+export function openPool(
+  url: string = testDatabaseUrl(),
+  allowExitOnIdle = false,
+  config: Partial<PoolConfig> = {},
+): pg.Pool {
+  const pool = new pg.Pool({
+    connectionString: url,
+    max: config.max ?? 4,
+    allowExitOnIdle,
+    connectionTimeoutMillis: config.connectionTimeoutMs ?? 0,
+  });
+  setPoolLimits(pool, config.limits ?? REQUEST_LIMITS);
+  // An idle connection that the server drops emits `error` on the pool; without a listener that would end the process.
+  // The next request gets a new connection; the loss is logged (NFR-18), without any user data.
+  pool.on("error", (error) => console.error("database connection lost", error.message));
+  // A connection that a request holds has no listener of the pool, and the server may end it at any time (a restart, an
+  // idle-in-transaction timeout): the query in progress then fails and the request answers 503 (NFR-12); pg-pool drops
+  // the connection on release. Without this listener the same event would end the process.
+  pool.on("connect", (client) => {
+    client.on("error", () => undefined);
+  });
+  return pool;
 }
 
 /**

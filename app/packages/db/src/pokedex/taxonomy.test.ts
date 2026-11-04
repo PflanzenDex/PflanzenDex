@@ -173,3 +173,24 @@ describe("US-POK-13 rarity in nature in the database", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("NFR-12 statistics of the taxon table", () => {
+  it("NFR-12 the replacement runs ANALYZE on taxon, so the planner sees the new tree", async () => {
+    const analyses = async () => {
+      await pool.query("select pg_stat_clear_snapshot()");
+      const r = await pool.query<{ n: string }>(
+        "select analyze_count::text as n from pg_stat_user_tables where relname = 'taxon'",
+      );
+      return Number(r.rows[0]?.n ?? 0);
+    };
+    const before = await analyses();
+    await store.replace(build("f1"));
+    // The backend reports its statistics when it goes idle (about a second): poll for the new count.
+    let after = await analyses();
+    for (let i = 0; i < 60 && after === before; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      after = await analyses();
+    }
+    expect(after).toBeGreaterThan(before);
+  });
+});

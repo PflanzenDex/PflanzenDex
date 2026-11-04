@@ -1,6 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 import { contributedRows } from "../../catalog/index.ts";
-import { withAccount } from "../../kernel/index.ts";
+import { withLongAccount } from "../../kernel/index.ts";
 import {
   accountTables,
   PHOTO_COLUMNS,
@@ -50,7 +50,7 @@ export class AccountDataPostgres {
 
   /** `null` when the account does not exist. */
   async read(accountId: string): Promise<AccountDataSnapshot | null> {
-    return withAccount(this.pool, accountId, async (c) => {
+    return withLongAccount(this.pool, accountId, async (c) => {
       const tables: Record<string, readonly ExportRow[]> = {};
       for (const t of await accountTables(c)) tables[t.name] = await ownRows(c, t, accountId);
       if ((tables["account"] ?? []).length === 0) return null;
