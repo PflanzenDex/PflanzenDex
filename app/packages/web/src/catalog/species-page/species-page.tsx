@@ -22,6 +22,12 @@ type View = { kind: "search" } | { kind: "profile" };
 const PROPOSE_LAYER = "propose";
 /** The layer with my care profile of the species (`?sheet=care`, US-BES-09, US-QS-21). */
 const CARE_LAYER = "care";
+/**
+ * The opener of the care profile in the action bar: 48 px at normal text like before, but it grows with its label at a
+ * larger text size. The side padding is 20 px at any text size (the value of `px-5` at normal text), so "Pflegeprofil"
+ * fits the button at 200 % text (issue 1217).
+ */
+const CARE_OPENER = "h-auto min-h-12 px-[20px] py-0";
 
 function ProfilePage(props: {
   profile: Request<Species>;
@@ -65,7 +71,7 @@ function ProfilePage(props: {
             embedded={props.embedded}
             extra={
               props.section && (
-                <LayerOpener id={CARE_LAYER} className="h-12">
+                <LayerOpener id={CARE_LAYER} className={CARE_OPENER}>
                   Mein Pflegeprofil
                 </LayerOpener>
               )

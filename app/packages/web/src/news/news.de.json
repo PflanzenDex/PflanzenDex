@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Bei großer Schrift verdeckt die Aktionsleiste im Artenprofil keinen Inhalt mehr, und ihre Beschriftungen passen in die Knöpfe.",
     "Bei großer Schrift bleiben die Beschriftungen der Reiter in ihrem Feld, statt sich zu überlappen.",
     "Anmeldung und Freischalten: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite.",
     "Pflanzen: Mit großer Schrift scrollt bei „Pflanze anlegen“, bei „Messen“ und bei den Änderungen an einer Pflanze nur noch der Inhalt, nicht mehr die ganze Seite.",
