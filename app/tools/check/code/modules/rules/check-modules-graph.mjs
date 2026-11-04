@@ -91,11 +91,8 @@ function layerImports({ src, file, fromLayer, modules, h }) {
   return out;
 }
 
-/**
- * AB-15, report only (blocking in FR-QG-23 step 5): shared imports no module and not app, a module imports not app.
- * Returns the findings as text lines (rule ID, file, line); they are printed, never added to the violations.
- */
-export function webLayerFindings({ appDir, cfg, h }) {
+// Imports that break the direction, one per hit: { file, from, line, text } with the text after rule and path.
+function webLayerHits({ appDir, cfg, h }) {
   const src = path.join(appDir, "packages", "web", "src");
   if (!fs.existsSync(src)) return [];
   const out = [];
@@ -110,18 +107,22 @@ export function webLayerFindings({ appDir, cfg, h }) {
       modules: cfg.MODULES,
       h,
     }))
-      out.push(
-        `AB-15 packages/web/src/${from}:${line} ${describe(fromLayer)} -> ${describe(toLayer)}: "${spec}"`,
-      );
+      out.push({
+        file,
+        from,
+        line,
+        text: `${describe(fromLayer)} -> ${describe(toLayer)}: "${spec}"`,
+      });
   }
   return out;
 }
 
-/** The AB-15 findings as printed by check-boundaries: a headline and one line per finding. */
-export function webLayerReport(ctx) {
-  const found = webLayerFindings(ctx);
-  return [
-    `AB-15 web layers (report only): ${found.length} finding(s)`,
-    ...found.map((l) => `  ${l}`),
-  ].join("\n");
+/** AB-15 findings as text lines (rule ID, file, line): shared imports no module and not app, a module imports not app. */
+export function webLayerFindings(ctx) {
+  return webLayerHits(ctx).map((v) => `AB-15 packages/web/src/${v.from}:${v.line} ${v.text}`);
+}
+
+/** AB-15 (blocking since FR-QG-23 step 5): every finding is a violation of check-boundaries. */
+export function checkWebLayers(ctx) {
+  for (const v of webLayerHits(ctx)) ctx.add("AB-15", v.file, v.line, v.text);
 }
