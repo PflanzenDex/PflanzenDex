@@ -8,9 +8,10 @@ import { createApp } from "./app";
 import { countingPool, type CountingPool } from "./count-queries";
 import { apiFor, type Api } from "./query-count-api-test-helpers";
 import { getRoutes, MEASURED, requestPath } from "./query-count-endpoints";
-import type { SeedIds } from "./query-count-seed-test-helpers";
+import { befriend, friendName, seedFriend } from "./query-count-seed-social-test-helpers";
+import { TZ, type SeedIds } from "./query-count-seed-test-helpers";
 import { seedSize, taxonName, type Cast } from "./query-count-seed-size-test-helpers";
-import { repeatFindings } from "./query-count-statements";
+import { normalize, repeatFindings } from "./query-count-statements";
 
 // US-QG-07: the number of SQL statements of a request must not grow with the keeper's data (N+1), and one request must
 // not send the same statement text twice (duplicate read). Every GET route of the app is measured or listed in EXCLUDED
@@ -40,14 +41,17 @@ const EXCLUDED: Record<string, string> = {
 
 type Measured = { status: number; count: number; statements: readonly string[]; body: string };
 
-// The growth reasons name their audit issue. The repeated texts have no reason field, so they are grouped here: offers,
-// exchange and swaps #1237; specimen rows read per row #1238; achievements #1239; account data, friend shares and the
+// The growth reasons name their audit issue (none is left: every measured route is flat with the data). The repeated
+// texts have no reason field, so they are grouped here: offers, exchange and swaps #1237; the specimen and species rows
+// of each friend, read once per friend and not per row #1238; achievements #1239; account data, friend shares and the
 // sign-in guard read twice #1240; care profiles, locations and light zones #1243.
 const readBaseline = <T>(file: string): T =>
   JSON.parse(readFileSync(new URL(`./${file}`, import.meta.url), "utf8")) as T;
 const growthBaseline = readBaseline<Record<string, string>>("query-count-baseline.json");
 const repeatBaseline = readBaseline<Record<string, string[]>>("query-repeat-baseline.json");
 const measured = Object.keys(MEASURED);
+// The friends of the NFR-12 friend-view block, cleaned up with the other accounts (see `afterAll`).
+const friendViewSubs: string[] = [];
 
 const cast = (tag: string): Cast => ({
   tag,
@@ -125,7 +129,7 @@ beforeAll(async () => {
 }, 280_000);
 
 afterAll(async () => {
-  const subs = SIZES.flatMap((size) => Object.values(casts[size]));
+  const subs = [...SIZES.flatMap((size) => Object.values(casts[size])), ...friendViewSubs];
   // Offers reference their specimen without a cascade: they go first.
   await admin.query(
     "delete from offer where account_id in (select id from account where subject = any($1))",
@@ -215,5 +219,92 @@ describe("US-QG-07 statements per request do not grow with the data (N+1)", () =
     const keys = new Set(measured.map((p) => `GET ${p}`));
     const named = [...Object.keys(growthBaseline), ...Object.keys(repeatBaseline)];
     expect(named.filter((k) => !keys.has(k))).toEqual([]);
+  });
+});
+
+// NFR-12 (#1238): the friend views of one keeper with 2 and then 6 friends, in their own block so the seed above keeps its
+// sizes. The owner's specimens are read as the owner, so each friend costs its own reads (shares, privacy, rows); what
+// must not happen is one read per shared specimen or one read of the keeper's collection per friend.
+const FRIEND_COUNTS = { two: 2, six: 6 } as const;
+type FriendCount = keyof typeof FRIEND_COUNTS;
+const SIZE_KEYS: readonly FriendCount[] = ["two", "six"];
+// The keeper's own collection: the one read of the viewer's specimens in a friend list (its names follow in one statement).
+const OWN_COLLECTION = /from specimen order by lower\(name\)/;
+const SHARED_ROWS = /from specimen where id = any\(/;
+const countOf = (m: Measured | undefined, shape: RegExp): number =>
+  (m?.statements ?? []).filter((s) => shape.test(normalize(s))).length;
+
+describe("NFR-12 friend views read the keeper's collection once and each friend's shared rows in one statement", () => {
+  const keeper = `qc-f-${randomUUID()}`;
+  const friendSubs = Array.from({ length: FRIEND_COUNTS.six }, () => `qc-f-${randomUUID()}`);
+  friendViewSubs.push(keeper, ...friendSubs);
+  let firstFriend = "";
+  const seen: Record<FriendCount, Record<string, Measured>> = { two: {}, six: {} };
+
+  async function addFriend(i: number): Promise<void> {
+    const sub = friendSubs[i] ?? "";
+    const tag = `f${String.fromCharCode(97 + i)}`; // letters only: species names take no digits
+    await seedFriend({ api, sub, run, tag }, 4, false);
+    const id = await befriend(api, keeper, sub, friendName(run, tag));
+    if (i === 0) firstFriend = id;
+  }
+
+  async function measureAll(size: FriendCount): Promise<void> {
+    const paths: Record<string, string> = {
+      list: "/friends",
+      feed: `/feed?timeZone=${TZ}`,
+      shared: `/friends/${firstFriend}/shared`,
+      collection: `/friends/${firstFriend}/collection`,
+    };
+    for (const [name, path] of Object.entries(paths)) {
+      await api.call(keeper, "GET", path); // the first call fills caches and creates rows
+      counter.reset();
+      const r = await api.call(keeper, "GET", path);
+      seen[size][name] = {
+        status: r.status,
+        count: counter.count(),
+        statements: counter.statements(),
+        body: JSON.stringify(r.body).slice(0, 200),
+      };
+    }
+  }
+
+  beforeAll(async () => {
+    await seedFriend({ api, sub: keeper, run, tag: "fk" }, 3, false);
+    for (let i = 0; i < FRIEND_COUNTS.two; i++) await addFriend(i);
+    await measureAll("two");
+    for (let i = FRIEND_COUNTS.two; i < FRIEND_COUNTS.six; i++) await addFriend(i);
+    await measureAll("six");
+  }, 280_000);
+
+  it("NFR-12 the shared views of one friend send the same statements with 2 and with 6 friends", () => {
+    for (const name of ["shared", "collection"]) {
+      expect(seen.six[name]?.status, `GET ${name} with 6 friends`).toBe(200);
+      expect(
+        seen.six[name]?.count,
+        `/friends/:id/${name} sends ${seen.two[name]?.count} statements with 2 friends and ${seen.six[name]?.count} with 6`,
+      ).toBe(seen.two[name]?.count);
+      expect(
+        countOf(seen.six[name], SHARED_ROWS),
+        `${name}: rows of the friend in one statement`,
+      ).toBe(1);
+    }
+  });
+
+  it("NFR-12 the friend list reads the keeper's own collection once, not once per friend", () => {
+    for (const size of SIZE_KEYS)
+      expect(
+        countOf(seen[size].list, OWN_COLLECTION),
+        `list with ${FRIEND_COUNTS[size]} friends`,
+      ).toBe(1);
+  });
+
+  it("NFR-12 the friend list and the feed read each friend's shared rows once per friend, not per row", () => {
+    for (const size of SIZE_KEYS)
+      for (const name of ["list", "feed"])
+        expect(
+          countOf(seen[size][name], SHARED_ROWS),
+          `${name} with ${FRIEND_COUNTS[size]} friends (2 shared specimens each)`,
+        ).toBe(FRIEND_COUNTS[size]);
   });
 });

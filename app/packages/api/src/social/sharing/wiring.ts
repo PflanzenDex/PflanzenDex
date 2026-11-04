@@ -5,7 +5,12 @@ import {
   type SharedFacts,
   type SpecimenLookup,
 } from "@pflanzendex/core";
-import { ProfilePostgres, SpeciesPostgres, SpecimenPostgres } from "@pflanzendex/db";
+import {
+  ProfilePostgres,
+  SpeciesPostgres,
+  SpecimenPostgres,
+  type SpecimenRow,
+} from "@pflanzendex/db";
 import type { Pool } from "pg";
 
 /**
@@ -27,18 +32,34 @@ export function sharingPorts(pool: Pool) {
   const privacy: PrivacySwitch = {
     everythingPrivate: async (userId) => (await profiles.find(userId))?.everythingPrivate ?? false,
   };
-  /** Only approved species names are shared: a private proposal of the owner stays unknown to friends (P-05). */
-  const approved = async (ownerId: string, id: string) => {
-    const s = await species.find(ownerId, id);
-    return s && (s.reviewStatus === "curated" || s.reviewStatus === "reviewed") ? s : null;
+  /**
+   * The approved species of the owner by id, read in ONE statement (NFR-12, #1238). Only approved names are shared: a
+   * private proposal of the owner stays unknown to friends (P-05).
+   */
+  const approvedById = async (ownerId: string, ids: readonly string[]) => {
+    const found = await species.findMany(ownerId, ids);
+    return new Map(
+      found.flatMap((s) =>
+        s && (s.reviewStatus === "curated" || s.reviewStatus === "reviewed")
+          ? [[s.id, s] as const]
+          : [],
+      ),
+    );
   };
   const facts: SharedFacts = {
     async describe(ownerId, ids) {
-      const rows = await Promise.all(ids.map((id) => specimens.find(ownerId, id)));
+      // Two statements for any number of shared specimens (NFR-12, #1238): the rows, then their species.
+      const rows = await specimens.findMany(ownerId, ids);
+      const live = rows.filter(
+        (row): row is SpecimenRow => row !== null && row.status !== "archived",
+      );
+      const approved = await approvedById(
+        ownerId,
+        live.map((row) => row.speciesId),
+      );
       const out = [];
-      for (const row of rows) {
-        if (!row || row.status === "archived") continue;
-        const s = await approved(ownerId, row.speciesId);
+      for (const row of live) {
+        const s = approved.get(row.speciesId) ?? null;
         out.push({
           id: row.id,
           speciesLatin: s?.latinName ?? null,
@@ -52,15 +73,12 @@ export function sharingPorts(pool: Pool) {
       return out;
     },
   };
+  // The account's own collection (NFR-12, #1238): the species of its active specimens (collection port), their names
+  // in one statement (catalog port), not one read per specimen or species.
   const mine: OwnSpeciesNames = {
     async latinNamesOf(userId) {
       const active = (await specimens.list(userId)).filter((s) => s.status !== "archived");
-      const names = await Promise.all(
-        [...new Set(active.map((s) => s.speciesId))].map(
-          async (id) => (await species.find(userId, id))?.latinName ?? null,
-        ),
-      );
-      return names.filter((n): n is string => n !== null);
+      return species.latinNamesOf(userId, [...new Set(active.map((s) => s.speciesId))]);
     },
   };
   return { lookup, privacy, facts, mine };
