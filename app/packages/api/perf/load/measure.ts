@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import os from "node:os";
-import { Harness, type Counts } from "./harness.ts";
-import { seedAccount, seedTaxa } from "./seed.ts";
+import { Harness, type Counts } from "../harness.ts";
+import { seedAccount, seedTaxa } from "../seed.ts";
 
 // Usage: PFLANZENDEX_TEST_DATABASE_URL=postgres://... npm run perf:measure -w @pflanzendex/api
 // Environment: PERF_SIZES (default "100,1000"), PERF_RUNS (timed runs per endpoint, default 30), PERF_SPECIES (distinct
