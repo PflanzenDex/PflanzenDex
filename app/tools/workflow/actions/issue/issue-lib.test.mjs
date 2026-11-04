@@ -19,6 +19,7 @@ const taxonomy = {
   epics: [
     { code: "ACC", label: "epic:ACC" },
     { code: "DEV", label: "epic:DEV" },
+    { code: "E", label: "epic:E", option: "Entscheidungen" },
   ],
   priorities: ["P0", "P1"],
 };
@@ -133,4 +134,18 @@ test("FR-DEV-10: make issue accepts the input in any case and returns the labels
 test("FR-DEV-10: the issue number is read from the URL that gh prints", () => {
   assert.equal(issueNumberOf("https://github.com/PflanzenDex/PflanzenDex/issues/1230\n"), 1230);
   assert.throws(() => issueNumberOf("created"), /no issue number/);
+});
+
+test("FR-DEV-10: an epic whose board option does not start with its code uses its named option", () => {
+  const verdict = validateLabels(["entscheidung", "epic:E"], {
+    ...taxonomy,
+    types: [...taxonomy.types, { label: "entscheidung", typ: "Entscheidung" }],
+  });
+  assert.equal(verdict.ok, true);
+  assert.deepEqual(verdict.fields, { Typ: "Entscheidung", Epic: "Entscheidungen" });
+  const options = [
+    { id: "9", name: "ENT · Entdecken" },
+    { id: "8", name: "Entscheidungen" },
+  ];
+  assert.equal(findOption(options, verdict.fields.Epic).id, "8");
 });

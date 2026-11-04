@@ -29,11 +29,14 @@ export function epicEntryOf(taxonomy, code) {
   return taxonomy.epics.find((e) => e.code === wanted);
 }
 
-/** The board values that follow from a type label and an epic code: { Typ, Epic }, or null when one is unknown. */
+/**
+ * The board values that follow from a type label and an epic code: { Typ, Epic }, or null when one is unknown. Epic is
+ * the code, or the entry's `option` when the board option does not start with the code (E: "Entscheidungen").
+ */
 export function boardFieldsFor(taxonomy, type, epic) {
   const t = typeEntryOf(taxonomy, type);
   const e = epicEntryOf(taxonomy, epic);
-  return t && e ? { Typ: t.typ, Epic: e.code } : null;
+  return t && e ? { Typ: t.typ, Epic: e.option ?? e.code } : null;
 }
 
 /**
