@@ -53,21 +53,28 @@ function closing<E>(
     : undefined;
 }
 
-/** Light zone, location and the open treatment as text chips (P-08: unknown reads as such). */
+/**
+ * Light zone, location and the open treatment as text chips (P-08: unknown reads as such). A long chip wraps inside its
+ * pill, so the row keeps the "Mehr" button inside the window at 200 % text (NFR-13, issue 1228).
+ */
 function Chips({ card }: { card: SpecimenCard }) {
   return (
     <ul aria-label="Auf einen Blick" className="m-0 flex list-none flex-wrap gap-1.5 p-0">
       <li>
-        <Badge variant="outline">
+        <Badge variant="outline" className="whitespace-normal">
           {card.lightZone ? zoneLabel(card.lightZone) : "Zone unbekannt"}
         </Badge>
       </li>
       <li>
-        <Badge variant="outline">{card.location ?? "Standort unbekannt"}</Badge>
+        <Badge variant="outline" className="whitespace-normal">
+          {card.location ?? "Standort unbekannt"}
+        </Badge>
       </li>
       {card.treatment ? (
         <li>
-          <Badge variant="warning">Behandeln</Badge>
+          <Badge variant="warning" className="whitespace-normal">
+            Behandeln
+          </Badge>
         </li>
       ) : null}
     </ul>
