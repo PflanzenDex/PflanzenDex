@@ -32,7 +32,7 @@ export type { PhaseLocationSource } from "./phases/phase-location";
 export { careProfileLocations, careProfileTargetLocation } from "./switching/profile-location";
 export { phaseSwitchConfirm, MAX_SWITCH } from "./switching/switch";
 export type { SwitchDependencies, SwitchedSpecimen } from "./switching/switch";
-export { carePhasesList } from "./phases/phases";
+export { carePhasesList, carePhasesOf } from "./phases/phases";
 export type { PhasesDependencies, PhasesRow } from "./phases/phases";
 export { treatmentPlan } from "./treatments/treatment-plan";
 export type { PlanDependencies, PlanResult } from "./treatments/treatment-plan";

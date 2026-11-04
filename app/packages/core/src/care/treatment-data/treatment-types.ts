@@ -56,4 +56,15 @@ export interface TreatmentStore {
   complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown">;
   /** Done treatments of one specimen of the account, latest done date first (history, US-BEH-03). */
   done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]>;
+  /**
+   * What the health of several specimens needs in one read (NFR-12): the open treatments as `open` gives them and the
+   * latest done treatment of each as `done` lists it first. A specimen without one is missing from the map.
+   */
+  openAndLastDone(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<{
+    readonly open: ReadonlyMap<string, readonly TreatmentRow[]>;
+    readonly lastDone: ReadonlyMap<string, TreatmentRow>;
+  }>;
 }

@@ -13,12 +13,17 @@ import {
 // friends, feed, exchange, match and swaps take their rows from here).
 export const friendName = (run: string, tag: string): string => `Friend ${tag} ${run}`;
 
-/** A friend with `n` species and specimens; every second one is shared and offered (no treatment, no confirmation). */
+/** A friend with `n` species and specimens; every second one is shared and offered (no treatment, no confirmation). The
+ * species have a dormancy period, so the offers of the friend show a care phase (the exchange reads it as the owner). */
 export async function seedFriend(seat: Seat, n: number, gear: boolean): Promise<void> {
   const { api, sub, run, tag } = seat;
   await api.ok(sub, "PUT", "/account/profile", profile(friendName(run, tag)));
   for (let i = 0; i < n; i++) {
-    const species = await api.ok(sub, "POST", "/species", speciesBody(run, tag, i));
+    const species = await api.ok(sub, "POST", "/species", {
+      ...speciesBody(run, tag, i),
+      dormancyFrom: "11-01",
+      dormancyUntil: "02-28",
+    });
     const specimen = await api.ok(sub, "POST", "/specimens", {
       speciesId: text(species, "id"),
       timeZone: TZ,

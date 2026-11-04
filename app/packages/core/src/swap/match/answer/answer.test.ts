@@ -32,8 +32,7 @@ function setup(offers: FriendOffer[] = OFFERS, wished = ["Aloe vera", "Echeveria
       [id(2)]: { name: "y", speciesLatin: "Echeveria elegans", speciesGerman: null },
     }),
     treatments: {
-      open: async () => new Map(),
-      done: async () => [],
+      openAndLastDone: async () => ({ open: new Map(), lastDone: new Map() }),
     } as unknown as ExchangeDependencies["treatments"],
     phases: new StubPhases({}),
     mine: { latinNamesOf: async () => [] },

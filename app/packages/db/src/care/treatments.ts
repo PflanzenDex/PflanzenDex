@@ -89,6 +89,39 @@ export class TreatmentsPostgres {
     return r.rows;
   }
 
+  /**
+   * `open` and the latest done treatment (the first one `done` lists) of each ID in ONE statement (NFR-12): the open
+   * rows come back earliest first, the done row is the one with the latest done date. Foreign IDs return nothing (P-04).
+   */
+  async openAndLastDone(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<{
+    readonly open: ReadonlyMap<string, readonly TreatmentRow[]>;
+    readonly lastDone: ReadonlyMap<string, TreatmentRow>;
+  }> {
+    if (specimenIds.length === 0) return { open: new Map(), lastDone: new Map() };
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<TreatmentRow>(
+        `select ${COLUMNS} from treatment
+          where specimen_id = any($1)
+            and (not done or id in (
+              select distinct on (specimen_id) id from treatment
+               where specimen_id = any($1) and done
+               order by specimen_id, done_at desc, due_at desc, id))
+          order by due_at, id`,
+        [specimenIds],
+      ),
+    );
+    const open = new Map<string, TreatmentRow[]>();
+    const lastDone = new Map<string, TreatmentRow>();
+    for (const row of r.rows) {
+      if (row.done) lastDone.set(row.specimenId, row);
+      else open.set(row.specimenId, [...(open.get(row.specimenId) ?? []), row]);
+    }
+    return { open, lastDone };
+  }
+
   /** Open treatments, earliest first; one query for all IDs. Foreign IDs return nothing (row rules, P-04). */
   async open(
     userId: string,

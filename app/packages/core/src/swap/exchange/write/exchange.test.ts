@@ -13,12 +13,23 @@ const B2 = "00000000-0000-4000-8000-0000000000b2";
 const MINE = "00000000-0000-4000-8000-0000000000c1";
 
 const treatments = {
-  open: async (_u: string, ids: readonly string[]) =>
-    new Map(ids.filter((i) => i === B2).map((i) => [i, [{ reason: "Spinnmilben" }]] as const)),
-  done: async (_u: string, id: string) =>
-    id === B1
-      ? [{ reason: "Schmierläuse", doneAt: "2026-09-20", agent: "Neemöl", note: "geheim" }]
-      : [],
+  openAndLastDone: async (_u: string, ids: readonly string[]) => ({
+    open: new Map(
+      ids.filter((i) => i === B2).map((i) => [i, [{ reason: "Spinnmilben" }]] as const),
+    ),
+    lastDone: new Map(
+      ids.flatMap((id) =>
+        id === B1
+          ? [
+              [
+                id,
+                { reason: "Schmierläuse", doneAt: "2026-09-20", agent: "Neemöl", note: "geheim" },
+              ] as const,
+            ]
+          : [],
+      ),
+    ),
+  }),
 } as unknown as ExchangeDependencies["treatments"];
 
 function setup(
@@ -224,5 +235,37 @@ describe("US-SOZ-09 requesting an offer", () => {
     await call();
     expect(swaps.requests).toHaveLength(1);
     expect((await run(deps, { offerId: A1 }, null)).ok).toBe(false);
+  });
+});
+
+describe("US-SOZ-09 NFR-12 owners are asked once; a phase comes from the owner's data (P-05)", () => {
+  it("US-SOZ-09 NFR-12 each owner is asked once for all of its offers", async () => {
+    const { deps, facts } = setup();
+    await list(deps);
+    expect(facts.asked).toEqual(["ben"]);
+  });
+
+  it("US-SOZ-09 P-05 a friend's phase is asked of that friend, for the released specimens only", async () => {
+    const C1 = "00000000-0000-4000-8000-0000000000d1";
+    const asked: { owner: string; ids: string[] }[] = [];
+    const { deps } = setup([
+      friendOffer(),
+      friendOffer({ offerId: A2, ownerId: "carl", ownerName: "Carl", specimenId: C1 }),
+    ]);
+    const phases: ExchangeDependencies["phases"] = {
+      phasesOf: async (owner, ids) => {
+        asked.push({ owner, ids: [...ids] });
+        return new Map(owner === "ben" ? [[B1, "dormancy" as const]] : []);
+      },
+    };
+    const r = await list({ ...deps, phases });
+    expect(asked).toEqual([
+      { owner: "ben", ids: [B1] },
+      { owner: "carl", ids: [C1] },
+    ]);
+    expect(r.ok && r.value.offers.map((o) => [o.ownerName, o.phase])).toEqual([
+      ["Ben", "dormancy"],
+      ["Carl", null],
+    ]);
   });
 });

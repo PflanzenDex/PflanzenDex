@@ -221,3 +221,78 @@ describe("US-BEH-03 ticking off in the database", () => {
     expect(await treatments.done(anna, e)).toHaveLength(1);
   });
 });
+
+describe("NFR-12 open and the latest done treatment per specimen", () => {
+  it("NFR-12 openAndLastDone is what open and done give per specimen; foreign and unknown IDs are missing", async () => {
+    const a = await specimen(anna, "Zuletzt A");
+    const b = await specimen(anna, "Zuletzt B");
+    const none = await specimen(anna, "Zuletzt ohne");
+    const made = await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-01", reason: "alt" }),
+      values({ specimenId: a, dueAt: "2026-10-02", reason: "neu" }),
+      values({ specimenId: b, dueAt: "2026-10-03", reason: "einzig" }),
+      values({ specimenId: b, dueAt: "2026-10-04", reason: "offen" }),
+    ]);
+    if (made === "specimen_unknown") throw new Error("seed");
+    const [alt, neu, einzig] = made;
+    await treatments.complete(anna, alt?.id ?? "", "2026-10-04");
+    await treatments.complete(anna, neu?.id ?? "", "2026-10-09");
+    await treatments.complete(anna, einzig?.id ?? "", "2026-10-05");
+    await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-30", reason: "offen A" }),
+    ]);
+    const { open, lastDone } = await treatments.openAndLastDone(anna, [a, b, none]);
+    expect(lastDone.get(a)?.reason).toBe("neu");
+    expect(lastDone.get(b)?.reason).toBe("einzig");
+    expect(lastDone.has(none)).toBe(false);
+    for (const id of [a, b]) expect(lastDone.get(id)).toEqual((await treatments.done(anna, id))[0]);
+    expect(open.get(a)).toEqual(await treatments.open(anna, [a]).then((m) => m.get(a)));
+    expect(open.get(a)?.map((t) => t.reason)).toEqual(["offen A"]);
+    expect(open.get(b)?.map((t) => t.reason)).toEqual(["offen"]);
+    const foreign = await treatments.openAndLastDone(ben, [a, b]);
+    expect(foreign.open.size + foreign.lastDone.size).toBe(0);
+    expect(await treatments.openAndLastDone(anna, [])).toEqual({
+      open: new Map(),
+      lastDone: new Map(),
+    });
+  });
+
+  it("NFR-12 openAndLastDone needs one statement for any number of specimens", async () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const id = await specimen(anna, `Zaehl T ${i} ${randomUUID()}`);
+      const made = await treatments.createMany(anna, [values({ specimenId: id })]);
+      if (made === "specimen_unknown") throw new Error("seed");
+      await treatments.complete(anna, made[0]?.id ?? "", "2026-10-06");
+      ids.push(id);
+    }
+    let statements = 0;
+    const counted = new Proxy(pool, {
+      get(target, prop) {
+        if (prop === "connect")
+          return async () => {
+            const c = await target.connect();
+            return new Proxy(c, {
+              get(client, p) {
+                const v = Reflect.get(client, p, client) as unknown;
+                if (p !== "query") return typeof v === "function" ? v.bind(client) : v;
+                return (...a: unknown[]) => (
+                  statements++,
+                  (v as (...x: unknown[]) => unknown).apply(client, a)
+                );
+              },
+            });
+          };
+        const v = Reflect.get(target, prop, target) as unknown;
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    });
+    const few = await new TreatmentsPostgres(counted).openAndLastDone(anna, ids.slice(0, 2));
+    const afterFew = statements;
+    statements = 0;
+    const many = await new TreatmentsPostgres(counted).openAndLastDone(anna, ids);
+    expect(few.lastDone.size).toBe(2);
+    expect(many.lastDone.size).toBe(6);
+    expect(statements).toBe(afterFew);
+  });
+});
