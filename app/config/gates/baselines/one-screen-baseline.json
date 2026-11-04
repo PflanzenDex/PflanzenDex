@@ -1,5 +1,5 @@
 {
-  "maxEntries": 35,
+  "maxEntries": 34,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -223,13 +223,6 @@
       "page": 1,
       "inner": 1,
       "innerX": 2.88
-    },
-    {
-      "screen": "plant-menu-more",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.73,
-      "innerX": 1.07
     },
     {
       "screen": "review-case",
