@@ -23,8 +23,8 @@ The product is cut into 17 feature areas (epics): **1 complete, 16 in progress, 
 |   🟨   | **Reminders/sensors** · [MON](docs/specs/product/09-reminders-and-sensors.md)               | Notifications, watering, sensors                                                                              | 0 ✅ · 6 🟨 · 2 ⬜  | `▒▒▒▒▒▒▒▒░░` |
 |   🟨   | **Social** · [SOZ](docs/specs/product/10-social.md)                                         | Friends, feed, swapping                                                                                       | 3 ✅ · 10 🟨 · 0 ⬜ | `██▒▒▒▒▒▒▒▒` |
 |   🟨   | **Equipment** · [EQU](docs/specs/product/11-equipment-and-recommendations.md)               | Equipment, need, affiliate                                                                                    | 0 ✅ · 11 🟨 · 1 ⬜ | `▒▒▒▒▒▒▒▒▒░` |
-|   🟨   | **AI access** · [KI](docs/specs/product/12-ai-assistant.md)                                 | AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment                     | 0 ✅ · 9 🟨 · 1 ⬜  | `▒▒▒▒▒▒▒▒▒░` |
-|   🟨   | **Cross-cutting** · [QS](docs/specs/product/14-cross-cutting.md)                            | Privacy, security, mobile, quality                                                                            | 0 ✅ · 20 🟨 · 4 ⬜ | `▒▒▒▒▒▒▒▒░░` |
+|   🟨   | **AI access** · [KI](docs/specs/product/12-ai-assistant.md)                                 | AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment                     | 1 ✅ · 9 🟨 · 7 ⬜  | `█▒▒▒▒▒░░░░` |
+|   🟨   | **Cross-cutting** · [QS](docs/specs/product/14-cross-cutting.md)                            | Privacy, security, mobile, quality                                                                            | 0 ✅ · 21 🟨 · 3 ⬜ | `▒▒▒▒▒▒▒▒▒░` |
 |   🟨   | **Discover** · [ENT](docs/specs/product/17-discover.md)                                     | Swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist                  | 0 ✅ · 8 🟨 · 1 ⬜  | `▒▒▒▒▒▒▒▒▒░` |
 |   🟨   | **Achievements** · [ACH](docs/specs/product/20-achievements.md)                             | Achievements for care and growth, care rhythm, personal records, anniversaries, year in review, calm mode     | 7 ✅ · 1 🟨 · 0 ⬜  | `█████████▒` |
 |   🟨   | **Swipe matching** · [TAU](docs/specs/product/21-swipe-matching.md)                         | Swipe matching of friends' swap offers against the own wishlist, yes/no/later, fits both ways                 | 1 ✅ · 6 🟨 · 0 ⬜  | `█▒▒▒▒▒▒▒▒▒` |
@@ -32,20 +32,20 @@ The product is cut into 17 feature areas (epics): **1 complete, 16 in progress, 
 
 ```mermaid
 pie showData title Product user stories by status
-  "Done" : 35
-  "In progress" : 111
-  "Planned" : 11
+  "Done" : 36
+  "In progress" : 112
+  "Planned" : 16
 ```
 
 ## Engineering
 
-|                     |                                                                       |
-| ------------------- | --------------------------------------------------------------------- |
-| **Repository**      | 2.49k files · 258k lines · 67 MiB                                     |
-| **Production code** | 95.6k lines · packages: web 39.1k · core 22.9k · db 12.0k · api 9.16k |
-| **Tests**           | 586 files · 5.06k test cases · 88.8k lines (93% of production code)   |
-| **Database**        | 94 migrations · 94 error codes                                        |
-| **Process docs**    | 18 ADRs · 9 agent skills · 6 runbooks                                 |
+|                     |                                                                      |
+| ------------------- | -------------------------------------------------------------------- |
+| **Repository**      | 2.76k files · 298k lines · 79 MiB                                    |
+| **Production code** | 111k lines · packages: web 44.8k · core 24.1k · db 12.7k · api 12.5k |
+| **Tests**           | 659 files · 5.87k test cases · 107k lines (97% of production code)   |
+| **Database**        | 101 migrations · 98 error codes                                      |
+| **Process docs**    | 18 ADRs · 9 agent skills · 7 runbooks                                |
 
 ### Quality gates and development process
 
@@ -56,26 +56,26 @@ pie showData title Product user stories by status
 
 ```mermaid
 pie showData title Lines by language
-  "TypeScript" : 160000
-  "Text" : 29500
-  "JSON" : 26800
-  "JavaScript" : 15400
-  "Markdown" : 15400
-  "SQL" : 4720
+  "TypeScript" : 185000
+  "JSON" : 30400
+  "Text" : 29600
+  "JavaScript" : 21300
+  "Markdown" : 17800
+  "SQL" : 5360
   "HTML" : 2800
-  "Other" : 3357
+  "Other" : 5292
 ```
 
 ## Activity
 
-881 commits by 4 people since 2026-10-02 · latest release `v0.0.0`
+1024 commits by 4 people since 2026-10-02 · latest release `v0.2.0`
 
 ```mermaid
 xychart-beta
   title "Commits on the last 14 active days"
-  x-axis ["10-10", "10-11", "10-12", "10-13", "10-14", "10-15", "10-16", "10-17", "10-18", "10-19", "10-20", "10-22", "10-29", "10-30"]
+  x-axis ["10-15", "10-16", "10-17", "10-18", "10-19", "10-20", "10-22", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04"]
   y-axis "Commits"
-  bar [26, 28, 3, 2, 3, 5, 13, 25, 27, 22, 7, 6, 15, 27]
+  bar [5, 13, 26, 27, 22, 7, 6, 15, 63, 17, 14, 26, 19, 30]
 ```
 
 <sub>Generated by `tools/repo/repo-stats.sh` when a pull request is made ready (`make pr`, US-DEV-10). Code numbers come from the committed files, rounded to 3 significant digits; activity comes from `dev` up to this branch's base.</sub>
