@@ -5,8 +5,8 @@ import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
 import { setSpecimenLocation } from "../../../../../collection";
-import { createWrite } from "../../../../../shared/data";
-import { loadLocations, loadZones } from "../../../../../light";
+import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
+import { refreshLight, sharedLocations, sharedZones } from "../../../../../light";
 import { zoneLabel } from "@pflanzendex/core";
 
 type Token = () => Promise<string | undefined>;
@@ -14,11 +14,14 @@ type Token = () => Promise<string | undefined>;
 /**
  * Makes sure the account has a place for the first plant: the server lays out the default location "Zuhause" only for
  * an account without locations and refuses otherwise (US-ONB-02); the refusal is the normal case, so it is ignored.
+ * A location that was laid out refreshes the shared light data (issue 1244).
  */
-export async function ensureHome(api: string, token: string): Promise<void> {
-  const own = await loadLocations(api, token);
-  if (own.ok && own.value.length === 0)
-    await createWrite(api, token)("POST", "/locations/defaults", {});
+export async function ensureHome(client: QueryClient, api: string, token: string): Promise<void> {
+  const own = await sharedLocations(client, api, token);
+  if (own.ok && own.value.length === 0) {
+    const made = await createWrite(api, token)("POST", "/locations/defaults", {});
+    if (made.ok) await refreshLight(client);
+  }
 }
 
 interface Places {
@@ -28,19 +31,23 @@ interface Places {
 
 function usePlaces(api: string, token: Token): Places | null {
   const [places, setPlaces] = useState<Places | null>(null);
+  const client = useQueryClient();
   useEffect(() => {
     let current = true;
     void (async () => {
       const t = await token();
       if (!t) return;
-      await ensureHome(api, t);
-      const [l, z] = await Promise.all([loadLocations(api, t), loadZones(api, t)]);
+      await ensureHome(client, api, t);
+      const [l, z] = await Promise.all([
+        sharedLocations(client, api, t),
+        sharedZones(client, api, t),
+      ]);
       if (current && l.ok && z.ok) setPlaces({ locations: l.value, zones: z.value });
     })();
     return () => {
       current = false;
     };
-  }, [api, token]);
+  }, [api, token, client]);
   return places;
 }
 
@@ -77,6 +84,7 @@ function ZoneChoice(props: {
 
 /** Sets the location of the plant; a location without a light zone gets the zone the keeper names (their own choice, never invented). */
 async function placeSpecimen(
+  client: QueryClient,
   p: { api: string; token: Token; specimenId: string },
   chosen: LightLocation,
   zoneId: string,
@@ -85,11 +93,14 @@ async function placeSpecimen(
   if (!t) return { ok: false as const, error: { code: "access.not_signed_in" } };
   const set = await setSpecimenLocation(p.api, t, { id: p.specimenId, locationId: chosen.id });
   if (!set.ok || chosen.lightZoneId !== null || !zoneId) return set;
-  return createWrite(p.api, t)("PUT", `/locations/${chosen.id}`, {
+  const named = await createWrite(p.api, t)("PUT", `/locations/${chosen.id}`, {
     name: chosen.name,
     kind: chosen.kind,
     lightZoneId: zoneId,
   });
+  // The location now stands under a light zone: the shared copies of the light data are asked again (issue 1244).
+  if (named.ok) await refreshLight(client);
+  return named;
 }
 
 /**
@@ -105,6 +116,7 @@ export function WhereQuestion(props: {
   onDone: (note?: string) => void;
 }) {
   const places = usePlaces(props.api, props.token);
+  const client = useQueryClient();
   const [locationId, setLocationId] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +126,7 @@ export function WhereQuestion(props: {
   const save = async () => {
     if (!chosen) return;
     setSaving(true);
-    const r = await placeSpecimen(props, chosen, zoneId);
+    const r = await placeSpecimen(client, props, chosen, zoneId);
     setSaving(false);
     if (!r.ok) return setError(errorText(r.error.code));
     const zone = places.zones.find((z) => z.id === (chosen.lightZoneId ?? zoneId));

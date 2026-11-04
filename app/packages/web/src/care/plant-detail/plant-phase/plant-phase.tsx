@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate } from "../../../shared/data";
-import { loadLocations } from "../../../light";
+import { LoadFrame, useInvalidate, useQueryClient } from "../../../shared/data";
+import { sharedLocations } from "../../../light";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
 import { Entry } from "../../phases/phases-list/entry/entry";
 import { switchedText } from "../../phases/phase-groups";
@@ -25,15 +25,16 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
   const { api, token, specimenId } = props;
   const again = useInvalidate(["care", "phases"]);
   const move = usePhaseSwitch(api, token, again);
+  const client = useQueryClient();
   const load = useCallback(
     async (t: string) => {
-      const [p, l] = await Promise.all([loadCarePhases(api, t), loadLocations(api, t)]);
+      const [p, l] = await Promise.all([loadCarePhases(api, t), sharedLocations(client, api, t)]);
       if (!p.ok) return p;
       if (!l.ok) return l;
       const row = p.value.find((r) => r.specimenId === specimenId) ?? null;
       return { ok: true as const, value: { row, locations: l.value } };
     },
-    [api, specimenId],
+    [api, specimenId, client],
   );
   return (
     <>

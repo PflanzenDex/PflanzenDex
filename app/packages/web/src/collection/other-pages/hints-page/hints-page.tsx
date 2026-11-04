@@ -2,7 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../../shared/data";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
   GRID,
@@ -14,7 +14,7 @@ import {
   Warning,
 } from "../../specimens/cards/parts/parts";
 import { refusalText } from "../../specimens/model/refusal";
-import { loadLocations } from "../../../light";
+import { sharedLocations } from "../../../light";
 import { loadSpecimenHints } from "../../insights/api/hints-api";
 import { setSpecimenLocation } from "../../specimens/model/specimens-api";
 import { HintCount, type useHintCount } from "../../insights/api/hint-count/hint-count";
@@ -69,17 +69,18 @@ function HintsList(props: HintsListProps) {
   const frameClass = host ? FILL : undefined;
   const again = useInvalidate(KEY);
   const place = useWriteAction(token, again);
+  const client = useQueryClient();
   const load = useCallback(
     async (t: string) => {
       const [hints, locations] = await Promise.all([
         loadSpecimenHints(api, t),
-        loadLocations(api, t),
+        sharedLocations(client, api, t),
       ]);
       if (!hints.ok) return hints;
       if (!locations.ok) return locations;
       return { ok: true as const, value: { hints: hints.value, locations: locations.value } };
     },
-    [api],
+    [api, client],
   );
   return (
     <Frame {...(frameClass ? { className: frameClass } : {})}>

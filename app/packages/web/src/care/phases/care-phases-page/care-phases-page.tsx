@@ -1,7 +1,13 @@
 import { useCallback, useEffect } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
-import { loadLocations } from "../../../light";
-import { LoadFrame, useInvalidate, type Response } from "../../../shared/data";
+import { sharedLocations } from "../../../light";
+import {
+  LoadFrame,
+  useInvalidate,
+  useQueryClient,
+  type QueryClient,
+  type Response,
+} from "../../../shared/data";
 import { PhasesList } from "../phases-list/phases-list";
 import { PhasesPaged } from "../phases-paged/phases-paged";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
@@ -14,8 +20,15 @@ type Token = () => Promise<string | undefined>;
 type Loaded = { rows: readonly PhasesRow[]; locations: readonly LightLocation[] };
 
 /** Phases and locations; if one fails, the loading fails as a whole. */
-async function loadBoth(api: string, token: string): Promise<Response<Loaded>> {
-  const [p, s] = await Promise.all([loadCarePhases(api, token), loadLocations(api, token)]);
+async function loadBoth(
+  client: QueryClient,
+  api: string,
+  token: string,
+): Promise<Response<Loaded>> {
+  const [p, s] = await Promise.all([
+    loadCarePhases(api, token),
+    sharedLocations(client, api, token),
+  ]);
   if (!p.ok) return p;
   if (!s.ok) return s;
   return { ok: true, value: { rows: p.value, locations: s.value } };
@@ -45,7 +58,8 @@ export function CarePhasesPage(props: { api: string; token: Token; host?: Phases
   const { api, token } = props;
   const again = useInvalidate(KEY);
   const move = usePhaseSwitch(api, token, again);
-  const load = useCallback((t: string) => loadBoth(api, t), [api]);
+  const client = useQueryClient();
+  const load = useCallback((t: string) => loadBoth(client, api, t), [api, client]);
   const loading = "Pflegephasen werden geladen …";
   return (
     <div className="flex min-w-0 flex-col gap-4">

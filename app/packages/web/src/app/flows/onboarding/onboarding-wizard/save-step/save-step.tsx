@@ -2,27 +2,32 @@ import { useEffect, useState, type ReactNode } from "react";
 import { zoneDerive, type LightZone, type Species, zoneLabel } from "@pflanzendex/core";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Label } from "@/shared/ui/display/label/label";
-import { createWrite } from "../../../../../shared/data";
-import { loadZones } from "../../../../../light";
+import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
+import { refreshLight, sharedZones } from "../../../../../light";
 import { ensureHome } from "../where-question/where-question";
 
 type Token = () => Promise<string | undefined>;
 
 /** The own zones; a new account has none yet, so the standard lamps are laid out silently first (US-ONB-02 gives them from the start). */
-async function ownZones(api: string, token: Token): Promise<readonly LightZone[]> {
+async function ownZones(
+  client: QueryClient,
+  api: string,
+  token: Token,
+): Promise<readonly LightZone[]> {
   const t = await token();
   if (!t) return [];
-  const first = await loadZones(api, t);
+  const first = await sharedZones(client, api, t);
   if (!first.ok) return [];
   if (first.value.length > 0) {
-    await ensureHome(api, t);
+    await ensureHome(client, api, t);
     return first.value;
   }
   const made = await createWrite(api, t)("POST", "/light-zones/defaults", {});
   if (!made.ok) return [];
-  // The default location "Zuhause" comes with the default lamps (US-ONB-02).
-  await ensureHome(api, t);
-  const again = await loadZones(api, t);
+  // The new zones refresh the shared light data (issue 1244); the default location "Zuhause" comes with them (US-ONB-02).
+  await refreshLight(client);
+  await ensureHome(client, api, t);
+  const again = await sharedZones(client, api, t);
   return again.ok ? again.value : [];
 }
 
@@ -42,14 +47,15 @@ export const derivedZone = (species: Species, zones: readonly LightZone[]): Ligh
 /** Light zones of the account for the save step; `zones` is `null` while they load. */
 export function useOwnZones(api: string, token: Token, enabled: boolean) {
   const [zones, setZones] = useState<readonly LightZone[] | null>(null);
+  const client = useQueryClient();
   useEffect(() => {
     if (!enabled || zones !== null) return;
     let current = true;
-    void ownZones(api, token).then((z) => current && setZones(z));
+    void ownZones(client, api, token).then((z) => current && setZones(z));
     return () => {
       current = false;
     };
-  }, [api, token, enabled, zones]);
+  }, [api, token, enabled, zones, client]);
   return zones;
 }
 
