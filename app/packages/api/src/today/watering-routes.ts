@@ -2,7 +2,7 @@ import { isTimeZone, monitoringWater, appError, type WateredDependencies } from 
 import { IdempotencyPostgres, SpecimenPostgres, WateringPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
+import { body, errorBody, readOnly, statusFor, write, type AuthEnv } from "../kernel";
 import { wateringDueFor } from "./watering";
 
 /**
@@ -19,16 +19,19 @@ export function wateringRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
   const water = monitoringWater(deps);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
-  routes.get("/watering/due", async (c) => {
-    const zone = c.req.query("timeZone");
-    if (!isTimeZone(zone)) {
-      const e = appError("input.invalid", {
-        details: [{ field: "timeZone", code: "input.invalid" }],
-      });
-      return c.json(errorBody(e), statusFor(e));
-    }
-    return c.json({ due: await wateringDueFor(pool, c.get("account").id, zone, clock()) });
-  });
+  routes.get(
+    "/watering/due",
+    readOnly(async (c) => {
+      const zone = c.req.query("timeZone");
+      if (!isTimeZone(zone)) {
+        const e = appError("input.invalid", {
+          details: [{ field: "timeZone", code: "input.invalid" }],
+        });
+        return c.json(errorBody(e), statusFor(e));
+      }
+      return c.json({ due: await wateringDueFor(pool, c.get("account").id, zone, clock()) });
+    }),
+  );
   routes.post("/watering", async (c) => write(c, writes, water, { input: await body(c) }));
   return routes;
 }

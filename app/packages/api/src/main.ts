@@ -4,6 +4,7 @@ import {
   checkDbRoles,
   JobsPostgres,
   openPool,
+  poolConfigFromEnv,
   roleCheckMode,
   testDatabaseUrl,
 } from "@pflanzendex/db";
@@ -27,7 +28,12 @@ const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pfla
 // Where the keys come from, if not the issuer's public address (inside the deploy network, TE-03).
 const jwksUrl = process.env["OIDC_JWKS_URL"];
 const jwks = jwksUrl ? { jwksUrl } : {};
-const pool = openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl());
+// Pool size and time limits (NFR-12, #1242): PFLANZENDEX_DB_* variables, starting values in `poolConfigFromEnv`.
+const pool = openPool(
+  process.env["DATABASE_URL"] ?? testDatabaseUrl(),
+  false,
+  poolConfigFromEnv(process.env),
+);
 // Database roles (#907, P-04): a superuser or BYPASSRLS owner makes `security definer` functions ignore row security.
 // `DB_ROLE_CHECK=enforce` (the compose deployment) stops the start; the default only warns (local dev uses the image's superuser).
 await checkDbRoles(pool, roleCheckMode(process.env), (message) => console.warn(message));

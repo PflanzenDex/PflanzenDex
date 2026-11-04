@@ -23,6 +23,19 @@ services:
     restart: unless-stopped
     # The image's own user (uid 70): the entrypoint skips its root-only steps; the data directory already belongs to it.
     user: postgres
+    # Memory settings for a small host (NFR-12, #1242; starting values, assumptions). shared_buffers is the PostgreSQL
+    # default, work_mem too (no temporary file in the concurrency measurement); effective_cache_size is only a planner
+    # hint (the default 4 GB would assume a cache this container does not have). Runbook: staging-deploy-and-backup.md.
+    command:
+      [
+        "postgres",
+        "-c",
+        "shared_buffers=128MB",
+        "-c",
+        "work_mem=4MB",
+        "-c",
+        "effective_cache_size=256MB",
+      ]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing}
@@ -39,7 +52,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
+          memory: 384m
   # One-shot: creates the sign-in service's own role and database in the same server, idempotently (also on an existing
   # volume). The role has no right on the app database, so tenant isolation stays untouched (P-04, TE-03).
   keycloak-db:
@@ -247,6 +260,12 @@ services:
       CATALOG_FILL: ${CATALOG_FILL:-}
       ATTRIBUTE_FILL: ${ATTRIBUTE_FILL:-}
       TAXONOMY_BUILD: ${TAXONOMY_BUILD:-}
+      # Pool and time limits of the database (NFR-12, #1242): empty means the starting values of `poolConfigFromEnv`.
+      PFLANZENDEX_DB_POOL_MAX: ${PFLANZENDEX_DB_POOL_MAX:-}
+      PFLANZENDEX_DB_CONNECT_TIMEOUT_MS: ${PFLANZENDEX_DB_CONNECT_TIMEOUT_MS:-}
+      PFLANZENDEX_DB_STATEMENT_TIMEOUT_MS: ${PFLANZENDEX_DB_STATEMENT_TIMEOUT_MS:-}
+      PFLANZENDEX_DB_LOCK_TIMEOUT_MS: ${PFLANZENDEX_DB_LOCK_TIMEOUT_MS:-}
+      PFLANZENDEX_DB_IDLE_TRANSACTION_TIMEOUT_MS: ${PFLANZENDEX_DB_IDLE_TRANSACTION_TIMEOUT_MS:-}
     depends_on:
       db:
         condition: service_healthy

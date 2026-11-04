@@ -1,31 +1,78 @@
 import type { Pool, PoolClient } from "pg";
+import { LONG_LIMITS, poolLimits, type DbLimits } from "./connection/limits.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Runs `body` in a transaction as the application role for exactly one account (P-03, P-04).
- * The session variable holds only until the end of the transaction (`set_config(..., true)`), so it cannot
- * survive into a foreign request when the connection is reused.
+ * Switches the open transaction to the application role (row rules apply, P-04) and sets its session variables and its
+ * time limits (NFR-12). The variables and limits are one `set_config(..., true)` statement after the role switch, so a
+ * transaction keeps the statements the query-count gate counts (`begin`, role, variables, ..., `commit`). They end with
+ * the transaction.
+ */
+export async function enterApplicationRole(
+  client: PoolClient,
+  limits: DbLimits,
+  variables: readonly (readonly [name: string, value: string])[],
+): Promise<void> {
+  await client.query("set local role pflanzendex_app");
+  const settings: (readonly [string, string])[] = [
+    ...variables,
+    ["statement_timeout", String(limits.statementMs)],
+    ["lock_timeout", String(limits.lockMs)],
+    ["idle_in_transaction_session_timeout", String(limits.idleInTransactionMs)],
+  ];
+  const calls = settings.map((_, i) => `set_config($${2 * i + 1}, $${2 * i + 2}, true)`);
+  await client.query(`select ${calls.join(", ")}`, settings.flat());
+}
+
+/**
+ * Runs `body` in a transaction as the application role for exactly one account (P-03, P-04), with the limits of the
+ * pool (`REQUEST_LIMITS` unless the pool was opened otherwise). The session variable holds only until the end of the
+ * transaction (`set_config(..., true)`), so it cannot survive into a foreign request when the connection is reused.
  */
 export async function withAccount<T>(
   pool: Pool,
   accountId: string,
   body: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
+  return inAccount(pool, accountId, poolLimits(pool), body);
+}
+
+/**
+ * As `withAccount`, with the limits of long operations (`LONG_LIMITS`): the account export and the account deletion
+ * (NFR-12). They keep a bounded budget instead of none.
+ */
+export async function withLongAccount<T>(
+  pool: Pool,
+  accountId: string,
+  body: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  return inAccount(pool, accountId, LONG_LIMITS, body);
+}
+
+async function inAccount<T>(
+  pool: Pool,
+  accountId: string,
+  limits: DbLimits,
+  body: (client: PoolClient) => Promise<T>,
+): Promise<T> {
   if (!UUID.test(accountId)) throw new Error("Account id is not a UUID");
   const client = await pool.connect();
+  let broken: Error | undefined;
   try {
     await client.query("begin");
-    await client.query("set local role pflanzendex_app");
-    await client.query("select set_config('app.account_id', $1, true)", [accountId]);
+    await enterApplicationRole(client, limits, [["app.account_id", accountId]]);
     const result = await body(client);
     await client.query("commit");
     return result;
   } catch (error) {
-    await client.query("rollback");
+    // A failed rollback (the connection is gone) must not hide the error that caused it; that connection is dropped.
+    await client.query("rollback").catch((e: unknown) => {
+      broken = e instanceof Error ? e : new Error(String(e));
+    });
     throw error;
   } finally {
-    client.release();
+    client.release(broken);
   }
 }
 
