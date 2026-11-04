@@ -30,6 +30,9 @@ import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../../flow
 const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
 const AppRoutes = lazyPage(loadRoutes);
 
+/** The code of "Heute", the landing page; `App` asks for it early, the route still loads it on its own (DS-08). */
+const loadToday = () => import("@/app/destinations/today-area/today-area");
+
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
 /** The active view comes from the address; going to a view is a navigation, so back and deep links work (US-QS-07). */
@@ -127,6 +130,11 @@ export function App() {
   const { pathname } = useLocation();
   // Fetch the route table while the session loads; a failure shows at the routes, with "Erneut versuchen" (P-10).
   useEffect(() => void loadRoutes().catch(() => undefined), []);
+  // Heute is the landing page: once the account is known its code is fetched in parallel with the routes (NFR-12).
+  const signedIn = z.kind === "signedIn";
+  useEffect(() => {
+    if (signedIn) void loadToday().catch(() => undefined);
+  }, [signedIn]);
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
   // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
