@@ -26,6 +26,17 @@ export type PageHeaderProps = {
   className?: string;
 };
 
+/**
+ * The minimum width of the title (NFR-13). With an action the title is at least its longest word and no word breaks
+ * inside (issue 1230): the row wraps and the action goes under the title (issue 1177). The longest word grows with the
+ * text, so the action wraps instead of squeezing the title. Without an action a title beside a way back keeps 230 px, so
+ * the back control sits above a narrow title (issue 1226); any other title keeps 5 rem.
+ */
+function titleMinimum(hasBack: boolean, hasAction: boolean): string {
+  if (hasAction) return "min-w-min [overflow-wrap:normal]";
+  return hasBack ? "min-w-[230px] [overflow-wrap:anywhere]" : "min-w-20 [overflow-wrap:anywhere]";
+}
+
 function BackControl(props: { back: PageBack }) {
   const { back } = props;
   const classes = cn("shrink-0", back.className);
@@ -73,11 +84,8 @@ export function PageHeader(props: PageHeaderProps) {
       <Heading
         {...(props.headingId ? { id: props.headingId } : {})}
         className={cn(
-          // A title beside a way back keeps 230 px (NFR-13): when the row cannot give it, the row wraps and the back control
-          // sits above the title. The threshold is in px, so it does not grow with the text. With an action (#1177) and
-          // without a way back the minimum stays 5 rem.
-          back && !action ? "min-w-[230px]" : "min-w-20",
-          "flex-1 font-semibold [overflow-wrap:anywhere]",
+          titleMinimum(Boolean(back), Boolean(action)),
+          "flex-1 font-semibold",
           Heading === "h1" ? "text-2xl" : "text-xl",
         )}
       >
