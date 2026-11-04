@@ -220,3 +220,56 @@ The owner database had no temporary file (`pg_stat_database.temp_files` = 0) aft
 - The other endpoints were not changed. Their timings moved by up to 2x between runs on this shared machine, so they are not compared here.
 
 **Limits (P-08):** one machine, one run per state (plus the paired "before" run), no concurrent users, no network. The first attempt wrote its rows into the schema database of the test suite and made the catalog tests time out; the perf harness is meant for a throw-away database (section 6). The rows were removed and the suite passes on the reset database.
+
+---
+
+## 11. Issue #1235: species visibility as a stored column (2026-11-04)
+
+**Branch:** `fix/issue-1235-performance-species-visibility` (PR #1269, draft).
+**Environment:** Intel N100 (4 cores), Linux, Node v26.13.0, PostgreSQL 18.6 in Docker (`postgres:18.6-alpine3.24`, `--memory` 512 MB, loopback); the measured role is the non-superuser owner, queries run as `pflanzendex_app` with `set local role` and `app.account_id` set per transaction, as `withAccount` does. Another agent ran builds in parallel on the same 3 GB box during the perf runs, so timings carry load noise (see the caveats).
+
+**Cause:** the SELECT policy `visible` on `species` called the `SECURITY DEFINER` function `species_status()` for every scanned row. One `count(*)` over the catalog made one `review_case` index scan per species row (1,260 scans for 1,260 species). Migration 0102 stores the review status and the creator of the review case on the species row; triggers keep them current (`species_review_copy`, `review_case_species_sync`, both `enable always`). The row rules are unchanged; the policies become column predicates. The review case stays the source of truth.
+
+### 11.1 EXPLAIN ANALYZE, same dataset before and after
+
+Method: a scratch database owned by the owner role, migrated to 0101, loaded with 1,260 species (600 curated, 600 foreign private proposals, 60 own proposals of the measured account, so 660 are visible to it), one Latin name per species; then migrated to 0102, which backfills all rows (verified: 0 mismatches against `review_case`). Each statement run 15 times as `pflanzendex_app` inside a rolled-back transaction, first 3 runs dropped, median reported (min to max in brackets). The EXPLAIN text is in `scratchpad` (not committed).
+
+| Query (as the app role)                | Before (0101) median ms | After (0102) median ms |
+| -------------------------------------- | ----------------------- | ---------------------- |
+| `select id from species` (policy only) | 61.8 (59.7 to 64.1)     | 1.55 (1.45 to 1.64)    |
+| species search, empty term (first 50)  | 102.2 (100.7 to 105.1)  | 3.8 (3.7 to 5.4)       |
+| species search, term in 600 names      | 136.6 (132.8 to 156.5)  | 9.6 (8.6 to 12.3)      |
+| species search, term in no name        | 128.6 (125.2 to 133.1)  | 3.6 (3.4 to 4.0)       |
+
+Earlier runs on the same kind of dataset, before the owner DB was reset (not re-run, same method): policy 60.4 ms; option (a) 1.76 to 1.87 ms (the one chosen); option (b), a security-barrier view with an inlinable `exists`, 7.6 ms (the planner built a hashed subplan); no-policy floor 0.23 ms (returns all 1,260 rows, so only a floor).
+
+Search results: the old and the new SQL return the same species ids for the empty term, the 600-name term and the no-match term (compared on the same data).
+
+The 600-name search first took 78 ms: the planner estimates one matching name for `like`, and joined `species` by a seq scan per match. The page now uses `a.id in (select ... like ...)` (a semi-join), which brought it to 9.6 ms with identical results.
+
+### 11.2 Trigram index: not used by the application role
+
+The first version also created `pg_trgm` and a GIN trigram index on `species_name(norm)`. The application role cannot use it: `textlike` (`like`) is not leakproof, so with row security on `species_name` PostgreSQL applies the policy quals before the `like` filter and never uses the index. Control: the same query on a copy of `species_name` without row security uses the index (`Bitmap Index Scan on ...trgm`). Superuser queries use it too, but the application never runs as superuser. The index and the extension were removed again; they would only have cost writes.
+
+**Decided (owner, 2026-11-04):** no trigram index in this change; the search keeps scanning `species_name` under row security. A table of approved names without row rules (approved names are visible to everybody, so it changes no visibility) is a possible follow-up, not part of this change.
+
+### 11.3 Perf: `npm run perf:measure -w @pflanzendex/api`, 1,000 specimens, 60 species, 30 timed runs (median ms)
+
+Dataset as in section 1 (60 species, 1,000 specimens, 500 taxa). Before: fresh DB at 0098, run 12:42 UTC. After: fresh DB at 0102, run 13:11 UTC (this run still had the trigram index, which was removed afterwards; reads do not use it, so the timings are not affected by it in principle). Only the rows that matter are shown; full data in the run's JSON.
+
+| Request                                       | Before median | After median | SQL statements before → after |
+| --------------------------------------------- | ------------- | ------------ | ----------------------------- |
+| `GET /species?q=` (Artenliste)                | 12.1          | 4.8          | 11 → 11                       |
+| `GET /today?timeZone=…`                       | 66.1          | 58.1         | 106 → 106                     |
+| `GET /specimens/cards?timeZone=…`             | 47.5          | 29.6         | 51 → 51                       |
+| `GET /discover/suggestions?timeZone=…&deck=1` | 64.0          | 36.2         | 65 → 65                       |
+| `GET /pokedex/cards?timeZone=…`               | 30.9          | 17.9         | 25 → 25                       |
+
+All 13 requests have the same statement count and the same body size before and after. Caveat: the before and after runs were not under the same machine load (the other agent's builds), and the other endpoints do not depend on the species visibility in this dataset; the differences of the other endpoints cannot be attributed to the change. The `/species?q=` list is the request that uses the visibility rule directly.
+
+### 11.4 Limits
+
+- One machine, one run per state, 30 timed calls; the timings are not comparable with the Ryzen figures of sections 1 to 3.
+- The perf dataset has 60 species per account, so the catalog-size effect is not visible in section 11.3; section 11.1 has 1,260 species. 10,000 species and the scaling claim are not measured.
+- The species search still scans `species_name` (no index under row security); its cost grows with the number of names in the catalog.
+- Not measured: concurrent users, cold caches, write requests.
