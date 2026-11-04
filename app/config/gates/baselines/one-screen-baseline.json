@@ -1,5 +1,5 @@
 {
-  "maxEntries": 40,
+  "maxEntries": 39,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -265,13 +265,6 @@
       "page": 1,
       "inner": 2.73,
       "innerX": 1.07
-    },
-    {
-      "screen": "review-case",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 3.79,
-      "innerX": 1.49
     }
   ]
 }

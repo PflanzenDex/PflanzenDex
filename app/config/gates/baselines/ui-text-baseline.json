@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1343,
+  "maxTotal": 1330,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -248,10 +248,6 @@
     {
       "file": "packages/web/src/catalog/review/review-entry/review-entry.tsx",
       "count": 1
-    },
-    {
-      "file": "packages/web/src/catalog/review/review-layer/layer-facts/layer-facts.tsx",
-      "count": 13
     },
     {
       "file": "packages/web/src/catalog/review/review-layer/review-layer.tsx",
