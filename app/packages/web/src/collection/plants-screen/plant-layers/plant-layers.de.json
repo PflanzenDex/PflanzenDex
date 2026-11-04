@@ -1,0 +1,17 @@
+{
+  "tabs.label": "Bereiche der Pflanze",
+  "tabs.overview": "Überblick",
+  "tabs.history": "Verlauf",
+  "tabs.care": "Pflege",
+  "tabs.location": "Standort",
+  "menu.label": "Mehr",
+  "menu.repot": "Eingetopft",
+  "menu.mark": "Kennzeichen",
+  "menu.catchDate": "Fangdatum",
+  "menu.archive": "Archivieren",
+  "chips.label": "Auf einen Blick",
+  "chips.zoneUnknown": "Zone unbekannt",
+  "chips.locationUnknown": "Standort unbekannt",
+  "chips.treatment": "Behandeln",
+  "slot.loading": "Lädt …"
+}

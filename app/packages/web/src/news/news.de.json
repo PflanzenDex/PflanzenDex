@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Bei großer Schrift bleibt der Knopf „Mehr“ in der Pflanzenansicht im Bild.",
     "Bei großer Schrift passen die Angaben eines Prüffalls in die Breite.",
     "Bei großer Schrift steht der Zurück-Knopf über dem Seitentitel, damit der Titel lesbar bleibt.",
     "Bei großer Schrift verdeckt die Aktionsleiste im Artenprofil keinen Inhalt mehr, und ihre Beschriftungen passen in die Knöpfe.",
