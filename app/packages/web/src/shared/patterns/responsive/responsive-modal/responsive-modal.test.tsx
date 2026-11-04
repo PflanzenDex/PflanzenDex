@@ -45,7 +45,7 @@ describe("ResponsiveModal (US-QS-07, DS-23)", () => {
     setViewportWidth(768);
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
-    const dialog = screen.getByRole("dialog", { name: "Pflanze bearbeiten" });
+    const dialog = await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
     expect(dialog.className).toContain("-translate-x-1/2");
   });
 
@@ -56,8 +56,9 @@ describe("ResponsiveModal (US-QS-07, DS-23)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zähler 0" }));
     expect(screen.getAllByRole("button", { name: "Zähler 1" })).toHaveLength(1);
     act(() => setViewportWidth(1024));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.className).toContain("-translate-x-1/2");
     expect(screen.getAllByRole("button", { name: "Zähler 1" })).toHaveLength(1);
-    expect(screen.getByRole("dialog").className).toContain("-translate-x-1/2");
     act(() => setViewportWidth(360));
     expect(screen.getAllByRole("button", { name: "Zähler 1" })).toHaveLength(1);
   });
@@ -66,7 +67,18 @@ describe("ResponsiveModal (US-QS-07, DS-23)", () => {
     setViewportWidth(768);
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    await screen.findByRole("dialog");
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-07 · DS-40 Esc returns the focus to the trigger that opened the dialog", async () => {
+    setViewportWidth(1024);
+    render(<Example />);
+    const trigger = screen.getByRole("button", { name: "Öffnen" });
+    await userEvent.click(trigger);
+    await screen.findByRole("dialog");
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(trigger);
   });
 });
