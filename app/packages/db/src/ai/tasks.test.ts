@@ -112,3 +112,29 @@ describe("US-KI-08 tasks in the database", () => {
     expect((await store.create(b.id, task(), now)).created).toBe(true);
   });
 });
+
+describe("NFR-12 expiry of an earlier task by its type and reference", () => {
+  it("NFR-12 the expiry stores the status of the same type and reference only; other references and types stay open", async () => {
+    const { id } = await setup();
+    const store = new TasksPostgres(pool);
+    const aloe = await store.create(id, task(), now);
+    const haworthia = await store.create(id, task("Haworthia"), now);
+    const wish = await store.create(
+      id,
+      { type: "wish_candidates", reference: "Aloe vera", label: "Aloe vera" },
+      now,
+    );
+    const later = new Date(now.getTime() + 15 * 86400000);
+    expect((await store.create(id, task(), later)).created).toBe(true);
+    // The stored status, not the status shown by `find` (which computes the expiry from the clock).
+    const stored = await admin.query<{ id: string; status: string }>(
+      "select id, status from ai_task where account_id = $1",
+      [id],
+    );
+    const statusOf = (taskId: string) => stored.rows.find((r) => r.id === taskId)?.status;
+    expect(statusOf(aloe.task.id)).toBe("expired");
+    expect(statusOf(haworthia.task.id)).toBe("open");
+    expect(statusOf(wish.task.id)).toBe("open");
+    expect(stored.rows.filter((r) => r.status === "open")).toHaveLength(3);
+  });
+});

@@ -20,15 +20,17 @@ const applicableOf = (counts: OnboardingCounts, unlocked: boolean): string[] => 
 ];
 
 /**
- * The hint state and the end of the guide of the account (DM-ONB-03), read once per visit of Heute. `null` while loading;
- * a failed request fails open: no hint, and the guide counts as not ended, so nothing is held back (P-10).
+ * The hint state and the end of the guide of the account (DM-ONB-03), read once per visit of Heute. `null` while loading
+ * or while the count the occasions depend on is not there (nothing is asked before it is known, issue 1244); a failed
+ * request fails open: no hint, and the guide counts as not ended, so nothing is held back (P-10).
  */
-export function useHints(api: string, token: Token, counts: OnboardingCounts) {
+export function useHints(api: string, token: Token, counts: OnboardingCounts | undefined) {
   const [state, setState] = useState<HintState | "failed" | null>(null);
   const unlocks = useUnlocks();
   const unlocked = unlocks.entries.some((e) => e.state === "open" && STAGED.has(e.id));
-  const key = applicableOf(counts, unlocked).join(",");
+  const key = counts === undefined ? null : applicableOf(counts, unlocked).join(",");
   useEffect(() => {
+    if (key === null) return;
     let current = true;
     void (async () => {
       const t = await token();

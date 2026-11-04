@@ -1,5 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
-import { WRITE_SUCCEEDED, useInvalidate, useRequest } from "../../../../../shared/data";
+import {
+  REFERENCE_STALE_TIME,
+  WRITE_SUCCEEDED,
+  useInvalidate,
+  useRequest,
+} from "../../../../../shared/data";
 import { loadUnlocks, type UnlockEntry } from "../unlock-api";
 
 type Token = () => Promise<string | undefined>;
@@ -25,7 +30,8 @@ const UnlocksContext = createContext<Unlocks>(NONE);
 export function UnlocksProvider(props: { api: string; token: Token; children: ReactNode }) {
   const { api, token } = props;
   const load = useCallback((t: string) => loadUnlocks(api, t), [api]);
-  const r = useRequest({ queryKey: UNLOCKS_KEY, token, load });
+  // A write refreshes the lock states at once (below), so the window only saves the requests of a remount (issue 1244).
+  const r = useRequest({ queryKey: UNLOCKS_KEY, token, load, staleTime: REFERENCE_STALE_TIME });
   const refresh = useInvalidate(UNLOCKS_KEY);
   useEffect(() => {
     window.addEventListener(WRITE_SUCCEEDED, refresh);

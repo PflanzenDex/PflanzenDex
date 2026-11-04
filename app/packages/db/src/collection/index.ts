@@ -9,5 +9,6 @@ export {
   createSpecimenOn,
   findSpecimenOn,
   listSpecimensOn,
+  unlockSummaryOf,
   type NewSpecimen,
 } from "./specimen-shared.ts";

@@ -580,10 +580,6 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/app/flows/onboarding/today-intro/today-intro.tsx",
-      "enums": 2
-    },
-    {
       "file": "packages/web/src/app/flows/onboarding/today-intro/use-hints.ts",
       "enums": 2
     },

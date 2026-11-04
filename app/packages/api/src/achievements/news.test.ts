@@ -22,8 +22,8 @@ const sources = (): FactSources =>
     },
     species: { find: async () => null, findMany: async () => [null] },
     profiles: { list: async () => [] },
-    treatments: { open: async () => new Map(), done: async () => [] },
-    measurements: { list: async () => [] },
+    treatments: { open: async () => new Map(), doneMany: async () => new Map() },
+    measurements: { listMany: async () => new Map() },
     swaps: { list: async () => [] },
   }) as unknown as FactSources;
 const KEEPER = { userId: "anna", timeZone: "Europe/Berlin", now: NOW };

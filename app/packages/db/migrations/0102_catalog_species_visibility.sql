@@ -10,7 +10,7 @@
 --   reviewer_reads  open proposals (proposal, ai_unreviewed) to reviewers
 -- Not in this migration (#1235): pg_trgm and a GIN trigram index on the names for `like '%term%'`. The application role
 -- reads species_name under row security, and `like` is not leakproof, so PostgreSQL does not use such an index for the
--- application's search (plan measured). It would only cost writes. Open question for the owner, see app.md.
+-- application's search (plan measured). It would only cost writes. Decided by the owner on 2026-11-04: no index, see app.md.
 -- Forward-only and additive for the previous app version: the new columns are nullable, nothing is renamed or dropped,
 -- species_status() stays for the other modules.
 

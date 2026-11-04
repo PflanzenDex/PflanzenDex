@@ -21,26 +21,12 @@ const photoUrl = (specimenId: string, measurementId: string) =>
 /**
  * The year in review of the keeper (US-ACH-07): counted facts of one calendar year, derived on every request from the
  * own data (FR-ACH-02, P-04) and private by default (P-05). Nothing is stored and nothing is compared (FR-ACH-04).
- * One request per specimen for the measurement values (starting value, small collections).
+ * The measurement values come with the facts read (NFR-12): no second read per specimen.
  */
 export async function achievementsYear(src: FactSources, who: Keeper, year: number) {
   const { userId, timeZone, now } = who;
-  const { facts } = await readAchievementFacts(src, userId, timeZone);
+  const { facts, measurements } = await readAchievementFacts(src, userId, timeZone);
   const earned = evaluateAchievements(facts, localToday(now, timeZone));
-  const measurements = (
-    await Promise.all(
-      facts.specimens.map(async (s) =>
-        (await src.measurements.list(userId, s.id)).map((m) => ({
-          id: m.id,
-          specimenId: s.id,
-          date: m.date,
-          value: m.value,
-          quality: m.quality,
-          hasPhoto: m.photo !== null,
-        })),
-      ),
-    )
-  ).flat();
   const review = yearInReview({
     year,
     specimens: facts.specimens,

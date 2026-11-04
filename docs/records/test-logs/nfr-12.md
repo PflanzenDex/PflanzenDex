@@ -122,14 +122,115 @@ SQL statements, total (payload), 60 species, identical at 100 and 1,000 specimen
 - `query-count-baseline.json` (US-QG-07) is empty now: all seven entries (`/today`, cards, distribution, light overview, difficulty, hints, discover suggestions) stopped growing and were deleted.
 - Limits as in section 4: one run, one machine, times are not deterministic; statement counts are.
 
-## 7. Issue #1235: species visibility as a stored column (2026-11-04)
+---
+
+## 8. Audit 2026-11-04, wave 1: perf seed and sign-in guard (issues #1234, #1236)
+
+**Environment:** the same workstation, throw-away `postgres:18.6-alpine3.24` container per run, `PERF_SIZES=100,1000`, 30 timed runs per request (median / p95 in ms).
+
+- **#1234 (PR #1253):** `perf/seed.ts` posted every measurement without `timeZone` and with values off the 0.5 grid and never read the reply, so every `perf:measure` run since `timeZone` became required had **zero measurements**. Every seed write now fails loudly on a non-2xx reply, and a row-count check after seeding requires `n` specimens, `2n` measurements and 10 wishes. After the fix: perf-100 has 100 specimens and 200 measurements, perf-1000 has 1,000 and 2,000. Statement counts are unchanged by the fix; `/specimens/cards` now carries the measurements (1,000 specimens: 390,551 → 451,550 bytes). Numbers in earlier sections that were measured after `timeZone` became required ran on empty measurement tables.
+- **#1236 (PR #1256):** the sign-in guard was registered for `/x` and `/x/*`, and Hono's `/x/*` also matches `/x`, so every exact-path request admitted the account twice (6 statements and one transaction more). `GET /account` no longer writes `account_data` on every read (only when the row is missing, the token changed or `last_active_at` is older than an hour).
+
+| Request           | Before: stmts (payload) | After: stmts (payload) | 1,000 specimens, median / p95 ms: before → after |
+| ----------------- | ----------------------- | ---------------------- | ------------------------------------------------ |
+| `GET /today`      | 112 (24)                | 106 (22)               | 36.8 / 49.2 → 33.8 / 43.2                        |
+| `GET /specimens`  | 17 (5)                  | 11 (3)                 | 14.0 / 22.6 → 14.9 / 23.0                        |
+| `GET /species?q=` | 17 (5)                  | 11 (3)                 | 9.4 / 17.6 → 8.4 / 16.5                          |
+
+The other measured requests were guarded once already and are unchanged. Latency differences are within run-to-run noise (one run each); the statement counts are exact.
+
+---
+
+## 9. Issue #1242: pool size, time limits and database memory (2026-11-04)
+
+**Environment:** the same workstation (AMD Ryzen 5 3600, 12 threads), Node v24.21.0. PostgreSQL 18.6 in a throw-away container (`postgres:18.6-alpine3.24`, loopback port). **Before:** commit `792190a8` (the claim), pool of 4 connections, PostgreSQL defaults, no memory limit. **After:** this branch: pool of 12 connections (`PFLANZENDEX_DB_POOL_MAX`, the new default), limits of 5 s per statement, 3 s per lock and 30 s idle inside a transaction; the container with `--memory 384m` and `shared_buffers` 128 MB, `work_mem` 4 MB and `effective_cache_size` 256 MB (the compose settings).
+
+Concurrency: `npm run perf:concurrency -w @pflanzendex/api` (`perf/load/concurrency.ts`): the Heute screen (`/today` and `/specimens/hints`, one after the other) per virtual user, 32 accounts with 100 specimens each, 10 s per level after a 2 s warm-up. Latency is per screen. The "before" runs used an earlier version of the script that took the pool size from `PERF_POOL_MAX` and built a plain `pg` pool of that size (no timeouts, as the old production pool); the accounts were seeded once and reused.
+
+### 9.1 Concurrency: the pool size sweep at 32 users
+
+| Pool connections | Before: screens/s | Before: median ms | Before: p95 ms | After: screens/s | After: median ms | After: p95 ms |
+| ---------------- | ----------------- | ----------------- | -------------- | ---------------- | ---------------- | ------------- |
+| 4 (old default)  | 59.7              | 534.0             | 558.3          | 59.2             | 537.2            | 561.4         |
+| 8                | 88.2              | 356.2             | 403.7          | 94.4             | 338.4            | 357.4         |
+| 12 (new default) | 99.5              | 321.6             | 343.3          | 105.7            | 301.4            | 321.4         |
+| 16               | 110.3             | 284.2             | 325.1          | 109.9            | 289.1            | 314.8         |
+
+Rule for the default: the smallest pool that reaches at least 90 % of the best throughput. The best measured throughput is about 110 screens/s (16 connections). 8 connections reach 94 screens/s (86 %), 12 reach 106 (96 %). **12 is the new default.** Above 12 the gain is small (16 connections: about 4 % more throughput), so the larger pool buys little for its extra connections.
+
+### 9.2 Concurrency: all levels, before (4 connections) and after (12 connections)
+
+| Virtual users | Before (pool 4): screens/s | median ms | p95 ms | After (pool 12, new default): screens/s | median ms | p95 ms |
+| ------------- | -------------------------- | --------- | ------ | --------------------------------------- | --------- | ------ |
+| 1             | 36.0                       | 27.2      | 35.9   | 36.3                                    | 26.9      | 34.6   |
+| 4             | 59.3                       | 66.9      | 79.9   | 95.2                                    | 41.8      | 51.4   |
+| 8             | 60.2                       | 132.3     | 147.2  | 106.3                                   | 75.1      | 88.6   |
+| 16            | 60.4                       | 263.8     | 287.9  | 106.0                                   | 150.3     | 166.7  |
+| 32            | 59.7                       | 534.0     | 558.3  | 105.7                                   | 301.4     | 321.4  |
+
+With 4 connections the old code is limited by the pool (throughput flat at about 60 screens/s from 4 users on). The per-transaction limits add no measurable cost: the "after" numbers with 4 connections are equal to the "before" ones (59.2 against 59.7 screens/s at 32 users, median 537 against 534 ms).
+
+### 9.3 Endpoints: `npm run perf:measure` (4 connections in the harness, 30 runs)
+
+Statement counts are the same before and after for every endpoint: the request frame (`begin`, `set local role`, one `select set_config` with the account and the three limits, `commit`) has the same number of statements as before, and the counts are the same ones that the query-count gate watches.
+
+| Screen     | Request                                       | SQL stmts (payload), before = after | Median ms, 100: before / after | Median ms, 1,000: before / after |
+| ---------- | --------------------------------------------- | ----------------------------------- | ------------------------------ | -------------------------------- |
+| Heute      | `GET /today?timeZone=…`                       | 106 (22)                            | 18.6 / 17.5                    | 37.5 / 38.3                      |
+| Heute      | `GET /specimens/hints`                        | 21 (5)                              | 10.3 / 11.9                    | 17.9 / 17.3                      |
+| Sammlung   | `GET /specimens/cards?timeZone=…`             | 51 (11)                             | 10.9 / 12.2                    | 30.3 / 31.2                      |
+| Sammlung   | `GET /specimens`                              | 11 (3)                              | 3.3 / 3.1                      | 13.4 / 14.2                      |
+| Sammlung   | `GET /specimens/count`                        | 11 (3)                              | 1.5 / 1.9                      | 2.4 / 2.6                        |
+| Sammlung   | `GET /specimens/distribution`                 | 31 (7)                              | 10.6 / 11.5                    | 17.4 / 17.0                      |
+| Sammlung   | `GET /specimens/light-overview`               | 26 (6)                              | 12.6 / 12.2                    | 17.9 / 17.6                      |
+| Sammlung   | `GET /specimens/difficulty`                   | 26 (6)                              | 9.9 / 11.2                     | 16.0 / 17.8                      |
+| Entdecken  | `GET /discover/suggestions?timeZone=…&deck=1` | 65 (17)                             | 27.9 / 29.7                    | 45.6 / 43.7                      |
+| Entdecken  | `GET /pokedex/cards?timeZone=…`               | 25 (9)                              | 19.1 / 19.1                    | 29.5 / 30.6                      |
+| Entdecken  | `GET /pokedex/ownership?timeZone=…`           | 16 (4)                              | 11.2 / 10.9                    | 22.1 / 21.3                      |
+| Entdecken  | `GET /wishes/candidates`                      | 51 (11)                             | 10.9 / 11.0                    | 18.7 / 17.8                      |
+| Artenliste | `GET /species?q=`                             | 11 (3)                              | 8.9 / 7.5                      | 8.5 / 9.2                        |
+
+### 9.4 Database container memory (`docker stats`, one sample per second)
+
+| Run                       | Settings                                                | Peak memory of `db` |
+| ------------------------- | ------------------------------------------------------- | ------------------- |
+| `perf:measure` before     | defaults, no limit, 4 connections                       | 77 MiB              |
+| `perf:measure` after      | 384 MB limit, 128 MB shared buffers, 4 MB work_mem      | 59 MiB              |
+| `perf:concurrency` before | no limit, pool 4 to 16, includes seeding of 32 accounts | 92 MiB              |
+| `perf:concurrency` after  | no limit, pool 4 to 16                                  | 94 MiB              |
+
+The owner database had no temporary file (`pg_stat_database.temp_files` = 0) after all concurrency runs, so `work_mem` 4 MB was not too small for this workload. The measured dataset is small (27 MB, 32 accounts, 3,200 specimens); a larger database fills the buffer pool up to `shared_buffers` (128 MB) and each connection adds its own memory. The limit of 384 MB is therefore a starting value (assumption) with about four times the measured peak, not a measured maximum.
+
+---
+
+## 10. Unlock facts: one aggregate and existence checks (issue #1241)
+
+**Change:** `GET /onboarding/unlocks` is loaded on every signed-in page (`UnlocksProvider`) and refetched after every write. It read every specimen to collect the dates and the active count, read the lists of wishes, friends, requests, offers, swaps and equipment only for their length, and awaited the other reads one after another. Now one aggregate over `specimen` gives the active count and the earliest `created_at`, one `exists` per module answers the existing-data question on the same rows under the same row rules, and `Promise.all` runs the independent reads. The lock rules get the same facts, so the answer does not change; `unlock-sources.test.ts` compares every source with the old list-based answer on data with the edge cases (archived specimens, a date that differs by time zone, ended and declined friendships, a withdrawn offer, a canceled swap, retired equipment, a second account).
+
+**Environment:** Intel Core Ultra 7 255H (16 cores), Node v24.21.0, PostgreSQL 18.6 in Docker, date 2026-11-04. The machine was shared with other sessions during the first run (load average up to 12). Same method as section 1: 1,000 specimens over 60 species, 3 warm-up and 30 timed calls, one counted call. The "before" rows are the code before the change (the branch's HEAD), run twice; the "after" row is the final code.
+
+| Request                              | Run                    | 100: median / p95 (ms) | 1,000: median / p95 (ms) | SQL stmts (payload) at 100 and 1,000 |
+| ------------------------------------ | ---------------------- | ---------------------- | ------------------------ | ------------------------------------ |
+| `GET /onboarding/unlocks?timeZone=…` | before, run 1          | 10.0 / 13.0            | 38.5 / 100.3             | 66 (14)                              |
+| `GET /onboarding/unlocks?timeZone=…` | before, run 2 (paired) | 14.3 / 19.4            | 42.5 / 79.7              | 66 (14)                              |
+| `GET /onboarding/unlocks?timeZone=…` | after                  | 5.6 / 7.8              | 5.1 / 7.8                | 56 (12)                              |
+
+- The gap between 100 and 1,000 specimens is gone: the median is 5.6 ms at 100 and 5.1 ms at 1,000 specimens, against the target of under 20 ms at 1,000.
+- The statement count drops from 66 to 56 (payload 14 to 12): five existence checks replace the seven lists, and one summary row replaces the specimen list. Both counts are exact for this shape.
+- The other endpoints were not changed. Their timings moved by up to 2x between runs on this shared machine, so they are not compared here.
+
+**Limits (P-08):** one machine, one run per state (plus the paired "before" run), no concurrent users, no network. The first attempt wrote its rows into the schema database of the test suite and made the catalog tests time out; the perf harness is meant for a throw-away database (section 6). The rows were removed and the suite passes on the reset database.
+
+---
+
+## 11. Issue #1235: species visibility as a stored column (2026-11-04)
 
 **Branch:** `fix/issue-1235-performance-species-visibility` (PR #1269, draft).
 **Environment:** Intel N100 (4 cores), Linux, Node v26.13.0, PostgreSQL 18.6 in Docker (`postgres:18.6-alpine3.24`, `--memory` 512 MB, loopback); the measured role is the non-superuser owner, queries run as `pflanzendex_app` with `set local role` and `app.account_id` set per transaction, as `withAccount` does. Another agent ran builds in parallel on the same 3 GB box during the perf runs, so timings carry load noise (see the caveats).
 
 **Cause:** the SELECT policy `visible` on `species` called the `SECURITY DEFINER` function `species_status()` for every scanned row. One `count(*)` over the catalog made one `review_case` index scan per species row (1,260 scans for 1,260 species). Migration 0102 stores the review status and the creator of the review case on the species row; triggers keep them current (`species_review_copy`, `review_case_species_sync`, both `enable always`). The row rules are unchanged; the policies become column predicates. The review case stays the source of truth.
 
-### 7.1 EXPLAIN ANALYZE, same dataset before and after
+### 11.1 EXPLAIN ANALYZE, same dataset before and after
 
 Method: a scratch database owned by the owner role, migrated to 0101, loaded with 1,260 species (600 curated, 600 foreign private proposals, 60 own proposals of the measured account, so 660 are visible to it), one Latin name per species; then migrated to 0102, which backfills all rows (verified: 0 mismatches against `review_case`). Each statement run 15 times as `pflanzendex_app` inside a rolled-back transaction, first 3 runs dropped, median reported (min to max in brackets). The EXPLAIN text is in `scratchpad` (not committed).
 
@@ -146,13 +247,13 @@ Search results: the old and the new SQL return the same species ids for the empt
 
 The 600-name search first took 78 ms: the planner estimates one matching name for `like`, and joined `species` by a seq scan per match. The page now uses `a.id in (select ... like ...)` (a semi-join), which brought it to 9.6 ms with identical results.
 
-### 7.2 Trigram index: not used by the application role
+### 11.2 Trigram index: not used by the application role
 
 The first version also created `pg_trgm` and a GIN trigram index on `species_name(norm)`. The application role cannot use it: `textlike` (`like`) is not leakproof, so with row security on `species_name` PostgreSQL applies the policy quals before the `like` filter and never uses the index. Control: the same query on a copy of `species_name` without row security uses the index (`Bitmap Index Scan on ...trgm`). Superuser queries use it too, but the application never runs as superuser. The index and the extension were removed again; they would only have cost writes.
 
-**Open question for the owner (not decided here):** serve the search from a table of approved names without row rules (approved names are visible to everybody, so this changes no visibility), or accept the scan that the search does now.
+**Decided (owner, 2026-11-04):** no trigram index in this change; the search keeps scanning `species_name` under row security. A table of approved names without row rules (approved names are visible to everybody, so it changes no visibility) is a possible follow-up, not part of this change.
 
-### 7.3 Perf: `npm run perf:measure -w @pflanzendex/api`, 1,000 specimens, 60 species, 30 timed runs (median ms)
+### 11.3 Perf: `npm run perf:measure -w @pflanzendex/api`, 1,000 specimens, 60 species, 30 timed runs (median ms)
 
 Dataset as in section 1 (60 species, 1,000 specimens, 500 taxa). Before: fresh DB at 0098, run 12:42 UTC. After: fresh DB at 0102, run 13:11 UTC (this run still had the trigram index, which was removed afterwards; reads do not use it, so the timings are not affected by it in principle). Only the rows that matter are shown; full data in the run's JSON.
 
@@ -166,9 +267,9 @@ Dataset as in section 1 (60 species, 1,000 specimens, 500 taxa). Before: fresh D
 
 All 13 requests have the same statement count and the same body size before and after. Caveat: the before and after runs were not under the same machine load (the other agent's builds), and the other endpoints do not depend on the species visibility in this dataset; the differences of the other endpoints cannot be attributed to the change. The `/species?q=` list is the request that uses the visibility rule directly.
 
-### 7.4 Limits
+### 11.4 Limits
 
 - One machine, one run per state, 30 timed calls; the timings are not comparable with the Ryzen figures of sections 1 to 3.
-- The perf dataset has 60 species per account, so the catalog-size effect is not visible in section 7.3; section 7.1 has 1,260 species. 10,000 species and the scaling claim are not measured.
+- The perf dataset has 60 species per account, so the catalog-size effect is not visible in section 11.3; section 11.1 has 1,260 species. 10,000 species and the scaling claim are not measured.
 - The species search still scans `species_name` (no index under row security); its cost grows with the number of names in the catalog.
 - Not measured: concurrent users, cold caches, write requests.

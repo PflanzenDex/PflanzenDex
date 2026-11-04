@@ -3,6 +3,7 @@ import type { SpecimenCard } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
 import { Button } from "@/shared/ui/button/button";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { useInView } from "@/shared/platform/visibility/use-in-view";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { UNKNOWN } from "../../../specimens/model/text";
 
@@ -30,13 +31,16 @@ const stateMark = cva("w-fit rounded-sm px-1 text-xs font-semibold", {
   defaultVariants: { attention: false },
 });
 
+/** The 56 px picture of a tile (NFR-12): the thumbnail, requested once the tile is near the viewport. */
 function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
-  const state = useStoredPhoto(access, card.photo?.url);
+  const [ref, inView] = useInView<HTMLSpanElement>();
+  const state = useStoredPhoto(access, card.photo?.url, { size: "thumb", enabled: inView });
   const initial = card.name.trim().charAt(0).toUpperCase() || "?";
   return typeof state === "string" ? (
     <img src={state} alt="" className="size-14 shrink-0 rounded-md object-cover" />
   ) : (
     <span
+      ref={ref}
       aria-hidden="true"
       data-initial={initial}
       className="grid size-14 shrink-0 place-items-center rounded-md text-xl font-semibold text-muted-foreground after:content-[attr(data-initial)]"
