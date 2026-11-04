@@ -18,6 +18,8 @@ const GATE_FILES = [
   /^app\/config\/project\/commitlint\.config\.js$/,
   /^app\/config\/project\/release\.config\.js$/,
   /^app\/config\/project\/tsconfig\.base\.json$/,
+  // The allowed issue types and epics (FR-DEV-10): a new type or epic is approved by the owner.
+  /^app\/config\/project\/issue-taxonomy\.json$/,
   /^app\/\.prettier(rc\.json|ignore)$/,
   // Every non-test file under app/tools/check/ defines a gate: the check scripts and their libraries (rules, thresholds).
   /^app\/tools\/check\/(?:.+\/)?(?!.*\.(?:test|selftest)\.mjs$)[^/]+\.mjs$/,
@@ -38,6 +40,7 @@ const FORBIDDEN_COMMANDS = [
   [/\bgit\s+push\b[^|;&]*\s(origin\s+)?(\S+:)?(main|dev)(?![\w/.-])/, "Never push to `main` or `dev`; open a pull request (E-13)."],
   [/\bgit\s+push\b[^|;&]*\s(--force|-f)\b(?!-)/, "Plain force pushes are not allowed; use --force-with-lease on your own feature branch."],
   [/\bgit\s+config\b[^|;&]*\bcore\.hooksPath\b/, "Changing core.hooksPath disables the git hooks; use `make hooks`."],
+  [/\bgh\s+issue\s+create\b/, "Create issues with `make issue TYPE= EPIC= PRIORITY= TITLE= BODY=` (FR-DEV-10): it sets the type and epic labels and the board fields."],
 ];
 
 // Commands that change repo-wide GitHub settings: allowed only after a human confirms.
@@ -46,6 +49,7 @@ const CONFIRM_COMMANDS = [
     "This changes GitHub protection settings; update .github/rulesets/ and use tools/repo/rulesets-apply.sh instead."],
   [/\bgh\s+repo\s+edit\b/, "This changes repository settings."],
   [/\bgh\s+release\s+(create|delete|edit)\b|\bgit\s+push\b[^|;&]*\s(--tags|v\d)/, "Releases and tags come from the release workflow only (ADR 0002)."],
+  [/\bgh\s+label\s+(create|edit|delete|clone)\b/, "Label changes need the owner (FR-DEV-10): a new type or epic is a pull request to app/config/project/issue-taxonomy.json."],
 ];
 
 // Heredoc bodies and quoted strings are text (commit messages, PR bodies), not commands; drop them before judging.
