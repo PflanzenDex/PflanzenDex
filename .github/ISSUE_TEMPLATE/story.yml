@@ -6,6 +6,7 @@ body:
     attributes:
       value: |
         New features start in `docs/specs/product/` (a story with Given/When/Then criteria); the issue comes second.
+        Type and epic labels are required (FR-DEV-10): `story` or `enabler`, and `epic:XX` of the spec's epic. Without them the issue gets the label `needs-triage` and a comment naming what is missing.
   - type: input
     id: id
     attributes:

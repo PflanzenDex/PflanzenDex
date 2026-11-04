@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -239,6 +239,15 @@ pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
+
+issue: ## New issue with type, epic and priority labels and board fields (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md>); refuses unknown values before creating anything (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs create --type "$(TYPE)" --epic "$(EPIC)" --priority "$(PRIORITY)" --title "$(TITLE)" --body-file "$(abspath $(BODY))"
+
+issue-check: ## Check the type and epic labels of an issue (ISSUE=<n> [EVENT=opened|edited|labeled|unlabeled]): comment and needs-triage when invalid, needs-triage removed when valid (CI: issue-check.yml, FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs check --issue "$(ISSUE)" --event "$(EVENT)"
+
+issue-sync: ## Set the board fields Typ and Epic of an issue (ISSUE=<n> TYPE=<label> EPIC=<code>); CI runs it with the project token (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs sync --issue "$(ISSUE)" --type "$(TYPE)" --epic "$(EPIC)"
 
 board: ## Who works on which open story of a release (board field Release, RELEASE="R1 Parität"); flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
 	cd $(APP) && node tools/workflow/board.mjs "$(RELEASE)"
