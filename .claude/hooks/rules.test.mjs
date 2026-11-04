@@ -52,6 +52,7 @@ test("US-QG-07: the moved check scripts, their libraries and the layout config s
     "app/tools/workflow/merge-pr.mjs",
     "app/tools/workflow/merge-pr.test.mjs",
     "app/config/lint/layout.config.mjs",
+    "app/config/project/issue-taxonomy.json",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
@@ -81,6 +82,27 @@ test("US-QG-07: skipping hooks, merging and pushing to protected branches are de
     "git config core.hooksPath /dev/null",
   ]) {
     assert.equal(decision(cmd), "deny", cmd);
+  }
+});
+
+test("FR-DEV-10: a bare gh issue create is denied, make issue and reading issues are not; label changes need the owner", () => {
+  assert.equal(decision("gh issue create --title x --body-file b.md"), "deny");
+  assert.equal(decision("cd app && gh issue create -t x"), "deny");
+  for (const cmd of [
+    'make issue TYPE=bug EPIC=QS PRIORITY=P3 TITLE="x" BODY=b.md',
+    "gh issue view 1222",
+    "gh issue comment 1222 --body x",
+    "gh label list",
+    'gh pr create --body "use gh issue create never"',
+  ]) {
+    assert.equal(decision(cmd), "none", cmd);
+  }
+  for (const cmd of [
+    "gh label create epic:X",
+    "gh label edit bug --color 000000",
+    "gh label delete old",
+  ]) {
+    assert.equal(decision(cmd), "ask", cmd);
   }
 });
 
