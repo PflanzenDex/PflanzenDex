@@ -13,5 +13,12 @@
   "chips.zoneUnknown": "Zone unbekannt",
   "chips.locationUnknown": "Standort unbekannt",
   "chips.treatment": "Behandeln",
-  "slot.loading": "Lädt …"
+  "slot.loading": "Lädt …",
+  "overview.measure": "Messen",
+  "overview.measureLabel": "Messen: {name}",
+  "overview.trend": "Trend: {value}",
+  "overview.state": "Zustand:",
+  "overview.facts": "Art: {species} · Status: {status}",
+  "overview.treat": "Behandeln",
+  "overview.treatLabel": "Behandeln: {name}"
 }
