@@ -309,6 +309,17 @@ describe("NFR-13 the action bar of the profile at a larger text size (issue 1217
     expect(opener.className).not.toMatch(/(^| )h-12( |$)/);
     expect(opener.className).toContain("px-[20px]");
   });
+
+  it("NFR-13 the card around the profile shrinks its padding as the text grows: 16 px at normal text, 8 px at 200 % (issue 1216)", async () => {
+    fakeServer();
+    render(page({ openId: "a1", profileSection: () => null }));
+    const card = (await screen.findByRole("button", { name: "Mein Pflegeprofil" })).closest(
+      ".rounded-2xl",
+    );
+    expect(card?.className).toContain("px-[max(8px,calc(24px_-_0.5rem))]");
+    expect(card?.className).toContain("py-[max(8px,calc(24px_-_0.5rem))]");
+    expect(card?.className).not.toMatch(/(^| )px-4( |$)/);
+  });
 });
 
 describe("US-BES-01 the page starts with the search", () => {

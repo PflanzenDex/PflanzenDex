@@ -87,4 +87,51 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(title.className).toContain("min-w-20");
     expect(screen.getByRole("button").parentElement?.className).toContain("max-w-full");
   });
+
+  it("NFR-13 with a way back the title keeps 230 px beside the back control, so a narrower row wraps and the back control sits above the title", () => {
+    inRouter(
+      <PageHeader
+        title="Adiantum raddianum"
+        back={{ label: "Zurück zur Suche", to: "/discover" }}
+      />,
+    );
+    const row = document.querySelector("[data-page-header]");
+    expect(row?.className).toContain("flex-wrap");
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className).toContain("min-w-[230px]");
+    expect(title.className).not.toContain("min-w-20");
+    expect(screen.getByRole("link", { name: "Zurück zur Suche" }).className).toContain("shrink-0");
+  });
+
+  it("NFR-13 the back control keeps its 44 px target and does not shrink when the title takes the row below it", () => {
+    render(
+      <PageHeader
+        title="Messen: Aloe"
+        back={{ label: "Zurück zur Sammlung", onBack: () => undefined }}
+      />,
+    );
+    const back = screen.getByRole("button", { name: "Zurück zur Sammlung" });
+    expect(back.className).toContain("shrink-0");
+    expect(back.className).toContain("min-h-[44px]");
+    expect(back.className).toContain("min-w-[44px]");
+  });
+
+  it("NFR-13 with a way back and an action the minimum stays at the #1177 value: the action wraps under the title", () => {
+    inRouter(
+      <PageHeader
+        title="Tauschbörse"
+        back={{ label: "Zurück zu Freunde", to: "/friends" }}
+        action={<button type="button">Zum Tausch anbieten</button>}
+      />,
+    );
+    expect(document.querySelector("[data-page-header]")?.className).toContain("flex-wrap");
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className).toContain("min-w-20");
+    expect(title.className).not.toContain("min-w-[230px]");
+  });
+
+  it("NFR-13 without a way back the title keeps the #1177 minimum width of 5 rem", () => {
+    inRouter(<PageHeader title="Freunde" action={<button type="button">Geräte</button>} />);
+    expect(screen.getByRole("heading", { level: 1 }).className).toContain("min-w-20");
+  });
 });
