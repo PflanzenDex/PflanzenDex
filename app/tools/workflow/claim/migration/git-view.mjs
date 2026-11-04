@@ -8,7 +8,8 @@ const git = (args, cwd) =>
 /** Migration file names (basenames) in a ref; undefined when the ref does not exist. */
 export function migrationsAt(ref, cwd) {
   try {
-    return git(["ls-tree", "--name-only", ref, `${MIGRATIONS_DIR}/`], cwd)
+    // `--full-tree`: the path counts from the repo root, not from the working directory (`make claim` runs in app/).
+    return git(["ls-tree", "--full-tree", "--name-only", ref, `${MIGRATIONS_DIR}/`], cwd)
       .split("\n")
       .filter((f) => numberOf(f) !== undefined)
       .map((f) => f.split("/").pop());

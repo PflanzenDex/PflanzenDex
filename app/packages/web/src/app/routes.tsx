@@ -8,11 +8,9 @@ import {
 } from "@/app/destinations/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "../account";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
+import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
 import {
   FunctionOverview,
-  LockedLayer,
-  LockedRows,
-  LockedTile,
   TodayIntro,
   UnlockPage,
   isShownLocked,

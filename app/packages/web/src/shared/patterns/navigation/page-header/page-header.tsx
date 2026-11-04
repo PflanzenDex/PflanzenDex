@@ -29,12 +29,16 @@ export type PageHeaderProps = {
 /**
  * The minimum width of the title (NFR-13). With an action the title is at least its longest word and no word breaks
  * inside (issue 1230): the row wraps and the action goes under the title (issue 1177). The longest word grows with the
- * text, so the action wraps instead of squeezing the title. Without an action a title beside a way back keeps 230 px, so
- * the back control sits above a narrow title (issue 1226); any other title keeps 5 rem.
+ * text, so the action wraps instead of squeezing the title. A title beside a way back without an action claims 230 px or
+ * its longest word, whichever is more: when the row cannot give that, it wraps and the back control sits above the title
+ * (issues 1226, 1254). The 230 px do not grow with the text, the longest word does; `break-word` keeps that word in the
+ * minimum (`anywhere` would remove it) and `max-w-full` caps it, so only a word wider than the whole column breaks. Any
+ * other title keeps 5 rem.
  */
 function titleMinimum(hasBack: boolean, hasAction: boolean): string {
-  if (hasAction) return "min-w-min [overflow-wrap:normal]";
-  return hasBack ? "min-w-[230px] [overflow-wrap:anywhere]" : "min-w-20 [overflow-wrap:anywhere]";
+  if (hasAction) return "min-w-min flex-1 [overflow-wrap:normal]";
+  if (hasBack) return "max-w-full grow basis-[230px] [overflow-wrap:break-word]";
+  return "min-w-20 flex-1 [overflow-wrap:anywhere]";
 }
 
 function BackControl(props: { back: PageBack }) {
@@ -85,7 +89,7 @@ export function PageHeader(props: PageHeaderProps) {
         {...(props.headingId ? { id: props.headingId } : {})}
         className={cn(
           titleMinimum(Boolean(back), Boolean(action)),
-          "flex-1 font-semibold",
+          "font-semibold",
           Heading === "h1" ? "text-2xl" : "text-xl",
         )}
       >

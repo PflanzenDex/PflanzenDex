@@ -67,6 +67,16 @@ vi.mock("vaul", () => {
   return { Drawer: {} };
 });
 
+vi.mock("../../flows/unlock/locked-rows/locked-rows", () => {
+  loaded.pages.push("locked-rows");
+  return { LockedRows: () => null };
+});
+
+vi.mock("@/shared/ui/overlays/dialog/dialog", () => {
+  loaded.pages.push("dialog");
+  return { Dialog: () => null, DialogContent: () => null, DialogTrigger: () => null };
+});
+
 describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the invitation page (forms and validation) loads only when the invitation code is asked for", async () => {
     await import("../../frame/app/app");
@@ -104,5 +114,15 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("US-QS-07 · DS-08 the sheet library (Vaul) loads only when a sheet is first opened", async () => {
     await import("../../frame/app/app");
     expect(loaded.pages).not.toContain("vaul");
+  });
+
+  it("NFR-12 · DS-08 the locked rows of the destinations load with their routes, not with the shell", async () => {
+    await import("../../frame/app/app");
+    expect(loaded.pages).not.toContain("locked-rows");
+  });
+
+  it("NFR-12 · DS-08 the dialog library (Radix: focus trap, scroll lock) loads only when a dialog first opens", async () => {
+    await import("../../frame/app/app");
+    expect(loaded.pages).not.toContain("dialog");
   });
 });
