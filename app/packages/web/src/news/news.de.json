@@ -1,6 +1,7 @@
 {
   "unreleased": [
     "Heute: Die Aufgaben laden schon, während die Anzahl der Pflanzen noch unterwegs ist. Bei langsamer Verbindung erscheint „Heute“ dadurch früher, und ein Wechsel zu „Sammlung“ und zurück lädt die Standorte nicht jedes Mal neu.",
+    "Die Fotos in der Sammlung laden schneller: Jede Pflanzenkachel holt nur ein kleines Vorschaubild, und erst wenn sie in Sicht kommt.",
     "Bei großer Schrift bricht eine Überschrift neben dem Zurück-Pfeil nicht mehr mitten im Wort um, zum Beispiel bei „Passende Angebote“.",
     "Bei großer Schrift bleiben „Gießen“ und „Behandeln“ in der Pflanzenansicht innerhalb der Karte und stehen untereinander.",
     "Bei großer Schrift bleibt der Knopf „Mehr“ in der Pflanzenansicht im Bild.",

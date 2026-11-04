@@ -61,6 +61,12 @@ export class FakeImageProcessor implements ImageProcessor {
     contentType: "image/jpeg",
     width: 800,
     height: 600,
+    thumbnail: {
+      bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 7, 7]),
+      contentType: "image/jpeg",
+      width: 256,
+      height: 192,
+    },
   };
 
   constructor(private readonly refusal: ErrorCode | null = null) {}

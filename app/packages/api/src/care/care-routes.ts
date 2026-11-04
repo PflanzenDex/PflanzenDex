@@ -6,8 +6,10 @@ import {
   measurementPhoto,
   measurementPhotoFile,
   MEDIA_LIMITS,
+  imageReader,
   imageStorage,
   type ImageProcessor,
+  type ImageReader,
   type ObjectStore,
 } from "@pflanzendex/core";
 import {
@@ -34,20 +36,22 @@ export type CareOptions = {
   media?: { readonly store: ObjectStore; readonly processor: ImageProcessor };
 };
 
-/** Reads the cleaned photo of a measurement back, for the owner only (US-WAC-05, P-05). */
+/**
+ * Reads the cleaned photo of a measurement back, for the owner only (US-WAC-05, P-05). `?size=thumb` answers the 256 px
+ * thumbnail for tiles and cards (NFR-12); without it the stored copy.
+ */
 function addPhotoRead(
   routes: Hono<AuthEnv>,
   deps: { measurements: MeasurementsPostgres; specimens: SpecimenPostgres },
-  media: CareOptions["media"],
+  images: ImageReader | undefined,
 ): void {
   routes.get("/specimens/:id/measurements/:measurementId/photo", async (c) => {
-    if (!media) return c.json(errorBody(appError("media.storage_unavailable")), 502);
-    const r = await measurementPhotoFile(
-      { ...deps, objects: media.store },
-      c.get("account").id,
-      c.req.param("id"),
-      c.req.param("measurementId"),
-    );
+    if (!images) return c.json(errorBody(appError("media.storage_unavailable")), 502);
+    const r = await measurementPhotoFile({ ...deps, images }, c.get("account").id, {
+      specimenId: c.req.param("id"),
+      measurementId: c.req.param("measurementId"),
+      sizes: c.req.queries("size") ?? [],
+    });
     if (!r.ok) return c.json(errorBody(r.error), statusFor(r.error));
     return c.body(r.value.bytes as unknown as ArrayBuffer, 200, {
       "content-type": r.value.contentType,
@@ -112,6 +116,10 @@ export function careRoutes(pool: Pool, opt: CareOptions = {}): Hono<AuthEnv> {
       success: 201,
     });
   });
-  addPhotoRead(routes, { measurements, specimens }, opt.media);
+  addPhotoRead(
+    routes,
+    { measurements, specimens },
+    opt.media ? imageReader(opt.media.store) : undefined,
+  );
   return routes;
 }

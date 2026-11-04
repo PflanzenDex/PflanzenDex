@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { appError, failed } from "../kernel";
+import type { Result } from "../kernel";
 import { storeImage } from "./store-image";
 import { FakeImageProcessor, InMemoryObjectStore } from "./object-store.fake";
+import { thumbnailName } from "./keys";
 import { MEDIA_LIMITS } from "./types";
 
 const A = "11111111-1111-4111-8111-111111111111";
@@ -10,6 +13,19 @@ const setup = (processor = new FakeImageProcessor()) => {
   return { store, processor, deps: { store, processor } };
 };
 
+/** A store that refuses to write any thumbnail (name ends with `-thumb.jpg`), like an unavailable bucket for one write. */
+class FailingThumbnailStore extends InMemoryObjectStore {
+  override async put(
+    accountId: string,
+    name: string,
+    bytes: Uint8Array,
+    contentType: string,
+  ): Promise<Result<void>> {
+    if (name.endsWith("-thumb.jpg")) return failed(appError("media.storage_unavailable"));
+    return super.put(accountId, name, bytes, contentType);
+  }
+}
+
 describe("TE-05 / FR-WAC-09 storing a processed image", () => {
   it("stores only the processed image and never the original", async () => {
     const { store, processor, deps } = setup();
@@ -17,8 +33,27 @@ describe("TE-05 / FR-WAC-09 storing a processed image", () => {
     expect(r).toEqual({ ok: true, value: { name: "m1.jpg", width: 800, height: 600 } });
     const stored = await store.get(A, "m1.jpg");
     expect(stored.ok && [...stored.value.bytes]).toEqual([...processor.output.bytes]);
-    expect(store.objectCount()).toBe(1);
+    expect(store.objectCount()).toBe(2); // the stored copy and its thumbnail (NFR-12)
     expect(store.containsBytes(original)).toBe(false);
+  });
+
+  it("NFR-12 stores the thumbnail of the processed image under the thumbnail name", async () => {
+    const { store, processor, deps } = setup();
+    await storeImage(deps, A, "m1.jpg", { bytes: original, contentType: "image/jpeg" });
+    const small = await store.get(A, thumbnailName("m1.jpg"));
+    expect(small.ok && [...small.value.bytes]).toEqual([...processor.output.thumbnail.bytes]);
+    expect(small.ok && small.value.contentType).toBe("image/jpeg");
+  });
+
+  it("NFR-12 a failed thumbnail write takes the stored copy back too: the upload is refused, nothing stays behind (P-10)", async () => {
+    const store = new FailingThumbnailStore();
+    const processor = new FakeImageProcessor();
+    const r = await storeImage({ store, processor }, A, "m1.jpg", {
+      bytes: original,
+      contentType: "image/jpeg",
+    });
+    expect(!r.ok && r.error.code).toBe("media.storage_unavailable");
+    expect(store.objectCount()).toBe(0);
   });
 
   it("rejects an oversize upload with media.too_large before processing and stores nothing", async () => {
