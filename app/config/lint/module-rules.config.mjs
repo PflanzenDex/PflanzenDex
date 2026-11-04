@@ -68,10 +68,13 @@ export const GLOBAL_REFERENCE_TABLES = {
 // AB-15 (FR-QG-23): the web layer of a path below `packages/web/src/`, the single mapping for the layers app, shared and the
 // modules (direction app -> modules -> shared). [prefix, layer], the first match wins; `null` = not checked. A root file of
 // `src/` belongs to `app`; a folder named like a registered module is that module, any other folder is not checked.
-// Steps 1 to 4 are done: main, routes, the frame, destinations, flows, tests and stories are below `app/`, and the collector
-// cards are in the pokedex module (`components/` no longer exists).
+// The migration is done (step 5): only the target folders are listed, and every finding blocks.
 export const WEB_LAYERS = [
   ["app/", "app"],
   ["shared/", "shared"],
   ["styles/", null],
 ];
+
+// AB-11 (FR-QG-23 step 5): the folder of the kernel per package below `src/`, where it is not named like the kernel
+// module. In web the kernel moved into the shared layer (`shared/data`, step 2), so the glossary check looks there.
+export const KERNEL_FOLDERS = { web: "shared/data" };

@@ -16,12 +16,15 @@ const codeOnly = (h, src) =>
 const singular = (w) =>
   w.endsWith("es") ? [w, w.slice(0, -2), w.slice(0, -1)] : [w, w.replace(/s$/, "")];
 
-// AB-11: the kernel means nothing in the domain, so no identifier of its code carries a glossary word.
+// AB-11: the kernel means nothing in the domain, so no identifier of its code carries a glossary word. The kernel folder
+// is `src/<KERNEL>` unless KERNEL_FOLDERS names another one for the package (web: `shared/data`, FR-QG-23).
 export function checkKernelGlossary({ appDir, add, cfg, h }) {
   const words = new Set(cfg.KERNEL_GLOSSARY_WORDS ?? []);
   if (!words.size) return;
   for (const pkg of LAYERS)
-    for (const file of h.walkCode(path.join(appDir, "packages", pkg, "src", cfg.KERNEL))) {
+    for (const file of h.walkCode(
+      path.join(appDir, "packages", pkg, "src", cfg.KERNEL_FOLDERS?.[pkg] ?? cfg.KERNEL),
+    )) {
       if (isTestFile(file) || isTestHelper(path.basename(file))) continue;
       codeOnly(h, fs.readFileSync(file, "utf8"))
         .split("\n")

@@ -3,10 +3,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { importsOf, walkCode } from "../../check-boundaries.mjs";
+import { checkProject, importsOf, walkCode } from "../../check-boundaries.mjs";
 import { webLayerFindings, webLayerOf } from "./check-modules-graph.mjs";
 
-// AB-15 (FR-QG-23, report only): shared imports no module and not app, a module imports not app.
+// AB-15 (FR-QG-23, blocking since step 5): shared imports no module and not app, a module imports not app.
 const cfg = { MODULES: ["kernel", "care", "pokedex"].map((name) => ({ name })) };
 const W = "packages/web/src";
 const files = {
@@ -19,14 +19,16 @@ const files = {
     'import { c } from "../care";\nimport { B } from "../shared/ui/button";\n',
   [`${W}/app/a.ts`]: 'import { B } from "../shared/ui/button";\n',
 };
-function findings(patch = {}) {
+function tree(patch = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "web-layers-"));
   for (const [rel, text] of Object.entries({ ...files, ...patch })) {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), text);
   }
-  return webLayerFindings({ appDir: dir, cfg, h: { walkCode, importsOf } });
+  return dir;
 }
+const findings = (patch) =>
+  webLayerFindings({ appDir: tree(patch), cfg, h: { walkCode, importsOf } });
 
 describe("FR-QG-23 AB-15 web layers", () => {
   it("FR-QG-23 AB-15: a clean tree has no finding (app -> modules -> shared)", () =>
@@ -62,4 +64,16 @@ describe("FR-QG-23 AB-15 web layers", () => {
     assert.equal(webLayerOf("main.tsx", m), "app");
     assert.equal(webLayerOf("care/form.tsx", m), "care");
   });
+
+  it("FR-QG-23 AB-15 blocks: check-boundaries lists the finding as a violation", () => {
+    const dir = tree({ [`${W}/shared/ui/card.tsx`]: 'import { r } from "@/app/routes";\n' });
+    const v = checkProject(dir).filter((l) => l.startsWith("AB-15"));
+    assert.deepEqual(v, [`AB-15 ${W}/shared/ui/card.tsx:1 shared -> app: "@/app/routes"`]);
+  });
+
+  it("FR-QG-23 AB-15 blocks: a clean web tree adds no violation", () =>
+    assert.deepEqual(
+      checkProject(tree()).filter((l) => l.startsWith("AB-15")),
+      [],
+    ));
 });
