@@ -1,0 +1,105 @@
+{
+  "GET /achievements": [
+    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don"
+  ],
+  "GET /achievements/news": [
+    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don"
+  ],
+  "GET /achievements/rhythm": [
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,"
+  ],
+  "GET /achievements/year": [
+    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don"
+  ],
+  "GET /care-phases": [
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as "
+  ],
+  "GET /discover/suggestions": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /equipment/needs": [
+    "select id, name, lux_ceiling as \"luxCeiling\", ppfd, sort_order as \"sortOrder\" from light_zone order ",
+    "select id, type, name, status, manufacturer, model, product_id as \"productId\", price_eur::float8 as "
+  ],
+  "GET /equipment/recommendations": [
+    "select id, type, name, status, manufacturer, model, product_id as \"productId\", price_eur::float8 as ",
+    "select id, name, lux_ceiling as \"luxCeiling\", ppfd, sort_order as \"sortOrder\" from light_zone order "
+  ],
+  "GET /equipment/zones": [
+    "select id, name, lux_ceiling as \"luxCeiling\", ppfd, sort_order as \"sortOrder\" from light_zone order "
+  ],
+  "GET /exchange/match": [
+    "select swap_id as \"swapId\", role, other_id as \"otherId\", other_name as \"otherName\", offer_id as \"off",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select id, name, german, target_zone_id as \"targetZoneId\", difficulty, reasoning, image_url as \"imag",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /exchange/offers": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /feed": [
+    "select specimen_id as \"specimenId\", share_photos as photos from friend_shares($1)",
+    "select display_name as \"displayName\", time_zone as \"timeZone\", everything_private as \"everythingPriv",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /friends": [
+    "select specimen_id as \"specimenId\", share_photos as photos from friend_shares($1)",
+    "select display_name as \"displayName\", time_zone as \"timeZone\", everything_private as \"everythingPriv",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau"
+  ],
+  "GET /friends/:id/collection": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /friends/:id/shared": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /offers": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /offers/preview": [
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as "
+  ],
+  "GET /specimens/:id/measurements": [
+    "select id from account where subject = $1",
+    "select invitation_required() as required"
+  ],
+  "GET /today": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select id, name, light_zone_id as \"lightZoneId\", kind from location order by lower(name)",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /watering/due": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as "
+  ],
+  "GET /wishes/candidates": [
+    "select id, name, lux_ceiling as \"luxCeiling\", ppfd, sort_order as \"sortOrder\" from light_zone order "
+  ]
+}
