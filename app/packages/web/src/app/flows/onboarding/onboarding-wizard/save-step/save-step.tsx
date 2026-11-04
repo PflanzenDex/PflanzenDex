@@ -5,7 +5,10 @@ import { Label } from "@/shared/ui/display/label/label";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
 import { refreshLight, sharedZones } from "../../../../../light";
 import { ensureHome } from "../where-question/where-question";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./save-step.de.json";
 
+const ui = texts(table);
 type Token = () => Promise<string | undefined>;
 
 /** The own zones; a new account has none yet, so the standard lamps are laid out silently first (US-ONB-02 gives them from the start). */
@@ -78,31 +81,27 @@ export function SaveStep(props: {
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
-        Pflanze speichern
+        {ui("title")}
       </h2>
       <p className="m-0">
         <i>{species.latinName}</i>
         {species.germanName ? ` (${species.germanName})` : ""}
       </p>
-      <Label htmlFor="first-plant-zone">Lichtbedarf</Label>
+      <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
       <Select
         id="first-plant-zone"
         value={props.zoneId}
         disabled={zones === null}
         onChange={(e) => props.onZone(e.target.value)}
       >
-        <option value="">
-          {derived ? `${derived.name} (laut Art)` : "Unbekannt, die Art nennt keinen Wert"}
-        </option>
+        <option value="">{derived ? ui("derived", { name: derived.name }) : ui("unknown")}</option>
         {(zones ?? []).map((z) => (
           <option key={z.id} value={z.id}>
             {zoneLabel(z.name)}
           </option>
         ))}
       </Select>
-      <p className="m-0 text-sm text-muted-foreground">
-        Der Lichtbedarf kommt von der Art. Du kannst ihn ändern.
-      </p>
+      <p className="m-0 text-sm text-muted-foreground">{ui("hint")}</p>
       {props.children}
       {props.error && <p role="alert">{props.error}</p>}
     </section>

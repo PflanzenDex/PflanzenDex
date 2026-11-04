@@ -14,7 +14,10 @@ import { loadCarePhases } from "../../shared/api/care-phases-api";
 import { CarePhasesSkeleton } from "./care-phases-page.skeleton";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 import { usePhaseSwitch } from "../use-phase-switch";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./care-phases-page.de.json";
 
+const ui = texts(table);
 const KEY = ["care", "phases"] as const;
 type Token = () => Promise<string | undefined>;
 type Loaded = { rows: readonly PhasesRow[]; locations: readonly LightLocation[] };
@@ -40,9 +43,7 @@ export type PhasesHost = { onCaption: (text: string | null) => void };
 /** Tells the host how many plants have a phase, and clears the line when the list goes away. */
 function ReportCount({ host, count }: { host: PhasesHost | undefined; count: number }) {
   useEffect(() => {
-    host?.onCaption(
-      count === 1 ? "1 Pflanze mit Pflegephase" : `${count} Pflanzen mit Pflegephase`,
-    );
+    host?.onCaption(count === 1 ? ui("countOne") : ui("countMany", { count }));
     return () => host?.onCaption(null);
   }, [host, count]);
   return null;
@@ -60,11 +61,11 @@ export function CarePhasesPage(props: { api: string; token: Token; host?: Phases
   const move = usePhaseSwitch(api, token, again);
   const client = useQueryClient();
   const load = useCallback((t: string) => loadBoth(client, api, t), [api, client]);
-  const loading = "Pflegephasen werden geladen …";
+  const loading = ui("loading");
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <h2 id="care-phases-title" className="sr-only">
-        Pflegephasen
+        {ui("title")}
       </h2>
       <LoadFrame
         queryKey={KEY}

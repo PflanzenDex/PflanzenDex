@@ -7,8 +7,12 @@ import type {
 } from "@pflanzendex/core";
 import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../shared/data";
 import { sharedLocations, sharedZones } from "../../light";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { loadCareProfiles, saveCareProfile } from "../care-profile/care-profile-api";
 import { CareProfileSectionSkeleton } from "./care-profile-page.skeleton";
+import table from "./care-profile-page.de.json";
+
+const ui = texts(table);
 import { ProfileList } from "../care-profile/care-profile-list/care-profile-list";
 
 interface Data {
@@ -66,8 +70,8 @@ export function CareProfileSection(props: {
         fresh
         token={token}
         load={load}
-        loadingText="Pflegeprofil wird geladen …"
-        loadingFallback={<CareProfileSectionSkeleton label="Pflegeprofil wird geladen …" />}
+        loadingText={ui("loading")}
+        loadingFallback={<CareProfileSectionSkeleton label={ui("loading")} />}
       >
         {(data: Data) => (
           <ProfileList

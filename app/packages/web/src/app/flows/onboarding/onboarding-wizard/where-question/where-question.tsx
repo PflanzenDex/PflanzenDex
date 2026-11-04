@@ -8,8 +8,15 @@ import { setSpecimenLocation } from "../../../../../collection";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
 import { refreshLight, sharedLocations, sharedZones } from "../../../../../light";
 import { zoneLabel } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./where-question.de.json";
 
+const ui = texts(table);
 type Token = () => Promise<string | undefined>;
+
+/** The note after a save: the place and, when it has one, its light zone (P-10). */
+const savedText = (name: string, zone: LightZone | undefined) =>
+  ui("saved", { name, zone: zone ? `, ${zoneLabel(zone.name)}` : "" });
 
 /**
  * Makes sure the account has a place for the first plant: the server lays out the default location "Zuhause" only for
@@ -65,13 +72,13 @@ function ZoneChoice(props: {
 }) {
   return (
     <>
-      <Label htmlFor="first-plant-location-zone">{`Licht bei ${props.name}`}</Label>
+      <Label htmlFor="first-plant-location-zone">{ui("zoneFor", { name: props.name })}</Label>
       <Select
         id="first-plant-location-zone"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
-        <option value="">Keine Angabe</option>
+        <option value="">{ui("noZone")}</option>
         {props.zones.map((z) => (
           <option key={z.id} value={z.id}>
             {zoneLabel(z.name)}
@@ -130,17 +137,17 @@ export function WhereQuestion(props: {
     setSaving(false);
     if (!r.ok) return setError(errorText(r.error.code));
     const zone = places.zones.find((z) => z.id === (chosen.lightZoneId ?? zoneId));
-    props.onDone(`Standort gespeichert: ${chosen.name}${zone ? `, ${zoneLabel(zone.name)}` : ""}.`);
+    props.onDone(savedText(chosen.name, zone));
   };
   return (
     <section className="flex flex-col gap-3">
       {places.locations.length === 1 && chosen ? (
         <p className="m-0">
-          Wo steht sie? <strong>{zoneOf(chosen, places.zones)}</strong>
+          {ui("where")} <strong>{zoneOf(chosen, places.zones)}</strong>
         </p>
       ) : (
         <>
-          <Label htmlFor="first-plant-location">Wo steht sie?</Label>
+          <Label htmlFor="first-plant-location">{ui("where")}</Label>
           <Select
             id="first-plant-location"
             value={chosen?.id ?? ""}
@@ -160,10 +167,10 @@ export function WhereQuestion(props: {
       {error && <p role="alert">{error}</p>}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button type="button" disabled={saving} onClick={() => void save()}>
-          Hier steht sie
+          {ui("save")}
         </Button>
         <Button type="button" variant="ghost" onClick={() => props.onDone()}>
-          Später
+          {ui("later")}
         </Button>
       </div>
     </section>

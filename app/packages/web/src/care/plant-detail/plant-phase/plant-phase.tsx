@@ -7,10 +7,11 @@ import { Entry } from "../../phases/phases-list/entry/entry";
 import { switchedText } from "../../phases/phase-groups";
 import { usePhaseSwitch } from "../../phases/use-phase-switch";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./plant-phase.de.json";
 
+const ui = texts(table);
 type Token = () => Promise<string | undefined>;
-const NO_PHASE =
-  "Pflegephase: unbekannt. Für diese Art ist kein Ruhephasen-Zeitraum hinterlegt; trage ihn im Pflegeprofil ein.";
 
 const Loading = ({ text }: { text: string }) => (
   <p role="status" className="text-sm text-muted-foreground">
@@ -44,8 +45,8 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
         queryKey={["care", "phases"]}
         token={token}
         load={load}
-        loadingText="Pflegephase wird geladen …"
-        loadingFallback={<Loading text="Pflegephase wird geladen …" />}
+        loadingText={ui("loading")}
+        loadingFallback={<Loading text={ui("loading")} />}
       >
         {(data: Phase) =>
           data.row ? (
@@ -59,7 +60,7 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
               }
             />
           ) : (
-            <p className="text-sm text-muted-foreground">{NO_PHASE}</p>
+            <p className="text-sm text-muted-foreground">{ui("unknown")}</p>
           )
         }
       </LoadFrame>

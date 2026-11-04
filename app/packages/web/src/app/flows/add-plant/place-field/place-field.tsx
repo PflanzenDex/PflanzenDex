@@ -5,8 +5,11 @@ import { Select } from "@/shared/ui/fields/select/select";
 import { loadCards } from "../../../../collection";
 import { sharedLocations, sharedZones } from "../../../../light";
 import { useQueryClient, type QueryClient } from "../../../../shared/data";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { cuttingLight, zoneLabel } from "@pflanzendex/core";
+import table from "./place-field.de.json";
 
+const ui = texts(table);
 type Token = () => Promise<string | undefined>;
 
 interface Places {
@@ -73,13 +76,13 @@ export function PlaceField(props: {
   if (!places || places.locations.length === 0) return null;
   return (
     <>
-      <Label htmlFor="add-plant-place">Standort</Label>
+      <Label htmlFor="add-plant-place">{ui("label")}</Label>
       <Select
         id="add-plant-place"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
-        <option value="">Keiner</option>
+        <option value="">{ui("none")}</option>
         {places.locations.map((l) => (
           <option key={l.id} value={l.id}>
             {label(l, places.zones)}
