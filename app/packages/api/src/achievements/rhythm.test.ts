@@ -34,11 +34,16 @@ function deps(
     },
     treatments: {
       open: async () => new Map(Object.entries(opt.open ?? {})),
-      done: async (_u: string, id: string) => opt.done?.[id] ?? [],
+      doneMany: async (_u: string, ids: string[]) =>
+        new Map(ids.map((id) => [id, opt.done?.[id] ?? []] as const)),
     },
     measurements: {
-      list: async (_u: string, id: string) =>
-        (opt.dates?.[id] ?? []).map((date) => ({ date })).reverse(),
+      listMany: async (_u: string, ids: string[]) =>
+        new Map(
+          ids.map(
+            (id) => [id, (opt.dates?.[id] ?? []).map((date) => ({ date })).reverse()] as const,
+          ),
+        ),
     },
     pauses: { listPauses: async () => opt.pauses ?? [] },
     species: {

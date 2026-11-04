@@ -41,6 +41,31 @@ export class MeasurementsPostgres {
   }
 
   /**
+   * The measurements of several specimens in one statement (NFR-12). Per specimen the order is the one of `list`: the
+   * statement sorts by the same keys, and grouping keeps that order. Foreign IDs return nothing (P-04); no IDs, no query.
+   */
+  async listMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly MeasurementRow[]>> {
+    if (specimenIds.length === 0) return new Map();
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<MeasurementRow>(
+        `select ${COLUMNS} from measurement where specimen_id = any($1)
+         order by date desc, created_at desc, id`,
+        [specimenIds],
+      ),
+    );
+    const grouped = new Map<string, MeasurementRow[]>();
+    for (const row of r.rows) {
+      const own = grouped.get(row.specimenId);
+      if (own) own.push(row);
+      else grouped.set(row.specimenId, [row]);
+    }
+    return grouped;
+  }
+
+  /**
    * The latest measurement per specimen (date, with the same date the one recorded last); one query for all IDs.
    * Foreign IDs return nothing: the row rules of the account hide them (P-04).
    */
