@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Bei großer Schrift bricht eine Überschrift neben dem Zurück-Pfeil nicht mehr mitten im Wort um, zum Beispiel bei „Passende Angebote“.",
     "Bei großer Schrift bleiben „Gießen“ und „Behandeln“ in der Pflanzenansicht innerhalb der Karte und stehen untereinander.",
     "Bei großer Schrift bleibt der Knopf „Mehr“ in der Pflanzenansicht im Bild.",
     "Bei großer Schrift passen die Angaben eines Prüffalls in die Breite.",
