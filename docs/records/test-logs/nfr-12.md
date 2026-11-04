@@ -322,3 +322,59 @@ The friend routes of one friend are flat in the number of friends. Before this c
 
 - Statement counts only; no timing claim. Not measured: concurrent requests, cold caches, friends beyond 6.
 - The "before" block counts come from the same test on the old route code with the new seed; they were read from a temporary dump in the test (not committed).
+
+## 13. Issue #1249: catalog-scaling gate for species reads (2026-11-04)
+
+**Branch:** `chore/issue-1249-gate-species-reads-must` (PR #1268). Test: `app/packages/db/src/species-catalog-scaling.test.ts` (5 tests, names carry NFR-12 and US-QG-07, about 3 s, part of the db suite in `app-tests`).
+**Environment:** Linux, PostgreSQL 18.6 in Docker (loopback, worktree test database), scratch database owned by `pflanzendex_test_owner` (row security applies). Counts are deterministic; the timings are single runs and not a claim.
+
+**Purpose:** the per-account query-count gate counts statements, so it cannot see a read whose cost grows with the whole shared catalog (#1235). The gate seeds 100 species and 2,000 species for the same viewer. The 1,900 extra species are invisible to the viewer: 1,500 private proposals of another account, 200 rejected and 200 merged ones. The viewer sees 50 approved species and 10 of its own proposals in both catalogs, so every read returns the same rows. Reads: the species list, two searches (`gatea`, `gatea 1`) and the Pokedex facts (`APPROVED_FACTS`). The statements are the ones the adapters run (`searchQuery` and `APPROVED_FACTS` in `catalog/species/species-read.ts`), not approximations.
+
+**Fail rule:** the large catalog costs more than FACTOR = 2 times the small one (starting value, an assumption: not measured on a real catalog). The base is at least one function call, because the reviewer check runs once per statement and may run zero or one time depending on the plan; a constant never fails.
+
+### 13.1 Metric choice
+
+Candidates were measured on the current dev code with the same statements and the same data (PostgreSQL, `ANALYZE` after each seed; the numbers come from a temporary copy of the test that adds `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`, not committed).
+
+| Candidate | Passes dev (must be flat) | Detects the pre-0102 policy | Verdict |
+| --- | --- | --- | --- |
+| Shared buffer hits (`EXPLAIN`) | no: list 3.0x, search 3.3x, Pokedex facts 22x | weakly (list 1.5x, facts 1.6x) | rejected: the sequential scan of the table grows with the table itself, which is the accepted cost, not per-row work |
+| Subplan loops (`SubPlan` and `InitPlan` nodes) | no for search: 2.9x (the name lookups of `species_name` are the accepted linear scan); list and facts flat | no: the old policy calls a function, not a subplan (list and search 58 loops at both sizes) | rejected: it misses the policy cost it should catch |
+| Function calls (`pg_stat_user_functions`, `track_functions = all`) | yes: 0 to 1 call at both sizes | yes for the search (8.6x and 11.1x) | **chosen** |
+
+The chosen metric is the sum of the calls of all user functions per statement (delta of the cumulative counters around the statement, flushed by the same session, `pg_stat_force_next_flush()` and `pg_stat_clear_snapshot()`). The gate runs the reads as `pflanzendex_app` (`enterApplicationRole`, the same as `withAccount`), so the policy calls are the real ones.
+
+### 13.2 Numbers on dev (current policies), 100 vs 2,000 species
+
+| Read | Function calls 100 | Function calls 2,000 | Shared hits 100 | Shared hits 2,000 | SubPlan loops 100 | SubPlan loops 2,000 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Species list (50 rows) | 1 (`is_reviewer`) | 1 (`is_reviewer`) | 71 | 213 (3.0x) | 59 | 59 |
+| Species search `gatea` (50 rows) | 1 | 0 | 315 | 1,038 (3.3x) | 61 | 178 (2.9x) |
+| Species search `gatea 1` (36 rows) | 1 | 0 | 257 | 830 (3.2x) | 49 | 142 (2.9x) |
+| Pokedex facts (50 rows) | 0 | 0 | 2 | 44 (22x) | 0 | 0 |
+
+The gate passes on dev: every read is flat for function calls. The buffer and subplan columns show why they are not the metric: the same statements would fail on the healthy code.
+
+### 13.3 Numbers with the pre-0102 per-row policy (the self-test), 100 vs 2,000 species
+
+The old policies are the ones of migrations 0012 (`visible` on `species` and `species_name`: `species_status(id) is not null`) and 0017 (`reviewer_reads`: `is_reviewer() and is_open_proposal(id)`). The self-test applies them inside a transaction on the same data, measures, and rolls back (no policy is left behind; a test checks it).
+
+| Read | Function calls 100 | Function calls 2,000 | Factor | `species_status` 100 to 2,000 | Shared hits 100 to 2,000 |
+| --- | --- | --- | --- | --- | --- |
+| Species list (50 rows) | 202 | 202 | 1.0x (not detected) | 110 to 110 | 480 to 740 (1.5x) |
+| Species search `gatea` (50 rows) | 502 | 4,302 | **8.6x (fails)** | 270 to 2,170 | 1,179 to 9,331 (7.9x) |
+| Species search `gatea 1` (36 rows) | 376 | 4,176 | **11.1x (fails)** | 208 to 2,108 | 857 to 8,873 (10.4x) |
+| Pokedex facts (50 rows) | 100 | 100 | 1.0x (not detected) | 50 to 50 | 152 to 244 (1.6x) |
+
+The list and the Pokedex facts stay flat under the old policy, and the search does not. The reason is the planner's order of the predicates: the list and the facts filter the viewer's rows with their own column predicates (`review_status`, `review_account`), and those run before the policy function, so the policy is called only for the rows the statement returns (110 and 50). The search reads `species_name` and applies the policy before its own `like` filter, so the policy runs for every name in the catalog (2,170 calls at 2,000 species). The same policy cost is therefore visible only where a statement cannot pre-filter. Both search terms fail the gate with this message (the first one, the other has the same shape):
+
+> NFR-12 (#1235, US-QG-07): species read "species search (term "gatea")" grows with the shared catalog. Metric: function calls per statement (pg_stat_user_functions, track_functions = all). 100 species: 502 calls, 2000 species: 4302 calls, factor 8.6x (limit 2x). Functions at 2000 species: public.is_reviewer 2132, public.species_status 2170. A lookup per catalog row is the usual cause; see docs/records/test-logs/nfr-12.md, section 13.
+
+Rows: the same rows under both policies and both sizes (a test checks it).
+
+### 13.4 Limits
+
+- The gate does not see a per-row policy cost in a statement that filters the same rows first (list, Pokedex facts): by design of the statements, the cost there is flat in function calls. A regression of that kind shows only where a statement reads the table before its own filter, such as the search. A policy-only probe (for example `select id from species` as the viewer) would close the gap, but it is not a read of the API; it is a possible follow-up, not part of this gate.
+- The seq scan of the table grows with the catalog (buffer hits 3x on dev at 20x the species); it is accepted (no trigram index, owner decision on #1235) and is not gated.
+- Statement shapes and plans are those of PostgreSQL 18 with `ANALYZE` on fixed data; a plan change in a later version can change the counts of the 0 or 1 `is_reviewer` calls (absorbed by the base of one call) but not the per-row calls.
+- Two catalog sizes, one viewer, one filler shape (other accounts' proposals, rejected and merged species). Not measured: several viewers, reviewers (they see more rows), a catalog of 20,000 species.
