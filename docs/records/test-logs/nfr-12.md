@@ -124,13 +124,30 @@ SQL statements, total (payload), 60 species, identical at 100 and 1,000 specimen
 
 ---
 
-## 2. Issue #1242: pool size, time limits and database memory (2026-11-04)
+## 8. Audit 2026-11-04, wave 1: perf seed and sign-in guard (issues #1234, #1236)
+
+**Environment:** the same workstation, throw-away `postgres:18.6-alpine3.24` container per run, `PERF_SIZES=100,1000`, 30 timed runs per request (median / p95 in ms).
+
+- **#1234 (PR #1253):** `perf/seed.ts` posted every measurement without `timeZone` and with values off the 0.5 grid and never read the reply, so every `perf:measure` run since `timeZone` became required had **zero measurements**. Every seed write now fails loudly on a non-2xx reply, and a row-count check after seeding requires `n` specimens, `2n` measurements and 10 wishes. After the fix: perf-100 has 100 specimens and 200 measurements, perf-1000 has 1,000 and 2,000. Statement counts are unchanged by the fix; `/specimens/cards` now carries the measurements (1,000 specimens: 390,551 → 451,550 bytes). Numbers in earlier sections that were measured after `timeZone` became required ran on empty measurement tables.
+- **#1236 (PR #1256):** the sign-in guard was registered for `/x` and `/x/*`, and Hono's `/x/*` also matches `/x`, so every exact-path request admitted the account twice (6 statements and one transaction more). `GET /account` no longer writes `account_data` on every read (only when the row is missing, the token changed or `last_active_at` is older than an hour).
+
+| Request           | Before: stmts (payload) | After: stmts (payload) | 1,000 specimens, median / p95 ms: before → after |
+| ----------------- | ----------------------- | ---------------------- | ------------------------------------------------ |
+| `GET /today`      | 112 (24)                | 106 (22)               | 36.8 / 49.2 → 33.8 / 43.2                        |
+| `GET /specimens`  | 17 (5)                  | 11 (3)                 | 14.0 / 22.6 → 14.9 / 23.0                        |
+| `GET /species?q=` | 17 (5)                  | 11 (3)                 | 9.4 / 17.6 → 8.4 / 16.5                          |
+
+The other measured requests were guarded once already and are unchanged. Latency differences are within run-to-run noise (one run each); the statement counts are exact.
+
+---
+
+## 9. Issue #1242: pool size, time limits and database memory (2026-11-04)
 
 **Environment:** the same workstation (AMD Ryzen 5 3600, 12 threads), Node v24.21.0. PostgreSQL 18.6 in a throw-away container (`postgres:18.6-alpine3.24`, loopback port). **Before:** commit `792190a8` (the claim), pool of 4 connections, PostgreSQL defaults, no memory limit. **After:** this branch: pool of 12 connections (`PFLANZENDEX_DB_POOL_MAX`, the new default), limits of 5 s per statement, 3 s per lock and 30 s idle inside a transaction; the container with `--memory 384m` and `shared_buffers` 128 MB, `work_mem` 4 MB and `effective_cache_size` 256 MB (the compose settings).
 
 Concurrency: `npm run perf:concurrency -w @pflanzendex/api` (`perf/load/concurrency.ts`): the Heute screen (`/today` and `/specimens/hints`, one after the other) per virtual user, 32 accounts with 100 specimens each, 10 s per level after a 2 s warm-up. Latency is per screen. The "before" runs used an earlier version of the script that took the pool size from `PERF_POOL_MAX` and built a plain `pg` pool of that size (no timeouts, as the old production pool); the accounts were seeded once and reused.
 
-### 2.1 Concurrency: the pool size sweep at 32 users
+### 9.1 Concurrency: the pool size sweep at 32 users
 
 | Pool connections | Before: screens/s | Before: median ms | Before: p95 ms | After: screens/s | After: median ms | After: p95 ms |
 | ---------------- | ----------------- | ----------------- | -------------- | ---------------- | ---------------- | ------------- |
@@ -141,7 +158,7 @@ Concurrency: `npm run perf:concurrency -w @pflanzendex/api` (`perf/load/concurre
 
 Rule for the default: the smallest pool that reaches at least 90 % of the best throughput. The best measured throughput is about 110 screens/s (16 connections). 8 connections reach 94 screens/s (86 %), 12 reach 106 (96 %). **12 is the new default.** Above 12 the gain is small (16 connections: about 4 % more throughput), so the larger pool buys little for its extra connections.
 
-### 2.2 Concurrency: all levels, before (4 connections) and after (12 connections)
+### 9.2 Concurrency: all levels, before (4 connections) and after (12 connections)
 
 | Virtual users | Before (pool 4): screens/s | median ms | p95 ms | After (pool 12, new default): screens/s | median ms | p95 ms |
 | ------------- | -------------------------- | --------- | ------ | --------------------------------------- | --------- | ------ |
@@ -153,7 +170,7 @@ Rule for the default: the smallest pool that reaches at least 90 % of the best t
 
 With 4 connections the old code is limited by the pool (throughput flat at about 60 screens/s from 4 users on). The per-transaction limits add no measurable cost: the "after" numbers with 4 connections are equal to the "before" ones (59.2 against 59.7 screens/s at 32 users, median 537 against 534 ms).
 
-### 2.3 Endpoints: `npm run perf:measure` (4 connections in the harness, 30 runs)
+### 9.3 Endpoints: `npm run perf:measure` (4 connections in the harness, 30 runs)
 
 Statement counts are the same before and after for every endpoint: the request frame (`begin`, `set local role`, one `select set_config` with the account and the three limits, `commit`) has the same number of statements as before, and the counts are the same ones that the query-count gate watches.
 
@@ -173,7 +190,7 @@ Statement counts are the same before and after for every endpoint: the request f
 | Entdecken  | `GET /wishes/candidates`                      | 51 (11)                             | 10.9 / 11.0                    | 18.7 / 17.8                      |
 | Artenliste | `GET /species?q=`                             | 11 (3)                              | 8.9 / 7.5                      | 8.5 / 9.2                        |
 
-### 2.4 Database container memory (`docker stats`, one sample per second)
+### 9.4 Database container memory (`docker stats`, one sample per second)
 
 | Run                       | Settings                                                | Peak memory of `db` |
 | ------------------------- | ------------------------------------------------------- | ------------------- |
