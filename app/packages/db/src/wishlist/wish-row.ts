@@ -1,4 +1,5 @@
-import type { PoolClient } from "pg";
+import type { Pool, PoolClient } from "pg";
+import { withAccount } from "../kernel/index.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
 import type { WishChange, WishPurchase, WishRow, WishValues } from "@pflanzendex/core";
@@ -13,4 +14,18 @@ export async function findWish(c: PoolClient, wishId: string): Promise<WishRow |
     wishId,
   ]);
   return r.rows[0];
+}
+
+/**
+ * Whether the account holds an open or bought plant wish: the rows of `open` and `bought` together, answered by one
+ * `exists` on the same rows (NFR-12, US-ONB-05). The row rules apply as for the lists; runs as the account of the
+ * caller (P-04). A function beside the rows, because `WishesPostgres` is at the file size limit.
+ */
+export async function hasOpenOrBoughtWish(pool: Pool, userId: string): Promise<boolean> {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ found: boolean }>(
+      `select exists(select 1 from wish where type = 'plant' and status in ('wishlist', 'bought')) as found`,
+    ),
+  );
+  return r.rows[0]?.found === true;
 }

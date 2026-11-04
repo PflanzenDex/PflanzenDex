@@ -10,6 +10,7 @@ const SIZES = (process.env["PERF_SIZES"] ?? "100,1000").split(",").map(Number);
 const RUNS = Number(process.env["PERF_RUNS"] ?? 30);
 const TZ = "timeZone=Europe%2FBerlin";
 const ENDPOINTS: readonly [screen: string, path: string][] = [
+  ["Alle Seiten", `/onboarding/unlocks?${TZ}`],
   ["Heute", `/today?${TZ}`],
   ["Heute", "/specimens/hints"],
   ["Sammlung", `/specimens/cards?${TZ}`],
