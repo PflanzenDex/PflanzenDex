@@ -73,7 +73,11 @@ export function PageHeader(props: PageHeaderProps) {
       <Heading
         {...(props.headingId ? { id: props.headingId } : {})}
         className={cn(
-          "min-w-20 flex-1 font-semibold [overflow-wrap:anywhere]",
+          // A title beside a way back keeps 230 px (NFR-13): when the row cannot give it, the row wraps and the back control
+          // sits above the title. The threshold is in px, so it does not grow with the text. With an action (#1177) and
+          // without a way back the minimum stays 5 rem.
+          back && !action ? "min-w-[230px]" : "min-w-20",
+          "flex-1 font-semibold [overflow-wrap:anywhere]",
           Heading === "h1" ? "text-2xl" : "text-xl",
         )}
       >
