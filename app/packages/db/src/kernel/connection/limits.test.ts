@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { openPool, testOwnerUrl } from "../connection/connection.ts";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { openAdminPool, openPool, testOwnerUrl } from "../connection/connection.ts";
 import { withAccount, withLongAccount } from "../tenant.ts";
 import {
   isDatabaseUnavailable,
@@ -141,7 +141,30 @@ describe("NFR-12 limits in PostgreSQL", () => {
     expect(r.rowCount).toBe(1);
   });
 
-  it("NFR-12 a pool keeps a listener for connection errors, so a dropped idle connection cannot end the process", () => {
-    expect(pool.listenerCount("error")).toBeGreaterThan(0);
+  it("NFR-12 a dropped idle connection is logged without the process ending, and the pool serves the next request", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const own = openPool(testOwnerUrl(), false, { max: 2 });
+    const admin = openAdminPool();
+    try {
+      const client = await own.connect();
+      const pid = (await client.query<{ pid: number }>("select pg_backend_pid() as pid")).rows[0]
+        ?.pid;
+      expect(pid).toEqual(expect.any(Number));
+      client.release();
+      // The idle connection is ended by the server; without the pool's error listener this would end the process.
+      const lost = new Promise<Error>((resolve) => own.once("error", resolve));
+      const killed = await admin.query<{ ok: boolean }>("select pg_terminate_backend($1) as ok", [
+        pid,
+      ]);
+      expect(killed.rows[0]?.ok).toBe(true);
+      const error = await lost;
+      expect(logged).toHaveBeenCalledWith("database connection lost", error.message);
+      const next = await own.query<{ one: number }>("select 1 as one");
+      expect(next.rows[0]?.one).toBe(1);
+    } finally {
+      logged.mockRestore();
+      await admin.end();
+      await own.end();
+    }
   });
 });
