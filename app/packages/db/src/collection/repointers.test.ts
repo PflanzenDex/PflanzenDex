@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, withAccount, openOwnerPool } from "../kernel/index.ts";
 import { assignRole, deleteAccountsWithCatalog, reviewCaseIdOf } from "../fixtures.ts";
 import { ReviewPostgres, SpeciesPostgres } from "../catalog/index.ts";
-import type { SpeciesName, SpeciesValues } from "../catalog/species.ts";
+import type { SpeciesName, SpeciesValues } from "../catalog/species/species.ts";
 import { CareProfilePostgres, COLLECTION_REPOINTERS, SpecimenPostgres } from "./index.ts";
 
 // US-BES-10, FR-BES-11, P-04, P-10: the merge of a proposal re-points the creator's references atomically

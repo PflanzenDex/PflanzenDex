@@ -9,7 +9,7 @@ import {
   ReviewPostgres,
   SpeciesPostgres,
 } from "../index.ts";
-import type { SpeciesValues } from "../species.ts";
+import type { SpeciesValues } from "../species/species.ts";
 
 // US-BES-16, DM-BES-06, DM-BES-07, FR-BES-12, FR-BES-19: corrections and version history (`make db-up`).
 let owner: Pool;

@@ -5,7 +5,7 @@ import { withAccount, migrate, openOwnerPool, openFixturePool } from "../kernel/
 import { findSchemaViolations } from "../schema-check.ts";
 import { assignRole } from "../fixtures.ts";
 import { SpeciesPostgres, ReviewPostgres } from "./index.ts";
-import type { SpeciesName, SpeciesValues } from "./species.ts";
+import type { SpeciesName, SpeciesValues } from "./species/species.ts";
 
 // US-BES-01, FR-BES-02, FR-BES-11, E-02: species catalog with private proposals (real PostgreSQL, `make db-up`).
 let pool: Pool;

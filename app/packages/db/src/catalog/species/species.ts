@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
-import { withAccount } from "../kernel/index.ts";
+import { withAccount } from "../../kernel/index.ts";
+import { COLUMN, FIELDS, NOT_MERGED, SELECTION, VISIBLE, searchQuery } from "./species-read.ts";
 
 // The shapes are the interfaces of `core` (type-only import through its public entry, AB-2).
 import type {
@@ -19,51 +20,7 @@ export interface SpeciesFacts {
 }
 export type { Species, SpeciesCreation, SpeciesHit, SpeciesName, SpeciesValues };
 
-/** Column per field (without synonyms: they live in `species_name`). */
-const COLUMN: Record<Exclude<keyof SpeciesValues, "synonyms">, string> = {
-  latinName: "latin_name",
-  genus: "genus",
-  epithet: "epithet",
-  cultivar: "cultivar",
-  germanName: "german_name",
-  englishName: "english_name",
-  familyGerman: "family_german",
-  familyLatin: "family_latin",
-  difficulty: "difficulty",
-  standardLevel: "standard_level",
-  lightDemandLux: "light_demand_lux",
-  softLeaf: "soft_leaf",
-  dormancyFrom: "dormancy_from",
-  dormancyUntil: "dormancy_until",
-  locationHint: "location_hint",
-  growthMeasure: "growth_measure",
-  etiolationSigns: "etiolation_signs",
-  wateringHint: "watering_hint",
-  substrate: "substrate",
-  pruning: "pruning",
-  growthHacks: "growth_hacks",
-  successCriteria: "success_criteria",
-  botanicalStory: "botanical_story",
-  source: "source",
-};
-const FIELDS = Object.keys(COLUMN) as (keyof typeof COLUMN)[];
-
-// Status and ownership come from functions with owner rights (migration 0005): the review list hides foreign cases.
-const SELECTION = `a.id, ${FIELDS.map((f) => `a.${COLUMN[f]} as "${f}"`).join(", ")},
-  coalesce((select array_agg(n.display order by n.display) from species_name n
-             where n.species_id = a.id and n.field = 'synonym'), '{}') as "synonyms",
-  coalesce(species_status(a.id), (select v.status from review_case v where v.object_kind = 'species' and v.object_id = a.id)) as "reviewStatus",
-  (select v.reason from review_case v where v.object_kind = 'species' and v.object_id = a.id
-      and v.account_id = current_account()) as "reviewReason",
-  a.created_by as "createdBy", species_own(a.id) as "own", a.version`;
-// What the application shows: approved species and own proposals (FR-BES-11). Reviewers may additionally read foreign
-// open proposals by row rule (US-BES-10); only `findForReview` asks for them.
-const VISIBLE = "species_status(a.id) is not null";
 const BY_IDS = `select ${SELECTION} from species a where a.id = any($1::uuid[]) and ${VISIBLE}`;
-// A merged proposal is a duplicate that is gone for everybody, reviewers included.
-const NOT_MERGED = `not exists (select from review_case v where v.object_kind = 'species' and v.object_id = a.id and v.status = 'merged')`;
-
-const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
 
 /**
  * Adapter for the species catalog; every call runs as the caller's account under the row rules: own proposals
@@ -97,24 +54,16 @@ export class SpeciesPostgres {
         `select a.latin_name as "latinName", a.german_name as "germanName", a.difficulty,
                 a.standard_level as "lightZone"
            from species a
-          where a.cultivar is null and species_status(a.id) in ('curated', 'reviewed')`,
+          where a.cultivar is null and a.review_status in ('curated', 'reviewed')`,
       ),
     );
     return r.rows;
   }
 
   async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {
+    const { text, values } = searchQuery(norm);
     const r = await withAccount(this.pool, userId, (c) =>
-      c.query<Species & { field: NameField | null; display: string | null }>(
-        `select ${SELECTION}, t.field, t.display from species a
-           left join lateral (
-             select n.field, n.display from species_name n
-              where n.species_id = a.id and $1::text is not null and n.norm like $1::text
-              order by array_position(array['latin','german','english','synonym'], n.field) limit 1) t on true
-          where ($1::text is null or t.field is not null) and ${VISIBLE}
-          order by a.latin_name limit 50`,
-        [norm === null ? null : mask(norm)],
-      ),
+      c.query<Species & { field: NameField | null; display: string | null }>(text, values),
     );
     return r.rows.map(({ field, display, ...species }) => ({
       ...species,
@@ -163,7 +112,8 @@ export class SpeciesPostgres {
       const key = names.filter((n) => n.field === "latin" || n.field === "synonym");
       const duplicate = await c.query<{ id: string }>(
         `select n.species_id as id from species_name n
-          where n.field in ('latin', 'synonym') and n.norm = any($1) and species_status(n.species_id) is not null
+          where n.field in ('latin', 'synonym') and n.norm = any($1)
+            and exists (select from species a where a.id = n.species_id and ${VISIBLE})
           limit 1`,
         [key.map((n) => n.norm)],
       );

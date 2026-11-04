@@ -13,7 +13,7 @@ import {
 } from "../index.ts";
 import type { FieldValueRecord, SnapshotRecord } from "./fill-store.ts";
 import type { LoadRecord } from "./catalog-load.ts";
-import type { SpeciesName, SpeciesValues } from "../species.ts";
+import type { SpeciesName, SpeciesValues } from "../species/species.ts";
 
 // US-BES-12, DM-BES-05, DM-BES-06, FR-BES-12, FR-BES-19: the database side of the catalog fill (`make db-up`).
 let owner: Pool;
