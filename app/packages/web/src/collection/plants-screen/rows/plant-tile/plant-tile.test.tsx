@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { PlantTile } from "./plant-tile";
 
@@ -46,5 +46,37 @@ describe("US-QS-19 a plant tile in two columns at 360 px (issue 1108)", () => {
       expect(line.className).not.toMatch(/overflow-wrap|break-/);
     }
     expect(tile.className).toContain("py-1.5");
+  });
+});
+
+describe("NFR-12 a plant tile asks the thumbnail of its photo", () => {
+  it("NFR-12 the tile requests size=thumb and shows the picture it gets back", async () => {
+    const requested: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        requested.push(String(url));
+        return {
+          ok: true,
+          status: 200,
+          blob: async () => new Blob([new Uint8Array([1])]),
+        } as Response;
+      }),
+    );
+    URL.createObjectURL = vi.fn(() => "blob:tile");
+    const withPhoto = {
+      ...card,
+      photo: { url: "/specimens/s1/measurements/m1/photo", date: "2026-10-01" },
+    } as unknown as SpecimenCard;
+    const { container } = render(
+      <MemoryRouter>
+        <PlantTile card={withPhoto} access={{ api: "http://api", token: async () => "tok" }} />
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:tile"),
+    );
+    expect(requested).toEqual(["http://api/specimens/s1/measurements/m1/photo?size=thumb"]);
+    vi.unstubAllGlobals();
   });
 });

@@ -3,6 +3,14 @@ type FetchFn = typeof fetch;
 /** Fired on `window` after every write that succeeded, so quiet observers (lock states, achievement banner) can look again. */
 export const WRITE_SUCCEEDED = "pflanzendex:write-succeeded";
 
+/**
+ * Sends `WRITE_SUCCEEDED` once for a successful write. Every write goes through `call` (or the photo upload, which calls
+ * it too), so each write announces itself exactly once, whichever screen or hook sent it (issue 1244).
+ */
+export function announceWrite(): void {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(WRITE_SUCCEEDED));
+}
+
 /** API error with a stable code (FR-QG-11); `D` is the shape of optional extra data of the error. */
 export interface ApiError<D = unknown> {
   code: string;
@@ -31,8 +39,9 @@ export async function call<T, D = unknown>(
   init: { method?: string; body?: unknown; key?: string } = {},
 ): Promise<Response<T, D>> {
   try {
+    const method = init.method ?? "GET";
     const res = await fetchFn(url, {
-      method: init.method ?? "GET",
+      method,
       headers: {
         Authorization: `Bearer ${token}`,
         ...(init.body === undefined ? {} : { "Content-Type": "application/json" }),
@@ -41,7 +50,10 @@ export async function call<T, D = unknown>(
       ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
     });
     const body = (await res.json().catch(() => ({}))) as { error?: ApiError<D> };
-    if (res.ok) return { ok: true, value: body as T };
+    if (res.ok) {
+      if (method !== "GET") announceWrite();
+      return { ok: true, value: body as T };
+    }
     if (res.status === 401)
       return {
         ok: false,
@@ -55,16 +67,13 @@ export async function call<T, D = unknown>(
 
 /**
  * Writes carry a fresh repeat-guard key per call (`Idempotency-Key`). A write that succeeded tells quiet observers
- * (lock states, achievement banner) to look again, whichever screen sent it (US-ONB-05).
+ * (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
  */
 export const createWrite =
   <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
-  async (method, path, body) => {
-    const r = await call<unknown, D>(fetchFn, `${api}${path}`, token, {
+  (method, path, body) =>
+    call<unknown, D>(fetchFn, `${api}${path}`, token, {
       method: method,
       body,
       key: crypto.randomUUID(),
     });
-    if (r.ok && typeof window !== "undefined") window.dispatchEvent(new Event(WRITE_SUCCEEDED));
-    return r;
-  };

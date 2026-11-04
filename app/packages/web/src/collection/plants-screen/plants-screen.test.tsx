@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Distribution, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
@@ -289,6 +289,35 @@ describe("US-QS-19 loading and error states of the plants", () => {
     render(page());
     expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("NFR-12 the Sammlung transfers thumbnails only", () => {
+  it("NFR-12 a Sammlung with 100 photographed plants requests only the thumbnails of the visible page", async () => {
+    const requested: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        requested.push(String(url));
+        return {
+          ok: true,
+          status: 200,
+          blob: async () => new Blob([new Uint8Array([1])]),
+        } as Response;
+      }),
+    );
+    URL.createObjectURL = vi.fn(() => "blob:plant");
+    const photographed = Array.from({ length: 100 }, (_, i) =>
+      card(i + 1, {
+        photo: { url: `/specimens/e${i + 1}/measurements/m${i + 1}/photo`, date: "2026-10-01" },
+      }),
+    );
+    screenWith(photographed);
+    await waitFor(() => expect(requested.length).toBeGreaterThan(0));
+    const visible = screen.getAllByRole("listitem").length;
+    await waitFor(() => expect(requested).toHaveLength(visible));
+    expect(requested.every((url) => url.endsWith("/photo?size=thumb"))).toBe(true);
     vi.unstubAllGlobals();
   });
 });

@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { InMemoryObjectStore, MEDIA_LIMITS, storeImage } from "@pflanzendex/core";
+import { InMemoryObjectStore, MEDIA_LIMITS, storeImage, thumbnailName } from "@pflanzendex/core";
 import { createSharpProcessor } from "./index";
 
 // Contract of the port `ImageProcessor` (TE-05, QG-D3, FR-WAC-09) with the real image library and the in-memory store (no S3 here: see s3-store.test.ts).
@@ -60,10 +60,10 @@ describe("TE-05 / QG-D3 photo pipeline with sharp", () => {
     expect(meta.format).toBe("jpeg");
   });
 
-  it("FR-WAC-09 the original is not stored: the only object is the processed image", async () => {
+  it("FR-WAC-09 the original is not stored: the only objects are the processed image and its thumbnail", async () => {
     const original = await gpsPhoto(400, 300);
     const { store } = await upload(original);
-    expect(store.objectCount()).toBe(1);
+    expect(store.objectCount()).toBe(2); // the stored copy and its thumbnail (NFR-12)
     expect(store.containsBytes(original)).toBe(false);
   });
 
@@ -123,5 +123,38 @@ describe("TE-05 / QG-D3 photo pipeline with sharp", () => {
     const refusing = createSharpProcessor({ maxPixels: 1_000_000 });
     const r = await refusing.process(huge);
     expect(!r.ok && r.error.code).toBe("media.too_large");
+  });
+});
+
+describe("NFR-12 the processed image comes with its thumbnail", () => {
+  it("NFR-12 the thumbnail is a JPEG with a 256 px long side, upright and without metadata", async () => {
+    const processed = await processor.process(await gpsPhoto(3200, 2000, 6));
+    if (!processed.ok) throw new Error("not processed");
+    const { thumbnail } = processed.value;
+    expect([thumbnail.contentType, thumbnail.width, thumbnail.height]).toEqual([
+      "image/jpeg",
+      160,
+      256,
+    ]);
+    const meta = await sharp(thumbnail.bytes).metadata();
+    expect([meta.format, meta.width, meta.height, meta.exif, meta.orientation]).toEqual([
+      "jpeg",
+      160,
+      256,
+      undefined,
+      undefined,
+    ]);
+    expect(metadataSegments(thumbnail.bytes)).toEqual([]);
+    expect(Buffer.from(thumbnail.bytes).includes("TestCam")).toBe(false);
+  });
+
+  it("NFR-12 storing keeps the stored copy at 1600 px and writes the thumbnail under the thumbnail name", async () => {
+    const original = await gpsPhoto(3200, 2000, 6);
+    const { store, result } = await upload(original);
+    expect(result.ok).toBe(true);
+    const small = await store.get(A, thumbnailName("photo-1.jpg"));
+    if (!small.ok) throw new Error("no thumbnail");
+    expect(store.objectCount()).toBe(2);
+    expect((await sharp(small.value.bytes).metadata()).height).toBe(256);
   });
 });
