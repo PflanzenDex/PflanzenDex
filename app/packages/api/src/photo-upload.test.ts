@@ -2,7 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { InMemoryObjectStore, MEDIA_LIMITS } from "@pflanzendex/core";
+import {
+  appError,
+  failed,
+  InMemoryObjectStore,
+  MEDIA_LIMITS,
+  thumbnailName,
+  type Result,
+} from "@pflanzendex/core";
 import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "./app";
 import { createSharpProcessor } from "./media";
@@ -274,5 +281,140 @@ describe("US-WAC-05 reading the photo back is private to the owner (P-05)", () =
     expect(((await r.json()) as { error: { code: string } }).error.code).toBe(
       "measurement.photo_not_found",
     );
+  });
+});
+
+/** A store that refuses to write thumbnails, like an unavailable bucket for one write (NFR-12, P-10). */
+class FailingThumbnailStore extends InMemoryObjectStore {
+  override async put(
+    accountId: string,
+    name: string,
+    bytes: Uint8Array,
+    contentType: string,
+  ): Promise<Result<void>> {
+    if (name.endsWith("-thumb.jpg")) return failed(appError("media.storage_unavailable"));
+    return super.put(accountId, name, bytes, contentType);
+  }
+}
+
+describe("NFR-12 thumbnails for tiles and cards", () => {
+  const read = (sub: string | null, e: string, m: string, query = "") =>
+    app.request(`/specimens/${e}/measurements/${m}/photo${query}`, {
+      headers: sub ? { authorization: `Bearer valid:${sub}` } : {},
+    });
+  const accountOf = async (e: string) =>
+    (await admin.query("select account_id from specimen where id = $1", [e])).rows[0]
+      .account_id as string;
+  const longEdge = async (bytes: Uint8Array) => {
+    const meta = await sharp(bytes).metadata();
+    return Math.max(meta.width ?? 0, meta.height ?? 0);
+  };
+
+  it("NFR-12 an upload stores a 256 px thumbnail next to the photo, without metadata", async () => {
+    const e = await newSpecimen(subA, "Vorschau");
+    await measure(subA, e);
+    const r = await upload(subA, e, await gpsPhoto(3200, 2000, 6));
+    const account = await accountOf(e);
+    const small = await store.get(account, thumbnailName(r.body["photo"] as string));
+    if (!small.ok) throw new Error("no thumbnail stored");
+    const meta = await sharp(small.value.bytes).metadata();
+    expect([meta.format, Math.max(meta.width ?? 0, meta.height ?? 0), meta.exif]).toEqual([
+      "jpeg",
+      256,
+      undefined,
+    ]);
+    expect(Buffer.from(small.value.bytes).includes(Buffer.from("TestCam"))).toBe(false);
+  });
+
+  it("NFR-12 size=thumb answers the thumbnail, the plain request the stored copy", async () => {
+    const e = await newSpecimen(subA, "Groesse");
+    await measure(subA, e);
+    const mid = (await upload(subA, e, await gpsPhoto(3200, 2000, 6))).body["measurementId"];
+    const small = await read(subA, e, mid as string, "?size=thumb");
+    const full = await read(subA, e, mid as string);
+    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect(small.headers.get("cache-control")).toContain("private");
+    const smallBytes = new Uint8Array(await small.arrayBuffer());
+    const fullBytes = new Uint8Array(await full.arrayBuffer());
+    expect([await longEdge(smallBytes), await longEdge(fullBytes)]).toEqual([256, 1600]);
+    expect(smallBytes.byteLength).toBeLessThan(fullBytes.byteLength);
+  });
+
+  it("NFR-12 size is validated: only thumb is allowed, anything else is input.invalid (400)", async () => {
+    const e = await newSpecimen(subA, "Pruefung");
+    await measure(subA, e);
+    const mid = (await upload(subA, e, await gpsPhoto(400, 300))).body["measurementId"] as string;
+    for (const query of ["?size=huge", "?size=full", "?size=", "?size=thumb&size=thumb"]) {
+      const r = await read(subA, e, mid, query);
+      expect(r.status).toBe(400);
+      expect(((await r.json()) as { error: { code: string } }).error.code).toBe("input.invalid");
+    }
+  });
+
+  it("NFR-12 a photo stored before the thumbnail existed answers the stored copy for size=thumb, never 404", async () => {
+    const e = await newSpecimen(subA, "Altbestand");
+    await measure(subA, e);
+    const up = await upload(subA, e, await gpsPhoto(400, 300));
+    const account = await accountOf(e);
+    await store.delete(account, thumbnailName(up.body["photo"] as string));
+    const mid = up.body["measurementId"] as string;
+    const r = await read(subA, e, mid, "?size=thumb");
+    const full = await read(subA, e, mid);
+    expect(r.status).toBe(200);
+    expect(Array.from(new Uint8Array(await r.arrayBuffer()))).toEqual(
+      Array.from(new Uint8Array(await full.arrayBuffer())),
+    );
+  });
+
+  it("NFR-12 another account never reads the thumbnail of a photo (P-04)", async () => {
+    const e = await newSpecimen(subA, "Fremdvorschau");
+    await measure(subA, e);
+    const mid = (await upload(subA, e, await gpsPhoto(400, 300))).body["measurementId"] as string;
+    await call(subB, "GET", "/account"); // creates the account of B
+    const r = await read(subB, e, mid, "?size=thumb");
+    expect(r.status).toBe(404);
+    expect(((await r.json()) as { error: { code: string } }).error.code).toBe("specimen.not_found");
+    expect((await read(null, e, mid, "?size=thumb")).status).toBe(401);
+  });
+
+  it("NFR-12 replacing the photo removes the thumbnail of the old one with it", async () => {
+    const e = await newSpecimen(subA, "Ersatz");
+    await measure(subA, e);
+    const first = await upload(subA, e, await gpsPhoto(400, 300));
+    const second = await upload(subA, e, await gpsPhoto(300, 400), "&replace=true");
+    const account = await accountOf(e);
+    expect(await store.exists(account, thumbnailName(first.body["photo"] as string))).toEqual({
+      ok: true,
+      value: false,
+    });
+    expect(await store.exists(account, thumbnailName(second.body["photo"] as string))).toEqual({
+      ok: true,
+      value: true,
+    });
+  });
+
+  it("NFR-12 a failed thumbnail write refuses the upload with 502 and keeps the measurement without photo (P-10)", async () => {
+    const e = await newSpecimen(subA, "Vorschaufehler");
+    await measure(subA, e);
+    const failing = createApp({
+      reviewer,
+      pool,
+      clock: () => NOW,
+      media: { store: new FailingThumbnailStore(), processor: createSharpProcessor() },
+    });
+    const res = await failing.request(`/specimens/${e}/measurements/photo?timeZone=Europe/Berlin`, {
+      method: "POST",
+      headers: {
+        "content-type": "image/jpeg",
+        authorization: `Bearer valid:${subA}`,
+        "idempotency-key": randomUUID(),
+      },
+      body: (await gpsPhoto(400, 300)) as unknown as NonNullable<RequestInit["body"]>,
+    });
+    expect(res.status).toBe(502);
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      "media.storage_unavailable",
+    );
+    expect((await call(subA, "GET", `/specimens/${e}/measurements`)).body["last"].photo).toBeNull();
   });
 });

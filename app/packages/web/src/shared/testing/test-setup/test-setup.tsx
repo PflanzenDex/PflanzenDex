@@ -3,9 +3,13 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { configure } from "@testing-library/dom";
 import type { ReactNode } from "react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import { createQueryClient } from "../../data";
+import { clearPhotoCache } from "../../platform/browser/use-stored-photo";
 import { setViewportWidth } from "../viewport-mock";
+
+// Loaded photos are cached by their request address (NFR-12): a test must not get the picture of an earlier test.
+afterEach(() => clearPhotoCache());
 
 vi.mock("@testing-library/react", async (importOriginal) => {
   const rtl = await importOriginal<typeof import("@testing-library/react")>();

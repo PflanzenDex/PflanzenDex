@@ -68,3 +68,31 @@ describe("US-WAC-05 the photo of a measurement in the view", () => {
     expect(screen.getByRole("status").textContent).toContain("Foto wird geladen");
   });
 });
+
+describe("NFR-12 the sizes of a measurement photo", () => {
+  const showWith = (compact: boolean) =>
+    render(
+      <MeasurementPhoto
+        api="http://api"
+        token={async () => "tok"}
+        specimenId="e1"
+        measurementId="m1"
+        date="2026-10-01"
+        compact={compact}
+      />,
+    );
+
+  it("NFR-12 a compact picture of the history (a list entry) asks the thumbnail", async () => {
+    stub(200);
+    showWith(true);
+    await screen.findByRole("img", { name: "Foto der Messung vom 01.10.2026" });
+    expect(calls[0]?.url).toBe("http://api/specimens/e1/measurements/m1/photo?size=thumb");
+  });
+
+  it("NFR-12 the picture of the measure page stays the stored copy", async () => {
+    stub(200);
+    showWith(false);
+    await screen.findByRole("img", { name: "Foto der Messung vom 01.10.2026" });
+    expect(calls[0]?.url).toBe("http://api/specimens/e1/measurements/m1/photo");
+  });
+});
