@@ -1,5 +1,10 @@
 import { MEDIA_LIMITS } from "@pflanzendex/core";
-import { currentTimeZone, type ApiError, type Response } from "../../../../shared/data";
+import {
+  announceWrite,
+  currentTimeZone,
+  type ApiError,
+  type Response,
+} from "../../../../shared/data";
 import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
 
 type FetchFn = typeof fetch;
@@ -43,7 +48,9 @@ export async function uploadPhoto(
         body: photo.file,
       },
     );
-    return res.ok ? { ok: true, value: await res.json().catch(() => ({})) } : await failure(res);
+    if (!res.ok) return await failure(res);
+    announceWrite();
+    return { ok: true, value: await res.json().catch(() => ({})) };
   } catch {
     return { ok: false, error: NETWORK };
   }

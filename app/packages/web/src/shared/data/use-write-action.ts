@@ -37,7 +37,6 @@ export function useWriteAction(token: () => Promise<string | undefined>, after: 
       setRunning(false);
       setError(r.ok ? null : r.error);
       setMessage(r.ok ? success : null);
-      if (r.ok) window.dispatchEvent(new Event(WRITE_SUCCEEDED));
       // Also after a refusal: the page may have been stale (e.g. archived elsewhere), the error stays on screen.
       after();
     },
