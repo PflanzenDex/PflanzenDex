@@ -88,7 +88,7 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(screen.getByRole("button").parentElement?.className).toContain("max-w-full");
   });
 
-  it("NFR-13 with a way back the title keeps 230 px beside the back control, so a narrower row wraps and the back control sits above the title", () => {
+  it("NFR-13 with a way back the title claims 230 px beside the back control, so a narrower row wraps and the back control sits above the title", () => {
     inRouter(
       <PageHeader
         title="Adiantum raddianum"
@@ -98,9 +98,26 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     const row = document.querySelector("[data-page-header]");
     expect(row?.className).toContain("flex-wrap");
     const title = screen.getByRole("heading", { level: 1 });
-    expect(title.className).toContain("min-w-[230px]");
+    expect(title.className).toContain("basis-[230px]");
+    expect(title.className).toContain("grow");
     expect(title.className).not.toContain("min-w-20");
     expect(screen.getByRole("link", { name: "Zurück zur Suche" }).className).toContain("shrink-0");
+  });
+
+  it("NFR-13 a title beside a way back keeps its longest word whole at 200 % text; only a word wider than the column may break", () => {
+    inRouter(
+      <PageHeader
+        title="Passende Angebote"
+        back={{ label: "Zurück zu Freunde", to: "/friends" }}
+      />,
+    );
+    const classes = screen.getByRole("heading", { level: 1 }).className.split(" ");
+    // `anywhere` would take the word out of the flex minimum, so the title could stay narrower than its longest word.
+    expect(classes).not.toContain("[overflow-wrap:anywhere]");
+    expect(classes).toContain("[overflow-wrap:break-word]");
+    // An explicit minimum would replace the content-based one; `max-w-full` caps that one at the column.
+    expect(classes.filter((c) => c.startsWith("min-w-"))).toEqual([]);
+    expect(classes).toContain("max-w-full");
   });
 
   it("NFR-13 the back control keeps its 44 px target and does not shrink when the title takes the row below it", () => {
