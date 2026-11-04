@@ -60,7 +60,7 @@ export async function phaseRows(
       const phase = carePhase(period.from, period.until, today);
       return [
         deps.targets
-          .phaseLocation(userId, z.speciesId, phase)
+          .phaseLocation(userId, z.speciesId, phase, own)
           .then((targetLocationId): PhasesRow => ({
             specimenId: z.id,
             name: z.name,
