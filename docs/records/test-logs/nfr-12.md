@@ -273,3 +273,52 @@ All 13 requests have the same statement count and the same body size before and 
 - The perf dataset has 60 species per account, so the catalog-size effect is not visible in section 11.3; section 11.1 has 1,260 species. 10,000 species and the scaling claim are not measured.
 - The species search still scans `species_name` (no index under row security); its cost grows with the number of names in the catalog.
 - Not measured: concurrent users, cold caches, write requests.
+
+## 12. Issue #1238: friend, feed and shared views read once per specimen (2026-11-04)
+
+**Branch:** `chore/issue-1238-performance-n-1-in` (PR #1271, draft).
+**Environment:** Linux, Node, PostgreSQL 18.6 in Docker (loopback, worktree test database); the counts come from the query-count gate, which runs the app in process as a signed-in keeper. These are statement counts, not timings.
+
+**Cause:** `describe(ownerId, ids)` in `api/src/social/sharing/wiring.ts` read each shared specimen with `specimens.find` and then its species with `species.find`: about ten statements per shared specimen, each a `withAccount` transaction. The viewer's names (`mine.latinNamesOf`, the basis of "you have it" and of the count of shared species) re-read the viewer's own collection once per friend in `GET /friends`.
+
+**Fix:** `describe` reads the rows with `SpecimenPostgres.findMany` and their species with `SpeciesPostgres.findMany`: two reads for any number of shared specimens, with the same row rules, the same order, the same archived filter and the same approval filter. The viewer's names come from the new `SpeciesPostgres.latinNamesOf(userId, ids)`, one statement with the same visibility as `find` (own proposals and approved species); the ids come from the collection port, and `GET /friends` reads them once per request. No route, field, order or visibility rule changes.
+
+### 12.1 Statement counts of the gate (2 friends, keeper with 5 or 50 specimens)
+
+Method: `npx vitest run src/query-count.test.ts` in `app/packages/api`; each route is called twice per size and the second call is counted (every statement, including the `begin`, `set local role`, `set_config`, `commit` of each `withAccount`). Before: the merge base with `origin/dev` (f271b110, the code before this change). After: this branch.
+
+| Route                         | Before small (5) | Before large (50) | After small (5) | After large (50) |
+| ----------------------------- | ---------------- | ----------------- | --------------- | ---------------- |
+| `GET /feed`                   | 96               | 536               | 56              | 56               |
+| `GET /friends`                | 151              | 1,041             | 61              | 61               |
+| `GET /friends/:id/collection` | 81               | 526               | 41              | 41               |
+| `GET /friends/:id/shared`     | 51               | 271               | 31              | 31               |
+
+The growth with the shared specimens is gone for all four routes. The growth baseline `query-count-baseline.json` is now empty (`{}`).
+
+### 12.2 Statement counts with 2 and 6 friends (one keeper, friends with 4 species and 2 shared specimens each)
+
+Method: a block of its own in the same test file (`NFR-12 friend views ...`), so the gate sizes above keep their seed. The keeper has 3 specimens. The same keeper is measured with 2 friends, then with 6 friends. The "before" column is the same test on the code before this change (the assertions fail there; only the counts are read).
+
+| Route (first friend for the friend routes) | Before, 2 friends | Before, 6 friends | After, 2 friends | After, 6 friends |
+| ------------------------------------------ | ----------------- | ----------------- | ---------------- | ---------------- |
+| `GET /friends`                             | 111               | 311               | 61               | 141              |
+| `GET /feed?timeZone=…`                     | 76                | 196               | 56               | 136              |
+| `GET /friends/:id/shared`                  | 41                | 41                | 31               | 31               |
+| `GET /friends/:id/collection`              | 61                | 61                | 41               | 41               |
+
+The friend routes of one friend are flat in the number of friends. Before this change `/friends/:id/shared` cost 21 statements plus 10 per shared specimen (41 for 2 shared specimens here, 51 for 3 and 271 for 25 in the gate); after it costs 31 for any number, the two reads of rows and species (10 statements) on top of the same 21.
+
+### 12.3 What remains per friend
+
+`GET /friends` and `GET /feed` grow by 20 statements per friend (141 - 61 and 136 - 56: 80 for four more friends), and not with the number of shared specimens. Each friend costs four reads in the owner's context: `friend_shares` (the viewer's context), the privacy flag of the owner's profile, the owner's shared rows and the owner's species. Under the row rules these cannot be merged across owners without a batch `security definer` function, which would change how friend shares are read: that is the scope of #1240 (account data and friend shares read twice), so the count with 2 and 6 friends is not equal for these two routes. Both read the owner's rows once per friend, one statement per table (`findMany`), so the cost per friend does not depend on the shares.
+
+### 12.4 Baselines and statement repeats
+
+- `query-count-baseline.json`: all four growth entries removed (the gate deletes an entry that no longer grows). The #1240 part of the growth reasons of `/feed` and `/friends` is kept as a note in the test file; the duplicate reads of `friend_shares` and the privacy flag stay in `query-repeat-baseline.json` for those two routes.
+- `query-repeat-baseline.json`: the entries of `/friends/:id/collection` and `/friends/:id/shared` removed (their repeats were the specimen and species texts of #1238). `/feed` and `/friends` keep their entries: the specimen and species statements repeat once per friend, as the owner's row rule requires.
+
+### 12.5 Limits
+
+- Statement counts only; no timing claim. Not measured: concurrent requests, cold caches, friends beyond 6.
+- The "before" block counts come from the same test on the old route code with the new seed; they were read from a temporary dump in the test (not committed).

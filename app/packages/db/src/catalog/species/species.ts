@@ -83,6 +83,21 @@ export class SpeciesPostgres {
     return ids.map((id) => byId.get(id.toLowerCase()) ?? null);
   }
 
+  /**
+   * The distinct Latin names of the given species, in ONE statement (NFR-12, #1238). The ids come from the caller's own
+   * specimens (the collection port); the visibility is that of `find`: a species the account cannot see is left out.
+   */
+  async latinNamesOf(userId: string, ids: readonly string[]): Promise<readonly string[]> {
+    if (ids.length === 0) return [];
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ latinName: string }>(
+        `select distinct a.latin_name as "latinName" from species a where a.id = any($1::uuid[]) and ${VISIBLE}`,
+        [ids],
+      ),
+    );
+    return r.rows.map((row) => row.latinName);
+  }
+
   /** The species a merged proposal of the account went into (US-BES-10); `null` for everything else. */
   async mergedInto(userId: string, id: string): Promise<{ id: string; latinName: string } | null> {
     const r = await withAccount(this.pool, userId, (c) =>

@@ -496,4 +496,42 @@ describe("NFR-12 specimens in one read", () => {
     expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
     expect(statements).toBe(afterFew);
   });
+
+  it("NFR-12 findMany equals find for archived and foreign specimens; no IDs send no statement", async () => {
+    const made = await specimens.create(anna, { ...values, name: `Archiv ${randomUUID()}` });
+    if (typeof made === "string") throw new Error(made);
+    expect(await specimens.archive(anna, made.id, "eingegangen", "2026-10-05")).toMatchObject({
+      status: "archived",
+    });
+    const ids = [made.id, randomUUID()];
+    for (const user of [anna, ben])
+      expect(await specimens.findMany(user, ids)).toEqual(
+        await Promise.all(ids.map((id) => specimens.find(user, id))),
+      );
+    // The archived specimen is returned by find and by findMany alike; a foreign one is null for the other account.
+    expect((await specimens.findMany(anna, ids))[0]).toMatchObject({
+      id: made.id,
+      status: "archived",
+    });
+    expect(await specimens.findMany(ben, [made.id])).toEqual([null]);
+    const counted = countedPool(pool);
+    expect(await new SpecimenPostgres(counted.pool).findMany(anna, [])).toEqual([]);
+    expect(counted.count()).toBe(0);
+  });
 });
+
+/** The pool with a count of the statements sent through it and its connections (NFR-12, US-QG-07). */
+function countedPool(target: Pool): { pool: Pool; count: () => number } {
+  let n = 0;
+  const wrap = <T extends object>(obj: T): T =>
+    new Proxy(obj, {
+      get(o, prop) {
+        const v = Reflect.get(o, prop, o) as unknown;
+        if (prop === "query")
+          return (...a: unknown[]) => (n++, (v as (...x: unknown[]) => unknown).apply(o, a));
+        if (prop === "connect") return async () => wrap(await (v as () => Promise<object>).call(o));
+        return typeof v === "function" ? v.bind(o) : v;
+      },
+    });
+  return { pool: wrap(target), count: () => n };
+}

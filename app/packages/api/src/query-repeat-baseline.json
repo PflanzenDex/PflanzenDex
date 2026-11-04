@@ -39,14 +39,6 @@
     "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
     "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau"
   ],
-  "GET /friends/:id/collection": [
-    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
-    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
-  ],
-  "GET /friends/:id/shared": [
-    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
-    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
-  ],
   "GET /specimens/:id/measurements": [
     "select id from account where subject = $1",
     "select invitation_required() as required"
