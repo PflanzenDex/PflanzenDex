@@ -1,5 +1,10 @@
 import { MEDIA_LIMITS } from "@pflanzendex/core";
-import { currentTimeZone, type ApiError, type Response } from "../../../../shared/data";
+import {
+  announceWrite,
+  currentTimeZone,
+  type ApiError,
+  type Response,
+} from "../../../../shared/data";
 import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
 import { forgetPhotos } from "@/shared/platform/browser/use-stored-photo";
 
@@ -47,6 +52,7 @@ export async function uploadPhoto(
     if (!res.ok) return await failure(res);
     // A replaced photo keeps its address: the next view must not show the old one from the cache (NFR-12).
     forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
+    announceWrite();
     return { ok: true, value: await res.json().catch(() => ({})) };
   } catch {
     return { ok: false, error: NETWORK };

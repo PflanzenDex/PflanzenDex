@@ -3,9 +3,13 @@ import type { LightLocation, LightZone } from "@pflanzendex/core";
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { loadCards } from "../../../../collection";
-import { loadLocations, loadZones } from "../../../../light";
+import { sharedLocations, sharedZones } from "../../../../light";
+import { useQueryClient, type QueryClient } from "../../../../shared/data";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { cuttingLight, zoneLabel } from "@pflanzendex/core";
+import table from "./place-field.de.json";
 
+const ui = texts(table);
 type Token = () => Promise<string | undefined>;
 
 interface Places {
@@ -16,12 +20,12 @@ interface Places {
 }
 
 /** The own places and the one the last plant stands at (by its name on the card); nothing is read when it fails. */
-async function loadPlaces(api: string, token: Token): Promise<Places | null> {
+async function loadPlaces(client: QueryClient, api: string, token: Token): Promise<Places | null> {
   const t = await token();
   if (!t) return null;
   const [l, z, c] = await Promise.all([
-    loadLocations(api, t),
-    loadZones(api, t),
+    sharedLocations(client, api, t),
+    sharedZones(client, api, t),
     loadCards(api, t),
   ]);
   if (!l.ok || !z.ok) return null;
@@ -47,9 +51,10 @@ const label = (l: LightLocation, zones: readonly LightZone[]) => {
 /** The own places for the flow of a further plant; `places` is `null` while they load or when they are not readable. */
 export function usePlaces(api: string, token: Token, onSuggest: (id: string) => void) {
   const [places, setPlaces] = useState<Places | null>(null);
+  const client = useQueryClient();
   useEffect(() => {
     let current = true;
-    void loadPlaces(api, token).then((p) => {
+    void loadPlaces(client, api, token).then((p) => {
       if (!current || !p) return;
       setPlaces(p);
       onSuggest(p.suggested);
@@ -57,7 +62,7 @@ export function usePlaces(api: string, token: Token, onSuggest: (id: string) => 
     return () => {
       current = false;
     };
-  }, [api, token, onSuggest]);
+  }, [api, token, onSuggest, client]);
   return places;
 }
 
@@ -71,13 +76,13 @@ export function PlaceField(props: {
   if (!places || places.locations.length === 0) return null;
   return (
     <>
-      <Label htmlFor="add-plant-place">Standort</Label>
+      <Label htmlFor="add-plant-place">{ui("label")}</Label>
       <Select
         id="add-plant-place"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
-        <option value="">Keiner</option>
+        <option value="">{ui("none")}</option>
         {places.locations.map((l) => (
           <option key={l.id} value={l.id}>
             {label(l, places.zones)}

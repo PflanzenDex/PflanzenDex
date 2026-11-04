@@ -90,3 +90,30 @@ describe("US-ENT-09 species attributes in the database", () => {
     expect(await store.forSpecies([SPECIES])).toEqual([]);
   });
 });
+
+describe("NFR-12 researched names of one field", () => {
+  it("NFR-12 the index taxon_attribute_field covers the field and the Latin name", async () => {
+    const { rows } = await pool.query<{ indexdef: string }>(
+      "select indexdef from pg_indexes where schemaname = 'public' and indexname = 'taxon_attribute_field'",
+    );
+    expect(rows[0]?.indexdef).toContain("(field, latin_name)");
+  });
+
+  it("NFR-12 speciesWith lists the Latin names of one field in order and no other field", async () => {
+    const [a, b, c] = ["Zz attributus a", "Zz attributus b", "Zz attributus c"];
+    try {
+      await store.save([
+        fact("growthSize", "small"),
+        { ...fact("growthSize", "small"), species: b },
+        { ...fact("growthSize", "small"), species: a },
+        { ...fact("humidity", "low"), species: c },
+      ]);
+      const names = (await store.speciesWith("growthSize")).filter((n) =>
+        [SPECIES, a, b, c].includes(n),
+      );
+      expect(names).toEqual([a, b, SPECIES]);
+    } finally {
+      await pool.query("delete from taxon_attribute where latin_name = any($1)", [[a, b, c]]);
+    }
+  });
+});

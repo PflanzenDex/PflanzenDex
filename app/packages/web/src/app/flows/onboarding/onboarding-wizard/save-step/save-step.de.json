@@ -1,0 +1,7 @@
+{
+  "title": "Pflanze speichern",
+  "zoneLabel": "Lichtbedarf",
+  "derived": "{name} (laut Art)",
+  "unknown": "Unbekannt, die Art nennt keinen Wert",
+  "hint": "Der Lichtbedarf kommt von der Art. Du kannst ihn ändern."
+}

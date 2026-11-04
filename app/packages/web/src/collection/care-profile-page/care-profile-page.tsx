@@ -5,10 +5,14 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
-import { loadLocations, loadZones } from "../../light";
+import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../shared/data";
+import { sharedLocations, sharedZones } from "../../light";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { loadCareProfiles, saveCareProfile } from "../care-profile/care-profile-api";
 import { CareProfileSectionSkeleton } from "./care-profile-page.skeleton";
+import table from "./care-profile-page.de.json";
+
+const ui = texts(table);
 import { ProfileList } from "../care-profile/care-profile-list/care-profile-list";
 
 interface Data {
@@ -33,12 +37,13 @@ export function CareProfileSection(props: {
   const { api, token, speciesId } = props;
   const again = useInvalidate(KEY);
   const write = useWriteAction(token, again);
+  const client = useQueryClient();
   const load = useCallback(
     async (t: string) => {
       const [entries, locations, zones] = await Promise.all([
         loadCareProfiles(api, t),
-        loadLocations(api, t),
-        loadZones(api, t),
+        sharedLocations(client, api, t),
+        sharedZones(client, api, t),
       ]);
       if (!entries.ok) return entries;
       if (!locations.ok) return locations;
@@ -54,7 +59,7 @@ export function CareProfileSection(props: {
         },
       };
     },
-    [api, speciesId],
+    [api, speciesId, client],
   );
   const save = (speciesId: string, changes: CareProfileChanges, success: string) =>
     void write.run((t) => saveCareProfile(api, t, { speciesId, changes }), success);
@@ -65,8 +70,8 @@ export function CareProfileSection(props: {
         fresh
         token={token}
         load={load}
-        loadingText="Pflegeprofil wird geladen …"
-        loadingFallback={<CareProfileSectionSkeleton label="Pflegeprofil wird geladen …" />}
+        loadingText={ui("loading")}
+        loadingFallback={<CareProfileSectionSkeleton label={ui("loading")} />}
       >
         {(data: Data) => (
           <ProfileList
