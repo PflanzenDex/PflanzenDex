@@ -1,7 +1,15 @@
 import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../../kernel/index.ts";
-import { COLUMN, FIELDS, NOT_MERGED, SELECTION, VISIBLE, searchQuery } from "./species-read.ts";
+import {
+  APPROVED_FACTS,
+  COLUMN,
+  FIELDS,
+  NOT_MERGED,
+  SELECTION,
+  VISIBLE,
+  searchQuery,
+} from "./species-read.ts";
 
 // The shapes are the interfaces of `core` (type-only import through its public entry, AB-2).
 import type {
@@ -49,14 +57,7 @@ export class SpeciesPostgres {
    * the Pokédex cards show next to the taxonomy (US-POK-01).
    */
   async approvedFacts(userId: string): Promise<readonly SpeciesFacts[]> {
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<SpeciesFacts>(
-        `select a.latin_name as "latinName", a.german_name as "germanName", a.difficulty,
-                a.standard_level as "lightZone"
-           from species a
-          where a.cultivar is null and a.review_status in ('curated', 'reviewed')`,
-      ),
-    );
+    const r = await withAccount(this.pool, userId, (c) => c.query<SpeciesFacts>(APPROVED_FACTS));
     return r.rows;
   }
 
