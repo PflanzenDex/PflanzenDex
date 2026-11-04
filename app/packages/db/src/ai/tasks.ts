@@ -39,7 +39,7 @@ export class TasksPostgres {
       // An expired task no longer blocks a new one: store the expiry first, then the unique index decides.
       await c.query(
         `update ai_task set status = 'expired', updated_at = $4
-          where type = $1 and reference = $2 and status in ('open', 'in_progress')
+          where type = $1 and md5(reference) = md5($2) and status in ('open', 'in_progress')
             and created_at < $3::timestamptz - interval '14 days'`,
         [t.type, t.reference, now, now],
       );
