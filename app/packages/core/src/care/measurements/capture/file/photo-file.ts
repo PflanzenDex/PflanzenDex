@@ -1,35 +1,58 @@
-import { appError, failed, isId } from "../../../../kernel";
+import { appError, failed, isId, ok } from "../../../../kernel";
 import type { Result } from "../../../../kernel";
 import type { SpecimenStore } from "../../../../collection";
 import type { MeasurementStore } from "../../types";
 
+/** The sizes a photo is read in (NFR-12): the stored copy, or the thumbnail that tiles and cards ask for. */
+export type PhotoSize = "full" | "thumb";
+
 export interface PhotoFileDependencies {
   readonly measurements: Pick<MeasurementStore, "list">;
   readonly specimens: Pick<SpecimenStore, "find">;
-  /** Reads a stored object; structurally the `ObjectStore` of `media` (ADR 0003: no edge to `media`). */
-  readonly objects: {
-    get(
+  /** Reads a stored image in a size; structurally the `ImageReader` of `media` (ADR 0003: no edge to `media`). */
+  readonly images: {
+    read(
       accountId: string,
       name: string,
+      size: PhotoSize,
     ): Promise<Result<{ readonly bytes: Uint8Array; readonly contentType: string }>>;
   };
 }
 
 /**
+ * No `size` means the stored copy; exactly one `thumb` is the thumbnail (NFR-12). Anything else, also a repeated `size`,
+ * is refused before a read.
+ */
+export function photoSize(sizes: readonly string[]): Result<PhotoSize> {
+  if (sizes.length === 0) return ok<PhotoSize>("full");
+  if (sizes.length === 1 && sizes[0] === "thumb") return ok<PhotoSize>("thumb");
+  return failed(appError("input.invalid", { details: [{ field: "size", code: "input.invalid" }] }));
+}
+
+/** The photo asked for: the measurement of a specimen, in the sizes asked (none means the stored copy, NFR-12). */
+export interface PhotoTarget {
+  readonly specimenId: string;
+  readonly measurementId: string;
+  readonly sizes?: readonly string[];
+}
+
+/**
  * The cleaned photo of a measurement (US-WAC-05, private by default P-05): only for the owner of the specimen. A
- * foreign specimen looks like a missing one (P-04); a measurement without a photo is `photo_not_found`.
+ * foreign specimen looks like a missing one (P-04); a measurement without a photo is `photo_not_found`. `sizes` picks
+ * the thumbnail for tiles and cards (NFR-12); without it the stored copy is answered, as the AI assessment reads it.
  */
 export async function measurementPhotoFile(
   deps: PhotoFileDependencies,
   userId: string,
-  specimenId: string,
-  measurementId: string,
+  target: PhotoTarget,
 ): Promise<Result<{ readonly bytes: Uint8Array; readonly contentType: string }>> {
-  if (!isId(specimenId)) return failed(appError("specimen.not_found"));
-  const specimen = await deps.specimens.find(userId, specimenId.toLowerCase());
+  const wanted = photoSize(target.sizes ?? []);
+  if (!wanted.ok) return wanted;
+  if (!isId(target.specimenId)) return failed(appError("specimen.not_found"));
+  const specimen = await deps.specimens.find(userId, target.specimenId.toLowerCase());
   if (!specimen) return failed(appError("specimen.not_found"));
   const rows = await deps.measurements.list(userId, specimen.id);
-  const name = rows.find((m) => m.id === measurementId.toLowerCase())?.photo;
+  const name = rows.find((m) => m.id === target.measurementId.toLowerCase())?.photo;
   if (!name) return failed(appError("measurement.photo_not_found"));
-  return deps.objects.get(userId, name);
+  return deps.images.read(userId, name, wanted.value);
 }
