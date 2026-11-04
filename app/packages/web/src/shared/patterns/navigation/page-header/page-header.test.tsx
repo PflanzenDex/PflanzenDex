@@ -84,7 +84,7 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     const row = document.querySelector("[data-page-header]");
     expect(row?.className).toContain("flex-wrap");
     const title = screen.getByRole("heading", { level: 1 });
-    expect(title.className).toContain("min-w-20");
+    expect(title.className).toContain("min-w-min");
     expect(screen.getByRole("button").parentElement?.className).toContain("max-w-full");
   });
 
@@ -133,7 +133,21 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(back.className).toContain("min-w-[44px]");
   });
 
-  it("NFR-13 with a way back and an action the minimum stays at the #1177 value: the action wraps under the title", () => {
+  it("NFR-13 with an action no word of the title breaks inside: the title is at least its longest word", () => {
+    inRouter(
+      <PageHeader
+        title="Tauschbörse"
+        action={<button type="button">Zum Tausch anbieten</button>}
+      />,
+    );
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className).toContain("min-w-min");
+    expect(title.className).toContain("[overflow-wrap:normal]");
+    expect(title.className).not.toContain("min-w-20");
+    expect(title.className).not.toContain("anywhere");
+  });
+
+  it("NFR-13 with a way back and an action the title is at least its longest word, so the action wraps under the title (#1177)", () => {
     inRouter(
       <PageHeader
         title="Tauschbörse"
@@ -143,12 +157,16 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     );
     expect(document.querySelector("[data-page-header]")?.className).toContain("flex-wrap");
     const title = screen.getByRole("heading", { level: 1 });
-    expect(title.className).toContain("min-w-20");
+    expect(title.className).toContain("min-w-min");
+    expect(title.className).not.toContain("min-w-20");
     expect(title.className).not.toContain("min-w-[230px]");
   });
 
-  it("NFR-13 without a way back the title keeps the #1177 minimum width of 5 rem", () => {
-    inRouter(<PageHeader title="Freunde" action={<button type="button">Geräte</button>} />);
-    expect(screen.getByRole("heading", { level: 1 }).className).toContain("min-w-20");
+  it("NFR-13 without an action the title keeps the 5 rem minimum and the anywhere wrap, so other headers do not change", () => {
+    inRouter(<PageHeader title="Freunde" />);
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className).toContain("min-w-20");
+    expect(title.className).toContain("[overflow-wrap:anywhere]");
+    expect(title.className).not.toContain("min-w-min");
   });
 });

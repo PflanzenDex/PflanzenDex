@@ -1,12 +1,9 @@
 {
-  "GET /care-phases": "the care profile read once for each specimen (#1243)",
   "GET /exchange/match": "specimen, treatment and care profile rows read once for each offer (#1237)",
   "GET /exchange/offers": "specimen, treatment and care profile rows read once for each offer (#1237)",
   "GET /feed": "specimen and species rows read once for each shared specimen (#1238); account data and friend shares read twice (#1240)",
   "GET /friends": "specimen and species rows read once for each shared specimen (#1238); account data and friend shares read twice (#1240)",
   "GET /friends/:id/collection": "specimen and species rows read once for each shared specimen (#1238)",
   "GET /friends/:id/shared": "specimen and species rows read once for each shared specimen (#1238)",
-  "GET /offers": "the care profile read for each offer and each specimen (#1237)",
-  "GET /offers/preview": "the care profile read once for each specimen (#1237)",
-  "GET /today": "the care profile read once for each specimen (#1243); the specimen read twice (#1238)"
+  "GET /offers": "the care profile read for each offer and each specimen (#1237)"
 }

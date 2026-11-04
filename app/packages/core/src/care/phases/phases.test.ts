@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SpeciesStub, InMemorySpecimens, testSpecies } from "../../collection/shared/test-helpers";
-import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "../index";
+import { NO_PHASE_LOCATION, carePhase, carePhasesList, careProfileLocations } from "../index";
 import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
 import { PhaseLocationStub } from "../shared/test-helpers";
 
@@ -171,5 +171,50 @@ describe("US-PHA-01 Phase of a specimen", () => {
       const r = await list(e, "anna", "2026-12-01T12:00:00Z", zone);
       expect(r).toMatchObject({ ok: false, error: { code: "input.invalid" } });
     }
+  });
+});
+
+describe("NFR-12 the phase list reads the care profiles once, however many specimens it lists", () => {
+  const GROWTH_SPOT = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const DORMANT_SPOT = "99999999-9999-4999-8999-999999999999";
+
+  it("NFR-12 every specimen gets its target from one reading of the profiles (no read per row)", async () => {
+    const profiles = new InMemoryCareProfiles({
+      anna: { locations: [GROWTH_SPOT, DORMANT_SPOT] },
+    });
+    await profiles.update("anna", WINTER, {
+      growthLocationId: GROWTH_SPOT,
+      dormancyLocationId: DORMANT_SPOT,
+    });
+    let reads = 0;
+    const counted = {
+      list: async (userId: string) => {
+        reads += 1;
+        return profiles.list(userId);
+      },
+    };
+    const e = await collection("anna", [
+      { speciesId: WINTER, name: "Bogenhanf 1", location: LOCATION },
+      { speciesId: WINTER, name: "Bogenhanf 2", location: LOCATION },
+      { speciesId: WINTER, name: "Bogenhanf 3", location: LOCATION },
+      { speciesId: SUMMER, name: "Aloe", location: LOCATION },
+    ]);
+    const r = await carePhasesList(
+      {
+        specimens: e,
+        species,
+        targets: careProfileLocations(counted),
+        profiles: counted,
+        clock: () => new Date("2026-12-01T12:00:00Z"),
+      },
+      "anna",
+      "UTC",
+    );
+    expect(reads).toBe(1);
+    const byName = new Map(r.ok ? r.value.map((row) => [row.name, row] as const) : []);
+    for (const name of ["Bogenhanf 1", "Bogenhanf 2", "Bogenhanf 3"])
+      expect(byName.get(name)).toMatchObject({ phase: "dormancy", targetLocationId: DORMANT_SPOT });
+    // No profile for Aloe: its target stays unknown (P-08).
+    expect(byName.get("Aloe")).toMatchObject({ targetLocationId: null });
   });
 });
