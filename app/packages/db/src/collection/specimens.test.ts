@@ -441,3 +441,59 @@ describe("US-SOZ-05 the day of the repot", () => {
     expect((await repo.find(anna, dated))?.repottedAt).toBe("2026-10-10");
   });
 });
+
+describe("NFR-12 specimens in one read", () => {
+  it("NFR-12 findMany equals find per ID: same order, foreign and unknown IDs are null", async () => {
+    const mine = await specimens.create(anna, { ...values, name: "Viele eigen" });
+    const theirs = await specimens.create(ben, { ...values, name: "Viele fremd" });
+    if (typeof mine === "string" || typeof theirs === "string") throw new Error("seed");
+    const ids = [mine.id, theirs.id, randomUUID(), mine.id.toUpperCase()];
+    for (const user of [anna, ben])
+      expect(await specimens.findMany(user, ids)).toEqual(
+        await Promise.all(ids.map((id) => specimens.find(user, id))),
+      );
+    expect((await specimens.findMany(anna, ids)).map((x) => x?.id ?? null)).toEqual([
+      mine.id,
+      null,
+      null,
+      mine.id,
+    ]);
+    expect(await specimens.findMany(anna, [])).toEqual([]);
+  });
+
+  it("NFR-12 findMany needs one statement for any number of specimens", async () => {
+    const made = [];
+    for (let i = 0; i < 6; i++) {
+      const z = await specimens.create(anna, { ...values, name: `Zaehl ${i} ${randomUUID()}` });
+      if (typeof z === "string") throw new Error(z);
+      made.push(z.id);
+    }
+    let statements = 0;
+    const counted = new Proxy(pool, {
+      get(target, prop) {
+        if (prop === "connect")
+          return async () => {
+            const c = await target.connect();
+            return new Proxy(c, {
+              get(client, p) {
+                const v = Reflect.get(client, p, client) as unknown;
+                if (p !== "query") return typeof v === "function" ? v.bind(client) : v;
+                return (...a: unknown[]) => (
+                  statements++,
+                  (v as (...x: unknown[]) => unknown).apply(client, a)
+                );
+              },
+            });
+          };
+        const v = Reflect.get(target, prop, target) as unknown;
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    });
+    const few = await new SpecimenPostgres(counted).findMany(anna, made.slice(0, 2));
+    const afterFew = statements;
+    statements = 0;
+    const many = await new SpecimenPostgres(counted).findMany(anna, made);
+    expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
+    expect(statements).toBe(afterFew);
+  });
+});

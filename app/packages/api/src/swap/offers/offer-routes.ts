@@ -3,7 +3,6 @@ import {
   offerList,
   offerPreview,
   offerWithdraw,
-  type PhaseLocationSource,
   type Result,
 } from "@pflanzendex/core";
 import { IdempotencyPostgres } from "@pflanzendex/db";
@@ -30,10 +29,7 @@ function reply<T>(c: Context<AuthEnv>, r: Result<T>) {
  *   409 `offer.not_shared`, `offer.already_open`, `offer.treatment_open` (needs `confirmTreatment: true`)
  * - POST /offers/:id/withdraw: withdraws it at any time while open or reserved; 404 `offer.not_found`, 409 `offer.not_active`
  */
-export function offerRoutes(
-  pool: Pool,
-  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource | undefined } = {},
-): Hono<AuthEnv> {
+export function offerRoutes(pool: Pool, opt: { clock?: () => Date } = {}): Hono<AuthEnv> {
   const deps = offerDependencies(pool, opt);
   const idem = { idempotency: new IdempotencyPostgres(pool) };
   const create = offerCreate(deps);

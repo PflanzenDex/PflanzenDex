@@ -4,11 +4,11 @@ export { SpecimenPostgres } from "./specimens.ts";
 export { CareProfilePostgres } from "./care-profiles.ts";
 export { FIXTURES_COLLECTION, FIXTURE_SPECIES_ID, createFixtureSpecimenAt } from "./fixtures.ts";
 export { COLLECTION_REPOINTERS } from "./repointers.ts";
+export { unlockSummaryOf } from "./specimen-locations.ts";
 export {
   archiveSpecimenOn,
   createSpecimenOn,
   findSpecimenOn,
   listSpecimensOn,
-  unlockSummaryOf,
   type NewSpecimen,
 } from "./specimen-shared.ts";

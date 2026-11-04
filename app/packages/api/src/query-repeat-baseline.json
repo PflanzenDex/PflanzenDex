@@ -47,14 +47,6 @@
     "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
     "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
   ],
-  "GET /offers": [
-    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
-    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
-    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
-    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
-    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
-    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
-  ],
   "GET /specimens/:id/measurements": [
     "select id from account where subject = $1",
     "select invitation_required() as required"

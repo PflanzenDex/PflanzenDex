@@ -30,44 +30,45 @@ export function exchangeDependencies(pool: Pool, offer: OfferDependencies): Exch
   const specimens = new SpecimenPostgres(pool);
   const species = new SpeciesPostgres(pool);
   const wishes = new WishesPostgres(pool);
-  const approved = async (ownerId: string, id: string) => {
-    const s = await species.find(ownerId, id);
-    return s && (s.reviewStatus === "curated" || s.reviewStatus === "reviewed") ? s : null;
-  };
   return {
     swaps: new SwapsPostgres(pool),
     treatments: offer.treatments,
     phases: offer.phases,
     facts: {
+      // One read of the specimens and one of their species for all IDs of the owner (NFR-12).
       async describe(ownerId, ids) {
-        const out = [];
-        for (const id of ids) {
-          const row = await specimens.find(ownerId, id);
-          if (!row || row.status === "archived") continue;
-          const s = await approved(ownerId, row.speciesId);
-          out.push({
+        const rows = (await specimens.findMany(ownerId, ids)).flatMap((r) =>
+          r && r.status !== "archived" ? [r] : [],
+        );
+        const read = await species.findMany(
+          ownerId,
+          rows.map((r) => r.speciesId),
+        );
+        return rows.map((row, i) => {
+          const s = approvedOf(read[i] ?? null);
+          return {
             id: row.id,
             name: row.marker !== null && s ? speciesDisplayName(s) : row.name,
             speciesLatin: s?.latinName ?? null,
             speciesGerman: s?.germanName ?? null,
-          });
-        }
-        return out;
+          };
+        });
       },
     },
     mine: {
       async latinNamesOf(userId) {
         const active = (await specimens.list(userId)).filter((s) => s.status !== "archived");
-        const names = await Promise.all(
-          [...new Set(active.map((s) => s.speciesId))].map(
-            async (id) => (await species.find(userId, id))?.latinName ?? null,
-          ),
-        );
-        return names.filter((n): n is string => n !== null);
+        const read = await species.findMany(userId, [...new Set(active.map((s) => s.speciesId))]);
+        return read.flatMap((s) => (s ? [s.latinName] : []));
       },
     },
     wishes: wishHints(wishes),
   };
+}
+
+/** Only an approved species (curated or reviewed) leaves the owner's account; a private proposal stays unknown (P-05). */
+function approvedOf<T extends { reviewStatus: string }>(s: T | null): T | null {
+  return s && (s.reviewStatus === "curated" || s.reviewStatus === "reviewed") ? s : null;
 }
 
 /**

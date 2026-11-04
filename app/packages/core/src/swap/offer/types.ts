@@ -1,5 +1,5 @@
 import type { SharingStore } from "../../social";
-import type { TreatmentStore } from "../../care";
+import type { CarePhase, TreatmentStore } from "../../care";
 
 export const OFFER_TYPES = ["cutting", "plant", "offshoot"] as const;
 export type OfferType = (typeof OFFER_TYPES)[number];
@@ -45,15 +45,20 @@ export interface OwnSpecimen {
 }
 export interface OwnSpecimens {
   find(userId: string, id: string): Promise<OwnSpecimen | null>;
+  /** `find` for many IDs in one step (NFR-12): one result per ID, same order, `null` where `find` gives `null`. */
+  findMany(userId: string, ids: readonly string[]): Promise<readonly (OwnSpecimen | null)[]>;
 }
 
-/** Port: the care phase of one specimen today, `null` = no phase (cutting, species without dormancy period). */
+/**
+ * Port: the care phase of the named specimens today (the same rows as the phase list). A specimen without a phase (cutting,
+ * species without dormancy period) is missing from the map, which means `null` (P-08). One call for all IDs (NFR-12).
+ */
 export interface PhaseHints {
-  phaseOf(
+  phasesOf(
     userId: string,
-    specimenId: string,
+    specimenIds: readonly string[],
     timeZone: string,
-  ): Promise<"growth" | "dormancy" | null>;
+  ): Promise<ReadonlyMap<string, CarePhase>>;
 }
 
 /** What an offer needs from the neighbouring modules (ADR 0012: `swap` depends on `social`, `collection`, `care`). */
@@ -62,7 +67,7 @@ export interface OfferDependencies {
   readonly specimens: OwnSpecimens;
   /** The keeper's own sharing settings: an offer needs `Share = friends`. */
   readonly sharing: Pick<SharingStore, "list">;
-  readonly treatments: Pick<TreatmentStore, "open" | "done">;
+  readonly treatments: Pick<TreatmentStore, "openAndLastDone">;
   readonly phases: PhaseHints;
 }
 

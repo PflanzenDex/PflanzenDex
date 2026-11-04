@@ -29,6 +29,16 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };
 
+const UNIQUE = "23505";
+
+/** Which unique rule a failed write violated: the name per account or the marker per species (US-BES-03). */
+export function takenBy(e: unknown): "name_taken" | "marker_taken" | null {
+  if (pgError(e).code !== UNIQUE) return null;
+  const constraint = pgError(e).constraint;
+  if (constraint === "specimen_name_per_account") return "name_taken";
+  return constraint === "specimen_marker_per_species" ? "marker_taken" : null;
+}
+
 export class SpeciesGone extends Error {}
 
 /**
@@ -176,24 +186,4 @@ export async function listSpecimensOn(c: PoolClient): Promise<readonly SpecimenR
 export async function findSpecimenOn(c: PoolClient, id: string): Promise<SpecimenRow | null> {
   const r = await c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = $1`, [id]);
   return r.rows[0] ?? null;
-}
-
-/**
- * What the unlock rules read of the specimens (NFR-12, US-ONB-04): the active count and the instant of the first
- * specimen ever created, archived ones included (history stays), in one row instead of the whole list. `created_at` is
- * not null (migration 0007), so every specimen has a creation date. Runs as the account of the caller (P-04); writes
- * nothing.
- */
-export async function unlockSummaryOf(
-  pool: Pool,
-  userId: string,
-): Promise<{ active: number; firstCreatedAt: string | null }> {
-  const r = await withAccount(pool, userId, (c) =>
-    c.query<{ active: number; firstCreatedAt: string | null }>(
-      `select count(*) filter (where status <> 'archived')::int as active,
-              to_char(min(created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "firstCreatedAt"
-         from specimen`,
-    ),
-  );
-  return r.rows[0] ?? { active: 0, firstCreatedAt: null };
 }
