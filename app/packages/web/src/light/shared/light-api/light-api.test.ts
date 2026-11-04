@@ -1,19 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { createWrite, loadDerivation, loadLight } from "./light-api";
+import { createWrite, loadDerivation, loadHints } from "./light-api";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
 describe("US-LIC-05 client of the light API", () => {
-  it("loads zones, locations and hints with bearer token", async () => {
-    const fetchFn = vi.fn<typeof fetch>(async (url) => {
-      const u = String(url);
-      if (u.endsWith("/light-zones")) return response(200, { zones: [] });
-      if (u.endsWith("/locations")) return response(200, { locations: [] });
-      return response(200, { hints: [] });
-    });
-    const r = await loadLight("http://api", "tok", fetchFn as unknown as typeof fetch);
-    expect(r).toEqual({ ok: true, value: { zones: [], locations: [], hints: [] } });
+  it("loads the hints with bearer token", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => response(200, { hints: [] }));
+    const r = await loadHints("http://api", "tok", fetchFn as unknown as typeof fetch);
+    expect(r).toEqual({ ok: true, value: [] });
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/hints");
     const header = fetchFn.mock.calls[0]?.[1]?.headers as Record<string, string>;
     expect(header["Authorization"]).toBe("Bearer tok");
   });
@@ -46,7 +42,7 @@ describe("US-LIC-05 client of the light API", () => {
     const fetchFn = (async () => {
       throw new Error("offline");
     }) as unknown as typeof fetch;
-    const r = await loadLight("http://api", "t", fetchFn);
+    const r = await loadHints("http://api", "t", fetchFn);
     expect(!r.ok && r.error.code).toBe("network.not_reachable");
   });
 });

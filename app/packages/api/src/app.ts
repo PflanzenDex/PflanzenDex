@@ -35,7 +35,14 @@ import {
 import { wishZoneUsageFor } from "./wishlist";
 import { equipmentLocationUsageFor, equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
-import { errorBody, featureAccess, statusFor, writeLimit, type FeatureAccess } from "./kernel";
+import {
+  accountEtag,
+  errorBody,
+  featureAccess,
+  statusFor,
+  writeLimit,
+  type FeatureAccess,
+} from "./kernel";
 import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -85,6 +92,9 @@ function bindAccount(
 /** The protected routes of all modules behind the sign-in guard. */
 function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool) {
   const features = featureAccess(pool, opt.features ?? ALL_FEATURES);
+  // Every answer of the account may be asked again with its ETag (NFR-12, issue 1244); registered first, so it wraps all
+  // protected routes and not the public health routes, which answer before it.
+  app.use("*", accountEtag());
   const auth = bindAccount(app, reviewer, pool, { ...opt, access: features });
   for (const path of LIGHT_PATHS) app.use(`${path}/*`, auth);
   app.route(

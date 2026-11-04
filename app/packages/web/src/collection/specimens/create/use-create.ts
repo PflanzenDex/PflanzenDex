@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { LightZone, Species, Specimen } from "@pflanzendex/core";
-import { useRequest } from "../../../shared/data";
-import { loadZones } from "../../../light";
+import { REFERENCE_STALE_TIME, useRequest } from "../../../shared/data";
+import { ZONES_KEY, loadZones } from "../../../light";
 import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
 import { createSpecimen } from "../model/specimens-api";
@@ -37,13 +37,16 @@ export function useCreate(
   return { created, send, zones };
 }
 
-/** The own light zones for the zone field of the create form; loaded only while the form is open (US-LIC-02). */
+/**
+ * The own light zones for the zone field of the create form; loaded only while the form is open (US-LIC-02). They share
+ * the copy of the zones with the light page and the other screens (issue 1244), refreshed by writes of the light data.
+ */
 export function useZones(api: string, token: Token, enabled: boolean) {
   const request = useRequest({
-    queryKey: ["collection", "zones"],
+    queryKey: ZONES_KEY,
     token,
     enabled,
-    fresh: true,
+    staleTime: REFERENCE_STALE_TIME,
     load: (t: string) => loadZones(api, t),
   });
   return {

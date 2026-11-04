@@ -382,6 +382,12 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Connect a client:** add a custom connector / remote MCP server with the URL `https://<host>/api/mcp`; the client discovers the sign-in service from the 401 and signs in with OAuth (the operator's Keycloak checklist is in `docs/guides/operations/staging-deploy-and-backup.md`).
 - **Tests:** `mcp/protocol.test.ts` (wire format, contract of the tools), `mcp/mcp-routes.test.ts` (every tool, two accounts, rights, switch, Origin, errors), `mcp/mcp-e2e.test.ts` (a client flow `initialize` → `notifications/initialized` → `tools/list` → `tools/call` over a real socket with signed JWTs; web token refused).
 
+## Conditional answers and private caching (NFR-12, issue 1244)
+
+- **ETag on every answer of the account:** each `200` of a protected `GET` carries `ETag`, `Cache-Control: private, no-cache` and `Vary: Authorization` (`api/src/kernel/account-etag.ts`, `hono/etag`). The ETag is a SHA-256 of the body with the account id mixed in. A repeat with `If-None-Match` of unchanged data gets `304` without a body; the `304` keeps the rule, the vary and the CORS headers. A `304` is never answered for the ETag of another account, even when both bodies are equal (`api/src/account-etag.test.ts`, `api/src/kernel/account-etag.test.ts`).
+- **Own rule kept, no ETag:** an answer that sets `Cache-Control` itself keeps it and gets no ETag: photos (`private, max-age=3600`), exports and operator data (`no-store`). Errors and writes get no ETag.
+- **Web side:** the reference data (species, locations, light zones, unlocks) is shown from a copy for 5 minutes (assumption, `REFERENCE_STALE_TIME` in `app/packages/web/src/shared/data/client/request/query-client.ts`); every write of the account refreshes the copies it can change.
+
 ## End-to-end tests (QG-T3, QG-U1)
 
 - **Target:** `make e2e` starts the test database and Keycloak (`db-up`, `auth-up`), applies the migrations and runs Playwright (package `packages/e2e`; Playwright starts API and web itself). Needs Docker. Projects: `mobil` (Pixel 7) and `desktop`.
