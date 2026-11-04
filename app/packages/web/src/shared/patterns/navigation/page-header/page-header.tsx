@@ -73,7 +73,11 @@ export function PageHeader(props: PageHeaderProps) {
       <Heading
         {...(props.headingId ? { id: props.headingId } : {})}
         className={cn(
-          "min-w-20 flex-1 font-semibold [overflow-wrap:anywhere]",
+          // A title beside a way back asks for a readable width of 12 rem (NFR-13): when the row cannot give it, the row
+          // wraps and the back control sits above the title. The width scales with the text size, so at 200 % text a
+          // phone row always wraps. With an action too, and without a way back, the #1177 minimum stays.
+          back && !action ? "min-w-[min(100%,12rem)]" : "min-w-20",
+          "flex-1 font-semibold [overflow-wrap:anywhere]",
           Heading === "h1" ? "text-2xl" : "text-xl",
         )}
       >
