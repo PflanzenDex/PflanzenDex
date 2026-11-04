@@ -17,7 +17,14 @@ import {
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { errorBody, statusFor, type AuthEnv } from "../kernel";
+import {
+  errorBody,
+  readOnly,
+  sharedFindMany,
+  sharedReads,
+  statusFor,
+  type AuthEnv,
+} from "../kernel";
 import { wateringRoutes } from "./watering-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
@@ -36,11 +43,12 @@ export type TodayOptions = {
 
 /** The dependencies of the central status function; the reminders (US-MON-01) derive their occasions from the same ones (FR-MON-03). */
 export function todayDependencies(pool: Pool, opt: TodayOptions) {
-  const profiles = new CareProfilePostgres(pool);
+  // Shared reads (NFR-12): inside one GET request each list is sent once, however many parts of the status read it.
+  const profiles = sharedReads(new CareProfilePostgres(pool), "care-profile", ["list"]);
   return {
-    specimens: new SpecimenPostgres(pool),
-    species: new SpeciesPostgres(pool),
-    locations: new LocationPostgres(pool),
+    specimens: sharedReads(new SpecimenPostgres(pool), "specimen", ["list"]),
+    species: sharedFindMany(new SpeciesPostgres(pool), "species"),
+    locations: sharedReads(new LocationPostgres(pool), "location", ["list"]),
     treatments: new TreatmentsPostgres(pool),
     profiles,
     targets: opt.phaseLocation ?? careProfileLocations(profiles),
@@ -66,10 +74,13 @@ export const todayStatusSource =
 export function todayRoutes(pool: Pool, opt: TodayOptions): Hono<AuthEnv> {
   const deps = todayDependencies(pool, opt);
   const routes = new Hono<AuthEnv>();
-  routes.get("/today", async (c) => {
-    const r = await todayStatus(deps, c.get("account").id, c.req.query("timeZone"));
-    return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
-  });
+  routes.get(
+    "/today",
+    readOnly(async (c) => {
+      const r = await todayStatus(deps, c.get("account").id, c.req.query("timeZone"));
+      return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
+    }),
+  );
   routes.route("/", wateringRoutes(pool, opt.clock ?? (() => new Date())));
   return routes;
 }
