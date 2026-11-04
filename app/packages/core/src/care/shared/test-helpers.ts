@@ -83,6 +83,18 @@ export class InMemoryMeasurements implements MeasurementStore {
       });
   }
 
+  async listMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly MeasurementRow[]>> {
+    const found = new Map<string, readonly MeasurementRow[]>();
+    for (const id of specimenIds) {
+      const rows = await this.list(userId, id);
+      if (rows.length > 0) found.set(id, rows);
+    }
+    return found;
+  }
+
   async lastFor(
     userId: string,
     specimenIds: readonly string[],

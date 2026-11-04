@@ -1,20 +1,4 @@
 {
-  "GET /achievements": [
-    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,",
-    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don"
-  ],
-  "GET /achievements/news": [
-    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,",
-    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don"
-  ],
-  "GET /achievements/rhythm": [
-    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
-    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,"
-  ],
-  "GET /achievements/year": [
-    "select id, specimen_id as \"specimenId\", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,",
-    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don"
-  ],
   "GET /care-phases": [
     "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as "
   ],

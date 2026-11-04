@@ -1,8 +1,4 @@
 {
-  "GET /achievements": "per specimen: measurement and treatment rows read once for each specimen (#1239)",
-  "GET /achievements/news": "per specimen: measurement and treatment rows read once for each specimen (#1239)",
-  "GET /achievements/rhythm": "per specimen: measurement and treatment rows read once for each specimen (#1239)",
-  "GET /achievements/year": "per specimen: measurement and treatment rows read once for each specimen (#1239)",
   "GET /care-phases": "the care profile read once for each specimen (#1243)",
   "GET /exchange/match": "specimen, treatment and care profile rows read once for each offer (#1237)",
   "GET /exchange/offers": "specimen, treatment and care profile rows read once for each offer (#1237)",

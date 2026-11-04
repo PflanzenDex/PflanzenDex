@@ -26,12 +26,20 @@ const src = {
     findMany: async (_u: string, ids: readonly string[]) => ids.map(() => null),
   },
   profiles: { list: async () => [] },
-  treatments: { open: async () => new Map(), done: async () => [] },
+  treatments: { open: async () => new Map(), doneMany: async () => new Map() },
   measurements: {
-    list: async (_u: string, id: string) =>
-      id === "a"
-        ? [row("m1", "2026-01-10", 10, "p1"), row("m2", "2026-09-10", 18, "p2")]
-        : [row("m3", "2025-05-01", 3)],
+    listMany: async (_u: string, ids: string[]) =>
+      new Map(
+        ids.map(
+          (id) =>
+            [
+              id,
+              id === "a"
+                ? [row("m1", "2026-01-10", 10, "p1"), row("m2", "2026-09-10", 18, "p2")]
+                : [row("m3", "2025-05-01", 3)],
+            ] as const,
+        ),
+      ),
   },
   swaps: { list: async () => [] },
 } as unknown as FactSources;
