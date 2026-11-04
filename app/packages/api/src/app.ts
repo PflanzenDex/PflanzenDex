@@ -71,12 +71,12 @@ function bindAccount(
     opt.invitationOnly === undefined ? {} : { invitationOnly: opt.invitationOnly },
   );
   app.route("/", registrationRoutes(pool, verifier));
-  app.use("/account", auth);
+  // `/account/*` also matches `/account` itself: one registration guards both (NFR-12).
   app.use("/account/*", auth);
   app.route("/account", accountRoutes(pool, opt.access));
   app.route("/account", exportRoutes(pool, opt.media?.store));
   app.route("/account", deletionRoutes(pool, opt.clock));
-  for (const path of OPERATOR_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of OPERATOR_PATHS) app.use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
   return auth;
 }
@@ -85,7 +85,7 @@ function bindAccount(
 function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool) {
   const features = featureAccess(pool, opt.features ?? ALL_FEATURES);
   const auth = bindAccount(app, reviewer, pool, { ...opt, access: features });
-  for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of LIGHT_PATHS) app.use(`${path}/*`, auth);
   app.route(
     "/",
     lightRoutes(
@@ -99,23 +99,23 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
       [equipmentLocationUsageFor(pool)],
     ),
   );
-  for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of SPECIES_PATHS) app.use(`${path}/*`, auth);
   app.route("/", speciesRoutes(pool));
-  for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of REVIEW_PATHS) app.use(`${path}/*`, auth);
   app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
   for (const path of GAP_PATHS) app.use(path, auth);
   app.route("/", gapRoutes(pool));
-  for (const path of CORRECTION_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of CORRECTION_PATHS) app.use(`${path}/*`, auth);
   app.route("/", correctionRoutes(pool));
-  for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of SPECIMEN_PATHS) app.use(`${path}/*`, auth);
   app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
-  for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of POKEDEX_PATHS) app.use(`${path}/*`, auth);
   app.route("/", pokedexRoutes(pool));
   app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
   app.route("/", achievementsRoutes(pool, auth, opt.clock));
   app.route("/", unlockRoutes(pool, auth, features, opt));
   app.route("/", monitoringRoutes(pool, auth));
-  for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of CARE_PROFILE_PATHS) app.use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));
   bindWishlist(app, pool, auth, opt);
   bindEquipment(app, pool, auth, { zoneStock: opt.zoneStock, features, products: opt.products });

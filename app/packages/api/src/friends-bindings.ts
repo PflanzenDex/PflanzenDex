@@ -43,9 +43,9 @@ export function bindFriends(
     ...EXCHANGE_PATHS,
     ...SWAP_PATHS,
   ]) {
-    app.use(path, auth).use(`${path}/*`, auth);
+    app.use(`${path}/*`, auth);
     // Behind the sign-in guard: while "social" is off for the account these paths answer 404 (US-DEV-06).
-    if (gate) app.use(path, gate).use(`${path}/*`, gate);
+    if (gate) app.use(`${path}/*`, gate);
   }
   app.route("/", friendRoutes(pool, clock, cancelOrphanedSwaps(pool)));
   app.route("/", sharingRoutes(pool));

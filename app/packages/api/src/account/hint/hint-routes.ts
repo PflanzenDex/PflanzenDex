@@ -42,7 +42,7 @@ export function hintRoutes(
 ) {
   const show = onboardingShowHint({ hints: w.hints });
   const dismiss = onboardingDismissHint({ hints: w.hints });
-  routes.use("/onboarding/hints", auth).use("/onboarding/hints/*", auth);
+  routes.use("/onboarding/hints/*", auth);
   routes.get("/onboarding/hints", async (c) => {
     const timeZone = c.req.query("timeZone");
     if (!isTimeZone(timeZone)) return badZone(c);

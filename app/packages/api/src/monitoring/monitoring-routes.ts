@@ -27,7 +27,7 @@ export function monitoringRoutes(pool: Pool, auth: MiddlewareHandler): Hono<Auth
   const subscribe = monitoringSubscribe({ channels });
   const unsubscribe = monitoringUnsubscribe({ channels });
   const routes = new Hono<AuthEnv>();
-  for (const path of MONITORING_PATHS) routes.use(path, auth).use(`${path}/*`, auth);
+  for (const path of MONITORING_PATHS) routes.use(`${path}/*`, auth);
   routes.get("/reminders", async (c) =>
     c.json({ reminders: await reminderInbox({ reminders }, c.get("account").id) }),
   );
