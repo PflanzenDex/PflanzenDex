@@ -1,14 +1,19 @@
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../../shared/data";
+import {
+  SIGN_IN as KERNEL_SIGN_IN,
+  useQueryClient,
+  useReload,
+  useRequest,
+} from "../../shared/data";
 import { LightView, type LightActions } from "../views/light-view/light-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
 import { refusalText } from "../shared/texts";
 import {
   createWrite,
   loadDerivation,
-  loadLight,
+  loadHints,
   loadLightOverview,
   type DerivationRequest,
   type ApiError,
@@ -16,9 +21,9 @@ import {
   type LightOverview,
   type Response,
 } from "../shared/light-api/light-api";
+import { LIGHT_KEY, sharedLocations, sharedZones } from "../shared/light-api/light-shared";
 
 type Loaded = { data: LightData; overview: Response<LightOverview> };
-const LIGHT_KEY = ["light"] as const;
 
 /** The refusal of a missing sign-in, typed for this module. */
 const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
@@ -79,14 +84,24 @@ export function LightPage(props: {
   const { api, token } = props;
   const toast = useToast();
 
+  const client = useQueryClient();
   const loadAll = useCallback(
     async (t: string): Promise<Response<Loaded>> => {
-      const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
-      if (!r.ok) return r;
+      // Zones and locations come from their shared copies (issue 1244); hints and overview are this page's own.
+      const [z, s, h, o] = await Promise.all([
+        sharedZones(client, api, t),
+        sharedLocations(client, api, t),
+        loadHints(api, t),
+        loadLightOverview(api, t),
+      ]);
+      if (!z.ok) return z;
+      if (!s.ok) return s;
+      if (!h.ok) return h;
       // The overview is an addition: if only it fails, the zones and locations stay usable.
-      return { ok: true, value: { data: r.value, overview: o } };
+      const data = { zones: z.value, locations: s.value, hints: h.value };
+      return { ok: true, value: { data, overview: o } };
     },
-    [api],
+    [api, client],
   );
   const request = useRequest({ queryKey: [...LIGHT_KEY, "page"], token, load: loadAll });
   const reload = useReload(LIGHT_KEY);

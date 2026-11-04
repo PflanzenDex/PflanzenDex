@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1313,
+  "maxTotal": 1288,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -146,10 +146,6 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/care/phases/care-phases-page/care-phases-page.tsx",
-      "count": 1
-    },
-    {
       "file": "packages/web/src/care/phases/phases-list/entry/entry.tsx",
       "count": 20
     },
@@ -176,10 +172,6 @@
     {
       "file": "packages/web/src/care/plant-detail/plant-history/plant-history.tsx",
       "count": 1
-    },
-    {
-      "file": "packages/web/src/care/plant-detail/plant-phase/plant-phase.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/care/treatments/open-treatments/open-treatments.tsx",
@@ -282,10 +274,6 @@
       "count": 10
     },
     {
-      "file": "packages/web/src/collection/care-profile-page/care-profile-page.tsx",
-      "count": 2
-    },
-    {
       "file": "packages/web/src/collection/care-profile/care-profile-list/care-profile-list.tsx",
       "count": 3
     },
@@ -352,10 +340,6 @@
     {
       "file": "packages/web/src/collection/other-pages/difficulty-page/difficulty-page.tsx",
       "count": 12
-    },
-    {
-      "file": "packages/web/src/collection/other-pages/hints-page/hints-page.tsx",
-      "count": 7
     },
     {
       "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
@@ -686,10 +670,6 @@
       "count": 8
     },
     {
-      "file": "packages/web/src/app/flows/add-plant/place-field/place-field.tsx",
-      "count": 2
-    },
-    {
       "file": "packages/web/src/app/flows/onboarding/function-overview/function-overview.tsx",
       "count": 14
     },
@@ -698,16 +678,8 @@
       "count": 8
     },
     {
-      "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/save-step/save-step.tsx",
-      "count": 5
-    },
-    {
       "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/species-step/species-step.tsx",
       "count": 7
-    },
-    {
-      "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/where-question/where-question.tsx",
-      "count": 6
     },
     {
       "file": "packages/web/src/app/flows/onboarding/today-intro/hint/hint-note/hint-note.tsx",
