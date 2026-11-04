@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createFixtureSpecimen } from "../fixtures.ts";
 import { ZonePostgres } from "../light/index.ts";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
-import { WishesPostgres } from "./index.ts";
+import { hasOpenOrBoughtWish, WishesPostgres } from "./index.ts";
 
 // US-WUN-01, DM-WUN-01, P-04: wishes per account (real PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -69,6 +69,19 @@ afterAll(async () => {
 });
 
 describe("US-WUN-01 wishes in the database", () => {
+  it("NFR-12 hasOpenOrBoughtWish sees an open plant wish of the account, and only its own (P-04)", async () => {
+    const fresh = randomUUID();
+    await admin.query("insert into account (id) values ($1)", [fresh]);
+    try {
+      expect(await hasOpenOrBoughtWish(pool, fresh)).toBe(false);
+      await wishes.create(fresh, values({ name: "Nur fuer hasOpen" }));
+      expect(await hasOpenOrBoughtWish(pool, fresh)).toBe(true);
+      expect(await hasOpenOrBoughtWish(pool, randomUUID())).toBe(false);
+    } finally {
+      await admin.query("delete from account where id = $1", [fresh]);
+    }
+  });
+
   it("stores a wish as an open plant wish and reads it back with all fields", async () => {
     const r = await wishes.create(
       anna,

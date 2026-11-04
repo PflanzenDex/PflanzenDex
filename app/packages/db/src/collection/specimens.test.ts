@@ -9,7 +9,8 @@ import {
   deleteSpeciesAsApplication,
 } from "../fixtures.ts";
 import { LocationPostgres } from "../light/index.ts";
-import { SpecimenPostgres } from "./index.ts";
+import { createFixtureSpecimen } from "../fixtures.ts";
+import { SpecimenPostgres, unlockSummaryOf } from "./index.ts";
 
 // US-BES-02, DM-BES-02, P-04: Exemplare je Konto (echte PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -320,6 +321,32 @@ describe("US-BES-04 cutting in the database", () => {
       status: "plant",
       repottedAt: "1900-01-01",
     });
+  });
+});
+
+describe("NFR-12 the summary the unlock rules read", () => {
+  it("NFR-12 counts the active specimens, keeps the first date of an archived one, and only its own (P-04)", async () => {
+    const fresh = randomUUID();
+    await admin.query("insert into account (id) values ($1)", [fresh]);
+    try {
+      expect(await unlockSummaryOf(pool, fresh)).toEqual({ active: 0, firstCreatedAt: null });
+      const first = await createFixtureSpecimen(pool, fresh, "Erste");
+      await createFixtureSpecimen(pool, fresh, "Zweite");
+      await admin.query(
+        "update specimen set created_at = '2026-01-02T23:30:00Z', status = 'archived', archived_at = now(), archived_reason = 'eingegangen' where id = $1",
+        [first],
+      );
+      expect(await unlockSummaryOf(pool, fresh)).toEqual({
+        active: 1,
+        firstCreatedAt: "2026-01-02T23:30:00Z",
+      });
+      expect(await unlockSummaryOf(pool, randomUUID())).toEqual({
+        active: 0,
+        firstCreatedAt: null,
+      });
+    } finally {
+      await admin.query("delete from account where id = $1", [fresh]);
+    }
   });
 });
 

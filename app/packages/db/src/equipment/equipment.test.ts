@@ -40,6 +40,18 @@ afterAll(async () => {
 });
 
 describe("US-EQU-01 equipment in the database", () => {
+  it("NFR-12 hasAny says whether the account has equipment, and only its own (P-04)", async () => {
+    const fresh = randomUUID();
+    await admin.query("insert into account (id) values ($1)", [fresh]);
+    try {
+      expect(await equipment.hasAny(fresh)).toBe(false);
+      await equipment.create(fresh, bare, "active");
+      expect(await equipment.hasAny(fresh)).toBe(true);
+    } finally {
+      await admin.query("delete from account where id = $1", [fresh]);
+    }
+  });
+
   it("stores unknown values as null and returns a given price and date unchanged", async () => {
     expect(await equipment.create(anna, bare, "active")).toMatchObject({
       name: "Lampe 3",
