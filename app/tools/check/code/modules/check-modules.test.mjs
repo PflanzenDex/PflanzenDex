@@ -511,6 +511,18 @@ describe("AB-11 glossary words in the kernel (FR-QG-19)", () => {
   it("without a word list the rule is idle", () => {
     assert.deepEqual(run(kernel("export const specimen = 1;\n")), []);
   });
+
+  it("FR-QG-23 AB-11: a package whose kernel lives elsewhere (web: shared/data) is checked there", () => {
+    const moved = cfg({
+      KERNEL_GLOSSARY_WORDS: ["specimen"],
+      KERNEL_FOLDERS: { web: "shared/data" },
+    });
+    const v = run(
+      { "packages/web/src/shared/data/client.ts": "export const specimenUrl = 1;\n" },
+      moved,
+    );
+    assert.match(v[0] ?? "", /^AB-11 packages\/web\/src\/shared\/data\/client\.ts:1 kernel names/);
+  });
 });
 
 describe("AB-13 contract test per port (FR-QG-19)", () => {

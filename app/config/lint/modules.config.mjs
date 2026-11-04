@@ -6,13 +6,14 @@
 // Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
 import {
   GLOBAL_REFERENCE_TABLES,
+  KERNEL_FOLDERS,
   KERNEL_GLOSSARY_WORDS,
   LEGACY_MIGRATIONS,
   LEGACY_TABLE_NAMES,
   PORTS_WITHOUT_CONTRACT_TEST,
 } from "./module-rules.config.mjs";
 
-const MODULE_RULES = { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
+const MODULE_RULES = { KERNEL_FOLDERS, KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
 const MODULES = [
   {
     name: "kernel",

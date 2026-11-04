@@ -102,6 +102,17 @@ describe("US-QS-23 a plant opens as a layer with tabs", () => {
     expect(tabs).toEqual(["Überblick", "Verlauf", "Pflege", "Standort"]);
   });
 
+  it("NFR-13 the four tabs of a plant wrap at 200 % text instead of scrolling sideways", async () => {
+    setViewportWidth(360);
+    show([card()]);
+    const layer = await open();
+    const strip = within(layer).getByRole("tablist", { name: "Bereiche der Pflanze" });
+    expect(strip.className.split(" ")).toContain("flex-wrap");
+    expect(strip.className.split(" ")).not.toContain("overflow-x-auto");
+    for (const tab of within(layer).getAllByRole("tab"))
+      expect(tab.className.split(" ")).toContain("min-w-fit");
+  });
+
   it("US-QS-23 · P-08 an unknown zone and location read unbekannt in the chips", async () => {
     setViewportWidth(360);
     show([card({ lightZone: null, lightZoneSource: null, location: null })]);

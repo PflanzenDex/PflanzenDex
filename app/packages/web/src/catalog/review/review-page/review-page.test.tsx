@@ -399,6 +399,17 @@ describe("US-QS-15 review list on one screen", () => {
     ).toBe("true");
   });
 
+  it("NFR-13 the two tabs of a case wrap at 200 % text instead of scrolling sideways", async () => {
+    server(list([entry()]));
+    show();
+    const dialog = await openRow("Echeveria elegans");
+    const strip = within(dialog).getByRole("tablist", { name: "Angaben oder Entscheidung" });
+    expect(strip.className.split(" ")).toContain("flex-wrap");
+    expect(strip.className.split(" ")).not.toContain("overflow-x-auto");
+    for (const tab of within(dialog).getAllByRole("tab"))
+      expect(tab.className.split(" ")).toContain("min-w-fit");
+  });
+
   it("US-QS-15 from 1024 px the case stands beside the list as a pane, not as a dialog", async () => {
     setViewportWidth(1440);
     server(list([entry()]));

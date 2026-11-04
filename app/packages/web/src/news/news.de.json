@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Bei großer Schrift bleiben die Beschriftungen der Reiter in ihrem Feld, statt sich zu überlappen.",
     "Anmeldung und Freischalten: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite.",
     "Pflanzen: Mit großer Schrift scrollt bei „Pflanze anlegen“, bei „Messen“ und bei den Änderungen an einer Pflanze nur noch der Inhalt, nicht mehr die ganze Seite.",
     "Artenprofil: Mit großer Schrift scrollt nur noch der Inhalt, nicht mehr die ganze Seite. Die Angaben zur Art stehen dabei untereinander, der Name über dem Wert, statt den Wert aus der Spalte zu drücken.",
