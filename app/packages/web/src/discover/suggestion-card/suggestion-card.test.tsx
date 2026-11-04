@@ -186,3 +186,12 @@ describe("US-QS-21 the card shows the essentials and opens the rest with Mehr", 
     );
   });
 });
+
+describe("NFR-12 the suggestion picture loads when it is near the viewport", () => {
+  it("NFR-12 the picture of a suggestion is loaded lazily (loading=lazy)", () => {
+    show(suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" }));
+    const img = screen.getByRole("img");
+    expect(img.getAttribute("loading")).toBe("lazy");
+    expect(img.getAttribute("src")).toBe("https://upload.wikimedia.org/a.jpg");
+  });
+});

@@ -1,6 +1,6 @@
 import { appError, failed, ok } from "../kernel";
 import type { Result } from "../kernel";
-import { objectKey } from "./keys";
+import { objectKey, thumbnailName } from "./keys";
 import { MEDIA_LIMITS } from "./types";
 import type { ImageProcessor, ObjectStore } from "./types";
 
@@ -16,8 +16,10 @@ export interface StoredImage {
 }
 
 /**
- * Upload pipeline (FR-WAC-09): check, process, store the processed image. The original is passed to the processor only
- * and never reaches the store, so no object with GPS data can exist. Nothing is written when any step fails (P-03).
+ * Upload pipeline (FR-WAC-09, NFR-12): check, process, store the processed image and its thumbnail. The original is passed
+ * to the processor only and never reaches the store, so no object with GPS data can exist. Nothing is kept when any step
+ * fails (P-03): when the thumbnail cannot be written, the stored copy is taken back and the upload is refused with the
+ * store's error, so the caller can retry and no photo is lost silently (P-10).
  */
 export async function storeImage(
   deps: StoreImageDependencies,
@@ -33,7 +35,16 @@ export async function storeImage(
     return failed(appError("media.type_unsupported"));
   const processed = await deps.processor.process(upload.bytes);
   if (!processed.ok) return processed;
-  const { bytes, contentType, width, height } = processed.value;
+  const { bytes, contentType, width, height, thumbnail } = processed.value;
   const put = await deps.store.put(accountId, name, bytes, contentType);
-  return put.ok ? ok({ name, width, height }) : put;
+  if (!put.ok) return put;
+  const small = await deps.store.put(
+    accountId,
+    thumbnailName(name),
+    thumbnail.bytes,
+    thumbnail.contentType,
+  );
+  if (small.ok) return ok({ name, width, height });
+  await deps.store.delete(accountId, name);
+  return small;
 }
