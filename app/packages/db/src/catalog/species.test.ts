@@ -382,3 +382,12 @@ describe("species catalog and review status (TE-08)", () => {
     expect(statements).toBe(afterFew);
   });
 });
+
+describe("NFR-12 species search by Latin name", () => {
+  it("NFR-12 the index species_latin_name serves the ordered search", async () => {
+    const { rows } = await admin.query<{ indexdef: string }>(
+      "select indexdef from pg_indexes where schemaname = 'public' and indexname = 'species_latin_name'",
+    );
+    expect(rows[0]?.indexdef).toContain("(latin_name)");
+  });
+});

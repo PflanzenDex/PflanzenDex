@@ -1,7 +1,7 @@
 import type { ArchivedEntry, SpecimenCard, LightLocation, Distribution } from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
-import { loadLocations } from "../../../light";
-import { useRequest, type Request } from "../../../shared/data";
+import { sharedLocations } from "../../../light";
+import { useQueryClient, useRequest, type Request } from "../../../shared/data";
 import { loadArchived } from "../../archived/archived-api";
 import { loadCards } from "../cards/cards-api";
 import { loadDistribution } from "../../insights/api/distribution-api";
@@ -18,11 +18,12 @@ export type Loaded = {
 
 /** Loads cards, locations, archive and distribution; if one fails, the loading fails as a whole (show nothing half). */
 export function useCollection(api: string, token: Token): Request<Loaded> {
+  const client = useQueryClient();
   const load = useCallback(
     async (t: string) => {
       const [e, s, a, v] = await Promise.all([
         loadCards(api, t),
-        loadLocations(api, t),
+        sharedLocations(client, api, t),
         loadArchived(api, t),
         loadDistribution(api, t),
       ]);
@@ -35,7 +36,7 @@ export function useCollection(api: string, token: Token): Request<Loaded> {
         value: { cards: e.value, locations: s.value, archived: a.value, distribution: v.value },
       };
     },
-    [api],
+    [api, client],
   );
   return useRequest({ queryKey: COLLECTION_KEY, token, load });
 }

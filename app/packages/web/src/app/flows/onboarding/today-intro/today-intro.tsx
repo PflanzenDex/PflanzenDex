@@ -1,9 +1,10 @@
 import { Suspense, type ReactNode } from "react";
 import { isNewAccount, type OnboardingCounts } from "@pflanzendex/core";
 import { loadSpecimenCount } from "../../../../collection";
-import { useFeature, useRequest } from "../../../../shared/data";
+import { useFeature, useRequest, type Request } from "../../../../shared/data";
 import { FriendsBanner } from "../../../../social";
 import { HintNote } from "./hint";
+import type { HintState } from "./hint/hint-api";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import type { LinkTarget } from "../../../../shared/patterns/navigation/navigation/navigation";
@@ -13,52 +14,85 @@ type Token = () => Promise<string | undefined>;
 type Target = Extract<LinkTarget, "species" | "collection">;
 
 const COUNTS_KEY = ["today", "intro-counts"];
+const NOTE_OCCASIONS = ["first_plant_saved", "function_unlocked"] as const;
 
-function Content(props: {
-  lookup: SpeciesLookup;
+/** The count of the account for the intro; `undefined` while it loads or when it failed (the tasks then show alone). */
+function useCounts(api: string, token: Token): Request<OnboardingCounts> {
+  return useRequest({
+    queryKey: COUNTS_KEY,
+    token,
+    load: async (t: string) => {
+      const specimens = await loadSpecimenCount(api, t);
+      if (!specimens.ok) return specimens;
+      const counts: OnboardingCounts = {
+        specimens: specimens.value.active,
+        archivedSpecimens: specimens.value.archived,
+      };
+      return { ok: true as const, value: counts };
+    },
+  });
+}
+
+/** Which part of the introduction shows now (issue 1244): nothing before the count, the guide in place of the tasks. */
+function stageOf(
+  pending: boolean,
+  counts: OnboardingCounts | undefined,
+  hints: HintState | "failed" | null,
+  ended: boolean,
+) {
+  const newAccount = counts !== undefined && isNewAccount(counts);
+  // Undecided: the count, or the hints a new account is judged by, are still loading.
+  const undecided = pending || (newAccount && hints === null);
+  const guide = newAccount && hints !== null && !ended;
+  return {
+    undecided,
+    guide,
+    intro: counts !== undefined && !undecided && !guide,
+    tasks: !undecided && !guide,
+  };
+}
+
+/** The hint that may show as a note above the tasks, if one is due (US-ONB-07). */
+function noteOf(hints: HintState | "failed" | null) {
+  const hint = typeof hints === "object" && hints !== null ? hints.hint : null;
+  return NOTE_OCCASIONS.find((o) => o === hint) ?? null;
+}
+
+/**
+ * A wrapper that is hidden as a whole while `shown` is false and otherwise takes no box of its own (`contents`), so the
+ * children keep their place in the layout of "Heute". It stays mounted, so its requests run without waiting for a
+ * decision (issue 1244) and a change of visibility never remounts (and refetches) its content.
+ */
+function Shown(props: { shown: boolean; children: ReactNode }) {
+  return (
+    <div hidden={!props.shown} className={props.shown ? "contents" : undefined}>
+      {props.children}
+    </div>
+  );
+}
+
+/** The quiet notices above the tasks: the friends' requests (when "social" is on) and the due hint. */
+function Notes(props: {
   api: string;
   token: Token;
-  counts: OnboardingCounts;
-  onOpen: (t: Target) => void;
-  fallback: ReactNode;
-  children: ReactNode;
+  social: boolean;
+  note: ReturnType<typeof noteOf>;
+  onGone: () => void;
 }) {
-  const { counts } = props;
-  const social = useFeature("social");
-  const [hints, setHints] = useHints(props.api, props.token, counts);
-  const [ended, leave] = useGuideEnd(props.api, props.token, hints);
-  if (isNewAccount(counts) && hints === null) return <>{props.fallback}</>;
-  if (isNewAccount(counts) && !ended)
-    return (
-      <FirstPlantGuide
-        lookup={props.lookup}
-        api={props.api}
-        token={props.token}
-        counts={COUNTS_KEY}
-        onOpen={props.onOpen}
-        onLeave={leave}
-      />
-    );
-  const due = typeof hints === "object" && hints !== null ? hints.hint : null;
+  const { api, token } = props;
   return (
     <>
-      {social && (
+      {props.social && (
         <Suspense fallback={null}>
           {/* The new plants are a tile of the overview (issue 1156); only the requests stay a notice here. */}
-          <FriendsBanner api={props.api} token={props.token} quiet requests news={false} />
+          <FriendsBanner api={api} token={token} quiet requests news={false} />
         </Suspense>
       )}
-      {(due === "first_plant_saved" || due === "function_unlocked") && (
+      {props.note && (
         <Suspense fallback={null}>
-          <HintNote
-            occasion={due}
-            api={props.api}
-            token={props.token}
-            onGone={() => setHints((h) => (typeof h === "object" && h ? { ...h, hint: null } : h))}
-          />
+          <HintNote occasion={props.note} api={api} token={token} onGone={props.onGone} />
         </Suspense>
       )}
-      {props.children}
     </>
   );
 }
@@ -68,6 +102,8 @@ function Content(props: {
  * the first-plant guide in place of the day's tasks (`children`); an account whose plants are all archived is a
  * returning keeper and gets the tasks. Otherwise the calm hint comes above the tasks; the locked functions are a tile of
  * the tasks (issue 1156).
+ * Only the intro waits for the count: the tasks load at the same time (issue 1244) and stay hidden until the count
+ * decides, so no task is shown in the wrong state and none waits for the count to start loading.
  * Counting fails open: when the count is not there the tasks show without the introduction (P-10 is kept by the tasks
  * themselves, which show their own error).
  */
@@ -82,21 +118,38 @@ export function TodayIntro(props: {
   /** The day's tasks. */
   children: ReactNode;
 }) {
-  const { api } = props;
-  const r = useRequest({
-    queryKey: COUNTS_KEY,
-    token: props.token,
-    load: async (t: string) => {
-      const specimens = await loadSpecimenCount(api, t);
-      if (!specimens.ok) return specimens;
-      const counts: OnboardingCounts = {
-        specimens: specimens.value.active,
-        archivedSpecimens: specimens.value.archived,
-      };
-      return { ok: true as const, value: counts };
-    },
-  });
-  if (r.status === "pending") return <>{props.fallback}</>;
-  if (r.value === undefined) return <>{props.children}</>;
-  return <Content {...props} counts={r.value} />;
+  const { api, token } = props;
+  const social = useFeature("social");
+  const r = useCounts(api, token);
+  const [hints, setHints] = useHints(api, token, r.value);
+  const [ended, leave] = useGuideEnd(api, token, hints);
+  const stage = stageOf(r.status === "pending", r.value, hints, ended);
+  return (
+    <>
+      {stage.undecided && props.fallback}
+      {stage.guide && (
+        <FirstPlantGuide
+          lookup={props.lookup}
+          api={api}
+          token={token}
+          counts={COUNTS_KEY}
+          onOpen={props.onOpen}
+          onLeave={leave}
+        />
+      )}
+      <Shown shown={stage.intro}>
+        <Notes
+          api={api}
+          token={token}
+          social={social}
+          note={noteOf(hints)}
+          onGone={() => setHints((h) => (typeof h === "object" && h ? { ...h, hint: null } : h))}
+        />
+      </Shown>
+      {/* A lazy part of the tasks suspends only this boundary: the intro above mounts and asks for its count at once. */}
+      <Shown shown={stage.tasks}>
+        <Suspense fallback={props.fallback}>{props.children}</Suspense>
+      </Shown>
+    </>
+  );
 }
