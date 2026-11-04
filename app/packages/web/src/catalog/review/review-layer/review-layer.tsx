@@ -138,6 +138,7 @@ export function ReviewLayer(props: { entry: ReviewEntry; actions: ReviewActions;
       ) : (
         <Tabs
           label="Angaben oder Entscheidung"
+          wrap
           value={tab}
           onValueChange={(value) => chooseTab(value as LayerTab)}
           tabs={[
