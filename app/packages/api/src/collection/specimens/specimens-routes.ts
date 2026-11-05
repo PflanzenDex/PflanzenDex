@@ -1,19 +1,18 @@
 import {
   NO_TREATMENTS,
   NO_MEASUREMENTS,
+  NO_MEASURED,
   NO_PROVENANCE,
   NO_TARGET_LOCATION,
   specimenCreate,
   specimenCorrectCatchDate,
   specimenRepot,
-  specimenCards,
   specimenLoad,
   specimenList,
   appError,
-  localToday,
-  isTimeZone,
   type TreatmentSource,
   type MeasurementSource,
+  type MeasuredSource,
   type ProvenanceSource,
   type TargetLocationSource,
 } from "@pflanzendex/core";
@@ -24,6 +23,10 @@ import {
   IdempotencyPostgres,
   LocationPostgres,
   ZonePostgres,
+  specimenAnyActive,
+  specimenCounts,
+  specimenPage,
+  treatableSpecimens,
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -32,6 +35,7 @@ import { archivedRoutes } from "../archived/archived-routes";
 import { markerRoutes } from "../markers/marker-routes";
 import { locationRoutes } from "../markers/location-routes";
 import { derivedRoutes } from "../insights/derived-routes";
+import { cardRoutes } from "../cards/cards-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const SPECIMEN_PATHS = ["/specimens"] as const;
@@ -47,6 +51,8 @@ export type SpecimenOptions = {
   treatments?: TreatmentSource | undefined;
   /** From whom received specimens came; implemented by `swap` (US-SOZ-13), until then the cards show none. */
   provenance?: ProvenanceSource | undefined;
+  /** The measured plants (summary of the cards); implemented by `care` (WAC), until then none is measured. */
+  measured?: MeasuredSource | undefined;
 };
 
 /** What the cards read (US-BES-06); the care profiles give the same effective zone as the distribution (#592). */
@@ -63,6 +69,14 @@ export const cardsDependencies = (
   treatments: opt.treatments ?? NO_TREATMENTS,
   provenance: opt.provenance ?? NO_PROVENANCE,
   profiles: new CareProfilePostgres(pool),
+  measured: opt.measured ?? NO_MEASURED,
+  // The page reads of the card list and the summary run in the database (NFR-12, FR-BES-23).
+  pages: {
+    page: (userId: string, q: Parameters<typeof specimenPage>[2]) => specimenPage(pool, userId, q),
+    summary: (userId: string) => specimenCounts(pool, userId),
+    anyActive: (userId: string, ids: readonly string[]) => specimenAnyActive(pool, userId, ids),
+    treatable: (userId: string) => treatableSpecimens(pool, userId),
+  },
 });
 
 /**
@@ -88,20 +102,9 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   routes.get("/specimens", async (c) =>
     c.json({ specimens: await specimenList(specimens, c.get("account").id) }),
   );
-  // Before `/specimens/:id`, otherwise "cards" would be read as an ID. "Today" is the local date of the requested time zone (the profile's, US-ACC-02; NFR-08).
-  routes.get("/specimens/cards", async (c) => {
-    const timeZone = c.req.query("timeZone");
-    if (!isTimeZone(timeZone)) {
-      const details = [{ field: "timeZone", code: "input.invalid" as const }];
-      return c.json(errorBody(appError("input.invalid", { details })), 400);
-    }
-    const cards = await specimenCards(
-      cardsDeps,
-      c.get("account").id,
-      localToday(clock(), timeZone),
-    );
-    return c.json({ cards });
-  });
+  // The card list, its summary, the treatment list and one card (US-BES-06, FR-BES-23); before `/specimens/:id`, otherwise
+  // "cards" would be read as an ID.
+  routes.route("/", cardRoutes(cardsDeps, clock));
   // The start page only needs the numbers of active and archived specimens (US-ACC-03); before `/specimens/:id`.
   routes.get("/specimens/count", async (c) => {
     const n = await specimens.countByStatus(c.get("account").id);

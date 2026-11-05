@@ -21,6 +21,7 @@ import {
   treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
+  measuredSourceFor,
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
@@ -98,6 +99,7 @@ export function careSources(pool: Pool, opt: AppOptions) {
   return {
     targetLocation: opt.targetLocation ?? targetLocationFor(pool),
     measurements: opt.measurements ?? measurementSourceFor(pool),
+    measured: measuredSourceFor(pool),
     treatments: opt.treatments ?? treatmentSourceFor(pool),
     provenance: opt.provenance ?? provenanceSourceFor(pool),
   };

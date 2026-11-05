@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import { groupBySpecimen } from "./group-rows.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface MeasurementRow {
@@ -56,13 +57,7 @@ export class MeasurementsPostgres {
         [specimenIds],
       ),
     );
-    const grouped = new Map<string, MeasurementRow[]>();
-    for (const row of r.rows) {
-      const own = grouped.get(row.specimenId);
-      if (own) own.push(row);
-      else grouped.set(row.specimenId, [row]);
-    }
-    return grouped;
+    return groupBySpecimen(r.rows);
   }
 
   /**
@@ -82,6 +77,16 @@ export class MeasurementsPostgres {
       ),
     );
     return new Map(r.rows.map((z) => [z.specimenId, z]));
+  }
+
+  /** The IDs of the specimens of the account that have a measurement, distinct, as one aggregate (US-BES-06 summary). Archived ones are included: the caller checks activity. */
+  async measuredSpecimenIds(userId: string): Promise<string[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ ids: string[] | null }>(
+        `select array_agg(distinct specimen_id::text) as ids from measurement`,
+      ),
+    );
+    return r.rows[0]?.ids ?? [];
   }
 
   /** The most recent measurement with a photo per specimen; foreign IDs return nothing (P-04). */
