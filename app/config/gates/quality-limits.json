@@ -23,10 +23,18 @@
     "maxCls": 0.1
   },
   "perf": {
-    "_comment": "NFR-12 / FR-QG-09 (issue 1250): budgets of the nightly load measurement (packages/api/perf/load/measure.ts, every GET route at `size` specimens, in process against PostgreSQL in CI), read by packages/api/perf/load/budget-report.ts. PROVISIONAL, replaced by values from the first CI runs before merge. Report only (owner decision 2026-11-05): `blocking` is switched on by the owner through its own gate PR after about two weeks of numbers.",
+    "_comment": "NFR-12 / FR-QG-09 (issue 1250): budgets of the nightly load measurement (packages/api/perf/load/measure.ts, every GET route at `size` specimens, in process against PostgreSQL 18 on a GitHub runner), read by packages/api/perf/load/budget-report.ts. Starting values (assumption) from ONE CI run (nightly 42079900165 on 2026-11-05, AMD EPYC 7763, 4 cores, 20 timed runs per route): the default holds every ordinary route with slack, a route gets its own budget at 1.5x its measured value (rounded up to 5) where that is above the default. Report only (owner decision 2026-11-05): `blocking` is switched on by the owner through its own gate PR after about two weeks of nightly numbers (issue 1250).",
     "size": 1000,
     "blocking": false,
-    "default": { "maxMedianMs": 100, "maxP95Ms": 200, "maxBodyKb": 500 },
-    "routes": {}
+    "default": { "maxMedianMs": 50, "maxP95Ms": 75, "maxBodyKb": 250 },
+    "routes": {
+      "/account/export": { "maxMedianMs": 140, "maxP95Ms": 145, "maxBodyKb": 2400 },
+      "/achievements": { "maxMedianMs": 85, "maxP95Ms": 105 },
+      "/achievements/news": { "maxMedianMs": 85, "maxP95Ms": 95 },
+      "/achievements/rhythm": { "maxMedianMs": 65 },
+      "/achievements/year": { "maxMedianMs": 165, "maxP95Ms": 170 },
+      "/pokedex/cards": { "maxBodyKb": 320 },
+      "/specimens": { "maxBodyKb": 575 }
+    }
   }
 }
