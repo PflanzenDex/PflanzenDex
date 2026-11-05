@@ -17,7 +17,7 @@ export function usePart(choices: readonly GroupChoice[]): GroupChoice | undefine
   return choices.find((c) => c.key === wanted) ?? choices[0];
 }
 
-/** The chips in one line: the chosen one has the check mark and the filled style, besides colour (US-QS-19). */
+/** The chips, in one line below 768 px and up to two lines from 768 px: the chosen one has the check mark and the filled style, besides colour (US-QS-19). */
 function ChipRow({
   label,
   choices,
@@ -30,7 +30,7 @@ function ChipRow({
   onChoose: (key: string) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex gap-2">
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
       {choices.map((c) => {
         const selected = c.key === chosen?.key;
         return (
@@ -89,11 +89,11 @@ function MeasureRow({
 }
 
 /**
- * A row of group choices with their counts (US-QS-19, issue 1281): the chips in one line when they all fit on one line
- * of the row, otherwise one selection field with the same names and counts. The row never scrolls sideways and never
- * takes more than one line; it is one control high in both forms. The choice is in the address (`part=`), so back,
- * forward and a copied link lead to the same group; choosing starts at page 1. The selection field is named by the
- * row's `label` only (no visible label) and keeps the keyboard focus across a choice.
+ * A row of group choices with their counts (US-QS-19, issue 1281): the chips when they fit the row (one line below
+ * 768 px, up to two lines from 768 px, simulated greedily with the measured chip widths in `useChipsFit`), otherwise one
+ * selection field with the same names and counts. The row never scrolls sideways. The choice is in the address
+ * (`part=`), so back, forward and a copied link lead to the same group; choosing starts at page 1. The selection field
+ * is named by the row's `label` only (no visible label) and keeps the keyboard focus across a choice.
  */
 export function GroupChoices({
   label,
@@ -104,7 +104,7 @@ export function GroupChoices({
 }) {
   const [params, setParams] = useSearchParams();
   const chosen = usePart(choices);
-  const { row, measure, fits } = useChipsFit();
+  const { row, measure, fits } = useChipsFit(choices.length > 0);
   const choose = (key: string) => {
     const next = new URLSearchParams(params);
     next.set(PART_PARAM, key);
