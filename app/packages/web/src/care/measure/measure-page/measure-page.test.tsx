@@ -94,6 +94,12 @@ afterEach(() => {
 const openCourse = async () =>
   userEvent.click(await screen.findByRole("button", { name: /^Verlauf \(/ }));
 
+/** The entries and their photos are in the part "Messungen" of the layer (US-QS-15). */
+const openEntries = async () => {
+  await openCourse();
+  await userEvent.click(await screen.findByRole("button", { name: "Messungen" }));
+};
+
 describe("US-WAC-01 Seite Messen", () => {
   it('US-WAC-01 shows "Was messen?" after loading and the empty course with next step (P-09)', async () => {
     fakeServer();
@@ -122,7 +128,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
-    await openCourse();
+    await openEntries();
     expect(
       await screen.findByRole("heading", { level: 3, name: "12,5\u00a0cm · 01.10.2026" }),
     ).toBeTruthy();
@@ -257,7 +263,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     show();
     await fillValue("12,5");
     await save();
-    await openCourse();
+    await openEntries();
     expect(
       await screen.findByRole("img", { name: "Foto der Messung vom 01.10.2026" }),
     ).toBeTruthy();
@@ -353,7 +359,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     setViewportWidth(1024);
     const { photoPosts } = fakeServer({ existing: [measurement] });
     show();
-    await openCourse();
+    await openEntries();
     await pick(/Foto hinzufügen/);
     await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
     expect(photoPosts[0]?.url).toContain("date=2026-10-01");
@@ -370,7 +376,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
         ++calls === 1 ? exists() : response(201, { photo: "q.jpg", replaced: true }),
     });
     show();
-    await openCourse();
+    await openEntries();
     await pick(/Foto ersetzen/);
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain(ERROR_TEXTS["measurement.photo_exists"]);
@@ -387,7 +393,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
       photoSave: exists,
     });
     show();
-    await openCourse();
+    await openEntries();
     await pick(/Foto ersetzen/);
     await screen.findByRole("dialog");
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
@@ -403,7 +409,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
         response(415, { error: { code: "media.type_unsupported", text: "raw server text" } }),
     });
     show();
-    await openCourse();
+    await openEntries();
     await pick(/Foto hinzufügen/);
     expect((await screen.findByRole("alert")).textContent).toContain(
       ERROR_TEXTS["media.type_unsupported"],
@@ -418,7 +424,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
       ],
     });
     show();
-    await openCourse();
+    await openEntries();
     await screen.findAllByRole("heading", { level: 3 });
     expect(screen.getAllByLabelText(/Foto hinzufügen/)).toHaveLength(1);
   });

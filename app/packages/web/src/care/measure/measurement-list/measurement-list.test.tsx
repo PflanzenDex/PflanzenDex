@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import type { MeasurementRow } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { MeasurementList } from "./measurement-list";
 
@@ -17,13 +18,14 @@ const row = (id: string, date: string, value: number): MeasurementRow => ({
 });
 const list = (records?: ReadonlySet<string>) =>
   render(
-    <MeasurementList
-      measurements={[row("b", "2026-01-01", 40), row("a", "2025-01-01", 10)]}
-      photo={{ api: "http://api", token: async () => "t", specimenId: "e1" }}
-      onPhotoSaved={() => {}}
-      onAdd={() => {}}
-      records={records}
-    />,
+    <MemoryRouter>
+      <MeasurementList
+        measurements={[row("b", "2026-01-01", 40), row("a", "2025-01-01", 10)]}
+        photo={{ api: "http://api", token: async () => "t", specimenId: "e1" }}
+        onPhotoSaved={() => {}}
+        records={records}
+      />
+    </MemoryRouter>,
   );
 
 describe("US-ACH-05 personal record in the history of a specimen", () => {
