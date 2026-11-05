@@ -3,26 +3,53 @@ import { LONG_LIMITS, poolLimits, type DbLimits } from "./connection/limits.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Switches the open transaction to the application role (row rules apply, P-04) and sets its session variables and its
- * time limits (NFR-12). The variables and limits are one `set_config(..., true)` statement after the role switch, so a
- * transaction keeps the statements the query-count gate counts (`begin`, role, variables, ..., `commit`). They end with
- * the transaction.
- */
-export async function enterApplicationRole(
-  client: PoolClient,
-  limits: DbLimits,
-  variables: readonly (readonly [name: string, value: string])[],
-): Promise<void> {
-  await client.query("set local role pflanzendex_app");
-  const settings: (readonly [string, string])[] = [
+type Settings = readonly (readonly [name: string, value: string])[];
+
+/** The session variables of a transaction, then its three time limits (NFR-12), in the order they are set. */
+function settingsOf(limits: DbLimits, variables: Settings): Settings {
+  return [
     ...variables,
     ["statement_timeout", String(limits.statementMs)],
     ["lock_timeout", String(limits.lockMs)],
     ["idle_in_transaction_session_timeout", String(limits.idleInTransactionMs)],
   ];
+}
+
+/**
+ * Switches the open transaction to the application role (row rules apply, P-04) and sets its session variables and its
+ * time limits (NFR-12). For a caller that opens the transaction with its own `begin` and runs something before the
+ * switch (the catalog load, after its advisory lock): the role is one statement and the settings one `set_config(..., true)`
+ * select. A caller that switches right after `begin` uses `beginAsApplicationRole`, which needs one round trip. They end
+ * with the transaction.
+ */
+export async function enterApplicationRole(
+  client: PoolClient,
+  limits: DbLimits,
+  variables: Settings,
+): Promise<void> {
+  await client.query("set local role pflanzendex_app");
+  const settings = settingsOf(limits, variables);
   const calls = settings.map((_, i) => `set_config($${2 * i + 1}, $${2 * i + 2}, true)`);
   await client.query(`select ${calls.join(", ")}`, settings.flat());
+}
+
+/**
+ * Opens a transaction as the application role in one round trip (NFR-12, #1240): `begin`, the role switch and the
+ * settings of `enterApplicationRole` go in one simple-protocol query, so the frame of a request opens with one statement
+ * instead of three. The settings are `set_config(..., true)` and end with the transaction. The simple protocol takes no
+ * parameters, so every value is written into the text with `client.escapeLiteral`, the setting names and the limits too.
+ * The caller checks an account id as a UUID; a sign-in subject is free text from a token and relies on this escaping.
+ */
+export async function beginAsApplicationRole(
+  client: PoolClient,
+  limits: DbLimits,
+  variables: Settings,
+): Promise<void> {
+  const calls = settingsOf(limits, variables).map(
+    ([name, value]) =>
+      `set_config(${client.escapeLiteral(name)}, ${client.escapeLiteral(value)}, true)`,
+  );
+  await client.query(`begin; set local role pflanzendex_app; select ${calls.join(", ")}`);
 }
 
 /**
@@ -60,8 +87,7 @@ async function inAccount<T>(
   const client = await pool.connect();
   let broken: Error | undefined;
   try {
-    await client.query("begin");
-    await enterApplicationRole(client, limits, [["app.account_id", accountId]]);
+    await beginAsApplicationRole(client, limits, [["app.account_id", accountId]]);
     const result = await body(client);
     await client.query("commit");
     return result;

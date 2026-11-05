@@ -1,5 +1,11 @@
 // Public interface of the `kernel` module (ADR 0003): tenant access, connection, migrations, idempotency.
-export { withAccount, withLongAccount, asAccount, enterApplicationRole } from "./tenant.ts";
+export {
+  withAccount,
+  withLongAccount,
+  asAccount,
+  beginAsApplicationRole,
+  enterApplicationRole,
+} from "./tenant.ts";
 export {
   isDatabaseUnavailable,
   LONG_LIMITS,
