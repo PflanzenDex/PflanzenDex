@@ -24,7 +24,7 @@ export const tileZone = (card: SpecimenCard): string =>
   card.lightZone ? zoneLabel(card.lightZone) : UNKNOWN;
 
 /** Attention is marked by the warning tokens and the word, never by colour alone (DS-38). */
-const stateMark = cva("w-fit rounded-sm px-1 text-xs font-semibold", {
+const stateMark = cva("w-fit max-w-full truncate rounded-sm px-1 text-xs font-semibold", {
   variants: {
     attention: { true: "border-b-2 border-warning-border bg-warning text-warning-foreground" },
   },
@@ -52,7 +52,9 @@ function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
  * A compact plant tile (US-QS-19): photo or the initial of the name, the name, the light zone as text and one state.
  * Name and zone keep one line each and end in "…" when they are longer than the tile, never breaking inside a word;
  * the full text stays the accessible name and the layer shows it (owner decision 2026-11-01, issue 1108). Choosing
- * it opens the plant in its layer (`?sheet=plant-<id>`). Takes the card and the photo access only.
+ * it opens the plant in its layer (`?sheet=plant-<id>`). Takes the card and the photo access only. A tile too narrow
+ * for picture and text side by side, as at 200 % text on a phone, stacks them, so the name keeps the full width and
+ * pots of one species stay apart by their marker (owner decision 2026-11-05, issue 1304).
  */
 export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
   const { openLayer, open } = useLayer(plantLayerId(card.id));
@@ -65,17 +67,19 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="h-auto w-full min-w-0 justify-start gap-2 whitespace-normal rounded-card bg-secondary px-2 py-1.5 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
+      className="@container h-auto w-full min-w-0 justify-start whitespace-normal rounded-card bg-secondary px-2 py-1.5 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
     >
-      <Face card={card} access={access} />
-      <span className="grid min-w-0 gap-0.5">
-        <span className="truncate font-semibold">{card.name}</span>{" "}
-        <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>{" "}
-        <span
-          data-attention={state.attention}
-          className={stateMark({ attention: state.attention })}
-        >
-          {state.text}
+      <span className="flex w-full min-w-0 items-center gap-2 @max-[7.5rem]:flex-col @max-[7.5rem]:items-start">
+        <Face card={card} access={access} />
+        <span className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-0.5">
+          <span className="truncate font-semibold">{card.name}</span>{" "}
+          <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>{" "}
+          <span
+            data-attention={state.attention}
+            className={stateMark({ attention: state.attention })}
+          >
+            {state.text}
+          </span>
         </span>
       </span>
     </Button>
