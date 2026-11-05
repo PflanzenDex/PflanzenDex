@@ -184,6 +184,8 @@ State of implementation: partly done. The page "Tauschbörse" shows "Angebote vo
 
 Related: the epic TAU (`21-swipe-matching.md`) offers a swipe view of the offers that match the own wishlist (US-TAU-01 to US-TAU-07); a request still arises only through the operation of this story.
 
+Shop offers (epic DEAL, `25-shop-offers-and-sale-alerts.md`) are not offers of friends and never appear here. Recipes that friends share (US-SUB-06) use the sharing setting of US-SOZ-04 and are not part of this exchange.
+
 ### US-SOZ-10 · Answer a swap request · 🟨 new
 
 Acceptance criteria:

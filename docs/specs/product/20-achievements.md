@@ -137,6 +137,7 @@ Acceptance criteria:
 - Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-02). It ships together with the first visible ACH element (see build order). Calm mode also switches off the introduction hints (US-ONB-07) and hides the staged ACH entries without announcing them (US-ONB-05).
 - Status: the setting exists (table `achievement_setting`, `GET /achievements/settings`, `PUT /achievements/settings/calm-mode`, switch "Ruhemodus" on the settings page, off by default) and core answers `showsAchievements(settings)`; the elements that must obey it arrive with US-ACH-02 and the following stories, each of which checks the setting. Assumption, decided by the PO: the switch saves on its own (no Save button), and the AI client interface (KI-R2) asks the same function once ACH text reaches it.
 - The state "calm mode" is respected by every ACH element and by the AI client interface (no hidden gamified text, KI-R2).
+- The keeper switch (US-ONB-09, P-12) is a separate setting: it switches the whole achievements function off for one keeper. Calm mode only hides the celebrations and keeps the information.
 
 ## Dependencies and build order
 
