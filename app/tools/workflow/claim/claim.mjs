@@ -1,16 +1,24 @@
 // `make claim ISSUE=<n>` (US-DEV-08): claim a story before working on it, so nobody builds it twice.
-// Refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its
-// story ID or it is labelled needs-triage (FR-DEV-10). Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
+// Refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its story ID or it is labelled needs-triage (FR-DEV-10). Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
+// Repository, issue, PR and assignee calls are REST and the board is one lookup of this issue, so a claim survives an exhausted GraphQL budget (FR-DEV-10, #1412): what cannot be written is a warning.
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
 import { fileURLToPath } from "node:url";
-import { fetchBranches, fetchIssue, fetchPrs, me, realClient } from "./lib/claim-client.mjs";
+import {
+  fetchBranches,
+  fetchIssue,
+  fetchPrs,
+  me,
+  realClient,
+  repoName,
+  setAssignee,
+} from "./lib/claim-client.mjs";
+import { boardItemOf } from "./lib/board-client.mjs";
 import { branchName, findConflicts, refusalReport } from "./lib/claim-lib.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
 import { collect } from "./migration/git-view.mjs";
 import { nextNumber, pad } from "./migration/migration-lib.mjs";
 import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs";
-import { loadItems, missingPriority } from "../actions/project-status/project-status.mjs";
 import {
   handoffBody,
   openDraftPr,
@@ -49,28 +57,28 @@ async function assertFree(client, number, { env, login, typ }) {
   return issue;
 }
 
-/** Assigns the issue to the caller; if somebody else was faster in the meantime, steps back. */
+/** Assigns the issue to the caller (REST); if somebody else was faster in the meantime, steps back. */
 async function assign(client, issue, login) {
-  await client.run("gh", ["issue", "edit", String(issue.number), "--add-assignee", "@me"]);
+  await setAssignee(client, issue.number, login, true);
   const after = await fetchIssue(client, issue.number);
   const others = after.assignees.filter((a) => a.login !== login);
   if (others.length) {
-    await client.run("gh", ["issue", "edit", String(issue.number), "--remove-assignee", "@me"]);
+    await setAssignee(client, issue.number, login, false);
     throw new ClaimRefused(
       others.map((a) => ({ text: `@${a.login} claimed #${issue.number} first` })),
     );
   }
 }
 
-async function projectStatus(client, issue, status, log) {
+/** Sets the board status; a failure is a warning and the claim goes on (P-10). True when the status was set. */
+async function projectStatus(client, { url, owner, status }, log) {
   try {
-    const owner = (
-      await client.run("gh", ["repo", "view", "--json", "owner", "-q", ".owner.login"])
-    ).trim();
-    await setProjectStatus(client, issue.url, owner, status);
+    await setProjectStatus(client, url, owner, status);
     log(`Project status: ${status}`);
+    return true;
   } catch (e) {
     log(`WARNING: project status not set (${e.message}); set it by hand on the board`);
+    return false;
   }
 }
 
@@ -93,24 +101,23 @@ function reserveMigration(client, env) {
   return pad(nextNumber({ taken }));
 }
 
-/** Warning only, never a failure: the claim is done; a failed lookup is reported, not swallowed (P-10). */
-async function warnNoPriority(client, number, log) {
+/**
+ * The board item of this issue, read once: its Typ decides the branch type, its priority the warning. A failed lookup is
+ * reported and the labels decide instead; nothing is swallowed (P-10).
+ */
+async function readBoard(client, repo, number, log) {
   try {
-    if ((await missingPriority(client, [number])).length)
-      log(`Warning: #${number} has ${PRIORITY_HINT}`);
+    return { item: await boardItemOf(client, { repo, number }) };
   } catch (e) {
-    log(`Warning: could not check the priority of #${number}: ${e.message}`);
+    log(`Warning: could not read the board type of #${number} (${e.message}); using its labels`);
+    return { error: e };
   }
 }
 
-/** The Typ of the issue on the board; a failed lookup is reported and the labels decide instead (P-10). */
-async function boardTyp(client, number, log) {
-  try {
-    return (await loadItems(client)).find((i) => i.issue === number)?.typ;
-  } catch (e) {
-    log(`Warning: could not read the board type of #${number} (${e.message}); using its labels`);
-    return undefined;
-  }
+/** Warning only, never a failure: the claim is done; a failed lookup is reported, not swallowed (P-10). */
+function warnNoPriority({ item, error }, number, log) {
+  if (error) return log(`Warning: could not check the priority of #${number} (${error.message})`);
+  if (item && !item.priority && !item.epic) log(`Warning: #${number} has ${PRIORITY_HINT}`);
 }
 
 /**
@@ -125,8 +132,10 @@ export async function claim(
   await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
   await check(client);
   const login = await me(client);
-  const typ = await boardTyp(client, number, log);
-  const issue = await assertFree(client, number, { env, login, typ });
+  const repo = await repoName(client);
+  const owner = repo.split("/")[0];
+  const board = await readBoard(client, repo, number, log);
+  const issue = await assertFree(client, number, { env, login, typ: board.item?.typ });
   const branch = branchName(issue);
   const undo = [];
   try {
@@ -137,13 +146,10 @@ export async function claim(
     ]);
     log(`Pushed origin/${branch}`);
     await assign(client, issue, login);
-    undo.push([
-      `assignee of #${number}`,
-      () => client.run("gh", ["issue", "edit", String(number), "--remove-assignee", "@me"]),
-    ]);
+    undo.push([`assignee of #${number}`, () => setAssignee(client, number, login, false)]);
     log(`Assigned #${number} to @${login}`);
-    await projectStatus(client, issue, STATUS_IN_PROGRESS, log);
-    undo.push(["project status", () => projectStatus(client, issue, STATUS_TODO, log)]);
+    if (await projectStatus(client, { url: issue.url, owner, status: STATUS_IN_PROGRESS }, log))
+      undo.push(["project status", () => setProjectStatus(client, issue.url, owner, STATUS_TODO)]);
     const url = await openDraftPr(
       client,
       issue,
@@ -151,7 +157,7 @@ export async function claim(
       handoffBody(issue, branch, login, reserveMigration(client, env)),
     );
     log(`Draft PR: ${url}`);
-    await warnNoPriority(client, number, log);
+    warnNoPriority(board, number, log);
     log(`Next: make worktree BRANCH=${branch}`);
     return { branch, url };
   } catch (e) {

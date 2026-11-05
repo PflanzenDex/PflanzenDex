@@ -64,7 +64,15 @@ const board = {
 
 const REPO = "PflanzenDex/PflanzenDex";
 
-/** Fake gh: answers by the start of the command line and records every call. */
+/** The field metadata of the project (board-client.mjs projectMeta, one GraphQL query): answered for every test. */
+const META = {
+  data: { organization: { projectV2: { id: "PROJ", fields: { nodes: board.fields } } } },
+};
+
+/**
+ * Fake gh: answers by the start of the command line and records every call. The field metadata query is answered by META,
+ * or by answers.meta (an error, for a board that cannot be reached).
+ */
 function fakeGh(answers = {}) {
   const calls = [];
   return {
@@ -72,7 +80,9 @@ function fakeGh(answers = {}) {
     async run(cmd, args) {
       const line = `${cmd} ${args.join(" ")}`;
       calls.push(line);
-      const hit = Object.entries(answers).find(([prefix]) => line.startsWith(prefix));
+      const hit = line.includes("fields(first")
+        ? ["meta", answers.meta ?? META]
+        : Object.entries(answers).find(([prefix]) => line.startsWith(prefix));
       if (!hit) return "";
       const value = typeof hit[1] === "function" ? hit[1](line) : hit[1];
       if (value instanceof Error) throw value;
@@ -84,17 +94,21 @@ function fakeGh(answers = {}) {
 const issueWith = (names) => ({
   "gh issue view": { number: 12, labels: names.map((name) => ({ name })) },
 });
-const boardAnswers = {
-  "gh project field-list": board,
-  "gh project item-add": { id: "ITEM" },
-  "gh project view": { id: "PROJ" },
-};
+const boardAnswers = { "gh project item-add": { id: "ITEM" } };
+/** The REST create of an issue (claim-client createIssueRest, FR-DEV-10 #1412): issue number n. */
+const created = (n) => ({
+  "gh api -X POST repos/PflanzenDex/PflanzenDex/issues": {
+    number: n,
+    html_url: `https://github.com/PflanzenDex/PflanzenDex/issues/${n}`,
+  },
+});
 const quiet = () => {};
 
-/** Answer of the one-issue status query (issue-board.mjs boardStatusOf): the issue's project items. */
+/** Answer of the one-issue status query (board-client.mjs boardItemOf): the issue's project items, aliased fields. */
 const itemOnBoard = (status, project = 2) => ({
+  id: "ITEM",
   project: { number: project, owner: { login: "PflanzenDex" } },
-  fieldValueByName: status ? { name: status } : null,
+  status: status ? { name: status } : null,
 });
 const issueOnBoard = (...nodes) => ({
   data: { repository: { issue: { projectItems: { nodes } } } },
@@ -165,10 +179,7 @@ test("FR-DEV-10 (c): make issue with an unknown type writes nothing on GitHub", 
 });
 
 test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ, Epic, Priority and Status Todo on the board", async () => {
-  const client = fakeGh({
-    ...boardAnswers,
-    "gh issue create": "https://github.com/PflanzenDex/PflanzenDex/issues/1230\n",
-  });
+  const client = fakeGh({ ...boardAnswers, ...created(1230) });
   const logs = [];
   const result = await createIssue(
     client,
@@ -178,9 +189,10 @@ test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ,
   assert.deepEqual(result, {
     number: 1230,
     url: "https://github.com/PflanzenDex/PflanzenDex/issues/1230",
+    board: "set",
   });
-  const create = client.calls.find((c) => c.startsWith("gh issue create"));
-  assert.match(create, /--label=story --label=epic:ACC/);
+  const create = client.calls.find((c) => c.startsWith("gh api -X POST"));
+  assert.match(create, /-f labels\[\]=story -f labels\[\]=epic:ACC/);
   const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
   assert.equal(edits.length, 4);
   assert.match(edits[0], /--field-id FT --single-select-option-id OT-S/);
@@ -191,20 +203,39 @@ test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ,
   assert.ok(logs.some((l) => /Board: Status Todo, Typ Story, Epic ACC, Priority P1/.test(l)));
 });
 
-test("FR-DEV-10: a failed board write after the issue exists says how to repair it, nothing is hidden", async () => {
+test("FR-DEV-10 (#1412): a board that cannot be reached is a warning, the issue stays, exit 0, and it says what is missing", async () => {
   const client = fakeGh({
-    "gh issue create": "https://github.com/PflanzenDex/PflanzenDex/issues/1231\n",
-    "gh project field-list": new Error("gh project unavailable"),
+    ...created(1231),
+    meta: new Error("GraphQL: API rate limit already exceeded for user ID 1."),
   });
-  await assert.rejects(
-    createIssue(
-      client,
-      { type: "bug", epic: "DEV", priority: "P1", title: "T", body: "B" },
-      { taxonomy, env: { GH_REPO: REPO }, log: quiet },
+  const logs = [];
+  const result = await createIssue(
+    client,
+    { type: "bug", epic: "DEV", priority: "P1", title: "T", body: "B" },
+    { taxonomy, env: { GH_REPO: REPO }, log: (l) => logs.push(l) },
+  );
+  assert.deepEqual(result, {
+    number: 1231,
+    url: "https://github.com/PflanzenDex/PflanzenDex/issues/1231",
+    board: "missing",
+  });
+  assert.match(
+    client.calls[0],
+    /^gh api -X POST repos\/PflanzenDex\/PflanzenDex\/issues/,
+    "REST create comes first",
+  );
+  assert.ok(
+    logs.some((l) =>
+      /WARNING: #1231 is created, but its board fields are NOT set \(GraphQL: API rate limit/.test(
+        l,
+      ),
     ),
-    (e) =>
-      /#1231 was created with its labels/.test(e.message) &&
-      /make issue-sync ISSUE=1231 TYPE=bug EPIC=DEV/.test(e.message),
+  );
+  assert.ok(logs.some((l) => /Not set yet: Typ Bug, Epic DEV, Status Todo, Priority P1/.test(l)));
+  assert.ok(logs.some((l) => /CI does not set Priority/.test(l)));
+  assert.ok(
+    !client.calls.some((c) => c.startsWith("gh project item-add")),
+    "nothing is written to the board",
   );
 });
 
@@ -235,10 +266,7 @@ test("FR-DEV-10: make issue refuses an unreadable body file before anything is c
 test("FR-DEV-10: make issue reads the body file and creates the issue", async () => {
   const body = path.join(tempDir("issue-test-"), "body.md");
   writeFileSync(body, "## Story\n\nText\n");
-  const client = fakeGh({
-    ...boardAnswers,
-    "gh issue create": "https://github.com/PflanzenDex/PflanzenDex/issues/1232\n",
-  });
+  const client = fakeGh({ ...boardAnswers, ...created(1232) });
   const code = await main(
     [
       "create",
@@ -257,7 +285,7 @@ test("FR-DEV-10: make issue reads the body file and creates the issue", async ()
   );
   assert.equal(code, 0);
   assert.ok(
-    client.calls.find((c) => c.startsWith("gh issue create") && c.includes("--body=## Story")),
+    client.calls.find((c) => c.startsWith("gh api -X POST") && c.includes("-f body=## Story")),
   );
 });
 

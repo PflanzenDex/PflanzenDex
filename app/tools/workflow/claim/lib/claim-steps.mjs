@@ -2,60 +2,21 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { json } from "./claim-client.mjs";
+import { createDraftPr } from "./claim-client.mjs";
+import { addBoardItem, editBoardField, projectMeta, STATUS_FIELD } from "./board-client.mjs";
 import { branchName, claimKey, scopeOf, storyIdOf } from "./claim-lib.mjs";
 
-export const PROJECT_NUMBER = "2"; // "PflanzenDex Roadmap"
-export const STATUS_FIELD = "Status";
 export const STATUS_IN_PROGRESS = "In Progress";
 export const STATUS_TODO = "Todo";
 
-/** Sets the project status of an issue; reads item, field and option ids at run time. */
+/** Sets the project status of an issue; the item is added first, field and option ids come from the project. */
 export async function setProjectStatus(client, issueUrl, owner, status = STATUS_IN_PROGRESS) {
-  const item = await json(client, [
-    "project",
-    "item-add",
-    PROJECT_NUMBER,
-    "--owner",
-    owner,
-    "--url",
-    issueUrl,
-    "--format",
-    "json",
-  ]);
-  const fields = await json(client, [
-    "project",
-    "field-list",
-    PROJECT_NUMBER,
-    "--owner",
-    owner,
-    "--format",
-    "json",
-  ]);
-  const field = fields.fields.find((f) => f.name === STATUS_FIELD);
+  const itemId = await addBoardItem(client, owner, issueUrl);
+  const meta = await projectMeta(client, owner);
+  const field = meta.fields.find((f) => f.name === STATUS_FIELD);
   const option = field?.options?.find((o) => o.name === status);
   if (!option) throw new Error(`project field "${STATUS_FIELD}" has no option "${status}"`);
-  const project = await json(client, [
-    "project",
-    "view",
-    PROJECT_NUMBER,
-    "--owner",
-    owner,
-    "--format",
-    "json",
-  ]);
-  await client.run("gh", [
-    "project",
-    "item-edit",
-    "--id",
-    item.id,
-    "--project-id",
-    project.id,
-    "--field-id",
-    field.id,
-    "--single-select-option-id",
-    option.id,
-  ]);
+  await editBoardField(client, { meta, itemId, field, option });
 }
 
 export function prTitle(issue) {
@@ -65,27 +26,18 @@ export function prTitle(issue) {
   return `${type}(${scopeOf(issue)}): ${subject.charAt(0).toLowerCase()}${subject.slice(1)}${id ? ` (${id})` : ""}`;
 }
 
-// Opens the draft PR with the Handoff as body file. The folder of that file goes again, also when `gh` fails.
+// Opens the draft PR over REST (no GraphQL point) with the Handoff as body file. The folder of that file goes again, also when the call fails.
 export async function openDraftPr(client, issue, branch, body) {
   const dir = mkdtempSync(path.join(tmpdir(), "claim-"));
   try {
     const file = path.join(dir, "body.md");
     writeFileSync(file, body);
-    return (
-      await client.run("gh", [
-        "pr",
-        "create",
-        "--draft",
-        "--base",
-        "dev",
-        "--head",
-        branch,
-        "--title",
-        prTitle(issue),
-        "--body-file",
-        file,
-      ])
-    ).trim();
+    return await createDraftPr(client, {
+      title: prTitle(issue),
+      head: branch,
+      base: "dev",
+      bodyFile: file,
+    });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
