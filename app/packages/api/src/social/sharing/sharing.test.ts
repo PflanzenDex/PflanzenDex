@@ -3,6 +3,17 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool, holdTaxonLock } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys, type KeyShape } from "../../exact-keys-test-helpers";
+
+// US-QG-05 QG-D2: the whitelisted fields of a collection card (US-SOZ-07).
+const COLLECTION_CARD: KeyShape = {
+  speciesLatin: true,
+  speciesGerman: true,
+  specimens: true,
+  cuttings: true,
+  firstCaught: true,
+  iHave: true,
+};
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -245,6 +256,16 @@ describe("US-SOZ-04 what a friend sees", () => {
     });
     expect(Object.keys(r.body.cards[0]).sort()).toEqual(
       ["cuttings", "firstCaught", "iHave", "specimens", "speciesGerman", "speciesLatin"].sort(),
+    );
+  });
+
+  it("US-QG-05 QG-D2 the friend's collection carries the card fields and the friend's display name, nothing else", async () => {
+    const r = await call(subB, "GET", `/friends/${friendOfBen}/collection`);
+    expect(r.body.cards.length).toBeGreaterThan(0);
+    expectExactKeys(
+      r.body,
+      { friend: { name: true }, cards: [COLLECTION_CARD] },
+      "GET /friends/:id/collection",
     );
   });
 

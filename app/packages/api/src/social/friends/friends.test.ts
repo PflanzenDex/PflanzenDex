@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys, type KeyShape } from "../../exact-keys-test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -233,5 +234,46 @@ describe("US-SOZ-03 end a friendship through the API", () => {
     });
     expect((await call(subF, "GET", "/friends")).body["friends"]).toEqual([]);
     expect((await call(subG, "GET", "/friends")).body["friends"]).toEqual([]);
+  });
+});
+
+// US-QG-05 QG-D2: the friend list and the requests carry the whitelisted fields only (US-SOZ-01 to US-SOZ-03).
+const REQUEST: KeyShape = { id: true, otherName: true, direction: true, status: true };
+const FRIEND: KeyShape = { id: true, name: true, since: true, sharedSpecies: true };
+describe("US-QG-05 QG-D2 the friend routes carry only the whitelisted fields", () => {
+  const [subH, subI, subJ] = [0, 1, 2].map(() => `soz2-${randomUUID()}`) as [
+    string,
+    string,
+    string,
+  ];
+  NAMES[subH] = "Hanna";
+  NAMES[subI] = "Ivo";
+  NAMES[subJ] = "Jana";
+
+  it("US-QG-05 QG-D2 requests and the friend list carry the display name, the state and the ids, nothing else", async () => {
+    for (const sub of [subH, subI, subJ]) await call(sub, "GET", "/account");
+    const { code } = await invite(subH);
+    const sent = await redeem(subI, code);
+    expect(sent.status).toBe(201);
+    expectExactKeys(sent.body, REQUEST, "POST /friends/requests");
+    const open = await requests(subH);
+    expect(open.incoming).toEqual([
+      expect.objectContaining({ otherName: "Ivo", direction: "received" }),
+    ]);
+    await call(subH, "POST", `/friends/requests/${open.incoming[0].id}/answer`, {
+      decision: "accept",
+    });
+    const list = (await call(subH, "GET", "/friends")).body;
+    expect(list.friends).toHaveLength(1);
+    expectExactKeys(list, { friends: [FRIEND] }, "GET /friends");
+
+    // A declined request: the sender sees "not accepted" (US-SOZ-02), no time.
+    const second = await invite(subH);
+    await redeem(subJ, second.code);
+    const pending = (await requests(subH)).incoming;
+    await call(subH, "POST", `/friends/requests/${pending[0].id}/answer`, { decision: "decline" });
+    const seenByJ = await requests(subJ);
+    expect(seenByJ.outgoing).toEqual([expect.objectContaining({ status: "declined" })]);
+    expectExactKeys(seenByJ, { incoming: [REQUEST], outgoing: [REQUEST] }, "GET /friends/requests");
   });
 });

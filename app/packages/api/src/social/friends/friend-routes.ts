@@ -11,9 +11,16 @@ import {
 import { FriendsPostgres, IdempotencyPostgres, SharingPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../../kernel";
+import { body, withoutKey, write, type AuthEnv } from "../../kernel";
 import { friendCollectionRoute, friendSharedRoute } from "../sharing/sharing-routes";
 import { sharingPorts } from "../sharing/wiring";
+
+/**
+ * A friendship request as either side sees it: the display name, the direction and the state, never the time it was
+ * made (US-SOZ-01: only the display name; US-SOZ-02: "not accepted" without a time). P-05, US-QG-05.
+ */
+const requestView = <T extends { requestedAt: string }>(request: T) =>
+  withoutKey(request, "requestedAt");
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const FRIEND_PATHS = ["/friends"] as const;
@@ -54,11 +61,15 @@ export function friendRoutes(
     return response;
   });
   routes.post("/friends/requests", async (c) =>
-    write(c, deps, request, { input: await body(c), success: 201 }),
+    write(c, deps, request, { input: await body(c), success: 201, wrapper: requestView }),
   );
-  routes.get("/friends/requests", async (c) =>
-    c.json(await friendRequests({ friends }, c.get("account").id)),
-  );
+  routes.get("/friends/requests", async (c) => {
+    const open = await friendRequests({ friends }, c.get("account").id);
+    return c.json({
+      incoming: open.incoming.map(requestView),
+      outgoing: open.outgoing.map(requestView),
+    });
+  });
   routes.post("/friends/requests/:id/answer", async (c) => {
     return write(c, deps, answer, { input: { ...(await body(c)), requestId: c.req.param("id") } });
   });

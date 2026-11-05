@@ -11,7 +11,7 @@ import {
 import { IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
+import { body, errorBody, statusFor, withoutKey, write, type AuthEnv } from "../../kernel";
 import { exchangeDependencies, matchContext } from "./wiring";
 
 /** Paths the sign-in guard (bearer token) must cover; `POST /offers/:id/request` sits under `/offers`. */
@@ -20,6 +20,12 @@ export const EXCHANGE_PATHS = ["/exchange"] as const;
 function reply<T>(c: Context<AuthEnv>, r: Result<T>) {
   return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
 }
+
+/**
+ * An offer as a friend sees it: the account id of the giver stays on the server (P-05, US-QG-05); the giver is named by
+ * the display name the keeper stored.
+ */
+const publicOffer = <T extends { ownerId: string }>(offer: T) => withoutKey(offer, "ownerId");
 
 /**
  * The exchange (US-SOZ-09, ADR 0012). Everything runs as the account of the caller; what a friend shows is decided by
@@ -59,12 +65,19 @@ export function exchangeRoutes(
   const answer = matchAnswer(deps, context.answers, clock);
   const undo = matchUndo(context.answers);
   const routes = new Hono<AuthEnv>();
-  routes.get("/exchange/offers", async (c) =>
-    reply(c, await exchangeList(deps, c.get("account").id, c.req.query())),
-  );
-  routes.get("/exchange/match", async (c) =>
-    reply(c, await matchDeck(deps, context, c.get("account").id, c.req.query())),
-  );
+  routes.get("/exchange/offers", async (c) => {
+    const r = await exchangeList(deps, c.get("account").id, c.req.query());
+    return r.ok ? c.json({ offers: r.value.offers.map(publicOffer) }) : reply(c, r);
+  });
+  routes.get("/exchange/match", async (c) => {
+    const r = await matchDeck(deps, context, c.get("account").id, c.req.query());
+    if (!r.ok) return reply(c, r);
+    return c.json({
+      ...r.value,
+      cards: r.value.cards.map(publicOffer),
+      entries: r.value.entries.map((e) => ({ ...e, card: e.card ? publicOffer(e.card) : null })),
+    });
+  });
   routes.put("/exchange/match/:offerId/answer", async (c) =>
     write(c, idem, answer, { input: { ...(await body(c)), offerId: c.req.param("offerId") } }),
   );

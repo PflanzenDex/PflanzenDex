@@ -3,8 +3,49 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool, holdTaxonLock } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys, type KeyShape } from "../../exact-keys-test-helpers";
+import { MATCH_CARD, MATCH_ENTRY, MATCH_REASONS } from "../exchange/exchange-shapes.test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
+
+// US-QG-05 QG-D2: the whitelisted fields of one side of a swap (US-SOZ-10, US-SOZ-11) and of a history entry (US-SOZ-13).
+// The giver never gets the recipient's marker, and no account id of the other side.
+const SWAP_SIDE: KeyShape = {
+  swapId: true,
+  role: true,
+  otherName: true,
+  offerId: true,
+  speciesLatin: true,
+  speciesGerman: true,
+  type: true,
+  mode: true,
+  counterName: true,
+  counterText: true,
+  status: true,
+  requestedAt: true,
+  reason: true,
+  cause: true,
+  proposal: true,
+  decidedAt: true,
+  confirmedGiver: true,
+  confirmedRecipient: true,
+  givenSpecimenId: true,
+  receivedSpecimenId: true,
+  handedOverAt: true,
+};
+const SWAP_HISTORY_ENTRY: KeyShape = {
+  swapId: true,
+  date: true,
+  friend: true,
+  direction: true,
+  species: true,
+  type: true,
+  mode: true,
+  status: true,
+  reason: true,
+  cause: true,
+  specimenId: true,
+};
 
 // US-SOZ-11 and US-SOZ-09: the handover of an accepted swap and the approved species in the exchange list, through the API
 // (real PostgreSQL). The species is approved, so the recipient can see it; this is the one file of the swap module that
@@ -780,5 +821,93 @@ describe("US-SOZ-05 feed events Swapped and Potted through the API", () => {
     expect(repotted.status).toBe(200);
     const potted = (await feed(subB)).filter((x) => x.type === "potted");
     expect(potted.map((x) => x.date)).toContain("2026-10-10");
+  });
+});
+
+// US-QG-05 QG-D2: the swap and match outputs carry the whitelisted fields only. These scenarios add wishes, offers and
+// swaps of the shared accounts, so they run last in this file and leave the scenarios above unchanged.
+describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted fields", () => {
+  const deck = async (sub: string | null) =>
+    call(sub, "GET", "/exchange/match?timeZone=Europe%2FBerlin");
+
+  it("US-QG-05 QG-D2 the swap sides and the history carry the swap fields only: no account id and no recipient marker", async () => {
+    await specimen(subD); // the recipient already has the species, so the marker is named at the handover
+    const a = await accepted("QG5", "swap", subD);
+    await confirm(subA, a.swapId);
+    const done = await confirm(subD, a.swapId, { marker: "Rot5" });
+    expect(done.body).toMatchObject({ status: "handed_over" });
+    expectExactKeys(
+      done.body,
+      { status: true, receivedSpecimenId: true },
+      "POST /swaps/:id/handover",
+    );
+    const sides = (await call(subA, "GET", "/swaps")).body;
+    expect(sides.received).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ swapId: a.swapId, status: "handed_over" }),
+      ]),
+    );
+    expectExactKeys(sides, { received: [SWAP_SIDE], sent: [SWAP_SIDE] }, "GET /swaps");
+    const history = (await call(subA, "GET", "/swaps/history")).body;
+    expect(history.entries.map((e: { swapId: string }) => e.swapId)).toContain(a.swapId);
+    expectExactKeys(history, { entries: [SWAP_HISTORY_ENTRY] }, "GET /swaps/history");
+  });
+
+  it("US-QG-05 QG-D2 the match deck carries the card fields, both kinds of reason and the answered entries, and no account id", async () => {
+    // A friend asks for an own offer of mine: the card of the friend's offer fits both ways for me (US-TAU-05).
+    const idA = await specimen(subA, "T5a");
+    await call(subA, "PUT", `/sharing/specimens/${idA}`, { share: "friends" });
+    const offerA = (
+      await call(subA, "POST", "/offers", { specimenId: idA, type: "plant", mode: "give_away" })
+    ).body.id as string;
+    const latin = (
+      await call(subB, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerA).speciesLatin as string;
+    expect(latin).toBeTruthy();
+    await call(subD, "POST", "/wishes", { name: latin });
+    const idD = await specimen(subD, "T5e");
+    expect(idD).toEqual(expect.any(String));
+    expect(
+      (await call(subD, "PUT", `/sharing/specimens/${idD}`, { share: "friends" })).status,
+    ).toBe(200);
+    const createdD = await call(subD, "POST", "/offers", {
+      specimenId: idD,
+      type: "cutting",
+      mode: "swap",
+    });
+    expect(createdD).toMatchObject({ status: 201 });
+    const offerD = createdD.body.id as string;
+    expect((await call(subA, "POST", `/offers/${offerD}/request`, {})).status).toBe(201);
+    const first = (await deck(subD)).body as {
+      cards: { offerId: string; reasons: { kind: string }[] }[];
+    };
+    const card = first.cards.find((c) => c.offerId === offerA);
+    expect(card?.reasons.map((r) => r.kind)).toEqual(["wishlist", "both_ways"]);
+    // "No" keeps the offer in the entries, with its card, so nothing disappears silently (US-TAU-06, P-10).
+    expect(
+      (
+        await call(subD, "PUT", `/exchange/match/${offerA}/answer`, {
+          answer: "no",
+          timeZone: "Europe/Berlin",
+        })
+      ).status,
+    ).toBe(200);
+    const body = (await deck(subD)).body;
+    expect(body.entries.map((e: { offerId: string }) => e.offerId)).toContain(offerA);
+    expectExactKeys(
+      body,
+      { cards: [MATCH_CARD], entries: [MATCH_ENTRY], empty: true },
+      "GET /exchange/match",
+    );
+    for (const c of body.cards)
+      for (const r of c.reasons)
+        expectExactKeys(r, MATCH_REASONS[r.kind as keyof typeof MATCH_REASONS], "cards[].reasons");
+    for (const e of body.entries)
+      for (const r of e.card?.reasons ?? [])
+        expectExactKeys(
+          r,
+          MATCH_REASONS[r.kind as keyof typeof MATCH_REASONS],
+          "entries[].card.reasons",
+        );
   });
 });
