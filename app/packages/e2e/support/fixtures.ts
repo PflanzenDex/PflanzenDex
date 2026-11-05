@@ -31,9 +31,15 @@ export const test = base.extend<{ account: TestAccount }>({
 });
 
 /** From any signed-in view: the Sammlung, the layer "Ansicht", then "Standorte und Lichtzonen verwalten" (US-QS-19). */
-/** On a phone one list shows at a time (US-QS-19): the segment "Standorte (n)" is chosen when it is there. */
+/**
+ * On a phone one list shows at a time (US-QS-19): the segment "Standorte (n)" is chosen when it is there. The lists render
+ * with the data, so the check waits for the segment (phone) or the list heading (desktop, where the segment is hidden):
+ * a check that ran before the data arrived saw no segment and left the zones on screen.
+ */
 export async function showLocations(page: Page): Promise<void> {
   const segment = page.getByRole("button", { name: /^Standorte \(\d+\)$/ });
+  const heading = page.getByRole("heading", { level: 2, name: "Standorte", exact: true });
+  await expect(segment.or(heading)).toBeVisible();
   if (await segment.isVisible()) await segment.click();
 }
 

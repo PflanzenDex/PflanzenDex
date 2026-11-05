@@ -5,6 +5,7 @@ import {
   openByKeyboard,
   press,
   signInByKeyboard,
+  specimenByKeyboard,
   tabTo,
   typeInto,
 } from "../../support/keyboard";
@@ -22,28 +23,6 @@ async function locationsByKeyboard(page: Page): Promise<void> {
   await expect(
     page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
   ).toBeVisible();
-}
-
-/** Proposes a species and creates a specimen of it, keyboard only (the start of every care flow). */
-async function specimenByKeyboard(page: Page, species: string): Promise<void> {
-  // The catalog is the mode "Katalog" of Entdecken (US-QS-14).
-  await openByKeyboard(page, "Entdecken");
-  await press(page, page.getByRole("button", { name: "Katalog" }));
-  await press(page, page.getByRole("button", { name: /Art vorschlagen/ }).first());
-  const form = page.getByRole("form", { name: "Art vorschlagen" });
-  await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
-  await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
-  await chooseByArrows(page, form.getByLabel(/^Standard-Stufe/), 3);
-  await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
-  await press(page, form.getByRole("button", { name: "Weiter" }));
-  await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
-  await typeInto(page, form.getByLabel(/^Vergeilung-Anzeichen/), "Die Rosette streckt sich.");
-  await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
-  await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
-  await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
-  const create = page.getByRole("form", { name: "Pflanze anlegen" });
-  await press(page, create.getByRole("button", { name: "Pflanze anlegen" }));
-  await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
 }
 
 test.describe("US-QS-08 Operable by keyboard alone", () => {
@@ -127,9 +106,12 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     await typeInto(page, form.getByLabel(/^Messwert/), "12,5");
-    await press(page, form.getByRole("button", { name: "Messung speichern" }));
+    // "Messung speichern" sits in the sticky footer beside the form, outside its element (US-QS-15).
+    await press(page, page.getByRole("button", { name: "Messung speichern" }));
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
     await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    // The course with the new measurement is the layer "Verlauf" of the measure page (US-QS-15).
+    await press(page, page.getByRole("button", { name: /^Verlauf \(\d+\)$/ }));
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
   });
 });
@@ -144,13 +126,24 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await specimenByKeyboard(page, "Aloe polyphylla");
     await openByKeyboard(page, "Heute");
     // The treatments are a layer above the overview of "Heute" (US-QS-18): the one "Behandlungen" entry (tile or row action), named by its count and topic, opens it.
-    await press(page, page.getByRole("button", { name: /^(\d+Behandlungen|Behandlungen \d+.*)$/ }));
+    await press(
+      page,
+      page.getByRole("button", { name: /^(\d+ Behandlungen|Behandlungen \d+.*)$/ }),
+    );
     await press(page, page.getByRole("button", { name: "Behandlung planen" }).first());
     const plan = page.getByRole("form", { name: /Behandlung planen/ });
     await press(page, plan.getByRole("checkbox").first(), "Space");
     await expect(plan.getByRole("checkbox").first()).toBeChecked();
+    // The reason sits in the part "Termin" of the plan; "Pflanzen" is the other part (US-BEH-01).
+    await press(
+      page,
+      plan
+        .getByRole("group", { name: "Teile der Behandlung" })
+        .getByRole("button", { name: "Termin" }),
+    );
     await typeInto(page, plan.getByLabel(/^Grund/), "Wollläuse");
-    await press(page, plan.getByRole("button", { name: /planen|speichern/i }));
+    // The save button is the layer's one primary action in its footer, outside the form element (US-QS-21).
+    await press(page, page.getByRole("button", { name: "Behandlung speichern" }));
     const done = page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ });
     await press(page, done);
     await expect(page.getByText(/„Wollläuse“ als erledigt eingetragen am/)).toBeVisible();
