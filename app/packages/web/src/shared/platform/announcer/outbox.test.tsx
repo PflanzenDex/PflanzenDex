@@ -192,10 +192,13 @@ function serverLosing(lost: number) {
   const records = new Map<string, unknown>();
   const keys: string[] = [];
   let left = lost;
-  const fetchFn = vi.fn<typeof fetch>(async (_url, init) => {
+  const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
     keys.push(key);
-    if (!records.has(key)) records.set(key, JSON.parse(String(init?.body)));
+    if (!records.has(key)) {
+      const body = init?.body === undefined ? null : JSON.parse(String(init.body));
+      records.set(key, { url: String(url), body });
+    }
     if (left > 0) {
       left -= 1;
       throw new TypeError("Failed to fetch");
@@ -298,5 +301,39 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
     expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 a write whose answer was lost does not swallow a later write: on, off, on again is applied", async () => {
+    const server = serverLosing(1);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("PUT", "/share", { share: true }); // applied, the answer is lost
+    await write("PUT", "/share", { share: false }); // the user moved on
+    await write("PUT", "/share", { share: true }); // the same write again: a new write
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect([...server.records.values()].at(-1)).toMatchObject({ body: { share: true } });
+  });
+
+  it("US-QS-03 the same across two paths: archive lost, restore succeeds, archive again is applied", async () => {
+    const server = serverLosing(1);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("POST", "/specimens/e1/archive", { timeZone: "Europe/Berlin" });
+    await write("POST", "/specimens/e1/restore");
+    await write("POST", "/specimens/e1/archive", { timeZone: "Europe/Berlin" });
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect([...server.records.values()].at(-1)).toMatchObject({
+      url: "http://api/specimens/e1/archive",
+    });
+  });
+
+  it("US-QS-03 two writes whose answers were lost: delivering the older one leaves the newer one's key in place", async () => {
+    const server = serverLosing(2);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("POST", "/measurements", { value: 1 }); // older, lost
+    await write("POST", "/measurements", { value: 2 }); // newer, lost
+    await write("POST", "/measurements", { value: 1 }); // older delivered: succeeds
+    await write("POST", "/measurements", { value: 2 }); // newer delivered again
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.keys[3]).toBe(server.keys[1]);
+    expect(server.records.size).toBe(2);
   });
 });
