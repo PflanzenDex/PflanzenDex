@@ -18,3 +18,37 @@ export function repeatFindings(statements: readonly string[]): string[] {
   }
   return [...seen].filter(([, n]) => n > 1).map(([text]) => text.slice(0, FINDING_CHARS));
 }
+
+/**
+ * The statements of both sizes in the order sent, and what only the larger side sent, for a growth failure (US-QG-07,
+ * #1301): the extra statement is named by its text, not only by its count. Texts are normalized like `repeatFindings`.
+ */
+export function growthReport(
+  small: { size: number; statements: readonly string[] },
+  large: { size: number; statements: readonly string[] },
+): string {
+  const listed = (side: { size: number; statements: readonly string[] }) => [
+    `statements for ${side.size} specimens (${side.statements.length}):`,
+    ...side.statements.map((sql, i) => `  ${i + 1}. ${normalize(sql)}`),
+  ];
+  const tally = (texts: readonly string[]) => {
+    const counts = new Map<string, number>();
+    for (const sql of texts) counts.set(normalize(sql), (counts.get(normalize(sql)) ?? 0) + 1);
+    return counts;
+  };
+  const extra = (a: Map<string, number>, b: Map<string, number>) =>
+    [...a]
+      .map(([text, n]) => [text, n - (b.get(text) ?? 0)] as const)
+      .filter(([, d]) => d > 0)
+      .map(([text, d]) => `  ${d} x ${text}`);
+  const onlyLarge = extra(tally(large.statements), tally(small.statements));
+  const onlySmall = extra(tally(small.statements), tally(large.statements));
+  return [
+    ...listed(small),
+    ...listed(large),
+    `sent only for ${large.size} specimens:`,
+    ...(onlyLarge.length > 0 ? onlyLarge : ["  (none)"]),
+    `sent only for ${small.size} specimens:`,
+    ...(onlySmall.length > 0 ? onlySmall : ["  (none)"]),
+  ].join("\n");
+}

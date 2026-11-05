@@ -11,7 +11,7 @@ import { getRoutes, MEASURED, requestPath } from "./query-count-endpoints";
 import { befriend, friendName, seedFriend } from "./query-count-seed-social-test-helpers";
 import { TZ, type SeedIds } from "./query-count-seed-test-helpers";
 import { seedSize, taxonName, type Cast } from "./query-count-seed-size-test-helpers";
-import { normalize, repeatFindings } from "./query-count-statements";
+import { growthReport, normalize, repeatFindings } from "./query-count-statements";
 
 // US-QG-07: the number of SQL statements of a request must not grow with the keeper's data (N+1), and one request must
 // not send the same statement text twice (duplicate read). Every GET route of the app is measured or listed in EXCLUDED
@@ -190,9 +190,17 @@ describe("US-QG-07 statements per request do not grow with the data (N+1)", () =
           `${key} is in query-count-baseline.json but no longer grows (${SMALL}: ${small}, ${LARGE}: ${large}): delete the entry`,
         ).toBe(true);
       } else {
+        // On a mismatch the message names the statements of both sizes and the extra one (#1301).
+        const report =
+          large === small
+            ? ""
+            : `\n${growthReport(
+                { size: SMALL, statements: results.small[key]?.statements ?? [] },
+                { size: LARGE, statements: results.large[key]?.statements ?? [] },
+              )}`;
         expect(
           large - small,
-          `${key} sends ${small} statements for ${SMALL} specimens and ${large} for ${LARGE} (N+1)`,
+          `${key} sends ${small} statements for ${SMALL} specimens and ${large} for ${LARGE} (N+1)${report}`,
         ).toBeLessThanOrEqual(ALLOWED_GROWTH);
       }
     },
