@@ -116,7 +116,7 @@ Acceptance criteria:
 - The script additionally checks the consistency of the spec itself: IDs unique, status overview in `README.md` matches the files, references to `US-/FR-/DM-/E-` IDs point to existing entries (references to IDs of the prototype folder are marked as such and excluded).
 - A change to domain logic without a green story test does not count as done (DoD, FR-QG-10).
 
-### US-QG-05 · Privacy and tenant isolation require tests · ⬜
+### US-QG-05 · Privacy and tenant isolation require tests · ✅
 
 As an **operator** I want the most sensitive rules never to be merely intention.
 
