@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Die Gruppen der Sammlung (Standort, Pflegephase, Familie) und die Erfolge brechen nicht mehr zur Seite aus: Passen die Auswahlmöglichkeiten in eine Zeile, ab 768 Pixel Breite auch in zwei Zeilen, stehen sie als Knöpfe nebeneinander, sonst als Auswahlfeld mit denselben Namen und Anzahlen.",
     "Der Verlauf einer Pflanze hat drei Teile: „Überblick“, „Kurve“ und „Messungen“. Er passt auf eine Bildschirmseite, auch auf dem Telefon. Die Messungen blättern nach der freien Höhe, und ihre Fotos sind klein.",
     "Der Titel der Tauschbörse und der Sammlung eines Freundes bricht auf kleinen Bildschirmen und bei großer Schrift nicht mehr mitten im Wort um.",
     "Heute: Die Aufgaben laden schon, während die Anzahl der Pflanzen noch unterwegs ist. Bei langsamer Verbindung erscheint „Heute“ dadurch früher, und ein Wechsel zu „Sammlung“ und zurück lädt die Standorte nicht jedes Mal neu.",
