@@ -2,11 +2,11 @@ import sharp from "sharp";
 import { MEDIA_LIMITS, appError } from "@pflanzendex/core";
 import type { ImageProcessor } from "@pflanzendex/core";
 
-const READABLE = new Set(["jpeg", "png", "webp"]);
+const READABLE = new Set(["jpeg", "png", "webp"]); // what may come in; the stored copy is always WebP
 
 /**
  * The processing stage (FR-WAC-09, QG-D3, NFR-12): rotate by the EXIF orientation, shrink to the maximum edge, re-encode
- * as JPEG. The thumbnail is made from that stored copy in the same step. sharp writes no metadata unless asked
+ * as WebP (issue 1289). The thumbnail is made from that stored copy in the same step. sharp writes no metadata unless asked
  * (`keepMetadata`/`withExif` are never called), so EXIF, GPS, XMP, IPTC and the ICC profile are gone; the decoded pixels
  * are re-encoded, never copied byte for byte.
  */
@@ -29,7 +29,7 @@ export function createSharpProcessor(
             withoutEnlargement: true,
           })
           .flatten({ background: "#ffffff" })
-          .jpeg({ quality: MEDIA_LIMITS.jpegQuality })
+          .webp({ quality: MEDIA_LIMITS.webpQuality })
           .toBuffer({ resolveWithObject: true });
         // The thumbnail is cut from the stored copy, which is already upright and free of metadata.
         const small = await sharp(data)
@@ -39,7 +39,7 @@ export function createSharpProcessor(
             fit: "inside",
             withoutEnlargement: true,
           })
-          .jpeg({ quality: MEDIA_LIMITS.thumbJpegQuality })
+          .webp({ quality: MEDIA_LIMITS.thumbWebpQuality })
           .toBuffer({ resolveWithObject: true });
         return {
           ok: true,

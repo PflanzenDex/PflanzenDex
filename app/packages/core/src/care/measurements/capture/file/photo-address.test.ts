@@ -6,7 +6,7 @@ const MEASUREMENT = "00000000-0000-4000-8000-0000000000aa";
 
 describe("NFR-12 US-WAC-06 the photo address carries the version of the stored object", () => {
   it("NFR-12 the version is the object name without its extension", () => {
-    expect(photoVersion("2f1c9a.jpg")).toBe("2f1c9a");
+    expect(photoVersion("2f1c9a.webp")).toBe("2f1c9a");
     expect(photoVersion("no-extension")).toBe("no-extension");
   });
 
@@ -14,12 +14,12 @@ describe("NFR-12 US-WAC-06 the photo address carries the version of the stored o
     const first = measurementPhotoPath({
       specimenId: SPECIMEN,
       measurementId: MEASUREMENT,
-      photo: "first.jpg",
+      photo: "first.webp",
     });
     const second = measurementPhotoPath({
       specimenId: SPECIMEN,
       measurementId: MEASUREMENT,
-      photo: "second.jpg",
+      photo: "second.webp",
     });
     expect(first).toBe(`/specimens/${SPECIMEN}/measurements/${MEASUREMENT}/photo?v=first`);
     expect(second).toBe(`/specimens/${SPECIMEN}/measurements/${MEASUREMENT}/photo?v=second`);

@@ -32,7 +32,7 @@ export interface WishRow {
   readonly imageSource: string | null;
   readonly license: string | null;
   /**
-   * Object name of the stored copy of the image (US-WUN-04, `<uuid>.jpg` in the object store); `null` until it is
+   * Object name of the stored copy of the image (US-WUN-04, `<uuid>.webp` in the object store); `null` until it is
    * stored. The address above is only the origin, it is never loaded by a viewer (P-05).
    */
   readonly imageObject: string | null;

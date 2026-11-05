@@ -36,9 +36,9 @@ describe("US-ACH-06 anniversaries through the API logic", () => {
     const r = await achievementsAnniversaries(
       deps([spec("s1", "Aloe", "2025-04-11")], {
         s1: [
-          meas("m3", "2026-03-01", "p3.jpg"),
+          meas("m3", "2026-03-01", "p3.webp"),
           meas("m2", "2025-05-01", null),
-          meas("m1", "2025-04-12", "p1.jpg"),
+          meas("m1", "2025-04-12", "p1.webp"),
         ],
       }),
       "anna",
@@ -74,7 +74,7 @@ describe("US-ACH-06 anniversaries through the API logic", () => {
     const none = await achievementsAnniversaries(deps(rows), "anna", "UTC", NOW);
     expect(none.items[0]).toMatchObject({ first: null, latest: null });
     const one = await achievementsAnniversaries(
-      deps(rows, { s1: [meas("m1", "2025-05-01", "p1.jpg")] }),
+      deps(rows, { s1: [meas("m1", "2025-05-01", "p1.webp")] }),
       "anna",
       "UTC",
       NOW,
@@ -107,7 +107,7 @@ describe("NFR-12 US-ACH-06 a replaced photo has a new address", () => {
       );
       return r.items[0]?.first?.url;
     };
-    expect(await url("old.jpg")).toBe("/specimens/s1/measurements/m1/photo?v=old");
-    expect(await url("new.jpg")).toBe("/specimens/s1/measurements/m1/photo?v=new");
+    expect(await url("old.webp")).toBe("/specimens/s1/measurements/m1/photo?v=old");
+    expect(await url("new.webp")).toBe("/specimens/s1/measurements/m1/photo?v=new");
   });
 });

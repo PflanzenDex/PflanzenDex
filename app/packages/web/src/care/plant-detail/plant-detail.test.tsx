@@ -132,7 +132,7 @@ describe("US-QS-23 Verlauf", () => {
   it("US-QS-23 the photos of the measurements are fetched privately and shown in the page", async () => {
     server({
       "GET /specimens/e1/measurements": () =>
-        json(200, view({ measurements: [row(2, { photo: "p.jpg" }), row(1)] })),
+        json(200, view({ measurements: [row(2, { photo: "p.webp" }), row(1)] })),
       "GET /specimens/e1/measurements/m2/photo": () => new Response(new Uint8Array([1])),
     });
     URL.createObjectURL = vi.fn(() => "blob:m2");

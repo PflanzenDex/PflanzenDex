@@ -14,9 +14,10 @@ export function objectKey(accountId: string, name: string): Result<string> {
 
 /**
  * The thumbnail of a stored image: the same name with `-thumb` before the extension (NFR-12). It is derived, never
- * stored in a row, so it needs no migration; an upload before the thumbnail existed has none (see `imageReader`).
+ * stored in a row, so it needs no migration. Every stored name ends in `.webp` (`namePattern`, checked by `objectKey`
+ * before this is used); an upload stored before the thumbnail existed has none (see `imageReader`).
  */
-export const thumbnailName = (name: string): string => name.replace(/\.jpg$/, "-thumb.jpg");
+export const thumbnailName = (name: string): string => name.replace(/\.webp$/, "-thumb.webp");
 
 /** Checks of every `put`, shared by all adapters: key, image content type, size limit. */
 export function putKey(

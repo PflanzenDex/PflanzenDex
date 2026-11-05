@@ -141,7 +141,7 @@ describe("US-WAC-06 sign-in", () => {
 });
 
 describe("US-WAC-06 / FR-WAC-09 processing and storage", () => {
-  it("stores a rotated, shrunk JPEG without EXIF/GPS for the measurement of the same day", async () => {
+  it("NFR-12 US-WAC-06 stores a rotated, shrunk WebP without EXIF/GPS for the measurement of the same day", async () => {
     const e = await newSpecimen(subA, "Verarbeitung");
     await measure(subA, e);
     // 3200x2000 with orientation 6: shown upright as 2000x3200, so the long side shrinks to 1600 (1000x1600).
@@ -151,9 +151,10 @@ describe("US-WAC-06 / FR-WAC-09 processing and storage", () => {
       .rows[0].account_id;
     const stored = await store.get(account, r.body["photo"]);
     if (!stored.ok) throw new Error("not stored");
+    expect(stored.value.contentType).toBe("image/webp");
     const meta = await sharp(stored.value.bytes).metadata();
     expect([meta.format, meta.width, meta.height, meta.exif, meta.orientation]).toEqual([
-      "jpeg",
+      "webp",
       1000,
       1600,
       undefined,
@@ -260,13 +261,13 @@ describe("US-WAC-05 reading the photo back is private to the owner (P-05)", () =
       headers: sub ? { authorization: `Bearer valid:${sub}` } : {},
     });
 
-  it("the owner gets the stored JPEG; foreign accounts and anonymous callers get nothing", async () => {
+  it("NFR-12 US-WAC-05 the owner gets the stored WebP; foreign accounts and anonymous callers get nothing", async () => {
     const e = await newSpecimen(subA, "Lesen");
     await measure(subA, e);
     const up = await upload(subA, e, await gpsPhoto(400, 300));
     const mid = up.body["measurementId"] as string;
     const own = await raw(subA, e, mid);
-    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/webp"]);
     expect(own.headers.get("cache-control")).toContain("private");
     expect((await own.arrayBuffer()).byteLength).toBeGreaterThan(0);
     expect((await raw(subB, e, mid)).status).toBe(404);
@@ -292,7 +293,7 @@ class FailingThumbnailStore extends InMemoryObjectStore {
     bytes: Uint8Array,
     contentType: string,
   ): Promise<Result<void>> {
-    if (name.endsWith("-thumb.jpg")) return failed(appError("media.storage_unavailable"));
+    if (name.endsWith("-thumb.webp")) return failed(appError("media.storage_unavailable"));
     return super.put(accountId, name, bytes, contentType);
   }
 }
@@ -310,16 +311,17 @@ describe("NFR-12 thumbnails for tiles and cards", () => {
     return Math.max(meta.width ?? 0, meta.height ?? 0);
   };
 
-  it("NFR-12 an upload stores a 256 px thumbnail next to the photo, without metadata", async () => {
+  it("NFR-12 an upload stores a 256 px WebP thumbnail next to the photo, without metadata", async () => {
     const e = await newSpecimen(subA, "Vorschau");
     await measure(subA, e);
     const r = await upload(subA, e, await gpsPhoto(3200, 2000, 6));
     const account = await accountOf(e);
     const small = await store.get(account, thumbnailName(r.body["photo"] as string));
     if (!small.ok) throw new Error("no thumbnail stored");
+    expect(small.value.contentType).toBe("image/webp");
     const meta = await sharp(small.value.bytes).metadata();
     expect([meta.format, Math.max(meta.width ?? 0, meta.height ?? 0), meta.exif]).toEqual([
-      "jpeg",
+      "webp",
       256,
       undefined,
     ]);
@@ -332,7 +334,7 @@ describe("NFR-12 thumbnails for tiles and cards", () => {
     const mid = (await upload(subA, e, await gpsPhoto(3200, 2000, 6))).body["measurementId"];
     const small = await read(subA, e, mid as string, "?size=thumb");
     const full = await read(subA, e, mid as string);
-    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/webp"]);
     expect(small.headers.get("cache-control")).toContain("private");
     const smallBytes = new Uint8Array(await small.arrayBuffer());
     const fullBytes = new Uint8Array(await full.arrayBuffer());
@@ -420,7 +422,7 @@ describe("NFR-12 thumbnails for tiles and cards", () => {
 });
 
 describe("NFR-12 US-WAC-06 a replaced photo has a new address", () => {
-  const versionOf = (photo: unknown) => String(photo).replace(/\.jpg$/, "");
+  const versionOf = (photo: unknown) => String(photo).replace(/\.webp$/, "");
   const readPhoto = (sub: string, e: string, m: string, query: string) =>
     app.request(`/specimens/${e}/measurements/${m}/photo${query}`, {
       headers: { authorization: `Bearer valid:${sub}` },
@@ -444,8 +446,8 @@ describe("NFR-12 US-WAC-06 a replaced photo has a new address", () => {
     const v = versionOf(up.body["photo"]);
     const full = await readPhoto(subA, e, mid, `?v=${v}`);
     const small = await readPhoto(subA, e, mid, `?size=thumb&v=${v}`);
-    expect([full.status, full.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
-    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect([full.status, full.headers.get("content-type")]).toEqual([200, "image/webp"]);
+    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/webp"]);
     expect(full.headers.get("cache-control")).toBe("private, max-age=3600");
     expect(small.headers.get("cache-control")).toBe("private, max-age=3600");
     expect(await bytesOf(full)).toEqual(await bytesOf(await readPhoto(subA, e, mid, "")));

@@ -391,14 +391,16 @@ describe("US-KI-04 photo assessment", () => {
     measurementId = m.body["id"];
     const account = (await admin.query("select id from account where subject = $1", [subA])).rows[0]
       .id;
-    await photos.put(account, "kifoto.jpg", new Uint8Array([1, 2, 3]), "image/jpeg");
-    await admin.query("update measurement set photo = 'kifoto.jpg' where id = $1", [measurementId]);
+    await photos.put(account, "kifoto.webp", new Uint8Array([1, 2, 3]), "image/webp");
+    await admin.query("update measurement set photo = 'kifoto.webp' where id = $1", [
+      measurementId,
+    ]);
   });
 
   it("US-KI-04 delivers the photo of the own account to a connected client with the read right, logged", async () => {
     const r = await photoRequest(ai(subA, "pflanzen:read"));
     expect(r.status).toBe(200);
-    expect(r.headers.get("content-type")).toBe("image/jpeg");
+    expect(r.headers.get("content-type")).toBe("image/webp");
     expect(new Uint8Array(await r.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
     const log = (await call(web(subA), "GET", "/ai/log")).body["log"];
     expect(log.some((e: { operation: string }) => e.operation === "measurement_photo")).toBe(true);

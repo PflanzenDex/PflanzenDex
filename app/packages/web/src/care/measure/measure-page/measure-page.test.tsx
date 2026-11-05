@@ -41,12 +41,12 @@ function fakeServer(
       if (String(url).endsWith("/photo"))
         return new Response(new Uint8Array([1]), {
           status: 200,
-          headers: { "content-type": "image/jpeg" },
+          headers: { "content-type": "image/webp" },
         });
       if (init?.method === "POST" && String(url).includes("/measurements/photo")) {
         const h = init.headers as Record<string, string>;
         photoPosts.push({ url: String(url), type: h["Content-Type"], key: h["Idempotency-Key"] });
-        return opts.photoSave ? opts.photoSave() : response(201, { photo: "p.jpg" });
+        return opts.photoSave ? opts.photoSave() : response(201, { photo: "p.webp" });
       }
       if (init?.method === "POST") {
         posts.push({
@@ -54,7 +54,7 @@ function fakeServer(
           key: (init.headers as Record<string, string>)["Idempotency-Key"],
         });
         if (opts.save) return opts.save();
-        measurements.unshift(opts.withPhoto ? { ...measurement, photo: "p.jpg" } : measurement);
+        measurements.unshift(opts.withPhoto ? { ...measurement, photo: "p.webp" } : measurement);
         return response(201, measurement);
       }
       loadAttempts += 1;
@@ -371,9 +371,9 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     setViewportWidth(1024);
     let calls = 0;
     const { photoPosts } = fakeServer({
-      existing: [{ ...measurement, photo: "p.jpg" }],
+      existing: [{ ...measurement, photo: "p.webp" }],
       photoSave: () =>
-        ++calls === 1 ? exists() : response(201, { photo: "q.jpg", replaced: true }),
+        ++calls === 1 ? exists() : response(201, { photo: "q.webp", replaced: true }),
     });
     show();
     await openEntries();
@@ -389,7 +389,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
   it("cancelling the confirmation keeps the old photo and sends nothing more", async () => {
     setViewportWidth(1024);
     const { photoPosts } = fakeServer({
-      existing: [{ ...measurement, photo: "p.jpg" }],
+      existing: [{ ...measurement, photo: "p.webp" }],
       photoSave: exists,
     });
     show();
