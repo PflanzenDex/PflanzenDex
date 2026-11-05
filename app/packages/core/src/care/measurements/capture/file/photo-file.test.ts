@@ -33,8 +33,8 @@ async function setup() {
   const withPhoto = await m(ANNA, E1);
   const without = await m(ANNA, E1);
   if (typeof withPhoto === "string" || typeof without === "string") throw new Error("fixture");
-  await measurements.setPhoto(ANNA, withPhoto.id, "p1.jpg");
-  stored.set(`${ANNA}/p1.jpg`, { bytes: BYTES, contentType: "image/jpeg" });
+  await measurements.setPhoto(ANNA, withPhoto.id, "p1.webp");
+  stored.set(`${ANNA}/p1.webp`, { bytes: BYTES, contentType: "image/webp" });
   const read = (userId: string, specimenId: string, id: string, ...sizes: string[]) =>
     measurementPhotoFile(
       { measurements, specimens: new SpecimenStub({ [ANNA]: [E1], [BEN]: [E2] }), images },
@@ -48,7 +48,7 @@ describe("US-WAC-05 the photo of a measurement is private to its owner (P-05)", 
   it("the owner gets the stored image", async () => {
     const { read, withPhoto } = await setup();
     const r = await read(ANNA, E1, withPhoto.id);
-    expect(r.ok && r.value.contentType).toBe("image/jpeg");
+    expect(r.ok && r.value.contentType).toBe("image/webp");
     expect(r.ok && Array.from(r.value.bytes)).toEqual(Array.from(BYTES));
   });
 
@@ -75,8 +75,8 @@ describe("US-WAC-05 the photo of a measurement is private to its owner (P-05)", 
     await read(ANNA, E1, withPhoto.id, "thumb");
     await read(ANNA, E1, withPhoto.id);
     expect(reads).toEqual([
-      ["p1.jpg", "thumb"],
-      ["p1.jpg", "full"],
+      ["p1.webp", "thumb"],
+      ["p1.webp", "full"],
     ]);
   });
 

@@ -404,8 +404,8 @@ describe("US-KI-09 US-KI-08 US-KI-04 KI-R6 drafts, tasks and photos stay in the 
     measurementId = m.body["id"];
     const account = (await admin.query("select id from account where subject = $1", [subA])).rows[0]
       .id;
-    await photos.put(account, "mcp.jpg", new Uint8Array([7, 8, 9]), "image/jpeg");
-    await admin.query("update measurement set photo = 'mcp.jpg' where id = $1", [measurementId]);
+    await photos.put(account, "mcp.webp", new Uint8Array([7, 8, 9]), "image/webp");
+    await admin.query("update measurement set photo = 'mcp.webp' where id = $1", [measurementId]);
   });
 
   it("US-KI-09 propose_draft stores a draft for the keeper only; a stranger's inbox stays empty", async () => {
@@ -452,7 +452,7 @@ describe("US-KI-09 US-KI-08 US-KI-04 KI-R6 drafts, tasks and photos stay in the 
   it("US-KI-04 the photo comes as image content to the own client only", async () => {
     const own = await tool(ai(subA, "pflanzen:read"), "get_measurement_photo", { measurementId });
     expect(own.result["content"]).toEqual([
-      { type: "image", data: Buffer.from([7, 8, 9]).toString("base64"), mimeType: "image/jpeg" },
+      { type: "image", data: Buffer.from([7, 8, 9]).toString("base64"), mimeType: "image/webp" },
     ]);
     const foreign = await tool(ai(subB, "pflanzen:read", OTHER), "get_measurement_photo", {
       measurementId,

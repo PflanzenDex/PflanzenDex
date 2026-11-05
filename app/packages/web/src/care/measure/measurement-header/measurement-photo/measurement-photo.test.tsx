@@ -13,7 +13,7 @@ const stub = (status: number, body: BodyInit | null = new Uint8Array([1, 2, 3]))
         auth: (init?.headers as Record<string, string> | undefined)?.["Authorization"],
       });
       return status === 200
-        ? new Response(body, { status, headers: { "content-type": "image/jpeg" } })
+        ? new Response(body, { status, headers: { "content-type": "image/webp" } })
         : new Response(
             JSON.stringify({
               error: { code: "measurement.photo_not_found", text: "raw server text" },
@@ -29,7 +29,7 @@ const show = () =>
       token={async () => "tok"}
       specimenId="e1"
       measurementId="m1"
-      photo="7c1e.jpg"
+      photo="7c1e.webp"
       date="2026-10-01"
     />,
   );
@@ -78,7 +78,7 @@ describe("NFR-12 the sizes of a measurement photo", () => {
         token={async () => "tok"}
         specimenId="e1"
         measurementId="m1"
-        photo="7c1e.jpg"
+        photo="7c1e.webp"
         date="2026-10-01"
         compact={compact}
       />,
@@ -106,7 +106,7 @@ describe("NFR-12 the sizes of a measurement photo", () => {
         token={async () => "tok"}
         specimenId="e1"
         measurementId="m1"
-        photo="first.jpg"
+        photo="first.webp"
         date="2026-10-01"
         compact
       />,
@@ -120,7 +120,7 @@ describe("NFR-12 the sizes of a measurement photo", () => {
         token={async () => "tok"}
         specimenId="e1"
         measurementId="m1"
-        photo="second.jpg"
+        photo="second.webp"
         date="2026-10-01"
         compact
       />,

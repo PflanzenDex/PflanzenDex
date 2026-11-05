@@ -117,22 +117,27 @@ describe("US-WAC-01 measurements in the database", () => {
       id: second.id,
       photo: null,
     });
-    expect(await measurements.setPhoto(anna, second.id, "foto-1.jpg")).toBe(true);
-    expect((await measurements.findOnDate(anna, ex, "2026-10-05"))?.photo).toBe("foto-1.jpg");
+    expect(await measurements.setPhoto(anna, second.id, "foto-1.webp")).toBe(true);
+    expect((await measurements.findOnDate(anna, ex, "2026-10-05"))?.photo).toBe("foto-1.webp");
   });
 
   it("US-WAC-06 a foreign account neither finds nor changes a measurement's photo (P-04)", async () => {
     const z = await measurements.create(anna, values({ date: "2026-10-07" }));
     if (typeof z === "string") throw new Error(z);
     expect(await measurements.findOnDate(ben, specimenAnna, "2026-10-07")).toBeNull();
-    expect(await measurements.setPhoto(ben, z.id, "fremd.jpg")).toBe(false);
+    expect(await measurements.setPhoto(ben, z.id, "fremd.webp")).toBe(false);
     expect((await measurements.findOnDate(anna, specimenAnna, "2026-10-07"))?.photo).toBeNull();
   });
 
-  it("US-WAC-06 the database accepts only valid photo names", async () => {
+  it("NFR-12 US-WAC-06 the database accepts only valid WebP photo names, a stored JPEG name is refused", async () => {
     const z = await measurements.create(anna, values({ date: "2026-10-08" }));
     if (typeof z === "string") throw new Error(z);
-    await expect(measurements.setPhoto(anna, z.id, "../x.jpg")).rejects.toThrow();
+    await expect(measurements.setPhoto(anna, z.id, "../x.webp")).rejects.toThrow(
+      /measurement_photo_check/,
+    );
+    await expect(measurements.setPhoto(anna, z.id, "old-jpeg.jpg")).rejects.toThrow(
+      /measurement_photo_check/,
+    );
   });
 
   it("values outside the limits fail already in the database", async () => {
@@ -190,23 +195,23 @@ describe("US-WAC-05 the most recent photo per specimen", () => {
     const mid = await measurements.create(anna, values({ specimenId: e, date: "2026-09-15" }));
     await measurements.create(anna, values({ specimenId: e, date: "2026-10-01" }));
     if (typeof old === "string" || typeof mid === "string") throw new Error("fixture");
-    await measurements.setPhoto(anna, old.id, "a.jpg");
-    await measurements.setPhoto(anna, mid.id, "b.jpg");
+    await measurements.setPhoto(anna, old.id, "a.webp");
+    await measurements.setPhoto(anna, mid.id, "b.webp");
     const r = await measurements.lastPhotoFor(anna, [e]);
-    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15", photo: "b.jpg" });
+    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15", photo: "b.webp" });
   });
 
   it("NFR-12 US-WAC-06 a replaced photo is named by its new object, so its address changes", async () => {
     const e = await specimen(anna, "Foto ersetzt");
     const m = await measurements.create(anna, values({ specimenId: e, date: "2026-09-15" }));
     if (typeof m === "string") throw new Error(m);
-    await measurements.setPhoto(anna, m.id, "first.jpg");
-    expect((await measurements.lastPhotoFor(anna, [e])).get(e)?.photo).toBe("first.jpg");
-    await measurements.setPhoto(anna, m.id, "second.jpg");
+    await measurements.setPhoto(anna, m.id, "first.webp");
+    expect((await measurements.lastPhotoFor(anna, [e])).get(e)?.photo).toBe("first.webp");
+    await measurements.setPhoto(anna, m.id, "second.webp");
     expect((await measurements.lastPhotoFor(anna, [e])).get(e)).toEqual({
       id: m.id,
       date: "2026-09-15",
-      photo: "second.jpg",
+      photo: "second.webp",
     });
   });
 
@@ -221,7 +226,7 @@ describe("US-WAC-05 the most recent photo per specimen", () => {
     const e = await specimen(anna, "Foto fremd");
     const m = await measurements.create(anna, values({ specimenId: e }));
     if (typeof m === "string") throw new Error(m);
-    await measurements.setPhoto(anna, m.id, "c.jpg");
+    await measurements.setPhoto(anna, m.id, "c.webp");
     expect((await measurements.lastPhotoFor(ben, [e])).size).toBe(0);
     expect((await measurements.lastPhotoFor(anna, [e])).size).toBe(1);
   });

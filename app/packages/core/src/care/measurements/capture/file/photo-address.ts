@@ -5,7 +5,7 @@
  * The version of a stored photo: its object name without the extension. A replacement stores a new object under a new
  * random name (US-WAC-06), so the version changes with every replacement.
  */
-export const photoVersion = (photo: string): string => photo.replace(/\.jpg$/, "");
+export const photoVersion = (photo: string): string => photo.replace(/\.webp$/, "");
 
 /**
  * The private address of a measurement photo: `/specimens/:id/measurements/:measurementId/photo?v=<version>`. A replaced

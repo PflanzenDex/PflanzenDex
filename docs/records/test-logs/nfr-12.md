@@ -594,3 +594,21 @@ This section gives sizes only. The payload decision is the owner's (issue #1302,
 At 32 users that is about 16 % more screens per second and a median about 14 % lower.
 
 **Limits (P-08):** one machine over loopback, two runs per state. A single request hardly changes; the gain is under load. Part of the drop in statements is counting: the opening still executes its statements, they travel as one call. A real network between API and database, even a container network, adds latency to each round trip; that was not measured here.
+
+## 21. Issue #1289: stored pictures as WebP (2026-11-05)
+
+**Source:** the measurement the owner's Performance session ran on 2026-11-05 and posted on issue 1289, copied here as the record the issue asks for. It was not repeated for this log.
+
+**Method:** 20 openly licensed plant photos from Wikimedia Commons (2,188 to 4,608 px on the long side; the test host holds no photos). The app's pipeline from `sharp-processor.ts` (rotate, 1600 px long side, 256 px thumbnail cut from the stored copy), sharp 0.35.5, libvips 8.18.7, one photo at a time, one process per format, pinned to 2 cores. "Same quality" = the setting whose median SSIM (luma, against the unencoded resized image) matches today's JPEG on the full-size image.
+
+| Format (full / thumb quality) | Full size, median | vs. JPEG | Thumb   | vs. JPEG | Encode full, median (max) | Peak memory |
+| ----------------------------- | ----------------- | -------- | ------- | -------- | ------------------------- | ----------- |
+| JPEG, before (82 / 80)        | 344.5 KB          | 1.00     | 13.2 KB | 1.00     | 197 ms (518)              | 225 MB      |
+| JPEG mozjpeg (86 / 84)        | 323.8 KB          | 0.94     | 12.8 KB | 0.97     | 528 ms (794)              | 237 MB      |
+| **WebP (82 / 72), chosen**    | 262.1 KB          | 0.74     | 9.7 KB  | 0.72     | 445 ms (816)              | 266 MB      |
+| AVIF effort 4 (64 / 62)       | 219.5 KB          | 0.62     | 9.3 KB  | 0.72     | 13,091 ms (22,281)        | 466 MB      |
+| AVIF effort 2 (64 / 62)       | 225.2 KB          | 0.62     | 9.0 KB  | 0.68     | 1,518 ms (2,604)          | 395 MB      |
+
+**Decision:** the owner chose WebP at quality 82 (stored copy) and 72 (thumbnail) as starting values (assumption): about 26 % smaller at the same measured quality, about 250 ms more per upload, 266 MB peak (the API container is limited to 512 MiB). PR for issue 1289 switches the format cleanly (migrations 0103 and 0104, no reader for JPEG, no conversion).
+
+**Limits (P-08):** not phone photos; SSIM on luma only, colour not scored, no human judged the images; timings from a faster CPU than the test host; peak memory is a whole Node process for one upload at a time. Sizes on real keepers' phone photos are not measured yet.

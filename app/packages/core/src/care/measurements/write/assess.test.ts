@@ -40,7 +40,7 @@ const MID = "00000000-0000-4000-8000-0000000000ff";
 
 describe("US-KI-04 assess the photo of a measurement", () => {
   it("US-KI-04 sets quality and note and marks an adopted AI suggestion, the value stays", async () => {
-    const { measurements, id, op } = await setup("p.jpg");
+    const { measurements, id, op } = await setup("p.webp");
     const r = await execute(
       op,
       { idempotency },
@@ -61,13 +61,13 @@ describe("US-KI-04 assess the photo of a measurement", () => {
   });
 
   it("US-KI-04 without the AI flag it is the keeper's own assessment", async () => {
-    const { measurements, id, op } = await setup("p.jpg");
+    const { measurements, id, op } = await setup("p.webp");
     await execute(op, { idempotency }, call("anna", { measurementId: id, quality: "etiolated" }));
     expect(await measurements.get("anna", id)).toMatchObject({ ratedBy: "keeper", note: null });
   });
 
   it("US-KI-04 refuses an impossible quality, a photoless measurement and an archived specimen", async () => {
-    const a = await setup("p.jpg");
+    const a = await setup("p.webp");
     expect(
       code(
         await execute(
@@ -87,7 +87,7 @@ describe("US-KI-04 assess the photo of a measurement", () => {
         ),
       ),
     ).toBe("measurement.photo_not_found");
-    const c = await setup("p.jpg", "archived");
+    const c = await setup("p.webp", "archived");
     expect(
       code(
         await execute(
@@ -100,7 +100,7 @@ describe("US-KI-04 assess the photo of a measurement", () => {
   });
 
   it("US-KI-04 a foreign or unknown measurement looks the same and nothing is written (P-04)", async () => {
-    const { measurements, id, op } = await setup("p.jpg");
+    const { measurements, id, op } = await setup("p.webp");
     expect(
       code(
         await execute(

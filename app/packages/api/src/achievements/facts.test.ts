@@ -59,7 +59,13 @@ function sources(over: Partial<Record<keyof FactSources, unknown>> = {}): FactSo
                 [
                   id,
                   [
-                    { id: "m1", date: "2026-03-02", value: 10, quality: "healthy", photo: "p.jpg" },
+                    {
+                      id: "m1",
+                      date: "2026-03-02",
+                      value: 10,
+                      quality: "healthy",
+                      photo: "p.webp",
+                    },
                     { id: "m2", date: "2026-03-09", value: 12, quality: "etiolated", photo: null },
                   ],
                 ] as const,
@@ -140,7 +146,7 @@ describe("NFR-12 one read per kind for all specimens", () => {
         date: "2026-03-02",
         value: 10,
         quality: "healthy",
-        photo: "p.jpg",
+        photo: "p.webp",
       },
       {
         id: "m2",
