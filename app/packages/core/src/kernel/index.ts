@@ -20,8 +20,9 @@ export {
   described,
   jsonSchemaOf,
   nullable,
+  photoSize,
 } from "./input";
-export type { JsonSchema, Schema } from "./input";
+export type { JsonSchema, PhotoSize, Schema } from "./input";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
 export { canonical } from "./input";
