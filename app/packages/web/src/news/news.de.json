@@ -1,6 +1,7 @@
 {
   "unreleased": [
     "Vorschläge für eine Zone: Gibt es zu wenige passende Arten, passt der Hinweis mit „Art vorschlagen“ jetzt auch auf kleine Handys.",
+    "Große Schrift: Lange Wörter trennen sich jetzt an einer Silbe mit Bindestrich. Mit der Tastatur bleibt der Fokus beim Wechsel zwischen Reitern auf dem Reiter und kehrt nach dem Schließen eines Fensters im Konto zur Zeile zurück.",
     "Große Schrift: Bei 200 % Textgröße ragen Konto, Erfolge und Geräte nicht mehr zur Seite hinaus. Lange Wörter brechen um, die Kacheln der Geräte stehen untereinander.",
     "Prüfliste und Geräte passen aufs Handy: Ein Vorschlag zeigt seine kurzen Angaben, die Beschreibung und die Entscheidung in drei Reitern. Die drei Vorrats-Schaltflächen eines Verbrauchsmaterials stehen nebeneinander.",
     "Die Gruppen der Sammlung (Standort, Pflegephase, Familie) und die Erfolge brechen nicht mehr zur Seite aus: Passen die Auswahlmöglichkeiten in eine Zeile, ab 768 Pixel Breite auch in zwei Zeilen, stehen sie als Knöpfe nebeneinander, sonst als Auswahlfeld mit denselben Namen und Anzahlen.",

@@ -51,7 +51,7 @@ Use one screen reader of the platform (NVDA or Narrator on Windows, VoiceOver on
 ## 4. Zoom, text size and viewport
 
 1. Browser zoom 400 % on a 1280 px window (the same as 320 CSS px): no horizontal scrolling, no content cut off (1.4.10, 1.4.4, US-QS-12).
-2. Text size 200 % (set the root font size, or the operating system text size): no overlapping text, no button or row label that breaks inside a word; content that no longer fits scrolls inside its own region, not the page (DS-61, DS-63).
+2. Text size 200 % (set the root font size, or the operating system text size): no overlapping text, no button or row label that breaks between random letters (a word wider than its row breaks at a syllable with a hyphen); content that no longer fits scrolls inside its own region, not the page (DS-61, DS-63).
 3. User text spacing (line height 1.5, paragraph spacing 2, letter spacing 0.12 and word spacing 0.16 times the font size; a bookmarklet or an injected stylesheet): no text overlaps or is cut off (1.4.12).
 4. Portrait and landscape, at 360 × 640 and 390 × 844 px for phones and 1024 × 768 px for a tablet: every view works in both (1.3.4).
 
