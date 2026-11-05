@@ -12,6 +12,8 @@ export type EmptyStateProps = {
   action?: EmptyStateAction;
   /** `error` is announced as an alert; `empty` is plain content. */
   variant?: "empty" | "error";
+  /** Without the icon tile and with less room: for a state below a notice that already says most of it (issue 1343). */
+  compact?: boolean;
   className?: string;
   /** Heading level of the title: 2 on a page, 3 inside a section of a page (US-QS-14). */
   level?: 2 | 3;
@@ -19,12 +21,24 @@ export type EmptyStateProps = {
   titleRef?: React.Ref<HTMLHeadingElement>;
 };
 
+function IconTile({ variant }: { variant: "empty" | "error" }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-14 items-center justify-center rounded-tile bg-accent text-2xl text-accent-foreground"
+    >
+      {variant === "error" ? "!" : "🌱"}
+    </span>
+  );
+}
+
 /** Empty or error state of a list, table or detail view (US-QS-07, DS-26, P-09): says what happened and what to do next. */
 export function EmptyState({
   title,
   description,
   action,
   variant = "empty",
+  compact = false,
   className,
   level = 2,
   titleRef,
@@ -34,17 +48,13 @@ export function EmptyState({
     <div
       role={variant === "error" ? "alert" : undefined}
       className={cn(
-        "flex min-w-0 flex-col items-center gap-4 rounded-card bg-card px-6 py-10 text-center shadow-elevation-1",
+        "flex min-w-0 flex-col items-center rounded-card bg-card text-center shadow-elevation-1",
+        compact ? "gap-2 p-4" : "gap-4 px-6 py-10",
         variant === "error" && "border border-destructive",
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className="flex size-14 items-center justify-center rounded-tile bg-accent text-2xl text-accent-foreground"
-      >
-        {variant === "error" ? "!" : "🌱"}
-      </span>
+      {compact ? null : <IconTile variant={variant} />}
       <Title
         ref={titleRef}
         tabIndex={titleRef ? -1 : undefined}

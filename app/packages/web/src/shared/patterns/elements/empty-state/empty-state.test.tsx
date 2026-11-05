@@ -38,6 +38,15 @@ describe("EmptyState (US-QS-07, DS-26, P-09)", () => {
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 
+  it("US-QS-21 compact drops the icon tile and keeps the title and the next step (issue 1343)", () => {
+    const { container } = render(
+      <EmptyState compact title="Leer" action={{ label: "Weiter", href: "/x" }} />,
+    );
+    expect(container.querySelector('[aria-hidden="true"]')).toBeNull();
+    expect(screen.getByRole("heading", { name: "Leer" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Weiter" })).toBeTruthy();
+  });
+
   it("US-QS-07 · DS-26 an action can be a link", () => {
     render(<EmptyState title="Leer" action={{ label: "Zum Pokédex", href: "/pokedex" }} />);
     expect(screen.getByRole("link", { name: "Zum Pokédex" }).getAttribute("href")).toBe("/pokedex");

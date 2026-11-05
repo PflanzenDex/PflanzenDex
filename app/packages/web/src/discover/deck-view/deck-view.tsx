@@ -149,6 +149,7 @@ function Cards(props: {
       <EmptyState
         title={deck.empty.text}
         description={deck.empty.nextAction}
+        compact={deck.zoneFilter?.shortfall != null}
         titleRef={endTitle}
         action={{ label: t("deck.propose"), href: CATALOG_ADDRESS }}
       />
