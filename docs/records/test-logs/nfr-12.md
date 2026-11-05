@@ -378,3 +378,104 @@ Rows: the same rows under both policies and both sizes (a test checks it).
 - The seq scan of the table grows with the catalog (buffer hits 3x on dev at 20x the species); it is accepted (no trigram index, owner decision on #1235) and is not gated.
 - Statement shapes and plans are those of PostgreSQL 18 with `ANALYZE` on fixed data; a plan change in a later version can change the counts of the 0 or 1 `is_reviewer` calls (absorbed by the base of one call) but not the per-row calls.
 - Two catalog sizes, one viewer, one filler shape (other accounts' proposals, rejected and merged species). Not measured: several viewers, reviewers (they see more rows), a catalog of 20,000 species.
+
+---
+
+## 14. Issue #1237: swap offers read once per owner (PR #1275, 2026-11-04)
+
+**Source:** the numbers of this section and of sections 15 to 18 are copied from the merged pull requests; nothing was measured again for this record.
+
+**Change:** the care phase is computed for all named specimens at once, and the exchange reads facts, health and phase once per owner instead of once per offer.
+
+Statements per request, query-count gate seed at 5 and 50 specimens:
+
+| Request                | Before      | After     |
+| ---------------------- | ----------- | --------- |
+| `GET /offers`          | 121 / 3651  | 36 / 36   |
+| `GET /exchange/offers` | 291 / 10821 | 91 / 91   |
+| `GET /exchange/match`  | 336 / 10941 | 136 / 131 |
+
+**Limits (P-08):** the gate seed was extended in the same PR (friend species got a dormancy period); without it `/exchange/offers` measured 1571 before the fix. The drop of 5 on `/exchange/match` depends on the data and was not traced. Reads per owner still repeat their statement text once per friend with offers; the repeat gate cannot tell that from a read per offer. The byte comparison of the three answers ran before two later refactors and was not repeated.
+
+## 15. Issue #1239: achievements read each kind once (PR #1274, 2026-11-04)
+
+**Change:** measurements and done treatments are read once for all specimens instead of once per specimen.
+
+Statements per request, gate seed (2 measurements and 1 treatment per specimen):
+
+| Request                    | 5 specimens: before | 50: before | 5: after | 50: after |
+| -------------------------- | ------------------- | ---------- | -------- | --------- |
+| `GET /achievements`        | 91                  | 541        | 51       | 51        |
+| `GET /achievements/news`   | 91                  | 541        | 51       | 51        |
+| `GET /achievements/rhythm` | 91                  | 541        | 51       | 51        |
+| `GET /achievements/year`   | 111                 | 786        | 46       | 46        |
+
+The answers of all four routes, `year` also with `?year=2025`, were byte-identical before and after for two seeded keepers.
+
+**Limits (P-08):** `rhythm` still reads the measurements of archived specimens and ignores them. `anniversaries.ts` still reads measurements per anniversary due today, outside these four routes.
+
+## 16. Issue #1240: one read per request and account (PR #1273, 2026-11-04)
+
+**Result: target not reached.** `GET /today` is at 66 statements, not the "about 40" of the issue; the other half of its Done, no identical statement twice in one request, is met. The remaining 13 transactions cost 4 frame statements each, plus 14 payload statements. Going lower needs one transaction per request, a change of the tenant frame (P-04). The issue stays open for that decision.
+
+**Issue dataset** (`perf:measure`, 1,000 specimens, 60 species, 500 taxa, no dormancy): `GET /today` 106 → 66 statements (payload 22 → 14), median 26.7 → 14.2 ms (2 runs only, indicative). `GET /specimens/cards` is unchanged at 51.
+
+**Phased dataset** (50 specimens, 12 species, dormancy on every species; a temporary script, not committed):
+
+| Request                          | Statements (transactions) before | After   | Repeated statements |
+| -------------------------------- | -------------------------------- | ------- | ------------------- |
+| `GET /today`                     | 356 (71)                         | 66 (13) | 4 → 0               |
+| `GET /care-phases`               | 271 (54)                         | 21 (4)  | 1 → 0               |
+| `GET /watering/due`              | 36 (7)                           | 26 (5)  | 2 → 0               |
+| `GET /equipment/needs`           | 56 (11)                          | 41 (8)  | 2 → 0               |
+| `GET /equipment/recommendations` | 56 (11)                          | 41 (8)  | 2 → 0               |
+
+The answers of the five routes for the same account were byte-identical before and after.
+
+## 17. Issue #1243: index gaps (PR #1270, 2026-11-04)
+
+**Method:** `EXPLAIN (ANALYZE, BUFFERS)` on synthetic data (among others `ai_log` 328,500 rows, `review_case` 20,000, `species` 20,000, `taxon_attribute` 25,000, `job` 65,205), as `pflanzendex_app` where row-level security applies. Medians of 5 runs in a local Docker database, so times are indicative only. An index was added only where the plan uses it.
+
+| Query                           | Before (median ms) | After (median ms) | Change                           |
+| ------------------------------- | ------------------ | ----------------- | -------------------------------- |
+| Review list, open cases         | 2.14               | 0.95              | `review_case_open`               |
+| Review list, curated batch      | 53.3               | 0.29              | `review_case_curated_species`    |
+| Species search without a filter | 424                | 3.96              | `species_latin_name`             |
+| `taxon_attribute` by field      | 4.28               | 0.44              | `taxon_attribute_field`          |
+| Expiry update of `ai_task`      | 0.258              | 0.086             | `md5(reference)` meets the index |
+
+`countSince` on a heavy account (10 connections, 365,000 extra rows) fell from 458 buffers to 5 through `ai_log_connection_day`.
+
+**Limits (P-08):** a species search with no hit does not change (about 870 to 920 ms on this dataset). No index was added for the job expiry sweep, because `job_due` already serves a realistic queue (0.63 ms, 0.83 ms with the candidate). Whether `location_zone` is redundant needs `idx_scan` from production. The indexes are built without `concurrently`, so a build blocks writes to its table (`ai_log`: 190 ms at 328,500 rows); check its size before deploying.
+
+## 18. Wave 5: web (issues #1244, #1245, #1247; PRs #1267, #1264, #1262, 2026-11-04)
+
+Issue #1246 (lists without server paging) belongs to this wave and is still open, so `GET /specimens/cards` keeps its size.
+
+### 18.1 Issue #1244: requests of Heute
+
+Production build, demo seed `states` (50 specimens), 390x844, Playwright request log.
+
+| Step             | Requests before | After                            |
+| ---------------- | --------------- | -------------------------------- |
+| Cold start       | 13              | 14                               |
+| Heute → Sammlung | 4               | 3                                |
+| Back to Heute    | 10              | 9                                |
+| Reload           | 13              | 13, all revalidated, 0 B of body |
+
+**Limits (P-08):** the request count did not fall on a cold start; the gain is bytes on repeated loads. The first paint of the tasks is not faster (still about 420 ms, held by the Suspense reveal after the lazy chunk). With `/specimens/count` delayed by 1.5 s the tasks were requested at 409 ms instead of 1915 ms, so the count no longer gates them. Regression, not fixed there: `/feed/banner` is sometimes fetched twice, which is the 14th request.
+
+### 18.2 Issue #1245: thumbnails
+
+Stored copy 245 to 411 KB, 256 px thumbnail 0.9 to 2.3 KB, measured on **generated** test images only; real photos will have larger thumbnails, not measured. Photos stored before the PR have no thumbnail and still transfer in full size until replaced. Lighthouse on Sammlung is not recorded; that part of the issue moved to #1251.
+
+### 18.3 Issue #1247: initial JS
+
+| Step                                            | Initial JS (gzip) |
+| ----------------------------------------------- | ----------------- |
+| Baseline                                        | 138.5 kB          |
+| Dialog of `ResponsiveModal` loads on first open | 126.6 kB          |
+| Locked rows leave the shell                     | 121.4 kB          |
+| Heute chunk requested early                     | 121.5 kB          |
+
+The goal of 125 kB is met. **Limit:** until its chunk has loaded, the first open of a dialog shows nothing, which is visible only on a slow network right after page load.
