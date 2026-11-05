@@ -17,9 +17,16 @@ test.describe("US-ACC-01 sign-in", () => {
   }, info) => {
     await signIn(page, account);
     await page.getByRole("link", { name: "Konto", exact: true }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Konto" })).toBeVisible();
-    // The index shows name and e-mail in its profile row (US-QS-17); the greeting is in "Profil".
     const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
+    // On a phone "/account" is the index under the heading "Konto". From 1024 px Einstellungen opens beside the index
+    // by itself and takes the main heading, the index stays (US-QS-17).
+    if (info.project.name === "mobil") {
+      await expect(page.getByRole("heading", { level: 1, name: "Konto" })).toBeVisible();
+    } else {
+      await expect(page.getByRole("heading", { level: 1, name: "Einstellungen" })).toBeVisible();
+      await expect(index).toBeVisible();
+    }
+    // The index shows name and e-mail in its profile row (US-QS-17); the greeting is in "Profil".
     await expect(index.getByText(account.displayName, { exact: true })).toBeVisible();
     await expect(index.getByText(account.email, { exact: true })).toBeVisible();
     await axeReport(page, info, "account");
