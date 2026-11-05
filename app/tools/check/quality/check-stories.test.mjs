@@ -2,11 +2,22 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import { check } from "./check-stories.mjs";
 
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
+
 function web(files) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stories-"));
+  const dir = tempDir("stories-");
   for (const [rel, content] of Object.entries(files)) {
     const p = path.join(dir, "src", rel);
     fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -58,7 +69,7 @@ describe("QG-U5 · every ui component has a story", () => {
   });
 
   it("passes when there are no component folders", () => {
-    assert.deepEqual(check(fs.mkdtempSync(path.join(os.tmpdir(), "stories-"))), []);
+    assert.deepEqual(check(tempDir("stories-")), []);
   });
 });
 

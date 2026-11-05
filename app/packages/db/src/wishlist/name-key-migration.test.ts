@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFileSync, mkdtempSync, readdirSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pg from "pg";
@@ -12,6 +12,14 @@ import {
   testDatabaseUrl,
 } from "../kernel/index.ts";
 import { withAccount } from "../kernel/index.ts";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // US-WUN-01, FR-WUN-06: migration 0020 backfills the name key of existing wishes. Wishes that collide only after folding
 // diacritics must not break it and must not be deleted (P-10). A scratch database is migrated up to 0019, filled, then
@@ -40,7 +48,7 @@ beforeAll(async () => {
   // Scratch database owned by the superuser: replays a historical migration state, not RLS behaviour.
   scratch = openPool(url.toString());
   scratch.on("error", () => undefined);
-  const before = mkdtempSync(join(tmpdir(), "wish-key-"));
+  const before = tempDir("wish-key-");
   for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter((n) => n < "0020"))
     copyFileSync(join(MIGRATIONS_DIRECTORY, f), join(before, f));
   await migrate(scratch, { directory: before });
@@ -53,6 +61,7 @@ beforeAll(async () => {
   await insert(ben, "Cafe", "2026-01-04T10:00:00Z");
 });
 afterAll(async () => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
   await scratch.end();
   await admin.query(`drop database if exists ${DB} with (force)`);
   await admin.end();

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFileSync, mkdtempSync, readdirSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pg from "pg";
@@ -13,6 +13,14 @@ import {
   withAccount,
 } from "./kernel/index.ts";
 import { TEST_OWNER_ROLE, testOwnerUrl } from "./kernel/connection/connection.ts";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // NFR-12, issue #1235, US-DEV-07: migration 0102 copies the review status and creator of every existing species to the
 // species row. A scratch database owned by the non-superuser owner role (as in production) is migrated up to 0101,
@@ -112,7 +120,7 @@ beforeAll(async () => {
   su.pathname = `/${DB}`;
   superUser = openPool(su.toString());
   superUser.on("error", () => undefined);
-  const before = mkdtempSync(join(tmpdir(), "visibility-"));
+  const before = tempDir("visibility-");
   for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter((n) => n < NEW))
     copyFileSync(join(MIGRATIONS_DIRECTORY, f), join(before, f));
   await migrate(scratch, { directory: before });
@@ -120,6 +128,7 @@ beforeAll(async () => {
   applied = await migrate(scratch);
 }, 120_000);
 afterAll(async () => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
   await superUser.end();
   await scratch.end();
   await admin.query(`drop database if exists ${DB} with (force)`);

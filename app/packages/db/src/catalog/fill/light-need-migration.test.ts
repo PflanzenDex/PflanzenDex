@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFileSync, mkdtempSync, readdirSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pg from "pg";
@@ -11,6 +11,14 @@ import {
   openPool,
   testDatabaseUrl,
 } from "../../kernel/index.ts";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // US-BES-12, US-LIC-01 (#1003): migration 0095 makes difficulty, default level and lux need nullable and clears the
 // starting values the operator batch and the dev seed wrote (P-08). A scratch database is migrated up to 0094, filled
@@ -102,7 +110,7 @@ beforeAll(async () => {
   url.pathname = `/${DB}`;
   scratch = openPool(url.toString());
   scratch.on("error", () => undefined);
-  const before = mkdtempSync(join(tmpdir(), "light-need-"));
+  const before = tempDir("light-need-");
   for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter((n) => n < MIGRATION))
     copyFileSync(join(MIGRATIONS_DIRECTORY, f), join(before, f));
   await migrate(scratch, { directory: before });
@@ -110,6 +118,7 @@ beforeAll(async () => {
   await migrate(scratch);
 }, 120_000);
 afterAll(async () => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
   await scratch.end();
   await admin.query(`drop database if exists ${DB} with (force)`);
   await admin.end();

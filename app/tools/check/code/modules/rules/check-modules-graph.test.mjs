@@ -2,9 +2,20 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import { checkProject, importsOf, walkCode } from "../../check-boundaries.mjs";
 import { webLayerFindings, webLayerOf } from "./check-modules-graph.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // AB-15 (FR-QG-23, blocking since step 5): shared imports no module and not app, a module imports not app.
 const cfg = { MODULES: ["kernel", "care", "pokedex"].map((name) => ({ name })) };
@@ -20,7 +31,7 @@ const files = {
   [`${W}/app/a.ts`]: 'import { B } from "../shared/ui/button";\n',
 };
 function tree(patch = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "web-layers-"));
+  const dir = tempDir("web-layers-");
   for (const [rel, text] of Object.entries({ ...files, ...patch })) {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), text);

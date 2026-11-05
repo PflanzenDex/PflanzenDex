@@ -1,11 +1,22 @@
 // FR-DEV-10: create, check and sync of issue labels and board fields, with an injected gh client (no GitHub access)
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkIssue, createIssue, IssueRefused, syncIssue } from "./issue.mjs";
 import { loadTaxonomy, main } from "./issue-cli.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(path.join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const taxonomy = {
   types: [
@@ -71,7 +82,7 @@ const boardAnswers = {
 const quiet = () => {};
 
 function tempOutput() {
-  return path.join(mkdtempSync(path.join(tmpdir(), "issue-test-")), "output");
+  return path.join(tempDir("issue-test-"), "output");
 }
 
 test("FR-DEV-10 (a): an opened issue without an epic label gets a comment and needs-triage, nothing else", async () => {
@@ -201,7 +212,7 @@ test("FR-DEV-10: make issue refuses an unreadable body file before anything is c
 });
 
 test("FR-DEV-10: make issue reads the body file and creates the issue", async () => {
-  const body = path.join(mkdtempSync(path.join(tmpdir(), "issue-test-")), "body.md");
+  const body = path.join(tempDir("issue-test-"), "body.md");
   writeFileSync(body, "## Story\n\nText\n");
   const client = fakeGh({
     ...boardAnswers,
