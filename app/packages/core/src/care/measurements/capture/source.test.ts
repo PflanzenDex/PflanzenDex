@@ -63,10 +63,23 @@ describe("US-WAC-01 MeasurementSource for the specimen cards (US-BES-06)", () =>
     await store.setPhoto("anna", old.id, "p1.jpg");
     const r = await measurementSource({ measurements: store }).forSpecimens("anna", [E1]);
     expect(r.get(E1)?.photo).toEqual({
-      url: `/specimens/${E1}/measurements/${old.id}/photo`,
+      url: `/specimens/${E1}/measurements/${old.id}/photo?v=p1`,
       date: "2026-09-20",
     });
     expect(r.get(E1)?.last.date).toBe("2026-10-02");
+  });
+
+  it("NFR-12 US-WAC-06 a replaced photo gets a new address in the card, so no cache keeps the old picture", async () => {
+    const m = await store.create("anna", values(E1));
+    if (typeof m === "string") throw new Error(m);
+    await store.setPhoto("anna", m.id, "first.jpg");
+    const source = measurementSource({ measurements: store });
+    const before = (await source.forSpecimens("anna", [E1])).get(E1)?.photo?.url;
+    await store.setPhoto("anna", m.id, "second.jpg");
+    const after = (await source.forSpecimens("anna", [E1])).get(E1)?.photo?.url;
+    expect(before).toBe(`/specimens/${E1}/measurements/${m.id}/photo?v=first`);
+    expect(after).toBe(`/specimens/${E1}/measurements/${m.id}/photo?v=second`);
+    expect(after).not.toBe(before);
   });
 
   it("US-WAC-05 of two photos the newer measurement wins", async () => {

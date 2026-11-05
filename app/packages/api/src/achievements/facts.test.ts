@@ -140,7 +140,7 @@ describe("NFR-12 one read per kind for all specimens", () => {
         date: "2026-03-02",
         value: 10,
         quality: "healthy",
-        hasPhoto: true,
+        photo: "p.jpg",
       },
       {
         id: "m2",
@@ -148,7 +148,7 @@ describe("NFR-12 one read per kind for all specimens", () => {
         date: "2026-03-09",
         value: 12,
         quality: "etiolated",
-        hasPhoto: false,
+        photo: null,
       },
     ]);
   });

@@ -130,16 +130,19 @@ export function clearPhotoCache(): void {
 }
 
 /**
- * Forgets the pictures under an API path after one changed. A replaced photo keeps its address (US-WAC-06), so without
- * this the cache would go on showing the old picture until it evicts it.
+ * Forgets the pictures under an API path after one changed, so the replaced picture leaves memory at once. A replaced
+ * photo has a new address (its version changes, NFR-12), so the next view fetches it anew.
  */
 export function forgetPhotos(api: string, pathPrefix: string): void {
   const prefix = `${api}${pathPrefix}`;
   for (const entry of [...cache.values()]) if (entry.key.startsWith(prefix)) evict(entry);
 }
 
-const address = (api: string, path: string, size: PhotoSize | undefined) =>
-  `${api}${path}${size ? `?size=${size}` : ""}`;
+/** The request address: the path may carry a query already (the version of a photo), the size joins it with `&`. */
+const address = (api: string, path: string, size: PhotoSize | undefined) => {
+  if (!size) return `${api}${path}`;
+  return `${api}${path}${path.includes("?") ? "&" : "?"}size=${size}`;
+};
 
 /**
  * Loads a private photo from the API path with the token (P-05, US-WAC-05): the bytes never sit behind a public link and

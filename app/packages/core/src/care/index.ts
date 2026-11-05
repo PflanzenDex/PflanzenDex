@@ -15,6 +15,7 @@ export type { RecordDependencies } from "./measurements/write/record";
 export { measurementPhoto } from "./measurements/capture/photo";
 export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
 export { measurementPhotoFile } from "./measurements/capture/file";
+export { measurementPhotoPath, photoVersion } from "./measurements/capture/file";
 export type { PhotoFileDependencies, PhotoTarget } from "./measurements/capture/file";
 export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
 export type {

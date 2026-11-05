@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Fotos: Ersetzt du das Foto einer Messung, zeigt die App das neue Foto sofort. Bisher konnte bis zu einer Stunde das alte Foto stehen bleiben.",
     "Vorschläge für eine Zone: Gibt es zu wenige passende Arten, passt der Hinweis mit „Art vorschlagen“ jetzt auch auf kleine Handys.",
     "Große Schrift: Lange Wörter trennen sich jetzt an einer Silbe mit Bindestrich. Mit der Tastatur bleibt der Fokus beim Wechsel zwischen Reitern auf dem Reiter und kehrt nach dem Schließen eines Fensters im Konto zur Zeile zurück.",
     "Große Schrift: Bei 200 % Textgröße ragen Konto, Erfolge und Geräte nicht mehr zur Seite hinaus. Lange Wörter brechen um, die Kacheln der Geräte stehen untereinander.",

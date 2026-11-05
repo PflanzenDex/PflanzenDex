@@ -1,6 +1,7 @@
 import {
   anniversaries,
   localToday,
+  measurementPhotoPath,
   type MeasurementStore,
   type SpecimenStore,
 } from "@pflanzendex/core";
@@ -11,8 +12,9 @@ export interface AnniversarySources {
   readonly measurements: Pick<MeasurementStore, "list">;
 }
 
-const photoOf = (specimenId: string, m: { id: string; date: string }) => ({
-  url: `/specimens/${specimenId}/measurements/${m.id}/photo`,
+/** A photo of the anniversary: its address carries the version of the photo (NFR-12). */
+const photoOf = (specimenId: string, m: { id: string; date: string; photo: string }) => ({
+  url: measurementPhotoPath({ specimenId, measurementId: m.id, photo: m.photo }),
   date: m.date,
 });
 
@@ -35,7 +37,7 @@ export async function achievementsAnniversaries(
   const items = await Promise.all(
     due.map(async (a) => {
       const photos = (await src.measurements.list(userId, a.specimenId))
-        .filter((m) => m.photo !== null)
+        .flatMap((m) => (m.photo === null ? [] : [{ id: m.id, date: m.date, photo: m.photo }]))
         .sort((x, y) => x.date.localeCompare(y.date));
       const first = photos[0];
       const latest = photos.length > 1 ? photos[photos.length - 1] : undefined;

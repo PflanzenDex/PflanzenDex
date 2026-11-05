@@ -418,3 +418,64 @@ describe("NFR-12 thumbnails for tiles and cards", () => {
     expect((await call(subA, "GET", `/specimens/${e}/measurements`)).body["last"].photo).toBeNull();
   });
 });
+
+describe("NFR-12 US-WAC-06 a replaced photo has a new address", () => {
+  const versionOf = (photo: unknown) => String(photo).replace(/\.jpg$/, "");
+  const readPhoto = (sub: string, e: string, m: string, query: string) =>
+    app.request(`/specimens/${e}/measurements/${m}/photo${query}`, {
+      headers: { authorization: `Bearer valid:${sub}` },
+    });
+  // The file declares its own `Response` (the JSON of `call`), so the fetch type is named here.
+  const bytesOf = async (res: globalThis.Response) =>
+    Array.from(new Uint8Array(await res.arrayBuffer()));
+  const cardPhoto = async (sub: string, id: string) =>
+    (
+      (await call(sub, "GET", "/specimens/cards?timeZone=Europe/Berlin")).body["cards"] as {
+        id: string;
+        photo: { url: string } | null;
+      }[]
+    ).find((k) => k.id === id)?.photo?.url;
+
+  it("NFR-12 US-WAC-06 the photo route answers 200 with ?v= and with ?size=thumb&v=, and reads the current photo", async () => {
+    const e = await newSpecimen(subA, "Version");
+    await measure(subA, e);
+    const up = await upload(subA, e, await gpsPhoto(3200, 2000, 6));
+    const mid = up.body["measurementId"] as string;
+    const v = versionOf(up.body["photo"]);
+    const full = await readPhoto(subA, e, mid, `?v=${v}`);
+    const small = await readPhoto(subA, e, mid, `?size=thumb&v=${v}`);
+    expect([full.status, full.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect(full.headers.get("cache-control")).toBe("private, max-age=3600");
+    expect(small.headers.get("cache-control")).toBe("private, max-age=3600");
+    expect(await bytesOf(full)).toEqual(await bytesOf(await readPhoto(subA, e, mid, "")));
+    expect(await bytesOf(small)).toEqual(
+      await bytesOf(await readPhoto(subA, e, mid, "?size=thumb")),
+    );
+    // The version is not read: an unknown one still answers the current photo.
+    const other = await readPhoto(subA, e, mid, "?v=unbekannt");
+    expect(other.status).toBe(200);
+  });
+
+  it("NFR-12 US-WAC-06 after a replacement the card and the measurement list carry the new version", async () => {
+    const e = await newSpecimen(subA, "Ersatzadresse");
+    await measure(subA, e);
+    const first = await upload(subA, e, await gpsPhoto(400, 300));
+    const before = await cardPhoto(subA, e);
+    const second = await upload(subA, e, await gpsPhoto(300, 400), "&replace=true");
+    const after = await cardPhoto(subA, e);
+    const mid = first.body["measurementId"] as string;
+    expect(before).toBe(
+      `/specimens/${e}/measurements/${mid}/photo?v=${versionOf(first.body["photo"])}`,
+    );
+    expect(after).toBe(
+      `/specimens/${e}/measurements/${mid}/photo?v=${versionOf(second.body["photo"])}`,
+    );
+    expect(after).not.toBe(before);
+    const list = (await call(subA, "GET", `/specimens/${e}/measurements`)).body["measurements"] as {
+      id: string;
+      photo: string | null;
+    }[];
+    expect(list.find((m) => m.id === mid)?.photo).toBe(second.body["photo"]);
+  });
+});

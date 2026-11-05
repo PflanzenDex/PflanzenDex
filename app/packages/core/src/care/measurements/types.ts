@@ -62,7 +62,9 @@ export interface MeasurementStore {
   lastPhotoFor(
     userId: string,
     specimenIds: readonly string[],
-  ): Promise<ReadonlyMap<string, { readonly id: string; readonly date: string }>>;
+  ): Promise<
+    ReadonlyMap<string, { readonly id: string; readonly date: string; readonly photo: string }>
+  >;
   /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07), else `null`. */
   findOnDate(userId: string, specimenId: string, date: string): Promise<MeasurementRow | null>;
   /** One measurement of the account by id; a foreign or unknown id gives `null` (P-04). */

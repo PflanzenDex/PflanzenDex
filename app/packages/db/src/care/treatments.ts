@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
-import { groupBySpecimen } from "./group-rows.ts";
+import { readGrouped } from "./group-rows.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
 import type { TreatmentRow, TreatmentValues } from "@pflanzendex/core";
@@ -131,15 +131,13 @@ export class TreatmentsPostgres {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, readonly TreatmentRow[]>> {
-    if (specimenIds.length === 0) return new Map();
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<TreatmentRow>(
-        `select ${COLUMNS} from treatment where specimen_id = any($1) and done
-         order by done_at desc, due_at desc, id`,
-        [specimenIds],
-      ),
+    return readGrouped<TreatmentRow>(
+      this.pool,
+      userId,
+      specimenIds,
+      `select ${COLUMNS} from treatment where specimen_id = any($1) and done
+       order by done_at desc, due_at desc, id`,
     );
-    return groupBySpecimen(r.rows);
   }
 
   /** Open treatments, earliest first; one query for all IDs. Foreign IDs return nothing (row rules, P-04). */
@@ -147,13 +145,11 @@ export class TreatmentsPostgres {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, readonly TreatmentRow[]>> {
-    if (specimenIds.length === 0) return new Map();
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<TreatmentRow>(
-        `select ${COLUMNS} from treatment where specimen_id = any($1) and not done order by due_at, id`,
-        [specimenIds],
-      ),
+    return readGrouped<TreatmentRow>(
+      this.pool,
+      userId,
+      specimenIds,
+      `select ${COLUMNS} from treatment where specimen_id = any($1) and not done order by due_at, id`,
     );
-    return groupBySpecimen(r.rows);
   }
 }
