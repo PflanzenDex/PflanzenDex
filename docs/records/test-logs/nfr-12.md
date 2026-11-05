@@ -479,3 +479,23 @@ Stored copy 245 to 411 KB, 256 px thumbnail 0.9 to 2.3 KB, measured on **generat
 | Heute chunk requested early                     | 121.5 kB          |
 
 The goal of 125 kB is met. **Limit:** until its chunk has loaded, the first open of a dialog shows nothing, which is visible only on a slow network right after page load.
+
+---
+
+## 19. Issue #1246: paged collection list, shared tree, capped search (2026-11-05)
+
+**Environment:** the same workstation, throw-away `postgres:18.6-alpine3.24` container, `PERF_SIZES=100,1000`, 30 timed runs, one run. The perf seed carries measurements, so the cards are realistic; the API test of the same limit uses bare plants and proves less. "Before" is section 8 and the audit baseline, so times come from different runs; the sizes and statement counts are exact.
+
+| Request at 1,000 specimens | Body before | Body after | Median ms before | After | SQL before | After |
+| -------------------------- | ----------- | ---------- | ---------------- | ----- | ---------- | ----- |
+| `GET /specimens/cards`     | 451,550 B   | 45,363 B   | about 30         | 9.4   | 51         | 52    |
+| `GET /pokedex/cards`       | about 212 KB | 217,203 B | about 19 to 30   | 18.6  | 25         | 25    |
+
+**Result:** the first page of Sammlung is 45.4 KB raw at 1,000 specimens, under the 60 KB of the issue. The body no longer grows with the collection (44,784 B at 100, 45,363 B at 1,000).
+
+**Limits (P-08):**
+
+- A page of 100 is only the first read: Sammlung also reads `GET /specimens/cards/summary`, which `perf:measure` does not list, so its cost is not in this table.
+- `GET /pokedex/cards` shows no measurable gain here. The version read costs the one statement the tree read cost, and the body is unchanged, so a first load stays about 217 KB. The cache saves reading the tree rows, which matters with a larger catalog; that was not measured. The catalog facts stay a read per request, because corrections and the catalog fill change them without a new build (FR-POK-13).
+- After a write all loaded pages are read again, up to 10 requests at 1,000 plants when all are loaded (owner decision: kept for now).
+- The AI and MCP species search still shows 50 hits without saying that more match.
