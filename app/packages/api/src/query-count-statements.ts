@@ -20,8 +20,18 @@ export function repeatFindings(statements: readonly string[]): string[] {
 }
 
 /**
+ * Literal values (ids, subjects, quoted texts) left out of a tally: the same statement of two keepers differs only in
+ * them.
+ */
+const shape = (sql: string): string =>
+  normalize(sql)
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "?")
+    .replace(/'[^']*'/g, "'?'");
+
+/**
  * The statements of both sizes in the order sent, and what only the larger side sent, for a growth failure (US-QG-07,
- * #1301): the extra statement is named by its text, not only by its count. Texts are normalized like `repeatFindings`.
+ * #1301): the extra statement is named by its text, not only by its count. Texts are normalized like `repeatFindings`;
+ * the "sent only" tallies also leave out the literal values.
  */
 export function growthReport(
   small: { size: number; statements: readonly string[] },
@@ -33,7 +43,7 @@ export function growthReport(
   ];
   const tally = (texts: readonly string[]) => {
     const counts = new Map<string, number>();
-    for (const sql of texts) counts.set(normalize(sql), (counts.get(normalize(sql)) ?? 0) + 1);
+    for (const sql of texts) counts.set(shape(sql), (counts.get(shape(sql)) ?? 0) + 1);
     return counts;
   };
   const extra = (a: Map<string, number>, b: Map<string, number>) =>
