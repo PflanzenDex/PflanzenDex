@@ -43,7 +43,6 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
   const { byDefault = false, ...rest } = props;
   const info = SECTIONS.find((s) => s.key === rest.section);
   const announcer = useAnnounce();
-  const { key } = useLocation();
   const id = headingId(ACCOUNT_SECTIONS[rest.section]);
   useEffect(() => {
     if (byDefault) return;
@@ -51,7 +50,7 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
     heading?.setAttribute("tabindex", "-1");
     heading?.focus();
     if (info) announcer?.announce(info.title);
-  }, [id, key, info, announcer, byDefault]);
+  }, [id, info, announcer, byDefault]);
   if (!info) return null;
   return (
     <div className="flex min-w-0 flex-col gap-2">
