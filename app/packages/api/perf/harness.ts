@@ -87,7 +87,13 @@ export class Harness {
       headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
-    const text = await res.text();
-    return { status: res.status, bytes: Buffer.byteLength(text), body: JSON.parse(text) };
+    // Not every answer is JSON (the account export is a ZIP): its bytes count, its body stays empty.
+    const raw = Buffer.from(await res.arrayBuffer());
+    const json = res.headers.get("content-type")?.includes("application/json") ?? false;
+    return {
+      status: res.status,
+      bytes: raw.byteLength,
+      body: json && raw.byteLength > 0 ? JSON.parse(raw.toString("utf8")) : {},
+    };
   }
 }
