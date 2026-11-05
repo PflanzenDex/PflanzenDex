@@ -115,7 +115,7 @@ const candidates: CandidateList = {
   zones: [{ zoneId: "z3", name: "Zone 3", count: 1 }],
   hint: {
     text: "Zwei Kandidaten warten.",
-    nextAction: "Kaufe zuerst für die am wenigsten besetzte Zone.",
+    nextAction: "Kaufe zuerst für die leerste Zone.",
   },
   duplicates: [],
   unfit: [],

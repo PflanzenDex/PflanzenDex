@@ -176,7 +176,7 @@ describe("US-LIC-02 thinnest zone and tie", () => {
     await create("anna", "Regal");
     await create("anna", "Wüstenbank");
     const v = await zoneDistribution(deps(), "anna");
-    expect(v.hint.text).toContain("am wenigsten besetzt");
+    expect(v.hint.text).toContain("am leersten");
     expect(v.hint.text).not.toContain("dünnste");
     expect(v.hint.nextAction).toContain("Wunschliste");
     expect(v.hint.nextAction).not.toContain("Plane");

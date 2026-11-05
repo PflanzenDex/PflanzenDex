@@ -79,8 +79,8 @@ describe("US-LIC-02 view of the distribution", () => {
       expect.stringContaining("Zone 3: 1 Pflanze"),
       expect.stringContaining("Zone 4: 1 Pflanze"),
     ]);
-    expect(rows[1]?.textContent).toContain("am wenigsten besetzt");
-    expect(rows[0]?.textContent).not.toContain("am wenigsten besetzt");
+    expect(rows[1]?.textContent).toContain("am leersten");
+    expect(rows[0]?.textContent).not.toContain("am leersten");
   });
 
   it("names the thinnest zone and the next action (P-09), with a tie with a hint to the wishlist", () => {
@@ -215,9 +215,7 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
-    await userEvent.click(
-      await screen.findByRole("button", { name: /Am wenigsten besetzt: Zone 3/ }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: /Am leersten: Zone 3/ }));
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();
