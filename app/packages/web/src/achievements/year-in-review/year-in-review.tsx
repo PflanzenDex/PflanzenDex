@@ -124,7 +124,7 @@ function YearBody(props: { api: string; token: Token }) {
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="m-0 font-semibold">{`Jahresrückblick ${v.year}`}</p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={() => setYear(v.year - 1)}>
           Vorjahr
         </Button>

@@ -86,6 +86,12 @@ describe("US-ACH-07 year in review", () => {
     );
   });
 
+  it("NFR-13 the two year buttons may wrap at 200 % text instead of leaving the layer (issue 1282)", async () => {
+    show(answer());
+    const previous = await screen.findByRole("button", { name: "Vorjahr" });
+    expect(previous.parentElement?.className).toContain("flex-wrap");
+  });
+
   it("US-ACH-08 calm mode or a failed read shows nothing", async () => {
     show({ calmMode: true });
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
