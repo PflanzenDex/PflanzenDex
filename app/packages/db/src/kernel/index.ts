@@ -32,6 +32,7 @@ export {
   type Fixtures,
 } from "./isolation.ts";
 export {
+  createFileDatabase,
   ensureTestOwnerDatabase,
   holdTaxonLock,
   openAdminPool,

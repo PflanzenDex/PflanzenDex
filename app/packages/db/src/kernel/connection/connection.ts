@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import pg from "pg";
 import { REQUEST_LIMITS, setPoolLimits, type PoolConfig } from "./limits.ts";
 
@@ -84,6 +85,38 @@ export function openFixturePool(): pg.Pool {
   const url = new URL(testDatabaseUrl());
   url.pathname = `/${testOwnerDatabaseName()}`;
   return openPool(url.toString(), true);
+}
+
+/**
+ * A database of its own for one test file (#1301, #1365). A result that depends on the rows of the whole database (the
+ * rarity participants of `rarity_participants()`) changes while parallel files switch their own rows on and off in the
+ * shared test database; this one cannot be disturbed that way. The test owner role owns it, so row-level security
+ * applies as in production (QG-D1). `drop()` removes it and ends the superuser pool that created it. `prefix` holds
+ * only lowercase letters, digits and underscores (it is a SQL name).
+ */
+export async function createFileDatabase(
+  prefix: string,
+): Promise<{ ownerUrl: string; fixtureUrl: string; drop(): Promise<void> }> {
+  const letters = Array.from({ length: 10 }, () => String.fromCharCode(97 + randomInt(26)));
+  const name = `${prefix}_${letters.join("")}`;
+  const admin = openAdminPool(true);
+  await admin.query(`create database ${name} owner ${new URL(testOwnerUrl()).username}`);
+  const at = (url: string) => {
+    const parsed = new URL(url);
+    parsed.pathname = `/${name}`;
+    return parsed.toString();
+  };
+  return {
+    ownerUrl: at(testOwnerUrl()),
+    fixtureUrl: at(testDatabaseUrl()),
+    drop: async () => {
+      try {
+        await admin.query(`drop database if exists ${name} with (force)`);
+      } finally {
+        await admin.end();
+      }
+    },
+  };
 }
 
 /**
