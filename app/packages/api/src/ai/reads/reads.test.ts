@@ -171,6 +171,7 @@ describe("US-KI-11 the catalog through the AI client", () => {
         type: "species",
         source: "https://de.wikipedia.org/wiki/Test",
         content: { ...A.species, source: "https://de.wikipedia.org/wiki/Test" },
+        idempotencyKey: randomUUID(),
       },
       "pflanzen:draft",
     );

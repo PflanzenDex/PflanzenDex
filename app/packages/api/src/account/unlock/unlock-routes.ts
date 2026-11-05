@@ -14,7 +14,15 @@ import type { Pool } from "pg";
 import { hintRoutes } from "../hint";
 import { styleRoutes } from "./style-routes";
 import { unlockSources } from "./sources/unlock-sources";
-import { body, errorBody, write, type AuthEnv, type Ctx, type FeatureAccess } from "../../kernel";
+import {
+  body,
+  errorBody,
+  keyMissing,
+  write,
+  type AuthEnv,
+  type Ctx,
+  type FeatureAccess,
+} from "../../kernel";
 
 /** The parts of the app options the lock routes read. */
 interface UnlockRouteOptions {
@@ -89,6 +97,7 @@ export function unlockRoutes(
     return c.json(entry(found.value));
   });
   routes.post("/onboarding/unlocks/:id", async (c) => {
+    if (!c.req.header("idempotency-key")) return keyMissing(c);
     const timeZone = (await body(c))["timeZone"];
     if (!isTimeZone(timeZone)) return badZone(c);
     return write(c, deps, unlock, {

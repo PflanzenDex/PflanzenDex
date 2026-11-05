@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "./index";
 import { defineOperation, failed, appError, execute, shape, ok, textField } from "./index";
 import { InMemoryIdempotencyStore, InMemoryLocations, locationCreate } from "./test-helpers";
@@ -114,6 +114,14 @@ describe("P-03 operations: invalid input writes nothing", () => {
     await call({ name: "" });
     const r = await call({ name: "Ok" });
     expect(r.ok).toBe(true);
+  });
+
+  it("US-QS-03 a call with invalid input and no key answers idempotency.key_missing, and the store is not touched", async () => {
+    const begin = vi.spyOn(idem, "begin");
+    const r = await call({ name: "" }, "");
+    expect(!r.ok && r.error.code).toBe("idempotency.key_missing");
+    expect(begin).not.toHaveBeenCalled();
+    expect(locations.writes).toBe(0);
   });
 
   it("drops unknown fields", async () => {
