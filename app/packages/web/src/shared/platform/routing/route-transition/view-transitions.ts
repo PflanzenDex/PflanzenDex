@@ -36,6 +36,10 @@ export function createTransitions() {
       // Skipped or finished: the marker goes in either case, so the main region is a plain element again.
       const done = () => void delete ROOT.dataset.routeTransition;
       transition.finished.then(done, done);
+      // A skip rejects `ready` with an AbortError, which is expected; any other rejection is re-thrown and stays visible.
+      transition.ready.catch((error: unknown) => {
+        if ((error as { name?: unknown } | null)?.name !== "AbortError") throw error;
+      });
       return true;
     },
   };
