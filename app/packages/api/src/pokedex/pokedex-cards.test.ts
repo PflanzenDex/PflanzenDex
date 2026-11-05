@@ -2,10 +2,9 @@ import { randomUUID } from "node:crypto";
 import { pokedexOwnership, readAppRarityBasis, readCollectorCards } from "@pflanzendex/core";
 import {
   ActiveSpeciesPostgres,
-  holdTaxonLock,
+  createFileDatabase,
   migrate,
-  openFixturePool,
-  openOwnerPool,
+  openPool,
   ProfilePostgres,
   ReviewPostgres,
   SpecimenPostgres,
@@ -21,9 +20,12 @@ import { countingPool } from "../count-queries";
 
 // FR-POK-13, NFR-12: the shared part of the collector cards against the real database. The taxonomy tree is read once per
 // build version and reused by every account; caught state, catch dates, app rarity and the catalog facts are read per
-// request. The file replaces the shared `taxon` table, so it holds the exclusive taxon lock like the build job does.
+// request.
+// The file runs in a database of its own (`createFileDatabase`, as query-count.test.ts, #1301). Its app rarity counts every
+// consenting account of the database, and parallel files switch consent on and off for their own accounts in the shared
+// database, so a rarity count there changed under these assertions (#1365). Its own `taxon` table needs no taxon lock:
+// no taxonomy build of another file can reach this database.
 const TZ = "Europe/Berlin";
-const TAXON_LOCK_WAIT_MS = 300_000;
 const run = `cc${randomUUID()
   .replace(/[^a-f]/g, "")
   .padEnd(8, "x")
@@ -66,11 +68,10 @@ const gammaId = randomUUID();
 const operator = randomUUID();
 const subA = `cc-a-${randomUUID()}`;
 const subB = `cc-b-${randomUUID()}`;
-const subs = [subA, subB];
 
+let database: Awaited<ReturnType<typeof createFileDatabase>> | undefined;
 let pool: Pool;
 let admin: Pool;
-let releaseTaxa: (() => Promise<void>) | undefined;
 const reviewer = async (token: string) =>
   token.startsWith("valid:")
     ? { sub: token.slice(6), email: "x@example.test", name: "T", email_verified: true }
@@ -167,9 +168,9 @@ async function uncachedAnswer(sub: string): Promise<string> {
 const isTreeRead = (sql: string) => sql.includes("from taxon where status = 'resolved'");
 
 beforeAll(async () => {
-  pool = openOwnerPool();
-  admin = openFixturePool();
-  releaseTaxa = await holdTaxonLock(admin, "exclusive");
+  database = await createFileDatabase("pflanzendex_pok_cards");
+  pool = openPool(database.ownerUrl);
+  admin = openPool(database.fixtureUrl, true);
   await migrate(pool);
   await admin.query("insert into account (id) values ($1)", [operator]);
   await admin.query("insert into account_role (account, role) values ($1, 'operator')", [operator]);
@@ -186,25 +187,15 @@ beforeAll(async () => {
     "insert into account_data (account_id, email) select id, $2 from account where subject = $1",
     [subA, `${subA}@example.test`],
   );
-}, TAXON_LOCK_WAIT_MS);
+}, 60_000);
 
 afterAll(async () => {
+  if (!database) return;
   try {
-    await admin.query(
-      "delete from specimen where account_id in (select id from account where subject = any($1))",
-      [subs],
-    );
-    await admin.query("delete from species where id = any($1)", [[alphaId, betaId, gammaId]]);
-    await admin.query("delete from review_case where object_id = any($1)", [
-      [alphaId, betaId, gammaId],
-    ]);
-    await admin.query("delete from taxon where catalog_fingerprint = any($1)", [[FP1, FP2]]);
-    await admin.query("delete from account where subject = any($1)", [subs]);
-    await admin.query("delete from account where id = $1", [operator]);
-  } finally {
-    await releaseTaxa?.();
     await pool.end();
     await admin.end();
+  } finally {
+    await database.drop();
   }
 });
 
