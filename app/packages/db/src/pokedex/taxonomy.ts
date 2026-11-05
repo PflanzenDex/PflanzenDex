@@ -1,4 +1,5 @@
-import type { Pool, PoolClient } from "pg";
+import type { Pool } from "pg";
+import { beginPlain, inTransaction } from "../kernel/index.ts";
 import {
   CARDS,
   natureRarityOf,
@@ -140,19 +141,11 @@ export class TaxonomyPostgres {
 
   /** Replaces the whole tree in one transaction: on any error nothing changes (US-POK-03). */
   async replace(build: TaxonomyRecord): Promise<void> {
-    const c: PoolClient = await this.pool.connect();
-    try {
-      await c.query("begin");
+    await inTransaction(this.pool, beginPlain, async (c) => {
       await c.query("delete from taxon");
       for (const t of build.taxa) await c.query(INSERT, resolvedRow(t, build));
       for (const f of build.failures) await c.query(INSERT, failedRow(f, build));
       await c.query("analyze taxon"); // NFR-12: planner statistics of the new tree
-      await c.query("commit");
-    } catch (error) {
-      await c.query("rollback");
-      throw error;
-    } finally {
-      c.release();
-    }
+    });
   }
 }

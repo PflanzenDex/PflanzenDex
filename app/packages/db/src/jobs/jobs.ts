@@ -1,4 +1,5 @@
 import type { Pool } from "pg";
+import { beginPlain, inTransaction } from "../kernel/index.ts";
 
 // Same shapes as `JobQueue` in `core` (structurally equal; `db` does not import `core`).
 export type JobStatus = "queued" | "running" | "succeeded" | "dead" | "expired";
@@ -101,9 +102,7 @@ export class JobsPostgres {
   }
 
   async claim(workerId: string, now: Date, leaseMs: number): Promise<JobRow | null> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("begin");
+    return inTransaction(this.pool, beginPlain, async (client) => {
       await client.query(
         `update job set status = 'dead', locked_by = null, lease_until = null, finished_at = $1,
                 last_error = 'worker lost, no attempts left'
@@ -132,14 +131,8 @@ export class JobsPostgres {
           returning ${COLUMNS}`,
         [now, workerId, leaseMs, this.onlyTypes],
       );
-      await client.query("commit");
       return r.rows[0] ? toJob(r.rows[0]) : null;
-    } catch (error) {
-      await client.query("rollback");
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   async succeed(id: string, workerId: string, now: Date): Promise<boolean> {
