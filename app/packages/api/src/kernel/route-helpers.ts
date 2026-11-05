@@ -77,3 +77,11 @@ export function imageBody(
     "cache-control": cache,
   });
 }
+
+/**
+ * The value without one key: a response leaves out what the caller must not see (P-05, QG-D2, US-QG-05), e.g. the
+ * account id of a friend. The value itself is not changed.
+ */
+export function withoutKey<T extends object, K extends keyof T>(value: T, key: K): Omit<T, K> {
+  return Object.fromEntries(Object.entries(value).filter(([name]) => name !== key)) as Omit<T, K>;
+}

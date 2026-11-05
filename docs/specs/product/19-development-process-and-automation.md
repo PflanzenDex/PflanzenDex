@@ -99,23 +99,19 @@ Acceptance criteria:
 - A check script (`make skills-check`) ensures: frontmatter complete, referenced paths and commands exist, links not broken, no orphaned skills.
 - Initial set (derived from the epics, not copied from Tombola):
 
-  | Skill                                                              | Purpose                                                                                                                              |
-  | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-  | `spec-to-tests`                                                    | create tests with story ID from the acceptance criteria of a story (P-06)                                                            |
-  | `add-core-operation`                                               | new validating operation in `core` with test, error code, AI release (KI-R1)                                                         |
-  | `add-epic-feature`                                                 | story → test → code → gates → update spec status                                                                                     |
-  | `tenant-isolation-test`                                            | tenant test for a new operation (QG-D1)                                                                                              |
-  | `privacy-whitelist`                                                | field whitelist and contract test for social/partner outputs (QG-D2)                                                                 |
-  | `db-migration`                                                     | forward-compatible migration with test and fallback plan (US-DEV-07)                                                                 |
-  | `error-code`                                                       | new error code with translation (FR-QG-11)                                                                                           |
-  | `date-and-timezone`                                                | local date and time zone (NFR-08, cause of B-01)                                                                                     |
-  | `photo-pipeline`                                                   | photo processing and EXIF test (US-WAC-06)                                                                                           |
-  | `catalog-batch`                                                    | create a catalog batch (20–40 species), run the build, check warnings (US-POK-02)                                                    |
-  | `ki-tool-contract`                                                 | release or change an operation for the AI interface: description, schema, error codes, contract test, whitelist (FR-KI-03, FR-KI-10) |
-  | `release-checklist`                                                | prepare and check a release (US-DEV-06)                                                                                              |
-  | `story-test-protocol`                                              | manual test protocol for flows that tests do not cover (pattern `ticket-test-protocol` from Tombola)                                 |
-  | `recap-and-learnings`                                              | after a task, extract lessons and transfer them to the principles register or skills                                                 |
-  | `discovery-review`, `compliance-review`, `review-failure-analysis` | review cycle (US-DEV-05)                                                                                                             |
+  | Skill                   | Purpose                                                                                                                              |
+  | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+  | `spec-to-tests`         | create tests with story ID from the acceptance criteria of a story (P-06)                                                            |
+  | `add-core-operation`    | new validating operation in `core` with test, error code, AI release (KI-R1)                                                         |
+  | `tenant-isolation-test` | tenant test for a new table with user data (QG-D1)                                                                                   |
+  | `privacy-whitelist`     | field whitelist and contract test for social/partner outputs (QG-D2)                                                                 |
+  | `db-migration`          | forward-compatible migration with test and fallback plan (US-DEV-07)                                                                 |
+  | `error-code`            | new error code with translation (FR-QG-11)                                                                                           |
+  | `date-and-timezone`     | local date and time zone (NFR-08, cause of B-01)                                                                                     |
+  | `ki-tool-contract`      | release or change an operation for the AI interface: description, schema, error codes, contract test, whitelist (FR-KI-03, FR-KI-10) |
+  | `release-checklist`     | prepare and check a release (US-DEV-06)                                                                                              |
+  | `story-test-protocol`   | manual test protocol for flows that tests do not cover (pattern `ticket-test-protocol` from Tombola)                                 |
+  | `recap-and-learnings`   | after a task, extract lessons and transfer them to the principles register or skills                                                 |
 
 - Promotion: if a skill step becomes a gate (e.g. "check that field X is not output"), the step in the skill is replaced by a reference to the gate (D-03).
 
@@ -130,7 +126,7 @@ Acceptance criteria:
 - **Flow:** read story → derive tests from the criteria (skill `spec-to-tests`) → implement → `make ci` green → PR with description (story IDs, deviations from the spec) → review → merge.
 - **Definition of Ready:** a story may be started when criteria are formulated verifiably (Given/When/Then), dependencies in `16-…` are clarified and open decisions (E-nn) are decided.
 - **Definition of Done:** FR-QG-10.
-- **Review (two-stage, optional from R1):** first **blind** by an agent that does not know the principles register, then failure analysis (`review-failure-analysis`) that records "why better, how measurable, how checkable" for every finding and presents it to the maintainer **for confirmation**. Compliance review against known principles only on request or before releases (Tombola pattern, E-18).
+- **Review (two-stage, optional from R1):** first **blind** by an agent that does not know the principles register, then a failure analysis that records "why better, how measurable, how checkable" for every finding and presents it to the maintainer **for confirmation**. Compliance review against known principles only on request or before releases (Tombola pattern, E-18).
 - **Decisions as ADR:** when an E-nn is decided, an entry arises under `docs/adr/NNNN-title.md` (context, decision, consequences); the row in `16-…` refers to it.
 - **Pitfalls register:** recurring errors (time zones, error texts, test synchronization) stand as short entries under `docs/guides/pitfalls/` and are added to when something is found (pattern `common-pitfalls`). Entries that can be checked become gates.
 - **Documentation process:** a code change without a matching spec or docs change stands out in review; docs commits carry `docs:`; docs are gated with markdown lint and link checking (QG-U2).

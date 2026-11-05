@@ -3,8 +3,27 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool, holdTaxonLock } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys, type KeyShape } from "../../exact-keys-test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
+
+// US-QG-05 QG-D2: the whitelisted fields of a feed event and of a banner item (US-SOZ-05, US-SOZ-06).
+const FEED_EVENT: KeyShape = {
+  friendId: true,
+  friendName: true,
+  type: true,
+  speciesLatin: true,
+  speciesGerman: true,
+  date: true,
+  count: true,
+};
+const BANNER_ITEM: KeyShape = {
+  friendId: true,
+  friendName: true,
+  speciesLatin: true,
+  speciesGerman: true,
+  count: true,
+};
 
 // US-SOZ-05: "Neu bei Freunden" through the API (real PostgreSQL).
 let pool: Pool;
@@ -162,6 +181,16 @@ describe("US-SOZ-05 feed through the API", () => {
     expect(JSON.stringify(events)).not.toMatch(/R1|PRIVATE|accountId/);
   });
 
+  it("US-QG-05 QG-D2 the feed carries the event fields, the period, asOf and the hint, and no account id", async () => {
+    const body = (await feed(subB)).body;
+    expect(body.events.length).toBeGreaterThan(0);
+    expectExactKeys(
+      body,
+      { events: [FEED_EVENT], asOf: true, hint: { text: true, nextAction: true } },
+      "GET /feed",
+    );
+  });
+
   it("US-SOZ-05 filters: only new species, period, friend", async () => {
     expect((await feed(subB, "timeZone=Europe%2FBerlin&onlyNewSpecies=true")).body.events).toEqual(
       [],
@@ -302,6 +331,34 @@ describe("US-SOZ-06 banner since my last visit through the API", () => {
     expect((await get(subE, "/feed/banner")).body.count).toBe(1);
     await post(subE, "/feed/seen", { upTo: b.asOf });
     expect((await get(subE, "/feed/banner")).body.count).toBe(0);
+  });
+
+  it("US-QG-05 QG-D2 the banner names the friend, the species and the count, and nothing else", async () => {
+    const third = (
+      await post(subD, "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId,
+        marker: "B3",
+        catchDate: "2019-06-06",
+      })
+    ).body.id;
+    await live.request(`/sharing/specimens/${third}`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+        authorization: `Bearer valid:${subD}`,
+      },
+      body: JSON.stringify({ share: "friends" }),
+    });
+    const b = (await get(subE, "/feed/banner")).body;
+    expect(b.count).toBe(1);
+    expectExactKeys(
+      b,
+      { firstVisit: true, count: true, items: [BANNER_ITEM], asOf: true },
+      "GET /feed/banner",
+    );
+    await post(subE, "/feed/seen", { upTo: b.asOf });
   });
 
   it("US-SOZ-06 bad input for 'seen': 400; the seen state of one account never changes another's", async () => {
