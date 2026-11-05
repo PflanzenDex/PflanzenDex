@@ -1,20 +1,6 @@
 {
-  "maxEntries": 15,
+  "maxEntries": 13,
   "entries": [
-    {
-      "screen": "collection-plants-course",
-      "size": "390x844",
-      "kind": "keyboard",
-      "rule": "not-hidden",
-      "count": 5
-    },
-    {
-      "screen": "collection-plants-course",
-      "size": "1920x1080",
-      "kind": "keyboard",
-      "rule": "not-hidden",
-      "count": 1
-    },
     {
       "screen": "collection-view-wishlist-sheet-bought",
       "size": "1920x1080",
