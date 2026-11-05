@@ -6,6 +6,11 @@ const FROM_APP = "layerFromApp";
 
 /** The element that opened the layer; focus returns to it when the layer closes (US-QS-15). */
 let opener: HTMLElement | null = null;
+/**
+ * The id of an opener that the layer which opened it has replaced (an item opened from a row of the list layer): when
+ * that list mounts again on Back, `keptOpener` gives the focus back to the row (US-QS-15, issue 1363).
+ */
+let returnTo: string | null = null;
 
 type LayerControl = {
   open: boolean;
@@ -26,6 +31,7 @@ export function useLayer(id: string): LayerControl {
     open,
     openLayer: (from) => {
       opener = from ?? (document.activeElement as HTMLElement | null);
+      returnTo = null;
       const next = new URLSearchParams(params);
       next.set(PARAM, id);
       // RouteFocus ignores `?sheet`, so the view behind the layer does not move the focus to its heading.
@@ -43,9 +49,24 @@ export function useLayer(id: string): LayerControl {
   };
 }
 
-/** Gives the focus back to the element that opened the layer, once the layer is closed (US-QS-15). */
+/**
+ * Gives the focus back to the element that opened the layer, once the layer is closed (US-QS-15). When that element is
+ * already gone because the layer holding it was replaced by the layer it opened, its id is kept for `keptOpener`.
+ */
 export function restoreFocus(): void {
   const target = opener;
   opener = null;
-  if (target?.isConnected) target.focus();
+  if (!target) return;
+  if (target.isConnected) target.focus();
+  else if (target.id) returnTo = target.id;
+}
+
+/**
+ * The kept opener (see `restoreFocus`) when it sits in `layer`, which has just mounted on Back. It is kept until another
+ * layer is opened from a control, so a second run of the mount effect (React's StrictMode) finds it too. `null` when
+ * nothing is kept or the opener is not in this layer (US-QS-15, issue 1363).
+ */
+export function keptOpener(layer: HTMLElement | null): HTMLElement | null {
+  const el = returnTo ? document.getElementById(returnTo) : null;
+  return el && layer?.contains(el) ? el : null;
 }

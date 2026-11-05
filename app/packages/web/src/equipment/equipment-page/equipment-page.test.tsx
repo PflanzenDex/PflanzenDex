@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import type { ReactElement } from "react";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { StrictMode, type ReactElement } from "react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { EquipmentPage } from "./equipment-page";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
@@ -562,6 +563,35 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const layer = await screen.findByRole("dialog", { name: "Zone 3" });
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
+
+  it.each([360, 1440])(
+    "US-QS-15 · US-QS-22 at %i px, Escape closes an item and the focus returns to the row it was opened from (WCAG 2.4.3)",
+    async (width) => {
+      setViewportWidth(width);
+      try {
+        fakeServer([item(), item({ id: "e2", name: "Timer A", type: "Timer" })]);
+        // StrictMode runs the mount effects twice in development, as the app does (issue 1363).
+        view(
+          <StrictMode>
+            <EquipmentPage api="http://api" token={token} />
+          </StrictMode>,
+        );
+        await userEvent.click(await screen.findByRole("button", { name: /^Equipment2 Teile/ }));
+        await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
+        await screen.findByRole("heading", { name: "Zone 3" });
+        await userEvent.keyboard("{Escape}");
+        // The list layer mounts again with new rows: the row of the item is the one that must hold the focus.
+        const row = await screen.findByRole("button", { name: /Zone 3/ });
+        await waitFor(() => expect(document.activeElement).toBe(row));
+        // Radix restores its own focus after a timer; the row keeps it.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(document.activeElement).toBe(row);
+      } finally {
+        // The later tests of this file expect the default phone viewport of the test setup.
+        setViewportWidth(360);
+      }
+    },
+  );
 
   it("US-QS-22 · P-09 a part without records says so and names the next step", async () => {
     fakeServer([]);
