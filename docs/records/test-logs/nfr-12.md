@@ -336,22 +336,22 @@ The friend routes of one friend are flat in the number of friends. Before this c
 
 Candidates were measured on the current dev code with the same statements and the same data (PostgreSQL, `ANALYZE` after each seed; the numbers come from a temporary copy of the test that adds `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`, not committed).
 
-| Candidate | Passes dev (must be flat) | Detects the pre-0102 policy | Verdict |
-| --- | --- | --- | --- |
-| Shared buffer hits (`EXPLAIN`) | no: list 3.0x, search 3.3x, Pokedex facts 22x | weakly (list 1.5x, facts 1.6x) | rejected: the sequential scan of the table grows with the table itself, which is the accepted cost, not per-row work |
-| Subplan loops (`SubPlan` and `InitPlan` nodes) | no for search: 2.9x (the name lookups of `species_name` are the accepted linear scan); list and facts flat | no: the old policy calls a function, not a subplan (list and search 58 loops at both sizes) | rejected: it misses the policy cost it should catch |
-| Function calls (`pg_stat_user_functions`, `track_functions = all`) | yes: 0 to 1 call at both sizes | yes for the search (8.6x and 11.1x) | **chosen** |
+| Candidate                                                          | Passes dev (must be flat)                                                                                  | Detects the pre-0102 policy                                                                 | Verdict                                                                                                              |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Shared buffer hits (`EXPLAIN`)                                     | no: list 3.0x, search 3.3x, Pokedex facts 22x                                                              | weakly (list 1.5x, facts 1.6x)                                                              | rejected: the sequential scan of the table grows with the table itself, which is the accepted cost, not per-row work |
+| Subplan loops (`SubPlan` and `InitPlan` nodes)                     | no for search: 2.9x (the name lookups of `species_name` are the accepted linear scan); list and facts flat | no: the old policy calls a function, not a subplan (list and search 58 loops at both sizes) | rejected: it misses the policy cost it should catch                                                                  |
+| Function calls (`pg_stat_user_functions`, `track_functions = all`) | yes: 0 to 1 call at both sizes                                                                             | yes for the search (8.6x and 11.1x)                                                         | **chosen**                                                                                                           |
 
 The chosen metric is the sum of the calls of all user functions per statement (delta of the cumulative counters around the statement, flushed by the same session, `pg_stat_force_next_flush()` and `pg_stat_clear_snapshot()`). The gate runs the reads as `pflanzendex_app` (`enterApplicationRole`, the same as `withAccount`), so the policy calls are the real ones.
 
 ### 13.2 Numbers on dev (current policies), 100 vs 2,000 species
 
-| Read | Function calls 100 | Function calls 2,000 | Shared hits 100 | Shared hits 2,000 | SubPlan loops 100 | SubPlan loops 2,000 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Species list (50 rows) | 1 (`is_reviewer`) | 1 (`is_reviewer`) | 71 | 213 (3.0x) | 59 | 59 |
-| Species search `gatea` (50 rows) | 1 | 0 | 315 | 1,038 (3.3x) | 61 | 178 (2.9x) |
-| Species search `gatea 1` (36 rows) | 1 | 0 | 257 | 830 (3.2x) | 49 | 142 (2.9x) |
-| Pokedex facts (50 rows) | 0 | 0 | 2 | 44 (22x) | 0 | 0 |
+| Read                               | Function calls 100 | Function calls 2,000 | Shared hits 100 | Shared hits 2,000 | SubPlan loops 100 | SubPlan loops 2,000 |
+| ---------------------------------- | ------------------ | -------------------- | --------------- | ----------------- | ----------------- | ------------------- |
+| Species list (50 rows)             | 1 (`is_reviewer`)  | 1 (`is_reviewer`)    | 71              | 213 (3.0x)        | 59                | 59                  |
+| Species search `gatea` (50 rows)   | 1                  | 0                    | 315             | 1,038 (3.3x)      | 61                | 178 (2.9x)          |
+| Species search `gatea 1` (36 rows) | 1                  | 0                    | 257             | 830 (3.2x)        | 49                | 142 (2.9x)          |
+| Pokedex facts (50 rows)            | 0                  | 0                    | 2               | 44 (22x)          | 0                 | 0                   |
 
 The gate passes on dev: every read is flat for function calls. The buffer and subplan columns show why they are not the metric: the same statements would fail on the healthy code.
 
@@ -359,12 +359,12 @@ The gate passes on dev: every read is flat for function calls. The buffer and su
 
 The old policies are the ones of migrations 0012 (`visible` on `species` and `species_name`: `species_status(id) is not null`) and 0017 (`reviewer_reads`: `is_reviewer() and is_open_proposal(id)`). The self-test applies them inside a transaction on the same data, measures, and rolls back (no policy is left behind; a test checks it).
 
-| Read | Function calls 100 | Function calls 2,000 | Factor | `species_status` 100 to 2,000 | Shared hits 100 to 2,000 |
-| --- | --- | --- | --- | --- | --- |
-| Species list (50 rows) | 202 | 202 | 1.0x (not detected) | 110 to 110 | 480 to 740 (1.5x) |
-| Species search `gatea` (50 rows) | 502 | 4,302 | **8.6x (fails)** | 270 to 2,170 | 1,179 to 9,331 (7.9x) |
-| Species search `gatea 1` (36 rows) | 376 | 4,176 | **11.1x (fails)** | 208 to 2,108 | 857 to 8,873 (10.4x) |
-| Pokedex facts (50 rows) | 100 | 100 | 1.0x (not detected) | 50 to 50 | 152 to 244 (1.6x) |
+| Read                               | Function calls 100 | Function calls 2,000 | Factor              | `species_status` 100 to 2,000 | Shared hits 100 to 2,000 |
+| ---------------------------------- | ------------------ | -------------------- | ------------------- | ----------------------------- | ------------------------ |
+| Species list (50 rows)             | 202                | 202                  | 1.0x (not detected) | 110 to 110                    | 480 to 740 (1.5x)        |
+| Species search `gatea` (50 rows)   | 502                | 4,302                | **8.6x (fails)**    | 270 to 2,170                  | 1,179 to 9,331 (7.9x)    |
+| Species search `gatea 1` (36 rows) | 376                | 4,176                | **11.1x (fails)**   | 208 to 2,108                  | 857 to 8,873 (10.4x)     |
+| Pokedex facts (50 rows)            | 100                | 100                  | 1.0x (not detected) | 50 to 50                      | 152 to 244 (1.6x)        |
 
 The list and the Pokedex facts stay flat under the old policy, and the search does not. The reason is the planner's order of the predicates: the list and the facts filter the viewer's rows with their own column predicates (`review_status`, `review_account`), and those run before the policy function, so the policy is called only for the rows the statement returns (110 and 50). The search reads `species_name` and applies the policy before its own `like` filter, so the policy runs for every name in the catalog (2,170 calls at 2,000 species). The same policy cost is therefore visible only where a statement cannot pre-filter. Both search terms fail the gate with this message (the first one, the other has the same shape):
 
@@ -486,10 +486,10 @@ The goal of 125 kB is met. **Limit:** until its chunk has loaded, the first open
 
 **Environment:** the same workstation, throw-away `postgres:18.6-alpine3.24` container, `PERF_SIZES=100,1000`, 30 timed runs, one run. The perf seed carries measurements, so the cards are realistic; the API test of the same limit uses bare plants and proves less. "Before" is section 8 and the audit baseline, so times come from different runs; the sizes and statement counts are exact.
 
-| Request at 1,000 specimens | Body before | Body after | Median ms before | After | SQL before | After |
-| -------------------------- | ----------- | ---------- | ---------------- | ----- | ---------- | ----- |
-| `GET /specimens/cards`     | 451,550 B   | 45,363 B   | about 30         | 9.4   | 51         | 52    |
-| `GET /pokedex/cards`       | about 212 KB | 217,203 B | about 19 to 30   | 18.6  | 25         | 25    |
+| Request at 1,000 specimens | Body before  | Body after | Median ms before | After | SQL before | After |
+| -------------------------- | ------------ | ---------- | ---------------- | ----- | ---------- | ----- |
+| `GET /specimens/cards`     | 451,550 B    | 45,363 B   | about 30         | 9.4   | 51         | 52    |
+| `GET /pokedex/cards`       | about 212 KB | 217,203 B  | about 19 to 30   | 18.6  | 25         | 25    |
 
 **Result:** the first page of Sammlung is 45.4 KB raw at 1,000 specimens, under the 60 KB of the issue. The body no longer grows with the collection (44,784 B at 100, 45,363 B at 1,000).
 
@@ -504,9 +504,9 @@ The goal of 125 kB is met. **Limit:** until its chunk has loaded, the first open
 
 Temporary, uncommitted edits: the taxa count of `perf/seed.ts` and a switch for the cache. `PERF_SIZES=100`, 30 timed runs, runs alternating off, on, on, off on a fresh database each. Another session ran short browser scripts at the same time, which the alternating order absorbs. Median ms of `GET /pokedex/cards`:
 
-| Taxa   | Raw body    | Cache off      | Cache on     | Change        |
-| ------ | ----------- | -------------- | ------------ | ------------- |
-| 5,000  | 2,186,704 B | 38.5 and 38.3  | 25.1 and 23.0 | about 37 % less |
+| Taxa   | Raw body    | Cache off       | Cache on      | Change          |
+| ------ | ----------- | --------------- | ------------- | --------------- |
+| 5,000  | 2,186,704 B | 38.5 and 38.3   | 25.1 and 23.0 | about 37 % less |
 | 20,000 | 8,786,705 B | 136.8 and 127.3 | 75.6 and 76.4 | about 42 % less |
 
 **Limit:** the body grows with the catalog, about 437 B per taxon, and is sent whole, because the cards are not paged (FR-POK-13). Production compresses it in the proxy; the compressed size was not measured. A catalog of this size would make the body, not the read, the cost that matters.
@@ -518,3 +518,52 @@ The one-screen gate seeds 50 plants, so it never reaches a further page. A tempo
 An error without a `text` made the Pager ask for the page again every 315 ms (30 requests in 9 s), because the Pager recognised a failure by its text. The API always sends a text, so only a foreign answer, such as a proxy's, could cause it. Fixed in this PR with a fallback text, and tested.
 
 **Not checked in a browser:** 200 % text in these two states, and the direct link to a plant that is not loaded (covered by tests only).
+
+### 19.3 Compressed size of the Pokédex cards (issue #1302, 2026-11-05)
+
+**Method:**
+
+- Raw bodies: temporary, uncommitted edits to the taxa count of `perf/seed.ts` (`TAXA_GENERA` 500 for 5,000 taxa and 2,000 for 20,000 taxa, `TAXA_PER_GENUS` 10), reverted afterwards. A temporary script (not committed) seeded the taxa as in 19.1, then an account with 100 specimens and 60 species, requested `GET /pokedex/cards?timeZone=Europe%2FBerlin` through the perf harness and wrote the raw response bytes. One fresh `postgres:18.6-alpine3.24` container per size. The raw sizes equal 19.1 exactly (2,186,704 B and 8,786,705 B).
+- Two more bodies, same request: the unmodified perf seed (500 taxa, 217,203 B, as in the section 19 table) and the dev fixture tree of `perf/catalog-seed/taxon-fixture.ts` (51 taxa with real names; Wikipedia, GBIF and IUCN fields null; 22,311 B).
+- Compression: Node 26.13.0 `zlib` (libzstd, zlib, brotli). Every compressed body was decompressed and compared with the raw bytes. The `zstd` and `brotli` CLIs are not installed on this box; `gzip` (GNU, level 5) was used as a cross-check only.
+- Caddy's default levels (`app/config/deploy/proxy.Caddyfile` says `encode zstd gzip` without a level, so the defaults apply):
+  - zstd: `zstd.SpeedDefault` is the default in caddyserver/caddy `modules/caddyhttp/encode/zstd/zstd.go`. klauspost/compress `zstd/encoder_options.go` describes it as "roughly equivalent to the default Zstandard mode (level 3)", and the Caddy docs for the `encode` directive say the same. Used: zstd level 3.
+  - gzip: `var defaultGzipLevel = 5` in caddyserver/caddy `modules/caddyhttp/encode/gzip/gzip.go`. Used: gzip level 5. Caddy encodes with klauspost/compress, not zlib, so its output differs a little; GNU gzip -5 is within 2.1 % of zlib level 5 at every size.
+  - brotli 5 and 11: reference only. Caddy does not serve brotli without a plugin (`proxy.Caddyfile`).
+
+**Sizes** (bytes; in brackets the compressed size as a share of the raw body):
+
+| Taxa                         | Raw B     | zstd 3 B        | gzip 5 B         | brotli 5 B      | brotli 11 B     |
+| ---------------------------- | --------- | --------------- | ---------------- | --------------- | --------------- |
+| 51 (dev fixture, real names) | 22,311    | 1,512 (6.78 %)  | 1,523 (6.83 %)   | 1,423 (6.38 %)  | 1,275 (5.71 %)  |
+| 500 (perf seed, unmodified)  | 217,203   | 2,326 (1.07 %)  | 4,574 (2.11 %)   | 1,974 (0.91 %)  | 1,839 (0.85 %)  |
+| 5,000                        | 2,186,704 | 22,558 (1.03 %) | 44,218 (2.02 %)  | 16,823 (0.77 %) | 16,083 (0.74 %) |
+| 20,000                       | 8,786,705 | 85,294 (0.97 %) | 176,233 (2.01 %) | 67,694 (0.77 %) | 63,604 (0.72 %) |
+
+The raw body is 434 to 439 B per taxon at every size.
+
+**Transfer time** (ASSUMPTION, P-08: the 100 ms latency and the 5, 10 and 25 Mbit/s downlink are not measured or sourced; no "average network" value is claimed). Time = latency + bytes × 8 / bandwidth, one request, no TCP slow start, no TLS, no server time and no JSON parsing, so these are lower bounds:
+
+| Taxa   | Encoding | 5 Mbit/s | 10 Mbit/s | 25 Mbit/s |
+| ------ | -------- | -------- | --------- | --------- |
+| 51     | raw      | 0.14 s   | 0.12 s    | 0.11 s    |
+| 51     | zstd 3   | 0.10 s   | 0.10 s    | 0.10 s    |
+| 51     | gzip 5   | 0.10 s   | 0.10 s    | 0.10 s    |
+| 500    | raw      | 0.45 s   | 0.27 s    | 0.17 s    |
+| 500    | zstd 3   | 0.10 s   | 0.10 s    | 0.10 s    |
+| 500    | gzip 5   | 0.11 s   | 0.10 s    | 0.10 s    |
+| 5,000  | raw      | 3.60 s   | 1.85 s    | 0.80 s    |
+| 5,000  | zstd 3   | 0.14 s   | 0.12 s    | 0.11 s    |
+| 5,000  | gzip 5   | 0.17 s   | 0.14 s    | 0.11 s    |
+| 20,000 | raw      | 14.16 s  | 7.13 s    | 2.91 s    |
+| 20,000 | zstd 3   | 0.24 s   | 0.17 s    | 0.13 s    |
+| 20,000 | gzip 5   | 0.38 s   | 0.24 s    | 0.16 s    |
+
+**Limits (P-08):**
+
+- The ratios depend on content. The seed's cards carry no text or media: `summary`, `imageUrl`, `sourceUrl` and `germanName` are null, every card is in state `missing` (no caught card), and the names repeat ("Perfgenus3 species7", 10 families). That explains the about 1 % ratio at 500 to 20,000 taxa. The 51-taxon fixture with real names but null text already compresses to 5.7 to 6.8 %. A real catalog with a summary, an image URL and a source URL per taxon compresses worse than both. The compressed size of the real catalog is not measured, and these rows cannot be read as its size (issue question 1).
+- The 5,000 and 20,000 taxa are synthetic counts, not the size of the real catalog. Caught cards (with `caughtDate` and `specimenCount`) are not in these bodies.
+- The levels are the Caddy defaults named above, reproduced with Node's libzstd and zlib; the Caddy proxy itself was not run (no Caddy binary here). Expect differences of a few percent.
+- One response per size; no variance and no server CPU time for compressing it per request were measured.
+
+This section gives sizes only. The payload decision is the owner's (issue #1302, questions 1 to 3).
