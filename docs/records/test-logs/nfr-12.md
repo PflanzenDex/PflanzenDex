@@ -544,5 +544,4 @@ An error without a `text` made the Pager ask for the page again every 315 ms (30
 
 At 32 users that is about 16 % more screens per second and a median about 14 % lower.
 
-**Limits (P-08):** one machine over loopback, two runs per state. A single request hardly changes; the gain is under load. Part of the drop in statements is counting: the opening still executes its statements, they travel as one call. With the database on another host the saving per round trip would be larger; on the one-host deployment it is the numbers above at best, because a container network adds latency that this test does not have or measure.
-
+**Limits (P-08):** one machine over loopback, two runs per state. A single request hardly changes; the gain is under load. Part of the drop in statements is counting: the opening still executes its statements, they travel as one call. A real network between API and database, even a container network, adds latency to each round trip; that was not measured here.
