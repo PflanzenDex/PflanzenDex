@@ -21,5 +21,12 @@
     "maxLcpMs": 3300,
     "maxTbtMs": 200,
     "maxCls": 0.1
+  },
+  "perf": {
+    "_comment": "NFR-12 / FR-QG-09 (issue 1250): budgets of the nightly load measurement (packages/api/perf/load/measure.ts, every GET route at `size` specimens, in process against PostgreSQL in CI), read by packages/api/perf/load/budget-report.ts. PROVISIONAL, replaced by values from the first CI runs before merge. Report only (owner decision 2026-11-05): `blocking` is switched on by the owner through its own gate PR after about two weeks of numbers.",
+    "size": 1000,
+    "blocking": false,
+    "default": { "maxMedianMs": 100, "maxP95Ms": 200, "maxBodyKb": 500 },
+    "routes": {}
   }
 }
