@@ -69,6 +69,23 @@ test("US-DEV-02: a PR that changes a gate file is left to a human", () => {
   assert.match(problems(gate, known)[0], /gate files.*ci\.yml.*merge-pr\.mjs/);
 });
 
+test("US-QG-07: a PR that changes a threshold or an exception list is refused, a PR that only shrinks a baseline is not", () => {
+  for (const f of [
+    "coverage-thresholds.json",
+    "quality-limits.json",
+    "audit-allowlist.json",
+    "conformance-allowlist.json",
+  ]) {
+    const pr = { ...ok, files: [{ path: `app/config/gates/${f}` }] };
+    const found = problems(pr, known);
+    assert.equal(found.length, 1, f);
+    assert.match(found[0], /gate files/, f);
+    assert.ok(found[0].includes(`app/config/gates/${f}`), f);
+  }
+  const shrink = { ...ok, files: [{ path: "app/config/gates/baselines/ui-text-baseline.json" }] };
+  assert.deepEqual(problems(shrink, known), []);
+});
+
 const run = (conclusion, startedAt, completedAt, status = "COMPLETED") => ({
   name: "ci-status",
   status,
