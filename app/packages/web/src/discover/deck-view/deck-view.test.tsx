@@ -129,6 +129,17 @@ describe("US-ENT-07 deck for one zone", () => {
     expect(screen.getByRole("link", { name: "Art vorschlagen" })).toBeTruthy();
   });
 
+  it("US-QS-21 an empty zone with a shortfall shows the compact empty state, without the icon tile (issue 1343)", () => {
+    const empty: SuggestionDeck = {
+      ...filtered({ text: "Zu wenige Arten.", nextAction: "Schlag eine vor." }),
+      suggestions: [],
+      empty: { reason: "all_decided", text: "Keine neuen Vorschläge.", nextAction: "Weiter." },
+    };
+    render(<DeckView deck={empty} onDecide={saveOk} onNewDeck={() => undefined} />);
+    expect(screen.getByRole("heading", { name: "Keine neuen Vorschläge." })).toBeTruthy();
+    expect(screen.queryByText("🌱")).toBeNull();
+  });
+
   it("US-ENT-07 an empty zone still shows the shortfall, not only the generic empty text (P-10)", () => {
     const text = "Für Lampe 3 gibt es im Katalog nur 0 passende Arten (Puffer: 2).";
     const empty: SuggestionDeck = {

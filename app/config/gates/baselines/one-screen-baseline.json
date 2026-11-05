@@ -1,11 +1,4 @@
 {
-  "maxEntries": 1,
-  "entries": [
-    {
-      "screen": "discover-view-suggestions-zone-2",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.11
-    }
-  ]
+  "maxEntries": 0,
+  "entries": []
 }
