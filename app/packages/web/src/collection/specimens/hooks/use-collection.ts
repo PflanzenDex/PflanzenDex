@@ -1,41 +1,48 @@
-import type { ArchivedEntry, SpecimenCard, LightLocation, Distribution } from "@pflanzendex/core";
+import type {
+  ArchivedEntry,
+  LightLocation,
+  Distribution,
+  SpecimenSummary,
+} from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
-import { loadLocations } from "../../../light";
-import { useRequest, type Request } from "../../../kernel";
+import { sharedLocations } from "../../../light";
+import { useQueryClient, useRequest, type Request } from "../../../shared/data";
 import { loadArchived } from "../../archived/archived-api";
-import { loadCards } from "../cards/cards-api";
+import { loadCardSummary } from "../cards/cards-api";
 import { loadDistribution } from "../../insights/api/distribution-api";
 
-export { SIGN_IN } from "../../../kernel";
+export { SIGN_IN } from "../../../shared/data";
 export type Token = () => Promise<string | undefined>;
 export const COLLECTION_KEY = ["collection", "overview"] as const;
 export type Loaded = {
-  cards: readonly SpecimenCard[];
+  /** Counts over all plants (US-BES-06); the plants themselves are read page by page (`useCardPages`). */
+  summary: SpecimenSummary;
   locations: readonly LightLocation[];
   archived: readonly ArchivedEntry[];
   distribution: Distribution;
 };
 
-/** Loads cards, locations, archive and distribution; if one fails, the loading fails as a whole (show nothing half). */
+/** Loads the summary, locations, archive and distribution; if one fails, the loading fails as a whole (show nothing half). */
 export function useCollection(api: string, token: Token): Request<Loaded> {
+  const client = useQueryClient();
   const load = useCallback(
     async (t: string) => {
-      const [e, s, a, v] = await Promise.all([
-        loadCards(api, t),
-        loadLocations(api, t),
+      const [m, s, a, v] = await Promise.all([
+        loadCardSummary(api, t),
+        sharedLocations(client, api, t),
         loadArchived(api, t),
         loadDistribution(api, t),
       ]);
-      if (!e.ok) return e;
+      if (!m.ok) return m;
       if (!s.ok) return s;
       if (!a.ok) return a;
       if (!v.ok) return v;
       return {
         ok: true as const,
-        value: { cards: e.value, locations: s.value, archived: a.value, distribution: v.value },
+        value: { summary: m.value, locations: s.value, archived: a.value, distribution: v.value },
       };
     },
-    [api],
+    [api, client],
   );
   return useRequest({ queryKey: COLLECTION_KEY, token, load });
 }

@@ -1,6 +1,6 @@
 import { appError, failed, isId, isTimeZone, ok, type Result } from "../../../kernel";
 import { SPECIES_PROTECTION_NOTICE, type OfferDependencies, type OfferHealth } from "../types";
-import { offerHealth } from "./health";
+import { NO_OFFER_HEALTH, healthOf } from "./health";
 
 /** What the dialog "Offer for swapping" shows before anything is written (US-SOZ-08). */
 export interface OfferPreview {
@@ -32,12 +32,17 @@ export async function offerPreview(
     );
   const specimen = await deps.specimens.find(userId, specimenId);
   if (!specimen) return failed(appError("specimen.not_found"));
-  const [shared, offers] = await Promise.all([deps.sharing.list(userId), deps.offers.list(userId)]);
+  const [shared, offers, health, phases] = await Promise.all([
+    deps.sharing.list(userId),
+    deps.offers.list(userId),
+    healthOf(deps, userId, [specimen.id]),
+    deps.phases.phasesOf(userId, [specimen.id], timeZone),
+  ]);
   return ok({
     specimenName: specimen.name,
     shared: shared.some((r) => r.specimenId === specimen.id),
-    health: await offerHealth(deps, userId, specimen.id),
-    phase: await deps.phases.phaseOf(userId, specimen.id, timeZone),
+    health: health.get(specimen.id) ?? NO_OFFER_HEALTH,
+    phase: phases.get(specimen.id) ?? null,
     offered: offers.some(
       (o) => o.specimenId === specimen.id && (o.status === "open" || o.status === "reserved"),
     ),

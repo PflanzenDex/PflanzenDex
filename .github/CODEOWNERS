@@ -16,6 +16,8 @@
 /app/packages/web/                  @MaxNize
 
 /docs/specs/product/                @MaxNize
+# Allowed issue labels (FR-DEV-10): a new type or epic is approved by the owner only.
+/app/config/project/issue-taxonomy.json @MaxNize
 /docs/specs/prototype/         @MaxNize
 /docs/guides/operations/                   @MaxNize
 

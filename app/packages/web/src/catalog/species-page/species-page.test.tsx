@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { ERROR_TEXTS, type Species } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SpeciesPage } from "./species-page";
 
 const response = (status: number, body: unknown) =>
@@ -297,6 +297,28 @@ describe("US-QS-14 · US-BES-09 a section of another module below the profile", 
     expect(
       await screen.findByRole("heading", { name: "Mein Pflegeprofil von Bogenhanf" }),
     ).toBeTruthy();
+  });
+});
+
+describe("NFR-13 the action bar of the profile at a larger text size (issue 1217)", () => {
+  it("NFR-13 the opener of my care profile grows with its label: a minimum height instead of a fixed one, the same side padding at any text size", async () => {
+    fakeServer();
+    render(page({ openId: "a1", profileSection: () => null }));
+    const opener = await screen.findByRole("button", { name: "Mein Pflegeprofil" });
+    expect(opener.className).toContain("min-h-12");
+    expect(opener.className).not.toMatch(/(^| )h-12( |$)/);
+    expect(opener.className).toContain("px-[20px]");
+  });
+
+  it("NFR-13 the card around the profile shrinks its padding as the text grows: 16 px at normal text, 8 px at 200 % (issue 1216)", async () => {
+    fakeServer();
+    render(page({ openId: "a1", profileSection: () => null }));
+    const card = (await screen.findByRole("button", { name: "Mein Pflegeprofil" })).closest(
+      ".rounded-2xl",
+    );
+    expect(card?.className).toContain("px-[max(8px,calc(24px_-_0.5rem))]");
+    expect(card?.className).toContain("py-[max(8px,calc(24px_-_0.5rem))]");
+    expect(card?.className).not.toMatch(/(^| )px-4( |$)/);
   });
 });
 

@@ -1,5 +1,5 @@
 import type { MeasurementRow } from "@pflanzendex/core";
-import { dateText, valueText } from "@/lib/format";
+import { dateText, valueText } from "@/shared/lib/format";
 
 const W = 320;
 const H = 140;

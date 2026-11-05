@@ -2,8 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import type { SpeciesHit } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import {
   Form,
   FormControl,
@@ -12,8 +13,8 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
+} from "@/shared/ui/fields/form/form";
+import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";
@@ -24,6 +25,9 @@ import {
   FiltersLayer,
   useFilters,
 } from "./search-filters/search-filters";
+import table from "./search-view.de.json";
+
+const t = texts(table);
 
 function Empty(props: { searchText: string; onPropose: () => void }) {
   const text = props.searchText.trim();
@@ -115,6 +119,8 @@ function SearchTitle(props: { Heading: "h1" | "h2"; hasHits: boolean }) {
 export function SpeciesSearch(props: {
   searchText: string;
   hit: readonly SpeciesHit[];
+  /** More species match than the hits show (FR-BES-24): a one-line notice above the list. */
+  more?: boolean | undefined;
   loading?: boolean;
   /** The search failed: the page shows the error with a retry instead of "no hits". */
   failed?: boolean;
@@ -151,6 +157,7 @@ export function SpeciesSearch(props: {
             Suche läuft …
           </p>
         )}
+        {props.more && hasHits && <p className="text-sm text-muted-foreground">{t("more")}</p>}
         {!hasHits ? (
           !props.loading &&
           !props.failed && <Empty searchText={props.searchText} onPropose={props.onPropose} />

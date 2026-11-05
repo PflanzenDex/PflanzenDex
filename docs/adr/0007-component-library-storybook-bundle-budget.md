@@ -14,7 +14,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 ## Decision 1 · Component library: shadcn/ui pattern on Radix, Vaul and CVA
 
 - **Status:** proposed, owner confirms in the ADR PR review. The choice between Radix and Base UI is made once, here (see alternatives).
-- **Decision:** components are owned code in `app/packages/web/src/components/ui` (copied and adapted, not an npm dependency of shadcn). Behavior and accessibility come from Radix UI primitives (the unified `radix-ui` package or `@radix-ui/react-*`), the bottom Sheet from Vaul, variants from `class-variance-authority`, class merging from `cn()` (`clsx` + `tailwind-merge`) in `src/lib/utils.ts`.
+- **Decision:** components are owned code in `app/packages/web/src/shared/ui` (copied and adapted, not an npm dependency of shadcn). Behavior and accessibility come from Radix UI primitives (the unified `radix-ui` package or `@radix-ui/react-*`), the bottom Sheet from Vaul, variants from `class-variance-authority`, class merging from `cn()` (`clsx` + `tailwind-merge`) in `src/shared/lib/utils.ts`.
 - **Reason:** one place for styling; focus handling, ARIA and keyboard behavior come from tested primitives instead of hand-written code; no runtime styling library (styles are Tailwind v4 classes); it fits the placement rules DS-01 and DS-06 and the token rules DS-28 to DS-36.
 - **Alternatives:**
 
@@ -54,7 +54,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 ## Decision 3 · Rule: every shared component has stories
 
 - **Status:** proposed, owner confirms in the ADR PR review.
-- **Decision:** every component in `components/ui` and `components/shared` has a `*.stories.tsx` file covering all variants and sizes, and the states default, focus, disabled, invalid and loading (where the component has them), each in light and dark.
+- **Decision:** every component in `shared/ui`, `shared/patterns` and `app/frame` has a `*.stories.tsx` file covering all variants and sizes, and the states default, focus, disabled, invalid and loading (where the component has them), each in light and dark.
 - **Reason:** the catalog is only trustworthy if it is complete; the states listed are the ones that break most often on a phone and in dark mode, and they are where DS-15 to DS-20 are checked.
 - **Alternatives:** stories only for "important" components (rejected: the cut is arbitrary and drifts); stories required by review only (rejected: not enforceable, see AGENTS.md on gates over goodwill).
 - **Consequences:**
@@ -65,7 +65,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 ## Decision 4 · `Select` wraps a styled native `<select>`
 
 - **Status:** proposed, owner confirms in the ADR PR review.
-- **Decision:** the `Select` primitive in `components/ui` wraps a styled native `<select>`. A Radix Select is added only for a concrete need that a native control cannot meet (for example rich options with icons), by its own issue.
+- **Decision:** the `Select` primitive in `shared/ui` wraps a styled native `<select>`. A Radix Select is added only for a concrete need that a native control cannot meet (for example rich options with icons), by its own issue.
 - **Reason:** the native control gives the best phone picker (OS wheel or sheet, one-hand use, P-11), is accessible by default and needs no JavaScript; no dependency is needed.
 - **Alternatives:** Radix Select for everything (rejected as default: custom listbox on a phone is worse than the OS picker, more code, more bundle); a combobox library (not needed now).
 - **Consequences:**

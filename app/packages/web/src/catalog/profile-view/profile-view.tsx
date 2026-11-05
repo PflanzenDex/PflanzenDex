@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { Leaf } from "lucide-react";
 import { speciesHints, type Species } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
-import { PageHeader } from "@/components/shared/navigation/app-shell/page-header/page-header";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import {
   FactGrid,
   type Fact,
-} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
-import { Tabs } from "@/components/data-display/panels/tabs/tabs";
+} from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import {
   STATUS,
   UNKNOWN,
@@ -99,6 +99,15 @@ function ProfileTabs({ species }: { species: Species }) {
 }
 
 /**
+ * The header of the profile: it keeps its natural height up to 40 % of the profile and scrolls inside itself beyond that,
+ * so at a larger text size the action bar below it is in view when the profile opens (issue 1217). The bar does not
+ * follow a scroll of the facts. The negative margin and the padding cancel out, so the position does not change; the
+ * padding keeps the focus ring of the way back inside the region (DS-37).
+ */
+const HEADER =
+  "-m-1 flex max-h-[40%] min-h-0 min-w-0 flex-col gap-2 overflow-y-auto overscroll-contain p-1";
+
+/**
  * Profile with the fields from DM-BES-01 (US-QS-21): a header with name, photo slot and the primary action, then the
  * facts in three tabs (Steckbrief, Pflege, Herkunft). Missing details are called "unknown" (P-08), hints name the next
  * action (P-09).
@@ -115,26 +124,29 @@ export function SpeciesProfile(props: {
   const { species } = props;
   return (
     <article aria-labelledby="species-title" className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      {/* The way back "Zurück zur Suche" is the page header's chevron (issue 1031); embedded, the name is a level-2 heading. */}
-      <PageHeader
-        headingId="species-title"
-        heading={props.embedded ? "h2" : "h1"}
-        title={<i>{species.latinName}</i>}
-        {...(props.onBack ? { back: { label: "Zurück zur Suche", onBack: props.onBack } } : {})}
-      />
-      <div className="flex min-w-0 items-center gap-3">
-        <PhotoSlot />
-        <Badge variant="outline" className="self-start">
-          {STATUS[species.reviewStatus]}
-        </Badge>
-      </div>
       {/*
-       * The primary action is a sticky footer (issue 1019): it keeps its place in the order of the profile, and it
-       * stays in view above the phone bar when the profile is taller than the screen, so "Diese Art wählen" is always
-       * reachable at a larger text size. Same offset as the suggestion actions (DS-61).
+       * Three parts in a column (issue 1217, NFR-13): the header, the action bar and the facts. The bar is in the flow
+       * between the header and the facts and is not sticky, so no part of the profile can lie under it at any scroll
+       * position (a sticky bar lay over the title at 200 % text). At normal text the three keep their places.
        */}
+      <div className={HEADER}>
+        {/* The way back "Zurück zur Suche" is the page header's chevron (issue 1031); embedded, the name is a level-2 heading. */}
+        <PageHeader
+          headingId="species-title"
+          heading={props.embedded ? "h2" : "h1"}
+          title={<i>{species.latinName}</i>}
+          {...(props.onBack ? { back: { label: "Zurück zur Suche", onBack: props.onBack } } : {})}
+        />
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <PhotoSlot />
+          <Badge variant="outline" className="self-start">
+            {STATUS[species.reviewStatus]}
+          </Badge>
+        </div>
+      </div>
+      {/* Each action takes at least the width of its longest word, so the row stacks when the words no longer fit side by side (issue 1217). */}
       {(props.onChoose || props.extra) && (
-        <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 flex flex-wrap gap-2 bg-background md:bottom-0 [&>*]:min-w-0 [&>*]:flex-1">
+        <div className="flex shrink-0 flex-wrap gap-2 bg-background [&>*]:min-w-min [&>*]:flex-1">
           {props.onChoose && (
             <Button type="button" size="touch" onClick={props.onChoose}>
               Diese Art wählen
@@ -143,15 +155,17 @@ export function SpeciesProfile(props: {
           {props.extra}
         </div>
       )}
-      {speciesHints(species).map((h) => (
-        <p
-          key={h.text}
-          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-        >
-          {h.text} {h.nextAction}
-        </p>
-      ))}
-      <ProfileTabs species={species} />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+        {speciesHints(species).map((h) => (
+          <p
+            key={h.text}
+            className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+          >
+            {h.text} {h.nextAction}
+          </p>
+        ))}
+        <ProfileTabs species={species} />
+      </div>
     </article>
   );
 }

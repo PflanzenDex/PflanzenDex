@@ -22,7 +22,7 @@ export const RULES = [
     id: "DS-10",
     languages: ["tsx"],
     test: (line, file) =>
-      !file.startsWith("platform/") &&
+      !file.startsWith("shared/platform/") &&
       /\bnavigator\.|\blocalStorage\b|\bsessionStorage\b|\bnew Notification\b|\bNotification\./.test(
         line,
       ),
@@ -64,23 +64,9 @@ export const RULES = [
   },
 ];
 
-const RESERVED_DIRS = new Set(["components", "lib", "platform", "styles"]);
-const IMPORT = /(?:from|import)\s*\(?\s*["']@\/([^"']+)["']/;
-// Layer rules for `@/` imports: ui < shared < modules, modules only through their index.
-export function importViolations(file, line) {
-  const match = line.match(IMPORT);
-  if (match === null) return [];
-  const [top, ...restParts] = match[1].split("/");
-  const rest = restParts.length > 0 ? restParts.join("/") : undefined;
-  const targetIsModule = !RESERVED_DIRS.has(top);
-  const found = [];
-  if (file.startsWith("components/ui/") && (targetIsModule || top === "components")) {
-    if (targetIsModule || rest?.startsWith("shared")) found.push("DS-01");
-  }
-  if (file.startsWith("components/shared/") && targetIsModule) found.push("DS-02");
-  if (targetIsModule && rest !== undefined) found.push("DS-42");
-  return found;
-}
+// DS-31 and DS-35 (FR-QG-20) apply to every non-story .tsx file below web/src: shared components, app/ and the
+// components of every domain module alike.
+const isTsx = (file) => file.endsWith(".tsx");
 
 // Blank out comments and string/template contents (keeps length and newlines) so structure can be matched.
 const LITERALS =
@@ -100,7 +86,7 @@ function balanced(text, open) {
 }
 
 const notStory = (file) => !/\.stories\.tsx$/.test(file);
-const isUi = (file) => file.startsWith("components/ui/") && notStory(file);
+const isUi = (file) => file.startsWith("shared/ui/") && notStory(file);
 const CVA_CALL = /\bcva\(/;
 const TERNARY_OR_AND = /(?<!\?)\?(?![?.])|&&/;
 
@@ -114,13 +100,13 @@ export const FILE_RULES = [
   },
   {
     id: "DS-48",
-    applies: (file) => file.endsWith(".tsx") && !file.startsWith("components/ui/"),
+    applies: (file) => file.endsWith(".tsx") && !file.startsWith("shared/ui/"),
     lines: (content, file) => rawControlLines(content, file),
   },
   {
     // DS-31: class names flow through cn(), never template literals or concatenation.
     id: "DS-31",
-    applies: (file) => file.startsWith("components/") && notStory(file),
+    applies: (file) => isTsx(file) && notStory(file),
     lines: (content) => {
       const found = [];
       content.split("\n").forEach((line, i) => {
@@ -172,7 +158,7 @@ export const FILE_RULES = [
   {
     // DS-35: every cva() call sets defaultVariants.
     id: "DS-35",
-    applies: (file) => file.startsWith("components/") && notStory(file),
+    applies: (file) => isTsx(file) && notStory(file),
     lines: (content) => {
       const code = blank(content);
       const found = [];

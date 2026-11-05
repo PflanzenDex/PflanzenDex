@@ -1,6 +1,6 @@
 import type { Recommendation } from "@pflanzendex/core";
-import { useFeature } from "@/kernel";
-import { Pager } from "@/components/shared/responsive/pager/pager";
+import { useFeature } from "@/shared/data";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 
 /** Recommendations per page; they page apart from the needs above them (starting value, assumption). */
 const PER_PAGE = 2;

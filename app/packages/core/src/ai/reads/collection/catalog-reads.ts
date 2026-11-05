@@ -3,7 +3,7 @@
 // proposes one. Only what the account may see: approved species and its own proposals (FR-BES-11, P-04).
 import { appError, failed, isId, ok, shape, textField, type Result } from "../../../kernel";
 import type { AiLogStore } from "../../status";
-import { normalizeName, referenceError, resolveName, type Named } from "../naming";
+import { NAMING_LIMITS, normalizeName, referenceError, resolveName, type Named } from "../naming";
 import {
   PAGE_FIELDS,
   pageOf,
@@ -54,8 +54,8 @@ export const aiSearchSpecies = (deps: ReadDependencies, call: ReadCall) =>
 async function speciesPool(deps: ReadDependencies, userId: string, ref: string) {
   const hits = await deps.source.searchSpecies(userId, ref);
   if (hits.length > 0) return hits;
-  const start = normalizeName(ref).slice(0, 3);
-  return start.length < 2 ? [] : deps.source.searchSpecies(userId, start);
+  const start = normalizeName(ref).slice(0, NAMING_LIMITS.prefix);
+  return start.length < NAMING_LIMITS.minSearch ? [] : deps.source.searchSpecies(userId, start);
 }
 
 /** The id a species reference names (FR-KI-15), or the refusal with candidates or nearest names. */

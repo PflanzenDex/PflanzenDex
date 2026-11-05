@@ -167,6 +167,46 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     // A species that is unknown is not "lacking" (P-08), so the filter leaves it out.
     expect(await ids("&lack=true")).toEqual([]);
   });
+  it("US-SOZ-09 NFR-12 P-05 the phase of a friend's offer comes from the owner's own species; a stranger sees no offer", async () => {
+    // A dormancy period that spans the whole year: the phase is "dormancy" on every day (the test does not depend on today).
+    const species = await call(subA, "POST", "/species", {
+      latinName: `Dormancus${randomUUID()
+        .replace(/[0-9-]/g, "x")
+        .slice(0, 8)} novus`,
+      difficulty: 2,
+      standardLevel: 2,
+      lightDemandLux: 15000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+      source: "RHS",
+      dormancyFrom: "01-01",
+      dormancyUntil: "12-31",
+    });
+    const specimenId = (
+      await call(subA, "POST", "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId: species.body.id,
+        marker: "Dormant",
+      })
+    ).body.id as string;
+    await share(subA, specimenId);
+    const made = await call(subA, "POST", "/offers", {
+      specimenId,
+      type: "cutting",
+      mode: "swap",
+    });
+    expect(made.status).toBe(201);
+    const seen = (await exchange(subB)).body.offers.find(
+      (x: { offerId: string }) => x.offerId === made.body.id,
+    );
+    expect(seen).toMatchObject({ phase: "dormancy" });
+    expect((await exchange(subC)).body.offers).toEqual([]);
+    const own = (await call(subA, "GET", `/offers?${tz}`)).body.offers.find(
+      (x: { id: string }) => x.id === made.body.id,
+    );
+    expect(own).toMatchObject({ phase: "dormancy" });
+  });
 });
 
 describe("US-SOZ-09 'Everything private' hides the offers (P-05)", () => {

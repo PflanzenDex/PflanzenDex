@@ -3,8 +3,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
-import { currentTimeZone, setProfileTimeZone } from "../../kernel";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { currentTimeZone, setProfileTimeZone } from "../../shared/data";
 import { SettingsPage } from "./settings-page";
 
 const response = (status: number, body: unknown) =>
@@ -613,7 +613,7 @@ describe("US-QS-17 settings as a list of groups", () => {
   it("US-QS-17 lists the six groups, each with its current value", async () => {
     fakeServer();
     show();
-    expect((await row("Profil")).textContent).toContain("Anna · Europe/Berlin");
+    expect((await row("Profil")).textContent).toContain("Anna · Europe/\u200bBerlin");
     expect((await row("Benachrichtigungen")).textContent).toContain("7 von 7 an");
     expect((await row("Datenschutz und Empfehlungen")).textContent).toContain("Standard");
     expect((await row("Wie nutzt du die App?")).textContent).toContain("ein paar Pflanzen");
@@ -713,7 +713,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
     expect(puts).toHaveLength(1);
-    expect((await row("Profil")).textContent).toContain("Berta · Europe/Berlin");
+    expect((await row("Profil")).textContent).toContain("Berta · Europe/\u200bBerlin");
   });
 
   it("US-QS-17 Wunschliste and Licht save only their own field with the rest of the stored profile", async () => {

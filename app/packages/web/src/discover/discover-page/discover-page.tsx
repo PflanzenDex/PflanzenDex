@@ -1,11 +1,11 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { LoadFrame } from "../../kernel";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { LoadFrame } from "../../shared/data";
 import { DeckView } from "../deck-view/deck-view";
 import { decideSuggestion, loadSuggestions } from "./discover-api";
 import table from "../discover.de.json";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
 

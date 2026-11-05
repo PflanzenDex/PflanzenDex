@@ -1,11 +1,11 @@
-import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
+import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
 import { useState } from "react";
 import { Link } from "react-router";
 import type { Friend } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Avatar } from "@/components/data-display/avatar/avatar";
-import { Card } from "@/components/data-display/card/card";
-import { Button } from "@/components/ui/button/button";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Avatar } from "@/shared/patterns/display/avatar/avatar";
+import { Card } from "@/shared/patterns/display/card/card";
+import { Button } from "@/shared/ui/button/button";
 import { dateText } from "../invite-card/invite-card";
 import { nameOf } from "../request-list/request-list";
 

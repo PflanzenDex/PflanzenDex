@@ -12,6 +12,10 @@ import { ManageLists, Notices } from "./manage-lists/manage-lists";
 import type { ZoneInput } from "../../zones/zones-view/zones-view";
 import type { LocationInput } from "../../zones/locations-view/locations-view";
 import type { Derive } from "../../zones/derivation-view/derivation-view";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../light.de.json";
+
+const t = texts(table);
 
 type AppError = Promise<ApiError | null>;
 
@@ -42,9 +46,9 @@ export function LightView(props: {
 }) {
   const { data, actions } = props;
   return (
-    <div className="flex min-w-0 gap-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        {props.hosted ? null : <h1 className="text-xl font-semibold">Standorte und Lichtzonen</h1>}
+    <div className="flex min-h-0 min-w-0 flex-1 gap-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        {props.hosted ? null : <h1 className="text-xl font-semibold">{t("view.title")}</h1>}
         {props.error && <ErrorMessage error={props.error} />}
         <ManageLists data={data} actions={actions} />
         <Notices data={data} />

@@ -1,6 +1,12 @@
 import { MEDIA_LIMITS } from "@pflanzendex/core";
-import { currentTimeZone, type ApiError, type Response } from "../../../../kernel";
-import { GENERIC_ERROR_TEXT } from "@/lib/error-text";
+import {
+  announceWrite,
+  currentTimeZone,
+  type ApiError,
+  type Response,
+} from "../../../../shared/data";
+import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
+import { forgetPhotos } from "@/shared/platform/browser/use-stored-photo";
 
 type FetchFn = typeof fetch;
 export interface UploadAccess {
@@ -43,7 +49,11 @@ export async function uploadPhoto(
         body: photo.file,
       },
     );
-    return res.ok ? { ok: true, value: await res.json().catch(() => ({})) } : await failure(res);
+    if (!res.ok) return await failure(res);
+    // The replaced picture leaves the picture cache at once; the next view asks its new address (NFR-12).
+    forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
+    announceWrite();
+    return { ok: true, value: await res.json().catch(() => ({})) };
   } catch {
     return { ok: false, error: NETWORK };
   }

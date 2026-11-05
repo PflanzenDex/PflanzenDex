@@ -1,0 +1,58 @@
+# Checks the labels of every issue (FR-DEV-10, US-DEV-05): exactly one type label and one epic label from
+# app/config/project/issue-taxonomy.json. Invalid: a comment and the label needs-triage (make issue-check). Valid: needs-triage
+# is removed and the board fields Typ and Epic follow the labels (make issue-sync, with the project token).
+# The labels and comments use the job token (issues: write); the project token is only created for a valid issue.
+# The token comes from the GitHub App of project-status.yml (vars.PROJECT_APP_ID, secrets.PROJECT_APP_PRIVATE_KEY).
+# Loop guard: the label needs-triage itself does not start a run, so the comment is written once per change.
+name: Issue check
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-check-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: ${{ !contains(github.event.issue.labels.*.name, 'report') && github.event.label.name != 'needs-triage' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Check type and epic labels
+        id: labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: make issue-check ISSUE="$ISSUE_NUMBER" EVENT="$EVENT_ACTION"
+      - id: app
+        if: ${{ steps.labels.outputs.valid == 'true' }}
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.PROJECT_APP_ID }}
+          private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Sync board fields Typ, Epic and an empty Status
+        if: ${{ steps.labels.outputs.valid == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TYPE: ${{ steps.labels.outputs.type }}
+          ISSUE_EPIC: ${{ steps.labels.outputs.epic }}
+        run: make issue-sync ISSUE="$ISSUE_NUMBER" TYPE="$ISSUE_TYPE" EPIC="$ISSUE_EPIC"

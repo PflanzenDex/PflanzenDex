@@ -9,7 +9,7 @@ import {
   textField,
   type ErrorDetail,
 } from "../../../kernel";
-import { offerHealth } from "../read/health";
+import { healthOf } from "../read/health";
 import {
   OFFER_LIMITS,
   OFFER_MODES,
@@ -68,7 +68,8 @@ export const offerCreate = (deps: OfferDependencies) =>
       if (specimen.status === "archived") return failed(appError("specimen.archived"));
       const shared = (await deps.sharing.list(userId)).some((r) => r.specimenId === specimen.id);
       if (!shared) return failed(appError("offer.not_shared"));
-      if (!input.confirmTreatment && (await offerHealth(deps, userId, specimen.id)).treatmentOpen)
+      const health = await healthOf(deps, userId, [specimen.id]);
+      if (!input.confirmTreatment && health.get(specimen.id)?.treatmentOpen)
         return failed(appError("offer.treatment_open"));
       const r = await deps.offers.create(userId, {
         specimenId: specimen.id,

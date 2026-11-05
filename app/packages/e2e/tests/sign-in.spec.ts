@@ -1,3 +1,4 @@
+import { FOREIGN_AUDIENCE, foreignAudienceToken } from "../support/account";
 import { axeReport } from "../support/axe";
 import { signIn, expect, test } from "../support/fixtures";
 
@@ -17,9 +18,16 @@ test.describe("US-ACC-01 sign-in", () => {
   }, info) => {
     await signIn(page, account);
     await page.getByRole("link", { name: "Konto", exact: true }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Konto" })).toBeVisible();
-    // The index shows name and e-mail in its profile row (US-QS-17); the greeting is in "Profil".
     const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
+    // On a phone "/account" is the index under the heading "Konto". From 1024 px Einstellungen opens beside the index
+    // by itself and takes the main heading, the index stays (US-QS-17).
+    if (info.project.name === "mobil") {
+      await expect(page.getByRole("heading", { level: 1, name: "Konto" })).toBeVisible();
+    } else {
+      await expect(page.getByRole("heading", { level: 1, name: "Einstellungen" })).toBeVisible();
+      await expect(index).toBeVisible();
+    }
+    // The index shows name and e-mail in its profile row (US-QS-17); the greeting is in "Profil".
     await expect(index.getByText(account.displayName, { exact: true })).toBeVisible();
     await expect(index.getByText(account.email, { exact: true })).toBeVisible();
     await axeReport(page, info, "account");
@@ -56,5 +64,29 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+  });
+});
+
+// Issue 204: the audience check against tokens of the real Keycloak, not only against test keys.
+test.describe("US-ACC-01 token audience", () => {
+  test("US-ACC-01 a real token for another audience is refused by the API", async ({
+    request,
+    account,
+  }) => {
+    const token = await foreignAudienceToken(account);
+    const claims = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString()) as {
+      aud: string[];
+      iss: string;
+    };
+    // Signature, issuer and expiry are fine, so the audience is the only reason left for the refusal.
+    expect(claims.aud).toContain(FOREIGN_AUDIENCE);
+    expect(claims.aud).not.toContain("pflanzendex-api");
+    expect(claims.iss).toMatch(/\/realms\/pflanzendex$/);
+    const port = process.env["E2E_API_PORT"] ?? "3000";
+    const res = await request.get(`http://localhost:${port}/account`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status()).toBe(401);
+    expect(await res.json()).toEqual({ error: { code: "not_signed_in" } });
   });
 });

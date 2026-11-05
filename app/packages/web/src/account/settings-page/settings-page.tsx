@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
-import { LayerHost, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { CalmModeSection, loadAchievementSettings } from "../../achievements";
-import { LoadFrame, useFeature, useRequest } from "../../kernel";
+import { LoadFrame, useFeature, useRequest } from "../../shared/data";
 import { loadProfile, type AccountProfile } from "../api/account-api";
 import { LightGroup, ProfileGroup, WishlistGroup } from "./groups/form-groups/form-groups";
 import { SETTINGS_LAYER } from "../index";

@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { useRequest } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { useRequest } from "../../../shared/data";
 import { loadOpenRequests } from "../../api/feed-api";
 import { nameOf } from "../../parts/request-list/request-list";
 

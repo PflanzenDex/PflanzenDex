@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -24,8 +24,10 @@ test("US-DEV-02: ids are found in titles and bodies, once", () => {
   ]);
 });
 
-test("US-DEV-02: spec ids come from headings and table rows", () => {
+test("US-DEV-02: spec ids come from headings and table rows", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "specs-"));
+  // The folder goes again, also when the assertion fails (#1297).
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
   writeFileSync(
     join(dir, "a.md"),
     "### US-ACC-01 · Title · ⬜\n\n| FR-ACC-01 | text | ⬜ |\n| **NFR-08** | text | ⬜ |\nSee US-XXX-99.\n",

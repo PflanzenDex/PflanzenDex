@@ -73,6 +73,6 @@ test("US-QG-10: only <name>/<name>.tsx is a component, named in PascalCase", () 
     componentName("shared/responsive/responsive-table/responsive-table.tsx"),
     "ResponsiveTable",
   );
-  assert.equal(componentName("shared/shell/shell.fixtures.tsx"), undefined);
+  assert.equal(componentName("app/stories/shell/shell.fixtures.tsx"), undefined);
   assert.equal(componentName("ui/button/button-base.tsx"), undefined);
 });

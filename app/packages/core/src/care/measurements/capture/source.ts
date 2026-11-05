@@ -1,5 +1,6 @@
 import type { CardMeasurementView, MeasurementSource } from "../../../collection";
 import type { MeasurementStore } from "../types";
+import { measurementPhotoPath } from "./file/photo-address";
 
 export interface SourceDependencies {
   readonly measurements: Pick<MeasurementStore, "lastFor" | "lastPhotoFor">;
@@ -19,9 +20,12 @@ export function measurementSource(deps: SourceDependencies): MeasurementSource {
       for (const [id, m] of await deps.measurements.lastFor(userId, specimenIds)) {
         const { date, value, quality, note } = m;
         const p = photos.get(id);
-        // The url is the private API path; the web fetches it with the token (P-05).
+        // The url is the private API path with the version of the photo (NFR-12); the web fetches it with the token (P-05).
         const photo = p
-          ? { url: `/specimens/${id}/measurements/${p.id}/photo`, date: p.date }
+          ? {
+              url: measurementPhotoPath({ specimenId: id, measurementId: p.id, photo: p.photo }),
+              date: p.date,
+            }
           : null;
         views.set(id, { last: { date, value, quality, note }, photo });
       }

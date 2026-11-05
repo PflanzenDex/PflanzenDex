@@ -2,11 +2,10 @@
 // The realm export only knows 5173; worktrees get deterministic ports (54400-55899, worktree-env.mjs), and Keycloak
 // accepts no wildcard in the host part, so the port is added through the admin API. Idempotent.
 // Usage: node tools/keycloak/web-port.mjs [port ...]   (default: PFLANZENDEX_DEV_WEB_PORT from the environment or .env.worktree)
-// Env:   KC_ADMIN_PASSWORD (default: app/config/dev/.env of this checkout or of the main checkout), E2E_KEYCLOAK_URL.
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+// Env:   KC_ADMIN_PASSWORD (default: app/config/dev/.env of the main checkout, dev-env.mjs), E2E_KEYCLOAK_URL.
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { adminPassword, envValue } from "./dev-env.mjs";
 
 const REALM = "pflanzendex";
 const CLIENT_ID = "pflanzendex-web";
@@ -38,36 +37,10 @@ export function parsePort(value) {
 const here = dirname(fileURLToPath(import.meta.url));
 const appDir = join(here, "..", "..");
 
-function readEnvFile(file, key) {
-  if (!existsSync(file)) return undefined;
-  const line = readFileSync(file, "utf8")
-    .split("\n")
-    .find((l) => l.startsWith(`${key}=`));
-  return line?.slice(key.length + 1).trim();
-}
-
-function mainCheckout() {
-  const common = execFileSync("git", ["rev-parse", "--git-common-dir"], {
-    cwd: appDir,
-    encoding: "utf8",
-  }).trim();
-  return dirname(join(appDir, common));
-}
-
-function adminPassword() {
-  const fromEnv = process.env["KC_ADMIN_PASSWORD"];
-  if (fromEnv) return fromEnv;
-  const found =
-    readEnvFile(join(appDir, "config", "dev", ".env"), "KC_ADMIN_PASSWORD") ??
-    readEnvFile(join(mainCheckout(), "app", "config", "dev", ".env"), "KC_ADMIN_PASSWORD");
-  if (!found) throw new Error("KC_ADMIN_PASSWORD missing: run `make auth-up` first");
-  return found;
-}
-
 function defaultPorts() {
   const fromEnv = process.env["PFLANZENDEX_DEV_WEB_PORT"];
   const found =
-    fromEnv ?? readEnvFile(join(appDir, "..", ".env.worktree"), "PFLANZENDEX_DEV_WEB_PORT");
+    fromEnv ?? envValue(join(appDir, "..", ".env.worktree"), "PFLANZENDEX_DEV_WEB_PORT");
   if (!found)
     throw new Error("no port given and PFLANZENDEX_DEV_WEB_PORT not found (.env.worktree)");
   return [found];
@@ -82,7 +55,7 @@ async function main(args) {
       grant_type: "password",
       client_id: "admin-cli",
       username: "admin",
-      password: adminPassword(),
+      password: adminPassword(appDir),
     }),
   });
   if (!login.ok)

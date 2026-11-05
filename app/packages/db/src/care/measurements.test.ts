@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
 import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
@@ -193,7 +193,21 @@ describe("US-WAC-05 the most recent photo per specimen", () => {
     await measurements.setPhoto(anna, old.id, "a.jpg");
     await measurements.setPhoto(anna, mid.id, "b.jpg");
     const r = await measurements.lastPhotoFor(anna, [e]);
-    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15" });
+    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15", photo: "b.jpg" });
+  });
+
+  it("NFR-12 US-WAC-06 a replaced photo is named by its new object, so its address changes", async () => {
+    const e = await specimen(anna, "Foto ersetzt");
+    const m = await measurements.create(anna, values({ specimenId: e, date: "2026-09-15" }));
+    if (typeof m === "string") throw new Error(m);
+    await measurements.setPhoto(anna, m.id, "first.jpg");
+    expect((await measurements.lastPhotoFor(anna, [e])).get(e)?.photo).toBe("first.jpg");
+    await measurements.setPhoto(anna, m.id, "second.jpg");
+    expect((await measurements.lastPhotoFor(anna, [e])).get(e)).toEqual({
+      id: m.id,
+      date: "2026-09-15",
+      photo: "second.jpg",
+    });
   });
 
   it("a specimen without a photo is missing; without IDs the answer is empty", async () => {
@@ -269,5 +283,60 @@ describe("US-KI-04 assess a measurement in the database", () => {
       await measurements.assess(ben, z.id, { quality: "etiolated", note: null, ratedBy: "keeper" }),
     ).toBe(false);
     expect((await measurements.get(anna, z.id))?.quality).toBe("healthy");
+  });
+});
+
+describe("NFR-12 measurements of many specimens in one read", () => {
+  it("NFR-12 returns per specimen what list returns, in the same order; specimens without measurements are missing", async () => {
+    const a = await specimen(anna, "Viele A");
+    const b = await specimen(anna, "Viele B");
+    const none = await specimen(anna, "Viele ohne");
+    await measurements.create(anna, values({ specimenId: a, date: "2026-09-01", value: 8 }));
+    await measurements.create(anna, values({ specimenId: a, date: "2026-10-01", value: 20 }));
+    await measurements.create(anna, values({ specimenId: a, date: "2026-10-01", value: 21 }));
+    await measurements.create(anna, values({ specimenId: b, date: "2026-10-02", value: 5 }));
+    const many = await measurements.listMany(anna, [a, b, none]);
+    expect([...many.keys()].sort()).toEqual([a, b].sort());
+    expect(many.get(a)).toEqual(await measurements.list(anna, a));
+    expect(many.get(b)).toEqual(await measurements.list(anna, b));
+    expect(many.get(a)?.map((m) => m.value)).toEqual([21, 20, 8]);
+  });
+
+  it("NFR-12 P-04 another account gets nothing for these specimens; without IDs no query is sent", async () => {
+    const e = await specimen(anna, "Viele fremd");
+    await measurements.create(anna, values({ specimenId: e }));
+    expect(await measurements.listMany(ben, [e])).toEqual(new Map());
+    expect((await measurements.listMany(anna, [e])).get(e)).toHaveLength(1);
+    const connect = vi.spyOn(pool, "connect");
+    try {
+      expect((await measurements.listMany(anna, [])).size).toBe(0);
+      expect(connect).not.toHaveBeenCalled();
+    } finally {
+      connect.mockRestore();
+    }
+  });
+});
+
+// US-BES-06 summary: the measured specimens of the account, one aggregate; activity is checked by the caller (P-04).
+describe("US-BES-06 summary: measured specimens of the account (database)", () => {
+  it("US-BES-06 the distinct IDs of the specimens with a measurement; archived ones are listed, foreign ones are not", async () => {
+    const mine = randomUUID();
+    const quiet = randomUUID();
+    for (const id of [mine, quiet])
+      await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
+    try {
+      expect(await measurements.measuredSpecimenIds(mine)).toEqual([]);
+      const plant = await specimen(mine, "Gemessen");
+      await measurements.create(mine, values({ specimenId: plant, date: "2026-10-01" }));
+      await measurements.create(mine, values({ specimenId: plant, date: "2026-10-02" }));
+      expect(await measurements.measuredSpecimenIds(mine)).toEqual([plant]);
+      await new SpecimenPostgres(pool).archive(mine, plant, "verkauft", "2026-10-02");
+      expect(await measurements.measuredSpecimenIds(mine)).toEqual([plant]);
+      const foreign = await specimen(anna, "Fremd gemessen");
+      await measurements.create(anna, values({ specimenId: foreign, date: "2026-10-01" }));
+      expect(await measurements.measuredSpecimenIds(quiet)).toEqual([]);
+    } finally {
+      await admin.query("delete from account where id = any($1)", [[mine, quiet]]);
+    }
   });
 });

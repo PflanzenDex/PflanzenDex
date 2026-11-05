@@ -19,8 +19,11 @@ Acceptance criteria:
 - **Missing:** name, German name and short text **visible**; photo = Wikipedia image; chip "not caught yet".
 - Without image: icon matching the family (cactus, arum, tendril leaf, orchid, rosette, bulb flower, sword leaves, palm, fern, bromeliad; otherwise neutral sprout).
 - If the short text is missing: "No description available."
-- Species-poor (genus ≤ 10 species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
+- Species-poor (genus ≤ 10 <!-- const: SPECIES_POOR_MAX --> species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
 - Source link on every card with an image source (CC BY-SA).
+- Given the catalog changes, when I next open the collector cards, then I see the new catalog (FR-POK-13).
+- Given two keepers with different plants, then each sees only their own caught state, although the catalog part is shared (P-04, FR-POK-13).
+- Given the layer "Sammlerkarten", then the cards page by the free height of the layer (US-QS-15). Given a window at most 700 px high (starting value, assumption), then a card shows its image 80 px high, its short text in two lines (the full text is in the species profile), and its unknown facts and rarity values folded into one line "n Angaben fehlen" with the next step (US-QS-24), so one card fits a 360×640 phone; taller windows show the card unchanged (decision of the owner, 2026-11-02, issue 1154).
 
 Status 🟨: the cards of the taxonomy tree work (`GET /pokedex/cards`, caught derived live from the specimens, missing cards, species-poor badge and rarity frame, Wikipedia image as a link only, P-05). Missing: the latest measurement photo of an active specimen (WAC-05, storage TE-05; the Wikipedia image link or a neutral sprout is shown) and the family icons (FR-POK-10); caught species that are not in the tree are not shown as cards (FR-POK-04 hints).
 
@@ -92,7 +95,7 @@ Status 🟨: the detail view of caught species is implemented (German name, genu
 
 Acceptance criteria:
 
-- Rank by number of caught species: Seedling 0–4, Sapling from 5, Young plant from 15, Bloomer from 30, Treetop from 60, Botanist from 100.
+- Rank by number of caught species: Seedling 0–4, Sapling from 5 <!-- const: COLLECTOR_RANKS.1.from -->, Young plant from 15 <!-- const: COLLECTOR_RANKS.2.from -->, Bloomer from 30 <!-- const: COLLECTOR_RANKS.3.from -->, Treetop from 60 <!-- const: COLLECTOR_RANKS.4.from -->, Botanist from 100 <!-- const: COLLECTOR_RANKS.5.from -->.
 - Display: rank, "N / M species caught (P %)", progress bar, "N more until "<next rank>"", "k of K orders discovered" (K from the tree, not hard-coded), state of the tree.
 
 ### US-POK-11 · Milestones with an instruction for action · 🟨 (prototype ✅)
@@ -165,7 +168,7 @@ Status 🟨: setting, aggregation (database function that returns only counts), 
 | FR-POK-01 | Pure logic (cards, milestones, search, ownership, rank) without I/O and with tests; the prototype tests (`pokedex-core.js`, 66) are the starting point.                                                                                                        | ⬜     |
 | FR-POK-03 | The taxonomy tree is written only by the build job, never by hand.                                                                                                                                                                                             | ⬜     |
 | FR-POK-04 | Hints for operator and keeper: own species not in the catalog; species that cannot be resolved; name deviation catalog ↔ tree; rating missing/invalid; specimen without epithet; "N species without a Wikipedia article" and "N without a GBIF species count". | ⬜     |
-| FR-POK-05 | The species-poor threshold (10) refers to the **genus**; species-poor is a badge, not a milestone.                                                                                                                                                             | ⬜     |
+| FR-POK-05 | The species-poor threshold (10 <!-- const: SPECIES_POOR_MAX -->) refers to the **genus**; species-poor is a badge, not a milestone.                                                                                                                            | ⬜     |
 | FR-POK-06 | Card numbers are consecutive in the current tree order. New species shift the numbers; "stable" applies only with an unchanged list.                                                                                                                           | ⬜     |
 | FR-POK-07 | Wikipedia text is under CC BY-SA; every card links the source.                                                                                                                                                                                                 | ⬜     |
 | FR-POK-08 | No invented numbers: species count from GBIF, catch date from own data, "unknown" instead of guessing.                                                                                                                                                         | ⬜     |
@@ -173,3 +176,4 @@ Status 🟨: setting, aggregation (database function that returns only counts), 
 | FR-POK-10 | The family icon assignment is configuration, no code in the interface.                                                                                                                                                                                         | ⬜     |
 | FR-POK-11 | **Social:** the keeper's Pokédex is the basis for friend comparison ("you have it / you lack it", US-SOZ-07). Rank and leaderboard comparison between friends remain excluded.                                                                                 | ⬜     |
 | FR-POK-12 | Wishlist and Pokédex are linked (FR-WUN-05); deliberately not in the prototype.                                                                                                                                                                                | ⬜     |
+| FR-POK-13 | **Shared taxonomy tree of the cards (NFR-12):** the taxonomy tree behind the collector cards is the same for every keeper and changes only with a taxonomy build, so it is built once per build and combined per request with the catalog facts, the app rarity and the keeper's derived ownership. The catalog facts stay a read per request, because corrections and the catalog fill change them without a new build. Caught stays derived live and is never stored. The cards are not paged by range, because search, filters and sorting (US-POK-08) span the whole tree. |

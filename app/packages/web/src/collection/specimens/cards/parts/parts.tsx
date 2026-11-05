@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
+import { Button } from "@/shared/ui/button/button";
+import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "../../model/refusal";
 import { dateText } from "../../model/text";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 /**
  * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
@@ -28,13 +28,18 @@ export function Plain({ children, className }: { children: ReactNode; className?
   return <div className={cn("min-w-0", className)}>{children}</div>;
 }
 
-export const TITLE = "mb-2 text-2xl font-semibold";
+/** A form's heading: a long word breaks instead of running past the edge at a large text size (US-QS-15, DS-61). */
+export const TITLE = "mb-2 break-words text-2xl font-semibold";
 export const SUBTITLE = "mb-1 text-xl font-semibold";
 
 /** Layout of the card grids (upward only, DS-12): one column on a phone, more as there is room. */
 export const GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3";
 /** The care profile cards are wider (a row of controls each): two columns at most. */
-export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 lg:grid-cols-2";
+/**
+ * The care profiles: two columns once their container is 42 rem wide, so the page shows two and the 384 px pane of the
+ * species profile one (a container query, not the window width: issue 1182). The parent carries `@container`.
+ */
+export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 @2xl:grid-cols-2";
 export const CARD =
   "grid min-w-0 content-start gap-1 break-words rounded-card bg-secondary p-3 text-secondary-foreground";
 

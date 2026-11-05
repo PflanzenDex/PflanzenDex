@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1520,
+  "maxTotal": 1283,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -118,10 +118,6 @@
       "count": 11
     },
     {
-      "file": "packages/web/src/care/measure/measure-page/course-layer/course-layer.tsx",
-      "count": 1
-    },
-    {
       "file": "packages/web/src/care/measure/measure-page/measure-page.tsx",
       "count": 3
     },
@@ -138,20 +134,8 @@
       "count": 8
     },
     {
-      "file": "packages/web/src/care/measure/measurement-header/measurement-photo/measurement-photo.tsx",
-      "count": 2
-    },
-    {
       "file": "packages/web/src/care/measure/measurement-header/photo-action/photo-action.tsx",
       "count": 6
-    },
-    {
-      "file": "packages/web/src/care/measure/measurement-list/measurement-list.tsx",
-      "count": 4
-    },
-    {
-      "file": "packages/web/src/care/phases/care-phases-page/care-phases-page.tsx",
-      "count": 1
     },
     {
       "file": "packages/web/src/care/phases/phases-list/entry/entry.tsx",
@@ -180,10 +164,6 @@
     {
       "file": "packages/web/src/care/plant-detail/plant-history/plant-history.tsx",
       "count": 1
-    },
-    {
-      "file": "packages/web/src/care/plant-detail/plant-phase/plant-phase.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/care/treatments/open-treatments/open-treatments.tsx",
@@ -250,10 +230,6 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/catalog/review/review-layer/layer-facts/layer-facts.tsx",
-      "count": 13
-    },
-    {
       "file": "packages/web/src/catalog/review/review-layer/review-layer.tsx",
       "count": 8
     },
@@ -288,10 +264,6 @@
     {
       "file": "packages/web/src/collection/archived/archived-list/archived-list.tsx",
       "count": 10
-    },
-    {
-      "file": "packages/web/src/collection/care-profile-page/care-profile-page.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/collection/care-profile/care-profile-list/care-profile-list.tsx",
@@ -362,24 +334,12 @@
       "count": 12
     },
     {
-      "file": "packages/web/src/collection/other-pages/hints-page/hints-page.tsx",
-      "count": 7
-    },
-    {
       "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
       "count": 6
     },
     {
-      "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
-      "count": 7
-    },
-    {
       "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-location/plant-location.tsx",
       "count": 4
-    },
-    {
-      "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-overview/plant-overview.tsx",
-      "count": 8
     },
     {
       "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layers.tsx",
@@ -406,119 +366,119 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/components/collector-card/collector-card.tsx",
+      "file": "packages/web/src/pokedex/pokedex-cards/collector-card/collector-card.tsx",
       "count": 13
     },
     {
-      "file": "packages/web/src/components/collector-card/rarity-note/rarity-note.tsx",
+      "file": "packages/web/src/pokedex/pokedex-cards/collector-card/rarity-note/rarity-note.tsx",
       "count": 7
     },
     {
-      "file": "packages/web/src/components/collector-cards/collector-cards.tsx",
+      "file": "packages/web/src/pokedex/pokedex-cards/collector-cards/collector-cards.tsx",
       "count": 3
     },
     {
-      "file": "packages/web/src/components/data-display/panels/pagination/load-more/load-more.tsx",
+      "file": "packages/web/src/shared/patterns/display/panels/pagination/load-more/load-more.tsx",
       "count": 3
     },
     {
-      "file": "packages/web/src/components/data-display/panels/pagination/pagination.tsx",
+      "file": "packages/web/src/shared/patterns/display/panels/pagination/pagination.tsx",
       "count": 6
     },
     {
-      "file": "packages/web/src/components/data-display/progress/step-indicator/step-indicator.tsx",
+      "file": "packages/web/src/shared/patterns/display/progress/step-indicator/step-indicator.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/routing/areas/account-area/account-area.tsx",
+      "file": "packages/web/src/app/destinations/account-area/account-area.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/routing/areas/account-area/account-index/account-index.tsx",
+      "file": "packages/web/src/app/destinations/account-area/account-index/account-index.tsx",
       "count": 7
     },
     {
-      "file": "packages/web/src/components/routing/areas/account-area/account-sections/account-sections.tsx",
+      "file": "packages/web/src/app/destinations/account-area/account-sections/account-sections.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/routing/areas/collection-area/area-header/area-header.tsx",
+      "file": "packages/web/src/app/destinations/collection-area/area-header/area-header.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/routing/areas/collection-area/collection-area.tsx",
+      "file": "packages/web/src/app/destinations/collection-area/collection-area.tsx",
       "count": 3
     },
     {
-      "file": "packages/web/src/components/routing/areas/collection-area/hand-over-routes/hand-over-routes.tsx",
+      "file": "packages/web/src/app/destinations/collection-area/hand-over-routes/hand-over-routes.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/routing/areas/discover-area/discover-area.tsx",
+      "file": "packages/web/src/app/destinations/discover-area/discover-area.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/routing/areas/today-area/today-area.tsx",
+      "file": "packages/web/src/app/destinations/today-area/today-area.tsx",
       "count": 4
     },
     {
-      "file": "packages/web/src/components/routing/areas/today-area/today-overview/today-overview.tsx",
-      "count": 11
+      "file": "packages/web/src/app/destinations/today-area/today-overview/today-overview.tsx",
+      "count": 5
     },
     {
-      "file": "packages/web/src/components/sammlung-header/sammlung-header.tsx",
+      "file": "packages/web/src/app/destinations/collection-area/sammlung-header/sammlung-header.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/sammlung-header/view-layer/view-layer.tsx",
+      "file": "packages/web/src/collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/shared/navigation/app-shell/app-shell.tsx",
+      "file": "packages/web/src/app/frame/app-shell/app-shell.tsx",
       "count": 3
     },
     {
-      "file": "packages/web/src/components/shared/navigation/mobile-nav-bar/mobile-nav-bar.tsx",
+      "file": "packages/web/src/app/frame/mobile-nav-bar/mobile-nav-bar.tsx",
       "count": 4
     },
     {
-      "file": "packages/web/src/components/shared/navigation/side-nav/side-nav.tsx",
+      "file": "packages/web/src/app/frame/side-nav/side-nav.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/shared/responsive/pager/pager.tsx",
+      "file": "packages/web/src/shared/patterns/responsive/pager/pager.tsx",
       "count": 4
     },
     {
-      "file": "packages/web/src/components/shared/responsive/responsive-table/fact-grid/fact-grid.tsx",
+      "file": "packages/web/src/shared/patterns/responsive/responsive-table/fact-grid/fact-grid.tsx",
       "count": 2
     },
     {
-      "file": "packages/web/src/components/shared/states/request-state/request-state.tsx",
+      "file": "packages/web/src/shared/patterns/states/request-state/request-state.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/shared/states/toast/toast-item/toast-item.tsx",
+      "file": "packages/web/src/shared/patterns/states/toast/toast-item/toast-item.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/display/more-help/more-help.tsx",
+      "file": "packages/web/src/shared/ui/display/more-help/more-help.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/fields/input/native-fields/date-field/date-field.tsx",
+      "file": "packages/web/src/shared/ui/fields/input/native-fields/date-field/date-field.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/fields/input/native-fields/file-field/file-field.tsx",
+      "file": "packages/web/src/shared/ui/fields/input/native-fields/file-field/file-field.tsx",
       "count": 4
     },
     {
-      "file": "packages/web/src/components/ui/fields/input/search-input/search-input.tsx",
+      "file": "packages/web/src/shared/ui/fields/input/search-input/search-input.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/components/ui/overlays/sheet/sheet.tsx",
+      "file": "packages/web/src/shared/ui/overlays/sheet/sheet.tsx",
       "count": 3
     },
     {
@@ -536,10 +496,6 @@
     {
       "file": "packages/web/src/equipment/equipment-page/equipment-screen/item-card/item-card.tsx",
       "count": 1
-    },
-    {
-      "file": "packages/web/src/equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
-      "count": 16
     },
     {
       "file": "packages/web/src/equipment/equipment-page/lamp-actions/save-with-undo.ts",
@@ -574,14 +530,6 @@
       "count": 6
     },
     {
-      "file": "packages/web/src/equipment/overviews/costs-view/costs-view.tsx",
-      "count": 3
-    },
-    {
-      "file": "packages/web/src/equipment/overviews/needs-view/needs-view.tsx",
-      "count": 4
-    },
-    {
       "file": "packages/web/src/equipment/overviews/needs-view/recommendations-view/recommendations-view.tsx",
       "count": 10
     },
@@ -594,40 +542,16 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/equipment/overviews/wishes-view/wishes-view.tsx",
-      "count": 10
-    },
-    {
       "file": "packages/web/src/equipment/overviews/zones-view/zones-view.tsx",
       "count": 8
-    },
-    {
-      "file": "packages/web/src/light/shared/ui/form/form.tsx",
-      "count": 1
     },
     {
       "file": "packages/web/src/light/shared/ui/message/message.tsx",
       "count": 1
     },
     {
-      "file": "packages/web/src/light/views/light-overview-view/light-overview-view.tsx",
-      "count": 6
-    },
-    {
-      "file": "packages/web/src/light/views/light-view/light-layers/light-layers.tsx",
-      "count": 12
-    },
-    {
       "file": "packages/web/src/light/views/light-view/light-row/light-row.tsx",
       "count": 2
-    },
-    {
-      "file": "packages/web/src/light/views/light-view/light-view.tsx",
-      "count": 1
-    },
-    {
-      "file": "packages/web/src/light/views/light-view/manage-lists/manage-lists.tsx",
-      "count": 15
     },
     {
       "file": "packages/web/src/light/views/rules-view/rules-view.tsx",
@@ -734,56 +658,28 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/shell/add-plant/add-plant.tsx",
+      "file": "packages/web/src/app/flows/add-plant/add-plant.tsx",
       "count": 8
     },
     {
-      "file": "packages/web/src/shell/add-plant/place-field/place-field.tsx",
-      "count": 2
-    },
-    {
-      "file": "packages/web/src/shell/function-overview/function-overview.tsx",
+      "file": "packages/web/src/app/flows/onboarding/function-overview/function-overview.tsx",
       "count": 14
     },
     {
-      "file": "packages/web/src/shell/onboarding-wizard/onboarding-wizard.tsx",
+      "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/onboarding-wizard.tsx",
       "count": 8
     },
     {
-      "file": "packages/web/src/shell/onboarding-wizard/save-step/save-step.tsx",
-      "count": 5
-    },
-    {
-      "file": "packages/web/src/shell/onboarding-wizard/species-step/species-step.tsx",
+      "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/species-step/species-step.tsx",
       "count": 7
     },
     {
-      "file": "packages/web/src/shell/onboarding-wizard/where-question/where-question.tsx",
-      "count": 6
-    },
-    {
-      "file": "packages/web/src/shell/today-intro/hint/hint-note/hint-note.tsx",
+      "file": "packages/web/src/app/flows/onboarding/today-intro/hint/hint-note/hint-note.tsx",
       "count": 3
     },
     {
-      "file": "packages/web/src/shell/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx",
-      "count": 4
-    },
-    {
-      "file": "packages/web/src/shell/unlock/locked-rows/locked-rows.tsx",
-      "count": 1
-    },
-    {
-      "file": "packages/web/src/shell/unlock/unlock-page/unlock-page.tsx",
+      "file": "packages/web/src/app/flows/unlock/unlock-page/unlock-page.tsx",
       "count": 11
-    },
-    {
-      "file": "packages/web/src/social/feed/feed-block/feed-block.tsx",
-      "count": 11
-    },
-    {
-      "file": "packages/web/src/social/feed/friends-banner/friends-banner.tsx",
-      "count": 9
     },
     {
       "file": "packages/web/src/social/feed/requests-notice/requests-notice.tsx",
@@ -804,10 +700,6 @@
     {
       "file": "packages/web/src/social/pages/friends-page/friend-layers/add-friend-layer/add-friend-layer.tsx",
       "count": 2
-    },
-    {
-      "file": "packages/web/src/social/pages/friends-page/friend-layers/friend-layers.tsx",
-      "count": 8
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friend-tiles/friend-tiles.tsx",
@@ -838,10 +730,6 @@
       "count": 13
     },
     {
-      "file": "packages/web/src/swap/pages/exchange/exchange.tsx",
-      "count": 8
-    },
-    {
       "file": "packages/web/src/swap/pages/match/match-card/match-card.tsx",
       "count": 10
     },
@@ -862,10 +750,6 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/swap/parts/friend-offers/friend-offers.tsx",
-      "count": 16
-    },
-    {
       "file": "packages/web/src/swap/parts/friend-offers/request-form/request-form.tsx",
       "count": 7
     },
@@ -882,14 +766,6 @@
       "count": 6
     },
     {
-      "file": "packages/web/src/swap/parts/offer-list/offer-list.tsx",
-      "count": 9
-    },
-    {
-      "file": "packages/web/src/swap/parts/swap-history/swap-history.tsx",
-      "count": 8
-    },
-    {
       "file": "packages/web/src/swap/parts/swap-requests/handover-box/handover-box.tsx",
       "count": 7
     },
@@ -900,14 +776,6 @@
     {
       "file": "packages/web/src/swap/parts/swap-requests/swap-card/swap-card.tsx",
       "count": 17
-    },
-    {
-      "file": "packages/web/src/swap/parts/swap-requests/swap-requests.tsx",
-      "count": 4
-    },
-    {
-      "file": "packages/web/src/today/today-page/today-page.tsx",
-      "count": 8
     },
     {
       "file": "packages/web/src/today/today-page/today-row/today-row.tsx",
@@ -938,10 +806,6 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/wishlist/hints/unfit-wishes/unfit-wishes.tsx",
-      "count": 3
-    },
-    {
       "file": "packages/web/src/wishlist/history/bought-list/bought-list.tsx",
       "count": 4
     },
@@ -962,19 +826,7 @@
       "count": 3
     },
     {
-      "file": "packages/web/src/wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
-      "count": 5
-    },
-    {
-      "file": "packages/web/src/wishlist/wishlist-page/parts/candidates/candidates.tsx",
-      "count": 5
-    },
-    {
       "file": "packages/web/src/wishlist/wishlist-page/rows/wish-row/wish-row.tsx",
-      "count": 4
-    },
-    {
-      "file": "packages/web/src/wishlist/wishlist-page/wishlist-page.tsx",
       "count": 4
     }
   ]

@@ -9,10 +9,10 @@ import {
   FormItem,
   FormLabel,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Select } from "@/components/ui/fields/select/select";
-import type { ApiError } from "../../../../kernel";
-import { loadCards } from "../../../specimens/cards/cards-api";
+} from "@/shared/ui/fields/form/form";
+import { Select } from "@/shared/ui/fields/select/select";
+import type { ApiError } from "../../../../shared/data";
+import { loadCard } from "../../../specimens/cards/cards-api";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
@@ -29,8 +29,9 @@ const NEXT_FOR_UNKNOWN =
 /** What the keeper sees after clearing: which zone applies again, from the freshly loaded card (P-09, P-08). */
 async function derivedText(api: string, token: string, id: string, name: string): Promise<string> {
   const head = `Die eigene Lichtzone von „${name}“ ist entfernt.`;
-  const r = await loadCards(api, token);
-  const card = r.ok ? r.value.find((c) => c.id === id) : undefined;
+  // The card of the one specimen, read again after the write: the zone that applies now (US-LIC-02).
+  const r = await loadCard(api, token, id);
+  const card = r.ok ? r.value : undefined;
   if (!card) return `${head} Welche Zone jetzt gilt, zeigt die Karte nach dem Neuladen.`;
   if (!card.lightZone) return `${head} ${NEXT_FOR_UNKNOWN}`;
   return `${head} Es gilt wieder die abgeleitete Zone: ${zoneText(card)}.`;

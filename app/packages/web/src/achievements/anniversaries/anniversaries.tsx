@@ -1,8 +1,8 @@
 import { useCallback } from "react";
-import { Button } from "@/components/ui/button/button";
-import { dateText } from "@/lib/format";
-import { useStoredPhoto } from "@/lib/use-stored-photo";
-import { useRequest } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { dateText } from "@/shared/lib/format";
+import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
+import { useRequest } from "../../shared/data";
 import {
   loadAnniversaries,
   type AnniversaryItem,

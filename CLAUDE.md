@@ -45,9 +45,15 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 - `make setup` activates the Git hooks in `.githooks/`: `commit-msg` (commitlint), `pre-commit` (Prettier and ESLint on staged files), `pre-push` (`make gates`). Never bypass them with `--no-verify`. CI repeats every check anyway.
 - The product epic MIG (import from the vault) was dropped; its IDs stay reserved.
 
+## Agent sessions and models
+
+- The orchestrating session (claims, briefs, reviews every diff, checks CI, writes the PR) runs on **Opus at effort medium**.
+- Implementation subagents run with **model `haiku` and effort `xhigh`** (Agent tool: `model: "haiku"`, `effort: "xhigh"`), not Sonnet (owner decision 2026-11-03).
+- Briefs stay precise: scope, files, done criteria, measure first, story ID in test names, commit and push only (never `make pr`, `make merge` or `gh pr merge`). The orchestrator reviews the diff and checks CI on the head itself before handing over.
+
 ## Priority of tickets
 
-Every open story or enabler on the project board "PflanzenDex Roadmap" needs the field **Priority** (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket; `make claim` and `make board` warn (they never block) when it is missing, `make status-check` lists all gaps. Rule of thumb (starting values, the owner may overrule per ticket):
+Every open story or enabler on the project board "PflanzenDex Roadmap" needs the field **Priority** (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket; `make claim` and `make board` warn (they never block) when it is missing, `make status-check` lists all gaps. Create tickets with `make issue` (FR-DEV-10): it sets the type and epic labels and the board fields Typ, Epic, Priority and Status (Todo) in one step. Rule of thumb (starting values, the owner may overrule per ticket):
 
 | Priority | Which tickets                                                                      |
 | -------- | ---------------------------------------------------------------------------------- |

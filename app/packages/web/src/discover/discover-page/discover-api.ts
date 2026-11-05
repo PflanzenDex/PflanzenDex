@@ -1,5 +1,5 @@
 import type { DecideResult, SuggestionDeck } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 /** Loads deck `deck` of the suggestions (US-ENT-01), optionally only for light zone `zone` (US-ENT-07): derived on every request, in the zone of the profile (NFR-08). */
 export function loadSuggestions(

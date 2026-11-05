@@ -52,12 +52,19 @@ const deps = (): OfferDependencies => ({
     ben: [{ id: FOREIGN, name: "Ficus", speciesId: "sp4", status: "plant" }],
   }),
   treatments: {
-    open: async (_u, ids) =>
-      new Map(ids.map((id) => [id, treatments.filter((t) => t.specimenId === id && !t.done)])),
-    done: async (_u, id) =>
-      treatments
-        .filter((t) => t.specimenId === id && t.done)
-        .sort((a, b) => (b.doneAt ?? "").localeCompare(a.doneAt ?? "")),
+    openAndLastDone: async (_u, ids) => ({
+      open: new Map(
+        ids.map((id) => [id, treatments.filter((t) => t.specimenId === id && !t.done)]),
+      ),
+      lastDone: new Map(
+        ids.flatMap((id) => {
+          const [last] = treatments
+            .filter((t) => t.specimenId === id && t.done)
+            .sort((a, b) => (b.doneAt ?? "").localeCompare(a.doneAt ?? ""));
+          return last ? [[id, last] as const] : [];
+        }),
+      ),
+    }),
   },
 });
 const run = <E, A>(op: Parameters<typeof execute<E, A>>[0], input: unknown, context = anna) =>
@@ -220,5 +227,42 @@ describe("US-SOZ-08 health details, phase hint and notice", () => {
     await create();
     const r = await offerList(deps(), "ben", "Europe/Berlin");
     expect(r.ok && r.value.offers).toEqual([]);
+  });
+});
+
+describe("US-SOZ-08 NFR-12 the list reads each source once for all offers", () => {
+  it("US-SOZ-08 NFR-12 the specimens, the treatments and the phases are asked once, not once per offer", async () => {
+    await create();
+    await create({ specimenId: S3, confirmTreatment: true });
+    const base = deps();
+    const asked: string[] = [];
+    const watched: OfferDependencies = {
+      ...base,
+      specimens: {
+        find: (u, id) => {
+          asked.push("find");
+          return base.specimens.find(u, id);
+        },
+        findMany: (u, ids) => {
+          asked.push("findMany");
+          return base.specimens.findMany(u, ids);
+        },
+      },
+      treatments: {
+        openAndLastDone: (u, ids) => {
+          asked.push("openAndLastDone");
+          return base.treatments.openAndLastDone(u, ids);
+        },
+      },
+      phases: {
+        phasesOf: (u, ids, tz) => {
+          asked.push("phasesOf");
+          return base.phases.phasesOf(u, ids, tz);
+        },
+      },
+    };
+    const r = await offerList(watched, "anna", "Europe/Berlin");
+    expect(r.ok && r.value.offers).toHaveLength(2);
+    expect(asked.sort()).toEqual(["findMany", "openAndLastDone", "phasesOf"]);
   });
 });

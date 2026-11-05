@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { RequestState } from "@/components/shared/states/request-state/request-state";
-import { SIGN_IN, type ApiError, type Request } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
+import { SIGN_IN, type ApiError, type Request } from "../../../shared/data";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 import { TreatmentForm } from "../treatment-form/treatment-form";
 import { TreatmentFormSkeleton } from "../treatments-page/treatments-page.skeleton";

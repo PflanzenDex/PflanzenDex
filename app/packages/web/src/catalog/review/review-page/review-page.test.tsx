@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ReviewPage } from "./review-page";
 import { ageText, issueText, movedText, summaryText } from "../review-text";
 
@@ -104,7 +104,11 @@ function server(initial: ReviewList, write: () => Promise<Response> = () => resp
 
 function Address() {
   const l = useLocation();
-  return <span data-testid="address">{l.pathname + l.search}</span>;
+  return (
+    <span data-testid="address" data-keep-focus={String(l.state?.keepFocus === true)}>
+      {l.pathname + l.search}
+    </span>
+  );
 }
 const address = () => screen.getByTestId("address").textContent ?? "";
 const show = (at = "/review") =>
@@ -306,6 +310,7 @@ describe("US-BES-10 review list shows the open cases", () => {
     await user.click(await screen.findByRole("button", { name: /Haworthia fasciata/ }));
     const dialog = await screen.findByRole("dialog", { name: "Haworthia fasciata" });
     expect(within(dialog).getByText(/Betreiber-Charge, bereits freigegeben/)).toBeTruthy();
+    expect(within(dialog).getByText("Vergeilungsanzeichen")).toBeTruthy();
     expect(within(dialog).queryByRole("button", { name: "Freigeben" })).toBeNull();
     expect(within(dialog).queryByRole("button", { name: "Zurückweisen" })).toBeNull();
   });
@@ -397,6 +402,38 @@ describe("US-QS-15 review list on one screen", () => {
     expect(
       within(again).getByRole("tab", { name: "Entscheiden" }).getAttribute("aria-selected"),
     ).toBe("true");
+  });
+
+  it("US-QS-08 the choice Offen or Freigegeben keeps the focus on its control (issue 1315)", async () => {
+    server(list([entry()]));
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: /Freigegeben/ }));
+    expect(screen.getByTestId("address").getAttribute("data-keep-focus")).toBe("true");
+  });
+
+  it("US-QS-15 the texts tab is in the address too and shows the free texts (issue 1283)", async () => {
+    server(list([entry()]));
+    show("/review?sheet=case-c1&ltab=texts");
+    const dialog = await screen.findByRole("dialog", { name: "Echeveria elegans" });
+    expect(
+      within(dialog).getByRole("tab", { name: "Beschreibung" }).getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(within(dialog).getByText("Vergeilungsanzeichen")).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: "Freigeben" })).toBeTruthy();
+  });
+
+  it("NFR-13 the three tabs of a case wrap at 200 % text instead of scrolling sideways", async () => {
+    server(list([entry()]));
+    show();
+    const dialog = await openRow("Echeveria elegans");
+    const strip = within(dialog).getByRole("tablist", {
+      name: "Angaben, Beschreibung oder Entscheidung",
+    });
+    expect(strip.className.split(" ")).toContain("flex-wrap");
+    expect(strip.className.split(" ")).not.toContain("overflow-x-auto");
+    for (const tab of within(dialog).getAllByRole("tab"))
+      expect(tab.className.split(" ")).toContain("min-w-fit");
   });
 
   it("US-QS-15 from 1024 px the case stands beside the list as a pane, not as a dialog", async () => {

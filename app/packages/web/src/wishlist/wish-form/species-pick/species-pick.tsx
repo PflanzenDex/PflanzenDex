@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { SpeciesHit } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { SearchInput } from "@/components/ui/fields/input/search-input/search-input";
-import { Label } from "@/components/ui/display/label/label";
+import { Button } from "@/shared/ui/button/button";
+import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+import { Label } from "@/shared/ui/display/label/label";
 import { searchSpecies } from "../../../catalog";
 
 type Token = () => Promise<string | undefined>;

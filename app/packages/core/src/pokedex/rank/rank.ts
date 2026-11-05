@@ -5,7 +5,7 @@ export type CollectorRank =
   "seedling" | "sapling" | "young_plant" | "bloomer" | "treetop" | "botanist";
 
 /** Lowest number of caught species of each rank, ascending. */
-const RANKS: readonly { rank: CollectorRank; from: number }[] = [
+export const COLLECTOR_RANKS: readonly { rank: CollectorRank; from: number }[] = [
   { rank: "seedling", from: 0 },
   { rank: "sapling", from: 5 },
   { rank: "young_plant", from: 15 },
@@ -48,10 +48,10 @@ function treeFigures(caught: number, tree: TreeTotals | null) {
 export function collectorProgress(caught: number, tree: TreeTotals | null): CollectorProgress {
   const index = Math.max(
     0,
-    RANKS.findLastIndex((r) => caught >= r.from),
+    COLLECTOR_RANKS.findLastIndex((r) => caught >= r.from),
   );
-  const current = RANKS[index] ?? RANKS[0];
-  const upcoming = RANKS[index + 1];
+  const current = COLLECTOR_RANKS[index] ?? COLLECTOR_RANKS[0];
+  const upcoming = COLLECTOR_RANKS[index + 1];
   return {
     rank: current?.rank ?? "seedling",
     next: upcoming ? { rank: upcoming.rank, remaining: upcoming.from - caught } : null,

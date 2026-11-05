@@ -19,6 +19,14 @@ const REGISTER: Record<string, readonly [Status, string]> = {
   species_status: ["scoped", "catalog status or own case"],
   species_own: ["scoped", "own review case"],
   species_is_merged: ["scoped", "own review case"],
+  species_review_copy: [
+    "id-bound",
+    "review case of the species being inserted, by its object id (NFR-12)",
+  ],
+  review_case_species_sync: [
+    "id-bound",
+    "species row of the changed review case, by its object id (NFR-12)",
+  ],
   is_open_proposal: ["gated", "reviewers read all open proposals"],
   lock_species_for_merge: ["gated", "reviewer lock"],
   invitation_required: ["gated", "one global setting row"],

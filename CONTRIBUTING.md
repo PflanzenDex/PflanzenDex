@@ -4,6 +4,7 @@ Short version for humans and agents. The rules themselves live in the specs; thi
 
 1. **Spec first.** Every change belongs to a story or requirement in `docs/specs/product/` (start with `README.md`). If it is missing, extend the spec first. Everything is written in English (specs, docs, code, commits, PRs); only the texts users see in the app are German.
 2. **One task, one branch, one worktree** (E-13, US-DEV-08): `make worktree BRANCH=feat/pha-02-care-phase`. Branches start from `dev`.
+   Create issues with `make issue` (type, epic and priority labels and board fields; FR-DEV-10): a type or epic label outside `app/config/project/issue-taxonomy.json` is refused, and an issue without both gets `needs-triage`.
 3. **Tests from the acceptance criteria**, with the story ID in the test name (P-06).
 4. **`make ci`** green locally before opening the PR. `make help` lists all targets.
 5. **PR into `dev`** with a Conventional Commits title; `make pr` pushes and marks the draft PR ready for review (US-DEV-10) (`feat(pha): …`, `fix(bes): …`, `docs: …`); the squash turns it into the commit message. Fill in the template and update the spec status in the same PR.

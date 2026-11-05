@@ -1,9 +1,20 @@
-import { test } from "node:test";
+import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { digest, parseArgs, runQuiet } from "./quiet.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 test("US-DEV-12: parseArgs reads --tail, --log and the command after --", () => {
   assert.deepEqual(parseArgs(["--tail", "3", "--log", "x.log", "--", "make", "ci"]), {
@@ -28,7 +39,7 @@ test("US-DEV-12: digest caps failure lines at 20", () => {
 });
 
 test("US-DEV-12: success prints one line, keeps the full log and passes exit code 0", () => {
-  const dir = mkdtempSync(join(tmpdir(), "quiet-"));
+  const dir = tempDir("quiet-");
   const log = join(dir, "run.log");
   const res = runQuiet({ tail: 5, log, command: [process.execPath, "-e", "console.log('hello')"] });
   assert.equal(res.code, 0);
@@ -39,7 +50,7 @@ test("US-DEV-12: success prints one line, keeps the full log and passes exit cod
 });
 
 test("US-DEV-12: failure passes the exit code and reports failure lines, tail and log path", () => {
-  const dir = mkdtempSync(join(tmpdir(), "quiet-"));
+  const dir = tempDir("quiet-");
   const log = join(dir, "run.log");
   const script =
     "for(let i=0;i<40;i++)console.log('line '+i);console.error('Error: boom');process.exit(3)";
@@ -53,7 +64,7 @@ test("US-DEV-12: failure passes the exit code and reports failure lines, tail an
 });
 
 test("US-DEV-12: a command that cannot start is a failure, not silence", () => {
-  const dir = mkdtempSync(join(tmpdir(), "quiet-"));
+  const dir = tempDir("quiet-");
   const res = runQuiet({
     tail: 3,
     log: join(dir, "r.log"),

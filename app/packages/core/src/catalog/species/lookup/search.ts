@@ -1,16 +1,17 @@
 import { isId } from "../../../kernel";
 import { normalize } from "../naming/name";
-import type { Species, SpeciesStore, SpeciesHit } from "../types";
+import type { Species, SpeciesSearch, SpeciesStore } from "../types";
 
 /**
  * Searches by Latin, German, English name or synonym (a partial word suffices, case and
- * accents ignored). An empty search text lists all visible species. What is seen is what the user may see.
+ * accents ignored). An empty search text lists all visible species. What is seen is what the user may see. The answer
+ * shows at most the cap and says whether more species match (FR-BES-24).
  */
 export function speciesSearch(
   store: SpeciesStore,
   userId: string,
   text: string,
-): Promise<readonly SpeciesHit[]> {
+): Promise<SpeciesSearch> {
   return store.search(userId, normalize(text) || null);
 }
 

@@ -173,3 +173,38 @@ describe("US-POK-13 rarity in nature in the database", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("NFR-12 statistics of the taxon table", () => {
+  it("NFR-12 the replacement runs ANALYZE on taxon, so the planner sees the new tree", async () => {
+    const analyses = async () => {
+      await pool.query("select pg_stat_clear_snapshot()");
+      const r = await pool.query<{ n: string }>(
+        "select analyze_count::text as n from pg_stat_user_tables where relname = 'taxon'",
+      );
+      return Number(r.rows[0]?.n ?? 0);
+    };
+    const before = await analyses();
+    await store.replace(build("f1"));
+    // The backend reports its statistics when it goes idle (about a second): poll for the new count.
+    let after = await analyses();
+    for (let i = 0; i < 60 && after === before; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      after = await analyses();
+    }
+    expect(after).toBeGreaterThan(before);
+  });
+
+  it("FR-POK-13 the version of the stored tree names its build and changes with every build", async () => {
+    expect(await store.version()).toBeNull();
+    await store.replace(build("f1"));
+    const first = await store.version();
+    expect(first).toContain("f1");
+    await store.replace(build("f2"));
+    const second = await store.version();
+    expect(second).toContain("f2");
+    expect(second).not.toBe(first);
+    // The same names built again at another time are another version: a build never reuses an older one's key.
+    await store.replace(build("f2", { builtAt: "2026-10-07T10:00:00Z" }));
+    expect(await store.version()).not.toBe(second);
+  });
+});

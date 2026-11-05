@@ -1,4 +1,11 @@
-import { execute, type Dependencies, type Operation } from "@pflanzendex/core";
+import {
+  appError,
+  execute,
+  type AppError,
+  type Dependencies,
+  type Operation,
+} from "@pflanzendex/core";
+import { isDatabaseUnavailable } from "@pflanzendex/db";
 import type { Context } from "hono";
 import type { AuthEnv } from "./auth-env";
 import { errorBody, statusFor } from "./error-http";
@@ -27,10 +34,21 @@ export async function write<E, A>(
     idempotencyKey: c.req.header("idempotency-key") || undefined,
   });
   if (!r.ok) {
-    if (r.error.code === "system.unexpected") console.error("Operation failed", r.error.cause);
-    return c.json(errorBody(r.error), statusFor(r.error));
+    const failure = answeredFailure(r.error);
+    if (failure.code === "system.unexpected") console.error("Operation failed", failure.cause);
+    return c.json(errorBody(failure), statusFor(failure));
   }
   return c.json(form.wrapper ? form.wrapper(r.value) : (r.value as object), form.success ?? 200);
+}
+
+/**
+ * A database that did not answer inside an operation (statement or lock timeout, no connection) is answered with its own
+ * stable code instead of `system.unexpected`, so the client knows that a retry may help (NFR-12, P-10).
+ */
+function answeredFailure(error: AppError): AppError {
+  if (error.code !== "system.unexpected" || !isDatabaseUnavailable(error.cause)) return error;
+  console.error("Database unavailable", (error.cause as { message?: unknown }).message);
+  return appError("system.database_unavailable");
 }
 
 /** The JSON body as an object; anything else counts as empty and fails input validation. */

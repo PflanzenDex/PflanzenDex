@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "../../equipment-page/equipment-page";
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
@@ -102,8 +102,10 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
   it("US-EQU-08 sends only the given fields of a new wish and refuses a missing name before sending", async () => {
     const fetchFn = fakeServer({ open: [], bought: [], discarded: [] });
     view();
-    const form = await screen.findByRole("form", { name: "Equipment-Wunsch erfassen" });
     const user = userEvent.setup();
+    // The form is a layer of its own (issue 1154): the button in the wishes opens it.
+    await user.click(await screen.findByRole("button", { name: "Equipment-Wunsch erfassen" }));
+    const form = await screen.findByRole("form", { name: "Equipment-Wunsch erfassen" });
     await user.selectOptions(within(form).getByLabelText("Art des Wunsches"), "Timer");
     await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
     expect(await within(form).findByText("Bitte gib einen Namen an.")).toBeTruthy();
@@ -111,10 +113,48 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     await user.type(within(form).getByLabelText("Name des Wunsches"), "Zeitschaltuhr");
     await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText("Equipment-Wunsch „Zeitschaltuhr“ gespeichert.");
+    // Saving closes the form layer, so the keeper is back at the wishes (issue 1154).
+    await waitFor(() =>
+      expect(screen.queryByRole("form", { name: "Equipment-Wunsch erfassen" })).toBeNull(),
+    );
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       equipmentType: "Timer",
       name: "Zeitschaltuhr",
     });
+  });
+
+  it("US-EQU-08 · US-QS-15 · issue 1154 a segment shows one group with its count, paged by the free height of the layer", async () => {
+    fakeServer({
+      open: [wish()],
+      bought: [wish({ id: "w2", name: "Heizmatte", status: "bought" })],
+      discarded: [],
+    });
+    view();
+    const user = userEvent.setup();
+    const open = await screen.findByRole("list", { name: "Offene Equipment-Wünsche" });
+    expect(open.hasAttribute("data-page-fit")).toBe(true);
+    const segment = screen.getByRole("group", { name: "Equipment-Wünsche nach Stand" });
+    expect(
+      within(segment)
+        .getByRole("button", { name: /Offen \(1\)/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    await user.click(within(segment).getByRole("button", { name: /Gekauft \(1\)/ }));
+    const bought = screen.getByRole("list", { name: "Gekaufte Equipment-Wünsche" });
+    expect(within(bought).getByText("Heizmatte")).toBeTruthy();
+    // A bought wish offers no buy or discard again.
+    expect(within(bought).queryByRole("button")).toBeNull();
+    await user.click(within(segment).getByRole("button", { name: /Verworfen \(0\)/ }));
+    expect(screen.getByText("Noch kein Equipment-Wunsch verworfen.")).toBeTruthy();
+  });
+
+  it("US-EQU-08 · issue 1154 the layer does not repeat its title as a visible heading", async () => {
+    fakeServer({ open: [wish()], bought: [], discarded: [] });
+    view();
+    await screen.findByRole("list", { name: "Offene Equipment-Wünsche" });
+    // The layer's own title is the visible one; the section heading is for screen readers only.
+    const heading = document.getElementById("equipment-wishes-title") as HTMLElement;
+    expect(heading.className).toContain("sr-only");
   });
 });

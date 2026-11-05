@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { daysAgo, type Ctx } from "../../accounts/common/shared.ts";
+import type { Ctx } from "../../accounts/common/shared.ts";
 
 // Roles, the review queue and the operator area (TE-08, US-BES-10, US-ACC-05, US-BES-13).
 
@@ -87,7 +87,9 @@ export async function reviewCases(ben: Ctx, clara: Ctx): Promise<void> {
  * invitation (the code itself is shown once and not kept; only its state is seen in the overview). Idempotent.
  */
 export async function operatorArea(clara: Ctx): Promise<void> {
-  const month = daysAgo(0).slice(0, 7); // the current month in the keeper zone (NFR-08)
+  // The month of the server's UTC clock, the clock `operator_cost.set` checks against (operator-cost.ts), not the
+  // keeper's zone: in the last hours of a month Berlin is already in the next month and the check would refuse it (#1111).
+  const month = new Date().toISOString().slice(0, 7);
   await clara.api.ok(clara.sub, "PUT", "/operator/cost", {
     amountCents: 4200,
     currency: "EUR",

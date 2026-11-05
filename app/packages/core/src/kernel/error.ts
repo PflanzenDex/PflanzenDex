@@ -13,6 +13,8 @@ export const ERROR_TEXTS = {
     "Zu viele Änderungen in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
   "system.unexpected":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
+  "system.database_unavailable":
+    "Die Datenbank antwortet gerade nicht rechtzeitig. Lade die Seite neu und versuche es in einer Minute erneut.",
   "invitation.invalid":
     "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code.",
   "invitation.required":

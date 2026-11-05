@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { collectorProgress, type CollectorRank as Rank, type TreeTotals } from "@pflanzendex/core";
 
 export const PROGRESS_LAYER = "progress";

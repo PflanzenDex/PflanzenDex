@@ -1,7 +1,7 @@
 import type { Distribution } from "@pflanzendex/core";
 import { Gauge } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { zoneLabel } from "@pflanzendex/core";
 
 /** The id of the layer with the distribution per light zone (`?sheet=zones`, US-QS-19). */
@@ -27,7 +27,7 @@ export function ZoneInsightRow({ distribution }: { distribution: Distribution })
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="flex-1 justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
+      className="grow basis-[11rem] justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
     >
       <Gauge aria-hidden="true" className="size-4 shrink-0" />
       <span className="break-normal">{zoneInsightText(distribution)}</span>

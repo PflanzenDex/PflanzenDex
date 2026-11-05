@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { localToday } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { FormRoot } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
-import { currentTimeZone } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { FormRoot } from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { currentTimeZone } from "../../../shared/data";
 import type { MeasurementInput } from "../../equipment-api";
 import { wholeNumber } from "../parse";
 

@@ -58,21 +58,30 @@ async function label(handle: Found): Promise<string> {
   });
 }
 
-const regionHandle = (page: Page): Promise<Found> =>
-  page.evaluateHandle(() => {
-    let best: Element | null = null;
-    let ratio = 0;
-    for (const el of document.querySelectorAll("*")) {
-      const style = getComputedStyle(el);
-      const scrolls = /(auto|scroll)/.test(style.overflowY) && style.visibility !== "hidden";
-      if (!scrolls || el.clientHeight < 80 || el.getClientRects().length === 0) continue;
-      if (el.scrollHeight / el.clientHeight > ratio) {
-        ratio = el.scrollHeight / el.clientHeight;
-        best = el;
+// The inner region of one axis: the visible element with `overflow-y|x: auto | scroll` and the largest content ratio.
+// `unmarked` leaves out rows that are meant to scroll sideways (`data-scroll-x="row"`, owner decision on issue 1183).
+const regionHandle = (page: Page, axis: "y" | "x", unmarked = false): Promise<Found> =>
+  page.evaluateHandle(
+    ([dir, skip]) => {
+      let best: Element | null = null;
+      let ratio = 0;
+      for (const el of document.querySelectorAll("*")) {
+        if (skip && el.closest('[data-scroll-x="row"]')) continue;
+        const style = getComputedStyle(el);
+        const mode = dir === "y" ? style.overflowY : style.overflowX;
+        const client = dir === "y" ? el.clientHeight : el.clientWidth;
+        const scroll = dir === "y" ? el.scrollHeight : el.scrollWidth;
+        const scrolls = /(auto|scroll)/.test(mode) && style.visibility !== "hidden";
+        if (!scrolls || client < 80 || el.getClientRects().length === 0) continue;
+        if (scroll / client > ratio) {
+          ratio = scroll / client;
+          best = el;
+        }
       }
-    }
-    return best;
-  });
+      return best;
+    },
+    [axis, unmarked] as const,
+  );
 
 const farthestHandle = (page: Page, axis: "bottom" | "right"): Promise<Found> =>
   page.evaluateHandle((side) => {
@@ -142,14 +151,22 @@ async function paintOf(page: Page): Promise<Raw["paint"]> {
 }
 
 async function regionOf(page: Page): Promise<Raw["region"]> {
-  const handle = await regionHandle(page);
+  const handle = await regionHandle(page, "y");
   const size = await handle.evaluate((el) =>
     el ? { scrollHeight: el.scrollHeight, clientHeight: el.clientHeight } : null,
   );
   return size ? { ...size, el: await label(handle) } : null;
 }
 
-/** Measures the open page at its current window size (issue 1137): page height, scroll regions, sideways overflow, painted width. */
+async function regionXOf(page: Page, unmarked = false): Promise<Raw["regionX"]> {
+  const handle = await regionHandle(page, "x", unmarked);
+  const size = await handle.evaluate((el) =>
+    el ? { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth } : null,
+  );
+  return size ? { ...size, el: await label(handle) } : null;
+}
+
+/** Measures the open page at its current window size (issue 1137): page height and width, scroll regions in both directions, painted width. */
 export async function measure(page: Page, withPaint: boolean): Promise<Raw> {
   const dims = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
@@ -163,6 +180,8 @@ export async function measure(page: Page, withPaint: boolean): Promise<Raw> {
   return {
     ...dims,
     region: await regionOf(page),
+    regionX: await regionXOf(page),
+    regionXUnmarked: await regionXOf(page, true),
     pageEl:
       dims.scrollHeight > dims.innerHeight + 1
         ? await label(await farthestHandle(page, "bottom"))

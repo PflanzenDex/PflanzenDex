@@ -2,12 +2,14 @@ import {
   appError,
   careProfileTargetLocation,
   failed,
+  imageReader,
   measurementPhotoById,
   type ObjectStore,
   type PhotoSource,
   measurementSource,
   treatmentSource,
   type MeasurementSource,
+  type MeasuredSource,
   type TreatmentSource,
   type TargetLocationSource,
 } from "@pflanzendex/core";
@@ -22,6 +24,12 @@ import type { Pool } from "pg";
 /** The port "Measurements per specimen" of the specimen cards (US-BES-06), fed by the measurements (US-WAC-01). */
 export function measurementSourceFor(pool: Pool): MeasurementSource {
   return measurementSource({ measurements: new MeasurementsPostgres(pool) });
+}
+
+/** The port "Measured plants" of the card summary (US-BES-06), fed by the measurements (US-WAC-01). */
+export function measuredSourceFor(pool: Pool): MeasuredSource {
+  const measurements = new MeasurementsPostgres(pool);
+  return { measuredSpecimenIds: (userId) => measurements.measuredSpecimenIds(userId) };
 }
 
 /** The port "Open treatments per specimen" of the specimen cards (US-BES-06), fed by the planned treatments (US-BEH-01). */
@@ -45,6 +53,6 @@ export function measurementPhotoSourceFor(
   };
   return async (userId, measurementId) =>
     media
-      ? measurementPhotoById({ ...deps, objects: media.store }, userId, measurementId)
+      ? measurementPhotoById({ ...deps, images: imageReader(media.store) }, userId, measurementId)
       : failed(appError("media.storage_unavailable"));
 }

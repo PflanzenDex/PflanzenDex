@@ -1,7 +1,12 @@
 name: Bug
 description: Something behaves differently than the spec describes.
 projects: ["PflanzenDex/2"] # type, release and epic are set on the board (fields Typ, Release, Epic)
+labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        The label `bug` is set by this form. An epic label (`epic:XX`) is required too (FR-DEV-10): without it the issue gets the label `needs-triage` and a comment naming what is missing.
   - type: input
     id: spec
     attributes:

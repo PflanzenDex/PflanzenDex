@@ -5,10 +5,10 @@ import {
   LayerOpener,
   LayerSheet,
   useLayer,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
-import type { ApiError, Request } from "../../kernel";
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { OFFLINE_NOTE } from "@/shared/patterns/states/request-state/request-state";
+import type { ApiError, Request } from "../../shared/data";
 import { useOpenId, useProfile, useSearch, useSend } from "../species-hooks";
 import { SpeciesProfile } from "../profile-view/profile-view";
 import { SpeciesSearch } from "../search-view/search-view";
@@ -22,6 +22,19 @@ type View = { kind: "search" } | { kind: "profile" };
 const PROPOSE_LAYER = "propose";
 /** The layer with my care profile of the species (`?sheet=care`, US-BES-09, US-QS-21). */
 const CARE_LAYER = "care";
+/**
+ * The opener of the care profile in the action bar: 48 px at normal text like before, but it grows with its label at a
+ * larger text size. The side padding is 20 px at any text size (the value of `px-5` at normal text), so "Pflegeprofil"
+ * fits the button at 200 % text (issue 1217).
+ */
+const CARE_OPENER = "h-auto min-h-12 px-[20px] py-0";
+/**
+ * The card around the profile: 16 px of padding at normal text (`p-4`), shrinking as the text grows, so the title beside
+ * the back control gets the room (NFR-13, issue 1216). The padding is 24 px less half of 1 rem, never under 8 px: 16 px at
+ * 100 % text, 8 px at 200 %. From 768 px it keeps the wide padding of the page (`md:p-7`).
+ */
+const PROFILE_CARD =
+  "flex min-h-0 min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-border bg-card px-[max(8px,calc(24px_-_0.5rem))] py-[max(8px,calc(24px_-_0.5rem))] text-card-foreground md:p-7";
 
 function ProfilePage(props: {
   profile: Request<Species>;
@@ -65,7 +78,7 @@ function ProfilePage(props: {
             embedded={props.embedded}
             extra={
               props.section && (
-                <LayerOpener id={CARE_LAYER} className="h-12">
+                <LayerOpener id={CARE_LAYER} className={CARE_OPENER}>
                   Mein Pflegeprofil
                 </LayerOpener>
               )
@@ -110,6 +123,13 @@ type SpeciesPageProps = {
   embedded?: boolean;
 };
 
+/** The address without its layer (`sheet`): the page of the list stays. */
+function withoutSheet(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+  next.delete("sheet");
+  return next;
+}
+
 /**
  * Search, view, choose or propose a species in the catalog (US-BES-01). "Choose" reports the species outward; the
  * specimen for it is created by `collection` (US-BES-02), the app wires both (`catalog` does not know `collection`).
@@ -127,9 +147,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
   const open = (id: string) => {
     // The profile is no place for a layer: it leaves the address (replace, no new entry); the page of the list stays.
     if (params.has("sheet")) {
-      const next = new URLSearchParams(params);
-      next.delete("sheet");
-      setParams(next, { replace: true });
+      setParams(withoutSheet(params), { replace: true });
     }
     setView({ kind: "profile" });
     setProfileId(id);
@@ -144,12 +162,13 @@ export function SpeciesPage(props: SpeciesPageProps) {
   };
   const searchError = view.kind === "search" ? search.error : null;
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-4 text-card-foreground md:p-7">
+    <div className={PROFILE_CARD}>
       {searchError && <SearchFailure error={searchError} onRetry={search.retry} />}
       {view.kind === "search" && (
         <SpeciesSearch
           searchText={searchText}
           hit={search.hit}
+          more={search.more}
           loading={search.loading}
           failed={searchError !== null}
           onSearch={setSearchText}

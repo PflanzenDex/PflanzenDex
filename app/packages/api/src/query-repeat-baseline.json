@@ -1,0 +1,49 @@
+{
+  "GET /discover/suggestions": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /equipment/zones": [
+    "select id, name, lux_ceiling as \"luxCeiling\", ppfd, sort_order as \"sortOrder\" from light_zone order "
+  ],
+  "GET /exchange/match": [
+    "select swap_id as \"swapId\", role, other_id as \"otherId\", other_name as \"otherName\", offer_id as \"off",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select id, name, german, target_zone_id as \"targetZoneId\", difficulty, reasoning, image_url as \"imag",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /exchange/offers": [
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select id, specimen_id as \"specimenId\", reason, agent, to_char(due_at, 'YYYY-MM-DD') as \"dueAt\", don",
+    "select species_id as \"speciesId\", growth_location_id as \"growthLocationId\", dormancy_location_id as ",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /feed": [
+    "select specimen_id as \"specimenId\", share_photos as photos from friend_shares($1)",
+    "select display_name as \"displayName\", time_zone as \"timeZone\", everything_private as \"everythingPriv",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as "
+  ],
+  "GET /friends": [
+    "select specimen_id as \"specimenId\", share_photos as photos from friend_shares($1)",
+    "select display_name as \"displayName\", time_zone as \"timeZone\", everything_private as \"everythingPriv",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau",
+    "select a.id, a.latin_name as \"latinName\", a.genus as \"genus\", a.epithet as \"epithet\", a.cultivar as ",
+    "select id, species_id as \"speciesId\", name, marker, location_id as \"locationId\", status, to_char(cau"
+  ],
+  "GET /specimens/:id/measurements": [
+    "select id from account where subject = $1",
+    "select invitation_required() as required"
+  ],
+  "GET /wishes/candidates": [
+    "select id, name, lux_ceiling as \"luxCeiling\", ppfd, sort_order as \"sortOrder\" from light_zone order "
+  ]
+}

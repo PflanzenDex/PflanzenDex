@@ -388,7 +388,7 @@ describe("US-ACC-05 invitation codes", () => {
   });
 
   it("US-ACC-05 shows the expiry in the time zone of the profile", async () => {
-    const { setProfileTimeZone } = await import("../../../kernel");
+    const { setProfileTimeZone } = await import("../../../shared/data");
     setProfileTimeZone("Pacific/Auckland");
     current = overview({
       invitations: [
@@ -453,6 +453,12 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Weiter" }));
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(within(dialog).getByText("Seite 2 von 2")).toBeTruthy();
+  });
+
+  it("US-QS-15 the page is one screen (DS-61): its frame marks the fit, so at a large text size only the content region scrolls", async () => {
+    show();
+    const heading = await screen.findByRole("heading", { name: "Betreiber" });
+    expect(heading.closest("[data-fit-screen]")).not.toBeNull();
   });
 });
 

@@ -1,4 +1,10 @@
 import type { Pool, PoolClient } from "pg";
+import {
+  beginPlain,
+  enterApplicationRole,
+  inTransaction,
+  LONG_LIMITS,
+} from "../../kernel/index.ts";
 
 /**
  * A species ready to be stored: parsed and normalized by the caller (the `db` package does not parse names). It has no
@@ -65,13 +71,11 @@ export class CatalogLoadPostgres {
     provenance: LoadProvenance,
     extra?: LoadExtraWrite,
   ): Promise<readonly string[]> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("begin");
+    return inTransaction(this.pool, beginPlain, async (client) => {
       // One loader at a time: a second run waits and then finds everything present.
       await client.query("select pg_advisory_xact_lock(hashtext($1))", [LOCK_KEY]);
-      await client.query("set local role pflanzendex_app");
-      await client.query("select set_config('app.account_id', $1, true)", [operator]);
+      // A load writes many species in one transaction: the long-operation limits (NFR-12).
+      await enterApplicationRole(client, LONG_LIMITS, [["app.account_id", operator]]);
       const created: { id: string; record: LoadRecord }[] = [];
       for (const record of records) {
         const id = await insertIfNew(client, operator, record);
@@ -81,14 +85,8 @@ export class CatalogLoadPostgres {
       await client.query("reset role");
       for (const { id, record } of created) await saveProvenance(client, id, record, provenance);
       if (extra) await extra(client);
-      await client.query("commit");
       return created.map((c) => c.record.latinName);
-    } catch (error) {
-      await client.query("rollback").catch(() => undefined);
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 }
 

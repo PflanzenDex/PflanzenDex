@@ -34,6 +34,49 @@ afterAll(async () => {
 });
 
 describe("US-QS-03 job queue in the database", () => {
+  it("US-QS-03 a queue without a limit hands out every type, so a job of an unregistered type ends dead and visible (P-10)", async () => {
+    const { job: stored } = await queue.enqueue(job({ type: "test.nobody_handles_this" }));
+    expect(await queue.claim("w1", T0, 1000)).toMatchObject({ id: stored.id });
+  });
+
+  it("US-QS-03 a queue limited to its types does not hand out a foreign job", async () => {
+    const limited = new JobsPostgres(pool, { onlyTypes: ["test.mine"] });
+    await queue.enqueue(job({ type: "test.foreign" }));
+    expect(await limited.claim("w1", T0, 1000)).toBeNull();
+    const { job: mine } = await queue.enqueue(job({ type: "test.mine" }));
+    expect(await limited.claim("w1", T0, 1000)).toMatchObject({ id: mine.id });
+  });
+
+  it("US-QS-03 a queue limited to its types does not sweep a foreign job: no takeover, no death, no expiry", async () => {
+    const limited = new JobsPostgres(pool, { onlyTypes: ["test.mine"] });
+    const later = at(60_000);
+    const lost = await queue.enqueue(job({ type: "test.lost" }));
+    await queue.claim("w1", T0, 1000);
+    const dying = await queue.enqueue(job({ type: "test.dying", maxAttempts: 1 }));
+    await queue.claim("w1", T0, 1000);
+    const expiring = await queue.enqueue(job({ type: "test.expiring", expiresAt: at(1) }));
+    expect(await limited.claim("w2", later, 1000)).toBeNull();
+    const { rows } = await pool.query<{ id: string; status: string }>("select id, status from job");
+    const status = new Map(rows.map((r) => [r.id, r.status]));
+    expect(status.get(lost.job.id)).toBe("running");
+    expect(status.get(dying.job.id)).toBe("running");
+    expect(status.get(expiring.job.id)).toBe("queued");
+  });
+
+  it("US-QS-03 a queue limited to its types purges only its own finished jobs", async () => {
+    const limited = new JobsPostgres(pool, { onlyTypes: ["test.mine"] });
+    for (const type of ["test.foreign", "test.mine"]) {
+      const { job: stored } = await queue.enqueue(job({ type }));
+      await pool.query("update job set status = 'succeeded', finished_at = $2 where id = $1", [
+        stored.id,
+        T0,
+      ]);
+    }
+    expect(await limited.purge(at(1))).toBe(1);
+    const { rows } = await pool.query<{ type: string }>("select type from job");
+    expect(rows.map((r) => r.type)).toEqual(["test.foreign"]);
+  });
+
   it("US-QS-03 enqueue stores a queued job that claim hands out once and counts the attempt", async () => {
     const { job: stored, created } = await queue.enqueue(job());
     expect(created).toBe(true);

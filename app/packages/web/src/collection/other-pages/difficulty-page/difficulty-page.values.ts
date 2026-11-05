@@ -5,8 +5,8 @@ import {
   isUnknown,
   missingText,
   type Fact,
-} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
-import { keepTogether } from "@/lib/format";
+} from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { keepTogether } from "@/shared/lib/format";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 /** Unknown difficulty is `null` (P-08), never "Leicht"; the fold shows it (US-QS-24). */

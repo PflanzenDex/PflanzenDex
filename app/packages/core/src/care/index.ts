@@ -15,7 +15,8 @@ export type { RecordDependencies } from "./measurements/write/record";
 export { measurementPhoto } from "./measurements/capture/photo";
 export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
 export { measurementPhotoFile } from "./measurements/capture/file";
-export type { PhotoFileDependencies } from "./measurements/capture/file";
+export { measurementPhotoPath, photoVersion } from "./measurements/capture/file";
+export type { PhotoFileDependencies, PhotoTarget } from "./measurements/capture/file";
 export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
 export type {
   RatedBy,
@@ -32,7 +33,7 @@ export type { PhaseLocationSource } from "./phases/phase-location";
 export { careProfileLocations, careProfileTargetLocation } from "./switching/profile-location";
 export { phaseSwitchConfirm, MAX_SWITCH } from "./switching/switch";
 export type { SwitchDependencies, SwitchedSpecimen } from "./switching/switch";
-export { carePhasesList } from "./phases/phases";
+export { carePhasesList, carePhasesOf } from "./phases/phases";
 export type { PhasesDependencies, PhasesRow } from "./phases/phases";
 export { treatmentPlan } from "./treatments/treatment-plan";
 export type { PlanDependencies, PlanResult } from "./treatments/treatment-plan";

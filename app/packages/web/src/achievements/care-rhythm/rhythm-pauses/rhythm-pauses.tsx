@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
-import { dateText } from "@/lib/format";
-import { errorText } from "@/lib/error-text";
-import { useInvalidate, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { dateText } from "@/shared/lib/format";
+import { errorText } from "@/shared/lib/error-text";
+import { useInvalidate, useWriteAction } from "../../../shared/data";
 import type { RhythmPauseItem } from "../../achievements-api";
 import { addRhythmPause, removeRhythmPause } from "./pause-api";
 

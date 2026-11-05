@@ -83,6 +83,18 @@ export class InMemoryMeasurements implements MeasurementStore {
       });
   }
 
+  async listMany(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly MeasurementRow[]>> {
+    const found = new Map<string, readonly MeasurementRow[]>();
+    for (const id of specimenIds) {
+      const rows = await this.list(userId, id);
+      if (rows.length > 0) found.set(id, rows);
+    }
+    return found;
+  }
+
   async lastFor(
     userId: string,
     specimenIds: readonly string[],
@@ -96,10 +108,10 @@ export class InMemoryMeasurements implements MeasurementStore {
   }
 
   async lastPhotoFor(userId: string, specimenIds: readonly string[]) {
-    const found = new Map<string, { id: string; date: string }>();
+    const found = new Map<string, { id: string; date: string; photo: string }>();
     for (const id of specimenIds) {
       const [newest] = (await this.list(userId, id)).filter((z) => z.photo);
-      if (newest) found.set(id, { id: newest.id, date: newest.date });
+      if (newest?.photo) found.set(id, { id: newest.id, date: newest.date, photo: newest.photo });
     }
     return found;
   }

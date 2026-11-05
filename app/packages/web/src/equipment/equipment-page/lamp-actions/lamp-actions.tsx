@@ -1,9 +1,9 @@
-import { errorText } from "@/lib/error-text";
+import { errorText } from "@/shared/lib/error-text";
 import {
   useToast,
   type ToastApi,
-} from "@/components/shared/states/toast/toast-provider/toast-provider";
-import { useWriteAction } from "../../../kernel";
+} from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useWriteAction } from "../../../shared/data";
 import {
   describeLamp,
   measureLamp,

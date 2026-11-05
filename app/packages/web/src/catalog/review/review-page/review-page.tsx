@@ -4,13 +4,13 @@ import { useLocation, useSearchParams } from "react-router";
 import {
   SegmentedControl,
   type SegmentedOption,
-} from "@/components/segmented-control/segmented-control";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
-import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
-import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../kernel";
+} from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../shared/data";
 import { ReviewPageSkeleton } from "./review-page.skeleton";
 import { refusalText } from "../../shared/refusal";
 import { ReviewRow } from "../review-entry/review-entry";
@@ -38,7 +38,7 @@ function useShow(): [Show, (show: Show) => void] {
     else address.set(SHOW_PARAM, next);
     address.delete("page");
     address.delete("sheet");
-    setParams(address, { replace: true, state: location.state });
+    setParams(address, { replace: true, state: { ...location.state, keepFocus: true } });
   };
   return [show, choose];
 }

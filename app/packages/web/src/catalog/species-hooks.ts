@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Species, SpeciesHit } from "@pflanzendex/core";
-import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../kernel";
-import { loadSpecies, propose, searchSpecies } from "./species-api";
+import type { Species, SpeciesSearch } from "@pflanzendex/core";
+import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../shared/data";
+import { loadSpecies, propose, searchSpeciesPage } from "./species-api";
 
 type Token = () => Promise<string | undefined>;
 export const SEARCH_KEY = ["catalog", "search"] as const;
@@ -16,19 +16,23 @@ function useDebounced(text: string, ms: number): string {
   return settled;
 }
 
-/** Searches after a short pause after typing; the result stays until the next one is there (cached per text). */
+/**
+ * Searches after a short pause after typing; the result stays until the next one is there (cached per text). `more` says
+ * that more species match than the hits show (FR-BES-24).
+ */
 export function useSearch(api: string, token: Token, searchText: string) {
   const term = useDebounced(searchText, 250);
   const key = [...SEARCH_KEY, term];
-  const load = useCallback((t: string) => searchSpecies(api, t, term), [api, term]);
-  const r = useRequest<readonly SpeciesHit[]>({
+  const load = useCallback((t: string) => searchSpeciesPage(api, t, term), [api, term]);
+  const r = useRequest<SpeciesSearch>({
     queryKey: key,
     token,
     load,
     keepPrevious: true,
   });
   return {
-    hit: r.value ?? [],
+    hit: r.value?.species ?? [],
+    more: r.value?.more ?? false,
     loading: r.status === "pending" || term !== searchText,
     error: r.error ?? null,
     offline: r.offline,

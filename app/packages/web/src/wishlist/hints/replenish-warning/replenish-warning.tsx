@@ -1,6 +1,6 @@
 import type { Replenishment } from "@pflanzendex/core";
 import { Link } from "react-router";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { zoneLabel } from "@pflanzendex/core";
 
 /**

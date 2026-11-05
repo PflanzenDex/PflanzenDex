@@ -1,7 +1,7 @@
 // Public interface of the `pokedex` module (ADR 0003): ownership of species derived from the specimens (US-POK-06) and their catch date (US-POK-07).
 export { pokedexOwnership, speciesKey } from "./ownership";
-export { browsePokedex } from "./browse";
-export { collectorProgress } from "./rank";
+export { SPECIES_POOR_MAX, browsePokedex } from "./browse";
+export { COLLECTOR_RANKS, collectorProgress } from "./rank";
 export { newlyCaught, pokedexMarkSeen, SEEN_LIMITS } from "./seen";
 export type { MarkSeenDependencies, SeenStore } from "./seen";
 export { milestoneOverview, milestones } from "./milestones";

@@ -32,7 +32,7 @@ vi.mock("oidc-client-ts", () => ({
   },
 }));
 
-import { currentTimeZone, setProfileTimeZone } from "../kernel";
+import { currentTimeZone, setProfileTimeZone } from "../shared/data";
 import { useSession } from "./session";
 
 const account = {

@@ -226,6 +226,18 @@ test("US-QS-14: the registration link on the sign-in page is an outline button b
   assert.match(css, /#kc-registration a[^{]*\{[^}]*border-radius:\s*var\(--radius-pill\)/);
 });
 
+test("US-QS-15: the sign-in page is one screen (NFR-13, DS-61): the page is the viewport, its form column scrolls inside it", () => {
+  assert.match(css, /\.pdx-page\s*\{[^}]*height:\s*100dvh/);
+  assert.doesNotMatch(
+    css,
+    /\.pdx-page\s*\{[^}]*min-height/,
+    "the page does not grow with its content",
+  );
+  assert.match(css, /\.pdx-page\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\)/);
+  assert.match(css, /\.pdx-content\s*\{[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/);
+  assert.match(css, /\.pdx-side\s*\{[^}]*overflow-y:\s*auto/, "the wide panel scrolls inside too");
+});
+
 test("US-QS-14: the drawing is decorative and the value lines are text", () => {
   const svg = template.match(/<svg class="pdx-drawing"[^>]*>/);
   assert.ok(svg, "the drawing is inline");

@@ -1,13 +1,13 @@
 import type { Suggestion } from "@pflanzendex/core";
 import { useRef, useState, type PointerEvent } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { cn } from "@/shared/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
-import { DifficultyStars, WikipediaSource } from "@/components/collector-card/collector-card";
+import { DifficultyStars, WikipediaSource } from "@/pokedex";
 import table from "../discover.de.json";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
 
@@ -23,6 +23,7 @@ function Picture({ s }: { s: Suggestion }) {
     <img
       src={s.imageUrl}
       alt={t("card.imageAlt", { species: s.species })}
+      loading="lazy"
       className="h-56 min-h-12 w-full shrink rounded-lg object-cover"
     />
   );

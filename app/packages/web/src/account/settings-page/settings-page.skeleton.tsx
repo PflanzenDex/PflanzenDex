@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the settings on a phone: the six rows of the groups (DS-52, DS-53). */
 export function SettingsPageSkeleton({ label }: { label: string }) {

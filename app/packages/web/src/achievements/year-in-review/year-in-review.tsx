@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { dateText, valueText } from "@/lib/format";
-import { useStoredPhoto } from "@/lib/use-stored-photo";
-import { useRequest } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { dateText, valueText } from "@/shared/lib/format";
+import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
+import { useRequest } from "../../shared/data";
 import { loadYear, type YearAnswer, type YearPhoto } from "./year-api";
 
 type Token = () => Promise<string | undefined>;
@@ -124,7 +124,7 @@ function YearBody(props: { api: string; token: Token }) {
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="m-0 font-semibold">{`Jahresrückblick ${v.year}`}</p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={() => setYear(v.year - 1)}>
           Vorjahr
         </Button>

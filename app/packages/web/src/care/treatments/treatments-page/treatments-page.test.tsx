@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { deliverBuffered } from "@/platform/announcer/outbox";
-import { AnnouncerProvider } from "@/platform/announcer/announcer";
+import { deliverBuffered } from "@/shared/platform/announcer/outbox";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
 
@@ -27,7 +27,7 @@ function fakeServer(
     const path = new URL(String(url)).pathname;
     const other = more(path, init);
     if (other) return other;
-    if (path === "/specimens/cards") return response(200, { cards: specimens });
+    if (path === "/specimens/treatable") return response(200, { specimens });
     if (path === "/treatments" && (init?.method ?? "GET") === "GET") return open();
     if (path === "/treatments" && init?.method === "POST") {
       posts.push({

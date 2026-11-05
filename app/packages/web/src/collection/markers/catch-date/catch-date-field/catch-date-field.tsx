@@ -11,9 +11,9 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
-import { currentTimeZone, type ApiError } from "../../../../kernel";
+} from "@/shared/ui/fields/form/form";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { currentTimeZone, type ApiError } from "../../../../shared/data";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {

@@ -1,4 +1,4 @@
-import { call, createWrite, type ApiError, type Response } from "../kernel";
+import { call, createWrite, type ApiError, type Response } from "../shared/data";
 
 type FetchFn = typeof fetch;
 

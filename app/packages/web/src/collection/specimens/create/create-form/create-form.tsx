@@ -7,8 +7,8 @@ import {
   type LightLocation,
   type LightZone,
 } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import type { ApiError } from "../../../../kernel";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import type { ApiError } from "../../../../shared/data";
 import {
   refusesCatchDate,
   useToday,

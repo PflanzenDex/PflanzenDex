@@ -46,6 +46,15 @@ describe("US-EQU-05 supply of a consumable", () => {
     expect(a.onSupply).toHaveBeenCalledWith(expect.objectContaining({ id: "c1" }), "empty");
   });
 
+  it("US-QS-22 the three levels share one row instead of filling a line each (issue 1283)", () => {
+    render(<Supply item={consumable()} actions={actions()} />);
+    for (const name of ["Vorhanden", "Wird knapp", "Leer"]) {
+      const classes = screen.getByRole("button", { name }).className.split(" ");
+      expect(classes).toContain("flex-1");
+      expect(classes).not.toContain("w-full");
+    }
+  });
+
   it("US-EQU-05 tapping the current level sends nothing", async () => {
     const a = actions();
     render(<Supply item={consumable()} actions={a} />);

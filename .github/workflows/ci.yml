@@ -45,8 +45,9 @@ jobs:
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
             echo "app=true" >> "$GITHUB_OUTPUT"; echo "one-screen=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # QG-U8: the one-screen run only when the UI, the e2e package or the gate files change (issue 1137).
-          if git diff --name-only "$base" HEAD | grep -qE '^(app/packages/(web|e2e)/|app/config/gates/|Makefile$|\.github/)'; then
+          # QG-U8: the one-screen run only when the UI, the e2e package, the demo seed it measures or the gate files change
+          # (issues 1137, 1164).
+          if git diff --name-only "$base" HEAD | grep -qE '^(app/packages/(web|e2e)/|app/packages/api/perf/(demo-seed|catalog-seed)/|app/config/gates/|Makefile$|\.github/)'; then
             echo "one-screen=true" >> "$GITHUB_OUTPUT"
           else
             echo "one-screen=false" >> "$GITHUB_OUTPUT"
@@ -57,8 +58,9 @@ jobs:
             echo "app=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*` or
-  # `ds-snapshots` job of that head commit is reused (waiting while a run of it is still going); a failed, cancelled or
+  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*`,
+  # `ds-snapshots`, `one-screen`, `a11y-routes` or `lighthouse` job of that head commit is reused (issue 1184: the two gates were skipped
+  # on edits without this proof, so an edit turned a red gate green) (waiting while a run of it is still going); a failed, cancelled or
   # missing result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
   reuse:
     if: >-
@@ -78,6 +80,9 @@ jobs:
       app-coverage: ${{ steps.reuse.outputs['app-coverage'] }}
       app-ui: ${{ steps.reuse.outputs['app-ui'] }}
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
+      one-screen: ${{ steps.reuse.outputs['one-screen'] }}
+      a11y-routes: ${{ steps.reuse.outputs['a11y-routes'] }}
+      lighthouse: ${{ steps.reuse.outputs['lighthouse'] }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -89,7 +94,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots"
+        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots one-screen a11y-routes lighthouse"
 
   # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, #1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
@@ -241,11 +246,17 @@ jobs:
       - uses: ./.github/actions/setup-app
       - run: make audit
 
-  # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main` and manual dispatch; otherwise nightly (nightly.yml).
-  # Never fails the build: no thresholds until the first baseline exists.
+  # QG-U1 / FR-QG-09 (issue 1136): Lighthouse on the built web app, median of 3 mobile runs against the limits in
+  # `app/config/gates/quality-limits.json`; blocking. Runs on PRs into `dev` and `main` when the app changes (about 2 min,
+  # parallel to the other jobs), on a manual dispatch and nightly (nightly.yml).
   lighthouse:
-    needs: changes
-    if: (github.event_name == 'pull_request' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success'
+      && (github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.lighthouse != 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -254,7 +265,6 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
       - run: make lighthouse
-        continue-on-error: true
       - if: always()
         run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
       - if: always()
@@ -298,11 +308,13 @@ jobs:
   # 1920 px width cap. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run with
   # several workers. Runs for PRs into `dev` and `main` when the UI, the e2e package or the gate files change, and by hand.
   one-screen:
-    needs: changes
+    needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
-      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true' && github.event.action != 'edited'))
+      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.one-screen != 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -329,6 +341,47 @@ jobs:
           name: one-screen-report
           path: |
             app/packages/e2e/one-screen-report
+            app/packages/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # QG-U7 (FR-QG-24, issue 467): axe (WCAG 2.2 A and AA, serious and critical) and the keyboard walk over every view and
+  # layer at 390x844 and 1920x1080. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run
+  # with several workers. Runs on the same paths as one-screen (its `changes` output), and by hand.
+  a11y-routes:
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success'
+      && (github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.a11y-routes != 'success'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      - run: make a11y-routes
+      - name: Findings per rule and screen
+        if: always()
+        run: make a11y-routes-report >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a11y-routes-report
+          path: |
+            app/packages/e2e/a11y-routes-report
             app/packages/e2e/test-results
           if-no-files-found: ignore
           retention-days: 14
@@ -417,6 +470,7 @@ jobs:
         lighthouse,
         e2e,
         one-screen,
+        a11y-routes,
       ]
     if: always()
     runs-on: ubuntu-24.04
@@ -438,8 +492,9 @@ jobs:
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
           ONE_SCREEN: ${{ needs.one-screen.result }}
+          A11Y_ROUTES: ${{ needs.a11y-routes.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN" "$A11Y_ROUTES"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;

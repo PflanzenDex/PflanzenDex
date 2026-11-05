@@ -5,11 +5,12 @@ import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setProfileTimeZone, type ApiError } from "../../../kernel";
+import { setProfileTimeZone, type ApiError } from "../../../shared/data";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { CreateForm } from "../../specimens/create/create-form/create-form";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
 import { correctCatchDate, createSpecimen } from "../../specimens/model/specimens-api";
+import { answerCardRead } from "../../specimens/tests/cards-fake";
 
 // US-BES-02 / FR-BES-04: back-dating the catch date in the create form.
 const species = { id: "a1", latinName: "Dracaena trifasciata", germanName: "Bogenhanf" } as Species;
@@ -190,7 +191,7 @@ function fakeServer(cards: SpecimenCard[], answer: () => Promise<Response>) {
       if (path === "/locations") return json(200, { locations: [] });
       if (path === "/specimens/archived") return json(200, { archived: [] });
       if (path === "/specimens/distribution") return json(200, EMPTY_DISTRIBUTION);
-      return json(200, { cards });
+      return answerCardRead(new URL(String(url)), cards) ?? json(404, {});
     }),
   );
   return posts;

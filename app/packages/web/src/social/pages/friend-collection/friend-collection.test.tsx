@@ -229,4 +229,9 @@ describe("US-QS-14 · US-QS-15 a friend's collection is a sub-page with one page
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" })).toBeTruthy();
   });
+
+  it("US-QS-15 the frame is one screen, so at a large text size only the content region scrolls (DS-61)", () => {
+    show({ friend: { name: "Anna" }, cards: CARDS });
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
 });

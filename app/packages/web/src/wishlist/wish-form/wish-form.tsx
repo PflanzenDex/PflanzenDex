@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { FormMoreFields } from "@/components/ui/fields/form/more-fields/more-fields";
-import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
+import { errorText } from "@/shared/lib/error-text";
+import type { ApiError } from "../../shared/data";
 import { SpeciesPick } from "./species-pick/species-pick";
 import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
 import {

@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
-import { createQueryClient } from "../../kernel";
+import { createQueryClient } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
@@ -183,28 +183,19 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Wähle selbst Höhe, Rosettendurchmesser oder Trieblänge");
   });
 
-  it("the course names value, date, quality and note; when empty it says what to do (P-09)", () => {
+  it("the course names value, date, quality and note of a measurement (US-WAC-01)", () => {
     const list = renderToString(
-      <MeasurementList
-        measurements={[measurement({ note: "nach dem Umtopfen" })]}
-        onAdd={() => undefined}
-        photo={PHOTO}
-        onPhotoSaved={() => undefined}
-      />,
+      <MemoryRouter>
+        <MeasurementList
+          measurements={[measurement({ note: "nach dem Umtopfen" })]}
+          photo={PHOTO}
+          onPhotoSaved={() => undefined}
+        />
+      </MemoryRouter>,
     );
     expect(list).toContain("12,5\u00a0cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
-    expect(
-      renderToString(
-        <MeasurementList
-          measurements={[]}
-          onAdd={() => undefined}
-          photo={PHOTO}
-          onPhotoSaved={() => undefined}
-        />,
-      ),
-    ).toContain("Trage oben den ersten Messwert ein");
   });
 
   it("the form has number, date, quality (healthy preset), note and the optional photo (US-WAC-05)", () => {

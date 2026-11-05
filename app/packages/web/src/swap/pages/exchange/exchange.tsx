@@ -1,16 +1,16 @@
 import { useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { OfferView } from "@pflanzendex/core";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import {
   LayerHost,
   LayerSheet,
   useLayer,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
-import { FullView } from "@/components/shared/navigation/app-shell/full-view/full-view";
-import { errorText } from "@/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { errorText } from "@/shared/lib/error-text";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadExchange, withdrawOffer, type ExchangeData } from "../../api/offers-api";
 import { SwapRequests } from "../../parts/swap-requests/swap-requests";
 import { FriendOffers } from "../../parts/friend-offers/friend-offers";
@@ -18,19 +18,18 @@ import { SwapHistory } from "../../parts/swap-history/swap-history";
 import { OfferForm } from "../../parts/offer-form/offer-form";
 import { OfferList } from "../../parts/offer-list/offer-list";
 import { ExchangeSkeleton } from "./exchange.skeleton";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../swap.de.json";
+
+const t = texts(table);
 
 const KEY = ["swap", "offers"] as const;
 type Token = () => Promise<string | undefined>;
 
 const OFFER_LAYER = "offer";
-const PARTS = [
-  { value: "mine", label: "Meine" },
-  { value: "friends", label: "Freunde" },
-  { value: "requests", label: "Anfragen" },
-  { value: "history", label: "Verlauf" },
-] as const;
-type Part = (typeof PARTS)[number]["value"];
-const isPart = (v: string | null): v is Part => PARTS.some((p) => p.value === v);
+const PART_VALUES = ["mine", "friends", "requests", "history"] as const;
+type Part = (typeof PART_VALUES)[number];
+const isPart = (v: string | null): v is Part => PART_VALUES.some((p) => p === v);
 
 /** The part of the exchange from the address (`part=`); choosing one starts its list at page 1 (the parts share `page`). */
 function usePart(): [Part, (value: Part) => void] {
@@ -61,7 +60,7 @@ function OfferOpener() {
       aria-haspopup="dialog"
       onClick={(event) => layer.openLayer(event.currentTarget)}
     >
-      Zum Tausch anbieten
+      {t("exchange.offer")}
     </Button>
   );
 }
@@ -72,7 +71,8 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
   const layer = useLayer(OFFER_LAYER);
   const [part, choose] = usePart();
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    // The part's list takes the free height of the page, page by page (US-QS-20, issue 1157).
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       {withdraw.message && (
         <p role="status" className="rounded-lg border border-border p-3">
           {withdraw.message}
@@ -84,7 +84,12 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
         </p>
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <SegmentedControl label="Bereich" options={PARTS} value={part} onChange={choose} />
+        <SegmentedControl
+          label={t("exchange.parts")}
+          options={PART_VALUES.map((value) => ({ value, label: t(`exchange.part.${value}`) }))}
+          value={part}
+          onChange={choose}
+        />
       </div>
       {part === "mine" && (
         <OfferList
@@ -93,7 +98,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
           onWithdraw={(o: OfferView) =>
             void withdraw.run(
               (t) => withdrawOffer(api, t, o.id),
-              `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
+              t("exchange.withdrawn", { name: o.specimenName ?? t("exchange.plant") }),
             )
           }
         />
@@ -101,7 +106,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
       {part === "requests" && <SwapRequests api={api} token={props.token} />}
       {part === "friends" && <FriendOffers api={api} token={props.token} />}
       {part === "history" && <SwapHistory api={api} token={props.token} />}
-      <LayerSheet id={OFFER_LAYER} title="Zum Tausch anbieten">
+      <LayerSheet id={OFFER_LAYER} title={t("exchange.offer")}>
         {layer.open ? (
           <OfferForm
             api={api}
@@ -126,27 +131,26 @@ export function ExchangePage(props: { api: string; token: Token }) {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadExchange(api, t), [api]);
   return (
-    <LayerHost>
+    // One screen (US-QS-15, issue 1157): the frame fills the window and the lists page by the free height.
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <FullView
         headingId="exchange-title"
-        title="Tauschbörse"
-        back={{ label: "Zurück zu Freunde", to: "/friends" }}
+        title={t("exchange.title")}
+        back={{ label: t("exchange.back"), to: "/friends" }}
         action={<OfferOpener />}
       >
         <div>
           <Button asChild variant="outline" size="touch" className="w-auto">
-            <Link to="/friends/match">Passende Angebote</Link>
+            <Link to="/friends/match">{t("exchange.match")}</Link>
           </Button>
         </div>
-        <p className="hidden text-muted-foreground md:block">
-          Nur deine Freunde sehen ein Angebot, und nur, was du für sie freigegeben hast.
-        </p>
+        <p className="hidden text-muted-foreground md:block">{t("exchange.privacy")}</p>
         <LoadFrame
           queryKey={KEY}
           token={token}
           load={load}
-          loadingText="Tauschbörse wird geladen …"
-          loadingFallback={<ExchangeSkeleton label="Tauschbörse wird geladen …" />}
+          loadingText={t("exchange.loading")}
+          loadingFallback={<ExchangeSkeleton label={t("exchange.loading")} />}
         >
           {(data: ExchangeData) => <Body data={data} api={api} token={token} onWritten={reload} />}
         </LoadFrame>

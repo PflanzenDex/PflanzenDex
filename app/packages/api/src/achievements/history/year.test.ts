@@ -26,12 +26,20 @@ const src = {
     findMany: async (_u: string, ids: readonly string[]) => ids.map(() => null),
   },
   profiles: { list: async () => [] },
-  treatments: { open: async () => new Map(), done: async () => [] },
+  treatments: { open: async () => new Map(), doneMany: async () => new Map() },
   measurements: {
-    list: async (_u: string, id: string) =>
-      id === "a"
-        ? [row("m1", "2026-01-10", 10, "p1"), row("m2", "2026-09-10", 18, "p2")]
-        : [row("m3", "2025-05-01", 3)],
+    listMany: async (_u: string, ids: string[]) =>
+      new Map(
+        ids.map(
+          (id) =>
+            [
+              id,
+              id === "a"
+                ? [row("m1", "2026-01-10", 10, "p1"), row("m2", "2026-09-10", 18, "p2")]
+                : [row("m3", "2025-05-01", 3)],
+            ] as const,
+        ),
+      ),
   },
   swaps: { list: async () => [] },
 } as unknown as FactSources;
@@ -44,8 +52,8 @@ describe("US-ACH-07 year in review through the API logic", () => {
     expect(r.counts).toMatchObject({ speciesCaught: 1, measurements: 2, handovers: 0 });
     expect(r.growth).toMatchObject({ specimenId: "a", growth: 8 });
     expect(r.photos?.urls).toEqual({
-      first: "/specimens/a/measurements/m1/photo",
-      last: "/specimens/a/measurements/m2/photo",
+      first: "/specimens/a/measurements/m1/photo?v=p1",
+      last: "/specimens/a/measurements/m2/photo?v=p2",
     });
   });
 

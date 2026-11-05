@@ -2,6 +2,7 @@ import type {
   Species,
   SpeciesCreation,
   SpeciesName,
+  SpeciesSearch,
   SpeciesStore,
   SpeciesHit,
   SpeciesValues,
@@ -36,7 +37,8 @@ export class InMemorySpecies implements SpeciesStore {
     return { ...species, own: creator === userId };
   }
 
-  async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {
+  /** The fake shows every match: the cap is tested against the database (FR-BES-24), so `more` stays false here. */
+  async search(userId: string, norm: string | null): Promise<SpeciesSearch> {
     const hit: SpeciesHit[] = [];
     for (const z of this.visible(userId)) {
       const matching = z.names
@@ -48,7 +50,7 @@ export class InMemorySpecies implements SpeciesStore {
           hit: matching ? { field: matching.field, display: matching.display } : null,
         });
     }
-    return hit.sort((a, b) => a.latinName.localeCompare(b.latinName));
+    return { species: hit.sort((a, b) => a.latinName.localeCompare(b.latinName)), more: false };
   }
 
   async find(userId: string, id: string): Promise<Species | null> {

@@ -126,6 +126,19 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
     expect(screen.getByText(noZone.text).closest("div")?.className).toContain("bg-warning");
   });
 
+  it("US-QS-18 · issue 1156 in the layer of Heute the hints page by its free height and leave the page of Heute alone", async () => {
+    fakeServer(() => response(200, { hints: [noZone, noSpecies, noLocation, noZone] }));
+    render(
+      <MemoryRouter initialEntries={["/today?sheet=hints&lpage=2"]}>
+        <HintsPage api="http://api" token={token} onOpen={noop} host />
+      </MemoryRouter>,
+    );
+    const list = await screen.findByRole("list", { name: "Fehlende Angaben" });
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    // The page of the layer is `lpage`, so the list of "Heute" behind it keeps its own `page`.
+    expect(screen.getByRole("status").textContent).toBe("Seite 2 von 2");
+  });
+
   it("US-QS-14 · US-BES-08 without hints the empty state is a level 3 heading with the way to the collection", async () => {
     fakeServer(() => response(200, { hints: [] }));
     const open = vi.fn();

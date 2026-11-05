@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Textarea } from "@/components/ui/fields/textarea/textarea";
+import { Button } from "@/shared/ui/button/button";
+import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 
 /** A small form for a reason (optional) or a proposal (required) of a swap answer (US-SOZ-10). */
 export function ReasonForm(props: {

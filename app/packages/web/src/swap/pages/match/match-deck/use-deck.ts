@@ -1,7 +1,7 @@
 import type { MatchCard as Card, MatchEntry, MatchYesResult } from "@pflanzendex/core";
 import { useEffect, useReducer, useRef, useState } from "react";
-import { errorText } from "@/lib/error-text";
-import type { Response } from "../../../../kernel";
+import { errorText } from "@/shared/lib/error-text";
+import type { Response } from "../../../../shared/data";
 import { cardTitle, deckReducer, initialDeck, type DeckAction } from "./deck-state";
 import type { Answer } from "./match-actions/match-actions";
 

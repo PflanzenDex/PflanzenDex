@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useWriteAction, type ApiError } from "../../../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { useWriteAction, type ApiError } from "../../../../../shared/data";
 import { createFriendCode, sendFriendRequest } from "../../../../api/friends-api";
 import { CodeForm } from "../../../../parts/code-form/code-form";
 import { InviteCard } from "../../../../parts/invite-card/invite-card";
@@ -47,7 +47,7 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
   return (
     <Layer id="add" title="Freund hinzufügen">
       <div className="flex min-w-0 flex-col gap-4">
-        <div role="tablist" aria-label="Freund hinzufügen" className="flex gap-2">
+        <div role="tablist" aria-label="Freund hinzufügen" className="flex flex-wrap gap-2">
           {tabs.map((t) => (
             <Button
               key={t.id}
@@ -57,7 +57,7 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
               aria-selected={tab === t.id}
               aria-controls={`add-panel-${t.id}`}
               variant={tab === t.id ? "secondary" : "ghost"}
-              className="flex-1"
+              className="max-w-full flex-1"
               onClick={() => setTab(t.id)}
             >
               {t.label}

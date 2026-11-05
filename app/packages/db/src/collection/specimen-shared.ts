@@ -29,6 +29,16 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };
 
+const UNIQUE = "23505";
+
+/** Which unique rule a failed write violated: the name per account or the marker per species (US-BES-03). */
+export function takenBy(e: unknown): "name_taken" | "marker_taken" | null {
+  if (pgError(e).code !== UNIQUE) return null;
+  const constraint = pgError(e).constraint;
+  if (constraint === "specimen_name_per_account") return "name_taken";
+  return constraint === "specimen_marker_per_species" ? "marker_taken" : null;
+}
+
 export class SpeciesGone extends Error {}
 
 /**

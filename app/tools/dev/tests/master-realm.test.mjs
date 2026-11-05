@@ -1,13 +1,24 @@
 // Tests for deploy/keycloak/master-realm.sh with a stubbed keycloak container (KC_EXEC), no Docker (TE-03, #758).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { test, after } from "node:test";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const script = new URL("../../../config/deploy/keycloak/master-realm.sh", import.meta.url).pathname;
-const dir = mkdtempSync(join(tmpdir(), "master-realm-"));
+const dir = tempDir("master-realm-");
 const calls = join(dir, "calls");
 // Stub: logs every command; `config credentials` fails with STUB_LOGIN=fail, `update` fails with STUB_UPDATE=fail.
 const exec = join(dir, "kc-exec");

@@ -2,7 +2,7 @@ import { cva } from "class-variance-authority";
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
 import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
-import { overdueChip } from "@/lib/format";
+import { overdueChip } from "@/shared/lib/format";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
 // (US-QS-23) places them in its tabs; derived data only.
@@ -22,6 +22,7 @@ const qualityMark = cva("", {
   variants: {
     quality: { healthy: "", etiolated: "border-b-2 border-warning-border bg-warning px-1" },
   },
+  defaultVariants: { quality: "healthy" },
 });
 const dueMark = cva("", {
   variants: {
@@ -31,6 +32,7 @@ const dueMark = cva("", {
       soon: "",
     },
   },
+  defaultVariants: { kind: "soon" },
 });
 
 export function Measurement({ card }: { card: SpecimenCard }) {

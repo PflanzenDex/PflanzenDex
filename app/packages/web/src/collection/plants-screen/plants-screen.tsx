@@ -1,17 +1,30 @@
-import type { SpecimenCard } from "@pflanzendex/core";
+import type { SpecimenCard, SpecimenSummary } from "@pflanzendex/core";
 import { Plus } from "lucide-react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { PagedGroups } from "@/components/shared/responsive/paged-groups/paged-groups";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { Button } from "@/components/ui/button/button";
-import { groupByLocation } from "@/components/sammlung-header/location-groups/group-by-location";
-import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import {
+  PagedGroups,
+  type PagedGroup,
+} from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import { usePart } from "@/shared/patterns/responsive/paged-groups/group-choices/group-choices";
+import { Pager, type PagerPaging } from "@/shared/patterns/responsive/pager/pager";
+import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
+import {
+  groupTitle,
+  locationChoices,
+  UNPLACED_KEY,
+} from "./rows/location-groups/group-by-location";
+import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { TITLE } from "../specimens/cards/parts/parts";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PlantTile } from "./rows/plant-tile/plant-tile";
 import { PlantLayers } from "./plant-layers/plant-layers";
 import { ARCHIVE_LAYER, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
+import table from "./plant-layers/plant-layers.de.json";
+
+const t = texts(table);
 
 /**
  * Tiles per page without a layout (starting values, assumption): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px.
@@ -30,13 +43,32 @@ type Props = LayerProps & {
   embedded?: boolean;
   /** Groups the plants by location and zone; the group is chosen from a row (US-QS-19). */
   groupBy?: "location";
+  /** The plants as the server pages them (FR-BES-23): `cards` of the layer props are the loaded ones of this list. */
+  plants: CardPages;
+  /** The counts over all plants (US-BES-06): the empty state, the total and the groups come from them. */
+  summary: SpecimenSummary;
 };
 
 // Two tiles per row from a 360 px phone at normal text, one per row at a larger text size (issue 1019). 8.75 rem lets
 // two columns fit the 294 px of the list at 360 px, so a page holds 6 tiles (owner decision 2026-11-01, issue 1108);
-// a column is never wider than the list, so at a larger text size a tile stays inside its card (issue 1113).
+// a column is never wider than the list, so at a larger text size a tile stays inside its card (issue 1113). The wider
+// windows keep 3 and 4 columns at normal text and lose columns as the text grows, because the minimum is in rem (issue 1304).
 const TILES =
-  "grid grid-cols-[repeat(auto-fill,minmax(min(8.75rem,100%),1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-[repeat(auto-fill,minmax(min(8.75rem,100%),1fr))] gap-2 md:grid-cols-[repeat(auto-fill,minmax(min(11rem,100%),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(min(max(9.5rem,22%),100%),1fr))]";
+
+/** The server paging of a list of plants for the Pager (FR-BES-23): the total, the loading state and a failure's text. */
+function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {
+  return {
+    total: list.total ?? fallbackTotal,
+    loading: list.status === "pending" || list.loadingMore,
+    // An error without a text still counts as a failure: the Pager would ask for the page again and again.
+    ...(list.error === undefined ? {} : { failure: list.error.text || t("list.failed") }),
+    onMore: list.loadMore,
+    onRetry: list.retry,
+    loadingText: t("list.loading"),
+    retryText: t("list.retry"),
+  };
+}
 
 function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string }) {
   const size = usePageSize();
@@ -49,20 +81,41 @@ function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string
       resetKey={props.resetKey}
       getKey={(card) => card.id}
       listClassName={TILES}
+      paging={pagingOf(props.plants, props.summary.total)}
       renderItem={(card) => <PlantTile card={card} access={props.photoAccess} />}
     />
   );
 }
 
-/** The plants by location: known locations alphabetically, "Standort unbekannt" last (US-QS-14, US-QS-19). */
+/**
+ * The plants by location (US-QS-14, US-QS-19): the groups and their counts come from the server's summary; the chosen
+ * group loads its own plants with the location filter, paged like the list (FR-BES-23). Other groups load nothing.
+ */
 function Grouped(props: Props) {
   const size = usePageSize();
-  const groups = groupByLocation(props.cards).map((g) => ({
-    key: g.key,
-    label: g.key === "unknown" ? "Standort unbekannt" : g.key,
-    items: g.items,
-    title: g.title,
-  }));
+  const choices = locationChoices(props.summary.groups, props.summary.unplaced);
+  const chosen = usePart(choices);
+  const key = chosen?.key;
+  const filter = key === undefined ? {} : { location: key === UNPLACED_KEY ? "none" : key };
+  const list = useCardPages(
+    props.photoAccess.api,
+    props.photoAccess.token,
+    filter,
+    chosen !== undefined,
+  );
+  // The zone is the first plant's, as before; it is left out until the group is loaded (P-08).
+  const zone = list.status === "ready" ? (list.cards[0]?.lightZone ?? null) : undefined;
+  const title = chosen ? groupTitle(chosen.label, zone, chosen.count) : "";
+  const groups: PagedGroup<SpecimenCard>[] = choices.map((c) => {
+    const on = c.key === chosen?.key;
+    return {
+      key: c.key,
+      label: c.label,
+      count: c.count,
+      items: on ? list.cards : [],
+      ...(on ? { paging: pagingOf(list, c.count) } : {}),
+    };
+  });
   return (
     <PagedGroups
       choicesLabel="Standort wählen"
@@ -73,11 +126,7 @@ function Grouped(props: Props) {
       listClassName={TILES}
       getKey={(card) => card.id}
       renderItem={(card) => <PlantTile card={card} access={props.photoAccess} />}
-      intro={(g) => (
-        <p className="text-sm text-muted-foreground">
-          {groups.find((x) => x.key === g.key)?.title}
-        </p>
-      )}
+      intro={() => <p className="text-sm text-muted-foreground">{title}</p>}
     />
   );
 }
@@ -118,7 +167,7 @@ function Row(props: Props) {
  */
 export function PlantsScreen(props: Props) {
   const body =
-    props.cards.length === 0 ? (
+    props.summary.total === 0 ? (
       <EmptyState
         title="Du hast noch keine Pflanze."
         description="Wähle zuerst eine Art aus dem Katalog."

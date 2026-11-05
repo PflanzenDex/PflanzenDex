@@ -1,9 +1,9 @@
 import { REMINDER_OCCASIONS, type ReminderOccasion } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
-import { Label } from "@/components/ui/display/label/label";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { currentTimeZone } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { Label } from "@/shared/ui/display/label/label";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { currentTimeZone } from "../../../shared/data";
 import { addDays, localToday } from "./pause";
 
 export type Paused = Readonly<Partial<Record<ReminderOccasion, string>>>;

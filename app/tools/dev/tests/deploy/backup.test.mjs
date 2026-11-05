@@ -10,14 +10,26 @@ import {
   readFileSync,
   statSync,
   writeFileSync,
+  rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { test } from "node:test";
+import { test, after } from "node:test";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const deploy = new URL("../../../../config/deploy/", import.meta.url).pathname;
 const backup = join(deploy, "scripts/backup.sh");
-const stubDir = mkdtempSync(join(tmpdir(), "backup-stub-"));
+const stubDir = tempDir("backup-stub-");
 // Stub: pg_dump prints a fake dump, pg_restore -l reads it, psql says the sign-in database exists.
 const pgExec = join(stubDir, "pg-exec");
 writeFileSync(
@@ -58,7 +70,7 @@ function run(env, script = backup) {
 }
 // A copy of a deploy script in a folder of its own: a .env written next to it is the copy's, never the checkout's (#1010).
 function copyScript(name) {
-  const root = mkdtempSync(join(tmpdir(), "deploy-copy-"));
+  const root = tempDir("deploy-copy-");
   mkdirSync(dirname(join(root, "scripts", name)), { recursive: true });
   copyFileSync(join(deploy, "scripts", name), join(root, "scripts", name));
   return { root, script: join(root, "scripts", name) };
@@ -66,7 +78,7 @@ function copyScript(name) {
 const mode = (path) => statSync(path).mode & 0o777;
 
 test("TE-03 new dumps are readable by the owner only, in a folder only the owner can open (#760)", () => {
-  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const dir = join(tempDir("backup-"), "backups");
   const r = run({ BACKUP_DIR: dir, HOME: tmpdir() });
   assert.equal(r.status, 0, r.stderr);
   const dumps = readdirSync(dir);
@@ -76,7 +88,7 @@ test("TE-03 new dumps are readable by the owner only, in a folder only the owner
 });
 
 test("TE-03 dumps of earlier runs are tightened to 0600 on the next run (#760)", () => {
-  const dir = mkdtempSync(join(tmpdir(), "backup-"));
+  const dir = tempDir("backup-");
   const old = join(dir, "keycloak-20260101T000000Z.dump");
   writeFileSync(old, "old");
   chmodSync(old, 0o664);
@@ -87,7 +99,7 @@ test("TE-03 dumps of earlier runs are tightened to 0600 on the next run (#760)",
 });
 
 test("TE-03 without BACKUP_DIR the dumps go outside the repository, into the home folder (#760)", () => {
-  const home = mkdtempSync(join(tmpdir(), "backup-home-"));
+  const home = tempDir("backup-home-");
   const r = run({ HOME: home });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(readdirSync(join(home, "pflanzendex-backups")).length, 2);
@@ -95,10 +107,10 @@ test("TE-03 without BACKUP_DIR the dumps go outside the repository, into the hom
 
 test("NFR-15 DEPLOY_ENV_FILE= keeps the .env of the deploy folder out of a run, so the dumps stay in BACKUP_DIR (#1010)", () => {
   const { root, script } = copyScript("backup.sh");
-  const hostBackups = join(mkdtempSync(join(tmpdir(), "host-backups-")), "backups");
+  const hostBackups = join(tempDir("host-backups-"), "backups");
   mkdirSync(hostBackups);
   writeFileSync(join(root, ".env"), `BACKUP_DIR=${hostBackups}\n`);
-  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const dir = join(tempDir("backup-"), "backups");
   const r = run({ BACKUP_DIR: dir, HOME: tmpdir(), DEPLOY_ENV_FILE: "" }, script);
   assert.equal(r.status, 0, r.stderr);
   assert.equal(readdirSync(dir).length, 2);
@@ -107,7 +119,7 @@ test("NFR-15 DEPLOY_ENV_FILE= keeps the .env of the deploy folder out of a run, 
 
 test("NFR-15 without DEPLOY_ENV_FILE the .env of the deploy folder is loaded, as before (#1010)", () => {
   const { root, script } = copyScript("backup.sh");
-  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const dir = join(tempDir("backup-"), "backups");
   writeFileSync(join(root, ".env"), `BACKUP_DIR=${dir}\n`);
   const r = spawnSync("bash", [script], {
     encoding: "utf8",
@@ -118,8 +130,8 @@ test("NFR-15 without DEPLOY_ENV_FILE the .env of the deploy folder is loaded, as
 });
 
 test("NFR-15 DEPLOY_ENV_FILE names an env file anywhere, and its BACKUP_DIR is honored (#1010)", () => {
-  const envFile = join(mkdtempSync(join(tmpdir(), "backup-env-")), "custom.env");
-  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const envFile = join(tempDir("backup-env-"), "custom.env");
+  const dir = join(tempDir("backup-"), "backups");
   writeFileSync(envFile, `BACKUP_DIR=${dir}\n`);
   const r = run({ DEPLOY_ENV_FILE: envFile, HOME: tmpdir() });
   assert.equal(r.status, 0, r.stderr);
@@ -127,8 +139,8 @@ test("NFR-15 DEPLOY_ENV_FILE names an env file anywhere, and its BACKUP_DIR is h
 });
 
 test("NFR-15 DEPLOY_ENV_FILE naming a missing file loads nothing, so the caller's BACKUP_DIR applies (#1010)", () => {
-  const missing = join(mkdtempSync(join(tmpdir(), "backup-env-")), "missing.env");
-  const dir = join(mkdtempSync(join(tmpdir(), "backup-")), "backups");
+  const missing = join(tempDir("backup-env-"), "missing.env");
+  const dir = join(tempDir("backup-"), "backups");
   const r = run({ DEPLOY_ENV_FILE: missing, BACKUP_DIR: dir, HOME: tmpdir() });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(readdirSync(dir).length, 2);

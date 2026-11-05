@@ -45,7 +45,6 @@
     "GET /onboarding/unlocks",
     "GET /onboarding/unlocks/:id",
     "GET /operator/introduction",
-    "GET /pokedex/cards",
     "GET /reminders",
     "GET /reminders/settings",
     "GET /reminders/subscriptions",

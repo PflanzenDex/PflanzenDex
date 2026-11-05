@@ -10,9 +10,13 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 # Memory cap of the local test database: one per worktree on a small dev box (#1084, starting value, assumption).
 # Local only: CI provides its own database service, production uses config/deploy. Override with DB_MEMORY=1g.
 DB_MEMORY ?= 512m
+# The local auth server (Keycloak, mail catcher) is one container set shared by every checkout, so it always runs with
+# the main checkout's compose file and app/config/dev/.env, also from a worktree (issue 1187, tools/keycloak/dev-env.mjs).
+AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/config/dev
+AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -66,14 +70,13 @@ migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 migration: ## New migration with the next free number, seen from origin/dev and all open PRs (NAME=<module>_<short_name>, issue #831)
 	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$(NAME)"
 
-auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/config/dev/.env (not in the repo)
-	@test -f $(APP)/config/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/config/dev/.env
-	docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env up -d
+auth-up: ## Start the shared auth server (Keycloak) and mail catcher; admin password in the main checkout's app/config/dev/.env (not in the repo, only the main checkout creates it; refuses on a password mismatch)
+	cd $(APP) && node tools/keycloak/auth-up.mjs
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
 	@echo "Keycloak: http://localhost:18081 (realm pflanzendex), mail: http://localhost:18025"
 
 auth-down: ## Remove the auth server and mail catcher
-	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env down -v
+	-$(AUTH_COMPOSE) down -v
 
 start: auth-up db-up ## Start everything for local work: auth server, database, API and web; prints URLs and test accounts
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test || { echo "Keycloak or the database is not responding"; exit 1; }
@@ -82,7 +85,7 @@ start: auth-up db-up ## Start everything for local work: auth server, database, 
 	$(MAKE) dev
 
 stop: ## Stop the local auth server, mail catcher and database containers (data is kept)
-	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env stop
+	-$(AUTH_COMPOSE) stop
 	-docker stop $(DB_CONTAINER)
 
 test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check scripts
@@ -97,21 +100,28 @@ browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
 conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px; 8 pages at once, CONFORMANCE_PAGES=<n> overrides (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
 
-ds-snapshots-check: ## Visual regression of the components/ui stories against the baselines in app/packages/web/.storybook/snapshots, 360 px, light and dark, in the pinned Playwright container; also runs its self-test (QG-U5, US-QS-07; needs Docker)
+ds-snapshots-check: ## Visual regression in the pinned Playwright container: components/ui stories (360 px, .storybook/snapshots) and page stories (5 sizes, .storybook/page-snapshots), light and dark; also runs its self-test (QG-U5, US-QS-07, FR-QG-27; needs Docker)
 	cd $(APP) && npm run ds-snapshots
 
-ds-snapshots: ## Rewrite the baselines in app/ds-snapshots (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07)
+ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07, FR-QG-27)
 	cd $(APP) && npm run ds-snapshots:update
 
 e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
-one-screen: $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the Pokédex layers are measured empty until a seed fixture exists); ONE_SCREEN_WORKERS=<n>, `npm run one-screen:write` rewrites the baseline; needs Docker
+one-screen: $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, `npm run one-screen:write` rewrites the baseline; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off npm run one-screen
 
 one-screen-report: ## The page/inner table of the last `make one-screen` run as Markdown (job summary); report only, never fails (QG-U8)
 	@cat $(APP)/packages/e2e/one-screen-report/report.md 2>/dev/null || echo "No one-screen report: run make one-screen first."
+
+a11y-routes: $(if $(CI),,db-up) auth-up migrate browsers ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; A11Y_ROUTES_WORKERS=<n>, `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && TAXONOMY_BUILD=off npm run a11y-routes
+
+a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
+	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."
 
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
 	cd $(APP) && node tools/check/quality/check-crap.mjs $(ARGS)
@@ -131,11 +141,24 @@ storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark
 build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
 	cd $(APP) && npm run build-storybook
 
-lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
+lighthouse: ## Lighthouse on the built web app, mobile, median of 3 runs against the limits in app/config/gates/quality-limits.json; fails past a limit (QG-U1, FR-QG-09), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web
 	cd $(APP) && npm run bundle-budget -- --report
 	tools/lighthouse/lighthouse-run.sh
-	tools/lighthouse/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+	@summary=$(APP)/packages/web/.lighthouseci/summary.md; tools/lighthouse/lighthouse-summary.sh --check > $$summary; status=$$?; cat $$summary; exit $$status
+
+lighthouse-signed: $(if $(CI),,db-up) auth-up migrate browsers ## Lighthouse on the signed-in /today and /collection, mobile, median of 3 runs; report only: scores never fail it, a run that cannot measure does (FR-QG-09, issue 1251); seeds the demo
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	tools/lighthouse/lighthouse-signed.sh
+
+perf-nightly: $(if $(CI),,db-up) ## Load measurement of every GET route at 1,000 specimens against the budgets in app/config/gates/quality-limits.json (`perf`), plus the concurrency probe (1/4/8/16 Heute screens); report only: a budget never fails it, a broken measurement does (NFR-12, issue 1250); output in app/.cache/perf
+	@mkdir -p $(APP)/.cache/perf
+	cd $(APP) && PERF_SIZES=1000 PERF_SPECIES=100 PERF_RUNS=$(or $(PERF_RUNS),20) npm run --silent perf:measure -w @pflanzendex/api > .cache/perf/measure.json
+	cd $(APP) && PERF_USERS=1,4,8,16 npm run --silent perf:concurrency -w @pflanzendex/api > .cache/perf/concurrency.txt
+	@cd $(APP)/packages/api && npx --no-install tsx perf/load/budget-report.ts ../../.cache/perf/measure.json > ../../.cache/perf/summary.md; status=$$?; \
+	  printf '\n### Concurrency, Heute screen (/today + /specimens/hints)\n\n```text\n' >> ../../.cache/perf/summary.md; \
+	  cat ../../.cache/perf/concurrency.txt >> ../../.cache/perf/summary.md; printf '```\n' >> ../../.cache/perf/summary.md; \
+	  cat ../../.cache/perf/summary.md; exit $$status
 
 bundle-report: ## Initial JS per chunk and package as Markdown against the 125 kB goal; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report
@@ -166,6 +189,9 @@ dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1
 
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
 	cd $(APP) && npm run layout
+
+layout-fix: ## Fix the layout of DIR=<dir> or move files: ARGS="--move <from>=<to>"; dry run, APPLY=1 applies (FR-QG-23)
+	cd $(APP) && node tools/layout-fix/layout-fix.mjs $(DIR) $(if $(APPLY),--apply) $(ARGS)
 
 layout-baseline: ## Create or lower app/config/gates/baselines/layout-baseline.json, never enlarge it (FR-QG-22)
 	cd $(APP) && npm run layout -- --write-baseline
@@ -227,10 +253,19 @@ pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
 
+issue: ## New issue with type and epic labels and the board fields Typ, Epic, Priority and Status Todo (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md>); refuses unknown values before creating anything (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs create --type "$(TYPE)" --epic "$(EPIC)" --priority "$(PRIORITY)" --title "$(TITLE)" --body-file "$(abspath $(BODY))"
+
+issue-check: ## Check the type and epic labels of an issue (ISSUE=<n> [EVENT=opened|edited|labeled|unlabeled]): comment and needs-triage when invalid, needs-triage removed when valid (CI: issue-check.yml, FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs check --issue "$(ISSUE)" --event "$(EVENT)"
+
+issue-sync: ## Set the board fields Typ and Epic of an issue, and Status Todo when it has none (ISSUE=<n> TYPE=<label> EPIC=<code>); CI runs it with the project token (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs sync --issue "$(ISSUE)" --type "$(TYPE)" --epic "$(EPIC)"
+
 board: ## Who works on which open story of a release (board field Release, RELEASE="R1 Parität"); flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
 	cd $(APP) && node tools/workflow/board.mjs "$(RELEASE)"
 
-status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
+status-check: ## Project status vs. pull requests, open items without a status, missing priorities (US-DEV-05); exit 1 on drift
 	cd $(APP) && node tools/workflow/actions/project-status/project-status.mjs check
 
 retro: ## Issue flow retro: created vs. closed per day, burndown (US-DEV-11); prints it, WRITE=1 rewrites the pinned report issue

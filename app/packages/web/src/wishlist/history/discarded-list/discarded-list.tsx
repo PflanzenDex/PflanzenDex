@@ -1,5 +1,5 @@
 import type { DiscardedList as Discarded } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 
 /**
  * The discarded wishes (US-WUN-05): they left the candidate list but are kept, so a discarded wish never disappears

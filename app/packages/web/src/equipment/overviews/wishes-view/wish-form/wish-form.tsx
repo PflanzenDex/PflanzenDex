@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import {
   Form,
   FormControl,
@@ -10,9 +10,9 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { Select } from "@/components/ui/fields/select/select";
+} from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
+import { Select } from "@/shared/ui/fields/select/select";
 import { TYPE_LABELS } from "../../../labels";
 import { EMPTY_WISH, toWishInput, wishSchema, type WishFields } from "../../../schemas";
 import type { EquipmentWishInput } from "../wishes-api";

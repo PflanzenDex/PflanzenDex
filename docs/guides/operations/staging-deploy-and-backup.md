@@ -18,7 +18,7 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below) and keeps at most 3 log files of 10 MB (`json-file` driver, anchor `x-logging`; the overlays repeat it; starting values, assumption), so a noisy client cannot fill the disk. The API limits writes per client (120 per minute, 429 `request.rate_limited`; `docs/guides/reference/app.md`). The limit applies when a container is created: `docker compose up -d` recreates the services with the new setting; `docker inspect --format '{{.HostConfig.LogConfig}}' <container>` shows it.
 
-**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/docker/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
+**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/docker/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/shared/testing/test-setup/`.
 
 ## One-time setup (host)
 
@@ -40,7 +40,7 @@ Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_
 
 ### Container privileges (#761)
 
-Every service runs with `no-new-privileges` and without any Linux capability (`cap_drop: [ALL]`), and none runs as root: `db`, `keycloak-db` and `db-roles` as `postgres` (uid 70), `migrate` and `api` as `node`, `keycloak` as uid 1000, `web` and `proxy` as `caddy` (uid 10001, the `caddy` stage of `web.Dockerfile`), `mailpit` as `nobody`. The Tailscale nodes stay uid 0, but without any capability (userspace networking needs none; their registered state belongs to root). `app/packages/web/src/lib/test-setup/deploy-config.test.ts` checks all of it. Check a running stack with `docker compose ... exec <service> grep Cap /proc/1/status` (all zero).
+Every service runs with `no-new-privileges` and without any Linux capability (`cap_drop: [ALL]`), and none runs as root: `db`, `keycloak-db` and `db-roles` as `postgres` (uid 70), `migrate` and `api` as `node`, `keycloak` as uid 1000, `web` and `proxy` as `caddy` (uid 10001, the `caddy` stage of `web.Dockerfile`), `mailpit` as `nobody`. The Tailscale nodes stay uid 0, but without any capability (userspace networking needs none; their registered state belongs to root). `app/packages/web/src/shared/testing/test-setup/deploy-config.test.ts` checks all of it. Check a running stack with `docker compose ... exec <service> grep Cap /proc/1/status` (all zero).
 
 **One-time step on a host that ran the stack before #761:** the volume `caddydata` still belongs to root, and Caddy as `caddy` cannot write it (the proxy keeps serving, but logs `permission denied` for `/data/caddy`; with `CADDY_SCHEME=` empty it could not store certificates). New volumes get the right owner from the image. Before the first deploy with #761, in `app/config/deploy`:
 
@@ -114,6 +114,34 @@ Test log:
 | Date       | Where                        | Result                                                                                                 |
 | ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 2026-10-03 | development machine (Docker) | `make restore-test` passed (500 rows, same checksum); backup and restore run against the Compose stack |
+
+## Database pool and time limits (NFR-12, #1242)
+
+The api keeps one pool of connections to the database (the schema owner, `DATABASE_URL`). Requests, the background jobs, the reminders and the taxonomy check share it. Starting values (assumptions) and their environment variables; an empty variable keeps the value, `0` switches a time limit off, a value that is not a whole number stops the api at start and the message names the variable. Set them in `.env` and restart the api (`docker compose --env-file app/config/deploy/.env up -d api`, as in the other sections of this runbook):
+
+| Variable                                     | Default | What it bounds                                                                                       |
+| -------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `PFLANZENDEX_DB_POOL_MAX`                    | 12      | connections of the pool                                                                              |
+| `PFLANZENDEX_DB_CONNECT_TIMEOUT_MS`          | 5000    | wait for a free connection (or for a new one) before the request answers 503                         |
+| `PFLANZENDEX_DB_STATEMENT_TIMEOUT_MS`        | 5000    | one statement of a request transaction (`statement_timeout`)                                         |
+| `PFLANZENDEX_DB_LOCK_TIMEOUT_MS`             | 3000    | wait for a lock inside a request transaction (`lock_timeout`)                                        |
+| `PFLANZENDEX_DB_IDLE_TRANSACTION_TIMEOUT_MS` | 30000   | pause inside a request transaction before PostgreSQL ends it (`idle_in_transaction_session_timeout`) |
+
+**Pool size (measured 2026-11-04 on a development machine, AMD Ryzen 5 3600 with 12 threads, PostgreSQL 18.6 in Docker, 32 accounts with 100 specimens, the Heute screen = `/today` and `/specimens/hints`, `npm run perf:concurrency`):** at 32 users the throughput was 59 screens/s with 4 connections, 94 with 8, 106 with 12 and 110 with 16; the median per screen fell from 534 ms (4 connections) to 301 ms (12). 12 is the smallest pool that reaches at least 90 % of the best throughput. The numbers and the method are in `docs/records/test-logs/nfr-12.md`, section 2. On a host with fewer cores (assumption) measure with the same script before raising the size above 8.
+
+**Where the limits apply:**
+
+- Requests: every transaction of the application role `pflanzendex_app` (`withAccount`, sign-in, access check, handover) sets the three limits at its start, in one statement; they end with the transaction, so the next user of the pooled connection gets the server default.
+- Long operations keep a bounded budget instead of none: the account export, the account deletion and the catalog load (`LONG_LIMITS`: 10 minutes per statement, 30 s lock wait, 10 minutes idle). These are constants in `packages/db/src/kernel/connection/limits.ts`, not environment variables.
+- The background jobs, the reminders and the taxonomy check run as the schema owner. They have no statement limit, as before, but they take connections from the same pool, so a long job can make requests wait for a connection (the wait is then bounded by `PFLANZENDEX_DB_CONNECT_TIMEOUT_MS`).
+
+**Why the limits are not role settings (checked on PostgreSQL 18.6):** `ALTER ROLE pflanzendex_app SET statement_timeout` would be the natural place, but it does not work here. The requests switch to the role with `SET ROLE`, and PostgreSQL applies role settings only at login, so the request transactions would not see them. And no session starts as that role: it is `NOLOGIN`. And the migrations run as the schema owner `pflanzendex_owner`, which is `NOCREATEROLE`: `alter role pflanzendex_app set ...` fails with "permission denied to alter role". The limits are therefore set per transaction in the code, and the environment variables above are the override for a deployment.
+
+**Overriding for one session** (a manual repair on `psql` as the owner): `set statement_timeout = 0;` and the other two settings the same way apply to that session only. A single request is changed in code: use `withLongAccount` for the operation, or change the constants in `limits.ts`.
+
+**What a failure looks like:** a request that hits a limit answers `503` with the code `system.database_unavailable` and the text "Die Datenbank antwortet gerade nicht rechtzeitig …" (no cause in the answer). The api log shows `Database unavailable <message>` (for example `canceling statement due to statement timeout`, `timeout exceeded when trying to connect`, `Client has encountered a connection error`) and no user data. A server that drops an idle connection logs `database connection lost <message>`. Any other unexpected failure answers `500` with the code `system.unexpected`, and its cause is logged as `Request failed`.
+
+**Runbook "requests answer 503 database_unavailable":** first `docker compose ps db` and `docker compose logs --tail 100 db` (restarts, out of memory, disk). Then look for long or blocked statements: `select pid, state, now() - query_start as age, wait_event_type, left(query, 80) from pg_stat_activity where datname = current_database() order by age desc;` run as the cluster user. If the pool is exhausted with many `active` connections of a job, understand the job before raising `PFLANZENDEX_DB_POOL_MAX`. Keep the pool below the server's `max_connections` (100 by default): above it, new connections fail with `too many clients already`.
 
 ## Test environment behind a reverse proxy
 
@@ -190,7 +218,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Memory
 
-Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions): `db` 256 MB, `keycloak` 900 MB (JVM heap `-Xms128m -Xmx512m`), `api` 512 MB, `migrate` 512 MB (only while it runs), `web` 96 MB, `proxy` 64 MB, `mailpit` 64 MB, `keycloak-db` 64 MB (only while it runs). Measured on 2026-10-11 on a development machine (not the target host) after the first requests, one registered account (`docker stats --no-stream`):
+Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions): `db` 384 MB (256 MB before #1242, see below), `keycloak` 900 MB (JVM heap `-Xms128m -Xmx512m`), `api` 512 MB, `migrate` 512 MB (only while it runs), `web` 96 MB, `proxy` 64 MB, `mailpit` 64 MB, `keycloak-db` 64 MB (only while it runs). Measured on 2026-10-11 on a development machine (not the target host) after the first requests, one registered account (`docker stats --no-stream`):
 
 | Container  | Memory used   | Limit  |
 | ---------- | ------------- | ------ |
@@ -200,9 +228,11 @@ Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions)
 | `web`      | 43 MiB        | 96 MB  |
 | `mailpit`  | 41 MiB        | 64 MB  |
 | `proxy`    | 16 MiB        | 64 MB  |
-| total      | about 815 MiB | 1.9 GB |
+| total      | about 815 MiB | 2.0 GB |
 
 That leaves room on a 3 GB host for the OS, Docker and image builds (`vite build` and `npm ci` need a few hundred MB while they run; build on the host only when nothing else peaks, or add swap). Keycloak's first start peaks higher than its idle figure; the 900 MB limit was not hit in the local run. Recheck on the real host.
+
+On 2026-11-04 (#1242, the same machine, `docker stats` once per second during `perf:measure` and `perf:concurrency`), `db` peaked at 77 MiB with the old settings and 4 connections, at 59 MiB with the new settings (`perf:measure`), and at 94 MiB during the concurrency runs with up to 16 connections on a 27 MB dataset. The limit rose to 384 MB and the compose file sets `shared_buffers` 128 MB, `work_mem` 4 MB and `effective_cache_size` 256 MB: a buffer pool that fills up on a larger database and 12 connections each with its own memory need more than the old 256 MB (assumption, not measured on a large database). The planner hint of the default (4 GB) would assume a cache this container does not have, so it is set to 256 MB.
 
 Test log (test environment):
 

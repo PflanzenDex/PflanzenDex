@@ -1,4 +1,4 @@
-import { test, describe } from "node:test";
+import { test, describe, after } from "node:test";
 import assert from "node:assert/strict";
 import zlib from "node:zlib";
 import fs from "node:fs";
@@ -13,6 +13,17 @@ import {
   buildReport,
   renderMarkdown,
 } from "./report-bundle.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // Base64 VLQ for the fixtures: segments are [genCol, srcIdx, srcLine, srcCol] with relative values.
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -116,7 +127,7 @@ describe("QG-U6 · report: grouping per package", () => {
 
   test("QG-U6 · FR-QG-10 own code groups by workspace package and first directory", () => {
     assert.equal(g("../../src/wishlist/history/x.ts"), "web/wishlist");
-    assert.equal(g("../../src/main.tsx"), "web/(src root)");
+    assert.equal(g("../../src/vite-env.d.ts"), "web/(src root)");
     assert.equal(g("../../../core/src/pokedex/rank/x.ts"), "core/pokedex");
   });
 
@@ -172,10 +183,7 @@ describe("QG-U6 · report: summing", () => {
 describe("QG-U6 · report: whole dist and Markdown", () => {
   const code = (s) => s.repeat(200);
   function fixture() {
-    const dist = path.join(
-      fs.mkdtempSync(path.join(os.tmpdir(), "bundle-report-")),
-      "packages/web/dist",
-    );
+    const dist = path.join(tempDir("bundle-report-"), "packages/web/dist");
     fs.mkdirSync(path.join(dist, "assets"), { recursive: true });
     fs.writeFileSync(
       path.join(dist, "index.html"),

@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { archiveSpecimen, loadArchived, restoreSpecimen } from "./archived-api";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
+import { answerCardRead } from "../specimens/tests/cards-fake";
 
 // US-BES-07: archive and restore in the UI (jsdom, server simulated).
 const response = (status: number, body: unknown) =>
@@ -70,7 +71,7 @@ function fakeServer(opts: { archivedError?: Response; startArchived?: ArchivedEn
     if (path === "/locations") return response(200, { locations: [] });
     if (path === "/specimens/archived") return response(200, { archived });
     if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-    return response(200, { cards });
+    return answerCardRead(new URL(String(url)), cards) ?? response(404, {});
   });
   vi.stubGlobal("fetch", fetchFn);
   return { fetchFn, posts };

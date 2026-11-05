@@ -13,12 +13,17 @@ export type Reply = { status: number; bytes: number; body: Record<string, any> }
 const FRAME = /^(begin|commit|rollback|set local role|select set_config)/i;
 
 export class Harness {
-  readonly owner: Pool = openOwnerPool();
+  readonly owner: Pool;
   /** Superuser pool: shared catalog rows, `analyze`, cleanup. */
   readonly admin: Pool = openFixturePool();
   counts: Counts = { total: 0, payload: 0 };
   private app!: ReturnType<typeof createApp>;
   private readonly seen = new WeakSet<object>();
+
+  /** `owner` is the connection the API runs on; the concurrency measurement passes a pool of its own size (#1242). */
+  constructor(owner: Pool = openOwnerPool()) {
+    this.owner = owner;
+  }
 
   async start(): Promise<void> {
     await ensureTestOwnerDatabase();
@@ -82,7 +87,13 @@ export class Harness {
       headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
-    const text = await res.text();
-    return { status: res.status, bytes: Buffer.byteLength(text), body: JSON.parse(text) };
+    // Not every answer is JSON (the account export is a ZIP): its bytes count, its body stays empty.
+    const raw = Buffer.from(await res.arrayBuffer());
+    const json = res.headers.get("content-type")?.includes("application/json") ?? false;
+    return {
+      status: res.status,
+      bytes: raw.byteLength,
+      body: json && raw.byteLength > 0 ? JSON.parse(raw.toString("utf8")) : {},
+    };
   }
 }

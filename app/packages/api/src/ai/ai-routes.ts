@@ -86,10 +86,10 @@ export function aiAccessRoutes(
   const routes = new Hono<AuthEnv>();
 
   for (const path of KEEPER_PATHS) {
-    routes.use(path, auth).use(`${path}/*`, auth);
+    routes.use(`${path}/*`, auth);
     if (opt.features) {
       const gate = featureGate(opt.features, "ai");
-      routes.use(path, gate).use(`${path}/*`, gate);
+      routes.use(`${path}/*`, gate);
     }
   }
   routes.get("/ai/connections", async (c) =>

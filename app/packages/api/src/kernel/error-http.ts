@@ -1,6 +1,6 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 502 | 504;
+type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 502 | 503 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
@@ -132,6 +132,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "source.response_invalid": 502,
   "source.request_rejected": 502,
   "source.timeout": 504,
+  // The database did not answer in time or cannot be reached (NFR-12): retry later, the request itself is fine.
+  "system.database_unavailable": 503,
 };
 
 export const statusFor = (f: AppError): Status => STATUS[f.code] ?? 500;

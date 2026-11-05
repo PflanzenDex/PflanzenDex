@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SpeciesPostgres } from "../catalog/index.ts";
 import type { SpeciesRepointer } from "../catalog/index.ts";
-import type { SpeciesName, SpeciesValues } from "../catalog/species.ts";
+import type { SpeciesName, SpeciesValues } from "../catalog/species/species.ts";
 import { deleteAccountsWithCatalog } from "../fixtures.ts";
 import { migrate, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { CareProfilePostgres, COLLECTION_REPOINTERS, SpecimenPostgres } from "./index.ts";

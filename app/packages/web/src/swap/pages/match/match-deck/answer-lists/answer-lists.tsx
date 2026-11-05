@@ -1,5 +1,5 @@
 import type { MatchEntry } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 
 const germanDate = (d: string) => d.split("-").reverse().join(".");
 const entryName = (e: MatchEntry) =>

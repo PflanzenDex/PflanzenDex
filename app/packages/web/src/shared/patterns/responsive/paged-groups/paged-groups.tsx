@@ -1,0 +1,59 @@
+import type { Key, ReactNode } from "react";
+import { cn } from "@/shared/lib/utils";
+import { GroupChoices, usePart } from "./group-choices/group-choices";
+import { Pager, type PagerPaging } from "../pager/pager";
+
+export type PagedGroup<T> = {
+  key: string;
+  label: string;
+  items: readonly T[];
+  /** All entries of the group on the server, when they are not all loaded (FR-BES-23); the choice shows it. */
+  count?: number;
+  /** The server paging of the group's entries (see `PagerPaging`); used while the group is chosen. */
+  paging?: PagerPaging;
+};
+
+/**
+ * Groups chosen from a row of choices with their counts, and the entries of the chosen group as pages (US-QS-19,
+ * DS-60): the group is in the address (`part=`), the page in `?page=n`, a changed group starts at page 1. `intro` is
+ * shown between the choices and the entries, e.g. the zone of the location or a group action. `fit` takes the page size
+ * from the free height of the frame (issue 1029); `pageSize` is then the starting value.
+ */
+export function PagedGroups<T>(props: {
+  /** Accessible name of the row of choices (German). */
+  choicesLabel: string;
+  /** Accessible name of the list of entries (German). */
+  listLabel: string;
+  groups: readonly PagedGroup<T>[];
+  pageSize: number;
+  renderItem: (item: T) => ReactNode;
+  getKey: (item: T) => Key;
+  listClassName?: string;
+  intro?: (group: PagedGroup<T>) => ReactNode;
+  fit?: boolean;
+}) {
+  const choices = props.groups.map((g) => ({
+    key: g.key,
+    label: g.label,
+    count: g.count ?? g.items.length,
+  }));
+  const chosen = usePart(choices);
+  const group = props.groups.find((g) => g.key === chosen?.key);
+  return (
+    <div className={cn("flex flex-col gap-2", props.fit && "min-h-0 flex-1")}>
+      <GroupChoices label={props.choicesLabel} choices={choices} />
+      {group ? props.intro?.(group) : null}
+      <Pager
+        items={group?.items ?? []}
+        pageSize={props.pageSize}
+        label={props.listLabel}
+        resetKey={group?.key ?? ""}
+        getKey={props.getKey}
+        {...(props.listClassName ? { listClassName: props.listClassName } : {})}
+        {...(props.fit ? { fit: true } : {})}
+        {...(group?.paging ? { paging: group.paging } : {})}
+        renderItem={props.renderItem}
+      />
+    </div>
+  );
+}

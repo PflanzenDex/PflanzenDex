@@ -1,7 +1,7 @@
 import type { FriendCard as Card } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 import { dateText } from "../../../parts/invite-card/invite-card";
 
 /** "du hast sie" / "du hast sie nicht", or the comparison is unknown (P-08): text carries the meaning, colour only supports it. */

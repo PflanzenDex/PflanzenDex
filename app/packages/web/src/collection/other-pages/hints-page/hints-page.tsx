@@ -1,8 +1,8 @@
 import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../../shared/data";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
   GRID,
@@ -14,12 +14,15 @@ import {
   Warning,
 } from "../../specimens/cards/parts/parts";
 import { refusalText } from "../../specimens/model/refusal";
-import { loadLocations } from "../../../light";
+import { sharedLocations } from "../../../light";
 import { loadSpecimenHints } from "../../insights/api/hints-api";
 import { setSpecimenLocation } from "../../specimens/model/specimens-api";
 import { HintCount, type useHintCount } from "../../insights/api/hint-count/hint-count";
 import { HintCard, type HintTarget } from "./hint-card/hint-card";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./hints-page.de.json";
 
+const ui = texts(table);
 export type { HintTarget };
 
 interface Data {
@@ -65,29 +68,32 @@ function HintsList(props: HintsListProps) {
   const { api, onOpen, token } = props;
   const host = props.host === true;
   const Frame = host ? Plain : PageFrame;
+  // In its layer the list pages by the free height, so every region down to it passes the height on (issue 1156).
+  const frameClass = host ? FILL : undefined;
   const again = useInvalidate(KEY);
   const place = useWriteAction(token, again);
+  const client = useQueryClient();
   const load = useCallback(
     async (t: string) => {
       const [hints, locations] = await Promise.all([
         loadSpecimenHints(api, t),
-        loadLocations(api, t),
+        sharedLocations(client, api, t),
       ]);
       if (!hints.ok) return hints;
       if (!locations.ok) return locations;
       return { ok: true as const, value: { hints: hints.value, locations: locations.value } };
     },
-    [api],
+    [api, client],
   );
   return (
-    <Frame>
+    <Frame {...(frameClass ? { className: frameClass } : {})}>
       <LoadFrame
         queryKey={KEY}
         token={token}
         load={load}
-        loadingText="Hinweise werden geladen …"
-        {...(host ? {} : { heading: "Hinweise" })}
-        loadingFallback={<HintsPageSkeleton label="Hinweise werden geladen …" host={host} />}
+        loadingText={ui("loading")}
+        {...(host ? {} : { heading: ui("heading") })}
+        loadingFallback={<HintsPageSkeleton label={ui("loading")} host={host} />}
       >
         {(data: Data) => (
           <>
@@ -116,8 +122,10 @@ function HintsList(props: HintsListProps) {
   );
 }
 
-/** Hints per page of the layer (starting value, assumption; US-QS-18). */
+/** Hints per page of the layer until the layout measures its free height (starting value, assumption; US-QS-18, issue 1156). */
 const PAGE_SIZE = 3;
+/** A region between the layer and its paged list: it takes the free height and passes it on (issue 1029). */
+const FILL = "flex min-h-0 flex-1 flex-col";
 
 function HintList(props: {
   host: boolean;
@@ -137,33 +145,27 @@ function HintList(props: {
     />
   );
   return (
-    <section aria-labelledby={props.host ? undefined : "hints-title"}>
+    <section
+      aria-labelledby={props.host ? undefined : "hints-title"}
+      {...(props.host ? { className: FILL } : {})}
+    >
       {!props.host && (
         <h1 id="hints-title" className={TITLE}>
-          Hinweise
+          {ui("heading")}
         </h1>
       )}
       {props.data.hints.length === 0 ? (
         <EmptyState
-          title="Keine Hinweise"
+          title={ui("emptyTitle")}
           level={props.host ? 3 : 2}
-          description="Jede Pflanze hat eine Art, einen Standort und eine Lichtzone."
-          action={{ label: "Zur Sammlung", onClick: () => props.onOpen("collection") }}
+          description={ui("emptyDescription")}
+          action={{ label: ui("toCollection"), onClick: () => props.onOpen("collection") }}
         />
       ) : (
         <>
-          <Quiet className="mb-3">
-            Diese Pflanzen sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung
-            auf die Lichtzonen.
-          </Quiet>
+          <Quiet className="mb-3">{ui("quiet")}</Quiet>
           {props.host ? (
-            <Pager
-              items={props.data.hints}
-              pageSize={PAGE_SIZE}
-              label="Fehlende Angaben"
-              getKey={(h) => `${h.specimenId}-${h.kind}`}
-              renderItem={(h) => card(h)}
-            />
+            <HintPages hints={props.data.hints} card={card} />
           ) : (
             <ul className={GRID}>
               {props.data.hints.map((h) => (
@@ -174,5 +176,24 @@ function HintList(props: {
         </>
       )}
     </section>
+  );
+}
+
+/** The hints in the layer of "Heute", as pages that fill its free height (US-QS-18, issue 1156). */
+function HintPages(props: {
+  hints: readonly SpecimenHint[];
+  card: (h: SpecimenHint) => ReactNode;
+}) {
+  return (
+    <Pager
+      items={props.hints}
+      pageSize={PAGE_SIZE}
+      fit
+      param={LAYER_PARAM}
+      replace
+      label={ui("pager")}
+      getKey={(h) => `${h.specimenId}-${h.kind}`}
+      renderItem={(h) => props.card(h)}
+    />
   );
 }

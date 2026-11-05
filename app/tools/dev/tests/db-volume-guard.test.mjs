@@ -2,13 +2,24 @@
 // The check runs its real shell code against directories that stand for the data volume.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { test } from "node:test";
+import { test, after } from "node:test";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const deploy = new URL("../../../config/deploy/scripts/deploy.sh", import.meta.url).pathname;
-const bin = mkdtempSync(join(tmpdir(), "db-volume-bin-"));
+const bin = tempDir("db-volume-bin-");
 // Stub docker: `volume inspect NAME` logs NAME and succeeds with STUB_VOLUME=present; `run` executes the check's shell
 // script with /v replaced by STUB_VOLUME_DIR (the fake volume), or fails with STUB_RUN=fail (daemon not reachable).
 writeFileSync(
@@ -32,12 +43,12 @@ chmodSync(join(bin, "compose"), 0o755);
 
 // files: the fake volume's content, relative paths (a trailing "/" makes an empty folder).
 function run({ major = "18", volume = "present", files = {}, env = {}, runFail = false } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "db-volume-"));
+  const dir = tempDir("db-volume-");
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(join(dir, dirname(path)), { recursive: true });
     if (!path.endsWith("/")) writeFileSync(join(dir, path), text);
   }
-  const log = join(dir, "..", `calls-${process.hrtime.bigint()}`);
+  const log = join(tempDir("db-volume-calls-"), "calls");
   writeFileSync(log, "");
   // Only the function is taken from the script, so the test runs the real code without running `main`.
   const script = `set -u; source <(sed -n '/^check_db_volume() {/,/^}/p' "$DEPLOY"); compose=("$STUB_COMPOSE"); check_db_volume`;

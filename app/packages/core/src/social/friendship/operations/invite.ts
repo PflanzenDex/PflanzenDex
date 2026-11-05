@@ -1,8 +1,6 @@
-import { defineOperation, ok, shape } from "../../../kernel";
+import { defineOperation, ok, shape, MS_PER_DAY } from "../../../kernel";
 import { newInvitationCode } from "../../../account";
 import { FRIEND_CODE_VALIDITY_DAYS, type FriendStore } from "../types";
-
-const DAY_MS = 86_400_000;
 
 export interface InviteDependencies {
   readonly friends: FriendStore;
@@ -32,7 +30,7 @@ export const friendInvite = (deps: InviteDependencies) =>
     run: async ({ userId }) => {
       const code = newInvitationCode(deps.random);
       const expiresAt = new Date(
-        deps.now().getTime() + FRIEND_CODE_VALIDITY_DAYS * DAY_MS,
+        deps.now().getTime() + FRIEND_CODE_VALIDITY_DAYS * MS_PER_DAY,
       ).toISOString();
       const saved = await deps.friends.createCode(userId, {
         code: code.replaceAll("-", ""),

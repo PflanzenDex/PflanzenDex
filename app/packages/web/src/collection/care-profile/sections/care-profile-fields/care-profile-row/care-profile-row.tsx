@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { Quiet } from "../../../../specimens/cards/parts/parts";
 
 /** One field of the care profile: the catalog value, the field and the reset to the catalog (US-BES-09). */

@@ -25,7 +25,7 @@ Repair of duplicate names (FR-WUN-06, migration 0020, issue 303): names are uniq
 
 Acceptance criteria:
 
-- Per zone 2–4 there should be at least **2** open candidates (buffer, adjustable).
+- Per zone 2–4 there should be at least **2** <!-- const: REPLENISH_BUFFER_LIMITS.default --> open candidates (buffer, adjustable).
 - If a zone falls below the buffer, a warning appears "Replenishment needed: <zone> (N open candidates)" with the actions "Discover for <zone>" (US-ENT-07) and "Fetch suggestions" (US-WUN-04).
 - The warning can come as a reminder (US-MON-01).
 

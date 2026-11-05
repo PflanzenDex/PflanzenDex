@@ -1,0 +1,18 @@
+{
+  "tiles.label": "Themen",
+  "tiles.treatments": "Behandlungen",
+  "tiles.watering": "Gießen",
+  "tiles.hints": "Fehlt noch",
+  "tiles.failed": "nicht geladen",
+  "tiles.loading": "lädt …",
+  "page.title": "Heute",
+  "page.now": "Jetzt dran",
+  "page.loading": "Heute wird geladen …",
+  "empty.title": "Heute steht nichts an.",
+  "empty.description": "Keine Behandlung ist fällig, keine Pflanze steht falsch und keine Angabe fehlt.",
+  "empty.action": "Zur Sammlung",
+  "later.one": "Ein weiterer Behandlungstermin steht später an.",
+  "later.other": "{count} weitere Behandlungstermine stehen später an.",
+  "later.short": "{count} Termine später",
+  "tasks.title": "Weitere Aufgaben"
+}

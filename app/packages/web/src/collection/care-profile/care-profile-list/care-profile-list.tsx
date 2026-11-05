@@ -4,8 +4,8 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import type { ApiError } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import type { ApiError } from "../../../shared/data";
 import { CareProfileCard } from "../sections/care-profile-card/care-profile-card";
 import { KeptProfileCard } from "../sections/kept-profile-card/kept-profile-card";
 import { NextAction, PROFILE_GRID, Status, Warning } from "../../specimens/cards/parts/parts";
@@ -25,7 +25,7 @@ export function ProfileList(props: {
 }) {
   const { data, write } = props;
   return (
-    <div>
+    <div className="@container">
       {write.message && <Status>{write.message}</Status>}
       {write.error && (
         <Warning>

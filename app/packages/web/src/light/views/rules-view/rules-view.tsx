@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { classificationRules, zoneLabel } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import {
   ResponsiveTable,
   type ResponsiveColumn,
-} from "@/components/shared/responsive/responsive-table/responsive-table";
+} from "@/shared/patterns/responsive/responsive-table/responsive-table";
 import type { LightZone } from "../../shared/light-api/light-api";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { useIsMd } from "@/lib/use-breakpoint";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 
 /** The entries cut into pages of `size` (a page is one part of the rules). */
 const pagesOf = <T,>(entries: readonly T[], size: number): T[][] =>

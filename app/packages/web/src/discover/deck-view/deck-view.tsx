@@ -1,15 +1,15 @@
 import type { DecideResult, SuggestionDeck } from "@pflanzendex/core";
 import { useEffect, useRef, useState } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
-import { Button } from "@/components/ui/button/button";
-import { errorText } from "@/lib/error-text";
-import type { Response } from "../../kernel";
-import { CATALOG_ADDRESS } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { Button } from "@/shared/ui/button/button";
+import { errorText } from "@/shared/lib/error-text";
+import type { Response } from "../../shared/data";
+import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
+import { cn } from "@/shared/lib/utils";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
 import table from "../discover.de.json";
-import { texts } from "@/lib/text-rules/texts";
+import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
 
@@ -149,6 +149,7 @@ function Cards(props: {
       <EmptyState
         title={deck.empty.text}
         description={deck.empty.nextAction}
+        compact={deck.zoneFilter?.shortfall != null}
         titleRef={endTitle}
         action={{ label: t("deck.propose"), href: CATALOG_ADDRESS }}
       />

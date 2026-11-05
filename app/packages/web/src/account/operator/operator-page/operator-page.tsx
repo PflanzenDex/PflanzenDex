@@ -1,15 +1,15 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { useCallback } from "react";
-import { LayerHost, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { LoadFrame } from "../../../kernel";
+import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { LoadFrame } from "../../../shared/data";
 import { loadOverview } from "../../api/access-api";
 import { IntroductionSection } from "../introduction-section/introduction-section";
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
 import { InvitationsArea, ModeSection, OperatorRow } from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
 import { refusalText } from "../../refusal";
-import { keepTogether } from "@/lib/format";
+import { keepTogether } from "@/shared/lib/format";
 import {
   OPERATOR_KEY,
   useOperatorActions,
@@ -168,14 +168,15 @@ function Layers(props: {
 
 /**
  * The operator area (US-ACC-05, US-QS-15): one row per topic with its current value; each topic opens as a layer. No
- * content of any account (P-05). On a wide screen the layer stands beside the rows.
+ * content of any account (P-05). On a wide screen the layer stands beside the rows. One screen (US-QS-15, DS-61): the
+ * page does not scroll, its content region does at a large text size.
  */
 export function OperatorPage(props: { api: string; token: Token }) {
   const { api, token } = props;
   const actions = useOperatorActions(api, token);
   const load = useCallback((t: string) => loadOverview(api, t), [api]);
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div data-fit-screen="" className="flex min-w-0 flex-col gap-4">
       <h1 className="text-2xl font-semibold">Betreiber</h1>
       <LoadFrame
         queryKey={[...OPERATOR_KEY, "overview"]}

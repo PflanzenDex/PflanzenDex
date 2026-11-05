@@ -5,7 +5,7 @@ import { withAccount, migrate, openOwnerPool, openFixturePool } from "../kernel/
 import { findSchemaViolations } from "../schema-check.ts";
 import { assignRole } from "../fixtures.ts";
 import { SpeciesPostgres, ReviewPostgres } from "./index.ts";
-import type { SpeciesName, SpeciesValues } from "./species.ts";
+import type { SpeciesName, SpeciesValues } from "./species/species.ts";
 
 // US-BES-01, FR-BES-02, FR-BES-11, E-02: species catalog with private proposals (real PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -105,7 +105,7 @@ describe("species catalog: proposal is private (FR-BES-11, P-04, P-05)", () => {
     expect(await species.find(anna, a.id)).toMatchObject({ id: a.id });
     expect(await species.find(ben, a.id)).toBeNull();
     expect(await species.find(operator, a.id)).toBeNull();
-    const view = (n: string) => species.search(n, norm(a.latinName));
+    const view = async (n: string) => (await species.search(n, norm(a.latinName))).species;
     expect(await view(anna)).toHaveLength(1);
     expect(await view(ben)).toEqual([]);
   });
@@ -240,7 +240,7 @@ describe("species catalog: search and duplicates", () => {
     });
     const a = await create(anna, w);
     await approve(a.id);
-    const t = async (s: string) => (await species.search(ben, norm(s)))[0]?.hit;
+    const t = async (s: string) => (await species.search(ben, norm(s))).species[0]?.hit;
     expect(await t(w.latinName)).toMatchObject({ field: "latin" });
     expect(await t(name("bogenhanf "))).toMatchObject({ field: "german" });
     expect(await t(name("sansevieria trifasciata "))).toMatchObject({
@@ -248,7 +248,7 @@ describe("species catalog: search and duplicates", () => {
       display: name("Sansevieria trifasciata "),
     });
     expect(
-      (await species.search(ben, norm(name("sansevieria trifasciata "))))[0]?.synonyms,
+      (await species.search(ben, norm(name("sansevieria trifasciata ")))).species[0]?.synonyms,
     ).toEqual([name("Sansevieria trifasciata ")]);
   });
 
@@ -269,8 +269,8 @@ describe("species catalog: search and duplicates", () => {
   });
 
   it("search characters % and _ are text, not wildcards; empty search lists only what is visible", async () => {
-    expect(await species.search(ben, "%")).toEqual([]);
-    const all = await species.search(ben, null);
+    expect((await species.search(ben, "%")).species).toEqual([]);
+    const all = (await species.search(ben, null)).species;
     expect(all.every((x) => x.own || x.reviewStatus === "reviewed")).toBe(true);
   });
 });
@@ -380,5 +380,118 @@ describe("species catalog and review status (TE-08)", () => {
     const many = await new SpeciesPostgres(counted).findMany(anna, made);
     expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
     expect(statements).toBe(afterFew);
+  });
+});
+
+describe("NFR-12 species search by Latin name", () => {
+  it("NFR-12 the index species_latin_name serves the ordered search", async () => {
+    const { rows } = await admin.query<{ indexdef: string }>(
+      "select indexdef from pg_indexes where schemaname = 'public' and indexname = 'species_latin_name'",
+    );
+    expect(rows[0]?.indexdef).toContain("(latin_name)");
+  });
+});
+
+describe("NFR-12 names of the own collection in one statement", () => {
+  /** The pool with a count of the statements sent through it and its connections (NFR-12). */
+  function countedPool(target: Pool): { pool: Pool; count: () => number } {
+    let n = 0;
+    const wrap = <T extends object>(obj: T): T =>
+      new Proxy(obj, {
+        get(o, prop) {
+          const v = Reflect.get(o, prop, o) as unknown;
+          if (prop === "query")
+            return (...a: unknown[]) => (n++, (v as (...x: unknown[]) => unknown).apply(o, a));
+          if (prop === "connect")
+            return async () => wrap(await (v as () => Promise<object>).call(o));
+          return typeof v === "function" ? v.bind(o) : v;
+        },
+      });
+    return { pool: wrap(target), count: () => n };
+  }
+
+  it("NFR-12 latinNamesOf gives the names find gives for the given species; invisible ones are left out", async () => {
+    const mine = await create(anna, values(name("Aloe kollektion-eigen ")));
+    const shared = await create(anna, values(name("Aloe kollektion-frei ")));
+    await approve(shared.id);
+    const theirs = await create(ben, values(name("Aloe kollektion-fremd ")));
+    const ids = [mine.id, shared.id, theirs.id, randomUUID()];
+    const forAnna = await species.latinNamesOf(anna, ids);
+    expect([...forAnna].sort()).toEqual([mine.latinName, shared.latinName].sort());
+    expect([...(await species.latinNamesOf(ben, ids))].sort()).toEqual(
+      [shared.latinName, theirs.latinName].sort(),
+    );
+    // The same names as the per-species `find` that this read replaces.
+    const viaFind = (await Promise.all(ids.map((id) => species.find(anna, id)))).flatMap((s) =>
+      s ? [s.latinName] : [],
+    );
+    expect([...forAnna].sort()).toEqual([...viaFind].sort());
+    expect(await species.latinNamesOf(anna, [])).toEqual([]);
+  });
+
+  it("NFR-12 latinNamesOf needs one statement for any number of species", async () => {
+    const made: string[] = [];
+    for (let i = 0; i < 6; i++)
+      made.push((await create(anna, values(name(`Aloe kollektion${i} `)))).id);
+    const counted = countedPool(pool);
+    const reader = new SpeciesPostgres(counted.pool);
+    const before = counted.count();
+    await reader.latinNamesOf(anna, made.slice(0, 2));
+    const few = counted.count() - before;
+    const middle = counted.count();
+    await reader.latinNamesOf(anna, made);
+    expect(counted.count() - middle).toBe(few);
+  });
+});
+
+describe("FR-BES-24 visible cap of the species search (P-10)", () => {
+  // A two-letter suffix per species keeps the Latin names unique and letters only.
+  const suffix = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  /** `count` proposals of `user`, every Latin name of them contains `term`. */
+  async function proposals(user: string, term: string, count: number): Promise<void> {
+    for (let i = 0; i < count; i++) await create(user, values(`${term}${suffix(i)} sp`));
+  }
+
+  it("FR-BES-24 51 matching species give 50 hits and more=true", async () => {
+    const term = name("Capmore");
+    await proposals(anna, term, 51);
+    const r = await species.search(anna, norm(term));
+    expect(r.species).toHaveLength(50);
+    expect(r.more).toBe(true);
+  });
+
+  it("FR-BES-24 exactly 50 matching species give 50 hits and more=false", async () => {
+    const term = name("Capexact");
+    await proposals(anna, term, 50);
+    const r = await species.search(anna, norm(term));
+    expect(r.species).toHaveLength(50);
+    expect(r.more).toBe(false);
+  });
+
+  it("FR-BES-24 fewer matching species give all of them and more=false", async () => {
+    const term = name("Capfew");
+    await proposals(anna, term, 3);
+    const r = await species.search(anna, norm(term));
+    expect(r.species).toHaveLength(3);
+    expect(r.more).toBe(false);
+  });
+
+  it("FR-BES-24 a foreign proposal does not count toward more: the owner sees no notice (P-05)", async () => {
+    const term = name("Capforeign");
+    await proposals(anna, term, 50);
+    await proposals(ben, term, 5);
+    const forAnna = await species.search(anna, norm(term));
+    expect(forAnna.species).toHaveLength(50);
+    expect(forAnna.more).toBe(false);
+    const forBen = await species.search(ben, norm(term));
+    expect(forBen.species).toHaveLength(5);
+    expect(forBen.more).toBe(false);
+  });
+
+  it("FR-BES-24 the list without a term keeps the cap: at most 50 hits, and more only when more are visible", async () => {
+    const all = await species.search(anna, null);
+    expect(all.species.length).toBeLessThanOrEqual(50);
+    if (all.more) expect(all.species).toHaveLength(50);
+    if (all.species.length < 50) expect(all.more).toBe(false);
   });
 });

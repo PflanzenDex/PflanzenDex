@@ -1,5 +1,6 @@
 import { phaseStatus, type LightLocation, type PhasesRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 import { CARD_CLASSES, WARNING_CLASSES } from "../../../shared/notices/notices";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
@@ -79,7 +80,7 @@ function CompactEntry(props: {
       : null,
   ].filter((h): h is string => h !== null);
   return (
-    <div className={`${CARD_CLASSES} flex flex-col gap-0 px-3 py-1 text-xs leading-tight`}>
+    <div className={cn(CARD_CLASSES, "flex flex-col gap-0 px-3 py-1 text-xs leading-tight")}>
       <div className="flex flex-wrap items-center justify-between gap-x-2">
         <h3 className="min-w-[8ch] flex-1 text-base font-semibold">{z.name}</h3>
         {canSwitch && (
@@ -128,7 +129,7 @@ export function Entry(props: {
   const status = phaseStatus(z);
   const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
   return (
-    <Root className={`${CARD_CLASSES} flex flex-col gap-1`}>
+    <Root className={cn(CARD_CLASSES, "flex flex-col gap-1")}>
       <h3 className="font-semibold">{z.name}</h3>
       <p>Soll-Phase heute: {PHASE_TEXT[z.phase]}</p>
       <p>{nextChangeText(z.nextChange)}</p>

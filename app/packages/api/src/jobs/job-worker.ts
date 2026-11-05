@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   drainJobs,
   JOB_LIMITS,
+  MS_PER_DAY,
   type JobHandlers,
   type JobQueue,
   type RunOutcome,
@@ -29,7 +30,6 @@ export interface JobWorker {
 }
 
 const PURGE_EVERY_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const logToStderr: NonNullable<JobWorkerOptions["report"]> = (event) => {
   if (event.kind === "error") console.error("job queue error", event.error);
@@ -62,7 +62,7 @@ export function createJobWorker(options: JobWorkerOptions): JobWorker {
     const t = now().getTime();
     if (t - lastPurge >= PURGE_EVERY_MS) {
       lastPurge = t;
-      await options.queue.purge(new Date(t - JOB_LIMITS.retentionDays * DAY_MS));
+      await options.queue.purge(new Date(t - JOB_LIMITS.retentionDays * MS_PER_DAY));
     }
     return outcomes;
   }

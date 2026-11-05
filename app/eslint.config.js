@@ -8,6 +8,7 @@ import security from "eslint-plugin-security";
 import { minimatch } from "minimatch";
 import { walkCode, hasMarker } from "./tools/check/code/check-boundaries.mjs";
 import uiText from "./tools/check/code/ui-text/eslint-ui-text.mjs";
+import { constantsConfigs } from "./tools/check/code/constants/constants-config.mjs";
 
 // Files with `MAX_LINES_IGNORE: <reason>` in their first 5 lines are exempt from max-lines (US-QG-03).
 // Thresholds live once in quality-limits.json (FR-QG-16); per-area overrides are merged over `default`.
@@ -64,8 +65,10 @@ const uiTextIgnores = [
   "**/*.test.ts",
   "**/*.test.tsx",
   "**/*.stories.tsx",
-  "packages/web/src/lib/page-stories/**",
-  "packages/web/src/lib/test-setup/**",
+  "packages/web/src/app/stories/harness/**",
+  "packages/web/src/app/stories/data/**",
+  "packages/web/src/app/stories/screens/**",
+  "packages/web/src/shared/testing/test-setup/**",
 ];
 const uiTextBaseline =
   process.env.UI_TEXT_BASELINE === "off"
@@ -142,6 +145,7 @@ export default defineConfig([
     rules: { "ui-text/no-literal-text": "error" },
   },
   ...uiTextOverrides,
+  ...constantsConfigs,
   ...(maxLinesIgnored.length ? [{ files: maxLinesIgnored, rules: { "max-lines": "off" } }] : []),
   ...(complexityIgnored.length
     ? [

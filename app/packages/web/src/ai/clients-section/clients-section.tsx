@@ -1,10 +1,10 @@
 import { useCallback } from "react";
 import type { AiConnection, AiRights } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
-import { Select } from "@/components/ui/fields/select/select";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Select } from "@/shared/ui/fields/select/select";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
 
 type Token = () => Promise<string | undefined>;

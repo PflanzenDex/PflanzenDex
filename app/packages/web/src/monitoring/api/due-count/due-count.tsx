@@ -1,5 +1,5 @@
 import { useCallback, type ReactNode } from "react";
-import { useRequest } from "../../../kernel";
+import { useRequest } from "../../../shared/data";
 import { loadWateringDue } from "../reminders-api";
 
 export const WATERING_KEY = ["monitoring", "watering"] as const;

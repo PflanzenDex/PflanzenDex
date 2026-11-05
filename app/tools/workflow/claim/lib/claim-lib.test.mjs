@@ -7,6 +7,7 @@ import {
   findConflicts,
   firstOpenRelease,
   keyOfBranch,
+  refusalReport,
   scopeOf,
   slugOf,
   staleHoursFrom,
@@ -123,6 +124,32 @@ test("US-DEV-11: a generated report issue is no work item and can never be claim
   assert.equal(found.length, 1);
   assert.equal(found[0].kind, "report");
   assert.match(found[0].text, /generated report/);
+});
+
+test("FR-DEV-10: the refusal of a needs-triage issue names triage, the others name the owner", () => {
+  const triage = { kind: "triage", text: "x" };
+  const pr = { kind: "pr", text: "y" };
+  assert.match(
+    refusalReport(5, { findings: [triage], message: "  - x" }),
+    /claim refused for #5: the issue needs triage/,
+  );
+  const other = refusalReport(5, { findings: [pr], message: "  - y" });
+  assert.match(other, /someone may already work on it/);
+  assert.match(other, /Ask the owner/);
+});
+
+test("FR-DEV-10: an issue labelled needs-triage cannot be claimed; the finding names the label", () => {
+  const triage = {
+    number: 900,
+    title: "Login fails",
+    labels: [{ name: "bug" }, { name: "needs-triage" }],
+    assignees: [],
+  };
+  const found = findConflicts({ issue: triage, prs: [], branches: [] });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, "triage");
+  assert.match(found[0].text, /"needs-triage"/);
+  assert.match(found[0].text, /FR-DEV-10/);
 });
 
 test("US-DEV-08: the board type decides the branch type, the labels only without one", () => {

@@ -1,6 +1,6 @@
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
 import { Discard } from "../../../candidate-card/discard/discard";
 
@@ -24,6 +24,7 @@ export function WishRow(props: {
   return (
     <div
       data-priority={c.priority.kind}
+      data-scroll-x="row"
       className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-card border border-border bg-card p-2 text-card-foreground"
     >
       <Button

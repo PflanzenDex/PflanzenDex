@@ -84,7 +84,15 @@ test.describe("US-LIC-01 determine the zone of a species", () => {
     await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
     await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
 
+    // The confirmation is a toast over the bottom of the phone, where the reference button stands. It leaves by itself
+    // after a few seconds; a pointer that hovers it keeps it, so the test waits for it to go (US-QS-07).
+    await expect(page.getByText("Standard-Zonen übernommen.")).toBeHidden();
     await page.getByRole("button", { name: "Lichthunger und Einstufung" }).click();
+    // The layer opens on the overview "Lichthunger"; the zone of a species is its segment "Art" (US-LIC-01).
+    await page
+      .getByRole("group", { name: "Teil der Lichtangaben" })
+      .getByRole("button", { name: "Art", exact: true })
+      .click();
     const form = page.getByRole("form", { name: "Zone ermitteln" });
     await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("15000");
     await form.getByRole("button", { name: "Zone ermitteln" }).click();

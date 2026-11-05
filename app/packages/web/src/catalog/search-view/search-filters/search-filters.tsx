@@ -1,9 +1,9 @@
 import type { SpeciesHit } from "@pflanzendex/core";
 import { useSearchParams } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { Select } from "@/components/ui/fields/select/select";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { DIFFICULTY } from "../../shared/text";
 
 /** The layer id of the filters: the address holds `?sheet=filters` while it is open (US-QS-21). */

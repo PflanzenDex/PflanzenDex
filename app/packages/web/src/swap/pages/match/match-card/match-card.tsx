@@ -1,7 +1,7 @@
 import type { MatchCard as Card } from "@pflanzendex/core";
 import { useRef, type PointerEvent } from "react";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { cn } from "@/shared/lib/utils";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../../../parts/offer-form/health-text";
 
 /** Share of the card width a swipe must cover (US-TAU-02, starting value 40 percent, assumption). */

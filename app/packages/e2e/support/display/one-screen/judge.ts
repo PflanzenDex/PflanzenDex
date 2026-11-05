@@ -1,5 +1,5 @@
 // The pure part of the one-screen gate (US-QS-15, DS-58, issue 1137, QG-U8): what a measurement means. The comparison
-// with the baseline is in baseline.ts. No browser here, so the self-test in tests/accessibility/one-screen.spec.ts runs
+// with the baseline is in baseline.ts. No browser here, so the self-test in tests/accessibility/routes/one-screen.spec.ts runs
 // without one.
 
 export type SizeKind = "fit" | "cap" | "text200";
@@ -34,6 +34,12 @@ export interface Region {
   el: string;
 }
 
+export interface RegionX {
+  scrollWidth: number;
+  clientWidth: number;
+  el: string;
+}
+
 /** What the page reports about itself at one size (measured in the browser, see fit.ts). */
 export interface Raw {
   scrollHeight: number;
@@ -41,6 +47,9 @@ export interface Raw {
   scrollWidth: number;
   innerWidth: number;
   region: Region | null;
+  regionX: RegionX | null;
+  /** The largest sideways region outside rows marked `data-scroll-x="row"` (judged at 200 % text). */
+  regionXUnmarked?: RegionX | null;
   pageEl: string;
   hEl: string;
   paint: {
@@ -57,7 +66,8 @@ export interface Result {
   size: string;
   page: number;
   inner: number;
-  hOver: number;
+  pageX: number;
+  innerX: number;
   cap: number;
   failures: string[];
 }
@@ -67,7 +77,8 @@ export interface BaselineEntry {
   size: string;
   page: number;
   inner: number;
-  hOver?: number;
+  pageX?: number;
+  innerX?: number;
   cap?: number;
 }
 
@@ -88,34 +99,60 @@ function capOver(raw: Raw): { over: number; text: string } {
   return { over, text };
 }
 
+const fmt = (n: number) => n.toFixed(2);
+
+// Sideways (owner decision on issue 1183): the page never scrolls sideways. At the normal sizes no inner region does
+// either; at 200 % text a row marked `data-scroll-x="row"` (segmented control, tab strip, chip row) may scroll inside its
+// own box (DS-63), every other region may not. `exemptX` (register: sidewaysExempt) skips only the inner region.
+function sideways(
+  raw: Raw,
+  exemptX: boolean,
+  largeText: boolean,
+): { pageX: number; innerX: number; failures: string[] } {
+  const failures: string[] = [];
+  const pageX = raw.scrollWidth / raw.innerWidth;
+  const rx = exemptX ? null : largeText ? (raw.regionXUnmarked ?? null) : raw.regionX;
+  const innerX = rx ? rx.scrollWidth / rx.clientWidth : 1;
+  if (raw.scrollWidth > raw.innerWidth + TOLERANCE_PX)
+    failures.push(
+      `page sideways ${fmt(pageX)} (${raw.scrollWidth} px of ${raw.innerWidth} px), rightmost: ${raw.hEl}`,
+    );
+  if (rx && rx.scrollWidth > rx.clientWidth + TOLERANCE_PX)
+    failures.push(
+      `inner sideways ${fmt(innerX)} (${rx.scrollWidth} px of ${rx.clientWidth} px) \u2194 ${rx.el}`,
+    );
+  return { pageX, innerX, failures };
+}
+
 /** Turns one measurement into a result with named failures. Pure. */
-export function evaluate(screen: string, size: Size, raw: Raw): Result {
+export function evaluate(screen: string, size: Size, raw: Raw, sidewaysExempt = false): Result {
   const failures: string[] = [];
   if (size.kind === "cap") {
     const { over, text } = capOver(raw);
     if (over > 0) failures.push(`width cap exceeded by ${over} px: ${text}`);
-    return { screen, size: size.name, page: 0, inner: 0, hOver: 0, cap: over, failures };
+    return { screen, size: size.name, page: 0, inner: 0, pageX: 0, innerX: 0, cap: over, failures };
   }
   const page = raw.scrollHeight / raw.innerHeight;
   const inner = raw.region ? raw.region.scrollHeight / raw.region.clientHeight : 1;
-  const hOver = Math.max(0, raw.scrollWidth - raw.innerWidth);
   if (raw.scrollHeight > raw.innerHeight + TOLERANCE_PX)
     failures.push(
       `page ${page.toFixed(2)} (${raw.scrollHeight} px of ${raw.innerHeight} px), lowest: ${raw.pageEl}`,
     );
   const innerBad = raw.region && raw.region.scrollHeight > raw.region.clientHeight + TOLERANCE_PX;
-  // At 200 % text the content may scroll inside its own region; only the page must stand (WCAG 1.4.4, 1.4.10, DS-61).
+  // At 200 % text the content may scroll vertically inside its own region; only the page must stand (WCAG 1.4.4, DS-61).
   if (innerBad && raw.region && size.kind === "fit")
     failures.push(
       `inner ${inner.toFixed(2)} (${raw.region.scrollHeight} px of ${raw.region.clientHeight} px): ${raw.region.el}`,
     );
-  if (hOver > 0) failures.push(`sideways overflow ${hOver} px: ${raw.hEl}`);
+  const x = sideways(raw, sidewaysExempt, size.kind === "text200");
+  failures.push(...x.failures);
   return {
     screen,
     size: size.name,
     page: round(page),
     inner: round(inner),
-    hOver,
+    pageX: round(x.pageX),
+    innerX: round(x.innerX),
     cap: 0,
     failures,
   };

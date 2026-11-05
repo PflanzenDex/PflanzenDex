@@ -2,7 +2,7 @@
 
 `report-story-tests.mjs` prints a Markdown report and always exits 0 (owner decision 2026-10-07: report first, the gate decision stays with the owner). Run it with `node tools/check/quality/duplicates/story-tests/report-story-tests.mjs` from `app/`.
 
-The blocking check for "every story with ✅ has a test naming its ID" already exists: `app/tools/check/docs/check-traceability.mjs` (`make spec-check`), for `US-` stories. This report adds numbers and covers requirements too.
+The blocking check for "every story with ✅ has a test naming its ID" already exists: `app/tools/check/docs/specs/check-traceability.mjs` (`make spec-check`), for `US-` stories. This report adds numbers and covers requirements too.
 
 ## What it prints
 

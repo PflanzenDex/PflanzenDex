@@ -1,7 +1,15 @@
 // Lock states as pure domain logic (US-ONB-04, FR-ONB-01): derived live from counts, dates and settings, never
 // stored. No I/O and no clock: today's local date comes in (NFR-08). Reasons and ways are data; the German text comes
 // from a message table (FR-QG-11).
-import { appError, daysBetween, failed, ok, type FeatureSet, type Result } from "../../../kernel";
+import {
+  appError,
+  daysBetween,
+  failed,
+  ok,
+  type FeatureSet,
+  type Result,
+  MS_PER_DAY,
+} from "../../../kernel";
 import {
   isUnlockFunctionId,
   UNLOCK_FUNCTIONS,
@@ -62,8 +70,6 @@ export interface UnlockStatus {
   /** Only while `locked`: the keeper may open it by tap even though the rule is not met (US-ONB-05). */
   readonly mayUnlockNow: boolean;
 }
-
-const MS_PER_DAY = 86_400_000;
 
 /** Calendar date `days` after `date`, no clock and no zone. */
 export function addDays(date: string, days: number): string {

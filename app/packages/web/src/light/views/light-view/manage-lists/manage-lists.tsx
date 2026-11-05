@@ -1,12 +1,12 @@
 import { Plus } from "lucide-react";
 import { useSearchParams } from "react-router";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerOpener, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { Button } from "@/components/ui/button/button";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { Button } from "@/shared/ui/button/button";
+import { cn } from "@/shared/lib/utils";
 import { zoneLabel } from "@pflanzendex/core";
 import type { LightData } from "../../../shared/light-api/light-api";
 import { lux, kindText, zoneName } from "../../../shared/texts";
@@ -15,6 +15,10 @@ import { locationLayerId } from "../../../zones/location-layer/location-layer";
 import { HINTS, NEW_LOCATION, NEW_ZONE, REFERENCE } from "../light-layers/light-layers";
 import type { LightActions } from "../light-view";
 import { LightRow } from "../light-row/light-row";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../light.de.json";
+
+const t = texts(table);
 
 /** The list on a phone: `zones` (default) or `locations`, in the address (US-QS-19). */
 export const LIST_PARAM = "list";
@@ -32,7 +36,7 @@ function AddButton({ kind }: { kind: ListKind }) {
       variant="outline"
       size="icon"
       aria-haspopup="dialog"
-      aria-label={kind === "zones" ? "Neue Lichtzone" : "Neuer Standort"}
+      aria-label={kind === "zones" ? t("lists.newZone") : t("lists.newLocation")}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <Plus aria-hidden="true" className="size-5" />
@@ -50,8 +54,9 @@ function ColumnHeader({ title, kind }: { title: string; kind: ListKind }) {
   );
 }
 
+// A column passes the free height of the grid to its list (issue 1155).
 const column = (active: boolean) =>
-  cn("min-w-0 flex-col gap-3 md:flex", active ? "flex" : "hidden");
+  cn("min-h-0 min-w-0 flex-col gap-3 md:flex", active ? "flex" : "hidden");
 
 /** The list of the zones: rows with their lux ceiling, paged (US-QS-19). */
 function ZoneColumn(props: {
@@ -61,21 +66,22 @@ function ZoneColumn(props: {
   actions: LightActions;
 }) {
   return (
-    <section aria-label="Lichtzonen" className={column(props.active)}>
-      <ColumnHeader title="Lichtzonen" kind="zones" />
+    <section aria-label={t("lists.zones")} className={column(props.active)}>
+      <ColumnHeader title={t("lists.zones")} kind="zones" />
       {props.zones.length === 0 ? (
         <ZoneEmpty actions={props.actions} />
       ) : (
         <Pager
           items={props.zones}
           pageSize={props.size}
-          label="Lichtzonen"
+          fit
+          label={t("lists.zones")}
           param={ZONE_PAGE}
           getKey={(z) => z.id}
           renderItem={(z) => (
             <LightRow
               name={zoneLabel(z.name)}
-              meta={`bis ${lux(z.luxCeiling)}`}
+              meta={t("lists.upTo", { lux: lux(z.luxCeiling) })}
               layer={zoneLayerId(z.id)}
             />
           )}
@@ -89,21 +95,22 @@ function ZoneColumn(props: {
 function LocationColumn(props: { data: LightData; active: boolean; size: number }) {
   const { data } = props;
   return (
-    <section aria-label="Standorte" className={column(props.active)}>
-      <ColumnHeader title="Standorte" kind="locations" />
+    <section aria-label={t("lists.locations")} className={column(props.active)}>
+      <ColumnHeader title={t("lists.locations")} kind="locations" />
       {data.locations.length === 0 ? (
         <LocationEmpty />
       ) : (
         <Pager
           items={data.locations}
           pageSize={props.size}
-          label="Standorte"
+          fit
+          label={t("lists.locations")}
           param={LOCATION_PAGE}
           getKey={(s) => s.id}
           renderItem={(s) => (
             <LightRow
               name={s.name}
-              meta={`${zoneName(data.zones, s.lightZoneId) ?? "Keine Lichtzone"} · ${kindText(s.kind)}`}
+              meta={`${zoneName(data.zones, s.lightZoneId) ?? t("lists.noZone")} · ${kindText(s.kind)}`}
               layer={locationLayerId(s.id)}
             />
           )}
@@ -132,17 +139,21 @@ export function ManageLists({ data, actions }: { data: LightData; actions: Light
     <>
       <div className="flex items-center justify-between gap-2 md:hidden">
         <SegmentedControl
-          label="Lichtzonen und Standorte"
+          label={t("lists.both")}
           options={[
-            { value: "zones", label: `Lichtzonen (${data.zones.length})` },
-            { value: "locations", label: `Standorte (${data.locations.length})` },
+            { value: "zones", label: t("lists.zonesCount", { count: data.zones.length }) },
+            {
+              value: "locations",
+              label: t("lists.locationsCount", { count: data.locations.length }),
+            },
           ]}
           value={list}
           onChange={choose}
         />
         <AddButton kind={list} />
       </div>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+      {/* The lists take the free height of the view, page by page (US-QS-19, issue 1155). */}
+      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)] gap-4 md:grid-cols-2">
         <ZoneColumn zones={data.zones} active={list === "zones"} size={size} actions={actions} />
         <LocationColumn data={data} active={list === "locations"} size={size} />
       </div>
@@ -153,9 +164,9 @@ export function ManageLists({ data, actions }: { data: LightData; actions: Light
 function ZoneEmpty({ actions }: { actions: LightActions }) {
   return (
     <EmptyState
-      title="Noch keine Lichtzonen"
-      description="Übernimm die vier Standard-Zonen oder lege eine eigene Zone an."
-      action={{ label: "Standard-Zonen übernehmen", onClick: () => void actions.defaults() }}
+      title={t("lists.zonesNone.title")}
+      description={t("lists.zonesNone.description")}
+      action={{ label: t("lists.zonesNone.action"), onClick: () => void actions.defaults() }}
     />
   );
 }
@@ -164,9 +175,9 @@ function LocationEmpty() {
   const { openLayer } = useLayer(NEW_LOCATION);
   return (
     <EmptyState
-      title="Noch keine Standorte"
-      description="Lege einen Platz an, z. B. „Fensterbank“, und ordne ihm eine Lichtzone zu."
-      action={{ label: "Ersten Standort anlegen", onClick: () => openLayer() }}
+      title={t("lists.locationsNone.title")}
+      description={t("lists.locationsNone.description")}
+      action={{ label: t("lists.locationsNone.action"), onClick: () => openLayer() }}
     />
   );
 }
@@ -177,11 +188,11 @@ export function Notices({ data }: { data: LightData }) {
     <div className="flex flex-col gap-2">
       {data.hints.length > 0 && (
         <LayerOpener id={HINTS} className="w-full">
-          Hinweise ({data.hints.length})
+          {t("notices.hints", { count: data.hints.length })}
         </LayerOpener>
       )}
       <LayerOpener id={REFERENCE} className="w-full">
-        Lichthunger und Einstufung
+        {t("notices.reference")}
       </LayerOpener>
     </div>
   );

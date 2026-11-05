@@ -1,8 +1,8 @@
 import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/core";
 import type { ReactNode, Ref } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
-import { EXCHANGE_PATH } from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { MatchCard } from "../match-card/match-card";
 import { AnswerLists } from "./answer-lists/answer-lists";
 import { countOf, laterCards, type DeckAction, type DeckState } from "./deck-state";

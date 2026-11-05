@@ -1,5 +1,5 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
 import { dateText } from "../../../shared/text";
 
 /** One open treatment of the plant with "Erledigt" (US-BEH-02); a row of the paged list "Offene Behandlungen". */

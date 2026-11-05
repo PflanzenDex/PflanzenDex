@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
-import { dateText } from "@/lib/format";
-import { useRequest } from "../../kernel";
+import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { dateText } from "@/shared/lib/format";
+import { useRequest } from "../../shared/data";
 import { RhythmPauses } from "./rhythm-pauses/rhythm-pauses";
 import { loadRhythm, type RhythmWeekState } from "../achievements-api";
 

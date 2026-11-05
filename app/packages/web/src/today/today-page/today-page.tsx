@@ -1,13 +1,17 @@
 import { useCallback, type ReactNode } from "react";
 import type { TodayList } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { useIsMd } from "@/lib/use-breakpoint";
-import { dateText } from "@/lib/format";
-import { LoadFrame, useRequest } from "../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { dateText } from "@/shared/lib/format";
+import { LoadFrame, useRequest } from "../../shared/data";
 import { loadToday } from "../today-api";
 import { isTreatment, TodayRow, type TodayDestination } from "./today-row/today-row";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../today.de.json";
+
+const t = texts(table);
 
 export type { TodayDestination };
 
@@ -19,9 +23,7 @@ const TASKS = "tasks";
  */
 const PAGE_SIZE = { phone: 3, md: 6 } as const;
 const laterText = (n: number): string =>
-  n === 1
-    ? "Ein weiterer Behandlungstermin steht später an."
-    : `${n} weitere Behandlungstermine stehen später an.`;
+  n === 1 ? t("later.one") : t("later.other", { count: n });
 
 /**
  * The single most urgent item and, below the tiles, the further tasks as compact rows (US-QS-18). Treatment items are
@@ -47,14 +49,10 @@ function Content(props: {
         />
       ) : (
         <EmptyState
-          title="Heute steht nichts an."
+          title={t("empty.title")}
           level={3}
-          description={
-            list.upcoming > 0
-              ? laterText(list.upcoming)
-              : "Keine Behandlung ist fällig, keine Pflanze steht falsch und keine Angabe fehlt."
-          }
-          action={{ label: "Zur Sammlung", onClick: () => props.onOpen("collection") }}
+          description={list.upcoming > 0 ? laterText(list.upcoming) : t("empty.description")}
+          action={{ label: t("empty.action"), onClick: () => props.onOpen("collection") }}
         />
       )}
     </>
@@ -76,7 +74,7 @@ function FurtherTasks(props: {
       items={rest}
       pageSize={pageSize}
       {...(props.fit ? { fit: true } : {})}
-      label="Weitere Aufgaben"
+      label={t("tasks.title")}
       // The rows do not count towards the height of the section (size containment): the section keeps one row and the
       // pager at a larger text size without growing with the page it shows, so the page size follows the free height
       // only (issue 1113).
@@ -100,14 +98,14 @@ function Below(props: { list: TodayList; onOpen: (d: TodayDestination) => void }
         // the pager instead of collapsing to nothing below the next line.
         <section aria-labelledby="tasks-title" className="flex min-w-0 flex-1 flex-col gap-2">
           <h2 id="tasks-title" className="text-sm font-semibold">
-            Weitere Aufgaben
+            {t("tasks.title")}
           </h2>
           <FurtherTasks list={list} onOpen={props.onOpen} fit />
         </section>
       )}
       {first && list.upcoming > 0 && (
         <p className="text-sm text-muted-foreground">
-          {rest.length > 0 ? `${list.upcoming} Termine später` : laterText(list.upcoming)}
+          {rest.length > 0 ? t("later.short", { count: list.upcoming }) : laterText(list.upcoming)}
         </p>
       )}
     </>
@@ -136,7 +134,7 @@ export function TodayPage(props: {
 }) {
   const { api } = props;
   const load = useCallback((t: string) => loadToday(api, t), [api]);
-  const loading = "Heute wird geladen …";
+  const loading = t("page.loading");
   // The same key as the frame below: one request, one copy. Until it is there the entry stays a tile.
   const today = useRequest({ queryKey: KEY, token: props.token, load });
   const first = today.value?.items[0];
@@ -144,12 +142,12 @@ export function TodayPage(props: {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <h1 id="today-title" className="text-2xl font-semibold">
-        Heute
+        {t("page.title")}
       </h1>
       {props.summary?.(treatmentFirst)}
       <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-2">
         <h2 id="now-title" className="sr-only">
-          Jetzt dran
+          {t("page.now")}
         </h2>
         <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
           {(list: TodayList) => (
@@ -164,10 +162,11 @@ export function TodayPage(props: {
       {props.tiles?.(treatmentFirst)}
       {today.value && <Below list={today.value} onOpen={props.onOpen} />}
       {/* The former address of the further tasks stays valid: the layer lists the same rows. */}
-      <LayerSheet id={TASKS} title="Weitere Aufgaben">
+      <LayerSheet id={TASKS} title={t("tasks.title")}>
         <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
           {(list: TodayList) => (
-            <FurtherTasks list={list} onOpen={props.onOpen} param={LAYER_PARAM} />
+            // The rows page by the free height of the layer, so the pager stays inside the pane (issue 1182).
+            <FurtherTasks list={list} onOpen={props.onOpen} param={LAYER_PARAM} fit />
           )}
         </LoadFrame>
       </LayerSheet>

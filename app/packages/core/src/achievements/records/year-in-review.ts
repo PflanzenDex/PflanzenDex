@@ -3,6 +3,7 @@
 // P-08); two years are two plain sets of numbers. Etiolated growth never counts (US-WAC-04). Pure; dates are local
 // calendar dates (NFR-08).
 import { RECORD_LIMITS } from "./records";
+import { MS_PER_DAY } from "../../kernel";
 
 export interface YearSpecimen {
   readonly id: string;
@@ -20,7 +21,8 @@ export interface YearMeasurement {
   /** In the unit of the growth measure (cm). */
   readonly value: number;
   readonly quality: "healthy" | "etiolated";
-  readonly hasPhoto: boolean;
+  /** The object name of the stored photo (its version in the address); `null` = no photo (US-WAC-06). */
+  readonly photo: string | null;
 }
 
 export interface YearInput {
@@ -33,11 +35,18 @@ export interface YearInput {
   readonly earned: readonly { readonly id: string; readonly earnedOn: string | null }[];
 }
 
+/** A photo of the year: the measurement, its date and the object name of its photo (the version of its address). */
+export interface YearPhotoRef {
+  readonly measurementId: string;
+  readonly date: string;
+  readonly photo: string;
+}
+
 export interface YearPhotoPair {
   readonly specimenId: string;
   readonly name: string;
-  readonly first: { readonly measurementId: string; readonly date: string };
-  readonly last: { readonly measurementId: string; readonly date: string };
+  readonly first: YearPhotoRef;
+  readonly last: YearPhotoRef;
 }
 
 export interface YearGrowth {
@@ -68,7 +77,6 @@ export interface YearInReview {
   readonly hasData: boolean;
 }
 
-const MS_PER_DAY = 86_400_000;
 const day = (d: string): number => {
   const [y, m, dd] = d.split("-").map(Number);
   return Date.UTC(y ?? 0, (m ?? 1) - 1, dd ?? 1) / MS_PER_DAY;
@@ -118,27 +126,42 @@ function bestGrowth(input: YearInput): YearGrowth | null {
   return best;
 }
 
+/** A measurement of the year that has its photo. */
+type PhotoOfYear = YearMeasurement & { readonly photo: string };
+
+/** The photos of the year of one specimen, by date; a measurement without a photo is not one of them. */
+const photosOfYear = (input: YearInput, specimenId: string): PhotoOfYear[] =>
+  byDate(
+    input.measurements.flatMap((m) =>
+      m.specimenId === specimenId && m.photo !== null && inYear(m.date, input.year)
+        ? [{ ...m, photo: m.photo }]
+        : [],
+    ),
+  );
+
+const photoRef = (m: PhotoOfYear): YearPhotoRef => ({
+  measurementId: m.id,
+  date: m.date,
+  photo: m.photo,
+});
+
 /** First and last photo of the year of the specimen with the most photos in it (ties: first in the list). */
 function photoPair(input: YearInput): YearPhotoPair | null {
-  let best: { s: YearSpecimen; photos: YearMeasurement[] } | null = null;
+  let best: { s: YearSpecimen; photos: PhotoOfYear[] } | null = null;
   for (const s of input.specimens) {
-    const photos = byDate(
-      input.measurements.filter(
-        (m) => m.specimenId === s.id && m.hasPhoto && inYear(m.date, input.year),
-      ),
-    );
+    const photos = photosOfYear(input, s.id);
     if (photos.length >= 2 && (best === null || photos.length > best.photos.length)) {
       best = { s, photos };
     }
   }
   if (!best) return null;
-  const first = best.photos[0] as YearMeasurement;
-  const last = best.photos[best.photos.length - 1] as YearMeasurement;
+  const first = best.photos[0] as PhotoOfYear;
+  const last = best.photos[best.photos.length - 1] as PhotoOfYear;
   return {
     specimenId: best.s.id,
     name: best.s.name,
-    first: { measurementId: first.id, date: first.date },
-    last: { measurementId: last.id, date: last.date },
+    first: photoRef(first),
+    last: photoRef(last),
   };
 }
 

@@ -5,6 +5,13 @@ export { CareProfilePostgres } from "./care-profiles.ts";
 export { FIXTURES_COLLECTION, FIXTURE_SPECIES_ID, createFixtureSpecimenAt } from "./fixtures.ts";
 export { COLLECTION_REPOINTERS } from "./repointers.ts";
 export {
+  specimenAnyActive,
+  specimenCounts,
+  specimenPage,
+  treatableSpecimens,
+  unlockSummaryOf,
+} from "./specimen-locations.ts";
+export {
   archiveSpecimenOn,
   createSpecimenOn,
   findSpecimenOn,

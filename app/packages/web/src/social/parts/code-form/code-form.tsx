@@ -2,11 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { TextField } from "@/components/ui/fields/input/input";
-import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { TextField } from "@/shared/ui/fields/input/input";
+import { errorText } from "@/shared/lib/error-text";
+import type { ApiError } from "../../../shared/data";
 
 const schema = z.object({ code: z.string().trim().min(1, "Bitte gib den Freundescode ein.") });
 type Fields = z.infer<typeof schema>;

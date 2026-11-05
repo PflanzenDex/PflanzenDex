@@ -8,6 +8,9 @@ export const DEFAULT_STALE_HOURS = 48;
 /** Label of generated report issues (US-DEV-11); such an issue can never be claimed. */
 export const REPORT_LABEL = "report";
 
+/** Label of an issue without a valid type and epic label (FR-DEV-10, set by the issue check); never claimable. */
+export const TRIAGE_LABEL = "needs-triage";
+
 const ID_PATTERN = /\b(US-[A-Z]{2,4}-\d{2}|FR-[A-Z]{2,4}-\d{2}|TE-\d{2})\b/i;
 const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
 const UMLAUTS = { ä: "ae", ö: "oe", ü: "ue", ß: "ss" };
@@ -106,6 +109,13 @@ export function prReferences(pr, issue) {
   return prState(pr) === "open" && (hasKey(pr.title, key) || hasKey(pr.headRefName, key));
 }
 
+/** What `make claim` prints for a refusal `e` (its findings and message): the triage hint, or the owner hint. */
+export function refusalReport(number, { findings, message }) {
+  if (findings.some((f) => f.kind === "triage"))
+    return `claim refused for #${number}: the issue needs triage.\n${message}`;
+  return `claim refused for #${number}: someone may already work on it.\n${message}\nAsk the owner, or let the claim go stale (make board) before taking over.`;
+}
+
 export function prState(pr) {
   return pr.mergedAt || pr.state === "MERGED" ? "merged" : pr.state === "OPEN" ? "open" : "closed";
 }
@@ -122,6 +132,12 @@ export function findConflicts({ issue, prs, branches, allowPrior = false }) {
     found.push({
       kind: "report",
       text: `issue #${issue.number} is a generated report (label "${REPORT_LABEL}"), not a work item`,
+    });
+  }
+  if ((issue.labels ?? []).some((l) => l.name === TRIAGE_LABEL)) {
+    found.push({
+      kind: "triage",
+      text: `issue #${issue.number} is labelled "${TRIAGE_LABEL}": it needs one type and one epic label first (FR-DEV-10)`,
     });
   }
   for (const a of issue.assignees ?? []) {

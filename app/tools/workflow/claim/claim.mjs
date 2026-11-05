@@ -1,14 +1,11 @@
 // `make claim ISSUE=<n>` (US-DEV-08): claim a story before working on it, so nobody builds it twice.
 // Refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its
-// story ID. Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
+// story ID or it is labelled needs-triage (FR-DEV-10). Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
-import { writeFileSync, mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchBranches, fetchIssue, fetchPrs, me, realClient } from "./lib/claim-client.mjs";
-import { branchName, findConflicts } from "./lib/claim-lib.mjs";
+import { branchName, findConflicts, refusalReport } from "./lib/claim-lib.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
 import { collect } from "./migration/git-view.mjs";
 import { nextNumber, pad } from "./migration/migration-lib.mjs";
@@ -16,7 +13,7 @@ import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs"
 import { loadItems, missingPriority } from "../actions/project-status/project-status.mjs";
 import {
   handoffBody,
-  prTitle,
+  openDraftPr,
   pushClaimBranch,
   setProjectStatus,
   STATUS_IN_PROGRESS,
@@ -147,23 +144,12 @@ export async function claim(
     log(`Assigned #${number} to @${login}`);
     await projectStatus(client, issue, STATUS_IN_PROGRESS, log);
     undo.push(["project status", () => projectStatus(client, issue, STATUS_TODO, log)]);
-    const file = path.join(mkdtempSync(path.join(tmpdir(), "claim-")), "body.md");
-    writeFileSync(file, handoffBody(issue, branch, login, reserveMigration(client, env)));
-    const url = (
-      await client.run("gh", [
-        "pr",
-        "create",
-        "--draft",
-        "--base",
-        "dev",
-        "--head",
-        branch,
-        "--title",
-        prTitle(issue),
-        "--body-file",
-        file,
-      ])
-    ).trim();
+    const url = await openDraftPr(
+      client,
+      issue,
+      branch,
+      handoffBody(issue, branch, login, reserveMigration(client, env)),
+    );
     log(`Draft PR: ${url}`);
     await warnNoPriority(client, number, log);
     log(`Next: make worktree BRANCH=${branch}`);
@@ -186,8 +172,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         `claim not started for #${number}: preflight failed, nothing was written.\n${e.message}`,
       );
     } else if (e instanceof ClaimRefused) {
-      console.error(`claim refused for #${number}: someone may already work on it.\n${e.message}`);
-      console.error("Ask the owner, or let the claim go stale (make board) before taking over.");
+      console.error(refusalReport(number, e));
     } else {
       console.error(`claim failed: ${e.message}`);
     }

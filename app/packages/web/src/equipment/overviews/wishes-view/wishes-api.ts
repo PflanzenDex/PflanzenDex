@@ -4,7 +4,7 @@ import type {
   EquipmentWishList,
   EquipmentWishRow,
 } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../../kernel";
+import { call, createWrite, type Response } from "../../../shared/data";
 
 export type { EquipmentPrefill, EquipmentWishBuyResult, EquipmentWishList, EquipmentWishRow };
 

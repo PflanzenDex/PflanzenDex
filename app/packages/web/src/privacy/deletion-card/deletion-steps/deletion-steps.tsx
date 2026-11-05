@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
-import { errorText } from "@/lib/error-text";
-import { keepTogether } from "@/lib/format";
-import type { ApiError } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Input } from "@/shared/ui/fields/input/input";
+import { errorText } from "@/shared/lib/error-text";
+import { keepTogether } from "@/shared/lib/format";
+import type { ApiError } from "../../../shared/data";
 import { cancelDeletion, requestDeletion, type DeletionState } from "../../privacy-api";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { CONFIRM_WORD, WhatHappens } from "../what-happens/what-happens";
 import type { useDeletionAction } from "../use-deletion-action/use-deletion-action";
 

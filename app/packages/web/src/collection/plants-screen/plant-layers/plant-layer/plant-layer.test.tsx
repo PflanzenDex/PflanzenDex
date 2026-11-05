@@ -4,9 +4,10 @@ import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
+import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
 import type { PlantSlots } from "../layer-ids";
 
 beforeAll(() => {
@@ -64,6 +65,8 @@ function show(cards: SpecimenCard[], extra: Extra = {}, at = "/") {
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
       <PlantsScreen
         cards={cards}
+        plants={pagesOf(cards)}
+        summary={summaryOf(cards)}
         distribution={EMPTY_DISTRIBUTION.distribution}
         archived={[]}
         photoAccess={{ api: "http://api", token: async () => "tok" }}
@@ -100,6 +103,38 @@ describe("US-QS-23 a plant opens as a layer with tabs", () => {
       .getAllByRole("tab")
       .map((t) => t.textContent);
     expect(tabs).toEqual(["Überblick", "Verlauf", "Pflege", "Standort"]);
+  });
+
+  it("NFR-13 the four tabs of a plant wrap at 200 % text instead of scrolling sideways", async () => {
+    setViewportWidth(360);
+    show([card()]);
+    const layer = await open();
+    const strip = within(layer).getByRole("tablist", { name: "Bereiche der Pflanze" });
+    expect(strip.className.split(" ")).toContain("flex-wrap");
+    expect(strip.className.split(" ")).not.toContain("overflow-x-auto");
+    for (const tab of within(layer).getAllByRole("tab"))
+      expect(tab.className.split(" ")).toContain("min-w-fit");
+  });
+
+  it("NFR-13 a long chip wraps inside its pill, so the header keeps the Mehr button beside the chips at 200 % text", async () => {
+    setViewportWidth(360);
+    show(
+      [
+        card({
+          location: "Wohnzimmer Fenster Süd hinter dem Vorhang",
+          treatment: { reason: "Neem", dueDate: { kind: "soon", days: 2, text: "in 2 Tg." } },
+        }),
+      ],
+      { onArchive: vi.fn() },
+    );
+    const layer = await open();
+    const chips = within(layer).getByRole("list", { name: "Auf einen Blick" });
+    for (const text of ["Zone 3", "Wohnzimmer Fenster Süd hinter dem Vorhang", "Behandeln"]) {
+      const classes = within(chips).getByText(text).className.split(" ");
+      expect(classes).toContain("whitespace-normal");
+      expect(classes).not.toContain("whitespace-nowrap");
+    }
+    expect(within(layer).getByRole("button", { name: "Mehr" })).toBeTruthy();
   });
 
   it("US-QS-23 · P-08 an unknown zone and location read unbekannt in the chips", async () => {

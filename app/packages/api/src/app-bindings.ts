@@ -21,6 +21,7 @@ import {
   treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
+  measuredSourceFor,
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
@@ -39,15 +40,15 @@ export function bindCareOne(
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
-  for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of CARE_PHASES_PATHS) app.use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
-  for (const path of TREATMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of TREATMENT_PATHS) app.use(`${path}/*`, auth);
   app.route("/", treatmentRoutes(pool, opt));
 }
 
 /** The module `today` (TE-07): sign-in guard in front of the path, then the read-only route. */
 export function bindToday(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: TodayOptions) {
-  for (const path of TODAY_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of TODAY_PATHS) app.use(`${path}/*`, auth);
   app.route("/", todayRoutes(pool, opt));
 }
 
@@ -61,7 +62,7 @@ export function todaySources(pool: Pool, opt: AppOptions) {
 
 /** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
 export function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: AppOptions) {
-  for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of WISH_PATHS) app.use(`${path}/*`, auth);
   const image = opt.wishImage && opt.media ? { ...opt.wishImage, media: opt.media } : undefined;
   app.route("/", wishRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), image));
 }
@@ -77,7 +78,7 @@ export function bindEquipment(
     products?: readonly ProductEntry[] | undefined;
   },
 ) {
-  for (const path of EQUIPMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of EQUIPMENT_PATHS) app.use(`${path}/*`, auth);
   app.route(
     "/",
     equipmentRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), opt.features, opt.products),
@@ -98,6 +99,7 @@ export function careSources(pool: Pool, opt: AppOptions) {
   return {
     targetLocation: opt.targetLocation ?? targetLocationFor(pool),
     measurements: opt.measurements ?? measurementSourceFor(pool),
+    measured: measuredSourceFor(pool),
     treatments: opt.treatments ?? treatmentSourceFor(pool),
     provenance: opt.provenance ?? provenanceSourceFor(pool),
   };
