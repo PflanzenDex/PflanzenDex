@@ -46,6 +46,19 @@ export function choiceField<const W extends string>(field: string, allowed: read
   return described(check, { type: "string", enum: [...allowed] });
 }
 
+/** The size a stored photo or image is read in (NFR-12): the stored copy, or the thumbnail that tiles and cards ask for. */
+export type PhotoSize = "full" | "thumb";
+
+/**
+ * The query parameter `size` of such a read (NFR-12): no value is the stored copy, exactly one `thumb` the thumbnail.
+ * Anything else, also a repeated `size`, is `input.invalid` on the field `size`, refused before any read.
+ */
+export function photoSize(sizes: readonly string[]): Result<PhotoSize> {
+  if (sizes.length === 0) return ok<PhotoSize>("full");
+  if (sizes.length === 1 && sizes[0] === "thumb") return ok<PhotoSize>("thumb");
+  return failed(appError("input.invalid", { details: [invalid("size")] }));
+}
+
 /** An IANA time zone name, e.g. `Europe/Berlin` (NFR-08). */
 export function timeZoneField(field: string) {
   const check = (value: unknown): string | ErrorDetail =>

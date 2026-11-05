@@ -1,10 +1,7 @@
-import { appError, failed, isId, ok } from "../../../../kernel";
-import type { Result } from "../../../../kernel";
+import { appError, failed, isId, photoSize } from "../../../../kernel";
+import type { PhotoSize, Result } from "../../../../kernel";
 import type { SpecimenStore } from "../../../../collection";
 import type { MeasurementStore } from "../../types";
-
-/** The sizes a photo is read in (NFR-12): the stored copy, or the thumbnail that tiles and cards ask for. */
-export type PhotoSize = "full" | "thumb";
 
 export interface PhotoFileDependencies {
   readonly measurements: Pick<MeasurementStore, "list">;
@@ -17,16 +14,6 @@ export interface PhotoFileDependencies {
       size: PhotoSize,
     ): Promise<Result<{ readonly bytes: Uint8Array; readonly contentType: string }>>;
   };
-}
-
-/**
- * No `size` means the stored copy; exactly one `thumb` is the thumbnail (NFR-12). Anything else, also a repeated `size`,
- * is refused before a read.
- */
-export function photoSize(sizes: readonly string[]): Result<PhotoSize> {
-  if (sizes.length === 0) return ok<PhotoSize>("full");
-  if (sizes.length === 1 && sizes[0] === "thumb") return ok<PhotoSize>("thumb");
-  return failed(appError("input.invalid", { details: [{ field: "size", code: "input.invalid" }] }));
 }
 
 /** The photo asked for: the measurement of a specimen, in the sizes asked (none means the stored copy, NFR-12). */
