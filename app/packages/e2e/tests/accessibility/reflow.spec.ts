@@ -16,7 +16,11 @@ import { addLocation, expect, test } from "../../support/fixtures";
 async function withSomeData(page: Page): Promise<void> {
   await openView(page, "/light");
   await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
-  await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
+  // The zones are paged by the free height (US-QS-19): on a short window the first page may end before Zone 2, so the
+  // check names the first zone, which is always on the first page.
+  await expect(
+    page.getByRole("heading", { level: 3, name: "Zone 1 · Stecklingslicht" }),
+  ).toBeVisible();
   await addLocation(page);
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill("Fensterbank im Schlafzimmer nach Südsüdwest");

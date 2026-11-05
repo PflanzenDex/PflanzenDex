@@ -69,6 +69,31 @@ export async function openByKeyboard(page: Page, label: string): Promise<void> {
   await expect(drawer).toBeHidden();
 }
 
+/** Proposes a species and creates a specimen of it, keyboard only (the start of every care flow). */
+export async function specimenByKeyboard(page: Page, species: string): Promise<void> {
+  // The catalog is the mode "Katalog" of Entdecken (US-QS-14).
+  await openByKeyboard(page, "Entdecken");
+  await press(page, page.getByRole("button", { name: "Katalog" }));
+  await press(page, page.getByRole("button", { name: /Art vorschlagen/ }).first());
+  const form = page.getByRole("form", { name: "Art vorschlagen" });
+  // Step 1 holds the name and the growth measure (US-QS-21).
+  await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
+  await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
+  await press(page, form.getByRole("button", { name: "Weiter" }));
+  await typeInto(page, form.getByLabel(/^Vergeilung-Anzeichen/), "Die Rosette streckt sich.");
+  await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
+  // The light is optional and sits behind "Mehr Angaben" (US-QS-24): the disclosure is opened with the keyboard.
+  await press(page, form.getByText("Mehr Angaben", { exact: true }));
+  await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
+  await chooseByArrows(page, form.getByLabel(/^Standard-Stufe/), 3);
+  await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
+  await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
+  await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
+  const create = page.getByRole("form", { name: "Pflanze anlegen" });
+  await press(page, create.getByRole("button", { name: "Pflanze anlegen" }));
+  await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
+}
+
 export interface WalkStep {
   name: string;
   /** Completely covered by the sticky header or the fixed bottom bar (2.4.11). */
