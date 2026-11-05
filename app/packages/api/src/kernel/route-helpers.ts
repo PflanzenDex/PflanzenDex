@@ -42,6 +42,15 @@ export async function write<E, A>(
 }
 
 /**
+ * The answer of a write route whose request carries no `Idempotency-Key` header (US-QS-03): refused before the body is
+ * read or anything else is checked, with the same code the operation gives (`idempotency.key_missing`, 400).
+ */
+export function keyMissing(c: Context) {
+  const failure = appError("idempotency.key_missing");
+  return c.json(errorBody(failure), statusFor(failure));
+}
+
+/**
  * A database that did not answer inside an operation (statement or lock timeout, no connection) is answered with its own
  * stable code instead of `system.unexpected`, so the client knows that a retry may help (NFR-12, P-10).
  */

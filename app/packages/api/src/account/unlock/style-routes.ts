@@ -10,7 +10,7 @@ import {
   type UnlockInput,
 } from "@pflanzendex/core";
 import type { Hono, MiddlewareHandler } from "hono";
-import { body, errorBody, write, type AuthEnv } from "../../kernel";
+import { body, errorBody, keyMissing, write, type AuthEnv } from "../../kernel";
 
 /**
  * The keeper style (US-ONB-03, DM-ONB-01). `GET /onboarding/style` answers `{ style, chosen }`: `chosen` is false for an
@@ -43,6 +43,7 @@ export function styleRoutes(
     return c.json({ style: found?.style ?? "few", chosen: found !== null });
   });
   routes.put("/onboarding/style", async (c) => {
+    if (!c.req.header("idempotency-key")) return keyMissing(c);
     const input = await body(c);
     if (!isTimeZone(input["timeZone"])) {
       const bad = appError("input.invalid", {
