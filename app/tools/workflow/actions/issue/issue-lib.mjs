@@ -2,6 +2,7 @@
 // issue says, which board options follow the labels, and what `make issue` accepts. No I/O here: issue.mjs reads and
 // writes GitHub, issue-board.mjs writes the project. The allowed list is app/config/project/issue-taxonomy.json.
 import { REPORT_LABEL, TRIAGE_LABEL } from "../../claim/lib/claim-lib.mjs";
+import { STATUS } from "../project-status/project-status-lib.mjs";
 
 export { REPORT_LABEL, TRIAGE_LABEL };
 
@@ -107,7 +108,7 @@ export function commentBody(verdict, taxonomy) {
 
 /**
  * Checks the input of `make issue` before anything is created. Returns { ok, errors }; with ok, the labels to set,
- * the board fields and the normalised title and body.
+ * the board fields (a new item starts with Status Todo, FR-DEV-10 (e)) and the normalised title and body.
  */
 export function validateNewIssue({ type, epic, priority, title, body }, taxonomy) {
   const errors = [];
@@ -139,7 +140,7 @@ export function validateNewIssue({ type, epic, priority, title, body }, taxonomy
     title: cleanTitle,
     body: String(body),
     labels: [t.label, e.label],
-    fields: { Typ: t.typ, Epic: e.code, Priority: p },
+    fields: { Typ: t.typ, Epic: e.code, Priority: p, Status: STATUS.todo },
   };
 }
 

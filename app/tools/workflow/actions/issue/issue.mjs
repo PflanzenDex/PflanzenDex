@@ -3,7 +3,8 @@
 // Every operation refuses before it writes anything.
 import { appendFileSync } from "node:fs";
 import { json } from "../../claim/lib/claim-client.mjs";
-import { setBoardFields } from "./issue-board.mjs";
+import { STATUS } from "../project-status/project-status-lib.mjs";
+import { boardStatusOf, setBoardFields } from "./issue-board.mjs";
 import {
   boardFieldsFor,
   commentBody,
@@ -50,7 +51,7 @@ export async function createIssue(client, input, { taxonomy, env = {}, log = con
   try {
     await setBoardFields(client, { url, owner: repo.split("/")[0], fields: plan.fields });
     log(
-      `Board: Typ ${plan.fields.Typ}, Epic ${plan.fields.Epic}, Priority ${plan.fields.Priority}`,
+      `Board: Status ${plan.fields.Status}, Typ ${plan.fields.Typ}, Epic ${plan.fields.Epic}, Priority ${plan.fields.Priority}`,
     );
   } catch (e) {
     throw new Error(
@@ -105,7 +106,11 @@ export async function checkIssue(
   return result;
 }
 
-/** Board fields Typ and Epic of an issue, from its type label and epic code. */
+/**
+ * Board fields of an issue from its type label and epic code: Typ and Epic always, Status Todo only when the item has
+ * no Status yet. The workflow runs this on edits too, so an existing Status (In Progress, On dev, Done) is never
+ * overwritten (FR-DEV-10 (e)).
+ */
 export async function syncIssue(
   client,
   number,
@@ -114,7 +119,15 @@ export async function syncIssue(
   const fields = boardFieldsFor(taxonomy, type, epic);
   if (!fields) throw new IssueRefused([`unknown type "${type ?? ""}" or epic "${epic ?? ""}"`]);
   const repo = await repoOf(client, env);
-  await setBoardFields(client, { url: issueUrl(repo, number), owner: repo.split("/")[0], fields });
-  log(`#${number} board: Typ ${fields.Typ}, Epic ${fields.Epic}`);
-  return fields;
+  const status = await boardStatusOf(client, { repo, number });
+  const wanted = status ? fields : { ...fields, Status: STATUS.todo };
+  await setBoardFields(client, {
+    url: issueUrl(repo, number),
+    owner: repo.split("/")[0],
+    fields: wanted,
+  });
+  log(
+    `#${number} board: Typ ${fields.Typ}, Epic ${fields.Epic}, ${status ? `Status ${status} (kept)` : "Status Todo (set)"}`,
+  );
+  return wanted;
 }
