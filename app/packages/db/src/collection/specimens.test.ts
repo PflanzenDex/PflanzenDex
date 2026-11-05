@@ -681,7 +681,7 @@ describe("US-BES-06 · NFR-12 · FR-BES-23 paged card list, summary and treatmen
     expect(await page(a)).toEqual({ rows: [], more: false, total: 0 });
     expect(await specimenCounts(pool, a)).toEqual({
       total: 0,
-      unplaced: false,
+      unplaced: 0,
       groups: [],
       lastLocationId: null,
     });
@@ -697,10 +697,14 @@ describe("US-BES-06 · NFR-12 · FR-BES-23 paged card list, summary and treatmen
     await plant(a, "Drei", { locationId: nord.id, caughtAt: "2026-09-30" });
     // The newest catch date, but no location: the last location is the one of the newest plant that has a location.
     await plant(a, "Vier", { locationId: null, caughtAt: "2026-10-03" });
+    await plant(a, "Sechs", { locationId: null, caughtAt: "2026-09-01" });
     const gone = await plant(a, "Fünf", { locationId: nord.id, caughtAt: "2026-10-05" });
     await specimens.archive(a, gone.id, "abgegeben", "2026-10-06");
+    // An archived plant without a location is no unplaced plant either.
+    const goneUnplaced = await plant(a, "Ohne Ort, weg", { locationId: null });
+    await specimens.archive(a, goneUnplaced.id, "abgegeben", "2026-10-06");
     const counts = await specimenCounts(pool, a);
-    expect(counts).toMatchObject({ total: 4, unplaced: true, lastLocationId: sued.id });
+    expect(counts).toMatchObject({ total: 5, unplaced: 2, lastLocationId: sued.id });
     expect(counts.groups).toHaveLength(2);
     expect(counts.groups).toEqual(
       expect.arrayContaining([
@@ -710,14 +714,14 @@ describe("US-BES-06 · NFR-12 · FR-BES-23 paged card list, summary and treatmen
     );
   });
 
-  it("US-BES-06 summary: a plant without a catch date counts as the oldest; without any unplaced plant `unplaced` is false", async () => {
+  it("US-BES-06 summary: a plant without a catch date counts as the oldest; without any unplaced plant `unplaced` is 0", async () => {
     const a = await fresh();
     const undated = await location(a, "Ohne Datum");
     const dated = await location(a, "Mit Datum");
     await plant(a, "Undatiert", { locationId: undated.id, caughtAt: null });
     await plant(a, "Datiert", { locationId: dated.id, caughtAt: "2026-01-01" });
     expect(await specimenCounts(pool, a)).toMatchObject({
-      unplaced: false,
+      unplaced: 0,
       lastLocationId: dated.id,
     });
   });

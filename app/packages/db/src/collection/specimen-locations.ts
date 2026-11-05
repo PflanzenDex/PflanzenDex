@@ -155,9 +155,9 @@ export async function specimenPage(
  */
 export async function specimenCounts(pool: Pool, userId: string) {
   return withAccount(pool, userId, async (c) => {
-    const totals = await c.query<{ total: number; unplaced: boolean }>(
+    const totals = await c.query<{ total: number; unplaced: number }>(
       `select count(*) filter (where status <> 'archived')::int as total,
-              coalesce(bool_or(location_id is null) filter (where status <> 'archived'), false) as unplaced
+              (count(*) filter (where status <> 'archived' and location_id is null))::int as unplaced
          from specimen`,
     );
     const groups = await c.query<{ locationId: string; count: number }>(
@@ -168,7 +168,7 @@ export async function specimenCounts(pool: Pool, userId: string) {
       `select location_id as "locationId" from specimen where status <> 'archived' and location_id is not null
         order by coalesce(to_char(caught_at, 'YYYY-MM-DD'), '') desc, lower(name) desc, id desc limit 1`,
     );
-    const t = totals.rows[0] ?? { total: 0, unplaced: false };
+    const t = totals.rows[0] ?? { total: 0, unplaced: 0 };
     return { ...t, groups: groups.rows, lastLocationId: last.rows[0]?.locationId ?? null };
   });
 }

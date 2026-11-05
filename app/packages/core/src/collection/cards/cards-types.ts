@@ -136,8 +136,8 @@ export interface SpecimenPage {
 /** The counts of the database over all active specimens (US-BES-06 summary): plain IDs, the names are resolved by `core`. */
 export interface SpecimenCountRows {
   readonly total: number;
-  /** Some active plant has no location. */
-  readonly unplaced: boolean;
+  /** Number of active plants without a location. */
+  readonly unplaced: number;
   readonly groups: readonly { readonly locationId: string; readonly count: number }[];
   /** Location of the plant with the latest catch date that has one; `null` without such a plant. */
   readonly lastLocationId: string | null;
@@ -152,7 +152,8 @@ export interface LocationGroup {
 
 export interface SpecimenSummary {
   readonly total: number;
-  readonly unplaced: boolean;
+  /** Number of active plants without a location; the group "Standort unbekannt" shows it (US-BES-06). */
+  readonly unplaced: number;
   readonly groups: readonly LocationGroup[];
   /** Name of the last location (see `SpecimenCountRows.lastLocationId`); `null` without such a plant. */
   readonly lastLocation: string | null;

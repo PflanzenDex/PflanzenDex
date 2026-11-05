@@ -373,13 +373,20 @@ describe("US-BES-06 · FR-BES-23 · NFR-12 paged list of 1,000 plants", () => {
     expect((await pageOf(subC, {}, "")).status).toBe(400);
   });
 
+  it("FR-BES-23 a cursor whose name holds a NUL character is input.invalid naming after, not a server error (PostgreSQL refuses NUL)", async () => {
+    const after = encodeURIComponent(JSON.stringify({ name: "Pflanze\u0000", id: randomUUID() }));
+    const r = await pageOf(subC, { after });
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+    expect(r.body["error"]["details"]).toEqual([{ field: "after", code: "input.invalid" }]);
+  });
+
   it("FR-BES-23 the summary covers all 1,000 plants, not the first page: total, unplaced, no location group, nothing measured", async () => {
     const r = await call(subC, "GET", "/specimens/cards/summary");
     expect(r.status).toBe(200);
     expect(r.body).toEqual({
       total: 1000,
       groups: [],
-      unplaced: true,
+      unplaced: 1000,
       anyMeasured: false,
       lastLocation: null,
     });
@@ -485,7 +492,7 @@ describe("US-BES-06 · FR-BES-23 cards, summary, treatment list and one card of 
     const r = await call(subD, "GET", "/specimens/cards/summary");
     expect(r.body).toEqual({
       total: 5,
-      unplaced: true,
+      unplaced: 1,
       anyMeasured: false,
       lastLocation: "Süd",
       groups: [

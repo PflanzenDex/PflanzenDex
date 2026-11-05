@@ -28,7 +28,8 @@ export interface CardPageDependencies extends CardsDependencies {
 }
 
 // The cursor is opaque text for clients: the URI-encoded JSON of the name and the ID. Only those two fields are read back,
-// and the ID must be a UUID; anything else is no cursor of this list.
+// and the ID must be a UUID; anything else is no cursor of this list. A name with a NUL character is refused too: PostgreSQL
+// cannot store it, so the page would answer 500 instead of `input.invalid`.
 export function encodeCardCursor(cursor: CardCursor): string {
   return encodeURIComponent(JSON.stringify({ name: cursor.name, id: cursor.id }));
 }
@@ -39,7 +40,10 @@ export function decodeCardCursor(text: string): CardCursor | null {
     const value = JSON.parse(decodeURIComponent(text)) as { name?: unknown; id?: unknown } | null;
     const name = value?.name;
     const id = value?.id;
-    return typeof name === "string" && typeof id === "string" && isId(id)
+    return typeof name === "string" &&
+      typeof id === "string" &&
+      isId(id) &&
+      !name.includes("\u0000")
       ? { name, id: id.toLowerCase() }
       : null;
   } catch {

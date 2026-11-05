@@ -63,7 +63,7 @@ function memoryPages(store: InMemorySpecimens, counts?: SpecimenCountRows): Spec
       return { rows: rows.slice(0, q.limit), more: rows.length > q.limit, total: all.length };
     },
     async summary() {
-      return counts ?? { total: 0, unplaced: false, groups: [], lastLocationId: null };
+      return counts ?? { total: 0, unplaced: 0, groups: [], lastLocationId: null };
     },
     async anyActive(userId, ids) {
       return store.rows.some((z) => z.userId === userId && isActive(z) && ids.includes(z.id));
@@ -142,6 +142,11 @@ describe("US-BES-06 · FR-BES-23 cursor of the card list", () => {
     ["JSON without a name", encodeURIComponent(`{"id":"${SPECIES}"}`)],
     ["a name that is no text", encodeURIComponent(`{"name":7,"id":"${SPECIES}"}`)],
     ["an ID that is no UUID", encodeURIComponent('{"name":"a","id":"x"}')],
+    [
+      "a name with a NUL character (PostgreSQL refuses it)",
+      encodeCardCursor({ name: "a\u0000b", id: SPECIES }),
+    ],
+    ["a NUL escape in the name", encodeURIComponent(`{"name":"a\\u0000b","id":"${SPECIES}"}`)],
   ])("FR-BES-23 a malformed cursor (%s) decodes to null", (_, text) => {
     expect(decodeCardCursor(text)).toBeNull();
   });
@@ -309,7 +314,7 @@ describe("US-BES-06 · FR-BES-23 one card and the summary", () => {
     const plant = await create("anna", "Gemessen", { locationId: shelf });
     const counts: SpecimenCountRows = {
       total: 1000,
-      unplaced: true,
+      unplaced: 3,
       groups: [{ locationId: shelf, count: 999 }],
       lastLocationId: shelf,
     };
@@ -326,7 +331,7 @@ describe("US-BES-06 · FR-BES-23 one card and the summary", () => {
     );
     expect(summary).toEqual({
       total: 1000,
-      unplaced: true,
+      unplaced: 3,
       groups: [{ locationId: shelf, location: "Regal Süd", count: 999 }],
       lastLocation: "Regal Süd",
       anyMeasured: true,
@@ -348,7 +353,7 @@ describe("US-BES-06 · FR-BES-23 one card and the summary", () => {
     const summary = await specimenSummary(cardDeps(), "anna");
     expect(summary).toEqual({
       total: 0,
-      unplaced: false,
+      unplaced: 0,
       groups: [],
       lastLocation: null,
       anyMeasured: false,
@@ -359,7 +364,7 @@ describe("US-BES-06 · FR-BES-23 one card and the summary", () => {
     const unknown = "99999999-9999-4999-8999-999999999999";
     const counts: SpecimenCountRows = {
       total: 4,
-      unplaced: false,
+      unplaced: 0,
       groups: [
         { locationId: shelf, count: 2 },
         { locationId: box, count: 1 },
