@@ -42,12 +42,14 @@ export function transitions(pr, items, openPrs = []) {
 }
 
 /**
- * Drift report: items whose status contradicts the pull requests, or that have no priority.
- * `prs`: all PRs as { number, base, state: "open"|"merged"|"closed", body }.
+ * Drift report: items whose status contradicts the pull requests, open items without a status, or items without a
+ * priority. `prs`: all PRs as { number, base, state: "open"|"merged"|"closed", body }. `item.open` is set by the check
+ * (project-status.mjs); a closed item without a status is not reported (FR-DEV-10 (e)).
  */
 export function drift(items, prs) {
   const out = [];
   for (const item of items) {
+    if (!item.status && item.open) out.push({ issue: item.issue, problem: "no status" });
     const refs = prs.filter((p) => closedIssues(p).includes(item.issue));
     const open = refs.some((p) => p.state === "open");
     const merged = refs.some((p) => p.state === "merged" && p.base === "dev");

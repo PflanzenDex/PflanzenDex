@@ -49,6 +49,16 @@ const board = {
       ],
     },
     { id: "FP", name: "Priority", options: [{ id: "OP-1", name: "P1 high" }] },
+    {
+      id: "FS",
+      name: "Status",
+      options: [
+        { id: "OS-T", name: "Todo" },
+        { id: "OS-I", name: "In Progress" },
+        { id: "OS-V", name: "On dev" },
+        { id: "OS-D", name: "Done" },
+      ],
+    },
   ],
 };
 
@@ -80,6 +90,15 @@ const boardAnswers = {
   "gh project view": { id: "PROJ" },
 };
 const quiet = () => {};
+
+/** Answer of the one-issue status query (issue-board.mjs boardStatusOf): the issue's project items. */
+const itemOnBoard = (status, project = 2) => ({
+  project: { number: project, owner: { login: "PflanzenDex" } },
+  fieldValueByName: status ? { name: status } : null,
+});
+const issueOnBoard = (...nodes) => ({
+  data: { repository: { issue: { projectItems: { nodes } } } },
+});
 
 function tempOutput() {
   return path.join(tempDir("issue-test-"), "output");
@@ -145,7 +164,7 @@ test("FR-DEV-10 (c): make issue with an unknown type writes nothing on GitHub", 
   assert.equal(client.calls.length, 0);
 });
 
-test("FR-DEV-10: make issue creates the issue with both labels and sets Typ, Epic and Priority on the board", async () => {
+test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ, Epic, Priority and Status Todo on the board", async () => {
   const client = fakeGh({
     ...boardAnswers,
     "gh issue create": "https://github.com/PflanzenDex/PflanzenDex/issues/1230\n",
@@ -163,11 +182,13 @@ test("FR-DEV-10: make issue creates the issue with both labels and sets Typ, Epi
   const create = client.calls.find((c) => c.startsWith("gh issue create"));
   assert.match(create, /--label=story --label=epic:ACC/);
   const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
-  assert.equal(edits.length, 3);
+  assert.equal(edits.length, 4);
   assert.match(edits[0], /--field-id FT --single-select-option-id OT-S/);
   assert.match(edits[1], /--field-id FE --single-select-option-id OE-ACC/);
   assert.match(edits[2], /--field-id FP --single-select-option-id OP-1/);
+  assert.match(edits[3], /--field-id FS --single-select-option-id OS-T/);
   assert.ok(logs.some((l) => /Created #1230/.test(l)));
+  assert.ok(logs.some((l) => /Board: Status Todo, Typ Story, Epic ACC, Priority P1/.test(l)));
 });
 
 test("FR-DEV-10: a failed board write after the issue exists says how to repair it, nothing is hidden", async () => {
@@ -241,7 +262,10 @@ test("FR-DEV-10: make issue reads the body file and creates the issue", async ()
 });
 
 test("FR-DEV-10 (b): sync sets Typ and Epic on the board from the type label and the epic code", async () => {
-  const client = fakeGh({ ...boardAnswers });
+  const client = fakeGh({
+    ...boardAnswers,
+    "gh api graphql": issueOnBoard(itemOnBoard("In Progress")),
+  });
   await syncIssue(client, 12, {
     type: "bug",
     epic: "DEV",
@@ -278,7 +302,7 @@ test("FR-DEV-10: sync refuses an unknown epic before it writes to the board", as
 });
 
 test("FR-DEV-10: a board option that does not exist fails the sync and writes no field", async () => {
-  const client = fakeGh({ ...boardAnswers });
+  const client = fakeGh({ ...boardAnswers, "gh api graphql": issueOnBoard() });
   await assert.rejects(
     syncIssue(client, 12, {
       type: "story",
@@ -290,6 +314,77 @@ test("FR-DEV-10: a board option that does not exist fails the sync and writes no
     /has no option for "QS"/,
   );
   assert.ok(!client.calls.some((c) => c.startsWith("gh project item-edit")));
+});
+
+test("FR-DEV-10 (e): sync sets Status Todo when the item has no Status yet, also when it is not on the board", async () => {
+  const cases = [
+    ["not on the board", issueOnBoard()],
+    ["on the board without a Status", issueOnBoard(itemOnBoard(null))],
+    ["a Status only in another project", issueOnBoard(itemOnBoard("Done", 9))],
+  ];
+  for (const [label, answer] of cases) {
+    const client = fakeGh({ ...boardAnswers, "gh api graphql": answer });
+    await syncIssue(client, 12, {
+      type: "bug",
+      epic: "DEV",
+      taxonomy,
+      env: { GH_REPO: REPO },
+      log: quiet,
+    });
+    const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
+    assert.equal(edits.length, 3, label);
+    assert.match(edits[2], /--field-id FS --single-select-option-id OS-T/, label);
+    // one issue is read, never the whole board
+    assert.ok(
+      client.calls.some((c) => c.startsWith("gh api graphql") && c.includes("-F number=12")),
+      label,
+    );
+    assert.ok(!client.calls.some((c) => c.startsWith("gh project item-list")), label);
+  }
+});
+
+test("FR-DEV-10 (e): sync never overwrites an existing Status (In Progress, On dev, Done)", async () => {
+  for (const status of ["In Progress", "On dev", "Done"]) {
+    const client = fakeGh({
+      ...boardAnswers,
+      "gh api graphql": issueOnBoard(itemOnBoard(status)),
+    });
+    const fields = await syncIssue(client, 12, {
+      type: "bug",
+      epic: "DEV",
+      taxonomy,
+      env: { GH_REPO: REPO },
+      log: quiet,
+    });
+    const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
+    assert.equal(edits.length, 2, status);
+    assert.ok(!edits.some((c) => c.includes("--field-id FS ")), status);
+    assert.deepEqual(fields, { Typ: "Bug", Epic: "DEV" }, status);
+  }
+});
+
+test("FR-DEV-10 (e): sync still sets Typ and Epic when the Status cannot be read, and warns instead of aborting", async () => {
+  const client = fakeGh({
+    ...boardAnswers,
+    "gh api graphql": new Error("GraphQL: Resource not accessible by integration"),
+  });
+  const logs = [];
+  const fields = await syncIssue(client, 12, {
+    type: "bug",
+    epic: "DEV",
+    taxonomy,
+    env: { GH_REPO: REPO },
+    log: (l) => logs.push(l),
+  });
+  const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
+  assert.equal(edits.length, 2);
+  assert.match(edits[0], /--field-id FT --single-select-option-id OT-B/);
+  assert.match(edits[1], /--field-id FE --single-select-option-id OE-DEV/);
+  assert.ok(!edits.some((c) => c.includes("--field-id FS ")), "an unknown Status is not written");
+  assert.deepEqual(fields, { Typ: "Bug", Epic: "DEV" });
+  assert.deepEqual(logs, [
+    "#12 board: Status not read (GraphQL: Resource not accessible by integration); Typ/Epic set, Status left as is",
+  ]);
 });
 
 test("FR-DEV-10: the usage of a mode is a usage error (exit 2 in the CLI)", async () => {
