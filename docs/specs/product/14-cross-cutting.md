@@ -1,6 +1,6 @@
 # 14 – Epic QS: Cross-Cutting (Privacy, Security, Mobile, Quality)
 
-Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-11 (`00-Product-Overview.md`).
+Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-12 (`00-Product-Overview.md`).
 
 ## User stories
 

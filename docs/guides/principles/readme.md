@@ -78,4 +78,4 @@ Section contents:
 | PRIN-010 | A story is claimed before work starts                    | checked  |
 | PRIN-011 | The file layout is checked, the baseline only shrinks    | gated    |
 
-Not yet in the register: AB-3 to AB-5 (no code to check yet), the P-01 to P-11 mapping of spec 18 beyond the rules above.
+Not yet in the register: AB-3 to AB-5 (no code to check yet), the P-01 to P-12 mapping of spec 18 beyond the rules above.

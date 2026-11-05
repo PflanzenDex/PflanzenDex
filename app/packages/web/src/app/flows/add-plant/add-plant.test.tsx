@@ -213,3 +213,19 @@ describe("US-QS-14 · US-ONB-01 Pflanze anlegen is a full-view page with one pag
     expect(more).not.toContain("bg-secondary");
   });
 });
+
+const LEGACY_ZONES = [
+  { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: null, sortOrder: 2 },
+  { id: "z4", name: "Lampe 4", luxCeiling: 60000, ppfd: null, sortOrder: 4 },
+];
+
+describe("US-ONB-01 the derived light need names its zone the plain way (US-QS-24, issue 897)", () => {
+  it("US-ONB-01 a zone stored under the old name Lampe n reads Zone n in the light need", async () => {
+    server(CARDS, LEGACY_ZONES);
+    view();
+    await toSave();
+    const field = await screen.findByRole("combobox", { name: "Lichtbedarf" });
+    expect(within(field).getByRole("option", { name: /^Zone \d \(laut Art\)$/ })).toBeTruthy();
+    expect(within(field).queryByText(/Lampe/)).toBeNull();
+  });
+});

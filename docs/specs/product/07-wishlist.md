@@ -74,6 +74,8 @@ State of implementation: partly done. The way from purchase to plant (the tab "W
 
 A wish of type `Plant` can carry the optional flag `Visible_To_Friends` (default no, DM-TAU-02) so that friends' swipe matching can show "fits both ways" (US-TAU-05); without it the wishlist stays private (FR-WUN-07). Friends' open offers that match a wish are shown as cards in epic TAU (`21-swipe-matching.md`).
 
+A wish can carry a match scope for shop offers (DM-DEAL-04, epic DEAL). A wish for an empty substrate component is an equipment wish (US-SUB-01). Wishes of variegated cultivars point to their own catalog entry (US-VAR-01).
+
 New wishes also arise via yes/no in Discover (`17-Discover.md`); `Discarded` is a decision of its own there and a learning signal (US-ENT-05).
 
 ## Requirements
