@@ -1,5 +1,11 @@
-import type { Pool, PoolClient } from "pg";
-import { beginAsApplicationRole, poolLimits, withAccount } from "../kernel/index.ts";
+import type { Pool } from "pg";
+import {
+  beginAsApplicationRole,
+  poolLimits,
+  settleTransaction,
+  withAccount,
+  type Settled,
+} from "../kernel/index.ts";
 
 // Same shapes as the interface AccessStore in `core` (structurally equal; `db` does not import `core`).
 type Role = "operator" | "reviewer";
@@ -109,34 +115,27 @@ export class AccessPostgres {
    */
   async register(subject: string, code: string): Promise<"registered" | "existing" | "invalid"> {
     if (subject.trim() === "") throw new Error("Subject missing");
-    const client = await this.pool.connect();
-    try {
-      await beginAsApplicationRole(client, poolLimits(this.pool), [["app.subject", subject]]);
-      const known = await client.query("select 1 from account where subject = $1", [subject]);
-      if (known.rowCount) return await finish(client, "existing");
-      const used = await client.query<{ ok: boolean }>("select redeem_invitation($1) as ok", [
-        code,
-      ]);
-      if (!used.rows[0]?.ok) return await finish(client, "invalid");
-      const created = await client.query(
-        "insert into account (subject) values ($1) on conflict (subject) do nothing",
-        [subject],
-      );
-      return await finish(client, created.rowCount ? "registered" : "existing");
-    } catch (error) {
-      await client.query("rollback");
-      throw error;
-    } finally {
-      client.release();
-    }
+    return settleTransaction(
+      this.pool,
+      (client) => beginAsApplicationRole(client, poolLimits(this.pool), [["app.subject", subject]]),
+      async (client) => {
+        const known = await client.query("select 1 from account where subject = $1", [subject]);
+        if (known.rowCount) return finish("existing");
+        const used = await client.query<{ ok: boolean }>("select redeem_invitation($1) as ok", [
+          code,
+        ]);
+        if (!used.rows[0]?.ok) return finish("invalid");
+        const created = await client.query(
+          "insert into account (subject) values ($1) on conflict (subject) do nothing",
+          [subject],
+        );
+        return finish(created.rowCount ? "registered" : "existing");
+      },
+    );
   }
 }
 
 /** Commits only a successful registration; every other outcome rolls back, so no code is lost by a failed attempt. */
-async function finish<T extends "registered" | "existing" | "invalid">(
-  client: PoolClient,
-  outcome: T,
-): Promise<T> {
-  await client.query(outcome === "registered" ? "commit" : "rollback");
-  return outcome;
+function finish(outcome: "registered" | "existing" | "invalid"): Settled<typeof outcome> {
+  return { commit: outcome === "registered", value: outcome };
 }

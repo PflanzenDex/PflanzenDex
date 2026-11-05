@@ -1,5 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 import { LONG_LIMITS, poolLimits, type DbLimits } from "./connection/limits.ts";
+import { inTransaction } from "./connection/transaction.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -84,22 +85,11 @@ async function inAccount<T>(
   body: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   if (!UUID.test(accountId)) throw new Error("Account id is not a UUID");
-  const client = await pool.connect();
-  let broken: Error | undefined;
-  try {
-    await beginAsApplicationRole(client, limits, [["app.account_id", accountId]]);
-    const result = await body(client);
-    await client.query("commit");
-    return result;
-  } catch (error) {
-    // A failed rollback (the connection is gone) must not hide the error that caused it; that connection is dropped.
-    await client.query("rollback").catch((e: unknown) => {
-      broken = e instanceof Error ? e : new Error(String(e));
-    });
-    throw error;
-  } finally {
-    client.release(broken);
-  }
+  return inTransaction(
+    pool,
+    (client) => beginAsApplicationRole(client, limits, [["app.account_id", accountId]]),
+    body,
+  );
 }
 
 /**
