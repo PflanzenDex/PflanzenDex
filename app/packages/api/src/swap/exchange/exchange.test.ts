@@ -182,10 +182,13 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     expect(created.status).toBe(201);
     const body = (await exchange(subB)).body;
     const mine = body.offers.find((x: { offerId: string }) => x.offerId === created.body.id);
+    // The treated offer is non-null here, so the nested health keys are checked too (see expectExactKeys).
+    expect(mine.health.lastTreated).not.toBeNull();
     expect(mine.health.lastTreated).toEqual({
       reason: "Wollläuse",
       doneAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
     });
+    expectExactKeys(mine.health.lastTreated, { reason: true, doneAt: true }, "health.lastTreated");
     expectExactKeys(body, { offers: [EXCHANGE_OFFER] }, "GET /exchange/offers");
   });
 

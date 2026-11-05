@@ -5,7 +5,16 @@ import { migrate, openFixturePool, openOwnerPool, holdTaxonLock } from "@pflanze
 import { createApp, type AppOptions } from "../../app";
 import { expectExactKeys, type KeyShape } from "../../exact-keys-test-helpers";
 
-// US-QG-05 QG-D2: the whitelisted fields of a collection card (US-SOZ-07).
+// US-QG-05 QG-D2: the whitelisted fields of a shared specimen (US-SOZ-04) and of a collection card (US-SOZ-07).
+const SHARED_SPECIMEN: KeyShape = {
+  id: true,
+  speciesLatin: true,
+  speciesGerman: true,
+  name: true,
+  caughtAt: true,
+  isCutting: true,
+  photoShared: true,
+};
 const COLLECTION_CARD: KeyShape = {
   speciesLatin: true,
   speciesGerman: true,
@@ -184,10 +193,14 @@ describe("US-SOZ-04 what a friend sees", () => {
       "isCutting",
       "name",
       "photoShared",
-      "repottedAt",
       "speciesGerman",
       "speciesLatin",
     ]);
+  });
+
+  it("US-QG-05 QG-D2 the friend's shared view carries the whitelisted specimen fields and nothing else", async () => {
+    const body = (await call(subB, "GET", `/friends/${friendOfBen}/shared`)).body;
+    expectExactKeys(body, { specimens: [SHARED_SPECIMEN] }, "GET /friends/:id/shared");
   });
 
   it("US-SOZ-04 a marker never reaches a friend: the name is the species name alone", async () => {

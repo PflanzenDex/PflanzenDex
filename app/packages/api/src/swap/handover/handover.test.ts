@@ -829,10 +829,25 @@ describe("US-SOZ-05 feed events Swapped and Potted through the API", () => {
 describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted fields", () => {
   const deck = async (sub: string | null) =>
     call(sub, "GET", "/exchange/match?timeZone=Europe%2FBerlin");
+  // A shared offer of `sub` for a specimen of the approved species (every specimen of this file has it).
+  const offer = async (
+    sub: string,
+    marker: string,
+    type: "cutting" | "plant",
+    mode: "swap" | "give_away",
+  ) => {
+    const id = await specimen(sub, marker);
+    expect((await call(sub, "PUT", `/sharing/specimens/${id}`, { share: "friends" })).status).toBe(
+      200,
+    );
+    const created = await call(sub, "POST", "/offers", { specimenId: id, type, mode });
+    expect(created.status).toBe(201);
+    return created.body.id as string;
+  };
 
-  it("US-QG-05 QG-D2 the swap sides and the history carry the swap fields only: no account id and no recipient marker", async () => {
-    await specimen(subD); // the recipient already has the species, so the marker is named at the handover
-    const a = await accepted("QG5", "swap", subD);
+  it("US-QG-05 QG-D2 the swap sides and the history carry the swap fields only, with rows on both lists: no account id and no recipient marker", async () => {
+    await specimen(subD); // the recipient already has the species, so the marker is asked at the handover
+    const a = await accepted("QG5", "swap", subD); // subA gives, subD receives and completes the handover
     await confirm(subA, a.swapId);
     const done = await confirm(subD, a.swapId, { marker: "Rot5" });
     expect(done.body).toMatchObject({ status: "handed_over" });
@@ -841,49 +856,41 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
       { status: true, receivedSpecimenId: true },
       "POST /swaps/:id/handover",
     );
+    // subD offers a cutting and subA asks for it: subA is the recipient here, so `sent` has a row for subA as well.
+    const offerD = await offer(subD, "QG5d", "cutting", "swap");
+    const b = (await call(subA, "POST", `/offers/${offerD}/request`, {})).body.swapId as string;
+    expect(b).toEqual(expect.any(String));
+    expect((await call(subD, "POST", `/swaps/${b}/answer`, { action: "accept" })).status).toBe(200);
+
     const sides = (await call(subA, "GET", "/swaps")).body;
-    expect(sides.received).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ swapId: a.swapId, status: "handed_over" }),
-      ]),
-    );
+    expect(sides.received.map((x: { swapId: string }) => x.swapId)).toContain(a.swapId);
+    expect(sides.sent.map((x: { swapId: string }) => x.swapId)).toContain(b);
     expectExactKeys(sides, { received: [SWAP_SIDE], sent: [SWAP_SIDE] }, "GET /swaps");
     const history = (await call(subA, "GET", "/swaps/history")).body;
     expect(history.entries.map((e: { swapId: string }) => e.swapId)).toContain(a.swapId);
     expectExactKeys(history, { entries: [SWAP_HISTORY_ENTRY] }, "GET /swaps/history");
   });
 
-  it("US-QG-05 QG-D2 the match deck carries the card fields, both kinds of reason and the answered entries, and no account id", async () => {
-    // A friend asks for an own offer of mine: the card of the friend's offer fits both ways for me (US-TAU-05).
-    const idA = await specimen(subA, "T5a");
-    await call(subA, "PUT", `/sharing/specimens/${idA}`, { share: "friends" });
-    const offerA = (
-      await call(subA, "POST", "/offers", { specimenId: idA, type: "plant", mode: "give_away" })
-    ).body.id as string;
+  it("US-QG-05 QG-D2 the match deck carries the card fields, both kinds of reason and an answered offer's card while open, and no account id", async () => {
+    // subD wishes for the species of subA's offer and subA asks for one of subD's offers: the card "fits both ways" (US-TAU-05).
+    const offerA = await offer(subA, "T5a", "plant", "give_away");
+    const offerA2 = await offer(subA, "T5b", "cutting", "swap");
     const latin = (
       await call(subB, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
     ).body.offers.find((x: { offerId: string }) => x.offerId === offerA).speciesLatin as string;
     expect(latin).toBeTruthy();
-    await call(subD, "POST", "/wishes", { name: latin });
-    const idD = await specimen(subD, "T5e");
-    expect(idD).toEqual(expect.any(String));
-    expect(
-      (await call(subD, "PUT", `/sharing/specimens/${idD}`, { share: "friends" })).status,
-    ).toBe(200);
-    const createdD = await call(subD, "POST", "/offers", {
-      specimenId: idD,
-      type: "cutting",
-      mode: "swap",
-    });
-    expect(createdD).toMatchObject({ status: 201 });
-    const offerD = createdD.body.id as string;
+    expect((await call(subD, "POST", "/wishes", { name: latin })).status).toBe(201);
+    const offerD = await offer(subD, "T5e", "cutting", "swap");
     expect((await call(subA, "POST", `/offers/${offerD}/request`, {})).status).toBe(201);
+
     const first = (await deck(subD)).body as {
       cards: { offerId: string; reasons: { kind: string }[] }[];
     };
-    const card = first.cards.find((c) => c.offerId === offerA);
-    expect(card?.reasons.map((r) => r.kind)).toEqual(["wishlist", "both_ways"]);
-    // "No" keeps the offer in the entries, with its card, so nothing disappears silently (US-TAU-06, P-10).
+    expect(first.cards.find((c) => c.offerId === offerA)?.reasons.map((r) => r.kind)).toEqual([
+      "wishlist",
+      "both_ways",
+    ]);
+    // "No" moves offerA to the entries, with its card while it is open; offerA2 stays a card (US-TAU-06, P-10).
     expect(
       (
         await call(subD, "PUT", `/exchange/match/${offerA}/answer`, {
@@ -893,7 +900,11 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
       ).status,
     ).toBe(200);
     const body = (await deck(subD)).body;
-    expect(body.entries.map((e: { offerId: string }) => e.offerId)).toContain(offerA);
+    const entry = body.entries.find((e: { offerId: string }) => e.offerId === offerA);
+    expect(entry).toBeDefined();
+    // A non-null nested card: the shape below checks its keys, so it must be the real card and not a missing one.
+    expect(entry.card).toEqual(expect.objectContaining({ offerId: offerA }));
+    expect(body.cards.map((c: { offerId: string }) => c.offerId)).toContain(offerA2);
     expectExactKeys(
       body,
       { cards: [MATCH_CARD], entries: [MATCH_ENTRY], empty: true },

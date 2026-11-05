@@ -250,30 +250,47 @@ describe("US-QG-05 QG-D2 the friend routes carry only the whitelisted fields", (
   NAMES[subI] = "Ivo";
   NAMES[subJ] = "Jana";
 
-  it("US-QG-05 QG-D2 requests and the friend list carry the display name, the state and the ids, nothing else", async () => {
+  it("US-QG-05 QG-D2 open requests on both sides, the friend list and a declined request carry only the whitelisted fields", async () => {
     for (const sub of [subH, subI, subJ]) await call(sub, "GET", "/account");
-    const { code } = await invite(subH);
-    const sent = await redeem(subI, code);
+    // Ivo asks Hanna (incoming for Hanna), and Hanna asks Jana (outgoing for Hanna): both lists are filled.
+    const toHanna = await invite(subH);
+    const sent = await redeem(subI, toHanna.code);
     expect(sent.status).toBe(201);
     expectExactKeys(sent.body, REQUEST, "POST /friends/requests");
+    const toJana = await invite(subJ);
+    expect((await redeem(subH, toJana.code)).status).toBe(201);
     const open = await requests(subH);
     expect(open.incoming).toEqual([
       expect.objectContaining({ otherName: "Ivo", direction: "received" }),
     ]);
+    expect(open.outgoing).toEqual([
+      expect.objectContaining({ otherName: "Jana", direction: "sent", status: "requested" }),
+    ]);
+    expectExactKeys(open, { incoming: [REQUEST], outgoing: [REQUEST] }, "GET /friends/requests");
+
+    // Hanna accepts Ivo: the friend list carries the name, the since date and the shared count, nothing else.
     await call(subH, "POST", `/friends/requests/${open.incoming[0].id}/answer`, {
       decision: "accept",
     });
     const list = (await call(subH, "GET", "/friends")).body;
-    expect(list.friends).toHaveLength(1);
     expectExactKeys(list, { friends: [FRIEND] }, "GET /friends");
 
-    // A declined request: the sender sees "not accepted" (US-SOZ-02), no time.
-    const second = await invite(subH);
-    await redeem(subJ, second.code);
-    const pending = (await requests(subH)).incoming;
-    await call(subH, "POST", `/friends/requests/${pending[0].id}/answer`, { decision: "decline" });
-    const seenByJ = await requests(subJ);
-    expect(seenByJ.outgoing).toEqual([expect.objectContaining({ status: "declined" })]);
-    expectExactKeys(seenByJ, { incoming: [REQUEST], outgoing: [REQUEST] }, "GET /friends/requests");
+    // Jana declines Hanna: Hanna sees "not accepted" without a time (US-SOZ-02); Jana's incoming list is filled first.
+    const janaSees = await requests(subJ);
+    expectExactKeys(
+      { incoming: janaSees.incoming },
+      { incoming: [REQUEST] },
+      "GET /friends/requests",
+    );
+    await call(subJ, "POST", `/friends/requests/${janaSees.incoming[0].id}/answer`, {
+      decision: "decline",
+    });
+    const declined = await requests(subH);
+    expect(declined.outgoing).toEqual([expect.objectContaining({ status: "declined" })]);
+    expectExactKeys(
+      { outgoing: declined.outgoing },
+      { outgoing: [REQUEST] },
+      "GET /friends/requests",
+    );
   });
 });
