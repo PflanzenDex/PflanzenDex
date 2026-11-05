@@ -1,5 +1,5 @@
 {
-  "maxEntries": 28,
+  "maxEntries": 24,
   "entries": [
     {
       "screen": "collection-equipment-item",
@@ -18,20 +18,6 @@
       "size": "360x640",
       "page": 1,
       "inner": 1.17
-    },
-    {
-      "screen": "account-achievements-earned",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "innerX": 1.11
-    },
-    {
-      "screen": "account-achievements-earned",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "innerX": 1.01
     },
     {
       "screen": "account-achievements-earned",
@@ -179,20 +165,6 @@
       "page": 1,
       "inner": 2.69,
       "innerX": 1.02
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "innerX": 3.17
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "innerX": 2.88
     }
   ]
 }
