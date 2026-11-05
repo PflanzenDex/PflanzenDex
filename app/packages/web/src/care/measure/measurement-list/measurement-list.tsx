@@ -47,7 +47,13 @@ export function MeasurementList(props: {
             {props.records?.has(m.id) && <p className="text-sm">{t("record")}</p>}
             {m.note && <p className="text-muted-foreground">{m.note}</p>}
             {m.photo && (
-              <MeasurementPhoto {...props.photo} measurementId={m.id} date={m.date} compact />
+              <MeasurementPhoto
+                {...props.photo}
+                measurementId={m.id}
+                photo={m.photo}
+                date={m.date}
+                compact
+              />
             )}
             {/* The server attaches a photo to the day's latest measurement, so only that one offers it (FR-WAC-07). */}
             {measurements[i - 1]?.date !== m.date && (

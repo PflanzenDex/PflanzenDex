@@ -52,8 +52,8 @@ describe("US-ACH-07 year in review through the API logic", () => {
     expect(r.counts).toMatchObject({ speciesCaught: 1, measurements: 2, handovers: 0 });
     expect(r.growth).toMatchObject({ specimenId: "a", growth: 8 });
     expect(r.photos?.urls).toEqual({
-      first: "/specimens/a/measurements/m1/photo",
-      last: "/specimens/a/measurements/m2/photo",
+      first: "/specimens/a/measurements/m1/photo?v=p1",
+      last: "/specimens/a/measurements/m2/photo?v=p2",
     });
   });
 

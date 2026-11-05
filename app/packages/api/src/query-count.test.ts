@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import type { Hono } from "hono";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { holdTaxonLock, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
+import { migrate, openAdminPool, openPool, testDatabaseUrl, testOwnerUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { countingPool, type CountingPool } from "./count-queries";
 import { apiFor, type Api } from "./query-count-api-test-helpers";
@@ -11,7 +11,7 @@ import { getRoutes, MEASURED, requestPath } from "./query-count-endpoints";
 import { befriend, friendName, seedFriend } from "./query-count-seed-social-test-helpers";
 import { TZ, type SeedIds } from "./query-count-seed-test-helpers";
 import { seedSize, taxonName, type Cast } from "./query-count-seed-size-test-helpers";
-import { normalize, repeatFindings } from "./query-count-statements";
+import { growthReport, normalize, repeatFindings } from "./query-count-statements";
 
 // US-QG-07: the number of SQL statements of a request must not grow with the keeper's data (N+1), and one request must
 // not send the same statement text twice (duplicate read). Every GET route of the app is measured or listed in EXCLUDED
@@ -66,16 +66,22 @@ const results: Record<Size, Record<string, Measured>> = { small: {}, large: {} }
 const run = randomUUID()
   .replace(/[0-9-]/g, "")
   .slice(0, 10);
+// The database of this file, created in `beforeAll` (#1301).
+const DB = `pflanzendex_qc_${run}`;
+/** The URL of `DB` on the server and with the user of `url`. */
+const withDatabase = (url: string): string => {
+  const parsed = new URL(url);
+  parsed.pathname = `/${DB}`;
+  return parsed.toString();
+};
 
+let dropper: Pool;
 let admin: Pool;
 let pool: Pool;
 let counter: CountingPool;
 let api: Api;
 let app: Hono;
 let routes: string[] = [];
-// Seeds taxa and compares two measurements of the Pokedex endpoints: a parallel taxonomy build (exclusive holder of the
-// taxon lock) must not replace the `taxon` table in between (US-QG-01, #994).
-let releaseTaxa: (() => Promise<void>) | undefined;
 
 /** A few resolved catalog taxa (shared table), so the Pokedex and wish endpoints have rows to derive. */
 async function seedTaxa(): Promise<void> {
@@ -103,10 +109,19 @@ async function measure(size: Size, seeded: SeedIds): Promise<void> {
   }
 }
 
+// US-QG-07 (#1301): a statement count depends on the data of the whole database, not only on the keeper. The Pokedex
+// cards read every account that consented to the rarity in PflanzenDex (`rarity_participants()`): a consenting account
+// without specimens adds one statement to the request (`active_species_of`), one with specimens adds four (its species
+// read is one transaction of three statements). Parallel test files switch consent on and off for their own accounts
+// (account/profile.test.ts, pokedex/pokedex-cards.test.ts), so the large keeper could see one more statement than the
+// small one. This file measures in a database of its own, owned by the test owner role as the shared one is, so row
+// security applies as in production (QG-D1). Its taxa are its own too, which is why it needs no taxon lock: no taxonomy
+// build of another file can reach this database.
 beforeAll(async () => {
-  admin = openFixturePool();
-  releaseTaxa = await holdTaxonLock(admin);
-  const owner = openOwnerPool();
+  dropper = openAdminPool();
+  await dropper.query(`create database ${DB} owner ${new URL(testOwnerUrl()).username}`);
+  admin = openPool(withDatabase(testDatabaseUrl()), true);
+  const owner = openPool(withDatabase(testOwnerUrl()));
   await migrate(owner);
   counter = countingPool(owner);
   pool = counter.pool;
@@ -156,8 +171,9 @@ afterAll(async () => {
   await admin.query("delete from account where subject = any($1)", [subs]);
   await admin.query("delete from taxon where catalog_fingerprint = $1", [`qc-${run}`]);
   await pool.end();
-  await releaseTaxa?.();
   await admin.end();
+  await dropper.query(`drop database if exists ${DB} with (force)`);
+  await dropper.end();
 });
 
 describe("US-QG-07 statements per request do not grow with the data (N+1)", () => {
@@ -190,9 +206,17 @@ describe("US-QG-07 statements per request do not grow with the data (N+1)", () =
           `${key} is in query-count-baseline.json but no longer grows (${SMALL}: ${small}, ${LARGE}: ${large}): delete the entry`,
         ).toBe(true);
       } else {
+        // On a mismatch the message names the statements of both sizes and the extra one (#1301).
+        const report =
+          large === small
+            ? ""
+            : `\n${growthReport(
+                { size: SMALL, statements: results.small[key]?.statements ?? [] },
+                { size: LARGE, statements: results.large[key]?.statements ?? [] },
+              )}`;
         expect(
           large - small,
-          `${key} sends ${small} statements for ${SMALL} specimens and ${large} for ${LARGE} (N+1)`,
+          `${key} sends ${small} statements for ${SMALL} specimens and ${large} for ${LARGE} (N+1)${report}`,
         ).toBeLessThanOrEqual(ALLOWED_GROWTH);
       }
     },

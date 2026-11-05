@@ -65,7 +65,7 @@ function measurementRows(
       date: m.date,
       value: m.value,
       quality: m.quality,
-      hasPhoto: m.photo !== null,
+      photo: m.photo,
     })),
   );
 }
@@ -109,11 +109,11 @@ export async function readAchievementFacts(
         dormancy: period ? { from: period.from, until: period.until } : null,
       };
     }),
-    measurements: measurements.map(({ specimenId, date, quality, hasPhoto }) => ({
+    measurements: measurements.map(({ specimenId, date, quality, photo }) => ({
       specimenId,
       date,
       quality,
-      hasPhoto,
+      hasPhoto: photo !== null,
     })),
     treatmentCourses,
     handovers: (await src.swaps.list(userId))

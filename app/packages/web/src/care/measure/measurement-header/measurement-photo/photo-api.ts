@@ -50,7 +50,7 @@ export async function uploadPhoto(
       },
     );
     if (!res.ok) return await failure(res);
-    // A replaced photo keeps its address: the next view must not show the old one from the cache (NFR-12).
+    // The replaced picture leaves the picture cache at once; the next view asks its new address (NFR-12).
     forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
     announceWrite();
     return { ok: true, value: await res.json().catch(() => ({})) };

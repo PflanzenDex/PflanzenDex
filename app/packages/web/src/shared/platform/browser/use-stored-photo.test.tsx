@@ -88,7 +88,7 @@ describe("NFR-12 the photo request in the size asked", () => {
     expect(small.result.current).not.toBe(full.result.current);
   });
 
-  it("NFR-12 a replaced photo keeps its address: after forgetting, the next mount fetches both sizes again, others stay cached", async () => {
+  it("NFR-12 forgetting the pictures of one specimen fetches them again on the next mount; other specimens stay cached", async () => {
     const mine = "/specimens/s1/measurements/m1/photo";
     const other = "/specimens/s2/measurements/m2/photo";
     const show = async (path: string, size?: "thumb") => {
@@ -111,6 +111,27 @@ describe("NFR-12 the photo request in the size asked", () => {
       `http://api${mine}`,
       `http://api${mine}?size=thumb`,
     ]);
+  });
+
+  it("NFR-12 US-WAC-06 a versioned address keeps its query and takes the size after it", async () => {
+    const versioned = renderHook(() =>
+      useStoredPhoto(access, `${path(7)}?v=abc`, { size: "thumb" }),
+    );
+    await waitFor(() => expect(typeof versioned.result.current).toBe("string"));
+    expect(fetched).toEqual(["http://api/specimens/s1/measurements/m7/photo?v=abc&size=thumb"]);
+  });
+
+  it("NFR-12 US-WAC-06 a replaced photo has a new version, so it is requested anew and the old picture is not reused", async () => {
+    const before = renderHook(() => useStoredPhoto(access, `${path(8)}?v=old`));
+    await waitFor(() => expect(typeof before.result.current).toBe("string"));
+    before.unmount();
+    const after = renderHook(() => useStoredPhoto(access, `${path(8)}?v=new`));
+    await waitFor(() => expect(typeof after.result.current).toBe("string"));
+    expect(fetched).toEqual([
+      "http://api/specimens/s1/measurements/m8/photo?v=old",
+      "http://api/specimens/s1/measurements/m8/photo?v=new",
+    ]);
+    expect(after.result.current).not.toBe(before.result.current);
   });
 
   it("NFR-12 a failed request is not kept: the next mount asks again", async () => {
