@@ -65,15 +65,28 @@ export async function call<T, D = unknown>(
   }
 }
 
+/** Answers that do not say whether the server applied the write: its key stays for the repeat (US-QS-03). */
+const UNANSWERED = new Set(["network.not_reachable", "idempotency.in_progress"]);
+
 /**
- * Writes carry a fresh repeat-guard key per call (`Idempotency-Key`). A write that succeeded tells quiet observers
+ * The repeat-guard key (`Idempotency-Key`) of each write whose answer is still open, by its logical write (method, URL
+ * and body). A repeat of that write, from the outbox or from a retry after a lost answer, carries the same key, so the
+ * server writes it once (US-QS-03). A success, a refusal or a refused sign-in ends the write and frees its key, so the
+ * next write of the same content is a new one. The token is not part of the key: the server scopes keys per account.
+ */
+const openKeys = new Map<string, string>();
+
+/**
+ * Writes carry the repeat-guard key of their logical write (see `openKeys`). A write that succeeded tells quiet observers
  * (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
  */
 export const createWrite =
   <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
-  (method, path, body) =>
-    call<unknown, D>(fetchFn, `${api}${path}`, token, {
-      method: method,
-      body,
-      key: crypto.randomUUID(),
-    });
+  async (method, path, body) => {
+    const logical = JSON.stringify([api, method, path, body ?? null]);
+    const key = openKeys.get(logical) ?? crypto.randomUUID();
+    openKeys.set(logical, key);
+    const r = await call<unknown, D>(fetchFn, `${api}${path}`, token, { method, body, key });
+    if (r.ok || !UNANSWERED.has(r.error.code)) openKeys.delete(logical);
+    return r;
+  };

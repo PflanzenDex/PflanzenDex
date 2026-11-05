@@ -33,7 +33,7 @@ Acceptance criteria:
 - Every writing operation is idempotent or prevents double execution (double click, repeat after abort).
 - Background jobs (reminders, catalog enrichment, photo processing) deliver the same result on repetition.
 
-State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** the redelivery of buffered write actions.
+State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. A write whose answer was lost keeps its repeat-guard key until it is answered: a retry by the user and the redelivery of a buffered write send the same key, so the API writes once (`createWrite` in the web data layer, held in memory until the page closes). **Open:** keys and buffered writes that survive a reload of the page (US-QS-07).
 
 ### US-QS-04 · Deviations become visible · 🟨 (prototype ✅)
 
