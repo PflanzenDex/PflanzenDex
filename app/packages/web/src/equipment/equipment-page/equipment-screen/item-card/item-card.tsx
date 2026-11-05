@@ -38,7 +38,6 @@ export function ItemCard(props: {
   const unknown = all.filter(([, v]) => !v).map(([l]) => l);
   return (
     <div className="min-w-0 rounded-lg border border-border p-3">
-      <h3 className="break-words font-semibold">{item.name}</h3>
       <p className="text-sm text-muted-foreground">
         {TYPE_LABELS[item.type]}
         {item.status ? ` · ${STATUS_LABELS[item.status]}` : ""}
