@@ -140,7 +140,7 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
       vi.fn(() => new Promise<Response>(() => undefined)),
     );
     await showReady(
-      [row("a", "2026-01-01", 10, { photo: "p.jpg" })],
+      [row("a", "2026-01-01", 10, { photo: "p.webp" })],
       "/collection?sheet=verlauf-e1&teil=messungen",
     );
     await waitFor(() => expect(document.querySelector('[role="status"] .h-20')).not.toBeNull());

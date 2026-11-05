@@ -219,7 +219,7 @@ describe("US-WUN-04 the candidate says whether the image is stored locally, with
       imageUrl: "https://commons.wikimedia.org/wiki/File:H.jpg",
       imageSource: "Anna, https://commons.wikimedia.org/wiki/File:H.jpg",
       license: "CC BY 4.0",
-      imageObject: "img-1.jpg",
+      imageObject: "img-1.webp",
     });
     const list = await wishCandidates({ wishes, stock: new ZoneStockStub({}) }, "anna");
     expect(list.candidates[0]?.image).toEqual({
@@ -237,7 +237,7 @@ describe("US-WUN-04 the candidate says whether the image is stored locally, with
       name: "Haworthia",
       imageUrl: "https://commons.wikimedia.org/wiki/File:H.jpg",
       imageSource: "x",
-      imageObject: "secret-name.jpg",
+      imageObject: "secret-name.webp",
     });
     const list = await wishCandidates({ wishes, stock: new ZoneStockStub({}) }, "anna");
     expect(JSON.stringify(list)).not.toContain("secret-name");

@@ -142,8 +142,13 @@ const seen = (user: string) =>
   });
 
 describe("NFR-12 migration 0102 on a database with review cases in every status", () => {
-  it("NFR-12 only the new migration applies on the filled database", () => {
-    expect(applied).toEqual([NEW]);
+  it("NFR-12 the new migration is the first to apply on the filled database, then every later one", () => {
+    // Later migrations (e.g. 0103/0104, issue 1289) apply after it, as in a real deploy.
+    const later = readdirSync(MIGRATIONS_DIRECTORY)
+      .filter((n) => n.endsWith(".sql") && n >= NEW)
+      .sort();
+    expect(applied[0]).toBe(NEW);
+    expect(applied).toEqual(later);
   });
 
   it("NFR-12 every species carries the status and creator of its review case, nothing is left out", async () => {

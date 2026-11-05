@@ -137,7 +137,7 @@ describe("US-WUN-04 store the image of a wish", () => {
     const own = await app.request(`/wishes/${id}/image`, {
       headers: { authorization: `Bearer valid:${subA}` },
     });
-    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/webp"]);
     expect(own.headers.get("cache-control")).toContain("private");
     expect(Array.from(new Uint8Array(await own.arrayBuffer()))).toEqual([0xff, 0xd8, 1, 2]);
     const foreign = await app.request(`/wishes/${id}/image`, {

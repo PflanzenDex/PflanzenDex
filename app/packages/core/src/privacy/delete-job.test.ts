@@ -32,8 +32,8 @@ function setup(opts: { dueAt?: Date | null; identity?: IdentityRemoval } = {}) {
 describe("US-ACC-04 the job removes the account when it is due", () => {
   it("US-ACC-04 removes the photos by prefix, then the account, and leaves the identity pending in the stub", async () => {
     const { photos, log, run } = setup();
-    await photos.put(ACCOUNT, "p1.jpg", new Uint8Array([1]), "image/jpeg");
-    await photos.put(ACCOUNT, "orphan.jpg", new Uint8Array([2]), "image/jpeg");
+    await photos.put(ACCOUNT, "p1.webp", new Uint8Array([1]), "image/webp");
+    await photos.put(ACCOUNT, "orphan.webp", new Uint8Array([2]), "image/webp");
     await run();
     expect(photos.objectCount()).toBe(0);
     expect(log).toEqual(["erase"]);
@@ -50,7 +50,7 @@ describe("US-ACC-04 the job removes the account when it is due", () => {
   it("US-ACC-04 does nothing for a withdrawn request, a request not yet due and an account already gone", async () => {
     for (const dueAt of [null, new Date("2026-10-24T00:00:00Z")]) {
       const { photos, log, run } = setup({ dueAt });
-      await photos.put(ACCOUNT, "p1.jpg", new Uint8Array([1]), "image/jpeg");
+      await photos.put(ACCOUNT, "p1.webp", new Uint8Array([1]), "image/webp");
       await run();
       expect(log).toEqual([]);
       expect(photos.objectCount()).toBe(1);

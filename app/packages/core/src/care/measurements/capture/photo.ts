@@ -92,7 +92,7 @@ async function findTarget(
  * (default today in the user's time zone; with several that day the one recorded last). Without a measurement nothing
  * is stored (`measurement.not_found`). A second photo replaces the first only with `replace` = true, otherwise
  * `measurement.photo_exists` and the old photo stays. Only the processed image is stored (rotated, at most 1600 px,
- * JPEG 82, no EXIF/GPS); invalid or too large files are refused by the media pipeline. The new object is written first
+ * WebP at quality 82, no EXIF/GPS); invalid or too large files are refused by the media pipeline. The new object is written first
  * and the old one deleted after the row points to the new one, so a failure never leaves a measurement without its photo.
  * The AI assessment of the photo is US-KI-04 and is not part of this operation.
  */
@@ -105,7 +105,7 @@ export const measurementPhoto = (deps: PhotoDependencies) =>
       if (!target.ok) return target;
       const measurement = target.value;
       if (measurement.photo && !input.replace) return failed(appError("measurement.photo_exists"));
-      const name = `${deps.newName()}.jpg`;
+      const name = `${deps.newName()}.webp`;
       const stored = await deps.storage.put(userId, name, deps.upload);
       if (!stored.ok) return stored;
       if (!(await deps.measurements.setPhoto(userId, measurement.id, name))) {
