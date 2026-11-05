@@ -27,7 +27,7 @@ beforeEach(() => {
       return {
         ok: true,
         status: 200,
-        blob: async () => ({ size: 1, type: "image/jpeg" }),
+        blob: async () => ({ size: 1, type: "image/webp" }),
       } as unknown as Response;
     }),
   );

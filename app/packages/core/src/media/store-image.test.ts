@@ -13,7 +13,7 @@ const setup = (processor = new FakeImageProcessor()) => {
   return { store, processor, deps: { store, processor } };
 };
 
-/** A store that refuses to write any thumbnail (name ends with `-thumb.jpg`), like an unavailable bucket for one write. */
+/** A store that refuses to write any thumbnail (name ends with `-thumb.webp`), like an unavailable bucket for one write. */
 class FailingThumbnailStore extends InMemoryObjectStore {
   override async put(
     accountId: string,
@@ -21,7 +21,7 @@ class FailingThumbnailStore extends InMemoryObjectStore {
     bytes: Uint8Array,
     contentType: string,
   ): Promise<Result<void>> {
-    if (name.endsWith("-thumb.jpg")) return failed(appError("media.storage_unavailable"));
+    if (name.endsWith("-thumb.webp")) return failed(appError("media.storage_unavailable"));
     return super.put(accountId, name, bytes, contentType);
   }
 }
@@ -29,9 +29,9 @@ class FailingThumbnailStore extends InMemoryObjectStore {
 describe("TE-05 / FR-WAC-09 storing a processed image", () => {
   it("stores only the processed image and never the original", async () => {
     const { store, processor, deps } = setup();
-    const r = await storeImage(deps, A, "m1.jpg", { bytes: original, contentType: "image/jpeg" });
-    expect(r).toEqual({ ok: true, value: { name: "m1.jpg", width: 800, height: 600 } });
-    const stored = await store.get(A, "m1.jpg");
+    const r = await storeImage(deps, A, "m1.webp", { bytes: original, contentType: "image/jpeg" });
+    expect(r).toEqual({ ok: true, value: { name: "m1.webp", width: 800, height: 600 } });
+    const stored = await store.get(A, "m1.webp");
     expect(stored.ok && [...stored.value.bytes]).toEqual([...processor.output.bytes]);
     expect(store.objectCount()).toBe(2); // the stored copy and its thumbnail (NFR-12)
     expect(store.containsBytes(original)).toBe(false);
@@ -39,16 +39,16 @@ describe("TE-05 / FR-WAC-09 storing a processed image", () => {
 
   it("NFR-12 stores the thumbnail of the processed image under the thumbnail name", async () => {
     const { store, processor, deps } = setup();
-    await storeImage(deps, A, "m1.jpg", { bytes: original, contentType: "image/jpeg" });
-    const small = await store.get(A, thumbnailName("m1.jpg"));
+    await storeImage(deps, A, "m1.webp", { bytes: original, contentType: "image/jpeg" });
+    const small = await store.get(A, thumbnailName("m1.webp"));
     expect(small.ok && [...small.value.bytes]).toEqual([...processor.output.thumbnail.bytes]);
-    expect(small.ok && small.value.contentType).toBe("image/jpeg");
+    expect(small.ok && small.value.contentType).toBe("image/webp");
   });
 
   it("NFR-12 a failed thumbnail write takes the stored copy back too: the upload is refused, nothing stays behind (P-10)", async () => {
     const store = new FailingThumbnailStore();
     const processor = new FakeImageProcessor();
-    const r = await storeImage({ store, processor }, A, "m1.jpg", {
+    const r = await storeImage({ store, processor }, A, "m1.webp", {
       bytes: original,
       contentType: "image/jpeg",
     });
@@ -59,7 +59,7 @@ describe("TE-05 / FR-WAC-09 storing a processed image", () => {
   it("rejects an oversize upload with media.too_large before processing and stores nothing", async () => {
     const { store, processor, deps } = setup();
     const big = new Uint8Array(MEDIA_LIMITS.uploadMaxBytes + 1);
-    const r = await storeImage(deps, A, "m1.jpg", { bytes: big, contentType: "image/jpeg" });
+    const r = await storeImage(deps, A, "m1.webp", { bytes: big, contentType: "image/jpeg" });
     expect(!r.ok && r.error.code).toBe("media.too_large");
     expect(processor.calls).toBe(0);
     expect(store.objectCount()).toBe(0);
@@ -67,21 +67,24 @@ describe("TE-05 / FR-WAC-09 storing a processed image", () => {
 
   it("rejects an upload type that is not jpeg, png or webp with media.type_unsupported", async () => {
     const { store, deps } = setup();
-    const r = await storeImage(deps, A, "m1.jpg", { bytes: original, contentType: "image/gif" });
+    const r = await storeImage(deps, A, "m1.webp", { bytes: original, contentType: "image/gif" });
     expect(!r.ok && r.error.code).toBe("media.type_unsupported");
     expect(store.objectCount()).toBe(0);
   });
 
   it("passes the processor's refusal on and stores nothing", async () => {
     const { store, deps } = setup(new FakeImageProcessor("media.not_an_image"));
-    const r = await storeImage(deps, A, "m1.jpg", { bytes: original, contentType: "image/jpeg" });
+    const r = await storeImage(deps, A, "m1.webp", { bytes: original, contentType: "image/jpeg" });
     expect(!r.ok && r.error.code).toBe("media.not_an_image");
     expect(store.objectCount()).toBe(0);
   });
 
   it("refuses an invalid name with media.name_invalid", async () => {
     const { deps, processor } = setup();
-    const r = await storeImage(deps, A, "../x.jpg", { bytes: original, contentType: "image/jpeg" });
+    const r = await storeImage(deps, A, "../x.webp", {
+      bytes: original,
+      contentType: "image/jpeg",
+    });
     expect(!r.ok && r.error.code).toBe("media.name_invalid");
     expect(processor.calls).toBe(0);
   });

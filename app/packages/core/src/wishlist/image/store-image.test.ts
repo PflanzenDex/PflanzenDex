@@ -102,13 +102,13 @@ describe("US-WUN-04 store the image of a wish locally, with source and license",
     const r = await run();
     expect(r.ok).toBe(true);
     expect(calls.download).toEqual([UPLOAD]);
-    expect(calls.put).toEqual(["img-1.jpg"]);
+    expect(calls.put).toEqual(["img-1.webp"]);
     expect(wishes.rows[0]).toMatchObject({
-      imageObject: "img-1.jpg",
+      imageObject: "img-1.webp",
       license: "CC BY-SA 4.0",
       imageSource: `Anna Beispiel, ${FILE}`,
     });
-    expect(r.ok && r.value).toMatchObject({ changed: true, wish: { imageObject: "img-1.jpg" } });
+    expect(r.ok && r.value).toMatchObject({ changed: true, wish: { imageObject: "img-1.webp" } });
   });
 
   it("a wish without an image address or with a foreign host is refused and nothing is fetched (no hotlink, no SSRF)", async () => {
@@ -155,7 +155,7 @@ describe("US-WUN-04 store the image of a wish locally, with source and license",
   });
 
   it("an image that is stored already is kept: nothing is fetched or written again", async () => {
-    const { run, calls } = setup({ objectName: "old.jpg" });
+    const { run, calls } = setup({ objectName: "old.webp" });
     const r = await run();
     expect(r.ok && r.value.changed).toBe(false);
     expect(calls.source + calls.download.length + calls.put.length).toBe(0);

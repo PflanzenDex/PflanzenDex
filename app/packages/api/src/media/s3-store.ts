@@ -117,8 +117,8 @@ export function createS3ObjectStore(
         await client.send(new DeleteObjectCommand({ Bucket, Key }));
       }),
     deleteAll: (accountId) =>
-      run(objectKey(accountId, "x.jpg"), (probe) =>
-        removePrefix(client, Bucket, probe.slice(0, probe.length - "x.jpg".length)),
+      run(objectKey(accountId, "x.webp"), (probe) =>
+        removePrefix(client, Bucket, probe.slice(0, probe.length - "x.webp".length)),
       ),
     exists: (accountId, name) =>
       run(
