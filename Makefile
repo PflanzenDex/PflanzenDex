@@ -240,19 +240,19 @@ pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
 
-issue: ## New issue with type, epic and priority labels and board fields (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md>); refuses unknown values before creating anything (FR-DEV-10)
+issue: ## New issue with type and epic labels and the board fields Typ, Epic, Priority and Status Todo (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md>); refuses unknown values before creating anything (FR-DEV-10)
 	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs create --type "$(TYPE)" --epic "$(EPIC)" --priority "$(PRIORITY)" --title "$(TITLE)" --body-file "$(abspath $(BODY))"
 
 issue-check: ## Check the type and epic labels of an issue (ISSUE=<n> [EVENT=opened|edited|labeled|unlabeled]): comment and needs-triage when invalid, needs-triage removed when valid (CI: issue-check.yml, FR-DEV-10)
 	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs check --issue "$(ISSUE)" --event "$(EVENT)"
 
-issue-sync: ## Set the board fields Typ and Epic of an issue (ISSUE=<n> TYPE=<label> EPIC=<code>); CI runs it with the project token (FR-DEV-10)
+issue-sync: ## Set the board fields Typ and Epic of an issue, and Status Todo when it has none (ISSUE=<n> TYPE=<label> EPIC=<code>); CI runs it with the project token (FR-DEV-10)
 	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs sync --issue "$(ISSUE)" --type "$(TYPE)" --epic "$(EPIC)"
 
 board: ## Who works on which open story of a release (board field Release, RELEASE="R1 Parität"); flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
 	cd $(APP) && node tools/workflow/board.mjs "$(RELEASE)"
 
-status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
+status-check: ## Project status vs. pull requests, open items without a status, missing priorities (US-DEV-05); exit 1 on drift
 	cd $(APP) && node tools/workflow/actions/project-status/project-status.mjs check
 
 retro: ## Issue flow retro: created vs. closed per day, burndown (US-DEV-11); prints it, WRITE=1 rewrites the pinned report issue
