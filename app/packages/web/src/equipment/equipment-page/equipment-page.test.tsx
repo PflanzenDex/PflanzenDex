@@ -117,9 +117,7 @@ describe("US-EQU-01 equipment page", () => {
   it("US-EQU-01 shows missing values as unknown, never guessed (P-08)", async () => {
     fakeServer([item()]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
-    const card = (await screen.findByRole("heading", { name: "Zone 3", level: 3 })).closest(
-      "div",
-    ) as HTMLElement;
+    const card = await screen.findByRole("dialog", { name: "Zone 3" });
     expect(card.textContent).toContain("Lampe · Aktiv");
     // Unknown values fold into one line; two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
     expect(card.textContent).toContain(
