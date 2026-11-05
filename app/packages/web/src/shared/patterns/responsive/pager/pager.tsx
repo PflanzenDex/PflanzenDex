@@ -7,6 +7,8 @@ import {
   parsePage,
   usePageAddress,
   usePagingMore,
+  useResetPage,
+  useRetryFocus,
   type PagerPaging,
 } from "./paging/paging";
 
@@ -149,6 +151,7 @@ export function Pager<T>({
   const page = Math.min(raw, pages);
   const first = (page - 1) * pageSize;
   const missing = usePagingMore(paging, items.length, first + pageSize, count);
+  const note = useRetryFocus(paging, missing, list);
   // The address follows the page (see pageAfterResize, issue 1029). Passive, not a layout effect: the router subscribes to
   // the address in its own layout effect, after the children's, so a navigation made earlier would be lost on mount.
   const measuredBefore = React.useRef<number | null>(null);
@@ -160,13 +163,7 @@ export function Pager<T>({
     if (params.has(param) && raw !== target) go(target, true);
   });
 
-  const lastKey = React.useRef(resetKey);
-  React.useEffect(() => {
-    if (lastKey.current === resetKey) return;
-    lastKey.current = resetKey;
-    if (params.has(param)) go(1, true);
-  }, [resetKey, params, go, param]);
-
+  useResetPage(resetKey, params.has(param), go);
   const swipe = useSwipe(page, pages, go);
 
   return (
@@ -185,7 +182,7 @@ export function Pager<T>({
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}
       </ul>
-      {missing && paging ? <PagingNote paging={paging} /> : null}
+      {missing && note ? <PagingNote paging={note} /> : null}
       {pages > 1 ? <PagerBar page={page} pages={pages} go={go} /> : null}
     </div>
   );

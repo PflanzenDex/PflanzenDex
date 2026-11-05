@@ -60,6 +60,46 @@ export function usePagingMore(
   return missing;
 }
 
+/**
+ * A retry that worked takes the note and its button away, and the focus with them: it moves to the first control of the
+ * list, or to the list (issue 1304, 2.4.3). A retry that failed keeps the button, and with it the focus.
+ */
+export function useRetryFocus(
+  paging: PagerPaging | undefined,
+  missing: boolean,
+  list: React.RefObject<HTMLElement | null>,
+): PagerPaging | undefined {
+  const retried = React.useRef(false);
+  React.useEffect(() => {
+    if (!retried.current || missing) return;
+    retried.current = false;
+    const box = list.current;
+    const control = box?.querySelector<HTMLElement>("a[href], button:not([disabled])");
+    if (!control) box?.setAttribute("tabindex", "-1");
+    (control ?? box)?.focus();
+  }, [missing, list]);
+  if (!paging) return undefined;
+  const onRetry = () => {
+    retried.current = true;
+    paging.onRetry();
+  };
+  return { ...paging, onRetry };
+}
+
+/** A changed `resetKey` (filter, search) starts again at page 1. */
+export function useResetPage(
+  resetKey: string | number | undefined,
+  paged: boolean,
+  go: (target: number, replace?: boolean) => void,
+) {
+  const lastKey = React.useRef(resetKey);
+  React.useEffect(() => {
+    if (lastKey.current === resetKey) return;
+    lastKey.current = resetKey;
+    if (paged) go(1, true);
+  }, [resetKey, paged, go]);
+}
+
 export function parsePage(raw: string | null): number {
   const n = Number(raw);
   return Number.isInteger(n) && n >= 1 ? n : 1;
