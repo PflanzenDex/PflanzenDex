@@ -326,6 +326,21 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
     expect(new Set(cursors).size).toBe(1);
   });
 
+  it("P-10 FR-BES-23 a further page that fails without an error text still shows the failure and asks only once", async () => {
+    const { fetchFn } = fakeServer({
+      specimens: many(150),
+      answer: (u) =>
+        u.pathname === "/specimens/cards" && u.searchParams.has("after")
+          ? response(502, { error: { code: "proxy.bad_gateway" } })
+          : null,
+    });
+    render(page({}, "/?page=25"));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Die Pflanzen konnten nicht geladen werden.",
+    );
+    expect(cardCalls(fetchFn).filter((u) => u.searchParams.has("after"))).toHaveLength(1);
+  });
+
   it("US-ONB-07 · FR-BES-23 the hint for a plant without a place still appears when that plant is beyond the first page", async () => {
     fakeServer({
       specimens: [...many(100), specimen({ id: "ezz", name: "Zzz Ohne Ort", locationId: null })],

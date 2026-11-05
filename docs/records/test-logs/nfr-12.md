@@ -496,6 +496,25 @@ The goal of 125 kB is met. **Limit:** until its chunk has loaded, the first open
 **Limits (P-08):**
 
 - A page of 100 is only the first read: Sammlung also reads `GET /specimens/cards/summary`, which `perf:measure` does not list, so its cost is not in this table.
-- `GET /pokedex/cards` shows no measurable gain here. The version read costs the one statement the tree read cost, and the body is unchanged, so a first load stays about 217 KB. The cache saves reading the tree rows, which matters with a larger catalog; that was not measured. The catalog facts stay a read per request, because corrections and the catalog fill change them without a new build (FR-POK-13).
+- `GET /pokedex/cards` shows no gain at the 500 taxa of the standard seed: the version read costs the one statement the tree read cost, and the body is unchanged. With a larger catalog the gain is clear, see 19.1. The catalog facts stay a read per request, because corrections and the catalog fill change them without a new build (FR-POK-13).
 - After a write all loaded pages are read again, up to 10 requests at 1,000 plants when all are loaded (owner decision: kept for now).
 - The AI and MCP species search still shows 50 hits without saying that more match.
+
+### 19.1 Pokédex tree cache with a larger catalog
+
+Temporary, uncommitted edits: the taxa count of `perf/seed.ts` and a switch for the cache. `PERF_SIZES=100`, 30 timed runs, runs alternating off, on, on, off on a fresh database each. Another session ran short browser scripts at the same time, which the alternating order absorbs. Median ms of `GET /pokedex/cards`:
+
+| Taxa   | Raw body    | Cache off      | Cache on     | Change        |
+| ------ | ----------- | -------------- | ------------ | ------------- |
+| 5,000  | 2,186,704 B | 38.5 and 38.3  | 25.1 and 23.0 | about 37 % less |
+| 20,000 | 8,786,705 B | 136.8 and 127.3 | 75.6 and 76.4 | about 42 % less |
+
+**Limit:** the body grows with the catalog, about 437 B per taxon, and is sent whole, because the cards are not paged (FR-POK-13). Production compresses it in the proxy; the compressed size was not measured. A catalog of this size would make the body, not the read, the cost that matters.
+
+### 19.2 Browser check beyond the first page
+
+The one-screen gate seeds 50 plants, so it never reaches a further page. A temporary Playwright spec (not committed) signed in a real account and answered the card reads with 250 plants: first page of 100, a slow further page, then a failing one with the API's error shape. At 360x640 and 390x844 the loading and the failed state fit: document height equals the window, no horizontal scroll, "Erneut versuchen" in view above the pager. The failed read was not repeated by itself.
+
+An error without a `text` made the Pager ask for the page again every 315 ms (30 requests in 9 s), because the Pager recognised a failure by its text. The API always sends a text, so only a foreign answer, such as a proxy's, could cause it. Fixed in this PR with a fallback text, and tested.
+
+**Not checked in a browser:** 200 % text in these two states, and the direct link to a plant that is not loaded (covered by tests only).

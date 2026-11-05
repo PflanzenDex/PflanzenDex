@@ -60,7 +60,8 @@ function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {
   return {
     total: list.total ?? fallbackTotal,
     loading: list.status === "pending" || list.loadingMore,
-    ...(list.error === undefined ? {} : { failure: list.error.text }),
+    // An error without a text still counts as a failure: the Pager would ask for the page again and again.
+    ...(list.error === undefined ? {} : { failure: list.error.text || t("list.failed") }),
     onMore: list.loadMore,
     onRetry: list.retry,
     loadingText: t("list.loading"),

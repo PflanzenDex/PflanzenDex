@@ -22,6 +22,7 @@
   "overview.treat": "Behandeln",
   "overview.treatLabel": "Behandeln: {name}",
   "list.loading": "Pflanzen werden geladen …",
+  "list.failed": "Die Pflanzen konnten nicht geladen werden.",
   "list.retry": "Erneut versuchen",
   "layer.plant": "Pflanze",
   "layer.profile": "Pflegeprofil"
