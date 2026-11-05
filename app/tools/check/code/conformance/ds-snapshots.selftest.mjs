@@ -6,11 +6,13 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, it } from "node:test";
+import { after, describe, it } from "node:test";
 import { expectedPageBaselines } from "./ds-snapshots.lib.mjs";
 import { runCatalog } from "./ds-snapshots.mjs";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ds-snapshots-selftest-"));
+// The fixture folder is removed after the file, also when a test fails (#1278).
+after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 const dirs = (name) => ({
   snapshotDir: path.join(tmp, name, "baselines"),
   pageSnapshotDir: path.join(tmp, name, "page-baselines"),

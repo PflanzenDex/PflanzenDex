@@ -1,13 +1,24 @@
 // Tests for deploy/scripts/smoke.sh with a stubbed curl on PATH (no Docker, no network).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { test, after } from "node:test";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const smoke = new URL("../../../../config/deploy/scripts/smoke.sh", import.meta.url).pathname;
-const bin = mkdtempSync(join(tmpdir(), "smoke-"));
+const bin = tempDir("smoke-");
 // Stub: with -w prints STUB_CODE (web root); for /health/details prints STUB_DETAILS, otherwise STUB_PUBLIC
 // (default: the status only); an unset STUB_DETAILS or STUB_PUBLIC="fail" fails like an unreachable route.
 writeFileSync(

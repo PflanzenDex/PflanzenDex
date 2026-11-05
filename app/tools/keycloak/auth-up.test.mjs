@@ -10,12 +10,24 @@ import {
   readFileSync,
   realpathSync,
   writeFileSync,
+  rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { test, after } from "node:test";
 import { authUpPlan } from "./auth-up.mjs";
 import { adminPassword, devConfigDir, inMainCheckout, mainCheckout } from "./dev-env.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const script = new URL("./auth-up.mjs", import.meta.url).pathname;
 const envFile = "/main/app/config/dev/.env";
@@ -54,7 +66,7 @@ test("US-DEV-08 auth-up: starts with the same password or when no container exis
 // A repository with app/config/dev and a linked worktree, plus a docker stub that logs its calls and reports the
 // container password from STUB_PASSWORD (no container when unset).
 function sandbox() {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), "auth-up-")));
+  const root = realpathSync(tempDir("auth-up-"));
   const main = join(root, "main");
   mkdirSync(join(main, "app", "config", "dev"), { recursive: true });
   const git = (cwd, ...args) => execFileSync("git", args, { cwd, stdio: "ignore" });

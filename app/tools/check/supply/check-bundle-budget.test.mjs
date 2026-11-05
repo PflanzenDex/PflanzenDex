@@ -1,4 +1,4 @@
-import { test, describe } from "node:test";
+import { test, describe, after } from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -13,11 +13,22 @@ import {
   formatKb,
 } from "./check-bundle-budget.mjs";
 
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
+
 // Random base64 text compresses to about 75 % (6 of 8 bits per character), so fixture sizes are approximate.
 const noise = (n) => crypto.randomBytes(n).toString("base64").slice(0, n);
 
 function fixtureDist(files, html) {
-  const dist = fs.mkdtempSync(path.join(os.tmpdir(), "bundle-budget-"));
+  const dist = tempDir("bundle-budget-");
   fs.mkdirSync(path.join(dist, "assets"));
   fs.writeFileSync(path.join(dist, "index.html"), html);
   for (const [name, code] of Object.entries(files))

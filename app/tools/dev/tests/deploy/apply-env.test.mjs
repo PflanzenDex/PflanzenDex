@@ -8,10 +8,22 @@ import {
   readFileSync,
   statSync,
   writeFileSync,
+  rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { test, after } from "node:test";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 const deploy = new URL("../../../../config/deploy/", import.meta.url).pathname;
 const script = join(deploy, "scripts/apply-env.sh");
@@ -22,7 +34,7 @@ const workflow = readFileSync(
 const mode = (path) => statSync(path).mode & 0o777;
 
 function setup(content) {
-  const dir = mkdtempSync(join(tmpdir(), "apply-env-"));
+  const dir = tempDir("apply-env-");
   const env = join(dir, ".env");
   if (content !== undefined) {
     writeFileSync(env, content);
