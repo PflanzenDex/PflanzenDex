@@ -53,7 +53,11 @@ Acceptance criteria:
 - Given I use a keyboard or a screen reader, then every action is reachable and announced with species and giver ("Yes: request Echeveria elegans from Anna"); the result of an action is announced as text (FR-TAU-08).
 - Given `prefers-reduced-motion: reduce`, then the card leaves without motion and the next card appears at once (US-QS-14).
 - Given I answered, when I press "Undo" (shown for the next card), then my last answer is taken back, as long as it was No or Later; a Yes is a request and is withdrawn in "Requests" (US-SOZ-10), not here.
-- Given a swipe is shorter than the threshold or ends in a scroll, then no answer is recorded (starting value of the threshold: 40 percent of the card width, assumption).
+- Given a swipe is shorter than the threshold or ends in a scroll, then no answer is recorded (starting value of the threshold: 40 percent of the card width, assumption; a flick of at least 0.6 px per ms over at least 15 percent of the width decides too, starting value, assumption).
+- Given a drag up or down past the threshold, then the card leaves as Later; the drag starts on the grip at the top edge of the card, so that scrolling the text keeps working.
+- Given a drag to the right past the threshold, then the card returns to its place and the confirmation asks first (FR-TAU-03); nothing is sent before it. The button Yes sends at once, except on a card that fits both ways, where it asks first (US-TAU-05).
+- Given a drag left, a drag up or down, or a button answers a card, then the card flies off in the direction of the answer and the answer is written once it has left; a refused write brings the card back with the error (P-10).
+- Given `prefers-reduced-motion: reduce`, then a drag does not move the card and the answer, the stamp and the next card appear at once (NFR-13).
 - After the last card: "Done for now. N requested, M for later." with the next step (open "Requests" or the Later list, P-09).
 
 ### US-TAU-03 · A request arises only from Yes · 🟨 new

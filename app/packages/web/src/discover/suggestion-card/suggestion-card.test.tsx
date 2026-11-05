@@ -28,7 +28,7 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
   exploration: false,
   ...extra,
 });
-const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} onSwipe={() => undefined} />);
+const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} />);
 
 describe("US-QS-21 the German name scales with the text size (issue 1019)", () => {
   it("US-QS-21 the German name is set in a rem size, not inherited, so 200 % text scales it with the title", () => {

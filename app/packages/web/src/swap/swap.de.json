@@ -46,5 +46,8 @@
   "requests.none": "Noch keine Anfragen. Sobald ein Freund dein Angebot anfragt oder du ein Angebot anfragst, siehst du den Stand hier.",
   "requests.received": "Anfrage an dich",
   "requests.sent": "Deine Anfrage",
-  "offers.withdrawButton": "Zurückziehen"
+  "offers.withdrawButton": "Zurückziehen",
+  "stamp.no": "Nein",
+  "stamp.yes": "Ja",
+  "stamp.later": "Später"
 }

@@ -1,9 +1,20 @@
 import type { MatchCard as Card, MatchEntry, MatchYesResult } from "@pflanzendex/core";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { errorText } from "@/shared/lib/error-text";
+import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import type { Response } from "../../../../shared/data";
 import { cardTitle, deckReducer, initialDeck, type DeckAction } from "./deck-state";
 import type { Answer } from "./match-actions/match-actions";
+
+/** A button answers the way its swipe would fly the card, so a button and a gesture show the same flight (US-TAU-02). */
+const FLIGHT: Record<Answer, SwipeDirection> = { no: "left", yes: "right", later: "up" };
+/** A flight decides: a vertical drag is Later in either direction (US-TAU-02). */
+const ANSWER: Record<SwipeDirection, Answer> = {
+  left: "no",
+  right: "yes",
+  up: "later",
+  down: "later",
+};
 
 export type OnYes = (
   offerId: string,
@@ -79,6 +90,8 @@ export function useDeck(props: {
     initialDeck(props.cards, props.entries),
   );
   const [busy, setBusy] = useState(false);
+  /** The direction the card flies to while its answer is written; `null` while it rests in its place. */
+  const [exit, setExit] = useState<SwipeDirection | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     // The next card or the end view: its heading gets the focus, never the page body (SC 2.4.3).
@@ -88,8 +101,10 @@ export function useDeck(props: {
   const run = (write: () => Promise<DeckAction>) => {
     setBusy(true);
     void write().then((action) => {
+      // The flight ends with the write: a refusal brings the card back with its error, a success moves on (P-10).
       setBusy(false);
       dispatch(action);
+      setExit(null);
     });
   };
   const store = (c: Card, a: "no" | "later") => storeAnswer(c, a, props.onAnswer);
@@ -97,14 +112,25 @@ export function useDeck(props: {
   const ask = (counter: string | null) => {
     if (current && !busy) run(() => askFor(current, props.onYes, counter));
   };
+  /** A button answers the card: it flies the way its swipe would; "Yes" on a card that fits both ways asks first (US-TAU-05). */
   const answer = (a: Answer) => {
+    if (!current || busy || exit !== null) return;
+    if (a === "yes" && current.reasons.some((r) => r.kind === "both_ways"))
+      return dispatch({ type: "confirm", on: true });
+    setExit(FLIGHT[a]);
+  };
+  /** A drag ended past the threshold: a drag to the right only asks, nothing is sent by a gesture (FR-TAU-03); the others fly. */
+  const swipe = (d: SwipeDirection) => {
+    if (!current || busy || exit !== null) return;
+    if (d === "right") return dispatch({ type: "confirm", on: true });
+    setExit(d);
+  };
+  /** The card has left the screen: the answer of its direction is written now. */
+  const finish = (d: SwipeDirection) => {
     if (!current || busy) return;
-    // A card that fits both ways asks for one more confirmation first, so the counter-offer can be chosen (US-TAU-05).
-    if (a === "yes")
-      return current.reasons.some((r) => r.kind === "both_ways")
-        ? dispatch({ type: "confirm", on: true })
-        : ask(null);
-    run(() => store(current, a));
+    const a = ANSWER[d];
+    if (a === "yes") ask(null);
+    else run(() => store(current, a));
   };
   const takeBack = (offerId: string, done: DeckAction) => {
     if (busy) return;
@@ -116,5 +142,5 @@ export function useDeck(props: {
   };
   const last = s.round[s.pos - 1];
   const undo = () => last && takeBack(last.offerId, { type: "undo" });
-  return { s, dispatch, busy, current, heading, answer, ask, undo, takeBack };
+  return { s, dispatch, busy, current, heading, answer, swipe, finish, exit, ask, undo, takeBack };
 }
