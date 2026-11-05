@@ -26,7 +26,13 @@ function Entry(props: {
       <p className="text-muted-foreground">{QUALITY_NAME[row.quality]}</p>
       {row.note ? <p className="text-muted-foreground">{row.note}</p> : null}
       {row.photo ? (
-        <MeasurementPhoto {...props.access} measurementId={row.id} date={row.date} compact />
+        <MeasurementPhoto
+          {...props.access}
+          measurementId={row.id}
+          photo={row.photo}
+          date={row.date}
+          compact
+        />
       ) : null}
     </div>
   );

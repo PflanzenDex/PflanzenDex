@@ -1,3 +1,4 @@
+import { measurementPhotoPath } from "@pflanzendex/core";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { dateText } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
@@ -13,20 +14,23 @@ const t = texts(table);
  * The photo of one measurement (US-WAC-05). Photos are private (P-05): the bytes are fetched with the token and shown
  * from an object URL, never from a public link. A failure says why by its error code (P-10). The compact picture is a
  * list entry of the history: it asks the thumbnail and loads when it is near the viewport (NFR-12); the picture of the
- * measure page asks the stored copy.
+ * measure page asks the stored copy. The address carries the version of the stored photo (`photo`), so a replaced
+ * photo is fetched anew (NFR-12).
  */
 export function MeasurementPhoto(
   props: PhotoAccess & {
     specimenId: string;
     measurementId: string;
+    /** The stored photo of the measurement (its object name): the version of the address. */
+    photo: string;
     date: string;
     /** A small picture for a paged list in a layer (US-QS-23). */
     compact?: boolean;
   },
 ) {
-  const { api, token, specimenId, measurementId, date } = props;
+  const { api, token, specimenId, measurementId, photo, date } = props;
   const [ref, inView] = useInView<HTMLDivElement>();
-  const path = `/specimens/${encodeURIComponent(specimenId)}/measurements/${encodeURIComponent(measurementId)}/photo`;
+  const path = measurementPhotoPath({ specimenId, measurementId, photo });
   const state = useStoredPhoto(
     { api, token },
     path,

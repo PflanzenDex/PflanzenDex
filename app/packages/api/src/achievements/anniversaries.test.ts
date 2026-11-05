@@ -13,7 +13,7 @@ const spec = (
   caughtAt,
   archivedAt,
 });
-const meas = (id: string, date: string, photo: object | null) => ({ id, date, photo });
+const meas = (id: string, date: string, photo: string | null) => ({ id, date, photo });
 const deps = (
   rows: ReturnType<typeof spec>[],
   list: Record<string, ReturnType<typeof meas>[]> = {},
@@ -30,16 +30,15 @@ const deps = (
   }) as unknown as Parameters<typeof achievementsAnniversaries>[0];
 // 2026-04-10 22:30 UTC is already 11 April in Berlin (NFR-08).
 const NOW = new Date("2026-04-10T22:30:00Z");
-const PHOTO = { mime: "image/jpeg" };
 
 describe("US-ACH-06 anniversaries through the API logic", () => {
   it("US-ACH-06 answers the anniversary with the first and the latest photo", async () => {
     const r = await achievementsAnniversaries(
       deps([spec("s1", "Aloe", "2025-04-11")], {
         s1: [
-          meas("m3", "2026-03-01", PHOTO),
+          meas("m3", "2026-03-01", "p3.jpg"),
           meas("m2", "2025-05-01", null),
-          meas("m1", "2025-04-12", PHOTO),
+          meas("m1", "2025-04-12", "p1.jpg"),
         ],
       }),
       "anna",
@@ -55,8 +54,8 @@ describe("US-ACH-06 anniversaries through the API logic", () => {
           months: 12,
           date: "2026-04-11",
           caughtOn: "2025-04-11",
-          first: { url: "/specimens/s1/measurements/m1/photo", date: "2025-04-12" },
-          latest: { url: "/specimens/s1/measurements/m3/photo", date: "2026-03-01" },
+          first: { url: "/specimens/s1/measurements/m1/photo?v=p1", date: "2025-04-12" },
+          latest: { url: "/specimens/s1/measurements/m3/photo?v=p3", date: "2026-03-01" },
         },
       ],
     });
@@ -75,7 +74,7 @@ describe("US-ACH-06 anniversaries through the API logic", () => {
     const none = await achievementsAnniversaries(deps(rows), "anna", "UTC", NOW);
     expect(none.items[0]).toMatchObject({ first: null, latest: null });
     const one = await achievementsAnniversaries(
-      deps(rows, { s1: [meas("m1", "2025-05-01", PHOTO)] }),
+      deps(rows, { s1: [meas("m1", "2025-05-01", "p1.jpg")] }),
       "anna",
       "UTC",
       NOW,
@@ -93,5 +92,22 @@ describe("US-ACH-06 anniversaries through the API logic", () => {
     );
     expect(r.items).toEqual([]);
     expect(seen).toEqual(["anna"]);
+  });
+});
+
+describe("NFR-12 US-ACH-06 a replaced photo has a new address", () => {
+  it("NFR-12 US-ACH-06 a replaced photo of an anniversary is addressed by its new version", async () => {
+    const rows = [spec("s1", "Aloe", "2025-04-11")];
+    const url = async (photo: string) => {
+      const r = await achievementsAnniversaries(
+        deps(rows, { s1: [meas("m1", "2025-04-12", photo)] }),
+        "anna",
+        "Europe/Berlin",
+        NOW,
+      );
+      return r.items[0]?.first?.url;
+    };
+    expect(await url("old.jpg")).toBe("/specimens/s1/measurements/m1/photo?v=old");
+    expect(await url("new.jpg")).toBe("/specimens/s1/measurements/m1/photo?v=new");
   });
 });

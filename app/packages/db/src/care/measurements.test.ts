@@ -193,7 +193,21 @@ describe("US-WAC-05 the most recent photo per specimen", () => {
     await measurements.setPhoto(anna, old.id, "a.jpg");
     await measurements.setPhoto(anna, mid.id, "b.jpg");
     const r = await measurements.lastPhotoFor(anna, [e]);
-    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15" });
+    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15", photo: "b.jpg" });
+  });
+
+  it("NFR-12 US-WAC-06 a replaced photo is named by its new object, so its address changes", async () => {
+    const e = await specimen(anna, "Foto ersetzt");
+    const m = await measurements.create(anna, values({ specimenId: e, date: "2026-09-15" }));
+    if (typeof m === "string") throw new Error(m);
+    await measurements.setPhoto(anna, m.id, "first.jpg");
+    expect((await measurements.lastPhotoFor(anna, [e])).get(e)?.photo).toBe("first.jpg");
+    await measurements.setPhoto(anna, m.id, "second.jpg");
+    expect((await measurements.lastPhotoFor(anna, [e])).get(e)).toEqual({
+      id: m.id,
+      date: "2026-09-15",
+      photo: "second.jpg",
+    });
   });
 
   it("a specimen without a photo is missing; without IDs the answer is empty", async () => {
