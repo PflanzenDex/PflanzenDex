@@ -39,16 +39,35 @@ function Facts(props: { entry: ReviewEntry }) {
       <Row label={t("label.light")}>{lux(s.lightDemandLux)}</Row>
       <Row label={t("label.dormancy")}>{dormancyPhase(s)}</Row>
       <Row label={t("label.growth")}>{growthText(s.growthMeasure)}</Row>
-      <Row label={t("label.etiolation")}>{orUnknown(s.etiolationSigns)}</Row>
-      <Row label={t("label.success")}>{orUnknown(s.successCriteria)}</Row>
       <Row label={t("label.source")}>{orUnknown(s.source)}</Row>
     </dl>
   );
 }
 
 /**
- * The facts tab of a case (US-BES-10): the age, the AI marking, the fields in two columns, and why approval is not
- * possible yet. An operator batch has no missing fields to show.
+ * The two free texts of a case (US-BES-10), each label above its text: they have no length a phone screen could hold
+ * beside the short facts, so they get a tab of their own (issue 1283).
+ */
+export function LayerTexts(props: { entry: ReviewEntry }) {
+  const s = props.entry.species;
+  if (!s) return <p className="text-sm text-muted-foreground">{t("facts.unavailable")}</p>;
+  return (
+    <dl className="m-0 flex flex-col gap-3 [overflow-wrap:anywhere] [&_dd]:m-0 [&_dt]:text-muted-foreground">
+      <div>
+        <dt>{t("label.etiolation")}</dt>
+        <dd>{orUnknown(s.etiolationSigns)}</dd>
+      </div>
+      <div>
+        <dt>{t("label.success")}</dt>
+        <dd>{orUnknown(s.successCriteria)}</dd>
+      </div>
+    </dl>
+  );
+}
+
+/**
+ * The facts tab of a case (US-BES-10): the age, the AI marking, the short fields in two columns, and why approval is
+ * not possible yet. An operator batch has no missing fields to show.
  */
 export function LayerFacts(props: { entry: ReviewEntry; now: number }) {
   const { entry, now } = props;

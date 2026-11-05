@@ -1,23 +1,11 @@
 {
-  "maxEntries": 24,
+  "maxEntries": 22,
   "entries": [
-    {
-      "screen": "collection-equipment-item",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.04
-    },
     {
       "screen": "discover-view-suggestions-zone-2",
       "size": "360x640",
       "page": 1,
       "inner": 1.11
-    },
-    {
-      "screen": "review-case",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.17
     },
     {
       "screen": "account-achievements-earned",
