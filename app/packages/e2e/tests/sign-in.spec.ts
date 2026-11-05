@@ -1,3 +1,4 @@
+import { FOREIGN_AUDIENCE, foreignAudienceToken } from "../support/account";
 import { axeReport } from "../support/axe";
 import { signIn, expect, test } from "../support/fixtures";
 
@@ -63,5 +64,29 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+  });
+});
+
+// Issue 204: the audience check against tokens of the real Keycloak, not only against test keys.
+test.describe("US-ACC-01 token audience", () => {
+  test("US-ACC-01 a real token for another audience is refused by the API", async ({
+    request,
+    account,
+  }) => {
+    const token = await foreignAudienceToken(account);
+    const claims = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString()) as {
+      aud: string[];
+      iss: string;
+    };
+    // Signature, issuer and expiry are fine, so the audience is the only reason left for the refusal.
+    expect(claims.aud).toContain(FOREIGN_AUDIENCE);
+    expect(claims.aud).not.toContain("pflanzendex-api");
+    expect(claims.iss).toMatch(/\/realms\/pflanzendex$/);
+    const port = process.env["E2E_API_PORT"] ?? "3000";
+    const res = await request.get(`http://localhost:${port}/account`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status()).toBe(401);
+    expect(await res.json()).toEqual({ error: { code: "not_signed_in" } });
   });
 });
