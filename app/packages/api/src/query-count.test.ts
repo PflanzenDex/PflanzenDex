@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import type { Hono } from "hono";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openAdminPool, openPool, testDatabaseUrl, testOwnerUrl } from "@pflanzendex/db";
+import { createFileDatabase, migrate, openPool } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { countingPool, type CountingPool } from "./count-queries";
 import { apiFor, type Api } from "./query-count-api-test-helpers";
@@ -66,16 +66,7 @@ const results: Record<Size, Record<string, Measured>> = { small: {}, large: {} }
 const run = randomUUID()
   .replace(/[0-9-]/g, "")
   .slice(0, 10);
-// The database of this file, created in `beforeAll` (#1301).
-const DB = `pflanzendex_qc_${run}`;
-/** The URL of `DB` on the server and with the user of `url`. */
-const withDatabase = (url: string): string => {
-  const parsed = new URL(url);
-  parsed.pathname = `/${DB}`;
-  return parsed.toString();
-};
-
-let dropper: Pool;
+let database: Awaited<ReturnType<typeof createFileDatabase>> | undefined;
 let admin: Pool;
 let pool: Pool;
 let counter: CountingPool;
@@ -118,10 +109,9 @@ async function measure(size: Size, seeded: SeedIds): Promise<void> {
 // security applies as in production (QG-D1). Its taxa are its own too, which is why it needs no taxon lock: no taxonomy
 // build of another file can reach this database.
 beforeAll(async () => {
-  dropper = openAdminPool();
-  await dropper.query(`create database ${DB} owner ${new URL(testOwnerUrl()).username}`);
-  admin = openPool(withDatabase(testDatabaseUrl()), true);
-  const owner = openPool(withDatabase(testOwnerUrl()));
+  database = await createFileDatabase("pflanzendex_qc");
+  admin = openPool(database.fixtureUrl, true);
+  const owner = openPool(database.ownerUrl);
   await migrate(owner);
   counter = countingPool(owner);
   pool = counter.pool;
@@ -172,8 +162,7 @@ afterAll(async () => {
   await admin.query("delete from taxon where catalog_fingerprint = $1", [`qc-${run}`]);
   await pool.end();
   await admin.end();
-  await dropper.query(`drop database if exists ${DB} with (force)`);
-  await dropper.end();
+  await database?.drop();
 });
 
 describe("US-QG-07 statements per request do not grow with the data (N+1)", () => {
