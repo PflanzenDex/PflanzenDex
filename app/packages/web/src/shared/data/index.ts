@@ -10,6 +10,7 @@ export {
   useInvalidate,
   useReload,
   useRequest,
+  useRequestPages,
   type Request,
 } from "./client/request/use-request";
 export { SIGN_IN, WRITE_SUCCEEDED, useWriteAction } from "./use-write-action";

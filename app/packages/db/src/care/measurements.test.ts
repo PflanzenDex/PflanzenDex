@@ -302,3 +302,27 @@ describe("NFR-12 measurements of many specimens in one read", () => {
     }
   });
 });
+
+// US-BES-06 summary: the measured specimens of the account, one aggregate; activity is checked by the caller (P-04).
+describe("US-BES-06 summary: measured specimens of the account (database)", () => {
+  it("US-BES-06 the distinct IDs of the specimens with a measurement; archived ones are listed, foreign ones are not", async () => {
+    const mine = randomUUID();
+    const quiet = randomUUID();
+    for (const id of [mine, quiet])
+      await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
+    try {
+      expect(await measurements.measuredSpecimenIds(mine)).toEqual([]);
+      const plant = await specimen(mine, "Gemessen");
+      await measurements.create(mine, values({ specimenId: plant, date: "2026-10-01" }));
+      await measurements.create(mine, values({ specimenId: plant, date: "2026-10-02" }));
+      expect(await measurements.measuredSpecimenIds(mine)).toEqual([plant]);
+      await new SpecimenPostgres(pool).archive(mine, plant, "verkauft", "2026-10-02");
+      expect(await measurements.measuredSpecimenIds(mine)).toEqual([plant]);
+      const foreign = await specimen(anna, "Fremd gemessen");
+      await measurements.create(anna, values({ specimenId: foreign, date: "2026-10-01" }));
+      expect(await measurements.measuredSpecimenIds(quiet)).toEqual([]);
+    } finally {
+      await admin.query("delete from account where id = any($1)", [[mine, quiet]]);
+    }
+  });
+});

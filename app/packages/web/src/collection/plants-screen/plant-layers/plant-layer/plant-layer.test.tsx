@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
+import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
 import type { PlantSlots } from "../layer-ids";
 
 beforeAll(() => {
@@ -64,6 +65,8 @@ function show(cards: SpecimenCard[], extra: Extra = {}, at = "/") {
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
       <PlantsScreen
         cards={cards}
+        plants={pagesOf(cards)}
+        summary={summaryOf(cards)}
         distribution={EMPTY_DISTRIBUTION.distribution}
         archived={[]}
         photoAccess={{ api: "http://api", token: async () => "tok" }}

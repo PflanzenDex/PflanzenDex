@@ -1,23 +1,25 @@
 import { Suspense, type ReactNode } from "react";
-import type { SpecimenCard } from "@pflanzendex/core";
+import type { SpecimenSummary } from "@pflanzendex/core";
 
-/** The occasions that apply to the list (US-ONB-07): a plant without a place, the first plant that can be measured. */
-export function hintOccasionsOf(cards: readonly SpecimenCard[]): string[] {
-  const active = cards.filter((c) => c.status !== "archived");
+/**
+ * The occasions that apply to the list (US-ONB-07): a plant without a place, the first plant that can be measured. They
+ * come from the summary over all plants (FR-BES-23), so a plant beyond the loaded page still counts.
+ */
+export function hintOccasionsOf(
+  summary: Pick<SpecimenSummary, "total" | "unplaced" | "anyMeasured">,
+): string[] {
   return [
-    ...(active.some((c) => c.location === null) ? ["plant_without_place"] : []),
-    ...(active.length > 0 && active.every((c) => c.lastMeasurement === null)
-      ? ["first_measurement"]
-      : []),
+    ...(summary.unplaced > 0 ? ["plant_without_place"] : []),
+    ...(summary.total > 0 && !summary.anyMeasured ? ["first_measurement"] : []),
   ];
 }
 
 /** The calm hint at the list (US-ONB-07), only when the app wired one and an occasion applies. */
 export function ListHint(props: {
-  cards: readonly SpecimenCard[];
+  summary: Pick<SpecimenSummary, "total" | "unplaced" | "anyMeasured">;
   render: ((applicable: readonly string[]) => ReactNode) | undefined;
 }) {
-  const applicable = hintOccasionsOf(props.cards);
+  const applicable = hintOccasionsOf(props.summary);
   return props.render && applicable.length > 0 ? (
     <Suspense fallback={null}>{props.render(applicable)}</Suspense>
   ) : null;

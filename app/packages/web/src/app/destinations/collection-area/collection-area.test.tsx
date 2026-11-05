@@ -6,6 +6,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
+import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
+import type { SpecimenCard } from "@pflanzendex/core";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -55,7 +57,7 @@ function stubCollection() {
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
       if (path === "/specimens/e1/measurements") return response(200, emptyView);
-      return response(200, { cards: [card] });
+      return answerCardRead(new URL(String(url)), [card as SpecimenCard]) ?? response(404, {});
     }),
   );
 }

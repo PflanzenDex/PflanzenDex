@@ -1,5 +1,5 @@
 {
-  "maxTotal": 327,
+  "maxTotal": 324,
   "entries": [
     {
       "file": "packages/api/src/achievements/history/year.ts",
@@ -490,10 +490,6 @@
     {
       "file": "packages/web/src/collection/collection-page/created/created.tsx",
       "enums": 2
-    },
-    {
-      "file": "packages/web/src/collection/collection-page/hint-occasions/hint-occasions.tsx",
-      "enums": 1
     },
     {
       "file": "packages/web/src/collection/markers/locate/light-zone-form/light-zone-form.tsx",

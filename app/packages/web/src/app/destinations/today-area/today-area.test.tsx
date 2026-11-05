@@ -51,6 +51,19 @@ type Setup = {
 
 const SPECIMENS = [{ id: "s-a", name: "Aloe", status: "plant" }];
 const CARDS = [{ id: "s-a", name: "Aloe", location: "Fensterbank" }];
+// The first page and the summary of the plants, as the API answers them (FR-BES-23).
+const pageOf = (list: readonly unknown[]) => ({
+  cards: list,
+  total: list.length,
+  next: null,
+});
+const summaryOf = (list: readonly unknown[]) => ({
+  total: list.length,
+  unplaced: (list as { location: string | null }[]).filter((c) => c.location === null).length,
+  groups: [],
+  lastLocation: null,
+  anyMeasured: false,
+});
 /** Five plants on two pages on a phone, with two locations and one plant without one (US-BEH-01). */
 const FIVE = [
   { id: "p1", name: "Aloe", location: "Fensterbank" },
@@ -84,7 +97,11 @@ function fakeServer(setup: Setup = {}) {
         "/specimens/count": () => response(200, { count: 1, archived: 0 }),
         "/onboarding/hints": () => response(200, { hint: null, guideEnded: false }),
         "/specimens": () => response(200, { specimens: setup.specimens ?? SPECIMENS }),
-        "/specimens/cards": () => response(200, { cards: setup.cards ?? setup.specimens ?? CARDS }),
+        "/specimens/cards": () => response(200, pageOf(setup.cards ?? setup.specimens ?? CARDS)),
+        "/specimens/cards/summary": () =>
+          response(200, summaryOf(setup.cards ?? setup.specimens ?? CARDS)),
+        "/specimens/treatable": () =>
+          response(200, { specimens: setup.cards ?? setup.specimens ?? CARDS }),
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
         "/specimens/e1/location": () => response(200, {}),

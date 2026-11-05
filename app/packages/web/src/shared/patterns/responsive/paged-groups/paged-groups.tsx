@@ -1,9 +1,17 @@
 import type { Key, ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 import { GroupChoices, usePart } from "./group-choices/group-choices";
-import { Pager } from "../pager/pager";
+import { Pager, type PagerPaging } from "../pager/pager";
 
-export type PagedGroup<T> = { key: string; label: string; items: readonly T[] };
+export type PagedGroup<T> = {
+  key: string;
+  label: string;
+  items: readonly T[];
+  /** All entries of the group on the server, when they are not all loaded (FR-BES-23); the choice shows it. */
+  count?: number;
+  /** The server paging of the group's entries (see `PagerPaging`); used while the group is chosen. */
+  paging?: PagerPaging;
+};
 
 /**
  * Groups chosen from a row of choices with their counts, and the entries of the chosen group as pages (US-QS-19,
@@ -24,7 +32,11 @@ export function PagedGroups<T>(props: {
   intro?: (group: PagedGroup<T>) => ReactNode;
   fit?: boolean;
 }) {
-  const choices = props.groups.map((g) => ({ key: g.key, label: g.label, count: g.items.length }));
+  const choices = props.groups.map((g) => ({
+    key: g.key,
+    label: g.label,
+    count: g.count ?? g.items.length,
+  }));
   const chosen = usePart(choices);
   const group = props.groups.find((g) => g.key === chosen?.key);
   return (
@@ -39,6 +51,7 @@ export function PagedGroups<T>(props: {
         getKey={props.getKey}
         {...(props.listClassName ? { listClassName: props.listClassName } : {})}
         {...(props.fit ? { fit: true } : {})}
+        {...(group?.paging ? { paging: group.paging } : {})}
         renderItem={props.renderItem}
       />
     </div>

@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import { groupBySpecimen } from "./group-rows.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
 import type { TreatmentRow, TreatmentValues } from "@pflanzendex/core";
@@ -138,13 +139,7 @@ export class TreatmentsPostgres {
         [specimenIds],
       ),
     );
-    const grouped = new Map<string, TreatmentRow[]>();
-    for (const row of r.rows) {
-      const own = grouped.get(row.specimenId);
-      if (own) own.push(row);
-      else grouped.set(row.specimenId, [row]);
-    }
-    return grouped;
+    return groupBySpecimen(r.rows);
   }
 
   /** Open treatments, earliest first; one query for all IDs. Foreign IDs return nothing (row rules, P-04). */
@@ -159,9 +154,6 @@ export class TreatmentsPostgres {
         [specimenIds],
       ),
     );
-    const grouped = new Map<string, TreatmentRow[]>();
-    for (const row of r.rows)
-      grouped.set(row.specimenId, [...(grouped.get(row.specimenId) ?? []), row]);
-    return grouped;
+    return groupBySpecimen(r.rows);
   }
 }

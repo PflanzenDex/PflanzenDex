@@ -1,6 +1,6 @@
 // Specimen cards (US-BES-06): what the card shows and which data it needs from other modules (ports).
 import type { ZoneSource } from "../placement/effective-zone";
-import type { SpecimenStatus } from "../shared/types";
+import type { SpecimenRow, SpecimenStatus } from "../shared/types";
 
 export const MEASUREMENT_QUALITIES = ["healthy", "etiolated"] as const;
 export type MeasurementQuality = (typeof MEASUREMENT_QUALITIES)[number];
@@ -96,4 +96,100 @@ export interface SpecimenCard {
   /** The open treatment that is due earliest, `null` without an open treatment. */
   readonly treatment: { readonly reason: string; readonly dueDate: DueDate } | null;
   readonly moreTreatments: number;
+}
+
+/**
+ * Port "Measured plants" (US-BES-06 summary): `care` (WAC) implements it. The IDs of the specimens of the account that
+ * have at least one measurement, as one aggregate; archived ones included (the caller checks activity, `SpecimenPageSource.anyActive`).
+ */
+export interface MeasuredSource {
+  measuredSpecimenIds(userId: string): Promise<readonly string[]>;
+}
+
+/**
+ * The cursor of the card list (US-BES-06, FR-BES-23): the sort key of the last card of a page (its name) and its ID. The
+ * client takes it as opaque text (`encodeCardCursor`), so the next page starts after exactly that row.
+ */
+export interface CardCursor {
+  readonly name: string;
+  readonly id: string;
+}
+
+/**
+ * One page of the card list. `location`: a location ID, `"none"` for plants without a location, `null` for all; `species`:
+ * a species ID or `null`. `limit` is at least 1 (`parseCardPageQuery` checks it).
+ */
+export interface CardPageQuery {
+  readonly limit: number;
+  readonly after: CardCursor | null;
+  readonly location: string | "none" | null;
+  readonly species: string | null;
+}
+
+/** The answer of the page read: `more` tells whether a card follows the page, `total` counts the whole filter. */
+export interface SpecimenPage {
+  readonly rows: readonly SpecimenRow[];
+  readonly more: boolean;
+  readonly total: number;
+}
+
+/** The counts of the database over all active specimens (US-BES-06 summary): plain IDs, the names are resolved by `core`. */
+export interface SpecimenCountRows {
+  readonly total: number;
+  /** Number of active plants without a location. */
+  readonly unplaced: number;
+  readonly groups: readonly { readonly locationId: string; readonly count: number }[];
+  /** Location of the plant with the latest catch date that has one; `null` without such a plant. */
+  readonly lastLocationId: string | null;
+}
+
+/** One location of the summary with its number of active plants (US-BES-06 "Nach Standort"); `location` is `null` when the name is unknown (P-08). */
+export interface LocationGroup {
+  readonly locationId: string;
+  readonly location: string | null;
+  readonly count: number;
+}
+
+export interface SpecimenSummary {
+  readonly total: number;
+  /** Number of active plants without a location; the group "Standort unbekannt" shows it (US-BES-06). */
+  readonly unplaced: number;
+  readonly groups: readonly LocationGroup[];
+  /** Name of the last location (see `SpecimenCountRows.lastLocationId`); `null` without such a plant. */
+  readonly lastLocation: string | null;
+  /** Some active plant is measured (US-BES-06); without a measurement port no plant counts as measured (P-08). */
+  readonly anyMeasured: boolean;
+}
+
+/** An active specimen for the treatment form (US-BEH-01): cuttings included; `location` is `null` when unknown (P-08). */
+export interface TreatableSpecimen {
+  readonly id: string;
+  readonly name: string;
+  readonly location: string | null;
+}
+
+/** The rows of the treatment list as the database answers them: the location by ID; `core` resolves the name. */
+export interface TreatableRow {
+  readonly id: string;
+  readonly name: string;
+  readonly locationId: string | null;
+}
+
+/**
+ * Port "Card list reads" (US-BES-06, FR-BES-23): the database answers one page of active specimens with the total of its
+ * filter, the counts of the summary, whether any of given specimens is active, and the slim list of the treatment form.
+ * Only specimens of the account `userId` are read.
+ */
+export interface SpecimenPageSource {
+  page(userId: string, query: CardPageQuery): Promise<SpecimenPage>;
+  summary(userId: string): Promise<SpecimenCountRows>;
+  anyActive(userId: string, specimenIds: readonly string[]): Promise<boolean>;
+  treatable(userId: string): Promise<readonly TreatableRow[]>;
+}
+
+export interface CardPage {
+  readonly cards: readonly SpecimenCard[];
+  readonly total: number;
+  /** Opaque cursor of the next page; `null` on the last page. */
+  readonly next: string | null;
 }

@@ -479,3 +479,42 @@ Stored copy 245 to 411 KB, 256 px thumbnail 0.9 to 2.3 KB, measured on **generat
 | Heute chunk requested early                     | 121.5 kB          |
 
 The goal of 125 kB is met. **Limit:** until its chunk has loaded, the first open of a dialog shows nothing, which is visible only on a slow network right after page load.
+
+---
+
+## 19. Issue #1246: paged collection list, shared tree, capped search (2026-11-05)
+
+**Environment:** the same workstation, throw-away `postgres:18.6-alpine3.24` container, `PERF_SIZES=100,1000`, 30 timed runs, one run. The perf seed carries measurements, so the cards are realistic; the API test of the same limit uses bare plants and proves less. "Before" is section 8 and the audit baseline, so times come from different runs; the sizes and statement counts are exact.
+
+| Request at 1,000 specimens | Body before | Body after | Median ms before | After | SQL before | After |
+| -------------------------- | ----------- | ---------- | ---------------- | ----- | ---------- | ----- |
+| `GET /specimens/cards`     | 451,550 B   | 45,363 B   | about 30         | 9.4   | 51         | 52    |
+| `GET /pokedex/cards`       | about 212 KB | 217,203 B | about 19 to 30   | 18.6  | 25         | 25    |
+
+**Result:** the first page of Sammlung is 45.4 KB raw at 1,000 specimens, under the 60 KB of the issue. The body no longer grows with the collection (44,784 B at 100, 45,363 B at 1,000).
+
+**Limits (P-08):**
+
+- A page of 100 is only the first read: Sammlung also reads `GET /specimens/cards/summary`, which `perf:measure` does not list, so its cost is not in this table.
+- `GET /pokedex/cards` shows no gain at the 500 taxa of the standard seed: the version read costs the one statement the tree read cost, and the body is unchanged. With a larger catalog the gain is clear, see 19.1. The catalog facts stay a read per request, because corrections and the catalog fill change them without a new build (FR-POK-13).
+- After a write all loaded pages are read again, up to 10 requests at 1,000 plants when all are loaded (owner decision: kept for now).
+- The AI and MCP species search still shows 50 hits without saying that more match.
+
+### 19.1 Pokédex tree cache with a larger catalog
+
+Temporary, uncommitted edits: the taxa count of `perf/seed.ts` and a switch for the cache. `PERF_SIZES=100`, 30 timed runs, runs alternating off, on, on, off on a fresh database each. Another session ran short browser scripts at the same time, which the alternating order absorbs. Median ms of `GET /pokedex/cards`:
+
+| Taxa   | Raw body    | Cache off      | Cache on     | Change        |
+| ------ | ----------- | -------------- | ------------ | ------------- |
+| 5,000  | 2,186,704 B | 38.5 and 38.3  | 25.1 and 23.0 | about 37 % less |
+| 20,000 | 8,786,705 B | 136.8 and 127.3 | 75.6 and 76.4 | about 42 % less |
+
+**Limit:** the body grows with the catalog, about 437 B per taxon, and is sent whole, because the cards are not paged (FR-POK-13). Production compresses it in the proxy; the compressed size was not measured. A catalog of this size would make the body, not the read, the cost that matters.
+
+### 19.2 Browser check beyond the first page
+
+The one-screen gate seeds 50 plants, so it never reaches a further page. A temporary Playwright spec (not committed) signed in a real account and answered the card reads with 250 plants: first page of 100, a slow further page, then a failing one with the API's error shape. At 360x640 and 390x844 the loading and the failed state fit: document height equals the window, no horizontal scroll, "Erneut versuchen" in view above the pager. The failed read was not repeated by itself.
+
+An error without a `text` made the Pager ask for the page again every 315 ms (30 requests in 9 s), because the Pager recognised a failure by its text. The API always sends a text, so only a foreign answer, such as a proxy's, could cause it. Fixed in this PR with a fallback text, and tested.
+
+**Not checked in a browser:** 200 % text in these two states, and the direct link to a plant that is not loaded (covered by tests only).

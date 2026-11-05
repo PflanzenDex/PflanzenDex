@@ -17,8 +17,9 @@ export function speciesRoutes(pool: Pool): Hono<AuthEnv> {
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
 
+  // The answer: `species` (the shown hits, at most the cap of FR-BES-24) and `more`, true when more species match.
   routes.get("/species", async (c) =>
-    c.json({ species: await speciesSearch(species, c.get("account").id, c.req.query("q") ?? "") }),
+    c.json(await speciesSearch(species, c.get("account").id, c.req.query("q") ?? "")),
   );
   routes.get("/species/:id", async (c) => {
     const found = await speciesLoad(species, c.get("account").id, c.req.param("id"));

@@ -1,6 +1,11 @@
 import type { Pool, PoolClient } from "pg";
-
-type IucnCategory = "LC" | "NT" | "VU" | "EN" | "CR" | "EW" | "EX" | "DD";
+import {
+  CARDS,
+  natureRarityOf,
+  type CardRow,
+  type IucnCategory,
+  type TaxonCardRecord,
+} from "./taxon-cards.ts";
 
 // Same shapes as `TaxonomyBuild` in `core` (structurally equal; `db` does not import values from `core`).
 interface Provenance {
@@ -94,64 +99,6 @@ const failedRow = (f: TaxonomyRecord["failures"][number], b: TaxonomyRecord) => 
   null,
 ];
 
-/** One resolved species of the tree for the collector cards (US-POK-01); same shape as `TaxonCardRow` in `core`. */
-export interface TaxonCardRecord {
-  readonly latinName: string;
-  readonly genus: string;
-  readonly family: string | null;
-  readonly order: string | null;
-  readonly summary: string | null;
-  readonly summaryLanguage: "de" | "en" | null;
-  readonly imageUrl: string | null;
-  readonly pageUrl: string | null;
-  readonly genusSpeciesCount: number | null;
-  readonly natureRarity: {
-    readonly iucn: {
-      readonly category: IucnCategory;
-      readonly url: string;
-      readonly retrievedAt: string;
-    } | null;
-    readonly occurrences: {
-      readonly count: number;
-      readonly url: string;
-      readonly retrievedAt: string;
-    } | null;
-  };
-}
-
-// Resolved species only; the catalog facts (German name, difficulty, light zone) come through the catalog port.
-const CARDS = `select latin_name as "latinName", genus, family, order_name as "order", summary,
-    summary_language as "summaryLanguage",
-    image_url as "imageUrl", page_url as "pageUrl", genus_species_count as "genusSpeciesCount",
-    nature_iucn_category as "iucnCategory", provenance->'iucn' as "iucnSource",
-    nature_gbif_occurrences as "gbifOccurrences", provenance->'occurrences' as "occurrencesSource"
-  from taxon where status = 'resolved'`;
-
-interface CardRow extends Omit<TaxonCardRecord, "natureRarity"> {
-  readonly iucnCategory: IucnCategory | null;
-  readonly iucnSource: { url: string; retrievedAt: string } | null;
-  readonly gbifOccurrences: string | null;
-  readonly occurrencesSource: { url: string; retrievedAt: string } | null;
-}
-
-// A value without its source is dropped: every shown value names its source (P-08).
-function natureRarityOf(r: CardRow): TaxonCardRecord["natureRarity"] {
-  return {
-    iucn:
-      r.iucnCategory !== null && r.iucnSource
-        ? { category: r.iucnCategory, url: r.iucnSource.url, retrievedAt: r.iucnSource.retrievedAt }
-        : null,
-    occurrences:
-      r.gbifOccurrences !== null && r.occurrencesSource
-        ? {
-            count: Number(r.gbifOccurrences),
-            url: r.occurrencesSource.url,
-            retrievedAt: r.occurrencesSource.retrievedAt,
-          }
-        : null,
-  };
-}
-
 /** Adapter for the taxonomy tree. Writing needs the owner connection: the application role may only read `taxon`. */
 export class TaxonomyPostgres {
   constructor(private readonly pool: Pool) {}
@@ -161,6 +108,17 @@ export class TaxonomyPostgres {
       "select catalog_fingerprint as f from taxon limit 1",
     );
     return r.rows[0]?.f ?? null;
+  }
+
+  /**
+   * The version of the stored tree (FR-POK-13): the fingerprint of its build and the build time. `replace` is the only
+   * writer and stamps every row alike, so one row tells the version; `null` before the first build. The cards cache keys on it.
+   */
+  async version(): Promise<string | null> {
+    const r = await this.pool.query<{ v: string }>(
+      "select catalog_fingerprint || '@' || built_at::text as v from taxon limit 1",
+    );
+    return r.rows[0]?.v ?? null;
   }
 
   /** The resolved tree for the collector cards: shared by all accounts, no user data (readable by the application role). */

@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "../../destinations/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
+import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
 import { VIEW_KEY } from "../../sammlung-view";
 
@@ -35,7 +36,8 @@ function stubServer() {
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      if (path === "/specimens/cards") return response(200, { cards: [] });
+      if (path.startsWith("/specimens/cards"))
+        return answerCardRead(new URL(String(url)), []) ?? response(404, {});
       if (path === "/specimens/difficulty") return response(200, { rows: [] });
       if (path === "/wishes/candidates")
         return response(200, {

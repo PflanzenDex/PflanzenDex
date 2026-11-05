@@ -19,16 +19,15 @@ export async function loadTreatableSpecimens(
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly TreatableSpecimen[]>> {
-  const timeZone = encodeURIComponent(currentTimeZone());
-  const r = await call<{ cards: TreatableSpecimen[] }>(
+  const r = await call<{ specimens: TreatableSpecimen[] }>(
     fetchFn,
-    `${api}/specimens/cards?timeZone=${timeZone}`,
+    `${api}/specimens/treatable`,
     token,
   );
   return r.ok
     ? {
         ok: true,
-        value: r.value.cards.map(({ id, name, location }) => ({
+        value: r.value.specimens.map(({ id, name, location }) => ({
           id,
           name,
           location: location ?? null,

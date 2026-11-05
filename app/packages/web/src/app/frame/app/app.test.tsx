@@ -32,6 +32,11 @@ import { BrowserRouter, MemoryRouter } from "react-router";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { App } from "./app";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
+import {
+  answerCardRead,
+  NO_CARDS_PAGE,
+  NO_CARDS_SUMMARY,
+} from "../../../collection/specimens/tests/cards-fake";
 
 /** The app runs inside a router; a memory router stands for the address bar. */
 const renderApp = (path = "/") =>
@@ -142,7 +147,8 @@ const ANSWERS: Record<string, unknown> = {
   "/species": { species: [] },
   "/species/a1": PROFILE_SPECIES,
   "/specimens/count": { count: 0, archived: 0 },
-  "/specimens/cards": { cards: [] },
+  "/specimens/cards": NO_CARDS_PAGE,
+  "/specimens/cards/summary": NO_CARDS_SUMMARY,
   "/specimens/archived": { archived: [] },
   "/specimens/distribution": EMPTY_DISTRIBUTION,
   "/locations": { locations: [] },
@@ -468,7 +474,8 @@ describe("US-ACC-01 App", () => {
         if (path === "/locations") return response(200, { locations: [] });
         if (path === "/light-zones") return response(200, { zones: [] });
         if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
-        if (path === "/specimens/cards") return response(200, { cards: [] });
+        if (path.startsWith("/specimens/cards"))
+          return answerCardRead(new URL(String(url)), []) ?? response(404, {});
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
         const species = {
@@ -538,7 +545,8 @@ describe("US-ACC-01 App", () => {
         if (path === "/locations") return response(200, { locations: [] });
         if (path === "/light-zones") return response(200, { zones: [] });
         if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
-        if (path === "/specimens/cards") return response(200, { cards: [] });
+        if (path.startsWith("/specimens/cards"))
+          return answerCardRead(new URL(String(url)), []) ?? response(404, {});
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
         return response(

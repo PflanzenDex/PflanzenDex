@@ -1,5 +1,11 @@
 import { useCallback, useEffect } from "react";
-import { keepPreviousData, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import type { ApiError, Response } from "../../api";
 import { NETWORK_DOWN, RequestFailure } from "./query-client";
 import { SIGN_IN } from "../../use-write-action";
@@ -75,4 +81,62 @@ export function useReload(queryKey: QueryKey): () => Promise<void> {
 export function useInvalidate(queryKey: QueryKey): () => void {
   const reload = useReload(queryKey);
   return useCallback(() => void reload(), [reload]);
+}
+
+/** A list read in pages (FR-BES-23): the pages loaded so far and the state of the next one. */
+export type PagesRequest<P> = {
+  /** The first page decides: "pending" until it is there, "error" when it failed (the view fails as a whole, P-10). */
+  status: "pending" | "error" | "ready";
+  /** The failure: of the first page, or of a further one while the loaded pages stay on screen (P-10). */
+  error: ApiError | undefined;
+  pages: readonly P[];
+  hasMore: boolean;
+  /** A further page is on its way. */
+  loadingMore: boolean;
+  /** Asks for the next page; nothing happens while one is on its way or none follows. */
+  loadMore: () => void;
+  /** A failed further page continues from the same cursor; a failed first page is read again. */
+  retry: () => void;
+};
+
+const NO_PAGES: readonly never[] = [];
+
+/**
+ * A list read in pages (FR-BES-23, NFR-12): `load` answers the page after `after` (`undefined` for the first page), and
+ * `next` of a page is the cursor of the following one, `null` on the last. A failed further page keeps the loaded pages
+ * (P-10); mutations invalidate by `queryKey` prefix like `useRequest`, so the pages refresh with the rest.
+ */
+export function useRequestPages<P extends { next: string | null }>(props: {
+  queryKey: QueryKey;
+  token: Token;
+  load: (token: string, after: string | undefined) => Promise<Response<P>>;
+  enabled?: boolean;
+}): PagesRequest<P> {
+  const { queryKey, token, load, enabled } = props;
+  const q = useInfiniteQuery({
+    queryKey,
+    ...(enabled === undefined ? {} : { enabled }),
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const t = await token();
+      if (!t) throw new RequestFailure(SIGN_IN);
+      const r = await load(t, pageParam ?? undefined);
+      if (!r.ok) throw new RequestFailure(r.error);
+      return r.value;
+    },
+    getNextPageParam: (last) => last.next,
+  });
+  const failure = q.error instanceof RequestFailure ? q.error.error : undefined;
+  const hasData = q.data !== undefined;
+  return {
+    status: hasData ? "ready" : q.isError ? "error" : "pending",
+    error: failure,
+    pages: q.data?.pages ?? NO_PAGES,
+    hasMore: q.hasNextPage,
+    loadingMore: q.isFetchingNextPage,
+    loadMore: () => {
+      if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage();
+    },
+    retry: () => void (q.isFetchNextPageError ? q.fetchNextPage() : q.refetch()),
+  };
 }

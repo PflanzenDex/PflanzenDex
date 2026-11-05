@@ -50,7 +50,7 @@ export async function speciesExisting(
     (n) => n.field === "latin" || n.field === "synonym",
   );
   for (const key of keys) {
-    const hits = await store.search(userId, key.norm);
+    const { species: hits } = await store.search(userId, key.norm);
     const same = hits.find((h) =>
       [h.latinName, ...h.synonyms].some((n) => normalize(n) === key.norm),
     );

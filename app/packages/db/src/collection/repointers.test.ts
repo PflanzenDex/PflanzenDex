@@ -239,8 +239,10 @@ describe("US-BES-10 review list and content visibility (FR-BES-11, P-04)", () =>
     expect(await species.findForReview(other, p.speciesId)).toBeNull();
     expect(await species.find(other, p.speciesId)).toBeNull();
     expect(await species.find(reviewer, p.speciesId)).toBeNull();
-    expect((await species.search(other, null)).map((s) => s.id)).not.toContain(p.speciesId);
-    expect((await species.search(reviewer, null)).map((s) => s.id)).not.toContain(p.speciesId);
+    expect((await species.search(other, null)).species.map((s) => s.id)).not.toContain(p.speciesId);
+    expect((await species.search(reviewer, null)).species.map((s) => s.id)).not.toContain(
+      p.speciesId,
+    );
     expect((await reviews.listForReview(other)).every((z) => z.creatorId === other)).toBe(true);
   });
 
@@ -350,11 +352,11 @@ describe("US-BES-10 a merge and a concurrent write on the proposal (FR-BES-11, P
     expect(await species.findForReview(reviewer, open.speciesId)).not.toBeNull();
     expect(await species.findForReview(reviewer, rejected.speciesId)).toBeNull();
     expect(await species.find(reviewer, rejected.speciesId)).toBeNull();
-    expect((await species.search(reviewer, null)).map((s) => s.id)).not.toContain(
+    expect((await species.search(reviewer, null)).species.map((s) => s.id)).not.toContain(
       rejected.speciesId,
     );
     // The name rows are hidden too: searching the exact name finds nothing for a reviewer.
-    const byName = await species.search(reviewer, rejected.latinName.toLowerCase());
+    const byName = (await species.search(reviewer, rejected.latinName.toLowerCase())).species;
     expect(byName.map((x) => x.id)).not.toContain(rejected.speciesId);
     // The creator still reads their rejected proposal.
     expect(await species.find(keeper, rejected.speciesId)).toMatchObject({
