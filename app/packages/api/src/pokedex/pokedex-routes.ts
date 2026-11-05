@@ -18,6 +18,7 @@ import {
 import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, write, type AuthEnv } from "../kernel";
+import { sharedTreeCache } from "./cards-cache";
 
 const zoneOf = (c: Context<AuthEnv>) => {
   const zone = c.req.query("timeZone");
@@ -58,10 +59,11 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
   routes.post("/pokedex/seen", async (c) =>
     write(c, writeDeps, markSeen, { input: await body(c) }),
   );
-  // Collector cards (US-POK-01): the shared taxonomy tree against the derived ownership; caught is never stored.
+  // Collector cards (US-POK-01): the shared taxonomy tree against the derived ownership; caught is never stored. The tree
+  // is kept per taxonomy build (FR-POK-13, cards-cache.ts); the facts and the rarity are read per request.
   const taxa = new TaxonomyPostgres(pool);
   const tree = {
-    tree: () => taxa.tree(),
+    tree: sharedTreeCache({ version: () => taxa.version(), tree: () => taxa.tree() }),
     facts: (userId: string) => deps.species.approvedFacts(userId),
     // Rarity in PflanzenDex (US-POK-14): only counts of the consenting accounts, never an account.
     appRarity: (userId: string) =>
