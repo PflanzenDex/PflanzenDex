@@ -61,23 +61,29 @@ export const APPROVED_FACTS = `select a.latin_name as "latinName", a.german_name
 const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
 
 /**
- * The species list and the search (`norm` null: the first 50 visible species by name; otherwise the species with a name
+ * The visible cap of the species search (FR-BES-24): at most this many hits are shown. A starting value (assumption).
+ * The search reads one row more to learn whether more species match; the rows past the cap are never shown.
+ */
+export const SEARCH_LIMIT = 50;
+
+/**
+ * The species list and the search (`norm` null: the first visible species by name; otherwise the species with a name
  * that contains the normalized term). The search reads `species_name` first and only then the visible species; no
- * trigram index serves it under row security (open question, docs/guides/reference/app.md). Sorting and the 50-row cut
- * come before the per-species columns are read: the columns are computed for at most 50 species, never for the whole
- * visible catalog.
+ * trigram index serves it under row security (open question, docs/guides/reference/app.md). Sorting and the cut come
+ * before the per-species columns are read: the columns are computed for at most SEARCH_LIMIT + 1 species, never for the
+ * whole visible catalog.
  */
 export function searchQuery(norm: string | null): { text: string; values: unknown[] } {
   const page =
     norm === null
       ? `select a.id, null::text as field, null::text as display from species a
-          where ${VISIBLE} order by a.latin_name limit 50`
+          where ${VISIBLE} order by a.latin_name limit ${SEARCH_LIMIT + 1}`
       : `select a.id, t.field, t.display from species a
            join lateral (select n.field, n.display from species_name n
               where n.species_id = a.id and n.norm like $1::text
               order by array_position(array['latin','german','english','synonym'], n.field) limit 1) t on true
           where ${VISIBLE} and a.id in (select n.species_id from species_name n where n.norm like $1::text)
-          order by a.latin_name limit 50`;
+          order by a.latin_name limit ${SEARCH_LIMIT + 1}`;
   return {
     text: `select ${SELECTION}, p.field, p.display from (${page}) p
              join species a on a.id = p.id order by a.latin_name`,

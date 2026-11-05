@@ -83,7 +83,7 @@ export function collectionReadSourceFor(
 
   return {
     async searchSpecies(userId, text) {
-      const [hits, mine] = await Promise.all([
+      const [{ species: hits }, mine] = await Promise.all([
         speciesSearch(species, userId, text),
         specimenList(specimens, userId),
       ]);

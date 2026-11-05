@@ -235,10 +235,10 @@ describe("NFR-12 the species list calls no function per row", () => {
       anna,
       values(name("Zetaquelle alpha "), { synonyms: [`zetasyn${run}`] }),
     );
-    const hits = await species.search(anna, `zetaquelle`);
+    const hits = (await species.search(anna, `zetaquelle`)).species;
     const mine = hits.filter((h) => h.id === p.id);
     expect(mine).toHaveLength(1);
     expect(mine[0]?.hit).toEqual({ field: "latin", display: p.latinName });
-    expect(await species.search(ben, `zetaquelle`)).toEqual([]);
+    expect((await species.search(ben, `zetaquelle`)).species).toEqual([]);
   });
 });

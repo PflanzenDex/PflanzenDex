@@ -123,6 +123,13 @@ type SpeciesPageProps = {
   embedded?: boolean;
 };
 
+/** The address without its layer (`sheet`): the page of the list stays. */
+function withoutSheet(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+  next.delete("sheet");
+  return next;
+}
+
 /**
  * Search, view, choose or propose a species in the catalog (US-BES-01). "Choose" reports the species outward; the
  * specimen for it is created by `collection` (US-BES-02), the app wires both (`catalog` does not know `collection`).
@@ -140,9 +147,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
   const open = (id: string) => {
     // The profile is no place for a layer: it leaves the address (replace, no new entry); the page of the list stays.
     if (params.has("sheet")) {
-      const next = new URLSearchParams(params);
-      next.delete("sheet");
-      setParams(next, { replace: true });
+      setParams(withoutSheet(params), { replace: true });
     }
     setView({ kind: "profile" });
     setProfileId(id);
@@ -163,6 +168,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
         <SpeciesSearch
           searchText={searchText}
           hit={search.hit}
+          more={search.more}
           loading={search.loading}
           failed={searchError !== null}
           onSearch={setSearchText}

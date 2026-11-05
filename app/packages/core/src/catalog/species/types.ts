@@ -79,12 +79,21 @@ export interface SpeciesHit extends Species {
 export type SpeciesCreation = { readonly kind: "fresh" | "duplicate"; readonly value: Species };
 
 /**
+ * The answer of a species search: the shown hits (at most the cap of the search, FR-BES-24) and whether more species
+ * match. `more` counts only what the account may see (P-05).
+ */
+export interface SpeciesSearch {
+  readonly species: readonly SpeciesHit[];
+  readonly more: boolean;
+}
+
+/**
  * Persistence port. All calls apply to the account `userId` and return only what it may see
  * (own proposals and approved species, FR-BES-11); the adapter additionally enforces this via row rule.
  */
 export interface SpeciesStore {
-  /** `norm`: normalized search text, `null` lists all visible species. */
-  search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]>;
+  /** `norm`: normalized search text, `null` lists all visible species. Shows at most the cap; `more` says if others match. */
+  search(userId: string, norm: string | null): Promise<SpeciesSearch>;
   find(userId: string, id: string): Promise<Species | null>;
   /** `find` for many IDs in one step (NFR-12): one result per ID in the same order, `null` where `find` gives `null`. */
   findMany(userId: string, ids: readonly string[]): Promise<readonly (Species | null)[]>;

@@ -54,8 +54,8 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
       dormancyFrom: null,
       wateringHint: null,
     });
-    expect((await speciesSearch(store, "anna", "bogenhanf")).length).toBe(1);
-    expect(await speciesSearch(store, "ben", "bogenhanf")).toEqual([]);
+    expect((await speciesSearch(store, "anna", "bogenhanf")).species.length).toBe(1);
+    expect((await speciesSearch(store, "ben", "bogenhanf")).species).toEqual([]);
     expect(await speciesLoad(store, "ben", first())).toBeNull();
   });
 
@@ -199,9 +199,9 @@ describe("US-BES-01 search by Latin or German name and synonyms", () => {
   });
 
   it("finds the species via Latin name, German name and synonym and says which (Sansevieria -> Dracaena)", async () => {
-    const latin = await speciesSearch(store, "ben", "DRACAENA triFasciata");
-    const german = await speciesSearch(store, "ben", "Bogenhanf");
-    const synonym = await speciesSearch(store, "ben", "Sansevieria");
+    const latin = (await speciesSearch(store, "ben", "DRACAENA triFasciata")).species;
+    const german = (await speciesSearch(store, "ben", "Bogenhanf")).species;
+    const synonym = (await speciesSearch(store, "ben", "Sansevieria")).species;
     expect(latin[0]?.hit).toMatchObject({ field: "latin" });
     expect(german[0]?.hit).toMatchObject({ field: "german" });
     expect(synonym[0]).toMatchObject({
@@ -221,8 +221,8 @@ describe("US-BES-01 search by Latin or German name and synonyms", () => {
   });
 
   it("without hits: empty list; empty search lists all visible", async () => {
-    expect(await speciesSearch(store, "ben", "Zzyzx")).toEqual([]);
-    expect(await speciesSearch(store, "ben", "  ")).toHaveLength(1);
+    expect((await speciesSearch(store, "ben", "Zzyzx")).species).toEqual([]);
+    expect((await speciesSearch(store, "ben", "  ")).species).toHaveLength(1);
   });
 });
 

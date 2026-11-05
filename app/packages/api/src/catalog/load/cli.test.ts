@@ -185,7 +185,7 @@ describe("US-BES-12 catalog:load, the curated start catalog (#991)", () => {
     // Tenant view: an unrelated account finds the approved species by German name and by synonym, like the app does.
     const stranger = await findOrCreateAccount(owner, `loader-stranger-${letters}`);
     const search = new SpeciesPostgres(owner);
-    const hits = await search.search(stranger, `ladeart ${letters}alpha`);
+    const hits = (await search.search(stranger, `ladeart ${letters}alpha`)).species;
     expect(hits.map((h) => h.latinName)).toEqual([`Loadgenus ${letters}alpha`]);
     // US-LIC-01, P-08 (#1003): the batch invents no difficulty or light need; they stay unknown.
     expect(hits.map((h) => [h.difficulty, h.standardLevel, h.lightDemandLux])).toEqual([
@@ -199,7 +199,7 @@ describe("US-BES-12 catalog:load, the curated start catalog (#991)", () => {
     expect(texts.rows).toEqual([
       { growth_measure: null, etiolation_signs: null, success_criteria: null },
     ]);
-    const bySynonym = await search.search(stranger, `synogenus ${letters}beta`);
+    const bySynonym = (await search.search(stranger, `synogenus ${letters}beta`)).species;
     expect(bySynonym.map((h) => h.latinName)).toEqual([`Loadgenus ${letters}beta`]);
     await admin.query("delete from account where id = $1", [stranger]);
   });

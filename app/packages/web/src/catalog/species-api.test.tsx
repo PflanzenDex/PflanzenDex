@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { loadSpecies, propose, searchSpecies } from "./species-api";
+import { loadSpecies, propose, searchSpecies, searchSpeciesPage } from "./species-api";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -12,6 +12,15 @@ describe("US-BES-01 client of the species API", () => {
     expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/species?q=K%C3%B6nigin%20%26%20Co");
     const header = fetchFn.mock.calls[0]?.[1]?.headers as Record<string, string>;
     expect(header["Authorization"]).toBe("Bearer tok");
+  });
+
+  it("FR-BES-24 the search page keeps the hits and says whether more species match", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      response(200, { species: [{ id: "a1" }], more: true }),
+    );
+    const r = await searchSpeciesPage("http://api", "tok", "Dra", fetchFn);
+    expect(r).toEqual({ ok: true, value: { species: [{ id: "a1" }], more: true } });
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/species?q=Dra");
   });
 
   it("loads a species; 404 arrives as an error with code", async () => {

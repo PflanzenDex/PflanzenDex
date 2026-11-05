@@ -33,7 +33,7 @@ async function similarTo(species: SpeciesStore, userId: string, s: Species) {
   const keys = new Set([s.latinName, ...s.synonyms].map(normalize).filter((n) => n !== ""));
   const found = new Map<string, SimilarSpecies>();
   for (const key of keys) {
-    for (const hit of await species.search(userId, key)) {
+    for (const hit of (await species.search(userId, key)).species) {
       const approved = hit.reviewStatus === "curated" || hit.reviewStatus === "reviewed";
       if (approved && hit.id !== s.id && hit.hit && !found.has(hit.id)) {
         found.set(hit.id, { id: hit.id, latinName: hit.latinName, matchedOn: hit.hit.display });
