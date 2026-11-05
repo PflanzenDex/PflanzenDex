@@ -19,6 +19,14 @@ export const NETWORK_DOWN = "network.not_reachable";
 export const REFERENCE_STALE_TIME = 5 * 60_000;
 
 /**
+ * How long a copy counts as fresh for the parts of one screen that read the same key but mount at different times
+ * (issue 1291, NFR-12): a part whose chunk loads after the answer of the first one reads that copy instead of asking
+ * again. Short, because this is not reference data: coming back to the screen later asks again. A write refreshes at
+ * once (`useInvalidate`). Starting value (assumption): 10 seconds.
+ */
+export const SCREEN_STALE_TIME = 10_000;
+
+/**
  * The one cache for server state (DS-09, ADR 0006). Requests run even when the browser reports "offline", so the
  * failure is a visible `network.not_reachable` and the last loaded data stays on screen (US-QS-07). No automatic
  * retries: the user decides with "Erneut versuchen". Data of an earlier session never survives sign-out (P-04).

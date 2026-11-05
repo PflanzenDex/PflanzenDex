@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LoadFrame, useInvalidate, useRequest } from "../../../shared/data";
+import { LoadFrame, SCREEN_STALE_TIME, useInvalidate, useRequest } from "../../../shared/data";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
 import { loadBanner } from "../../api/feed-api";
 import { loadMatchingCount, loadOpenOffersCount } from "../../api/offer-counts-api";
@@ -23,7 +23,12 @@ type Token = () => Promise<string | undefined>;
 /** Calm mode shows no counts (US-ACH-08, US-TAU-07); otherwise the count of the news banner while it loads or fails (P-10). */
 function useNewsCount(api: string, token: Token, calm: boolean): TileCount {
   const load = useCallback((t: string) => loadBanner(api, t), [api]);
-  const r = useRequest({ queryKey: ["social", "banner"], token, load });
+  const r = useRequest({
+    queryKey: ["social", "banner"],
+    token,
+    load,
+    staleTime: SCREEN_STALE_TIME,
+  });
   if (calm) return "hidden";
   if (r.status === "error") return "error";
   return r.value === undefined ? "loading" : r.value.firstVisit ? 0 : r.value.count;
