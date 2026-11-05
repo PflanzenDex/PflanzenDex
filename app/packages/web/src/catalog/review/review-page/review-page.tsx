@@ -38,7 +38,7 @@ function useShow(): [Show, (show: Show) => void] {
     else address.set(SHOW_PARAM, next);
     address.delete("page");
     address.delete("sheet");
-    setParams(address, { replace: true, state: location.state });
+    setParams(address, { replace: true, state: { ...location.state, keepFocus: true } });
   };
   return [show, choose];
 }

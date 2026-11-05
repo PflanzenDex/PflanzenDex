@@ -164,6 +164,33 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     expect(document.activeElement).toBe(focused);
   });
 
+  it("US-QS-08 the tab or part of a layer (?ltab, ?tab, ?teil) is no new view: the focus stays (issue 1315)", async () => {
+    function Tabs() {
+      const [, setParams] = useSearchParams();
+      return (
+        <button type="button" onClick={() => setParams({ ltab: "texts", tab: "b", teil: "c" })}>
+          Reiter
+        </button>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/b"]}>
+        <AnnouncerProvider>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={titleOf} />
+            <h1>Zweite Seite</h1>
+            <Tabs />
+          </main>
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const tab = screen.getByRole("button", { name: "Reiter" });
+    tab.focus();
+    await userEvent.click(tab);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.activeElement).toBe(tab);
+  });
+
   it("US-QS-18 · US-QS-15 opening a layer or turning a page (?sheet, ?page) is no new view: the focus stays", async () => {
     function Opener() {
       const [, setParams] = useSearchParams();

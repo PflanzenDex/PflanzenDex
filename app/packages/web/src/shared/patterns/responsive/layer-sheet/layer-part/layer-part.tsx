@@ -40,9 +40,11 @@ export function LayerOpenRow({
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold [overflow-wrap:anywhere]">{title}</span>
+        <span className="block font-semibold hyphens-auto [overflow-wrap:anywhere]">{title}</span>
         {value === undefined ? null : (
-          <span className="block text-sm text-muted-foreground">{value}</span>
+          <span className="block text-sm text-muted-foreground hyphens-auto [overflow-wrap:anywhere]">
+            {value}
+          </span>
         )}
       </span>
       <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />

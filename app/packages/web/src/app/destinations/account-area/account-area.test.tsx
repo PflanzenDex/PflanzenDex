@@ -209,6 +209,17 @@ describe("US-QS-17 Konto with its sections as views", () => {
     expect(puts[0]?.["displayName"]).toBe("Lena L");
   });
 
+  it("US-QS-08 closing a layer of a section gives the focus back to its row, not to the heading (issue 1315)", async () => {
+    fakeServer();
+    show("/account/settings");
+    const row = await screen.findByRole("button", { name: /^Profil/ });
+    await userEvent.click(row);
+    await screen.findByLabelText("Anzeigename");
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(screen.queryByLabelText("Anzeigename")).toBeNull());
+    await vi.waitFor(() => expect(document.activeElement?.textContent).toContain("Profil"));
+  });
+
   it("US-QS-17 · P-09 the section Einstellungen shows a skeleton with one status while loading", () => {
     fakeServer();
     show("/account/settings");

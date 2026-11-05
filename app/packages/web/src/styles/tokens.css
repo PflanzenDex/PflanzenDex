@@ -223,6 +223,10 @@
   h3 {
     line-height: 1.25;
   }
+  /* A word wider than the window at 200 % text breaks at a syllable, not between random letters (issue 1315). */
+  h1 {
+    hyphens: auto;
+  }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;

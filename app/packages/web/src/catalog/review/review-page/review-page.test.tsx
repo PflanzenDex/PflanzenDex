@@ -104,7 +104,11 @@ function server(initial: ReviewList, write: () => Promise<Response> = () => resp
 
 function Address() {
   const l = useLocation();
-  return <span data-testid="address">{l.pathname + l.search}</span>;
+  return (
+    <span data-testid="address" data-keep-focus={String(l.state?.keepFocus === true)}>
+      {l.pathname + l.search}
+    </span>
+  );
 }
 const address = () => screen.getByTestId("address").textContent ?? "";
 const show = (at = "/review") =>
@@ -398,6 +402,14 @@ describe("US-QS-15 review list on one screen", () => {
     expect(
       within(again).getByRole("tab", { name: "Entscheiden" }).getAttribute("aria-selected"),
     ).toBe("true");
+  });
+
+  it("US-QS-08 the choice Offen or Freigegeben keeps the focus on its control (issue 1315)", async () => {
+    server(list([entry()]));
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: /Freigegeben/ }));
+    expect(screen.getByTestId("address").getAttribute("data-keep-focus")).toBe("true");
   });
 
   it("US-QS-15 the texts tab is in the address too and shows the free texts (issue 1283)", async () => {

@@ -4,12 +4,18 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 
 const load = () => import("./focus-moves").then((m) => m.createFocusMover());
 
-/** The address without the parts that are no view: a layer (`?sheet=`) and the page of a list (`?page=`) (US-QS-15). */
+/**
+ * The address without the parts that are no view: a layer (`?sheet=`), the page of a list (`?page=`) and the tab or part
+ * of a layer (`ltab`, `tab`, `teil`) (US-QS-15, issue 1315).
+ */
 function viewSearch(search: string): string {
   const params = new URLSearchParams(search);
   params.delete("sheet");
   params.delete("page");
   params.delete("lpage");
+  params.delete("ltab");
+  params.delete("tab");
+  params.delete("teil");
   return params.toString();
 }
 
