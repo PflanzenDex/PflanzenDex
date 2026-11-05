@@ -1,29 +1,4 @@
 {
-  "maxEntries": 4,
-  "entries": [
-    {
-      "screen": "collection-view-plants-last-page",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.09
-    },
-    {
-      "screen": "collection-view-plants-last-page",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.01
-    },
-    {
-      "screen": "collection-view-plants-page-2",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.38
-    },
-    {
-      "screen": "collection-view-plants-page-2",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1.12
-    }
-  ]
+  "maxEntries": 0,
+  "entries": []
 }
