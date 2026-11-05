@@ -363,6 +363,30 @@ test("FR-DEV-10 (e): sync never overwrites an existing Status (In Progress, On d
   }
 });
 
+test("FR-DEV-10 (e): sync still sets Typ and Epic when the Status cannot be read, and warns instead of aborting", async () => {
+  const client = fakeGh({
+    ...boardAnswers,
+    "gh api graphql": new Error("GraphQL: Resource not accessible by integration"),
+  });
+  const logs = [];
+  const fields = await syncIssue(client, 12, {
+    type: "bug",
+    epic: "DEV",
+    taxonomy,
+    env: { GH_REPO: REPO },
+    log: (l) => logs.push(l),
+  });
+  const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
+  assert.equal(edits.length, 2);
+  assert.match(edits[0], /--field-id FT --single-select-option-id OT-B/);
+  assert.match(edits[1], /--field-id FE --single-select-option-id OE-DEV/);
+  assert.ok(!edits.some((c) => c.includes("--field-id FS ")), "an unknown Status is not written");
+  assert.deepEqual(fields, { Typ: "Bug", Epic: "DEV" });
+  assert.deepEqual(logs, [
+    "#12 board: Status not read (GraphQL: Resource not accessible by integration); Typ/Epic set, Status left as is",
+  ]);
+});
+
 test("FR-DEV-10: the usage of a mode is a usage error (exit 2 in the CLI)", async () => {
   await assert.rejects(main(["nope"], { client: fakeGh(), taxonomy, log: quiet }), /usage/);
   await assert.rejects(

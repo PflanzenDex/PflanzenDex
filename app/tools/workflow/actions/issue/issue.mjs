@@ -109,7 +109,8 @@ export async function checkIssue(
 /**
  * Board fields of an issue from its type label and epic code: Typ and Epic always, Status Todo only when the item has
  * no Status yet. The workflow runs this on edits too, so an existing Status (In Progress, On dev, Done) is never
- * overwritten (FR-DEV-10 (e)).
+ * overwritten (FR-DEV-10 (e)). When the Status cannot be read, Typ and Epic are still set, the Status is left as it is
+ * and a warning says so (P-10: visible, not swallowed).
  */
 export async function syncIssue(
   client,
@@ -119,15 +120,27 @@ export async function syncIssue(
   const fields = boardFieldsFor(taxonomy, type, epic);
   if (!fields) throw new IssueRefused([`unknown type "${type ?? ""}" or epic "${epic ?? ""}"`]);
   const repo = await repoOf(client, env);
-  const status = await boardStatusOf(client, { repo, number });
-  const wanted = status ? fields : { ...fields, Status: STATUS.todo };
+  let status = null;
+  let readError = null;
+  try {
+    status = await boardStatusOf(client, { repo, number });
+  } catch (e) {
+    readError = e;
+  }
+  // Status is written only when it is known to be empty; an unknown Status is left as it is.
+  const wanted = !readError && !status ? { ...fields, Status: STATUS.todo } : fields;
   await setBoardFields(client, {
     url: issueUrl(repo, number),
     owner: repo.split("/")[0],
     fields: wanted,
   });
-  log(
-    `#${number} board: Typ ${fields.Typ}, Epic ${fields.Epic}, ${status ? `Status ${status} (kept)` : "Status Todo (set)"}`,
-  );
+  if (readError)
+    log(
+      `#${number} board: Status not read (${readError.message}); Typ/Epic set, Status left as is`,
+    );
+  else
+    log(
+      `#${number} board: Typ ${fields.Typ}, Epic ${fields.Epic}, ${status ? `Status ${status} (kept)` : "Status Todo (set)"}`,
+    );
   return wanted;
 }
