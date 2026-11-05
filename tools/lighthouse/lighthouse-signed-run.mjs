@@ -158,6 +158,9 @@ async function signIn(context) {
     await page.locator("#password").fill(PASSWORD);
     await page.locator("#kc-login").click();
     await page.waitForURL(`${webOrigin}/**`);
+    // Back on the app the code is still being exchanged for tokens: leaving now aborts that and nothing is stored, which
+    // a slow runner hits. The brand link stands only once signed in (as in the e2e fixture `signIn`).
+    await page.getByRole("link", { name: "PflanzenDéx, zu Heute" }).waitFor();
     const api = [];
     page.on("response", (response) =>
       api.push({ url: response.url(), statusCode: response.status() }),
