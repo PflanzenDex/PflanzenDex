@@ -75,3 +75,49 @@ export async function createTestAccount(): Promise<TestAccount> {
     throw new Error(`Test account not created: ${res.status} ${await res.text()}`);
   return account;
 }
+
+/** The audience of the client below: a real token of this realm, meant for another service (issue 204). */
+export const FOREIGN_AUDIENCE = "e2e-foreign-service";
+const FOREIGN_CLIENT = "e2e-foreign-audience";
+
+/** A token the real Keycloak signs for this account, with the audience of another service. */
+export async function foreignAudienceToken(account: TestAccount): Promise<string> {
+  const created = await fetch(`${KEYCLOAK}/admin/realms/${REALM}/clients`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${await adminToken()}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      clientId: FOREIGN_CLIENT,
+      publicClient: true,
+      directAccessGrantsEnabled: true,
+      standardFlowEnabled: false,
+      protocolMappers: [
+        {
+          name: "foreign-audience",
+          protocol: "openid-connect",
+          protocolMapper: "oidc-audience-mapper",
+          config: {
+            "included.custom.audience": FOREIGN_AUDIENCE,
+            "access.token.claim": "true",
+          },
+        },
+      ],
+    }),
+  });
+  // 409: an earlier test already created the client in this shared Keycloak.
+  if (created.status !== 201 && created.status !== 409)
+    throw new Error(`Client not created: ${created.status} ${await created.text()}`);
+  const res = await fetch(`${KEYCLOAK}/realms/${REALM}/protocol/openid-connect/token`, {
+    method: "POST",
+    body: new URLSearchParams({
+      grant_type: "password",
+      client_id: FOREIGN_CLIENT,
+      username: account.email,
+      password: account.password,
+    }),
+  });
+  if (!res.ok) throw new Error(`Token not issued: ${res.status} ${await res.text()}`);
+  return ((await res.json()) as { access_token: string }).access_token;
+}

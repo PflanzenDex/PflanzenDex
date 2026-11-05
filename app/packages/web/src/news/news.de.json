@@ -1,6 +1,8 @@
 {
   "unreleased": [
     "Fotos und Wunschbilder: Neue Bilder werden im Format WebP gespeichert, das beim Laden weniger Daten braucht.",
+    "Große Schrift: Die Kacheln der Sammlung stapeln Bild und Text, wenn es eng wird, sodass der Name mehr Platz hat und nichts mehr aus der Kachel ragt. Nach „Erneut versuchen“ steht der Fokus auf der ersten neu geladenen Pflanze.",
+    "Tastatur: Lädt die Seite noch, während du schon mit der Tab-Taste unterwegs bist, bleibt der Fokus jetzt dort, wo du ihn hingesetzt hast.",
     "Fotos: Ersetzt du das Foto einer Messung, zeigt die App das neue Foto sofort. Bisher konnte bis zu einer Stunde das alte Foto stehen bleiben.",
     "Vorschläge für eine Zone: Gibt es zu wenige passende Arten, passt der Hinweis mit „Art vorschlagen“ jetzt auch auf kleine Handys.",
     "Große Schrift: Lange Wörter trennen sich jetzt an einer Silbe mit Bindestrich. Mit der Tastatur bleibt der Fokus beim Wechsel zwischen Reitern auf dem Reiter und kehrt nach dem Schließen eines Fensters im Konto zur Zeile zurück.",

@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -150,6 +150,15 @@ lighthouse: ## Lighthouse on the built web app, mobile, median of 3 runs against
 lighthouse-signed: $(if $(CI),,db-up) auth-up migrate browsers ## Lighthouse on the signed-in /today and /collection, mobile, median of 3 runs; report only: scores never fail it, a run that cannot measure does (FR-QG-09, issue 1251); seeds the demo
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	tools/lighthouse/lighthouse-signed.sh
+
+perf-nightly: $(if $(CI),,db-up) ## Load measurement of every GET route at 1,000 specimens against the budgets in app/config/gates/quality-limits.json (`perf`), plus the concurrency probe (1/4/8/16 Heute screens); report only: a budget never fails it, a broken measurement does (NFR-12, issue 1250); output in app/.cache/perf
+	@mkdir -p $(APP)/.cache/perf
+	cd $(APP) && PERF_SIZES=1000 PERF_SPECIES=100 PERF_RUNS=$(or $(PERF_RUNS),20) npm run --silent perf:measure -w @pflanzendex/api > .cache/perf/measure.json
+	cd $(APP) && PERF_USERS=1,4,8,16 npm run --silent perf:concurrency -w @pflanzendex/api > .cache/perf/concurrency.txt
+	@cd $(APP)/packages/api && npx --no-install tsx perf/load/budget-report.ts ../../.cache/perf/measure.json > ../../.cache/perf/summary.md; status=$$?; \
+	  printf '\n### Concurrency, Heute screen (/today + /specimens/hints)\n\n```text\n' >> ../../.cache/perf/summary.md; \
+	  cat ../../.cache/perf/concurrency.txt >> ../../.cache/perf/summary.md; printf '```\n' >> ../../.cache/perf/summary.md; \
+	  cat ../../.cache/perf/summary.md; exit $$status
 
 bundle-report: ## Initial JS per chunk and package as Markdown against the 125 kB goal; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report

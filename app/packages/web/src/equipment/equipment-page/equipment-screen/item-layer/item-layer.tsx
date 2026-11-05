@@ -12,7 +12,8 @@ const ITEM_PREFIX = "item-";
 /** One record as a row (name, kind, state, zone); the full record opens as a layer (US-QS-22). */
 export function ItemRow(props: { item: EquipmentRow; zone: string | undefined }) {
   const { item, zone } = props;
-  const { openLayer } = useLayer(ITEM_PREFIX + item.id);
+  const sheet = ITEM_PREFIX + item.id;
+  const { openLayer } = useLayer(sheet);
   const facts = [
     TYPE_LABELS[item.type],
     item.status ? STATUS_LABELS[item.status] : null,
@@ -20,6 +21,7 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
   ].filter(Boolean);
   return (
     <Button
+      id={`row-${sheet}`}
       type="button"
       variant="outline"
       aria-haspopup="dialog"

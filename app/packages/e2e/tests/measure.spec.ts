@@ -44,6 +44,15 @@ async function openCourse(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: /^Verlauf: / })).toBeVisible();
 }
 
+/** The layer opens on "Überblick"; the rows of the measurements are its part "Messungen" (US-QS-15). */
+async function openMeasurements(page: Page): Promise<void> {
+  await openCourse(page);
+  await page
+    .getByRole("group", { name: "Teile des Verlaufs" })
+    .getByRole("button", { name: "Messungen" })
+    .click();
+}
+
 test.describe("US-WAC-01 Messung erfassen", () => {
   test("US-WAC-01 record a measurement, see it in the course and find it again after reloading", async ({
     page,
@@ -72,7 +81,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
 
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
     await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
-    await openCourse(page);
+    await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
     await axeReport(page, info, "measure-erfasst");
@@ -83,7 +92,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await form.getByLabel("Datum").fill("2026-01-02");
     await form.getByLabel("Qualität").selectOption("etiolated");
     await page.getByRole("button", { name: "Messung speichern" }).click();
-    await openCourse(page);
+    await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: "10 cm · 02.01.2026" })).toBeVisible();
     await page.keyboard.press("Escape");
     // The last measurement is the one with the newer date, not the one entered last.
@@ -94,7 +103,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     // Nothing is lost silently (P-10): after reloading the measurements from the database are there again.
     await page.reload();
     await measureFromCollection(page);
-    await openCourse(page);
+    await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: "10 cm · 02.01.2026" })).toBeVisible();
   });
 
