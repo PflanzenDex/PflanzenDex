@@ -10,12 +10,12 @@ const W2 = "00000000-0000-4000-8000-000000000002";
 
 const setup = () => {
   const wishes = new InMemoryWishes({});
-  wishes.seed(ANNA, { id: W1, name: "Mit Bild", imageObject: "img-1.jpg" });
+  wishes.seed(ANNA, { id: W1, name: "Mit Bild", imageObject: "img-1.webp" });
   wishes.seed(ANNA, { id: W2, name: "Ohne Bild" });
   const objects = {
     get: async (account: string, name: string) =>
-      account === ANNA && name === "img-1.jpg"
-        ? ok({ bytes: new Uint8Array([9]), contentType: "image/jpeg" })
+      account === ANNA && name === "img-1.webp"
+        ? ok({ bytes: new Uint8Array([9]), contentType: "image/webp" })
         : failed(appError("media.not_found")),
   };
   return (userId: string, id: string) => wishImageFile({ wishes, objects }, userId, id);
@@ -24,7 +24,7 @@ const setup = () => {
 describe("US-WUN-04 the stored wish image is private to its owner (P-05)", () => {
   it("the owner gets the stored copy", async () => {
     const r = await setup()(ANNA, W1);
-    expect(r.ok && r.value.contentType).toBe("image/jpeg");
+    expect(r.ok && r.value.contentType).toBe("image/webp");
   });
 
   it("a wish without a stored copy answers wish.image_not_found", async () => {

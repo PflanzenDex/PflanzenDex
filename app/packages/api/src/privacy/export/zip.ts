@@ -1,7 +1,7 @@
 import { crc32 } from "node:zlib";
 
-// A ZIP archive without compression ("stored"), written by hand because the export needs nothing more: photos are JPEG
-// already, `data.json` is small, and a fixed date and fixed order make the same files give the same bytes (US-ACC-04).
+// A ZIP archive without compression ("stored"), written by hand because the export needs nothing more: photos are WebP
+// already (issue 1289), `data.json` is small, and a fixed date and fixed order make the same files give the same bytes (US-ACC-04).
 // Sizes stay below 4 GB (no ZIP64); the export of one keeper is far below that (assumption).
 
 export interface ZipEntry {

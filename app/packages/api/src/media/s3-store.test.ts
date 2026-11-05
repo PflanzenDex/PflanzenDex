@@ -60,7 +60,7 @@ describe.skipIf(!live)(
   () => {
     const a = randomUUID();
     const b = randomUUID();
-    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 1, 2, 3]);
+    const webp = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3]); // "RIFF": a WebP container
     const store = () => createS3ObjectStore(config as S3Config);
 
     beforeAll(async () => {
@@ -73,42 +73,42 @@ describe.skipIf(!live)(
 
     it("stores, reads, probes and deletes an object with its content type", async () => {
       const s = store();
-      await s.put(a, "round.jpg", jpeg, MEDIA_LIMITS.storedType);
-      const read = await s.get(a, "round.jpg");
+      await s.put(a, "round.webp", webp, MEDIA_LIMITS.storedType);
+      const read = await s.get(a, "round.webp");
       expect(read.ok && [...read.value.bytes, read.value.contentType]).toEqual([
-        ...jpeg,
-        "image/jpeg",
+        ...webp,
+        "image/webp",
       ]);
-      expect(await s.exists(a, "round.jpg")).toEqual({ ok: true, value: true });
-      await s.delete(a, "round.jpg");
-      expect(await s.exists(a, "round.jpg")).toEqual({ ok: true, value: false });
-      const gone = await s.get(a, "round.jpg");
+      expect(await s.exists(a, "round.webp")).toEqual({ ok: true, value: true });
+      await s.delete(a, "round.webp");
+      expect(await s.exists(a, "round.webp")).toEqual({ ok: true, value: false });
+      const gone = await s.get(a, "round.webp");
       expect(!gone.ok && gone.error.code).toBe("media.not_found");
     });
 
     it("QG-D3 account A cannot read, probe or delete account B's object, also not by traversal", async () => {
       const s = store();
-      await s.put(b, "private.jpg", jpeg, MEDIA_LIMITS.storedType);
-      const foreign = await s.get(a, "private.jpg");
+      await s.put(b, "private.webp", webp, MEDIA_LIMITS.storedType);
+      const foreign = await s.get(a, "private.webp");
       expect(!foreign.ok && foreign.error.code).toBe("media.not_found");
-      expect(await s.exists(a, "private.jpg")).toEqual({ ok: true, value: false });
-      await s.delete(a, "private.jpg");
-      const sneak = await s.get(a, `../${b}/private.jpg`);
+      expect(await s.exists(a, "private.webp")).toEqual({ ok: true, value: false });
+      await s.delete(a, "private.webp");
+      const sneak = await s.get(a, `../${b}/private.webp`);
       expect(!sneak.ok && sneak.error.code).toBe("media.name_invalid");
-      expect((await s.get(b, "private.jpg")).ok).toBe(true);
-      await s.delete(b, "private.jpg");
+      expect((await s.get(b, "private.webp")).ok).toBe(true);
+      await s.delete(b, "private.webp");
     });
 
     it("TE-05 an oversize object or a non-image type is refused before any request", async () => {
       const s = store();
       const big = await s.put(
         a,
-        "big.jpg",
+        "big.webp",
         new Uint8Array(MEDIA_LIMITS.storedMaxBytes + 1),
-        "image/jpeg",
+        "image/webp",
       );
       expect(!big.ok && big.error.code).toBe("media.too_large");
-      const html = await s.put(a, "x.jpg", jpeg, "text/html");
+      const html = await s.put(a, "x.webp", webp, "text/html");
       expect(!html.ok && html.error.code).toBe("media.type_unsupported");
     });
   },
