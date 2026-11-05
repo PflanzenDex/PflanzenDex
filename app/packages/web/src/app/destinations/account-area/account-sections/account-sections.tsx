@@ -33,7 +33,7 @@ function AchievementsParts(props: { api: string; token: Token }) {
   const visible = useAchievementsVisible(props.api, props.token);
   if (!visible) return null;
   return (
-    <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
       <AchievementsOverviewSection api={props.api} token={props.token} />
       <CareRhythmSection api={props.api} token={props.token} />
       <YearInReviewSection api={props.api} token={props.token} />

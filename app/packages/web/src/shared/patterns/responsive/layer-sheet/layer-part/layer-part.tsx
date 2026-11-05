@@ -40,7 +40,7 @@ export function LayerOpenRow({
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold">{title}</span>
+        <span className="block font-semibold [overflow-wrap:anywhere]">{title}</span>
         {value === undefined ? null : (
           <span className="block text-sm text-muted-foreground">{value}</span>
         )}
