@@ -209,6 +209,26 @@
     "title": "Sammlung"
   },
   {
+    "id": "collection-view-species-sort-family",
+    "account": "test2",
+    "path": "/collection?view=species",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Filter"
+      },
+      {
+        "role": "combobox",
+        "name": "Sortierung",
+        "select": "family"
+      },
+      {
+        "key": "Escape"
+      }
+    ],
+    "title": "Sammlung"
+  },
+  {
     "id": "collection-view-plants-sheet-view",
     "account": "test2",
     "path": "/collection?view=plants&sheet=view",
@@ -1029,12 +1049,174 @@
     "title": "Equipment-Eintrag"
   },
   {
+    "id": "collection-equipment-item-substrate-aroid-mix",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 0
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-sensor-bodenfeuchte",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 1
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-fertilizer-fluessigduenger",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 2
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-lamp-growbox",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 3
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-substrate-kakteenerde",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 4
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-plant-agent-neemoel",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 5
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-lamp-pflanzenlampe-led",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 0
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-lamp-regallampe",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 1
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-lamp-stecklingslampe",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 2
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-timer-zeitschaltuhr",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 3
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Equipment-Eintrag"
+  },
+  {
     "id": "review-case",
     "account": "test3",
     "path": "/review",
     "steps": [
       {
         "css": "main ul button"
+      }
+    ],
+    "layerFile": "catalog/review/review-layer/review-layer.tsx",
+    "title": "Prüffall"
+  },
+  {
+    "id": "review-case-texts",
+    "account": "test3",
+    "path": "/review",
+    "steps": [
+      {
+        "css": "main ul button"
+      },
+      {
+        "role": "tab",
+        "name": "Beschreibung"
+      }
+    ],
+    "layerFile": "catalog/review/review-layer/review-layer.tsx",
+    "title": "Prüffall"
+  },
+  {
+    "id": "review-case-decide",
+    "account": "test3",
+    "path": "/review",
+    "steps": [
+      {
+        "css": "main ul button"
+      },
+      {
+        "role": "tab",
+        "name": "Entscheiden"
       }
     ],
     "layerFile": "catalog/review/review-layer/review-layer.tsx",
@@ -1061,6 +1243,18 @@
     "id": "collection",
     "account": "test2",
     "path": "/collection",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-plants-page-2",
+    "account": "test4",
+    "path": "/collection?view=plants&page=2",
+    "title": "Sammlung"
+  },
+  {
+    "id": "collection-view-plants-last-page",
+    "account": "test4",
+    "path": "/collection?view=plants&page=999",
     "title": "Sammlung"
   }
 ]
