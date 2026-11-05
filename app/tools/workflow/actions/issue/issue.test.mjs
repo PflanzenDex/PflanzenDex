@@ -395,7 +395,7 @@ test("FR-DEV-10: the usage of a mode is a usage error (exit 2 in the CLI)", asyn
   );
 });
 
-test("FR-DEV-10: the allowed list in app/config/project holds the five types and the 21 epics (19 product and process epics, E and TE), and no MIG", () => {
+test("FR-DEV-10: the allowed list in app/config/project holds the five types and the 24 epics (22 product and process epics, E and TE), and no MIG", () => {
   const file = loadTaxonomy();
   assert.deepEqual(
     file.types.map((t) => t.label),
@@ -405,9 +405,9 @@ test("FR-DEV-10: the allowed list in app/config/project holds the five types and
     file.types.map((t) => t.typ),
     ["Story", "Enabler", "Bug", "Epic", "Entscheidung"],
   );
-  assert.equal(file.epics.length, 21);
+  assert.equal(file.epics.length, 24);
   for (const epic of file.epics) assert.equal(epic.label, `epic:${epic.code}`);
-  assert.equal(new Set(file.epics.map((e) => e.code)).size, 21);
+  assert.equal(new Set(file.epics.map((e) => e.code)).size, 24);
   assert.ok(!file.epics.some((e) => e.code === "MIG" || e.label === "epic:MIG"));
   assert.deepEqual(file.priorities, ["P0", "P1", "P2", "P3"]);
 });
