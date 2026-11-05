@@ -107,6 +107,14 @@ describe("US-BES-06 client of the cards API", () => {
     });
   });
 
+  it("US-QS-19 the card of the address is read by its encoded id: a plant id with a slash or a question mark stays one path segment", async () => {
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(card({ id: "x" })), { status: 200 }),
+    );
+    await loadCard("http://api", "tok", "a/b?c", fetchFn);
+    expect(String(fetchFn.mock.calls[0]?.[0])).toMatch(/\/specimens\/a%2Fb%3Fc\/card\?/);
+  });
+
   it("FR-BES-23 every active plant of a species is read to the end, not only its first page (the marker rule needs all)", async () => {
     const cards = Array.from({ length: 205 }, (_, i) =>
       card({ id: `e${i}`, name: `Shop ${String(i).padStart(3, "0")}` }),
