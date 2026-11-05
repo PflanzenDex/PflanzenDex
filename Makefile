@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -146,6 +146,10 @@ lighthouse: ## Lighthouse on the built web app, mobile, median of 3 runs against
 	cd $(APP) && npm run bundle-budget -- --report
 	tools/lighthouse/lighthouse-run.sh
 	@summary=$(APP)/packages/web/.lighthouseci/summary.md; tools/lighthouse/lighthouse-summary.sh --check > $$summary; status=$$?; cat $$summary; exit $$status
+
+lighthouse-signed: $(if $(CI),,db-up) auth-up migrate browsers ## Lighthouse on the signed-in /today and /collection, mobile, median of 3 runs; report only: scores never fail it, a run that cannot measure does (FR-QG-09, issue 1251); seeds the demo
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	tools/lighthouse/lighthouse-signed.sh
 
 bundle-report: ## Initial JS per chunk and package as Markdown against the 125 kB goal; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report
