@@ -20,14 +20,19 @@ const PRIORITY_BORDER: Record<string, string> = {
 const placeholder =
   "grid min-h-18 place-items-center rounded-lg border border-dashed border-border text-muted-foreground";
 
-/** The local copy (US-WUN-04): fetched with the token, so a viewer's browser never contacts a third-party host (P-05). */
+/**
+ * The local copy (US-WUN-04): fetched with the token, so a viewer's browser never contacts a third-party host (P-05). The
+ * card asks for the small thumbnail, not the full stored copy (NFR-12).
+ */
 function StoredPicture(props: {
   c: Candidate;
   image: NonNullable<Candidate["image"]>;
   access: PhotoAccess;
 }) {
   const { c, image } = props;
-  const state = useStoredPhoto(props.access, `/wishes/${encodeURIComponent(c.id)}/image`);
+  const state = useStoredPhoto(props.access, `/wishes/${encodeURIComponent(c.id)}/image`, {
+    size: "thumb",
+  });
   return (
     <figure className="m-0 grid gap-1">
       {typeof state === "string" ? (

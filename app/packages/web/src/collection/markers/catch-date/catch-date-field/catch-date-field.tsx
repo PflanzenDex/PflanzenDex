@@ -49,8 +49,7 @@ export function CatchDateField(props: { control: Control<CreateFields>; today: s
             <DateField {...field} max={props.today} />
           </FormControl>
           <FormDescription>
-            Voreingestellt ist heute. Hast du die Pflanze schon länger, trage hier ein früheres
-            Datum ein; ein Datum in der Zukunft geht nicht.
+            Ist sie schon länger bei dir, trage ein früheres Datum ein; die Zukunft geht nicht.
           </FormDescription>
           <FormMessage />
         </FormItem>

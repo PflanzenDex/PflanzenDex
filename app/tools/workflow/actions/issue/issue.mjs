@@ -1,14 +1,13 @@
 // Issue labels and board fields (FR-DEV-10, US-DEV-05): the operations behind `make issue`, `make issue-check` and
 // `make issue-sync`. The command line is issue-cli.mjs, the rules issue-lib.mjs, the project writes issue-board.mjs.
-// Every operation refuses before it writes anything.
+// Every operation refuses before it writes anything. Creating the issue is REST, so it works when the GraphQL budget is used up.
 import { appendFileSync } from "node:fs";
-import { json } from "../../claim/lib/claim-client.mjs";
+import { createIssueRest, json, repoName } from "../../claim/lib/claim-client.mjs";
 import { STATUS } from "../project-status/project-status-lib.mjs";
 import { boardStatusOf, setBoardFields } from "./issue-board.mjs";
 import {
   boardFieldsFor,
   commentBody,
-  issueNumberOf,
   issueUrl,
   REPORT_LABEL,
   shouldComment,
@@ -27,39 +26,41 @@ export class IssueRefused extends Error {
 
 /** Owner/name of the repository: GH_REPO in CI, otherwise the repository of the checkout. */
 async function repoOf(client, env) {
-  if (env.GH_REPO) return env.GH_REPO;
-  return (
-    await client.run("gh", ["repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"])
-  ).trim();
+  return env.GH_REPO || repoName(client);
 }
 
-/** Creates the issue after the checks; the board fields follow. A failed board write keeps the issue and says how to repair it. */
+/**
+ * Creates the issue, then its board fields. A board that is not reachable does not undo the issue: a warning says which
+ * fields are not set and who sets them (CI sets Typ, Epic and an empty Status; CI does not set Priority). It is never a
+ * failure, because a failed `make issue` invites a retry, and a retry creates a duplicate issue (FR-DEV-10, P-10).
+ */
 export async function createIssue(client, input, { taxonomy, env = {}, log = console.log }) {
   const plan = validateNewIssue(input, taxonomy);
   if (!plan.ok) throw new IssueRefused(plan.errors);
   const repo = await repoOf(client, env);
-  const out = await client.run("gh", [
-    "issue",
-    "create",
-    `--title=${plan.title}`,
-    `--body=${plan.body}`,
-    ...plan.labels.map((label) => `--label=${label}`),
-  ]);
-  const url = out.trim();
-  const number = issueNumberOf(url);
+  const { number, url } = await createIssueRest(client, {
+    repo,
+    title: plan.title,
+    body: plan.body,
+    labels: plan.labels,
+  });
   log(`Created #${number}: ${url}`);
   try {
     await setBoardFields(client, { url, owner: repo.split("/")[0], fields: plan.fields });
     log(
       `Board: Status ${plan.fields.Status}, Typ ${plan.fields.Typ}, Epic ${plan.fields.Epic}, Priority ${plan.fields.Priority}`,
     );
+    return { number, url, board: "set" };
   } catch (e) {
-    throw new Error(
-      `#${number} was created with its labels, but its board fields are not set (${e.message}). Run: make issue-sync ISSUE=${number} TYPE=${plan.type} EPIC=${plan.epic}, then set Priority by hand.`,
-      { cause: e },
+    log(`WARNING: #${number} is created, but its board fields are NOT set (${e.message}).`);
+    log(
+      `  Not set yet: Typ ${plan.fields.Typ}, Epic ${plan.fields.Epic}, Status ${plan.fields.Status}, Priority ${plan.fields.Priority}.`,
     );
+    log(
+      "  CI sets Typ, Epic and an empty Status once the labels are valid (issue-check.yml, App token). CI does not set Priority: set it by hand on the board.",
+    );
+    return { number, url, board: "missing" };
   }
-  return { number, url };
 }
 
 /** Labels of one issue decide: comment and needs-triage when invalid, needs-triage removed when valid. */

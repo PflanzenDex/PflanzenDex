@@ -4,12 +4,16 @@ import assert from "node:assert/strict";
 import { checkBranch, run } from "./claim-check.mjs";
 import { handoffBody } from "./lib/claim-steps.mjs";
 
+// Fake gh: the repository name, the user and the open issues (REST shape, FR-DEV-10 #1412) are answered by route.
 function client(issues, { offline = false } = {}) {
   return {
     async run(cmd, args) {
       if (offline) throw new Error("network down\nmore");
-      if (args[0] === "api") return "max\n";
-      return JSON.stringify(issues);
+      if (args.some((a) => a.includes("{owner}/{repo}"))) return "PflanzenDex/PflanzenDex\n";
+      if (args[1] === "user") return "max\n";
+      return JSON.stringify(
+        issues.map((i) => ({ ...i, state: "open", labels: [], html_url: "", updated_at: "" })),
+      );
     },
   };
 }

@@ -75,6 +75,8 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): the consumable types are `Substrate`, `Fertilizer` and `Plant agent`; `Other` stays a device with a state, because a generic record cannot be both. A new consumable starts `available`; a consumable recorded before has no value and reads `available`; a device has no supply. The supply changes by tap and may jump to any level. `Agent_Link` is a text of up to 80 characters that the keeper links to a plant agent; it is matched against `Treatment.Agent` case-insensitively and never changes the free text of a treatment. The entry in "Rebuy" is derived by US-EQU-07, not stored. The link from the species' `Substrate` to a consumable is open: a species is shared, equipment is private to the account (P-05), so the link needs its own decision.
 
+The consumable type `Substrate` folds into the substrate model of epic SUB (US-SUB-01; no migration job, because no production data exists yet). Supports (US-SUB-08) are equipment items. The shop links of the epics VAR, SUB and DEAL carry no affiliate parameter; FR-EQU-03 to FR-EQU-05 apply to any later partner link.
+
 ### US-EQU-06 · Assign sensors and accessories · 🟨 new
 
 Acceptance criteria:

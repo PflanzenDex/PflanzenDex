@@ -1,6 +1,6 @@
 # 14 – Epic QS: Cross-Cutting (Privacy, Security, Mobile, Quality)
 
-Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-11 (`00-Product-Overview.md`).
+Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-12 (`00-Product-Overview.md`).
 
 ## User stories
 
@@ -33,7 +33,7 @@ Acceptance criteria:
 - Every writing operation is idempotent or prevents double execution (double click, repeat after abort).
 - Background jobs (reminders, catalog enrichment, photo processing) deliver the same result on repetition.
 
-State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** no job type yet (reminders, catalog enrichment, photo processing come with their stories) and the redelivery of buffered write actions.
+State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** the redelivery of buffered write actions.
 
 ### US-QS-04 · Deviations become visible · 🟨 (prototype ✅)
 

@@ -26,7 +26,7 @@ export function RemindersSection(props: { api: string; token: Token }) {
       <LayerPart
         id="times"
         title="Wann erinnern?"
-        value="Uhrzeit, Ruhezeit und Messung"
+        value="Uhrzeit, Erinnerungspause und Messung"
         primaryAction={
           <Button type="submit" form={TIMES_FORM} className="w-full">
             Erinnerungen speichern

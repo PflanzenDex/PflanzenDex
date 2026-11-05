@@ -59,6 +59,24 @@ export type PageFit = { size: number | null; rowHeight: number };
 type Tallest = { width: number; rowHeight: number };
 
 /**
+ * The frame whose visible height the list shares (issue 1413): a view that fills the height (`data-fit-fill`) or the pane
+ * of a layer from lg (`data-layer-pane`). A sheet, a dialog or the document has none, and its list keeps its own height.
+ */
+const FRAME = "[data-fit-fill], [data-layer-pane]";
+
+/**
+ * The height the list may fill (issue 1413). Ancestors sized by their content hold the list at the height of its rows, so
+ * its own height is no measure of the room left: the frame overflows by what does not fit, and the list gives that up.
+ * At least one row, the least a page shows. Without a frame, or without a layout, the list's own height counts as before.
+ */
+function freeHeight(list: HTMLElement, rowHeight: number): number {
+  const own = list.getBoundingClientRect().height;
+  const frame = list.closest<HTMLElement>(FRAME);
+  if (!frame || !(own > 0)) return own;
+  return Math.max(own - (frame.scrollHeight - frame.clientHeight), rowHeight);
+}
+
+/**
  * Reads the measures of a rendered list region and its tallest row from the layout; `null` without a rendered row. The
  * row height only grows while the width stays (`tallest`): rows differ per page (a chip, a second line), and a size taken
  * from the rows on screen would change the page, and with it the rows, forever.
@@ -73,7 +91,7 @@ function measure(list: HTMLElement, tallest: { current: Tallest | null }): PageF
   const style = getComputedStyle(list);
   const tracks = style.gridTemplateColumns;
   const size = fitPageSize({
-    height: list.getBoundingClientRect().height,
+    height: freeHeight(list, rowHeight),
     rowHeight,
     gap: Number.parseFloat(style.rowGap) || 0,
     columns: tracks && tracks !== "none" ? tracks.trim().split(/\s+/).length : 1,
@@ -106,9 +124,10 @@ function settle(memo: { current: Settle }, next: PageFit | null): PageFit | null
 /**
  * The page size that fills the free height of a list region (US-QS-19, issue 1029). The region is measured after every
  * render, because the rows change with the page, and again whenever the region or a row changes its size. `null` while
- * there is no layout. The region must be sized by its frame (`flex-1 min-h-0`), not by its content: otherwise it holds
- * every entry. The caller keeps one row as the smallest height of the region, so a large text makes the frame scroll
- * instead of squeezing the list under the pager.
+ * there is no layout. The free height is the frame's (a view that fills the height, or a layer's pane, see `FRAME`): the
+ * region's own height less what that frame overflows, because ancestors sized by their content hold the region at the
+ * height of its rows (issue 1413). The caller keeps one row as the smallest height of the region, so a large text makes
+ * the frame scroll instead of squeezing the list under the pager.
  */
 export function usePageFit(list: RefObject<HTMLElement | null>, enabled: boolean): PageFit | null {
   const [fit, setFit] = useState<PageFit | null>(null);
@@ -133,6 +152,9 @@ export function usePageFit(list: RefObject<HTMLElement | null>, enabled: boolean
     if (el) {
       observer.observe(el);
       for (const row of Array.from(el.children)) observer.observe(row);
+      // A shorter window changes the frame, not the list that its content holds (issue 1413).
+      const frame = el.closest(FRAME);
+      if (frame) observer.observe(frame);
     }
     return () => observer.disconnect();
   });

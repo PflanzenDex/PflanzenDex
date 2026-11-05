@@ -50,9 +50,9 @@ const linkWith = (rel: string, type?: string) =>
   links.find((link) => link.rel === rel && (type === undefined || link.type === type));
 
 describe("US-QS-07 · installable web app and its icon", () => {
-  it("US-QS-07 the manifest names the app PflanzenDex, opens it standalone at the start page and speaks German", () => {
-    expect(manifest.name).toBe("PflanzenDex");
-    expect(manifest.short_name).toBe("PflanzenDex");
+  it("US-QS-07 the manifest names the app PflanzenDéx, opens it standalone at the start page and speaks German", () => {
+    expect(manifest.name).toBe("PflanzenDéx");
+    expect(manifest.short_name).toBe("PflanzenDéx");
     expect(manifest.start_url).toBe("/");
     expect(manifest.scope).toBe("/");
     expect(manifest.display).toBe("standalone");

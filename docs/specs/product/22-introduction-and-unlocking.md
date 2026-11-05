@@ -10,6 +10,8 @@ Delimitation from DEV-06: the **feature switch** is the operator's decision (`so
 
 Delimitation from ACH: no levels, ranks, titles, points or badges for using the app. An unlock is a door that opens, not a reward that is earned (FR-ONB-08). Calm mode (US-ACH-08) switches the hints off, not the information.
 
+Delimitation from the keeper switch (US-ONB-09, principle P-12): a feature the keeper switched off is neither locked nor announced, and an unlock never switches a feature on. A switch is the keeper's choice to leave a feature out; an unlock is the first introduction of a function that stays on. The keeper switch is a third state beside `switched_off` (operator) and `locked` (staging); the three never mix.
+
 ## Problem
 
 Found in the code of the current onboarding (`app/packages/web/src/app/flows/onboarding/onboarding-wizard`, `app/packages/core/src/account/onboarding.ts`, `app/packages/web/src/app/flows/onboarding/today-intro`, formerly `shell/start-page`):
@@ -22,15 +24,16 @@ Found in the code of the current onboarding (`app/packages/web/src/app/flows/onb
 
 ## Terms
 
-| Term              | Meaning                                                                                                                                                                                       |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Keeper style      | Account setting with two values: `few` ("ein paar Pflanzen pflegen") and `many` ("viel verwalten, alles sofort"). Chosen at the start, changeable at any time (DM-ONB-01). No level, no rank. |
-| Unlock            | The moment a staged function is introduced to this account. Open, locked or unlockable (see Lock state).                                                                                      |
-| Lock state        | Per function and account: `open` (usable), `locked` (not yet, with reason and way) or `unlockable` (the condition is met or the keeper may open it now by one tap). Derived live (FR-ONB-01). |
-| Unlock rule       | The condition of one function: a count, a time since the first plant, or both, with the way to meet it. Starting values in the table below.                                                   |
-| Reason and way    | The two parts of every lock text: why it is not open ("Tauschen: lege 3 Pflanzen an") and what opens it ("noch 2 Pflanzen", "noch 112 Tage", "jetzt freischalten"). Always both (US-ONB-05).  |
-| Function overview | The fixed page "Was die App kann" (account, section help) listing every function with its state (US-ONB-06).                                                                                  |
-| Hint              | A short, dismissible note at the place where it helps; at most once per occasion (US-ONB-07). Not a tour, not a modal.                                                                        |
+| Term              | Meaning                                                                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Keeper style      | Account setting with two values: `few` ("ein paar Pflanzen pflegen") and `many` ("viel verwalten, alles sofort"). Chosen at the start, changeable at any time (DM-ONB-01). No level, no rank.                                              |
+| Unlock            | The moment a staged function is introduced to this account. Open, locked or unlockable (see Lock state).                                                                                                                                   |
+| Lock state        | Per function and account: `open` (usable), `locked` (not yet, with reason and way) or `unlockable` (the condition is met or the keeper may open it now by one tap). Derived live (FR-ONB-01).                                              |
+| Unlock rule       | The condition of one function: a count, a time since the first plant, or both, with the way to meet it. Starting values in the table below.                                                                                                |
+| Reason and way    | The two parts of every lock text: why it is not open ("Tauschen: lege 3 Pflanzen an") and what opens it ("noch 2 Pflanzen", "noch 112 Tage", "jetzt freischalten"). Always both (US-ONB-05).                                               |
+| Function overview | The fixed page "Was die App kann" (account, section help) listing every function with its state (US-ONB-06).                                                                                                                               |
+| Keeper switch     | The keeper's on/off setting for a feature outside the core purpose (P-12, US-ONB-09). Switched off, the feature leaves navigation, "Heute" and reminders; the data stays. Not an unlock and not the operator's feature switch (US-DEV-06). |
+| Hint              | A short, dismissible note at the place where it helps; at most once per occasion (US-ONB-07). Not a tour, not a modal.                                                                                                                     |
 
 ## Unlock rules (starting values, assumptions)
 
@@ -71,7 +74,7 @@ Acceptance criteria:
 - Measurable (US-ONB-08): median time from first open to the saved first plant at most 90 seconds, at most 3 steps.
 - Status: replaces the order of ACC-03 (locations, zones, first plant) by first plant first.
 
-State of implementation (US-QS-16, 2026-10-29: the guide, the hint and the locked rows moved from the former start page to "Heute"; there is no start page any more, `/` leads to `/today`): a new account (`isNewAccount`) opens "Heute" on "Deine erste Pflanze" with two steps, each marked "Schritt n von 2" (species search by name, then "Pflanze speichern"); no location and no light zone is asked or loaded. The light need is the zone derived live from the species (`zoneDerive`, shown as "Lampe 2 (laut Art)" in a select the keeper may change); only a changed zone is sent as the specimen's own zone, the derived one is never stored (P-01). A new account without light zones gets the standard lamps silently (`POST /light-zones/defaults`, the minimum of US-ONB-02). After saving the page names "Miss deine Pflanze" and opens the collection. The permanent start-page cards for missing locations and zones, and the old steps "Standorte" and "Lichtzonen", are removed. "Überspringen" shows the normal first-plant action (US-ACC-03). **Open:** the free name and the optional first photo (step 1 of the criteria: the specimen has no free name yet, only species and marker, and photos exist only on measurements, US-WAC-05); landing directly on the new plant instead of the collection; the measurement of US-ONB-08; the question "Wo steht sie?" and the default location "Zuhause" (US-ONB-02).
+State of implementation (US-QS-16, 2026-10-29: the guide, the hint and the locked rows moved from the former start page to "Heute"; there is no start page any more, `/` leads to `/today`): a new account (`isNewAccount`) opens "Heute" on "Deine erste Pflanze" with two steps, each marked "Schritt n von 2" (species search by name, then "Pflanze speichern"); no location and no light zone is asked or loaded. The light need is the zone derived live from the species (`zoneDerive`, shown as "Zone 2 (laut Art)" in a select the keeper may change; a zone stored under an old name "Lampe n" reads "Zone n", issue 897); only a changed zone is sent as the specimen's own zone, the derived one is never stored (P-01). A new account without light zones gets the standard lamps silently (`POST /light-zones/defaults`, the minimum of US-ONB-02). After saving the page names "Miss deine Pflanze" and opens the collection. The permanent start-page cards for missing locations and zones, and the old steps "Standorte" and "Lichtzonen", are removed. "Überspringen" shows the normal first-plant action (US-ACC-03). **Open:** the free name and the optional first photo (step 1 of the criteria: the specimen has no free name yet, only species and marker, and photos exist only on measurements, US-WAC-05); landing directly on the new plant instead of the collection; the measurement of US-ONB-08; the question "Wo steht sie?" and the default location "Zuhause" (US-ONB-02).
 
 Further plants (#896): "Weiteres Exemplar" (and the empty state's "Art wählen") opens `/collection/new`, titled "Pflanze anlegen", the same two steps as the first plant in its own lazy chunk. The save step adds the field "Standort", preselected with the place of the plant with the latest catch date (matched by name) and shown with its light; "Keiner" leaves it open. After saving, "Zum Bestand" or "Noch eine Pflanze". "Mehr Angaben" opens the long form for the chosen species.
 
@@ -190,6 +193,43 @@ Acceptance criteria:
 
 State of implementation: the operator area (`GET /operator/introduction`, section "Einstieg" in "Betreiber", migration `0083`) shows the three measures against the targets from existing data only: the median seconds from the creation of an account to the creation of its first specimen, the share of accounts that are at least 7 days old and have no specimen (an archived one counts as a plant), and the steps of the guide by construction (`FIRST_PLANT_STEPS`). The window is the accounts created in the last 90 days (starting value). The database function `operator_introduction()` is `security definer`, checks the operator role again and returns counts and one median, never an account; no click and no event is stored, no third party is involved. It opens no row rule: it reads the first specimen of each account of the window under the normal row rule by taking over that account inside the function (migration `0084`; two-account tests show that no one else sees a foreign specimen). A figure with fewer than 5 accounts behind it is `NULL` already in SQL (also the count of accounts) and shows as "unbekannt (zu wenige Konten)", the target stays visible (P-08, P-05); `core` repeats the check. **Known limits:** the time starts at the creation of the account, not at the "first open" (which is not stored); accounts of the vault-era or before the new flow are inside the window until they age out. The protocol template `template-onboarding-usability.md` is complete for a run (task, time, steps, questions asked, hesitation, abandonment, findings with label `epic:ONB`). **Open:** the first usability run with 3 to 5 casual users on the real app has not taken place; no result is recorded and none is invented. The story stays 🟨 until that run is done and linked in a release PR.
 
+### US-ONB-09 · Switch features on or off per keeper · ⬜ new
+
+Issue #1321 (owner interview 2026-11-05). As a **plant keeper** I want to switch off the features I do not use, and to choose the level of detail where that makes sense, so that the app stays as simple or as detailed as I want and nothing I have recorded is lost.
+
+Acceptance criteria:
+
+- Given a feature outside the core purpose (see the table below), when I switch it off in "Konto", section "Funktionen", then it leaves the navigation, "Heute" and the reminders at once (P-12).
+- Given a switched-off feature, then its data stays, and switching it on again shows all of it (P-10).
+- Given a switched-off feature, then it is still listed in "Konto", section "Funktionen", with its switch, and in the function overview (US-ONB-06) as "Ausgeschaltet" with the switch to turn it on again. It is never announced as locked and never as "coming soon" (FR-ONB-03).
+- Given a core feature, then it has no switch, and the setting says why in one sentence (for example "Gehört zum Kern der App: Sammlung, Pflege und Pokédex bleiben an.").
+- Given a feature that offers several levels of detail, then the keeper picks the level in the same settings. The simpler level changes what is asked at entry, never what is stored or shown (P-10). Example: a new-leaf log with a tap, or with a photo, size and notes.
+- Given the operator has switched a feature off (US-DEV-06), then the keeper's switch does not show it, and it is never announced as "coming soon".
+- Given a feature is switched on but still locked by its unlock rule (US-ONB-04), then it shows its reason and its way as before. A switch is not an unlock.
+- Given an open request from another person (for example a swap request, US-SOZ-10) and a switched-off feature, then the request is not lost: it stays listed under the switch in "Konto" until the keeper answers it (assumption, P-10).
+- Given an AI client, then it may read the switch state but never change it (FR-KI-22). Friends never see the switch state (P-05).
+
+Core and switchable functions (core list decided by the owner, 2026-11-05; every other function is switchable):
+
+| Function                                                                    | Epics              | Keeper switch |
+| --------------------------------------------------------------------------- | ------------------ | ------------- |
+| "Heute", collection (plants, species), locations, light zones, account      | BES, LIC, ACC, QS  | core          |
+| Phases, measurements, photos and growth, treatments                         | PHA, WAC, BEH      | core          |
+| Care reminders (phase, treatment, measurement, watering interval)           | MON-02 to MON-05   | core          |
+| Pokédex, and the cultivar entries of variegated cultivars                   | POK, VAR (entries) | core          |
+| Wishlist (the mode in the collection)                                       | WUN                | switchable    |
+| Discover                                                                    | ENT                | switchable    |
+| Equipment and recommendations                                               | EQU                | switchable    |
+| Friends, feed, offers and swaps, swipe matching                             | SOZ, TAU           | switchable    |
+| AI access                                                                   | KI                 | switchable    |
+| Achievements (care rhythm, personal records, anniversaries, year in review) | ACH                | switchable    |
+| Sensors and their reminders                                                 | MON-06, MON-07     | switchable    |
+| Substrate (components, recipes, supports and their reminders)               | SUB                | switchable    |
+| Variegation facts, prices, logging and warnings                             | VAR                | switchable    |
+| Shop offers and sale alerts                                                 | DEAL               | switchable    |
+
+Status: the switches are stored per keeper (DM-ONB-04). Changing a switch is a validating operation (P-03). The core list is decided by the owner (2026-11-05); every other function is switchable and keeps its data when switched off.
+
 ## Data model
 
 ### DM-ONB-01 Keeper style (extension of the account settings)
@@ -203,6 +243,10 @@ State of implementation: the operator area (`GET /operator/introduction`, sectio
 ### DM-ONB-03 Dismissed hint
 
 `Account`, `Occasion` (id), `Dismissed_At` or `Last_Shown_At` (local date). Used for "once per occasion" and the 7-day expiry of US-ONB-07. Tenant table.
+
+### DM-ONB-04 Keeper feature switch
+
+`Account`, `Feature` (id from the feature registry of US-ONB-04), `Enabled` (`yes | no`; no row means `yes`), `Changed_At` (local date). Tenant table of the keeper (P-04), private (P-05). The state of a switch is derived; only the keeper's choice is stored (NFR-04).
 
 ## Requirements
 
@@ -218,21 +262,23 @@ State of implementation: the operator area (`GET /operator/introduction`, sectio
 | FR-ONB-08 | No gamification of the introduction: no level, rank, title, points, streak, badge, confetti or leaderboard; no countdown pressure; no comparison with other keepers. Unlocks are not achievements (ACH) and are not shared with friends (P-05).                                                                                                                                                                                                                                                                                       | ⬜              |
 | FR-ONB-09 | Accessibility (NFR-13): lock markings and hints are text, reachable by keyboard and announced; 360 px layout; reduced motion respected (US-QS-14). Texts are German, kept in message tables.                                                                                                                                                                                                                                                                                                                                          | ⬜              |
 | FR-ONB-10 | Out of scope: guided tours with arrows, video tutorials, progress bars with percentages, reminders by e-mail or push to "finish setup", A/B tests on individuals, per-click analytics, unlocks sold or earned by money or activity points.                                                                                                                                                                                                                                                                                            | ⬜ (deliberate) |
+| FR-ONB-11 | **Keeper switches (P-12):** core features (collection, care, Pokédex, "Heute" and the account) have no switch, and the setting says why. A switched-off feature leaves navigation, "Heute" and reminders; its data stays, and open requests of other people are kept until the keeper answers them (P-10). A switch is a validating operation, is never changed by an AI client (FR-KI-22) and is never shown to friends (P-05).                                                                                                      | ⬜              |
 
 ## Dependencies and build order
 
 Decided by the PO. Priority P1 for the new order of the start, P2 for the rest; release R1 (assumption), so as early as possible and before the app is opened beyond the three start users (stage 2).
 
-| Order | Story     | Priority | Release | Depends on              | Why here                                                             |
-| ----- | --------- | -------- | ------- | ----------------------- | -------------------------------------------------------------------- |
-| 1     | US-ONB-01 | P1       | R1      | US-ACC-03, US-BES-02    | The reported problem; reorders the start with the first plant first  |
-| 2     | US-ONB-02 | P2       | R1      | US-ONB-01, US-LIC-01/02 | Removes the structure questions and the permanent nag cards          |
-| 3     | US-ONB-04 | P2       | R1      | US-ACH-08, US-DEV-06    | Pure rules, no UI; basis for everything staged                       |
-| 4     | US-ONB-03 | P2       | R1      | US-ACC-02, US-ONB-04    | Style setting before any function is locked                          |
-| 5     | US-ONB-05 | P2       | R1      | US-ONB-04, US-QS-14     | Locks only ship together with reason, way and the unlock tap         |
-| 6     | US-ONB-06 | P2       | R1      | US-ONB-04, US-ONB-05    | Fixed overview and the registry test                                 |
-| 7     | US-ONB-07 | P2       | R1      | US-ONB-01, US-ACH-08    | Hints once the occasions exist                                       |
-| 8     | US-ONB-08 | P2       | R1      | US-ONB-01               | Protocol template with the first story, first run before the release |
+| Order | Story     | Priority | Release | Depends on                     | Why here                                                                  |
+| ----- | --------- | -------- | ------- | ------------------------------ | ------------------------------------------------------------------------- |
+| 1     | US-ONB-01 | P1       | R1      | US-ACC-03, US-BES-02           | The reported problem; reorders the start with the first plant first       |
+| 2     | US-ONB-02 | P2       | R1      | US-ONB-01, US-LIC-01/02        | Removes the structure questions and the permanent nag cards               |
+| 3     | US-ONB-04 | P2       | R1      | US-ACH-08, US-DEV-06           | Pure rules, no UI; basis for everything staged                            |
+| 4     | US-ONB-03 | P2       | R1      | US-ACC-02, US-ONB-04           | Style setting before any function is locked                               |
+| 5     | US-ONB-05 | P2       | R1      | US-ONB-04, US-QS-14            | Locks only ship together with reason, way and the unlock tap              |
+| 6     | US-ONB-06 | P2       | R1      | US-ONB-04, US-ONB-05           | Fixed overview and the registry test                                      |
+| 7     | US-ONB-07 | P2       | R1      | US-ONB-01, US-ACH-08           | Hints once the occasions exist                                            |
+| 8     | US-ONB-08 | P2       | R1      | US-ONB-01                      | Protocol template with the first story, first run before the release      |
+| 9     | US-ONB-09 | P2       | R1      | US-ONB-04, US-ONB-06, US-QS-17 | Switches need the registry and the overview of the staged functions first |
 
 No lock ships before US-ONB-05 and US-ONB-06 (FR-ONB-02, FR-ONB-03): staging without transparency is not allowed.
 
@@ -246,6 +292,7 @@ No lock ships before US-ONB-05 and US-ONB-06 (FR-ONB-02, FR-ONB-03): staging wit
 - Hints are quiet: dismissible, once per occasion, off in calm mode, nothing hidden that is looked for.
 - Measurable targets (90 seconds, 3 steps, 25 percent without a plant after 7 days) are starting values.
 - Release R1 and priorities P1 (US-ONB-01) and P2 (rest); the owner may overrule per ticket.
+- Keeper switches (P-12, US-ONB-09): collection, care, Pokédex, "Heute" and the account are core and have no switch (owner decision 2026-11-05). The wishlist and achievements are switchable and keep their data (owner decision). Every other function is switchable.
 
 ## Open questions
 

@@ -1,6 +1,8 @@
 {
   "unreleased": [
-    "Installieren: PflanzenDex lässt sich jetzt auf dem Startbildschirm deines Handys ablegen und öffnet sich dann ohne Browserleiste. Die App hat dafür ein eigenes Symbol: eine Pflanze im Topf in der Markenfarbe.",
+    "Installieren: PflanzenDéx lässt sich jetzt auf dem Startbildschirm deines Handys ablegen und öffnet sich dann ohne Browserleiste. Die App hat dafür ein eigenes Symbol: eine Pflanze im Topf in der Markenfarbe.",
+    "Klarere Worte: Die Verteilung auf die Zonen sagt jetzt „am leersten“ und schlägt die Wunschliste vor. Die Einstellungen der Erinnerungen nennen die Pause „Erinnerungspause“.",
+    "Wunschbilder: Die Karten der Wunschliste laden jetzt ein kleines Vorschaubild statt des großen Bildes. Das geht schneller und braucht weniger Daten.",
     "Entdecken und Tauschen: Die Karten folgen jetzt deinem Finger, neigen sich und zeigen beim Ziehen „Ja“, „Nein“ oder „Später“. Lässt du weit genug los, fliegt die Karte weg, sonst springt sie zurück. Knöpfe und Tastatur wirken genauso.",
     "Fotos und Wunschbilder: Neue Bilder werden im Format WebP gespeichert, das beim Laden weniger Daten braucht.",
     "Große Schrift: Die Kacheln der Sammlung stapeln Bild und Text, wenn es eng wird, sodass der Name mehr Platz hat und nichts mehr aus der Kachel ragt. Nach „Erneut versuchen“ steht der Fokus auf der ersten neu geladenen Pflanze.",
@@ -214,6 +216,7 @@
     "Keine Umrandung mehr bei der Überschrift: Nach dem Antippen oder Klicken einer Schaltfläche oder eines Links sieht die Überschrift der neuen Ansicht keinen Rahmen mehr, der wie ein Eingabefeld aussieht. Wer mit der Tastatur navigiert, sieht den Fokusrahmen weiterhin.",
     "Große Bildschirme: Neben einem offenen Fenster bleibt der Inhalt jetzt breit genug für Namen und Zahlen, statt auf einen schmalen Streifen zu schrumpfen. „Heute“ ist gleich breit, auch mit einem Jubiläum. „Konto“ zeigt ab 1024 Pixel „Einstellungen“ rechts, statt eines leeren Feldes.",
     "Zurück und Überschriften: Unterseiten haben jetzt alle dieselbe Kopfzeile: links ein Pfeil „Zurück zu …“, daneben die eine Überschrift und höchstens eine Schaltfläche. Das gilt für „Freunde“ (die Sammlung einer Freundin oder eines Freundes, Tauschbörse, Passende Angebote), das Profil einer Art, die Abschnitte von „Konto“, das Messen einer Pflanze, „Standorte und Lichtzonen“ und „Pflanze anlegen“. Die Prüfliste steht ohne Karte um ihre Überschrift. Die Seiten zum Freischalten einer Funktion sind eine Karte mit Überschrift und Schaltflächen. Schaltflächen haben feste Rollen: die Hauptaktion gefüllt, Nebenaktionen umrandet, weitere Wege nur Text (zum Beispiel „Mehr Angaben“). Auf „Heute“ und bei „Pflanze anlegen“ steht keine graue Schaltfläche mehr neben umrandeten.",
-    "Eintopfen: Ein Datum vor dem Fangdatum der Pflanze wird nicht gespeichert. Das Formular zeigt am Feld „Eingetopft am“, dass der Tag vor dem Fangdatum liegt; wähle das Fangdatum oder einen späteren Tag. Ist kein Fangdatum bekannt, nimmt das Formular jeden früheren Tag an."
+    "Eintopfen: Ein Datum vor dem Fangdatum der Pflanze wird nicht gespeichert. Das Formular zeigt am Feld „Eingetopft am“, dass der Tag vor dem Fangdatum liegt; wähle das Fangdatum oder einen späteren Tag. Ist kein Fangdatum bekannt, nimmt das Formular jeden früheren Tag an.",
+    "Sammlung: Wird das Fenster kleiner, etwa beim Drehen des Telefons, zeigt die Pflanzenliste nur noch so viele Kacheln, wie darunter Platz haben. Der Bereich scrollt nicht mehr in sich selbst."
   ]
 }
