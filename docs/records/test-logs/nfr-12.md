@@ -567,3 +567,30 @@ The raw body is 434 to 439 B per taxon at every size.
 - One response per size; no variance and no server CPU time for compressing it per request were measured.
 
 This section gives sizes only. The payload decision is the owner's (issue #1302, questions 1 to 3).
+
+---
+
+## 20. Issue #1240: every transaction opens in one round trip (2026-11-05)
+
+**Change:** `begin`, the role switch and the settings go in one simple-protocol query (`beginAsApplicationRole`), so a transaction costs 2 round trips of frame instead of 4. Reads keep their own transactions; the owner decided against one transaction per GET request. Role, settings and transaction scope are unchanged (P-04). Every value is written with `client.escapeLiteral`, because a sign-in subject is free text. `catalog-load.ts` keeps the old order: it takes an advisory lock between `begin` and the role switch.
+
+**Result:** `GET /today` is at 40 statements (issue target: about 40), down from 66, with no statement text twice. The 14 payload statements are unchanged.
+
+**Method:** a temporary uncommitted switch between the old and the new opening, same code otherwise, fresh `postgres:18.6-alpine3.24` per run, order old, new, new, old. `perf:measure` at 1,000 specimens with 30 timed runs; `perf:concurrency` with pool 12, 100 specimens, 10 s per level. Another session ran short browser measurements at the same time, which the alternating order absorbs.
+
+| Request at 1,000 specimens | Statements before | After | Median ms before | After      |
+| -------------------------- | ----------------- | ----- | ---------------- | ---------- |
+| `GET /today`               | 66                | 40    | 25.9, 26.4       | 23.5, 25.7 |
+| `GET /specimens/cards`     | 52                | 32    | 8.1, 8.3         | 7.9, 7.8   |
+| `GET /onboarding/unlocks`  | 56                | 34    | 4.3, 4.1         | 4.0, 3.4   |
+| `GET /wishes/candidates`   | 51                | 31    | 14.1, 12.4       | 12.5, 12.3 |
+
+| Virtual users | Screens/s before | After        | Median ms before | After        | p95 ms before | After        |
+| ------------- | ---------------- | ------------ | ---------------- | ------------ | ------------- | ------------ |
+| 1             | 76.5, 73.6       | 79.7, 80.8   | 12.9, 13.5       | 12.4, 12.2   | 16.4, 17.2    | 15.7, 15.4   |
+| 16            | 167.6, 165.6     | 187.1, 192.5 | 93.2, 95.4       | 84.8, 81.3   | 114.1, 112.5  | 104.5, 106.1 |
+| 32            | 169.5, 165.2     | 194.6, 193.4 | 187.3, 190.8     | 161.1, 164.7 | 216.5, 221.5  | 192.0, 194.8 |
+
+At 32 users that is about 16 % more screens per second and a median about 14 % lower.
+
+**Limits (P-08):** one machine over loopback, two runs per state. A single request hardly changes; the gain is under load. Part of the drop in statements is counting: the opening still executes its statements, they travel as one call. A real network between API and database, even a container network, adds latency to each round trip; that was not measured here.

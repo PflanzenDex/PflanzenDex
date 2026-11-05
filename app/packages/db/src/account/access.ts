@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from "pg";
-import { enterApplicationRole, poolLimits, withAccount } from "../kernel/index.ts";
+import { beginAsApplicationRole, poolLimits, withAccount } from "../kernel/index.ts";
 
 // Same shapes as the interface AccessStore in `core` (structurally equal; `db` does not import `core`).
 type Role = "operator" | "reviewer";
@@ -111,8 +111,7 @@ export class AccessPostgres {
     if (subject.trim() === "") throw new Error("Subject missing");
     const client = await this.pool.connect();
     try {
-      await client.query("begin");
-      await enterApplicationRole(client, poolLimits(this.pool), [["app.subject", subject]]);
+      await beginAsApplicationRole(client, poolLimits(this.pool), [["app.subject", subject]]);
       const known = await client.query("select 1 from account where subject = $1", [subject]);
       if (known.rowCount) return await finish(client, "existing");
       const used = await client.query<{ ok: boolean }>("select redeem_invitation($1) as ok", [
