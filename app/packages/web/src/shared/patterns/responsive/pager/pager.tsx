@@ -113,8 +113,9 @@ export type PagerProps<T> = {
   replace?: boolean;
   /**
    * The page size is the free height of the list region: the whole rows that fit, times the columns of a grid, measured
-   * in the layout (US-QS-19, issue 1029). The region must be sized by its frame (flex-1, min-h-0 up to the frame), and
-   * the pager sits below it at the bottom of that frame. The list carries `data-page-fit`, so a layer takes its full height (issue 1156).
+   * in the layout (US-QS-19, issue 1029). The region is sized by its frame (flex-1), and the pager sits below it at the
+   * bottom of that frame; the frame's room that the content does not take is the free height (issue 1413). The list
+   * carries `data-page-fit`, so a layer takes its full height (issue 1156).
    */
   fit?: boolean;
   /** The entries live on the server in pages (FR-BES-23): the pages count from its total, see `PagerPaging`. */
