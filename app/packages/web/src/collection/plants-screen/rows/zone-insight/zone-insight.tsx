@@ -10,7 +10,7 @@ export const ZONES_LAYER = "zones";
 /** One line about the light zones: the thinnest zone named in text, or the way to the distribution (P-08, P-09). */
 export function zoneInsightText(distribution: Distribution): string {
   const names = distribution.thinnest.map((z) => zoneLabel(z.name));
-  return names.length > 0 ? `Dünnste Zone: ${names.join(", ")}` : "Lichtzonen ansehen";
+  return names.length > 0 ? `Am wenigsten besetzt: ${names.join(", ")}` : "Lichtzonen ansehen";
 }
 
 /**

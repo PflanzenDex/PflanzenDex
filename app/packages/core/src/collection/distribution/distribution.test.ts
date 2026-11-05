@@ -169,6 +169,19 @@ describe("US-LIC-02 thinnest zone and tie", () => {
     expect(v.hint.nextAction).not.toBe("");
   });
 
+  it("US-LIC-02 the thinnest zone reads plainly and its next step points to the wishlist (P-09, issue 897)", async () => {
+    await create("anna", "Fensterbank");
+    await create("anna", "Fensterbank");
+    await create("anna", "Regal");
+    await create("anna", "Regal");
+    await create("anna", "Wüstenbank");
+    const v = await zoneDistribution(deps(), "anna");
+    expect(v.hint.text).toContain("am wenigsten besetzt");
+    expect(v.hint.text).not.toContain("dünnste");
+    expect(v.hint.nextAction).toContain("Wunschliste");
+    expect(v.hint.nextAction).not.toContain("Plane");
+  });
+
   it("with a tie it names all tied ones and points to the wishlist", async () => {
     await create("anna", "Fensterbank");
     await create("anna", "Fensterbank");

@@ -143,7 +143,7 @@ describe("US-QS-19 tiles of the plants", () => {
 
   it("US-QS-19 at 200 % text the insight row wraps at whole words: the row may wrap, the insight never gets narrower than its longest word, and the section grows with its content (issue 1113)", () => {
     screenWith(many(8));
-    const insight = screen.getByRole("button", { name: /Lichtzonen ansehen|Dünnste Zone/ });
+    const insight = screen.getByRole("button", { name: /Lichtzonen ansehen|Am wenigsten besetzt/ });
     expect(insight.className).not.toContain("min-w-0");
     expect(insight.querySelector("span.break-normal")).not.toBeNull();
     expect(insight.parentElement?.className).toContain("flex-wrap");
@@ -197,11 +197,11 @@ describe("US-QS-19 the layers of the plants", () => {
   it("US-QS-19 the insight row names the thinnest zone and opens the layer with the distribution and the way to the management", async () => {
     const onManage = vi.fn();
     screenWith(many(2), { onManage });
-    await userEvent.click(screen.getByRole("button", { name: /Dünnste Zone: Zone 3/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Am wenigsten besetzt: Zone 3/ }));
     const layer = await screen.findByRole("dialog", { name: "Lichtzonen" });
     expect(screen.getByTestId("address").textContent).toBe("?sheet=zones");
     expect(within(layer).getByText(/Zone 3: 1 Pflanze/)).toBeTruthy();
-    expect(within(layer).getByText(/dünnste Zone/)).toBeTruthy();
+    expect(within(layer).getByText(/am wenigsten besetzt/)).toBeTruthy();
     expect(within(layer).getByText(/Stecklingslicht zählt nicht/)).toBeTruthy();
     await userEvent.click(
       within(layer).getByRole("button", { name: "Standorte und Lichtzonen verwalten" }),
