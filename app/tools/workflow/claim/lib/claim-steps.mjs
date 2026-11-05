@@ -1,4 +1,7 @@
 // Side-effect steps of `make claim` (US-DEV-08), each small and driven through the injected client.
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { json } from "./claim-client.mjs";
 import { branchName, claimKey, scopeOf, storyIdOf } from "./claim-lib.mjs";
 
@@ -60,6 +63,32 @@ export function prTitle(issue) {
   const subject = issue.title.replace(/^.*?·\s*/, "").replace(/^(US|FR|TE)-\S+\s*/i, "");
   const type = branchName(issue).split("/")[0];
   return `${type}(${scopeOf(issue)}): ${subject.charAt(0).toLowerCase()}${subject.slice(1)}${id ? ` (${id})` : ""}`;
+}
+
+// Opens the draft PR with the Handoff as body file. The folder of that file goes again, also when `gh` fails.
+export async function openDraftPr(client, issue, branch, body) {
+  const dir = mkdtempSync(path.join(tmpdir(), "claim-"));
+  try {
+    const file = path.join(dir, "body.md");
+    writeFileSync(file, body);
+    return (
+      await client.run("gh", [
+        "pr",
+        "create",
+        "--draft",
+        "--base",
+        "dev",
+        "--head",
+        branch,
+        "--title",
+        prTitle(issue),
+        "--body-file",
+        file,
+      ])
+    ).trim();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 /** Draft PR text; the "## Handoff" section is what the next person (or agent) reads first. */

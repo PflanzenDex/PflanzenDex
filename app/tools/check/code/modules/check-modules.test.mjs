@@ -2,10 +2,21 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import { checkProject } from "../check-boundaries.mjs";
 import { kernelExports } from "./rules/check-modules-sql.mjs";
 import { MODULE_CONFIG as REAL } from "../../../../config/lint/modules.config.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // Module rules AB-7 to AB-14 (FR-QG-19): each rule has a clean case and a violating fixture.
 const CFG = {
@@ -23,7 +34,7 @@ const CFG = {
 const cfg = (patch = {}) => ({ ...CFG, ...patch });
 
 function project(files) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "modules-"));
+  const dir = tempDir("modules-");
   for (const [rel, content] of Object.entries(files)) {
     const p = path.join(dir, rel);
     fs.mkdirSync(path.dirname(p), { recursive: true });

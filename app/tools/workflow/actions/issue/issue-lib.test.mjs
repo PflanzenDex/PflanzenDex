@@ -127,7 +127,7 @@ test("FR-DEV-10: make issue accepts the input in any case and returns the labels
   );
   assert.equal(plan.ok, true);
   assert.deepEqual(plan.labels, ["story", "epic:ACC"]);
-  assert.deepEqual(plan.fields, { Typ: "Story", Epic: "ACC", Priority: "P1" });
+  assert.deepEqual(plan.fields, { Typ: "Story", Epic: "ACC", Priority: "P1", Status: "Todo" });
   assert.equal(plan.title, "Delete specimen");
 });
 

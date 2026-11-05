@@ -1,4 +1,4 @@
-import { test, describe } from "node:test";
+import { test, describe, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -14,6 +14,17 @@ import {
   assess,
   readLimits,
 } from "./check-lighthouse-summary.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // Real Lighthouse 13.5.0 JSON shape (trimmed to the keys the summary reads).
 const item = (resourceType, transferSize) => ({ resourceType, transferSize, resourceSize: 1 });
@@ -114,7 +125,7 @@ describe("QG-U1 Lighthouse summary", () => {
   });
 
   test("QG-U1 readReports reads run-*.json in order and fails without reports", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-summary-"));
+    const dir = tempDir("lh-summary-");
     assert.throws(() => readReports(dir), /no Lighthouse reports/);
     assert.throws(() => readReports(path.join(dir, "missing")), /no Lighthouse reports/);
     runs.forEach((r, i) =>
@@ -176,7 +187,7 @@ describe("QG-U1 · FR-QG-09 Lighthouse limits (issue 1136)", () => {
   test("FR-QG-09 --check exits 1 on a value past the limit and 0 within the limits", () => {
     const script = new URL("./check-lighthouse-summary.mjs", import.meta.url).pathname;
     const run = (lcp) => {
-      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-check-"));
+      const dir = tempDir("lh-check-");
       const ok = {
         ...runs[1],
         categories: {
