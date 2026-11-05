@@ -41,19 +41,13 @@ function titleMinimum(hasBack: boolean, hasAction: boolean): string {
   return "min-w-20 flex-1 [overflow-wrap:anywhere]";
 }
 
+/** The icon-only way back. It carries no `title`: a native tooltip cannot be closed with Esc (US-QS-12, 1.4.13). */
 function BackControl(props: { back: PageBack }) {
   const { back } = props;
   const classes = cn("shrink-0", back.className);
   if ("to" in back)
     return (
-      <Button
-        asChild
-        variant="ghost"
-        size="icon"
-        aria-label={back.label}
-        title={back.label}
-        className={classes}
-      >
+      <Button asChild variant="ghost" size="icon" aria-label={back.label} className={classes}>
         <Link to={back.to} state={back.state}>
           <ChevronLeft aria-hidden="true" className="size-5" />
         </Link>
@@ -65,7 +59,6 @@ function BackControl(props: { back: PageBack }) {
       variant="ghost"
       size="icon"
       aria-label={back.label}
-      title={back.label}
       className={classes}
       onClick={back.onBack}
     >

@@ -343,6 +343,46 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
     vi.unstubAllGlobals();
   });
 
+  it("US-QS-08 · 2.4.11 the content reserves the real height of the bottom bar, so no line ends under it", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    // A bar whose labels wrap is 93 px high, more than the 4 rem the classes of `main` reserve.
+    const height = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        return { height: this.hasAttribute("data-bottom-bar") ? 93 : 0 } as DOMRect;
+      });
+    const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
+    expect(document.querySelector("main")?.style.paddingBottom).toBe("93px");
+    unmount();
+    expect(document.querySelector("main")).toBeNull();
+    height.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-14 · the content takes the classes of `main` again where the bar is hidden (from md)", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const height = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(() => ({ height: 0 }) as DOMRect);
+    const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
+    expect(document.querySelector("main")?.style.paddingBottom).toBe("");
+    unmount();
+    height.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
   it("US-QS-08 · 2.1.2 choosing a destination in the Mehr drawer closes it, so no overlay keeps the focus", async () => {
     at("/", <MobileNavBar items={make(9)} />);
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));

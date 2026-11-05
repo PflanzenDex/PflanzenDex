@@ -21,6 +21,16 @@ function clearance(bar: Element | null | undefined): string {
 }
 
 /**
+ * The bottom padding of `main` for the bar: its real height, because the class reserves 4 rem and a bar whose labels wrap
+ * is taller (93 px at 412 px wide): the last line of the content sat under it. Empty while the bar is hidden (from `md`),
+ * so the classes of `main` apply again.
+ */
+function barReserve(bar: Element | null | undefined): string {
+  const height = bar?.getBoundingClientRect().height ?? 0;
+  return height > 0 ? `${height}px` : "";
+}
+
+/**
  * Keeps the focused element out from under the sticky header and the fixed bottom bar (US-QS-08, WCAG 2.4.11): the
  * page's scroll padding follows their real height, which changes with wrapping, safe areas and the `md` breakpoint.
  */
@@ -30,11 +40,13 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
     if (!root || typeof ResizeObserver === "undefined") return;
     const header = root.querySelector("header");
     const bar = root.querySelector("nav[data-bottom-bar]");
+    const main = root.querySelector<HTMLElement>("main");
     // From `md` the header and the bar are `display: none` and measure 0, so rail and sidebar add no padding.
     const html = document.documentElement.style;
     const update = () => {
       html.scrollPaddingTop = clearance(header);
       html.scrollPaddingBottom = clearance(bar);
+      if (main) main.style.paddingBottom = barReserve(bar);
     };
     const observer = new ResizeObserver(update);
     for (const el of [header, bar]) if (el) observer.observe(el);
@@ -43,6 +55,7 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
       observer.disconnect();
       html.scrollPaddingTop = "";
       html.scrollPaddingBottom = "";
+      if (main) main.style.paddingBottom = "";
     };
   }, [shell]);
 }

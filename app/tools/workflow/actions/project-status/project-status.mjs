@@ -128,7 +128,21 @@ export async function main(argv, client = realClient()) {
       "number,body,state,baseRefName",
     ]);
     const prs = all.map((p) => ({ ...p, base: p.baseRefName, state: p.state.toLowerCase() }));
-    const found = drift(items, prs);
+    const openIssues = await json(client, [
+      "issue",
+      "list",
+      "--state",
+      "open",
+      "--limit",
+      "1000",
+      "--json",
+      "number",
+    ]);
+    const open = new Set(openIssues.map((i) => i.number));
+    const found = drift(
+      items.map((i) => ({ ...i, open: open.has(i.issue) })),
+      prs,
+    );
     for (const f of found) console.log(`#${f.issue}: ${f.problem}`);
     console.log(`${found.length} drift finding(s).`);
     return found.length ? 1 : 0;

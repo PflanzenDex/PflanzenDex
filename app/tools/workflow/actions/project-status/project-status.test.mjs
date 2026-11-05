@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { closedIssues, drift, transitions } from "./project-status-lib.mjs";
-import { missingPriority } from "./project-status.mjs";
+import { main, missingPriority } from "./project-status.mjs";
 
 const items = [
   { issue: 1, status: "In Progress" },
@@ -88,4 +88,49 @@ test("US-DEV-05: missingPriority names open items without a priority, epics and 
   };
   const client = { run: async () => JSON.stringify(list) };
   assert.deepEqual(await missingPriority(client, [1, 2, 3, 99]), [2]);
+});
+
+test("FR-DEV-10 (e): drift reports no status for an open item of any type, not for a closed one", () => {
+  const sItems = [
+    { issue: 7, priority: "P1 high", open: true },
+    { issue: 8, epic: true, open: true },
+    { issue: 9, priority: "P2 normal", open: false },
+    { issue: 10, status: "Todo", priority: "P1 high", open: true },
+  ];
+  assert.deepEqual(drift(sItems, []), [
+    { issue: 7, problem: "no status" },
+    { issue: 8, problem: "no status" },
+  ]);
+});
+
+test("FR-DEV-10 (e): status-check exits 1 and lists the open board item without a Status", async () => {
+  const client = {
+    async run(cmd, args) {
+      const line = args.join(" ");
+      if (line.startsWith("project item-list"))
+        return JSON.stringify({
+          items: [
+            { id: "a", content: { type: "Issue", number: 7 }, priority: "P1 high" },
+            { id: "b", content: { type: "Issue", number: 8 }, status: "Done" },
+            { id: "c", content: { type: "Issue", number: 9 }, priority: "P2 normal" },
+          ],
+        });
+      if (line.startsWith("issue list --state open"))
+        return JSON.stringify([{ number: 7 }, { number: 8 }]);
+      if (line.startsWith("pr list")) return "[]";
+      throw new Error(`unexpected gh call: ${line}`);
+    },
+  };
+  const lines = [];
+  const log = console.log;
+  console.log = (...args) => lines.push(args.join(" "));
+  let code;
+  try {
+    code = await main(["check"], client);
+  } finally {
+    console.log = log;
+  }
+  assert.equal(code, 1);
+  assert.ok(lines.includes("#7: no status"));
+  assert.ok(!lines.some((l) => /^#9:/.test(l)), "a closed item without a Status is not reported");
 });

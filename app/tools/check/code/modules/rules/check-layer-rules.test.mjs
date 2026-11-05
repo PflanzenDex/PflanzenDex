@@ -2,9 +2,20 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import { checkProject } from "../../check-boundaries.mjs";
 import { MODULE_CONFIG as REAL } from "../../../../../config/lint/modules.config.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // Layer rules AB-3, AB-4 and AB-5 (FR-QG-05): a clean fixture and one violating fixture per kind of slip.
 const mod = (name, dependsOn = ["kernel"]) => ({
@@ -52,7 +63,7 @@ const clean = {
 };
 
 function project(files) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "layers-"));
+  const dir = tempDir("layers-");
   for (const [rel, content] of Object.entries(files)) {
     const p = path.join(dir, rel);
     fs.mkdirSync(path.dirname(p), { recursive: true });
