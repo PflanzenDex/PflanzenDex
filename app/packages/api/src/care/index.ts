@@ -2,6 +2,7 @@
 export {
   measurementPhotoSourceFor,
   measurementSourceFor,
+  measuredSourceFor,
   treatmentSourceFor,
   targetLocationFor,
 } from "./source";

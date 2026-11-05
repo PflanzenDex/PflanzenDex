@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
 import { setLightZone } from "../../specimens/model/specimens-api";
+import { answerCardRead } from "../../specimens/tests/cards-fake";
 
 // US-LIC-02 / US-BES-04: the own light zone of an EXISTING specimen is set, changed and cleared on its card.
 const response = (status: number, body: unknown) =>
@@ -64,7 +65,7 @@ function fakeServer(state: {
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      return response(200, { cards: state.cards });
+      return answerCardRead(new URL(String(url)), state.cards) ?? response(404, {});
     }),
   );
   return posts;

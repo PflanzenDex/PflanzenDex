@@ -1,19 +1,18 @@
-import { useCallback, type ReactNode } from "react";
-import type { Species, Specimen } from "@pflanzendex/core";
+import { useCallback } from "react";
+import type { Specimen } from "@pflanzendex/core";
 import { useInvalidate } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
 import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
 import { refusalText } from "../specimens/model/refusal";
-import { CreateForm } from "../specimens/create/create-form/create-form";
+import { CreateWithSiblings } from "./create-with-siblings/create-with-siblings";
+import type { Props } from "./collection-props";
 import { ArchiveForm } from "../archived/archived-form/archived-form";
 import {
   COLLECTION_KEY,
   useCollection,
   useHostReport,
-  type Host,
   type Loaded,
-  type Token,
 } from "../specimens/hooks/use-collection";
 import { useArchive } from "../specimens/hooks/use-archive";
 import { useRepot } from "../specimens/hooks/use-repot";
@@ -29,25 +28,8 @@ import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/l
 import { Created } from "./created/created";
 import { ListHint } from "./hint-occasions/hint-occasions";
 import { PlantsScreen } from "../plants-screen/plants-screen";
-import type { PlantSlots } from "../plants-screen/plant-layers/layer-ids";
 import { useListActions, type ListActions } from "../specimens/hooks/use-list-actions";
-type Props = {
-  api: string;
-  token: Token;
-  newSpecies: Species | null;
-  onSpeciesChoose: () => void;
-  onAdd?: () => void; // quick flow for a further plant instead of the catalog (US-ONB-01)
-  onCompleted: (specimen: Specimen) => void;
-  onMeasure?: (e: { id: string; name: string }) => void;
-  /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
-  host?: Host;
-  /** Opens the management of locations and light zones from the layers of the plants (US-QS-19). */
-  onManage?: () => void;
-  groupBy?: "location"; // grouping by location and zone (US-QS-14)
-  renderHint?: (applicable: readonly string[]) => ReactNode; // calm hint (US-ONB-07)
-  /** Parts of the plant layer that belong to other modules, wired by the app (US-QS-23). */
-  plantSlots?: PlantSlots;
-};
+import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
 
 /**
  * Collection, create (US-BES-02), markers (US-BES-03), archive (US-BES-07): the form with a chosen species, otherwise the
@@ -56,6 +38,8 @@ type Props = {
 export function CollectionPage(props: Props) {
   const { api, token, newSpecies } = props;
   const request = useCollection(api, token);
+  // The plants are read page by page; the first page is part of the view, a failure of it fails the whole view (P-10).
+  const plants = useCardPages(api, token);
   const afterAction = useInvalidate(COLLECTION_KEY);
   const archived = useArchive(api, token, afterAction);
   const potted = useRepot(api, token, afterAction);
@@ -65,28 +49,33 @@ export function CollectionPage(props: Props) {
   const clearMessages = useCallback(() => {
     for (const a of [archived, potted, marked, caught, zoned]) a.setMessage(null);
   }, [archived, potted, marked, caught, zoned]);
-  const formOpen = !!(
-    newSpecies ||
-    archived.open ||
-    potted.open ||
-    marked.open ||
-    caught.open ||
-    zoned.open
-  );
-  useHostReport(props.host, request.value?.cards.length, formOpen);
+  const opened = [archived.open, potted.open, marked.open, caught.open, zoned.open];
+  const formOpen = !!newSpecies || opened.some(Boolean);
+  useHostReport(props.host, request.value?.summary.total, formOpen);
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
     clearMessages,
     completed: props.onCompleted,
   });
+  // The view waits for the summary and the first page; either failing fails the whole view with its text (P-10).
+  const failed = request.status === "error" ? request.error : plants.error;
+  const ready = request.status === "ready" && plants.status === "ready";
+  const status = ready
+    ? "ready"
+    : request.status === "pending" || plants.status === "pending"
+      ? "pending"
+      : "error";
   return (
     // No min-h-0: the card is never shorter than what it holds, so at a larger text size it grows with its content
     // and the one-screen frame scrolls (issue 1113); at normal text the list inside takes the free height.
     <PageFrame className="flex flex-1 flex-col">
       <RequestState
-        status={request.status}
-        {...(request.error ? { errorText: request.error.text } : {})}
-        onRetry={request.retry}
+        status={status}
+        {...(failed ? { errorText: failed.text } : {})}
+        onRetry={() => {
+          request.retry();
+          plants.retry();
+        }}
         {...(props.host ? {} : { heading: "Sammlung" })}
         skeleton={<CollectionPageSkeleton label="Sammlung wird geladen …" />}
         offline={request.offline}
@@ -94,6 +83,7 @@ export function CollectionPage(props: Props) {
         {request.value && (
           <Views
             data={request.value}
+            plants={plants}
             create={create}
             actions={{ archived, potted, marked, caught, zoned, clearMessages }}
             props={props}
@@ -107,6 +97,7 @@ export function CollectionPage(props: Props) {
 /** One view at a time: the create form, the archive form, the marker form or the list. */
 function Views(p: {
   data: Loaded;
+  plants: CardPages;
   create: ReturnType<typeof useCreate>;
   actions: ListActions;
   props: Props;
@@ -114,14 +105,13 @@ function Views(p: {
   const { data, create, props } = p;
   const { archived, potted, marked, caught, zoned } = p.actions;
   if (props.newSpecies) {
-    const id = props.newSpecies.id;
     return (
-      <CreateForm
+      <CreateWithSiblings
         species={props.newSpecies}
-        siblings={data.cards.filter((k) => k.speciesId === id)}
-        locations={data.locations}
-        zones={create.zones}
-        onSend={create.send}
+        api={props.api}
+        token={props.token}
+        data={data}
+        create={create}
         onCancel={props.onSpeciesChoose}
       />
     );
@@ -149,20 +139,36 @@ function Views(p: {
   }
   if (caught.open) return <CatchDateForm state={{ ...caught, open: caught.open }} />;
   if (zoned.open) return <LightZoneForm state={{ ...zoned, open: zoned.open }} />;
-  return <List data={data} created={create.created} actions={p.actions} props={props} />;
+  return (
+    <List
+      data={data}
+      plants={p.plants}
+      created={create.created}
+      actions={p.actions}
+      props={props}
+    />
+  );
 }
 
-function List(p: { data: Loaded; created: Specimen | null; actions: ListActions; props: Props }) {
-  const { data } = p;
+function List(p: {
+  data: Loaded;
+  plants: CardPages;
+  created: Specimen | null;
+  actions: ListActions;
+  props: Props;
+}) {
+  const { data, plants } = p;
   const { api, token } = p.props;
   const { message, error, handlers } = useListActions(api, token, p.actions);
   return (
     <>
       {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
       {error && <Warning>{refusalText(error)}</Warning>}
-      {p.created === null && <ListHint cards={data.cards} render={p.props.renderHint} />}
+      {p.created === null && <ListHint summary={data.summary} render={p.props.renderHint} />}
       <PlantsScreen
-        cards={data.cards}
+        cards={plants.cards}
+        plants={plants}
+        summary={data.summary}
         distribution={data.distribution}
         archived={data.archived}
         onSpeciesChoose={p.props.onAdd ?? p.props.onSpeciesChoose}

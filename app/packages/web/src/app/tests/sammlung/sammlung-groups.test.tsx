@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "../../destinations/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
+import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
 import "../../../collection/specimens/tests/plants-test-helpers";
@@ -12,17 +14,21 @@ import "../../../collection/specimens/tests/plants-test-helpers";
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
-const card = (id: string, location: string | null, lightZone: string | null) => ({
+const card = (id: string, location: string | null, lightZone: string | null): SpecimenCard => ({
   id,
   name: `Pflanze ${id}`,
+  speciesId: "a1",
+  marker: null,
   speciesName: "Bogenhanf",
-  status: "plant",
+  status: "plant" as const,
   location,
   lightZone,
+  lightZoneSource: lightZone === null ? null : ("location" as const),
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
 });
 const cards = [
@@ -41,18 +47,22 @@ const phase = {
   nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
 };
 
-function stubServer() {
+/** The API as the page reads it: the card reads answer from `list` (FR-BES-23), `record` sees every request. */
+function stubServer(list: readonly ReturnType<typeof card>[] = cards, record?: (url: URL) => void) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
-      const path = new URL(String(url)).pathname;
+      const u = new URL(String(url));
+      const path = u.pathname;
+      record?.(u);
+      const own = answerCardRead(u, list);
+      if (own) return own;
       if (path === "/locations")
         return response(200, {
           locations: [{ id: "s1", name: "Regal Süd", lightZoneId: null, kind: "indoor" }],
         });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      if (path === "/specimens/cards") return response(200, { cards });
       if (path === "/care-phases") return response(200, { phases: [phase] });
       if (path === "/light-zones") return response(200, { zones: [] });
       if (path === "/hints") return response(200, { hints: [] });
@@ -172,6 +182,24 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(screen.getByText("Standort unbekannt · Zone unbekannt · 1 Pflanze")).toBeTruthy();
     await openView();
     expect(pressed("Nach Standort")).toBe(true);
+  });
+
+  it("US-BES-06 · FR-BES-23 grouped by location a group shows its full count, and opening it loads only its own plants", async () => {
+    const seen: URL[] = [];
+    stubServer(
+      [
+        ...Array.from({ length: 120 }, (_, i) => card(`w${i}`, "Wohnzimmer", "Zone 2")),
+        card("f1", "Flur", null),
+      ],
+      (u) => seen.push(u),
+    );
+    renderAt("/collection?view=plants&group=location&part=Wohnzimmer");
+    const row = await screen.findByRole("group", { name: "Standort wählen" });
+    expect(within(row).getByRole("button", { name: /^Wohnzimmer \(120\)$/ })).toBeTruthy();
+    expect(await screen.findByText("Seite 1 von 20")).toBeTruthy();
+    const groupCalls = seen.filter((u) => u.pathname === "/specimens/cards");
+    expect(groupCalls.some((u) => u.searchParams.get("location") === "Wohnzimmer")).toBe(true);
+    expect(groupCalls.some((u) => u.searchParams.get("location") === "Flur")).toBe(false);
   });
 
   it("US-QS-19 · US-PHA-01 grouped by care phase the phase of the plants shows with its count line", async () => {

@@ -9,6 +9,7 @@ import type {
   MeasurementSource,
   OpenTreatment,
   ProvenanceSource,
+  MeasuredSource,
 } from "./cards-types";
 import type { CareProfileReader } from "../care-profile/care-profile-types";
 import { effectiveZone, zoneOverrides, type ZoneContext } from "../placement/effective-zone";
@@ -38,6 +39,7 @@ export interface CardsDependencies {
 export const NO_MEASUREMENTS: MeasurementSource = { forSpecimens: async () => new Map() };
 export const NO_TREATMENTS: TreatmentSource = { open: async () => new Map() };
 export const NO_PROVENANCE: ProvenanceSource = { forSpecimens: async () => new Map() };
+export const NO_MEASURED: MeasuredSource = { measuredSpecimenIds: async () => [] };
 
 const dayNumber = (date: string): number => {
   const [j, m, t] = date.split("-").map(Number);
@@ -73,8 +75,8 @@ function measurementDisplay(measurement: CardMeasurementView | undefined) {
 }
 
 /**
- * The cards of all specimens of the account (US-BES-06). The ports for measurements and treatments are asked once for
- * all own specimens, never for foreign ones (P-04). `today` is the user's local date.
+ * The cards of all specimens of the account (US-BES-06), the AI read included. The ports for measurements and treatments
+ * are asked once for all own specimens, never for foreign ones (P-04). `today` is the user's local date.
  */
 export async function specimenCards(
   deps: CardsDependencies,
@@ -83,6 +85,19 @@ export async function specimenCards(
 ): Promise<readonly SpecimenCard[]> {
   // Archived specimens have no card, and the ports do not learn their IDs (US-BES-07).
   const rows = (await deps.specimens.list(userId)).filter(isActive);
+  return cardsOf(deps, userId, today, rows);
+}
+
+/**
+ * The cards of the given specimens of the account, in the given order (US-BES-06, NFR-12). The ports are asked for these
+ * IDs only, so one page of the list never loads the rows of the other plants. The caller passes active specimens only.
+ */
+export async function cardsOf(
+  deps: CardsDependencies,
+  userId: string,
+  today: string,
+  rows: readonly SpecimenRow[],
+): Promise<readonly SpecimenCard[]> {
   const ids = rows.map((z) => z.id);
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
   const [locations, zones, species, measurements, treatments, profiles, provenance] =

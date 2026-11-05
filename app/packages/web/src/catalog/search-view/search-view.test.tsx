@@ -278,3 +278,37 @@ describe("US-QS-21 states name their next action", () => {
     expect(screen.queryByText("Der gemeinsame Katalog ist noch leer.")).toBeNull();
   });
 });
+
+describe("FR-BES-24 the search says when more species match", () => {
+  function searchWith(more: boolean | undefined, hits: readonly SpeciesHit[]) {
+    return render(
+      <MemoryRouter>
+        <SpeciesSearch
+          searchText="Dra"
+          hit={hits}
+          more={more}
+          onSearch={onSearch}
+          onOpen={onOpen}
+          onPropose={onPropose}
+          embedded
+        />
+      </MemoryRouter>,
+    );
+  }
+
+  it("FR-BES-24 shows the notice next to the shown hits when more species match", () => {
+    searchWith(true, many(3));
+    expect(screen.getByText("Mehr als 50 Treffer. Suche genauer.")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /Species/ })).toHaveLength(3);
+  });
+
+  it("FR-BES-24 no notice when every match is shown (exactly as many as the search shows)", () => {
+    searchWith(false, many(3));
+    expect(screen.queryByText("Mehr als 50 Treffer. Suche genauer.")).toBeNull();
+  });
+
+  it("FR-BES-24 no notice without hits, even when the flag is set", () => {
+    searchWith(true, []);
+    expect(screen.queryByText("Mehr als 50 Treffer. Suche genauer.")).toBeNull();
+  });
+});

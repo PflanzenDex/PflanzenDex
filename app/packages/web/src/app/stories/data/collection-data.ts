@@ -1,3 +1,4 @@
+import { cardReads } from "../card-reads";
 import type {
   CandidateList,
   Distribution,
@@ -125,7 +126,7 @@ const candidates: CandidateList = {
 };
 
 export const collectionRoutes = {
-  "/specimens/cards": { cards },
+  ...cardReads(cards),
   "/specimens/count": { count: 3, archived: 0 },
   "/specimens/archived": { archived: [] },
   "/specimens/distribution": { distribution },
@@ -154,7 +155,7 @@ export const collectionRoutes = {
 /** A new account: no plants, species or wishes yet; every mode says what to do first (P-09). */
 export const collectionEmpty = {
   ...collectionRoutes,
-  "/specimens/cards": { cards: [] },
+  ...cardReads([]),
   "/specimens/count": { count: 0, archived: 0 },
   "/pokedex/ownership": { ownership: { caught: [], unidentified: [] } },
   "/wishes/candidates": { ...candidates, candidates: [] },
@@ -183,6 +184,6 @@ const many: SpecimenCard[] = [
 
 export const collectionMany = {
   ...collectionRoutes,
-  "/specimens/cards": { cards: many },
+  ...cardReads(many),
   "/specimens/count": { count: many.length, archived: 0 },
 };

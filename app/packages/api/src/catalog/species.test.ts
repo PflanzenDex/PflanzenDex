@@ -144,3 +144,44 @@ describe("US-BES-01 propose, search and view species", () => {
     expect((await call(subA, "GET", "/species/no-uuid")).status).toBe(404);
   });
 });
+
+describe("FR-BES-24 visible cap of the species search over HTTP", () => {
+  // Letters only, one per species: the epithet of the proposal.
+  const suffix = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  const term = (base: string) => `${base}${run}`;
+  const propose = async (sub: string, t: string, count: number) => {
+    for (let i = 0; i < count; i++)
+      expect((await call(sub, "POST", "/species", profile(`${t}${suffix(i)} sp`))).status).toBe(
+        201,
+      );
+  };
+
+  it("FR-BES-24 51 matches: the answer keeps `species` with 50 hits and adds `more: true`", async () => {
+    const t = term("Capmore");
+    await propose(subA, t, 51);
+    const r = await call(subA, "GET", `/species?q=${t}`);
+    expect(r.status).toBe(200);
+    expect(r.body["species"]).toHaveLength(50);
+    expect(r.body["more"]).toBe(true);
+  });
+
+  it("FR-BES-24 exactly 50 matches: 50 hits and `more: false`", async () => {
+    const t = term("Capexact");
+    await propose(subA, t, 50);
+    const r = await call(subA, "GET", `/species?q=${t}`);
+    expect(r.body["species"]).toHaveLength(50);
+    expect(r.body["more"]).toBe(false);
+  });
+
+  it("FR-BES-24 a foreign proposal does not count toward `more` (P-05): the keeper sees no notice", async () => {
+    const t = term("Capforeign");
+    await propose(subA, t, 50);
+    await propose(subB, t, 3);
+    const mine = await call(subA, "GET", `/species?q=${t}`);
+    expect(mine.body["species"]).toHaveLength(50);
+    expect(mine.body["more"]).toBe(false);
+    const theirs = await call(subB, "GET", `/species?q=${t}`);
+    expect(theirs.body["species"]).toHaveLength(3);
+    expect(theirs.body["more"]).toBe(false);
+  });
+});

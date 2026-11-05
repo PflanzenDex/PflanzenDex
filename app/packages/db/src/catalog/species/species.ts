@@ -6,6 +6,7 @@ import {
   COLUMN,
   FIELDS,
   NOT_MERGED,
+  SEARCH_LIMIT,
   SELECTION,
   VISIBLE,
   searchQuery,
@@ -16,8 +17,8 @@ import type {
   NameField,
   Species,
   SpeciesCreation,
-  SpeciesHit,
   SpeciesName,
+  SpeciesSearch,
   SpeciesValues,
 } from "@pflanzendex/core";
 export interface SpeciesFacts {
@@ -26,7 +27,7 @@ export interface SpeciesFacts {
   readonly difficulty: number | null;
   readonly lightZone: number | null;
 }
-export type { Species, SpeciesCreation, SpeciesHit, SpeciesName, SpeciesValues };
+export type { Species, SpeciesCreation, SpeciesName, SpeciesValues };
 
 const BY_IDS = `select ${SELECTION} from species a where a.id = any($1::uuid[]) and ${VISIBLE}`;
 
@@ -61,15 +62,17 @@ export class SpeciesPostgres {
     return r.rows;
   }
 
-  async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {
+  /** The visible species that match; `more` is true when one more row came back, i.e. more match than the cap shows. */
+  async search(userId: string, norm: string | null): Promise<SpeciesSearch> {
     const { text, values } = searchQuery(norm);
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<Species & { field: NameField | null; display: string | null }>(text, values),
     );
-    return r.rows.map(({ field, display, ...species }) => ({
+    const hits = r.rows.map(({ field, display, ...species }) => ({
       ...species,
       hit: field && display ? { field, display } : null,
     }));
+    return { species: hits.slice(0, SEARCH_LIMIT), more: hits.length > SEARCH_LIMIT };
   }
 
   async find(userId: string, id: string): Promise<Species | null> {

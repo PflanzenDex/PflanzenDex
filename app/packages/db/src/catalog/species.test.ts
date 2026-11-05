@@ -105,7 +105,7 @@ describe("species catalog: proposal is private (FR-BES-11, P-04, P-05)", () => {
     expect(await species.find(anna, a.id)).toMatchObject({ id: a.id });
     expect(await species.find(ben, a.id)).toBeNull();
     expect(await species.find(operator, a.id)).toBeNull();
-    const view = (n: string) => species.search(n, norm(a.latinName));
+    const view = async (n: string) => (await species.search(n, norm(a.latinName))).species;
     expect(await view(anna)).toHaveLength(1);
     expect(await view(ben)).toEqual([]);
   });
@@ -240,7 +240,7 @@ describe("species catalog: search and duplicates", () => {
     });
     const a = await create(anna, w);
     await approve(a.id);
-    const t = async (s: string) => (await species.search(ben, norm(s)))[0]?.hit;
+    const t = async (s: string) => (await species.search(ben, norm(s))).species[0]?.hit;
     expect(await t(w.latinName)).toMatchObject({ field: "latin" });
     expect(await t(name("bogenhanf "))).toMatchObject({ field: "german" });
     expect(await t(name("sansevieria trifasciata "))).toMatchObject({
@@ -248,7 +248,7 @@ describe("species catalog: search and duplicates", () => {
       display: name("Sansevieria trifasciata "),
     });
     expect(
-      (await species.search(ben, norm(name("sansevieria trifasciata "))))[0]?.synonyms,
+      (await species.search(ben, norm(name("sansevieria trifasciata ")))).species[0]?.synonyms,
     ).toEqual([name("Sansevieria trifasciata ")]);
   });
 
@@ -269,8 +269,8 @@ describe("species catalog: search and duplicates", () => {
   });
 
   it("search characters % and _ are text, not wildcards; empty search lists only what is visible", async () => {
-    expect(await species.search(ben, "%")).toEqual([]);
-    const all = await species.search(ben, null);
+    expect((await species.search(ben, "%")).species).toEqual([]);
+    const all = (await species.search(ben, null)).species;
     expect(all.every((x) => x.own || x.reviewStatus === "reviewed")).toBe(true);
   });
 });
@@ -441,5 +441,57 @@ describe("NFR-12 names of the own collection in one statement", () => {
     const middle = counted.count();
     await reader.latinNamesOf(anna, made);
     expect(counted.count() - middle).toBe(few);
+  });
+});
+
+describe("FR-BES-24 visible cap of the species search (P-10)", () => {
+  // A two-letter suffix per species keeps the Latin names unique and letters only.
+  const suffix = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  /** `count` proposals of `user`, every Latin name of them contains `term`. */
+  async function proposals(user: string, term: string, count: number): Promise<void> {
+    for (let i = 0; i < count; i++) await create(user, values(`${term}${suffix(i)} sp`));
+  }
+
+  it("FR-BES-24 51 matching species give 50 hits and more=true", async () => {
+    const term = name("Capmore");
+    await proposals(anna, term, 51);
+    const r = await species.search(anna, norm(term));
+    expect(r.species).toHaveLength(50);
+    expect(r.more).toBe(true);
+  });
+
+  it("FR-BES-24 exactly 50 matching species give 50 hits and more=false", async () => {
+    const term = name("Capexact");
+    await proposals(anna, term, 50);
+    const r = await species.search(anna, norm(term));
+    expect(r.species).toHaveLength(50);
+    expect(r.more).toBe(false);
+  });
+
+  it("FR-BES-24 fewer matching species give all of them and more=false", async () => {
+    const term = name("Capfew");
+    await proposals(anna, term, 3);
+    const r = await species.search(anna, norm(term));
+    expect(r.species).toHaveLength(3);
+    expect(r.more).toBe(false);
+  });
+
+  it("FR-BES-24 a foreign proposal does not count toward more: the owner sees no notice (P-05)", async () => {
+    const term = name("Capforeign");
+    await proposals(anna, term, 50);
+    await proposals(ben, term, 5);
+    const forAnna = await species.search(anna, norm(term));
+    expect(forAnna.species).toHaveLength(50);
+    expect(forAnna.more).toBe(false);
+    const forBen = await species.search(ben, norm(term));
+    expect(forBen.species).toHaveLength(5);
+    expect(forBen.more).toBe(false);
+  });
+
+  it("FR-BES-24 the list without a term keeps the cap: at most 50 hits, and more only when more are visible", async () => {
+    const all = await species.search(anna, null);
+    expect(all.species.length).toBeLessThanOrEqual(50);
+    if (all.more) expect(all.species).toHaveLength(50);
+    if (all.species.length < 50) expect(all.more).toBe(false);
   });
 });

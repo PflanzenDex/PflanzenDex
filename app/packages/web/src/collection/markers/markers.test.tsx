@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { markSpecimen, createSpecimen } from "../specimens/model/specimens-api";
+import { answerCardRead } from "../specimens/tests/cards-fake";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -58,7 +59,7 @@ function fakeServer(cards: SpecimenCard[], answer?: () => Promise<Response>) {
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      return response(200, { cards });
+      return answerCardRead(new URL(String(url)), cards) ?? response(404, {});
     }),
   );
   return posts;

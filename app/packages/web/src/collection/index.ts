@@ -18,7 +18,7 @@ export const DifficultyPage = lazyPage(() =>
     default: m.DifficultyPage,
   })),
 );
-export { loadCards, loadSpecimenCount } from "./specimens/cards/cards-api";
+export { loadCardSummary, loadSpecimenCount } from "./specimens/cards/cards-api";
 export { createSpecimen, setSpecimenLocation } from "./specimens/model/specimens-api";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";

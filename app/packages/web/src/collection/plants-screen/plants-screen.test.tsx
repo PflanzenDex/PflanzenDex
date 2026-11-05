@@ -6,7 +6,8 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
-import { openPlant } from "../specimens/tests/plants-test-helpers";
+import { openPlant, pagesOf, summaryOf } from "../specimens/tests/plants-test-helpers";
+import { answerCardRead } from "../specimens/tests/cards-fake";
 import { PlantsScreen } from "./plants-screen";
 
 const card = (id: number, extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
@@ -53,6 +54,8 @@ const screenWith = (cards: SpecimenCard[], extra: Extra = {}, at = "/") =>
     <MemoryRouter initialEntries={[at]}>
       <PlantsScreen
         cards={cards}
+        plants={pagesOf(cards)}
+        summary={summaryOf(cards)}
         distribution={distribution}
         archived={[]}
         photoAccess={{ api: "http://api", token: async () => "tok" }}
@@ -283,7 +286,7 @@ describe("US-QS-19 loading and error states of the plants", () => {
         if (path === "/locations") return Response.json({ locations: [] });
         if (path === "/specimens/archived") return Response.json({ archived: [] });
         if (path === "/specimens/distribution") return Response.json(EMPTY_DISTRIBUTION);
-        return Response.json({ cards: [] });
+        return answerCardRead(new URL(String(url)), []) ?? Response.json({});
       }),
     );
     render(page());

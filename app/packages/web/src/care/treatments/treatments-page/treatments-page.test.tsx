@@ -27,7 +27,7 @@ function fakeServer(
     const path = new URL(String(url)).pathname;
     const other = more(path, init);
     if (other) return other;
-    if (path === "/specimens/cards") return response(200, { cards: specimens });
+    if (path === "/specimens/treatable") return response(200, { specimens });
     if (path === "/treatments" && (init?.method ?? "GET") === "GET") return open();
     if (path === "/treatments" && init?.method === "POST") {
       posts.push({

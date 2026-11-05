@@ -193,4 +193,18 @@ describe("NFR-12 statistics of the taxon table", () => {
     }
     expect(after).toBeGreaterThan(before);
   });
+
+  it("FR-POK-13 the version of the stored tree names its build and changes with every build", async () => {
+    expect(await store.version()).toBeNull();
+    await store.replace(build("f1"));
+    const first = await store.version();
+    expect(first).toContain("f1");
+    await store.replace(build("f2"));
+    const second = await store.version();
+    expect(second).toContain("f2");
+    expect(second).not.toBe(first);
+    // The same names built again at another time are another version: a build never reuses an older one's key.
+    await store.replace(build("f2", { builtAt: "2026-10-07T10:00:00Z" }));
+    expect(await store.version()).not.toBe(second);
+  });
 });
