@@ -11,7 +11,6 @@ const token = async () => "tok";
 const side = (extra: Record<string, unknown> = {}) => ({
   swapId: "s1",
   role: "giver",
-  otherId: "ben",
   otherName: "Ben",
   offerId: "o1",
   speciesLatin: "Aloe vera",

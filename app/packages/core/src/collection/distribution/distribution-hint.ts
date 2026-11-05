@@ -30,12 +30,12 @@ export function distributionHint(
   const names = thinnest.map((z) => zoneLabel(z.name));
   if (thinnest.length > 1)
     return {
-      text: `${name(names)} sind gleich dünn besetzt (je ${specimens(count)}).`,
+      text: `${name(names)} sind gleich wenig besetzt (je ${specimens(count)}).`,
       nextAction:
         "Setze Arten für diese Zonen auf die Wunschliste oder wähle bei einer Pflanze eine dieser Zonen als eigene Lichtzone.",
     };
   return {
-    text: `${name(names)} ist die dünnste Zone (${specimens(count)}).`,
-    nextAction: "Hier ist noch Platz: Plane die nächste Pflanze für diese Zone.",
+    text: `${name(names)} ist am leersten (${specimens(count)}).`,
+    nextAction: "Hier ist noch Platz: Setz eine Art auf die Wunschliste.",
   };
 }

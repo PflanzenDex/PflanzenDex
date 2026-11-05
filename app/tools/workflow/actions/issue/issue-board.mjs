@@ -1,48 +1,20 @@
 // Board writes for issues (FR-DEV-10): the issue is added to project 2 if needed, then its single-select fields are set.
-// Option ids are read at run time, never stored. Same client shape as claim-steps.mjs (injected in tests).
-import { json } from "../../claim/lib/claim-client.mjs";
-import { PROJECT_NUMBER } from "../../claim/lib/claim-steps.mjs";
+// Option ids are read at run time (once per run, board-client.mjs), never stored. Same client shape as the claim tools (injected in tests).
+import {
+  addBoardItem,
+  boardItemOf,
+  editBoardField,
+  projectMeta,
+} from "../../claim/lib/board-client.mjs";
 import { findOption } from "./issue-lib.mjs";
-
-const STATUS_QUERY = `query($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) {
-    issue(number: $number) {
-      projectItems(first: 100) {
-        nodes {
-          project { number owner { ... on Organization { login } ... on User { login } } }
-          fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
-        }
-      }
-    }
-  }
-}`;
 
 /**
  * The board Status of one issue on project PROJECT_NUMBER of the repository owner, or null when the issue has none or
  * is not on the board yet. One query for this issue; the board is never read as a whole (FR-DEV-10 (e)).
  */
 export async function boardStatusOf(client, { repo, number }) {
-  const [owner, name] = repo.split("/");
-  const data = await json(client, [
-    "api",
-    "graphql",
-    "-f",
-    `query=${STATUS_QUERY}`,
-    "-F",
-    `owner=${owner}`,
-    "-F",
-    `name=${name}`,
-    "-F",
-    `number=${number}`,
-  ]);
-  const issue = data.data?.repository?.issue;
-  if (!issue) throw new Error(`issue #${number} not found in ${repo}`);
-  const item = issue.projectItems.nodes.find(
-    (n) =>
-      n.project.number === Number(PROJECT_NUMBER) &&
-      n.project.owner.login?.toLowerCase() === owner.toLowerCase(),
-  );
-  return item?.fieldValueByName?.name ?? null;
+  const item = await boardItemOf(client, { repo, number });
+  return item?.status ?? null;
 }
 
 /**
@@ -51,54 +23,16 @@ export async function boardStatusOf(client, { repo, number }) {
  * wrong key writes nothing.
  */
 export async function setBoardFields(client, { url, owner, fields }) {
-  const list = await json(client, [
-    "project",
-    "field-list",
-    PROJECT_NUMBER,
-    "--owner",
-    owner,
-    "--format",
-    "json",
-  ]);
+  const meta = await projectMeta(client, owner);
   const edits = Object.entries(fields).map(([name, key]) => {
-    const field = list.fields.find((f) => f.name === name);
+    const field = meta.fields.find((f) => f.name === name);
     if (!field) throw new Error(`project field "${name}" does not exist`);
     const option = findOption(field.options, key);
     if (!option) throw new Error(`project field "${name}" has no option for "${key}"`);
     return { field, option };
   });
-  const item = await json(client, [
-    "project",
-    "item-add",
-    PROJECT_NUMBER,
-    "--owner",
-    owner,
-    "--url",
-    url,
-    "--format",
-    "json",
-  ]);
-  const project = await json(client, [
-    "project",
-    "view",
-    PROJECT_NUMBER,
-    "--owner",
-    owner,
-    "--format",
-    "json",
-  ]);
+  const itemId = await addBoardItem(client, owner, url);
   for (const { field, option } of edits)
-    await client.run("gh", [
-      "project",
-      "item-edit",
-      "--id",
-      item.id,
-      "--project-id",
-      project.id,
-      "--field-id",
-      field.id,
-      "--single-select-option-id",
-      option.id,
-    ]);
-  return item.id;
+    await editBoardField(client, { meta, itemId, field, option });
+  return itemId;
 }

@@ -174,6 +174,14 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
+  it("US-MON-08 the section Erinnerungen names its quiet window Erinnerungspause, not Ruhezeit (issue 897)", async () => {
+    fakeServer();
+    show("/account/reminders");
+    const region = await screen.findByRole("region", { name: "Erinnerungen" });
+    expect(await within(region).findByText("Uhrzeit, Erinnerungspause und Messung")).toBeTruthy();
+    expect(region.textContent).not.toContain("Ruhezeit");
+  });
+
   it("US-QS-17 · US-ACC-01 the section Profil shows name and e-mail and no sign-out that skips the confirmation (issue 1098)", async () => {
     fakeServer();
     const signOut = vi.fn();

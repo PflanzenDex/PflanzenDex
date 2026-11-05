@@ -113,7 +113,10 @@ const candidates: CandidateList = {
     wish("w2", "Sansevieria cylindrica", "Rundblättriger Bogenhanf", 1),
   ],
   zones: [{ zoneId: "z3", name: "Zone 3", count: 1 }],
-  hint: { text: "Zwei Kandidaten warten.", nextAction: "Kaufe zuerst für die dünnste Zone." },
+  hint: {
+    text: "Zwei Kandidaten warten.",
+    nextAction: "Kaufe zuerst für die leerste Zone.",
+  },
   duplicates: [],
   unfit: [],
   duplicateHint: null,

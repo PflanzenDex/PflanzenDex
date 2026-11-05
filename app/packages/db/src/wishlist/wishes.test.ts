@@ -40,7 +40,7 @@ const base = {
   license: null,
 };
 const IMAGE = {
-  object: "img-1.jpg",
+  object: "img-1.webp",
   source: "Anna, https://commons.wikimedia.org/wiki/File:A.jpg",
   license: "CC BY 4.0",
 };
@@ -431,11 +431,11 @@ describe("US-WUN-04 the stored copy of a wish image", () => {
     expect(w.imageObject).toBeNull();
     const updated = await wishes.setImage(anna, w.id, IMAGE);
     expect(updated).toMatchObject({
-      imageObject: "img-1.jpg",
+      imageObject: "img-1.webp",
       imageSource: IMAGE.source,
       license: "CC BY 4.0",
     });
-    expect(await wishes.find(anna, w.id)).toMatchObject({ imageObject: "img-1.jpg" });
+    expect(await wishes.find(anna, w.id)).toMatchObject({ imageObject: "img-1.webp" });
   });
 
   it("tenant: another account neither finds nor changes the wish (P-04)", async () => {
@@ -453,10 +453,24 @@ describe("US-WUN-04 the stored copy of a wish image", () => {
     expect((await wishes.find(anna, w.id))?.imageObject).toBeNull();
   });
 
-  it("the database refuses an object name that is not a stored JPEG name", async () => {
-    const w = await wishes.create(anna, values({ name: "Bad object" }));
+  it("NFR-12 US-WUN-04 the database refuses an object name that is not a stored WebP name", async () => {
+    // The wish has a Commons address, so only the name check can refuse (wish_check needs the address for the source).
+    const w = await wishes.create(
+      anna,
+      values({
+        name: "Bad object",
+        imageUrl: "https://commons.wikimedia.org/wiki/File:A.jpg",
+        imageSource: "Wikipedia",
+      }),
+    );
     if (typeof w === "string") throw new Error(w);
-    await expect(wishes.setImage(anna, w.id, { ...IMAGE, object: "../x.png" })).rejects.toThrow();
+    await expect(wishes.setImage(anna, w.id, { ...IMAGE, object: "../x.png" })).rejects.toThrow(
+      /wish_image_object_check/,
+    );
+    await expect(wishes.setImage(anna, w.id, { ...IMAGE, object: "old-jpeg.jpg" })).rejects.toThrow(
+      /wish_image_object_check/,
+    );
+    expect((await wishes.find(anna, w.id))?.imageObject).toBeNull();
   });
 });
 

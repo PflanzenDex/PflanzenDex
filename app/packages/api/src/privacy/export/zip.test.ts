@@ -6,7 +6,7 @@ const text = (s: string) => new TextEncoder().encode(s);
 describe("US-ACC-04 export archive", () => {
   it("US-ACC-04 writes a ZIP whose entries can be read back from the central directory", () => {
     const zip = zipArchive([
-      { path: "photos/b.jpg", bytes: new Uint8Array([9, 8, 7]) },
+      { path: "photos/b.webp", bytes: new Uint8Array([9, 8, 7]) },
       { path: "data.json", bytes: text('{"a":1}') },
     ]);
     const end = zip.length - 22;
@@ -24,7 +24,7 @@ describe("US-ACC-04 export archive", () => {
       expect(zip.subarray(dataAt, dataAt + size).length).toBe(size);
       at += 46 + nameLength;
     }
-    expect(names).toEqual(["data.json", "photos/b.jpg"]);
+    expect(names).toEqual(["data.json", "photos/b.webp"]);
   });
 
   it("US-ACC-04 gives the same bytes for the same files, whatever the order they come in", () => {

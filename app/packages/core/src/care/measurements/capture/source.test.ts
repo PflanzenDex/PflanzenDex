@@ -60,7 +60,7 @@ describe("US-WAC-01 MeasurementSource for the specimen cards (US-BES-06)", () =>
     const old = await store.create("anna", values(E1, { date: "2026-09-20" }));
     await store.create("anna", values(E1, { date: "2026-10-02" }));
     if (typeof old === "string") throw new Error(old);
-    await store.setPhoto("anna", old.id, "p1.jpg");
+    await store.setPhoto("anna", old.id, "p1.webp");
     const r = await measurementSource({ measurements: store }).forSpecimens("anna", [E1]);
     expect(r.get(E1)?.photo).toEqual({
       url: `/specimens/${E1}/measurements/${old.id}/photo?v=p1`,
@@ -72,10 +72,10 @@ describe("US-WAC-01 MeasurementSource for the specimen cards (US-BES-06)", () =>
   it("NFR-12 US-WAC-06 a replaced photo gets a new address in the card, so no cache keeps the old picture", async () => {
     const m = await store.create("anna", values(E1));
     if (typeof m === "string") throw new Error(m);
-    await store.setPhoto("anna", m.id, "first.jpg");
+    await store.setPhoto("anna", m.id, "first.webp");
     const source = measurementSource({ measurements: store });
     const before = (await source.forSpecimens("anna", [E1])).get(E1)?.photo?.url;
-    await store.setPhoto("anna", m.id, "second.jpg");
+    await store.setPhoto("anna", m.id, "second.webp");
     const after = (await source.forSpecimens("anna", [E1])).get(E1)?.photo?.url;
     expect(before).toBe(`/specimens/${E1}/measurements/${m.id}/photo?v=first`);
     expect(after).toBe(`/specimens/${E1}/measurements/${m.id}/photo?v=second`);
@@ -86,8 +86,8 @@ describe("US-WAC-01 MeasurementSource for the specimen cards (US-BES-06)", () =>
     const a = await store.create("anna", values(E1, { date: "2026-09-20" }));
     const b = await store.create("anna", values(E1, { date: "2026-10-02" }));
     if (typeof a === "string" || typeof b === "string") throw new Error("fixture");
-    await store.setPhoto("anna", a.id, "p1.jpg");
-    await store.setPhoto("anna", b.id, "p2.jpg");
+    await store.setPhoto("anna", a.id, "p1.webp");
+    await store.setPhoto("anna", b.id, "p2.webp");
     const r = await measurementSource({ measurements: store }).forSpecimens("anna", [E1]);
     expect(r.get(E1)?.photo?.date).toBe("2026-10-02");
   });

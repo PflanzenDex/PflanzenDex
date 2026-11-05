@@ -16,7 +16,7 @@ let created: number;
 let revoked: string[];
 
 /** A picture of `size` bytes; the bytes themselves do not matter here, only their count (the cache bound). */
-const picture = (size = 10) => ({ size, type: "image/jpeg" }) as unknown as Blob;
+const picture = (size = 10) => ({ size, type: "image/webp" }) as unknown as Blob;
 
 beforeEach(() => {
   fetched = [];

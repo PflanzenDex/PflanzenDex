@@ -1,5 +1,6 @@
 import {
   appError,
+  imageReader,
   imageStorage,
   wishImageFile,
   wishStoreImage,
@@ -117,7 +118,10 @@ export interface WishImageSources {
 
 type ImageDeps = WishImageSources & { media: { store: ObjectStore; processor: ImageProcessor } };
 
-/** `POST /wishes/:id/image` stores a local copy; `GET /wishes/:id/image` serves it to the owner only (P-05). */
+/**
+ * `POST /wishes/:id/image` stores a local copy; `GET /wishes/:id/image` serves it to the owner only (P-05), the 256 px
+ * thumbnail with `?size=thumb` (NFR-12).
+ */
 function addImageRoutes(
   routes: Hono<AuthEnv>,
   wishes: WishesPostgres,
@@ -134,11 +138,13 @@ function addImageRoutes(
   routes.post("/wishes/:id/image", async (c) =>
     write(c, deps, store, { input: { wishId: c.req.param("id") } }),
   );
+  const images = imageReader(image.media.store);
   routes.get("/wishes/:id/image", async (c) => {
     const r = await wishImageFile(
-      { wishes, objects: image.media.store },
+      { wishes, images },
       c.get("account").id,
       c.req.param("id"),
+      c.req.queries("size") ?? [],
     );
     if (!r.ok) return c.json(errorBody(r.error), statusFor(r.error));
     return c.body(r.value.bytes as unknown as ArrayBuffer, 200, {

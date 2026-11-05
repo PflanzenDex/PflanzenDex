@@ -81,7 +81,7 @@ const verify = (deps: WishImageDependencies, wish: WishRow) =>
  * Stores a local copy of the wish's image (US-WUN-04, P-05: a viewer never loads a foreign address). Only Wikimedia
  * Commons is accepted: the address names a Commons file, its metadata come from the Commons API through the source
  * client (TE-09), the license must allow storing (public domain, CC0, CC BY, CC BY-SA) and the original is downloaded
- * from Wikimedia only. The processed copy (TE-05: JPEG, at most 1600 px, no metadata) is stored under a new name and
+ * from Wikimedia only. The processed copy (TE-05: WebP, at most 1600 px, no metadata) is stored under a new name and
  * the wish records the verified source and license; the original is never kept. Nothing is guessed: an image without
  * a readable license is refused (P-08). An image that is stored already is kept. A wish of another account looks
  * unknown (`wish.not_found`, P-04).
@@ -98,7 +98,7 @@ export const wishStoreImage = (deps: WishImageDependencies) =>
       if (!file.ok) return file;
       const original = await deps.download.get(file.value.downloadUrl);
       if (!original.ok) return original;
-      const name = `${deps.newName()}.jpg`;
+      const name = `${deps.newName()}.webp`;
       const stored = await deps.storage.put(userId, name, original.value);
       if (!stored.ok) return stored;
       const image = { object: name, source: file.value.source, license: file.value.license };

@@ -37,7 +37,17 @@ Acceptance criteria:
 
 - The card shows image with source and license (FR-POK-07), species name, German name, short text, target light zone, difficulty (★☆☆ … ★★★) and the attributes from DM-ENT-01 where known (otherwise "unknown").
 - Below the card are 1–3 **reasons** (US-ENT-03), no percentage and no "match".
-- Actions: **No** · **Later** · **Yes**, on the phone also by swipe gesture (left/right), always additionally as buttons (NFR-13).
+- Actions: **No** · **Later** · **Yes**, on the phone also by swipe gesture (left/right, and up or down for Later), always additionally as buttons (NFR-13).
+- Given a card is dragged, when the pointer moves, then the card follows it, tilted by the horizontal distance (up to 8 degrees, starting value, assumption), and the stamp of the direction ("Ja", "Nein" or "Später") fades in with the strength of the drag, so direction and strength are readable before the release.
+- Given a drag ends past the threshold (40 percent of the card width, or a flick of at least 0.6 px per ms over at least 15 percent of the width; starting values, assumption), then the card flies off in that direction and the decision is written once it has left.
+- Given a drag ends below the threshold, then the card springs back and nothing is decided.
+- Given a vertical drag up or down past the threshold, then the card leaves as "Später": nothing is written and the species can come back in a later deck. A vertical drag starts on the grip at the top edge of the card, so that scrolling the text keeps working.
+- Given a button or a key decides a card, then the card flies off as it does for the swipe of that decision (No to the left, Yes to the right, Later upwards) and the result is the same.
+- Given `prefers-reduced-motion: reduce`, then the card does not follow the finger, does not fly and does not spring back; the stamp, the decision and the next card appear at once (NFR-13).
+- Given a decision, when the browser offers vibration, then the device vibrates briefly once; there is no sound.
+- Given the server refuses a decision, then the card springs back with the error text and nothing is lost (P-10).
+- Given a card is shown, then the next card is already in place underneath as a blank frame and grows to full size while the card leaves; its content appears when it becomes the front card (assumption: a second copy of the content underneath would repeat element ids).
+- Given a Yes or No has been written, then an undo in the deck is not built yet; a written decision has no take-back operation yet (open, see US-ENT-04).
 - After the last suggestion: "Done for today. N new on the wishlist." Further suggestions only via "New deck".
 - Without candidates: "No new suggestions" with the reason (everything owned or decided, or filter too narrow) and the matching action (loosen filter, propose species US-BES-01).
 

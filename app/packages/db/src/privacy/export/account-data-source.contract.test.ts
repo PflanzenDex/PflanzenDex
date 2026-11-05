@@ -31,7 +31,7 @@ beforeAll(async () => {
   for (const id of [mine, other]) await admin.query("insert into account (id) values ($1)", [id]);
   await fillAccountWithFixtures(pool, FIXTURES, mine);
   await fillAccountWithFixtures(pool, FIXTURES, other);
-  await attachPhotos(admin, mine, ["m-photo.jpg", "w-photo.jpg"]);
+  await attachPhotos(admin, mine, ["m-photo.webp", "w-photo.webp"]);
   await createCatalogContributions(admin, mine, { shared, proposal });
 });
 afterAll(async () => {
@@ -72,8 +72,8 @@ describe("US-ACC-04 AccountDataSource: export of all own data", () => {
     const snapshot = await new AccountDataPostgres(pool).read(mine);
     expect(snapshot?.photos).toEqual(
       expect.arrayContaining([
-        { table: "measurement", column: "photo", name: "m-photo.jpg" },
-        { table: "wish", column: "image_object", name: "w-photo.jpg" },
+        { table: "measurement", column: "photo", name: "m-photo.webp" },
+        { table: "wish", column: "image_object", name: "w-photo.webp" },
       ]),
     );
     const species = (snapshot?.tables["species"] ?? []).map((r) => r["id"]);

@@ -26,7 +26,7 @@ const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
   thinnest: [zone(3), zone(4)],
   notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
   hint: {
-    text: "Zone 3 und Zone 4 sind gleich dünn besetzt (je 1).",
+    text: "Zone 3 und Zone 4 sind gleich wenig besetzt (je 1).",
     nextAction: "Setze Arten für diese Zonen auf die Wunschliste.",
   },
   ...extra,
@@ -79,13 +79,13 @@ describe("US-LIC-02 view of the distribution", () => {
       expect.stringContaining("Zone 3: 1 Pflanze"),
       expect.stringContaining("Zone 4: 1 Pflanze"),
     ]);
-    expect(rows[1]?.textContent).toContain("dünnste Zone");
-    expect(rows[0]?.textContent).not.toContain("dünnste Zone");
+    expect(rows[1]?.textContent).toContain("am leersten");
+    expect(rows[0]?.textContent).not.toContain("am leersten");
   });
 
   it("names the thinnest zone and the next action (P-09), with a tie with a hint to the wishlist", () => {
     render(<DistributionView distribution={distribution()} />);
-    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich wenig besetzt/)).toBeTruthy();
     expect(screen.getByText(/auf die Wunschliste/)).toBeTruthy();
   });
 
@@ -215,11 +215,11 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: /Dünnste Zone: Zone 3/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Am leersten: Zone 3/ }));
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();
-    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich wenig besetzt/)).toBeTruthy();
   });
 
   it('if the distribution fails, nothing is shown half: error text and "Erneut versuchen"', async () => {

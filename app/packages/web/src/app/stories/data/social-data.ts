@@ -13,7 +13,6 @@ export const socialRoutes = {
         otherName: "Sven",
         direction: "received",
         status: "requested",
-        requestedAt: "2026-10-05T09:00:00Z",
       },
     ],
     outgoing: [
@@ -22,7 +21,6 @@ export const socialRoutes = {
         otherName: "Mia",
         direction: "sent",
         status: "requested",
-        requestedAt: "2026-10-06T16:00:00Z",
       },
     ],
   },

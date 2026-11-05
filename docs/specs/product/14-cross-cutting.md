@@ -1,6 +1,6 @@
 # 14 – Epic QS: Cross-Cutting (Privacy, Security, Mobile, Quality)
 
-Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-11 (`00-Product-Overview.md`).
+Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-12 (`00-Product-Overview.md`).
 
 ## User stories
 
@@ -33,7 +33,7 @@ Acceptance criteria:
 - Every writing operation is idempotent or prevents double execution (double click, repeat after abort).
 - Background jobs (reminders, catalog enrichment, photo processing) deliver the same result on repetition.
 
-State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** no job type yet (reminders, catalog enrichment, photo processing come with their stories) and the redelivery of buffered write actions.
+State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** the redelivery of buffered write actions.
 
 ### US-QS-04 · Deviations become visible · 🟨 (prototype ✅)
 
@@ -51,11 +51,11 @@ As a **plant keeper** I want to know and determine what happens with my data.
 Acceptance criteria:
 
 - Information, export and complete deletion of the account (see `US-ACC-04`).
-- Photos are freed of EXIF/GPS before storage and reduced to a maximum size (prototype: long side 1600 px, quality 82).
+- Photos are freed of EXIF/GPS before storage and reduced to a maximum size (long side 1600 px, WebP quality 82, thumbnail 72; starting values, assumption, issue 1289).
 - Location, growth notes, treatments, prices and financial data are never transmitted to friends or partners (FR-SOZ-01, FR-EQU-08).
 - A page "What is measured?" names usage measurement and click counting; without consent nothing is counted.
 
-State of implementation: photos are freed of EXIF/GPS and reduced (long side 1600 px, quality 82) before storage and served only to their owner (US-WAC-06). Friends see only the whitelisted facts of shared specimens (US-SOZ-04); a test proves for every friend view (shared specimens, friend collection, friend list, feed, feed banner) that location, measurement notes and treatments of a shared specimen never reach the friend. The section "Was wird gemessen?" on the page Konto names what is recorded: no click counting, no usage analytics and no advertising or analytics services; the time of the last activity is stored on every sign-in and the operator sees only the number of active accounts of the last 30 days (US-ACC-05); images of collector cards and suggestions are loaded by the device directly from Wikimedia. Export and deletion of the account exist (US-ACC-04); **open:** the information about the processing (release R3); whether the count of active accounts needs a consent or rests on the operator's legitimate interest (owner decision).
+State of implementation: photos are freed of EXIF/GPS and reduced (long side 1600 px, WebP quality 82, issue 1289) before storage and served only to their owner (US-WAC-06). Friends see only the whitelisted facts of shared specimens (US-SOZ-04); a test proves for every friend view (shared specimens, friend collection, friend list, feed, feed banner) that location, measurement notes and treatments of a shared specimen never reach the friend. The section "Was wird gemessen?" on the page Konto names what is recorded: no click counting, no usage analytics and no advertising or analytics services; the time of the last activity is stored on every sign-in and the operator sees only the number of active accounts of the last 30 days (US-ACC-05); images of collector cards and suggestions are loaded by the device directly from Wikimedia. Export and deletion of the account exist (US-ACC-04); **open:** the information about the processing (release R3); whether the count of active accounts needs a consent or rests on the operator's legitimate interest (owner decision).
 
 ### US-QS-06 · Sources and licenses · 🟨 (prototype ✅)
 

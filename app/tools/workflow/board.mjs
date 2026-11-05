@@ -112,13 +112,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (!release) throw new Error("no release on the board has open stories or enablers");
     const items = workItems(issues, board, release);
     console.log(`Release: ${release}`);
+    // The priorities come from the board already read above: no second listing of the board (#1412).
     const noPriority = await missingPriority(
       client,
       items.map((i) => i.number),
-    ).catch((e) => {
-      console.error(`Warning: could not check priorities: ${e.message}`);
-      return [];
-    });
+      board,
+    );
     const rows = buildRows({ items, prs, branchDates, now: Date.now(), staleHours, noPriority });
     console.log(formatRows(rows, staleHours, noPriority));
   } catch (e) {

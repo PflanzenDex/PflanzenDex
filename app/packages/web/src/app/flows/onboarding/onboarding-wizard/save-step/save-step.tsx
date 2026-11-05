@@ -94,7 +94,9 @@ export function SaveStep(props: {
         disabled={zones === null}
         onChange={(e) => props.onZone(e.target.value)}
       >
-        <option value="">{derived ? ui("derived", { name: derived.name }) : ui("unknown")}</option>
+        <option value="">
+          {derived ? ui("derived", { name: zoneLabel(derived.name) }) : ui("unknown")}
+        </option>
         {(zones ?? []).map((z) => (
           <option key={z.id} value={z.id}>
             {zoneLabel(z.name)}
