@@ -59,6 +59,7 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
             type="button"
             size="touch"
             variant={item.supply === level ? "default" : "secondary"}
+            className="w-auto flex-1 px-2"
             aria-pressed={item.supply === level}
             disabled={actions.busy}
             onClick={() => item.supply !== level && actions.onSupply(item, level)}

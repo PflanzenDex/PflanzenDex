@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { enterApplicationRole, poolLimits } from "../kernel/index.ts";
+import { beginAsApplicationRole, poolLimits } from "../kernel/index.ts";
 
 /**
  * Own path for registration and sign-in (US-ACC-01): finds the account for the verified subject of the
@@ -10,8 +10,7 @@ export async function findOrCreateAccount(pool: Pool, subject: string): Promise<
   if (subject.trim() === "") throw new Error("Subject missing");
   const client = await pool.connect();
   try {
-    await client.query("begin");
-    await enterApplicationRole(client, poolLimits(pool), [["app.subject", subject]]);
+    await beginAsApplicationRole(client, poolLimits(pool), [["app.subject", subject]]);
     // Concurrent first sign-ins: the unique index on `subject` decides, `do nothing` reports no error.
     await client.query(
       "insert into account (subject) values ($1) on conflict (subject) do nothing",
@@ -39,8 +38,7 @@ async function lookUp(
 ): Promise<{ id: string | null; required: boolean }> {
   const client = await pool.connect();
   try {
-    await client.query("begin");
-    await enterApplicationRole(client, poolLimits(pool), [["app.subject", subject]]);
+    await beginAsApplicationRole(client, poolLimits(pool), [["app.subject", subject]]);
     const known = await client.query<{ id: string }>("select id from account where subject = $1", [
       subject,
     ]);

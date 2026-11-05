@@ -8,7 +8,7 @@ import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { caseSheet } from "../review-entry/review-entry";
 import { isBatch } from "../review-text";
-import { LayerFacts } from "./layer-facts/layer-facts";
+import { LayerFacts, LayerTexts } from "./layer-facts/layer-facts";
 
 export interface ReviewActions {
   running: boolean;
@@ -19,14 +19,15 @@ export interface ReviewActions {
 
 /** A decision closes the layer as it is sent; the page then shows what happened (P-10). */
 type Done = (act: () => void) => () => void;
-type LayerTab = "facts" | "decide";
+type LayerTab = "facts" | "texts" | "decide";
 const TAB_PARAM = "ltab";
 
-/** The tab of the layer is in the address (`?ltab=decide`); the facts are the default (US-QS-15). */
+/** The tab of the layer is in the address (`?ltab=texts`, `?ltab=decide`); the facts are the default (US-QS-15). */
 function useLayerTab(): [LayerTab, (tab: LayerTab) => void] {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
-  const tab: LayerTab = params.get(TAB_PARAM) === "decide" ? "decide" : "facts";
+  const named = params.get(TAB_PARAM);
+  const tab: LayerTab = named === "texts" || named === "decide" ? named : "facts";
   const choose = (next: LayerTab) => {
     const address = new URLSearchParams(params);
     if (next === "facts") address.delete(TAB_PARAM);
@@ -92,9 +93,9 @@ function Reject(props: { entry: ReviewEntry; actions: ReviewActions; done: Done 
 }
 
 /**
- * One case as a layer above the list (US-QS-15): the facts in one tab, the duplicate hint and the decisions in the other;
- * approval is the one filled action and stays at the bottom in both. An operator batch is approved already, so it shows
- * its facts only. The layer scrolls only inside itself.
+ * One case as a layer above the list (US-QS-15): the short facts, the free texts, and the duplicate hint with the
+ * decisions in three tabs; approval is the one filled action and stays at the bottom in all of them. An operator batch
+ * is approved already, so it shows its facts and texts together. The layer scrolls only inside itself.
  */
 export function ReviewLayer(props: { entry: ReviewEntry; actions: ReviewActions; now: number }) {
   const { entry, actions, now } = props;
@@ -109,6 +110,7 @@ export function ReviewLayer(props: { entry: ReviewEntry; actions: ReviewActions;
   };
   const onFacts = batch || tab === "facts";
   const facts = <LayerFacts entry={entry} now={now} />;
+  const texts = <LayerTexts entry={entry} />;
   const decide = (
     <div className="flex flex-col gap-4">
       <Similar entry={entry} actions={actions} done={done} />
@@ -134,15 +136,19 @@ export function ReviewLayer(props: { entry: ReviewEntry; actions: ReviewActions;
       }
     >
       {batch ? (
-        facts
+        <div className="flex flex-col gap-3">
+          {facts}
+          {texts}
+        </div>
       ) : (
         <Tabs
-          label="Angaben oder Entscheidung"
+          label="Angaben, Beschreibung oder Entscheidung"
           wrap
           value={tab}
           onValueChange={(value) => chooseTab(value as LayerTab)}
           tabs={[
             { value: "facts", label: "Angaben", content: facts },
+            { value: "texts", label: "Beschreibung", content: texts },
             { value: "decide", label: "Entscheiden", content: decide },
           ]}
         />

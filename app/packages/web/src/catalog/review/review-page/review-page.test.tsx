@@ -306,6 +306,7 @@ describe("US-BES-10 review list shows the open cases", () => {
     await user.click(await screen.findByRole("button", { name: /Haworthia fasciata/ }));
     const dialog = await screen.findByRole("dialog", { name: "Haworthia fasciata" });
     expect(within(dialog).getByText(/Betreiber-Charge, bereits freigegeben/)).toBeTruthy();
+    expect(within(dialog).getByText("Vergeilungsanzeichen")).toBeTruthy();
     expect(within(dialog).queryByRole("button", { name: "Freigeben" })).toBeNull();
     expect(within(dialog).queryByRole("button", { name: "Zurückweisen" })).toBeNull();
   });
@@ -399,11 +400,24 @@ describe("US-QS-15 review list on one screen", () => {
     ).toBe("true");
   });
 
-  it("NFR-13 the two tabs of a case wrap at 200 % text instead of scrolling sideways", async () => {
+  it("US-QS-15 the texts tab is in the address too and shows the free texts (issue 1283)", async () => {
+    server(list([entry()]));
+    show("/review?sheet=case-c1&ltab=texts");
+    const dialog = await screen.findByRole("dialog", { name: "Echeveria elegans" });
+    expect(
+      within(dialog).getByRole("tab", { name: "Beschreibung" }).getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(within(dialog).getByText("Vergeilungsanzeichen")).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: "Freigeben" })).toBeTruthy();
+  });
+
+  it("NFR-13 the three tabs of a case wrap at 200 % text instead of scrolling sideways", async () => {
     server(list([entry()]));
     show();
     const dialog = await openRow("Echeveria elegans");
-    const strip = within(dialog).getByRole("tablist", { name: "Angaben oder Entscheidung" });
+    const strip = within(dialog).getByRole("tablist", {
+      name: "Angaben, Beschreibung oder Entscheidung",
+    });
     expect(strip.className.split(" ")).toContain("flex-wrap");
     expect(strip.className.split(" ")).not.toContain("overflow-x-auto");
     for (const tab of within(dialog).getAllByRole("tab"))
