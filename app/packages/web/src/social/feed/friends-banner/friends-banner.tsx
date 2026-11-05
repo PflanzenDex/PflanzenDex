@@ -3,7 +3,7 @@ import type { Banner, BannerItem } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
+import { SCREEN_STALE_TIME, useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
@@ -43,7 +43,7 @@ function useFirstVisit(api: string, token: Token, banner: Banner | undefined, re
 export function useNewPlants(api: string, token: Token) {
   const reload = useInvalidate(KEY);
   const load = useCallback((tk: string) => loadBanner(api, tk), [api]);
-  const r = useRequest({ queryKey: KEY, token, load });
+  const r = useRequest({ queryKey: KEY, token, load, staleTime: SCREEN_STALE_TIME });
   const okay = useWriteAction(token, reload);
   useFirstVisit(api, token, r.value, reload);
   const banner = r.value;

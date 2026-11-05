@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { createQueryClient, SCREEN_STALE_TIME } from "../../../shared/data";
 import { FriendsBanner } from "../friends-banner/friends-banner";
 import { FriendsNewsLayer, FriendsNewsTile } from "./friends-news";
 
@@ -111,5 +113,78 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     render(<FriendsBanner api="http://api" token={token} quiet news={false} />);
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByRole("region", { name: /Neu bei Freunden/ })).toBeNull();
+  });
+});
+
+describe("NFR-12 Heute asks for the news of friends once on a cold start (issue 1291)", () => {
+  const bannerReads = () =>
+    vi.mocked(fetch).mock.calls.filter(([url]) => new URL(String(url)).pathname === "/feed/banner")
+      .length;
+
+  /** The layer mounts first; the tile follows when its chunk has loaded, after the answer is there. */
+  function ColdStart({ client, tile }: { client: QueryClient; tile: boolean }) {
+    return (
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={["/today"]}>
+          <FriendsNewsLayer api="http://api" token={token} />
+          {tile && (
+            <FriendsNewsTile
+              api="http://api"
+              token={token}
+              tile={(n, label, layer) => (
+                <LayerOpener id={layer}>
+                  {n} {label}
+                </LayerOpener>
+              )}
+            />
+          )}
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  }
+
+  async function layerAnswered(client: QueryClient) {
+    const view = render(<ColdStart client={client} tile={false} />);
+    await vi.waitFor(() => expect(client.getQueryData(["social", "banner"])).toBeDefined());
+    return view;
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("NFR-12 a tile that mounts after the answer of the layer reads the same copy, one request", async () => {
+    server(banner(1));
+    const client = createQueryClient();
+    const view = await layerAnswered(client);
+    view.rerender(<ColdStart client={client} tile />);
+    await screen.findByRole("button", { name: "1 Neu bei Freunden" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(bannerReads()).toBe(1);
+  });
+
+  it("NFR-12 · US-SOZ-06 'Okay' still reads again at once inside the window", async () => {
+    server(banner(1));
+    const client = createQueryClient();
+    const view = await layerAnswered(client);
+    view.rerender(<ColdStart client={client} tile />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.click(within(layer).getByRole("button", { name: "Okay" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("button", { name: /Neu bei Freunden/ })).toBeNull(),
+    );
+    expect(bannerReads()).toBe(2);
+  });
+
+  it("NFR-12 · US-SOZ-06 coming back after the window asks again, so new plants of friends show", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    server(banner(1));
+    const client = createQueryClient();
+    const view = await layerAnswered(client);
+    view.unmount();
+    vi.setSystemTime(Date.now() + SCREEN_STALE_TIME + 1);
+    render(<ColdStart client={client} tile />);
+    await vi.waitFor(() => expect(bannerReads()).toBe(2));
   });
 });
