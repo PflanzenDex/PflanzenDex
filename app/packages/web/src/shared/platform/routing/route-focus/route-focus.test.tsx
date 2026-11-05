@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Suspense, lazy } from "react";
-import { Link, MemoryRouter, Route, Routes, useNavigate, useSearchParams } from "react-router";
+import { Suspense, lazy, useEffect } from "react";
+import {
+  Link,
+  MemoryRouter,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { RouteFocus } from "./route-focus";
@@ -215,6 +223,96 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     await userEvent.click(opener);
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+/** A view that shows its heading and then redirects to the start view, as a page does after a check. */
+function AltView() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    void navigate("/b", { replace: true });
+  }, [navigate]);
+  return <h1>Alt Seite</h1>;
+}
+
+function Third() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <h1>Dritte Seite</h1>
+      <button type="button" onClick={() => void navigate(-1)}>
+        Zurück
+      </button>
+    </>
+  );
+}
+
+/** The route table as the app has it: `/` and an old address redirect with `<Navigate replace>` (issue 1423). */
+function Arrival() {
+  return (
+    <>
+      <a href="#inhalt">Zum Inhalt springen</a>
+      <nav>
+        <Link to="/dritte">Dritte</Link>
+        <Link to="/alt">Alt</Link>
+      </nav>
+      <main id="inhalt" tabIndex={-1}>
+        <RouteFocus titleOf={titleOf} />
+        <Suspense fallback={<p>Lädt</p>}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/b" replace />} />
+            <Route path="/b" element={<Second />} />
+            <Route path="/alt" element={<AltView />} />
+            <Route path="/dritte" element={<Third />} />
+          </Routes>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
+const arrive = () =>
+  render(
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={["/"]}>
+        <Arrival />
+      </MemoryRouter>
+    </AnnouncerProvider>,
+  );
+
+describe("US-QS-08 · a first load through a redirect is no view change (issue 1423)", () => {
+  it("US-QS-08 the redirect from / on the first load leaves the focus at the top: the first Tab reaches the skip link (2.4.1)", async () => {
+    arrive();
+    const heading = await screen.findByRole("heading", { level: 1, name: "Zweite Seite" });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.activeElement).not.toBe(heading);
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Zum Inhalt springen" }));
+  });
+
+  it("US-QS-08 after such a first load a view change moves the focus to the heading, and going back restores it (2.4.3)", async () => {
+    arrive();
+    await screen.findByRole("heading", { level: 1, name: "Zweite Seite" });
+    await new Promise((r) => setTimeout(r, 50));
+    await userEvent.click(screen.getByRole("link", { name: "Dritte" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { level: 1, name: "Dritte Seite" }),
+      ),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("link", { name: "Dritte" })),
+    );
+  });
+
+  it("US-QS-08 a redirect after the person has navigated still moves the focus to the heading (2.4.3)", async () => {
+    arrive();
+    await screen.findByRole("heading", { level: 1, name: "Zweite Seite" });
+    await new Promise((r) => setTimeout(r, 50));
+    await userEvent.click(screen.getByRole("link", { name: "Alt" }));
+    const heading = await screen.findByRole("heading", { level: 1, name: "Zweite Seite" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 });
 
