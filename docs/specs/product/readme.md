@@ -17,31 +17,34 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 
 ## Files
 
-| File                                                                                 | Content                                                                                                                 |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| [00-Product-Overview.md](00-product-overview.md)                                     | Vision, target group, actors, principles, domain model, glossary                                                        |
-| [01-Accounts-and-Onboarding.md](01-accounts-and-onboarding.md)                       | Epic ACC: account, sign-in, profile, invitation                                                                         |
-| [02-Collection.md](02-collection.md)                                                 | Epic BES: species catalog, enrichment from sources, corrections, care profile, review, specimens, cutting, archive      |
-| [03-Light-and-Locations.md](03-light-and-locations.md)                               | Epic LIC: light zones, locations, distribution, position                                                                |
-| [04-Care-Phases.md](04-care-phases.md)                                               | Epic PHA: dormancy/growth phase, location reconciliation                                                                |
-| [05-Growth-and-Photos.md](05-growth-and-photos.md)                                   | Epic WAC: measurement, trend, etiolation, photos                                                                        |
-| [06-Treatments.md](06-treatments.md)                                                 | Epic BEH: pests, diseases, courses of treatment                                                                         |
-| [07-Wishlist.md](07-wishlist.md)                                                     | Epic WUN: purchase candidates, buffer, path to the plant                                                                |
-| [08-Pokedex.md](08-pokedex.md)                                                       | Epic POK: collector cards, taxonomy, milestones                                                                         |
-| [09-Reminders-and-Sensors.md](09-reminders-and-sensors.md)                           | Epic MON: notifications, watering, sensors                                                                              |
-| [10-Social.md](10-social.md)                                                         | Epic SOZ: friends, feed, swapping                                                                                       |
-| [11-Equipment-and-Recommendations.md](11-equipment-and-recommendations.md)           | Epic EQU: equipment, need, affiliate                                                                                    |
-| [12-AI-Assistant.md](12-ai-assistant.md)                                             | Epic KI: AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment                      |
-| [13-Business-Case.md](13-business-case.md)                                           | Stages: for us, pays for itself, profit                                                                                 |
-| [14-Cross-Cutting.md](14-cross-cutting.md)                                           | Epic QS: privacy, security, mobile, quality                                                                             |
-| [15-Migration-from-Prototype.md](15-migration-from-prototype.md)                     | Epic MIG: **dropped** (no import from the vault, IDs reserved)                                                          |
-| [16-Releases-and-Decisions.md](16-releases-and-decisions.md)                         | Release cut, technology draft, open decisions, non-goals                                                                |
-| [17-Discover.md](17-discover.md)                                                     | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist                  |
-| [18-Architecture-and-Quality-Gates.md](18-architecture-and-quality-gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD                            |
-| [19-Development-Process-and-Automation.md](19-development-process-and-automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations                                |
-| [20-achievements.md](20-achievements.md)                                             | Epic ACH: achievements for care and growth, care rhythm, personal records, anniversaries, year in review, calm mode     |
-| [21-swipe-matching.md](21-swipe-matching.md)                                         | Epic TAU: swipe matching of friends' swap offers against the own wishlist, yes/no/later, fits both ways                 |
-| [22-introduction-and-unlocking.md](22-introduction-and-unlocking.md)                 | Epic ONB: playful introduction, first plant first, keeper style, staged unlocking with visible locks, function overview |
+| File                                                                                 | Content                                                                                                                                       |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [00-Product-Overview.md](00-product-overview.md)                                     | Vision, target group, actors, principles, domain model, glossary                                                                              |
+| [01-Accounts-and-Onboarding.md](01-accounts-and-onboarding.md)                       | Epic ACC: account, sign-in, profile, invitation                                                                                               |
+| [02-Collection.md](02-collection.md)                                                 | Epic BES: species catalog, enrichment from sources, corrections, care profile, review, specimens, cutting, archive                            |
+| [03-Light-and-Locations.md](03-light-and-locations.md)                               | Epic LIC: light zones, locations, distribution, position                                                                                      |
+| [04-Care-Phases.md](04-care-phases.md)                                               | Epic PHA: dormancy/growth phase, location reconciliation                                                                                      |
+| [05-Growth-and-Photos.md](05-growth-and-photos.md)                                   | Epic WAC: measurement, trend, etiolation, photos                                                                                              |
+| [06-Treatments.md](06-treatments.md)                                                 | Epic BEH: pests, diseases, courses of treatment                                                                                               |
+| [07-Wishlist.md](07-wishlist.md)                                                     | Epic WUN: purchase candidates, buffer, path to the plant                                                                                      |
+| [08-Pokedex.md](08-pokedex.md)                                                       | Epic POK: collector cards, taxonomy, milestones                                                                                               |
+| [09-Reminders-and-Sensors.md](09-reminders-and-sensors.md)                           | Epic MON: notifications, watering, sensors                                                                                                    |
+| [10-Social.md](10-social.md)                                                         | Epic SOZ: friends, feed, swapping                                                                                                             |
+| [11-Equipment-and-Recommendations.md](11-equipment-and-recommendations.md)           | Epic EQU: equipment, need, affiliate                                                                                                          |
+| [12-AI-Assistant.md](12-ai-assistant.md)                                             | Epic KI: AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment                                            |
+| [13-Business-Case.md](13-business-case.md)                                           | Stages: for us, pays for itself, profit                                                                                                       |
+| [14-Cross-Cutting.md](14-cross-cutting.md)                                           | Epic QS: privacy, security, mobile, quality                                                                                                   |
+| [15-Migration-from-Prototype.md](15-migration-from-prototype.md)                     | Epic MIG: **dropped** (no import from the vault, IDs reserved)                                                                                |
+| [16-Releases-and-Decisions.md](16-releases-and-decisions.md)                         | Release cut, technology draft, open decisions, non-goals                                                                                      |
+| [17-Discover.md](17-discover.md)                                                     | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist                                        |
+| [18-Architecture-and-Quality-Gates.md](18-architecture-and-quality-gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD                                                  |
+| [19-Development-Process-and-Automation.md](19-development-process-and-automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations                                                      |
+| [20-achievements.md](20-achievements.md)                                             | Epic ACH: achievements for care and growth, care rhythm, personal records, anniversaries, year in review, calm mode                           |
+| [21-swipe-matching.md](21-swipe-matching.md)                                         | Epic TAU: swipe matching of friends' swap offers against the own wishlist, yes/no/later, fits both ways                                       |
+| [22-introduction-and-unlocking.md](22-introduction-and-unlocking.md)                 | Epic ONB: playful introduction, first plant first, keeper style, staged unlocking with visible locks, function overview                       |
+| [23-variegated-cultivars.md](23-variegated-cultivars.md)                             | Epic VAR: variegated cultivars as own catalog entries with trade names, variegation facts, shop prices, variegation events, reversion warning |
+| [24-substrate.md](24-substrate.md)                                                   | Epic SUB: substrate components and stock, soil recipes in volume parts, recipe per plant, comparison, sharing, supports and their reminders   |
+| [25-shop-offers-and-sale-alerts.md](25-shop-offers-and-sale-alerts.md)               | Epic DEAL: shop subscriptions, community reports, reading of shops whose terms allow it, match pushes and the offer list                      |
 
 ## Conventions
 
@@ -59,29 +62,32 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 
 <!-- spec-status:start (generated by app/tools/dev/agent/spec-status.mjs, do not edit by hand) -->
 
-| Epic                           | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
-| ------------------------------ | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
-| ACC Accounts                   | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
-| BES Collection                 | 16      | 2      | 14      | 0      | 0 · 8 · 14                | 8                      | 8       |
-| LIC Light and locations        | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
-| PHA Care phases                | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
-| WAC Growth/photos              | 6       | 4      | 2       | 0      | 5 · 0 · 1                 | 6                      | 0       |
-| BEH Treatments                 | 4       | 4      | 0       | 0      | 4 · 0 · 2                 | 4                      | 0       |
-| WUN Wishlist                   | 5       | 0      | 5       | 0      | 2 · 0 · 5                 | 5                      | 0       |
-| POK Pokédex                    | 12      | 0      | 11      | 1      | 0 · 0 · 11                | 10                     | 2       |
-| MON Reminders/sensors          | 8       | 0      | 6       | 2      | 0 · 0 · 8                 | 0                      | 8       |
-| SOZ Social                     | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
-| EQU Equipment                  | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
-| KI AI access                   | 17      | 1      | 9       | 7      | 0 · 3 · 20                | 3                      | 14      |
-| QS Cross-cutting               | 24      | 0      | 21      | 3      | 0 · 0 · 0                 | 6                      | 18      |
-| MIG Migration (dropped)        | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
-| ENT Discover                   | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
-| QG Quality gates               | 10      | 0      | 8       | 2      | 14 · 11 · 2               | 0                      | 10      |
-| DEV Development process        | 12      | 1      | 10      | 1      | 1 · 2 · 7                 | 0                      | 12      |
-| ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
-| TAU Swipe matching             | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
-| ONB Introduction and unlocking | 8       | 5      | 3       | 0      | 1 · 0 · 9                 | 0                      | 8       |
-| **Total**                      | **186** | **37** | **130** | **19** |                           | **50**                 | **136** |
+| Epic                             | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
+| -------------------------------- | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
+| ACC Accounts                     | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
+| BES Collection                   | 16      | 2      | 14      | 0      | 0 · 8 · 14                | 8                      | 8       |
+| LIC Light and locations          | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
+| PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
+| WAC Growth/photos                | 6       | 4      | 2       | 0      | 5 · 0 · 1                 | 6                      | 0       |
+| BEH Treatments                   | 4       | 4      | 0       | 0      | 4 · 0 · 2                 | 4                      | 0       |
+| WUN Wishlist                     | 5       | 0      | 5       | 0      | 2 · 0 · 5                 | 5                      | 0       |
+| POK Pokédex                      | 12      | 0      | 11      | 1      | 0 · 0 · 11                | 10                     | 2       |
+| MON Reminders/sensors            | 8       | 0      | 6       | 2      | 0 · 0 · 8                 | 0                      | 8       |
+| SOZ Social                       | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
+| EQU Equipment                    | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
+| KI AI access                     | 17      | 1      | 9       | 7      | 0 · 3 · 20                | 3                      | 14      |
+| QS Cross-cutting                 | 24      | 0      | 21      | 3      | 0 · 0 · 0                 | 6                      | 18      |
+| MIG Migration (dropped)          | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
+| ENT Discover                     | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
+| QG Quality gates                 | 10      | 0      | 8       | 2      | 14 · 11 · 2               | 0                      | 10      |
+| DEV Development process          | 12      | 1      | 10      | 1      | 1 · 2 · 7                 | 0                      | 12      |
+| ACH Achievements                 | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
+| TAU Swipe matching               | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
+| ONB Introduction and unlocking   | 9       | 5      | 3       | 1      | 1 · 0 · 10                | 0                      | 9       |
+| VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
+| SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
+| DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
+| **Total**                        | **211** | **37** | **130** | **44** |                           | **50**                 | **161** |
 
 <!-- spec-status:end -->
 

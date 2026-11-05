@@ -17,7 +17,7 @@ This repo holds the **specs** (English) and, as decided in E-05 (`docs/specs/pro
 
 The vault paths referenced in the prototype specs (`02-Areas/…`, `scripts/pflanzen/…`, `docs/superpowers/specs/…`) are **not in this repo**.
 
-Start with `docs/specs/product/readme.md` (index, conventions, replacement table), then `docs/specs/product/00-product-overview.md` (principles P-01…P-11, domain model, glossary) and `16-releases-and-decisions.md` (release cut R0–R6, open decisions E-nn, non-goals).
+Start with `docs/specs/product/readme.md` (index, conventions, replacement table), then `docs/specs/product/00-product-overview.md` (principles P-01…P-12, domain model, glossary) and `16-releases-and-decisions.md` (release cut R0–R6, open decisions E-nn, non-goals).
 
 ## Language
 
@@ -29,7 +29,7 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 
 - **New features go into `docs/specs/product/`.** Only touch `docs/specs/prototype/` to correct the description of the vault's actual state.
 - Product IDs: `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`, decisions `E-nn`. Stories taken over from the prototype **keep their prototype ID** so the two can be compared. IDs are never renumbered.
-- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, ENT (`17-discover.md`, swipe suggestions from the catalog into the wishlist), ACH (`20-achievements.md`, achievements and rewards for care and growth), TAU (`21-swipe-matching.md`, swipe matching of friends' swap offers against the wishlist), ONB (`22-introduction-and-unlocking.md`, playful introduction and staged unlocking of functions).
+- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, ENT (`17-discover.md`, swipe suggestions from the catalog into the wishlist), ACH (`20-achievements.md`, achievements and rewards for care and growth), TAU (`21-swipe-matching.md`, swipe matching of friends' swap offers against the wishlist), ONB (`22-introduction-and-unlocking.md`, playful introduction and staged unlocking of functions), VAR (`23-variegated-cultivars.md`, variegated cultivars as catalog entries with trade names, facts, prices and reversion warnings), SUB (`24-substrate.md`, components, soil recipes and supports), DEAL (`25-shop-offers-and-sale-alerts.md`, shop offers and sale alerts for wishes).
 - When adding a product epic: new numbered file, then update the file and status tables in `docs/specs/product/readme.md`, cross-reference the affected epics, add glossary terms to `00`, and place it in the release cut in `16`.
 - Product specs are **technology-neutral**: behavior, data and limits. Technology choices belong in `16` as decisions.
 - Acceptance criteria use a short Given/When/Then form and are meant to become tests (P-06).
@@ -74,6 +74,7 @@ From `docs/specs/product/00-product-overview.md`:
 - **P-08:** no invented numbers. Compare against the user's own history or citable sources (GBIF, Wikipedia), and show "unknown" when a value is unknown.
 - **P-09:** every view says what to do next.
 - **P-10:** nothing disappears silently.
+- **P-12:** the keeper chooses the features; everything outside the core can be switched off, and the data stays.
 
 Recurring consequences:
 

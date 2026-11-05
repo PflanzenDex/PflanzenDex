@@ -23,7 +23,7 @@ The release cut R0 (foundation) to R6 (sensors) is in `16-releases-and-decisions
 
 ### 1.2 Quality goals
 
-The top quality goals, derived from the principles P-01 to P-11 (`00-product-overview.md`) and the non-functional requirements NFR-01 to NFR-18 (`14-cross-cutting.md`):
+The top quality goals, derived from the principles P-01 to P-12 (`00-product-overview.md`) and the non-functional requirements NFR-01 to NFR-18 (`14-cross-cutting.md`):
 
 | Priority | Quality goal                     | Motivation                                                                                                |
 | -------- | -------------------------------- | --------------------------------------------------------------------------------------------------------- |

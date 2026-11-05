@@ -249,19 +249,20 @@ Consequences for the existing gates: the tenant test (QG-D1) stays general over 
 
 Every product principle from `00-Product-Overview.md` gets at least one gate, otherwise it remains intention.
 
-| Principle                             | Gate                                                                                 |
-| ------------------------------------- | ------------------------------------------------------------------------------------ |
-| P-01 AI judges, code computes         | AB-3, QG-T1 (domain logic coverage), contract tests of the AI interface (FR-KI-03)   |
-| P-02 One core, many interfaces        | AB-1, AB-2, test "Today"/reminder/AI use the same `status` function (R-04 in `16-…`) |
-| P-03 Validating operations            | AB-3, test per writing operation: invalid input writes nothing (FR-KI-02)            |
-| P-04 Multi-tenant                     | QG-D1                                                                                |
-| P-05 Private by default               | QG-D2, test: new specimen is `private`                                               |
-| P-06 Specs are executable             | QG-T4, QG-U2                                                                         |
-| P-07 Human delivers only human things | Review question in the DoD (no required field that would be derivable)               |
-| P-08 No invented numbers              | Tests: unknown is delivered as "unknown" (US-POK-07, FR-SOZ-07)                      |
-| P-09 Instruction for action           | Test on the "Today" list: every item has an action                                   |
-| P-10 Nothing disappears silently      | Test: incomplete data appears in "Hints" (US-BES-08)                                 |
-| P-11 Mobile first                     | QG-U1 (mobile runs, phone viewport in E2E)                                           |
+| Principle                             | Gate                                                                                                            |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| P-01 AI judges, code computes         | AB-3, QG-T1 (domain logic coverage), contract tests of the AI interface (FR-KI-03)                              |
+| P-02 One core, many interfaces        | AB-1, AB-2, test "Today"/reminder/AI use the same `status` function (R-04 in `16-…`)                            |
+| P-03 Validating operations            | AB-3, test per writing operation: invalid input writes nothing (FR-KI-02)                                       |
+| P-04 Multi-tenant                     | QG-D1                                                                                                           |
+| P-05 Private by default               | QG-D2, test: new specimen is `private`                                                                          |
+| P-06 Specs are executable             | QG-T4, QG-U2                                                                                                    |
+| P-07 Human delivers only human things | Review question in the DoD (no required field that would be derivable)                                          |
+| P-08 No invented numbers              | Tests: unknown is delivered as "unknown" (US-POK-07, FR-SOZ-07)                                                 |
+| P-09 Instruction for action           | Test on the "Today" list: every item has an action                                                              |
+| P-10 Nothing disappears silently      | Test: incomplete data appears in "Hints" (US-BES-08)                                                            |
+| P-11 Mobile first                     | QG-U1 (mobile runs, phone viewport in E2E)                                                                      |
+| P-12 Keeper chooses the features      | Test per switch: switched off removes navigation, "Heute" and reminders and keeps the data (US-ONB-09, planned) |
 
 ## Open decisions (addition to `16-…`)
 
