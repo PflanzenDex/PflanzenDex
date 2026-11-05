@@ -47,7 +47,7 @@ jobs:
           app-id: ${{ vars.PROJECT_APP_ID }}
           private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-      - name: Sync board fields Typ and Epic
+      - name: Sync board fields Typ, Epic and an empty Status
         if: ${{ steps.labels.outputs.valid == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}

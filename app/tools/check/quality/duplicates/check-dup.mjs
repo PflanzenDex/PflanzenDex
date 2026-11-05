@@ -63,12 +63,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     { cwd: root, encoding: "utf8" },
   );
   const file = path.join(out, "jscpd-report.json");
-  if (!fs.existsSync(file)) {
+  // The report folder goes again on every path, also when jscpd fails or its report cannot be read (#1297).
+  let report = null;
+  try {
+    if (fs.existsSync(file)) report = JSON.parse(fs.readFileSync(file, "utf8"));
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+  if (!report) {
     console.error(`QG-K5: jscpd failed\n${run.stdout}${run.stderr}`);
     process.exit(2);
   }
-  const report = JSON.parse(fs.readFileSync(file, "utf8"));
-  fs.rmSync(out, { recursive: true, force: true });
   const total = report.statistics.total;
   const percent = total.percentage;
   console.log(
