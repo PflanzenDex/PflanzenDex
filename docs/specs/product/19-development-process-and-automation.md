@@ -60,7 +60,7 @@ Acceptance criteria (git hooks, managed via a tool like Husky, installed by `mak
 Acceptance criteria (agent hooks, Claude Code `settings.json` in the repo):
 
 - **`Stop` hook (message only, never blocks):** if code was changed in the session and `make ci` or `make gates` did not run afterwards, a note appears to the human (pattern: the `review_analysis.py` hook in Tombola, which only shows a system message and does not redirect the model).
-- **`PreToolUse` guard:** changes to gate configurations (`.githooks/`, workflows, `.claude/`, coverage and complexity thresholds, exception lists in `app/config/gates/`) require explicit confirmation by the human. The shrink-only baselines in `app/config/gates/baselines/` are not gate configurations: an agent may shrink them in a normal change, and their check scripts fail when they grow. This technically enforces `US-QG-07` ("the agent lowers no threshold to get around a failure").
+- **`PreToolUse` guard:** changes to gate configurations (`.githooks/`, workflows, `.claude/`, coverage and complexity thresholds, exception lists in `app/config/gates/`, baseline lists) require explicit confirmation by the human. This technically enforces `US-QG-07` ("the agent lowers no threshold to get around a failure").
 - **`PostToolUse` hook:** formats changed files (Prettier) and, for changes in `docs/specs/product/`, starts the spec check (`spec-check`) as a message.
 - Hooks have their own tests (example Tombola: `review_analysis_test.py`) and a time limit; a hanging hook must not block the session.
 - The permission list (`permissions.allow`) contains only reading and gate-near commands (`make ci`, `git status`, …), no write or deploy commands.

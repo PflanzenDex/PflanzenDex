@@ -642,6 +642,6 @@ Rules marked 🔒 are checked by `app/tools/check/code/design-system/check-desig
   - a violation appears that is **not** in the baseline (new code must comply), or
   - the count for an entry **grows**, or
   - an entry is **stale** (the violation is gone but the entry remains: delete it, so the baseline only shrinks).
-- **No weakening.** The rules, the script and the thresholds are gate files (`AGENTS.md`). An agent never edits them to turn a red run green. The baseline is not a gate file: an agent may shrink it in a normal PR, and the check fails when an entry grows or stays stale. Changes to a rule go in their own PR with a reason (US-QG-07).
+- **No weakening.** The baseline, the rules, the script and the thresholds are gate files (`AGENTS.md`). An agent never edits them to turn a red run green. Changes to a rule go in their own PR with a reason (US-QG-07).
 - **Framework adoption rule (DS-57 🔒):** while the web package does not depend on `tailwindcss`, `class-variance-authority`, `clsx`, `tailwind-merge`, `react-hook-form` and `zod`, or lacks `shared/ui` and `shared/lib/utils.ts`, the check reports the missing pieces as baseline entries. They are removed when the migration issues land. It never passes silently for an app that does not use the design system.
 - **Findings** are tracked as GitHub issues with the label `design-system` and the rule ID in the title (for example `DS-27: replace color literals in pokedex.css`), one issue per rule and module, so each is a small, claimable task.
