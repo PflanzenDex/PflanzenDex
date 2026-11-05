@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Tastatur: Lädt die Seite noch, während du schon mit der Tab-Taste unterwegs bist, bleibt der Fokus jetzt dort, wo du ihn hingesetzt hast.",
     "Große Schrift: Lange Wörter trennen sich jetzt an einer Silbe mit Bindestrich. Mit der Tastatur bleibt der Fokus beim Wechsel zwischen Reitern auf dem Reiter und kehrt nach dem Schließen eines Fensters im Konto zur Zeile zurück.",
     "Große Schrift: Bei 200 % Textgröße ragen Konto, Erfolge und Geräte nicht mehr zur Seite hinaus. Lange Wörter brechen um, die Kacheln der Geräte stehen untereinander.",
     "Prüfliste und Geräte passen aufs Handy: Ein Vorschlag zeigt seine kurzen Angaben, die Beschreibung und die Entscheidung in drei Reitern. Die drei Vorrats-Schaltflächen eines Verbrauchsmaterials stehen nebeneinander.",

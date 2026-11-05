@@ -66,11 +66,19 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
     if (left === null || left === key || keepFocus || sameView) return;
     let stop = () => {};
     let cancelled = false;
+    // The mover is a chunk of its own: a key or tap before it has loaded is the person taking over, too (issue 1362).
+    const takeOver = () => void (cancelled = true);
+    const watch = (change: "addEventListener" | "removeEventListener") => {
+      for (const input of ["keydown", "pointerdown"]) document[change](input, takeOver, true);
+    };
+    watch("addEventListener");
     void mover.current?.then((m) => {
+      watch("removeEventListener");
       if (!cancelled) stop = m.move(left, key, type, () => announcer?.announce(title));
     });
     return () => {
       cancelled = true;
+      watch("removeEventListener");
       stop();
     };
   }, [key, type, title, announcer, keepFocus, here]);
