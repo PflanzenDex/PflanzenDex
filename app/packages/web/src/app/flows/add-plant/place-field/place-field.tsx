@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
-import { loadCards } from "../../../../collection";
+import { loadCardSummary } from "../../../../collection";
 import { sharedLocations, sharedZones } from "../../../../light";
 import { useQueryClient, type QueryClient } from "../../../../shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -19,25 +19,21 @@ interface Places {
   readonly suggested: string;
 }
 
-/** The own places and the one the last plant stands at (by its name on the card); nothing is read when it fails. */
+/** The own places and the one the last plant stands at (the server's summary, US-BES-06); nothing is read when it fails. */
 async function loadPlaces(client: QueryClient, api: string, token: Token): Promise<Places | null> {
   const t = await token();
   if (!t) return null;
-  const [l, z, c] = await Promise.all([
+  const [l, z, s] = await Promise.all([
     sharedLocations(client, api, t),
     sharedZones(client, api, t),
-    loadCards(api, t),
+    loadCardSummary(api, t),
   ]);
   if (!l.ok || !z.ok) return null;
-  const last = c.ok
-    ? [...c.value]
-        .filter((k) => k.location !== null)
-        .sort((a, b) => (a.caughtAt ?? "").localeCompare(b.caughtAt ?? ""))
-        .at(-1)
-    : undefined;
+  // The place of the plant with the latest catch date that has one; the server counts over all plants, not one page.
+  const last = s.ok ? s.value.lastLocation : null;
   // A place under cutting light is no suggestion for a plant that is not a cutting (issue 1045, US-BES-04).
   const cutting = cuttingLight(z.value);
-  const place = l.value.find((x) => x.name === last?.location);
+  const place = l.value.find((x) => x.name === last);
   const suggested = place && place.lightZoneId !== cutting?.id ? place.id : "";
   return { locations: l.value, zones: z.value, suggested };
 }

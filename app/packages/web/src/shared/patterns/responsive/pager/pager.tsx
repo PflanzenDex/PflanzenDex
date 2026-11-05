@@ -1,8 +1,16 @@
 import * as React from "react";
-import { useLocation, useSearchParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { pageAfterResize, usePageFit } from "./use-page-fit";
+import {
+  PagingNote,
+  parsePage,
+  usePageAddress,
+  usePagingMore,
+  type PagerPaging,
+} from "./paging/paging";
+
+export type { PagerPaging } from "./paging/paging";
 
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
@@ -107,28 +115,9 @@ export type PagerProps<T> = {
    * the pager sits below it at the bottom of that frame. The list carries `data-page-fit`, so a layer takes its full height (issue 1156).
    */
   fit?: boolean;
+  /** The entries live on the server in pages (FR-BES-23): the pages count from its total, see `PagerPaging`. */
+  paging?: PagerPaging;
 };
-
-function parsePage(raw: string | null): number {
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= 1 ? n : 1;
-}
-
-/** The page in the address: the current one, and `go` to write another. Keeps the history state, so a layer closes by going back (`useLayer`). */
-function usePageAddress(param: string, replaceEntry: boolean) {
-  const [params, setParams] = useSearchParams();
-  const location = useLocation();
-  const go = React.useCallback(
-    (target: number, replace = false) => {
-      const next = new URLSearchParams(params);
-      if (target <= 1) next.delete(param);
-      else next.set(param, String(target));
-      setParams(next, { replace: replace || replaceEntry, state: location.state });
-    },
-    [params, setParams, param, replaceEntry, location.state],
-  );
-  return { params, go };
-}
 
 /**
  * Pages of whole entries instead of a long scroll (US-QS-15, DS-58): "Zurück" and "Weiter", the position "Seite n von m"
@@ -146,16 +135,20 @@ export function Pager<T>({
   param = PARAM,
   replace: replaceEntry = false,
   fit = false,
+  paging,
 }: PagerProps<T>) {
   const { params, go } = usePageAddress(param, replaceEntry);
   const list = React.useRef<HTMLUListElement>(null);
   const fitted = usePageFit(list, fit);
   const measured = fitted?.size ?? null;
   const pageSize = measured ?? startingSize;
-  const pages = Math.max(1, Math.ceil(items.length / pageSize));
+  // The entries of the list: all of them on the server (`paging.total`), at least the loaded ones.
+  const count = paging ? Math.max(paging.total, items.length) : items.length;
+  const pages = Math.max(1, Math.ceil(count / pageSize));
   const raw = parsePage(params.get(param));
   const page = Math.min(raw, pages);
-
+  const first = (page - 1) * pageSize;
+  const missing = usePagingMore(paging, items.length, first + pageSize, count);
   // The address follows the page (see pageAfterResize, issue 1029). Passive, not a layout effect: the router subscribes to
   // the address in its own layout effect, after the children's, so a navigation made earlier would be lost on mount.
   const measuredBefore = React.useRef<number | null>(null);
@@ -163,7 +156,7 @@ export function Pager<T>({
     const before = measuredBefore.current;
     measuredBefore.current = measured;
     if (fit && measured === null) return; // no layout yet: the starting value must not rewrite the address
-    const target = pageAfterResize({ before, measured, raw, count: items.length, page });
+    const target = pageAfterResize({ before, measured, raw, count, page });
     if (params.has(param) && raw !== target) go(target, true);
   });
 
@@ -175,8 +168,6 @@ export function Pager<T>({
   }, [resetKey, params, go, param]);
 
   const swipe = useSwipe(page, pages, go);
-  const visible = items.slice((page - 1) * pageSize, page * pageSize);
-  const first = (page - 1) * pageSize;
 
   return (
     <div
@@ -190,10 +181,11 @@ export function Pager<T>({
         aria-label={label}
         className={cn("flex flex-col gap-2", fit && "min-h-0 flex-1 content-start", listClassName)}
       >
-        {visible.map((item, i) => (
+        {items.slice(first, first + pageSize).map((item, i) => (
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}
       </ul>
+      {missing && paging ? <PagingNote paging={paging} /> : null}
       {pages > 1 ? <PagerBar page={page} pages={pages} go={go} /> : null}
     </div>
   );

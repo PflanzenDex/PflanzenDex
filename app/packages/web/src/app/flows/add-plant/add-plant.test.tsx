@@ -3,7 +3,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { SpecimenCard } from "@pflanzendex/core";
 import { AddPlant } from "./add-plant";
+import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -40,7 +42,8 @@ function server(
       }
       if (path === "/light-zones") return response(200, { zones });
       if (path === "/locations") return response(200, { locations });
-      if (path === "/specimens/cards") return response(200, { cards });
+      if (path.startsWith("/specimens/cards"))
+        return answerCardRead(new URL(String(url)), cards as SpecimenCard[]) ?? response(404, {});
       if (path === "/species") return response(200, { species: [HIT] });
       if (path === "/species/sp1") return response(200, SPECIES);
       return response(404, {});

@@ -26,6 +26,7 @@ vi.mock("oidc-client-ts", () => ({
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { App } from "../../frame/app/app";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
+import { NO_CARDS_PAGE, NO_CARDS_SUMMARY } from "../../../collection/specimens/tests/cards-fake";
 
 // US-WUN-05: after "Gekauft" the app opens the creation of a specimen with the species preselected from the catalog, or
 // the catalog search with the wish name; the wish is linked to the specimen it became ("bought → specimen").
@@ -93,7 +94,8 @@ const READS: Record<string, unknown> = {
   "/locations": { locations: [] },
   "/light-zones": { zones: [] },
   "/specimens/count": { count: 0, archived: 0 },
-  "/specimens/cards": { cards: [] },
+  "/specimens/cards": NO_CARDS_PAGE,
+  "/specimens/cards/summary": NO_CARDS_SUMMARY,
   "/specimens/archived": { archived: [] },
   "/specimens/distribution": EMPTY_DISTRIBUTION,
 };

@@ -289,3 +289,99 @@ describe("US-QS-19 page size fills the free height of the region", () => {
     expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
   });
 });
+
+// FR-BES-23: the entries of a server list come in pages; the Pager counts the pages from the server total and asks for
+// the next server page when the page on screen reaches beyond the loaded entries (P-10: nothing vanishes silently).
+type PagingProps = {
+  loaded: string[];
+  total?: number;
+  at?: string;
+  loading?: boolean;
+  failure?: string;
+  onMore?: () => void;
+  onRetry?: () => void;
+};
+
+function Paged({
+  loaded,
+  total = 7,
+  at = "/",
+  loading = false,
+  failure,
+  onMore,
+  onRetry,
+}: PagingProps) {
+  return (
+    <MemoryRouter initialEntries={[at]}>
+      <Pager
+        items={loaded}
+        pageSize={3}
+        label="Pflanzen"
+        renderItem={(t) => t}
+        paging={{
+          total,
+          loading,
+          ...(failure === undefined ? {} : { failure }),
+          onMore: onMore ?? vi.fn(),
+          onRetry: onRetry ?? vi.fn(),
+          loadingText: "Pflanzen werden geladen …",
+          retryText: "Erneut versuchen",
+        }}
+      />
+      <Where />
+    </MemoryRouter>
+  );
+}
+
+describe("FR-BES-23 Pager of a server list", () => {
+  it("FR-BES-23 the position counts the pages of the server total, not of the loaded entries", () => {
+    render(<Paged loaded={items.slice(0, 3)} total={7} />);
+    expect(screen.getByRole("status").textContent).toBe("Seite 1 von 3");
+  });
+
+  it("FR-BES-23 a page beyond the loaded entries asks for the next server page once and shows a loading note, never an empty page", () => {
+    const onMore = vi.fn();
+    render(<Paged loaded={items.slice(0, 3)} at="/?page=2" onMore={onMore} />);
+    expect(onMore).toHaveBeenCalledTimes(1);
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+    expect(screen.getByText("Pflanzen werden geladen …")).toBeTruthy();
+  });
+
+  it("FR-BES-23 a page partly loaded shows what is loaded and the note for the rest", () => {
+    render(<Paged loaded={items.slice(0, 4)} at="/?page=2" />);
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Pflanze 4"]);
+    expect(screen.getByText("Pflanzen werden geladen …")).toBeTruthy();
+  });
+
+  it("FR-BES-23 while a page is on its way it is not asked for again", () => {
+    const onMore = vi.fn();
+    render(<Paged loaded={items.slice(0, 3)} at="/?page=2" loading onMore={onMore} />);
+    expect(onMore).not.toHaveBeenCalled();
+  });
+
+  it("P-10 a failed further page keeps the loaded entries, shows the failure with Erneut versuchen, and does not ask again by itself", async () => {
+    const onMore = vi.fn();
+    const onRetry = vi.fn();
+    render(
+      <Paged
+        loaded={items.slice(0, 3)}
+        at="/?page=2"
+        failure="Die nächsten Pflanzen sind nicht angekommen."
+        onMore={onMore}
+        onRetry={onRetry}
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Die nächsten Pflanzen sind nicht angekommen.",
+    );
+    expect(onMore).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(onRetry).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Pflanze 1",
+      "Pflanze 2",
+      "Pflanze 3",
+    ]);
+  });
+});

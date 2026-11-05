@@ -7,6 +7,7 @@ import { openPlant, openTab } from "../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "./collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
+import { answerCardRead } from "../specimens/tests/cards-fake";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -49,11 +50,19 @@ const cardFrom = (e: Specimen): SpecimenCard => ({
 });
 const location = { id: "s1", name: "Regal Süd", lightZoneId: null, kind: "indoor" as const };
 
-function fakeServer(opts: { specimens?: Specimen[]; create?: () => Promise<Response> } = {}) {
+type ServerOptions = {
+  specimens?: Specimen[];
+  create?: () => Promise<Response>;
+  /** Answers a request before the default answers (a failing page, for example); `null` leaves it to the default. */
+  answer?: (url: URL) => Promise<Response> | null;
+};
+
+function fakeServer(opts: ServerOptions = {}) {
   const posts: { body: Record<string, unknown>; key: string | undefined }[] = [];
   const specimens = opts.specimens ?? [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
-    const path = new URL(String(url)).pathname;
+    const u = new URL(String(url));
+    const path = u.pathname;
     if (init?.method === "POST" && path === "/specimens") {
       posts.push({
         body: JSON.parse(String(init.body)) as Record<string, unknown>,
@@ -64,17 +73,35 @@ function fakeServer(opts: { specimens?: Specimen[]; create?: () => Promise<Respo
       specimens.push(fresh);
       return response(201, fresh);
     }
+    const own = opts.answer?.(u);
+    if (own) return own;
     if (path === "/locations") return response(200, { locations: [location] });
     if (path === "/specimens/archived") return response(200, { archived: [] });
     if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-    return response(200, { cards: specimens.map(cardFrom) });
+    return answerCardRead(u, specimens.map(cardFrom)) ?? response(404, {});
   });
   vi.stubGlobal("fetch", fetchFn);
   return { fetchFn, posts };
 }
 
-const page = (extra: Partial<Parameters<typeof CollectionPage>[0]> = {}) => (
-  <MemoryRouter>
+/** The requests of the card list (`/specimens/cards`) that the page sent, as URLs. */
+const cardCalls = (fetchFn: ReturnType<typeof vi.fn<typeof fetch>>) =>
+  fetchFn.mock.calls
+    .map(([url]) => new URL(String(url)))
+    .filter((u) => u.pathname === "/specimens/cards");
+
+/** One hundred and more plants with names that sort in the order of their numbers (FR-BES-23). */
+const many = (n: number, locationId: string | null = "s1") =>
+  Array.from({ length: n }, (_, i) =>
+    specimen({
+      id: `e${i + 1}`,
+      name: `Pflanze ${String(i + 1).padStart(3, "0")}`,
+      locationId,
+    }),
+  );
+
+const page = (extra: Partial<Parameters<typeof CollectionPage>[0]> = {}, at = "/") => (
+  <MemoryRouter initialEntries={[at]}>
     <CollectionPage
       api="http://api"
       token={async () => "tok"}
@@ -118,9 +145,9 @@ describe("US-BES-02 Seite Sammlung", () => {
           return response(500, {
             error: { code: "server.error", text: "Standorte nicht ladbar." },
           });
-        return path === "/specimens/archived"
-          ? response(200, { archived: [] })
-          : response(200, { cards: [cardFrom(specimen())], ...EMPTY_DISTRIBUTION });
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        return answerCardRead(new URL(String(url)), [cardFrom(specimen())]) ?? response(404, {});
       }),
     );
     render(page());
@@ -233,9 +260,9 @@ describe("US-BES-06 cards on the collection page", () => {
         const path = new URL(String(url)).pathname;
         if (path === "/locations") return response(200, { locations: [location] });
         if (path.endsWith("/photo")) return new Response(new Uint8Array([1]), { status: 200 });
-        return path === "/specimens/archived"
-          ? response(200, { archived: [] })
-          : response(200, { cards: [card], ...EMPTY_DISTRIBUTION });
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        return answerCardRead(new URL(String(url)), [card]) ?? response(404, {});
       }),
     );
     URL.createObjectURL = vi.fn(() => "blob:card");
@@ -252,5 +279,110 @@ describe("US-BES-06 cards on the collection page", () => {
     await userEvent.click(screen.getByText("Notiz der Messung"));
     expect(details?.open).toBe(true);
     expect(screen.getByText("Streckt sich.")).toBeTruthy();
+  });
+});
+
+// US-BES-06 · FR-BES-23 · NFR-12: the list reads its plants in pages of 100 from the server; the total and every reader
+// that speaks about all plants use the server's answer, never the loaded page (P-10).
+describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
+  it("NFR-12 · FR-BES-23 the pages count from the server total before any further page is loaded", async () => {
+    fakeServer({ specimens: many(150) });
+    render(page());
+    expect(await screen.findByText("Seite 1 von 25")).toBeTruthy();
+  });
+
+  it("US-BES-06 · FR-BES-23 a plant beyond the first server page is reachable through the Pager; the next page loads by itself", async () => {
+    const { fetchFn } = fakeServer({ specimens: many(150) });
+    render(page({}, "/?page=25"));
+    expect(await screen.findByRole("button", { name: /^Pflanze 150 / })).toBeTruthy();
+    expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
+    expect(cardCalls(fetchFn).some((u) => u.searchParams.has("after"))).toBe(true);
+  });
+
+  it("P-10 FR-BES-23 a further page that fails keeps the loaded plants; Erneut versuchen continues from the same cursor", async () => {
+    let failed = false;
+    const { fetchFn } = fakeServer({
+      specimens: many(150),
+      answer: (u) => {
+        if (u.pathname !== "/specimens/cards" || !u.searchParams.has("after") || failed)
+          return null;
+        failed = true;
+        return response(500, {
+          error: { code: "server.error", text: "Die Pflanzen konnten nicht geladen werden." },
+        });
+      },
+    });
+    render(page({}, "/?page=25"));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Die Pflanzen konnten nicht geladen werden.",
+    );
+    expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("button", { name: /^Pflanze 150 / })).toBeTruthy();
+    const cursors = cardCalls(fetchFn)
+      .map((u) => u.searchParams.get("after"))
+      .filter((after): after is string => after !== null);
+    expect(cursors.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(cursors).size).toBe(1);
+  });
+
+  it("US-ONB-07 · FR-BES-23 the hint for a plant without a place still appears when that plant is beyond the first page", async () => {
+    fakeServer({
+      specimens: [...many(100), specimen({ id: "ezz", name: "Zzz Ohne Ort", locationId: null })],
+    });
+    render(
+      page({
+        renderHint: (applicable) => <p>Hinweis: {applicable.join(" ")}</p>,
+      }),
+    );
+    expect(await screen.findByText(/Hinweis: .*plant_without_place/)).toBeTruthy();
+  });
+
+  it("US-BES-03 · FR-BES-23 the other specimens of a species come from the species filter, not from the loaded page", async () => {
+    const others = Array.from({ length: 100 }, (_, i) =>
+      specimen({
+        id: `o${i}`,
+        speciesId: "a2",
+        name: `Aaa ${String(i).padStart(3, "0")}`,
+        locationId: "s1",
+      }),
+    );
+    const sibling = specimen({ id: "z1", speciesId: "a1", name: "Zzz Eins", locationId: "s1" });
+    const { fetchFn } = fakeServer({ specimens: [...others, sibling] });
+    render(page({ newSpecies: species }));
+    // One other specimen of the species exists, beyond the first page: the marker is required.
+    expect(await screen.findByLabelText("Kennzeichen")).toBeTruthy();
+    const ofSpecies = cardCalls(fetchFn).filter((u) => u.searchParams.get("species") === "a1");
+    expect(ofSpecies.length).toBeGreaterThan(0);
+    expect(ofSpecies[0]?.searchParams.get("limit")).toBe("200");
+  });
+
+  it("FR-BES-23 the caption of the host names the total of all plants, not the loaded ones", async () => {
+    fakeServer({ specimens: many(150) });
+    const host = { onCaption: vi.fn(), onFullView: vi.fn() };
+    render(page({ host }));
+    await vi.waitFor(() => expect(host.onCaption).toHaveBeenLastCalledWith("150 Pflanzen"));
+  });
+
+  it("FR-BES-23 after a write the total is refreshed: the pages follow the new total", async () => {
+    const { posts } = fakeServer({ specimens: many(144) });
+    const { rerender } = render(page({ newSpecies: { ...species, id: "a9" } as Species }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    rerender(page());
+    expect(await screen.findByText("Seite 1 von 25")).toBeTruthy();
+  });
+
+  it("US-BES-06 · FR-BES-23 a direct link to a plant that is not loaded opens its layer", async () => {
+    fakeServer({ specimens: many(150) });
+    render(page({}, "/?sheet=plant-e150"));
+    expect(await screen.findByRole("heading", { name: "Pflanze 150" })).toBeTruthy();
+  });
+
+  it("P-10 a direct link to a plant that does not exist shows the error state with Erneut versuchen", async () => {
+    fakeServer({ specimens: many(3) });
+    render(page({}, "/?sheet=plant-gibt-es-nicht"));
+    expect(await screen.findByText("Diese Pflanze gibt es nicht.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 });
