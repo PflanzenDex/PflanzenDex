@@ -1,5 +1,10 @@
 import type { Pool } from "pg";
-import { beginAsApplicationRole, poolLimits } from "../kernel/index.ts";
+import {
+  beginAsApplicationRole,
+  inTransaction,
+  poolLimits,
+  settleTransaction,
+} from "../kernel/index.ts";
 
 /**
  * Own path for registration and sign-in (US-ACC-01): finds the account for the verified subject of the
@@ -8,27 +13,23 @@ import { beginAsApplicationRole, poolLimits } from "../kernel/index.ts";
  */
 export async function findOrCreateAccount(pool: Pool, subject: string): Promise<string> {
   if (subject.trim() === "") throw new Error("Subject missing");
-  const client = await pool.connect();
-  try {
-    await beginAsApplicationRole(client, poolLimits(pool), [["app.subject", subject]]);
-    // Concurrent first sign-ins: the unique index on `subject` decides, `do nothing` reports no error.
-    await client.query(
-      "insert into account (subject) values ($1) on conflict (subject) do nothing",
-      [subject],
-    );
-    const r = await client.query<{ id: string }>("select id from account where subject = $1", [
-      subject,
-    ]);
-    await client.query("commit");
-    const id = r.rows[0]?.id;
-    if (!id) throw new Error("Account could not be created");
-    return id;
-  } catch (error) {
-    await client.query("rollback");
-    throw error;
-  } finally {
-    client.release();
-  }
+  return inTransaction(
+    pool,
+    (client) => beginAsApplicationRole(client, poolLimits(pool), [["app.subject", subject]]),
+    async (client) => {
+      // Concurrent first sign-ins: the unique index on `subject` decides, `do nothing` reports no error.
+      await client.query(
+        "insert into account (subject) values ($1) on conflict (subject) do nothing",
+        [subject],
+      );
+      const r = await client.query<{ id: string }>("select id from account where subject = $1", [
+        subject,
+      ]);
+      const id = r.rows[0]?.id;
+      if (!id) throw new Error("Account could not be created");
+      return id;
+    },
+  );
 }
 
 async function lookUp(
@@ -36,23 +37,26 @@ async function lookUp(
   subject: string,
   override: { invitationOnly?: boolean } | undefined,
 ): Promise<{ id: string | null; required: boolean }> {
-  const client = await pool.connect();
-  try {
-    await beginAsApplicationRole(client, poolLimits(pool), [["app.subject", subject]]);
-    const known = await client.query<{ id: string }>("select id from account where subject = $1", [
-      subject,
-    ]);
-    const mode = await client.query<{ required: boolean }>(
-      "select invitation_required() as required",
-    );
-    return {
-      id: known.rows[0]?.id ?? null,
-      required: override?.invitationOnly ?? mode.rows[0]?.required === true,
-    };
-  } finally {
-    await client.query("rollback");
-    client.release();
-  }
+  return settleTransaction(
+    pool,
+    (client) => beginAsApplicationRole(client, poolLimits(pool), [["app.subject", subject]]),
+    async (client) => {
+      const known = await client.query<{ id: string }>(
+        "select id from account where subject = $1",
+        [subject],
+      );
+      const mode = await client.query<{ required: boolean }>(
+        "select invitation_required() as required",
+      );
+      return {
+        commit: false, // only reads: nothing to keep
+        value: {
+          id: known.rows[0]?.id ?? null,
+          required: override?.invitationOnly ?? mode.rows[0]?.required === true,
+        },
+      };
+    },
+  );
 }
 
 /**

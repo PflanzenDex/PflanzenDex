@@ -16,6 +16,12 @@ export {
   type DbLimits,
   type PoolConfig,
 } from "./connection/limits.ts";
+export {
+  beginPlain,
+  inTransaction,
+  settleTransaction,
+  type Settled,
+} from "./connection/transaction.ts";
 export { migrate, MIGRATIONS_DIRECTORY, type MigrationsOptions } from "./migrate.ts";
 export { checkSchema, tenantsTables, WITHOUT_ACCOUNT_ID } from "./schema.ts";
 export type { TenantExceptions } from "./schema.ts";
