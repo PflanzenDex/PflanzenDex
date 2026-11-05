@@ -19,12 +19,14 @@ export function useFirstPlant(api: string, token: Token) {
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<{ name: string; id: string } | null>(null);
   const zones = useOwnZones(api, token, species !== null);
-  // A button that unmounts takes the focus with it: move it to the heading of the new step (not on first render).
+  // A button that unmounts takes the focus with it: move it to the heading of the new step. Comparing the step, not
+  // counting runs: StrictMode runs the effect twice on mount, and the flow must not take the focus by appearing (issue 1362).
   const box = useRef<HTMLDivElement>(null);
-  const moved = useRef(false);
+  const shown = useRef({ index, created });
   useEffect(() => {
-    if (moved.current) box.current?.querySelector("h2")?.focus();
-    moved.current = true;
+    if (shown.current.index === index && shown.current.created === created) return;
+    shown.current = { index, created };
+    box.current?.querySelector("h2")?.focus();
   }, [index, created]);
   const pick = (s: Species) => {
     setSpecies(s);

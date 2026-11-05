@@ -1,4 +1,4 @@
-import { expect, showLocations, test } from "../../support/fixtures";
+import { expect, showLocations, test } from "../../../support/fixtures";
 import {
   chooseByArrows,
   keyboardWalk,
@@ -8,9 +8,9 @@ import {
   specimenByKeyboard,
   tabTo,
   typeInto,
-} from "../../support/keyboard";
+} from "../../../support/keyboard";
 import type { Page } from "@playwright/test";
-import { VIEWS, openView } from "../../support/display/display";
+import { VIEWS, openView } from "../../../support/display/display";
 
 // US-QS-08 Operable by keyboard alone: keyboard-only variants of the everyday flows (US-QS-07) and a keyboard walk
 // over every view of the navigation, on the phone and on desktop. No step clicks or taps.
@@ -112,6 +112,13 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
     // The course with the new measurement is the layer "Verlauf" of the measure page (US-QS-15).
     await press(page, page.getByRole("button", { name: /^Verlauf \(\d+\)$/ }));
+    // The layer opens on "Überblick"; the rows are its part "Messungen" (US-QS-15).
+    await press(
+      page,
+      page
+        .getByRole("group", { name: "Teile des Verlaufs" })
+        .getByRole("button", { name: "Messungen" }),
+    );
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
   });
 });
