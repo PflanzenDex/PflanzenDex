@@ -136,6 +136,22 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(posts[0]?.key).toBeTruthy();
   });
 
+  it("US-QS-03 a second try after a lost answer sends the same Idempotency-Key: one measurement", async () => {
+    const save = vi
+      .fn<() => Promise<Response>>()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockImplementation(() => response(201, measurement));
+    const { posts } = fakeServer({ save });
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    expect(posts).toHaveLength(2);
+    expect(posts[1]?.key).toBe(posts[0]?.key);
+  });
+
   it('US-WAC-02 "Wie erkennen?" opens the etiolation signs of the species; etiolated/thin is sent', async () => {
     const { posts } = fakeServer({ signs: "Rosette streckt sich, Blätter werden blass." });
     show();

@@ -2,7 +2,7 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useWriteAction } from "@/shared/data";
+import { createWrite, useWriteAction, type Response as ApiResponse } from "@/shared/data";
 import { AnnouncerProvider } from "./announcer";
 import { deliverBuffered } from "./outbox";
 
@@ -24,7 +24,10 @@ const buffered = () => waitFor(() => expect(heard()).toMatch(/^Du bist offline/)
 const region = () => document.querySelector<HTMLElement>("[aria-live=polite]");
 
 /** One tap that writes, shown the way a page does: a button that runs the action. */
-function Page(props: { send: () => Promise<{ ok: true; value: unknown }>; after: () => void }) {
+function Page(props: {
+  send: (token: string) => Promise<ApiResponse<unknown>>;
+  after: () => void;
+}) {
   const write = useWriteAction(async () => "token", props.after);
   return (
     <>
@@ -36,7 +39,7 @@ function Page(props: { send: () => Promise<{ ok: true; value: unknown }>; after:
   );
 }
 
-const shell = (send: () => Promise<{ ok: true; value: unknown }>, after = vi.fn()) =>
+const shell = (send: (token: string) => Promise<ApiResponse<unknown>>, after = vi.fn()) =>
   render(
     <AnnouncerProvider>
       <Page send={send} after={after} />
@@ -178,5 +181,159 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     );
     await act(async () => result.current.run(send, "Gespeichert."));
     expect(send).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * A server that keeps one record per Idempotency-Key, as the API does (its replay test in `care/measurements.test.ts`).
+ * The first `lost` answers are lost on the way back: the record exists, the client sees a network error.
+ */
+function serverLosing(lost: number) {
+  const records = new Map<string, unknown>();
+  const keys: string[] = [];
+  let left = lost;
+  const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+    const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
+    keys.push(key);
+    if (!records.has(key)) {
+      const body = init?.body === undefined ? null : JSON.parse(String(init.body));
+      records.set(key, { url: String(url), body });
+    }
+    if (left > 0) {
+      left -= 1;
+      throw new TypeError("Failed to fetch");
+    }
+    return new Response(JSON.stringify({ id: key }), { status: 201 });
+  });
+  return { fetchFn, records, keys };
+}
+
+const measurement = (value: number) => (t: string, fetchFn: typeof fetch) =>
+  createWrite("http://api", t, fetchFn)("POST", "/measurements", { value });
+
+describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idempotency-Key", () => {
+  it("US-QS-03 a buffered write whose answer was lost is sent again with the same key: one record", async () => {
+    online(false);
+    const server = serverLosing(1);
+    shell((t) => measurement(9)(t, server.fetchFn));
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await buffered();
+    online(true);
+    await deliverBuffered();
+    expect(server.keys).toHaveLength(1);
+    await deliverBuffered();
+    await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
+    expect(server.keys).toHaveLength(2);
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(server.records.size).toBe(1);
+  });
+
+  it("US-QS-03 a retry by the user after a lost answer sends the same key: one record", async () => {
+    online(true);
+    const server = serverLosing(1);
+    const save = (t: string) => measurement(9)(t, server.fetchFn);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "token",
+        () => undefined,
+      ),
+    );
+    await act(async () => result.current.run(save, "Gespeichert."));
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await act(async () => result.current.run(save, "Gespeichert."));
+    expect(result.current.error).toBeNull();
+    expect(server.keys).toHaveLength(2);
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(server.records.size).toBe(1);
+  });
+
+  it("US-QS-03 a second tap after a confirmed write is a new write with a key of its own", async () => {
+    online(true);
+    const server = serverLosing(0);
+    const save = (t: string) => measurement(9)(t, server.fetchFn);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "token",
+        () => undefined,
+      ),
+    );
+    await act(async () => result.current.run(save, "Gespeichert."));
+    await act(async () => result.current.run(save, "Gespeichert."));
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(server.records.size).toBe(2);
+  });
+
+  it("US-QS-03 a different write after a lost answer gets a key of its own", async () => {
+    online(true);
+    const server = serverLosing(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "token",
+        () => undefined,
+      ),
+    );
+    await act(async () => result.current.run((t) => measurement(9)(t, server.fetchFn), "a"));
+    await act(async () => result.current.run((t) => measurement(10)(t, server.fetchFn), "b"));
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(server.records.size).toBe(2);
+  });
+
+  it("US-QS-03 a refused write is definitive: its identical retry gets a new key", async () => {
+    online(true);
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { code: "input.invalid", text: "x" } }), {
+          status: 400,
+        }),
+      )
+      .mockResolvedValueOnce(new Response("{}", { status: 201 }));
+    const save = (t: string) => measurement(9)(t, fetchFn);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "token",
+        () => undefined,
+      ),
+    );
+    await act(async () => result.current.run(save, "Gespeichert."));
+    await act(async () => result.current.run(save, "Gespeichert."));
+    const keys = fetchFn.mock.calls.map(
+      ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
+    );
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 a write whose answer was lost does not swallow a later write: on, off, on again is applied", async () => {
+    const server = serverLosing(1);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("PUT", "/share", { share: true }); // applied, the answer is lost
+    await write("PUT", "/share", { share: false }); // the user moved on
+    await write("PUT", "/share", { share: true }); // the same write again: a new write
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect([...server.records.values()].at(-1)).toMatchObject({ body: { share: true } });
+  });
+
+  it("US-QS-03 the same across two paths: archive lost, restore succeeds, archive again is applied", async () => {
+    const server = serverLosing(1);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("POST", "/specimens/e1/archive", { timeZone: "Europe/Berlin" });
+    await write("POST", "/specimens/e1/restore");
+    await write("POST", "/specimens/e1/archive", { timeZone: "Europe/Berlin" });
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect([...server.records.values()].at(-1)).toMatchObject({
+      url: "http://api/specimens/e1/archive",
+    });
+  });
+
+  it("US-QS-03 two writes whose answers were lost: delivering the older one leaves the newer one's key in place", async () => {
+    const server = serverLosing(2);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("POST", "/measurements", { value: 1 }); // older, lost
+    await write("POST", "/measurements", { value: 2 }); // newer, lost
+    await write("POST", "/measurements", { value: 1 }); // older delivered: succeeds
+    await write("POST", "/measurements", { value: 2 }); // newer delivered again
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.keys[3]).toBe(server.keys[1]);
+    expect(server.records.size).toBe(2);
   });
 });
