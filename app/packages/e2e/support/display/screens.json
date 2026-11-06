@@ -442,6 +442,27 @@
     "title": "Birkenfeige"
   },
   {
+    "id": "collection-plant-leaves",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Verlauf"
+      },
+      {
+        "role": "button",
+        "name": "Blätter"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
     "id": "collection-plant-care",
     "account": "test2",
     "path": "/collection?view=plants",

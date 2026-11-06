@@ -1,5 +1,5 @@
 import type { PlantSlots } from "@/collection";
-import { PlantCare, PlantGrowth, PlantHistory } from "@/care";
+import { PlantCare, PlantCourse, PlantGrowth } from "@/care";
 import { WaterAction } from "@/monitoring";
 
 type Token = () => Promise<string | undefined>;
@@ -13,7 +13,7 @@ export function plantSlots(api: string, token: Token): PlantSlots {
   return {
     growth: (card) => <PlantGrowth api={api} token={token} specimenId={card.id} />,
     history: (card, ctx) => (
-      <PlantHistory api={api} token={token} specimenId={card.id} onMeasure={ctx.measure} />
+      <PlantCourse api={api} token={token} specimenId={card.id} onMeasure={ctx.measure} />
     ),
     care: (card) => (
       <PlantCare api={api} token={token} specimen={{ id: card.id, name: card.name }} />

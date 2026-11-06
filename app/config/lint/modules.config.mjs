@@ -96,7 +96,7 @@ const MODULES = [
   {
     name: "care",
     epics: ["PHA", "BEH", "WAC"],
-    tables: ["treatment", "measurement"],
+    tables: ["treatment", "measurement", "leaf"],
     dependsOn: ["kernel", "catalog", "light", "collection", "monitoring", "achievements"],
     ports: [],
   },

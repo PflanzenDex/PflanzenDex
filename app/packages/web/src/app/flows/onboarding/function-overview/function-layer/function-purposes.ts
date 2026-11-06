@@ -10,6 +10,7 @@ export const FUNCTION_PURPOSES: Record<UnlockFunctionId, string> = {
   measuring: "Halte Maße deiner Pflanzen fest, um ihr Wachstum zu verfolgen.",
   photos: "Hänge Fotos an deine Pflanzen und sieh, wie sie sich verändern.",
   growth: "Zeigt den Verlauf deiner Pflanzen anhand deiner eigenen Messungen.",
+  leaf_log: "Halte neue Blätter deiner Pflanzen fest, mit einem Tipp oder mit Maßen und Notiz.",
   treatments: "Plane Behandlungen und hake sie ab, wenn sie erledigt sind.",
   pokedex: "Zeigt, welche Arten du schon hast, und was dir noch fehlt.",
   wishlist: "Merke dir Arten, die du gern hättest.",
