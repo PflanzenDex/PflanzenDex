@@ -19,6 +19,12 @@ export const PotLabelPage = lazyPage(() =>
     default: m.PotLabelPage,
   })),
 );
+/** The print of the QR pot labels (US-BES-17, FR-BES-25): its own address `/collection/labels`, shown while "pot_labels" is on. */
+export const PrintLabelsPage = lazyPage(() =>
+  import("./other-pages/print-labels-page/print-labels-page").then((m) => ({
+    default: m.PrintLabelsPage,
+  })),
+);
 export const DifficultyPage = lazyPage(() =>
   import("./other-pages/difficulty-page/difficulty-page").then((m) => ({
     default: m.DifficultyPage,

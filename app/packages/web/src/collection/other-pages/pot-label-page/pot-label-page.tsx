@@ -33,7 +33,7 @@ export function PotLabelPage(props: { api: string; token: Token }) {
   const on = useFeature("pot_labels");
   if (!on) return <Navigate to={plantAddress(id)} replace />;
   return (
-    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
+    <LayerHost>
       <LabelPlant api={props.api} token={props.token} id={id} />
     </LayerHost>
   );

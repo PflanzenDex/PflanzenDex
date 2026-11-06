@@ -38,6 +38,12 @@
     "title": "Sammlung"
   },
   {
+    "id": "collection-labels",
+    "account": "test2",
+    "path": "/collection/labels",
+    "title": "Etiketten drucken"
+  },
+  {
     "id": "collection-view-wishlist",
     "account": "test2",
     "path": "/collection?view=wishlist",

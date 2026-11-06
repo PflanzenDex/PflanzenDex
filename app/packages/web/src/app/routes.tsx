@@ -8,7 +8,7 @@ import {
   type HandOver,
 } from "@/app/destinations/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "../account";
-import { PotLabelPage } from "@/collection";
+import { PotLabelPage, PrintLabelsPage } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
 import {
@@ -28,6 +28,7 @@ import {
 } from "@/app/destinations/area-parts/simple-routes/simple-routes";
 import { legacyRoutes } from "@/app/legacy-routes/legacy-routes";
 import {
+  LABELS_PATH,
   PATHS,
   destinationHeading,
   type LinkTarget,
@@ -149,6 +150,11 @@ export function AppRoutes(props: {
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
         {/* A scanned pot label opens its plant (US-BES-17); the id is opaque and the page asks the server as the keeper. */}
         <Route path="/label/:id" element={<PotLabelPage api={api} token={s.token} />} />
+        {/* The print of the pot labels (US-BES-17); the page itself sends the address to the collection while the switch is off (P-12). */}
+        <Route
+          path={LABELS_PATH}
+          element={locks.page("pot_labels") ?? <PrintLabelsPage api={api} token={s.token} />}
+        />
         {social && socialRoutes(api, s.token, locks.page, locks.mark)}
         <Route
           path={PATHS.today}

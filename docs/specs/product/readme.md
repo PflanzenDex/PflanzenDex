@@ -65,7 +65,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | Epic                             | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
 | -------------------------------- | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
 | ACC Accounts                     | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
-| BES Collection                   | 17      | 2      | 15      | 0      | 0 · 8 · 15                | 8                      | 9       |
+| BES Collection                   | 17      | 2      | 15      | 0      | 1 · 8 · 14                | 8                      | 9       |
 | LIC Light and locations          | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
 | PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
 | WAC Growth/photos                | 7       | 4      | 3       | 0      | 5 · 0 · 1                 | 6                      | 1       |

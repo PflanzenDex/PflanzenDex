@@ -140,3 +140,42 @@ describe("US-ONB-09 the keeper's switches in the Sammlung", () => {
     expect(within(switchGroup).getByText("Geräte")).toBeTruthy();
   });
 });
+
+describe("US-BES-17 the entry to the pot labels", () => {
+  it("US-BES-17 the plants offer Etiketten drucken with the keeper switch on and not with it off (P-12)", async () => {
+    stubCollection();
+    const { unmount } = render(
+      <MemoryRouter initialEntries={["/collection?view=plants"]}>
+        <FeaturesProvider features={{ pot_labels: true }}>
+          <CollectionArea
+            api="http://api"
+            token={async () => "tok"}
+            newSpecies={null}
+            onSpeciesChoose={() => {}}
+            onCompleted={() => {}}
+          />
+        </FeaturesProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    expect(screen.getByRole("link", { name: "Etiketten drucken" }).getAttribute("href")).toBe(
+      "/collection/labels",
+    );
+    unmount();
+    render(
+      <MemoryRouter initialEntries={["/collection?view=plants"]}>
+        <FeaturesProvider features={{ pot_labels: false }}>
+          <CollectionArea
+            api="http://api"
+            token={async () => "tok"}
+            newSpecies={null}
+            onSpeciesChoose={() => {}}
+            onCompleted={() => {}}
+          />
+        </FeaturesProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    expect(screen.queryByRole("link", { name: "Etiketten drucken" })).toBeNull();
+  });
+});

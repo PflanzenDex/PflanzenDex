@@ -401,3 +401,12 @@
     outline-offset: 2px;
   }
 }
+
+/*
+ * Print (US-BES-17): the pot labels are A4 sheets of 70 x 37 mm labels, three in a row, so the page has no margin of its
+ * own; each label sizes itself in mm. The rest of the app is hidden in print by `print:hidden` on the shell.
+ */
+@page {
+  size: A4;
+  margin: 0;
+}
