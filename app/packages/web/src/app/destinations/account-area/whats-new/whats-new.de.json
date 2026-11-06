@@ -9,6 +9,8 @@
   "list.label": "Neuigkeiten, neueste zuerst",
   "line.more": "Mehr anzeigen",
   "line.less": "Weniger anzeigen",
+  "heading.unreleased": "Noch nicht veröffentlicht",
+  "heading.version": "Version {version} vom {date}",
   "hint.one": "Neu in Version {version}: 1 Neuerung",
   "hint.many": "Neu in Version {version}: {count} Neuerungen",
   "hint.link": "Neuerungen ansehen",

@@ -1,12 +1,29 @@
 import news from "@/news/news.de.json";
+import { newsEntries, type NewsEntry } from "./news-lines.mjs";
 import { readStored, writeStored } from "@/shared/platform/browser/storage";
 
 /**
- * The user-facing changelog, newest first: every `feat:` and `fix:` PR adds its line at the top of `unreleased`
- * (QG-U3, US-DEV-06). Only lazy parts import this module (the page Neu and the hint on "Heute"), so the lines stay out
- * of the first load (DS-08).
+ * One fragment per `feat:` and `fix:` PR (QG-U3, US-DEV-06): a JSON file in news/unreleased/, read here with the other
+ * changelog lines. Only lazy parts import this module (the page Neu and the hint on "Heute"), so the lines stay out of
+ * the first load (DS-08).
  */
-export const NEWS_LINES: readonly string[] = news.unreleased;
+const fragmentModules = import.meta.glob<{ default: { line?: unknown } }>(
+  "../../../../news/unreleased/*.json",
+  { eager: true },
+);
+const fragments = Object.entries(fragmentModules).map(([path, mod]) => ({
+  name: path.slice(path.lastIndexOf("/") + 1),
+  line: typeof mod.default.line === "string" ? mod.default.line : null,
+}));
+
+/** The changelog lines in display order: the unreleased lines first, then each version with its heading (US-DEV-06). */
+export const NEWS_ENTRIES: readonly NewsEntry[] = newsEntries(news, fragments);
+
+/**
+ * The number of lines. A release moves lines from the unreleased part into a version and the count stays the same, so a
+ * moved line is not new (US-DEV-06).
+ */
+export const NEWS_COUNT = NEWS_ENTRIES.length;
 
 /** The per-device key of the number of lines the keeper has seen (DS-10). */
 const SEEN_KEY = "pflanzendex.news-seen";
@@ -29,7 +46,8 @@ export function markNewsSeen(total: number): boolean {
 
 /**
  * The lines not seen yet, given the stored count (US-DEV-06). Lines are only prepended, so the unseen ones are the first
- * `total - seen`. A stored count above `total` means that a release has cut the list: every line left is new then.
+ * `total - seen`. A release keeps the count (it moves lines, see NEWS_COUNT). A stored count above `total` means that
+ * lines were taken back: every line left is shown as new then, so nothing is missed.
  */
 export function unseenOf(total: number, seen: number): number {
   return seen > total ? total : total - seen;

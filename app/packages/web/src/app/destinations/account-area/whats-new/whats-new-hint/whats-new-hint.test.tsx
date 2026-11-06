@@ -3,11 +3,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { markNewsSeen, NEWS_LINES, unseenNow } from "../whats-new";
+import { markNewsSeen, NEWS_COUNT, unseenNow } from "../whats-new";
 import { WhatsNewPage } from "../whats-new-page/whats-new-page";
 import { WhatsNewHint } from "./whats-new-hint";
 
-const TOTAL = NEWS_LINES.length;
+const TOTAL = NEWS_COUNT;
 
 beforeEach(() => {
   window.localStorage.clear();

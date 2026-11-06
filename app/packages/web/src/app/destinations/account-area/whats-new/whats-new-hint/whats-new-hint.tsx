@@ -4,7 +4,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import table from "../whats-new.de.json";
-import { NEWS_LINES, appVersion, markNewsSeen, unseenNow } from "../whats-new";
+import { NEWS_COUNT, appVersion, markNewsSeen, unseenNow } from "../whats-new";
 
 const t = texts(table);
 
@@ -14,7 +14,7 @@ const t = texts(table);
  * the shared banner (DS-34), so it is announced as a status and can be closed by keyboard.
  */
 export function WhatsNewHint() {
-  const total = NEWS_LINES.length;
+  const total = NEWS_COUNT;
   const [unseen, setUnseen] = useState(() => unseenNow(total));
   if (unseen === 0) return null;
   const version = appVersion() ?? t("version.unknown");
