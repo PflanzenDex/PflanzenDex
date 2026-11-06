@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   ALL_FEATURES,
   isActive,
+  keeperOffOf,
   localToday,
   readAchievementSettings,
   readKeeperStyle,
@@ -15,6 +16,7 @@ import {
   EquipmentPostgres,
   FriendsPostgres,
   KeeperStylePostgres,
+  KeeperSwitchPostgres,
   ManualUnlockPostgres,
   OffersPostgres,
   SpecimenPostgres,
@@ -46,6 +48,7 @@ let facts: ReturnType<typeof unlockSources>["facts"];
 let styles: KeeperStylePostgres;
 let calm: AchievementSettingsPostgres;
 let unlocks: ManualUnlockPostgres;
+let switches: KeeperSwitchPostgres;
 let specimens: SpecimenPostgres;
 let wishes: WishesPostgres;
 let friends: FriendsPostgres;
@@ -71,6 +74,7 @@ beforeAll(async () => {
   styles = new KeeperStylePostgres(owner);
   calm = new AchievementSettingsPostgres(owner);
   unlocks = new ManualUnlockPostgres(owner);
+  switches = new KeeperSwitchPostgres(owner);
   specimens = new SpecimenPostgres(owner);
   wishes = new WishesPostgres(owner);
   friends = new FriendsPostgres(owner);
@@ -244,6 +248,7 @@ async function listFacts(userId: string, timeZone: string): Promise<UnlockInput>
     features: new Set(enabled) as UnlockInput["features"],
     manualUnlocks: new Set((await unlocks.list(userId)).map((u) => u.id)),
     existingData,
+    keeperOff: keeperOffOf(await switches.list(userId)),
   };
 }
 

@@ -10,7 +10,7 @@ import {
   InvitationPage,
   type State,
 } from "../../../account";
-import { FeaturesProvider, useClearOnSignOut } from "../../../shared/data";
+import { useClearOnSignOut, useFeature } from "../../../shared/data";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { AppShell } from "../app-shell/app-shell";
@@ -25,6 +25,7 @@ import {
 import { PathNotes } from "../../../wishlist";
 import { useWishHandOver } from "../../flows/add-plant/wish-to-specimen";
 import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../../flows/unlock";
+import { SignedInFeatures } from "../../flows/unlock/model/keeper-switches/keeper-switches";
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
@@ -69,6 +70,7 @@ type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
 function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
   const { account } = props;
   const friends = useUnlocks().entries.find((e) => e.id === "friends");
+  const social = useFeature("social");
   return (
     <AppShell
       titleOf={viewTitle}
@@ -76,7 +78,7 @@ function SignedInShell(props: { account: SignedInAccount; children: ReactNode })
       items={navItems({
         reviewer: account.reviewer === true,
         operator: account.operator === true,
-        social: account.features?.social,
+        social,
         locks: friends && isShownLocked(friends) ? { friends: lockMark(friends) } : {},
       })}
     >
@@ -161,8 +163,8 @@ export function App() {
       </main>
     );
   return (
-    <FeaturesProvider features={z.account.features}>
-      <UnlocksProvider api={api} token={s.token}>
+    <UnlocksProvider api={api} token={s.token}>
+      <SignedInFeatures features={z.account.features}>
         <SignedInShell account={z.account}>
           {/* The width cap of the page is lifted for a destination with layers: its frame takes the main column and caps only its content, so a pane fits beside it (US-QS-15, #1027). */}
           <div className="mx-auto w-full max-w-180 has-[[data-layer-host]]:max-w-none">
@@ -191,7 +193,7 @@ export function App() {
             </RouteBoundary>
           </div>
         </SignedInShell>
-      </UnlocksProvider>
-    </FeaturesProvider>
+      </SignedInFeatures>
+    </UnlocksProvider>
   );
 }

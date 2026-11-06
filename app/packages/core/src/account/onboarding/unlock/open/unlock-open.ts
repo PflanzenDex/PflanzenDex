@@ -33,10 +33,16 @@ export interface ManualUnlockStore {
 
 const schema = shape({ id: textField("id", { min: 1, max: 40 }), on: calendarDateField("on") });
 
-/** Opens one function for good ("Jetzt freischalten"); repeating it changes nothing. Unknown or switched-off: refused. */
+/**
+ * Opens one function for good ("Jetzt freischalten"); repeating it changes nothing. Unknown or switched-off by the operator:
+ * refused as unknown. Switched off by the keeper (US-ONB-09): refused as `onboarding.keeper_off`, an unlock never switches
+ * a feature on.
+ */
 export const onboardingUnlockFunction = (deps: {
   unlocks: ManualUnlockStore;
   features: (userId: string) => Promise<FeatureSet>;
+  /** The keeper switches that are off for the account (US-ONB-09). */
+  keeperOff: (userId: string) => Promise<ReadonlySet<string>>;
 }) =>
   defineOperation({
     name: "onboarding.unlock_function",
@@ -46,6 +52,8 @@ export const onboardingUnlockFunction = (deps: {
       const switchedOff = found?.feature && !(await deps.features(userId)).has(found.feature);
       if (!found || switchedOff)
         return failed(appError("onboarding.unknown_function", { data: { id } }));
+      if (found.keeperSwitch && (await deps.keeperOff(userId)).has(found.keeperSwitch))
+        return failed(appError("onboarding.keeper_off", { data: { id } }));
       return ok(await deps.unlocks.add(userId, id, on));
     },
   });

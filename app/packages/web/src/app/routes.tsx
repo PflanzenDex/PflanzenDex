@@ -99,11 +99,11 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
   );
 }
 
-/** What the account may open: the role-bound views and, while "social" is on, "Freunde" (US-DEV-06). */
-const rolesOf = (account: SignedIn): Partial<Record<View, boolean>> => ({
+/** What the account may open: the role-bound views and, while "social" is on, "Freunde" (US-DEV-06, US-ONB-09). */
+const rolesOf = (account: SignedIn, friends: boolean): Partial<Record<View, boolean>> => ({
   review: account.reviewer === true,
   operator: account.operator === true,
-  friends: account.features?.social !== false,
+  friends,
 });
 
 /** "Freunde" and the exchange have routes only while "social" is on for the account (US-DEV-06); otherwise the address leads to "Heute" without a hint. */
@@ -117,13 +117,16 @@ export function AppRoutes(props: {
   handOver: HandOver;
 }) {
   const { api, session: s, account, handOver: h } = props;
-  const roles = rolesOf(account);
+  // "Freunde" follows the operator's switch of the account and the keeper's switch (US-ONB-09, via the features).
+  const keeperSocial = useFeature("social");
+  const roles = rolesOf(account, account.features?.social !== false && keeperSocial);
   const social = roles.friends !== false;
+  const achievements = useFeature("achievement_views");
   const { pathname } = useLocation();
   const locks = useLockPages(api, s.token);
   return (
     <RouteBoundary resetKey={pathname} heading={destinationHeading(pathname)}>
-      <AchievementNewsBanner api={api} token={s.token} />
+      {achievements ? <AchievementNewsBanner api={api} token={s.token} /> : null}
       <Routes>
         <Route
           path={`${PATHS.account}/*`}

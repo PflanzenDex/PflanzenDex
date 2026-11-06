@@ -3,7 +3,7 @@ import { VIEW_LAYER } from "@/collection";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { buttonVariants } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
-import { SAMMLUNG_VIEWS, type SammlungView } from "../../../sammlung-view";
+import { SAMMLUNG_VIEWS, useOfferedView, type SammlungView } from "../../../sammlung-view";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import type { ShortcutId } from "@/shared/platform/device/keyboard/register";
 
@@ -25,8 +25,10 @@ export function AreaHeader(props: {
 }) {
   const arranged = props.view === "plants" || props.view === "species";
   const { hint } = useShortcuts();
-  // The switch shows the key of the mode it can reach by one (US-QS-11); the other modes show none.
-  const options = SAMMLUNG_VIEWS.map((o) => {
+  const offered = useOfferedView();
+  // The switch shows the key of the mode it can reach by one (US-QS-11); the other modes show none. A mode the keeper
+  // switched off is not offered (US-ONB-09).
+  const options = SAMMLUNG_VIEWS.filter((o) => offered(o.value)).map((o) => {
     const id = SHORTCUT_OF_VIEW[o.value];
     const keyHint = id ? hint(id) : undefined;
     return keyHint ? { ...o, keyHint } : o;
