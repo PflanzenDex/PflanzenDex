@@ -1,0 +1,15 @@
+{
+  "heading": "Dein zusammengeführter Vorschlag",
+  "notice": "Dein Vorschlag wurde mit „{name}“ zusammengeführt. Für diese Art hattest du schon ein Pflegeprofil, deshalb wurde dieses hier nicht übernommen und bleibt unverändert erhalten.",
+  "nextAction": "Öffne das Pflegeprofil von „{name}“ und übernimm von Hand, was du behalten willst.",
+  "target": "Zielart: {name}",
+  "unknown": "unbekannt",
+  "range": "{from} bis {until}",
+  "row.growthLocation": "Soll-Standort Wachstum",
+  "row.dormancyLocation": "Soll-Standort Ruhephase",
+  "row.lightZone": "Lichtzone",
+  "row.dormancy": "Ruhephase",
+  "row.wateringGrowth": "Gießen Wachstum (Tage)",
+  "row.wateringDormancy": "Gießen Ruhephase (Tage)",
+  "row.ownHints": "Eigene Hinweise"
+}

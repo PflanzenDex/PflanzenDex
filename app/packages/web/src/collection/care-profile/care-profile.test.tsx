@@ -429,14 +429,10 @@ describe("US-BES-10 a care profile kept on a merged proposal is shown, not edita
         true,
       ),
       speciesId: "gone",
-      speciesName: "Dein zusammengeführter Vorschlag",
+      speciesName: "Bogenhanf",
       activeSpecimens: 0,
       mergedInto: { speciesId: "s1", speciesName: "Bogenhanf" },
-      notice: {
-        text: "Dein Vorschlag wurde mit „Bogenhanf“ zusammengeführt.",
-        nextAction:
-          "Öffne das Pflegeprofil von „Bogenhanf“ und übernimm von Hand, was du behalten willst.",
-      },
+      notice: { code: "proposal_merged" },
     };
     fakeServer({ entries: [entry(), kept] });
     open();
@@ -445,6 +441,7 @@ describe("US-BES-10 a care profile kept on a merged proposal is shown, not edita
     ).toBeTruthy();
     expect(screen.getByText(/zusammengeführt\./)).toBeTruthy();
     expect(screen.getByText(/übernimm von Hand/)).toBeTruthy();
+    expect(screen.getByText("Zielart: Bogenhanf")).toBeTruthy();
     expect(screen.getByText("Mein alter Hinweis")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Speichern/ })).toHaveLength(1);
   });
