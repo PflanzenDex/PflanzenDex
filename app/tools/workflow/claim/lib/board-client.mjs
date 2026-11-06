@@ -4,8 +4,11 @@
 //   gh project field-list  about 100 points, it loads 100 items with their fields (gh project view costs 1),
 //   one issue's projectItems 1 to 2 points.
 // So the board is read here with small queries: the field ids and options once per run, one issue's items, and the whole
-// board in pages of 100 with plain field values (no nested connection per item). Writes stay with gh project (item-add, item-edit).
-import { graphql, json } from "./claim-client.mjs";
+// board in pages of 100 with plain field values (no nested connection per item).
+// The claim writes its status with two GraphQL mutations (addProjectItem, setItemOption, #1487): `gh project item-add` made four
+// requests for one item (owner, project, resource lookups, then the mutation) and `item-edit` one more. issue-board.mjs and
+// project-status.mjs keep the gh project writes (addBoardItem, editBoardField).
+import { graphql, graphqlIds, json } from "./claim-client.mjs";
 
 export const PROJECT_NUMBER = "2"; // "PflanzenDex Roadmap"
 export const STATUS_FIELD = "Status";
@@ -154,4 +157,30 @@ export async function editBoardField(client, { meta, itemId, field, option }) {
     "--single-select-option-id",
     option.id,
   ]);
+}
+
+const ADD_ITEM = `mutation($project: ID!, $content: ID!) {
+  addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } }
+}`;
+
+const SET_OPTION = `mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: $project, itemId: $item, fieldId: $field, value: { singleSelectOptionId: $option }
+  }) { projectV2Item { id } }
+}`;
+
+/** Adds an issue, by its GraphQL node id, to the project (one mutation, the ids come from the project metadata); returns the item id. */
+export async function addProjectItem(client, { projectId, contentId }) {
+  const data = await graphqlIds(client, ADD_ITEM, { project: projectId, content: contentId });
+  return data.addProjectV2ItemById.item.id;
+}
+
+/** Sets one single-select field of a board item to one option (one mutation, string ids only). */
+export async function setItemOption(client, { projectId, itemId, fieldId, optionId }) {
+  await graphqlIds(client, SET_OPTION, {
+    project: projectId,
+    item: itemId,
+    field: fieldId,
+    option: optionId,
+  });
 }

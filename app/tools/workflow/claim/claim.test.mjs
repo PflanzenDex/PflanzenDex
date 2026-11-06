@@ -1,8 +1,11 @@
-// US-DEV-08: `make claim` with an injected gh/git client (REST for the repository, GraphQL only for the board: FR-DEV-10, #1412)
+// US-DEV-08: `make claim` with an injected gh/git client (REST for the repository, GraphQL only for the board: FR-DEV-10, #1412).
+// The fake models origin: a pushed claim branch shows up in ls-remote and can be deleted, so the undo checks see what the real
+// origin would show (#1487).
 import test from "node:test";
 import assert from "node:assert/strict";
 import { claim, ClaimRefused } from "./claim.mjs";
 import { PreflightFailed } from "./claim-preflight.mjs";
+import { deleteClaimBranch } from "./lib/writes/claim-steps.mjs";
 
 const issue = {
   number: 62,
@@ -15,8 +18,9 @@ const issue = {
 
 const REPO = "PflanzenDex/PflanzenDex";
 const PULLS_POST = /-X POST repos\/PflanzenDex\/PflanzenDex\/pulls/;
+const STANDARD_FETCH = "+refs/heads/*:refs/remotes/origin/*";
 
-/** The issue as the REST route answers it: state in lower case, the browser URL as html_url. */
+/** The issue as the REST route answers it: state in lower case, the browser URL as html_url, the GraphQL node id. */
 const restIssue = (i) => ({
   ...i,
   state: i.state.toLowerCase(),
@@ -24,6 +28,7 @@ const restIssue = (i) => ({
   labels: i.labels ?? [],
   assignees: i.assignees ?? [],
   updated_at: "2026-11-01T00:00:00Z",
+  node_id: "I_kw62",
 });
 
 /** A pull request as the REST pulls route answers it. */
@@ -37,18 +42,54 @@ const restPr = (p) => ({
   head: { ref: p.headRefName ?? "" },
 });
 
-// Fake client: answers by the first matching rule on "cmd arg arg ..."; records every call.
-function fake({
-  issues = [issue],
-  prs = [],
-  branches = "",
-  pushFails = false,
-  prFails = false,
-  graphqlFails = false,
-  board,
-} = {}) {
+/**
+ * Fake client: answers by the first matching rule on "cmd arg arg ..."; records every call.
+ * Options: trackedRefs (standard fetch refspec), pushFails (refused), pushApplies (pushed, answer lost), assignApplies (assignee
+ * added, answer lost), raceWith (somebody else is in the assignee answer), undoFails / undoAlwaysFails (assignee DELETE).
+ */
+const DEFAULTS = {
+  issues: [issue],
+  prs: [],
+  branches: "",
+  trackedRefs: false,
+  pushFails: false,
+  pushApplies: false,
+  prFails: false,
+  assignApplies: false,
+  raceWith: null,
+  undoFails: 0,
+  undoAlwaysFails: false,
+  graphqlFails: false,
+  board: undefined,
+};
+
+function fake(options = {}) {
+  const {
+    issues,
+    prs,
+    branches,
+    trackedRefs,
+    pushFails,
+    pushApplies,
+    prFails,
+    assignApplies,
+    raceWith,
+    undoFails,
+    undoAlwaysFails,
+    graphqlFails,
+    board,
+  } = { ...DEFAULTS, ...options };
   const calls = [];
   let views = 0;
+  let undoFailuresLeft = undoFails;
+  const origin = new Map([
+    ["main", "m1"],
+    ["dev", "d1"],
+  ]); // branch name -> sha on origin
+  for (const line of branches.split("\n").filter(Boolean)) {
+    const [sha, ref] = line.split("\t");
+    origin.set(ref.replace("refs/heads/", ""), sha);
+  }
   const fail = (message) => () => {
     throw new Error(message);
   };
@@ -91,10 +132,29 @@ function fake({
   const graphql = (line) => {
     if (graphqlFails) throw new Error("GraphQL: API rate limit already exceeded for user ID 1.");
     if (line.includes("fields(first")) return JSON.stringify(meta);
+    if (line.includes("addProjectV2ItemById"))
+      return JSON.stringify({ data: { addProjectV2ItemById: { item: { id: "NEW" } } } });
+    if (line.includes("updateProjectV2ItemFieldValue"))
+      return JSON.stringify({
+        data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: "ITEM" } } },
+      });
     if (!board) throw new Error("no board");
     const nodes = [itemOfBoard(62)].filter(Boolean);
     return JSON.stringify({ data: { repository: { issue: { projectItems: { nodes } } } } });
   };
+  // `git ls-remote --heads origin [refs/heads/<name>]`: all branches, or the one named by the pattern.
+  const lsRemote = (line) => {
+    const pattern = line.split(" ").find((a) => a.startsWith("refs/heads/"));
+    const lines = [...origin]
+      .filter(([name]) => !pattern || pattern === `refs/heads/${name}`)
+      .map(([name, sha]) => `${sha}\trefs/heads/${name}`);
+    return lines.length ? `${lines.join("\n")}\n` : "";
+  };
+  const assigneeAnswer = () =>
+    JSON.stringify({
+      ...restIssue(issues[0]),
+      assignees: [{ login: "max" }, ...(raceWith ? [{ login: raceWith }] : [])],
+    });
   const rules = [
     [
       `gh api repos/${REPO}/issues/62`,
@@ -103,21 +163,53 @@ function fake({
     [`gh api repos/${REPO}/pulls`, () => JSON.stringify(prs.map(restPr))],
     ["gh api repos/{owner}/{repo}", () => `${REPO}\n`],
     ["gh api user", () => "max\n"],
-    ["git ls-remote", () => branches],
+    ["git ls-remote", lsRemote],
+    ["git config --get-all remote.origin.fetch", () => (trackedRefs ? `${STANDARD_FETCH}\n` : "")],
+    [
+      "git for-each-ref",
+      () => [...origin.keys(), "HEAD"].map((n) => `refs/remotes/origin/${n}`).join("\n") + "\n",
+    ],
     ["gh api graphql", graphql],
-    [`gh api -X POST repos/${REPO}/issues/62/assignees`, () => "{}"],
-    [`gh api -X DELETE repos/${REPO}/issues/62/assignees`, () => "{}"],
+    [
+      `gh api -X POST repos/${REPO}/issues/62/assignees`,
+      assignApplies ? fail("gh: connection reset") : () => assigneeAnswer(),
+    ],
+    [
+      `gh api -X DELETE repos/${REPO}/issues/62/assignees`,
+      () => {
+        if (undoAlwaysFails || undoFailuresLeft > 0) {
+          undoFailuresLeft -= 1;
+          throw new Error("gh: network is unreachable");
+        }
+        return "{}";
+      },
+    ],
     [
       `gh api -X POST repos/${REPO}/pulls`,
       prFails
         ? fail("gh down")
         : () => JSON.stringify({ html_url: "https://github.com/o/r/pull/9" }),
     ],
-    ["gh project item-add", () => JSON.stringify({ id: "ITEM" })],
     ["git rev-parse", () => "tree\n"],
     ["git commit-tree", () => "abc123\n"],
-    ["git push origin --delete", () => ""],
-    ["git push", pushFails ? fail("rejected") : () => ""],
+    [
+      "git push origin --delete ",
+      (line) => {
+        origin.delete(line.split(" ").pop());
+        return "";
+      },
+    ],
+    [
+      "git push origin ",
+      (line) => {
+        const [, sha, name] = line.match(/^git push origin (\S+):refs\/heads\/(\S+)$/);
+        if (pushFails) throw new Error("rejected");
+        if (origin.has(name)) throw new Error("rejected: the branch exists");
+        origin.set(name, sha);
+        if (pushApplies) throw new Error("connection reset after the push");
+        return "";
+      },
+    ],
   ];
   return {
     calls,
@@ -130,7 +222,7 @@ function fake({
   };
 }
 
-const quiet = { log() {} };
+const quiet = { log() {}, retryDelayMs: 0 };
 
 test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as draft PR", async () => {
   const client = fake();
@@ -141,10 +233,16 @@ test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as
     all,
     /-X POST repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees -f assignees\[\]=max/,
   );
-  assert.match(
-    all,
-    /gh project item-edit --id ITEM --project-id PROJ --field-id F --single-select-option-id O/,
+  // Not on the board yet: added by the node id, then the Status option is written (two GraphQL mutations, #1487).
+  assert.ok(
+    client.calls.some((c) => c.includes("-f content=I_kw62") && c.includes("addProjectV2ItemById")),
   );
+  assert.ok(
+    client.calls.some(
+      (c) => c.includes("updateProjectV2ItemFieldValue") && c.includes("-f option=O"),
+    ),
+  );
+  assert.doesNotMatch(all, /gh project (item-add|item-edit)/);
   assert.match(all, /git push origin abc123:refs\/heads\/feat\/bes-06-delete-specimen/);
   assert.match(
     all,
@@ -153,7 +251,7 @@ test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as
   assert.doesNotMatch(all, /--no-verify|--force/);
 });
 
-test("FR-DEV-10: a claim reads the board once and runs no gh issue or gh pr command (GraphQL) for the repository", async () => {
+test("FR-DEV-10: a claim reads the board once and runs no gh issue or gh pr command (GraphQL)", async () => {
   const client = fake({ board: { items: [{ id: "I", content: { number: 62 }, priority: "P1" }] } });
   await claim(client, 62, quiet);
   assert.equal(client.calls.filter((c) => c.includes("projectItems")).length, 1);
@@ -199,9 +297,75 @@ test("US-DEV-08: the exact branch name already on origin refuses the claim", asy
   await assert.rejects(claim(fake({ branches }), 62, quiet), ClaimRefused);
 });
 
+// Every refusal of the claim check, once with the branches from the remote-tracking refs and once with ls-remote (#1487).
+for (const trackedRefs of [true, false]) {
+  const mode = trackedRefs ? "remote-tracking refs" : "ls-remote";
+  const refused = (name, options, pattern) =>
+    test(`US-DEV-08: refusal holds with ${mode}: ${name}`, async () => {
+      const client = fake({ trackedRefs, ...options });
+      await assert.rejects(claim(client, 62, quiet), (e) => {
+        assert.ok(e instanceof ClaimRefused, `not refused: ${e.message}`);
+        assert.match(e.message, pattern);
+        return true;
+      });
+      assert.ok(!client.calls.some((c) => /-X |git push/.test(c)), "nothing is written");
+      assert.equal(
+        client.calls.some((c) => c.startsWith("git ls-remote")),
+        !trackedRefs,
+        "ls-remote is asked only with a narrow refspec",
+      );
+    });
+  refused(
+    "assignee",
+    { issues: [{ ...issue, assignees: [{ login: "konradhe14" }] }] },
+    /@konradhe14/,
+  );
+  refused(
+    "open PR closes the issue",
+    { prs: [{ number: 5, title: "feat(bes): x", body: "Closes #62", state: "OPEN" }] },
+    /PR #5 \(open\)/,
+  );
+  refused(
+    "merged PR closes the issue (it went into dev, the issue stays open)",
+    {
+      prs: [
+        {
+          number: 6,
+          title: "feat(bes): x",
+          body: "Closes #62",
+          state: "CLOSED",
+          mergedAt: "2026-11-01T00:00:00Z",
+        },
+      ],
+    },
+    /PR #6 \(merged\)/,
+  );
+  refused(
+    "branch with the story ID",
+    { branches: "sha1\trefs/heads/feat/bes-06-konrad\n" },
+    /origin\/feat\/bes-06-konrad/,
+  );
+  refused(
+    "exact branch name",
+    { branches: "sha1\trefs/heads/feat/bes-06-delete-specimen\n" },
+    /branch origin\/feat\/bes-06-delete-specimen exists/,
+  );
+  refused(
+    "needs-triage label",
+    { issues: [{ ...issue, labels: [{ name: "story" }, { name: "needs-triage" }] }] },
+    /needs-triage/,
+  );
+}
+
+test("US-DEV-08: the branches of a standard fetch come from the remote-tracking refs, the main and dev branches excluded", async () => {
+  const client = fake({ trackedRefs: true, branches: "sha1\trefs/heads/feat/xyz-01-a\n" });
+  const result = await claim(client, 62, quiet);
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.ok(client.calls.some((c) => c.startsWith("git for-each-ref")));
+});
+
 test("US-DEV-08: losing the race for the assignee steps back and deletes its own branch", async () => {
-  const taken = { ...issue, assignees: [{ login: "konradhe14" }] };
-  const client = fake({ issues: [issue, taken] });
+  const client = fake({ raceWith: "konradhe14" });
   await assert.rejects(claim(client, 62, quiet), /claimed #62 first/);
   assert.ok(client.calls.some((c) => /-X DELETE .*assignees/.test(c)));
   assert.ok(
@@ -221,6 +385,32 @@ test("US-DEV-08: a failing push leaves no assignee behind and writes nothing", a
   const client = fake({ pushFails: true });
   await assert.rejects(claim(client, 62, quiet), /rejected/);
   assert.ok(!client.calls.some((c) => /-X /.test(c)));
+  assert.ok(!client.calls.some((c) => /--delete/.test(c)), "the branch was never ours to delete");
+});
+
+test("US-DEV-08: a push whose answer was lost is undone, because origin shows our claim commit", async () => {
+  const client = fake({ pushApplies: true });
+  await assert.rejects(claim(client, 62, quiet), /connection reset after the push/);
+  assert.ok(
+    client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
+  );
+  assert.ok(!client.calls.some((c) => /-X POST/.test(c)), "nothing was assigned");
+});
+
+test("US-DEV-08: an assignee answer lost after GitHub applied it is undone", async () => {
+  const client = fake({ assignApplies: true });
+  await assert.rejects(claim(client, 62, quiet), /connection reset/);
+  assert.ok(client.calls.some((c) => /-X DELETE repos\/.*\/issues\/62\/assignees/.test(c)));
+  assert.ok(
+    client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
+  );
+});
+
+test("US-DEV-08: a branch that origin holds with another commit is never deleted by an undo", async () => {
+  const client = fake({ branches: "other999\trefs/heads/feat/bes-06-delete-specimen\n" });
+  const note = await deleteClaimBranch(client, "feat/bes-06-delete-specimen", "abc123");
+  assert.match(note, /left alone/);
+  assert.ok(!client.calls.some((c) => /--delete/.test(c)));
 });
 
 test("US-DEV-08: a failing PR creation rolls back assignee, status and branch", async () => {
@@ -229,10 +419,76 @@ test("US-DEV-08: a failing PR creation rolls back assignee, status and branch", 
   const all = client.calls.join("\n");
   assert.match(all, /-X DELETE repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees/);
   assert.match(all, /git push origin --delete feat\/bes-06-delete-specimen/);
-  assert.match(all, /item-edit .*--single-select-option-id T/);
+  assert.ok(
+    client.calls.some(
+      (c) => c.includes("updateProjectV2ItemFieldValue") && c.includes("-f option=T"),
+    ),
+    "the status goes back to Todo",
+  );
 });
 
-test("US-DEV-08: re-running after a half claim of the caller continues", async () => {
+test("US-DEV-08: an undo step that fails once is tried again, and the rollback reports no warning", async () => {
+  const logs = [];
+  const client = fake({ prFails: true, undoFails: 1 });
+  await assert.rejects(claim(client, 62, { log: (l) => logs.push(l), retryDelayMs: 0 }), /gh down/);
+  assert.equal(client.calls.filter((c) => /-X DELETE .*assignees/.test(c)).length, 2);
+  assert.ok(logs.some((l) => /Rolled back: assignee of #62/.test(l)));
+  assert.ok(!logs.some((l) => /WARNING/.test(l)));
+});
+
+test("US-DEV-08: an undo step that keeps failing prints the command to run by hand (P-10)", async () => {
+  const logs = [];
+  const client = fake({ prFails: true, undoAlwaysFails: true });
+  await assert.rejects(claim(client, 62, { log: (l) => logs.push(l), retryDelayMs: 0 }), /gh down/);
+  assert.equal(client.calls.filter((c) => /-X DELETE .*assignees/.test(c)).length, 3);
+  assert.ok(
+    logs.some((l) =>
+      /WARNING: could not roll back "assignee of #62".*undo it by hand: gh api -X DELETE repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees -f assignees\[\]=max/.test(
+        l,
+      ),
+    ),
+  );
+});
+
+test("US-DEV-08: after a claim is undone, the same claim runs again", async () => {
+  await assert.rejects(claim(fake({ prFails: true }), 62, quiet), /gh down/);
+  const result = await claim(fake(), 62, quiet);
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+});
+
+test("US-DEV-08: each step of a claim is announced before it runs, so a hung call is visible", async () => {
+  const logs = [];
+  await claim(fake(), 62, { log: (l) => logs.push(l), retryDelayMs: 0 });
+  for (const step of [
+    "claim: fetching origin",
+    "claim: reading #62",
+    "claim: pushing origin/feat/bes-06-delete-specimen",
+    "claim: assigning #62",
+    "claim: setting the project status",
+    "claim: opening the draft PR",
+  ]) {
+    assert.ok(
+      logs.some((l) => l.startsWith(step)),
+      `no progress line for: ${step}`,
+    );
+  }
+  assert.ok(logs.some((l) => /^claim: done in \d+ s$/.test(l)));
+});
+
+test("US-DEV-08: the status of an issue already on the board is set on its item, without a second item write", async () => {
+  const client = fake({
+    board: { items: [{ id: "I", content: { number: 62 }, status: "Todo", priority: "P1" }] },
+  });
+  await claim(client, 62, quiet);
+  assert.ok(!client.calls.some((c) => c.includes("addProjectV2ItemById")));
+  assert.ok(
+    client.calls.some(
+      (c) => c.includes("updateProjectV2ItemFieldValue") && c.includes("-f item=I "),
+    ),
+  );
+});
+
+test("US-DEV-08: a re-run after a half claim of the caller continues", async () => {
   const mine = { ...issue, assignees: [{ login: "max" }] };
   const result = await claim(fake({ issues: [mine] }), 62, quiet);
   assert.equal(result.branch, "feat/bes-06-delete-specimen");
@@ -299,7 +555,7 @@ test("US-DEV-08: the branch type comes from the board type, not from the issue l
 
 test("US-DEV-08: a board that cannot be read is reported and the labels decide (P-10)", async () => {
   const lines = [];
-  const result = await claim(fake(), 62, { log: (l) => lines.push(l) });
+  const result = await claim(fake(), 62, { log: (l) => lines.push(l), retryDelayMs: 0 });
   assert.equal(result.branch, "feat/bes-06-delete-specimen");
   assert.ok(lines.some((l) => /could not read the board type of #62/.test(l)));
 });

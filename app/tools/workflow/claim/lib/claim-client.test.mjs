@@ -3,10 +3,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createIssueRest,
+  fetchBranches,
   fetchIssue,
   fetchOpenIssues,
   fetchPrs,
   graphql,
+  graphqlIds,
+  realClient,
   setAssignee,
 } from "./claim-client.mjs";
 
@@ -170,4 +173,73 @@ test("FR-DEV-10: setAssignee adds and removes one login over REST", async () => 
   assert.ok(
     client.calls.includes(`gh api -X DELETE repos/${REPO}/issues/62/assignees -f assignees[]=max`),
   );
+});
+
+test("US-DEV-08: setAssignee returns the issue as GitHub answers it, so the claim sees the assignees without a second read", async () => {
+  const answer = { number: 62, assignees: [{ login: "max" }, { login: "konradhe14" }] };
+  const client = fakeGh([
+    ["gh api repos/{owner}/{repo}", `${REPO}\n`],
+    ["gh api -X POST", JSON.stringify(answer)],
+  ]);
+  assert.deepEqual(await setAssignee(client, 62, "max", true), answer);
+});
+
+test("US-DEV-08: the three pull request pages are asked for at once, not one after the other (#1487)", async () => {
+  const pages = [page(100), page(100), page(100), page(100)];
+  let inFlight = 0;
+  let peak = 0;
+  const client = {
+    async run(cmd, args) {
+      const line = `${cmd} ${args.join(" ")}`;
+      if (line.includes("{owner}/{repo}")) return `${REPO}\n`;
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      inFlight -= 1;
+      return JSON.stringify(pages[Number(line.match(/&page=(\d+)/)[1]) - 1]);
+    },
+  };
+  assert.equal((await fetchPrs(client)).length, 300);
+  assert.equal(peak, 3, "three requests in flight, one per page");
+});
+
+test("US-DEV-08: with the standard fetch refspec the branches come from the remote-tracking refs, without a network call", async () => {
+  const client = fakeGh([
+    ["git config --get-all remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*\n"],
+    [
+      "git for-each-ref",
+      "refs/remotes/origin/main\nrefs/remotes/origin/dev\nrefs/remotes/origin/feat/x-01-a\n",
+    ],
+    ["git ls-remote", () => assert.fail("origin must not be asked")],
+  ]);
+  assert.deepEqual(await fetchBranches(client), ["feat/x-01-a"]);
+});
+
+test("US-DEV-08: with a narrow fetch refspec (single-branch clone) origin is asked with ls-remote, because the tracked refs would miss branches", async () => {
+  const client = fakeGh([
+    ["git config --get-all remote.origin.fetch", "+refs/heads/dev:refs/remotes/origin/dev\n"],
+    ["git ls-remote", "sha1\trefs/heads/main\nsha2\trefs/heads/feat/x-01-a\n"],
+  ]);
+  assert.deepEqual(await fetchBranches(client), ["feat/x-01-a"]);
+  assert.ok(client.calls.some((c) => c.startsWith("git ls-remote --heads origin")));
+});
+
+test("US-DEV-08: a real call with a time limit that does not answer fails with a message that names it (#1487)", async () => {
+  const client = realClient({ timeoutMs: 300 });
+  await assert.rejects(
+    client.run(process.execPath, ["-e", "setTimeout(() => {}, 20000)"]),
+    /did not answer within 0\.3 s \(network or GitHub too slow\)/,
+  );
+});
+
+test("US-DEV-08: a real call without a time limit returns its output", async () => {
+  const out = await realClient().run(process.execPath, ["-e", "process.stdout.write('ok')"]);
+  assert.equal(out, "ok");
+});
+
+test("US-DEV-08: graphqlIds sends every variable as a string, so an option id of digits stays a string", async () => {
+  const client = fakeGh([["gh api graphql", '{"data":{"ok":true}}']]);
+  await graphqlIds(client, "mutation($option: String!) { ok }", { option: "12345678" });
+  assert.ok(client.calls[0].includes(" -f option=12345678"));
+  assert.ok(!client.calls[0].includes(" -F option="));
 });

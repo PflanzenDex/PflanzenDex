@@ -166,3 +166,24 @@ export function staleHoursFrom(env) {
   const n = Number(env.CLAIM_STALE_HOURS);
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_STALE_HOURS;
 }
+
+/** A refused claim: every finding, each with its text (`make claim` prints them). */
+export class ClaimRefused extends Error {
+  constructor(findings) {
+    super(findings.map((f) => `  - ${f.text}`).join("\n"));
+    this.findings = findings;
+  }
+}
+
+/** The claim rules over the data read for one issue (no I/O). Throws ClaimRefused with every finding. */
+export function checkFree({ issue, prs, branches, number, login, allowPrior }) {
+  if (issue.state !== "OPEN")
+    throw new ClaimRefused([{ text: `issue #${number} is ${issue.state}` }]);
+  // The caller's own assignment is a half claim of an earlier run: continue, do not refuse.
+  const findings = findConflicts({ issue, prs, branches, allowPrior }).filter(
+    (f) => !(f.kind === "assignee" && f.login === login),
+  );
+  const branch = branchName(issue);
+  if (branches.includes(branch)) findings.push({ text: `branch origin/${branch} exists` });
+  if (findings.length) throw new ClaimRefused(findings);
+}
