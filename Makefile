@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse merge migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report
 
 help: ## List all targets with a one-line description
 	@grep -hE '^[a-z0-9][a-z0-9-]*:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-20s %s\n", $$1, $$2}'
@@ -59,10 +59,31 @@ docs-check: ## Lint markdown and check relative links (QG-U2)
 db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory $(DB_MEMORY) \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 >/dev/null
-	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
+	@until docker exec $(DB_CONTAINER) pg_isready -q -h 127.0.0.1 -d pflanzendex_test; do sleep 1; done
 
-db-down: ## Remove the test database
-	-docker rm -f $(DB_CONTAINER)
+db-down: ## Remove the test database with its data (the volume too), so the next db-up starts empty
+	-docker rm -f -v $(DB_CONTAINER)
+
+# The local-only targets below change the test database of this worktree and nothing else: each runs
+# tools/workflow/worktree/local-database.mjs first, which refuses a DATABASE_URL that is not this database (US-DEV-01).
+db-reset: ## Remove the test database of this worktree with its data and migrate a fresh one (local only, refuses any other DATABASE_URL; US-DEV-01)
+	cd $(APP) && node tools/workflow/worktree/local-database.mjs $(PFLANZENDEX_TEST_DATABASE_URL)
+	$(MAKE) db-down
+	$(MAKE) db-up
+	$(MAKE) migrate
+
+db-seed: ## Seed the demo accounts test, test2 and test3 into the test database of this worktree (DEMO_SEED_PROFILE=base or states; local only, starts the sign-in service and the database; US-DEV-01)
+	cd $(APP) && node tools/workflow/worktree/local-database.mjs $(PFLANZENDEX_TEST_DATABASE_URL)
+	$(if $(CI),,$(MAKE) db-up)
+	$(MAKE) auth-up
+	$(MAKE) migrate
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=$(or $(DEMO_SEED_PROFILE),base) npm run seed:demo -w @pflanzendex/api
+
+pokedex-build: ## Run the taxonomy build once on the test database of this worktree (US-POK-03); DRY_RUN=1 compares with the stored tree and sends no request, otherwise it asks OpenTree, Wikidata, Wikipedia and GBIF (needs network)
+	cd $(APP) && node tools/workflow/worktree/local-database.mjs $(PFLANZENDEX_TEST_DATABASE_URL)
+	$(if $(CI),,$(MAKE) db-up)
+	$(MAKE) migrate
+	cd $(APP) && npm run taxonomy:build -w @pflanzendex/api $(if $(DRY_RUN),-- --dry-run)
 
 migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 	cd $(APP) && npm run migrate -w @pflanzendex/db
@@ -280,6 +301,9 @@ retro: ## Issue flow retro: created vs. closed per day, burndown (US-DEV-11); pr
 
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
+
+clean-ports: ## Stop the processes that listen on the dev ports of this worktree (API and web; only your own processes, each one named; 3000 and 5173 in the main checkout; US-DEV-01)
+	cd $(APP) && node tools/workflow/worktree/clean-ports.mjs
 
 deploy: ## Build and start staging from origin/main (on the host, needs app/config/deploy/.env)
 	$(APP)/config/deploy/scripts/deploy.sh

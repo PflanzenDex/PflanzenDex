@@ -11,6 +11,7 @@
     "perf:concurrency": "tsx perf/load/concurrency.ts",
     "catalog:check-data": "tsx src/catalog/load/research/run-check.ts",
     "catalog:load": "tsx src/catalog/load/run.ts",
+    "taxonomy:build": "tsx src/pokedex/run-taxonomy-build.ts",
     "seed:catalog": "tsx perf/catalog-seed/run-seed.ts",
     "seed:demo": "tsx perf/demo-seed/run-demo-seed.ts"
   },
