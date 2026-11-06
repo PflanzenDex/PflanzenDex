@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
-import { clientKey, writeLimit } from "./write-limit";
+import { clientKey, REDEEM_LIMIT, redeemGate, writeLimit } from "./write-limit";
 
 // TE-03 (#762): write endpoints answer 429 with a stable code after the per-client limit.
 const token = (sub: string) =>
@@ -34,7 +34,7 @@ describe("TE-03 write limit per client (#762)", () => {
     expect(await res.json()).toEqual({
       error: {
         code: "request.rate_limited",
-        text: "Zu viele Änderungen in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
+        text: "Zu viele Versuche in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
       },
     });
   });
@@ -81,5 +81,75 @@ describe("TE-03 write limit per client (#762)", () => {
     expect((await a.request("/x", { method: "POST" })).status).toBe(404);
     expect((await a.request("/x", { method: "POST" })).status).toBe(429);
     for (let i = 0; i < 3; i++) expect((await a.request("/health")).status).toBe(200);
+  });
+});
+
+// US-ACC-05 (issue 305): redeeming an invitation code is limited per subject and per address. The subject is checked
+// first and both are counted only when both have room, so a refused attempt counts nowhere.
+describe("US-ACC-05 redeem limit per subject and address", () => {
+  const addr = "9.9.9.9";
+  function gate(clock = { t: 0 }) {
+    return { clock, redeem: redeemGate({ ...REDEEM_LIMIT, now: () => clock.t }) };
+  }
+
+  it("US-ACC-05 the sixth attempt of a subject in one window is refused with the seconds left in it", () => {
+    const { clock, redeem } = gate();
+    for (let i = 0; i < 5; i++) expect(redeem("s1", addr)).toBeUndefined();
+    clock.t = 15_000;
+    expect(redeem("s1", addr)).toBe(45);
+  });
+
+  it("US-ACC-05 another subject is not affected by a refused one", () => {
+    const { redeem } = gate();
+    for (let i = 0; i < 6; i++) redeem("s1", addr);
+    expect(redeem("s2", addr)).toBeUndefined();
+  });
+
+  it("US-ACC-05 the window of a subject resets after a minute", () => {
+    const { clock, redeem } = gate();
+    for (let i = 0; i < 5; i++) redeem("s1", addr);
+    expect(redeem("s1", addr)).toBe(60);
+    clock.t = 60_000;
+    expect(redeem("s1", addr)).toBeUndefined();
+  });
+
+  it("US-ACC-05 the 21st attempt from one address with other subjects is refused", () => {
+    const { redeem } = gate();
+    for (let i = 0; i < 20; i++) expect(redeem(`s${i}`, addr)).toBeUndefined();
+    expect(redeem("s20", addr)).toBe(60);
+  });
+
+  it("US-ACC-05 a refusal by the subject limit does not count against the address", () => {
+    const { redeem } = gate();
+    for (let i = 0; i < 5; i++) redeem("s1", addr);
+    expect(redeem("s1", addr)).toBe(60); // the sixth attempt, refused by its subject
+    for (let i = 0; i < 15; i++) expect(redeem(`o${i}`, addr)).toBeUndefined(); // 5 + 15 = 20 counted
+    expect(redeem("late", addr)).toBe(60);
+  });
+
+  it("US-ACC-05 a refusal by the address limit does not count against the subject", () => {
+    const { redeem } = gate();
+    for (let i = 0; i < 20; i++) redeem(`o${i}`, addr);
+    expect(redeem("s9", addr)).toBe(60); // refused by the address
+    for (let i = 0; i < 5; i++) expect(redeem("s9", "8.8.8.8")).toBeUndefined();
+    expect(redeem("s9", "8.8.8.8")).toBe(60);
+  });
+
+  it("US-ACC-05 without an address all attempts share one counter, and the subject limit still applies", () => {
+    const { redeem } = gate();
+    for (let i = 0; i < 20; i++) expect(redeem(`n${i}`, undefined)).toBeUndefined();
+    expect(redeem("n20", undefined)).toBe(60);
+    const bySubject = gate();
+    for (let i = 0; i < 5; i++) bySubject.redeem("same", undefined);
+    expect(bySubject.redeem("same", undefined)).toBe(60);
+  });
+
+  it("US-ACC-05 the starting values are 5 attempts per subject and 20 per address and minute, and main.ts passes them", () => {
+    expect(REDEEM_LIMIT).toEqual({
+      subject: { max: 5, windowMs: 60_000 },
+      address: { max: 20, windowMs: 60_000 },
+    });
+    const main = readFileSync(new URL("../main.ts", import.meta.url), "utf8");
+    expect(main).toMatch(/redeemLimit: REDEEM_LIMIT/);
   });
 });
