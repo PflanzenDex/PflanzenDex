@@ -92,6 +92,23 @@ describe("FR-BES-24 similar species past the cap of the search", () => {
   const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
   const plain = (latinName: string) => ({ ...FULL, latinName, germanName: null, synonyms: [] });
 
+  it("FR-BES-24 the proposal's own name among the shown hits does not hide an approved species beyond the cap", async () => {
+    const w = new ReviewWorld(50);
+    for (let i = 0; i < 50; i++) await w.approvedSpecies(plain(`Ca${letters(i)} zzcap`));
+    const approved = await w.proposeSpecies("anna", plain("Zzcap"));
+    // Sorted first, so it is shown, and it carries the name as a synonym: the one shown hit of that name is itself.
+    const own = await w.proposeSpecies("reviewer", { ...plain("Aaa zzown"), synonyms: ["Zzcap"] });
+    w.species.approve(approved.speciesId);
+    const r = await catalogList(w.reviews, w.species, "reviewer");
+    if (!r.ok) throw new Error(r.error.code);
+    const entry = r.value.entries.find((e) => e.species?.id === own.speciesId);
+    expect(entry?.similar).toContainEqual({
+      id: approved.speciesId,
+      latinName: "Zzcap",
+      matchedOn: "Zzcap",
+    });
+  });
+
   it("FR-BES-24 an approved species with the proposal's name beyond the cap is listed as similar", async () => {
     const w = new ReviewWorld(50);
     for (let i = 0; i < 50; i++) await w.approvedSpecies(plain(`Ca${letters(i)} zzcap`));

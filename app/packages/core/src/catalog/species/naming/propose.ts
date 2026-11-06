@@ -54,7 +54,7 @@ export async function speciesExisting(
     const sameName = (h: Species) =>
       [h.latinName, ...h.synonyms].some((n) => normalize(n) === key.norm);
     // An exact match beyond the cap of the search counts too (FR-BES-24).
-    const hits = await withExactBeyondCap(await store.search(userId, key.norm), sameName, () =>
+    const hits = await withExactBeyondCap(await store.search(userId, key.norm), () =>
       store.exact(userId, key.norm),
     );
     const same = hits.find(sameName);

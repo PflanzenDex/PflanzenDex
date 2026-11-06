@@ -65,10 +65,7 @@ export const aiSearchSpecies = (deps: ReadDependencies, call: ReadCall) =>
  */
 async function speciesPool(deps: ReadDependencies, userId: string, ref: string) {
   const shown = await deps.source.searchSpecies(userId, ref);
-  const wanted = normalizeName(ref);
-  const sameName = (s: SpeciesItem) => named(s).names.some((n) => normalizeName(n) === wanted);
-  const beyond =
-    shown.more && !shown.species.some(sameName) ? await deps.source.exactSpecies(userId, ref) : [];
+  const beyond = shown.more ? await deps.source.exactSpecies(userId, ref) : [];
   const hits = [
     ...shown.species,
     ...beyond.filter((b) => !shown.species.some((s) => s.id === b.id)),

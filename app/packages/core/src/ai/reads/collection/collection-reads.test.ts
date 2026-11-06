@@ -161,10 +161,11 @@ describe("FR-BES-24 the cut of the species search is said, never guessed", () =>
    * Fifty names "Ca.. Zzvera" and the target "Zzvera": every name contains "vera" and "zzvera"; the search shows the
    * first 50 in name order (as the app's search does), so the target, the 51st, is beyond the cap.
    */
-  const cut = (): CollectionReadSource => {
+  const cut = (extra: readonly SpeciesItem[] = []): CollectionReadSource => {
     const all = [
       ...Array.from({ length: 50 }, (_, i) => species(i, `Ca${letters(i)} Zzvera`)),
       species(60, "Zzvera"),
+      ...extra,
     ].sort((a, b) => a.latinName.localeCompare(b.latinName));
     const names = (x: SpeciesItem) => [x.latinName, ...x.synonyms].map((n) => n.toLowerCase());
     const base = source();
@@ -197,6 +198,13 @@ describe("FR-BES-24 the cut of the species search is said, never guessed", () =>
     const s = { source: cut(), log: new InMemoryAiLog() };
     const r = await aiGetSpecies(s, call({ species: "Zzvera" }));
     expect(value(r).species).toMatchObject({ id: uuid(360), latinName: "Zzvera" });
+  });
+
+  it("FR-BES-24 a shown species of that name does not hide a second one beyond the cap: the reference is ambiguous", async () => {
+    const shown = { ...species(61, "Aaa Zzvera"), synonyms: ["Zzvera"] };
+    const s = { source: cut([shown]), log: new InMemoryAiLog() };
+    const r = await aiGetSpecies(s, call({ species: "Zzvera" }));
+    expect(code(r)).toBe("ai.reference_ambiguous");
   });
 
   it("FR-BES-24 a name that is not exact and beyond the cap is not_found, with the nearest names", async () => {

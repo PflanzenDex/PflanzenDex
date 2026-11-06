@@ -30,15 +30,15 @@ export async function speciesExact(
 
 /**
  * The hits of a name lookup with the cap of `speciesSearch` lifted for an exact match (FR-BES-24): the shown hits;
- * when more species match and none of the shown ones is `same`, the exact matches are added. So a duplicate check or
- * a name reference finds an existing species even when 50 others match first in name order.
+ * when more species match, the exact matches are added. A shown hit of the same name does not end the lookup: it may be
+ * the proposal itself, and a second species of that name may lie beyond the cap. So a duplicate check or a name
+ * reference finds an existing species even when 50 others match first in name order.
  */
 export async function withExactBeyondCap<T extends { readonly id: string }>(
   shown: { readonly species: readonly T[]; readonly more: boolean },
-  same: (hit: T) => boolean,
   exact: () => Promise<readonly T[]>,
 ): Promise<readonly T[]> {
-  if (!shown.more || shown.species.some(same)) return shown.species;
+  if (!shown.more) return shown.species;
   const beyond = (await exact()).filter((h) => !shown.species.some((s) => s.id === h.id));
   return [...shown.species, ...beyond];
 }
