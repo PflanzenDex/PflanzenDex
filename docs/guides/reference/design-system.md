@@ -21,7 +21,7 @@ This document describes the **target** UI stack. The `web` package does not matc
 | Layout of the code | `shared/ui`, `shared/patterns`, `<module>/` folders                     | `src/<module>/` with `index.ts` as public interface (`modules.config.mjs`)            |
 | Device access      | Only through `src/shared/platform/` adapters                            | Direct browser APIs in components                                                     |
 
-The gap is tracked as issues (label `design-system`), every deviation is listed in `app/config/gates/baselines/quality-ds-baseline.json` and may only shrink (ratchet, section 6).
+The gap is tracked as issues (label `design-system`), every deviation is listed in `app/config/gates/baselines/quality-ds-baseline.json` and may only shrink (ratchet, section 6); a change that grows it needs a human, a shrink does not (US-QG-07).
 
 **Paths and aliases.** `@/` means `app/packages/web/src/`. A module is a top-level folder of `src/` other than `app`, `components`, `shared` and `styles`; its name and allowed dependencies come from ADR 0003 and `app/config/lint/modules.config.mjs`. This file never defines its own module list.
 
@@ -646,6 +646,6 @@ Rules marked 🔒 are checked by `app/tools/check/code/design-system/check-desig
   - a violation appears that is **not** in the baseline (new code must comply), or
   - the count for an entry **grows**, or
   - an entry is **stale** (the violation is gone but the entry remains: delete it, so the baseline only shrinks).
-- **No weakening.** The baseline, the rules, the script and the thresholds are gate files (`AGENTS.md`). An agent never edits them to turn a red run green. Changes to a rule go in their own PR with a reason (US-QG-07).
+- **No weakening.** The rules, the script and the thresholds are gate files (`AGENTS.md`). The baseline is guarded against growth only: an agent may shrink it, a change that grows it needs a human (US-QG-07). An agent never edits any of them to turn a red run green. Changes to a rule go in their own PR with a reason (US-QG-07).
 - **Framework adoption rule (DS-57 🔒):** while the web package does not depend on `tailwindcss`, `class-variance-authority`, `clsx`, `tailwind-merge`, `react-hook-form` and `zod`, or lacks `shared/ui` and `shared/lib/utils.ts`, the check reports the missing pieces as baseline entries. They are removed when the migration issues land. It never passes silently for an app that does not use the design system.
 - **Findings** are tracked as GitHub issues with the label `design-system` and the rule ID in the title (for example `DS-27: replace color literals in pokedex.css`), one issue per rule and module, so each is a small, claimable task.
