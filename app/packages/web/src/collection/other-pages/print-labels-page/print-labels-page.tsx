@@ -76,8 +76,8 @@ function LabelsView(props: { api: string; token: Token }) {
   const status = list.status === "ready" && list.cards.length === 0 ? "empty" : list.status;
 
   return (
-    // One screen (US-QS-15, DS-61): the page does not scroll, the content region does at a large text size.
-    <div data-fit-screen="" className="flex min-w-0 flex-col">
+    // One screen (US-QS-15, DS-61): the frame fills the free height, and the list pages by what is left of it (issue 1413).
+    <div data-fit-screen="" data-fit-fill="" className="flex min-h-0 min-w-0 flex-col">
       <FullView
         headingId="print-labels-title"
         title={ui("heading")}
@@ -126,7 +126,8 @@ function ChoicePanel(props: {
   const { list, rows, chosen, onToggle, format, cultivars } = props;
   const ready = chosen.length > 0 && format !== "" && cultivars.status === "ready";
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+    // No min-h-0: at a larger text size the panel grows with its content and scrolls in the frame (issue 1113).
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
       <p className="text-sm text-muted-foreground">{ui("intro")}</p>
       <div className="flex flex-col gap-1">
         <Label htmlFor="print-labels-format">{ui("format")}</Label>

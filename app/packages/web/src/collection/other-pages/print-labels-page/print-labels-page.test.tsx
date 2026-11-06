@@ -198,6 +198,15 @@ describe("US-BES-17 printing QR pot labels", () => {
     await waitFor(() => expect(printButton().disabled).toBe(false));
   });
 
+  it("US-BES-17 the page fills one screen and its list pages by the free height (US-QS-15, DS-61)", async () => {
+    server([card()]);
+    show();
+    const list = await screen.findByRole("list", { name: "Pflanzen" });
+    const frame = list.closest("[data-fit-screen]");
+    expect(frame?.hasAttribute("data-fit-fill")).toBe(true);
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
+  });
+
   it("US-BES-17 without plants the page offers the way to the collection (P-09)", async () => {
     server([]);
     show();
