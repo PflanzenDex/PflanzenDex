@@ -79,7 +79,7 @@ The ranges are an assumption (starting values). With 500 slots per service colli
 
 Rules of the launcher:
 
-- A busy API or web port stops the start before any server runs, and the message names the port. Vite never moves to another port. If one server fails, the other is stopped too.
+- A busy API or web port stops the start before any server runs, and the message names the port. Vite never moves to another port. If one server fails, the other is stopped too. `make clean-ports` stops the processes of your own user that listen on the API and web port of this worktree (each one is named; another user's process is reported and left alone).
 - A variable already set in the environment wins over the file, so `PORT=4000 make dev` starts the API on 4000 and `VITE_API_URL` follows it. An empty variable counts as not set.
 - Without `.env.worktree` (the main checkout) the command is the one from before: 3000 and 5173, no variables, no port flags.
 - `TAXONOMY_BUILD` is not set. It changes what the Pokédex shows (the foreign taxonomy build runs or is skipped), so a worktree should not differ from the main checkout by default. Set it per run when a worktree should skip the build: `TAXONOMY_BUILD=off make dev`.

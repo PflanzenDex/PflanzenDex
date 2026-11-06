@@ -26,19 +26,19 @@ Acceptance criteria:
 - A `Makefile` in the root directory is the **documented entry point**; `make help` lists all targets with one sentence.
 - At least these targets (names are a proposal):
 
-  | Target                              | Purpose                                                                      |
-  | ----------------------------------- | ---------------------------------------------------------------------------- |
-  | `setup`                             | First installation (dependencies, example environment, hooks, test database) |
-  | `dev`                               | Start database, API and web together locally                                 |
-  | `lint`, `format`, `typecheck`       | Checks from QG-C and QG-K                                                    |
-  | `test`, `test-e2e`                  | Tests (unit/integration, end-to-end with auto-start)                         |
-  | `spec-check`                        | Spec consistency and traceability (QG-T4, QG-U2)                             |
-  | `gates`                             | all fast gates (QG-C, QG-K, QG-S1), identical to pre-push                    |
-  | `ci`                                | **all** gates in the order of CI, stops at the first failing part            |
-  | `db-migrate`, `db-reset`, `db-seed` | Database (see US-DEV-07)                                                     |
-  | `pokedex-build`                     | Taxonomy build (US-POK-03)                                                   |
-  | `release-dry-run`                   | shows the next version and the notes without publishing anything             |
-  | `clean`, `clean-ports`              | Clean up                                                                     |
+  | Target                           | Purpose                                                                                                                          |
+  | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+  | `setup`                          | First installation (dependencies, example environment, hooks, test database)                                                     |
+  | `dev`                            | Start database, API and web together locally                                                                                     |
+  | `lint`, `format`, `typecheck`    | Checks from QG-C and QG-K                                                                                                        |
+  | `test`, `e2e`                    | Tests (unit/integration, end-to-end with auto-start)                                                                             |
+  | `spec-check`                     | Spec consistency and traceability (QG-T4, QG-U2)                                                                                 |
+  | `gates`                          | all fast gates (QG-C, QG-K, QG-S1), identical to pre-push                                                                        |
+  | `ci`                             | **all** gates in the order of CI, stops at the first failing part                                                                |
+  | `migrate`, `db-reset`, `db-seed` | Database (see US-DEV-07); `db-reset` and `db-seed` act on this worktree's test database only and refuse any other `DATABASE_URL` |
+  | `pokedex-build`                  | Taxonomy build once (US-POK-03); `DRY_RUN=1` compares with the stored tree and sends no request                                  |
+  | `release-dry-run`                | shows the next version and the notes without publishing anything                                                                 |
+  | `clean`, `clean-ports`           | Clean up; `clean-ports` stops only the own processes on the dev ports of this worktree, each one named                           |
 
 - `make ci` **stops at the first failing part** (gates, tests, UI) and has the same scope as the CI jobs. Inside the gates part every check runs and every failure is named (US-QG-01). An error is never hidden by `|| true`, `tail` or a pipe (D-05).
 - The CI workflows call the `make` targets. If there is a deviation (e.g. services in CI), it stands as an environment query in the target (`ifndef CI`), not as a second implementation.
