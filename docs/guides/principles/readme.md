@@ -99,7 +99,7 @@ One entry per rule. The maturity is what is true on `dev` today. Every gate of `
 | PRIN-004 | Source files have at most 200 lines                                                             | gated      |
 | PRIN-005 | Cyclomatic complexity is at most 15, in the core at most 10                                     | gated      |
 | PRIN-006 | Every table is isolated per account (tenant)                                                    | gated      |
-| PRIN-007 | Errors carry stable codes of the form domain.reason                                             | checked    |
+| PRIN-007 | Errors carry stable codes of the form domain.reason                                             | gated      |
 | PRIN-008 | Spec files and spec IDs are unique                                                              | gated      |
 | PRIN-009 | Commit messages follow Conventional Commits                                                     | gated      |
 | PRIN-010 | A story is claimed before work starts, so nobody builds it twice                                | checked    |
