@@ -12,6 +12,7 @@ import {
   statSync,
   symlinkSync,
   writeFileSync,
+  existsSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -114,6 +115,18 @@ test("US-DEV-08: the copy holds the node_modules of a workspace too (issue 1525)
   await copyTree(src, dst);
   const copied = path.join("packages", "web", "node_modules", "@hookform", "resolvers", "index.js");
   assert.equal(readFileSync(path.join(dst, copied), "utf8"), "module.exports = 2;\n");
+});
+
+test("US-DEV-08: the copy leaves out the test caches of the source", async () => {
+  const r = scratch();
+  const src = app(path.join(r, "src"));
+  mkdirSync(path.join(src, "node_modules", ".vite", "vitest"), { recursive: true });
+  mkdirSync(path.join(src, "node_modules", ".vitest-cache"), { recursive: true });
+  const dst = app(path.join(r, "dst"), { installed: false });
+  await copyTree(src, dst);
+  assert.equal(existsSync(path.join(dst, "node_modules", ".vite")), false);
+  assert.equal(existsSync(path.join(dst, "node_modules", ".vitest-cache")), false);
+  assert.equal(existsSync(path.join(dst, "node_modules", "left-pad", "index.js")), true);
 });
 
 test("US-DEV-08: a stamped install without its workspace folder is no source (issue 1525)", () => {
