@@ -80,6 +80,8 @@ Acceptance criteria:
 - Photo capture directly from the camera.
 - Given a page or a request is loading, when the wait is shown, then an animated sprout (static under reduced motion) accompanies the placeholder or stands alone, and assistive technology hears the loading text once (4.1.3, 2.3.3).
 - Given a dialog or a sheet whose code is not loaded yet, when I open it, then the status "Fenster wird geladen …" appears only after 300 ms (starting value, assumption, issue 1575): a window whose code is there, or arrives within that time, opens with no status and no flash, and the status goes when the window opens (NFR-12, P-10).
+- Given the status shows, when I press Escape, then nothing opens afterwards (NFR-12, P-10).
+- Given the status shows, when I leave the page, then the status goes and nothing opens on the new page (NFR-12, P-10).
 - Given a write succeeded or failed, when the result is shown, then a toast says so in a polite (error: assertive) live region above the bottom bar, an undo action is offered where one exists, and the toast stays while it is hovered or focused and for an error at least 10 s; a state that lasts (offline, unknown zone, failed sync) is shown as a banner that stays until dismissed or resolved (4.1.3, 2.2.1, P-10). The toast also shows above an open layer, so the undo can be seen and taken there (issue 1028).
 - Given a card, a person or plant picture, or a progress value is shown, when it is read by assistive technology or the image fails, then a card that opens something is one link or button with a visible focus ring and a 44 px target, a picture is named (or hidden when the name is next to it) and falls back to initials, and progress is a named progress bar with its value or "Schritt n von m"; motion stops under reduced motion (1.1.1, 2.4.7, 2.5.8, 4.1.2).
 - Given a set of tabs, when I move with the arrow keys, Home or End, then focus and selection move together over a real tablist (only the selected tab is in the tab order, `aria-selected` and `aria-controls` are set) (4.1.2, 2.1.1).
@@ -103,6 +105,7 @@ Acceptance criteria:
 - Given a function that uses swiping or dragging (swipe suggestions in Discover, dragging a sheet, reordering), when I use the keyboard or a single tap, then the same result is reachable without the gesture (2.5.1, 2.5.7).
 - Given any widget, when it has the focus, then the focus can always leave it again with the keys named above; there is no keyboard trap (2.1.2).
 - Given an everyday flow (US-QS-07: measuring with photo, confirming watering or location, ticking off a treatment, Today list), when its end-to-end test runs, then a keyboard-only variant of the test passes (guardrail, P-06).
+- Given the shortcut overview opened from its help button, when I press Esc, then the focus is back on that button; opened with `?`, the focus goes to the heading of the view and never stays on `body` (2.4.3, DS-40).
 
 ### US-QS-09 · Oriented and guided through the app · 🟨 new
 

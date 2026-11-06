@@ -122,7 +122,7 @@ function SheetLoading() {
  * it waits under the same fallback instead of reaching the route's boundary.
  */
 const SheetWindow = React.forwardRef<HTMLDivElement, SheetPanelProps>((props, ref) => {
-  const { Component, waiting } = useLoadingWindow(SheetPanel, props.open);
+  const { Component, waiting } = useLoadingWindow(SheetPanel, props.open, props.onOpenChange);
   if (!Component) return waiting ? <SheetLoading /> : null;
   return (
     <React.Suspense fallback={props.open ? <SheetLoading /> : null}>
@@ -141,9 +141,10 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props,
       resetKey="sheet"
       errorView={(retry) =>
         open ? (
+          // A centred panel like the dialog's error view: pinned to the bottom edge it covered the navigation labels (issue 1575).
           <div
             role="alert"
-            className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-3 border-t border-destructive bg-background p-4 pb-[env(safe-area-inset-bottom)] text-center text-foreground"
+            className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-card border border-destructive bg-background p-6 text-center text-foreground shadow-elevation-2"
           >
             <p className="text-base font-semibold">{t("sheet.loadFailed")}</p>
             <Button variant="outline" onClick={retry}>

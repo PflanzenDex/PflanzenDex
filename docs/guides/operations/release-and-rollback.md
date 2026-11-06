@@ -80,7 +80,7 @@ Limits: database migrations are not reverted. Migrations must be expand/contract
 
 ## Manual rollback
 
-On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health` (status) and, on the host, `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details` (version).
+On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test; if `compose ps` fails, it stops before any change with an `ERROR:` line, and with the database stopped (a first deploy) it prints `backup skipped` and takes no backup (US-DEV-07). Check afterwards with `curl -s https://<host>/health` (status) and, on the host, `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details` (version).
 
 ## Filling the catalog (first release, #991)
 
