@@ -1,5 +1,5 @@
 {
-  "note": "The only allowed issue labels and board options (FR-DEV-10, US-DEV-05). Every issue carries exactly one type label and one epic label from this file. A new type or epic is a pull request to this file that the owner merges. Board options: the field Typ matches its option name exactly; the field Epic and Priority match the option whose name starts with the code (for example ACC matches the option \"ACC · …\"), so the option texts of the board stay out of this file. An epic whose board option does not start with its code names that option in `option` (E: decisions E-nn, TE: platform enablers TE-nn; owner decision 2026-11-04).",
+  "note": "The only allowed issue labels and board options (FR-DEV-10, US-DEV-05). Every issue carries exactly one type label and one epic label from this file. A new type or epic is a pull request to this file that the owner merges. Board options: the field Typ matches its option name exactly; the field Epic, Priority and Release match the option whose name starts with the code (for example ACC matches the option \"ACC · …\", R2 matches \"R2 Soziales\"), so the option texts of the board stay out of this file. An epic whose board option does not start with its code names that option in `option` (E: decisions E-nn, TE: platform enablers TE-nn; owner decision 2026-11-04); the same holds for the release S2 (stage 2). Releases: `make issue` sets the field Release by a rule in issue-lib.mjs (FR-DEV-10); RELEASE=<code> overrides it and must be one of these codes.",
   "types": [
     { "label": "story", "typ": "Story" },
     { "label": "enabler", "typ": "Enabler" },
@@ -33,5 +33,15 @@
     { "code": "E", "label": "epic:E", "option": "Entscheidungen" },
     { "code": "TE", "label": "epic:TE", "option": "Plattform-Enabler" }
   ],
-  "priorities": ["P0", "P1", "P2", "P3"]
+  "priorities": ["P0", "P1", "P2", "P3"],
+  "releases": [
+    { "code": "R0" },
+    { "code": "R1" },
+    { "code": "R2" },
+    { "code": "R3" },
+    { "code": "R4" },
+    { "code": "R5" },
+    { "code": "R6" },
+    { "code": "S2", "option": "Stufe 2" }
+  ]
 }

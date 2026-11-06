@@ -129,7 +129,7 @@ Acceptance criteria:
 - Given a chart (growth trend, zone distribution), then the same values are available as text or a table, and an unknown value reads "unbekannt", never an invented number (1.1.1, 1.3.1, P-08).
 - Given a status shown as color, emoji or icon (care phase, etiolation, overdue), then the same status is also given as text that assistive technology reads (1.4.1, 1.3.3).
 
-### US-QS-11 · Keyboard shortcuts · ⬜ new
+### US-QS-11 · Keyboard shortcuts · 🟨 new
 
 As a **plant keeper working at a desktop** I want to reach the frequent actions with shortcuts.
 
@@ -140,6 +140,8 @@ Acceptance criteria:
 - Given a shortcut made of a single character, then I can turn it off or change it to one with a modifier in my account settings, and it never fires while the focus is in a text field (2.1.4).
 - Given a shortcut, then it does not take over keys that browsers, the operating system or screen readers use (for example Tab, Ctrl+L, Alt+arrow, the screen reader modifier keys); the register rejects such a key at build time (guardrail).
 - Given a phone without a keyboard, then nothing depends on a shortcut.
+
+State of implementation (🟨, starting values and assumptions, decided within DS-70): the keys of the starting set are `?` (overview), `/` (search), `h` (Heute), `s` (Sammlung), `p` (Pokédex, the species mode of Sammlung) and `w` (Wunschliste); each is a single character, and its modifier variant is Alt+Shift with the same physical key. The keyboard shortcut mode is an account setting, `plain` (single characters work, starting value), `modifier` (Alt+Shift) or `disabled`; it is per account, so it applies on every device of the keeper (assumption), set under "Konto", then "Einstellungen", in the layer "Wie nutzt du die App?". The overview opens with `?` and from the help entry "Was die App kann". The register refuses Tab, Enter, Space, Escape, Backspace, Delete, Insert, Home, End, Page Up and Page Down, the arrow keys, CapsLock, NumLock, ScrollLock, Pause, Print Screen, the context menu key, Meta, OS, Control, Alt, AltGraph, Shift, Fn, Clear and F1 to F24, every Ctrl or Cmd combination, and Alt without Shift (menu access keys). "New measurement" is not a global shortcut: its control ("Messen") exists only inside a specimen's layer, where a measurement belongs to one specimen, so a global key has no target; it is left out until that layer registers its own shortcut. Open points for the next step: a manual keyboard walk in a browser, a screen reader run, and the axe and keyboard gates of the new register entry for the settings layer.
 
 ### US-QS-12 · Adaptable display · 🟨 new
 

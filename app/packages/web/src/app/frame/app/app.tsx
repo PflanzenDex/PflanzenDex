@@ -72,6 +72,7 @@ function SignedInShell(props: { account: SignedInAccount; children: ReactNode })
   return (
     <AppShell
       titleOf={viewTitle}
+      shortcutMode={account.keyboardShortcuts}
       items={navItems({
         reviewer: account.reviewer === true,
         operator: account.operator === true,

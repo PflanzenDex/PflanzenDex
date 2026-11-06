@@ -1,6 +1,11 @@
 import { useState } from "react";
+import type { KeyboardShortcutMode } from "@pflanzendex/core";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import table from "./switch-groups.de.json";
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { refusalText } from "@/shared/lib/error-text";
@@ -14,7 +19,7 @@ type Flag = "everythingPrivate" | "noRecommendations" | "rarityConsent";
  * A switch saves at once (US-QS-17): the whole stored profile with this one change goes out. The switch shows the
  * stored state, so a refused save leaves it where it was and says why by the error code's text (P-10).
  */
-function useSwitchSave(saver: ProfileSaver) {
+function useSwitchSave(saver: ProfileSaver, onSaved?: (profile: AccountProfile) => void) {
   const [error, setError] = useState<ApiError | null>(null);
   const [saved, setSaved] = useState(false);
   const change = async (patch: Partial<AccountProfile>) => {
@@ -22,6 +27,7 @@ function useSwitchSave(saver: ProfileSaver) {
     if (!r) return;
     setError(r.ok ? null : r.error);
     setSaved(r.ok);
+    if (r.ok) onSaved?.(r.value);
   };
   return { error, saved, change };
 }
@@ -105,6 +111,41 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
       >
         Du entscheidest, was geteilt und empfohlen wird.
       </MoreHelp>
+      <Feedback error={error} saved={saved} />
+    </div>
+  );
+}
+
+const t = texts(table);
+
+const CHOICES: readonly { value: KeyboardShortcutMode; label: string }[] = [
+  { value: "plain", label: t("shortcuts.plain") },
+  { value: "modifier", label: t("shortcuts.modifier") },
+  { value: "disabled", label: t("shortcuts.off") },
+];
+
+/**
+ * Group "Tastenkürzel" (US-QS-11): one choice of three. Einzeltasten (the starting value), Alt and Umschalt with the key,
+ * or none. The choice saves at once and takes effect at once; the help says what each one does and that all of it is
+ * also reachable with buttons.
+ */
+export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
+  const shortcuts = useShortcuts();
+  const { error, saved, change } = useSwitchSave(saver, (p) =>
+    shortcuts.setMode(p.keyboardShortcuts),
+  );
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="m-0 font-semibold">{t("shortcuts.label")}</p>
+      <SegmentedControl
+        label={t("shortcuts.label")}
+        options={CHOICES}
+        value={saver.saved.keyboardShortcuts}
+        onChange={(mode) => {
+          if (mode !== saver.saved.keyboardShortcuts) void change({ keyboardShortcuts: mode });
+        }}
+      />
+      <p className="m-0 text-sm text-muted-foreground">{t("shortcuts.help")}</p>
       <Feedback error={error} saved={saved} />
     </div>
   );

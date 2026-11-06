@@ -4,12 +4,15 @@ export {
   accountUpdateProfile,
   defaultNotifications,
   DISPLAY_NAME_LIMITS,
+  KEYBOARD_SHORTCUT_DEFAULT,
+  KEYBOARD_SHORTCUT_MODES,
   NOTIFICATION_OCCASIONS,
   REPLENISH_BUFFER_LIMITS,
   POSITION_THRESHOLD_LIMITS,
 } from "./profile";
 export type {
   AccountProfile,
+  KeyboardShortcutMode,
   NotificationOccasion,
   NotificationSwitches,
   ProfileDependencies,

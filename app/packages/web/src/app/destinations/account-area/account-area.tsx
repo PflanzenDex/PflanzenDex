@@ -6,6 +6,7 @@ import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { AreaSection } from "@/app/destinations/area-parts/area-section/area-section";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+import { ShortcutHelpButton } from "@/shared/platform/device/keyboard/shortcut-overview/shortcut-overview";
 import { headingId } from "@/app/destinations/area-parts/area-section/use-section-anchor";
 import { SETTINGS_LAYER_IDS, type Account } from "@/account";
 import { PATHS, type AccountSection } from "@/shared/patterns/navigation/navigation/navigation";
@@ -64,6 +65,8 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
           <PageHeader
             headingId={id}
             title={info.title}
+            // The help entry of the keyboard shortcuts sits beside the title, in the row the way back already takes (US-QS-11).
+            {...(rest.section === "functions" ? { action: <ShortcutHelpButton /> } : {})}
             {...(byDefault
               ? {}
               : {

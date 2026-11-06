@@ -76,7 +76,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | SOZ Social                       | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                    | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
 | KI AI access                     | 17      | 2      | 10      | 5      | 1 · 3 · 19                | 3                      | 14      |
-| QS Cross-cutting                 | 24      | 0      | 22      | 2      | 0 · 0 · 0                 | 6                      | 18      |
+| QS Cross-cutting                 | 24      | 0      | 23      | 1      | 0 · 0 · 0                 | 6                      | 18      |
 | MIG Migration (dropped)          | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                     | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
 | QG Quality gates                 | 10      | 2      | 7       | 1      | 15 · 10 · 2               | 0                      | 10      |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **211** | **41** | **130** | **40** |                           | **50**                 | **161** |
+| **Total**                        | **211** | **41** | **131** | **39** |                           | **50**                 | **161** |
 
 <!-- spec-status:end -->
 

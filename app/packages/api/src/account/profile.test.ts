@@ -81,6 +81,7 @@ describe("US-ACC-02 · GET /account/profile", () => {
       replenishBuffer: 2,
       rarityConsent: false,
       positionThresholds: null,
+      keyboardShortcuts: "plain",
     });
   });
 
@@ -250,5 +251,29 @@ describe("US-ACC-02 · tenant isolation over HTTP (P-04)", () => {
       c.query("select 1 from account_data where account_id = $1", [a.id]),
     );
     expect(seen.rowCount).toBe(0);
+  });
+});
+
+describe("US-QS-11 · keyboard shortcut mode in the profile", () => {
+  it("is plain for a fresh account, saves a mode, refuses an unknown one and keeps the mode when it is left out", async () => {
+    const fresh = await read(subKeepOther);
+    expect(fresh.keyboardShortcuts).toBe("plain");
+    expect((await put(subA, { ...profile, keyboardShortcuts: "modifier" })).status).toBe(200);
+    expect((await read(subA)).keyboardShortcuts).toBe("modifier");
+    const bad = await put(subA, { ...profile, keyboardShortcuts: "single" });
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: { details: unknown } }).error.details).toEqual([
+      { field: "keyboardShortcuts", code: "input.invalid" },
+    ]);
+    expect((await put(subA, profile)).status).toBe(200);
+    expect((await read(subA)).keyboardShortcuts).toBe("modifier");
+    expect((await read(subB)).keyboardShortcuts).toBe("plain");
+  });
+
+  it("two accounts: account B cannot read or change the mode of account A (P-04)", async () => {
+    await put(subA, { ...profile, keyboardShortcuts: "disabled" });
+    expect((await put(subB, { ...profile, keyboardShortcuts: "modifier" })).status).toBe(200);
+    expect((await read(subA)).keyboardShortcuts).toBe("disabled");
+    expect((await read(subB)).keyboardShortcuts).toBe("modifier");
   });
 });

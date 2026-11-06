@@ -135,7 +135,7 @@ async function main() {
     const busy = await busyPorts(plan.listen);
     if (busy.length)
       throw new Error(
-        `port in use: ${busy.join(", ")}. Stop the process that holds it (ss -ltnp shows it); the ports come from ${WORKTREE_ENV_FILE}`,
+        `port in use: ${busy.join(", ")}. Stop the process that holds it (make clean-ports stops your own processes on these ports; ss -ltnp shows the holder); the ports come from ${WORKTREE_ENV_FILE}`,
       );
   }
   return runConcurrently(plan.args, plan.variables);

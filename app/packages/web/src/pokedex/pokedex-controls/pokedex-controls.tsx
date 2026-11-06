@@ -6,6 +6,7 @@ import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input"
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { cn } from "@/shared/lib/utils";
+import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 
 export const FILTER_LAYER = "filters";
 
@@ -31,6 +32,7 @@ export function Controls(props: {
   onQuery: (query: string) => void;
 }) {
   const searchId = useId();
+  const { hint } = useShortcuts();
   return (
     <div className="flex items-end gap-2">
       <div className="min-w-0 flex-1">
@@ -41,6 +43,7 @@ export function Controls(props: {
           id={searchId}
           ref={props.searchRef}
           placeholder="Suche"
+          keyHint={hint("search")}
           value={props.query}
           onChange={(e) => props.onQuery(e.target.value)}
           onClear={() => props.onQuery("")}
