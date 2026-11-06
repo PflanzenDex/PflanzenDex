@@ -59,8 +59,8 @@ function NewsHeading({ heading }: { heading: NonNullable<NewsEntry["heading"]> }
 
 /**
  * The version of the build and the lines in display order, one page at a time (US-DEV-06, US-QS-15): the unreleased
- * lines first, then each version under its heading. The pager turns the pages and keeps the page in the address. An
- * empty list says what to do next (P-09).
+ * lines first, then each version under its heading. The pager turns the pages and keeps the first entry of the page in
+ * the address. An empty list says what to do next (P-09).
  */
 export function WhatsNewList(props: {
   entries: readonly NewsEntry[];

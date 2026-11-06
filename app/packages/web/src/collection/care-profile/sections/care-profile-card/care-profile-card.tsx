@@ -4,7 +4,7 @@ import { useLocation, useSearchParams } from "react-router";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
-import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { dropPageParts, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { changesOf, draftOf } from "../../care-profile-draft";
 import type { Lists } from "../care-profile-sections/care-profile-sections";
 import { Quiet } from "../../../specimens/cards/parts/parts";
@@ -18,11 +18,11 @@ const DORMANCY_FIELDS = ["fromMonth", "fromDay", "untilMonth", "untilDay"] as co
 /** The zero-based page of the dormancy period (see `ProfileFields`). */
 const DORMANCY_PAGE = 2;
 
-/** The address with the page of the fields: page 0 has no part; the address counts from 1, as the pager does. */
+/** The address with the page of the fields: the page is its index, since each page is one entry; page 0 has no part. */
 function withPage(params: URLSearchParams, index: number): URLSearchParams {
   const next = new URLSearchParams(params);
-  if (index <= 0) next.delete(LAYER_PARAM);
-  else next.set(LAYER_PARAM, String(index + 1));
+  dropPageParts(next, LAYER_PARAM);
+  if (index > 0) next.set(LAYER_PARAM, String(index));
   return next;
 }
 

@@ -8,7 +8,7 @@ import {
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { dropPageParts, PAGE_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../shared/data";
 import { ReviewPageSkeleton } from "./review-page.skeleton";
@@ -27,7 +27,7 @@ const SHOW_OPTIONS: readonly SegmentedOption<Show>[] = [
   { value: "approved", label: "Freigegeben" },
 ];
 
-/** The 'Offen' or 'Freigegeben' choice, in the address (`?show=approved`); a changed choice starts at page 1 (US-QS-15). */
+/** The 'Offen' or 'Freigegeben' choice, in the address (`?show=approved`); a changed choice starts at the first entry (US-QS-15). */
 function useShow(): [Show, (show: Show) => void] {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
@@ -36,7 +36,7 @@ function useShow(): [Show, (show: Show) => void] {
     const address = new URLSearchParams(params);
     if (next === "open") address.delete(SHOW_PARAM);
     else address.set(SHOW_PARAM, next);
-    address.delete("page");
+    dropPageParts(address, PAGE_PARAM);
     address.delete("sheet");
     setParams(address, { replace: true, state: { ...location.state, keepFocus: true } });
   };

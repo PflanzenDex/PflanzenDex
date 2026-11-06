@@ -81,10 +81,10 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
     expect(lineTexts()).toEqual(first);
     cleanup();
 
-    // The last page holds the oldest line: the page is in the address, so the last page opens directly.
+    // The last page holds the oldest line: its first entry is in the address, so the last page opens directly.
     const pages = Math.ceil(all.length / first.length);
     render(
-      <MemoryRouter initialEntries={[`/account/news?page=${pages}`]}>
+      <MemoryRouter initialEntries={[`/account/news?from=${(pages - 1) * first.length}`]}>
         <WhatsNewPage />
       </MemoryRouter>,
     );

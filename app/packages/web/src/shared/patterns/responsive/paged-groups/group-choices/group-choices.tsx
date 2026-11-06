@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
 import { Select } from "@/shared/ui/fields/select/select";
 import { cn } from "@/shared/lib/utils";
+import { dropPageParts, PAGE_PARAM } from "../../pager/pager";
 import { useChipsFit } from "./use-chips-fit";
 
 /** The query parameter of the chosen group, e.g. `?group=location&part=Regal` (US-QS-19). */
@@ -92,7 +93,7 @@ function MeasureRow({
  * A row of group choices with their counts (US-QS-19, issue 1281): the chips when they fit the row (one line below
  * 768 px, up to two lines from 768 px, simulated greedily with the measured chip widths in `useChipsFit`), otherwise one
  * selection field with the same names and counts. The row never scrolls sideways. The choice is in the address
- * (`part=`), so back, forward and a copied link lead to the same group; choosing starts at page 1. The selection field
+ * (`part=`), so back, forward and a copied link lead to the same group; choosing starts at the first entry. The selection field
  * is named by the row's `label` only (no visible label) and keeps the keyboard focus across a choice.
  */
 export function GroupChoices({
@@ -108,7 +109,7 @@ export function GroupChoices({
   const choose = (key: string) => {
     const next = new URLSearchParams(params);
     next.set(PART_PARAM, key);
-    next.delete("page");
+    dropPageParts(next, PAGE_PARAM);
     setParams(next, { state: { keepFocus: true } });
   };
   if (choices.length === 0) return null;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitPageSize, pageAfterResize } from "./use-page-fit";
+import { fitPageSize } from "./use-page-fit";
 
 describe("US-QS-19 page size fills the free height of the region", () => {
   it("US-QS-19 takes the whole rows that fit: n rows need n × row + (n − 1) × gap", () => {
@@ -31,20 +31,5 @@ describe("US-QS-19 page size fills the free height of the region", () => {
   it("US-QS-19 without a layout (no height or no row) there is no size, and the caller keeps its starting value", () => {
     expect(fitPageSize({ height: 0, rowHeight: 100, gap: 8, columns: 1 })).toBeNull();
     expect(fitPageSize({ height: 600, rowHeight: 0, gap: 8, columns: 1 })).toBeNull();
-  });
-
-  it("US-QS-19 a changed page size keeps the first entry of the page before on screen", () => {
-    // Page 2 of 3-entry pages starts with entry 4 (index 3); at 5 entries per page that entry is on page 1.
-    expect(pageAfterResize({ before: 3, measured: 5, raw: 2, count: 7, page: 2 })).toBe(1);
-  });
-
-  it("US-QS-19 a changed page size never leaves the address past the end", () => {
-    // Page 3 of 3-entry pages starts with entry 7 (index 6); at 6 entries per page it is on page 2 of 2.
-    expect(pageAfterResize({ before: 3, measured: 6, raw: 3, count: 7, page: 3 })).toBe(2);
-  });
-
-  it("US-QS-19 without a change of the size the address keeps its nearest valid page", () => {
-    expect(pageAfterResize({ before: null, measured: 5, raw: 9, count: 7, page: 2 })).toBe(2);
-    expect(pageAfterResize({ before: 3, measured: 3, raw: 2, count: 7, page: 2 })).toBe(2);
   });
 });

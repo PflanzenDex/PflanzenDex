@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Listen: Die Adresse einer Liste merkt sich jetzt den ersten Eintrag auf dem Bildschirm statt einer Seitennummer. Dreht sich das Telefon oder ändert sich die Textgröße, bleibt dieser Eintrag oben. Alte Lesezeichen mit einer Seitennummer öffnen die Seite, die sie meinten.",
     "Konto → Was die App kann: Du kannst Funktionen ausschalten, die du nicht brauchst, zum Beispiel Wunschliste, Entdecken, Geräte, Freunde und Tauschen, KI-Zugang oder Erfolge. Sie verschwinden dann aus der Navigation und aus Heute, und deine Daten bleiben erhalten; der Kern der App bleibt an.",
     "Tastatur: Mit „?“ siehst du alle Tastenkürzel. Häufige Wege wie Heute, Sammlung, Pokédex und Wunschliste gehen per Taste, und unter Konto → Einstellungen lassen sich die Einzeltasten abschalten oder mit Alt und Umschalt nutzen.",
     "Anmelden: Die Startseite bietet jetzt „Anderes Konto“, und „Konto anlegen“ beendet eine noch offene Anmeldung beim Anmeldedienst, sodass du mit einem anderen Konto nicht mehr auf eine Fehlerseite stößt.",
