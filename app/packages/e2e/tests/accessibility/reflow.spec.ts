@@ -8,6 +8,7 @@ import {
   tooltips,
 } from "../../support/display/display";
 import { addLocation, expect, test } from "../../support/fixtures";
+import { specimenByKeyboard } from "../../support/keyboard";
 
 // US-QS-12: enlarge and adapt the display without losing content. Every view of a fresh account is measured in the
 // real browser; the standing criteria hold for every view added to VIEWS later (FR-QG-10 item 11).
@@ -111,5 +112,41 @@ test.describe("US-QS-12 adaptable display: reflow, zoom and orientation", () => 
       await openView(page, view);
       expect(await tooltips(page), view).toEqual([]);
     }
+  });
+});
+
+// FR-BES-23 (issue 1414): the tile of a plant in the Sammlung at 360 px and 200 % text. At that width the picture and the
+// text stack (`@max-[7.5rem]` in plant-tile.tsx), so the state keeps the full width of the tile. Without the stacking the
+// picture and the text share one row, the text column gets no room and the state mark is cut off. Nothing overflows the
+// window then, so the one-screen metrics stay green (they never see it). 200 % text is set the way the one-screen gate
+// sets it (`html { font-size: 200% }`).
+test.describe("FR-BES-23 Sammlung tiles at 200 % text", () => {
+  test("FR-BES-23 the state of a tile stays visible inside its tile at 360 px and 200 % text", async ({
+    page,
+    account,
+  }, info) => {
+    test.skip(
+      info.project.name !== "mobil",
+      "a phone width: the desktop project is not sized for 360 px",
+    );
+    test.setTimeout(120_000);
+    await signInToApp(page, account);
+    await specimenByKeyboard(page, "Aloe vera");
+
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+
+    const tile = page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first();
+    await expect(tile).toBeVisible();
+    const state = tile.locator("[data-attention]");
+    await expect(state).toBeVisible();
+
+    // The state mark lies inside the tile, left and right, and its text is not cut off by the mark's own box.
+    const tileBox = await tile.boundingBox();
+    const stateBox = await state.boundingBox();
+    if (!tileBox || !stateBox) throw new Error("the tile or its state mark has no box");
+    expect(stateBox.x).toBeGreaterThanOrEqual(tileBox.x);
+    expect(stateBox.x + stateBox.width).toBeLessThanOrEqual(tileBox.x + tileBox.width);
+    expect(await state.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   });
 });
