@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -261,6 +261,7 @@ test("US-QG-07: a gate file asks in another worktree and on a detached HEAD; an 
   const makefile = join(wt, "Makefile");
   const pre = join(wt, ".githooks/pre-commit");
   writeFileSync(makefile, "all:\n");
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
   applied(wt, { file_path: makefile });
   assert.equal(guard(wt, { file_path: makefile }), null);
   // Another worktree has its own record, which holds nothing for this file.
@@ -302,4 +303,116 @@ test("US-QG-07: a confirmation record that is missing, unreadable or malformed a
   // The record is written by the hook only: an edit of it asks, whatever it holds.
   rmSync(record, { recursive: true });
   assertAsks(guard(wt, { file_path: record }), /^claude-gate-confirmations\.json records which gate files/);
+});
+
+// The gate file plan and the question record (US-QG-07): `make gate-plan` runs gate-plan.mjs in the worktree with the files
+// in the environment variable GATE_PLAN_FILES, as the Makefile passes them. Nothing here confirms a file by hand.
+const PLAN_CLI = fileURLToPath(new URL("./gate-plan.mjs", import.meta.url));
+const planOf = (dir) => join(gitDirOf(dir), "claude-gate-plan.json");
+const askedOf = (dir) => join(gitDirOf(dir), "claude-gate-plan-asked.json");
+const plan = (dir, files) => spawnSync("node", [PLAN_CLI], { cwd: dir, env: { ...ENV, GATE_PLAN_FILES: files }, encoding: "utf8" });
+const BRANCH = "refs/heads/fix/x";
+
+/** Two gate files of the worktree: the Makefile and a hook (both exist, so the test reads like a real edit). */
+function gateFiles(wt) {
+  mkdirSync(join(wt, ".githooks"), { recursive: true });
+  const files = { makefile: join(wt, "Makefile"), pre: join(wt, ".githooks/pre-commit"), owners: join(wt, ".github/CODEOWNERS") };
+  mkdirSync(join(wt, ".github"), { recursive: true });
+  for (const file of Object.values(files)) writeFileSync(file, "x\n");
+  return files;
+}
+
+test("US-QG-07: a plan makes the first question name every planned file that is not confirmed yet, and one answer confirms them all", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
+  const asked = guard(wt, { file_path: makefile });
+  assertAsks(asked, /^Makefile defines a gate/);
+  assert.match(asked.permissionDecisionReason, /not confirmed yet: \.githooks\/pre-commit, Makefile\. Confirming this edit also confirms them/);
+  writeFileSync(makefile, "all:\nclean:\n");
+  applied(wt, { file_path: makefile });
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  assert.equal(guard(wt, { file_path: pre }), null);
+});
+
+test("US-QG-07: a gate file outside the plan asks alone, and its answer confirms that file only", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  assert.equal(plan(wt, "Makefile").status, 0);
+  const asked = guard(wt, { file_path: pre });
+  assertAsks(asked, /^\.githooks\/pre-commit defines a gate/);
+  assert.doesNotMatch(asked.permissionDecisionReason, /not confirmed yet/);
+  applied(wt, { file_path: pre });
+  assert.equal(guard(wt, { file_path: pre }), null);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+});
+
+test("US-QG-07: a plan changed after a question confirms nothing new: the answer confirms the list the question showed", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre, owners } = gateFiles(wt);
+  assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  assert.equal(plan(wt, ".githooks/pre-commit .github/CODEOWNERS Makefile").status, 0);
+  applied(wt, { file_path: makefile });
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  assert.equal(guard(wt, { file_path: pre }), null);
+  assertAsks(guard(wt, { file_path: owners }), /^\.github\/CODEOWNERS defines a gate/);
+});
+
+test("US-QG-07: a question that was denied confirms nothing, and an edit that no question of its own asked about uses no snapshot", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  // The human denied it: no edit follows. An edit of the other planned file now confirms nothing, because its own question never came.
+  applied(wt, { file_path: pre });
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+});
+
+test("US-QG-07: a plan or a question record that cannot be read asks each file alone; a plan naming a non-gate path is unusable", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  writeFileSync(planOf(wt), "{ not json");
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  assert.doesNotMatch(guard(wt, { file_path: makefile }).permissionDecisionReason, /not confirmed yet/);
+  applied(wt, { file_path: makefile });
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  writeFileSync(planOf(wt), JSON.stringify({ [BRANCH]: ["Makefile", "README.md"] }));
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  assert.doesNotMatch(guard(wt, { file_path: pre }).permissionDecisionReason, /not confirmed yet/);
+});
+
+test("US-QG-07: make gate-plan confirms nothing: every planned file still asks, and the record stays missing", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  assert.equal(existsSync(recordOf(wt)), false);
+});
+
+test("US-QG-07: make gate-plan refuses a path that is not a gate file, an empty list and a detached HEAD, and writes nothing", (t) => {
+  const { wt } = checkout(t);
+  gateFiles(wt);
+  const refused = plan(wt, "README.md Makefile");
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.stderr, /^gate-plan: not a gate file: README\.md\n/);
+  assert.notEqual(plan(wt, "").status, 0);
+  assert.notEqual(plan(wt, "../Makefile").status, 0);
+  assert.equal(existsSync(planOf(wt)), false);
+  // A leading ./ is the same file: it is recorded without it.
+  assert.equal(plan(wt, "./Makefile").status, 0);
+  assert.deepEqual(JSON.parse(readFileSync(planOf(wt), "utf8")), { [BRANCH]: ["Makefile"] });
+  git(wt, ["checkout", "-q", "--detach"]);
+  const detached = plan(wt, "Makefile");
+  assert.notEqual(detached.status, 0);
+  assert.match(detached.stderr, /HEAD is detached/);
+});
+
+test("US-QG-07: an edit of the plan or of the question record asks the human, whatever it holds", (t) => {
+  const { wt } = checkout(t);
+  assertAsks(guard(wt, { file_path: planOf(wt) }), /^claude-gate-plan\.json lists the gate files/);
+  assertAsks(guard(wt, { file_path: askedOf(wt) }), /^claude-gate-plan-asked\.json is the question/);
 });

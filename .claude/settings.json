@@ -48,7 +48,8 @@
       "Bash(make pr-state PR=*)",
       "Bash(make issue-read ISSUE=*)",
       "Bash(make pr-text PR=*)",
-      "Bash(make issue-comment ISSUE=*)"
+      "Bash(make issue-comment ISSUE=*)",
+      "Bash(make gate-plan FILES=*)"
     ],
     "deny": [
       "Bash(sed -n -i:*)",

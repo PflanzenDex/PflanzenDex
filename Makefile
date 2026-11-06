@@ -21,7 +21,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge pr-state issue-read pr-text issue-comment
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge pr-state issue-read pr-text issue-comment gate-plan
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -39,6 +39,9 @@ export ONE_SCREEN_ONLY := $(value SCREEN)
 ifneq ($(FRESH),)
 export FRESH
 endif
+# FILES of `make gate-plan` reach the command raw, like the REST_ values; the unexport of FILES above keeps make from expanding
+# them (issue 1608, US-QG-07).
+export GATE_PLAN_FILES := $(value FILES)
 
 pr-state: ## Read a PR over REST (PR=<n>): title, state, draft, merged, head, base, auto-merge and the latest check runs of the head (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs pr-state
@@ -272,6 +275,11 @@ db-indexes: ## Every foreign key and tenant column (account_id) of the migration
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format; a green result of this exact content is skipped (FRESH=1 runs all, issue 1608)
 	cd $(APP) && node tools/check/supply/check-deps.mjs
 	cd $(APP) && npm run gates
+
+# Declares the gate files that a branch will change, before the first edit of them (US-QG-07). The Claude Code hook then asks
+# one question that lists the whole plan. The paths are relative to the top of the worktree. It confirms nothing.
+gate-plan: ## Declares the gate files this branch will change (FILES="a b", paths from the top of the worktree; US-QG-07): one question then covers the list, and nothing is confirmed
+	node .claude/hooks/gate-plan.mjs
 
 ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
 	cd $(APP) && npm run ci

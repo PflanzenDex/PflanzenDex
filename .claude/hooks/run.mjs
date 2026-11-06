@@ -7,7 +7,17 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { baselineGrows, isBaselineFile, textAfter } from "./baseline-growth.mjs";
-import { CONFIRMATIONS_FILE, needsQuestion, withConfirmation } from "./gate-confirmations.mjs";
+import {
+  ASKED_FILE,
+  CONFIRMATIONS_FILE,
+  PLAN_FILE,
+  needsQuestion,
+  plannedFiles,
+  questionFiles,
+  snapshotList,
+  snapshotText,
+  withConfirmations,
+} from "./gate-confirmations.mjs";
 import {
   isCodePath,
   isGateFile,
@@ -115,28 +125,28 @@ function notInHead(folder, file) {
   }
 }
 
-// Where a worktree keeps its confirmations of gate files and which branch it is on: the git directory of the worktree
-// (private to it, not tracked, not shared with the other worktrees) and the full ref of HEAD, null when HEAD is detached.
-// Null when git cannot tell (US-QG-07).
+// Where a worktree keeps its gate file records and which branch it is on: the git directory of the worktree (private to it,
+// not tracked, not shared with the other worktrees) and the full ref of HEAD, null when HEAD is detached. Null when git
+// cannot tell (US-QG-07).
 function confirmationSpot(folder) {
   const gitOut = (args) =>
     execFileSync("git", args, { cwd: folder, encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim();
   try {
-    const gitDir = gitOut(["rev-parse", "--absolute-git-dir"]);
+    const dir = gitOut(["rev-parse", "--absolute-git-dir"]);
     let branch = null;
     try {
       branch = gitOut(["symbolic-ref", "-q", "HEAD"]) || null;
     } catch {
       // A detached HEAD: symbolic-ref exits 1, and there is no branch to key the record by.
     }
-    return { file: path.join(gitDir, CONFIRMATIONS_FILE), branch };
+    return { dir, file: path.join(dir, CONFIRMATIONS_FILE), branch };
   } catch {
     return null;
   }
 }
 
-// The text of the record of confirmations, or null when it is missing or cannot be read (US-QG-07).
-function readConfirmations(file) {
+// The text of a record file of the git directory, or null when it is missing or cannot be read (US-QG-07).
+function readRecord(file) {
   try {
     return fs.readFileSync(file, "utf8");
   } catch {
@@ -144,17 +154,58 @@ function readConfirmations(file) {
   }
 }
 
-// Whether an edit of this gate file needs the human's question (US-QG-07): always when the place of the record is unknown.
-function gateEditNeedsQuestion(folder, file) {
+// The gate files that the question about this edit names (US-QG-07), or null when the record already confirms the file. The
+// question is written as the snapshot that after-edit reads: every question rewrites it, and one without a branch removes it,
+// so an edit confirms only what its own question showed. Without a known place the file is asked alone.
+function gateQuestion(folder, file) {
   const spot = confirmationSpot(folder);
-  return !spot || needsQuestion(file, spot.branch, readConfirmations(spot.file));
+  const record = spot ? readRecord(spot.file) : null;
+  if (spot && !needsQuestion(file, spot.branch, record)) return null;
+  const planned = spot?.branch ? plannedFiles(readRecord(path.join(spot.dir, PLAN_FILE)), spot.branch) : null;
+  const list = spot?.branch ? questionFiles(file, planned, record, spot.branch) : [file];
+  writeSnapshot(spot, file, list);
+  return list;
 }
 
-// After an edit of a gate file went through, the file counts as confirmed on this branch (US-QG-07). Without a branch or a
-// known place nothing is recorded, and the next edit asks again.
+// Writes the snapshot of a question, or removes the old one when the question has no branch to key it by. A snapshot that
+// cannot be written leaves none: the edit then confirms nothing, and the next edit asks again (fail closed).
+function writeSnapshot(spot, file, list) {
+  if (!spot) return;
+  const asked = path.join(spot.dir, ASKED_FILE);
+  try {
+    fs.rmSync(asked, { force: true });
+    if (spot.branch) fs.writeFileSync(asked, snapshotText(spot.branch, file, list));
+  } catch (error) {
+    process.stderr.write(`hook: the question could not be recorded (${error.message.split("\n")[0]})\n`);
+  }
+}
+
+// The reason of the question about a gate file (US-QG-07). When the plan names more files that are not confirmed yet, the
+// reason lists them all, and says that confirming this edit confirms them too.
+function gateReason(file, list) {
+  const base = `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green.`;
+  if (list.length === 1) return `${base} A confirmed edit lets later edits of this file on this branch pass (US-QG-07).`;
+  return `${base} The plan of this branch (make gate-plan) lists these files, not confirmed yet: ${list.join(", ")}. Confirming this edit also confirms them, and later edits of them on this branch pass (US-QG-07).`;
+}
+
+// The records of the gate file questions (US-QG-07). An edit of one of them asks the human: only the hook and make gate-plan
+// write them, and make gate-plan confirms nothing.
+const RECORD_REASONS = {
+  [CONFIRMATIONS_FILE]: `${CONFIRMATIONS_FILE} records which gate files a human confirmed. Only the hook writes it (US-QG-07).`,
+  [PLAN_FILE]: `${PLAN_FILE} lists the gate files a branch plans to change. Only make gate-plan writes it, and it confirms nothing (US-QG-07).`,
+  [ASKED_FILE]: `${ASKED_FILE} is the question last asked about a gate file. Only the hook writes it (US-QG-07).`,
+};
+
+// After an edit of a gate file went through (US-QG-07), every file of the snapshot of the last question is confirmed on this
+// branch, when the snapshot names this file and this branch, and then the snapshot is deleted. The plan is not read here: a
+// list changed after the question confirms nothing new. Without a branch nothing is recorded, and the next edit asks again.
 function recordGateEdit(folder, file) {
   const spot = confirmationSpot(folder);
-  if (spot?.branch) fs.writeFileSync(spot.file, withConfirmation(readConfirmations(spot.file), spot.branch, file));
+  if (!spot?.branch) return;
+  const list = snapshotList(readRecord(path.join(spot.dir, ASKED_FILE)), spot.branch, file);
+  if (list === null) return;
+  fs.writeFileSync(spot.file, withConfirmations(readRecord(spot.file), spot.branch, list));
+  fs.rmSync(path.join(spot.dir, ASKED_FILE), { force: true });
 }
 
 const print = (obj) => process.stdout.write(JSON.stringify(obj));
@@ -193,15 +244,13 @@ const handlers = {
     // An applied migration is immutable. A new one, not yet in HEAD, is filled in after `make migration` (US-DEV-07).
     const migration = isMigrationFile(file) && fs.existsSync(path.join(fileRoot, file));
     if (migration && !notInHead(fileRoot, file)) return preToolUse("deny", MIGRATION_REASON);
-    if (path.basename(target ?? "") === CONFIRMATIONS_FILE) {
-      // Only after-edit writes the record: an agent's edit of it could confirm gate files nobody was asked about (US-QG-07).
-      preToolUse("ask", `${CONFIRMATIONS_FILE} records which gate files a human confirmed. Only the hook writes it (US-QG-07).`);
+    const record = path.basename(target ?? "");
+    if (Object.hasOwn(RECORD_REASONS, record)) {
+      // Only the hook (guard-edit and after-edit) and make gate-plan write the records: an agent's edit of one could confirm gate files nobody was asked about (US-QG-07).
+      preToolUse("ask", RECORD_REASONS[record]);
     } else if (isGateFile(file)) {
-      if (gateEditNeedsQuestion(fileRoot, file))
-        preToolUse(
-          "ask",
-          `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green. A confirmed edit lets later edits of this file on this branch pass (US-QG-07).`,
-        );
+      const list = gateQuestion(fileRoot, file);
+      if (list) preToolUse("ask", gateReason(file, list));
     } else if (isBaselineFile(file)) {
       let reason;
       try {
