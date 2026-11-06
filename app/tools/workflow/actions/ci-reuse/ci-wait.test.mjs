@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { evidenceOf } from "./ci-reuse.mjs";
-import { report } from "./ci-report.mjs";
+import { report, stateLine } from "./ci-report.mjs";
 import {
   assess,
   exitCodeOf,
@@ -645,4 +645,11 @@ test("US-DEV-10: a CodeQL check of another app with the same name does not count
   const a = assess(faked);
   assert.deepEqual(a.problems, []);
   assert.equal(rowOf(a, "CodeQL"), undefined);
+});
+
+test("US-DEV-10: the make gate-review state line names the failed CodeQL check of PR 1503's earlier head", () => {
+  assert.equal(
+    stateLine(assess(scanOpen())),
+    "not green: CodeQL: failure (ci-status: success, not judged)",
+  );
 });
