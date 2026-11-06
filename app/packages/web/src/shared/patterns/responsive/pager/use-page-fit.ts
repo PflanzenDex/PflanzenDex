@@ -28,28 +28,6 @@ export function fitPageSize({
 }
 
 /**
- * The page the address names after a page size change from the layout (US-QS-19, issue 1029): the page that holds the
- * first entry of the page before stays on screen when it can. Without a change it is `page`, the nearest valid page.
- */
-export function pageAfterResize({
-  before,
-  measured,
-  raw,
-  count,
-  page,
-}: {
-  before: number | null;
-  measured: number | null;
-  raw: number;
-  count: number;
-  page: number;
-}): number {
-  if (before === null || measured === null || before === measured) return page;
-  const pages = Math.max(1, Math.ceil(count / before));
-  return Math.floor(((Math.min(raw, pages) - 1) * before) / measured) + 1;
-}
-
-/**
  * What the layout says about a list region: the page size that fits it (`null` while the region has no height) and the
  * height of one row (kept even when the region is squeezed to nothing, so the frame can make room for it).
  */

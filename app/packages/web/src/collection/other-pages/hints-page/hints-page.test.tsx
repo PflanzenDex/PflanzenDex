@@ -129,13 +129,13 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
   it("US-QS-18 · issue 1156 in the layer of Heute the hints page by its free height and leave the page of Heute alone", async () => {
     fakeServer(() => response(200, { hints: [noZone, noSpecies, noLocation, noZone] }));
     render(
-      <MemoryRouter initialEntries={["/today?sheet=hints&lpage=2"]}>
+      <MemoryRouter initialEntries={["/today?sheet=hints&lfrom=3"]}>
         <HintsPage api="http://api" token={token} onOpen={noop} host />
       </MemoryRouter>,
     );
     const list = await screen.findByRole("list", { name: "Fehlende Angaben" });
     expect(list.hasAttribute("data-page-fit")).toBe(true);
-    // The page of the layer is `lpage`, so the list of "Heute" behind it keeps its own `page`.
+    // The first entry of the layer is `lfrom`, so the list of "Heute" behind it keeps its own `from`.
     expect(screen.getByRole("status").textContent).toBe("Seite 2 von 2");
   });
 

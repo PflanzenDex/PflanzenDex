@@ -343,7 +343,7 @@ describe("US-QS-15 review list on one screen", () => {
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
   });
 
-  it("US-QS-15 each case is a compact row; the list is paged in whole rows with the page in the address", async () => {
+  it("US-QS-15 each case is a compact row; the list is paged in whole rows with the first entry in the address", async () => {
     const many = Array.from({ length: 10 }, (_, i) =>
       entry({}, "proposal", `c${i + 1}`, { latinName: `Species ${i + 1}` }),
     );
@@ -354,20 +354,20 @@ describe("US-QS-15 review list on one screen", () => {
     expect(within(rows).getAllByRole("button")).toHaveLength(4);
     expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(address()).toContain("page=2");
+    expect(address()).toContain("from=4");
     expect(screen.getByRole("button", { name: /Species 5/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Species 1$/ })).toBeNull();
   });
 
-  it("US-QS-15 a changed choice starts the list at page 1", async () => {
+  it("US-QS-15 a changed choice starts the list at the first entry", async () => {
     const many = Array.from({ length: 10 }, (_, i) =>
       entry({}, "proposal", `c${i + 1}`, { latinName: `Species ${i + 1}` }),
     );
     server(list(many, 10), () => response(200, {}));
     const user = userEvent.setup();
-    show("/review?page=2");
+    show("/review?from=4");
     await user.click(await screen.findByRole("button", { name: "Freigegeben" }));
-    expect(address()).not.toContain("page=");
+    expect(address()).not.toContain("from=");
   });
 
   it("US-QS-15 a case layer opened by a link reopens at once (deep link ?sheet=case-<id>)", async () => {
