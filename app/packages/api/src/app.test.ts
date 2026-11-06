@@ -20,7 +20,7 @@ describe("health endpoint (TE-01, TE-03)", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       status: "ok",
-      product: "PflanzenDex",
+      product: "PflanzenDéx",
       version: "v0.1.0-3-gabc1234",
       commit: "abc1234",
       checks: {
