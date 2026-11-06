@@ -128,4 +128,14 @@ describe("US-QS-07 · installable web app and its icon", () => {
     const png = ico.subarray(image32?.offset ?? 0, (image32?.offset ?? 0) + (image32?.size ?? 0));
     expect(png.equals(publicFile("/favicon-32.png"))).toBe(true);
   });
+
+  it("US-QS-07 a motif loses every comment, also one that forms when an inner one goes", async () => {
+    const generator = "./build-icons.mjs"; // a Node script without types, so not a static import
+    const { innerOf } = (await import(/* @vite-ignore */ generator)) as {
+      innerOf: (svg: string) => string;
+    };
+    expect(innerOf('<svg viewBox="0 0 1 1"><!<!-- a -->-- b --><path d="M0 0"/></svg>')).toBe(
+      '<path d="M0 0"/>',
+    );
+  });
 });

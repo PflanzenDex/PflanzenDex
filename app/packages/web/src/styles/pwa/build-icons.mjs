@@ -44,7 +44,13 @@ const GLYPH = token(/--primary-foreground:\s*(#[0-9a-fA-F]{6});/);
 /** The markup inside a motif file: its shapes without the <svg> element and without comments. */
 export function innerOf(svg) {
   const start = svg.indexOf(">", svg.indexOf("<svg")) + 1;
-  return svg.slice(start, svg.lastIndexOf("</svg>")).replace(/<!--[\s\S]*?-->/g, "");
+  let inner = svg.slice(start, svg.lastIndexOf("</svg>"));
+  let before;
+  do {
+    before = inner;
+    inner = inner.replace(/<!--[\s\S]*?-->/g, ""); // again: removing one comment can form the next
+  } while (inner !== before);
+  return inner;
 }
 
 const svgDocument = (body) =>
