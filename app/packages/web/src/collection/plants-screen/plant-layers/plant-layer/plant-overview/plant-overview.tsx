@@ -13,6 +13,7 @@ import {
 import { UNKNOWN } from "../../../../specimens/model/text";
 import { tileState } from "../../../rows/plant-tile/plant-tile";
 import table from "../../plant-layers.de.json";
+import { PlantNotes } from "../plant-notes/plant-notes";
 
 const t = texts(table);
 
@@ -45,6 +46,8 @@ export function PlantOverview(props: {
   water?: ReactNode;
   /** Opens the planning of a treatment (tab "Pflege"). */
   onTreat: () => void;
+  /** Opens the form of the private notes with the notes shown here (US-BES-18). */
+  onNotes?: ((notes: string | null) => void) | undefined;
 }) {
   const { card } = props;
   const state = tileState(card);
@@ -74,6 +77,8 @@ export function PlantOverview(props: {
         </Quiet>
       </div>
       <Provenance value={card.provenance} />
+      {/* The private notes (US-BES-18): read here, written in the page's form; the buttons below stay where they are. */}
+      <PlantNotes card={card} access={props.access} onEdit={props.onNotes} />
       {/* Two equal buttons side by side; when both labels do not fit (200 % text, NFR-13) each takes its own row. A message
           of "Gießen" always takes a row of its own. */}
       <div className="flex flex-wrap gap-2 [&>button]:grow [&>button]:basis-2/5 [&>p]:basis-full">

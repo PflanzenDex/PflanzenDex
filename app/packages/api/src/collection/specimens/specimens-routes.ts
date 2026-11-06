@@ -9,6 +9,8 @@ import {
   specimenRepot,
   specimenLoad,
   specimenList,
+  specimenNotes,
+  specimenSetNotes,
   appError,
   type TreatmentSource,
   type MeasurementSource,
@@ -20,6 +22,7 @@ import {
   CareProfilePostgres,
   SpeciesPostgres,
   SpecimenPostgres,
+  SpecimenNotesPostgres,
   IdempotencyPostgres,
   LocationPostgres,
   ZonePostgres,
@@ -96,6 +99,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   });
   const repot = specimenRepot({ specimens, clock });
   const correct = specimenCorrectCatchDate({ specimens, clock });
+  const notes = new SpecimenNotesPostgres(pool);
+  const setNotes = specimenSetNotes({ specimens: notes });
   const cardsDeps = cardsDependencies(pool, specimens, opt);
   const routes = new Hono<AuthEnv>();
 
@@ -118,9 +123,14 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   routes.route("/", locationRoutes(pool));
   // Distribution (US-LIC-02) and hints (US-BES-08); before `/specimens/:id`.
   routes.route("/", derivedRoutes(pool));
+  // US-BES-18: the keeper's own detail carries the private notes; the other reads of a specimen (lists, cards, friends,
+  // swaps, AI) leave them out (P-05).
   routes.get("/specimens/:id", async (c) => {
-    const e = await specimenLoad(specimens, c.get("account").id, c.req.param("id"));
-    return e ? c.json(e) : c.json(errorBody(appError("specimen.not_found")), 404);
+    const account = c.get("account").id;
+    const e = await specimenLoad(specimens, account, c.req.param("id"));
+    if (!e) return c.json(errorBody(appError("specimen.not_found")), 404);
+    const own = await specimenNotes(notes, account, e.id);
+    return c.json({ ...e, notes: own?.notes ?? null });
   });
   routes.post("/specimens", async (c) =>
     write(c, deps, create, { input: await body(c), success: 201 }),
@@ -132,6 +142,10 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   // US-BES-11: correct the catch date; only `caught_at` changes, same rules as on creation (P-03, `Idempotency-Key`).
   routes.post("/specimens/:id/catch-date", async (c) =>
     write(c, deps, correct, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
+  );
+  // US-BES-18: set or clear the private notes (P-03, `Idempotency-Key`); an empty text clears them.
+  routes.post("/specimens/:id/notes", async (c) =>
+    write(c, deps, setNotes, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
   );
   return routes;
 }

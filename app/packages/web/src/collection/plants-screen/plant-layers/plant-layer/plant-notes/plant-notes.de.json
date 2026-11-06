@@ -1,0 +1,23 @@
+{
+  "section.title": "Notizen",
+  "section.empty": "Noch keine Notiz. Halte fest, was du zu dieser Pflanze wissen willst. Nur du siehst sie.",
+  "section.write": "Notiz schreiben",
+  "section.writeLabel": "Notiz schreiben: {name}",
+  "section.edit": "Notiz bearbeiten",
+  "section.editLabel": "Notiz bearbeiten: {name}",
+  "section.more": "Alle lesen",
+  "section.less": "Weniger zeigen",
+  "section.loading": "Notiz wird geladen …",
+  "section.failed": "Die Notiz konnte nicht geladen werden.",
+  "section.retry": "Erneut versuchen",
+  "form.title": "Private Notiz",
+  "form.formLabel": "Notiz bearbeiten",
+  "form.name": "„{name}“",
+  "form.hint": "Nur du siehst die Notiz. Leer speichern entfernt sie.",
+  "form.label": "Notiz",
+  "form.description": "Bis zu {max} Zeichen. Notizen werden nie geteilt.",
+  "form.submit": "Notiz speichern",
+  "form.cancel": "Abbrechen",
+  "message.saved": "Die Notiz zu „{name}“ ist gespeichert.",
+  "message.cleared": "Die Notiz zu „{name}“ ist entfernt."
+}

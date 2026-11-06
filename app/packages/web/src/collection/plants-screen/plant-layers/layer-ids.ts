@@ -10,6 +10,8 @@ export type Handlers = {
   onRepot?: ((e: SpecimenCard) => void) | undefined;
   onMark?: ((e: SpecimenCard) => void) | undefined;
   onCatchDate?: ((e: SpecimenCard) => void) | undefined;
+  /** Opens the form of the private notes with the notes the overview shows (US-BES-18). */
+  onNotes?: ((e: SpecimenCard, notes: string | null) => void) | undefined;
   onLightZone?: ((e: SpecimenCard) => void) | undefined;
 };
 

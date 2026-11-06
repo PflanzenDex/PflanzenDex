@@ -103,6 +103,7 @@ export function PlantLayers(props: LayerProps) {
           onRepot={props.onRepot}
           onMark={props.onMark}
           onCatchDate={props.onCatchDate}
+          onNotes={props.onNotes}
           onLightZone={props.onLightZone}
         />
       ) : null}

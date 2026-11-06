@@ -8,6 +8,7 @@ import type { useMarker } from "../../markers/marker/use-marker";
 import { setSpecimenLocation } from "../model/specimens-api";
 import type { useArchive } from "./use-archive";
 import { COLLECTION_KEY, type Token } from "./use-collection";
+import type { useNotes, NotesTarget } from "./use-notes";
 import type { useRepot } from "./use-repot";
 
 export type ListActions = {
@@ -16,6 +17,7 @@ export type ListActions = {
   marked: ReturnType<typeof useMarker>;
   caught: ReturnType<typeof useCatchDate>;
   zoned: ReturnType<typeof useLightZone>;
+  noted: ReturnType<typeof useNotes>;
   clearMessages: () => void;
 };
 
@@ -27,7 +29,7 @@ type Named = { id: string; name: string };
  * The latest message and error of any of them are returned for the page to show (P-09, P-10).
  */
 export function useListActions(api: string, token: Token, a: ListActions) {
-  const { archived, potted, marked, caught, zoned, clearMessages } = a;
+  const { archived, potted, marked, caught, zoned, noted, clearMessages } = a;
   const place = useWriteAction(token, useInvalidate(COLLECTION_KEY));
   const openCatchDate = (e: CatchDateTarget) => {
     clearMessages();
@@ -36,6 +38,7 @@ export function useListActions(api: string, token: Token, a: ListActions) {
   return {
     message:
       place.message ??
+      noted.message ??
       zoned.message ??
       caught.message ??
       marked.message ??
@@ -60,6 +63,12 @@ export function useListActions(api: string, token: Token, a: ListActions) {
         marked.setOpen(e);
       },
       onCatchDate: openCatchDate,
+      // The layer's overview asks for the form with the notes it shows (US-BES-18).
+      onNotes: (e: Named, notes: string | null) => {
+        clearMessages();
+        const target: NotesTarget = { id: e.id, name: e.name, notes };
+        noted.setOpen(target);
+      },
       onLightZone: (e: Parameters<typeof zoned.setOpen>[0] & object) => {
         clearMessages();
         zoned.setOpen(e);

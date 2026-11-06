@@ -1,15 +1,22 @@
 // @vitest-environment jsdom
 import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
+import { QueryClientProvider } from "@tanstack/react-query";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createQueryClient } from "../../../shared/data";
 import { PlantLocation } from "../../plants-screen/plant-layers/plant-layer/plant-location/plant-location";
 import { PlantOverview } from "../../plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
 import { loadAllCardsOf, loadCard, loadCardPage, loadCardSummary } from "./cards-api";
 import { answerCardRead } from "../tests/cards-fake";
 
-// React separates adjacent text parts with comments in server rendering; for text checks we remove them.
-const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
+// React separates adjacent text parts with comments in server rendering; for text checks we remove them. The overview
+// reads the notes through the data layer (US-BES-18), so the server render gets a query client as the app has one.
+const renderToString = (e: Parameters<typeof render>[0]) =>
+  render(<QueryClientProvider client={createQueryClient()}>{e}</QueryClientProvider>).replaceAll(
+    "<!-- -->",
+    "",
+  );
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 

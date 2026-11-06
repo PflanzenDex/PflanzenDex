@@ -25,6 +25,8 @@ import {
   useCatchDate,
 } from "../markers/catch-date/catch-date-field/catch-date-field";
 import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/light-zone-form";
+import { NotesForm } from "../plants-screen/plant-layers/plant-layer/plant-notes/notes-form/notes-form";
+import { useNotes } from "../specimens/hooks/use-notes";
 import { Created } from "./created/created";
 import { ListHint } from "./hint-occasions/hint-occasions";
 import { PlantsScreen } from "../plants-screen/plants-screen";
@@ -46,10 +48,11 @@ export function CollectionPage(props: Props) {
   const marked = useMarker(api, token, afterAction);
   const caught = useCatchDate(api, token, afterAction);
   const zoned = useLightZone(api, token, afterAction);
+  const noted = useNotes(api, token, afterAction);
   const clearMessages = useCallback(() => {
-    for (const a of [archived, potted, marked, caught, zoned]) a.setMessage(null);
-  }, [archived, potted, marked, caught, zoned]);
-  const opened = [archived.open, potted.open, marked.open, caught.open, zoned.open];
+    for (const a of [archived, potted, marked, caught, zoned, noted]) a.setMessage(null);
+  }, [archived, potted, marked, caught, zoned, noted]);
+  const opened = [archived.open, potted.open, marked.open, caught.open, zoned.open, noted.open];
   const formOpen = !!newSpecies || opened.some(Boolean);
   useHostReport(props.host, request.value?.summary.total, formOpen);
   const create = useCreate(api, token, newSpecies, {
@@ -85,7 +88,7 @@ export function CollectionPage(props: Props) {
             data={request.value}
             plants={plants}
             create={create}
-            actions={{ archived, potted, marked, caught, zoned, clearMessages }}
+            actions={{ archived, potted, marked, caught, zoned, noted, clearMessages }}
             props={props}
           />
         )}
@@ -103,7 +106,7 @@ function Views(p: {
   props: Props;
 }) {
   const { data, create, props } = p;
-  const { archived, potted, marked, caught, zoned } = p.actions;
+  const { archived, potted, marked, caught, zoned, noted } = p.actions;
   if (props.newSpecies) {
     return (
       <CreateWithSiblings
@@ -138,6 +141,7 @@ function Views(p: {
     );
   }
   if (caught.open) return <CatchDateForm state={{ ...caught, open: caught.open }} />;
+  if (noted.open) return <NotesForm state={{ ...noted, open: noted.open }} />;
   if (zoned.open) return <LightZoneForm state={{ ...zoned, open: zoned.open }} />;
   return (
     <List

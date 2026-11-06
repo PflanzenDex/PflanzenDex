@@ -53,6 +53,13 @@ export const repotSchema = z.object({
 });
 export type RepotFields = z.infer<typeof repotSchema>;
 
+/**
+ * The form of the private notes (US-BES-18): the text as typed. An empty text clears the notes; the server trims it
+ * and checks the length again (P-03).
+ */
+export const notesSchema = z.object({ notes: z.string() });
+export type NotesFields = z.infer<typeof notesSchema>;
+
 export const OTHER_REASON = "other";
 
 /** The form to archive a specimen (US-BES-07): a reason from the list, or an own one. */

@@ -132,6 +132,7 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
         growth={p.slots?.growth ? slot(p.slots.growth) : undefined}
         water={p.slots?.water ? slot(p.slots.water) : undefined}
         onTreat={() => tab.choose("pflege")}
+        onNotes={p.onNotes ? closing(close, (v: string | null) => p.onNotes?.(card, v)) : undefined}
       />
     ),
     verlauf: p.slots?.history ? slot(p.slots.history) : <Measurement card={card} />,

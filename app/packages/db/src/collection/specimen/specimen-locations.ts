@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
-import { withAccount } from "../kernel/index.ts";
-import { COLUMNS, FOREIGN_KEY, pgError, type SpecimenRow } from "./specimen-shared.ts";
+import { withAccount } from "../../kernel/index.ts";
+import { COLUMNS, FOREIGN_KEY, pgError, type SpecimenRow } from "../specimen-shared.ts";
 
 /** A specimen was refused: the transaction is undone and the reason goes back to the caller. */
 class Refused extends Error {
