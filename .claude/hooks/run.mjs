@@ -55,6 +55,45 @@ function locate(file) {
   return { root: owner.toplevel, file: path.relative(owner.toplevel, real).split(path.sep).join("/") };
 }
 
+// The path with its links resolved: the nearest folder that exists is resolved, the rest is kept as written (US-QG-07).
+function realpath(p) {
+  const rest = [];
+  let existing = p;
+  while (!fs.existsSync(existing) && path.dirname(existing) !== existing) {
+    rest.unshift(path.basename(existing));
+    existing = path.dirname(existing);
+  }
+  return path.join(fs.realpathSync(existing), ...rest);
+}
+
+// What the Bash guard needs to place a git command (US-QG-07, #1519): the folder the shell is in (the hook input's cwd,
+// which the shell's cd moves), and the main checkout (the worktree whose .git is a directory) and the linked worktrees
+// of the repository this hook runs in, as git lists them. Empty when git cannot tell: the guard then refuses reset and
+// clean, because the place is not known.
+function bashWhere() {
+  try {
+    const repo = repoAt(root);
+    if (!repo) return {};
+    const listed = run("git", ["worktree", "list", "--porcelain"], { cwd: repo.folder, timeout: 3000 })
+      .split("\n")
+      .filter((line) => line.startsWith("worktree "))
+      .map((line) => realpath(line.slice("worktree ".length)));
+    const isMain = (p) => fs.existsSync(path.join(p, ".git")) && fs.statSync(path.join(p, ".git")).isDirectory();
+    const main = listed.find(isMain);
+    if (!main) return {};
+    const isFolder = (p) => {
+      try {
+        return fs.statSync(p).isDirectory();
+      } catch {
+        return false;
+      }
+    };
+    return { cwd: input.cwd ?? root, main, linked: listed.filter((p) => p !== main), isFolder, realpath };
+  } catch {
+    return {};
+  }
+}
+
 // Whether HEAD of the file's repository lacks the file, so it is a new migration (US-QG-07, US-DEV-07). An untracked or
 // only staged file is missing from HEAD; an applied one is in it. `git ls-tree HEAD -- <file>` exits 0 and prints nothing
 // for a missing path. `git cat-file -e HEAD:<file>` was the first choice, but it exits 128 for a missing path as well as
@@ -125,7 +164,10 @@ const handlers = {
     }
   },
   "guard-bash"() {
-    const verdict = judgeCommand(input.tool_input?.command ?? "");
+    const command = input.tool_input?.command ?? "";
+    // Git facts are read only for a command that names git, reset or clean; the rest of the commands cost nothing (US-QG-07).
+    const where = /\bgit\b|\b(reset|clean)\b/.test(command) ? bashWhere() : {};
+    const verdict = judgeCommand(command, where);
     if (verdict) preToolUse(verdict.decision, verdict.reason);
   },
   "after-edit"() {

@@ -272,3 +272,69 @@ describe("QG-U6 · report: whole dist and Markdown", () => {
     assert.match(md, /5\.0 kB under the goal/);
   });
 });
+
+describe("QG-U6 · report: chunks without sourcemaps", () => {
+  // The shape of a real build: the entry chunk and the runtime chunk that index.html preloads.
+  // `maps` names the files that get a .map file next to them.
+  function buildDist(maps) {
+    const dist = path.join(tempDir("bundle-report-"), "packages/web/dist");
+    fs.mkdirSync(path.join(dist, "assets"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dist, "index.html"),
+      '<script type="module" src="/assets/index.js"></script>\n' +
+        '<link rel="modulepreload" href="/assets/rolldown-runtime.js">',
+    );
+    const texts = {
+      "index.js": `${"abcde".repeat(200)}${"fghij".repeat(200)}`,
+      "rolldown-runtime.js": "klmno".repeat(200),
+    };
+    for (const [name, text] of Object.entries(texts)) {
+      fs.writeFileSync(path.join(dist, "assets", name), text);
+      if (maps[name])
+        fs.writeFileSync(
+          path.join(dist, "assets", `${name}.map`),
+          JSON.stringify({
+            sources: ["../../node_modules/react/i.js", "../../src/kernel/k.ts"],
+            mappings: mappingsOf([
+              [0, 0],
+              [text.length / 2, 1],
+            ]),
+          }),
+        );
+    }
+    return dist;
+  }
+  const gzipOf = (file) => zlib.gzipSync(fs.readFileSync(file), { level: 9 }).length;
+  const sumOf = (rows) => rows.reduce((s, r) => s + r.gzip, 0);
+
+  test("QG-U6 · FR-QG-10 a chunk without a sourcemap is counted under '(no sourcemap)', the chunk with one still gets packages", () => {
+    const dist = buildDist({ "index.js": true });
+    const report = buildReport(dist);
+    assert.equal(report.hasMaps, true);
+    const none = report.packages.find((p) => p.group === "(no sourcemap)");
+    assert.equal(none?.gzip, gzipOf(path.join(dist, "assets", "rolldown-runtime.js")));
+    assert.ok(report.packages.some((p) => p.group === "react"));
+    assert.match(renderMarkdown(report, { limit: 152000 }), /\| \(no sourcemap\) \|/);
+  });
+
+  test("QG-U6 · FR-QG-10 the packages add up to the gzip total of all initial chunks, no chunk lost or counted twice", () => {
+    const report = buildReport(buildDist({ "index.js": true }));
+    assert.equal(sumOf(report.packages), report.total);
+  });
+
+  test("QG-U6 · FR-QG-10 without any sourcemap the report keeps its behaviour: hasMaps false, no packages, the Markdown says so", () => {
+    const report = buildReport(buildDist({}));
+    assert.equal(report.hasMaps, false);
+    assert.deepEqual(report.packages, []);
+    assert.match(renderMarkdown(report, { limit: 152000 }), /no sourcemaps/i);
+  });
+
+  test("QG-U6 · FR-QG-10 with a sourcemap for every chunk the report has no '(no sourcemap)' row", () => {
+    const report = buildReport(buildDist({ "index.js": true, "rolldown-runtime.js": true }));
+    assert.equal(report.hasMaps, true);
+    assert.equal(
+      report.packages.some((p) => p.group === "(no sourcemap)"),
+      false,
+    );
+  });
+});
