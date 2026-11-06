@@ -108,6 +108,7 @@ function ShortcutOverviewLayer() {
       onOpenChange={s.setOverviewOpen}
       rows={s.rows}
       off={off}
+      returnFocusTo={s.overviewOpener}
     />
   );
 }

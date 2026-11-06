@@ -4,6 +4,7 @@ import { Button } from "@/shared/ui/button/button";
 import { ChunkErrorBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { useLoadingWindow } from "@/shared/platform/routing/lazy-page/loading-window";
+import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { DialogModalProps } from "./dialog-modal/dialog-modal";
 import table from "./dialog-part.de.json";
@@ -79,6 +80,8 @@ export type DialogPartProps = {
   opened: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenAutoFocus?: ((event: Event) => void) | undefined;
+  /** The element the focus returns to when there is no trigger (US-QS-08); the view's start when it has left the page. */
+  returnFocusTo?: React.RefObject<HTMLElement | null> | undefined;
   body: React.ReactNode;
 };
 
@@ -96,9 +99,13 @@ export function DialogPart(props: DialogPartProps) {
     opened,
     onOpenChange,
     onOpenAutoFocus,
+    returnFocusTo,
     body,
   } = props;
   const opener = React.useRef<HTMLElement>(null);
+  // Radix would return the focus to its own trigger, which a controlled dialog does not render (issue 1247, US-QS-08):
+  // the focus goes to the opener of the trigger, or to the one given, and to the view's start when that has left.
+  const closeFocus = returnFocusOnClose(trigger ? opener : returnFocusTo);
   return (
     <>
       {trigger ? (
@@ -135,7 +142,7 @@ export function DialogPart(props: DialogPartProps) {
             {...(description ? { description } : {})}
             {...(closeLabel ? { closeLabel } : {})}
             {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
-            returnFocusTo={opener}
+            {...(closeFocus ? { onCloseAutoFocus: closeFocus } : {})}
           >
             {body}
           </DialogWindow>
