@@ -1,10 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { findProblems, run } from "./check-principles.mjs";
+import {
+  findProblems,
+  isCalendarDay,
+  monthsBefore,
+  parseCaught,
+  run,
+} from "./check-principles.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const env = { exists: (p) => p === "app/ok.mjs", makeTargets: ["gates"] };
+const env = { exists: (p) => p === "app/ok.mjs", makeTargets: ["gates"], today: "2026-11-06" };
 const entry = (meta, sections) =>
   `---\n${Object.entries(meta)
     .map(([k, v]) => `${k}: ${v}`)
@@ -81,4 +87,94 @@ test("US-QG-06: missing repo paths and make targets are reported", () => {
 test("US-QG-06: the real register in this repo is valid", () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
   assert.deepEqual(run(root), []);
+});
+
+// blocking_from (criterion 2) and the Caught line (criterion 4).
+const checkedSections = {
+  "Why it is better": "x",
+  "How it is measured": "x",
+  "Checked by": "`app/ok.mjs`",
+};
+const checkedWith = (meta) =>
+  check("PRIN-001-a.md", entry({ ...base, maturity: "checked", ...meta }, checkedSections));
+const gatedWith = (evidence) =>
+  check(
+    "PRIN-001-a.md",
+    entry({ ...base, maturity: "gated" }, { ...gatedSections, Evidence: evidence }),
+  );
+
+test("US-QG-06: a checked entry with a blocking_from day still ahead passes", () => {
+  assert.deepEqual(checkedWith({ blocking_from: "2026-11-07" }), []);
+});
+test("US-QG-06: blocking_from on a gated entry is rejected, the switch is done (PRIN-5)", () => {
+  const p = check(
+    "PRIN-001-a.md",
+    entry({ ...base, maturity: "gated", blocking_from: "2026-12-01" }, gatedSections),
+  );
+  assert.equal(p.length, 1);
+  assert.match(p[0], /^PRIN-5 .*gated entry carries no blocking_from/);
+});
+test("US-QG-06: a blocking_from day that has come, on an entry not gated, is rejected (PRIN-6)", () => {
+  // The day itself counts: from blocking_from on, the gate blocks.
+  for (const day of ["2026-11-06", "2026-10-01"]) {
+    const p = checkedWith({ blocking_from: day });
+    assert.equal(p.length, 1, day);
+    assert.ok(p[0].startsWith("PRIN-6 ") && p[0].includes(`blocking_from ${day} has come`), p[0]);
+  }
+});
+test("US-QG-06: blocking_from must be a real calendar day (PRIN-6)", () => {
+  for (const value of ["2026-02-30", "soon", "2026-11-6", ""]) {
+    const p = checkedWith({ blocking_from: value });
+    assert.equal(p.length, 1, value);
+    assert.match(p[0], /^PRIN-6 .*is not a date YYYY-MM-DD/);
+  }
+});
+test("US-QG-06: a well-formed Caught line in Evidence passes", () => {
+  assert.deepEqual(
+    gatedWith("Caught: 2026-10-20, PR #1269, a lookup per row was found by the query count."),
+    [],
+  );
+});
+test("US-QG-06: a malformed Caught line is rejected, a bullet is not skipped (PRIN-7)", () => {
+  const bad = [
+    "Caught: 2026-10-20, PR 1269, text",
+    "Caught: 2026-02-30, PR #1269, text",
+    "Caught: 2026-10-20, PR #0, text",
+    "Caught: 2026-10-20, PR #1269,",
+    "- Caught: 2026-10-20, PR #1269, text",
+  ];
+  for (const line of bad) {
+    const p = gatedWith(line);
+    assert.equal(p.length, 1, line);
+    assert.match(p[0], /^PRIN-7 .*Caught line must read/);
+  }
+});
+test("US-QG-06: a Caught line outside Evidence is rejected (PRIN-7)", () => {
+  const s = { ...gatedSections, "Why it is better": "Caught: 2026-10-20, PR #1269, text" };
+  const p = check("PRIN-001-a.md", entry({ ...base, maturity: "gated" }, s));
+  assert.equal(p.length, 1);
+  assert.match(p[0], /^PRIN-7 .*belongs in "Evidence", not in "Why it is better"/);
+});
+test("US-QG-06: a Caught line dated after today is rejected (PRIN-7)", () => {
+  const p = gatedWith("Caught: 2026-11-07, PR #1269, text");
+  assert.equal(p.length, 1);
+  assert.match(p[0], /^PRIN-7 .*Caught date 2026-11-07 is after today/);
+});
+test("US-QG-06: parseCaught reads the fixed format into date, PR and text", () => {
+  assert.deepEqual(parseCaught("Caught: 2026-10-20, PR #1269, found by the count."), {
+    date: "2026-10-20",
+    pr: 1269,
+    what: "found by the count.",
+  });
+  assert.equal(parseCaught("Caught: 2028-02-29, PR #1, leap day")?.date, "2028-02-29");
+  assert.equal(parseCaught("Caught: 2027-02-29, PR #1, no leap day"), null);
+  assert.equal(parseCaught("Evidence: 2026-10-20, PR #1269, text"), null);
+});
+test("US-QG-06: calendar days are real days, and the window steps back by whole months", () => {
+  assert.equal(isCalendarDay("2026-02-28"), true);
+  assert.equal(isCalendarDay("2026-02-29"), false);
+  assert.equal(isCalendarDay("2026-13-01"), false);
+  assert.equal(monthsBefore("2026-11-06", 3), "2026-08-06");
+  assert.equal(monthsBefore("2026-03-31", 1), "2026-02-28");
+  assert.equal(monthsBefore("2026-03-31", 3), "2025-12-31");
 });

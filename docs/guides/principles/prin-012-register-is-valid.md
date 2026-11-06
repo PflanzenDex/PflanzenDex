@@ -11,7 +11,7 @@ An entry with a missing field, an unknown maturity or a reference to a script or
 
 ## How it is measured
 
-Number of problems the validator reports: rule PRIN-1 (frontmatter and maturity), PRIN-2 (unique id, file name starts with the id), PRIN-3 (sections required for the maturity level), PRIN-4 (paths and make targets in "Checked by" and "Gate" exist). Target: 0.
+Number of problems the validator reports: rule PRIN-1 (frontmatter and maturity), PRIN-2 (unique id, file name starts with the id), PRIN-3 (sections required for the maturity level), PRIN-4 (paths and make targets in "Checked by" and "Gate" exist), PRIN-5 (a gated entry still carries `blocking_from`), PRIN-6 (`blocking_from` is not a date, or its day has come while the entry is not gated), PRIN-7 (a `Caught:` line is malformed, outside Evidence or dated after today). Target: 0.
 
 ## Checked by
 
@@ -23,4 +23,4 @@ Number of problems the validator reports: rule PRIN-1 (frontmatter and maturity)
 
 ## Evidence
 
-The validator checks format and references, not the truth of a maturity claim: whether a named job really blocks the merge is a review question. Completeness (every gate has an entry) is not checked by a script; see PRIN-013.
+The validator checks format and references, not the truth of a maturity claim: whether a named job really blocks the merge is a review question. Completeness (every gate has an entry) is not checked by a script; see PRIN-013. The validator checks the form of a `Caught:` line, not that the failure was real: that is the PR's statement, and the quarterly review (`make principles-review`) only lists the entries without one.

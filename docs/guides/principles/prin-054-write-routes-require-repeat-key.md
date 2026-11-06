@@ -24,3 +24,5 @@ Number of non-GET routes that do not answer a request without the key with `400`
 ## Evidence
 
 The test names carry US-QS-03: one test walks every non-GET route, one checks the AI client, one checks that each named exception is still a route with a reason. A new exception is a reviewable change in the test file.
+
+Caught: 2026-11-05, PR #1420, the walk test listed 61 write routes that answered before the key check, and POST /mcp/tasks/:id/claim and /decline wrote with no key at all.
