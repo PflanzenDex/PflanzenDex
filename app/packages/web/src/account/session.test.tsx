@@ -451,6 +451,23 @@ describe("US-ACC-01 Abmelden und Anderes Konto bei einem Fehler", () => {
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
   });
 
+  it("US-ACC-01 Anderes Konto after a real sign-out: a failure keeps that sign-out, the marker stays", async () => {
+    window.sessionStorage.setItem("pflanzendex.signed_out", "1");
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.useAnotherAccount());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        kind: "signedOut",
+        hint: "Du bist abgemeldet.",
+        error: FAILED,
+      }),
+    );
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBe("1");
+  });
+
   it("US-ACC-01 Abmelden on the invitation page: a failed sign-out is said there too", async () => {
     mgr.getUser.mockResolvedValue(user);
     vi.stubGlobal(

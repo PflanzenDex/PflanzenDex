@@ -110,14 +110,16 @@ function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetSta
   // "Abmelden" and "Anderes Konto" end the session first: `prompt=login` would not help, because Keycloak refuses
   // another person while the first session is alive ("already signed in with another user", Keycloak 26.8).
   // A failure (the sign-in service unreachable, the sign-in library not loading) is said where the button was pressed
-  // and the marker of endSession goes again: nobody signed out. Each press starts without the old error and may retry.
+  // and the marker is as it was: this press signed nobody out, but a real sign-out before it still counts. Each press
+  // starts without the old error and may retry.
   const signOut = () => {
+    const signedOutBefore = window.sessionStorage.getItem(MARKER) !== null;
     setState((z) => withError(z, undefined));
     void manager
       .then((mgr) => endSession(mgr))
       .catch(() => {
         setState((z) => withError(z, t("signOut.failed")));
-        window.sessionStorage.removeItem(MARKER);
+        if (!signedOutBefore) window.sessionStorage.removeItem(MARKER);
       });
   };
   return {
