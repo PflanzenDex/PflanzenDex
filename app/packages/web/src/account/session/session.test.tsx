@@ -674,3 +674,113 @@ describe("US-ACC-01 Anmelden and Konto anlegen when the sign-in service cannot b
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
   });
 });
+
+describe("US-ACC-01 first load when the sign-in service or its library fails", () => {
+  const UNREACHABLE =
+    "Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
+  const LIBRARY_FAILED =
+    "Die Anmeldung konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.";
+  const SILENT_TRIED = "pflanzendex.silent_tried";
+
+  // The sign-in library cannot be loaded: the module is replaced for the next import only, and undone after the test.
+  const libraryFails = () =>
+    vi.doMock("../api/sign-in-client", () => ({
+      newManager: () => Promise.reject(new Error("chunk failed")),
+      processReturn: vi.fn(),
+    }));
+  const undoLibraryFails = () => {
+    vi.doUnmock("../api/sign-in-client");
+    vi.resetModules();
+  };
+
+  // A first load in a fresh tab whose silent attempt is refused, because the sign-in service cannot be reached.
+  const unreachableFirstLoad = () => {
+    window.sessionStorage.removeItem(SILENT_TRIED);
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    return renderHook(() => useSession());
+  };
+
+  it("US-ACC-01 when the sign-in service cannot be reached at the first load, the welcome page says so at once, without a retry", async () => {
+    const { result } = unreachableFirstLoad();
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", error: UNREACHABLE }),
+    );
+    expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "none" });
+    expect(window.sessionStorage.getItem(SILENT_TRIED)).toBe("1");
+  });
+
+  it("US-ACC-01 after that first load, a further load makes no second attempt and shows the welcome page without an error", async () => {
+    const { result } = unreachableFirstLoad();
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", error: UNREACHABLE }),
+    );
+    await act(() => result.current.reload());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+    cleanup();
+    // A page reload: the same tab, so the attempt stays used.
+    const again = renderHook(() => useSession());
+    await waitFor(() => expect(again.result.current.state).toEqual({ kind: "signedOut" }));
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+  });
+
+  it("US-ACC-01 pressing Anmelden after that first load starts the sign-in and clears the error", async () => {
+    const { result } = unreachableFirstLoad();
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", error: UNREACHABLE }),
+    );
+    act(() => result.current.signIn());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+  });
+
+  it("US-ACC-01 when the sign-in library cannot be loaded the page says so and offers a reload, never the loading state", async () => {
+    libraryFails();
+    try {
+      const session = await freshUseSession();
+      const { result } = renderHook(() => session());
+      await waitFor(() => expect(result.current.state.kind).toBe("error"));
+      expect(result.current.state).toEqual({
+        kind: "error",
+        text: LIBRARY_FAILED,
+        reloadPage: true,
+      });
+    } finally {
+      undoLibraryFails();
+    }
+  });
+
+  it("US-ACC-01 when the sign-in library cannot be loaded no rejection goes unhandled, also not when the page unmounts", async () => {
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    libraryFails();
+    try {
+      const session = await freshUseSession();
+      const { unmount } = renderHook(() => session());
+      // One macrotask lets the failure run its course; then the page unmounts and the effect cleanup runs.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      unmount();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off("unhandledRejection", unhandled);
+      undoLibraryFails();
+    }
+  });
+
+  it("US-ACC-01 a failed account load keeps its text and offers no page reload", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(500)),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+    expect(result.current.state).toEqual({
+      kind: "error",
+      text: "Das Konto konnte nicht geladen werden.",
+    });
+    expect(result.current.state).not.toHaveProperty("reloadPage");
+  });
+});

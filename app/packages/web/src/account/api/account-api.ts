@@ -49,6 +49,12 @@ export type AccountProfile = {
 type Environment = Record<string, string | undefined>;
 type FetchFn = typeof fetch;
 
+/**
+ * A sign-in request (discovery, token exchange, sign-out at the service) gives up after this many seconds, so an
+ * unanswering sign-in service shows its error instead of a loading state (US-ACC-01). Starting value, assumption.
+ */
+export const SIGN_IN_TIMEOUT_SECONDS = 15;
+
 /** Settings for the sign-in service (code flow with PKCE); defaults match `make auth-up`. */
 export function oidcSettings(env: Environment, origin: string): UserManagerSettings {
   return {
@@ -60,6 +66,7 @@ export function oidcSettings(env: Environment, origin: string): UserManagerSetti
     scope: "openid profile email",
     ui_locales: "de",
     automaticSilentRenew: true,
+    requestTimeoutInSeconds: SIGN_IN_TIMEOUT_SECONDS,
   };
 }
 

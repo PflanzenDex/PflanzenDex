@@ -3,6 +3,8 @@ import type { UserManager, User } from "oidc-client-ts";
 import { setProfileTimeZone } from "../../shared/data";
 import { apiUrl, getAccount, type Account } from "../api/account-api";
 import { newManager, processReturn } from "../api/sign-in-client";
+import { texts } from "../../shared/lib/text-rules/texts";
+import table from "../views/views.de.json";
 import { MARKER, REGISTER, SILENT_TRIED, endSession, sessionActions } from "./session-actions";
 
 export type State =
@@ -11,9 +13,11 @@ export type State =
   /** Signed in at the sign-in service, but registration needs an invitation code (US-ACC-05). */
   | { kind: "invitationNeeded"; error?: string | undefined }
   | { kind: "signedIn"; account: Account; error?: string | undefined }
-  | { kind: "error"; text: string };
+  /** reloadPage: the sign-in library did not load, so the page offers a full reload instead of a retry (US-ACC-01). */
+  | { kind: "error"; text: string; reloadPage?: boolean };
 
 const env = import.meta.env as Record<string, string | undefined>;
+const t = texts(table);
 
 // Once per tab, never after an explicit sign-out and never while the address still carries a result of the detour.
 function shouldTrySilently(): boolean {
@@ -41,6 +45,17 @@ async function registerReturn(
   return null;
 }
 
+// The one silent attempt of the tab (US-ACC-01). The redirect leaves the page, so the state stays loading; when the
+// sign-in service cannot be reached, the welcome page says so. The attempt stays used up (SILENT_TRIED), so no retry follows.
+async function silentAttempt(mgr: UserManager): Promise<State> {
+  try {
+    await mgr.signinRedirect({ prompt: "none" });
+    return { kind: "loading" };
+  } catch {
+    return { kind: "signedOut", error: t("signIn.unreachable") };
+  }
+}
+
 async function loadState(mgr: UserManager): Promise<State> {
   try {
     // Read and cleared at once: Strict Mode runs the load twice, and only the first run acts on the intent.
@@ -56,8 +71,7 @@ async function loadState(mgr: UserManager): Promise<State> {
         // A live session at the sign-in service (app token lost, other port, cleared site data) is picked up
         // without showing a login page (US-ACC-01); without one the service answers `login_required` at once.
         window.sessionStorage.setItem(SILENT_TRIED, "1");
-        await mgr.signinRedirect({ prompt: "none" });
-        return { kind: "loading" };
+        return silentAttempt(mgr);
       }
       const hint = window.sessionStorage.getItem(MARKER) ? "Du bist abgemeldet." : undefined;
       return hint ? { kind: "signedOut", hint } : { kind: "signedOut" };
@@ -84,7 +98,15 @@ export function useSession() {
 
   const load = useCallback(async () => {
     setState({ kind: "loading" });
-    setState(await loadState(await manager));
+    let mgr: UserManager;
+    try {
+      mgr = await manager;
+    } catch {
+      // The sign-in library did not load (a failed chunk): load is the one place that tells the person (US-ACC-01).
+      setState({ kind: "error", text: t("library.failed"), reloadPage: true });
+      return;
+    }
+    setState(await loadState(mgr));
   }, [manager]);
 
   useEffect(() => {
@@ -94,13 +116,19 @@ export function useSession() {
         kind: "signedOut",
         hint: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
       });
-    const listening = manager.then((mgr) => {
-      mgr.events.addUserSignedOut(ended);
-      mgr.events.addSilentRenewError(ended);
-      return mgr;
-    });
+    // A failed library rejects the manager: load tells the person about it, so the listeners do not attach here, and the
+    // rejection is handled instead of left unhandled.
+    const listening = manager.then(
+      (mgr) => {
+        mgr.events.addUserSignedOut(ended);
+        mgr.events.addSilentRenewError(ended);
+        return mgr;
+      },
+      () => null,
+    );
     return () => {
       void listening.then((mgr) => {
+        if (!mgr) return;
         mgr.events.removeUserSignedOut(ended);
         mgr.events.removeSilentRenewError(ended);
       });

@@ -19,6 +19,10 @@ describe("OIDC settings (US-ACC-01)", () => {
     expect(e.authority).toBe("https://id.example/realms/x");
     expect(e.post_logout_redirect_uri).toBe("https://app.example/");
   });
+
+  it("US-ACC-01 a sign-in request gives up after 15 seconds (starting value, assumption)", () => {
+    expect(oidcSettings({}, "http://localhost:5173").requestTimeoutInSeconds).toBe(15);
+  });
 });
 
 describe("fetch account from the API", () => {

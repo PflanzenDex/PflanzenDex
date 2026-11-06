@@ -87,12 +87,24 @@ export function Loading() {
   );
 }
 
-export function AppError(props: { text: string; onReload: Action }) {
+/**
+ * A failed load says what happened. "Erneut versuchen" asks again; with `reloadPage` (the sign-in library did not load,
+ * US-ACC-01) the button reloads the page, because a retry in the same page load cannot load the library.
+ */
+export function AppError(props: {
+  text: string;
+  onReload: Action;
+  reloadPage?: boolean | undefined;
+}) {
   return (
     <EmptyState
       variant="error"
       title={props.text}
-      action={{ label: t("error.retry"), onClick: props.onReload }}
+      action={
+        props.reloadPage
+          ? { label: t("error.reloadPage"), onClick: () => window.location.reload() }
+          : { label: t("error.retry"), onClick: props.onReload }
+      }
       className="w-full max-w-md"
     />
   );

@@ -5,7 +5,10 @@
   "welcome.otherAccount": "Anderes Konto",
   "loading.label": "Einen Moment, die Anmeldung wird geprüft …",
   "error.retry": "Erneut versuchen",
+  "error.reloadPage": "Seite neu laden",
+  "library.failed": "Die Anmeldung konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.",
   "signOut.failed": "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.",
   "signIn.failed": "Anmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.",
+  "signIn.unreachable": "Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.",
   "register.failed": "Konto anlegen hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal."
 }
