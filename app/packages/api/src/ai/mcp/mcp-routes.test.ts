@@ -274,6 +274,8 @@ describe("US-KI-07 FR-KI-06 the protocol", () => {
       "list_measurements",
       "list_locations",
       "list_light_zones",
+      "describe_rules",
+      "check_species_name",
     ]);
     for (const t of tools) expect(t["inputSchema"]).toMatchObject({ type: "object" });
   });

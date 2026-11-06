@@ -56,6 +56,23 @@ export { TASK_INSTRUCTIONS, TASK_TITLES } from "./tasks/prompt/texts";
 export { aiDiscoverDecide, aiDiscoverSuggestions } from "./results/discover";
 export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./results/discover";
 export { aiCheckImageSource } from "./results/image-source";
+// Rule discovery (US-KI-13, FR-KI-17).
+export {
+  RULES_VERSION,
+  aiCheckSpeciesName,
+  aiDescribeRules,
+  checkSpeciesNameSchema,
+  describeRules,
+  describeRulesSchema,
+} from "./results/rules";
+export type {
+  NameVerdict,
+  RuleArea,
+  RuleOperation,
+  RulesDependencies,
+  RulesDescription,
+  RulesSource,
+} from "./results/rules";
 export type { ImageSourceCall, ImageSourceChecker } from "./results/image-source";
 // The catalog and the collection by name (US-KI-11, FR-KI-15, FR-KI-16).
 export {
