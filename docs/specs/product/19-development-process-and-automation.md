@@ -45,6 +45,20 @@ Acceptance criteria:
 - The targets run on Linux, macOS and under WSL; path differences (Python or Node call, virtualenv directories) are resolved **in one place**, not three times (finding from Tombola).
 - The Makefile contains no domain logic, only calls. Everything non-trivial lives in scripts (`scripts/`) with tests.
 
+Scope of `make ci` against CI (issue 1397): `make ci` runs the three parts that every pull request runs, in CI order: `make ci-gates` (job `app-gates`), `make ci-tests-base`, `make ci-tests-web` and `make ci-coverage` (jobs `app-tests`, `app-tests-web`, `app-coverage`) and `make ci-ui` (job `app-ui`). The other CI jobs stay CI-only, because each needs something a quick local run should not demand. Each still has its own `make` target, so it can be run locally on demand with the same command CI uses:
+
+| CI job                        | Local target                                    | Why it is not part of `make ci`                                                                                                         |
+| ----------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ds-snapshots`                | `make ds-snapshots-check`                       | Runs in the pinned Playwright container so the pictures match pixel for pixel; it needs Docker and takes minutes.                       |
+| `lighthouse`                  | `make lighthouse`                               | Three Lighthouse runs on a production build; a laptop's numbers differ from CI's, so its limits are judged in CI.                       |
+| `one-screen`, `a11y-routes`   | `make one-screen`, `make a11y-routes`           | Need the real stack with the sign-in service (`auth-up`), a migrated database, the demo seed and browsers.                              |
+| `e2e`                         | `make e2e`                                      | Release pull requests into `main` and manual runs only (E-15); it needs the same stack.                                                 |
+| `audit`                       | `make audit`                                    | Release pull requests into `main` only; it asks the npm registry, so its answer changes without a code change.                          |
+| `metadata`                    | `make commitlint MSG=…`, `make changelog-check` | Checks the pull request title and description, which exist only on GitHub; the `commit-msg` hook runs commitlint on every local commit. |
+| `dependency-review`, `CodeQL` | none                                            | GitHub services without a local equivalent.                                                                                             |
+
+So the criterion "`make ci` has the same scope as the CI jobs" holds for the jobs every pull request into `dev` must pass to merge, except the ones in this table; CI repeats every check anyway (D-02).
+
 ### US-DEV-02 · Hooks catch early without annoying · 🟨
 
 As a **developer** I want checks exactly when they are cheapest.
