@@ -1,4 +1,8 @@
+import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS, type AccountSection } from "@/shared/patterns/navigation/navigation/navigation";
+import table from "../whats-new/whats-new.de.json";
+
+const t = texts(table);
 
 /** The path segment of each section (US-QS-17); `accountAddress` derives the same segments. */
 export const ACCOUNT_SECTIONS = {
@@ -9,6 +13,7 @@ export const ACCOUNT_SECTIONS = {
   aiClients: "ai-clients",
   measured: "measured",
   functions: "functions",
+  news: "news",
   data: "data",
 } as const;
 
@@ -33,6 +38,7 @@ export const SECTIONS: readonly { key: AccountSection; title: string; loading: s
   { key: "aiClients", title: "KI-Clients", loading: "KI-Clients werden geladen …" },
   { key: "measured", title: "Was wird gemessen?", loading: "Wird geladen …" },
   { key: "functions", title: "Was die App kann", loading: "Funktionen werden geladen …" },
+  { key: "news", title: t("section.title"), loading: t("section.loading") },
   { key: "data", title: "Meine Daten", loading: "Meine Daten werden geladen …" },
 ];
 

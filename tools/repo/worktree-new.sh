@@ -2,7 +2,7 @@
 # Creates a branch and worktree for one task (US-DEV-08): one task, one branch, one working directory.
 # Usage: tools/repo/worktree-new.sh <branch>   e.g. feat/dev-08-parallel
 # The branch starts from origin/dev (or continues origin/<branch> when `make claim` created it); the directory is .worktrees/<name>/.
-# Unique ports and database names go into .worktrees/<name>/.env.worktree (see worktree-env.mjs).
+# Unique ports and database names go into .worktrees/<name>/.env.worktree (see app/tools/workflow/worktree/worktree-env.mjs).
 set -euo pipefail
 
 branch="${1:-}"
@@ -29,7 +29,7 @@ if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
 else
   git worktree add -b "$branch" "$dir" origin/dev
 fi
-node "$root/app/tools/workflow/worktree-env.mjs" "$branch" > "$dir/.env.worktree"
+node "$root/app/tools/workflow/worktree/worktree-env.mjs" "$branch" > "$dir/.env.worktree"
 
 echo "Worktree: $dir"
 echo "Environment: $dir/.env.worktree"
