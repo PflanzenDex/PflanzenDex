@@ -1,5 +1,5 @@
 # CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
-# Path filters: the app suite only runs when `app/`, the Makefile or the workflows change; the docs and spec gates
+# Path filters: the app suite only runs when `app/`, the Makefile, `.github/` or `.claude/hooks/` change; the docs and spec gates
 # (`docs-gates`) run when documentation changes (US-QG-02, #1389).
 # `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
@@ -54,7 +54,7 @@ jobs:
           else
             echo "one-screen=false" >> "$GITHUB_OUTPUT"
           fi
-          if git diff --name-only "$base" HEAD | grep -qE '^(app/|Makefile$|\.github/|\.nvmrc$)'; then
+          if git diff --name-only "$base" HEAD | grep -qE '^(app/|Makefile$|\.github/|\.nvmrc$|\.claude/hooks/)'; then
             echo "app=true" >> "$GITHUB_OUTPUT"
           else
             echo "app=false" >> "$GITHUB_OUTPUT"
@@ -321,7 +321,11 @@ jobs:
   # QG-U8 (US-QS-15, DS-58, issue 1137): every view and layer fits the window at 360x640 to 1920x1080 and under the
   # 1920 px width cap. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run with
   # several workers. Runs for PRs into `dev` and `main` when the UI, the e2e package or the gate files change, and by hand.
-  one-screen:
+  # US-QG-01 (issue 1485): the screens run as three shards, one runner each (`--shard`, the same stack per shard), so the
+  # test time is about a third. The job `one-screen` below merges the shard reports and is the result this gate reports to
+  # `ci-status`: it fails unless every shard passed and every screen and size was measured exactly once. Shards write no
+  # summary of their own, the merged table is written once.
+  one-screen-shard:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success'
@@ -329,6 +333,11 @@ jobs:
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
       && !(github.event.action == 'edited' && github.event.pull_request.draft)
       && needs.reuse.outputs.one-screen != 'success'))
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    name: one-screen shard ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -345,7 +354,59 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
-      - run: make one-screen
+      # US-QG-01 (issue 1485): the system packages of the browser install come from a cache of the same Playwright version,
+      # saved on `dev` (deps-cache.yml) or by an earlier run of this branch. A miss runs the full install, slowly if the
+      # mirror is throttled. Only a complete install is saved, after the browser is proved present (install-browsers.sh).
+      - id: playwright
+        run: echo "version=$(make -s playwright-version)" >> "$GITHUB_OUTPUT"
+      - id: apt-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
+      - run: make one-screen SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
+      - id: apt-complete
+        if: always() && steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -f "$RUNNER_TEMP/apt-debs/COMPLETE" ]; then echo "complete=true" >> "$GITHUB_OUTPUT"; else echo "complete=false" >> "$GITHUB_OUTPUT"; fi
+      - if: always() && steps.apt-complete.outputs.complete == 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: one-screen-shard-${{ matrix.shard }}
+          path: |
+            app/packages/e2e/one-screen-report
+            app/packages/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  one-screen:
+    needs: [changes, one-screen-shard]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.one-screen-shard.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      - uses: actions/download-artifact@v7
+        if: always()
+        with:
+          pattern: one-screen-shard-*
+          path: app/packages/e2e/one-screen-shards
+      - name: Merge the shards (every screen and size measured once)
+        id: merge
+        if: always()
+        run: make one-screen-merge
       - name: Ratio table per screen and size
         if: always()
         run: make one-screen-report >> "$GITHUB_STEP_SUMMARY"
@@ -353,16 +414,25 @@ jobs:
         if: always()
         with:
           name: one-screen-report
-          path: |
-            app/packages/e2e/one-screen-report
-            app/packages/e2e/test-results
+          path: app/packages/e2e/one-screen-report
           if-no-files-found: ignore
           retention-days: 14
+      - name: Every shard passed and the merge is complete
+        if: always()
+        env:
+          SHARDS: ${{ needs.one-screen-shard.result }}
+          MERGE: ${{ steps.merge.outcome }}
+        run: |
+          if [ "$SHARDS" != "success" ] || [ "$MERGE" != "success" ]; then
+            echo "one-screen: shards $SHARDS, merge $MERGE: the gate fails (US-QG-01)" >&2
+            exit 1
+          fi
 
   # QG-U7 (FR-QG-24, issue 467): axe (WCAG 2.2 A and AA, serious and critical) and the keyboard walk over every view and
   # layer at 390x844 and 1920x1080. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run
   # with several workers. Runs on the same paths as one-screen (its `changes` output), and by hand.
-  a11y-routes:
+  # US-QG-01 (issue 1485): three shards, merged by the job `a11y-routes` below (same design as one-screen).
+  a11y-routes-shard:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success'
@@ -370,6 +440,11 @@ jobs:
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
       && !(github.event.action == 'edited' && github.event.pull_request.draft)
       && needs.reuse.outputs.a11y-routes != 'success'))
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    name: a11y-routes shard ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -386,7 +461,57 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
-      - run: make a11y-routes
+      # The same apt cache as one-screen-shard (US-QG-01, issue 1485).
+      - id: playwright
+        run: echo "version=$(make -s playwright-version)" >> "$GITHUB_OUTPUT"
+      - id: apt-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
+      - run: make a11y-routes SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
+      - id: apt-complete
+        if: always() && steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -f "$RUNNER_TEMP/apt-debs/COMPLETE" ]; then echo "complete=true" >> "$GITHUB_OUTPUT"; else echo "complete=false" >> "$GITHUB_OUTPUT"; fi
+      - if: always() && steps.apt-complete.outputs.complete == 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a11y-routes-shard-${{ matrix.shard }}
+          path: |
+            app/packages/e2e/a11y-routes-report
+            app/packages/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  a11y-routes:
+    needs: [changes, a11y-routes-shard]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.a11y-routes-shard.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      - uses: actions/download-artifact@v7
+        if: always()
+        with:
+          pattern: a11y-routes-shard-*
+          path: app/packages/e2e/a11y-routes-shards
+      - name: Merge the shards (every screen and size measured once)
+        id: merge
+        if: always()
+        run: make a11y-routes-merge
       - name: Findings per rule and screen
         if: always()
         run: make a11y-routes-report >> "$GITHUB_STEP_SUMMARY"
@@ -394,11 +519,19 @@ jobs:
         if: always()
         with:
           name: a11y-routes-report
-          path: |
-            app/packages/e2e/a11y-routes-report
-            app/packages/e2e/test-results
+          path: app/packages/e2e/a11y-routes-report
           if-no-files-found: ignore
           retention-days: 14
+      - name: Every shard passed and the merge is complete
+        if: always()
+        env:
+          SHARDS: ${{ needs.a11y-routes-shard.result }}
+          MERGE: ${{ steps.merge.outcome }}
+        run: |
+          if [ "$SHARDS" != "success" ] || [ "$MERGE" != "success" ]; then
+            echo "a11y-routes: shards $SHARDS, merge $MERGE: the gate fails (US-QG-01)" >&2
+            exit 1
+          fi
 
   # QG-C1 for the PR title (the squash into `dev` and the merge into `main` use it as the commit message)
   # and QG-U3 (`feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`).
@@ -503,7 +636,9 @@ jobs:
         audit,
         lighthouse,
         e2e,
+        one-screen-shard,
         one-screen,
+        a11y-routes-shard,
         a11y-routes,
       ]
     if: always()
@@ -526,10 +661,12 @@ jobs:
           AUDIT: ${{ needs.audit.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
+          ONE_SCREEN_SHARD: ${{ needs.one-screen-shard.result }}
           ONE_SCREEN: ${{ needs.one-screen.result }}
+          A11Y_ROUTES_SHARD: ${{ needs.a11y-routes-shard.result }}
           A11Y_ROUTES: ${{ needs.a11y-routes.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DOCS_GATES" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN" "$A11Y_ROUTES"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DOCS_GATES" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN_SHARD" "$ONE_SCREEN" "$A11Y_ROUTES_SHARD" "$A11Y_ROUTES"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;

@@ -15,6 +15,8 @@ type Row = Species & { creator: string; names: readonly SpeciesName[] };
 /** In-memory adapter for tests only; the real adapter lives in `db`. Visibility as in FR-BES-11. */
 export class InMemorySpecies implements SpeciesStore {
   readonly rows: Row[] = [];
+  /** `cap` simulates the visible cap of the search (FR-BES-24); without it the fake shows every match. */
+  constructor(private readonly cap = Number.POSITIVE_INFINITY) {}
 
   /** Simulates approval by a reviewer (BES-10): the species is then visible to everyone. */
   approve(id: string): void {
@@ -37,7 +39,6 @@ export class InMemorySpecies implements SpeciesStore {
     return { ...species, own: creator === userId };
   }
 
-  /** The fake shows every match: the cap is tested against the database (FR-BES-24), so `more` stays false here. */
   async search(userId: string, norm: string | null): Promise<SpeciesSearch> {
     const hit: SpeciesHit[] = [];
     for (const z of this.visible(userId)) {
@@ -50,7 +51,24 @@ export class InMemorySpecies implements SpeciesStore {
           hit: matching ? { field: matching.field, display: matching.display } : null,
         });
     }
-    return { species: hit.sort((a, b) => a.latinName.localeCompare(b.latinName)), more: false };
+    const all = hit.sort((a, b) => a.latinName.localeCompare(b.latinName));
+    return { species: all.slice(0, this.cap), more: all.length > this.cap };
+  }
+
+  /** Like the adapter: a name equal to `norm` as a whole, no cap (FR-BES-24). */
+  async exact(userId: string, norm: string): Promise<SpeciesHit[]> {
+    const hit: SpeciesHit[] = [];
+    for (const z of this.visible(userId)) {
+      const matching = z.names
+        .filter((n) => n.norm === norm)
+        .sort((a, b) => RANK[a.field] - RANK[b.field])[0];
+      if (matching)
+        hit.push({
+          ...this.asValue(userId, z),
+          hit: { field: matching.field, display: matching.display },
+        });
+    }
+    return hit.sort((a, b) => a.latinName.localeCompare(b.latinName));
   }
 
   async find(userId: string, id: string): Promise<Species | null> {

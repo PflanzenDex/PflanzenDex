@@ -110,9 +110,25 @@ const waitOpts = (c, read, timeoutMs = 600_000) => ({
   timeoutMs,
 });
 
-test("US-DEV-10: the judged jobs are the jobs of ci.yml, ci-status excluded", () => {
+// US-QG-01 (issue 1485): the matrix shards of one-screen and a11y-routes are jobs of their own in ci.yml. Their check runs are
+// named "<gate> shard <n>", so the verdict cannot read them by job name; their result reaches the verdict through the
+// aggregate job of the gate (`one-screen`, `a11y-routes`), which needs every shard and fails unless all of them passed.
+const MATRIX_SHARDS = ["a11y-routes-shard", "one-screen-shard"];
+
+test("US-DEV-10: the judged jobs are the jobs of ci.yml, ci-status and the matrix shards excluded", () => {
   const defined = jobsDefinedIn(readFileSync(CI_YML, "utf8"));
-  assert.deepEqual([...defined].sort(), [...JOBS, "ci-status"].sort());
+  assert.deepEqual([...defined].sort(), [...JOBS, "ci-status", ...MATRIX_SHARDS].sort());
+});
+
+test("US-QG-01: every matrix shard is needed by its aggregate job, and that job is judged", () => {
+  const text = readFileSync(CI_YML, "utf8");
+  for (const shard of MATRIX_SHARDS) {
+    const aggregate = shard.replace(/-shard$/, "");
+    assert.ok(JOBS.includes(aggregate), aggregate);
+    const block = text.slice(text.indexOf(`\n  ${aggregate}:\n`));
+    const needs = block.split("\n").find((line) => line.startsWith("    needs:"));
+    assert.ok(needs?.includes(shard), `${aggregate} needs ${shard}: ${needs}`);
+  }
 });
 
 test("US-DEV-10: the path filters are the ones that the changes job of ci.yml uses, with the same text", () => {
@@ -125,6 +141,7 @@ test("US-DEV-10: the path filters are the ones that the changes job of ci.yml us
 });
 
 test("US-DEV-10: the path filters match the same files as the changes job", () => {
+  assert.ok(PATHS.app.test(".claude/hooks/rules.mjs"));
   assert.ok(PATHS.docs.test("README.md"));
   assert.ok(PATHS.docs.test("app/src/notes.md"));
   assert.ok(PATHS.app.test("app/config/gates/coverage-thresholds.json"));

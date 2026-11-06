@@ -23,7 +23,38 @@ const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { cwd: root, encoding: "utf8", timeout: 20000, stdio: ["ignore", "pipe", "pipe"], ...opts });
-const relative = (file) => path.relative(root, path.resolve(root, file ?? "")).split(path.sep).join("/");
+// Git's view of a folder: the top of its worktree, the common git dir that every worktree of one repository shares, and
+// the folder with its links resolved (git reports resolved paths). Null outside a repository or when git fails (US-QG-07).
+function repoAt(folder) {
+  try {
+    const [toplevel, common] = execFileSync("git", ["rev-parse", "--show-toplevel", "--git-common-dir"], {
+      cwd: folder,
+      encoding: "utf8",
+      timeout: 3000,
+      stdio: ["ignore", "pipe", "ignore"],
+    }).split("\n");
+    return { toplevel: fs.realpathSync(toplevel), common: fs.realpathSync(path.resolve(folder, common)), folder: fs.realpathSync(folder) };
+  } catch {
+    return null;
+  }
+}
+
+// The root that owns a file, and the file's path from that root (US-QG-07, FR-QG-17). A file in a worktree of this
+// repository is judged by its path inside that worktree, whichever folder the session started in. Any other file keeps
+// the path from `root`, which starts with ".." and so matches no pattern.
+function locate(file) {
+  const abs = path.resolve(root, file ?? "");
+  const fromRoot = { root, file: path.relative(root, abs).split(path.sep).join("/") };
+  // A new file may sit in a folder that does not exist yet: git answers for the nearest folder that does.
+  let folder = path.dirname(abs);
+  while (!fs.existsSync(folder) && path.dirname(folder) !== folder) folder = path.dirname(folder);
+  const session = repoAt(root);
+  const owner = session && repoAt(folder);
+  if (!owner || owner.common !== session.common) return fromRoot;
+  const real = path.join(owner.folder, path.relative(folder, abs));
+  return { root: owner.toplevel, file: path.relative(owner.toplevel, real).split(path.sep).join("/") };
+}
+
 const print = (obj) => process.stdout.write(JSON.stringify(obj));
 const preToolUse = (permissionDecision, permissionDecisionReason) =>
   print({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, permissionDecisionReason } });
@@ -43,8 +74,8 @@ const stateFile = () => path.join(run("git", ["rev-parse", "--absolute-git-dir"]
 
 // Why an edit of a baseline grows it, or null when it only shrinks it (US-QG-07). The file on disk and the tool input
 // give the resulting text; an edit that cannot be placed exactly counts as growth.
-function baselineEditGrowth(file, toolInput) {
-  const abs = path.join(root, file);
+function baselineEditGrowth(fileRoot, file, toolInput) {
+  const abs = path.join(fileRoot, file);
   const before = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
   if (before === null) return "a new baseline file";
   const after = textAfter(toolInput, before);
@@ -55,14 +86,14 @@ function baselineEditGrowth(file, toolInput) {
 
 const handlers = {
   "guard-edit"() {
-    const file = relative(input.tool_input?.file_path ?? input.tool_input?.notebook_path);
-    if (isMigrationFile(file) && fs.existsSync(path.join(root, file))) return preToolUse("deny", MIGRATION_REASON);
+    const { root: fileRoot, file } = locate(input.tool_input?.file_path ?? input.tool_input?.notebook_path);
+    if (isMigrationFile(file) && fs.existsSync(path.join(fileRoot, file))) return preToolUse("deny", MIGRATION_REASON);
     if (isGateFile(file)) {
       preToolUse("ask", `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green (US-QG-07).`);
     } else if (isBaselineFile(file)) {
       let reason;
       try {
-        reason = baselineEditGrowth(file, input.tool_input ?? {});
+        reason = baselineEditGrowth(fileRoot, file, input.tool_input ?? {});
       } catch (e) {
         // Fail closed: a baseline that cannot be judged goes to a human.
         reason = `it could not be judged (${e.message.split("\n")[0]})`;
@@ -76,11 +107,11 @@ const handlers = {
     if (verdict) preToolUse(verdict.decision, verdict.reason);
   },
   "after-edit"() {
-    const file = relative(input.tool_input?.file_path);
-    if (prettierCanFormat(file)) run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], { cwd: path.join(root, "app") });
+    const { root: fileRoot, file } = locate(input.tool_input?.file_path);
+    if (prettierCanFormat(file)) run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], { cwd: path.join(fileRoot, "app") });
     if (isSpecPath(file)) {
       try {
-        run("node", ["app/tools/check/docs/specs/check-specs.mjs"]);
+        run("node", ["app/tools/check/docs/specs/check-specs.mjs"], { cwd: fileRoot });
       } catch (e) {
         print({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: `Spec check failed after editing ${file}:\n${e.stderr || e.stdout}` } });
       }

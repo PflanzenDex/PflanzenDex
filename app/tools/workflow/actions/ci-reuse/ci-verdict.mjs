@@ -11,7 +11,7 @@ export const MAX_FILES = 3000; // the REST list of changed files stops at 3000 e
 // text is there). The `changes` job diffs against the base commit of the event, this reading against the PR's files: they
 // differ only when the base moved after the PR branched off.
 export const PATHS = {
-  app: /^(app\/|Makefile$|\.github\/|\.nvmrc$)/,
+  app: /^(app\/|Makefile$|\.github\/|\.nvmrc$|\.claude\/hooks\/)/,
   oneScreen:
     /^(app\/packages\/(web|e2e)\/|app\/packages\/api\/perf\/(demo-seed|catalog-seed)\/|app\/config\/gates\/|Makefile$|\.github\/)/,
   docs: /^(docs\/|\.agents\/|\.claude\/skills\/|\.markdownlint-cli2\.jsonc$)|\.md$/,
