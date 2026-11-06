@@ -25,6 +25,7 @@ Acceptance criteria:
 - Given the sign-in service cannot be reached when the app opens, then the welcome page shows and says so and what to do next, and nothing blames the account.
 - Given the sign-in library cannot be loaded, when the app opens, then the page says so and offers "Seite neu laden", and it never stays on the loading state.
 - Given the sign-in service does not answer, then a sign-in call gives up after 15 s (starting value, assumption) and the failure is shown as above.
+- Given our API does not answer while the account loads, then the call gives up after 15 s (starting value, assumption), the page says "Das Konto konnte nicht geladen werden." and offers "Erneut versuchen", and it never stays on the loading state.
 
 ### US-ACC-02 · Profile and settings · 🟨 new
 

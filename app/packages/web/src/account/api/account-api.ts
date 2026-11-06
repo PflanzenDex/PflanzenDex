@@ -50,10 +50,11 @@ type Environment = Record<string, string | undefined>;
 type FetchFn = typeof fetch;
 
 /**
- * A sign-in request (discovery, token exchange, sign-out at the service) gives up after this many seconds, so an
- * unanswering sign-in service shows its error instead of a loading state (US-ACC-01). Starting value, assumption.
+ * A request to the sign-in service (discovery, token exchange, sign-out there) or to our own API (the account load)
+ * gives up after this many seconds, so an unanswering service shows its error instead of a loading state (US-ACC-01).
+ * Starting value, assumption.
  */
-export const SIGN_IN_TIMEOUT_SECONDS = 15;
+export const REQUEST_TIMEOUT_SECONDS = 15;
 
 /** Settings for the sign-in service (code flow with PKCE); defaults match `make auth-up`. */
 export function oidcSettings(env: Environment, origin: string): UserManagerSettings {
@@ -66,7 +67,7 @@ export function oidcSettings(env: Environment, origin: string): UserManagerSetti
     scope: "openid profile email",
     ui_locales: "de",
     automaticSilentRenew: true,
-    requestTimeoutInSeconds: SIGN_IN_TIMEOUT_SECONDS,
+    requestTimeoutInSeconds: REQUEST_TIMEOUT_SECONDS,
   };
 }
 
@@ -83,7 +84,10 @@ export async function getAccount(
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Account> {
-  const res = await fetchFn(`${api}/account`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetchFn(`${api}/account`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
+  });
   if (res.status === 401) throw new Error("not_signed_in");
   if (res.status === 403 && (await invitationRequired(res))) throw new Error("invitation_required");
   if (!res.ok) throw new Error("account_not_loadable");
@@ -99,7 +103,7 @@ export async function signOutEverywhere(
   const res = await fetchFn(`${authority}/account/sessions`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-    signal: AbortSignal.timeout(SIGN_IN_TIMEOUT_SECONDS * 1000),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
   });
   if (!res.ok) throw new Error("sign_out_failed");
 }

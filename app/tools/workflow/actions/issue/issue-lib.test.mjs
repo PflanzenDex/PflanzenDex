@@ -11,6 +11,7 @@ import {
   validateNewIssue,
 } from "./issue-lib.mjs";
 import { loadTaxonomy } from "./issue-cli.mjs";
+import { EPIC_SCOPES, TECH_SCOPES } from "../../../../config/project/commitlint.config.js";
 
 const taxonomy = {
   types: [
@@ -230,4 +231,26 @@ test("FR-DEV-10: an epic whose board option does not start with its code uses it
     { id: "8", name: "Entscheidungen" },
   ];
   assert.equal(findOption(options, verdict.fields.Epic).id, "8");
+});
+
+// Decisions (epic E, E-nn) have no commit scope: they are recorded as docs commits (type `docs`).
+const EPIC_WITHOUT_SCOPE = "E";
+
+test("QG-C1 FR-DEV-10: every epic of issue-taxonomy.json has a commit scope (TE uses the scope te), and every epic scope is an epic", () => {
+  const scopes = new Set([...EPIC_SCOPES, ...TECH_SCOPES]);
+  const epicsWithScope = real.epics
+    .map((epic) => epic.code)
+    .filter((code) => code !== EPIC_WITHOUT_SCOPE)
+    .map((code) => code.toLowerCase());
+  assert.deepEqual(
+    epicsWithScope.filter((code) => !scopes.has(code)),
+    [],
+    "epics without a commit scope in app/config/project/commitlint.config.js",
+  );
+  const epics = new Set(real.epics.map((epic) => epic.code.toLowerCase()));
+  assert.deepEqual(
+    EPIC_SCOPES.filter((scope) => !epics.has(scope)),
+    [],
+    "epic scopes that are no epic in app/config/project/issue-taxonomy.json",
+  );
 });

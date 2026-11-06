@@ -54,7 +54,7 @@
   --destructive: #b3261e; /* invalid field border and error text */
   --destructive-foreground: #ffffff;
   --border: #e4e4e7; /* decorative lines of cards and dividers */
-  --input: #71717a; /* field boundary: 4.6:1 on background, 4.8:1 on card (WCAG 1.4.11); --border stays decorative */
+  --input: #71717a; /* field boundary and boundary of secondary buttons (US-QS-14): 4.6:1 on background, 4.8:1 on card (WCAG 1.4.11); --border stays decorative */
   --ring: #1b6b4a;
 
   /* Elevation (ADR 0011 decision 4) and motion (decision 5); radius, type scale and easing are in @theme below. */

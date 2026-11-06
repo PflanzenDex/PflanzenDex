@@ -18,6 +18,8 @@ export const EPIC_SCOPES = [
   "qs",
   "ent",
   "ach",
+  "tau",
+  "onb",
   "qg",
   "dev",
   "var",
