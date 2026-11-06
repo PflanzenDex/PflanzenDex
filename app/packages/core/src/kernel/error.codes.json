@@ -97,6 +97,7 @@
   "review.merge_conflict",
   "review.merge_lock_failed",
   "review.merge_target_invalid",
+  "review.name_approved",
   "review.not_found",
   "review.reason_missing",
   "review.status_invalid",

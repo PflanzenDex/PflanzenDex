@@ -49,6 +49,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "review.merge_lock_failed": 409,
   "review.reason_missing": 400,
   "review.approval_incomplete": 409,
+  "review.name_approved": 409,
   "review.merge_target_invalid": 409,
   "review.merge_conflict": 409,
   "species.duplicate": 409,

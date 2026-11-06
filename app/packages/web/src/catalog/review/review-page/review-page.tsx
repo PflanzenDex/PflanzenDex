@@ -12,6 +12,7 @@ import { dropPageParts, PAGE_PARAM, Pager } from "@/shared/patterns/responsive/p
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../shared/data";
 import { ReviewPageSkeleton } from "./review-page.skeleton";
+import { DuplicatesNotice } from "./duplicates-notice/duplicates-notice";
 import { refusalText } from "@/shared/lib/error-text";
 import { ReviewRow } from "../review-entry/review-entry";
 import { ReviewLayer, type ReviewActions } from "../review-layer/review-layer";
@@ -96,6 +97,7 @@ function ReviewBody(props: {
         onChange={choose}
       />
       {summary && <p className="text-sm">{summary}</p>}
+      <DuplicatesNotice duplicates={list.duplicates} />
       {shown.length === 0 ? (
         show === "open" ? (
           <EmptyState

@@ -1,6 +1,9 @@
 import type { ApprovalIssue, MergeOutcome, ReviewEntry, ReviewList } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { FIELDS } from "../shared/text";
+import table from "./review-page/review-page.de.json";
 
+const t = texts(table);
 const DAY = 86_400_000;
 
 /** Age of a proposal in whole days since its creation (derived, never stored). */
@@ -15,11 +18,17 @@ export function isBatch(entry: ReviewEntry): boolean {
   return entry.reviewCase.status === "curated";
 }
 
-/** The short facts of a row that need attention: AI marking, missing fields, a possible duplicate (P-09, P-10). */
+/**
+ * The short facts of a row that need attention: AI marking, missing fields, a name that is approved already, a possible
+ * duplicate (P-09, P-10). The name has its own flag; it is not a missing field.
+ */
 export function flagsOf(entry: ReviewEntry): string[] {
+  const missing = entry.issues.some((i) => i.reason !== "name_approved");
+  const name = entry.issues.some((i) => i.reason === "name_approved");
   return [
     ...(entry.aiCreated ? ["KI-erstellt"] : []),
-    ...(entry.issues.length > 0 ? ["Angaben fehlen"] : []),
+    ...(missing ? ["Angaben fehlen"] : []),
+    ...(name ? [t("flag.nameApproved")] : []),
     ...(entry.similar.length > 0 ? ["Mögliche Dublette"] : []),
   ];
 }
@@ -33,6 +42,7 @@ export function summaryText(list: ReviewList, now: number): string {
 
 /** Why the profile cannot be approved yet, in words a reviewer can act on. */
 export function issueText(issue: ApprovalIssue): string {
+  if (issue.reason === "name_approved") return t("issue.nameApproved");
   const name = FIELDS[issue.field] ?? issue.field;
   return issue.reason === "source_missing"
     ? "Quelle fehlt (Pflicht für Lichtbedarf und Ruhephase)"

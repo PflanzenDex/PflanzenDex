@@ -10,6 +10,8 @@ export type {
   Role,
   MergeMoved,
   MergeOutcome,
+  ApprovedTwin,
+  ApprovedDuplicate,
 } from "./types";
 export type { ReviewEntry, ReviewList, SimilarSpecies } from "./review/list";
 export type { ApprovalIssue } from "./review/approval";
