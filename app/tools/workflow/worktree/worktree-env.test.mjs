@@ -94,13 +94,12 @@ test("US-DEV-08: an install with the same lock file is a source, and its copy sh
   const srcFile = path.join(src, "node_modules", "left-pad", "index.js");
   const dstFile = path.join(dst, "node_modules", "left-pad", "index.js");
   assert.equal(readFileSync(dstFile, "utf8"), readFileSync(srcFile, "utf8"));
-  assert.notEqual(
-    statSync(dstFile).ino,
-    statSync(srcFile).ino,
+  writeFileSync(dstFile, "changed in the new worktree\n");
+  assert.equal(
+    readFileSync(srcFile, "utf8"),
+    "module.exports = 1;\n",
     "a different file, not a hard link",
   );
-  writeFileSync(dstFile, "changed in the new worktree\n");
-  assert.equal(readFileSync(srcFile, "utf8"), "module.exports = 1;\n", "the source is untouched");
   assert.equal(
     readlinkSync(path.join(dst, "node_modules", "pad-link")),
     "../left-pad",
