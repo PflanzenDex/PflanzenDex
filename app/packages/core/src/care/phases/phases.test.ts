@@ -272,4 +272,23 @@ describe("US-PHA-01 NFR-12 the phase of named specimens is the one of the phase 
     expect((await carePhasesOf(deps(ben), "ben", benId, "UTC")).size).toBe(1);
     expect((await carePhasesOf(deps(ben), "ben", [], "UTC")).size).toBe(0);
   });
+
+  it("US-PHA-01 US-SOZ-09 NFR-12 carePhasesOf reads the species of the named plants only", async () => {
+    const e = await collection("anna", [
+      { speciesId: WINTER, name: "Bogenhanf" },
+      { speciesId: SUMMER, name: "Aloe" },
+    ]);
+    const [winter = ""] = idsOf(e, "anna");
+    const asked: (readonly string[])[] = [];
+    const recording = {
+      find: (userId: string, id: string) => species.find(userId, id),
+      findMany: (userId: string, ids: readonly string[]) => {
+        asked.push([...ids]);
+        return species.findMany(userId, ids);
+      },
+    };
+    const phases = await carePhasesOf({ ...deps(e), species: recording }, "anna", [winter], "UTC");
+    expect([...phases.keys()]).toEqual([winter]);
+    expect(asked).toEqual([[WINTER]]);
+  });
 });

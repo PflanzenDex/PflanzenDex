@@ -1,3 +1,4 @@
+import type { SpeciesSource } from "../../collection";
 import type { SharingStore } from "../../social";
 import type { CarePhase, TreatmentStore } from "../../care";
 
@@ -52,12 +53,15 @@ export interface OwnSpecimens {
 /**
  * Port: the care phase of the named specimens today (the same rows as the phase list). A specimen without a phase (cutting,
  * species without dormancy period) is missing from the map, which means `null` (P-08). One call for all IDs (NFR-12).
+ * `species` is the owner's species read of the same request, when the caller shares one (NFR-12); without it the phases
+ * read the species themselves.
  */
 export interface PhaseHints {
   phasesOf(
     userId: string,
     specimenIds: readonly string[],
     timeZone: string,
+    species?: SpeciesSource,
   ): Promise<ReadonlyMap<string, CarePhase>>;
 }
 
