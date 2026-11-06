@@ -92,6 +92,17 @@ afterAll(async () => {
 });
 
 describe("US-WAC-07 the leaf log through the API", () => {
+  it("US-WAC-07 without a sign-in every leaf route answers 401 (P-04)", async () => {
+    const plant = randomUUID();
+    for (const [method, path] of [
+      ["GET", `/specimens/${plant}/leaves`],
+      ["POST", `/specimens/${plant}/leaves`],
+      ["DELETE", `/specimens/${plant}/leaves/${randomUUID()}`],
+    ] as const) {
+      expect((await call(null, method, path)).status).toBe(401);
+    }
+  });
+
   it("US-WAC-07 one tap records a leaf of today in the keeper's time zone with no size", async () => {
     const plant = await newPlant(subA, "Tap");
     const r = await leaf(subA, plant);
