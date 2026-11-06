@@ -1022,7 +1022,7 @@ app/tools/
     docs/       check-links, check-principles, check-skills, check-specs, check-traceability
     release/    check-changelog, check-ci-drift, check-release-tags, release-config
     supply/     check-audit, check-deps
-  workflow/     board, claim/, merge-pr, project-status/, worktree-env
+  workflow/     board, claim/, merge-pr, project-status/, worktree/ (worktree-env, dev-servers)
   dev/          commitlint, git-hook-hints, health-summary, repo-stats, smoke
 ```
 
