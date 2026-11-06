@@ -17,7 +17,20 @@ import {
   stripText,
 } from "./rules.mjs";
 
-const decision = (cmd) => judgeCommand(cmd)?.decision ?? "none";
+// The place the rules below are judged in: a linked worktree of /repo, where reset and clean are allowed (US-QG-07).
+const WORKTREE = { cwd: "/repo/.worktrees/x", main: "/repo", linked: ["/repo/.worktrees/x"] };
+const decision = (cmd) => judgeCommand(cmd, WORKTREE)?.decision ?? "none";
+
+test("US-QG-07: reset and clean are denied in the main checkout, asked in a worktree and denied when the place is unknown", () => {
+  const MAIN_CHECKOUT = { cwd: "/repo", main: "/repo", linked: ["/repo/.worktrees/x"] };
+  const verdict = judgeCommand("git clean -fd", MAIN_CHECKOUT);
+  assert.equal(verdict.decision, "deny");
+  assert.match(verdict.reason, /main checkout/);
+  assert.equal(judgeCommand("git reset --hard", MAIN_CHECKOUT).decision, "deny");
+  assert.equal(decision("git reset --hard"), "ask");
+  assert.equal(judgeCommand("git reset --hard").decision, "deny");
+  assert.equal(judgeCommand("git status"), null);
+});
 
 test("US-QG-07: gate configs need a human confirmation, ordinary code does not", () => {
   for (const f of [

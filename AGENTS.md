@@ -23,7 +23,7 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 
 Gate configs (workflows, rulesets, git hooks, `Makefile`, ESLint/knip/commitlint/release configs, check scripts, thresholds, exception lists, `.claude/`) define what "done" means. The Claude Code hooks in `.claude/settings.json` ask a human before you edit them. Never change them to turn a red run green. If a rule is wrong, say so and change it in its own PR with a reason (US-QG-07).
 
-Blocked for agents (and pointless anyway, because CI and the rulesets repeat every check): `--no-verify`, force pushes, pushes to `dev` or `main`, calling `gh pr merge` directly, merging into `main`, changing `core.hooksPath`, editing rulesets or creating releases by hand.
+Blocked for agents (and pointless anyway, because CI and the rulesets repeat every check): `--no-verify`, force pushes, pushes to `dev` or `main`, calling `gh pr merge` directly, merging into `main`, changing `core.hooksPath`, editing rulesets or creating releases by hand. `git reset --hard` and `git clean` run only in a worktree, never in the main checkout, where they destroy uncommitted work (US-QG-07); the Claude Code hook refuses them there.
 
 ## Before you say "done"
 
