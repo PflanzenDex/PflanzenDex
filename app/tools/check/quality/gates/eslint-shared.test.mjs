@@ -6,13 +6,13 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { RESULTS_ENV, inDirs, sharedFindings } from "./eslint-shared.mjs";
-import { METRIC_RULES } from "../quality/check-baseline.mjs";
-import { RULES as CONSTANT_RULES } from "../code/constants/check-constants.mjs";
-import { RULE as UI_TEXT_RULE } from "../code/ui-text/check-ui-text.mjs";
+import { METRIC_RULES } from "./check-baseline.mjs";
+import { RULES as CONSTANT_RULES } from "../../code/constants/check-constants.mjs";
+import { RULE as UI_TEXT_RULE } from "../../code/ui-text/check-ui-text.mjs";
 
-const APP_DIR = fileURLToPath(new URL("../../../", import.meta.url));
+const APP_DIR = fileURLToPath(new URL("../../../../", import.meta.url));
 const CHECKS = {
-  baseline: "tools/check/quality/check-baseline.mjs",
+  baseline: "tools/check/quality/gates/check-baseline.mjs",
   constants: "tools/check/code/constants/check-constants.mjs",
   "ui-text": "tools/check/code/ui-text/check-ui-text.mjs",
 };

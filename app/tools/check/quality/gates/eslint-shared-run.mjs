@@ -2,9 +2,9 @@
 // constants and ui-text. It writes the findings to the file named by GATES_ESLINT_RESULTS. It fails only when ESLint
 // cannot run; the three checks decide on the findings.
 import fs from "node:fs";
-import { METRIC_RULES } from "../quality/check-baseline.mjs";
-import { RULES as CONSTANT_RULES } from "../code/constants/check-constants.mjs";
-import { RULE as UI_TEXT_RULE } from "../code/ui-text/check-ui-text.mjs";
+import { METRIC_RULES } from "./check-baseline.mjs";
+import { RULES as CONSTANT_RULES } from "../../code/constants/check-constants.mjs";
+import { RULE as UI_TEXT_RULE } from "../../code/ui-text/check-ui-text.mjs";
 import { RESULTS_ENV, lintWithoutBaselines } from "./eslint-shared.mjs";
 
 const file = process.env[RESULTS_ENV];

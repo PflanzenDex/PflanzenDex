@@ -7,7 +7,7 @@
 // ESLint runs with QUALITY_BASELINE=off so the baseline allowance in eslint.config.js does not hide anything.
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { lintFindings } from "../gates/eslint-shared.mjs";
+import { lintFindings } from "./eslint-shared.mjs";
 
 export const METRIC_RULES = [
   "complexity",

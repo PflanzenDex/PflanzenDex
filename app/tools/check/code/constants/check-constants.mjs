@@ -9,7 +9,7 @@
 //   CN-3  the counts add up to more than `maxTotal` (lower `maxTotal` when hits move; never raise it).
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { lintFindings } from "../../gates/eslint-shared.mjs";
+import { lintFindings } from "../../quality/gates/eslint-shared.mjs";
 
 export const RULES = { numbers: "constants/no-magic-number", enums: "constants/no-enum-literal" };
 export const BASELINE_FILE = "config/gates/baselines/constants-baseline.json";

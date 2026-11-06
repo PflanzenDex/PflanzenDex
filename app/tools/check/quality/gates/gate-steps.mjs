@@ -11,7 +11,10 @@ const needsSharedPass = { needs: [ESLINT_SHARED] };
 export const GATE_STEPS = [
   npmStep("typecheck"),
   npmStep("lint"),
-  { name: ESLINT_SHARED, argv: [process.execPath, "tools/check/gates/eslint-shared-run.mjs"] },
+  {
+    name: ESLINT_SHARED,
+    argv: [process.execPath, "tools/check/quality/gates/eslint-shared-run.mjs"],
+  },
   npmStep("format:check"),
   npmStep("layout"),
   npmStep("boundaries"),

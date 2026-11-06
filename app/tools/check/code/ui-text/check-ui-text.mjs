@@ -7,7 +7,7 @@
 //   UT-3  the counts add up to more than `maxTotal` (lower `maxTotal` when texts move into a table; never raise it).
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { lintFindings } from "../../gates/eslint-shared.mjs";
+import { lintFindings } from "../../quality/gates/eslint-shared.mjs";
 
 export const RULE = "ui-text/no-literal-text";
 export const BASELINE_FILE = "config/gates/baselines/ui-text-baseline.json";

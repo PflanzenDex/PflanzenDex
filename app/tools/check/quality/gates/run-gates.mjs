@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { ESLINT_SHARED, GATE_PARALLEL_LIMIT, GATE_STEPS } from "./gate-steps.mjs";
 import { RESULTS_ENV } from "./eslint-shared.mjs";
 
-const APP_DIR = fileURLToPath(new URL("../../../", import.meta.url));
+const APP_DIR = fileURLToPath(new URL("../../../../", import.meta.url));
 const DEFAULT_CACHE_DIR = path.join(APP_DIR, ".cache", "gates");
 
 const isReady = (finished) => (step) => (step.needs ?? []).every((name) => finished.has(name));

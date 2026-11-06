@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { checkBaseline, parseFinding } from "./check-baseline.mjs";
-import { worstFive, toMarkdown } from "../../dev/health-summary.mjs";
+import { worstFive, toMarkdown } from "../../../dev/health-summary.mjs";
 
 const entry = { rule: "max-params", file: "a.ts", function: "f", value: 5, date: "2026-10-03" };
 const finding = { rule: "max-params", file: "a.ts", function: "f", value: 5 };
