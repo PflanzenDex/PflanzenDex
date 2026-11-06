@@ -15,6 +15,7 @@ import {
   ACCOUNT_SECTIONS,
   LEGACY_ACCOUNT_ANCHORS,
   SECTIONS,
+  isOff,
   rowId,
   sectionOf,
 } from "./account-model/account-model";
@@ -131,11 +132,6 @@ function KontoTitle(props: { open: AccountSection | undefined; byDefault: boolea
   );
 }
 
-/** A section that is off leads to the index: AI access without the AI function, "Was die App kann" without its overview. */
-function isOff(open: AccountSection | undefined, ai: boolean | undefined, hasOverview: boolean) {
-  return (open === "aiClients" && !ai) || (open === "functions" && !hasOverview);
-}
-
 /**
  * The destination "Konto" (US-QS-17): an index of its sections like the settings app of a phone. `/account` shows the
  * index, `/account/<section>` the section as a view of its own with one main heading; on a wide screen (1280 px) the
@@ -148,6 +144,8 @@ export function AccountArea(props: Props) {
   const { pathname, hash } = useLocation();
   const section = sectionOf(pathname);
   const ai = useFeature("ai");
+  // The keeper's switch of the achievements (US-ONB-09): off, the section and its row are gone.
+  const achievements = useFeature("achievement_views");
   const sheet = useSearchParams()[0].get("sheet");
   const isLg = useIsLg();
   // The section the keeper chose. From 1024 px an address without one shows Einstellungen in the pane beside the index,
@@ -163,7 +161,7 @@ export function AccountArea(props: Props) {
   const legacy = LEGACY_ACCOUNT_ANCHORS[hash.slice(1)];
   if (section === undefined && legacy)
     return <Navigate to={`${PATHS.account}/${ACCOUNT_SECTIONS[legacy]}`} replace />;
-  if (section === "unknown" || isOff(open, ai, props.overview !== undefined))
+  if (section === "unknown" || isOff(open, ai, achievements, props.overview !== undefined))
     return <Navigate to={PATHS.account} replace />;
 
   // The section's frame widens from 1024 px: a settings layer inside it needs the room beside its list (US-QS-15, #1027).
