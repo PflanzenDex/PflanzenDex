@@ -11,6 +11,7 @@ import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { Caller } from "./access/caller.ts";
 import { parseSubjects } from "./access/subjects.ts";
 import { seedAll } from "./accounts/seed-all.ts";
+import { speciesByLatin } from "./accounts/common/shared.ts";
 
 // US-DEV-01 / #924: the demo seed runs against a scratch database (migrated like the dev database, superuser
 // connection like `make start`), twice, and changes nothing the second time. Everything goes through the API routes, so
@@ -44,6 +45,7 @@ const counts = async (): Promise<Record<string, number>> => {
     "achievement_rhythm_pause",
     "light_zone",
     "location",
+    "leaf",
   ])
     out[table] = Number((await pool.query(`select count(*) n from ${table}`)).rows[0].n);
   return out;
@@ -115,6 +117,32 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     );
     expect(style.rows.map((r) => r.style)).toEqual(["few", "many"]);
   }, 180_000);
+
+  it("US-WAC-07 the seed gives Ben's Birkenfeige leaves: more than one page, sizes and a note", async () => {
+    const api = new Caller(pool, new Map());
+    const ben = { api, sub: SUBJECTS.test2, name: "Ben", log: () => undefined };
+    const species = (await speciesByLatin(ben, ["Ficus benjamina"])).get("Ficus benjamina");
+    const specimens = (await api.ok(SUBJECTS.test2, "GET", "/specimens"))["specimens"] as {
+      id: string;
+      speciesId: string;
+      marker: string | null;
+    }[];
+    const plant = specimens.find((s) => s.speciesId === species && s.marker === null);
+    expect(plant).toBeDefined();
+    const view = await api.ok(SUBJECTS.test2, "GET", `/specimens/${plant?.id}/leaves`);
+    expect(view["keeperOff"]).toBe(false);
+    // Two leaves per page in the web view (PAGE_SIZE in plant-leaves.tsx): four leaves give a pager with two pages.
+    expect(view["count"]).toBe(4);
+    const leaves = view["leaves"] as {
+      lengthMm: number | null;
+      widthMm: number | null;
+      note: string | null;
+    }[];
+    expect(leaves.every((l) => l.lengthMm !== null && l.widthMm !== null)).toBe(true);
+    expect(leaves.some((l) => l.note)).toBe(true);
+    expect(view["comparison"]).toMatchObject({ measure: "length", direction: "larger" });
+    expect(first["leaf"]).toBe(4);
+  });
 
   it("US-DEV-01 the swap history shows a handed-over and a declined swap (#943, US-SOZ-13)", async () => {
     const api = new Caller(pool, new Map());
