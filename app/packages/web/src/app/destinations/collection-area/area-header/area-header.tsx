@@ -1,8 +1,5 @@
-import { Link } from "react-router";
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
 import { VIEW_LAYER } from "@/collection";
-import { useFeature } from "@/shared/data";
-import { LABELS_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { buttonVariants } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
@@ -22,7 +19,7 @@ const SHORTCUT_OF_VIEW: Partial<Record<SammlungView, ShortcutId>> = {
 
 /**
  * The title area of the Sammlung: the switch and, beside the heading, the opener "Ansicht" of the layer that arranges
- * the plants or the species (issue 1096); below the switch the print of the pot labels for the plants (US-BES-17). Wunschliste and Geräte have nothing to arrange; an invisible stand-in of the
+ * the plants or the species (issue 1096). Wunschliste and Geräte have nothing to arrange; an invisible stand-in of the
  * same size keeps the header's height, so nothing below it jumps between the modes.
  */
 export function AreaHeader(props: {
@@ -31,8 +28,6 @@ export function AreaHeader(props: {
   onChoose: (v: SammlungView) => void;
 }) {
   const arranged = props.view === "plants" || props.view === "species";
-  // The print of the pot labels hangs beside the plants (US-BES-17); the keeper switch "pot_labels" hides it (P-12).
-  const labels = useFeature("pot_labels") && props.view === "plants";
   const { hint } = useShortcuts();
   const offered = useOfferedView();
   // The switch shows the key of the mode it can reach by one (US-QS-11); the other modes show none. A mode the keeper
@@ -61,13 +56,6 @@ export function AreaHeader(props: {
           </span>
         )
       }
-    >
-      {/* Below the switch, so the order of the tab stops of the title area stays: opener, switch, then this link. */}
-      {labels ? (
-        <Link to={LABELS_PATH} className={cn(buttonVariants({ variant: "outline" }), "self-start")}>
-          {ui("labels")}
-        </Link>
-      ) : null}
-    </SammlungHeader>
+    />
   );
 }

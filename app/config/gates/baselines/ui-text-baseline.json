@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1245,
+  "maxTotal": 1243,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -415,10 +415,6 @@
     },
     {
       "file": "packages/web/src/app/destinations/collection-area/sammlung-header/sammlung-header.tsx",
-      "count": 2
-    },
-    {
-      "file": "packages/web/src/collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
       "count": 2
     },
     {

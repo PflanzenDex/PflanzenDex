@@ -76,37 +76,40 @@ function LabelsView(props: { api: string; token: Token }) {
   const status = list.status === "ready" && list.cards.length === 0 ? "empty" : list.status;
 
   return (
-    <FullView
-      headingId="print-labels-title"
-      title={ui("heading")}
-      back={{ label: ui("back"), to: PATHS.collection }}
-    >
-      <RequestState
-        status={status}
-        {...(list.error ? { errorText: errorText(list.error.code) } : {})}
-        onRetry={list.retry}
-        empty={
-          <EmptyState
-            title={ui("emptyTitle")}
-            description={ui("emptyText")}
-            action={{ label: ui("toCollection"), href: PATHS.collection }}
-          />
-        }
+    // One screen (US-QS-15, DS-61): the page does not scroll, the content region does at a large text size.
+    <div data-fit-screen="" className="flex min-w-0 flex-col">
+      <FullView
+        headingId="print-labels-title"
+        title={ui("heading")}
+        back={{ label: ui("back"), to: PATHS.collection }}
       >
-        <ChoicePanel
-          list={list}
-          rows={rows}
-          chosen={chosen}
-          onToggle={toggle}
-          format={format}
-          onFormat={setFormat}
-          cultivars={cultivars}
-        />
-      </RequestState>
-      {chosen.length > 0 && format !== "" ? (
-        <PrintRegion label={ui("printRegion")} plants={plants} format={format} />
-      ) : null}
-    </FullView>
+        <RequestState
+          status={status}
+          {...(list.error ? { errorText: errorText(list.error.code) } : {})}
+          onRetry={list.retry}
+          empty={
+            <EmptyState
+              title={ui("emptyTitle")}
+              description={ui("emptyText")}
+              action={{ label: ui("toCollection"), href: PATHS.collection }}
+            />
+          }
+        >
+          <ChoicePanel
+            list={list}
+            rows={rows}
+            chosen={chosen}
+            onToggle={toggle}
+            format={format}
+            onFormat={setFormat}
+            cultivars={cultivars}
+          />
+        </RequestState>
+        {chosen.length > 0 && format !== "" ? (
+          <PrintRegion label={ui("printRegion")} plants={plants} format={format} />
+        ) : null}
+      </FullView>
+    </div>
   );
 }
 
@@ -123,7 +126,7 @@ function ChoicePanel(props: {
   const { list, rows, chosen, onToggle, format, cultivars } = props;
   const ready = chosen.length > 0 && format !== "" && cultivars.status === "ready";
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <p className="text-sm text-muted-foreground">{ui("intro")}</p>
       <div className="flex flex-col gap-1">
         <Label htmlFor="print-labels-format">{ui("format")}</Label>
@@ -140,6 +143,7 @@ function ChoicePanel(props: {
       <Pager
         items={list.cards}
         pageSize={rows}
+        fit
         label={ui("list")}
         getKey={(card) => card.id}
         paging={pagingOf(list)}

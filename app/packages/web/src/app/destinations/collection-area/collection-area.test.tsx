@@ -142,40 +142,45 @@ describe("US-ONB-09 the keeper's switches in the Sammlung", () => {
 });
 
 describe("US-BES-17 the entry to the pot labels", () => {
-  it("US-BES-17 the plants offer Etiketten drucken with the keeper switch on and not with it off (P-12)", async () => {
-    stubCollection();
-    const { unmount } = render(
-      <MemoryRouter initialEntries={["/collection?view=plants"]}>
-        <FeaturesProvider features={{ pot_labels: true }}>
-          <CollectionArea
-            api="http://api"
-            token={async () => "tok"}
-            newSpecies={null}
-            onSpeciesChoose={() => {}}
-            onCompleted={() => {}}
-          />
-        </FeaturesProvider>
-      </MemoryRouter>,
-    );
+  const collection = (potLabels: boolean) => (
+    <MemoryRouter initialEntries={["/collection?view=plants"]}>
+      <FeaturesProvider features={{ pot_labels: potLabels }}>
+        <CollectionArea
+          api="http://api"
+          token={async () => "tok"}
+          newSpecies={null}
+          onSpeciesChoose={() => {}}
+          onCompleted={() => {}}
+        />
+      </FeaturesProvider>
+    </MemoryRouter>
+  );
+  const openView = async () => {
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
-    expect(screen.getByRole("link", { name: "Etiketten drucken" }).getAttribute("href")).toBe(
-      "/collection/labels",
-    );
-    unmount();
-    render(
-      <MemoryRouter initialEntries={["/collection?view=plants"]}>
-        <FeaturesProvider features={{ pot_labels: false }}>
-          <CollectionArea
-            api="http://api"
-            token={async () => "tok"}
-            newSpecies={null}
-            onSpeciesChoose={() => {}}
-            onCompleted={() => {}}
-          />
-        </FeaturesProvider>
-      </MemoryRouter>,
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
+    return screen.findByRole("dialog", { name: "Ansicht" });
+  };
+
+  it("US-BES-17 the layer Ansicht of the plants offers Etiketten drucken with the keeper switch on", async () => {
+    stubCollection();
+    render(collection(true));
+    const layer = await openView();
+    expect(
+      within(layer).getByRole("link", { name: "Etiketten drucken" }).getAttribute("href"),
+    ).toBe("/collection/labels");
+  });
+
+  it("US-BES-17 the entry adds no row to the title area of the Sammlung (US-QS-15)", async () => {
+    stubCollection();
+    render(collection(true));
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     expect(screen.queryByRole("link", { name: "Etiketten drucken" })).toBeNull();
+  });
+
+  it("US-BES-17 the layer Ansicht offers no print with the keeper switch off (P-12)", async () => {
+    stubCollection();
+    render(collection(false));
+    const layer = await openView();
+    expect(within(layer).queryByRole("link", { name: "Etiketten drucken" })).toBeNull();
   });
 });
