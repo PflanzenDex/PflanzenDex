@@ -11,12 +11,13 @@ import { getRoutes, MEASURED, requestPath } from "./query-count-endpoints";
 import { befriend, friendName, seedFriend } from "./query-count-seed-social-test-helpers";
 import { TZ, type SeedIds } from "./query-count-seed-test-helpers";
 import { seedSize, taxonName, type Cast } from "./query-count-seed-size-test-helpers";
-import { growthReport, normalize, repeatFindings } from "./query-count-statements";
+import { growthReport, normalize, repeatCounts, repeatsOverOwners } from "./query-count-statements";
 
-// US-QG-07: the number of SQL statements of a request must not grow with the keeper's data (N+1), and one request must
-// not send the same statement text twice (duplicate read). Every GET route of the app is measured or listed in EXCLUDED
-// with a reason, so a new route fails until it is covered. Findings that exist today are in the two baselines, which
-// only shrink: `query-count-baseline.json` (growth) and `query-repeat-baseline.json` (repeated statement texts).
+// US-QG-07: the number of SQL statements of a request must not grow with the keeper's data (N+1). A statement text may
+// repeat within one request at most once per owner of the fixture (#1306): a read per friend passes, a read per offer
+// fails. Every GET route of the app is measured or listed in EXCLUDED with a reason, so a new route fails until it is
+// covered. Findings that exist today are in the two baselines, which only shrink: `query-count-baseline.json` (growth)
+// and `query-repeat-baseline.json` (repeated statement texts; a listed text still has to stay within the owner bound).
 const SMALL = 5;
 const LARGE = 50;
 const ALLOWED_GROWTH = 0; // statements; any growth with the data is an N+1 (starting value, assumption)
@@ -73,6 +74,10 @@ let counter: CountingPool;
 let api: Api;
 let app: Hono;
 let routes: string[] = [];
+// The owners of the large fixture (keeper and both friends, each with specimens) and its offers, read from the database
+// after the seed (#1306): the owner rule bounds a repeat by the owners, and a read per offer shows only with more offers.
+let owners = 0;
+let offers = 0;
 
 /** A few resolved catalog taxa (shared table), so the Pokedex and wish endpoints have rows to derive. */
 async function seedTaxa(): Promise<void> {
@@ -130,6 +135,14 @@ beforeAll(async () => {
   await seedTaxa();
   ids.small = await seedSize({ api, admin, run }, casts.small, SMALL);
   ids.large = await seedSize({ api, admin, run }, casts.large, LARGE);
+  const fixture = await admin.query<{ owners: number; offers: number }>(
+    `select (select count(distinct s.account_id) from specimen s join account a on a.id = s.account_id
+       where a.subject = any($1))::int as owners,
+     (select count(*) from offer o join account a on a.id = o.account_id where a.subject = any($1))::int as offers`,
+    [[casts.large.keeper, casts.large.friendA, casts.large.friendB]],
+  );
+  owners = fixture.rows[0]?.owners ?? 0;
+  offers = fixture.rows[0]?.offers ?? 0;
   for (const size of SIZES) await measure(size, ids[size] as SeedIds);
 }, 280_000);
 
@@ -212,26 +225,50 @@ describe("US-QG-07 statements per request do not grow with the data (N+1)", () =
   );
 
   it.each(measured)(
-    "US-QG-07 GET %s sends no statement text twice for the large keeper",
+    "US-QG-07 GET %s sends each statement text at most once per owner for the large keeper",
     (pattern) => {
       const key = `GET ${pattern}`;
-      const found = repeatFindings(results.large[key]?.statements ?? []);
+      const statements = results.large[key]?.statements ?? [];
+      const found = repeatCounts(statements);
       const known = repeatBaseline[key] ?? [];
       expect(
-        found.filter((f) => !known.includes(f)),
-        `${key} sends a statement twice (N+1 or duplicate read): fix it or add the text to query-repeat-baseline.json`,
+        found.filter((f) => !known.includes(f.finding)).map((f) => `${f.count} x ${f.finding}`),
+        `${key} sends a statement twice (duplicate read or N+1): fix it or add the text to query-repeat-baseline.json`,
+      ).toEqual([]);
+      // A listed text is no pass by itself: it may repeat once per owner (a read per friend), never once per row.
+      expect(
+        repeatsOverOwners(statements, owners).map((f) => `${f.count} x ${f.finding}`),
+        `${key} sends a statement more often than the ${owners} owners of the fixture: at most one read per owner (a read per offer is an N+1; the fixture has ${offers} offers)`,
       ).toEqual([]);
       expect(
-        known.filter((k) => !found.includes(k)),
+        known.filter((k) => !found.some((f) => f.finding === k)),
         `${key} no longer sends these statements twice: delete them from query-repeat-baseline.json`,
       ).toEqual([]);
     },
   );
 
+  it("US-QG-07 the fixture has more offers than owners, so a read per offer shows above the owner bound", () => {
+    expect(offers, `${offers} offers and ${owners} owners`).toBeGreaterThan(owners);
+  });
+
   it("US-QG-07 every baseline entry names an endpoint under test", () => {
     const keys = new Set(measured.map((p) => `GET ${p}`));
     const named = [...Object.keys(growthBaseline), ...Object.keys(repeatBaseline)];
     expect(named.filter((k) => !keys.has(k))).toEqual([]);
+  });
+});
+
+// US-QG-07 (#1306): the owner rule on statement lists of known shape, so the rule is proven without a route: a read once
+// per owner passes, a read once per offer (more offers than owners) fails. The rule takes no baseline, so a listed prefix
+// cannot lift it; the real routes are checked in the `it.each` above.
+describe("US-QG-07 the owner rule: a read per owner passes, a read per offer fails", () => {
+  const readOf = (n: number) =>
+    Array.from({ length: n }, () => "select id, name from specimen where id = $1");
+  it("US-QG-07 a statement sent once per owner of three owners passes the owner rule", () => {
+    expect(repeatsOverOwners(readOf(3), 3)).toEqual([]);
+  });
+  it("US-QG-07 a statement sent once per offer (six offers, three owners) fails the owner rule", () => {
+    expect(repeatsOverOwners(readOf(6), 3).map((r) => r.count)).toEqual([6]);
   });
 });
 
