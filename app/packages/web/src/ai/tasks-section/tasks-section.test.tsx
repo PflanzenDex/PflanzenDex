@@ -10,7 +10,7 @@ import { NewTaskPart, TasksSection } from "./tasks-section";
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
-const PROMPT = "Auftrag aus PflanzenDex\nAuftrags-Kennung: t1";
+const PROMPT = "Auftrag aus PflanzenDéx\nAuftrags-Kennung: t1";
 const row = (over: Record<string, unknown> = {}) => ({
   id: "t1",
   type: "species_profile",

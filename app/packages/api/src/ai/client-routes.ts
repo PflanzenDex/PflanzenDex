@@ -1,6 +1,7 @@
 import {
   AI_SCOPES,
   aiStatus,
+  productTitle,
   type CollectionReadSource,
   type DiscoverSource,
   type DraftStore,
@@ -67,7 +68,7 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
         authorization_servers: [opt.issuer],
         scopes_supported: Object.values(AI_SCOPES),
         bearer_methods_supported: ["header"],
-        resource_name: "PflanzenDex",
+        resource_name: productTitle(),
       }),
     );
   const guard = {
