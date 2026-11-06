@@ -122,3 +122,4 @@ The app has no "delete" for a measurement, a treatment or a specimen (only archi
 - Writes: 0 direct writes except a Discover decision; 4 content types as drafts. About 30 app write operations are missing (S4, S5).
 - Destructive: 0 of 7 (archive specimen, delete location, delete light zone, discard wish, remove duplicate wish, discard equipment wish, undo import run) (S6).
 - Rule discovery: none (S3). Import helpers: none (S7).
+- Update 2026-11-06: S3 is done (US-KI-13): the tools `describe_rules` and `check_species_name` (`GET /mcp/rules`, `GET /mcp/rules/species-name`).

@@ -6,17 +6,22 @@ import { rightNeeded, type AiRights } from "@pflanzendex/core";
 import { ACCOUNT_TOOLS } from "./sets/account-tools";
 import { COLLECTION_TOOLS } from "./sets/collection-tools";
 import { RESEARCH_TOOLS } from "./sets/research-tools";
+import { RULES_TOOLS } from "./sets/rules-tools";
 import type { McpTool } from "./schema";
 
 export { checkArguments } from "./schema";
 export type { McpTool } from "./schema";
 
+/** The tools per area, in a fixed order; the rule discovery describes them by these areas (US-KI-13). */
+export const MCP_TOOL_SETS: Readonly<Record<string, readonly McpTool[]>> = {
+  account: ACCOUNT_TOOLS,
+  research: RESEARCH_TOOLS,
+  collection: COLLECTION_TOOLS,
+  rules: RULES_TOOLS,
+};
+
 /** The tools in a fixed order (deterministic `tools/list`). */
-export const MCP_TOOLS: readonly McpTool[] = [
-  ...ACCOUNT_TOOLS,
-  ...RESEARCH_TOOLS,
-  ...COLLECTION_TOOLS,
-];
+export const MCP_TOOLS: readonly McpTool[] = Object.values(MCP_TOOL_SETS).flat();
 
 /** The right a tool needs, from the one table of classes (FR-KI-12); a tool without a released class is a bug. */
 export function toolRight(tool: McpTool): AiRights {

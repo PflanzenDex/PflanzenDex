@@ -19,6 +19,7 @@ import { errorBody, statusFor } from "../kernel";
 import { clientResearchRoutes } from "./research/client-research-routes";
 import { clientDiscoverRoutes } from "./discover/client-discover-routes";
 import { clientReadRoutes } from "./reads/client-read-routes";
+import { clientRulesRoutes } from "./reads/rules-routes";
 import { clientTaskRoutes } from "./tasks/client-task-routes";
 import { clientDraftRoutes } from "./drafts/client-draft-routes";
 import { clientAuthentication, type AiEnv } from "./guard/client-auth";
@@ -49,17 +50,8 @@ export interface ClientStores {
   sources?: SourceClient;
 }
 
-/**
- * Client side of the AI interface (AI token): the protected resource metadata (RFC 9728), the session of the
- * connection (US-KI-07), the daily status (US-KI-02), research, drafts, Discover, tasks, the catalog and the collection (US-KI-11), and the MCP endpoint
- * `POST /mcp` that offers them as tools. Every route runs behind the guard of its right (KI-R8).
- */
-export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientStores): Hono<AiEnv> {
-  const { connections, log, status, drafts, types, tasks, discover } = stores;
-  const client = new Hono<AiEnv>();
-  const clock = opt.clock ?? (() => new Date());
-  const metadataUrl = metadataUrlOf(opt.resource);
-  // RFC 9728: at the address the challenge names and at the path-inserted well-known address of the resource.
+/** RFC 9728: the metadata at the address the challenge names and at the path-inserted well-known address of the resource. */
+function metadataRoutes(client: Hono<AiEnv>, opt: AiAccessOptions) {
   const resourcePath = new URL(opt.resource).pathname.replace(/\/$/, "");
   for (const path of [WELL_KNOWN, `${WELL_KNOWN}${resourcePath}`])
     client.get(path, (c) =>
@@ -71,6 +63,19 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
         resource_name: productTitle(),
       }),
     );
+}
+
+/**
+ * Client side of the AI interface (AI token): the protected resource metadata (RFC 9728), the session of the
+ * connection (US-KI-07), the daily status (US-KI-02), research, drafts, Discover, tasks, the catalog and the collection (US-KI-11), and the MCP endpoint
+ * `POST /mcp` that offers them as tools. Every route runs behind the guard of its right (KI-R8).
+ */
+export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientStores): Hono<AiEnv> {
+  const { connections, log, status, drafts, types, tasks, discover } = stores;
+  const client = new Hono<AiEnv>();
+  const clock = opt.clock ?? (() => new Date());
+  const metadataUrl = metadataUrlOf(opt.resource);
+  metadataRoutes(client, opt);
   const guard = {
     verifier: opt.verifier,
     pool,
@@ -105,6 +110,7 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
   client.route("/", clientDiscoverRoutes(guard, { discover, drafts, log }, clock));
   client.route("/", clientReadRoutes(guard, { collection: stores.collection, log }, clock));
   client.route("/", clientTaskRoutes(guard, { tasks, log }, opt.resource, clock));
+  client.route("/", clientRulesRoutes(guard, { log }, stores.sources !== undefined, clock));
   // The MCP endpoint (E-04): JSON-RPC tools over the routes above, with the caller's token and the same guards.
   client.route(
     "/",

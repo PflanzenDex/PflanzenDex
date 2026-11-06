@@ -24,6 +24,9 @@ export {
   speciesSchema,
   normalize,
   parseLatin,
+  LATIN_NAME_RULE,
+  SPECIES_NAMING_RULE,
+  checkSpeciesName,
 } from "./species";
 export type {
   Species,
@@ -37,6 +40,8 @@ export type {
   LatinName,
   NameField,
   GrowthMeasure,
+  NameExample,
+  SpeciesNameCheck,
 } from "./species";
 export {
   CATALOG_FILL_JOB_TYPE,

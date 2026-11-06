@@ -31,7 +31,7 @@ const NAME_PROBLEM = {
   hybrid: "catalog.name_hybrid",
 } as const;
 
-const latinField = described(
+export const latinField = described(
   (value: unknown): LatinName | ErrorDetail => {
     const parsed = typeof value === "string" && parseLatin(value);
     if (parsed) return parsed;
