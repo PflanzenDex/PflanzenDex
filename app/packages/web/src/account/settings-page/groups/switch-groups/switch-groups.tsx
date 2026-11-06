@@ -3,7 +3,8 @@ import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
-import { ALERT_CLASSES, refusalText } from "../../../refusal";
+import { refusalText } from "@/shared/lib/error-text";
+import { ALERT_CLASSES } from "@/shared/ui/fields/form/server-refusal";
 import { OCCASION_TEXT, visibleOccasions } from "../../../settings-fields/settings-fields";
 import type { ProfileSaver } from "../profile-saver";
 

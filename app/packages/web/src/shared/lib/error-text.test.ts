@@ -1,6 +1,6 @@
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
-import { applyServerError, errorText, GENERIC_ERROR_TEXT } from "./error-text";
+import { applyServerError, errorText, GENERIC_ERROR_TEXT, refusalText } from "./error-text";
 
 describe("error-text (US-QS-07 · DS-49, FR-QG-11)", () => {
   it("US-QS-07 · DS-49 maps a known code to its German text from ERROR_TEXTS", () => {
@@ -42,5 +42,15 @@ describe("error-text (US-QS-07 · DS-49, FR-QG-11)", () => {
       type: "server",
       message: GENERIC_ERROR_TEXT,
     });
+  });
+
+  it("US-QS-07 · DS-49 refusalText gives the German text of the code, and the own text only of an unreachable server", () => {
+    expect(refusalText({ code: "access.denied", text: "raw server text" })).toBe(
+      ERROR_TEXTS["access.denied"],
+    );
+    expect(refusalText({ code: "made_up.code", text: "raw server text" })).toBe(GENERIC_ERROR_TEXT);
+    expect(refusalText({ code: "network.not_reachable", text: "Keine Verbindung." })).toBe(
+      "Keine Verbindung.",
+    );
   });
 });

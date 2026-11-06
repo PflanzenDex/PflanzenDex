@@ -4,7 +4,7 @@ import { useInvalidate } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
 import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
-import { refusalText } from "../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { CreateWithSiblings } from "./create-with-siblings/create-with-siblings";
 import type { Props } from "./collection-props";
 import { ArchiveForm } from "../archived/archived-form/archived-form";

@@ -14,7 +14,7 @@ import { SpeciesProfile } from "../profile-view/profile-view";
 import { SpeciesSearch } from "../search-view/search-view";
 import { ProposalForm } from "../proposal/proposal-form/proposal-form";
 import { ProfileSkeleton } from "../profile-view/profile-view.skeleton";
-import { refusalText } from "../shared/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 
 type View = { kind: "search" } | { kind: "profile" };
 
