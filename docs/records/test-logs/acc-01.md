@@ -108,6 +108,26 @@ The welcome page has no skip link because it has no navigation block; the first 
 - ✅ `make one-screen` for the welcome route at 360×640 with 200 % text: passes after the copy change below. Before, the page was 808 px (label of two lines and the long tagline) and 712 px (one-line label) of 640 px high, because a third control costs 72 px at this size.
 - ⏭️ Screen reader: none installed on this machine (orca and nvda not found); no spoken result.
 - ⏭️ Zoom 400 %, user text spacing, forced colors and reduced motion: not walked by hand for this change (the control uses the existing button, no animation).
-- ⏭️ The new e2e test "US-ACC-01 another account" in `sign-in.spec.ts` is written but not run: it creates users in the shared Keycloak realm (`support/account.ts`).
+- ✅ The e2e tests of `sign-in.spec.ts` ran against a throwaway Keycloak, not the shared realm (section 8).
 
 **Copy change for the owner:** the welcome tagline lost its second sentence ("Lege ein Konto an, um zu starten."), which repeated the "Konto anlegen" button, and the action label is "Anderes Konto". The longer label "Mit anderem Konto anmelden" wraps to two lines at 200 % text and overflows at 360×640.
+
+## 8. "Konto anlegen" with a live sign-in of another person (issue 667, 2026-11-06)
+
+**Environment:** Linux, Docker; Keycloak 26.8.1 with the repo realm import (redirect address of `pflanzendex-web` extended by port 55611 through the admin API) in a throwaway compose project on port 18991, with its own Mailpit on 18926; PostgreSQL 16 in this worktree's own container (port 54611, database `pflanzendex_test`, migrations 0001 to 0105); API port 55111, web (Vite dev server) port 55611. Chromium via Playwright 1.64.1, locale de-DE, time zone Europe/Berlin, phone viewport 390×844. The throwaway Keycloak, Mailpit and the worktree servers were removed after the run. The shared sign-in service (18081) and the shared test databases were not touched.
+
+**Before the change (the reported state, measured):**
+- Person A signed in; app storage cleared; welcome page; "Konto anlegen" opens the registration form of the sign-in service directly (`prompt=create`). A's sign-in service session is still alive (1 session).
+- Registration of person B, mail link, password page, submit: the sign-in service shows "Da ist etwas schiefgelaufen. Sie sind in dieser Session bereits mit einem anderen Benutzer … angemeldet. Bitte melden Sie sich zuerst ab." (the refusal at the end of registration). A's session is still alive (1 session).
+- Control, no session: "Konto anlegen" opens the registration at once; mail link, password, then signed in on "Heute".
+
+**After the change:**
+- With A's live session: "Konto anlegen" sends one silent check (`prompt=none`, a top-level redirect, no sign-in service page shown). The check returns with A's code; the existing sign-out path ends the session with its id token, so no logout page is committed in the browser; the return then sends one `prompt=create` request. B's registration completes and the app shows "Heute"; A's session count is 0.
+- Without a session: one silent check returns `login_required` (about 110 ms locally, one request), then the registration opens. No logout page.
+- The silent check is the same redirect that already runs once per tab on page load; it is the only extra step of the no-session path, and no sign-in service page is shown during it.
+
+**e2e (`tests/sign-in.spec.ts`, projects mobil and desktop):** 16 passed. First run: 14 passed, 2 failed. The failures were the existing assertion "wrong credentials stay with the sign-in service" on both projects, which hard-coded the port 18081 of the shared sign-in service. The assertion now checks the realm path; the second run passed. The new tests: "US-ACC-01 Konto anlegen with a live sign-in of another person ends it first, then the registration opens" and "US-ACC-01 Konto anlegen without a sign-in opens the registration directly, with no sign-out page".
+
+**one-screen (`welcome`, `account-news`, the screens of the changed copy):** 2 passed. `make one-screen` itself was not run, because its `auth-up` step starts the shared sign-in service.
+
+**Not run:** screen reader, zoom 400 %, forced colors, reduced motion; the full `make e2e` (starts the shared sign-in service); `ds-snapshots` (no page story shows the changed texts: the welcome page is not a page story, and the news page has no snapshot).

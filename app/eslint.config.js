@@ -32,7 +32,7 @@ const areaOverrides = Object.entries(limits.overrides).map(([glob, o]) => ({
 }));
 
 // Ratchet baseline (FR-QG-17): known violations may not get worse. A baselined file is allowed up to its recorded
-// value per rule; tools/check/quality/check-baseline.mjs runs with QUALITY_BASELINE=off and verifies the list is exact.
+// value per rule; tools/check/quality/gates/check-baseline.mjs runs with QUALITY_BASELINE=off and verifies the list is exact.
 const baseline =
   process.env.QUALITY_BASELINE === "off"
     ? []
