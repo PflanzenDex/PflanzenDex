@@ -21,6 +21,8 @@ Number of agent merges that pass without one of the four conditions: the pull re
 
 `make merge PR=<n>`, which runs `app/tools/workflow/merge-pr.mjs`. A failed condition is named and the merge is left to a human.
 
+For the human review of the open gate PRs, `make gate-review` (US-QG-07) lists every open pull request into `dev` that changes a gate file: its gate files, the CI state on its head as it stands (never waited for), conflicts, age, and whether a limit, baseline or allowlist moved looser. A change it cannot prove is shown as "read it". The command is read-only and merges nothing; the human merge stays (ADR 0005).
+
 ## Evidence
 
 Tests in `app/tools/workflow/merge-pr.test.mjs`. The gate-file list is a configuration of the hooks, so a change to it is itself a gate change. Human merges are not covered by this entry (ADR 0005).
