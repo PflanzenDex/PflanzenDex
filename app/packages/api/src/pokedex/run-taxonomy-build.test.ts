@@ -128,7 +128,8 @@ describe("US-POK-03 pokedex-build", () => {
       printed.push(String(line));
     });
     try {
-      // The migrated database of the api tests, the same as every other api test (CI migrates only that one).
+      // The api tests' owner database, migrated in beforeAll; without DATABASE_URL the command would read the unmigrated
+      // test database.
       const code = await runTaxonomyBuildCommand(["--dry-run"], {
         ...process.env,
         DATABASE_URL: testOwnerUrl(),
