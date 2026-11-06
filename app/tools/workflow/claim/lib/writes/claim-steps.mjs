@@ -2,12 +2,29 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createDraftPr } from "../claim-client.mjs";
+import { CallTimeout, createDraftPr, PUSH_LIMIT } from "../claim-client.mjs";
 import { addProjectItem, projectMeta, setItemOption, STATUS_FIELD } from "../board-client.mjs";
 import { branchName, claimKey, scopeOf, storyIdOf } from "../claim-lib.mjs";
 
 export const STATUS_IN_PROGRESS = "In Progress";
 export const STATUS_TODO = "Todo";
+
+/**
+ * A git push of the claim or of its undo, under the push limit (CLAIM_PUSH_TIMEOUT_S): git push runs the pre-push hook, which runs
+ * make gates, so the limit of the other calls is too short for it (#1559). A timeout names that cause and the variable to raise.
+ */
+async function gitPush(client, args) {
+  try {
+    await client.run("git", ["push", "origin", ...args], { limit: PUSH_LIMIT });
+  } catch (e) {
+    if (!(e instanceof CallTimeout)) throw e;
+    const seconds = e.limitMs / 1000;
+    throw new Error(
+      `git push origin did not finish within ${seconds} s: the pre-push gates (make gates) took longer than that. Raise CLAIM_PUSH_TIMEOUT_S (now ${seconds}) before the next claim; nothing of the push is left running.`,
+      { cause: e },
+    );
+  }
+}
 
 /**
  * Sets the project status of an issue with GraphQL (#1487). `item` is the board item read before the claim; an issue that is
@@ -99,7 +116,7 @@ export async function commitClaim(client, issue) {
 
 /** Pushes the claim commit as a new branch. A branch that exists already makes the push fail: it is never overwritten. */
 export async function pushClaimBranch(client, branch, sha) {
-  await client.run("git", ["push", "origin", `${sha}:refs/heads/${branch}`]);
+  await gitPush(client, [`${sha}:refs/heads/${branch}`]);
 }
 
 /**
@@ -113,6 +130,6 @@ export async function deleteClaimBranch(client, branch, sha) {
   ).trim();
   if (!listed) return "already gone";
   if (listed.split("\t")[0] !== sha) return `origin/${branch} is not our claim commit; left alone`;
-  await client.run("git", ["push", "origin", "--delete", branch]);
+  await gitPush(client, ["--delete", branch]);
   return undefined;
 }
