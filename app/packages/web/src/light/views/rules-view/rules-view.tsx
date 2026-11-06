@@ -102,7 +102,7 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
         items={parts}
         pageSize={1}
         label="Teile der Einstufungsregeln"
-        param="rpage"
+        param="rfrom"
         getKey={(_, i) => i}
         renderItem={(part) => part}
       />

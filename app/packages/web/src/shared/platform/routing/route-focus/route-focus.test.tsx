@@ -63,7 +63,7 @@ function Harness() {
         <Link to="/slow">Langsame</Link>
         <Link to="/none">Ohne</Link>
         <Link to="/?sheet=zones">Mit Ebene</Link>
-        <Link to="/?page=2">Mit Seite</Link>
+        <Link to="/?from=6">Mit Seite</Link>
       </nav>
       <main id="inhalt" tabIndex={-1}>
         <RouteFocus titleOf={titleOf} />
@@ -99,6 +99,36 @@ describe("US-QS-19 · RouteFocus leaves layers and pages alone (US-QS-15)", () =
     await new Promise((r) => setTimeout(r, 60));
     expect(document.activeElement).not.toBe(screen.getByRole("heading", { level: 1 }));
     expect(document.title).toBe("Erste – PflanzenDéx");
+  });
+});
+
+describe("FR-BES-23 · RouteFocus and the first entry of a list (issue 1492)", () => {
+  function Convert() {
+    const navigate = useNavigate();
+    return (
+      <button type="button" onClick={() => void navigate("/?from=6", { replace: true })}>
+        Umrechnen
+      </button>
+    );
+  }
+
+  it("FR-BES-23 an old page address converted to its first entry (?page=2 to ?from=6) moves no focus", async () => {
+    render(
+      <MemoryRouter initialEntries={["/?page=2"]}>
+        <AnnouncerProvider>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={titleOf} />
+            <h1>Erste Seite</h1>
+            <Convert />
+          </main>
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const button = screen.getByRole("button", { name: "Umrechnen" });
+    button.focus();
+    await userEvent.click(button);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.activeElement).toBe(button);
   });
 });
 
@@ -199,11 +229,11 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     expect(document.activeElement).toBe(tab);
   });
 
-  it("US-QS-18 · US-QS-15 opening a layer or turning a page (?sheet, ?page) is no new view: the focus stays", async () => {
+  it("US-QS-18 · US-QS-15 opening a layer or turning a page (?sheet, ?from) is no new view: the focus stays", async () => {
     function Opener() {
       const [, setParams] = useSearchParams();
       return (
-        <button type="button" onClick={() => setParams({ sheet: "tasks", page: "2" })}>
+        <button type="button" onClick={() => setParams({ sheet: "tasks", from: "6" })}>
           Ebene
         </button>
       );

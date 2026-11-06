@@ -293,7 +293,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
 
   it("US-BES-06 · FR-BES-23 a plant beyond the first server page is reachable through the Pager; the next page loads by itself", async () => {
     const { fetchFn } = fakeServer({ specimens: many(150) });
-    render(page({}, "/?page=25"));
+    render(page({}, "/?from=144"));
     expect(await screen.findByRole("button", { name: /^Pflanze 150 / })).toBeTruthy();
     expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
     expect(cardCalls(fetchFn).some((u) => u.searchParams.has("after"))).toBe(true);
@@ -312,7 +312,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
         });
       },
     });
-    render(page({}, "/?page=25"));
+    render(page({}, "/?from=144"));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Pflanzen konnten nicht geladen werden.",
     );
@@ -334,7 +334,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
           ? response(502, { error: { code: "proxy.bad_gateway" } })
           : null,
     });
-    render(page({}, "/?page=25"));
+    render(page({}, "/?from=144"));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Pflanzen konnten nicht geladen werden.",
     );

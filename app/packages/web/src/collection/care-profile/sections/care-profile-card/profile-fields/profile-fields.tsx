@@ -32,7 +32,7 @@ function pageFields(page: number, shared: ProfileShared, lists: Lists) {
 
 /**
  * The fields of the care profile in three pages (US-BES-09, US-QS-23): each page fits a layer on a phone, the page is in
- * the address (`lpage`, the pager's own part) and the values of all pages stay in the form.
+ * the address (`lfrom`, the pager's own part) and the values of all pages stay in the form.
  */
 export function ProfileFields(props: { shared: ProfileShared; lists: Lists; name: string }) {
   const { shared, lists, name } = props;

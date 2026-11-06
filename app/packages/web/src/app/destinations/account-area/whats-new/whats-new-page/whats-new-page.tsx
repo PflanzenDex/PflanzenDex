@@ -47,7 +47,7 @@ function NewsLine({ line }: { line: string }) {
 
 /**
  * The version of the build and the lines, newest first, one page at a time (US-DEV-06, US-QS-15): the pager turns the
- * pages and keeps the page in the address. An empty list says what to do next (P-09).
+ * pages and keeps the first entry of the page in the address. An empty list says what to do next (P-09).
  */
 export function WhatsNewList(props: { lines: readonly string[]; version: string | undefined }) {
   const navigate = useNavigate();

@@ -23,8 +23,8 @@ const t = texts(table);
 /** The list on a phone: `zones` (default) or `locations`, in the address (US-QS-19). */
 export const LIST_PARAM = "list";
 /** The page of each list; two names, because on a desktop both lists stand side by side. */
-const ZONE_PAGE = "zpage";
-const LOCATION_PAGE = "spage";
+const ZONE_PAGE = "zfrom";
+const LOCATION_PAGE = "sfrom";
 type ListKind = "zones" | "locations";
 
 /** The "+" of a list: opens the create layer of that kind (US-QS-19). */
