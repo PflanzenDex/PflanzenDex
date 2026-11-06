@@ -12,8 +12,8 @@
 # PR_READY_TRIES attempts and PR_READY_MAX_WAIT seconds per wait (FR-DEV-10, #1412). Then it exits 75 and pushes nothing:
 # the PR is still a draft, and `make pr` runs again after the reset. No endless loop.
 # A gh error that is not a rate limit exits 1 and pushes nothing. If marking ready works and the push fails, the PR stays
-# ready for review with its previous head and the script exits 1. `make pr` can run again: gh reports a PR that is already
-# ready and exits 0 (assumed; pr-ready.test.mjs fakes that answer).
+# ready for review with its previous head and the script exits 1. `make pr` can run again: `gh pr ready` on a PR that is
+# already ready says so and exits 0 (checked with gh 2.102.1 on PR 1533; pr-ready.test.mjs fakes that answer).
 set -euo pipefail
 
 pr="${1:-}"
