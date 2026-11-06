@@ -66,7 +66,7 @@ As a **developer** I want checks exactly when they are cheapest.
 Acceptance criteria (git hooks, managed via a tool like Husky, installed by `make setup`):
 
 - **`commit-msg`:** commitlint (QG-C1).
-- **`pre-commit`:** only on **changed files** and under 10 seconds (assumption): formatting (Prettier) and basic lint. Domain gates do not belong here (Tombola deliberately has nothing here; we add only the fast part).
+- **`pre-commit`:** only on **changed files** and under 10 seconds (measured at 2.6 s for 40 staged files, `docs/records/spikes/2026-11-06-pre-commit-timing/`): formatting (Prettier) and basic lint. Domain gates do not belong here (Tombola deliberately has nothing here; we add only the fast part).
 - **`pre-push`:** `make gates` (QG-C2 to QG-C5, QG-K1, QG-S1) with a clear error message and re-run command (US-QG-01).
 - **`post-merge` / `post-checkout`:** point out changed dependencies or migrations (`make setup` / `make db-migrate`), but execute nothing themselves.
 - Any bypass (`--no-verify`) is permissible, but ineffective for the merge: CI repeats everything (D-02).

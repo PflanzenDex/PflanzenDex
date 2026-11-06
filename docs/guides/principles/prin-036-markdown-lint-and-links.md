@@ -21,7 +21,7 @@ The link check starts at the repository root and reads every Markdown file below
 
 ## Gate
 
-`make gates` (step `npm run docs`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`) and `ci-status` requires it. Locally: `make docs-check`.
+`make gates` (step `npm run docs`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`); a pull request that changes only documentation runs it in the job `docs-gates` (`make ci-docs`) instead, and `ci-status` requires both. Locally: `make docs-check`.
 
 ## Evidence
 
