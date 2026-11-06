@@ -16,11 +16,28 @@ export const LOADING_STATUS_DELAY_MS = 300;
  * body loads (a lazy part inside the window waits under the window's fallback and does not reach the route's boundary).
  * A fallback around the chunk wait would start React's hold of about 300 ms on the reveal of content and flash the
  * status on a fast open (issue 1575), so the chunk is waited for here instead, and a loaded component renders at once.
+ *
+ * While the window is open and its chunk is still on its way, Escape calls `onOpenChange(false)` (US-QS-07, DS-40), from
+ * the first moment of the wait, so also before the status shows. Once the component is there, Radix handles Escape
+ * alone, so the window is closed once. Nothing else is stopped: the listener neither prevents nor stops the event.
  */
-export function useLoadingWindow<C extends AnyComponent>(page: LazyPage<C>, open: boolean) {
+export function useLoadingWindow<C extends AnyComponent>(
+  page: LazyPage<C>,
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+) {
   const [component, setComponent] = useState<C | null>(page.loaded);
   const [failure, setFailure] = useState<{ cause: unknown } | null>(null);
   const [delayed, setDelayed] = useState(false);
+
+  useEffect(() => {
+    if (!open || component) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) onOpenChange(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, component, onOpenChange]);
 
   useEffect(() => {
     if (component) return;

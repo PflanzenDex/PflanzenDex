@@ -122,7 +122,7 @@ function SheetLoading() {
  * it waits under the same fallback instead of reaching the route's boundary.
  */
 const SheetWindow = React.forwardRef<HTMLDivElement, SheetPanelProps>((props, ref) => {
-  const { Component, waiting } = useLoadingWindow(SheetPanel, props.open);
+  const { Component, waiting } = useLoadingWindow(SheetPanel, props.open, props.onOpenChange);
   if (!Component) return waiting ? <SheetLoading /> : null;
   return (
     <React.Suspense fallback={props.open ? <SheetLoading /> : null}>

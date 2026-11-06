@@ -447,3 +447,109 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => {
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 a %s whose chunk is pending closes on Escape before the status shows, and nothing opens when the chunk arrives",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      expect(screen.queryByRole("status")).toBeNull();
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("status")).toBeNull();
+      release();
+      await waitFor(() => expect(chunk.loaded).toBe(1));
+      await act(async () => undefined);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 a %s whose chunk is pending closes on Escape while the status shows, and the status goes",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      expect((await screen.findByRole("status")).textContent).toBe("Fenster wird geladen …");
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("status")).toBeNull();
+      release();
+      await waitFor(() => expect(chunk.loaded).toBe(1));
+      await act(async () => undefined);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 after Escape on a pending %s, a later open works and opens the window",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      await userEvent.keyboard("{Escape}");
+      release();
+      await waitFor(() => expect(chunk.loaded).toBe(1));
+      await act(async () => undefined);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      await userEvent.click(trigger);
+      expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+      expect(screen.queryByRole("status")).toBeNull();
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 with the real %s open, Escape calls onOpenChange once, not twice",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const onOpenChange = vi.fn();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" open onOpenChange={onOpenChange}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
+      await userEvent.keyboard("{Escape}");
+      expect(onOpenChange).toHaveBeenCalledTimes(1);
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    },
+  );
+});

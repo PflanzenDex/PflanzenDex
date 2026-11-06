@@ -42,7 +42,7 @@ function DialogLoading() {
  * waits under the same fallback instead of reaching the route's boundary.
  */
 function DialogWindow(props: DialogModalProps) {
-  const { Component, waiting } = useLoadingWindow(DialogModal, props.open);
+  const { Component, waiting } = useLoadingWindow(DialogModal, props.open, props.onOpenChange);
   if (!Component) return waiting ? <DialogLoading /> : null;
   return (
     <React.Suspense fallback={props.open ? <DialogLoading /> : null}>
