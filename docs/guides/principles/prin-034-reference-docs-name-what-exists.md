@@ -19,7 +19,7 @@ RF-1: API routes not named as `METHOD /path` in `docs/guides/reference/app.md`. 
 
 ## Gate
 
-`make gates` (step `npm run reference`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`) and `ci-status` requires it. Locally: `make reference-check`.
+`make gates` (step `npm run reference`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`); a pull request that changes only documentation runs it in the job `docs-gates` (`make ci-docs`) instead, and `ci-status` requires both. Locally: `make reference-check`.
 
 ## Evidence
 
