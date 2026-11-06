@@ -231,6 +231,17 @@ test("US-QG-07: the display tolerances (one-screen baseline and judge, a11y find
   }
 });
 
+test("US-QG-07: the news logic behind the changelog check is a gate file; its types, its tests and the news display beside it are not", () => {
+  assert.equal(isGateFile("app/packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs"), true);
+  for (const f of [
+    "app/packages/web/src/app/destinations/account-area/whats-new/news-lines.d.mts",
+    "app/packages/web/src/app/destinations/account-area/whats-new/news-lines.test.ts",
+    "app/packages/web/src/app/destinations/account-area/whats-new/whats-new.ts",
+  ]) {
+    assert.equal(isGateFile(f), false, f);
+  }
+});
+
 test("US-QG-07: skipping hooks, merging and pushing to protected branches are denied", () => {
   for (const cmd of [
     "git commit --no-verify -m x",
