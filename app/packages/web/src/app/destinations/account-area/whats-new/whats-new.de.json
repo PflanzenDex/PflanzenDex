@@ -1,0 +1,13 @@
+{
+  "section.title": "Neu in PflanzenDéx",
+  "section.loading": "Neuigkeiten werden geladen …",
+  "version": "Version {version}",
+  "version.unknown": "unbekannt",
+  "empty.title": "Noch nichts Neues",
+  "empty.description": "Sobald eine neue Version erscheint, steht hier, was sich geändert hat.",
+  "empty.action": "Zu Heute",
+  "hint.one": "Neu in Version {version}: 1 Neuerung",
+  "hint.many": "Neu in Version {version}: {count} Neuerungen",
+  "hint.link": "Neuerungen ansehen",
+  "hint.dismiss": "Hinweis ausblenden"
+}

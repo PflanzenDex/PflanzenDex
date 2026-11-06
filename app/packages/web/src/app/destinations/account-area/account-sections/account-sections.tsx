@@ -16,6 +16,9 @@ import {
   MANAGE_ADDRESS,
   type AccountSection,
 } from "@/shared/patterns/navigation/navigation/navigation";
+// "Neu in PflanzenDéx" (US-DEV-06) is a section like the others: static here, in the lazy Konto area. A dynamic import
+// would move shared modules into the first load (+1.5 kB gzip measured), so it stays in this chunk.
+import { WhatsNewPage } from "../whats-new/whats-new-page/whats-new-page";
 
 type Token = () => Promise<string | undefined>;
 /** Renders the locked rows of some functions inside a section (US-ONB-05); wired by the app. */
@@ -94,6 +97,8 @@ export function SectionContent({ section, ...p }: SectionProps & { section: Acco
       return <MeasuredView />;
     case "functions":
       return <>{p.overview}</>;
+    case "news":
+      return <WhatsNewPage />;
     case "data":
       return <PrivacySection api={p.api} token={p.token} />;
   }
