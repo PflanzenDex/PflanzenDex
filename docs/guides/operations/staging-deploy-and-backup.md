@@ -178,7 +178,7 @@ How it fits together:
    | `TRUSTED_PROXIES`                                                                           | the upstream proxy's address(es) as CIDR, space separated, e.g. `192.0.2.10/32`                                |
    | `COMPOSE_FILE`                                                                              | `docker-compose.yml:docker-compose.test.yml` (adds Mailpit; `deploy.sh`, `backup.sh` and `restore.sh` read it) |
 
-   `POSTGRES_USER`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER` have defaults in the template; `SMTP_*`, `KEYCLOAK_DB_NAME`, `KEYCLOAK_DB_USER`, `KEYCLOAK_JAVA_HEAP`, `HTTP_PORT`, `BACKUP_*` are optional (all listed in `.env.example`). The file is in `.gitignore`; no secret goes into the repo (QG-S1). Never write real hostnames or addresses into the repo either: it is public.
+   `POSTGRES_USER`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER` have defaults in the template; `SMTP_*`, `KEYCLOAK_DB_NAME`, `KEYCLOAK_DB_USER`, `KEYCLOAK_JAVA_HEAP`, `HTTP_PORT`, `BACKUP_*` are optional (all listed in `.env.example`). `SMOKE_USER` and `SMOKE_PASSWORD` (the deploy's sign-in check, `release-and-rollback.md`, "Smoke test") are optional too and are written on the host only, by `keycloak/smoke-user.sh`. The file is in `.gitignore`; no secret goes into the repo (QG-S1). Never write real hostnames or addresses into the repo either: it is public.
 
 4. Schedule backups, e.g. `0 3 * * * cd /path/to/repo && make backup`.
 
@@ -210,7 +210,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Deploy and update
 
-`app/config/deploy/scripts/deploy.sh origin/dev` (backup first, migrations through the one-shot `migrate`, rollback to the previous ref if the api or Keycloak does not become healthy or the smoke test fails). With `CADDY_SCHEME=http://` the smoke test calls `http://127.0.0.1:$HTTP_PORT` with the `Host` header of `APP_HOST`; set `SMOKE_URL` to test through the public address instead. A Keycloak image update is a change of the tag in `docker-compose.yml` (keep it equal to `app/config/dev/compose.yaml`).
+`app/config/deploy/scripts/deploy.sh origin/dev` (backup first, migrations through the one-shot `migrate`, rollback to the previous ref if the api or Keycloak does not become healthy or the smoke test fails). With `CADDY_SCHEME=http://` the smoke test calls `http://127.0.0.1:$HTTP_PORT` with the `Host` header of `APP_HOST`; set `SMOKE_URL` to test through the public address instead. With `SMOKE_USER` and `SMOKE_PASSWORD` set, the smoke test also signs in as the tester and opens Heute (#1404; without them the output says the sign-in check is skipped). A Keycloak image update is a change of the tag in `docker-compose.yml` (keep it equal to `app/config/dev/compose.yaml`).
 
 ### Backup and restore
 

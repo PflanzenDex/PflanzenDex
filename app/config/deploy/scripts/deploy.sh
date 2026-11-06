@@ -85,19 +85,25 @@ deploy_ref() {
 # Smoke target: SMOKE_URL, else the proxy on this host. Behind a TLS-terminating proxy (CADDY_SCHEME=http://) the
 # plain HTTP port answers with the right Host header; otherwise Caddy's HTTPS port (local CA needs -k for localhost).
 # Sets SMOKE_BASE and exports SMOKE_CURL_OPTS in the current shell: called inside $(...) the export would be lost
-# and smoke.sh would ask the proxy without the Host header.
+# and smoke.sh would ask the proxy without the Host header. The sign-in service (#1404) is reached the same way:
+# SMOKE_AUTH_URL and SMOKE_AUTH_CURL_OPTS. With SMOKE_URL set, smoke.sh takes the public AUTH_URL.
+# The tester's SMOKE_USER and SMOKE_PASSWORD come from .env (sourced above and exported by `set -a`).
 smoke_target() {
   if [ -n "${SMOKE_URL:-}" ]; then SMOKE_BASE="$SMOKE_URL"; return; fi
   set -a; . ./.env; set +a
   if [ "${CADDY_SCHEME:-}" = "http://" ]; then
     export SMOKE_CURL_OPTS="${SMOKE_CURL_OPTS:--H Host:${APP_HOST}}"
     SMOKE_BASE="http://127.0.0.1:${HTTP_PORT:-80}"
+    export SMOKE_AUTH_CURL_OPTS="${SMOKE_AUTH_CURL_OPTS:--H Host:${AUTH_HOST}}"
+    export SMOKE_AUTH_URL="http://127.0.0.1:${HTTP_PORT:-80}"
     return
   fi
   local port=""
   if [ "${HTTPS_PORT:-443}" != 443 ]; then port=":${HTTPS_PORT}"; fi
   case "$APP_HOST" in localhost | *.localhost) export SMOKE_CURL_OPTS="${SMOKE_CURL_OPTS:--k --resolve ${APP_HOST}:${HTTPS_PORT:-443}:127.0.0.1}" ;; esac
   SMOKE_BASE="https://${APP_HOST}${port}"
+  export SMOKE_AUTH_URL="https://${AUTH_HOST}${port}"
+  case "$AUTH_HOST" in localhost | *.localhost) export SMOKE_AUTH_CURL_OPTS="${SMOKE_AUTH_CURL_OPTS:--k --resolve ${AUTH_HOST}:${HTTPS_PORT:-443}:127.0.0.1}" ;; esac
 }
 
 main() {
