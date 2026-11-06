@@ -57,3 +57,21 @@ export function sectionOf(pathname: string): AccountSection | "unknown" | undefi
 
 /** The id of the row of a section in the index: the target of the focus when Back returns to the index. */
 export const rowId = (key: AccountSection) => `konto-row-${ACCOUNT_SECTIONS[key]}`;
+
+/**
+ * Whether a section is off for the keeper, so its address leads to the index (US-QS-17): AI access without the AI
+ * function, "Erfolge" while the keeper's switch of the achievements is off (US-ONB-09), "Was die App kann" without its
+ * overview.
+ */
+export function isOff(
+  open: AccountSection | undefined,
+  ai: boolean | undefined,
+  achievements: boolean,
+  hasOverview: boolean,
+): boolean {
+  return (
+    (open === "aiClients" && !ai) ||
+    (open === "achievements" && !achievements) ||
+    (open === "functions" && !hasOverview)
+  );
+}
