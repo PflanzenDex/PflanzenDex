@@ -94,7 +94,9 @@ Taken in the production-build run at the states of check 1 to 4 (dialog at 1440 
 | `qs-07-dialog-loading/03-after-close-desktop.png` | after Escape, no focus on any control |
 | `qs-07-dialog-loading/03-after-close-mobile.png` | after Escape, focus back on the trigger |
 
-## Findings (tickets to file)
+## Findings
+
+Tickets: F1 and F6 are #1573, F2 and F3 are #1574, F4 and F5 are #1575, F7 is #1576.
 
 **F1. Desktop: focus is lost when the overview is closed with Escape (US-QS-07, DS-40).** Steps: sign in, open "Konto", open "Was die App kann". Click "Tastenkürzel anzeigen" (the icon in the section header) or reach it with Tab and press Enter. Press Escape. Observed: focus on `body`. Expected: focus on the button. Reproduced with mouse and keyboard, production build and dev. The button is the same node and still in the DOM afterwards, so it was not replaced. Not caused by StrictMode: the production build shows the same result. The overview passes no `trigger`, so `DialogModal` keeps Radix's default focus return (code reading); the cause is not isolated further. The phone sheet returns focus correctly.
 
