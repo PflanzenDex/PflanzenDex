@@ -15,7 +15,14 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { copyTree, reuseDeps, slug, sourcesFor, worktreeEnv } from "./worktree-env.mjs";
+import {
+  copyTree,
+  installFolders,
+  reuseDeps,
+  slug,
+  sourcesFor,
+  worktreeEnv,
+} from "./worktree-env.mjs";
 
 test("US-DEV-08: the same branch yields the same values", () => {
   assert.deepEqual(worktreeEnv("feat/a"), worktreeEnv("feat/a"));
@@ -84,6 +91,37 @@ function app(dir, { lock = '{"lockfileVersion":3}\n', installed = true, stamp = 
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, stdio: "pipe" }).toString();
 }
+
+const NESTED_LOCK = `${JSON.stringify({
+  lockfileVersion: 3,
+  packages: {
+    "": {},
+    "node_modules/left-pad": {},
+    "packages/web": {},
+    "packages/web/node_modules/@hookform/resolvers": {},
+  },
+})}\n`;
+
+test("US-DEV-08: the copy holds the node_modules of a workspace too (issue 1525)", async () => {
+  const r = scratch();
+  const src = app(path.join(r, "src"), { lock: NESTED_LOCK });
+  const nested = path.join(src, "packages", "web", "node_modules", "@hookform", "resolvers");
+  mkdirSync(nested, { recursive: true });
+  writeFileSync(path.join(nested, "index.js"), "module.exports = 2;\n");
+  const dst = app(path.join(r, "dst"), { lock: NESTED_LOCK, installed: false });
+  mkdirSync(path.join(dst, "packages", "web"), { recursive: true });
+  assert.deepEqual(installFolders(src), ["node_modules", "packages/web/node_modules"]);
+  await copyTree(src, dst);
+  const copied = path.join("packages", "web", "node_modules", "@hookform", "resolvers", "index.js");
+  assert.equal(readFileSync(path.join(dst, copied), "utf8"), "module.exports = 2;\n");
+});
+
+test("US-DEV-08: a stamped install without its workspace folder is no source (issue 1525)", () => {
+  const r = scratch();
+  const src = app(path.join(r, "src"), { lock: NESTED_LOCK });
+  const dst = app(path.join(r, "dst"), { lock: NESTED_LOCK, installed: false });
+  assert.deepEqual(sourcesFor(dst, [src]), []);
+});
 
 test("US-DEV-08: an install with the same lock file is a source, and its copy shares no file with it", async () => {
   const r = scratch();
