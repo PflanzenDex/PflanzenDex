@@ -1043,6 +1043,52 @@
     "title": "Pflegeprofil"
   },
   {
+    "id": "collection-plant-notes",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Überblick"
+      },
+      {
+        "role": "button",
+        "re": "^Notizen"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.tsx",
+    "title": "Notizen"
+  },
+  {
+    "id": "collection-plant-notes-form",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Überblick"
+      },
+      {
+        "role": "button",
+        "re": "^Notizen"
+      },
+      {
+        "role": "button",
+        "re": "^Notiz (schreiben|bearbeiten)$"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.tsx",
+    "title": "Notizen"
+  },
+  {
     "id": "collection-plants-course",
     "account": "test2",
     "path": "/collection?view=plants",

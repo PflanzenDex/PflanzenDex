@@ -170,3 +170,50 @@ describe("NFR-12 US-ACC-04 the photos in the export are the stored WebP files", 
     expect((await sharp(bytes).metadata()).format).toBe("webp");
   });
 });
+
+// US-BES-18: the private notes are part of the owner's export like every other column of the keeper's rows (US-ACC-04).
+describe("US-BES-18 the notes are in the owner's export (US-ACC-04)", () => {
+  it("US-BES-18 a specimen with notes appears in data.json of the owner's export with its notes", async () => {
+    const note = "Vorsicht, Zugluft am Fenster – nur für den Export";
+    const write = (path: string, body: unknown) =>
+      app.request(path, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer valid:${subA}`,
+          "content-type": "application/json",
+          "idempotency-key": randomUUID(),
+        },
+        body: JSON.stringify(body),
+      });
+    // Latin names take letters only, so the tag is letters too (as in the test above).
+    const tag = randomUUID()
+      .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
+      .replace(/-/g, "")
+      .slice(0, 10);
+    const species = await write("/species", {
+      latinName: `Notizexport${tag} vera`,
+      germanName: "Notizexport",
+      difficulty: 2,
+      standardLevel: 3,
+      lightDemandLux: 40000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+    });
+    expect(species.status).toBe(201);
+    const speciesId = ((await species.json()) as { id: string }).id;
+    const created = await write("/specimens", { speciesId, timeZone: "Europe/Berlin" });
+    expect(created.status).toBe(201);
+    const id = ((await created.json()) as { id: string }).id;
+    expect((await write(`/specimens/${id}/notes`, { notes: note })).status).toBe(200);
+
+    const res = await get(subA, "/account/export");
+    expect(res.status).toBe(200);
+    const zip = Buffer.from(await res.arrayBuffer());
+    const json = zipEntries(zip).get("data.json")?.toString("utf8") ?? "null";
+    const doc = JSON.parse(json) as {
+      tables: { specimen: { id: string; notes: string | null }[] };
+    };
+    expect(doc.tables.specimen.find((z) => z.id === id)?.notes).toBe(note);
+  });
+});

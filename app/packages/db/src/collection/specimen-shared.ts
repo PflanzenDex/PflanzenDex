@@ -118,7 +118,15 @@ export interface NewSpecimen {
   readonly lightZoneId?: string | null;
   readonly caughtAt: string | null;
   readonly status?: "plant" | "cutting";
+  /** Private notes (US-BES-18); the swap handover passes none, so a note never moves to the recipient. */
+  readonly notes?: string | null;
 }
+
+/** What `specimen.create` writes for a new specimen (US-BES-02, US-BES-18): the same fields as `NewSpecimen`. */
+export type SpecimenValues = Pick<
+  NewSpecimen,
+  "speciesId" | "name" | "marker" | "locationId" | "caughtAt" | "status" | "lightZoneId" | "notes"
+>;
 
 /**
  * Creates a specimen inside the open transaction of `c`, as the account the connection is set to (ADR 0012: the
@@ -141,8 +149,8 @@ export async function createSpecimenOn(
     if (!done.rowCount) throw new UnknownSpecimen();
   }
   const r = await c.query<SpecimenRow>(
-    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id)
-     values ($1, $2, $3, $4, $5, $6, $7, $8) returning ${COLUMNS}`,
+    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id, notes)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning ${COLUMNS}`,
     [
       userId,
       w.speciesId,
@@ -152,6 +160,7 @@ export async function createSpecimenOn(
       w.caughtAt,
       w.status ?? "plant",
       w.lightZoneId ?? null,
+      w.notes ?? null,
     ],
   );
   await ensureSpeciesVisible(c, w.speciesId);

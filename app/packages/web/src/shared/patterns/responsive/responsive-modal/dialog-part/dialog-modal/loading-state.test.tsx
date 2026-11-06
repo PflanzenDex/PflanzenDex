@@ -446,4 +446,135 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     expect(chunk.attempts).toBe(failedAttempts + 1);
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("US-QS-07 · DS-23 the sheet's failed-chunk view is a centred panel like the dialog's, not anchored to the bottom edge", async () => {
+    const ResponsiveModal = await freshResponsiveModal();
+    setViewportWidth(360);
+    chunk.fail = true;
+    render(
+      <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+        <button>Speichern</button>
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const cls = (await screen.findByRole("alert")).className;
+    for (const token of [
+      "fixed",
+      "left-1/2",
+      "top-1/2",
+      "-translate-x-1/2",
+      "-translate-y-1/2",
+      "rounded-card",
+      "border-destructive",
+    ])
+      expect(cls).toContain(token);
+    expect(cls).not.toContain("bottom-0");
+    expect(cls).not.toContain("inset-x-0");
+  });
+});
+
+describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => {
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 a %s whose chunk is pending closes on Escape before the status shows, and nothing opens when the chunk arrives",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      expect(screen.queryByRole("status")).toBeNull();
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("status")).toBeNull();
+      release();
+      await waitFor(() => expect(chunk.loaded).toBe(1));
+      await act(async () => undefined);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 a %s whose chunk is pending closes on Escape while the status shows, and the status goes",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      expect((await screen.findByRole("status")).textContent).toBe("Fenster wird geladen …");
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("status")).toBeNull();
+      release();
+      await waitFor(() => expect(chunk.loaded).toBe(1));
+      await act(async () => undefined);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 after Escape on a pending %s, a later open works and opens the window",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      await userEvent.keyboard("{Escape}");
+      release();
+      await waitFor(() => expect(chunk.loaded).toBe(1));
+      await act(async () => undefined);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      await userEvent.click(trigger);
+      expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+      expect(screen.queryByRole("status")).toBeNull();
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-40 with the real %s open, Escape calls onOpenChange once, not twice",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const onOpenChange = vi.fn();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" open onOpenChange={onOpenChange}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
+      await userEvent.keyboard("{Escape}");
+      expect(onOpenChange).toHaveBeenCalledTimes(1);
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    },
+  );
 });

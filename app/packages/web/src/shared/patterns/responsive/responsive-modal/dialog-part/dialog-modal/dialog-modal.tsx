@@ -8,8 +8,8 @@ export type DialogModalProps = {
   description?: string;
   closeLabel?: string;
   onOpenAutoFocus?: (event: Event) => void;
-  /** Where the focus goes when the dialog closes: the trigger, which `ResponsiveModal` renders outside this chunk. */
-  returnFocusTo?: React.RefObject<HTMLElement | null>;
+  /** Where the focus goes when the dialog closes; `DialogPart` gives the handler (Radix would focus a trigger that is not rendered here, issue 1247). */
+  onCloseAutoFocus?: (event: Event) => void;
   children: React.ReactNode;
 };
 
@@ -24,7 +24,7 @@ export function DialogModal({
   description,
   closeLabel,
   onOpenAutoFocus,
-  returnFocusTo,
+  onCloseAutoFocus,
   children,
 }: DialogModalProps) {
   return (
@@ -34,13 +34,7 @@ export function DialogModal({
         {...(description ? { description } : {})}
         {...(closeLabel ? { closeLabel } : {})}
         {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
-        onCloseAutoFocus={(event: Event) => {
-          // Radix would focus its own trigger, which is not rendered here; the focus goes to the opener instead (issue 1247).
-          const opener = returnFocusTo?.current;
-          if (!opener) return;
-          event.preventDefault();
-          opener.focus();
-        }}
+        {...(onCloseAutoFocus ? { onCloseAutoFocus } : {})}
       >
         {children}
       </DialogContent>

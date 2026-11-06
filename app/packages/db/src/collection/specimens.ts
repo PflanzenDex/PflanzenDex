@@ -12,14 +12,11 @@ import {
   setCaughtAt,
   takenBy,
   type SpecimenRow,
+  type SpecimenValues,
 } from "./specimen-shared.ts";
-import { setLightZone, setLocations, zoneUsers } from "./specimen-locations.ts";
+import { setLightZone, setLocations, zoneUsers } from "./specimen/specimen-locations.ts";
 
-export type { SpecimenRow };
-export type SpecimenValues = Pick<
-  SpecimenRow,
-  "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
-> & { readonly status?: "plant" | "cutting"; readonly lightZoneId?: string | null };
+export type { SpecimenRow, SpecimenValues };
 
 export interface MarkerAssignment {
   readonly specimenId: string;

@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { collectionReadSourceFor } from "../ai-reads/read-source";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -300,7 +301,8 @@ describe("US-BES-11 correct the catch date via the API", () => {
     const before = (await call(subA, "GET", `/specimens/${id}`)).body;
     const r = await correct(subA, id, { catchDate: "2019-05-17" });
     expect(r.status).toBe(200);
-    expect(r.body).toEqual({ ...before, caughtAt: "2019-05-17" });
+    // The detail read carries the private notes (US-BES-18); the write answer does not, so they are left out here.
+    expect(r.body).toEqual({ ...before, caughtAt: "2019-05-17", notes: undefined });
     expect((await call(subA, "GET", `/specimens/${id}`)).body["caughtAt"]).toBe("2019-05-17");
   });
 
@@ -366,5 +368,141 @@ describe("US-BES-11 correct the catch date via the API", () => {
     const r = await correct(subA, id, { catchDate: "2020-01-01" }, null);
     expect(r.status).toBe(400);
     expect((await call(subA, "GET", `/specimens/${id}`)).body["caughtAt"]).toBe("2026-10-03");
+  });
+});
+
+// US-BES-18: the private notes of a specimen through the API (real PostgreSQL, `make db-up`).
+const SECRET = "Nur für Anna: Ableger aus dem Garten von Oma";
+let ownCounter = 0;
+/** A specimen of the account with its own (private) species proposal, so that the test needs no review. */
+const ownSpecimen = async (sub: string, name = "Notiz") => {
+  ownCounter += 1;
+  const latin = `${name}${run}${"abcdefghijklmnop"[ownCounter] ?? "z"} notes`;
+  const species = await newSpecies(sub, latin, `${name}${run}${ownCounter}`);
+  return (await create(sub, { speciesId: species })).body["id"] as string;
+};
+const notesPath = (id: string) => `/specimens/${id}/notes`;
+
+describe("US-BES-18 write the notes of an own specimen (P-03, Idempotency-Key)", () => {
+  it("POST /specimens/:id/notes saves the trimmed text and answers the id and the notes", async () => {
+    const id = await ownSpecimen(subA);
+    const r = await call(subA, "POST", notesPath(id), { notes: "  Nur morgens gießen.  " });
+    expect(r).toMatchObject({ status: 200, body: { id, notes: "Nur morgens gießen." } });
+  });
+
+  it("an empty text clears the notes: 200 with notes null", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: "Erst etwas" });
+    const r = await call(subA, "POST", notesPath(id), { notes: "   " });
+    expect(r).toMatchObject({ status: 200, body: { id, notes: null } });
+  });
+
+  it("a text over 2000 characters: 400 input.invalid with the detail on the field notes, nothing changes", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: "Bleibt" });
+    const r = await call(subA, "POST", notesPath(id), { notes: "x".repeat(2001) });
+    expect(r).toMatchObject({
+      status: 400,
+      body: { error: { code: "input.invalid", details: [{ field: "notes" }] } },
+    });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBe("Bleibt");
+  });
+
+  it("without an Idempotency-Key the write is refused and nothing changes (US-QS-03)", async () => {
+    const id = await ownSpecimen(subA);
+    const r = await call(subA, "POST", notesPath(id), { notes: "Ohne Schlüssel" }, null);
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "idempotency.key_missing" } } });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBeNull();
+  });
+
+  it("the same Idempotency-Key with another text is a key conflict: nothing is written twice", async () => {
+    const id = await ownSpecimen(subA);
+    const key = randomUUID();
+    expect((await call(subA, "POST", notesPath(id), { notes: "Erste" }, key)).status).toBe(200);
+    const second = await call(subA, "POST", notesPath(id), { notes: "Zweite" }, key);
+    expect(second).toMatchObject({
+      status: 409,
+      body: { error: { code: "idempotency.key_conflict" } },
+    });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBe("Erste");
+  });
+
+  it("without a token: 401", async () => {
+    const id = await ownSpecimen(subA);
+    expect((await call(null, "POST", notesPath(id), { notes: "Kein Konto" })).status).toBe(401);
+  });
+
+  it("a foreign specimen answers 404 specimen.not_found (P-04) and the owner's notes stay", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: SECRET });
+    const r = await call(subB, "POST", notesPath(id), { notes: "Ben war hier" });
+    expect(r).toMatchObject({ status: 404, body: { error: { code: "specimen.not_found" } } });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBe(SECRET);
+  });
+
+  it("an unknown specimen answers 404 specimen.not_found", async () => {
+    const r = await call(subA, "POST", notesPath("00000000-0000-4000-8000-0000000000aa"), {
+      notes: "Ins Leere",
+    });
+    expect(r).toMatchObject({ status: 404, body: { error: { code: "specimen.not_found" } } });
+  });
+
+  it("an archived specimen answers 409 specimen.archived and keeps its notes (US-BES-07)", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: "Vor dem Archiv" });
+    await call(subA, "POST", `/specimens/${id}/archive`, {
+      timeZone: "Europe/Berlin",
+      reason: "eingegangen",
+    });
+    const r = await call(subA, "POST", notesPath(id), { notes: "Danach" });
+    expect(r).toMatchObject({ status: 409, body: { error: { code: "specimen.archived" } } });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBe("Vor dem Archiv");
+  });
+});
+
+describe("US-BES-18 read the notes: the keeper's own detail only (P-04, P-05)", () => {
+  it("GET /specimens/:id returns the notes to the keeper, null when there are none", async () => {
+    const id = await ownSpecimen(subA);
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBeNull();
+    await call(subA, "POST", notesPath(id), { notes: SECRET });
+    const r = await call(subA, "GET", `/specimens/${id}`);
+    expect(r).toMatchObject({ status: 200, body: { id, notes: SECRET } });
+  });
+
+  it("GET /specimens/:id of a foreign specimen answers 404 (P-04)", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: SECRET });
+    expect(await call(subB, "GET", `/specimens/${id}`)).toMatchObject({
+      status: 404,
+      body: { error: { code: "specimen.not_found" } },
+    });
+  });
+
+  it("the list and the cards carry no notes: the card keeps its shape (FR-BES-23)", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: SECRET });
+    const list = await call(subA, "GET", "/specimens");
+    const listed = (list.body["specimens"] as Record<string, unknown>[]).find(
+      (z) => z["id"] === id,
+    );
+    expect(listed).toBeDefined();
+    expect(listed).not.toHaveProperty("notes");
+    const cards = await call(subA, "GET", "/specimens/cards?timeZone=Europe/Berlin");
+    const card = (cards.body["cards"] as Record<string, unknown>[]).find((z) => z["id"] === id);
+    expect(card).toBeDefined();
+    expect(card).not.toHaveProperty("notes");
+    expect(JSON.stringify(cards.body)).not.toContain(SECRET);
+  });
+
+  it("the AI read of a specimen carries no notes (US-BES-18; AI reads of free text come later, FR-KI-07)", async () => {
+    const id = await ownSpecimen(subA);
+    await call(subA, "POST", notesPath(id), { notes: SECRET });
+    const accountId = (
+      await admin.query<{ id: string }>("select id from account where subject = $1", [subA])
+    ).rows[0]?.id as string;
+    const read = await collectionReadSourceFor(pool).specimen(accountId, id);
+    expect(read).not.toBeNull();
+    expect(read).not.toHaveProperty("notes");
+    expect(JSON.stringify(read)).not.toContain(SECRET);
   });
 });

@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProposalForm } from "../../../catalog/proposal/proposal-form/proposal-form";
 import { PlantOverview } from "../../../collection/plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
@@ -30,13 +31,15 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
 const ACCESS = { api: "http://api", token: async () => "tok" };
 const list = (cards: SpecimenCard[]) =>
   render(
-    <ul>
-      {cards.map((c) => (
-        <li key={c.id}>
-          <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
-        </li>
-      ))}
-    </ul>,
+    <MemoryRouter>
+      <ul>
+        {cards.map((c) => (
+          <li key={c.id}>
+            <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
+          </li>
+        ))}
+      </ul>
+    </MemoryRouter>,
   );
 
 describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)", () => {

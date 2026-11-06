@@ -17,7 +17,7 @@ import { reminderChannelFromEnv, remindersRuntime } from "./monitoring";
 import { reminderOccasionsFor } from "./today";
 import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
-import { WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
+import { REDEEM_LIMIT, WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
 import { deleteAccountHandlers, NO_STORE } from "./privacy";
 import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
@@ -86,6 +86,8 @@ const app = createApp({
   pool,
   // Basic per-client limit on writes (TE-03, #762).
   writeLimit: WRITE_LIMIT,
+  // Redeeming invitation codes per subject and address (US-ACC-05, issue 305).
+  redeemLimit: REDEEM_LIMIT,
   webOrigin: process.env["WEB_ORIGIN"] ?? "http://localhost:5173",
 });
 

@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
+import { REDEEM_LIMIT } from "../kernel";
 
 // US-ACC-05 over HTTP with real PostgreSQL (`make db-up`). The mode "invitation only" is forced per app instance
 // (`invitationOnly`), never switched in the shared database: other test files sign in new subjects in parallel.
@@ -383,5 +384,82 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
     const r = await call(open, subOperator, "POST", "/operator/invitations", {});
     expect(r.status).toBe(201);
     expect(r.headers?.get("cache-control")).toBe("no-store");
+  });
+});
+
+describe("US-ACC-05 · redeeming a code is limited per subject and address (issue 305)", () => {
+  const WRONG = "AAAA-AAAA-AAAA-AAAA-AAAA-AAAA";
+  const RATE_LIMITED =
+    "Zu viele Versuche in kurzer Zeit. Warte eine Minute und versuche es dann erneut.";
+  // The clock is injected, so the window passes without waiting; the numbers are REDEEM_LIMIT (starting values).
+  const limited = (clock: { t: number }) =>
+    createApp({
+      reviewer: verifier,
+      pool,
+      invitationOnly: true,
+      redeemLimit: { ...REDEEM_LIMIT, now: () => clock.t },
+    });
+  const redeem = async (
+    app: ReturnType<typeof createApp>,
+    token: string,
+    code: unknown,
+    forwardedFor?: string,
+  ): Promise<Reply> => {
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    headers["authorization"] = `Bearer ${token}`;
+    if (forwardedFor) headers["x-forwarded-for"] = forwardedFor;
+    const res = await app.request("/registration/invitation", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ code }),
+    });
+    return { status: res.status, body: (await res.json()) as Reply["body"], headers: res.headers };
+  };
+
+  it("US-ACC-05 after five attempts the sixth is refused with 429 and does not use up the code", async () => {
+    const clock = { t: 0 };
+    const app = limited(clock);
+    const code = await newCode();
+    const sub = fresh();
+    extra.push(sub);
+    for (let i = 0; i < 5; i++)
+      expect((await redeem(app, `valid:${sub}`, WRONG)).body["error"].code).toBe(
+        "invitation.invalid",
+      );
+    clock.t = 15_000;
+    const refused = await redeem(app, `valid:${sub}`, code);
+    expect(refused.status).toBe(429);
+    expect(refused.headers?.get("retry-after")).toBe("45");
+    expect(refused.body).toEqual({ error: { code: "request.rate_limited", text: RATE_LIMITED } });
+    clock.t = 60_000;
+    expect(await redeem(app, `valid:${sub}`, code)).toMatchObject({
+      status: 200,
+      body: { registered: true },
+    });
+  });
+
+  it("US-ACC-05 a forged token answers 401 and uses up no attempt of its address", async () => {
+    const clock = { t: 0 };
+    const app = limited(clock);
+    for (let i = 0; i < 30; i++)
+      expect((await redeem(app, "forged:someone", WRONG, "10.1.1.1")).status).toBe(401);
+    for (let i = 0; i < 20; i++) {
+      const sub = fresh();
+      extra.push(sub);
+      expect((await redeem(app, `valid:${sub}`, WRONG, "10.1.1.1")).status).toBe(403);
+    }
+    const last = fresh();
+    extra.push(last);
+    expect((await redeem(app, `valid:${last}`, WRONG, "10.1.1.1")).status).toBe(429);
+  });
+
+  it("US-ACC-05 without the limit option nothing is limited", async () => {
+    const free = createApp({ reviewer: verifier, pool, invitationOnly: true });
+    const sub = fresh();
+    extra.push(sub);
+    for (let i = 0; i < 8; i++)
+      expect((await redeem(free, `valid:${sub}`, WRONG)).body["error"].code).toBe(
+        "invitation.invalid",
+      );
   });
 });

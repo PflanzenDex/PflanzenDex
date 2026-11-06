@@ -12,6 +12,7 @@ import { LocationPostgres } from "../light/index.ts";
 import { createFixtureSpecimen } from "../fixtures.ts";
 import {
   SpecimenPostgres,
+  SpecimenNotesPostgres,
   specimenCounts,
   specimenAnyActive,
   specimenPage,
@@ -768,5 +769,107 @@ describe("US-BES-06 · NFR-12 · FR-BES-23 paged card list, summary and treatmen
       expect.objectContaining({ name: "Meine Pflanze" }),
     ]);
     expect(await page(mine, { location: theirPlace.id })).toMatchObject({ total: 0, rows: [] });
+  });
+});
+
+// US-BES-18: the private notes of a specimen (real PostgreSQL, `make db-up`).
+const notesStore = () => new SpecimenNotesPostgres(pool);
+const noteSpecimen = async (account: string, name: string, notes?: string | null) => {
+  const r = await specimens.create(account, {
+    speciesId: species,
+    name,
+    marker: null,
+    locationId: null,
+    caughtAt: "2026-10-03",
+    ...(notes === undefined ? {} : { notes }),
+  });
+  if (typeof r === "string") throw new Error(r);
+  return r;
+};
+
+/** Writes the column in plain SQL as the account, to test the database's own rule. */
+const writeNotesColumn = (account: string, id: string, text: string | null) =>
+  withAccount(pool, account, (c) =>
+    c.query("update specimen set notes = $2 where id = $1", [id, text]),
+  );
+
+describe("US-BES-18 the notes are stored with the specimen", () => {
+  it("a note given at creation is kept and read back by the keeper", async () => {
+    const r = await noteSpecimen(anna, "Notiz eins", "Vorsicht, Zugluft am Fenster");
+    expect(await notesStore().findNotes(anna, r.id)).toEqual({
+      id: r.id,
+      notes: "Vorsicht, Zugluft am Fenster",
+    });
+  });
+
+  it("a specimen without a note reads null, not an empty text", async () => {
+    const r = await noteSpecimen(anna, "Notiz ohne");
+    expect(await notesStore().findNotes(anna, r.id)).toEqual({ id: r.id, notes: null });
+  });
+
+  it("setNotes replaces the text and clears it with null", async () => {
+    const r = await noteSpecimen(anna, "Notiz wechsel");
+    expect(await notesStore().setNotes(anna, r.id, "Erst so")).toEqual({
+      id: r.id,
+      notes: "Erst so",
+    });
+    expect(await notesStore().setNotes(anna, r.id, "Dann so")).toEqual({
+      id: r.id,
+      notes: "Dann so",
+    });
+    expect(await notesStore().setNotes(anna, r.id, null)).toEqual({ id: r.id, notes: null });
+    expect(await notesStore().findNotes(anna, r.id)).toEqual({ id: r.id, notes: null });
+  });
+
+  it("an archived specimen keeps its notes and changes none (US-BES-07)", async () => {
+    const r = await noteSpecimen(anna, "Notiz archiv", "Vor dem Archiv");
+    await specimens.archive(anna, r.id, "eingegangen", "2026-10-04");
+    expect(await notesStore().setNotes(anna, r.id, "Danach")).toBe("archived");
+    expect(await notesStore().findNotes(anna, r.id)).toEqual({ id: r.id, notes: "Vor dem Archiv" });
+  });
+});
+
+describe("US-BES-18 the database enforces the limit of 2000 characters", () => {
+  it("2000 characters are accepted, 2001 are refused with check_violation", async () => {
+    const r = await noteSpecimen(anna, "Notiz grenze");
+    await writeNotesColumn(anna, r.id, "x".repeat(2000));
+    await expect(writeNotesColumn(anna, r.id, "x".repeat(2001))).rejects.toMatchObject({
+      code: "23514",
+    });
+    expect((await notesStore().findNotes(anna, r.id))?.notes?.length).toBe(2000);
+  });
+
+  it("the limit counts characters (code points), like the core: 2000 emoji pass, 2001 do not", async () => {
+    const r = await noteSpecimen(anna, "Notiz emoji");
+    await writeNotesColumn(anna, r.id, "🌿".repeat(2000));
+    await expect(writeNotesColumn(anna, r.id, "🌿".repeat(2001))).rejects.toMatchObject({
+      code: "23514",
+    });
+  });
+
+  it("an empty text is refused: an empty note is stored as null", async () => {
+    const r = await noteSpecimen(anna, "Notiz leer");
+    await expect(writeNotesColumn(anna, r.id, "")).rejects.toMatchObject({ code: "23514" });
+  });
+});
+
+describe("US-BES-18 tenant isolation of the notes (P-04, QG-D1)", () => {
+  it("another account neither reads nor changes the notes; both look like an unknown specimen", async () => {
+    const r = await noteSpecimen(anna, "Notiz fremd", "Nur für Anna");
+    expect(await notesStore().findNotes(ben, r.id)).toBeNull();
+    expect(await notesStore().setNotes(ben, r.id, "Ben war hier")).toBe("not_found");
+    expect(await notesStore().findNotes(anna, r.id)).toEqual({ id: r.id, notes: "Nur für Anna" });
+  });
+});
+
+describe("US-BES-18 the notes stay out of the shared reads (P-05)", () => {
+  it("the list, find and findMany of the specimen rows carry no notes key", async () => {
+    const r = await noteSpecimen(anna, "Notiz schlüssel", "Geheim");
+    const listed = (await specimens.list(anna)).find((z) => z.id === r.id);
+    expect(listed).toBeDefined();
+    expect(listed).not.toHaveProperty("notes");
+    expect(await specimens.find(anna, r.id)).not.toHaveProperty("notes");
+    const many = await specimens.findMany(anna, [r.id]);
+    expect(many[0]).not.toHaveProperty("notes");
   });
 });
