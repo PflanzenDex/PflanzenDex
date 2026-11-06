@@ -294,7 +294,7 @@ No lock ships before US-ONB-05 and US-ONB-06 (FR-ONB-02, FR-ONB-03): staging wit
 - Hints are quiet: dismissible, once per occasion, off in calm mode, nothing hidden that is looked for.
 - Measurable targets (90 seconds, 3 steps, 25 percent without a plant after 7 days) are starting values.
 - Release R1 and priorities P1 (US-ONB-01) and P2 (rest); the owner may overrule per ticket.
-- Keeper switches (P-12, US-ONB-09): collection, care, Pokédex, "Heute" and the account are core and have no switch (owner decision 2026-11-05). The wishlist and achievements are switchable and keep their data (owner decision). Every other function is switchable.
+- Keeper switches (P-12, US-ONB-09): collection, care, Pokédex, "Heute" and the account are core and have no switch (owner decision 2026-11-05). The leaf log (US-WAC-07) is an addition to care with a switch of its own, on by default (owner interview 2026-11-05, issue 1325). The wishlist and achievements are switchable and keep their data (owner decision). Every other function is switchable.
 
 ## Open questions
 

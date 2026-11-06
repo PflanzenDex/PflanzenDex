@@ -81,11 +81,32 @@ Acceptance criteria (processing):
 
 State of implementation: the processing and storing half works (release R1). `POST /specimens/:id/measurements/photo?timeZone=…&date=…&replace=true` takes the raw image file (`Content-Type` JPEG, PNG or WebP, `Idempotency-Key`) and runs `measurement.photo`: the image is rotated by EXIF, the long side reduced to at most 1600 px, stored as WebP (quality 82, thumbnail 72, issue 1289), EXIF/GPS removed, only the cleaned version is stored, never the original (FR-WAC-09, QG-D3). The photo belongs to the measurement of the given day (default today in the profile's time zone; with several measurements that day the one recorded last, FR-WAC-07); a second photo is refused with `measurement.photo_exists` until the request repeats with `replace=true`, then the old object is deleted after the new one is linked. Errors with German texts: `measurement.not_found` (no measurement that day), `media.too_large` (413), `media.type_unsupported` (415), `media.not_an_image` (422), `media.storage_unavailable` (502, no storage configured). Storage: column `measurement.photo` (migration `0031`). **Missing:** the AI assessment with the suggestion of `quality` and note (US-KI-04, release R4; `Assessed_By` stays `Keeper`), the status stays 🟨 (the upload control, the confirmation dialog for replacing and showing the photo exist, US-WAC-05).
 
+### US-WAC-07 · Log new leaves at the detail I choose · 🟨 new
+
+As a **plant keeper** I want to log each new leaf, as a quick tap or with its size, so I see how my plant develops.
+
+Decisions (owner interview 2026-11-05, issue 1325): the keeper chooses the level for each leaf: just a tap, or with a photo, length and width, or a note on fenestration or variegation. The feature is opt-in (P-12). Comparisons use the keeper's own data only (P-08).
+
+Acceptance criteria:
+
+- Given a plant, when I choose "Neues Blatt", then one tap records a leaf with today's local date; a size, a note or an earlier date are optional, and a date in the future is refused (NFR-08).
+- Given leaves of a plant, then the plant shows their number and the last leaves, newest first, paged when they do not fit (US-QS-15).
+- Given the newest leaf has a length, and an earlier leaf has one too, then the plant says whether the newest is larger, smaller or the same size as the last earlier leaf with a length. Without a length on both, width is compared the same way. Length and width are never compared with each other.
+- Given the newest leaf has no size, or no earlier leaf has the same measure, then no comparison is shown (P-08). The wording only states the size: a larger leaf is never called success, because etiolated growth never counts as success.
+- Given a leaf logged by mistake, when I remove it and confirm, then it is gone and the number and comparison follow (P-03, P-10).
+- Given a leaf, when I add a photo, then it is stored and shown like a measurement photo (US-WAC-06). Not built yet: a follow-up of issue 1325.
+- Given the keeper switch for the leaf log is off, then the plant offers and shows no leaves, and the logged leaves stay; switched on again they are back (P-12, US-ONB-09).
+- Given another account, then it can neither see nor change my leaves; the leaf log is not shared with friends (P-04, P-05).
+
 ## Data model
 
 ### DM-WAC-01 Measurement
 
 `Specimen`, `Date` (local), `Value` (number, cm or unit of the growth measure), `Quality` (`Healthy` | `Etiolated/thin`), `Note?`, `Photo?`, `Assessed_By` (`Keeper` | `AI suggestion accepted`).
+
+### DM-WAC-02 Leaf
+
+`Specimen`, `Date` (local), `Length_mm?`, `Width_mm?`, `Note?` (fenestration, variegation), `Photo?`. Limits: a size is a whole number from 1 to 5,000 mm, a note at most 500 characters (starting values, assumptions).
 
 ## Requirements
 
