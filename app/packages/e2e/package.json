@@ -4,7 +4,7 @@
   "type": "module",
   "description": "End-to-end tests (QG-T3): Playwright against the real stack (Keycloak, PostgreSQL, API, Vite), mobile and desktop",
   "scripts": {
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/e2e.tsbuildinfo",
     "e2e": "playwright test --project=mobil --project=desktop",
     "one-screen": "playwright test --project=one-screen --workers=${ONE_SCREEN_WORKERS:-4} --shard=${ONE_SCREEN_SHARD:-1/1}",
     "one-screen:write": "ONE_SCREEN_WRITE=1 npm run one-screen",

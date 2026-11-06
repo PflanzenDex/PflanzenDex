@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/db.tsbuildinfo",
     "test": "vitest run",
     "migrate": "tsx src/kernel/migrate-cli.ts"
   },
