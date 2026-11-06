@@ -33,6 +33,12 @@ export REST_TITLE := $(value TITLE)
 export REST_BODY := $(value BODY)
 # SCREEN=<id> of `make one-screen` reaches the e2e spec as ONE_SCREEN_ONLY, raw like the REST_ values (issue 1608).
 export ONE_SCREEN_ONLY := $(value SCREEN)
+# FRESH=1 reaches `npm run gates` as an environment variable (issue 1608). Without a value it is not exported: an exported
+# empty FRESH would count as set and never let a green result skip a run. An empty FRESH= on the command line still
+# reaches the environment (make exports command-line variables), which counts as set and runs every step: the safe side.
+ifneq ($(FRESH),)
+export FRESH
+endif
 
 pr-state: ## Read a PR over REST (PR=<n>): title, state, draft, merged, head, base, auto-merge and the latest check runs of the head (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs pr-state
@@ -263,7 +269,7 @@ layout-baseline: ## Create or lower app/config/gates/baselines/layout-baseline.j
 db-indexes: ## Every foreign key and tenant column (account_id) of the migrations has an index, baseline ratchet (US-QG-07)
 	cd $(APP) && npm run db-indexes
 
-gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
+gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format; a green result of this exact content is skipped (FRESH=1 runs all, issue 1608)
 	cd $(APP) && node tools/check/supply/check-deps.mjs
 	cd $(APP) && npm run gates
 
