@@ -8,15 +8,34 @@ const FRAME =
 /** Whitespace collapsed; the text identity decides a repeat, parameters are not looked at (N+1, duplicate read). */
 export const normalize = (sql: string): string => sql.replace(/\s+/g, " ").trim();
 
-/** The first 100 characters of every statement text that a request sends more than once, without the frame. */
-export function repeatFindings(statements: readonly string[]): string[] {
+/** A statement text that a request sends more than once: its first characters and how often it was sent (US-QG-07). */
+export type Repeat = { readonly finding: string; readonly count: number };
+
+/** Every statement text that a request sends more than once, without the frame, with its count (US-QG-07, #1306). */
+export function repeatCounts(statements: readonly string[]): Repeat[] {
   const seen = new Map<string, number>();
   for (const sql of statements) {
     const text = normalize(sql);
     if (FRAME.test(text)) continue;
     seen.set(text, (seen.get(text) ?? 0) + 1);
   }
-  return [...seen].filter(([, n]) => n > 1).map(([text]) => text.slice(0, FINDING_CHARS));
+  return [...seen]
+    .filter(([, n]) => n > 1)
+    .map(([text, count]) => ({ finding: text.slice(0, FINDING_CHARS), count }));
+}
+
+/** The first 100 characters of every statement text that a request sends more than once, without the frame. */
+export function repeatFindings(statements: readonly string[]): string[] {
+  return repeatCounts(statements).map((r) => r.finding);
+}
+
+/**
+ * The owner rule (US-QG-07, #1306): a statement text may be sent at most once per owner of the fixture, so a read per
+ * friend passes and a read per offer (N+1) does not. The bound is the owner count of the fixture for every statement,
+ * not a per-route number, and a prefix listed in the baseline does not lift it.
+ */
+export function repeatsOverOwners(statements: readonly string[], owners: number): Repeat[] {
+  return repeatCounts(statements).filter((r) => r.count > owners);
 }
 
 /**
