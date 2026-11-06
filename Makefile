@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge pr-state issue-read pr-text issue-comment
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge pr-state issue-read pr-text issue-comment
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -311,6 +311,9 @@ ci-wait: ## Wait until every check of a PR head has finished, then print the rea
 
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
 	cd $(APP) && node tools/workflow/merge-pr.mjs "$(PR)"
+
+auto-merge: ## Wait for the CI of a PR (PR=<n>), then merge it with every make merge check; a gate PR is refused at the end, after CI; red CI merges nothing; never arms GitHub auto-merge; it runs in the session's background, so it ends with that session and the PR then stays open, nothing half done (US-DEV-13)
+	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-wait.mjs "$$REST_PR" && node tools/workflow/merge-pr.mjs "$$REST_PR"
 
 gate-review: ## Open PRs into dev that change a gate file: CI as it stands, conflicts, age, whether a limit, baseline or allowlist moved looser (read-only, US-QG-07)
 	cd $(APP) && node tools/workflow/actions/ci-reuse/gate-review/gate-review.mjs
