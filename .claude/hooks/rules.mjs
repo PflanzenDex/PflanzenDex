@@ -37,6 +37,8 @@ const GATE_FILES = [
   /^app\/packages\/e2e\/support\/display\/one-screen\/judge\.ts$/,
   /^app\/packages\/e2e\/support\/display\/a11y\/findings\.ts$/,
   /^app\/packages\/e2e\/support\/display\/a11y\/axe-findings\.ts$/,
+  // check-changelog.mjs imports its logic from this file (US-QG-07).
+  /^app\/packages\/web\/src\/app\/destinations\/account-area\/whats-new\/news-lines\.mjs$/,
 ];
 
 export function isGateFile(relativePath) {
