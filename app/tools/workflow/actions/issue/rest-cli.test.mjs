@@ -117,12 +117,12 @@ function cli(dir, command, env = {}, routes = []) {
  * commands (`bash -c`, as in check-ci-drift.test.mjs): every value reaches bash through the environment (M_<NAME>) and is
  * quoted there, so the shell hands it to make byte for byte and never parses it. VARS are make command-line values.
  */
-function make(dir, target, vars, routes = []) {
+function make(dir, target, vars, routes = [], flags = "-s") {
   writeFileSync(join(dir, "routes.json"), JSON.stringify([...routes, REPO]));
   const log = join(dir, "calls.log");
   rmSync(log, { force: true });
   const names = Object.keys(vars);
-  const command = [`make -s ${target}`, ...names.map((k) => `${k}="$M_${k}"`)].join(" ");
+  const command = [`make ${flags} ${target}`, ...names.map((k) => `${k}="$M_${k}"`)].join(" ");
   const res = spawnSync("bash", ["-c", command], {
     encoding: "utf8",
     cwd: fileURLToPath(ROOT),
@@ -414,5 +414,56 @@ test("US-DEV-13 make reads a body file whose name holds backticks under that exa
   assert.ok(
     write?.includes(`body=@${file}`),
     `gh did not get the body path unchanged: ${JSON.stringify(write)}`,
+  );
+});
+
+test("US-DEV-13 auto-merge is declared in .PHONY, has a help sentence and runs ci-wait, then merge-pr, joined by &&", () => {
+  const lines = readFileSync(new URL("Makefile", ROOT), "utf8").split("\n");
+  const phony = lines.find((l) => l.startsWith(".PHONY:")).split(/\s+/);
+  assert.ok(phony.includes("auto-merge"), "auto-merge is not in .PHONY");
+  const at = lines.findIndex((l) => l.startsWith("auto-merge:"));
+  assert.ok(at >= 0, "auto-merge has no target line");
+  assert.ok(lines[at].split("## ")[1]?.trim(), "auto-merge has no help sentence after ##");
+  assert.equal(
+    lines[at + 1],
+    '\tcd $(APP) && node tools/workflow/actions/ci-reuse/ci-wait.mjs "$$REST_PR" && node tools/workflow/merge-pr.mjs "$$REST_PR"',
+  );
+  assert.doesNotMatch(lines[at + 1], /\$\(PR\)/, "the recipe reads the number through make");
+});
+
+test("US-DEV-13 make -n auto-merge prints the number only as $REST_PR, so user text never reaches the command", (t) => {
+  const dir = scratch(t);
+  const marker = join(dir, "touched-by-auto-merge");
+  const r = make(dir, "auto-merge", { PR: `1;touch ${marker}` }, [], "-n");
+  assert.equal(r.code, 0, r.err);
+  assert.equal(existsSync(marker), false, "the number was run as a shell command");
+  assert.ok(!r.out.includes(marker) && !r.out.includes("1;"), r.out);
+  assert.match(
+    r.out,
+    /ci-wait\.mjs "\$REST_PR" && node tools\/workflow\/merge-pr\.mjs "\$REST_PR"/,
+  );
+});
+
+test("US-DEV-13 auto-merge refuses a value that is not a whole number before any call and never reaches merge-pr", (t) => {
+  const dir = scratch(t);
+  const marker = join(dir, "touched-by-auto-merge");
+  for (const bad of ["", "abc", "5x", "-3", "1.5", `1;touch ${marker}`]) {
+    const r = make(dir, "auto-merge", { PR: bad }, [PR_READ, PR_WRITE, CHECKS]);
+    assert.equal(r.code, 2, JSON.stringify(bad));
+    assert.match(r.err, /usage: make ci-wait PR=<number>/, JSON.stringify(bad));
+    assert.doesNotMatch(r.err, /usage: make merge/, `${JSON.stringify(bad)}: merge-pr ran`);
+    assert.deepEqual(r.calls, [], `${JSON.stringify(bad)}: no gh call at all`);
+  }
+  assert.equal(existsSync(marker), false, "the value was run as a shell command");
+});
+
+test("US-DEV-02 .claude/settings.json denies sed -i and rg --pre, and allows make auto-merge for a PR number", () => {
+  const settings = JSON.parse(readFileSync(new URL(".claude/settings.json", ROOT), "utf8"));
+  for (const rule of ["Bash(sed -n -i:*)", "Bash(rg --pre:*)"]) {
+    assert.ok(settings.permissions.deny.includes(rule), `${rule} is not denied`);
+  }
+  assert.ok(
+    settings.permissions.allow.includes("Bash(make auto-merge PR=*)"),
+    "make auto-merge is not allowed",
   );
 });

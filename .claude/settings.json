@@ -27,6 +27,7 @@
       "Bash(git fetch origin)",
       "Bash(git fetch -q origin)",
       "Bash(make ci-wait PR=*)",
+      "Bash(make auto-merge PR=*)",
       "Bash(make board)",
       "Bash(make status-check)",
       "Bash(make layout)",
@@ -50,6 +51,8 @@
       "Bash(make issue-comment ISSUE=*)"
     ],
     "deny": [
+      "Bash(sed -n -i:*)",
+      "Bash(rg --pre:*)",
       "Bash(gh pr merge:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
