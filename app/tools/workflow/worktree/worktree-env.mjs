@@ -46,6 +46,14 @@ const lockOf = (app) => {
   return existsSync(file) ? readFileSync(file) : null;
 };
 
+/** The node_modules folders of an install: the root, and each workspace the lock file gives its own (issue 1525). */
+export function installFolders(app) {
+  const nested = Object.keys(JSON.parse(lockOf(app)).packages ?? {}).flatMap(
+    (key) => /^packages\/[^/]+\/node_modules(?=\/)/.exec(key) ?? [],
+  );
+  return ["node_modules", ...new Set(nested)];
+}
+
 /** The app folders whose installed tree can be copied for `target`: the same lock file bytes and a passing stamp. Order kept. */
 export function sourcesFor(target, candidates) {
   const lock = lockOf(target);
@@ -54,28 +62,34 @@ export function sourcesFor(target, candidates) {
     if (path.resolve(app) === path.resolve(target)) return false;
     if (!existsSync(path.join(app, "node_modules"))) return false;
     if (!lockOf(app)?.equals(lock)) return false;
+    // A stamp says nothing about completeness: a tree without its workspace folders must not spread (issue 1525).
+    if (!installFolders(app).every((folder) => existsSync(path.join(app, folder)))) return false;
     return depsFindings(app).length === 0;
   });
 }
 
 /**
- * Copies `<source>/node_modules` to `<target>/node_modules`. A copy that still links into the source is removed again and
+ * Copies every node_modules folder of `<source>` to `<target>`. A copy that still links into the source is removed again and
  * refused: a shared link would make two worktrees write into the same files.
  */
 export async function copyTree(source, target) {
-  const from = path.join(source, "node_modules");
-  const to = path.join(target, "node_modules");
-  const args = process.platform === "linux" ? ["-a", "--reflink=auto", from, to] : ["-a", from, to];
+  const folders = installFolders(source);
   try {
-    await exec("cp", args, { maxBuffer: MB });
-    const { stdout } = await exec("find", [to, "-type", "l", "-lname", `${from}/*`], {
-      maxBuffer: MB,
-    });
-    if (stdout.trim()) {
-      throw new Error(`a link in the copy points into ${from}: ${stdout.split("\n")[0]}`);
+    for (const folder of folders) {
+      const from = path.join(source, folder);
+      const to = path.join(target, folder);
+      const flags = process.platform === "linux" ? ["-a", "--reflink=auto"] : ["-a"];
+      await exec("cp", [...flags, from, to], { maxBuffer: MB });
+      const { stdout } = await exec("find", [to, "-type", "l", "-lname", `${source}/*`], {
+        maxBuffer: MB,
+      });
+      if (stdout.trim()) {
+        throw new Error(`a link in the copy points into ${source}: ${stdout.split("\n")[0]}`);
+      }
     }
   } catch (e) {
-    rmSync(to, { recursive: true, force: true });
+    for (const folder of folders)
+      rmSync(path.join(target, folder), { recursive: true, force: true });
     throw e;
   }
 }
