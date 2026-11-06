@@ -57,19 +57,27 @@ export function exchangeRoutes(
   offer: OfferDependencies,
   clock: () => Date = () => new Date(),
 ): Hono<AuthEnv> {
-  const deps = exchangeDependencies(pool, offer);
   const idem = { idempotency: new IdempotencyPostgres(pool) };
-  const request = swapRequest(deps);
-  const context = matchContext(pool, deps, clock);
-  const yes = matchYes(deps, context.answers);
-  const answer = matchAnswer(deps, context.answers, clock);
-  const undo = matchUndo(context.answers);
+  // Built per request: an owner's species are read once within one request and never kept for the next (NFR-12).
+  const ports = () => {
+    const deps = exchangeDependencies(pool, offer);
+    const context = matchContext(pool, deps, clock);
+    return {
+      deps,
+      context,
+      request: swapRequest(deps),
+      yes: matchYes(deps, context.answers),
+      answer: matchAnswer(deps, context.answers, clock),
+      undo: matchUndo(context.answers),
+    };
+  };
   const routes = new Hono<AuthEnv>();
   routes.get("/exchange/offers", async (c) => {
-    const r = await exchangeList(deps, c.get("account").id, c.req.query());
+    const r = await exchangeList(ports().deps, c.get("account").id, c.req.query());
     return r.ok ? c.json({ offers: r.value.offers.map(publicOffer) }) : reply(c, r);
   });
   routes.get("/exchange/match", async (c) => {
+    const { deps, context } = ports();
     const r = await matchDeck(deps, context, c.get("account").id, c.req.query());
     if (!r.ok) return reply(c, r);
     return c.json({
@@ -79,19 +87,21 @@ export function exchangeRoutes(
     });
   });
   routes.put("/exchange/match/:offerId/answer", async (c) =>
-    write(c, idem, answer, { input: { ...(await body(c)), offerId: c.req.param("offerId") } }),
+    write(c, idem, ports().answer, {
+      input: { ...(await body(c)), offerId: c.req.param("offerId") },
+    }),
   );
   routes.delete("/exchange/match/:offerId/answer", async (c) =>
-    write(c, idem, undo, { input: { offerId: c.req.param("offerId") } }),
+    write(c, idem, ports().undo, { input: { offerId: c.req.param("offerId") } }),
   );
   routes.post("/exchange/match/:offerId/yes", async (c) =>
-    write(c, idem, yes, {
+    write(c, idem, ports().yes, {
       input: { ...(await body(c)), offerId: c.req.param("offerId") },
       success: 201,
     }),
   );
   routes.post("/offers/:id/request", async (c) =>
-    write(c, idem, request, {
+    write(c, idem, ports().request, {
       input: { ...(await body(c)), offerId: c.req.param("id") },
       success: 201,
     }),

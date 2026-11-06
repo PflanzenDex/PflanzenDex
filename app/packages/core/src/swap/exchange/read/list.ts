@@ -40,6 +40,8 @@ interface OwnerReads {
 /**
  * The facts, health and phase of the released specimens, each asked as its owner (the database released the offer, P-05):
  * one read per owner for all of its offers, so the statements grow with the owners, never with the offers (NFR-12).
+ * The phases run after the facts of their owner: the wiring shares the owner's species read between the two, so the
+ * species are read once per owner (NFR-12). The health is read alongside the facts.
  */
 async function readOwners(
   deps: ExchangeDependencies,
@@ -52,11 +54,11 @@ async function readOwners(
   const health = new Map<string, OfferHealth>();
   const phases = new Map<string, CarePhase>();
   for (const [owner, ids] of byOwner) {
-    const [described, healthOfOwner, phasesOfOwner] = await Promise.all([
+    const [described, healthOfOwner] = await Promise.all([
       deps.facts.describe(owner, ids),
       healthOf(deps, owner, ids),
-      deps.phases.phasesOf(owner, ids, timeZone),
     ]);
+    const phasesOfOwner = await deps.phases.phasesOf(owner, ids, timeZone);
     for (const f of described) facts.set(f.id, f);
     for (const [id, h] of healthOfOwner) health.set(id, h);
     for (const [id, p] of phasesOfOwner) phases.set(id, p);

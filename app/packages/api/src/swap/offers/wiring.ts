@@ -34,7 +34,14 @@ export function offerDependencies(pool: Pool, opt: { clock?: () => Date } = {}):
       openAndLastDone: (u, ids) => treatments.openAndLastDone(u, ids),
     },
     phases: {
-      phasesOf: (userId, ids, timeZone) => carePhasesOf(phaseDeps, userId, ids, timeZone),
+      // A caller that shares its owner's species read of the request passes it on (NFR-12); the rest reads them here.
+      phasesOf: (userId, ids, timeZone, species) =>
+        carePhasesOf(
+          { ...phaseDeps, species: species ?? phaseDeps.species },
+          userId,
+          ids,
+          timeZone,
+        ),
     },
   };
 }
