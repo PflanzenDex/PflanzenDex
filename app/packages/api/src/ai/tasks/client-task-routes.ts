@@ -9,7 +9,7 @@ import {
   type TaskStore,
 } from "@pflanzendex/core";
 import { Hono } from "hono";
-import { errorBody, statusFor } from "../../kernel";
+import { errorBody, keyMissing, statusFor } from "../../kernel";
 import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
 
 /**
@@ -44,6 +44,7 @@ export function clientTaskRoutes(
     ["decline", aiDeclineClientTask],
   ] as const)
     client.post(`/mcp/tasks/:id/${path}`, clientAuthentication(guard, "drafts"), async (c) => {
+      if (!c.req.header("idempotency-key")) return keyMissing(c);
       const { connection, rights } = c.get("ai");
       const r = await op(stores, {
         userId: c.get("account").id,
