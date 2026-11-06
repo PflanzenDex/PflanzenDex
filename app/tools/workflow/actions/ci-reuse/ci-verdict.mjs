@@ -3,7 +3,7 @@
 // and its `ci-status` is green while the full run is still going. So the verdict is per job, from every check run on the
 // head commit: the latest real result of each job (a skipped or cancelled run is no result). The jobs that count are the
 // ones that the head's own workflow defines and that its path filter and base branch require (ci.yml, `changes`).
-import { runIdOf } from "./ci-reuse.mjs";
+import { evidenceOf, isActionsCheck, scanRowsOf } from "./ci-reuse.mjs";
 
 export const MAX_FILES = 3000; // the REST list of changed files stops at 3000 entries
 
@@ -49,12 +49,9 @@ const APP_JOBS = [
 ];
 const UI_JOBS = ["one-screen", "a11y-routes"];
 const MAIN_ONLY_JOBS = ["audit", "e2e"];
-const NO_WORK = new Set(["skipped", "cancelled"]);
 export const NOT_IN_WORKFLOW = "not in workflow";
 const QUIET = new Set(["success", "skipped", "cancelled", "running", NOT_IN_WORKFLOW]);
 
-const isActionsCheck = (c) => (c.app?.slug ?? "github-actions") === "github-actions";
-const doneAt = (c) => Date.parse(c.completed_at ?? "") || 0;
 export const shortSha = (sha) => String(sha ?? "").slice(0, 8);
 
 /** The jobs that the workflow of the head commit defines (keys directly under `jobs:`; a head may predate a job). */
@@ -78,18 +75,6 @@ export function requiredJobs({ files, base, draft, defined }) {
   if (hit(PATHS.docs)) jobs.push("docs-gates");
   if (base === "main") jobs.push(...MAIN_ONLY_JOBS);
   return new Set(jobs.filter((j) => defined.has(j)));
-}
-
-/**
- * The result of one job from its check runs (all runs of that job on the head commit, any order): the latest finished run
- * that did work. A skipped run did no work, and a cancelled run was superseded by a newer run of the same commit, so
- * either one counts only when no other run finished (then it is the result). Null when nothing finished at all.
- */
-export function evidenceOf(runs) {
-  const done = runs.filter((r) => r.status === "completed").sort((a, b) => doneAt(b) - doneAt(a));
-  const pick =
-    done.find((r) => !NO_WORK.has(r.conclusion)) ?? done.find((r) => r.conclusion === "cancelled");
-  return pick ? { conclusion: pick.conclusion, run: runIdOf(pick), at: pick.completed_at } : null;
 }
 
 function problemOf(job, result, required) {
@@ -124,13 +109,13 @@ export function rowsOf(checkRuns, required, defined) {
 /**
  * The state of one PR from one snapshot: `merged`, `closed`, `conflict` and `computing` (GitHub has not decided
  * mergeability yet) come first; `running` while any check run or workflow run of the head is unfinished; otherwise
- * `settled` with the problems (empty when every required job succeeded).
+ * `settled` with the problems (empty when every required job succeeded and no code-scanning check failed).
  */
 export function assess(snap) {
   const { pr, head, checkRuns, workflowRuns, files } = snap;
   const defined = snap.defined ?? new Set(JOBS);
   const required = requiredJobs({ files, base: pr.base, draft: pr.draft, defined });
-  const rows = rowsOf(checkRuns, required, defined);
+  const rows = [...rowsOf(checkRuns, required, defined), ...scanRowsOf(checkRuns)];
   const aggregate = evidenceOf(
     checkRuns.filter((c) => c.name === "ci-status" && isActionsCheck(c)),
   );
