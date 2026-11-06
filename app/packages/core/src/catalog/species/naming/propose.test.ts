@@ -373,3 +373,33 @@ describe("US-POK-02 hybrid signs and additions do not belong in the catalog (US-
     expect(r.ok).toBe(true);
   });
 });
+
+describe("FR-BES-24 duplicate hint past the cap of the search (P-10)", () => {
+  // The target is genus only ("Zzcap"); fifty other names contain its name and sort before it in name order, so the
+  // capped search shows only those and the exact match is the 51st row.
+  const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  const plain = (latinName: string) => ({ ...profile, latinName, germanName: null, synonyms: [] });
+
+  it("FR-BES-24 an exact name beyond the 50th row is still named as the existing species", async () => {
+    store = new InMemorySpecies(50);
+    for (let i = 0; i < 50; i++) {
+      const r = await propose(plain(`Ca${letters(i)} zzcap`));
+      if (!r.ok) throw new Error(r.error.code);
+    }
+    const target = await propose(plain("Zzcap"));
+    if (!target.ok) throw new Error(target.error.code);
+    expect((await store.search("anna", "zzcap")).more).toBe(true);
+    expect((await speciesExisting(store, "anna", plain("Zzcap")))?.id).toBe(target.value.id);
+  });
+
+  it("FR-BES-24 an exact name beyond the cap is not named to another account (P-04)", async () => {
+    store = new InMemorySpecies(50);
+    for (let i = 0; i < 50; i++) {
+      const r = await propose(plain(`Ca${letters(i)} zzcap`));
+      if (!r.ok) throw new Error(r.error.code);
+    }
+    const target = await propose(plain("Zzcap"));
+    if (!target.ok) throw new Error(target.error.code);
+    expect(await speciesExisting(store, "ben", plain("Zzcap"))).toBeNull();
+  });
+});

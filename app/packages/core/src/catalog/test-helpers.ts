@@ -113,12 +113,14 @@ export const FULL = {
 };
 
 export class ReviewWorld {
-  readonly species = new InMemorySpecies();
+  readonly species: InMemorySpecies;
   readonly reviews = new InMemoryReview({ operator: ["operator"], reviewer: ["reviewer"] });
   private readonly idem = new InMemoryIdempotencyStore();
   private counter = 0;
 
-  constructor() {
+  /** `cap`: the visible cap of the species search (FR-BES-24), for tests of the cut result. */
+  constructor(cap?: number) {
+    this.species = new InMemorySpecies(cap);
     this.species.reviewers.push("operator", "reviewer");
   }
 

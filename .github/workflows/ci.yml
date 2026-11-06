@@ -1,5 +1,5 @@
 # CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
-# Path filters: the app suite only runs when `app/`, the Makefile or the workflows change; the docs and spec gates
+# Path filters: the app suite only runs when `app/`, the Makefile, `.github/` or `.claude/hooks/` change; the docs and spec gates
 # (`docs-gates`) run when documentation changes (US-QG-02, #1389).
 # `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
@@ -54,7 +54,7 @@ jobs:
           else
             echo "one-screen=false" >> "$GITHUB_OUTPUT"
           fi
-          if git diff --name-only "$base" HEAD | grep -qE '^(app/|Makefile$|\.github/|\.nvmrc$)'; then
+          if git diff --name-only "$base" HEAD | grep -qE '^(app/|Makefile$|\.github/|\.nvmrc$|\.claude/hooks/)'; then
             echo "app=true" >> "$GITHUB_OUTPUT"
           else
             echo "app=false" >> "$GITHUB_OUTPUT"

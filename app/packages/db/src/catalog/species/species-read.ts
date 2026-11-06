@@ -66,6 +66,11 @@ const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
  */
 export const SEARCH_LIMIT = 50;
 
+/** The rows of the species of a page (the ids and the matched name), read with the columns of `SELECTION`. */
+const withSelection = (page: string) =>
+  `select ${SELECTION}, p.field, p.display from (${page}) p
+     join species a on a.id = p.id order by a.latin_name`;
+
 /**
  * The species list and the search (`norm` null: the first visible species by name; otherwise the species with a name
  * that contains the normalized term). The search reads `species_name` first and only then the visible species; no
@@ -84,9 +89,19 @@ export function searchQuery(norm: string | null): { text: string; values: unknow
               order by array_position(array['latin','german','english','synonym'], n.field) limit 1) t on true
           where ${VISIBLE} and a.id in (select n.species_id from species_name n where n.norm like $1::text)
           order by a.latin_name limit ${SEARCH_LIMIT + 1}`;
-  return {
-    text: `select ${SELECTION}, p.field, p.display from (${page}) p
-             join species a on a.id = p.id order by a.latin_name`,
-    values: norm === null ? [] : [mask(norm)],
-  };
+  return { text: withSelection(page), values: norm === null ? [] : [mask(norm)] };
+}
+
+/**
+ * The visible species with a name (Latin, German, English or synonym) that equals `norm` as a whole (FR-BES-24). Same
+ * visibility, columns and hit as `searchQuery`, but no cap: an exact match beyond the cap of the search is found too.
+ * Only names equal to the term match, so the result stays as small as the number of identical names.
+ */
+export function exactQuery(norm: string): { text: string; values: unknown[] } {
+  const page = `select a.id, t.field, t.display from species a
+           join lateral (select n.field, n.display from species_name n
+              where n.species_id = a.id and n.norm = $1::text
+              order by array_position(array['latin','german','english','synonym'], n.field) limit 1) t on true
+          where ${VISIBLE} and a.id in (select n.species_id from species_name n where n.norm = $1::text)`;
+  return { text: withSelection(page), values: [norm] };
 }
