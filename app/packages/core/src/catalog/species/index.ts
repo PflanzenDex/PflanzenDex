@@ -1,6 +1,6 @@
 export { speciesExisting, speciesPropose } from "./naming/propose";
 export { speciesSchema } from "./naming/fields";
-export { speciesLoad, speciesSearch } from "./lookup/search";
+export { speciesExact, speciesLoad, speciesSearch, withExactBeyondCap } from "./lookup/search";
 export { speciesHints } from "./lookup/hints";
 export type { SpeciesHint } from "./lookup/hints";
 export { LATIN_NAME_RULE, normalize, parseLatin } from "./naming/name";

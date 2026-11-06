@@ -9,6 +9,7 @@ import {
   SEARCH_LIMIT,
   SELECTION,
   VISIBLE,
+  exactQuery,
   searchQuery,
 } from "./species-read.ts";
 
@@ -17,6 +18,7 @@ import type {
   NameField,
   Species,
   SpeciesCreation,
+  SpeciesHit,
   SpeciesName,
   SpeciesSearch,
   SpeciesValues,
@@ -65,14 +67,24 @@ export class SpeciesPostgres {
   /** The visible species that match; `more` is true when one more row came back, i.e. more match than the cap shows. */
   async search(userId: string, norm: string | null): Promise<SpeciesSearch> {
     const { text, values } = searchQuery(norm);
+    const hits = await this.hits(userId, text, values);
+    return { species: hits.slice(0, SEARCH_LIMIT), more: hits.length > SEARCH_LIMIT };
+  }
+
+  /** The visible species with a name equal to `norm` as a whole, without the cap (FR-BES-24). */
+  async exact(userId: string, norm: string): Promise<readonly SpeciesHit[]> {
+    const { text, values } = exactQuery(norm);
+    return this.hits(userId, text, values);
+  }
+
+  private async hits(userId: string, text: string, values: unknown[]): Promise<SpeciesHit[]> {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<Species & { field: NameField | null; display: string | null }>(text, values),
     );
-    const hits = r.rows.map(({ field, display, ...species }) => ({
+    return r.rows.map(({ field, display, ...species }) => ({
       ...species,
       hit: field && display ? { field, display } : null,
     }));
-    return { species: hits.slice(0, SEARCH_LIMIT), more: hits.length > SEARCH_LIMIT };
   }
 
   async find(userId: string, id: string): Promise<Species | null> {

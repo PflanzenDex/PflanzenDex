@@ -86,3 +86,26 @@ describe("US-BES-10 review list", () => {
     expect(r.ok && r.value).toEqual({ open: 0, oldestOpenAt: null, entries: [] });
   });
 });
+
+describe("FR-BES-24 similar species past the cap of the search", () => {
+  // Fifty approved names contain "zzcap" and sort before "Zzcap" in name order: the capped search shows only them.
+  const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  const plain = (latinName: string) => ({ ...FULL, latinName, germanName: null, synonyms: [] });
+
+  it("FR-BES-24 an approved species with the proposal's name beyond the cap is listed as similar", async () => {
+    const w = new ReviewWorld(50);
+    for (let i = 0; i < 50; i++) await w.approvedSpecies(plain(`Ca${letters(i)} zzcap`));
+    // Two keepers propose the same name; the first is approved afterwards, so the second one has it as a match.
+    const first = await w.proposeSpecies("anna", plain("Zzcap"));
+    const second = await w.proposeSpecies("ben", plain("Zzcap"));
+    w.species.approve(first.speciesId);
+    const r = await catalogList(w.reviews, w.species, "reviewer");
+    if (!r.ok) throw new Error(r.error.code);
+    const entry = r.value.entries.find((e) => e.species?.id === second.speciesId);
+    expect(entry?.similar).toContainEqual({
+      id: first.speciesId,
+      latinName: "Zzcap",
+      matchedOn: "Zzcap",
+    });
+  });
+});

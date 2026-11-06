@@ -495,3 +495,45 @@ describe("FR-BES-24 visible cap of the species search (P-10)", () => {
     if (all.species.length < 50) expect(all.more).toBe(false);
   });
 });
+
+describe("FR-BES-24 exact name beyond the cap of the search", () => {
+  // Fifty proposals of anna contain the term and sort before the target in name order: the capped search cannot show it.
+  const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+
+  it("FR-BES-24 exact finds a visible species by its Latin name beyond the cap, where search stops at 50", async () => {
+    const term = name("Zzcap");
+    const target = await create(anna, values(term));
+    for (let i = 0; i < 50; i++) await create(anna, values(`Ca${letters(i)} ${term}`));
+    const shown = await species.search(anna, norm(term));
+    expect(shown.more).toBe(true);
+    expect(shown.species.map((s) => s.id)).not.toContain(target.id);
+    const exact = await species.exact(anna, norm(term));
+    expect(exact.map((s) => s.id)).toEqual([target.id]);
+    expect(exact[0]?.hit).toEqual({ field: "latin", display: term });
+  });
+
+  it("FR-BES-24 exact finds a visible species by its synonym and names the synonym as the hit", async () => {
+    const synonym = name("Zzsyn");
+    const a = await create(anna, values(name("Aloe synonym "), { synonyms: [synonym] }));
+    const hits = await species.exact(anna, norm(synonym));
+    expect(hits).toEqual([
+      expect.objectContaining({ id: a.id, hit: { field: "synonym", display: synonym } }),
+    ]);
+  });
+
+  it("FR-BES-24 exact is tenant-safe: another account's proposal is not returned (P-04)", async () => {
+    const term = name("Zzfremd");
+    const mine = await create(anna, values(term));
+    const theirs = await create(ben, values(term));
+    expect((await species.exact(anna, norm(term))).map((s) => s.id)).toEqual([mine.id]);
+    expect((await species.exact(ben, norm(term))).map((s) => s.id)).toEqual([theirs.id]);
+    expect(await species.exact(operator, norm(term))).toEqual([]);
+  });
+
+  it("FR-BES-24 exact of a term without a whole name match is empty; LIKE characters stay text", async () => {
+    const term = name("Zzteil");
+    await create(anna, values(term));
+    expect(await species.exact(anna, norm(term).slice(0, 4))).toEqual([]);
+    expect(await species.exact(anna, "%")).toEqual([]);
+  });
+});

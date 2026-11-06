@@ -37,25 +37,47 @@ const named = (s: SpeciesItem): Named => ({
   names: [s.latinName, ...(s.germanName ? [s.germanName] : []), ...s.synonyms],
 });
 
-/** Species search of the app (US-BES-01), at least 2 characters, ordered by Latin name and paged (FR-KI-16). */
+/**
+ * Species search of the app (US-BES-01), at least 2 characters, ordered by Latin name and paged (FR-KI-16). `more` says
+ * that more species match than the list shows (FR-BES-24): a cut list never looks complete, and no count is guessed.
+ */
 export const aiSearchSpecies = (deps: ReadDependencies, call: ReadCall) =>
   readCall(deps, call, "search_species", {
     schema: searchSpeciesSchema,
-    run: async (input): Promise<Result<Page<SpeciesItem> & { dataFields: readonly string[] }>> => {
-      const all = [...(await deps.source.searchSpecies(call.userId, input.query))].sort(
-        byLatinName,
-      );
-      return ok({ ...pageOf(all, input), dataFields: SPECIES_DATA.map((f) => `items[].${f}`) });
+    run: async (
+      input,
+    ): Promise<Result<Page<SpeciesItem> & { more: boolean; dataFields: readonly string[] }>> => {
+      const found = await deps.source.searchSpecies(call.userId, input.query);
+      const all = [...found.species].sort(byLatinName);
+      return ok({
+        ...pageOf(all, input),
+        more: found.more,
+        dataFields: SPECIES_DATA.map((f) => `items[].${f}`),
+      });
     },
-    effect: (v) => `${v.items.length} of ${v.total} species`,
+    effect: (v) => `${v.items.length} of ${v.total} species${v.more ? ", more match" : ""}`,
   });
 
-/** The visible species a name may mean: the app's search for the name, else for its beginning (nearest names). */
+/**
+ * The visible species a name may mean: the app's search for the name, with an exact name beyond the cap of that search
+ * added (FR-BES-24; the rule of the duplicate check, restated here because this module may not import the catalog),
+ * else the search for the beginning of the name (nearest names).
+ */
 async function speciesPool(deps: ReadDependencies, userId: string, ref: string) {
-  const hits = await deps.source.searchSpecies(userId, ref);
+  const shown = await deps.source.searchSpecies(userId, ref);
+  const wanted = normalizeName(ref);
+  const sameName = (s: SpeciesItem) => named(s).names.some((n) => normalizeName(n) === wanted);
+  const beyond =
+    shown.more && !shown.species.some(sameName) ? await deps.source.exactSpecies(userId, ref) : [];
+  const hits = [
+    ...shown.species,
+    ...beyond.filter((b) => !shown.species.some((s) => s.id === b.id)),
+  ];
   if (hits.length > 0) return hits;
   const start = normalizeName(ref).slice(0, NAMING_LIMITS.prefix);
-  return start.length < NAMING_LIMITS.minSearch ? [] : deps.source.searchSpecies(userId, start);
+  return start.length < NAMING_LIMITS.minSearch
+    ? []
+    : (await deps.source.searchSpecies(userId, start)).species;
 }
 
 /** The id a species reference names (FR-KI-15), or the refusal with candidates or nearest names. */

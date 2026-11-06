@@ -1,6 +1,7 @@
 import { defineOperation, appError, failed, ok } from "../../../kernel";
 import { speciesSchema, type SpeciesInput } from "./fields";
 import { normalize } from "./name";
+import { withExactBeyondCap } from "../lookup/search";
 import type { Species, SpeciesName, SpeciesStore, SpeciesValues, NameField } from "../types";
 
 function valueFrom(e: SpeciesInput): SpeciesValues {
@@ -40,7 +41,7 @@ export function namesFrom(w: SpeciesValues): SpeciesName[] {
  * name the existing species before anything is stored (US-KI-11).
  */
 export async function speciesExisting(
-  store: Pick<SpeciesStore, "search">,
+  store: Pick<SpeciesStore, "search" | "exact">,
   userId: string,
   input: unknown,
 ): Promise<Species | null> {
@@ -50,10 +51,13 @@ export async function speciesExisting(
     (n) => n.field === "latin" || n.field === "synonym",
   );
   for (const key of keys) {
-    const { species: hits } = await store.search(userId, key.norm);
-    const same = hits.find((h) =>
-      [h.latinName, ...h.synonyms].some((n) => normalize(n) === key.norm),
+    const sameName = (h: Species) =>
+      [h.latinName, ...h.synonyms].some((n) => normalize(n) === key.norm);
+    // An exact match beyond the cap of the search counts too (FR-BES-24).
+    const hits = await withExactBeyondCap(await store.search(userId, key.norm), sameName, () =>
+      store.exact(userId, key.norm),
     );
+    const same = hits.find(sameName);
     if (same) return same;
   }
   return null;

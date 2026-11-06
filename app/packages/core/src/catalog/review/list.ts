@@ -1,6 +1,12 @@
 import { appError, failed, ok, type Result } from "../../kernel";
 import { checkApprovalReadiness, type ApprovalIssue } from "./approval";
-import { normalize, type Species, type SpeciesStore } from "../species";
+import {
+  normalize,
+  withExactBeyondCap,
+  type Species,
+  type SpeciesHit,
+  type SpeciesStore,
+} from "../species";
 import { OPEN, type ReviewCase, type ReviewStore } from "../types";
 
 /** An existing approved species that looks like the proposal (duplicate hint, US-BES-10). */
@@ -33,7 +39,13 @@ async function similarTo(species: SpeciesStore, userId: string, s: Species) {
   const keys = new Set([s.latinName, ...s.synonyms].map(normalize).filter((n) => n !== ""));
   const found = new Map<string, SimilarSpecies>();
   for (const key of keys) {
-    for (const hit of (await species.search(userId, key)).species) {
+    const sameName = (h: SpeciesHit) =>
+      [h.latinName, ...h.synonyms].some((n) => normalize(n) === key);
+    // An exact match beyond the cap of the search is similar too (FR-BES-24).
+    const hits = await withExactBeyondCap(await species.search(userId, key), sameName, () =>
+      species.exact(userId, key),
+    );
+    for (const hit of hits) {
       const approved = hit.reviewStatus === "curated" || hit.reviewStatus === "reviewed";
       if (approved && hit.id !== s.id && hit.hit && !found.has(hit.id)) {
         found.set(hit.id, { id: hit.id, latinName: hit.latinName, matchedOn: hit.hit.display });
