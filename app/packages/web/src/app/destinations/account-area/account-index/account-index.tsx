@@ -11,7 +11,18 @@ import {
 } from "@/shared/patterns/navigation/navigation/navigation";
 import type { Account } from "@/account";
 import { SECTIONS, rowId } from "../account-model/account-model";
-import { useAccountValues } from "./account-values";
+import { useAccountValues, type Values } from "./account-values";
+
+/** The rows of the index: every section that is on for the account; the profile has its own row above them. */
+function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
+  return SECTIONS.filter(
+    (s) =>
+      s.key !== "profile" &&
+      (s.key !== "achievements" || values.achievementsShown) &&
+      (s.key !== "aiClients" || ai) &&
+      (s.key !== "functions" || hasOverview),
+  );
+}
 
 type Token = () => Promise<string | undefined>;
 
@@ -20,6 +31,7 @@ const ROW =
 /** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
 const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
+const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 function Row(props: {
   to: AccountSection;
@@ -41,7 +53,12 @@ function Row(props: {
 }
 
 /** The confirmation of signing out (US-QS-17): a sheet on a phone, a dialog on a large screen. */
-function SignOutRow(props: { onSignOut: () => void; onEverywhereSignOut: () => void }) {
+function SignOutRow(props: {
+  onSignOut: () => void;
+  onEverywhereSignOut: () => void;
+  /** The error of the last try (US-ACC-01): the dialog stays open, so the person can press again. */
+  error?: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -60,6 +77,11 @@ function SignOutRow(props: { onSignOut: () => void; onEverywhereSignOut: () => v
       </Button>
       <ResponsiveModal title="Abmelden?" closeLabel="Schließen" open={open} onOpenChange={setOpen}>
         <div className="flex flex-col gap-3">
+          {props.error && (
+            <p role="alert" className={NOTICE}>
+              {props.error}
+            </p>
+          )}
           <Button type="button" size="touch" onClick={props.onSignOut}>
             Abmelden
           </Button>
@@ -89,16 +111,12 @@ export function AccountIndex(props: {
   hasOverview: boolean;
   onSignOut: () => void;
   onEverywhereSignOut: () => void;
+  /** The error of a failed sign-out (US-ACC-01), shown in its dialog. */
+  error?: string;
 }) {
   const ai = useFeature("ai");
   const values = useAccountValues(props.api, props.token);
-  const rows = SECTIONS.filter(
-    (s) =>
-      s.key !== "profile" &&
-      (s.key !== "achievements" || values.achievementsShown) &&
-      (s.key !== "aiClients" || ai) &&
-      (s.key !== "functions" || props.hasOverview),
-  );
+  const rows = rowsOf(values, ai, props.hasOverview);
   const name = props.account.displayName || props.account.email;
   return (
     <nav aria-label="Abschnitte von Konto">
@@ -135,7 +153,11 @@ export function AccountIndex(props: {
           );
         })}
         <li>
-          <SignOutRow onSignOut={props.onSignOut} onEverywhereSignOut={props.onEverywhereSignOut} />
+          <SignOutRow
+            onSignOut={props.onSignOut}
+            onEverywhereSignOut={props.onEverywhereSignOut}
+            {...(props.error ? { error: props.error } : {})}
+          />
         </li>
       </ul>
     </nav>

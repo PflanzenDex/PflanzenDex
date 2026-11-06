@@ -2,7 +2,7 @@
 id: PRIN-004
 title: Source files have at most 200 lines
 maturity: gated
-spec: [FR-QG-04, E-15, US-QG-08]
+spec: [FR-QG-18, E-15, US-QG-08]
 ---
 
 ## Why it is better
