@@ -122,6 +122,20 @@ describe("US-ACC-05 registration with an invitation code", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "Abmelden" }));
     expect(onSignOut).toHaveBeenCalledOnce();
   });
+
+  it("US-ACC-01 a failed sign-out shows its error on this page, and the button stays for another try", () => {
+    render(
+      <InvitationPage
+        api="http://api"
+        token={token}
+        onRegistered={onRegistered}
+        onSignOut={onSignOut}
+        error="Abmelden hat nicht geklappt: Prüfe deine Verbindung und versuche es noch einmal."
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain("Abmelden hat nicht geklappt");
+    expect(screen.getByRole("button", { name: "Abmelden" })).toBeTruthy();
+  });
 });
 
 describe("US-ACC-05 · DS-48 states and primitives", () => {
