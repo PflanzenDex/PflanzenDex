@@ -1,4 +1,4 @@
-// US-DEV-10: the CI result of a pull request as `make ci-wait` reads it. The fixtures are real records of PR 1465 and PR 1476
+// US-DEV-13: the CI result of a pull request as `make ci-wait` reads it. The fixtures are real records of PR 1465 and PR 1476
 // (ci-wait.fixtures.json: pull request, changed files, check runs, workflow runs, and the jobs of the head's ci.yml, trimmed
 // to the fields that the reading uses; read 2026-11-06). A state "at a time" is made from those final records.
 import assert from "node:assert/strict";
@@ -115,7 +115,7 @@ const waitOpts = (c, read, timeoutMs = 600_000) => ({
 // aggregate job of the gate (`one-screen`, `a11y-routes`), which needs every shard and fails unless all of them passed.
 const MATRIX_SHARDS = ["a11y-routes-shard", "one-screen-shard"];
 
-test("US-DEV-10: the judged jobs are the jobs of ci.yml, ci-status and the matrix shards excluded", () => {
+test("US-DEV-13: the judged jobs are the jobs of ci.yml, ci-status and the matrix shards excluded", () => {
   const defined = jobsDefinedIn(readFileSync(CI_YML, "utf8"));
   assert.deepEqual([...defined].sort(), [...JOBS, "ci-status", ...MATRIX_SHARDS].sort());
 });
@@ -131,7 +131,7 @@ test("US-QG-01: every matrix shard is needed by its aggregate job, and that job 
   }
 });
 
-test("US-DEV-10: the path filters are the ones that the changes job of ci.yml uses, with the same text", () => {
+test("US-DEV-13: the path filters are the ones that the changes job of ci.yml uses, with the same text", () => {
   const text = readFileSync(CI_YML, "utf8");
   // RegExp.source escapes the slashes; ci.yml writes them plain.
   for (const re of Object.values(PATHS)) {
@@ -140,7 +140,7 @@ test("US-DEV-10: the path filters are the ones that the changes job of ci.yml us
   }
 });
 
-test("US-DEV-10: the path filters match the same files as the changes job", () => {
+test("US-DEV-13: the path filters match the same files as the changes job", () => {
   assert.ok(PATHS.app.test(".claude/hooks/rules.mjs"));
   assert.ok(PATHS.docs.test("README.md"));
   assert.ok(PATHS.docs.test("app/src/notes.md"));
@@ -150,13 +150,13 @@ test("US-DEV-10: the path filters match the same files as the changes job", () =
   assert.ok(!PATHS.docs.test("app/packages/api/src/a.ts"));
 });
 
-test("US-DEV-10: jobsDefinedIn reads the jobs under jobs: and not the triggers under on:", () => {
+test("US-DEV-13: jobsDefinedIn reads the jobs under jobs: and not the triggers under on:", () => {
   const yml =
     "on:\n  push:\n  pull_request:\njobs:\n  changes:\n    runs-on: x\n    steps:\n      - run: y\n  ci-status:\n    needs: [changes]\n";
   assert.deepEqual([...jobsDefinedIn(yml)], ["changes", "ci-status"]);
 });
 
-test("US-DEV-10: the jobs required for a PR follow the path filter, the draft state and the base branch", () => {
+test("US-DEV-13: the jobs required for a PR follow the path filter, the draft state and the base branch", () => {
   const defined = new Set(JOBS);
   const docsOnly = requiredJobs({ files: ["docs/x.md"], base: "dev", draft: false, defined });
   assert.ok(docsOnly.has("docs-gates"));
@@ -178,13 +178,13 @@ test("US-DEV-10: the jobs required for a PR follow the path filter, the draft st
   assert.ok(ui.has("one-screen") && ui.has("a11y-routes") && ui.has("audit") && ui.has("e2e"));
 });
 
-test("US-DEV-10: when GitHub lists 3000 files, every path filter counts as matched", () => {
+test("US-DEV-13: when GitHub lists 3000 files, every path filter counts as matched", () => {
   const files = Array.from({ length: 3000 }, () => "x.txt");
   const req = requiredJobs({ files, base: "dev", draft: false, defined: new Set(JOBS) });
   assert.ok(req.has("app-gates") && req.has("one-screen") && req.has("docs-gates"));
 });
 
-test("US-DEV-10: a job that the head's workflow does not define is never required (PR 1465 predates docs-gates)", () => {
+test("US-DEV-13: a job that the head's workflow does not define is never required (PR 1465 predates docs-gates)", () => {
   const s = snapOf("pr1465");
   const withDefined = requiredJobs({
     files: s.files,
@@ -202,7 +202,7 @@ test("US-DEV-10: a job that the head's workflow does not define is never require
   assert.ok(ifDefined.has("docs-gates"), "docs/ changed, so the job is required where it exists");
 });
 
-test("US-DEV-10: PR 1476 requires the app, UI and docs jobs of its own workflow, but not the main-only ones", () => {
+test("US-DEV-13: PR 1476 requires the app, UI and docs jobs of its own workflow, but not the main-only ones", () => {
   const s = snapOf("pr1476");
   const required = requiredJobs({ files: s.files, base: "dev", draft: false, defined: s.defined });
   for (const job of [
@@ -219,7 +219,7 @@ test("US-DEV-10: PR 1476 requires the app, UI and docs jobs of its own workflow,
   assert.ok(!required.has("audit") && !required.has("e2e"));
 });
 
-test("US-DEV-10: the latest finished run that did work decides; skipped and cancelled runs are no result", () => {
+test("US-DEV-13: the latest finished run that did work decides; skipped and cancelled runs are no result", () => {
   const run = (id, conclusion, done) => ({
     status: "completed",
     conclusion,
@@ -241,27 +241,27 @@ test("US-DEV-10: the latest finished run that did work decides; skipped and canc
   assert.equal(evidenceOf([{ status: "in_progress", conclusion: null }]), null);
 });
 
-test("US-DEV-10: a cancelled run after a success does not turn the job red (PR 1476 app-gates, app-coverage)", () => {
+test("US-DEV-13: a cancelled run after a success does not turn the job red (PR 1476 app-gates, app-coverage)", () => {
   const a = assess(open(snapOf("pr1476")));
   assert.equal(rowOf(a, "app-gates").result, "success");
   assert.equal(rowOf(a, "app-gates").run, "42185065502");
   assert.equal(rowOf(a, "app-coverage").result, "success");
 });
 
-test("US-DEV-10: a job skipped by the text-edit run keeps the result of the full run (PR 1465 a11y-routes)", () => {
+test("US-DEV-13: a job skipped by the text-edit run keeps the result of the full run (PR 1465 a11y-routes)", () => {
   const row = rowOf(assess(open(snapOf("pr1465"))), "a11y-routes");
   assert.equal(row.result, "success");
   assert.equal(row.run, "42177736005");
 });
 
-test("US-DEV-10: the green ci-status of a text edit does not count while the full run of PR 1465 is still going", () => {
+test("US-DEV-13: the green ci-status of a text edit does not count while the full run of PR 1465 is still going", () => {
   const a = assess(open(asOf(snapOf("pr1465"), "2026-11-06T07:00:00Z")));
   assert.equal(a.status, "running");
   assert.ok(a.unfinished.includes("app-ui"));
   assert.equal(a.aggregate.conclusion, "success", "the aggregate of the text edit is green");
 });
 
-test("US-DEV-10: PR 1465 and PR 1476 are green once every run of their head is final", () => {
+test("US-DEV-13: PR 1465 and PR 1476 are green once every run of their head is final", () => {
   for (const key of ["pr1465", "pr1476"]) {
     const a = assess(open(snapOf(key)));
     assert.equal(a.status, "settled", key);
@@ -270,7 +270,7 @@ test("US-DEV-10: PR 1465 and PR 1476 are green once every run of their head is f
   }
 });
 
-test("US-DEV-10: a queued workflow run keeps the PR waiting before its check runs exist (PR 1476 at 08:07)", () => {
+test("US-DEV-13: a queued workflow run keeps the PR waiting before its check runs exist (PR 1476 at 08:07)", () => {
   const s = open(snapOf("pr1476"));
   const queued = {
     ...s,
@@ -284,7 +284,7 @@ test("US-DEV-10: a queued workflow run keeps the PR waiting before its check run
   assert.deepEqual(a.unfinished, ["CI workflow run (queued)"]);
 });
 
-test("US-DEV-10: a merged PR is reported as merged and is not waited for (PR 1465)", async () => {
+test("US-DEV-13: a merged PR is reported as merged and is not waited for (PR 1465)", async () => {
   const s = snapOf("pr1465");
   const a = assess(s);
   assert.equal(a.status, "merged");
@@ -298,7 +298,7 @@ test("US-DEV-10: a merged PR is reported as merged and is not waited for (PR 146
   assert.deepEqual(c.sleeps, []);
 });
 
-test("US-DEV-10: a conflicting PR fails at once, because it gets no CI run", async () => {
+test("US-DEV-13: a conflicting PR fails at once, because it gets no CI run", async () => {
   const s = open(snapOf("pr1476"));
   const conflict = {
     ...s,
@@ -317,19 +317,19 @@ test("US-DEV-10: a conflicting PR fails at once, because it gets no CI run", asy
   assert.match(report(out), /conflicts with dev/);
 });
 
-test("US-DEV-10: a PR closed without a merge fails", () => {
+test("US-DEV-13: a PR closed without a merge fails", () => {
   const s = snapOf("pr1465");
   const a = assess({ ...s, pr: { ...s.pr, merged: false, mergedAt: null, state: "closed" } });
   assert.equal(a.status, "closed");
   assert.equal(exitCodeOf(a), 1);
 });
 
-test("US-DEV-10: mergeability that GitHub has not computed yet keeps the wait going", () => {
+test("US-DEV-13: mergeability that GitHub has not computed yet keeps the wait going", () => {
   const s = open(snapOf("pr1476"));
   assert.equal(assess({ ...s, pr: { ...s.pr, mergeable: null } }).status, "computing");
 });
 
-test("US-DEV-10: the wait ends only once the PR stayed quiet for the settle time", async () => {
+test("US-DEV-13: the wait ends only once the PR stayed quiet for the settle time", async () => {
   const c = clock();
   const r = reads([open(snapOf("pr1476"))]);
   const out = await waitForCi(1476, waitOpts(c, r.read));
@@ -338,7 +338,7 @@ test("US-DEV-10: the wait ends only once the PR stayed quiet for the settle time
   assert.equal(c.t, 60_000);
 });
 
-test("US-DEV-10: a run that starts during the settle time starts the settle time again", async () => {
+test("US-DEV-13: a run that starts during the settle time starts the settle time again", async () => {
   const s = open(snapOf("pr1476"));
   const queued = {
     ...s,
@@ -354,7 +354,7 @@ test("US-DEV-10: a run that starts during the settle time starts the settle time
   assert.equal(r.calls.length, 6);
 });
 
-test("US-DEV-10: a new head commit starts the settle time again", async () => {
+test("US-DEV-13: a new head commit starts the settle time again", async () => {
   const s = open(snapOf("pr1476"));
   const next = "f".repeat(40);
   const moved = { ...s, head: next, pr: { ...s.pr, head: next } };
@@ -366,7 +366,7 @@ test("US-DEV-10: a new head commit starts the settle time again", async () => {
   assert.equal(r.calls.length, 4);
 });
 
-test("US-DEV-10: the timeout ends the wait and names the unfinished checks", async () => {
+test("US-DEV-13: the timeout ends the wait and names the unfinished checks", async () => {
   const running = open(asOf(snapOf("pr1465"), "2026-11-06T07:00:00Z"));
   const c = clock();
   const r = reads([running]);
@@ -376,7 +376,7 @@ test("US-DEV-10: the timeout ends the wait and names the unfinished checks", asy
   assert.match(report(out), /timed out after 2 min; still open: .*app-ui/);
 });
 
-test("US-DEV-10: one failed read is retried, three failed reads in a row stop the wait", async () => {
+test("US-DEV-13: one failed read is retried, three failed reads in a row stop the wait", async () => {
   const s = open(snapOf("pr1465"));
   const boom = new Error("GitHub API 502");
   const c = clock();
@@ -389,7 +389,7 @@ test("US-DEV-10: one failed read is retried, three failed reads in a row stop th
   assert.equal(always.calls.length, 3);
 });
 
-test("US-DEV-10: the report names every job with its result and run, and ends with the verdict", () => {
+test("US-DEV-13: the report names every job with its result and run, and ends with the verdict", () => {
   const text = report(assess(open(snapOf("pr1476"))));
   assert.match(
     text,
@@ -403,7 +403,7 @@ test("US-DEV-10: the report names every job with its result and run, and ends wi
   );
 });
 
-test("US-DEV-10: a failed required job makes the verdict not green and the exit code 1", () => {
+test("US-DEV-13: a failed required job makes the verdict not green and the exit code 1", () => {
   const s = open(snapOf("pr1476"));
   const broken = {
     ...s,
@@ -416,7 +416,7 @@ test("US-DEV-10: a failed required job makes the verdict not green and the exit 
   assert.match(report(a), /not green: changes: failure/);
 });
 
-test("US-DEV-10: a required job that was only cancelled is a problem, and a job that never ran is named", () => {
+test("US-DEV-13: a required job that was only cancelled is a problem, and a job that never ran is named", () => {
   const s = open(snapOf("pr1476"));
   const onlyCancelled = {
     ...s,
@@ -437,7 +437,7 @@ test("US-DEV-10: a required job that was only cancelled is a problem, and a job 
   assert.equal(exitCodeOf(b), 1);
 });
 
-test("US-DEV-10: a check run of another app with the name of a CI job does not count", () => {
+test("US-DEV-13: a check run of another app with the name of a CI job does not count", () => {
   const s = open(snapOf("pr1476"));
   const faked = {
     ...s,
@@ -454,7 +454,7 @@ test("US-DEV-10: a check run of another app with the name of a CI job does not c
   assert.notEqual(rowOf(assess(faked), "app-gates").result, "success");
 });
 
-test("US-DEV-10: a failed job the path filter does not require still fails the PR", () => {
+test("US-DEV-13: a failed job the path filter does not require still fails the PR", () => {
   const s = open(snapOf("pr1476"));
   const e2e = {
     ...s,
@@ -467,7 +467,7 @@ test("US-DEV-10: a failed job the path filter does not require still fails the P
   assert.deepEqual(a.problems, ["e2e: failure"]);
 });
 
-test("US-DEV-10: make merge refuses while CI runs, names the failed jobs and passes a green head", () => {
+test("US-DEV-13: make merge refuses while CI runs, names the failed jobs and passes a green head", () => {
   const running = assess(asOf(open(snapOf("pr1465")), "2026-11-06T07:00:00Z"));
   assert.match(problemsNow(running)[0], /CI is still running .*app-ui.*make ci-wait PR=1465/);
   const s = open(snapOf("pr1476"));
@@ -481,7 +481,7 @@ test("US-DEV-10: make merge refuses while CI runs, names the failed jobs and pas
   assert.deepEqual(problemsNow(assess(s)), []);
 });
 
-test("US-DEV-10: readSnapshot reads every page of the check runs over REST and the jobs of the head's ci.yml", async () => {
+test("US-DEV-13: readSnapshot reads every page of the check runs over REST and the jobs of the head's ci.yml", async () => {
   const s = snapOf("pr1476");
   const many = Array.from({ length: 150 }, (_, i) => ({
     ...s.checkRuns[i % s.checkRuns.length],
@@ -522,7 +522,7 @@ test("US-DEV-10: readSnapshot reads every page of the check runs over REST and t
   assert.ok(calls.some((p) => /check-runs\?filter=all&per_page=100&page=2$/.test(p)));
 });
 
-test("US-DEV-10: a head without a ci.yml defines no job, so nothing is required from it", async () => {
+test("US-DEV-13: a head without a ci.yml defines no job, so nothing is required from it", async () => {
   const client = {
     async run(cmd, args) {
       const path = args[1];
@@ -541,7 +541,7 @@ test("US-DEV-10: a head without a ci.yml defines no job, so nothing is required 
   assert.deepEqual(a.problems, ["no CI run on the head commit"]);
 });
 
-// US-DEV-10: code scanning. The fixture pr1503earlier is real: PR 1503 at its earlier head 4316b1d2, where the GitHub Advanced
+// US-DEV-13: code scanning. The fixture pr1503earlier is real: PR 1503 at its earlier head 4316b1d2, where the GitHub Advanced
 // Security app failed `CodeQL` with 2 new high alerts while `make ci-wait` printed green (issue 1510). The CI jobs of that head
 // are the ones the fixture keeps; the code-scanning checks are the real records of the same head.
 const scanOpen = () => open(snapOf("pr1503earlier"));
@@ -550,7 +550,7 @@ const withCheck = (s, name, change) => ({
   checkRuns: s.checkRuns.map((c) => (c.name === name ? { ...c, ...change } : c)),
 });
 
-test("US-DEV-10: a failed CodeQL check of PR 1503's earlier head is a problem that names it", () => {
+test("US-DEV-13: a failed CodeQL check of PR 1503's earlier head is a problem that names it", () => {
   const a = assess(scanOpen());
   assert.equal(a.status, "settled");
   assert.deepEqual(a.problems, ["CodeQL: failure"]);
@@ -569,7 +569,7 @@ test("US-DEV-10: a failed CodeQL check of PR 1503's earlier head is a problem th
   assert.deepEqual(problemsNow(a), ["CI: CodeQL: failure"]);
 });
 
-test("US-DEV-10: a failed analyze check of the advanced workflow is a problem that names it", () => {
+test("US-DEV-13: a failed analyze check of the advanced workflow is a problem that names it", () => {
   const s = withCheck(scanOpen(), "CodeQL", { conclusion: "success" });
   const a = assess(withCheck(s, "analyze (javascript-typescript)", { conclusion: "failure" }));
   assert.deepEqual(a.problems, ["analyze (javascript-typescript): failure"]);
@@ -577,7 +577,7 @@ test("US-DEV-10: a failed analyze check of the advanced workflow is a problem th
   assert.match(report(a), /analyze \(javascript-typescript\)\s+failure\s+scanning\s+run /);
 });
 
-test("US-DEV-10: the green CodeQL and analyze checks of PR 1465 are judged and pass", () => {
+test("US-DEV-13: the green CodeQL and analyze checks of PR 1465 are judged and pass", () => {
   const a = assess(open(snapOf("pr1465")));
   assert.equal(rowOf(a, "CodeQL").result, "success");
   assert.equal(rowOf(a, "analyze (javascript-typescript)").result, "success");
@@ -585,7 +585,7 @@ test("US-DEV-10: the green CodeQL and analyze checks of PR 1465 are judged and p
   assert.deepEqual(a.problems, []);
 });
 
-test("US-DEV-10: a PR without a CodeQL or analyze check is no problem (docs-only PRs may have none)", () => {
+test("US-DEV-13: a PR without a CodeQL or analyze check is no problem (docs-only PRs may have none)", () => {
   const s = scanOpen();
   const none = { ...s, checkRuns: s.checkRuns.filter((c) => !/^(CodeQL|analyze )/.test(c.name)) };
   const a = assess(none);
@@ -594,7 +594,7 @@ test("US-DEV-10: a PR without a CodeQL or analyze check is no problem (docs-only
   assert.equal(rowOf(a, "CodeQL"), undefined);
 });
 
-test("US-DEV-10: a neutral, cancelled or skipped CodeQL result is no problem", () => {
+test("US-DEV-13: a neutral, cancelled or skipped CodeQL result is no problem", () => {
   for (const conclusion of ["neutral", "cancelled", "skipped"]) {
     const a = assess(withCheck(scanOpen(), "CodeQL", { conclusion }));
     assert.deepEqual(a.problems, [], conclusion);
@@ -602,7 +602,7 @@ test("US-DEV-10: a neutral, cancelled or skipped CodeQL result is no problem", (
   }
 });
 
-test("US-DEV-10: a CodeQL re-run that passes after the failed run is no problem", () => {
+test("US-DEV-13: a CodeQL re-run that passes after the failed run is no problem", () => {
   const s = scanOpen();
   const failed = s.checkRuns.find((c) => c.name === "CodeQL");
   const rerun = {
@@ -619,7 +619,7 @@ test("US-DEV-10: a CodeQL re-run that passes after the failed run is no problem"
   assert.deepEqual(a.problems, []);
 });
 
-test("US-DEV-10: a CodeQL check that is still running keeps the PR waiting, and make merge refuses", () => {
+test("US-DEV-13: a CodeQL check that is still running keeps the PR waiting, and make merge refuses", () => {
   const running = withCheck(scanOpen(), "CodeQL", {
     status: "in_progress",
     conclusion: null,
@@ -634,7 +634,7 @@ test("US-DEV-10: a CodeQL check that is still running keeps the PR waiting, and 
   );
 });
 
-test("US-DEV-10: a CodeQL check of another app with the same name does not count, as with the CI jobs", () => {
+test("US-DEV-13: a CodeQL check of another app with the same name does not count, as with the CI jobs", () => {
   const s = scanOpen();
   const faked = {
     ...s,
@@ -647,7 +647,7 @@ test("US-DEV-10: a CodeQL check of another app with the same name does not count
   assert.equal(rowOf(a, "CodeQL"), undefined);
 });
 
-test("US-DEV-10: the make gate-review state line names the failed CodeQL check of PR 1503's earlier head", () => {
+test("US-DEV-13: the make gate-review state line names the failed CodeQL check of PR 1503's earlier head", () => {
   assert.equal(
     stateLine(assess(scanOpen())),
     "not green: CodeQL: failure (ci-status: success, not judged)",

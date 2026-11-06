@@ -282,7 +282,7 @@ worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim c
 ci-reuse: ## CI only: reuse a green job (JOBS="app ds-snapshots") of the same PR head commit after a title/body edit (US-QG-02, #404)
 	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-reuse.mjs $(JOBS)
 
-ci-wait: ## Wait until every check of a PR head has finished, then print the real result per job (PR=<n>; exit 1 on a failure, a conflict or a required job that never ran; US-DEV-10)
+ci-wait: ## Wait until every check of a PR head has finished, then print the real result per job (PR=<n>; exit 1 on a failure, a conflict or a required job that never ran; US-DEV-13)
 	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-wait.mjs "$(PR)"
 
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
@@ -294,7 +294,7 @@ gate-review: ## Open PRs into dev that change a gate file: CI as it stands, conf
 repo-stats: ## Regenerate the statistics block in README.md (once per release PR, see release-checklist; US-DEV-10)
 	tools/repo/repo-stats.sh
 
-pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
+pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-13)
 	tools/repo/pr-ready.sh "$(PR)"
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
