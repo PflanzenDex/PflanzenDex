@@ -1,40 +1,46 @@
 import { useCallback, useState } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
-import type { ApiError } from "../../../shared/data";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { useReload, type ApiError } from "../../../shared/data";
 import { setSpecimenNotes } from "../model/specimens-api";
-import { SIGN_IN, type Token } from "./use-collection";
+import { SIGN_IN } from "./use-collection";
 import table from "../../plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.de.json";
 
 const translate = texts(table);
 
-/** The plant whose notes are being written; `notes` are the notes the layer showed (US-BES-18). */
-export type NotesTarget = { id: string; name: string; notes: string | null };
+/** The cached read of the notes of one plant (US-BES-18). */
+export const notesKey = (specimenId: string) => ["specimen-notes", specimenId];
 
 /**
- * State and action for the private notes (US-BES-18). After a save the page says what changed and reloads the list
- * (P-09); a refusal stays in the form (P-10).
+ * State and action for the private notes of one plant (US-BES-18). A save reads the notes again and says what changed
+ * (P-09); a refusal comes back to the form, which keeps the text (P-10).
  */
-export function useNotes(api: string, token: Token, after: () => void) {
-  const [open, setOpen] = useState<NotesTarget | null>(null);
+export function useNotes(access: PhotoAccess, plant: { id: string; name: string }) {
   const [message, setMessage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const reload = useReload(notesKey(plant.id));
+  const { api, token } = access;
+  const { id, name } = plant;
 
   const send = useCallback(
     async (notes: string): Promise<ApiError | null> => {
-      const credential = await token();
-      if (!credential || !open) return SIGN_IN;
-      const r = await setSpecimenNotes(api, credential, { id: open.id, notes });
-      if (!r.ok) return r.error;
-      setMessage(
-        translate(r.value.notes === null ? "message.cleared" : "message.saved", {
-          name: open.name,
-        }),
-      );
-      setOpen(null);
-      after();
-      return null;
+      setSaving(true);
+      try {
+        const credential = await token();
+        if (!credential) return SIGN_IN;
+        const r = await setSpecimenNotes(api, credential, { id, notes });
+        if (!r.ok) return r.error;
+        await reload();
+        setMessage(
+          translate(r.value.notes === null ? "message.cleared" : "message.saved", { name }),
+        );
+        return null;
+      } finally {
+        setSaving(false);
+      }
     },
-    [api, token, open, after],
+    [api, token, id, name, reload],
   );
 
-  return { open, message, send, setOpen, setMessage };
+  return { message, saving, send, setMessage };
 }

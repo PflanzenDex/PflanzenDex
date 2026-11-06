@@ -184,7 +184,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Create:** `specimen.create` takes optional `notes` (trimmed, empty means none), for the CSV import (US-BES-18, later slice); the create answer carries no notes.
 - **API:** `POST /specimens/:id/notes` (`Idempotency-Key`; body `notes`), answers `{ id, notes }`. `GET /specimens/:id` (the keeper's own detail) adds `notes` (`null` when none). Lists, cards (`GET /specimens`, `GET /specimens/cards`), the archive and the friend, swap and feed reads leave the notes out (P-05, FR-BES-23); the AI read (`specimen` in the collection read source) carries no notes either (free text needs its dataFields marking, FR-KI-07, a later decision).
 - **Export:** the keeper's data export carries `notes` (the export reads every tenant column, US-ACC-04).
-- **Web:** the plant layer's overview has the section "Notizen" (read from `GET /specimens/:id` when the overview opens): the text cut to three lines with "Alle lesen", or an empty state with "Notiz schreiben"; the page's form "Private Notiz" saves or clears it (`specimen.set_notes`), a refusal marks the field (P-10).
+- **Web:** the button "Notizen" on the plant layer's overview opens the layer `?sheet=notes-<id>` (`NotesLayer`), which reads `GET /specimens/:id` only while it is open: the whole text, which scrolls inside the layer, or an empty state; its filled action "Notiz schreiben" or "Notiz bearbeiten" shows the form in the same layer, whose filled "Notiz speichern" saves or clears the text (`specimen.set_notes`); a refusal marks the field and keeps the text (P-10). Closing goes back to the plant and its button.
 
 ## Tell several specimens of a species apart (US-BES-03)
 

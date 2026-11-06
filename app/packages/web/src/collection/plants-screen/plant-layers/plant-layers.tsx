@@ -10,6 +10,7 @@ import { loadCard } from "../../specimens/cards/cards-api";
 import { COLLECTION_KEY } from "../../specimens/hooks/use-collection";
 import { PlantLayer } from "./plant-layer/plant-layer";
 import { CareProfileLayer, careProfileLayerId } from "./plant-layer/plant-care-tab/plant-care-tab";
+import { NotesLayer, notesLayerId } from "./plant-layer/plant-notes/plant-notes";
 import { plantLayerId } from "../rows/plant-tile/plant-tile";
 import { ZONES_LAYER } from "../rows/zone-insight/zone-insight";
 import { ARCHIVE_LAYER, type LayerProps } from "./layer-ids";
@@ -17,9 +18,15 @@ import table from "./plant-layers.de.json";
 
 const t = texts(table);
 
-/** The ID of the plant a layer address names: `plant-<id>` or `profil-<id>` (US-QS-19, US-QS-23); `undefined` otherwise. */
+/** The ID of the plant a layer address names: `plant-<id>`, `profil-<id>` or `notes-<id>` (US-QS-19, US-QS-23); `undefined` otherwise. */
 function plantIdOf(sheet: string | null): string | undefined {
-  return /^(?:plant|profil)-(.+)$/.exec(sheet ?? "")?.[1];
+  return /^(?:plant|profil|notes)-(.+)$/.exec(sheet ?? "")?.[1];
+}
+
+/** The title of a layer whose plant is still being read, or could not be read. */
+function unreadTitle(sheet: string): string {
+  if (sheet.startsWith("profil-")) return t("layer.profile");
+  return sheet.startsWith("notes-") ? t("layer.notes") : t("layer.plant");
 }
 
 /**
@@ -63,6 +70,7 @@ export function PlantLayers(props: LayerProps) {
   const { card, direct } = useLayerPlant(props, plantIdOf(sheet));
   const plant = card && plantLayerId(card.id) === sheet ? card : undefined;
   const profile = card && careProfileLayerId(card.id) === sheet ? card : undefined;
+  const notes = card && notesLayerId(card.id) === sheet ? card : undefined;
   // A plant that is being read, or could not be read, has its layer with that state (P-10), never a silent nothing.
   const unread = plantIdOf(sheet) !== undefined && card === undefined;
   return (
@@ -77,10 +85,7 @@ export function PlantLayers(props: LayerProps) {
       </LayerSheet>
       {props.archived.length > 0 ? <ArchiveLayer {...props} /> : null}
       {unread && sheet ? (
-        <LayerSheet
-          id={sheet}
-          title={t(sheet.startsWith("profil-") ? "layer.profile" : "layer.plant")}
-        >
+        <LayerSheet id={sheet} title={unreadTitle(sheet)}>
           <RequestState
             status={direct.status}
             {...(direct.error ? { errorText: direct.error.text } : {})}
@@ -103,11 +108,11 @@ export function PlantLayers(props: LayerProps) {
           onRepot={props.onRepot}
           onMark={props.onMark}
           onCatchDate={props.onCatchDate}
-          onNotes={props.onNotes}
           onLightZone={props.onLightZone}
         />
       ) : null}
       {profile ? <CareProfileLayer card={profile} access={props.photoAccess} /> : null}
+      {notes ? <NotesLayer card={notes} access={props.photoAccess} /> : null}
     </>
   );
 }

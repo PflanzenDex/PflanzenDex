@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../../../insights/distribution-test-helpers";
-import { findCardButton, openPlant } from "../../../../specimens/tests/plants-test-helpers";
+import { openPlant } from "../../../../specimens/tests/plants-test-helpers";
 import { answerCardRead } from "../../../../specimens/tests/cards-fake";
 
-// US-BES-18: the private notes of a specimen, through the plant layer and the form of the collection page (what the
+// US-BES-18: the private notes of a specimen, through the plant layer and the layer of the notes (what the
 // keeper sees). The fake server keeps the notes between the reads and the writes, as the API does.
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -101,88 +101,144 @@ const page = () => (
   </MemoryRouter>
 );
 
-/** The overview of the plant layer, where the notes are. */
+/** The plant layer, open on its overview. */
 async function overview() {
   await openPlant("Bogenhanf");
   return screen.findByRole("dialog", { name: "Bogenhanf" });
 }
 
-describe("US-BES-18 the overview shows the private notes of the plant", () => {
+/** The notes of the plant: the layer above the overview. */
+async function notesLayer() {
+  const plant = await overview();
+  await userEvent.click(within(plant).getByRole("button", { name: "Notizen: Bogenhanf" }));
+  return screen.findByRole("dialog", { name: "Notizen" });
+}
+
+/** The form of the notes, opened by the filled action of the layer. */
+async function notesForm(action: string) {
+  const layer = await notesLayer();
+  await userEvent.click(await within(layer).findByRole("button", { name: action }));
+  return {
+    layer,
+    field: within(layer).getByLabelText("Notiz") as HTMLTextAreaElement,
+    save: within(layer).getByRole("button", { name: "Notiz speichern" }),
+  };
+}
+
+const detailReads = () =>
+  vi.mocked(fetch).mock.calls.filter(([url]) => new URL(String(url)).pathname === "/specimens/e1");
+
+describe("US-BES-18 the plant layer opens the private notes as their own layer", () => {
+  it("US-BES-18 the overview offers the notes as a button and reads them only when their layer opens (US-QS-15)", async () => {
+    fakeServer({ notes: NOTE });
+    render(page());
+    const plant = await overview();
+    expect(within(plant).getByRole("button", { name: "Notizen: Bogenhanf" })).toBeTruthy();
+    expect(within(plant).queryByText(NOTE)).toBeNull();
+    expect(detailReads()).toEqual([]);
+  });
+
   it("US-BES-18 the layer shows the notes the keeper wrote, read from the own detail", async () => {
     fakeServer({ notes: NOTE });
     render(page());
-    const layer = await overview();
+    const layer = await notesLayer();
     expect(await within(layer).findByText(NOTE)).toBeTruthy();
-    expect(within(layer).getByRole("heading", { name: "Notizen" })).toBeTruthy();
-    expect(within(layer).getByRole("button", { name: "Notiz bearbeiten: Bogenhanf" })).toBeTruthy();
+    expect(within(layer).getByRole("button", { name: "Notiz bearbeiten" })).toBeTruthy();
   });
 
-  it("US-BES-18 without a note the overview says what to do and that only the keeper sees the note (P-09)", async () => {
+  it("US-BES-18 without a note the layer says what to do and that only the keeper sees the note (P-09)", async () => {
     fakeServer();
     render(page());
-    const layer = await overview();
+    const layer = await notesLayer();
     expect(await within(layer).findByText(/Noch keine Notiz/)).toBeTruthy();
     expect(within(layer).getByText(/Nur du siehst sie/)).toBeTruthy();
-    expect(within(layer).getByRole("button", { name: "Notiz schreiben: Bogenhanf" })).toBeTruthy();
+    expect(within(layer).getByRole("button", { name: "Notiz schreiben" })).toBeTruthy();
   });
 
-  it("US-BES-18 a long note is cut, and a button reads all of it (the layer fits one screen, US-QS-15)", async () => {
+  it("US-BES-18 a long note shows in whole, free text may scroll inside its layer (US-QS-15)", async () => {
     fakeServer({ notes: LONG });
     render(page());
-    const layer = await overview();
-    const more = await within(layer).findByRole("button", { name: "Alle lesen" });
-    expect(more.getAttribute("aria-expanded")).toBe("false");
-    await userEvent.click(more);
-    expect(more.getAttribute("aria-expanded")).toBe("true");
-    expect(within(layer).getByText(LONG.trim())).toBeTruthy();
+    const layer = await notesLayer();
+    expect(await within(layer).findByText(LONG.trim())).toBeTruthy();
   });
 
-  it("US-BES-18 when the notes cannot be read the overview says so (P-10)", async () => {
+  it("US-BES-18 when the notes cannot be read the layer says so and offers no write (P-10)", async () => {
     fakeServer({ detailFails: true });
     render(page());
-    const layer = await overview();
+    const layer = await notesLayer();
     expect(await within(layer).findByRole("alert")).toBeTruthy();
     expect(within(layer).queryByText(/Noch keine Notiz/)).toBeNull();
+    expect(within(layer).queryByRole("button", { name: "Notiz schreiben" })).toBeNull();
+  });
+
+  it("US-BES-18 closing the layer goes back to the plant and its button (US-QS-15)", async () => {
+    fakeServer({ notes: NOTE });
+    render(page());
+    const layer = await notesLayer();
+    await within(layer).findByText(NOTE);
+    await userEvent.keyboard("{Escape}");
+    const plant = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    const opener = within(plant).getByRole("button", { name: "Notizen: Bogenhanf" });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });
 
-describe("US-BES-18 change the notes through the form of the page", () => {
-  it("US-BES-18 the form is labelled and keyboard reachable; saving sends the text and says what changed (P-09)", async () => {
+describe("US-BES-18 change the notes in their layer", () => {
+  it("US-BES-18 the form is labelled and takes the focus; saving sends the text, shows it and says what changed (P-09)", async () => {
     const posts = fakeServer();
     render(page());
-    await findCardButton("Notiz schreiben: Bogenhanf");
-    await userEvent.click(screen.getByRole("button", { name: "Notiz schreiben: Bogenhanf" }));
-    const field = screen.getByLabelText("Notiz") as HTMLTextAreaElement;
+    const { layer, field, save } = await notesForm("Notiz schreiben");
     expect(field.tagName).toBe("TEXTAREA");
+    expect(document.activeElement).toBe(field);
     await userEvent.type(field, NOTE);
-    await userEvent.click(screen.getByRole("button", { name: "Notiz speichern" }));
+    await userEvent.click(save);
     expect(posts).toEqual([{ path: "/specimens/e1/notes", body: { notes: NOTE } }]);
-    expect(await screen.findByText("Die Notiz zu „Bogenhanf“ ist gespeichert.")).toBeTruthy();
+    expect(
+      await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist gespeichert."),
+    ).toBeTruthy();
+    expect(within(layer).getByText(NOTE)).toBeTruthy();
+    expect(document.activeElement).toBe(
+      within(layer).getByRole("button", { name: "Notiz bearbeiten" }),
+    );
   });
 
-  it("US-BES-18 the saved note is shown again when the plant is opened next", async () => {
+  it("US-BES-18 the saved note is shown again when the layer is opened next", async () => {
     fakeServer();
     render(page());
-    await findCardButton("Notiz schreiben: Bogenhanf");
-    await userEvent.click(screen.getByRole("button", { name: "Notiz schreiben: Bogenhanf" }));
-    await userEvent.type(screen.getByLabelText("Notiz"), NOTE);
-    await userEvent.click(screen.getByRole("button", { name: "Notiz speichern" }));
-    await screen.findByText("Die Notiz zu „Bogenhanf“ ist gespeichert.");
-    const layer = await overview();
-    expect(await within(layer).findByText(NOTE)).toBeTruthy();
+    const { layer, field, save } = await notesForm("Notiz schreiben");
+    await userEvent.type(field, NOTE);
+    await userEvent.click(save);
+    await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist gespeichert.");
+    await userEvent.keyboard("{Escape}");
+    const plant = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    await userEvent.click(within(plant).getByRole("button", { name: "Notizen: Bogenhanf" }));
+    const again = await screen.findByRole("dialog", { name: "Notizen" });
+    expect(await within(again).findByText(NOTE)).toBeTruthy();
   });
 
-  it("US-BES-18 an empty text clears the note: null is sent and the page says it was removed", async () => {
+  it("US-BES-18 an empty text clears the note: an empty text is sent and the layer says it was removed", async () => {
     const posts = fakeServer({ notes: NOTE });
     render(page());
-    await findCardButton("Notiz bearbeiten: Bogenhanf");
-    await userEvent.click(screen.getByRole("button", { name: "Notiz bearbeiten: Bogenhanf" }));
-    const field = screen.getByLabelText("Notiz") as HTMLTextAreaElement;
+    const { layer, field, save } = await notesForm("Notiz bearbeiten");
     expect(field.value).toBe(NOTE);
     await userEvent.clear(field);
-    await userEvent.click(screen.getByRole("button", { name: "Notiz speichern" }));
+    await userEvent.click(save);
     expect(posts).toEqual([{ path: "/specimens/e1/notes", body: { notes: "" } }]);
-    expect(await screen.findByText("Die Notiz zu „Bogenhanf“ ist entfernt.")).toBeTruthy();
+    expect(await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist entfernt.")).toBeTruthy();
+    expect(within(layer).getByText(/Noch keine Notiz/)).toBeTruthy();
+  });
+
+  it("US-BES-18 cancelling writes nothing and shows the notes as they were", async () => {
+    const posts = fakeServer({ notes: NOTE });
+    render(page());
+    const { layer, field } = await notesForm("Notiz bearbeiten");
+    await userEvent.type(field, " Anders.");
+    await userEvent.click(within(layer).getByRole("button", { name: "Abbrechen" }));
+    expect(posts).toEqual([]);
+    expect(within(layer).getByText(NOTE)).toBeTruthy();
+    expect(document.activeElement).toBe(
+      within(layer).getByRole("button", { name: "Notiz bearbeiten" }),
+    );
   });
 
   it("US-BES-18 a refused save marks the field and keeps the text (P-10)", async () => {
@@ -195,30 +251,28 @@ describe("US-BES-18 change the notes through the form of the page", () => {
       },
     });
     render(page());
-    await findCardButton("Notiz schreiben: Bogenhanf");
-    await userEvent.click(screen.getByRole("button", { name: "Notiz schreiben: Bogenhanf" }));
-    const field = screen.getByLabelText("Notiz") as HTMLTextAreaElement;
+    const { layer, field, save } = await notesForm("Notiz schreiben");
     await userEvent.type(field, NOTE);
-    await userEvent.click(screen.getByRole("button", { name: "Notiz speichern" }));
+    await userEvent.click(save);
     // The refusal names the field and shows the German text of its code (FR-QG-11): the text is not the hint of the field.
     expect(
-      await screen.findByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),
+      await within(layer).findByText(
+        "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+      ),
     ).toBeTruthy();
     expect(field.getAttribute("aria-invalid")).toBe("true");
     expect(field.value).toBe(NOTE);
-    expect(screen.queryByText(/gespeichert/)).toBeNull();
+    expect(within(layer).queryByText(/gespeichert/)).toBeNull();
   });
 
   it("US-BES-18 a failed connection keeps the form and the text, and says it did not save (P-10)", async () => {
     fakeServer({ network: true });
     render(page());
-    await findCardButton("Notiz schreiben: Bogenhanf");
-    await userEvent.click(screen.getByRole("button", { name: "Notiz schreiben: Bogenhanf" }));
-    const field = screen.getByLabelText("Notiz") as HTMLTextAreaElement;
+    const { layer, field, save } = await notesForm("Notiz schreiben");
     await userEvent.type(field, NOTE);
-    await userEvent.click(screen.getByRole("button", { name: "Notiz speichern" }));
-    expect(await screen.findByRole("alert")).toBeTruthy();
+    await userEvent.click(save);
+    expect(await within(layer).findByRole("alert")).toBeTruthy();
     expect(field.value).toBe(NOTE);
-    expect(screen.queryByText(/gespeichert/)).toBeNull();
+    expect(within(layer).queryByText(/gespeichert/)).toBeNull();
   });
 });
