@@ -1,4 +1,5 @@
 import {
+  accountSwitchFeature,
   appError,
   isTimeZone,
   localToday,
@@ -39,10 +40,13 @@ const badZone = (c: Ctx) =>
     400,
   );
 
-/** The entry the web app and the AI client get: registry data plus the derived state, reason and way as data. */
+/**
+ * The entry the web app and the AI client get: registry data plus the derived state, reason and way as data. `keeperSwitch`
+ * names the keeper switch of the function (US-ONB-09); a function without one is core and has no switch.
+ */
 const entry = (s: UnlockStatus) => {
   const f = UNLOCK_FUNCTIONS.find((u) => u.id === s.id);
-  return { ...s, epic: f?.epic, destination: f?.destination };
+  return { ...s, epic: f?.epic, destination: f?.destination, keeperSwitch: f?.keeperSwitch };
 };
 
 type Facts = ReturnType<typeof unlockSources>["facts"];
@@ -62,6 +66,33 @@ export function unlockListFor(pool: Pool, opt: UnlockRouteOptions & { features: 
 }
 
 /**
+ * The keeper's switch of a feature outside the core purpose (US-ONB-09, P-03): `PUT /onboarding/switches/:feature` with body
+ * `{ enabled, timeZone }`; the answer is the stored row. Not an AI write: the AI client reads the state and never changes it
+ * (FR-KI-22).
+ */
+function switchRoute(
+  routes: Hono<AuthEnv>,
+  w: {
+    readonly deps: { readonly idempotency: IdempotencyPostgres };
+    readonly clock: () => Date;
+    readonly switchFeature: ReturnType<typeof accountSwitchFeature>;
+  },
+) {
+  routes.put("/onboarding/switches/:feature", async (c) => {
+    if (!c.req.header("idempotency-key")) return keyMissing(c);
+    const input = await body(c);
+    if (!isTimeZone(input["timeZone"])) return badZone(c);
+    return write(c, w.deps, w.switchFeature, {
+      input: {
+        feature: c.req.param("feature"),
+        enabled: input["enabled"],
+        on: localToday(w.clock(), input["timeZone"]),
+      },
+    });
+  });
+}
+
+/**
  * Lock states of the keeper's functions (US-ONB-05, FR-ONB-01), derived on every request from the own data and never
  * stored. `GET /onboarding/unlocks?timeZone=` lists every function that may be announced; a function the operator switched
  * off is not in the list (FR-ONB-03). `GET /onboarding/unlocks/:id?timeZone=` answers one function: `200` while open,
@@ -77,18 +108,17 @@ export function unlockRoutes(
   opt: UnlockRouteOptions,
 ): Hono<AuthEnv> {
   const clock = opt.clock ?? (() => new Date());
-  const { unlocks, styles, featureSet, facts, hints, hintContext } = unlockSources(pool, {
-    features,
-    clock: opt.clock,
-    style: opt.keeperStyle,
-  });
-  const unlock = onboardingUnlockFunction({ unlocks, features: featureSet });
+  const { unlocks, styles, switches, featureSet, facts, keeperOff, hints, hintContext } =
+    unlockSources(pool, { features, clock: opt.clock, style: opt.keeperStyle });
+  const unlock = onboardingUnlockFunction({ unlocks, features: featureSet, keeperOff });
+  const switchFeature = accountSwitchFeature({ switches });
   const deps = { idempotency: new IdempotencyPostgres(pool) };
 
   const routes = new Hono<AuthEnv>();
   styleRoutes(routes, auth, { styles, unlocks, facts, deps, clock });
   hintRoutes(routes, auth, { hints, context: hintContext, deps, clock });
   routes.use("/onboarding/unlocks/*", auth);
+  routes.use("/onboarding/switches/*", auth);
   routes.get("/onboarding/unlocks", async (c) => {
     const timeZone = c.req.query("timeZone");
     if (!isTimeZone(timeZone)) return badZone(c);
@@ -105,6 +135,12 @@ export function unlockRoutes(
     if (found.value.state === "locked") {
       return c.json(errorBody(appError("onboarding.locked", { data: entry(found.value) })), 409);
     }
+    if (found.value.state === "keeper_off") {
+      return c.json(
+        errorBody(appError("onboarding.keeper_off", { data: entry(found.value) })),
+        409,
+      );
+    }
     return c.json(entry(found.value));
   });
   routes.post("/onboarding/unlocks/:id", async (c) => {
@@ -115,5 +151,6 @@ export function unlockRoutes(
       input: { id: c.req.param("id"), on: localToday(clock(), timeZone) },
     });
   });
+  switchRoute(routes, { deps, clock, switchFeature });
   return routes;
 }

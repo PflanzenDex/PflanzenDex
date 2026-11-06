@@ -10,4 +10,8 @@ export const ONBOARDING_ERROR_TEXTS = {
     "Diese Funktion ist noch gesperrt. Grund und Weg stehen dabei; du kannst sie jederzeit selbst freischalten.",
   "onboarding.unknown_occasion":
     "Diesen Hinweis kennt die App nicht. Es wurde nichts gespeichert; du kannst einfach weiterarbeiten.",
+  "onboarding.keeper_off":
+    "Diese Funktion ist ausgeschaltet. Schalte sie unter „Was die App kann“ wieder ein; freigeschaltet wurde nichts.",
+  "onboarding.core_feature":
+    "Diese Funktion gehört zum Kern der App und lässt sich nicht ausschalten. Es wurde nichts geändert.",
 } as const;

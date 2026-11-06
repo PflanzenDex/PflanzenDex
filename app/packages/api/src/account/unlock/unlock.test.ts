@@ -230,3 +230,122 @@ describe("US-ONB-03 keeper style through the API", () => {
     expect(list.map((f) => f.id)).not.toContain("friends");
   });
 });
+
+// US-ONB-09: the keeper's switches through the API (DM-ONB-04, P-03, P-04, P-05, FR-KI-22).
+describe("US-ONB-09 keeper switches through the API", () => {
+  it("US-ONB-09 without a token: 401, and the switch is not written", async () => {
+    const r = await call(app, null, "PUT", "/onboarding/switches/wishlist", {
+      enabled: false,
+      timeZone: "Europe/Berlin",
+    });
+    expect(r.status).toBe(401);
+  });
+
+  it("US-ONB-09 a write without Idempotency-Key is refused before anything else (US-QS-03)", async () => {
+    const res = await app.request("/onboarding/switches/wishlist", {
+      method: "PUT",
+      headers: { "content-type": "application/json", authorization: `Bearer valid:${subA}` },
+      body: JSON.stringify({ enabled: false, timeZone: "Europe/Berlin" }),
+    });
+    expect(res.status).toBe(400);
+    const answer = (await res.json()) as { error: { code: string } };
+    expect(answer.error.code).toBe("idempotency.key_missing");
+  });
+
+  it("US-ONB-09 a missing or invalid time zone or enabled flag: 400 input.invalid", async () => {
+    const noZone = await call(app, subA, "PUT", "/onboarding/switches/wishlist", {
+      enabled: false,
+    });
+    expect(noZone.status).toBe(400);
+    expect(noZone.body["error"].code).toBe("input.invalid");
+    const noFlag = await call(app, subA, "PUT", "/onboarding/switches/wishlist", {
+      enabled: "no",
+      timeZone: "Europe/Berlin",
+    });
+    expect(noFlag.status).toBe(400);
+    expect(noFlag.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ONB-09 a core feature has no switch: 409 onboarding.core_feature, nothing changes", async () => {
+    const r = await call(app, subA, "PUT", "/onboarding/switches/pokedex", {
+      enabled: false,
+      timeZone: "Europe/Berlin",
+    });
+    expect(r.status).toBe(409);
+    expect(r.body["error"].code).toBe("onboarding.core_feature");
+    const list = await call(app, subA, "GET", `/onboarding/unlocks${TZ}`);
+    expect(list.body["functions"].find((f: { id: string }) => f.id === "pokedex")?.state).toBe(
+      "locked",
+    );
+  });
+
+  it("US-ONB-09 an unknown feature: 404 onboarding.unknown_function", async () => {
+    const r = await call(app, subA, "PUT", "/onboarding/switches/teleport", {
+      enabled: false,
+      timeZone: "Europe/Berlin",
+    });
+    expect(r.status).toBe(404);
+    expect(r.body["error"].code).toBe("onboarding.unknown_function");
+  });
+
+  it("US-ONB-09 switched off: the feature is listed as keeper_off, never locked and never announced", async () => {
+    const off = await call(app, subA, "PUT", "/onboarding/switches/wishlist", {
+      enabled: false,
+      timeZone: "Europe/Berlin",
+    });
+    expect(off).toMatchObject({ status: 200 });
+    const list = await call(app, subA, "GET", `/onboarding/unlocks${TZ}`);
+    expect(list.status).toBe(200);
+    const wish = (list.body["functions"] as { id: string }[]).find((f) => f.id === "wishlist");
+    expect(wish).toMatchObject({
+      state: "keeper_off",
+      announced: false,
+      mayUnlockNow: false,
+      keeperSwitch: "wishlist",
+    });
+  });
+
+  it("US-ONB-09 a switched-off feature answers 409 onboarding.keeper_off on its own address, with the same entry as data", async () => {
+    const r = await call(app, subA, "GET", `/onboarding/unlocks/wishlist${TZ}`);
+    expect(r.status).toBe(409);
+    expect(r.body["error"].code).toBe("onboarding.keeper_off");
+    expect(r.body["error"].data).toMatchObject({ id: "wishlist", state: "keeper_off" });
+  });
+
+  it("US-ONB-09 an unlock never switches a feature on: the tap is refused with 409 onboarding.keeper_off", async () => {
+    const r = await call(app, subA, "POST", "/onboarding/unlocks/wishlist", {
+      timeZone: "Europe/Berlin",
+    });
+    expect(r.status).toBe(409);
+    expect(r.body["error"].code).toBe("onboarding.keeper_off");
+    const list = await call(app, subA, "GET", `/onboarding/unlocks${TZ}`);
+    expect(
+      (list.body["functions"] as { id: string; state: string }[]).find((f) => f.id === "wishlist")
+        ?.state,
+    ).toBe("keeper_off");
+  });
+
+  it("US-ONB-09 switching on again shows the feature as before (locked with reason and way)", async () => {
+    const on = await call(app, subA, "PUT", "/onboarding/switches/wishlist", {
+      enabled: true,
+      timeZone: "Europe/Berlin",
+    });
+    expect(on.status).toBe(200);
+    const r = await call(app, subA, "GET", `/onboarding/unlocks/wishlist${TZ}`);
+    expect(r.status).toBe(409);
+    expect(r.body["error"].code).toBe("onboarding.locked");
+    expect(r.body["error"].data).toMatchObject({ state: "locked", mayUnlockNow: true });
+  });
+
+  it("US-ONB-09 the switch of one account is invisible to another (P-04, P-05)", async () => {
+    await call(app, subA, "PUT", "/onboarding/switches/equipment", {
+      enabled: false,
+      timeZone: "Europe/Berlin",
+    });
+    const other = await call(app, subB, "GET", `/onboarding/unlocks${TZ}`);
+    expect(
+      (other.body["functions"] as { id: string; state: string }[]).find((f) => f.id === "equipment")
+        ?.state,
+    ).not.toBe("keeper_off");
+  });
+});

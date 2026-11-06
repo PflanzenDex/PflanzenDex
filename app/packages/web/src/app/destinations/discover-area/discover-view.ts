@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router";
 import { readStored, writeStored } from "@/shared/platform/browser/storage";
 import { useAnnounce } from "@/shared/platform/announcer/context";
+import { useFeature } from "@/shared/data";
 
 export type DiscoverView = "suggestions" | "catalog";
 
@@ -25,8 +26,11 @@ const parse = (v: string | null | undefined): DiscoverView | null =>
 export function useDiscoverView(): { view: DiscoverView; choose: (v: DiscoverView) => void } {
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
-  const view =
+  // The suggestions are the function "discover" (US-ENT): switched off by the keeper (US-ONB-09), the catalog stays.
+  const discover = useFeature("discover");
+  const asked =
     parse(params.get(DISCOVER_VIEW_PARAM)) ?? parse(readStored(DISCOVER_VIEW_KEY)) ?? "suggestions";
+  const view: DiscoverView = asked === "suggestions" && !discover ? "catalog" : asked;
   const choose = (next: DiscoverView) => {
     if (next === view) return;
     writeStored(DISCOVER_VIEW_KEY, next);
