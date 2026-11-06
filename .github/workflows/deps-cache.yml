@@ -32,7 +32,7 @@ jobs:
       - uses: ./.github/actions/setup-app
       # US-QG-01 (issue 1485): the apt cache of the browser install, read by the CI shards of every PR (a PR restores the
       # cache of its base branch). Filled here on a miss only; the save follows a complete install, after the browser is
-      # proved present (tools/repo/install-browsers.sh).
+      # proved present (tools/lighthouse/install-browsers.sh).
       - id: playwright
         run: echo "version=$(make -s playwright-version)" >> "$GITHUB_OUTPUT"
       - id: apt-cache

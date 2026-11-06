@@ -116,7 +116,7 @@ coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet ch
 	cd $(APP) && npm run coverage
 
 browsers: ## Install the Chromium that Playwright uses (e2e, conformance run); CI: the system packages and the download are time-limited and retried once (US-QG-01)
-	cd $(APP) && $(if $(CI),sh ../tools/repo/install-browsers.sh,npx --no-install playwright install chromium)
+	cd $(APP) && $(if $(CI),sh ../tools/lighthouse/install-browsers.sh,npx --no-install playwright install chromium)
 
 playwright-version: ## Print the installed version of Playwright (the key of the CI cache of the browser's system packages, US-QG-01)
 	@cd $(APP) && node -p "require('./node_modules/@playwright/test/package.json').version"
