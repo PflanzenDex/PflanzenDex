@@ -25,7 +25,7 @@ const PER_PAGE = 100;
 const MAX_PAGES = 50;
 
 /** Every page of a REST list that wraps its items (`check_runs`, `workflow_runs`), 100 per page. */
-async function pagedKey(client, path, key) {
+export async function pagedKey(client, path, key) {
   const sep = path.includes("?") ? "&" : "?";
   const out = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
