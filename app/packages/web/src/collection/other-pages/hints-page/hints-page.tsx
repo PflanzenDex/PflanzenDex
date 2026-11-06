@@ -13,7 +13,7 @@ import {
   TITLE,
   Warning,
 } from "../../specimens/cards/parts/parts";
-import { refusalText } from "../../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { sharedLocations } from "../../../light";
 import { loadSpecimenHints } from "../../insights/api/hints-api";
 import { setSpecimenLocation } from "../../specimens/model/specimens-api";

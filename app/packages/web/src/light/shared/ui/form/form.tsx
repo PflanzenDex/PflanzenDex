@@ -12,16 +12,10 @@ import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import table from "../../../light.de.json";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/fields/form/form";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
-import { ALERT_CLASSES, useServerRefusal } from "../../texts";
+import { ALERT_CLASSES, useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 
 const t = texts(table);
 
@@ -44,7 +38,7 @@ export function useSaveForm<F extends FieldValues>(opts: {
     (e: ApiError) => refusable.filter((f) => e.details?.some((d) => d.field === f)),
     [refusable],
   );
-  const { alertText, alertRef } = useServerRefusal<F>(error, form.setError, fieldsOf);
+  const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf);
   const send = form.handleSubmit(async (values) => {
     const refusal = await save(values);
     setError(refusal);
@@ -104,18 +98,8 @@ export function SelectField<T extends FieldValues>(props: {
   children: React.ReactNode;
 }) {
   return (
-    <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Select {...field}>{props.children}</Select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <Field control={props.control} name={props.name} label={props.label}>
+      {(field) => <Select {...field}>{props.children}</Select>}
+    </Field>
   );
 }

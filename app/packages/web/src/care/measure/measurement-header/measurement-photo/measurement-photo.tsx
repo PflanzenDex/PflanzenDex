@@ -5,7 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { useInView } from "@/shared/platform/visibility/use-in-view";
-import { refusalText } from "../../../shared/notices/notices";
+import { refusalText } from "@/shared/lib/error-text";
 import table from "./measurement-photo.de.json";
 
 const t = texts(table);

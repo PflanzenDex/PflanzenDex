@@ -1,5 +1,5 @@
 {
-  "maxTotal": 324,
+  "maxTotal": 319,
   "entries": [
     {
       "file": "packages/api/src/achievements/history/year.ts",
@@ -145,14 +145,6 @@
     {
       "file": "packages/core/src/achievements/seen/seen.ts",
       "numbers": 1
-    },
-    {
-      "file": "packages/core/src/ai/reads/catalog-reads.ts",
-      "numbers": 2
-    },
-    {
-      "file": "packages/core/src/ai/reads/collection-reads.ts",
-      "enums": 3
     },
     {
       "file": "packages/core/src/ai/results/discover.ts",

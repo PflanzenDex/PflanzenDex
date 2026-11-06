@@ -87,3 +87,27 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 - The Keycloak flow is checked only manually (no Keycloak in CI); an integration test with a container would be follow-up work.
 - The realm export is for development (`start-dev`, H2, `http`). Production operation (database, HTTPS, real mail relay, domains of the redirect URIs) belongs to TE-03/operation.
 - Keycloak warns that "Full scope allowed" for the web client is outdated.
+
+## 7. Another account on the welcome page (issue 667, 2026-11-06)
+
+**Method:** keyboard walk with Playwright (Chromium, locale `de-DE`) against the Vite dev server on port 5173 of this worktree, desktop 1440×900 and phone 390×844. Keycloak was stubbed in the walk: its discovery document was answered locally and every other request to its origin was recorded and answered locally, so the shared sign-in service was not used. The walk script is not part of the repository.
+
+**Keyboard walk (welcome page, both sizes):**
+
+| # | Element | Visible focus | Result |
+| --- | --- | --- | --- |
+| 1 | "Anmelden" | ✅ yes | Tab order as in the view |
+| 2 | "Konto anlegen" | ✅ yes | Tab order as in the view |
+| 3 | "Anderes Konto" | ✅ yes, 48 px high, fully in view | Enter and Space send the browser to the sign-in service's logout endpoint with `client_id` and `post_logout_redirect_uri` (no `id_token_hint`) |
+| – | Shift+Tab from 3 | ✅ | back to 2, then 1 (reverse order) |
+
+The welcome page has no skip link because it has no navigation block; the first stop is the first action.
+
+**Other checks:**
+- ✅ `make a11y-routes` for the welcome route (axe and keyboard walk), run read-only: passes.
+- ✅ `make one-screen` for the welcome route at 360×640 with 200 % text: passes after the copy change below. Before, the page was 808 px (label of two lines and the long tagline) and 712 px (one-line label) of 640 px high, because a third control costs 72 px at this size.
+- ⏭️ Screen reader: none installed on this machine (orca and nvda not found); no spoken result.
+- ⏭️ Zoom 400 %, user text spacing, forced colors and reduced motion: not walked by hand for this change (the control uses the existing button, no animation).
+- ⏭️ The new e2e test "US-ACC-01 another account" in `sign-in.spec.ts` is written but not run: it creates users in the shared Keycloak realm (`support/account.ts`).
+
+**Copy change for the owner:** the welcome tagline lost its second sentence ("Lege ein Konto an, um zu starten."), which repeated the "Konto anlegen" button, and the action label is "Anderes Konto". The longer label "Mit anderem Konto anmelden" wraps to two lines at 200 % text and overflows at 360×640.

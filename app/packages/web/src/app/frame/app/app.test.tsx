@@ -226,6 +226,7 @@ beforeAll(async () => {
 beforeEach(() => {
   mgr.getUser.mockReset();
   mgr.signinRedirect.mockClear();
+  mgr.signoutRedirect.mockClear();
   window.sessionStorage.clear();
   window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
   window.localStorage.removeItem("pflanzendex.collection-view");
@@ -245,6 +246,15 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Konto anlegen" }));
     expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "create" });
     expect(screen.queryByRole("navigation")).toBeNull();
+  });
+
+  it("US-ACC-01 signed out, the welcome page offers 'Anderes Konto', which ends the session at the sign-in service", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await userEvent.click(await screen.findByRole("button", { name: "Anderes Konto" }));
+    expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
   });
 
   it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {

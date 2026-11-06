@@ -16,20 +16,39 @@ const nothing = () => undefined;
 
 describe("welcome (US-ACC-01)", () => {
   it("offers register and sign in", () => {
-    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    const html = renderToString(
+      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+    );
     expect(html).toContain("Konto anlegen");
     expect(html).toContain("Anmelden");
   });
 
   it("US-QS-09 sign-in and sign-up ask for no puzzle and no code, they hand over to the sign-in service (3.3.8)", () => {
-    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    const html = renderToString(
+      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+    );
     expect(html).not.toMatch(/<input|captcha|<canvas|<iframe/i);
-    expect(html.match(/<button/g)).toHaveLength(2);
+    expect(html.match(/<button/g)).toHaveLength(3);
+  });
+
+  it("US-ACC-01 offers 'Anderes Konto' last, after sign-in and registration", () => {
+    const html = renderToString(
+      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+    );
+    const [signIn, register, other] = html.split("<button").slice(1);
+    expect(signIn).toContain(">Anmelden<");
+    expect(register).toContain(">Konto anlegen<");
+    expect(other).toContain(">Anderes Konto<");
   });
 
   it("names the next action after signing out", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} hint="Du bist abgemeldet." />,
+      <Welcome
+        onRegister={nothing}
+        onSignIn={nothing}
+        onAnotherAccount={nothing}
+        hint="Du bist abgemeldet."
+      />,
     );
     expect(html).toContain("Du bist abgemeldet.");
     expect(html).toContain('role="status"');
@@ -38,7 +57,9 @@ describe("welcome (US-ACC-01)", () => {
 
 describe("welcome in the sign-in frame (US-QS-14)", () => {
   it("US-QS-14 shows the wordmark, the three value lines and a drawing that assistive technology skips", () => {
-    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    const html = renderToString(
+      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+    );
     expect(html).toContain("PflanzenDéx");
     expect(html).toContain("Sammle deine Pflanzen wie Karten");
     expect(html).toContain("Miss Wachstum gegen deine eigene Geschichte");
@@ -47,7 +68,9 @@ describe("welcome in the sign-in frame (US-QS-14)", () => {
   });
 
   it("US-QS-14 sign-in is the filled button and comes first, registration the outline button", () => {
-    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    const html = renderToString(
+      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+    );
     const [signIn, register] = html.split("<button").slice(1);
     expect(signIn).toContain(">Anmelden<");
     expect(signIn).toContain("bg-primary text-primary-foreground");
@@ -57,7 +80,9 @@ describe("welcome in the sign-in frame (US-QS-14)", () => {
   });
 
   it("US-QS-14 offers no language choice on the card", () => {
-    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    const html = renderToString(
+      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+    );
     expect(html).not.toMatch(/<select|lang=|Sprache|language/i);
   });
 });

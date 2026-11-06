@@ -111,7 +111,7 @@ As a **developer (or AI)** I want to get from each story to its tests and back (
 
 Acceptance criteria:
 
-- Every story in `docs/specs/product/` with status ✅ has at least one test whose name carries the story ID (e.g. `US-PHA-01`).
+- Every story in `docs/specs/product/` with status ✅ has at least one test whose name carries the story ID (e.g. `US-PHA-01`). A skipped or todo test does not count, because it cannot fail.
 - A test that names an unknown or ⬜ story ID is reported (hint, no error).
 - The script additionally checks the consistency of the spec itself: IDs unique, status overview in `README.md` matches the files, references to `US-/FR-/DM-/E-` IDs point to existing entries (references to IDs of the prototype folder are marked as such and excluded).
 - A change to domain logic without a green story test does not count as done (DoD, FR-QG-10).

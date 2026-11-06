@@ -1,9 +1,10 @@
 import type { Species, GrowthMeasure } from "@pflanzendex/core";
+import { UNKNOWN } from "@/shared/lib/format";
+
+export { UNKNOWN };
 
 const numberFormat = new Intl.NumberFormat("de-DE");
 
-/** P-08: what is missing is called "unknown" and is never filled with a value. */
-export const UNKNOWN = "unbekannt";
 export const orUnknown = (value: string | null) => value ?? UNKNOWN;
 
 export const DIFFICULTY: Record<number, string> = { 1: "Einfach", 2: "Medium", 3: "Schwer" };

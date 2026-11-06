@@ -181,6 +181,33 @@ describe("US-ACC-01 Sitzung", () => {
     );
   });
 
+  it("US-ACC-01 another account: the session at the sign-in service ends first, no login with prompt=login is asked", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.useAnotherAccount());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    // Keycloak refuses a different person while another session is alive, prompt=login included (see session.ts).
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 another account: the return shows the welcome page with the hint and makes no silent attempt", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    act(() => result.current.useAnotherAccount());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    cleanup();
+    // A fresh tab state: only the marker of the sign-out may keep the silent attempt from running.
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    mgr.getUser.mockResolvedValue(null);
+    const back = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(back.result.current.state).toEqual({ kind: "signedOut", hint: "Du bist abgemeldet." }),
+    );
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
   it("sign in and register start the detour via the sign-in service; register with prompt=create", async () => {
     mgr.getUser.mockResolvedValue(null);
     window.sessionStorage.setItem("pflanzendex.signed_out", "1");

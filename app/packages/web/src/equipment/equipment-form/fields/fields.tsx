@@ -8,6 +8,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/fields/form/form";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import { Select } from "@/shared/ui/fields/select/select";
@@ -26,25 +27,16 @@ function TextField(props: {
   inputMode?: "decimal";
 }) {
   return (
-    <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Input
-              {...field}
-              autoComplete="off"
-              {...(props.max ? { maxLength: props.max } : {})}
-              {...(props.inputMode ? { inputMode: props.inputMode } : {})}
-            />
-          </FormControl>
-          {props.hint ? <FormDescription>{props.hint}</FormDescription> : null}
-          <FormMessage />
-        </FormItem>
+    <Field control={props.control} name={props.name} label={props.label} description={props.hint}>
+      {(field) => (
+        <Input
+          {...field}
+          autoComplete="off"
+          {...(props.max ? { maxLength: props.max } : {})}
+          {...(props.inputMode ? { inputMode: props.inputMode } : {})}
+        />
       )}
-    />
+    </Field>
   );
 }
 

@@ -10,10 +10,10 @@ import {
   shape,
   textField,
   timeZoneField,
-} from "../../kernel";
+} from "../../../kernel";
 import { resolveSpecies, type ReadDependencies } from "./catalog-reads";
-import { referenceError, resolveName, type Named } from "./naming";
-import { PAGE_FIELDS, pageOf, readCall, type ReadCall, type SpecimenItem } from "./types";
+import { referenceError, resolveName, type Named } from "../naming";
+import { PAGE_FIELDS, pageOf, readCall, type ReadCall, type SpecimenItem } from "../types";
 import { collectionView, type CollectionView, type SpecimenOut } from "./views";
 
 const ref = (field: string) => orNull(textField(field, { min: 1, max: 200 }));
@@ -55,8 +55,8 @@ function resolvePlace(view: CollectionView, kind: "location" | "lightZone", valu
 }
 
 /** A specimen reference among the account's specimens: the active ones first, then the archive (US-BES-07). */
-function resolveSpecimen(rows: readonly SpecimenItem[], value: string) {
-  const active = rows.filter((s) => s.status !== "archived");
+export function resolveSpecimen(rows: readonly SpecimenItem[], value: string) {
+  const active = rows.filter((s) => s.archivedAt === null);
   const first = resolveName(named(active), value);
   const r = first.kind === "none" ? resolveName(named(rows), value) : first;
   return r.kind === "found"
@@ -64,8 +64,12 @@ function resolveSpecimen(rows: readonly SpecimenItem[], value: string) {
     : failed(referenceError(r, "specimen", "specimen.not_found"));
 }
 
-const statusFits = (status: "active" | "archived" | "all" | null) => (s: SpecimenOut) =>
-  status === "all" || (status === "archived") === (s.status === "archived");
+/** Which specimens a status filter keeps: an archived specimen carries its archive date (US-BES-07). */
+const STATUS_FITS = {
+  active: (s: SpecimenOut) => s.archivedAt === null,
+  archived: (s: SpecimenOut) => s.archivedAt !== null,
+  all: () => true,
+} as const;
 
 const SPECIMEN_DATA = ["name", "marker", "species.name", "location.name", "lightZone.name"];
 
@@ -84,7 +88,7 @@ export const aiListSpecimens = (deps: ReadDependencies, call: ReadCall) =>
       const zone = resolvePlace(view, "lightZone", input.lightZone);
       if (!zone.ok) return zone;
       const all = view.specimens
-        .filter(statusFits(input.status ?? "active"))
+        .filter(STATUS_FITS[input.status ?? "active"])
         .filter((s) => species.value === null || s.species.id === species.value)
         .filter((s) => location.value === null || s.location?.id === location.value)
         .filter((s) => zone.value === null || s.lightZone?.id === zone.value);

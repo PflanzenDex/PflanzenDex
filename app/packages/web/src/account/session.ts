@@ -92,6 +92,15 @@ async function loadState(mgr: UserManager): Promise<State> {
 }
 
 function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetStateAction<State>>) {
+  // Ends the session at the sign-in service (the browser's single sign-on session), then the welcome page shows again.
+  // Used by "Abmelden" and by "Anderes Konto": `prompt=login` would not help with another person. Keycloak
+  // authenticates the other person in the login form, finds the live session of the first one and refuses with
+  // "already signed in with another user" (AuthenticationProcessor.attachSession, Keycloak 26.8). So the session ends
+  // first and the next sign-in starts without one (US-ACC-01, decided by the spike of US-ACC-06).
+  const endSession = () => {
+    window.sessionStorage.setItem(MARKER, "1");
+    void manager.then((mgr) => mgr.signoutRedirect());
+  };
   return {
     signIn: () => {
       window.sessionStorage.removeItem(MARKER);
@@ -102,10 +111,8 @@ function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetSta
       window.sessionStorage.removeItem(MARKER);
       void manager.then((mgr) => mgr.signinRedirect({ prompt: "create" }));
     },
-    signOut: () => {
-      window.sessionStorage.setItem(MARKER, "1");
-      void manager.then((mgr) => mgr.signoutRedirect());
-    },
+    signOut: endSession,
+    useAnotherAccount: endSession,
     everywhereSignOut: async () => {
       const mgr = await manager;
       const user = await mgr.getUser();

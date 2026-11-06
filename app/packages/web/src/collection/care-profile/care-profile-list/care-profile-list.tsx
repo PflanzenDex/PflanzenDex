@@ -9,7 +9,7 @@ import type { ApiError } from "../../../shared/data";
 import { CareProfileCard } from "../sections/care-profile-card/care-profile-card";
 import { KeptProfileCard } from "../sections/kept-profile-card/kept-profile-card";
 import { NextAction, PROFILE_GRID, Status, Warning } from "../../specimens/cards/parts/parts";
-import { refusalText } from "../../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 
 export interface ProfileData {
   readonly entries: readonly CareProfileEntry[];

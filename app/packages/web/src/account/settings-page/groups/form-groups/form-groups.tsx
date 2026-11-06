@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
-import { ALERT_CLASSES, useServerRefusal } from "../../../refusal";
+import { ALERT_CLASSES, useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import {
   profileSchema,
   toProfile,
@@ -47,7 +47,7 @@ function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boo
       keys.filter((k) => e.details?.some((d) => d.field === k)).flatMap(fieldPathsOf),
     [keys],
   );
-  const { alertText, alertRef } = useServerRefusal<Fields>(error, form.setError, fieldsOf);
+  const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf);
 
   const send = form.handleSubmit(
     async (values) => {

@@ -20,8 +20,12 @@ export type Resolution =
   | { readonly kind: "ambiguous"; readonly candidates: readonly Candidate[] }
   | { readonly kind: "none"; readonly nearest: readonly string[] };
 
-/** Nearest names on "not found" and candidates on "ambiguous" (starting values, assumption). */
-export const NAMING_LIMITS = { nearest: 5, candidates: 20 } as const;
+/**
+ * Nearest names on "not found" and candidates on "ambiguous"; without a hit the nearest names come from a search for
+ * the first `prefix` characters, which needs at least `minSearch` (the catalog search's minimum). Starting values,
+ * assumption.
+ */
+export const NAMING_LIMITS = { nearest: 5, candidates: 20, prefix: 3, minSearch: 2 } as const;
 
 /** Case, accents, dashes, brackets and repeated spaces do not matter: "Aloe vera (blau)" = "Aloe vera – blau". */
 export const normalizeName = (text: string): string =>

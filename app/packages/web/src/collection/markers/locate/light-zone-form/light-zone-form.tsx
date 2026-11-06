@@ -16,7 +16,7 @@ import { loadCard } from "../../../specimens/cards/cards-api";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
-import { refusalText } from "../../../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { setLightZone } from "../../../specimens/model/specimens-api";
 import { zoneText } from "../../../specimens/model/text";
 import { zoneLabel } from "@pflanzendex/core";
