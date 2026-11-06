@@ -5,7 +5,7 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 const load = () => import("./focus-moves").then((m) => m.createFocusMover());
 
 /**
- * The address without the parts that are no view: a layer (`?sheet=`), the first entry of a list (`?from=`, `?lfrom=`) and
+ * The address without the parts that are no view: a layer (`?sheet=`), the first entry of a list (`?from=`, `?lfrom=`, `?blfrom=`) and
  * the tab or part of a layer (`ltab`, `tab`, `teil`) (US-QS-15, issue 1315). The old page numbers (`?page=`, `?lpage=`) go
  * too: converting one to its first entry (issue 1492) is then no view change, and neither is a turned page.
  */
@@ -14,6 +14,7 @@ function viewSearch(search: string): string {
   params.delete("sheet");
   params.delete("from");
   params.delete("lfrom");
+  params.delete("blfrom");
   params.delete("page");
   params.delete("lpage");
   params.delete("ltab");

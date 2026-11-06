@@ -23,6 +23,9 @@ export const PlantGrowth = lazyPage(() =>
 export const PlantHistory = lazyPage(() =>
   import("./plant-detail/plant-history/plant-history").then((m) => ({ default: m.PlantHistory })),
 );
+export const PlantLeaves = lazyPage(() =>
+  import("./plant-leaves/plant-leaves").then((m) => ({ default: m.PlantLeaves })),
+);
 export const PlantCare = lazyPage(() =>
   import("./plant-detail/plant-care/plant-care").then((m) => ({ default: m.PlantCare })),
 );

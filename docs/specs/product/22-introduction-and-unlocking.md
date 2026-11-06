@@ -215,6 +215,7 @@ Core and switchable functions (core list decided by the owner, 2026-11-05; every
 | --------------------------------------------------------------------------- | ------------------ | ------------- |
 | "Heute", collection (plants, species), locations, light zones, account      | BES, LIC, ACC, QS  | core          |
 | Phases, measurements, photos and growth, treatments                         | PHA, WAC, BEH      | core          |
+| Leaf log (new leaves, US-WAC-07)                                            | WAC                | switchable    |
 | Care reminders (phase, treatment, measurement, watering interval)           | MON-02 to MON-05   | core          |
 | Pokédex, and the cultivar entries of variegated cultivars                   | POK, VAR (entries) | core          |
 | Wishlist (the mode in the collection)                                       | WUN                | switchable    |

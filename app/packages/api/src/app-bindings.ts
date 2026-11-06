@@ -16,8 +16,10 @@ import type { AppOptions } from "./app-options";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
+  LEAF_PATHS,
   TREATMENT_PATHS,
   careRoutes,
+  leafRoutes,
   treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
@@ -40,6 +42,8 @@ export function bindCareOne(
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
+  for (const path of LEAF_PATHS) app.use(path, auth);
+  app.route("/", leafRoutes(pool, opt));
   for (const path of CARE_PHASES_PATHS) app.use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
   for (const path of TREATMENT_PATHS) app.use(`${path}/*`, auth);

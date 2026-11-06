@@ -254,6 +254,32 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(opener);
   });
+
+  it("US-WAC-07 · US-QS-15 turning a page of the leaf log (?blfrom) is no new view: the focus stays", async () => {
+    function Turner() {
+      const [, setParams] = useSearchParams();
+      return (
+        <button type="button" onClick={() => setParams({ blfrom: "6" }, { replace: true })}>
+          Weiter
+        </button>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/b"]}>
+        <AnnouncerProvider>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={titleOf} />
+            <h1>Zweite Seite</h1>
+            <Turner />
+          </main>
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const turner = screen.getByRole("button", { name: "Weiter" });
+    await userEvent.click(turner);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(turner);
+  });
 });
 
 /** A view that shows its heading and then redirects to the start view, as a page does after a check. */
