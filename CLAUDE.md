@@ -53,7 +53,7 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 
 ## Priority of tickets
 
-Every open story or enabler on the project board "PflanzenDex Roadmap" needs the field **Priority** (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket; `make claim` and `make board` warn (they never block) when it is missing, `make status-check` lists all gaps. Create tickets with `make issue` (FR-DEV-10): it sets the type and epic labels and the board fields Typ, Epic, Priority and Status (Todo) in one step. Rule of thumb (starting values, the owner may overrule per ticket):
+Every open story or enabler on the project board "PflanzenDex Roadmap" needs the field **Priority** (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket; `make claim` and `make board` warn (they never block) when it is missing, `make status-check` lists all gaps. Create tickets with `make issue` (FR-DEV-10): it sets the type and epic labels and the board fields Typ, Epic, Priority, Release and Status (Todo) in one step; the Release follows the rule of FR-DEV-10 unless `RELEASE=<code>` overrides it. Rule of thumb (starting values, the owner may overrule per ticket):
 
 | Priority | Which tickets                                                                      |
 | -------- | ---------------------------------------------------------------------------------- |

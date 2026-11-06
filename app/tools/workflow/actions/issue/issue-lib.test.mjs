@@ -1,4 +1,4 @@
-// FR-DEV-10: the rules of the issue labels (type, epic, board options, comment, make issue input)
+// FR-DEV-10: the rules of the issue labels (type, epic, board options, comment, make issue input, Release)
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -10,6 +10,7 @@ import {
   validateLabels,
   validateNewIssue,
 } from "./issue-lib.mjs";
+import { loadTaxonomy } from "./issue-cli.mjs";
 
 const taxonomy = {
   types: [
@@ -22,7 +23,18 @@ const taxonomy = {
     { code: "E", label: "epic:E", option: "Entscheidungen" },
   ],
   priorities: ["P0", "P1"],
+  releases: [
+    { code: "R1" },
+    { code: "R2" },
+    { code: "R3" },
+    { code: "R4" },
+    { code: "R5" },
+    { code: "S2", option: "Stufe 2" },
+  ],
 };
+
+/** The allowed list as it is in the repository: the rule of Release is checked against it, not against a copy. */
+const real = loadTaxonomy();
 
 test("FR-DEV-10: a type label and an epic label from the list are valid and give the board values", () => {
   const verdict = validateLabels(["story", "epic:ACC"], taxonomy);
@@ -127,8 +139,78 @@ test("FR-DEV-10: make issue accepts the input in any case and returns the labels
   );
   assert.equal(plan.ok, true);
   assert.deepEqual(plan.labels, ["story", "epic:ACC"]);
-  assert.deepEqual(plan.fields, { Typ: "Story", Epic: "ACC", Priority: "P1", Status: "Todo" });
+  assert.deepEqual(plan.fields, {
+    Typ: "Story",
+    Epic: "ACC",
+    Priority: "P1",
+    Release: "R2",
+    Status: "Todo",
+  });
   assert.equal(plan.title, "Delete specimen");
+});
+
+test("FR-DEV-10: make issue sets the Release by the rule: a bug by its priority (P0 and P1 R1, P2 R2, P3 R4), every other type R2, an epic none", () => {
+  const release = (type, priority) =>
+    validateNewIssue({ type, epic: "ACC", priority, title: "T", body: "B" }, real).fields.Release;
+  for (const priority of ["P0", "P1"]) assert.equal(release("bug", priority), "R1", priority);
+  assert.equal(release("bug", "P2"), "R2");
+  assert.equal(release("bug", "P3"), "R4");
+  for (const type of ["story", "enabler", "entscheidung"])
+    for (const priority of ["P0", "P1", "P2", "P3"])
+      assert.equal(release(type, priority), "R2", `${type} ${priority}`);
+  for (const priority of ["P0", "P1", "P2", "P3"])
+    assert.equal(release("epic", priority), undefined, `epic ${priority} has no Release`);
+});
+
+test("FR-DEV-10: a RELEASE override wins over the rule for every type, the epic included, and is case-insensitive", () => {
+  const plan = (input) =>
+    validateNewIssue({ epic: "ACC", priority: "P0", title: "T", body: "B", ...input }, real);
+  assert.equal(plan({ type: "bug", release: "R3" }).fields.Release, "R3");
+  assert.equal(plan({ type: "bug", release: "r3" }).fields.Release, "R3");
+  assert.equal(plan({ type: "epic", release: "R5" }).fields.Release, "R5");
+  assert.equal(plan({ type: "story", release: "S2" }).fields.Release, "Stufe 2");
+  assert.equal(
+    plan({ type: "bug", release: "" }).fields.Release,
+    "R1",
+    "an empty override is no override",
+  );
+});
+
+test("FR-DEV-10: an unknown RELEASE is refused with the allowed codes, before anything is created", () => {
+  const plan = validateNewIssue(
+    { type: "bug", epic: "ACC", priority: "P1", release: "R9", title: "T", body: "B" },
+    taxonomy,
+  );
+  assert.equal(plan.ok, false);
+  assert.deepEqual(plan.errors, ['unknown release "R9"; allowed: R1, R2, R3, R4, R5, S2']);
+});
+
+test("FR-DEV-10: the allowed list of issue-taxonomy.json holds the codes the rule gives (R1, R2, R4) and the codes RELEASE= accepts", () => {
+  const codes = new Set(real.releases.map((r) => r.code));
+  for (const code of ["R1", "R2", "R4"]) assert.ok(codes.has(code), code);
+  for (const code of ["R0", "R1", "R2", "R3", "R4", "R5", "R6", "S2"])
+    assert.ok(codes.has(code), `${code} is allowed for RELEASE=`);
+});
+
+test("FR-DEV-10: a board option is found by a multi-word key: Stufe 2 finds 'Stufe 2 – …', not 'Stufe 20 …'", () => {
+  const options = [
+    { id: "R2", name: "R2 Soziales" },
+    { id: "S", name: "Stufe 2 – Öffnung für Externe" },
+    { id: "T", name: "Stufe 20 – Anderes" },
+  ];
+  assert.equal(findOption(options, "Stufe 2").id, "S");
+  assert.equal(findOption(options, "R2").id, "R2");
+  assert.equal(findOption(options, "R"), undefined);
+  assert.equal(findOption(options, "Stufe 3"), undefined);
+});
+
+test("FR-DEV-10: make issue sets an epic to its named board option (E: Entscheidungen), not to its code", () => {
+  const plan = validateNewIssue(
+    { type: "entscheidung", epic: "E", priority: "P1", title: "T", body: "B" },
+    real,
+  );
+  assert.equal(plan.ok, true);
+  assert.equal(plan.fields.Epic, "Entscheidungen");
 });
 
 test("FR-DEV-10: the issue number is read from the URL that gh prints", () => {

@@ -1,5 +1,5 @@
 // Command line of the issue tools (FR-DEV-10); the make targets make issue, make issue-check and make issue-sync call it:
-//   node issue-cli.mjs create --type <label> --epic <code> --priority <P0-P3> --title <text> --body-file <file>
+//   node issue-cli.mjs create --type <label> --epic <code> --priority <P0-P3> --title <text> --body-file <file> [--release <code>]
 //   node issue-cli.mjs check --issue <n> [--event <action>]     (writes valid, type, epic to $GITHUB_OUTPUT when set)
 //   node issue-cli.mjs sync --issue <n> --type <label> --epic <code>
 // Exit 0 ok, 1 refused or failed, 2 usage. Operations: issue.mjs. Allowed list: app/config/project/issue-taxonomy.json.
@@ -24,6 +24,7 @@ const OPTIONS = {
     priority: { type: "string" },
     title: { type: "string" },
     "body-file": { type: "string" },
+    release: { type: "string" },
   },
   check: { issue: { type: "string" }, event: { type: "string", default: "" } },
   sync: { issue: { type: "string" }, type: { type: "string" }, epic: { type: "string" } },
@@ -58,6 +59,7 @@ export async function main(
       type: values.type,
       epic: values.epic,
       priority: values.priority,
+      release: values.release,
       title: values.title,
       body,
     };

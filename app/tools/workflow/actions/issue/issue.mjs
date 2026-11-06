@@ -29,10 +29,17 @@ async function repoOf(client, env) {
   return env.GH_REPO || repoName(client);
 }
 
+/** The board fields as text, in the order they are written: "Typ Story, Epic ACC, Priority P1". */
+const fieldList = (fields) =>
+  Object.entries(fields)
+    .map(([name, key]) => `${name} ${key}`)
+    .join(", ");
+
 /**
- * Creates the issue, then its board fields. A board that is not reachable does not undo the issue: a warning says which
- * fields are not set and who sets them (CI sets Typ, Epic and an empty Status; CI does not set Priority). It is never a
- * failure, because a failed `make issue` invites a retry, and a retry creates a duplicate issue (FR-DEV-10, P-10).
+ * Creates the issue, then its board fields (Typ, Epic, Priority, Release and Status). A board that is not reachable does
+ * not undo the issue: a warning says which fields are set and which are not, and who sets them (CI sets Typ, Epic and an
+ * empty Status; CI does not set Priority or Release). It is never a failure, because a failed `make issue` invites a
+ * retry, and a retry creates a duplicate issue (FR-DEV-10, P-10).
  */
 export async function createIssue(client, input, { taxonomy, env = {}, log = console.log }) {
   const plan = validateNewIssue(input, taxonomy);
@@ -47,17 +54,23 @@ export async function createIssue(client, input, { taxonomy, env = {}, log = con
   log(`Created #${number}: ${url}`);
   try {
     await setBoardFields(client, { url, owner: repo.split("/")[0], fields: plan.fields });
-    log(
-      `Board: Status ${plan.fields.Status}, Typ ${plan.fields.Typ}, Epic ${plan.fields.Epic}, Priority ${plan.fields.Priority}`,
-    );
+    log(`Board: ${fieldList(plan.fields)}`);
     return { number, url, board: "set" };
   } catch (e) {
-    log(`WARNING: #${number} is created, but its board fields are NOT set (${e.message}).`);
+    const written = e.written ?? [];
+    const pick = (keep) =>
+      Object.fromEntries(
+        Object.entries(plan.fields).filter(([name]) => written.includes(name) === keep),
+      );
     log(
-      `  Not set yet: Typ ${plan.fields.Typ}, Epic ${plan.fields.Epic}, Status ${plan.fields.Status}, Priority ${plan.fields.Priority}.`,
+      written.length
+        ? `WARNING: #${number} is created, but only some of its board fields are set (${e.message}).`
+        : `WARNING: #${number} is created, but its board fields are NOT set (${e.message}).`,
     );
+    if (written.length) log(`  Set: ${fieldList(pick(true))}.`);
+    log(`  Not set yet: ${fieldList(pick(false))}.`);
     log(
-      "  CI sets Typ, Epic and an empty Status once the labels are valid (issue-check.yml, App token). CI does not set Priority: set it by hand on the board.",
+      "  CI sets Typ, Epic and an empty Status once the labels are valid (issue-check.yml, App token). CI does not set Priority or Release: set them by hand on the board.",
     );
     return { number, url, board: "missing" };
   }
