@@ -15,7 +15,7 @@ export type PagedGroup<T> = {
 
 /**
  * Groups chosen from a row of choices with their counts, and the entries of the chosen group as pages (US-QS-19,
- * DS-60): the group is in the address (`part=`), the page in `?page=n`, a changed group starts at page 1. `intro` is
+ * DS-60): the group is in the address (`part=`), the first entry of the page in `?from=n`, a changed group starts at the first entry. `intro` is
  * shown between the choices and the entries, e.g. the zone of the location or a group action. `fit` takes the page size
  * from the free height of the frame (issue 1029); `pageSize` is then the starting value.
  */

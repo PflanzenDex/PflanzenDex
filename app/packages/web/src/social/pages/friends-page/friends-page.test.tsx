@@ -168,8 +168,8 @@ function fakeServer(initial: Initial = {}) {
 type Options = { calm?: boolean; swapMark?: string };
 
 /** Renders the page at its address; `sheet` opens that layer as a reload or a copied link would (US-QS-15). */
-function show(sheet?: string, options: Options = {}, page = "") {
-  const query = [sheet && `sheet=${sheet}`, page && `page=${page}`].filter(Boolean).join("&");
+function show(sheet?: string, options: Options = {}, from = "") {
+  const query = [sheet && `sheet=${sheet}`, from && `from=${from}`].filter(Boolean).join("&");
   return render(
     <MemoryRouter initialEntries={[`/friends${query ? `?${query}` : ""}`]}>
       <FriendsPage api="http://api" token={token} {...options} />
@@ -615,7 +615,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText("Freund5")).toBeTruthy();
   });
 
-  it("US-QS-20 requests are paged too, and a page address outside the range shows the nearest page", async () => {
+  it("US-QS-20 requests are paged too, and an entry past the end shows the last page", async () => {
     fakeServer({
       incoming: [1, 2, 3, 4, 5].map((n) => req({ id: `r${n}`, otherName: `Person${n}` })),
     });

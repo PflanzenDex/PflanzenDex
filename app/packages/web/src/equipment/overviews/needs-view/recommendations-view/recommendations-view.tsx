@@ -4,7 +4,7 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 
 /** Recommendations per page; they page apart from the needs above them (starting value, assumption). */
 const PER_PAGE = 2;
-const PARAM = "rpage";
+const PARAM = "rfrom";
 
 const date = (iso: string) => iso.split("-").reverse().join(".");
 const eur = (cents: number) => `${(cents / 100).toFixed(2).replace(".", ",")} €`;

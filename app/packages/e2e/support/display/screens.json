@@ -1254,13 +1254,13 @@
   {
     "id": "collection-view-plants-page-2",
     "account": "test4",
-    "path": "/collection?view=plants&page=2",
+    "path": "/collection?view=plants&from=6",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-plants-last-page",
     "account": "test4",
-    "path": "/collection?view=plants&page=999",
+    "path": "/collection?view=plants&from=99999",
     "title": "Sammlung"
   }
 ]
