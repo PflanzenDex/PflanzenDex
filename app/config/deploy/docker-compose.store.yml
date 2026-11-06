@@ -1,0 +1,85 @@
+# Object store of the test environment (US-WAC-06): an S3-compatible store for the photos, so that photo upload works on
+# the test host. Opt-in: nothing changes until this file is listed in COMPOSE_FILE. Production needs its own decision
+# (docs/guides/operations/staging-deploy-and-backup.md, "Object store").
+# Use: COMPOSE_FILE=docker-compose.yml:docker-compose.test.yml:docker-compose.store.yml in .env, and MINIO_ROOT_PASSWORD in
+# .env (at least 8 characters; it is also the secret the API uses, so it stays on the host only).
+# The store publishes no port: the API reaches it on the Docker network, and photos stream through the API (no signed URLs).
+# The one-shot `object-store-bucket` creates the bucket before the API starts; if it fails, `up` fails, as with `migrate`.
+# Memory limits are starting values (assumption, US-WAC-06); measure and adjust.
+# The store is the MinIO image of the development storage (same digest), built by Chainguard from source.
+x-s3: &s3
+  S3_ENDPOINT: http://object-store:9000
+  S3_REGION: eu-central-1
+  S3_BUCKET: pflanzendex-photos
+  S3_ACCESS_KEY_ID: pflanzendex
+  S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is missing (at least 8 characters, see .env.example)}
+services:
+  object-store:
+    # The same log limit and privilege settings as the services of docker-compose.yml (TE-03, #761, #762).
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # The image's own user (uid 65532, nonroot), named here so that the review sees it.
+    user: "65532:65532"
+    image: cgr.dev/chainguard/minio:latest@sha256:3b6e40c30ecd5cea627e382ff0b82ca841f58c52294578787043ee80c8ef7c82
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: pflanzendex
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is missing (at least 8 characters, see .env.example)}
+      # No web console: the API is the only client.
+      MINIO_BROWSER: "off"
+    volumes:
+      - objectdata:/data
+    # The image has a shell and the MinIO client: `mc ready` asks the store itself (no curl needed).
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+  # One-shot: creates the photo bucket, idempotently (also on an existing volume), before the API starts (US-WAC-06).
+  # The same image and build as `migrate` in docker-compose.yml. It uses the store's root credentials (see the runbook).
+  object-store-bucket:
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    build:
+      context: ../..
+      dockerfile: config/deploy/docker/api.Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-unknown}
+        APP_VERSION: ${APP_VERSION:-unknown}
+    restart: "no"
+    working_dir: /srv/app/packages/api
+    command: ["npx", "tsx", "src/media/ensure-bucket-cli.ts"]
+    environment:
+      <<: *s3
+    depends_on:
+      object-store:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  # The API gets the store and waits for the bucket. Its other settings stay those of docker-compose.yml.
+  api:
+    environment:
+      <<: *s3
+    depends_on:
+      object-store-bucket:
+        condition: service_completed_successfully
+volumes:
+  objectdata:
