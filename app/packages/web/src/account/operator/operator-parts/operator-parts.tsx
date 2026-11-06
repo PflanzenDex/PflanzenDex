@@ -158,7 +158,7 @@ export function NewCode(props: { created: CreatedInvitation }) {
   );
 }
 
-/** The invitations in pages of whole entries (`?lpage=n` in the layer, US-QS-15); the newest first, as the server sends them. */
+/** The invitations in pages of whole entries (`?lfrom=n` in the layer, US-QS-15); the newest first, as the server sends them. */
 export function InvitationList(props: {
   invitations: readonly InvitationRecord[];
   onStart: () => void;

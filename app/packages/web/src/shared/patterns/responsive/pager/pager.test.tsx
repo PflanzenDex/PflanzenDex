@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
+import { StrictMode, useEffect, type ReactElement } from "react";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Pager } from "./pager";
+import { LAYER_PARAM, Pager } from "./pager";
 
 afterEach(cleanup);
 
@@ -13,6 +14,9 @@ function Where() {
   const { search } = useLocation();
   return <span data-testid="address">{search}</span>;
 }
+
+const address = () => screen.getByTestId("address").textContent;
+const entries = () => screen.getAllByRole("listitem").map((li) => li.textContent);
 
 function Example({ at = "/", resetKey = "a" }: { at?: string; resetKey?: string }) {
   return (
@@ -35,20 +39,16 @@ function swipe(target: Element, from: number, to: number) {
 }
 
 describe("Pager (US-QS-15)", () => {
-  it("US-QS-15 shows whole entries of the page named in the address and the position", () => {
-    render(<Example at="/?page=2" />);
-    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
-      "Pflanze 4",
-      "Pflanze 5",
-      "Pflanze 6",
-    ]);
+  it("US-QS-15 · FR-BES-23 shows whole entries from the first entry the address names, and the position", () => {
+    render(<Example at="/?from=3" />);
+    expect(entries()).toEqual(["Pflanze 4", "Pflanze 5", "Pflanze 6"]);
     expect(screen.getByRole("status").textContent).toBe("Seite 2 von 3");
   });
 
-  it("US-QS-15 a page outside the range shows the nearest valid one and corrects the address", () => {
-    render(<Example at="/?page=99" />);
+  it("US-QS-15 · FR-BES-23 an entry past the end shows the last page and the address follows", () => {
+    render(<Example at="/?from=99" />);
     expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
-    expect(screen.getByTestId("address").textContent).toBe("?page=3");
+    expect(address()).toBe("?from=6");
   });
 
   it("US-QS-15 Weiter and Zurück change the page and are disabled at the ends", async () => {
@@ -57,7 +57,7 @@ describe("Pager (US-QS-15)", () => {
     expect((back as HTMLButtonElement).disabled).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("status").textContent).toBe("Seite 2 von 3");
-    expect(screen.getByTestId("address").textContent).toBe("?page=2");
+    expect(address()).toBe("?from=3");
     await userEvent.click(back);
     expect(screen.getByRole("status").textContent).toBe("Seite 1 von 3");
   });
@@ -67,11 +67,12 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.getByRole("status").getAttribute("aria-live")).toBe("polite");
   });
 
-  it("US-QS-15 a changed filter starts at page 1", () => {
-    const { rerender } = render(<Example at="/?page=3" />);
+  it("US-QS-15 · FR-BES-23 a changed filter starts at the first entry", () => {
+    const { rerender } = render(<Example at="/?from=6" />);
     expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
-    rerender(<Example at="/?page=3" resetKey="b" />);
+    rerender(<Example at="/?from=6" resetKey="b" />);
     expect(screen.getByRole("status").textContent).toBe("Seite 1 von 3");
+    expect(address()).toBe("");
   });
 
   it("US-QS-15 swiping left goes on, swiping right goes back, a short move does nothing", () => {
@@ -86,7 +87,7 @@ describe("Pager (US-QS-15)", () => {
   });
 
   it("US-QS-15 · issue 1045 a disabled page button is neutral, not the faded outline green", () => {
-    render(<Example at="/?page=1" />);
+    render(<Example />);
     const back = screen.getByRole("button", { name: "Zurück" });
     expect(back.hasAttribute("disabled")).toBe(true);
     expect(back.className).toContain("disabled:text-muted-foreground");
@@ -94,7 +95,7 @@ describe("Pager (US-QS-15)", () => {
   });
 
   it("US-QS-24 the page caption never breaks inside a number and its count", () => {
-    render(<Example at="/?page=2" />);
+    render(<Example at="/?from=3" />);
     expect(screen.getByRole("status").className).toContain("whitespace-nowrap");
   });
 
@@ -118,32 +119,38 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
-  it("US-QS-23 a pager with its own address part leaves the page of the list behind it alone", async () => {
+  it("US-QS-23 a pager with its own address part leaves the first entry of the list behind it alone", async () => {
     render(
-      <MemoryRouter initialEntries={["/?page=2"]}>
-        <Pager items={items} pageSize={3} label="Verlauf" param="verlauf" renderItem={(t) => t} />
+      <MemoryRouter initialEntries={["/?from=6"]}>
+        <Pager items={items} pageSize={3} label="Verlauf" param="vfrom" renderItem={(t) => t} />
         <Where />
       </MemoryRouter>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?page=2&verlauf=2");
+    expect(address()).toBe("?from=6&vfrom=3");
   });
 });
 
 describe("Pager in a layer (US-QS-22)", () => {
-  it("US-QS-22 a list in a layer keeps its page in its own address part, apart from the page of the screen", async () => {
+  it("US-QS-22 a list in a layer keeps its first entry in its own address part, apart from the list of the screen", async () => {
     render(
-      <MemoryRouter initialEntries={["/?page=2"]}>
+      <MemoryRouter initialEntries={["/?from=3"]}>
         <Pager items={items} pageSize={3} label="Pflanzen" renderItem={(t) => t} />
-        <Pager items={items} pageSize={3} label="Im Layer" param="lpage" renderItem={(t) => t} />
+        <Pager
+          items={items}
+          pageSize={3}
+          label="Im Layer"
+          param={LAYER_PARAM}
+          renderItem={(t) => t}
+        />
         <Where />
       </MemoryRouter>,
     );
     const layerList = screen.getByRole("list", { name: "Im Layer" });
-    // The layer starts at its first page although the screen behind stands on page 2.
+    // The layer starts at its first entry although the screen behind starts at entry 4.
     expect(layerList.textContent).toContain("Pflanze 1");
     await userEvent.click(screen.getAllByRole("button", { name: "Weiter" })[1] as HTMLElement);
-    expect(screen.getByTestId("address").textContent).toBe("?page=2&lpage=2");
+    expect(address()).toBe("?from=3&lfrom=3");
     expect(screen.getByRole("list", { name: "Im Layer" }).textContent).toContain("Pflanze 4");
     expect(screen.getByRole("list", { name: "Pflanzen" }).textContent).toContain("Pflanze 4");
   });
@@ -163,6 +170,29 @@ function resizeTo(region: number, row: number) {
   });
 }
 
+/** The layout of a browser for the fit lists: the list region and its rows have the heights of `box`, and a resize is `resizeTo`. */
+function stubLayout() {
+  box = { region: 0, row: 0 };
+  tall = null;
+  observers = [];
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    const row = tall && this.textContent === tall.name ? tall.row : box.row;
+    const height = this.tagName === "UL" ? box.region : this.tagName === "LI" ? row : 0;
+    return { height, width: 0, top: 0, left: 0, right: 0, bottom: height, x: 0, y: 0 } as DOMRect;
+  });
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(notify: () => void) {
+        observers.push(notify);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+}
+
 function FitExample({ at = "/" }: { at?: string }) {
   return (
     <MemoryRouter initialEntries={[at]}>
@@ -173,29 +203,7 @@ function FitExample({ at = "/" }: { at?: string }) {
 }
 
 describe("US-QS-19 page size fills the free height of the region", () => {
-  beforeEach(() => {
-    box = { region: 0, row: 0 };
-    tall = null;
-    observers = [];
-    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-      this: Element,
-    ) {
-      const row = tall && this.textContent === tall.name ? tall.row : box.row;
-      const height = this.tagName === "UL" ? box.region : this.tagName === "LI" ? row : 0;
-      return { height, width: 0, top: 0, left: 0, right: 0, bottom: height, x: 0, y: 0 } as DOMRect;
-    });
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        constructor(notify: () => void) {
-          observers.push(notify);
-        }
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    );
-  });
+  beforeEach(stubLayout);
 
   afterEach(() => {
     vi.restoreAllMocks();
@@ -226,7 +234,7 @@ describe("US-QS-19 page size fills the free height of the region", () => {
 
   it("US-QS-19 the pager stays below the list region at the bottom of its frame, also on the last page", () => {
     resizeTo(532, 100);
-    render(<FitExample at="/?page=2" />);
+    render(<FitExample at="/?from=5" />);
     const list = screen.getByRole("list", { name: "Pflanzen" });
     const frame = list.parentElement as HTMLElement;
     const bar = screen.getByRole("status");
@@ -239,19 +247,13 @@ describe("US-QS-19 page size fills the free height of the region", () => {
     expect(list.className).toContain("min-h-0");
   });
 
-  it("US-QS-19 a resize keeps the first entry of the page visible when it can", () => {
+  it("US-QS-19 · FR-BES-23 a resize keeps the first entry on top and writes no address", () => {
     resizeTo(316, 100);
-    render(<FitExample at="/?page=2" />);
+    render(<FitExample at="/?from=3" />);
     expect(screen.getAllByRole("listitem")[0]?.textContent).toBe("Pflanze 4");
     resizeTo(532, 100);
-    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
-      "Pflanze 1",
-      "Pflanze 2",
-      "Pflanze 3",
-      "Pflanze 4",
-      "Pflanze 5",
-    ]);
-    expect(screen.getByTestId("address").textContent).toBe("");
+    expect(entries()).toEqual(["Pflanze 4", "Pflanze 5", "Pflanze 6", "Pflanze 7"]);
+    expect(address()).toBe("?from=3");
   });
 
   it("US-QS-19 a region never shrinks below one row: at a large text size the frame scrolls, the pager does not move", () => {
@@ -262,12 +264,12 @@ describe("US-QS-19 page size fills the free height of the region", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 
-  it("US-QS-19 a changed page size never leaves the address past the end", () => {
+  it("US-QS-19 · FR-BES-23 a changed page size keeps the entry and never leaves the address past the end", () => {
     resizeTo(316, 100);
-    render(<FitExample at="/?page=3" />);
+    render(<FitExample at="/?from=6" />);
     resizeTo(640, 100);
     expect(screen.getByRole("status").textContent).toBe("Seite 2 von 2");
-    expect(screen.getByTestId("address").textContent).toBe("?page=2");
+    expect(address()).toBe("?from=6");
     expect(screen.getAllByRole("listitem")[0]?.textContent).toBe("Pflanze 7");
   });
 
@@ -287,6 +289,242 @@ describe("US-QS-19 page size fills the free height of the region", () => {
     ]);
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
+  });
+});
+
+// Issue 1492: the address names the first entry on screen, so a reload, a remount or a resize shows the same entries. An
+// old page number converts once, at the first measured size; after that the address holds the entry.
+const long = Array.from({ length: 108 }, (_, i) => `Pflanze ${i + 1}`);
+/** The addresses the router went through since the last reset: a write of the pager shows here as a new entry. */
+let trace: string[] = [];
+
+function Trace() {
+  const { search } = useLocation();
+  useEffect(() => {
+    if (trace[trace.length - 1] !== search) trace.push(search);
+  }, [search]);
+  return null;
+}
+
+function FitList({ at }: { at: string }) {
+  return (
+    <MemoryRouter initialEntries={[at]}>
+      <Pager items={long} pageSize={6} fit label="Pflanzen" renderItem={(t) => t} />
+      <Where />
+      <Trace />
+    </MemoryRouter>
+  );
+}
+
+/** Mounts the list afresh, as a reload does: the old tree goes, the address stays. */
+function remount(previous: { unmount: () => void } | null, node: ReactElement, strict: boolean) {
+  previous?.unmount();
+  trace = [];
+  return render(strict ? <StrictMode>{node}</StrictMode> : node);
+}
+
+const firstEntry = () => entries()[0];
+
+describe("FR-BES-23 the address names the first entry (issue 1492)", () => {
+  beforeEach(() => {
+    stubLayout();
+    trace = [];
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  for (const strict of [false, true]) {
+    const mode = strict ? ", in StrictMode" : "";
+
+    it(`FR-BES-23 an old page address converts once at the measured size, and five fresh mounts keep the entry${mode}`, () => {
+      // Starting size 6, measured size 3: page 9 of 3-entry pages is the entry 24, counted from 0.
+      resizeTo(300, 100);
+      let view = remount(null, <FitList at="/?page=9" />, strict);
+      expect(trace).toEqual(["?page=9", "?from=24"]);
+      expect(address()).toBe("?from=24");
+      expect(firstEntry()).toBe("Pflanze 25");
+      for (let i = 0; i < 5; i++) {
+        view = remount(view, <FitList at="/?from=24" />, strict);
+        expect(trace).toEqual(["?from=24"]);
+        expect(address()).toBe("?from=24");
+        expect(firstEntry()).toBe("Pflanze 25");
+      }
+    });
+
+    it(`FR-BES-23 a plain address keeps entry 48 at every measured size of a mount (3, 5, 6)${mode}`, () => {
+      let view: { unmount: () => void } | null = null;
+      for (const region of [300, 500, 600]) {
+        resizeTo(region, 100);
+        view = remount(view, <FitList at="/?from=48" />, strict);
+        expect(trace).toEqual(["?from=48"]);
+        expect(address()).toBe("?from=48");
+        expect(firstEntry()).toBe("Pflanze 49");
+        expect(entries()).toHaveLength(region / 100);
+      }
+    });
+  }
+
+  it("FR-BES-23 · US-QS-19 a resize while mounted writes no address and keeps the first entry", () => {
+    resizeTo(300, 100);
+    render(<FitList at="/?from=48" />);
+    resizeTo(600, 100);
+    expect(entries()).toHaveLength(6);
+    expect(firstEntry()).toBe("Pflanze 49");
+    resizeTo(500, 100);
+    expect(entries()).toHaveLength(5);
+    expect(firstEntry()).toBe("Pflanze 49");
+    expect(address()).toBe("?from=48");
+    expect(trace).toEqual(["?from=48"]);
+  });
+
+  it("FR-BES-23 an entry past the end shows the last page, the address follows once, and a second pass writes nothing", () => {
+    resizeTo(600, 100);
+    const view = render(<FitList at="/?from=999" />);
+    expect(address()).toBe("?from=102");
+    expect(firstEntry()).toBe("Pflanze 103");
+    expect(screen.getByRole("status").textContent).toBe("Seite 18 von 18");
+    expect(trace).toEqual(["?from=999", "?from=102"]);
+    view.rerender(<FitList at="/?from=999" />);
+    resizeTo(600, 100);
+    expect(trace).toEqual(["?from=999", "?from=102"]);
+  });
+});
+
+/** Goes one entry back in the history: the way a layer closes. */
+function Earlier() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(-1)}>
+      Eine Ebene zurück
+    </button>
+  );
+}
+
+describe("FR-BES-23 old page addresses convert once (issue 1492)", () => {
+  it("FR-BES-23 an old page number of a list in a layer (`?lpage=2`) converts to its own part, the entry of that page", () => {
+    render(
+      <MemoryRouter initialEntries={["/?lpage=2"]}>
+        <Pager
+          items={items}
+          pageSize={3}
+          label="Im Layer"
+          param={LAYER_PARAM}
+          renderItem={(t) => t}
+        />
+        <Where />
+      </MemoryRouter>,
+    );
+    expect(address()).toBe("?lfrom=3");
+    expect(entries()).toEqual(["Pflanze 4", "Pflanze 5", "Pflanze 6"]);
+  });
+
+  it("FR-BES-23 an old page number of the history of a plant (`?verlauf=2`) converts to `vfrom`", () => {
+    render(
+      <MemoryRouter initialEntries={["/?verlauf=2"]}>
+        <Pager items={items} pageSize={3} label="Verlauf" param="vfrom" renderItem={(t) => t} />
+        <Where />
+      </MemoryRouter>,
+    );
+    expect(address()).toBe("?vfrom=3");
+  });
+
+  it("FR-BES-23 with both parts in the address the new one wins and the old one goes", () => {
+    render(
+      <MemoryRouter initialEntries={["/?lpage=2&lfrom=6"]}>
+        <Pager
+          items={items}
+          pageSize={3}
+          label="Im Layer"
+          param={LAYER_PARAM}
+          renderItem={(t) => t}
+        />
+        <Where />
+      </MemoryRouter>,
+    );
+    expect(address()).toBe("?lfrom=6");
+    expect(entries()).toEqual(["Pflanze 7"]);
+  });
+
+  it("FR-BES-23 with both parts of the screen (`?page=2&from=6`) the new one wins and the old one goes", () => {
+    render(
+      <MemoryRouter initialEntries={["/?page=2&from=6"]}>
+        <Pager items={items} pageSize={3} label="Pflanzen" renderItem={(t) => t} />
+        <Where />
+      </MemoryRouter>,
+    );
+    expect(address()).toBe("?from=6");
+    expect(entries()).toEqual(["Pflanze 7"]);
+  });
+
+  it("FR-BES-23 two lists on one screen with old page numbers both convert, and the address keeps both entries", () => {
+    render(
+      <MemoryRouter initialEntries={["/?page=9&lpage=2"]}>
+        <Pager items={items} pageSize={3} label="Pflanzen" renderItem={(t) => t} />
+        <Pager
+          items={items}
+          pageSize={3}
+          label="Im Layer"
+          param={LAYER_PARAM}
+          renderItem={(t) => t}
+        />
+        <Where />
+      </MemoryRouter>,
+    );
+    // Both writes start from the same address: the second one is repeated by the next render, and then both hold.
+    const parts = new URLSearchParams(address() ?? "");
+    expect(parts.get("from")).toBe("6");
+    expect(parts.get("lfrom")).toBe("3");
+    expect(parts.has("page")).toBe(false);
+    expect(parts.has("lpage")).toBe(false);
+  });
+
+  it("FR-BES-23 converting an old page replaces the history entry, so going back leaves the list in one step", async () => {
+    render(
+      <MemoryRouter initialEntries={["/", "/?page=2"]}>
+        <Pager items={items} pageSize={3} label="Pflanzen" renderItem={(t) => t} />
+        <Where />
+        <Earlier />
+      </MemoryRouter>,
+    );
+    expect(address()).toBe("?from=3");
+    await userEvent.click(screen.getByRole("button", { name: "Eine Ebene zurück" }));
+    expect(address()).toBe("");
+  });
+
+  it("FR-BES-23 · US-QS-19 a fit list without a measurement leaves an old address alone", () => {
+    render(
+      <MemoryRouter initialEntries={["/?page=3"]}>
+        <Pager items={items} pageSize={3} fit label="Pflanzen" renderItem={(t) => t} />
+        <Where />
+      </MemoryRouter>,
+    );
+    expect(address()).toBe("?page=3");
+    expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
+  });
+
+  it("FR-BES-23 · US-QS-15 a changed resetKey goes to the first entry from an old page part too", () => {
+    const keyed = (resetKey: string) => (
+      <MemoryRouter initialEntries={["/?page=3"]}>
+        <Pager
+          items={items}
+          pageSize={3}
+          fit
+          label="Pflanzen"
+          resetKey={resetKey}
+          renderItem={(t) => t}
+        />
+        <Where />
+      </MemoryRouter>
+    );
+    const view = render(keyed("a"));
+    // Without a layout the old page stays until the first measurement (a fit list writes nothing before it).
+    expect(address()).toBe("?page=3");
+    view.rerender(keyed("b"));
+    expect(address()).toBe("");
+    expect(screen.getByRole("status").textContent).toBe("Seite 1 von 3");
   });
 });
 
@@ -341,21 +579,21 @@ describe("FR-BES-23 Pager of a server list", () => {
 
   it("FR-BES-23 a page beyond the loaded entries asks for the next server page once and shows a loading note, never an empty page", () => {
     const onMore = vi.fn();
-    render(<Paged loaded={items.slice(0, 3)} at="/?page=2" onMore={onMore} />);
+    render(<Paged loaded={items.slice(0, 3)} at="/?from=3" onMore={onMore} />);
     expect(onMore).toHaveBeenCalledTimes(1);
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
     expect(screen.getByText("Pflanzen werden geladen …")).toBeTruthy();
   });
 
   it("FR-BES-23 a page partly loaded shows what is loaded and the note for the rest", () => {
-    render(<Paged loaded={items.slice(0, 4)} at="/?page=2" />);
+    render(<Paged loaded={items.slice(0, 4)} at="/?from=3" />);
     expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Pflanze 4"]);
     expect(screen.getByText("Pflanzen werden geladen …")).toBeTruthy();
   });
 
   it("FR-BES-23 while a page is on its way it is not asked for again", () => {
     const onMore = vi.fn();
-    render(<Paged loaded={items.slice(0, 3)} at="/?page=2" loading onMore={onMore} />);
+    render(<Paged loaded={items.slice(0, 3)} at="/?from=3" loading onMore={onMore} />);
     expect(onMore).not.toHaveBeenCalled();
   });
 
@@ -365,7 +603,7 @@ describe("FR-BES-23 Pager of a server list", () => {
     render(
       <Paged
         loaded={items.slice(0, 3)}
-        at="/?page=2"
+        at="/?from=3"
         failure="Die nächsten Pflanzen sind nicht angekommen."
         onMore={onMore}
         onRetry={onRetry}

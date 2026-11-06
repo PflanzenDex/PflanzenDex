@@ -118,16 +118,16 @@ describe("US-QS-19 tiles of the plants", () => {
     expect(screen.getByRole("button", { name: "Pflanze 3 Zone 3 Gesund" })).toBeTruthy();
   });
 
-  it("US-QS-19 the plants are paged, the page is in the address and a page out of range shows the nearest", async () => {
+  it("US-QS-19 · FR-BES-23 the plants are paged, the first entry is in the address and an entry past the end shows the last page", async () => {
     screenWith(many(8));
     expect(screen.getAllByRole("listitem")).toHaveLength(6);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?page=2");
+    expect(screen.getByTestId("address").textContent).toBe("?from=6");
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByRole("button", { name: /^Pflanze 7 / })).toBeTruthy();
     cleanup();
-    screenWith(many(8), {}, "/?page=9");
+    screenWith(many(8), {}, "/?from=9");
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 

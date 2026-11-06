@@ -64,7 +64,7 @@ const choicesOf = (n: number, counts?: number[]): GroupChoice[] =>
     count: counts?.[i] ?? i + 1,
   }));
 
-/** Shows the address next to the row, so a test can read `part=` and `page=`. */
+/** Shows the address next to the row, so a test can read `part=` and `from=`. */
 function Address() {
   const location = useLocation();
   return <p data-testid="address">{location.search}</p>;
@@ -172,19 +172,19 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     );
   });
 
-  it("US-QS-19 choosing in the selection field writes part= and removes page", async () => {
+  it("US-QS-19 choosing in the selection field writes part= and removes the first entry", async () => {
     layout = { row: 300, chips: [200, 200, 200] };
-    show(choicesOf(3), "/collection?view=plants&part=g1&page=3");
+    show(choicesOf(3), "/collection?view=plants&part=g1&from=6");
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Standorte" }), "g3");
     expect(address()).toContain("part=g3");
-    expect(address()).not.toContain("page=");
+    expect(address()).not.toContain("from=");
   });
 
-  it("US-QS-19 choosing a chip writes part= and removes page", async () => {
-    show(choicesOf(2), "/collection?view=plants&page=2");
+  it("US-QS-19 choosing a chip writes part= and removes the first entry", async () => {
+    show(choicesOf(2), "/collection?view=plants&from=3");
     await userEvent.click(screen.getByRole("button", { name: /Gruppe 2/ }));
     expect(address()).toContain("part=g2");
-    expect(address()).not.toContain("page=");
+    expect(address()).not.toContain("from=");
   });
 
   it("US-QS-15 · US-QS-19 the keyboard focus stays on the selection field after choosing", async () => {

@@ -169,21 +169,21 @@ describe("US-QS-21 the catalog list is paged", () => {
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();
   });
 
-  it("US-QS-21 the page is in the address, a reload at ?page=2 shows page 2", async () => {
+  it("US-QS-21 · FR-BES-23 the first entry is in the address, a reload at ?from=3 shows the same entries", async () => {
     search(many(10));
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(address()).toBe("/discover?view=catalog&page=2");
+    expect(address()).toBe("/discover?view=catalog&from=3");
     cleanup();
-    search(many(10), "/discover?view=catalog&page=2");
+    search(many(10), "/discover?view=catalog&from=3");
     expect(screen.getByText("Species 4")).toBeTruthy();
     expect(screen.queryByText("Species 1")).toBeNull();
   });
 
-  it("US-QS-21 a new search starts at page 1", async () => {
-    const { rerender } = search(many(10), "/discover?view=catalog&page=3", "a");
-    expect(address()).toContain("page=3");
+  it("US-QS-21 a new search starts at the first entry", async () => {
+    const { rerender } = search(many(10), "/discover?view=catalog&from=6", "a");
+    expect(address()).toContain("from=6");
     rerender(
-      <MemoryRouter initialEntries={["/discover?view=catalog&page=3"]}>
+      <MemoryRouter initialEntries={["/discover?view=catalog&from=6"]}>
         <SpeciesSearch
           searchText="ab"
           hit={many(10)}
@@ -196,7 +196,7 @@ describe("US-QS-21 the catalog list is paged", () => {
       </MemoryRouter>,
     );
     // The router instance is kept by React, so the effect of the changed search text rewrites the address.
-    await vi.waitFor(() => expect(address()).not.toContain("page=3"));
+    await vi.waitFor(() => expect(address()).not.toContain("from=6"));
   });
 
   it("US-QS-21 choosing a result opens its profile", async () => {
@@ -232,13 +232,13 @@ describe("US-QS-21 filters live in a layer and show as chips", () => {
     expect(screen.getByText("Species 1")).toBeTruthy();
   });
 
-  it("US-QS-21 a filter starts the list at page 1", async () => {
-    search(many(10), "/discover?view=catalog&page=3&difficulty=1");
+  it("US-QS-21 a filter starts the list at the first entry", async () => {
+    search(many(10), "/discover?view=catalog&from=6&difficulty=1");
     await userEvent.click(screen.getByRole("button", { name: "Filter (1)" }));
     const layer = await screen.findByRole("dialog", { name: "Filter" });
     await userEvent.click(within(layer).getByRole("checkbox", { name: "Nur meine Vorschläge" }));
     expect(address()).toContain("own=1");
-    await vi.waitFor(() => expect(address()).not.toContain("page=3"));
+    await vi.waitFor(() => expect(address()).not.toContain("from=6"));
   });
 
   it("US-QS-21 filters that match nothing say so and offer to reset them (P-09)", async () => {
