@@ -14,7 +14,7 @@ import {
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import { currentTimeZone } from "../../../shared/data";
-import { Field } from "../../shared/field/field";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import {
   toTreatmentInput,
   treatmentDefaults,
