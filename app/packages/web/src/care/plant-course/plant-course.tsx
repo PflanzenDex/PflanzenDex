@@ -19,6 +19,8 @@ const OPTIONS = [
 type Course = (typeof OPTIONS)[number]["value"];
 
 const COURSE_PARAM = "course";
+/** Measurements per page below the switch (starting value, assumption): the tab fits one screen on a small phone. */
+const PAGE_SIZE = 2;
 
 /**
  * The list in the address (`&course=measurements|leaves`): an absent or unknown value means the measurements. A change
@@ -52,7 +54,7 @@ export function PlantCourse(props: Props) {
       {course === "leaves" ? (
         <PlantLeaves api={props.api} token={props.token} specimenId={props.specimenId} />
       ) : (
-        <PlantHistory {...props} />
+        <PlantHistory {...props} pageSize={PAGE_SIZE} />
       )}
     </div>
   );

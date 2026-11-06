@@ -192,7 +192,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     setViewportWidth(1024);
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Mit Maßen oder Notiz" }));
+    await user.click(await screen.findByRole("button", { name: "Mit Details" }));
     await screen.findByRole("dialog");
     await user.type(screen.getByLabelText("Länge in mm (optional)"), "42");
     await user.type(screen.getByLabelText("Breite in mm (optional)"), "11");

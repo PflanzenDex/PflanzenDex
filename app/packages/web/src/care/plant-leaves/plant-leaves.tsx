@@ -26,8 +26,8 @@ import { LeafRow } from "./leaf-row/leaf-row";
 import table from "./plant-leaves.de.json";
 
 const t = texts(table);
-/** Leaves per page (starting value, assumption): a few whole entries, so the layer keeps its height on a phone. */
-const PAGE_SIZE = 3;
+/** Leaves per page (starting value, assumption): two whole entries, so the tab fits one screen on a small phone. */
+const PAGE_SIZE = 2;
 
 type Token = () => Promise<string | undefined>;
 type Props = { api: string; token: Token; specimenId: string };
@@ -119,7 +119,7 @@ function LeafLog({ api, token, specimenId }: Props) {
   const remove = async (row: Leaf) => setRefusal(await writes.remove(row.id));
   return (
     <section aria-labelledby="leaf-heading" className="grid gap-3">
-      <h3 id="leaf-heading" className="font-semibold">
+      <h3 id="leaf-heading" className="sr-only">
         {t("heading")}
       </h3>
       <div className="flex flex-wrap gap-2">
