@@ -205,6 +205,17 @@ describe("US-QS-17 Konto with its sections as views", () => {
     ).toContain("Abmeldung ist fehlgeschlagen");
   });
 
+  it("US-ACC-01 a failed sign-out shows its error in the sign-out dialog, which stays open for another try", async () => {
+    fakeServer();
+    const signOut = vi.fn();
+    show("/account", { signOut, error: "Abmelden hat nicht geklappt: Prüfe deine Verbindung." });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("alert").textContent).toContain("Abmelden hat nicht geklappt");
+    expect(within(dialog).getByRole("button", { name: "Abmelden" })).toBeTruthy();
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
   it("US-QS-17 · US-ACC-02 settings still save through the section Einstellungen", async () => {
     const puts = fakeServer();
     show("/account/settings?sheet=profile");

@@ -3,7 +3,11 @@ import { Slot } from "@radix-ui/react-slot";
 import { Button } from "@/shared/ui/button/button";
 import { ChunkErrorBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { SheetPanelProps } from "@/shared/ui/overlays/sheet/sheet-panel/sheet-panel";
+import table from "./sheet.de.json";
+
+const t = texts(table);
 
 // Vaul is about 8 kB gzip and only needed once a sheet opens, so it loads on demand (DS-08, US-QS-07).
 const loadPanel = () => import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel");
@@ -95,6 +99,21 @@ SheetTrigger.displayName = "SheetTrigger";
 
 export type SheetContentProps = Omit<SheetPanelProps, "open" | "onOpenChange">;
 
+/**
+ * The loading state of a sheet whose chunk is still on its way (NFR-12, P-10): a bottom panel with the look of the error
+ * view. It takes no focus, so the trigger keeps it while the code loads.
+ */
+function SheetLoading() {
+  return (
+    <div
+      role="status"
+      className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-3 border-t border-border bg-background p-4 pb-[env(safe-area-inset-bottom)] text-center text-foreground"
+    >
+      <p className="text-base font-semibold">{t("sheet.loading")}</p>
+    </div>
+  );
+}
+
 /** Bottom sheet content (US-QS-07, DS-23, DS-40): see `shared/patterns/elements/sheet-panel`. A failed chunk shows an error with retry. */
 const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props, ref) => {
   const { open, setOpen, opened } = useSheet();
@@ -108,18 +127,18 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props,
             role="alert"
             className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-3 border-t border-destructive bg-background p-4 pb-[env(safe-area-inset-bottom)] text-center text-foreground"
           >
-            <p className="text-base font-semibold">Das Fenster konnte nicht geladen werden.</p>
+            <p className="text-base font-semibold">{t("sheet.loadFailed")}</p>
             <Button variant="outline" onClick={retry}>
-              Erneut versuchen
+              {t("sheet.retry")}
             </Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>
-              Schließen
+              {t("sheet.close")}
             </Button>
           </div>
         ) : null
       }
     >
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={open ? <SheetLoading /> : null}>
         <SheetPanel ref={ref} {...props} open={open} onOpenChange={setOpen} />
       </React.Suspense>
     </ChunkErrorBoundary>
