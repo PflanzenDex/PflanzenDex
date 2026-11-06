@@ -1704,5 +1704,166 @@
       "ds-snapshots",
       "ci-status"
     ]
+  },
+  "pr1503earlier": {
+    "source": "gh api repos/PflanzenDex/PflanzenDex: commits/4316b1d2d82363881ad4708349b1ebe385defb9f/check-runs?filter=all (the earlier head of PR 1503, read 2026-11-06), and contents/.github/workflows/ci.yml at that head for definedJobs. Trimmed: the code-scanning checks (CodeQL failed with 2 high alerts, analyze passed), the latest run of each job that ci.yml requires of a PR without app files, and the two ci-status runs; the other check runs of that head are left out. files is empty because the test is about the code-scanning checks, and with no files only the jobs every PR runs are required.",
+    "pull": {
+      "number": 1503,
+      "title": "chore(dev): make claim is quicker and undoes itself, make worktree is ready to commit (US-DEV-08)",
+      "html_url": "https://github.com/PflanzenDex/PflanzenDex/pull/1503",
+      "state": "open",
+      "merged": false,
+      "merged_at": null,
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "base": {
+        "ref": "dev"
+      },
+      "head": {
+        "sha": "4316b1d2d82363881ad4708349b1ebe385defb9f"
+      }
+    },
+    "files": [],
+    "checkRuns": [
+      {
+        "id": 127847930786,
+        "name": "CodeQL",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-11-06T10:41:31Z",
+        "completed_at": "2026-11-06T10:41:33Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/runs/127847930786",
+        "app": {
+          "slug": "github-advanced-security"
+        }
+      },
+      {
+        "id": 127847612109,
+        "name": "analyze (actions)",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:40:54Z",
+        "completed_at": "2026-11-06T10:41:40Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204494706/job/127847612109",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127847611479,
+        "name": "analyze (javascript-typescript)",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:40:52Z",
+        "completed_at": "2026-11-06T10:42:35Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204494706/job/127847611479",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467255,
+        "name": "changes",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:51Z",
+        "completed_at": "2026-11-06T10:42:58Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467255",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467491,
+        "name": "layout",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:51Z",
+        "completed_at": "2026-11-06T10:43:04Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467491",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467384,
+        "name": "dependency-review",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:51Z",
+        "completed_at": "2026-11-06T10:42:58Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467384",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467142,
+        "name": "metadata",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:50Z",
+        "completed_at": "2026-11-06T10:43:10Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467142",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127852051865,
+        "name": "ci-status",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:51:33Z",
+        "completed_at": "2026-11-06T10:51:36Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127852051865",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127850514043,
+        "name": "ci-status",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-11-06T10:47:42Z",
+        "completed_at": "2026-11-06T10:47:46Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204494733/job/127850514043",
+        "app": {
+          "slug": "github-actions"
+        }
+      }
+    ],
+    "workflowRuns": [],
+    "definedJobs": [
+      "a11y-routes",
+      "app-coverage",
+      "app-gates",
+      "app-tests",
+      "app-tests-web",
+      "app-ui",
+      "audit",
+      "changes",
+      "ci-status",
+      "dependency-review",
+      "docs-gates",
+      "ds-snapshots",
+      "e2e",
+      "layout",
+      "lighthouse",
+      "metadata",
+      "one-screen",
+      "reuse"
+    ]
   }
 }
