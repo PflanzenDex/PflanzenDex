@@ -244,7 +244,8 @@ describe("US-ACC-01 App", () => {
     renderApp();
     expect(screen.getByRole("status").textContent).toContain("Anmeldung wird geprüft");
     await userEvent.click(await screen.findByRole("button", { name: "Konto anlegen" }));
-    expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "create" });
+    // US-ACC-01: the silent check of a live session comes first; the registration opens on its return.
+    expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "none" });
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 

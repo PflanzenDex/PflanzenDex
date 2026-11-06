@@ -10,6 +10,8 @@ const KEYCLOAK = process.env["E2E_KEYCLOAK_URL"] ?? "http://localhost:18081";
 const REALM = "pflanzendex";
 
 export interface TestAccount {
+  /** The Keycloak user id, for reading the account's sessions (US-ACC-01). */
+  id: string;
   email: string;
   password: string;
   displayName: string;
@@ -50,7 +52,7 @@ async function adminToken(): Promise<string> {
 }
 
 export async function createTestAccount(): Promise<TestAccount> {
-  const account: TestAccount = {
+  const account = {
     email: `e2e-${randomUUID()}@example.test`,
     password: `Pw-${randomUUID()}`,
     displayName: "Erika Testfrau",
@@ -73,7 +75,18 @@ export async function createTestAccount(): Promise<TestAccount> {
   });
   if (res.status !== 201)
     throw new Error(`Test account not created: ${res.status} ${await res.text()}`);
-  return account;
+  const id = res.headers.get("location")?.split("/").pop();
+  if (!id) throw new Error("Test account created without a location header");
+  return { ...account, id };
+}
+
+/** Live sign-in sessions of the account at the sign-in service, the browser's single sign-on sessions (US-ACC-01). */
+export async function liveSessionCount(account: TestAccount): Promise<number> {
+  const res = await fetch(`${KEYCLOAK}/admin/realms/${REALM}/users/${account.id}/sessions`, {
+    headers: { Authorization: `Bearer ${await adminToken()}` },
+  });
+  if (!res.ok) throw new Error(`Sessions not read: ${res.status}`);
+  return ((await res.json()) as unknown[]).length;
 }
 
 /** The audience of the client below: a real token of this realm, meant for another service (issue 204). */

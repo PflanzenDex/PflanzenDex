@@ -46,6 +46,12 @@ const user = { access_token: "tok", expired: false };
 const response = (status: number, body: unknown = {}) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
+// A fresh module instance: the once-guard of the sign-in return lives at module level (one page load per instance).
+async function freshUseSession() {
+  vi.resetModules();
+  return (await import("./session")).useSession;
+}
+
 beforeEach(() => {
   mgr.getUser.mockReset();
   mgr.removeUser.mockClear();
@@ -208,7 +214,7 @@ describe("US-ACC-01 Sitzung", () => {
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
   });
 
-  it("sign in and register start the detour via the sign-in service; register with prompt=create", async () => {
+  it("sign in and register start the detour via the sign-in service; register checks the session first (prompt=none)", async () => {
     mgr.getUser.mockResolvedValue(null);
     window.sessionStorage.setItem("pflanzendex.signed_out", "1");
     const { result } = renderHook(() => useSession());
@@ -217,7 +223,67 @@ describe("US-ACC-01 Sitzung", () => {
     await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith());
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
     act(() => result.current.register());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "none" }));
+  });
+
+  it("US-ACC-01 Konto anlegen without a live session: the silent check comes back empty and the registration opens at once, no sign-out", async () => {
+    const session = await freshUseSession();
+    mgr.getUser.mockResolvedValue(null);
+    const first = renderHook(() => session());
+    await waitFor(() => expect(first.result.current.state.kind).toBe("signedOut"));
+    act(() => first.result.current.register());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "none" }));
+    cleanup();
+    // The silent check returns from the sign-in service without a session.
+    window.history.replaceState({}, "", "/?error=login_required&state=abc");
+    renderHook(() => session());
     await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "create" }));
+    expect(mgr.signoutRedirect).not.toHaveBeenCalled();
+    expect(window.location.search).toBe("");
+  });
+
+  it("US-ACC-01 Konto anlegen with a live session of another person: the session ends first, then the registration opens", async () => {
+    const session = await freshUseSession();
+    mgr.getUser.mockResolvedValue(null);
+    const first = renderHook(() => session());
+    await waitFor(() => expect(first.result.current.state.kind).toBe("signedOut"));
+    act(() => first.result.current.register());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "none" }));
+    cleanup();
+    // The silent check returns with a code: the sign-in service still holds the session of the other person.
+    window.history.replaceState({}, "", "/?code=abc&state=xyz");
+    mgr.signinCallback.mockResolvedValue(user);
+    renderHook(() => session());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    expect(mgr.signinRedirect).not.toHaveBeenCalledWith({ prompt: "create" });
+    cleanup();
+    // The sign-out comes back without a sign-in: the registration opens at once.
+    mgr.getUser.mockResolvedValue(null);
+    window.history.replaceState({}, "", "/");
+    renderHook(() => session());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "create" }));
+    expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
+  });
+
+  it("US-ACC-01 Konto anlegen under Strict Mode: the registration opens once", async () => {
+    const { StrictMode } = await import("react");
+    const session = await freshUseSession();
+    window.sessionStorage.setItem("pflanzendex.register", "check");
+    window.history.replaceState({}, "", "/?error=login_required&state=abc");
+    mgr.getUser.mockResolvedValue(null);
+    renderHook(() => session(), { wrapper: StrictMode });
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "create" }));
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+  });
+
+  it("US-ACC-01 a registration check that came back without an answer in the address does not open the registration", async () => {
+    window.sessionStorage.setItem("pflanzendex.register", "check");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+    expect(mgr.signoutRedirect).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem("pflanzendex.register")).toBeNull();
   });
 
   it("signing out on all devices ends the sessions at the sign-in service and signs out", async () => {
