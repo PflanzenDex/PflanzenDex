@@ -19,7 +19,7 @@ The script reports every duplicate file number and every ID defined twice; the t
 
 ## Gate
 
-`make gates` (step `npm run specs`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`) and `ci-status` requires it.
+`make gates` (step `npm run specs`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`); a pull request that changes only documentation runs it in the job `docs-gates` (`make ci-docs`) instead, and `ci-status` requires both.
 
 ## Evidence
 
