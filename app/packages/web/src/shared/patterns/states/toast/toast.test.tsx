@@ -158,7 +158,11 @@ describe("Toast (US-QS-07, P-10)", () => {
     setup();
     show({ message: "Gegossen." });
     const viewport = region("polite").parentElement as HTMLElement;
-    expect(viewport.className).toContain("bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)]");
+    // Above the bottom bar from 30 rem of window height (the tall window); below it the toast sits near the window bottom.
+    expect(viewport.className).toContain(
+      "tall-window:bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)]",
+    );
+    expect(viewport.className).toContain("bottom-4");
     expect(screen.getByRole("button", { name: "Meldung schließen" }).className).toContain(
       "min-h-[44px]",
     );

@@ -19,7 +19,7 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
   const { card: c, busy } = props;
   const who = SIGN(c);
   return (
-    <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t border-border bg-background py-2 md:bottom-0 [@media(max-height:30rem)]:static">
+    <div className="z-10 border-t border-border bg-background py-2 tall-window:sticky tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tall-window:md:bottom-0">
       <div className="mx-auto flex w-full max-w-md gap-2">
         <Button
           variant="outline"
