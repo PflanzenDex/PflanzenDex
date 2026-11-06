@@ -210,7 +210,10 @@ describe("US-KI-11 the collection through the AI client", () => {
       timeZone: TZ,
       specimen: `Leseprobe ${tag} anna`,
     });
-    expect(both.body["error"]).toMatchObject({ code: "ai.reference_ambiguous" });
+    expect(both.body["error"]).toMatchObject({
+      code: "ai.reference_ambiguous",
+      data: { more: false },
+    });
     expect(ids(both.body["error"].data.candidates)).toEqual(
       ids([A.blue, A.red] as { id: string }[]),
     );

@@ -15,9 +15,14 @@ export interface Candidate {
   readonly name: string;
 }
 
+/** `more`: more entities match than `candidates` lists (FR-KI-15); no count is given (P-08). */
 export type Resolution =
   | { readonly kind: "found"; readonly id: string }
-  | { readonly kind: "ambiguous"; readonly candidates: readonly Candidate[] }
+  | {
+      readonly kind: "ambiguous";
+      readonly candidates: readonly Candidate[];
+      readonly more: boolean;
+    }
   | { readonly kind: "none"; readonly nearest: readonly string[] };
 
 /**
@@ -64,24 +69,38 @@ export function nearestNames(items: readonly Named[], norm: string): string[] {
 const toCandidates = (items: readonly Named[]): Candidate[] =>
   items.slice(0, NAMING_LIMITS.candidates).map((i) => ({ id: i.id, name: i.label }));
 
-function decide(hits: readonly Named[]): Resolution | null {
-  if (hits.length === 1) return { kind: "found", id: (hits[0] as Named).id };
-  return hits.length > 1 ? { kind: "ambiguous", candidates: toCandidates(hits) } : null;
+/**
+ * No hit gives null. One hit is found, unless the pool was cut: a cut pool may hold more matches than it shows, so one
+ * hit proves nothing (KI-R4) and is ambiguous with `more` true.
+ */
+function decide(hits: readonly Named[], cut: boolean): Resolution | null {
+  if (hits.length === 0) return null;
+  if (hits.length === 1 && !cut) return { kind: "found", id: (hits[0] as Named).id };
+  return {
+    kind: "ambiguous",
+    candidates: toCandidates(hits),
+    more: cut || hits.length > NAMING_LIMITS.candidates,
+  };
 }
 
 /**
  * Resolves a reference among the entities of the account (FR-KI-15): an id is taken as it is (the read that follows
  * answers `not_found` for an id the account does not have); a name is matched exactly first, then as a part of a name.
- * One hit is used, several hits are candidates and nothing is done (KI-R4), none gives the nearest names.
+ * One hit is used, several hits are candidates and nothing is done (KI-R4), none gives the nearest names. `cut` says that
+ * the pool was cut at a cap (FR-BES-24): exact names are complete anyway, so it applies to partial names only.
  */
-export function resolveName(items: readonly Named[], ref: string): Resolution {
+export function resolveName(items: readonly Named[], ref: string, cut = false): Resolution {
   if (isId(ref)) return { kind: "found", id: ref.toLowerCase() };
   const norm = normalizeName(ref);
   const names = (i: Named) => i.names.map(normalizeName);
-  const exact = decide(items.filter((i) => names(i).includes(norm)));
+  const exact = decide(
+    items.filter((i) => names(i).includes(norm)),
+    false,
+  );
   if (exact) return exact;
   const partial = decide(
     items.filter((i) => names(i).some((n) => norm !== "" && n.includes(norm))),
+    cut,
   );
   return partial ?? { kind: "none", nearest: nearestNames(items, norm) };
 }
@@ -95,7 +114,7 @@ export function referenceError(
   return r.kind === "ambiguous"
     ? appError("ai.reference_ambiguous", {
         details: [{ field, code: "ai.reference_ambiguous" }],
-        data: { field, candidates: r.candidates },
+        data: { field, candidates: r.candidates, more: r.more },
       })
     : appError(notFound, {
         details: [{ field, code: notFound }],
