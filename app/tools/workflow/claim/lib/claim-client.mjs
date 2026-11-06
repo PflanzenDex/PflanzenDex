@@ -1,37 +1,16 @@
-// Thin wrapper around gh and git for the claim tools (US-DEV-08). Tests inject a fake with the same shape:
-// { run(cmd, args) -> Promise<string> }. Every gh read uses --json, a REST route or the GraphQL helper below, never text output.
-// Repository, issue, pull request and assignee calls use REST: REST has its own budget and spends no GraphQL point, so the
-// claim, worktree and board tools keep working when the GraphQL budget is used up (FR-DEV-10, #1412). The board is in board-client.mjs.
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+// The claim tools' reads and writes on the repository, issues, pull requests and assignees (US-DEV-08). REST only (FR-DEV-10, #1412):
+// REST has its own budget and spends no GraphQL point, so the claim, worktree and board tools keep working when the GraphQL budget
+// is used up. The board is in board-client.mjs; the transport (gh and git calls, paging, time limit) in github-calls.mjs.
 import { claimKey } from "./claim-lib.mjs";
+import { json, restPages } from "./github-calls.mjs";
 
-const exec = promisify(execFile);
+export { graphql, graphqlIds, json, realClient, restList, restPages } from "./github-calls.mjs";
+
 const memo = new WeakMap(); // client -> lookups that are read once per run
 
-export function realClient({ cwd = process.cwd() } = {}) {
-  return {
-    async run(cmd, args) {
-      const { stdout } = await exec(cmd, args, { cwd, maxBuffer: 32 * 1024 * 1024 });
-      return stdout;
-    },
-  };
-}
-
-export async function json(client, args) {
-  return JSON.parse(await client.run("gh", args));
-}
-
-/** One GraphQL call through `gh api graphql`; a GraphQL error (also inside an HTTP 200 body) throws with its message. */
-export async function graphql(client, query, vars = {}) {
-  const args = ["api", "graphql", "-f", `query=${query}`];
-  for (const [name, value] of Object.entries(vars)) {
-    if (value !== undefined && value !== null) args.push("-F", `${name}=${value}`);
-  }
-  const body = await json(client, args);
-  if (body.errors?.length) throw new Error(body.errors[0].message);
-  return body.data;
-}
+// The fetch refspec `git clone` writes: every branch lands in refs/remotes/origin/*.
+const STANDARD_FETCH = "+refs/heads/*:refs/remotes/origin/*";
+const NOT_A_FEATURE = new Set(["main", "dev", "HEAD"]);
 
 export const me = async (client) =>
   (await client.run("gh", ["api", "user", "-q", ".login"])).trim();
@@ -52,19 +31,7 @@ export function repoName(client) {
 
 const repoPath = async (client, tail) => `repos/${await repoName(client)}/${tail}`;
 
-/** Up to `max` items of a paged REST list (100 per page); `path` may already carry a query string. */
-export async function restList(client, path, max) {
-  const sep = path.includes("?") ? "&" : "?";
-  const out = [];
-  for (let page = 1; out.length < max; page += 1) {
-    const batch = await json(client, ["api", `${path}${sep}per_page=100&page=${page}`]);
-    out.push(...batch);
-    if (batch.length < 100) break;
-  }
-  return out.slice(0, max);
-}
-
-/** The fields the claim rules read, in the shape `gh issue view --json` gave them (state in upper case). */
+/** The fields the claim rules read, in the shape `gh issue view --json` gave them (state in upper case). nodeId is the GraphQL id (board). */
 export const issueOf = (i) => ({
   number: i.number,
   title: i.title,
@@ -73,6 +40,7 @@ export const issueOf = (i) => ({
   assignees: i.assignees ?? [],
   url: i.html_url,
   updatedAt: i.updated_at,
+  nodeId: i.node_id ?? null,
 });
 
 /** A pull request in the shape `gh pr list --json` gave: state OPEN, CLOSED or MERGED, mergedAt, isDraft, headRefName. */
@@ -93,9 +61,9 @@ export async function fetchIssue(client, n) {
   return issueOf(await json(client, ["api", await repoPath(client, `issues/${n}`)]));
 }
 
-/** The 300 newest pull requests (the bound of the claim check, as before), REST. */
+/** The 300 newest pull requests (the bound of the claim check, as before), REST, the three pages at once. */
 export async function fetchPrs(client) {
-  const list = await restList(
+  const list = await restPages(
     client,
     await repoPath(client, "pulls?state=all&sort=created&direction=desc"),
     300,
@@ -103,21 +71,48 @@ export async function fetchPrs(client) {
   return list.map(prOf);
 }
 
-/** Branch names on origin (without refs/heads/), main and dev excluded. */
+/**
+ * Branch names on origin (without refs/heads/), main and dev excluded. With the standard fetch refspec they come from the
+ * remote-tracking refs that `git fetch --prune origin` has just updated: no network call. With any other refspec (a
+ * single-branch clone) origin is asked with ls-remote, because the remote-tracking refs would then miss branches.
+ */
 export async function fetchBranches(client) {
-  const out = await client.run("git", ["ls-remote", "--heads", "origin"]);
+  const names = (await trackedBranches(client)) ?? (await remoteBranches(client));
+  return names.filter((b) => b && !NOT_A_FEATURE.has(b));
+}
+
+/** Branch names from refs/remotes/origin/*, or null when the fetch refspec is not the standard one. */
+async function trackedBranches(client) {
+  let refspecs;
+  try {
+    refspecs = await client.run("git", ["config", "--get-all", "remote.origin.fetch"]);
+  } catch {
+    return null; // git config exits 1 when the key is not set: the fallback asks origin
+  }
+  if (!refspecs.split("\n").includes(STANDARD_FETCH)) return null;
+  const out = await client.run("git", [
+    "for-each-ref",
+    "--format=%(refname)",
+    "refs/remotes/origin/",
+  ]);
   return out
     .split("\n")
-    .map((l) => l.split("\t")[1]?.replace("refs/heads/", ""))
-    .filter((b) => b && b !== "main" && b !== "dev");
+    .filter(Boolean)
+    .map((ref) => ref.replace("refs/remotes/origin/", ""));
+}
+
+/** Branch names asked from origin with ls-remote. */
+async function remoteBranches(client) {
+  const out = await client.run("git", ["ls-remote", "--heads", "origin"]);
+  return out.split("\n").map((l) => l.split("\t")[1]?.replace("refs/heads/", ""));
 }
 
 /**
  * All open issues, newest first, pull requests left out (the REST issue list holds both); which of them are work items of
- * a release is decided by the board (`workItems`). Up to 500 entries are read, as before (4 pages for 338 open issues).
+ * a release is decided by the board (`workItems`). Up to 500 entries are read, as before, the pages at once (#1487).
  */
 export async function fetchOpenIssues(client) {
-  const list = await restList(
+  const list = await restPages(
     client,
     await repoPath(client, "issues?state=open&sort=created&direction=desc"),
     500,
@@ -130,9 +125,12 @@ export async function findIssuesByKey(client, key) {
   return (await fetchOpenIssues(client)).filter((i) => claimKey(i) === key);
 }
 
-/** Adds (add = true) or removes the assignee `login` of an issue (REST, no GraphQL point). */
+/**
+ * Adds (add = true) or removes the assignee `login` of an issue (REST, no GraphQL point). GitHub answers with the issue as it
+ * is after the change, so the claim sees the assignees without a second read; null when the answer is empty.
+ */
 export async function setAssignee(client, n, login, add) {
-  await client.run("gh", [
+  const out = await client.run("gh", [
     "api",
     "-X",
     add ? "POST" : "DELETE",
@@ -140,6 +138,7 @@ export async function setAssignee(client, n, login, add) {
     "-f",
     `assignees[]=${login}`,
   ]);
+  return out.trim() ? JSON.parse(out) : null;
 }
 
 /** Creates an issue with labels in `repo` ("owner/name", REST). Returns its number and URL. */

@@ -2,21 +2,33 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createDraftPr } from "./claim-client.mjs";
-import { addBoardItem, editBoardField, projectMeta, STATUS_FIELD } from "./board-client.mjs";
-import { branchName, claimKey, scopeOf, storyIdOf } from "./claim-lib.mjs";
+import { createDraftPr } from "../claim-client.mjs";
+import { addProjectItem, projectMeta, setItemOption, STATUS_FIELD } from "../board-client.mjs";
+import { branchName, claimKey, scopeOf, storyIdOf } from "../claim-lib.mjs";
 
 export const STATUS_IN_PROGRESS = "In Progress";
 export const STATUS_TODO = "Todo";
 
-/** Sets the project status of an issue; the item is added first, field and option ids come from the project. */
-export async function setProjectStatus(client, issueUrl, owner, status = STATUS_IN_PROGRESS) {
-  const itemId = await addBoardItem(client, owner, issueUrl);
+/**
+ * Sets the project status of an issue with GraphQL (#1487). `item` is the board item read before the claim; an issue that is
+ * not on the board yet is added first, by its node id. Field and option ids are read from the project at run time.
+ */
+export async function setProjectStatus(
+  client,
+  { issue, owner, status = STATUS_IN_PROGRESS, item },
+) {
   const meta = await projectMeta(client, owner);
   const field = meta.fields.find((f) => f.name === STATUS_FIELD);
   const option = field?.options?.find((o) => o.name === status);
   if (!option) throw new Error(`project field "${STATUS_FIELD}" has no option "${status}"`);
-  await editBoardField(client, { meta, itemId, field, option });
+  const itemId =
+    item?.id ?? (await addProjectItem(client, { projectId: meta.id, contentId: issue.nodeId }));
+  await setItemOption(client, {
+    projectId: meta.id,
+    itemId,
+    fieldId: field.id,
+    optionId: option.id,
+  });
 }
 
 export function prTitle(issue) {
@@ -78,13 +90,29 @@ export function handoffBody(issue, branch, login, migrationNumber) {
   ].join("\n");
 }
 
-/** Empty commit on origin/dev without touching the working tree, pushed as a new branch only. */
-export async function pushClaimBranch(client, issue, branch) {
+/** The claim commit: an empty commit on origin/dev, made without touching the working tree. Local only; returns its sha. */
+export async function commitClaim(client, issue) {
   const tree = (await client.run("git", ["rev-parse", "origin/dev^{tree}"])).trim();
   const message = `chore(${scopeOf(issue)}): claim ${claimKey(issue)} (#${issue.number})`;
-  const sha = (
-    await client.run("git", ["commit-tree", tree, "-p", "origin/dev", "-m", message])
-  ).trim();
+  return (await client.run("git", ["commit-tree", tree, "-p", "origin/dev", "-m", message])).trim();
+}
+
+/** Pushes the claim commit as a new branch. A branch that exists already makes the push fail: it is never overwritten. */
+export async function pushClaimBranch(client, branch, sha) {
   await client.run("git", ["push", "origin", `${sha}:refs/heads/${branch}`]);
-  return sha;
+}
+
+/**
+ * Deletes the claim branch, but only while origin still points at our claim commit: a branch that somebody else pushed under
+ * the same name is left alone (returns the note for the log). The check also covers a push that reached origin although its
+ * answer was lost (a timeout).
+ */
+export async function deleteClaimBranch(client, branch, sha) {
+  const listed = (
+    await client.run("git", ["ls-remote", "--heads", "origin", `refs/heads/${branch}`])
+  ).trim();
+  if (!listed) return "already gone";
+  if (listed.split("\t")[0] !== sha) return `origin/${branch} is not our claim commit; left alone`;
+  await client.run("git", ["push", "origin", "--delete", branch]);
+  return undefined;
 }

@@ -3,10 +3,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   addBoardItem,
+  addProjectItem,
   boardItemOf,
   editBoardField,
   listBoardItems,
   projectMeta,
+  setItemOption,
 } from "./board-client.mjs";
 
 /** Fake gh for GraphQL: the answer is chosen by the query text (the line holds the whole query). */
@@ -175,5 +177,40 @@ test("FR-DEV-10 (#1412): adding an item returns its id, and an option is written
     client.calls.includes(
       "gh project item-edit --id ITEM --project-id PROJ --field-id F1 --single-select-option-id O1",
     ),
+  );
+});
+
+test("US-DEV-08: the claim adds an issue by its node id with one mutation and returns the item id (#1487)", async () => {
+  const client = fakeGh({ data: { addProjectV2ItemById: { item: { id: "PVTI_new" } } } });
+  assert.equal(
+    await addProjectItem(client, { projectId: "PROJ", contentId: "I_kw62" }),
+    "PVTI_new",
+  );
+  assert.equal(client.calls.length, 1, "one GraphQL request");
+  assert.ok(client.calls[0].includes("addProjectV2ItemById"));
+  assert.ok(client.calls[0].includes(" -f project=PROJ -f content=I_kw62"));
+});
+
+test("US-DEV-08: the claim sets a Status option with one mutation, and a digit-only option id stays a string (#1487)", async () => {
+  const client = fakeGh({
+    data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: "I" } } },
+  });
+  await setItemOption(client, {
+    projectId: "PROJ",
+    itemId: "PVTI_1",
+    fieldId: "PVTSSF_1",
+    optionId: "12345678",
+  });
+  assert.equal(client.calls.length, 1, "one GraphQL request, no lookup first");
+  assert.ok(client.calls[0].includes("updateProjectV2ItemFieldValue"));
+  assert.ok(client.calls[0].includes(" -f item=PVTI_1 -f field=PVTSSF_1 -f option=12345678"));
+  assert.ok(!client.calls[0].includes(" -F option="));
+});
+
+test("US-DEV-08: a rejected mutation throws with the GraphQL message (P-10), it does not pass as done", async () => {
+  const client = fakeGh({ errors: [{ message: "Could not resolve to a node" }] });
+  await assert.rejects(
+    setItemOption(client, { projectId: "P", itemId: "I", fieldId: "F", optionId: "O" }),
+    /Could not resolve to a node/,
   );
 });

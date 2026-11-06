@@ -1,6 +1,10 @@
 // `make claim ISSUE=<n>` (US-DEV-08): claim a story before working on it, so nobody builds it twice.
 // Refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its story ID or it is labelled needs-triage (FR-DEV-10). Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
 // Repository, issue, PR and assignee calls are REST and the board is one lookup of this issue, so a claim survives an exhausted GraphQL budget (FR-DEV-10, #1412): what cannot be written is a warning.
+// Speed (#1487): the reads that do not depend on each other run at once, the branch list comes from the refs the fetch has just
+// updated, the assignee answer shows the assignees (no second read), and the status is two GraphQL writes.
+// Safety (#1487): every GitHub or git call has a time limit (CLAIM_TIMEOUT_S, starting value 60 s), each undo step is tried three
+// times, and a step that still fails prints the command to run by hand (claim-undo.mjs, claim-writes.mjs).
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
 import { fileURLToPath } from "node:url";
@@ -11,95 +15,17 @@ import {
   me,
   realClient,
   repoName,
-  setAssignee,
 } from "./lib/claim-client.mjs";
 import { boardItemOf } from "./lib/board-client.mjs";
-import { branchName, findConflicts, refusalReport } from "./lib/claim-lib.mjs";
+import { checkFree, ClaimRefused, refusalReport } from "./lib/claim-lib.mjs";
+import { rollBack } from "./lib/writes/claim-undo.mjs";
+import { writeClaim } from "./lib/writes/claim-writes.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
-import { collect } from "./migration/git-view.mjs";
-import { nextNumber, pad } from "./migration/migration-lib.mjs";
 import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs";
-import {
-  handoffBody,
-  openDraftPr,
-  pushClaimBranch,
-  setProjectStatus,
-  STATUS_IN_PROGRESS,
-  STATUS_TODO,
-} from "./lib/claim-steps.mjs";
 
-export class ClaimRefused extends Error {
-  constructor(findings) {
-    super(findings.map((f) => `  - ${f.text}`).join("\n"));
-    this.findings = findings;
-  }
-}
+export { ClaimRefused };
 
-async function assertFree(client, number, { env, login, typ }) {
-  const [found, prs, branches] = await Promise.all([
-    fetchIssue(client, number),
-    fetchPrs(client),
-    fetchBranches(client),
-  ]);
-  const issue = typ ? { ...found, typ } : found;
-  if (issue.state !== "OPEN")
-    throw new ClaimRefused([{ text: `issue #${number} is ${issue.state}` }]);
-  // The caller's own assignment is a half claim of an earlier run: continue, do not refuse.
-  const findings = findConflicts({
-    issue,
-    prs,
-    branches,
-    allowPrior: env.ALLOW_PRIOR_WORK === "1",
-  }).filter((f) => !(f.kind === "assignee" && f.login === login));
-  const branch = branchName(issue);
-  if (branches.includes(branch)) findings.push({ text: `branch origin/${branch} exists` });
-  if (findings.length) throw new ClaimRefused(findings);
-  return issue;
-}
-
-/** Assigns the issue to the caller (REST); if somebody else was faster in the meantime, steps back. */
-async function assign(client, issue, login) {
-  await setAssignee(client, issue.number, login, true);
-  const after = await fetchIssue(client, issue.number);
-  const others = after.assignees.filter((a) => a.login !== login);
-  if (others.length) {
-    await setAssignee(client, issue.number, login, false);
-    throw new ClaimRefused(
-      others.map((a) => ({ text: `@${a.login} claimed #${issue.number} first` })),
-    );
-  }
-}
-
-/** Sets the board status; a failure is a warning and the claim goes on (P-10). True when the status was set. */
-async function projectStatus(client, { url, owner, status }, log) {
-  try {
-    await setProjectStatus(client, url, owner, status);
-    log(`Project status: ${status}`);
-    return true;
-  } catch (e) {
-    log(`WARNING: project status not set (${e.message}); set it by hand on the board`);
-    return false;
-  }
-}
-
-/** Runs the undo steps in reverse, each best effort, so the original error stays the one reported. */
-async function rollBack(undo, log) {
-  for (const [label, step] of undo.reverse()) {
-    try {
-      await step();
-      log(`Rolled back: ${label}`);
-    } catch (e) {
-      log(`WARNING: could not roll back "${label}" (${e.message}); undo it by hand`);
-    }
-  }
-}
-
-/** RESERVE_MIGRATION=1: the next free migration number, seen from origin/dev and all open PRs (issue #831). */
-function reserveMigration(client, env) {
-  if (env.RESERVE_MIGRATION !== "1") return undefined;
-  const { taken } = collect({ cwd: client.cwd ?? process.cwd(), branch: "" });
-  return pad(nextNumber({ taken }));
-}
+export const DEFAULT_TIMEOUT_S = 60; // assumption: a starting value; a GitHub call here takes well under a second
 
 /**
  * The board item of this issue, read once: its Typ decides the branch type, its priority the warning. A failed lookup is
@@ -121,47 +47,47 @@ function warnNoPriority({ item, error }, number, log) {
 }
 
 /**
- * Atomic claim: preflight first, then the branch is pushed (the step that fails most often), then the
- * assignee, status and draft PR. Any failure undoes what was written; a re-run starts clean.
+ * Atomic claim: preflight first, then the reads, then the writes (branch, assignee, status, draft PR). Any failure undoes what
+ * was written; a re-run starts clean.
  */
 export async function claim(
   client,
   number,
-  { env = {}, log = console.log, preflight: check = preflight } = {},
+  { env = {}, log = console.log, preflight: check = preflight, retryDelayMs = 1000 } = {},
 ) {
+  const started = Date.now();
+  log("claim: fetching origin");
   await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
   await check(client);
-  const login = await me(client);
-  const repo = await repoName(client);
-  const owner = repo.split("/")[0];
-  const board = await readBoard(client, repo, number, log);
-  const issue = await assertFree(client, number, { env, login, typ: board.item?.typ });
-  const branch = branchName(issue);
+  const [login, repo] = await Promise.all([me(client), repoName(client)]);
+  log(`claim: reading #${number}, the pull requests, the branches and the board`);
+  const [board, found, prs, branches] = await Promise.all([
+    readBoard(client, repo, number, log),
+    fetchIssue(client, number),
+    fetchPrs(client),
+    fetchBranches(client),
+  ]);
+  const issue = board.item?.typ ? { ...found, typ: board.item.typ } : found;
+  checkFree({ issue, prs, branches, number, login, allowPrior: env.ALLOW_PRIOR_WORK === "1" });
   const undo = [];
   try {
-    await pushClaimBranch(client, issue, branch);
-    undo.push([
-      `branch origin/${branch}`,
-      () => client.run("git", ["push", "origin", "--delete", branch]),
-    ]);
-    log(`Pushed origin/${branch}`);
-    await assign(client, issue, login);
-    undo.push([`assignee of #${number}`, () => setAssignee(client, number, login, false)]);
-    log(`Assigned #${number} to @${login}`);
-    if (await projectStatus(client, { url: issue.url, owner, status: STATUS_IN_PROGRESS }, log))
-      undo.push(["project status", () => setProjectStatus(client, issue.url, owner, STATUS_TODO)]);
-    const url = await openDraftPr(
-      client,
+    const { branch, url } = await writeClaim(client, {
       issue,
-      branch,
-      handoffBody(issue, branch, login, reserveMigration(client, env)),
-    );
-    log(`Draft PR: ${url}`);
+      number,
+      login,
+      repo,
+      owner: repo.split("/")[0],
+      board,
+      env,
+      undo,
+      log,
+    });
     warnNoPriority(board, number, log);
     log(`Next: make worktree BRANCH=${branch}`);
+    log(`claim: done in ${Math.round((Date.now() - started) / 1000)} s`);
     return { branch, url };
   } catch (e) {
-    await rollBack(undo, log);
+    await rollBack(undo, log, retryDelayMs);
     throw e;
   }
 }
@@ -172,7 +98,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("usage: make claim ISSUE=<issue number>");
     process.exit(2);
   }
-  claim(realClient(), number, { env: process.env }).catch((e) => {
+  const timeoutS = process.env.CLAIM_TIMEOUT_S
+    ? Number(process.env.CLAIM_TIMEOUT_S)
+    : DEFAULT_TIMEOUT_S;
+  if (!(timeoutS > 0)) {
+    console.error("CLAIM_TIMEOUT_S must be a positive number of seconds");
+    process.exit(2);
+  }
+  claim(realClient({ timeoutMs: timeoutS * 1000 }), number, { env: process.env }).catch((e) => {
     if (e instanceof PreflightFailed) {
       console.error(
         `claim not started for #${number}: preflight failed, nothing was written.\n${e.message}`,

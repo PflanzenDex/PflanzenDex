@@ -14,8 +14,11 @@ export async function checkBranch(client, branch) {
   const id = key.toUpperCase();
   let issue, login;
   try {
-    issue = (await findIssuesByKey(client, key))[0];
-    login = await me(client);
+    // The issue list and the user are independent: one round trip (#1487).
+    [issue, login] = await Promise.all([
+      findIssuesByKey(client, key).then((found) => found[0]),
+      me(client),
+    ]);
   } catch (e) {
     return { ok: true, message: `claim check skipped for ${id}: ${e.message.split("\n")[0]}` };
   }
