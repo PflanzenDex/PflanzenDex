@@ -99,6 +99,7 @@ export async function signOutEverywhere(
   const res = await fetchFn(`${authority}/account/sessions`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    signal: AbortSignal.timeout(SIGN_IN_TIMEOUT_SECONDS * 1000),
   });
   if (!res.ok) throw new Error("sign_out_failed");
 }

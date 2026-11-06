@@ -52,7 +52,16 @@ describe("sign out on all devices", () => {
     expect(f).toHaveBeenCalledWith("http://id/realms/x/account/sessions", {
       method: "DELETE",
       headers: { Authorization: "Bearer tok", Accept: "application/json" },
+      signal: expect.any(AbortSignal),
     });
+  });
+
+  it("US-ACC-01 signing out on all devices gives up after the same 15 seconds", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    const f = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    await signOutEverywhere("http://id/realms/x", "tok", f);
+    expect(timeout).toHaveBeenCalledWith(15_000);
+    timeout.mockRestore();
   });
 
   it("throws on errors so the UI reports nothing wrong", async () => {

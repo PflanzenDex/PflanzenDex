@@ -34,7 +34,11 @@ async function registerReturn(
   answered: boolean,
 ): Promise<State | null> {
   if (intent === "check" && answered) {
-    if (user) await endSession(mgr, "after_logout");
+    if (user)
+      await endSession(mgr, "after_logout").catch((e: unknown) => {
+        window.sessionStorage.removeItem(REGISTER); // the session did not end: no flag stays behind
+        throw e;
+      });
     else await mgr.signinRedirect({ prompt: "create" });
     return { kind: "loading" };
   }
@@ -81,7 +85,6 @@ async function loadState(mgr: UserManager): Promise<State> {
     setProfileTimeZone(account.timeZone ?? null);
     return { kind: "signedIn", account };
   } catch (e) {
-    window.sessionStorage.removeItem(REGISTER); // a failed end of the registration leaves no flag behind
     if (e instanceof Error && e.message === "not_signed_in") {
       await mgr.removeUser();
       return { kind: "signedOut" };
