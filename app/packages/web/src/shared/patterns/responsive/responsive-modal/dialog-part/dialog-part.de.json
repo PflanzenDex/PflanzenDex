@@ -1,4 +1,5 @@
 {
+  "dialog.loading": "Fenster wird geladen …",
   "dialog.loadFailed": "Das Fenster konnte nicht geladen werden.",
   "dialog.retry": "Erneut versuchen",
   "dialog.close": "Schließen"

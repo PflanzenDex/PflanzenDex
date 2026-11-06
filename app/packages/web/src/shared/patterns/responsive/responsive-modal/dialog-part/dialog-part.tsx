@@ -19,6 +19,21 @@ export function preloadDialog(): void {
   void loadDialog().catch(() => undefined);
 }
 
+/**
+ * The loading state of a dialog whose chunk is still on its way (NFR-12, P-10): a centred panel with the look of the
+ * error view. It takes no focus, so the trigger keeps it while the code loads.
+ */
+function DialogLoading() {
+  return (
+    <div
+      role="status"
+      className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-card border border-border bg-background p-6 text-center text-foreground shadow-elevation-2"
+    >
+      <p className="text-base font-semibold">{t("dialog.loading")}</p>
+    </div>
+  );
+}
+
 /** The error view of a dialog whose chunk failed: the text, a retry and a way out (P-10, DS-08). */
 function DialogLoadFailed(props: { onRetry: () => void; onClose: () => void; closeLabel: string }) {
   return (
@@ -75,6 +90,9 @@ export function DialogPart(props: DialogPartProps) {
           aria-haspopup="dialog"
           aria-expanded={open}
           data-state={open ? "open" : "closed"}
+          onPointerEnter={preloadDialog}
+          onFocus={preloadDialog}
+          onTouchStart={preloadDialog}
           onClick={() => onOpenChange(!open)}
         >
           {trigger}
@@ -93,7 +111,7 @@ export function DialogPart(props: DialogPartProps) {
             ) : null
           }
         >
-          <React.Suspense fallback={null}>
+          <React.Suspense fallback={open ? <DialogLoading /> : null}>
             <DialogModal
               open={open}
               onOpenChange={onOpenChange}
