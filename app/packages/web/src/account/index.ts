@@ -35,8 +35,8 @@ export const KeeperStyleQuestion = lazyPage(() =>
     default: m.KeeperStyleQuestion,
   })),
 );
-export { useSession } from "./session";
-export type { State } from "./session";
+export { useSession } from "./session/session";
+export type { State } from "./session/session";
 /** Needed only while the invitation code is asked for: forms and validation stay out of the entry chunk (#451). */
 export const InvitationPage = lazyPage(() =>
   import("./invitation-page/invitation-page").then((m) => ({ default: m.InvitationPage })),

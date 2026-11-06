@@ -40,7 +40,14 @@
       "Bash(make claim ISSUE=*)",
       "Bash(make pr PR=*)",
       "Bash(git push origin HEAD)",
-      "Bash(git push -q origin HEAD)"
+      "Bash(git push -q origin HEAD)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(sed -n:*)",
+      "Bash(make pr-state PR=*)",
+      "Bash(make issue-read ISSUE=*)",
+      "Bash(make pr-text PR=*)",
+      "Bash(make issue-comment ISSUE=*)"
     ],
     "deny": [
       "Bash(gh pr merge:*)",
