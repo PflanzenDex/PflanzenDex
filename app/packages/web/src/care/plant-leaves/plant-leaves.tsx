@@ -74,6 +74,14 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
 
 function LeafList(props: { view: LeafLogView; busy: boolean; onRemove: (row: Leaf) => void }) {
   const { view } = props;
+  // Two plain lines, not the empty panel: the buttons above already are the next step (P-09), and the tab fits one screen.
+  if (view.count === 0)
+    return (
+      <div className="grid gap-1">
+        <p className="font-semibold">{t("empty.title")}</p>
+        <p className="text-sm text-muted-foreground">{t("empty.description")}</p>
+      </div>
+    );
   return (
     <div className="grid gap-3">
       <p className="font-semibold">{countText(view.count)}</p>
@@ -131,17 +139,7 @@ function LeafLog({ api, token, specimenId }: Props) {
         </Button>
       </div>
       {refusal && <RefusalAlert error={refusal} />}
-      <LoadFrame
-        queryKey={key}
-        token={token}
-        load={load}
-        loadingText={t("loading")}
-        empty={{
-          isEmpty: (view) => view.count === 0,
-          title: t("empty.title"),
-          description: t("empty.description"),
-        }}
-      >
+      <LoadFrame queryKey={key} token={token} load={load} loadingText={t("loading")}>
         {(view) => <LeafList view={view} busy={writes.busy} onRemove={(row) => void remove(row)} />}
       </LoadFrame>
       <ResponsiveModal
