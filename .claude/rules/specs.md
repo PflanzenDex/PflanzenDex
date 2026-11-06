@@ -12,5 +12,5 @@ paths:
 - Numbers that are neither measured nor sourced are marked "assumption" or "starting value".
 - Status symbols: ⬜ planned, 🟨 in progress, ✅ done. Change the status and the counters in `readme.md` in the same PR as the code.
 - A new epic needs: a numbered file, README tables updated, cross-references, glossary terms in `00`, a place in the release cut in `16`.
-- Respect the principles (P-01 to P-11): no comparisons against species averages, no rankings between friends, etiolation never counts as success.
+- Respect the principles (P-01 to P-12): no comparisons against species averages, no rankings between friends, etiolation never counts as success.
 - `app/tools/check/docs/specs/check-specs.mjs` validates structure; run `make gates` after editing.
