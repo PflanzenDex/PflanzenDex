@@ -38,6 +38,9 @@ export default {
     { path: "app", maxUnits: 6 },
     { path: "app/packages/*/src", maxUnits: Infinity },
     { path: "app/packages/*/src/*", maxUnits: 10 },
+    // The changelog fragments (US-DEV-06, issue 1486): one JSON file per PR, named by its issue number and a slug. Each
+    // file is a unit of its own, so a unit cap would stop the folder after nine PRs; the name pattern (LY-2) is the rule.
+    { path: "app/packages/web/src/news/unreleased", collection: /^\d+-[a-z0-9-]+\.json$/ },
     // The gate scripts: one folder per gate (US-QG-07 added db-indexes as the sixth, FR-QG-26 the UI text rule as the
     // seventh: a language rule fits none of the other folders, FR-QG-12 the constants gate as the eighth (issue 1138):
     // literal repetition of domain values is its own gate); a ninth needs a new reason.

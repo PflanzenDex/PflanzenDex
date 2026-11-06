@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { germanDate, type NewsEntry } from "../news-lines.mjs";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
@@ -8,7 +9,7 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
 import { Button } from "@/shared/ui/button/button";
 import table from "../whats-new.de.json";
-import { NEWS_LINES, appVersion, markNewsSeen } from "../whats-new";
+import { NEWS_COUNT, NEWS_ENTRIES, appVersion, markNewsSeen } from "../whats-new";
 
 const t = texts(table);
 
@@ -52,11 +53,26 @@ function NewsLine({ line }: { line: string }) {
   );
 }
 
+/** The heading of a group: "Noch nicht veröffentlicht" or "Version 1.2.0 vom 06.11.2026" (US-DEV-06). */
+function NewsHeading({ heading }: { heading: NonNullable<NewsEntry["heading"]> }) {
+  return (
+    <h2 className="m-0 text-base font-semibold">
+      {heading.version === null
+        ? t("heading.unreleased")
+        : t("heading.version", { version: heading.version, date: germanDate(heading.date) })}
+    </h2>
+  );
+}
+
 /**
- * The version of the build and the lines, newest first, one page at a time (US-DEV-06, US-QS-15): the pager turns the
- * pages and keeps the first entry of the page in the address. An empty list says what to do next (P-09).
+ * The version of the build and the lines in display order, one page at a time (US-DEV-06, US-QS-15): the unreleased
+ * lines first, then each version under its heading. The pager turns the pages and keeps the first entry of the page in
+ * the address. An empty list says what to do next (P-09).
  */
-export function WhatsNewList(props: { lines: readonly string[]; version: string | undefined }) {
+export function WhatsNewList(props: {
+  entries: readonly NewsEntry[];
+  version: string | undefined;
+}) {
   const navigate = useNavigate();
   const pageSize = useIsLg() ? PAGE_LG : PAGE_PHONE;
   return (
@@ -64,7 +80,7 @@ export function WhatsNewList(props: { lines: readonly string[]; version: string 
       <p className="m-0 text-sm text-muted-foreground">
         {t("version", { version: props.version ?? t("version.unknown") })}
       </p>
-      {props.lines.length === 0 ? (
+      {props.entries.length === 0 ? (
         <EmptyState
           title={t("empty.title")}
           description={t("empty.description")}
@@ -72,11 +88,16 @@ export function WhatsNewList(props: { lines: readonly string[]; version: string 
         />
       ) : (
         <Pager
-          items={props.lines}
+          items={props.entries}
           pageSize={pageSize}
           label={t("list.label")}
-          getKey={(_line, index) => index}
-          renderItem={(line) => <NewsLine line={line} />}
+          getKey={(_entry, index) => index}
+          renderItem={(entry) => (
+            <div className="flex min-w-0 flex-col gap-2">
+              {entry.heading && <NewsHeading heading={entry.heading} />}
+              <NewsLine line={entry.text} />
+            </div>
+          )}
         />
       )}
     </div>
@@ -89,7 +110,7 @@ export function WhatsNewList(props: { lines: readonly string[]; version: string 
  */
 export function WhatsNewPage() {
   useEffect(() => {
-    markNewsSeen(NEWS_LINES.length);
+    markNewsSeen(NEWS_COUNT);
   }, []);
-  return <WhatsNewList lines={NEWS_LINES} version={appVersion()} />;
+  return <WhatsNewList entries={NEWS_ENTRIES} version={appVersion()} />;
 }
