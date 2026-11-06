@@ -65,6 +65,7 @@ function useSpeciesHandOver(setView: (v: LinkTarget) => void) {
 
 type Session = ReturnType<typeof useSession>;
 type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
+type SignedOut = Extract<State, { kind: "signedOut" }>;
 
 /** The shell with its navigation; a destination that is not open yet stays in place, marked with text (US-ONB-05). */
 function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
@@ -115,6 +116,7 @@ function EntryStates(props: { state: State; session: Session }) {
             token={s.token}
             onRegistered={() => void s.reload()}
             onSignOut={s.signOut}
+            {...(z.error ? { error: z.error } : {})}
           />
         </RouteBoundary>
       )}
@@ -123,14 +125,14 @@ function EntryStates(props: { state: State; session: Session }) {
 }
 
 /** The welcome page with the session's actions: sign in, register, another account (US-ACC-01). */
-function SignedOutWelcome(props: { session: Session; hint?: string }) {
-  const { session: s } = props;
+function SignedOutWelcome({ session: s, state: z }: { session: Session; state: SignedOut }) {
   return (
     <Welcome
       onRegister={s.register}
       onSignIn={s.signIn}
       onAnotherAccount={s.useAnotherAccount}
-      {...(props.hint ? { hint: props.hint } : {})}
+      hint={z.hint}
+      error={z.error}
     />
   );
 }
@@ -154,8 +156,7 @@ export function App() {
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
   // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
-  if (z.kind === "signedOut")
-    return <SignedOutWelcome session={s} {...(z.hint ? { hint: z.hint } : {})} />;
+  if (z.kind === "signedOut") return <SignedOutWelcome session={s} state={z} />;
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">
