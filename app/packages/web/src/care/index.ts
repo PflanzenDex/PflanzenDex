@@ -20,8 +20,9 @@ export const PlanLayer = lazyPage(() =>
 export const PlantGrowth = lazyPage(() =>
   import("./plant-detail/plant-growth/plant-growth").then((m) => ({ default: m.PlantGrowth })),
 );
-export const PlantHistory = lazyPage(() =>
-  import("./plant-detail/plant-history/plant-history").then((m) => ({ default: m.PlantHistory })),
+/** The tab "Verlauf" of a plant: the measurements, and the leaf log behind the switch "Messungen | Blätter" (US-WAC-07). */
+export const PlantCourse = lazyPage(() =>
+  import("./plant-course/plant-course").then((m) => ({ default: m.PlantCourse })),
 );
 export const PlantCare = lazyPage(() =>
   import("./plant-detail/plant-care/plant-care").then((m) => ({ default: m.PlantCare })),

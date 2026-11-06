@@ -49,6 +49,8 @@ export function PlantHistory(props: {
   specimenId: string;
   /** Leaves the layer and opens the measuring. */
   onMeasure?: () => void;
+  /** Entries per page; smaller when a switch sits above the list (US-WAC-07). */
+  pageSize?: number;
 }) {
   const { api, token, specimenId } = props;
   const key = useMemo(() => ["care", "measurements", specimenId], [specimenId]);
@@ -78,7 +80,7 @@ export function PlantHistory(props: {
       {(view) => (
         <Pager
           items={view.measurements}
-          pageSize={PAGE_SIZE}
+          pageSize={props.pageSize ?? PAGE_SIZE}
           label="Messungen und Fotos"
           param="vfrom"
           replace
