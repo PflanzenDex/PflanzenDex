@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { findCardButton } from "../../../collection/specimens/tests/plants-test-helpers";
 import userEvent from "@testing-library/user-event";
@@ -8,6 +8,7 @@ import { CollectionArea } from "./collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { FeaturesProvider } from "@/shared/data";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -106,5 +107,36 @@ describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {
     await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
     const heading = await screen.findByRole("heading", { name: "Kennzeichen ändern" });
     expect(heading.closest("[data-fit-screen]")).not.toBeNull();
+  });
+});
+
+describe("US-ONB-09 the keeper's switches in the Sammlung", () => {
+  it("US-ONB-09 a switched-off wishlist is not offered in the switch, and its address falls back to the plants", async () => {
+    stubCollection();
+    render(
+      <MemoryRouter initialEntries={["/collection?view=wishlist"]}>
+        <FeaturesProvider
+          features={{
+            social: true,
+            ai: true,
+            recommendations: true,
+            wishlist: false,
+            equipment: true,
+          }}
+        >
+          <CollectionArea
+            api="http://api"
+            token={async () => "tok"}
+            newSpecies={null}
+            onSpeciesChoose={() => {}}
+            onCompleted={() => {}}
+          />
+        </FeaturesProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    const switchGroup = screen.getByRole("group", { name: "Ansicht der Sammlung" });
+    expect(within(switchGroup).queryByText("Wünsche")).toBeNull();
+    expect(within(switchGroup).getByText("Geräte")).toBeTruthy();
   });
 });

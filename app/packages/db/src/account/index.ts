@@ -6,5 +6,5 @@ export { ProfilePostgres } from "./profile.ts";
 export { HintPostgres } from "./hint/index.ts";
 export { IntroductionPostgres } from "./introduction/index.ts";
 export { KeeperStylePostgres } from "./style/index.ts";
-export { ManualUnlockPostgres } from "./unlock/index.ts";
+export { KeeperSwitchPostgres, ManualUnlockPostgres } from "./unlock/index.ts";
 export { FIXTURES_ACCOUNT } from "./fixtures.ts";
