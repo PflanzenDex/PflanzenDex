@@ -12,9 +12,9 @@ import table from "../wishlist.de.json";
 const t = texts(table);
 
 export const LEVELS: Record<number, string> = {
-  1: t("card.level.1"),
-  2: t("card.level.2"),
-  3: t("card.level.3"),
+  1: t("card.level.easy"),
+  2: t("card.level.medium"),
+  3: t("card.level.hard"),
 };
 export const UNKNOWN = t("card.unknown");
 
