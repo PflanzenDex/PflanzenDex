@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
 import { readBaseline, saveResults } from "../../../support/display/reporter";
 import { measure, openScreen, settle } from "../../../support/display/one-screen/fit";
-import { SCREENS, type Screen } from "../../../support/display/one-screen/register";
+import { SCREENS, screensOf, type Screen } from "../../../support/display/one-screen/register";
 import {
   SIZES,
   evaluate,
@@ -26,6 +26,12 @@ import { coverageProblems } from "./merge-shards";
 const API = `http://localhost:${process.env["E2E_API_PORT"] ?? "3000"}`;
 const WRITE = process.env["ONE_SCREEN_WRITE"] === "1";
 
+// SCREEN of make one-screen (issue 1608): a partial run writes no baseline and is no shard; make refuses both first.
+const ONLY = process.env["ONE_SCREEN_ONLY"] ?? "";
+if (ONLY && (WRITE || process.env["ONE_SCREEN_SHARD"]))
+  throw new Error("one-screen: SCREEN is a partial run: no baseline write, no shard");
+const SELECTED = screensOf(ONLY);
+
 test.describe.configure({ mode: "parallel", timeout: 150_000 });
 
 async function measureAll(
@@ -46,7 +52,7 @@ async function measureAll(
 }
 
 test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
-  for (const screen of SCREENS) {
+  for (const screen of SELECTED) {
     test(`US-QS-15 one screen: ${screen.id}`, async ({ browser, states }) => {
       const storageState = await states(screen.account);
       const context = await browser.newContext({

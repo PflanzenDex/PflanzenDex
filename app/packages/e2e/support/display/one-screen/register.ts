@@ -41,3 +41,14 @@ export const SCREENS: readonly Screen[] = JSON.parse(
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed file next to this module
   readFileSync(new URL("../screens.json", import.meta.url), "utf8"),
 ) as Screen[];
+
+/** The screens of this run: all of them, or the one that `ONE_SCREEN_ONLY` names (SCREEN of make one-screen, issue 1608). */
+export function screensOf(only: string): readonly Screen[] {
+  if (only === "") return SCREENS;
+  const found = SCREENS.filter((screen) => screen.id === only);
+  if (found.length === 0)
+    throw new Error(
+      `one-screen: unknown screen "${only}", the valid ids are: ${SCREENS.map((s) => s.id).join(", ")}`,
+    );
+  return found;
+}

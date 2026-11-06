@@ -26,6 +26,8 @@ export REST_PR := $(value PR)
 export REST_ISSUE := $(value ISSUE)
 export REST_TITLE := $(value TITLE)
 export REST_BODY := $(value BODY)
+# SCREEN=<id> of `make one-screen` reaches the e2e spec as ONE_SCREEN_ONLY, raw like the REST_ values (issue 1608).
+export ONE_SCREEN_ONLY := $(value SCREEN)
 
 pr-state: ## Read a PR over REST (PR=<n>): title, state, draft, merged, head, base, auto-merge and the latest check runs of the head (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs pr-state
@@ -154,7 +156,7 @@ ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories
 e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
-one-screen: $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs one shard of the screens (CI, US-QG-01), `npm run one-screen:write` rewrites the baseline; needs Docker
+one-screen: $(if $(and $(SCREEN),$(SHARD)),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(SCREEN),$(filter 1,$(ONE_SCREEN_WRITE))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs one shard of the screens (CI, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD=$(SHARD) npm run one-screen
 
