@@ -163,18 +163,25 @@ describe("US-BES-10 a care profile kept on a merged proposal does not vanish (FR
       userId,
     );
 
-  it("US-BES-10 shows it with a notice naming the target species and the next action", async () => {
+  it("US-BES-10 shows it under the target species' name with the merged marker and a notice code", async () => {
     await profiles.update("anna", MERGED, { ownHints: "Mein alter Hinweis" });
     const entries = await withMerged();
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       speciesId: MERGED,
+      speciesName: "Bogenhanf",
       mergedInto: { speciesId: BOGEN, speciesName: "Bogenhanf" },
+      notice: { code: "proposal_merged" },
       deviates: true,
     });
     expect(entries[0]?.profile.ownHints.own).toBe("Mein alter Hinweis");
-    expect(entries[0]?.notice?.text).toContain("Bogenhanf");
-    expect(entries[0]?.notice?.nextAction).toContain("Pflegeprofil");
+  });
+
+  it("US-BES-10 the merged entry carries no German UI text of its own: the wording is the web's (P-09, FR-QG-26)", async () => {
+    await profiles.update("anna", MERGED, { ownHints: "x" });
+    const [entry] = await withMerged();
+    expect(entry?.speciesName).not.toMatch(/zusammengef|Vorschlag/);
+    expect(JSON.stringify(entry?.notice)).toBe('{"code":"proposal_merged"}');
   });
 
   it("US-BES-10 a profile of a species that is invisible and not merged stays hidden (P-04)", async () => {

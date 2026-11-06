@@ -9,6 +9,10 @@ import { isActive, type SpeciesSource, type SpecimenStore } from "../shared/type
 
 export interface CareProfileEntry {
   readonly speciesId: string;
+  /**
+   * The species' name. For a merged proposal (US-BES-10) it is the name of the species it was merged into, so every
+   * reader gets a name; the merged marker is `mergedInto`.
+   */
   readonly speciesName: string;
   /** Active specimens of the species (archived ones do not count, US-BES-07). */
   readonly activeSpecimens: number;
@@ -22,8 +26,11 @@ export interface CareProfileEntry {
    * (US-BES-10): the profile stayed because I already had one for the target (P-10, nothing disappears silently).
    */
   readonly mergedInto: { readonly speciesId: string; readonly speciesName: string } | null;
-  /** What happened and what to do next (P-09); `null` for an ordinary entry. */
-  readonly notice: { readonly text: string; readonly nextAction: string } | null;
+  /**
+   * What happened to a merged proposal's profile (US-BES-10); the code is worded by the web from its message table, so
+   * core holds no UI text. `null` for an ordinary entry.
+   */
+  readonly notice: { readonly code: "proposal_merged" } | null;
 }
 
 /** Port: the species a merged proposal of mine went into. Implemented by the catalog adapter (ADR 0003). */
@@ -73,16 +80,13 @@ async function mergedEntry(
   return [
     {
       speciesId: id,
-      speciesName: "Dein zusammengeführter Vorschlag",
+      speciesName: name,
       activeSpecimens: 0,
       wateringHint: null,
       profile: effectiveProfile({ species, profile, catalogZoneId: catalogZone(species, zones) }),
       deviates: deviation(profile),
       mergedInto: { speciesId: target.id, speciesName: name },
-      notice: {
-        text: `Dein Vorschlag wurde mit „${name}“ zusammengeführt. Für diese Art hattest du schon ein Pflegeprofil, deshalb wurde dieses hier nicht übernommen und bleibt unverändert erhalten.`,
-        nextAction: `Öffne das Pflegeprofil von „${name}“ und übernimm von Hand, was du behalten willst.`,
-      },
+      notice: { code: "proposal_merged" },
     },
   ];
 }
