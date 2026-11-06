@@ -260,8 +260,8 @@ pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
 
-issue: ## New issue with type and epic labels and the board fields Typ, Epic, Priority and Status Todo (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md>); refuses unknown values before creating anything (FR-DEV-10)
-	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs create --type "$(TYPE)" --epic "$(EPIC)" --priority "$(PRIORITY)" --title "$(TITLE)" --body-file "$(abspath $(BODY))"
+issue: ## New issue with type and epic labels and the board fields Typ, Epic, Priority, Release and Status Todo (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md> [RELEASE=R3]); Release by rule (bug by priority P0/P1 R1, P2 R2, P3 R4; epic none; other types R2) unless RELEASE overrides it; refuses unknown values before creating anything (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs create --type "$(TYPE)" --epic "$(EPIC)" --priority "$(PRIORITY)" --title "$(TITLE)" --body-file "$(abspath $(BODY))" $(if $(RELEASE),--release "$(RELEASE)")
 
 issue-check: ## Check the type and epic labels of an issue (ISSUE=<n> [EVENT=opened|edited|labeled|unlabeled]): comment and needs-triage when invalid, needs-triage removed when valid (CI: issue-check.yml, FR-DEV-10)
 	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs check --issue "$(ISSUE)" --event "$(EVENT)"
