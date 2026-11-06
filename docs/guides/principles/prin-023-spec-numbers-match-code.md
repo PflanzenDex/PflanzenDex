@@ -19,7 +19,7 @@ Findings per code: SN-1 (a marked spec number differs from the constant), SN-2 (
 
 ## Gate
 
-`make gates` (step `npm run spec-numbers`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`) and `ci-status` requires it.
+`make gates` (step `npm run spec-numbers`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`); a pull request that changes only documentation runs it in the job `docs-gates` (`make ci-docs`) instead, and `ci-status` requires both.
 
 ## Evidence
 
