@@ -1,6 +1,7 @@
 // Public interface of the `collection` module (ADR 0003).
 export { SpeciesGone, type SpecimenRow } from "./specimen-shared.ts";
 export { SpecimenPostgres } from "./specimens.ts";
+export { SpecimenNotesPostgres, type SpecimenNotes } from "./specimen/specimen-notes.ts";
 export { CareProfilePostgres } from "./care-profiles.ts";
 export { FIXTURES_COLLECTION, FIXTURE_SPECIES_ID, createFixtureSpecimenAt } from "./fixtures.ts";
 export { COLLECTION_REPOINTERS } from "./repointers.ts";
@@ -10,7 +11,7 @@ export {
   specimenPage,
   treatableSpecimens,
   unlockSummaryOf,
-} from "./specimen-locations.ts";
+} from "./specimen/specimen-locations.ts";
 export {
   archiveSpecimenOn,
   createSpecimenOn,

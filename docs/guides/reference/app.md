@@ -177,6 +177,15 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** the card has "Fangdatum"; the form shows the stored date ("Bisher: …" or "unbekannt"), is preset to it (today when unknown), limited to today, and after saving the message names the specimen and the new date (P-09); a refusal marks the field (P-10).
 - **Limits:** the archive section has no entry point yet; an archived specimen can be corrected through the API only.
 
+## Private notes of a specimen (US-BES-18)
+
+- **Data:** migration 0109 (`-- module: collection`, expand only): nullable `specimen.notes text`, check `specimen_notes_length` (`notes is null or char_length(notes) between 1 and 2000`); the limit is a starting value (assumption), counted in characters (code points) in `core` (`SPECIMEN_LIMITS.notes`) and in the table alike.
+- **Operation:** `specimen.set_notes` (`core/src/collection/notes/notes.ts`, input `specimenId`, `notes`; `notes` is required: `""` or `null` clears it, the text is trimmed; over the limit or not text: `input.invalid` on `notes`, nothing written). Its own port `NotesStore` (`findNotes`, `setNotes`). An archived specimen stays unchanged (`specimen.archived` 409, as the marker, the location and the light zone do, US-BES-07); a foreign or unknown one is 404 `specimen.not_found` (P-04). `specimenNotes` is the keeper's own read.
+- **Create:** `specimen.create` takes optional `notes` (trimmed, empty means none), for the CSV import (US-BES-18, later slice); the create answer carries no notes.
+- **API:** `POST /specimens/:id/notes` (`Idempotency-Key`; body `notes`), answers `{ id, notes }`. `GET /specimens/:id` (the keeper's own detail) adds `notes` (`null` when none). Lists, cards (`GET /specimens`, `GET /specimens/cards`), the archive and the friend, swap and feed reads leave the notes out (P-05, FR-BES-23); the AI read (`specimen` in the collection read source) carries no notes either (free text needs its dataFields marking, FR-KI-07, a later decision).
+- **Export:** the keeper's data export carries `notes` (the export reads every tenant column, US-ACC-04).
+- **Web:** the button "Notizen" on the plant layer's overview opens the layer `?sheet=notes-<id>` (`NotesLayer`), which reads `GET /specimens/:id` only while it is open: the whole text, which scrolls inside the layer, or an empty state; its filled action "Notiz schreiben" or "Notiz bearbeiten" shows the form in the same layer, whose filled "Notiz speichern" saves or clears the text (`specimen.set_notes`); a refusal marks the field and keeps the text (P-10). Closing goes back to the plant and its button.
+
 ## Tell several specimens of a species apart (US-BES-03)
 
 - **Data:** migration 0013 (`-- module: collection`): unique index `specimen_marker_per_species (account_id, species_id, lower(marker))` for rows with a marker; archived specimens count, their marker stays taken like their name (US-BES-07). The name was unique per account already, so no existing data can violate the index.
