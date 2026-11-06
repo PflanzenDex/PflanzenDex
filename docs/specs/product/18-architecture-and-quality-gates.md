@@ -140,6 +140,15 @@ Acceptance criteria:
 - Coverage thresholds are set just **below** the current value and only raised (ratchet), never lowered without a reason in the PR.
 - A gate that found no error in three months is checked for usefulness, not kept blindly.
 
+State of implementation: criterion 1 is met. Every gate has an entry in `docs/guides/principles/` (PRIN-012 to PRIN-067; PRIN-001 to PRIN-011 were there before, PRIN-009 is now `gated` for the pull request title). The validator `npm run principles` checks the format and the referenced paths and make targets (PRIN-012). Criterion 3 is met as a mechanism: `app/tools/check/quality/coverage/check-coverage-ratchet.mjs` fails when a coverage value drops below its threshold in `app/config/gates/coverage-thresholds.json` and hints when a value can be raised (PRIN-029). The values were set from CI runs; this text does not re-measure them.
+
+**Open (owner decisions):**
+
+- **Criterion 2 (report, then blocking after an agreed period).** Nothing records when a report started or when it turns blocking. Report-only gates today are the nightly jobs `perf` (`perf.blocking` in `app/config/gates/quality-limits.json`), `lighthouse-signed` and `image-scan`, and the scorecard; a switch is an edit of a gate file. Proposal: an optional frontmatter field `blocking_from: YYYY-MM-DD` on entries at maturity `checked`. `npm run principles` fails when a `gated` entry still carries the field, or when a `checked` entry carries a date that has already passed, so the switch cannot be forgotten. The switch PR removes the date and raises the maturity. Owner decides the length of the report period (proposal: two weeks of nightly numbers, the rule already written for `perf`) and who approves a switch.
+- **Criterion 4 (a gate without a caught error for three months is checked).** Nothing records which gate caught an error, so "no error in three months" cannot be measured. Proposal: a line `Caught: YYYY-MM-DD, PR #<n>, <what it caught>` in the Evidence section of the gate, written in the PR that fixes the failure. A quarterly routine lists every `gated` and `checked` entry without a `Caught:` line of the last three months; for each the owner keeps it with a reason in its Evidence or lowers its maturity in a PR of its own. Owner decides whether the Evidence line is the record (proposed) or the CI run history, and who reviews the list.
+
+Nothing of these two proposals is built: the validator, the check scripts, CI, the Makefile, thresholds and baselines are unchanged.
+
 ### US-QG-07 · AI agents work within the same gates · 🟨
 
 As a **developer** I want Claude (or other agents) to be bound to the same rules.

@@ -19,7 +19,7 @@ A directory with few entries and a predictable name can be read at a glance, and
 
 ## Gate
 
-`make layout` (part of `make gates`, repeated in `make ci`), which the CI job `app` in `.github/workflows/ci.yml` runs and `ci-status` requires.
+`make layout` (part of `make gates`, repeated in `make ci`), which the CI job `layout` in `.github/workflows/ci.yml` runs and `ci-status` requires.
 
 ## Evidence
 
