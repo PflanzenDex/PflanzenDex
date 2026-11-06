@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Fotos: Sendest du ein Foto nach einer ausgebliebenen Antwort noch einmal, bleibt es ein einziges Foto. Die App fragt dann nicht, ob das Foto ersetzt werden soll.",
     "Name: Die App schreibt sich jetzt überall PflanzenDéx, auch beim Anmelden, in Mails und in Benachrichtigungen.",
     "Installieren: PflanzenDéx lässt sich jetzt auf dem Startbildschirm deines Handys ablegen und öffnet sich dann ohne Browserleiste. Die App hat dafür ein eigenes Symbol: eine Pflanze im Topf in der Markenfarbe.",
     "Schlechte Verbindung: Wird eine Eingabe nach einer ausgebliebenen Antwort erneut gesendet, entsteht kein doppelter Eintrag mehr, etwa eine zweite Messung.",

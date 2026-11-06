@@ -203,6 +203,41 @@ describe("US-WAC-06 replacing needs confirmation", () => {
   });
 });
 
+describe("US-QS-03 a repeated upload after a lost answer is not a second photo", () => {
+  it("US-QS-03 the same key and the same file replay the stored answer: 201, the same photo, no photo_exists", async () => {
+    const e = await newSpecimen(subA, "Wiederholt");
+    await measure(subA, e);
+    const bytes = await gpsPhoto(400, 300);
+    const key = randomUUID();
+    // The keeper never saw the first answer, so the same upload goes out again with the same key.
+    const first = await upload(subA, e, bytes, "", "image/jpeg", key);
+    const repeat = await upload(subA, e, bytes, "", "image/jpeg", key);
+    expect(first).toMatchObject({ status: 201, body: { replaced: false } });
+    expect(repeat).toMatchObject({
+      status: 201,
+      body: { photo: first.body["photo"], replaced: false },
+    });
+    expect((await call(subA, "GET", `/specimens/${e}/measurements`)).body["last"].photo).toBe(
+      first.body["photo"],
+    );
+  });
+
+  it("US-QS-03 the same key with another file is a key conflict, never a second photo", async () => {
+    const e = await newSpecimen(subA, "Anderes");
+    await measure(subA, e);
+    const key = randomUUID();
+    const first = await upload(subA, e, await gpsPhoto(400, 300), "", "image/jpeg", key);
+    const other = await upload(subA, e, await gpsPhoto(300, 400), "", "image/jpeg", key);
+    expect(other).toMatchObject({
+      status: 409,
+      body: { error: { code: "idempotency.key_conflict" } },
+    });
+    expect((await call(subA, "GET", `/specimens/${e}/measurements`)).body["last"].photo).toBe(
+      first.body["photo"],
+    );
+  });
+});
+
 describe("US-WAC-06 aborts with a clear message", () => {
   it("no measurement on that day: 404 measurement.not_found, nothing stored", async () => {
     const e = await newSpecimen(subA, "OhneMessung");
