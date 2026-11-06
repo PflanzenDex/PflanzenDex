@@ -21,7 +21,7 @@ vi.mock("oidc-client-ts", () => ({
     events = {
       addUserSignedOut: (f: () => void) => (mgr.handler["source"] ??= []).push(f),
       removeUserSignedOut: () => undefined,
-      addSilentRenewError: (f: () => void) => (mgr.handler["erneuern"] ??= []).push(f),
+      addSilentRenewError: (f: () => void) => (mgr.handler["renew"] ??= []).push(f),
       removeSilentRenewError: () => undefined,
     };
     getUser = mgr.getUser;
@@ -58,7 +58,7 @@ beforeEach(() => {
   mgr.signinRedirect.mockClear();
   mgr.signoutRedirect.mockClear();
   mgr.handler["source"] = [];
-  mgr.handler["erneuern"] = [];
+  mgr.handler["renew"] = [];
   window.sessionStorage.clear();
   // The silent attempt has its own tests below; all others start as if it had already been made.
   window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
@@ -73,8 +73,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-ACC-01 Sitzung", () => {
-  it("ohne gespeicherte Anmeldung: abgemeldet, ohne Hinweis", async () => {
+describe("US-ACC-01 session", () => {
+  it("without a stored sign-in: signed out, without a hint", async () => {
     mgr.getUser.mockResolvedValue(null);
     const { result } = renderHook(() => useSession());
     expect(result.current.state).toEqual({ kind: "loading" });
@@ -331,7 +331,7 @@ describe("US-ACC-01 Sitzung", () => {
       hint: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
     });
     await act(() => result.current.reload());
-    act(() => mgr.handler["erneuern"]?.forEach((f) => f()));
+    act(() => mgr.handler["renew"]?.forEach((f) => f()));
     expect(result.current.state.kind).toBe("signedOut");
   });
 
@@ -424,7 +424,7 @@ describe("US-ACC-01 Sitzung", () => {
   });
 });
 
-describe("US-ACC-01 Abmelden und Anderes Konto bei einem Fehler", () => {
+describe("US-ACC-01 Abmelden and Anderes Konto on a failure", () => {
   const FAILED =
     "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
 
