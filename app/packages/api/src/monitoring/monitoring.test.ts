@@ -272,7 +272,7 @@ describe("US-MON-01 the daily job against the database", () => {
   it("US-MON-01 the stub channel sends nothing out and says so in the log", async () => {
     const lines: string[] = [];
     await new StubReminderChannel((l) => lines.push(l)).send("anna", {
-      title: "PflanzenDex",
+      title: "PflanzenDéx",
       body: "1 Sache braucht heute dich.",
       items: [item],
     });

@@ -56,7 +56,7 @@ export function AccountView(props: { account: Account; error?: string }) {
 
 /** What the app records about the use and what never leaves the account (US-QS-05, #305): every point is true today. */
 const MEASURED = [
-  "Keine Klickzählung und keine Nutzungsanalyse: PflanzenDex zählt nicht, was du antippst oder wie lange du die App nutzt, und bindet keine Werbe- oder Analysedienste ein.",
+  "Keine Klickzählung und keine Nutzungsanalyse: PflanzenDéx zählt nicht, was du antippst oder wie lange du die App nutzt, und bindet keine Werbe- oder Analysedienste ein.",
   "Bei jeder Anmeldung speichern wir, wann du zuletzt aktiv warst. Der Betreiber sieht davon nur die Zahl der aktiven Konten der letzten 30 Tage, nie deinen Zeitpunkt.",
   "Fotos zu deinen Messungen speichern wir ohne Ort- und Kameradaten (EXIF/GPS) und verkleinert; nur du kannst sie sehen.",
   "Standort, Notizen, Behandlungen und Preise deiner Pflanzen sehen Freunde nie, auch nicht bei geteilten Pflanzen.",

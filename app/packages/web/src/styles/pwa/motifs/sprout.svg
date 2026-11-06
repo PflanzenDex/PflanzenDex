@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Motif A "sprout": a seedling on a bar of soil, two leaves of unequal size. Glyph only, the colours come from the tokens. -->
+  <rect x="132" y="392" width="248" height="24" rx="12"/>
+  <rect x="248" y="262" width="16" height="136" rx="8"/>
+  <path transform="translate(248 268) rotate(-50) scale(1.1)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(264 262) rotate(38) scale(0.8)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+</svg>

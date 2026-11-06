@@ -1,7 +1,7 @@
 {
   "realm": "pflanzendex",
   "enabled": true,
-  "displayName": "PflanzenDex",
+  "displayName": "PflanzenDéx",
   "loginTheme": "pflanzendex",
   "sslRequired": "external",
   "registrationAllowed": true,
@@ -29,7 +29,7 @@
     "host": "mailpit",
     "port": "1025",
     "from": "noreply@pflanzendex.localhost",
-    "fromDisplayName": "PflanzenDex"
+    "fromDisplayName": "PflanzenDéx"
   },
   "users": [
     {
@@ -66,13 +66,13 @@
   "clients": [
     {
       "clientId": "pflanzendex-api",
-      "name": "PflanzenDex API",
+      "name": "PflanzenDéx API",
       "enabled": true,
       "bearerOnly": true
     },
     {
       "clientId": "pflanzendex-web",
-      "name": "PflanzenDex Web",
+      "name": "PflanzenDéx Web",
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,

@@ -3,6 +3,6 @@ import { pageTitle } from "./title";
 
 describe("page title (scaffold test, TE-01)", () => {
   it("uses the product name from core", () => {
-    expect(pageTitle()).toBe("PflanzenDex");
+    expect(pageTitle()).toBe("PflanzenDéx");
   });
 });

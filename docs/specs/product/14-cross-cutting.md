@@ -67,7 +67,7 @@ Acceptance criteria:
 
 State of implementation: the collector card (US-POK-01) and the suggestion card (US-ENT-01) link the Wikipedia article with "Quelle: Wikipedia (CC BY-SA)" or "Bild und Text: Wikipedia (CC BY-SA)"; when text or image are shown without a known article link, source and license are still named as text ("…, Link unbekannt", P-08); a card without Wikipedia content shows no attribution. User images (measurement photos, US-WAC-06) are served only to their owner and are not passed on (the photo switch of US-SOZ-04 does not act yet). **Open:** the label of partner links (FR-EQU-05; equipment does not exist yet) and the license of each image (a Wikimedia Commons image can carry a license other than CC BY-SA; the catalog does not store it yet).
 
-### US-QS-07 · Usable on mobile · ⬜ new
+### US-QS-07 · Usable on mobile · 🟨 new
 
 As a **plant keeper** I want to operate the app on the phone next to the plant.
 
