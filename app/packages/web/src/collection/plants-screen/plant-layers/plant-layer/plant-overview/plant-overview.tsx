@@ -13,6 +13,7 @@ import {
 import { UNKNOWN } from "../../../../specimens/model/text";
 import { tileState } from "../../../rows/plant-tile/plant-tile";
 import table from "../../plant-layers.de.json";
+import { NotesButton } from "../plant-notes/plant-notes";
 
 const t = texts(table);
 
@@ -34,7 +35,8 @@ export function MeasureButton(props: { card: SpecimenCard; onMeasure: () => void
 /**
  * "Überblick" (US-QS-23): fits the layer without scroll on a phone. The latest photo as a thumbnail beside the last
  * measurement, the growth trend of the own history (a slot of `care`, P-08), the state and the open treatment; "Gießen"
- * (a slot of `monitoring`) and "Behandeln" are outline buttons, the filled "Messen" sits in the layer's primary slot.
+ * (a slot of `monitoring`), "Behandeln" and "Notizen" are outline buttons, the filled "Messen" sits in the layer's
+ * primary slot.
  */
 export function PlantOverview(props: {
   card: SpecimenCard;
@@ -74,9 +76,10 @@ export function PlantOverview(props: {
         </Quiet>
       </div>
       <Provenance value={card.provenance} />
-      {/* Two equal buttons side by side; when both labels do not fit (200 % text, NFR-13) each takes its own row. A message
-          of "Gießen" always takes a row of its own. */}
-      <div className="flex flex-wrap gap-2 [&>button]:grow [&>button]:basis-2/5 [&>p]:basis-full">
+      {/* Three buttons side by side: the row costs no height at 360 px, where the overview has about 10 px left (US-QS-23).
+          When the labels do not fit (200 % text, NFR-13) a button moves to the next row. A message of "Gießen" always takes
+          a row of its own. The private notes open as their own layer (US-BES-18). */}
+      <div className="flex flex-wrap gap-2 [&>button]:grow [&>button]:basis-1/4 [&>p]:basis-full">
         {props.water}
         <Button
           type="button"
@@ -86,6 +89,7 @@ export function PlantOverview(props: {
         >
           {t("overview.treat")}
         </Button>
+        <NotesButton card={card} />
       </div>
     </div>
   );

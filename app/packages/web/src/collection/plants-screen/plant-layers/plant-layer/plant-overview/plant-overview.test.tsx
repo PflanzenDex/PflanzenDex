@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MeasureButton, PlantOverview } from "./plant-overview";
 
@@ -27,17 +28,24 @@ afterEach(cleanup);
 
 describe("PlantOverview (NFR-13, US-QS-23)", () => {
   const overview = (water?: React.ReactNode) =>
-    render(<PlantOverview card={CARD} access={ACCESS} onTreat={vi.fn()} water={water} />);
+    render(
+      <MemoryRouter>
+        <PlantOverview card={CARD} access={ACCESS} onTreat={vi.fn()} water={water} />
+      </MemoryRouter>,
+    );
 
-  it("NFR-13 the Gießen and Behandeln row may wrap, so at 200 % text the buttons stay inside their column", () => {
+  it("NFR-13 the row of Gießen, Behandeln and Notizen may wrap, so at 200 % text the buttons stay inside their column", () => {
     overview(<button type="button">Gießen</button>);
     const treat = screen.getByRole("button", { name: "Behandeln: Birkenfeige" });
     const classes = (treat.parentElement as HTMLElement).className.split(" ");
     expect(classes).toEqual(
-      expect.arrayContaining(["flex", "flex-wrap", "[&>button]:grow", "[&>button]:basis-2/5"]),
+      expect.arrayContaining(["flex", "flex-wrap", "[&>button]:grow", "[&>button]:basis-1/4"]),
     );
     expect(classes).not.toContain("grid-cols-2");
     expect(screen.getByRole("button", { name: "Gießen" }).parentElement).toBe(treat.parentElement);
+    expect(screen.getByRole("button", { name: "Notizen: Birkenfeige" }).parentElement).toBe(
+      treat.parentElement,
+    );
   });
 
   it("NFR-13 the column does not grow with its widest row, and the measurement may move below the photo", () => {

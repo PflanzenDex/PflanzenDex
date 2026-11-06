@@ -1,12 +1,15 @@
 import type { SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
 import type { MarkerAssignment, LocationAssignment } from "./types";
+import type { NotesStore, SpecimenNotes } from "../notes/types";
 
 export { testSpecies, SpeciesStub } from "./test-helpers.species";
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. Known locations replace the foreign key. */
-export class InMemorySpecimens implements SpecimenStore {
+export class InMemorySpecimens implements SpecimenStore, NotesStore {
   readonly rows: (SpecimenRow & { userId: string })[] = [];
   writes = 0;
+  /** Private notes (US-BES-18) sit beside the rows, as the table keeps them apart from every other read. */
+  private readonly notesById = new Map<string, string | null>();
 
   constructor(
     private readonly locations: Readonly<Record<string, readonly string[]>> = {},
@@ -26,6 +29,22 @@ export class InMemorySpecimens implements SpecimenStore {
   async find(userId: string, id: string): Promise<SpecimenRow | null> {
     return (await this.list(userId)).find((z) => z.id === id) ?? null;
   }
+
+  async findNotes(userId: string, id: string): Promise<SpecimenNotes | null> {
+    const own = this.rows.some((r) => r.userId === userId && r.id === id);
+    return own ? { id, notes: this.notesOf(id) } : null;
+  }
+
+  async setNotes(userId: string, id: string, notes: string | null) {
+    const z = this.rows.find((r) => r.userId === userId && r.id === id);
+    if (!z) return "not_found" as const;
+    if (z.status === "archived") return "archived" as const;
+    this.writes += 1;
+    this.notesById.set(id, notes);
+    return { id, notes };
+  }
+
+  notesOf = (id: string): string | null => this.notesById.get(id) ?? null;
 
   private markerTaken(userId: string, speciesId: string, marker: string, except: string[] = []) {
     return this.rows.some(
@@ -85,8 +104,9 @@ export class InMemorySpecimens implements SpecimenStore {
     if (unknown) return unknown;
     for (const a of assignments)
       this.replace(userId, a.specimenId, { name: a.name, marker: a.marker });
+    const { notes = null, ...values } = w;
     const row: SpecimenRow = {
-      ...w,
+      ...values,
       createdAt: "2026-10-01T10:00:00Z",
       id: `00000000-0000-4000-8000-${String(this.rows.length + 1).padStart(12, "0")}`,
       status: w.status ?? "plant",
@@ -94,6 +114,7 @@ export class InMemorySpecimens implements SpecimenStore {
       archivedReason: null,
     };
     this.rows.push({ ...row, userId });
+    this.notesById.set(row.id, notes);
     return row;
   }
 

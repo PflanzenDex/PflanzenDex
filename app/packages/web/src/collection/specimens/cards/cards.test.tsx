@@ -2,6 +2,7 @@
 import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlantLocation } from "../../plants-screen/plant-layers/plant-layer/plant-location/plant-location";
 import { PlantOverview } from "../../plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
@@ -35,14 +36,16 @@ const ACCESS = { api: "http://api", token: async () => "tok" };
 /** The facts of a card as the plant layer shows them: the tabs "Überblick" and "Standort" (US-QS-23). */
 function CardList({ cards }: { cards: SpecimenCard[] }) {
   return (
-    <ul>
-      {cards.map((c) => (
-        <li key={c.id}>
-          <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
-          <PlantLocation card={c} />
-        </li>
-      ))}
-    </ul>
+    <MemoryRouter>
+      <ul>
+        {cards.map((c) => (
+          <li key={c.id}>
+            <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
+            <PlantLocation card={c} />
+          </li>
+        ))}
+      </ul>
+    </MemoryRouter>
   );
 }
 const html = (cards: SpecimenCard[]) => renderToString(<CardList cards={cards} />);
