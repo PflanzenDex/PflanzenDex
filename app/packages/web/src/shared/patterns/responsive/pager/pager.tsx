@@ -153,14 +153,16 @@ export function Pager<T>({
   const first = (page - 1) * pageSize;
   const missing = usePagingMore(paging, items.length, first + pageSize, count);
   const note = useRetryFocus(paging, missing, list);
-  // The address follows the page (see pageAfterResize, issue 1029). Passive, not a layout effect: the router subscribes to
-  // the address in its own layout effect, after the children's, so a navigation made earlier would be lost on mount.
+  // The address follows the page (see pageAfterResize, issues 1029 and 1372). Passive, not a layout effect: the router
+  // subscribes to the address in its own layout effect, after the children's, so a navigation made earlier would be lost
+  // on mount. `measuredBefore` keeps the last measured size, the one the address is counted in; before the first
+  // measurement that is the starting size.
   const measuredBefore = React.useRef<number | null>(null);
   React.useEffect(() => {
-    const before = measuredBefore.current;
-    measuredBefore.current = measured;
     if (fit && measured === null) return; // no layout yet: the starting value must not rewrite the address
-    const target = pageAfterResize({ before, measured, raw, count, page });
+    const before = measuredBefore.current;
+    if (measured !== null) measuredBefore.current = measured;
+    const target = pageAfterResize({ before, starting: startingSize, measured, raw, count, page });
     if (params.has(param) && raw !== target) go(target, true);
   });
 

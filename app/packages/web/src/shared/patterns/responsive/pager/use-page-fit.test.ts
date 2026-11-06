@@ -35,16 +35,52 @@ describe("US-QS-19 page size fills the free height of the region", () => {
 
   it("US-QS-19 a changed page size keeps the first entry of the page before on screen", () => {
     // Page 2 of 3-entry pages starts with entry 4 (index 3); at 5 entries per page that entry is on page 1.
-    expect(pageAfterResize({ before: 3, measured: 5, raw: 2, count: 7, page: 2 })).toBe(1);
+    expect(
+      pageAfterResize({ before: 3, starting: 3, measured: 5, raw: 2, count: 7, page: 2 }),
+    ).toBe(1);
   });
 
   it("US-QS-19 a changed page size never leaves the address past the end", () => {
     // Page 3 of 3-entry pages starts with entry 7 (index 6); at 6 entries per page it is on page 2 of 2.
-    expect(pageAfterResize({ before: 3, measured: 6, raw: 3, count: 7, page: 3 })).toBe(2);
+    expect(
+      pageAfterResize({ before: 3, starting: 3, measured: 6, raw: 3, count: 7, page: 3 }),
+    ).toBe(2);
   });
 
   it("US-QS-19 without a change of the size the address keeps its nearest valid page", () => {
-    expect(pageAfterResize({ before: null, measured: 5, raw: 9, count: 7, page: 2 })).toBe(2);
-    expect(pageAfterResize({ before: 3, measured: 3, raw: 2, count: 7, page: 2 })).toBe(2);
+    expect(
+      pageAfterResize({ before: null, starting: 5, measured: 5, raw: 9, count: 7, page: 2 }),
+    ).toBe(2);
+    expect(
+      pageAfterResize({ before: 3, starting: 3, measured: 3, raw: 2, count: 7, page: 2 }),
+    ).toBe(2);
+  });
+
+  // A direct link to a far page is read with the starting size, before any measurement (issue 1372). Page 19 of 6-entry
+  // pages starts with entry 109 (index 108) of 111 plants; at 3 per page that entry is on page 37.
+  it("FR-BES-23 a first measurement that shrinks the page size keeps the first entry of the address on screen", () => {
+    expect(
+      pageAfterResize({ before: null, starting: 6, measured: 3, raw: 19, count: 111, page: 19 }),
+    ).toBe(37);
+  });
+
+  it("FR-BES-23 a first measurement that grows the page size keeps the first entry of the address on screen", () => {
+    // Page 19 of 3-entry pages starts with index 54; at 6 entries per page that index is on page 10.
+    expect(
+      pageAfterResize({ before: null, starting: 3, measured: 6, raw: 19, count: 111, page: 19 }),
+    ).toBe(10);
+  });
+
+  it("FR-BES-23 a first measurement keeps a link past the end of the list on the nearest valid page, as before", () => {
+    // Page 50 is past the end at the starting size (19 pages of 6), so it keeps the last page of the measured size.
+    expect(
+      pageAfterResize({ before: null, starting: 6, measured: 3, raw: 50, count: 111, page: 37 }),
+    ).toBe(37);
+  });
+
+  it("FR-BES-23 a first measurement equal to the starting size changes nothing", () => {
+    expect(
+      pageAfterResize({ before: null, starting: 6, measured: 6, raw: 19, count: 111, page: 19 }),
+    ).toBe(19);
   });
 });

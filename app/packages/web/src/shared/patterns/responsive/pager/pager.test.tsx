@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, useLocation, useNavigationType } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Pager } from "./pager";
 
@@ -12,6 +12,18 @@ const items = Array.from({ length: 7 }, (_, i) => `Pflanze ${i + 1}`);
 function Where() {
   const { search } = useLocation();
   return <span data-testid="address">{search}</span>;
+}
+
+/** How the address last changed and the state it keeps (the focus rule `keepFocus`, issue 1372). */
+function History() {
+  const kind = useNavigationType();
+  const { state } = useLocation();
+  return (
+    <>
+      <span data-testid="navigation">{kind}</span>
+      <span data-testid="state">{JSON.stringify(state)}</span>
+    </>
+  );
 }
 
 function Example({ at = "/", resetKey = "a" }: { at?: string; resetKey?: string }) {
@@ -172,6 +184,41 @@ function FitExample({ at = "/" }: { at?: string }) {
   );
 }
 
+/** Thirty plants on the server (FR-BES-23); `loaded` are the ones on the client, the starting size is six (issue 1372). */
+const far = Array.from({ length: 30 }, (_, i) => `Pflanze ${i + 1}`);
+
+function FarExample({
+  at,
+  loaded = far,
+  onMore = () => {},
+}: {
+  at: string;
+  loaded?: string[];
+  onMore?: () => void;
+}) {
+  return (
+    <MemoryRouter initialEntries={[{ pathname: "/", search: at, state: { keepFocus: true } }]}>
+      <Pager
+        items={loaded}
+        pageSize={6}
+        fit
+        label="Pflanzen"
+        renderItem={(t) => t}
+        paging={{
+          total: far.length,
+          loading: false,
+          onMore,
+          onRetry: () => {},
+          loadingText: "Pflanzen werden geladen …",
+          retryText: "Erneut versuchen",
+        }}
+      />
+      <Where />
+      <History />
+    </MemoryRouter>
+  );
+}
+
 describe("US-QS-19 page size fills the free height of the region", () => {
   beforeEach(() => {
     box = { region: 0, row: 0 };
@@ -225,8 +272,10 @@ describe("US-QS-19 page size fills the free height of the region", () => {
   });
 
   it("US-QS-19 the pager stays below the list region at the bottom of its frame, also on the last page", () => {
+    // Page 3 of 3-entry pages starts with entry 7, which is on page 2 of 2 at 5 per page (entries 6 and 7). A link to page 2
+    // is different now: its first entry (4) is on page 1 at 5 per page, so a first load shows page 1 (issue 1372).
     resizeTo(532, 100);
-    render(<FitExample at="/?page=2" />);
+    render(<FitExample at="/?page=3" />);
     const list = screen.getByRole("list", { name: "Pflanzen" });
     const frame = list.parentElement as HTMLElement;
     const bar = screen.getByRole("status");
@@ -252,6 +301,39 @@ describe("US-QS-19 page size fills the free height of the region", () => {
       "Pflanze 5",
     ]);
     expect(screen.getByTestId("address").textContent).toBe("");
+  });
+
+  it("FR-BES-23 a direct link to a far page keeps its first plant on screen when the first measurement shrinks the page, and replaces the address", () => {
+    // Page 5 of 6-plant pages starts with plant 25 (index 24); at 3 per page that plant is on page 9 of 10 (issue 1372).
+    resizeTo(316, 100);
+    render(<FarExample at="?page=5" />);
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Pflanze 25",
+      "Pflanze 26",
+      "Pflanze 27",
+    ]);
+    expect(screen.getByRole("status").textContent).toBe("Seite 9 von 10");
+    expect(screen.getByTestId("address").textContent).toBe("?page=9");
+    // The link's entry is replaced, not followed by a new one, and the state of the address (keepFocus) is kept.
+    expect(screen.getByTestId("navigation").textContent).toBe("REPLACE");
+    expect(screen.getByTestId("state").textContent).toBe('{"keepFocus":true}');
+  });
+
+  it("FR-BES-23 a direct link to a far page of a server list keeps its plant on screen once that plant is loaded", () => {
+    resizeTo(316, 100);
+    const onMore = vi.fn();
+    const view = render(<FarExample at="?page=5" loaded={far.slice(0, 12)} onMore={onMore} />);
+    // Plant 25 is not loaded yet: no row to measure, so the address stays and the next server page is asked for.
+    expect(onMore).toHaveBeenCalled();
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+    expect(screen.getByTestId("address").textContent).toBe("?page=5");
+    view.rerender(<FarExample at="?page=5" loaded={far} onMore={onMore} />);
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Pflanze 25",
+      "Pflanze 26",
+      "Pflanze 27",
+    ]);
+    expect(screen.getByTestId("address").textContent).toBe("?page=9");
   });
 
   it("US-QS-19 a region never shrinks below one row: at a large text size the frame scrolls, the pager does not move", () => {

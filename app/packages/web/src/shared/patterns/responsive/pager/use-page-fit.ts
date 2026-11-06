@@ -30,23 +30,33 @@ export function fitPageSize({
 /**
  * The page the address names after a page size change from the layout (US-QS-19, issue 1029): the page that holds the
  * first entry of the page before stays on screen when it can. Without a change it is `page`, the nearest valid page.
+ * Before the first measurement the page before is the starting size the address was read with (issue 1372): a direct
+ * link to a far page keeps its first entry when the first measurement changes the size. A link past the end at the
+ * starting size keeps `page`, as it did before.
  */
 export function pageAfterResize({
   before,
+  starting,
   measured,
   raw,
   count,
   page,
 }: {
+  /** The size the address was counted in at the last measurement; `null` before the first one. */
   before: number | null;
+  /** The size the address was read with before any measurement (the caller's starting value). */
+  starting: number;
   measured: number | null;
   raw: number;
   count: number;
   page: number;
 }): number {
-  if (before === null || measured === null || before === measured) return page;
-  const pages = Math.max(1, Math.ceil(count / before));
-  return Math.floor(((Math.min(raw, pages) - 1) * before) / measured) + 1;
+  if (measured === null) return page;
+  const was = before ?? starting;
+  if (was === measured) return page;
+  const pages = Math.max(1, Math.ceil(count / was));
+  if (before === null && raw > pages) return page;
+  return Math.floor(((Math.min(raw, pages) - 1) * was) / measured) + 1;
 }
 
 /**
