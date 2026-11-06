@@ -4,12 +4,16 @@
 //   2. the newest `ci-status` run on the PR head commit is green (older, cancelled runs do not count)
 //   3. the PR names a story or requirement (US-/FR-/DM-/NFR-) that exists in docs/specs/product (the spec is written)
 //   4. the PR changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, this script): a human decides
-import { execFileSync } from "node:child_process";
+//   5. the PR grows no baseline (app/config/gates/baselines/, US-QG-07): the merge base and the head are compared; a
+//      baseline that only shrinks merges, and a version that cannot be read refuses the PR
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { baselineChanges, baselineProblems } from "../../../.claude/hooks/baseline-growth.mjs";
 import { isGateFile } from "../../../.claude/hooks/rules.mjs";
 
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const ID = /\b(?:US|FR|DM)-[A-Z]+-\d+\b|\bNFR-\d+\b/g;
 
 /** Story and requirement IDs named in a text. */
@@ -48,7 +52,7 @@ export function latestCheck(rollup, name) {
 }
 
 /** Problems that stop an agent from merging; empty means allowed. `pr` is the JSON of `gh pr view`. */
-export function problems(pr, known) {
+export function problems(pr, known, changes = []) {
   const out = [];
   if (pr.state !== "OPEN") out.push(`the PR is ${pr.state}, not open`);
   if (pr.isDraft) out.push("the PR is a draft");
@@ -68,20 +72,84 @@ export function problems(pr, known) {
   const gates = (pr.files ?? []).map((f) => f.path).filter(isGateFile);
   if (gates.length)
     out.push(`it changes gate files, which a human must merge: ${gates.join(", ")}`);
+  out.push(...baselineProblems(changes));
   return out;
 }
 
 const gh = (...args) => execFileSync("gh", args, { encoding: "utf8" });
+
+/** The merge base of the PR's base and head commits (the diff the PR shows). */
+const mergeBaseOf = (pr) =>
+  gh(
+    "api",
+    `repos/{owner}/{repo}/compare/${pr.baseRefOid}...${pr.headRefOid}`,
+    "--jq",
+    ".merge_base_commit.sha",
+  ).trim();
+
+/** A file's text at a commit on GitHub; null when the file is absent there (HTTP 404); other failures throw. */
+function readAt(sha, file) {
+  const result = spawnSync(
+    "gh",
+    [
+      "api",
+      "-H",
+      "Accept: application/vnd.github.raw",
+      `repos/{owner}/{repo}/contents/${file}?ref=${sha}`,
+    ],
+    { encoding: "utf8" },
+  );
+  if (result.status === 0) return result.stdout;
+  if (/HTTP 404/.test(result.stderr ?? "")) return null;
+  throw new Error(
+    (result.stderr || result.error?.message || `gh exited with ${result.status}`)
+      .trim()
+      .split("\n")[0],
+  );
+}
+
+/**
+ * Whether the code at `sha` still names the file's name outside the baseline folder, that is a gate that reads it.
+ * An unclear answer (for example a commit this clone does not have) counts as named, so the deletion is growth.
+ */
+function namedAt(sha, file) {
+  const name = file.split("/").pop();
+  const result = spawnSync(
+    "git",
+    [
+      "grep",
+      "-l",
+      "-F",
+      "-e",
+      name,
+      sha,
+      "--",
+      "app",
+      "tools",
+      ".claude",
+      ".github",
+      "Makefile",
+      ":(exclude)app/config/gates/baselines",
+    ],
+    { cwd: REPO_ROOT, encoding: "utf8" },
+  );
+  return result.status !== 1;
+}
 
 function main(number) {
   if (!/^\d+$/.test(number ?? "")) {
     console.error("usage: make merge PR=<number>");
     return 2;
   }
-  const fields = "state,isDraft,baseRefName,title,body,files,statusCheckRollup";
+  const fields =
+    "state,isDraft,baseRefName,baseRefOid,headRefOid,title,body,files,statusCheckRollup";
   const pr = JSON.parse(gh("pr", "view", number, "--json", fields));
-  const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-  const found = problems(pr, specIds(join(root, "docs", "specs", "product")));
+  const changes = baselineChanges(pr, {
+    mergeBase: () => mergeBaseOf(pr),
+    readAt,
+    namedAtHead: (file) => namedAt(pr.headRefOid, file),
+  });
+  const found = problems(pr, specIds(join(REPO_ROOT, "docs", "specs", "product")), changes);
   if (found.length) {
     console.error(
       `merge-pr: PR #${number} is not merged:\n${found.map((p) => `  - ${p}`).join("\n")}`,
