@@ -866,7 +866,7 @@ In the `scripts` block add the line after `"boundaries"`:
     "layout": "node scripts/check-layout.mjs",
 ```
 
-and in the `gates` script insert `npm run layout &&` directly after `npm run boundaries &&`.
+and in the `gates` script insert `npm run layout &&` directly before `npm run boundaries &&` (QG-C4 runs before QG-C5, as in `18`).
 
 - [ ] **Step 5: Add the make targets** to `Makefile`
 

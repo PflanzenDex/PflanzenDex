@@ -1,6 +1,6 @@
 ---
 name: spec-to-tests
-description: Use when starting a story or requirement from Docs/PRODUCT-SPECS. Turns its Given/When/Then acceptance criteria into failing tests named with the story ID, before any implementation (P-06).
+description: Use when starting a story or requirement from docs/specs/product/. Turns its Given/When/Then acceptance criteria into failing tests named with the story ID, before any implementation (P-06).
 ---
 
 # Spec to tests

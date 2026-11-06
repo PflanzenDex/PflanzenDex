@@ -19,7 +19,7 @@ IDs are never renumbered.
 - **Symptom:** A plant captured late in the evening shows the next or previous day as capture or measurement date.
 - **Cause:** The prototype formatted dates with `toISOString().slice(0, 10)`, which converts to UTC before cutting the string.
 - **Fix:** Use the local date in the time zone of the user profile for every calendar date (NFR-08); compute phases and reminders in that zone.
-- **Can it become a gate?** Yes: a lint rule forbidding `toISOString().slice(0, 10)` for calendar dates plus a time zone test (QG-D4). Not implemented yet.
+- **Can it become a gate?** Yes, and part of it exists: the ESLint rule `no-restricted-syntax` in `app/eslint.config.js` (the constant `noUtcDateSlice`) forbids `toISOString().slice(0, 10)`, and the same call with `substring` or `substr`; `make gates` runs ESLint. It does not catch other UTC cuts, such as `slice(0, 7)` for months. Time zone tests: `app/packages/core/src/kernel/input/date.test.ts` (NFR-08, QG-D4) and the New York case in `app/packages/api/src/collection/specimens/specimens.test.ts` (FR-BES-04).
 - **Source:** Defect B-01 of the prototype; `docs/specs/product/14-cross-cutting.md` (NFR-08), `docs/specs/product/18-architecture-and-quality-gates.md` (QG-D4).
 
 ## PF-002 Duplicate spec file numbers from parallel sessions
