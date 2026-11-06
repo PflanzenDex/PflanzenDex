@@ -19,7 +19,7 @@ Median of 3 mobile runs per metric against `lighthouse` in `app/config/gates/qua
 
 ## Gate
 
-`make lighthouse` in the CI job `lighthouse` of `.github/workflows/ci.yml`, which runs for pull requests into `dev` and `main` when the app changes; `ci-status` requires the job, and it counts as green when the job is skipped.
+`make lighthouse` in the CI job `lighthouse` of `.github/workflows/ci.yml`, which runs for pull requests into `dev` and `main` when the UI changes (issue 1608); `ci-status` requires the job, and it counts as green when the job is skipped.
 
 ## Evidence
 

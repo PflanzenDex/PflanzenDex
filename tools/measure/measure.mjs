@@ -1,6 +1,6 @@
 // Measures screens of the one-screen register at the window sizes of US-QS-15 (US-QG-01, issue 1199): for each screen
 // and size the page ratio, the largest inner scroll region, the overflow in pixels as the gate counts it, sideways
-// overflow and the painted width (for the 1920 px cap). A local helper before pushing; the CI job `one-screen` stays
+// overflow and the painted width (for the 1920 px cap). A local helper before pushing; the CI job `results` (its one-screen part) stays
 // the reference.
 //
 // Usage: node tools/measure/measure.mjs [options] [id[@WxH] ...]

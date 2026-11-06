@@ -19,7 +19,7 @@ Per registered screen at 390x844 and 1920x1080: axe violations of WCAG 2.2 A and
 
 ## Gate
 
-`make a11y-routes` in the CI job `a11y-routes` of `.github/workflows/ci.yml`, which runs for pull requests into `dev` and `main` when the one-screen paths change; `ci-status` requires the job, and a skipped run counts as green.
+`make a11y-routes` in the shard jobs `a11y-routes-shard` of `.github/workflows/ci.yml`, merged by the job `results`, which runs for pull requests into `dev` and `main` when the one-screen paths change; `ci-status` requires the job, and a skipped run counts as green.
 
 ## Evidence
 

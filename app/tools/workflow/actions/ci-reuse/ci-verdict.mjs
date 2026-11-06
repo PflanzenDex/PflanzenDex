@@ -15,9 +15,14 @@ export const PATHS = {
   oneScreen:
     /^(app\/packages\/(web|e2e)\/|app\/packages\/api\/perf\/(demo-seed|catalog-seed)\/|app\/config\/gates\/|Makefile$|\.github\/)/,
   docs: /^(docs\/|\.agents\/|\.claude\/skills\/|\.markdownlint-cli2\.jsonc$)|\.md$/,
+  // The `ui` output (issue 1608): an app path that is neither workflow or dev tooling, a hook, documentation nor Markdown.
+  // A changed file counts when it matches this (a negative lookahead, as the PCRE grep of the `changes` job reads it).
+  ui: /^(?!(app\/tools\/workflow\/|app\/tools\/dev\/|\.claude\/hooks\/|docs\/|\.agents\/|\.claude\/skills\/)|.*\.md$)(app\/|Makefile$|\.github\/|\.nvmrc$|\.claude\/hooks\/)/,
 };
 
 // The jobs of ci.yml that this reading judges, in workflow order. `ci-status` aggregates them: it is shown, not judged.
+// `app-coverage`, `one-screen` and `a11y-routes` are the jobs that `results` replaced (issue 1608); they stay for a head whose
+// ci.yml still defines them. A job that the head's workflow does not define is never required.
 export const JOBS = [
   "changes",
   "layout",
@@ -27,26 +32,20 @@ export const JOBS = [
   "app-gates",
   "app-tests",
   "app-tests-web",
-  "app-coverage",
+  "results",
   "app-ui",
   "ds-snapshots",
   "lighthouse",
-  "one-screen",
-  "a11y-routes",
   "docs-gates",
   "audit",
   "e2e",
+  "app-coverage",
+  "one-screen",
+  "a11y-routes",
 ];
 const CI_NAMES = new Set([...JOBS, "ci-status"]);
-const APP_JOBS = [
-  "app-gates",
-  "app-tests",
-  "app-tests-web",
-  "app-coverage",
-  "app-ui",
-  "ds-snapshots",
-  "lighthouse",
-];
+const APP_JOBS = ["app-gates", "app-tests", "app-tests-web", "results", "app-coverage"];
+const UI_APP_JOBS = ["app-ui", "ds-snapshots", "lighthouse"];
 const UI_JOBS = ["one-screen", "a11y-routes"];
 const MAIN_ONLY_JOBS = ["audit", "e2e"];
 export const NOT_IN_WORKFLOW = "not in workflow";
@@ -71,6 +70,7 @@ export function requiredJobs({ files, base, draft, defined }) {
   const hit = (re) => all || files.some((f) => re.test(f));
   const jobs = ["changes", "layout", "dependency-review", "metadata"];
   if (hit(PATHS.app)) jobs.push(...APP_JOBS);
+  if (hit(PATHS.ui)) jobs.push(...UI_APP_JOBS);
   if (hit(PATHS.oneScreen)) jobs.push(...UI_JOBS);
   if (hit(PATHS.docs)) jobs.push("docs-gates");
   if (base === "main") jobs.push(...MAIN_ONLY_JOBS);

@@ -19,7 +19,7 @@ Per registered view and layer at 360x640, 390x844, 768x1024, 1024x768 and 1920x1
 
 ## Gate
 
-`make one-screen` in the CI job `one-screen` of `.github/workflows/ci.yml`, which runs for pull requests into `dev` and `main` when the UI, the e2e package, the demo seed or the gate files change; `ci-status` requires the job, and a skipped run counts as green.
+`make one-screen` in the shard jobs `one-screen-shard` of `.github/workflows/ci.yml`, merged by the job `results`, which runs for pull requests into `dev` and `main` when the UI, the e2e package, the demo seed or the gate files change; `ci-status` requires the job, and a skipped run counts as green.
 
 ## Evidence
 

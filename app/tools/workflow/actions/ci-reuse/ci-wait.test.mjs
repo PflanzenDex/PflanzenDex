@@ -2,6 +2,7 @@
 // (ci-wait.fixtures.json: pull request, changed files, check runs, workflow runs, and the jobs of the head's ci.yml, trimmed
 // to the fields that the reading uses; read 2026-11-06). A state "at a time" is made from those final records.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { evidenceOf } from "./ci-reuse.mjs";
@@ -112,23 +113,69 @@ const waitOpts = (c, read, timeoutMs = 600_000) => ({
 
 // US-QG-01 (issue 1485): the matrix shards of one-screen and a11y-routes are jobs of their own in ci.yml. Their check runs are
 // named "<gate> shard <n>", so the verdict cannot read them by job name; their result reaches the verdict through the
-// aggregate job of the gate (`one-screen`, `a11y-routes`), which needs every shard and fails unless all of them passed.
+// job `results` (issue 1608), which needs every shard and fails unless all of them passed.
 const MATRIX_SHARDS = ["a11y-routes-shard", "one-screen-shard"];
+// Jobs that `results` replaced (issue 1608): the verdict keeps them, so a head whose ci.yml still defines them is judged.
+const RETIRED_JOBS = ["app-coverage", "one-screen", "a11y-routes"];
 
-test("US-DEV-13: the judged jobs are the jobs of ci.yml, ci-status and the matrix shards excluded", () => {
+test("US-DEV-13 (issue 1608): every job of ci.yml is judged, except ci-status and the matrix shards", () => {
   const defined = jobsDefinedIn(readFileSync(CI_YML, "utf8"));
-  assert.deepEqual([...defined].sort(), [...JOBS, "ci-status", ...MATRIX_SHARDS].sort());
+  const judged = [...defined].filter((j) => j !== "ci-status" && !MATRIX_SHARDS.includes(j));
+  assert.deepEqual(
+    judged.filter((j) => !JOBS.includes(j)),
+    [],
+    "a job of ci.yml that is not judged",
+  );
+  assert.deepEqual(
+    JOBS.filter((j) => !RETIRED_JOBS.includes(j) && !defined.has(j)),
+    [],
+    "a judged job that ci.yml does not define",
+  );
 });
 
-test("US-QG-01: every matrix shard is needed by its aggregate job, and that job is judged", () => {
+test("US-QG-01 (issue 1608): every matrix shard is needed by the results job, and that job is judged", () => {
   const text = readFileSync(CI_YML, "utf8");
+  const block = text.slice(text.indexOf("\n  results:\n"));
+  const needs = block.split("\n").find((line) => line.startsWith("    needs:"));
   for (const shard of MATRIX_SHARDS) {
-    const aggregate = shard.replace(/-shard$/, "");
-    assert.ok(JOBS.includes(aggregate), aggregate);
-    const block = text.slice(text.indexOf(`\n  ${aggregate}:\n`));
-    const needs = block.split("\n").find((line) => line.startsWith("    needs:"));
-    assert.ok(needs?.includes(shard), `${aggregate} needs ${shard}: ${needs}`);
+    assert.ok(needs?.includes(shard), `results needs ${shard}: ${needs}`);
   }
+  assert.ok(JOBS.includes("results"));
+});
+
+test("US-QG-02 (issue 1608): the ui output is the app paths without workflow and dev tooling, hooks, docs and Markdown", () => {
+  assert.ok(PATHS.ui.test("app/packages/web/src/x.tsx"));
+  assert.ok(PATHS.ui.test("app/tools/check/x.mjs"), "a check script is an app path");
+  assert.ok(PATHS.ui.test("Makefile"));
+  assert.ok(PATHS.ui.test(".github/workflows/ci.yml"));
+  assert.ok(!PATHS.ui.test("app/tools/workflow/x.mjs"));
+  assert.ok(!PATHS.ui.test("app/tools/dev/x.mjs"));
+  assert.ok(!PATHS.ui.test(".claude/hooks/rules.mjs"));
+  assert.ok(!PATHS.ui.test("docs/guides/x.md"));
+  assert.ok(!PATHS.ui.test("app/packages/web/src/x.md"));
+  assert.ok(!PATHS.ui.test(".agents/skills/x/SKILL.md"));
+  assert.ok(!PATHS.ui.test("README.md"));
+});
+
+test("US-QG-02 (issue 1608): a workflow-only change runs the app jobs and the results job, but no UI gate", () => {
+  const req = requiredJobs({
+    files: ["app/tools/workflow/actions/ci-reuse/ci-verdict.mjs"],
+    base: "dev",
+    draft: false,
+    defined: new Set(JOBS),
+  });
+  for (const job of ["app-gates", "app-tests", "app-tests-web", "results"])
+    assert.ok(req.has(job), job);
+  for (const job of ["app-ui", "ds-snapshots", "lighthouse", "one-screen", "a11y-routes"]) {
+    assert.ok(!req.has(job), job);
+  }
+  const docs = requiredJobs({
+    files: ["docs/x.md"],
+    base: "dev",
+    draft: false,
+    defined: new Set(JOBS),
+  });
+  assert.ok(!docs.has("results") && !docs.has("app-tests"));
 });
 
 test("US-DEV-13: the path filters are the ones that the changes job of ci.yml uses, with the same text", () => {
@@ -710,4 +757,97 @@ test("US-DEV-13 (issue 1608): the jobs come from the ci.yml of the merge commit,
   const snap = await readSnapshot(client, 1476);
   assert.deepEqual([...snap.defined], ["changes"]);
   assert.deepEqual(refs, [merge]);
+});
+
+// US-QG-02 (issue 1608): the job `results` fails for each part that failed, and for nothing else. Its last step is run here
+// with the results that ci.yml gives it as environment (the needs of the job and the outcomes of its steps).
+const RESULTS_LAST_STEP = "Every part that ran passed (US-QG-01, US-QG-02)";
+const ALL_PASSED = {
+  APP_TESTS: "success",
+  APP_TESTS_WEB: "success",
+  COVERAGE: "success",
+  ONE_SCREEN_SHARDS: "success",
+  ONE_SCREEN_MERGE: "success",
+  A11Y_ROUTES_SHARDS: "success",
+  A11Y_ROUTES_MERGE: "success",
+};
+
+/** The bash of the step `name` in ci.yml: the lines of its `run: |` block, which are indented deeper than the `run:` key. */
+function stepScript(ciText, name) {
+  const lines = ciText.split("\n");
+  const at = lines.findIndex((l) => l.trim() === `- name: ${name}`);
+  assert.ok(at >= 0, `step ${name}`);
+  const runAt = lines.findIndex((l, i) => i > at && l.trim() === "run: |");
+  const indent = lines[runAt].indexOf("run:") + 2;
+  const body = [];
+  for (let i = runAt + 1; i < lines.length; i++) {
+    if (lines[i].trim() !== "" && lines[i].search(/\S/) < indent) break;
+    body.push(lines[i].slice(indent));
+  }
+  return body.join("\n");
+}
+
+const resultsOf = (parts) =>
+  spawnSync("bash", ["-c", stepScript(readFileSync(CI_YML, "utf8"), RESULTS_LAST_STEP)], {
+    encoding: "utf8",
+    env: { PATH: process.env.PATH, ...ALL_PASSED, ...parts },
+  });
+
+test("US-QG-02 (issue 1608): the results job passes when every part that ran passed, and a part that did not run is no failure", () => {
+  assert.equal(resultsOf({}).status, 0);
+  const reused = { APP_TESTS: "skipped", APP_TESTS_WEB: "skipped", COVERAGE: "skipped" };
+  assert.equal(resultsOf(reused).status, 0, "reused test jobs need no coverage");
+  const noUi = {
+    ONE_SCREEN_SHARDS: "skipped",
+    ONE_SCREEN_MERGE: "skipped",
+    A11Y_ROUTES_SHARDS: "skipped",
+    A11Y_ROUTES_MERGE: "skipped",
+  };
+  assert.equal(resultsOf(noUi).status, 0, "no UI shards ran");
+});
+
+test("US-QG-02 (issue 1608): a failed or cancelled test job fails the results job", () => {
+  for (const result of ["failure", "cancelled"]) {
+    const out = resultsOf({ APP_TESTS_WEB: result, COVERAGE: "skipped" });
+    assert.equal(out.status, 1, result);
+    assert.match(out.stderr, /test-job=/);
+  }
+});
+
+test("US-QG-02 (issue 1608): the coverage ratchet fails the results job when both test jobs passed", () => {
+  const out = resultsOf({ COVERAGE: "failure" });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /coverage=failure/);
+  assert.equal(
+    resultsOf({ COVERAGE: "skipped" }).status,
+    1,
+    "a coverage step that did not run is a failure",
+  );
+});
+
+test("US-QG-01 (issue 1608): a failed one-screen shard, or a one-screen merge that fails, fails the results job", () => {
+  for (const parts of [{ ONE_SCREEN_SHARDS: "failure" }, { ONE_SCREEN_MERGE: "failure" }]) {
+    const out = resultsOf(parts);
+    assert.equal(out.status, 1, JSON.stringify(parts));
+    assert.match(out.stderr, /one-screen \(shards/);
+  }
+});
+
+test("US-QG-01 (issue 1608): a failed a11y-routes shard, or an a11y-routes merge that fails, fails the results job", () => {
+  for (const parts of [{ A11Y_ROUTES_SHARDS: "failure" }, { A11Y_ROUTES_MERGE: "failure" }]) {
+    const out = resultsOf(parts);
+    assert.equal(out.status, 1, JSON.stringify(parts));
+    assert.match(out.stderr, /a11y-routes \(shards/);
+  }
+});
+
+test("US-QG-02 (issue 1608): every failed part is named in the one message of the results job", () => {
+  const out = resultsOf({
+    APP_TESTS: "failure",
+    COVERAGE: "skipped",
+    A11Y_ROUTES_MERGE: "failure",
+  });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /test-job=failure/);
+  assert.match(out.stderr, /a11y-routes \(shards success, merge failure\)/);
 });

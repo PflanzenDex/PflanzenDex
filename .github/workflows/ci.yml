@@ -37,6 +37,7 @@ jobs:
       app: ${{ steps.filter.outputs.app }}
       one-screen: ${{ steps.filter.outputs.one-screen }}
       docs: ${{ steps.filter.outputs.docs }}
+      ui: ${{ steps.filter.outputs.ui }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -50,7 +51,7 @@ jobs:
           base="$PUSH_BEFORE"
           if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; fi
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-            { echo "app=true"; echo "one-screen=true"; echo "docs=true"; } >> "$GITHUB_OUTPUT"; exit 0
+            { echo "app=true"; echo "one-screen=true"; echo "docs=true"; echo "ui=true"; } >> "$GITHUB_OUTPUT"; exit 0
           fi
           # QG-U8: the one-screen run only when the UI, the e2e package, the demo seed it measures or the gate files change
           # (issues 1137, 1164).
@@ -70,6 +71,13 @@ jobs:
             echo "docs=true" >> "$GITHUB_OUTPUT"
           else
             echo "docs=false" >> "$GITHUB_OUTPUT"
+          fi
+          # US-QG-02 (issue 1608): the UI gates (`app-ui`, `ds-snapshots`, `lighthouse`) run for an app change that is not
+          # workflow or dev tooling, a hook, documentation or Markdown. A file counts when it is an app path and not in that set.
+          if git diff --name-only "$base" HEAD | grep -qP '^(?!(app/tools/workflow/|app/tools/dev/|\.claude/hooks/|docs/|\.agents/|\.claude/skills/)|.*\.md$)(app/|Makefile$|\.github/|\.nvmrc$|\.claude/hooks/)'; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ui=false" >> "$GITHUB_OUTPUT"
           fi
 
   # US-QG-02 (issue 404): a title/body edit starts a run on an unchanged commit. A green `app-*`, `ds-snapshots`, `one-screen`,
@@ -94,11 +102,9 @@ jobs:
       app-gates: ${{ steps.reuse.outputs['app-gates'] }}
       app-tests: ${{ steps.reuse.outputs['app-tests'] }}
       app-tests-web: ${{ steps.reuse.outputs['app-tests-web'] }}
-      app-coverage: ${{ steps.reuse.outputs['app-coverage'] }}
       app-ui: ${{ steps.reuse.outputs['app-ui'] }}
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
-      one-screen: ${{ steps.reuse.outputs['one-screen'] }}
-      a11y-routes: ${{ steps.reuse.outputs['a11y-routes'] }}
+      results: ${{ steps.reuse.outputs['results'] }}
       lighthouse: ${{ steps.reuse.outputs['lighthouse'] }}
     steps:
       - uses: actions/checkout@v7
@@ -112,7 +118,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots one-screen a11y-routes lighthouse"
+        run: make ci-reuse JOBS="app-gates app-tests app-tests-web results app-ui ds-snapshots lighthouse"
 
   # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, issue 1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
@@ -145,7 +151,7 @@ jobs:
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
       && needs.reuse.outputs.superseded != 'true'
-      && (needs.reuse.outputs.app-tests != 'success' || needs.reuse.outputs.app-coverage != 'success')
+      && (needs.reuse.outputs.app-tests != 'success' || needs.reuse.outputs.results != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
@@ -164,7 +170,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
       - run: make ci-tests-base
-      # Only what the ratchet (coverage-summary.json) and the CRAP check (coverage-final.json) read in app-coverage.
+      # Only what the ratchet (coverage-summary.json) and the CRAP check (coverage-final.json) read in the results job.
       - uses: actions/upload-artifact@v7
         with:
           name: coverage-base
@@ -175,13 +181,13 @@ jobs:
           retention-days: 1
 
   # The web suite beside app-tests (issue 1125): in one job it ran after api, core and db and made app-tests the slowest
-  # job. Reused only together with app-coverage, so the ratchet never runs on half the coverage.
+  # job. Reused only together with `results`, so the ratchet never runs on half the coverage (issue 1608).
   app-tests-web:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
       && needs.reuse.outputs.superseded != 'true'
-      && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.app-coverage != 'success')
+      && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.results != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -200,31 +206,10 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # Coverage ratchet and CRAP check over all four packages, once both test jobs have succeeded in this run (issue 1125).
-  # When they are reused, this job was green on the same commit too and is skipped with them.
-  app-coverage:
-    needs: [changes, reuse, app-tests, app-tests-web]
-    if: >-
-      !cancelled() && needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      # Shallow like app-tests before the split: without origin/dev the CRAP check scores all functions, as before.
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup-app
-      - uses: actions/download-artifact@v7
-        with:
-          pattern: coverage-*
-          path: app/packages
-          merge-multiple: true
-      - run: make ci-coverage
-
   app-ui:
     needs: [changes, reuse]
     if: >-
-      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.ui == 'true'
       && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.app-ui != 'success'
     runs-on: ubuntu-24.04
@@ -270,14 +255,14 @@ jobs:
       - run: make audit
 
   # QG-U1 / FR-QG-09 (issue 1136): Lighthouse on the built web app, median of 3 mobile runs against the limits in
-  # `app/config/gates/quality-limits.json`; blocking. Runs on PRs into `dev` and `main` when the app changes (about 2 min,
-  # parallel to the other jobs), on a manual dispatch and nightly (nightly.yml).
+  # `app/config/gates/quality-limits.json`; blocking. Runs on PRs into `dev` and `main` when the UI changes (about 2 min,
+  # parallel to the other jobs; issue 1608), on a manual dispatch and nightly (nightly.yml).
   lighthouse:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
-      || (github.event_name == 'pull_request' && needs.changes.outputs.app == 'true'
+      || (github.event_name == 'pull_request' && needs.changes.outputs.ui == 'true'
       && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.lighthouse != 'success'))
     runs-on: ubuntu-24.04
@@ -333,7 +318,7 @@ jobs:
   # 1920 px width cap. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run with
   # several workers. Runs for PRs into `dev` and `main` when the UI, the e2e package or the gate files change, and by hand.
   # US-QG-01 (issue 1485): the screens run as three shards, one runner each (`--shard`, the same stack per shard), so the
-  # test time is about a third. The job `one-screen` below merges the shard reports and is the result this gate reports to
+  # test time is about a third. The job `results` below merges the shard reports and is the result this gate reports to
   # `ci-status`: it fails unless every shard passed and every screen and size was measured exactly once. Shards write no
   # summary of their own, the merged table is written once.
   one-screen-shard:
@@ -343,7 +328,7 @@ jobs:
       && (github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
       && needs.reuse.outputs.superseded != 'true'
-      && needs.reuse.outputs.one-screen != 'success'))
+      && needs.reuse.outputs.results != 'success'))
     strategy:
       fail-fast: false
       matrix:
@@ -375,7 +360,7 @@ jobs:
         with:
           path: ${{ runner.temp }}/apt-debs
           key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
-      - run: make one-screen SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
+      - run: make one-screen SHARD=${{ matrix.shard }}/${{ strategy.job-total }} -j3 -Otarget
         env:
           PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
       - id: apt-complete
@@ -398,51 +383,10 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  one-screen:
-    needs: [changes, one-screen-shard]
-    if: >-
-      !cancelled() && needs.changes.result == 'success' && needs.one-screen-shard.result != 'skipped'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup-app
-      - uses: actions/download-artifact@v7
-        if: always()
-        with:
-          pattern: one-screen-shard-*
-          path: app/packages/e2e/one-screen-shards
-      - name: Merge the shards (every screen and size measured once)
-        id: merge
-        if: always()
-        run: make one-screen-merge
-      - name: Ratio table per screen and size
-        if: always()
-        run: make one-screen-report >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: one-screen-report
-          path: app/packages/e2e/one-screen-report
-          if-no-files-found: ignore
-          retention-days: 14
-      - name: Every shard passed and the merge is complete
-        if: always()
-        env:
-          SHARDS: ${{ needs.one-screen-shard.result }}
-          MERGE: ${{ steps.merge.outcome }}
-        run: |
-          if [ "$SHARDS" != "success" ] || [ "$MERGE" != "success" ]; then
-            echo "one-screen: shards $SHARDS, merge $MERGE: the gate fails (US-QG-01)" >&2
-            exit 1
-          fi
-
   # QG-U7 (FR-QG-24, issue 467): axe (WCAG 2.2 A and AA, serious and critical) and the keyboard walk over every view and
   # layer at 390x844 and 1920x1080. Blocking from the first PR; known failures sit in the baseline (FR-QG-17). Read-only run
   # with several workers. Runs on the same paths as one-screen (its `changes` output), and by hand.
-  # US-QG-01 (issue 1485): three shards, merged by the job `a11y-routes` below (same design as one-screen).
+  # US-QG-01 (issue 1485): three shards, merged by the job `results` below (same design as one-screen).
   a11y-routes-shard:
     needs: [changes, reuse]
     if: >-
@@ -450,7 +394,7 @@ jobs:
       && (github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
       && needs.reuse.outputs.superseded != 'true'
-      && needs.reuse.outputs.a11y-routes != 'success'))
+      && needs.reuse.outputs.results != 'success'))
     strategy:
       fail-fast: false
       matrix:
@@ -480,7 +424,7 @@ jobs:
         with:
           path: ${{ runner.temp }}/apt-debs
           key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
-      - run: make a11y-routes SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
+      - run: make a11y-routes SHARD=${{ matrix.shard }}/${{ strategy.job-total }} -j3 -Otarget
         env:
           PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
       - id: apt-complete
@@ -503,46 +447,108 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  a11y-routes:
-    needs: [changes, a11y-routes-shard]
+  # The end of the app suite in one job (issue 1608). The coverage ratchet (`make ci-coverage`, once both test jobs passed),
+  # the merge of the one-screen shards and the merge of the a11y-routes shards (US-QG-01) were three jobs, each queued on its
+  # own after the run. A part runs when its inputs ran; the merges run with `always()`, so a failed part does not hide the
+  # next one. The last step fails unless every part that ran passed, and it names the part that did not (US-QG-02).
+  # A test job that failed or was cancelled fails this job too: `reuse` takes a green `results` as the proof for the test jobs
+  # and the shards, so a green `results` must never come from a run in which a failed test job skipped the coverage part.
+  results:
+    needs: [changes, reuse, app-tests, app-tests-web, one-screen-shard, a11y-routes-shard]
     if: >-
-      !cancelled() && needs.changes.result == 'success' && needs.a11y-routes-shard.result != 'skipped'
+      !cancelled() && needs.changes.result == 'success'
+      && (needs.app-tests.result != 'skipped' || needs.app-tests-web.result != 'skipped'
+      || needs.one-screen-shard.result != 'skipped' || needs.a11y-routes-shard.result != 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      # Shallow like app-tests before the split: without origin/dev the CRAP check scores all functions, as before.
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
-      - uses: actions/download-artifact@v7
-        if: always()
+      - name: Coverage inputs (both test jobs passed)
+        if: needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
+        uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-*
+          path: app/packages
+          merge-multiple: true
+      - name: Coverage ratchet and CRAP check
+        id: coverage
+        if: needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
+        run: make ci-coverage
+      - name: One-screen shard reports
+        if: always() && needs.one-screen-shard.result != 'skipped'
+        uses: actions/download-artifact@v7
+        with:
+          pattern: one-screen-shard-*
+          path: app/packages/e2e/one-screen-shards
+      - name: Merge the one-screen shards (every screen and size measured once)
+        id: merge-one-screen
+        if: always() && needs.one-screen-shard.result != 'skipped'
+        run: make one-screen-merge
+      - name: One-screen ratio table per screen and size
+        if: always() && needs.one-screen-shard.result != 'skipped'
+        run: make one-screen-report >> "$GITHUB_STEP_SUMMARY"
+      - name: One-screen report
+        if: always() && needs.one-screen-shard.result != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: one-screen-report
+          path: app/packages/e2e/one-screen-report
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: A11y-routes shard reports
+        if: always() && needs.a11y-routes-shard.result != 'skipped'
+        uses: actions/download-artifact@v7
         with:
           pattern: a11y-routes-shard-*
           path: app/packages/e2e/a11y-routes-shards
-      - name: Merge the shards (every screen and size measured once)
-        id: merge
-        if: always()
+      - name: Merge the a11y-routes shards (every screen and size measured once)
+        id: merge-a11y-routes
+        if: always() && needs.a11y-routes-shard.result != 'skipped'
         run: make a11y-routes-merge
       - name: Findings per rule and screen
-        if: always()
+        if: always() && needs.a11y-routes-shard.result != 'skipped'
         run: make a11y-routes-report >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v7
-        if: always()
+      - name: A11y-routes report
+        if: always() && needs.a11y-routes-shard.result != 'skipped'
+        uses: actions/upload-artifact@v7
         with:
           name: a11y-routes-report
           path: app/packages/e2e/a11y-routes-report
           if-no-files-found: ignore
           retention-days: 14
-      - name: Every shard passed and the merge is complete
+      - name: Every part that ran passed (US-QG-01, US-QG-02)
         if: always()
         env:
-          SHARDS: ${{ needs.a11y-routes-shard.result }}
-          MERGE: ${{ steps.merge.outcome }}
+          APP_TESTS: ${{ needs.app-tests.result }}
+          APP_TESTS_WEB: ${{ needs.app-tests-web.result }}
+          COVERAGE: ${{ steps.coverage.outcome }}
+          ONE_SCREEN_SHARDS: ${{ needs.one-screen-shard.result }}
+          ONE_SCREEN_MERGE: ${{ steps.merge-one-screen.outcome }}
+          A11Y_ROUTES_SHARDS: ${{ needs.a11y-routes-shard.result }}
+          A11Y_ROUTES_MERGE: ${{ steps.merge-a11y-routes.outcome }}
         run: |
-          if [ "$SHARDS" != "success" ] || [ "$MERGE" != "success" ]; then
-            echo "a11y-routes: shards $SHARDS, merge $MERGE: the gate fails (US-QG-01)" >&2
+          bad=""
+          for r in "$APP_TESTS" "$APP_TESTS_WEB"; do
+            case "$r" in success | skipped) ;; *) bad="$bad test-job=$r" ;; esac
+          done
+          if [ "$APP_TESTS" = "success" ] && [ "$APP_TESTS_WEB" = "success" ] && [ "$COVERAGE" != "success" ]; then
+            bad="$bad coverage=$COVERAGE"
+          fi
+          if [ "$ONE_SCREEN_SHARDS" != "skipped" ] && { [ "$ONE_SCREEN_SHARDS" != "success" ] || [ "$ONE_SCREEN_MERGE" != "success" ]; }; then
+            bad="$bad one-screen (shards $ONE_SCREEN_SHARDS, merge $ONE_SCREEN_MERGE)"
+          fi
+          if [ "$A11Y_ROUTES_SHARDS" != "skipped" ] && { [ "$A11Y_ROUTES_SHARDS" != "success" ] || [ "$A11Y_ROUTES_MERGE" != "success" ]; }; then
+            bad="$bad a11y-routes (shards $A11Y_ROUTES_SHARDS, merge $A11Y_ROUTES_MERGE)"
+          fi
+          if [ -n "$bad" ]; then
+            echo "results: the gate fails (US-QG-01, US-QG-02):$bad" >&2
             exit 1
           fi
+          echo "results: every part that ran passed"
 
   # QG-C1 for the PR title (the squash into `dev` and the merge into `main` use it as the commit message)
   # and QG-U3 (`feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`).
@@ -611,7 +617,7 @@ jobs:
   ds-snapshots:
     needs: [changes, reuse]
     if: >-
-      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.ui == 'true'
       && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs['ds-snapshots'] != 'success'
     runs-on: ubuntu-24.04
@@ -643,7 +649,6 @@ jobs:
         app-gates,
         app-tests,
         app-tests-web,
-        app-coverage,
         app-ui,
         layout,
         docs-gates,
@@ -654,9 +659,8 @@ jobs:
         lighthouse,
         e2e,
         one-screen-shard,
-        one-screen,
         a11y-routes-shard,
-        a11y-routes,
+        results,
       ]
     if: always()
     runs-on: ubuntu-24.04
@@ -668,7 +672,6 @@ jobs:
           APP_GATES: ${{ needs.app-gates.result }}
           APP_TESTS: ${{ needs.app-tests.result }}
           APP_TESTS_WEB: ${{ needs.app-tests-web.result }}
-          APP_COVERAGE: ${{ needs.app-coverage.result }}
           APP_UI: ${{ needs.app-ui.result }}
           LAYOUT: ${{ needs.layout.result }}
           DOCS_GATES: ${{ needs.docs-gates.result }}
@@ -679,11 +682,10 @@ jobs:
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
           ONE_SCREEN_SHARD: ${{ needs.one-screen-shard.result }}
-          ONE_SCREEN: ${{ needs.one-screen.result }}
+          RESULTS: ${{ needs.results.result }}
           A11Y_ROUTES_SHARD: ${{ needs.a11y-routes-shard.result }}
-          A11Y_ROUTES: ${{ needs.a11y-routes.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DOCS_GATES" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN_SHARD" "$ONE_SCREEN" "$A11Y_ROUTES_SHARD" "$A11Y_ROUTES"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_UI" "$LAYOUT" "$DOCS_GATES" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN_SHARD" "$A11Y_ROUTES_SHARD" "$RESULTS"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
