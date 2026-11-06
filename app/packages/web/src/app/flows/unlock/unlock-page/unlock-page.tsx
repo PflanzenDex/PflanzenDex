@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
-import { errorText } from "@/shared/lib/error-text";
+import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useInvalidate, useWriteAction } from "../../../../shared/data";
 import {
   PATHS,
@@ -104,7 +104,7 @@ function WriteNotes(props: {
       )}
       {error && (
         <p role="alert" className={ALERT}>
-          {error.code === "network.not_reachable" ? error.text : errorText(error.code)}
+          {refusalText(error)}
         </p>
       )}
     </>

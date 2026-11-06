@@ -119,6 +119,19 @@ function EntryStates(props: { state: State; session: Session }) {
   );
 }
 
+/** The welcome page with the session's actions: sign in, register, another account (US-ACC-01). */
+function SignedOutWelcome(props: { session: Session; hint?: string }) {
+  const { session: s } = props;
+  return (
+    <Welcome
+      onRegister={s.register}
+      onSignIn={s.signIn}
+      onAnotherAccount={s.useAnotherAccount}
+      {...(props.hint ? { hint: props.hint } : {})}
+    />
+  );
+}
+
 export function App() {
   const s = useSession();
   const { setView, openProfile } = useViews();
@@ -139,9 +152,7 @@ export function App() {
   useEntryTitle(z.kind);
   // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
   if (z.kind === "signedOut")
-    return (
-      <Welcome onRegister={s.register} onSignIn={s.signIn} {...(z.hint ? { hint: z.hint } : {})} />
-    );
+    return <SignedOutWelcome session={s} {...(z.hint ? { hint: z.hint } : {})} />;
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">

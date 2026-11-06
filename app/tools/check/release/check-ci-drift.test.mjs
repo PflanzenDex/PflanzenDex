@@ -1,4 +1,8 @@
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { test, describe } from "node:test";
 import assert from "node:assert";
 import { findDrift } from "./check-ci-drift.mjs";
@@ -300,5 +304,45 @@ describe("FR-QG-01: the Makefile", () => {
       documented.filter((t) => !phony.has(t)),
       [],
     );
+  });
+});
+
+describe("US-DEV-01: make help", () => {
+  test("US-DEV-01: make help lists every target that has a ## description, digits in the name included", () => {
+    const lines = fs
+      .readFileSync(new URL("../../../../Makefile", import.meta.url), "utf8")
+      .split("\n");
+    const described = lines.flatMap((l) => l.match(/^([a-z0-9][a-z0-9-]*):.*## /)?.[1] ?? []);
+    assert.ok(described.length > 0, "no target with a ## description found");
+    // The help recipe runs directly with bash, not through make: knip flags an unlisted make binary in test files
+    // (the gate that rejected a spawned make), so this test needs no make binary. The recipe is the real one from the
+    // Makefile, with make's expansions applied: $$ becomes $, and $(MAKEFILE_LIST) becomes two files, the Makefile and
+    // a second file as in a worktree with .env.worktree, so grep sees more than one file.
+    const start = lines.findIndex((l) => l.startsWith("help: ## "));
+    assert.ok(start >= 0, "no help target");
+    const recipe = lines[start + 1];
+    assert.match(recipe, /^\t@grep /, "the help recipe is not on the line after help:");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "make-help-"));
+    try {
+      const envFile = path.join(dir, ".env.worktree");
+      fs.writeFileSync(envFile, "PFLANZENDEX_TEST_DB_PORT=54517\n");
+      const command = recipe
+        .replace(/^\t@/, "")
+        .replaceAll("$$", () => "$")
+        .replaceAll("$(MAKEFILE_LIST)", () => `Makefile '${envFile}'`);
+      const help = spawnSync("bash", ["-c", command], {
+        cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
+        encoding: "utf8",
+      });
+      assert.equal(help.status, 0, help.stderr);
+      // The first column of each help line is the target name.
+      const listed = new Set(help.stdout.split("\n").map((l) => l.trim().split(/\s+/)[0]));
+      assert.deepStrictEqual(
+        described.filter((t) => !listed.has(t)),
+        [],
+      );
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -5,15 +5,11 @@ import { z } from "zod";
 import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
-import { errorText } from "@/shared/lib/error-text";
+import { refusalText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../../shared/data";
 
 const schema = z.object({ code: z.string().trim().min(1, "Bitte gib den Freundescode ein.") });
 type Fields = z.infer<typeof schema>;
-
-/** The text of a refusal by its error code, never the raw server text (P-10); the web app's own network text stays. */
-const refusalText = (e: ApiError) =>
-  e.code === "network.not_reachable" ? e.text : errorText(e.code);
 
 /**
  * "Code eingeben", the second tab of the layer "Freund hinzufügen" (US-SOZ-01, US-QS-20): sends a friendship request with the code someone passed on. A refused code (unknown,

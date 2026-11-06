@@ -64,6 +64,7 @@ import {
 } from "./app-bindings";
 import { measurementPhotoSourceFor, targetLocationFor } from "./care";
 import { todayStatusSource } from "./today";
+import { appAreaReadsFor } from "./ai-collection-reads";
 
 export type { AppOptions } from "./app-options";
 
@@ -148,6 +149,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
       photo: measurementPhotoSourceFor(pool, opt.media),
       discover: discoverSourceFor(pool, opt.zoneStock),
       collection: collectionReadSourceFor(pool, { clock: opt.clock, ...careSources(pool, opt) }),
+      areas: appAreaReadsFor(pool, { ...opt, zoneStock: today.zoneStock, features }),
       ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
     }),
   );

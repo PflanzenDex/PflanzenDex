@@ -45,6 +45,22 @@ const entry = (s: UnlockStatus) => {
   return { ...s, epic: f?.epic, destination: f?.destination };
 };
 
+type Facts = ReturnType<typeof unlockSources>["facts"];
+
+/** Every function that may be announced with its derived lock state (`GET /onboarding/unlocks`, FR-ONB-03). */
+const unlockListOf = (facts: Facts) => async (userId: string, timeZone: string) => ({
+  functions: unlockStates(await facts(userId, timeZone))
+    .filter((s) => s.state !== "switched_off")
+    .map(entry),
+});
+
+/** The lock states as `GET /onboarding/unlocks` answers them, for the AI client (US-KI-12); derived, never stored. */
+export function unlockListFor(pool: Pool, opt: UnlockRouteOptions & { features: FeatureAccess }) {
+  return unlockListOf(
+    unlockSources(pool, { features: opt.features, clock: opt.clock, style: opt.keeperStyle }).facts,
+  );
+}
+
 /**
  * Lock states of the keeper's functions (US-ONB-05, FR-ONB-01), derived on every request from the own data and never
  * stored. `GET /onboarding/unlocks?timeZone=` lists every function that may be announced; a function the operator switched
@@ -76,12 +92,7 @@ export function unlockRoutes(
   routes.get("/onboarding/unlocks", async (c) => {
     const timeZone = c.req.query("timeZone");
     if (!isTimeZone(timeZone)) return badZone(c);
-    const input = await facts(c.get("account").id, timeZone);
-    return c.json({
-      functions: unlockStates(input)
-        .filter((s) => s.state !== "switched_off")
-        .map(entry),
-    });
+    return c.json(await unlockListOf(facts)(c.get("account").id, timeZone));
   });
   routes.get("/onboarding/unlocks/:id", async (c) => {
     const timeZone = c.req.query("timeZone");

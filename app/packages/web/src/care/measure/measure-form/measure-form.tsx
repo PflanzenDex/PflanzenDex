@@ -11,7 +11,7 @@ import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import { currentTimeZone, type ApiError } from "../../../shared/data";
-import { Field } from "../../shared/field/field";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { RefusalAlert } from "../../shared/notices/notices";

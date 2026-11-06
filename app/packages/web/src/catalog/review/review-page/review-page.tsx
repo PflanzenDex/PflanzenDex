@@ -12,7 +12,7 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../shared/data";
 import { ReviewPageSkeleton } from "./review-page.skeleton";
-import { refusalText } from "../../shared/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { ReviewRow } from "../review-entry/review-entry";
 import { ReviewLayer, type ReviewActions } from "../review-layer/review-layer";
 import { decideProposal, loadReviewList, mergeProposal } from "../review-api";

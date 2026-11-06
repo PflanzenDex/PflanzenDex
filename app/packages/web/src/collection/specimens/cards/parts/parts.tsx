@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { refusalText } from "../../model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
 import { cn } from "@/shared/lib/utils";
 

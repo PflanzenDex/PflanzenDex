@@ -1,5 +1,9 @@
 import {
+  AREA_NAMES,
+  NOT_RELEASED_READS,
+  aiAreaRead,
   aiGetSpecies,
+  aiNotReleased,
   aiGetSpecimen,
   aiListLightZones,
   aiListLocations,
@@ -7,6 +11,8 @@ import {
   aiListSpecimens,
   aiSearchSpecies,
   type AiLogStore,
+  type AreaReadSource,
+  type NotReleasedRead,
   type CollectionReadSource,
   type ReadCall,
   type Result,
@@ -14,9 +20,10 @@ import {
 import { Hono, type Context } from "hono";
 import { errorBody, statusFor } from "../../kernel";
 import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
+import { AREA_PATHS, notReleasedPath } from "./area-paths";
 
 type Read = (
-  deps: { source: CollectionReadSource; log: AiLogStore },
+  deps: { source: CollectionReadSource; areas: AreaReadSource; log: AiLogStore },
   call: ReadCall,
 ) => Promise<Result<unknown>>;
 
@@ -35,14 +42,16 @@ function inputOf(c: Context<AiEnv>, params: Record<string, string>) {
  * specimens, one specimen, locations, light zones and the measurements of a specimen. References in the path are an id
  * or a readable name (FR-KI-15); lists take `offset` and `limit` (FR-KI-16). Each route runs the read operation of
  * `core` over the same functions as the app's own routes (KI-R10, FR-KI-14); a foreign id answers 404 (P-04).
+ * Every other area (US-KI-12) has its route in `AREA_PATHS`; friends' data, sharing, offers, swaps and recommendations
+ * answer `ai.not_released` under `/mcp/not-released/:subject` (FR-KI-10).
  */
 export function clientReadRoutes(
   guard: ClientGuardOptions,
-  stores: { collection: CollectionReadSource; log: AiLogStore },
+  stores: { collection: CollectionReadSource; areas: AreaReadSource; log: AiLogStore },
   clock: () => Date,
 ): Hono<AiEnv> {
   const client = new Hono<AiEnv>();
-  const deps = { source: stores.collection, log: stores.log };
+  const deps = { source: stores.collection, areas: stores.areas, log: stores.log };
   const route = (path: string, read: Read) =>
     client.get(path, clientAuthentication(guard, "read"), async (c) => {
       const { connection, rights } = c.get("ai");
@@ -62,5 +71,10 @@ export function clientReadRoutes(
   route("/mcp/specimens/:specimen/measurements", aiListMeasurements);
   route("/mcp/locations", aiListLocations);
   route("/mcp/light-zones", aiListLightZones);
+  for (const name of AREA_NAMES) route(AREA_PATHS[name], aiAreaRead(name));
+  for (const subject of Object.keys(NOT_RELEASED_READS) as NotReleasedRead[])
+    route(notReleasedPath(subject), (d, call) =>
+      aiNotReleased(d, call, NOT_RELEASED_READS[subject]),
+    );
   return client;
 }

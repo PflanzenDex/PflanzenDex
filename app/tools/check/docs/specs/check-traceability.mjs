@@ -1,5 +1,5 @@
 // Spec traceability and consistency (US-QG-04, FR-QG-03, FR-QG-06).
-// Errors: done stories without a test, README counters that differ from the specs.
+// Errors: done stories without a test that can run (skipped and todo tests do not count), README counters that differ from the specs.
 // Hints (stdout only): tests naming unknown or not-yet-done stories, unresolved references.
 import fs from "node:fs";
 import path from "node:path";
@@ -10,7 +10,11 @@ import { storiesByModule } from "../../code/modules/module-report.mjs";
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;
 const DEF = /^(?:#{2,4}\s+|\|\s*\*{0,2})((?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/;
 const REF = /\b(?:(?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/g;
-const TEST_CALL = /\b(?:describe|it|test)(?:\.(?:only|skip|todo))?\(\s*(["'`])/g;
+// A title counts only when its test can run and fail: describe, it and test, also with .only.
+const TEST_CALL = /\b(?:describe|it|test)(?:\.only)?\(\s*(["'`])/g;
+// Skipped and todo titles never run, so they cannot fail (US-QG-04, issue 1390). A `test.skip(condition, reason)`
+// call inside a test body is no declaration: it has no title literal after the parenthesis, so that test still counts.
+const INERT_CALL = /\b(?:describe|it|test)\.(?:skip|todo)\(\s*(["'`])/g;
 
 // Text of the string literal that starts right after the opening quote at `start`.
 function literalFrom(text, start, quote) {
@@ -29,10 +33,10 @@ export function parseStories(files) {
   return stories;
 }
 
-export function testedIds(testFiles) {
+function idsInTitles(testFiles, call) {
   const ids = new Set();
   for (const text of Object.values(testFiles))
-    for (const m of text.matchAll(TEST_CALL))
+    for (const m of text.matchAll(call))
       for (const id of literalFrom(text, m.index + m[0].length, m[1]).matchAll(
         /\bUS-[A-Z]+-\d+\b/g,
       ))
@@ -40,17 +44,31 @@ export function testedIds(testFiles) {
   return ids;
 }
 
+// Story IDs named by a test that can run.
+export function testedIds(testFiles) {
+  return idsInTitles(testFiles, TEST_CALL);
+}
+
+// Story IDs named only by skipped or todo titles: they do not count as tests.
+export function skippedIds(testFiles) {
+  return idsInTitles(testFiles, INERT_CALL);
+}
+
 export function testedIdsByFile(testFiles) {
   return Object.fromEntries(Object.entries(testFiles).map(([f, t]) => [f, testedIds({ [f]: t })]));
 }
 
-export function traceability(stories, tested) {
+export function traceability(stories, tested, skipped = new Set()) {
   const errors = [];
   const hints = [];
   const byId = new Map(stories.map((s) => [s.id, s]));
   for (const s of stories)
-    if (s.status === "✅" && !tested.has(s.id))
-      errors.push(`story ${s.id} is done (✅) in ${s.file} but no test title contains its ID`);
+    if (s.status === "✅" && !tested.has(s.id)) {
+      const why = skipped.has(s.id)
+        ? "only skipped or todo tests name it, and they cannot fail"
+        : "no test title contains its ID";
+      errors.push(`story ${s.id} is done (✅) in ${s.file} but ${why}`);
+    }
   for (const id of [...tested].sort()) {
     const s = byId.get(id);
     if (!s) hints.push(`test names unknown story ${id}`);
@@ -125,7 +143,7 @@ export function run(root) {
     ...readTree(root, path.join(root, ".claude/hooks"), isTest),
   };
   const stories = parseStories(specs);
-  const trace = traceability(stories, testedIds(tests));
+  const trace = traceability(stories, testedIds(tests), skippedIds(tests));
   const readme = specs[path.relative(root, path.join(specDir, "readme.md"))] ?? "";
   const errors = [...trace.errors, ...checkCounters(readme, stories)];
   const refs = unresolvedRefs(specs);

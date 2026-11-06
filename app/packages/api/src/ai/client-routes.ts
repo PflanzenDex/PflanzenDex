@@ -1,6 +1,11 @@
 import {
   AI_SCOPES,
   aiStatus,
+  aiDrafts,
+  aiLog,
+  ok,
+  type AppAreaReadSource,
+  type AreaReadSource,
   productTitle,
   type CollectionReadSource,
   type DiscoverSource,
@@ -19,6 +24,7 @@ import { errorBody, statusFor } from "../kernel";
 import { clientResearchRoutes } from "./research/client-research-routes";
 import { clientDiscoverRoutes } from "./discover/client-discover-routes";
 import { clientReadRoutes } from "./reads/client-read-routes";
+import { clientRulesRoutes } from "./reads/rules-routes";
 import { clientTaskRoutes } from "./tasks/client-task-routes";
 import { clientDraftRoutes } from "./drafts/client-draft-routes";
 import { clientAuthentication, type AiEnv } from "./guard/client-auth";
@@ -46,7 +52,24 @@ export interface ClientStores {
   discover: DiscoverSource;
   /** The reads of the catalog and the collection (US-KI-11), over the same functions as the app's routes. */
   collection: CollectionReadSource;
+  /** Every other area (US-KI-12), over the same functions as the app's routes. */
+  areas: AppAreaReadSource;
   sources?: SourceClient;
+}
+
+/** RFC 9728: the metadata at the address the challenge names and at the path-inserted well-known address of the resource. */
+function metadataRoutes(client: Hono<AiEnv>, opt: AiAccessOptions) {
+  const resourcePath = new URL(opt.resource).pathname.replace(/\/$/, "");
+  for (const path of [WELL_KNOWN, `${WELL_KNOWN}${resourcePath}`])
+    client.get(path, (c) =>
+      c.json({
+        resource: opt.resource,
+        authorization_servers: [opt.issuer],
+        scopes_supported: Object.values(AI_SCOPES),
+        bearer_methods_supported: ["header"],
+        resource_name: productTitle(),
+      }),
+    );
 }
 
 /**
@@ -59,18 +82,7 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
   const client = new Hono<AiEnv>();
   const clock = opt.clock ?? (() => new Date());
   const metadataUrl = metadataUrlOf(opt.resource);
-  // RFC 9728: at the address the challenge names and at the path-inserted well-known address of the resource.
-  const resourcePath = new URL(opt.resource).pathname.replace(/\/$/, "");
-  for (const path of [WELL_KNOWN, `${WELL_KNOWN}${resourcePath}`])
-    client.get(path, (c) =>
-      c.json({
-        resource: opt.resource,
-        authorization_servers: [opt.issuer],
-        scopes_supported: Object.values(AI_SCOPES),
-        bearer_methods_supported: ["header"],
-        resource_name: productTitle(),
-      }),
-    );
+  metadataRoutes(client, opt);
   const guard = {
     verifier: opt.verifier,
     pool,
@@ -95,7 +107,7 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
         connectionId: connection.id,
         rights,
         timeZone: c.req.query("timeZone"),
-        now: (opt.clock ?? (() => new Date()))(),
+        now: clock(),
       },
     );
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
@@ -103,8 +115,9 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
   client.route("/", clientResearchRoutes(guard, stores, clock));
   client.route("/", clientDraftRoutes(guard, { drafts, types, log, tasks }, clock));
   client.route("/", clientDiscoverRoutes(guard, { discover, drafts, log }, clock));
-  client.route("/", clientReadRoutes(guard, { collection: stores.collection, log }, clock));
+  client.route("/", clientReadRoutes(guard, readStores(stores, clock), clock));
   client.route("/", clientTaskRoutes(guard, { tasks, log }, opt.resource, clock));
+  client.route("/", clientRulesRoutes(guard, { log }, stores.sources !== undefined, clock));
   // The MCP endpoint (E-04): JSON-RPC tools over the routes above, with the caller's token and the same guards.
   client.route(
     "/",
@@ -116,4 +129,22 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
     }),
   );
   return client;
+}
+
+/** The collection and the app's areas plus the own connection's entries of the AI log and drafts (US-KI-12, P-04). */
+function readStores(stores: ClientStores, clock: () => Date) {
+  const areas: AreaReadSource = {
+    ...stores.areas,
+    list_ai_log: async (userId, q) =>
+      ok({
+        log: (await aiLog(stores, userId)).filter((e) => e.connectionId === q.connectionId),
+      }),
+    list_ai_drafts: async (userId, q) =>
+      ok({
+        drafts: (await aiDrafts(stores, userId, clock())).filter(
+          (d) => d.connectionId === q.connectionId,
+        ),
+      }),
+  };
+  return { collection: stores.collection, areas, log: stores.log };
 }

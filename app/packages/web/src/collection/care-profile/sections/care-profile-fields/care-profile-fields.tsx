@@ -7,6 +7,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/fields/form/form";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
@@ -48,26 +49,18 @@ export function Choice(props: {
   items: readonly (LightLocation | LightZone)[];
 }) {
   return (
-    <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Select {...field}>
-              <option value="">Katalog gilt</option>
-              {props.items.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
+    <Field control={props.control} name={props.name} label={props.label}>
+      {(field) => (
+        <Select {...field}>
+          <option value="">Katalog gilt</option>
+          {props.items.map((i) => (
+            <option key={i.id} value={i.id}>
+              {i.name}
+            </option>
+          ))}
+        </Select>
       )}
-    />
+    </Field>
   );
 }
 
@@ -139,19 +132,9 @@ export function MonthDay(props: {
 /** Watering interval in days (1 to 365); empty means no deviation. */
 export function DaysInput(props: { control: Control<Fields>; name: Key; label: string }) {
   return (
-    <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Input {...field} type="number" inputMode="numeric" min={1} max={365} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <Field control={props.control} name={props.name} label={props.label}>
+      {(field) => <Input {...field} type="number" inputMode="numeric" min={1} max={365} />}
+    </Field>
   );
 }
 
