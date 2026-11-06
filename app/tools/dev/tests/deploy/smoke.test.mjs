@@ -482,13 +482,17 @@ test("US-DEV-06 on localhost the sign-in host is resolved to the loopback with t
   assert.equal(target.SMOKE_AUTH_CURL_OPTS, "-k --resolve auth.localhost:8443:127.0.0.1");
 });
 
-// A deploy.sh copy in a folder of its own, with stubs for git and docker compose, and a smoke.sh stub that records what it
-// gets and fails on its first call only: the deploy fails, the rollback to the previous commit passes.
+// A deploy.sh copy in a folder of its own, with stubs for git, docker compose and sleep, and a smoke.sh stub that records what
+// it gets and fails on its first call only: the deploy fails, the rollback to the previous commit passes. The events log
+// lists the steps in order: health (a healthy check), realm (the realm wait inside keycloak), master-realm, smoke.
+// STUB_REALM=never makes the realm wait fail: the realm never answers 200.
 function deployHarness() {
   const root = tempDir("deploy-harness-");
   const dep = join(root, "config", "deploy");
   const stubs = join(root, "stubs");
   const log = join(root, "smoke-calls.log");
+  const events = join(root, "events.log");
+  writeFileSync(events, "");
   mkdirSync(join(dep, "scripts"), { recursive: true });
   mkdirSync(join(dep, "keycloak"), { recursive: true });
   mkdirSync(stubs);
@@ -498,22 +502,28 @@ function deployHarness() {
     join(dep, ".env"),
     "CADDY_SCHEME=http://\nAPP_HOST=app.example.test\nAUTH_HOST=auth.example.test\nHTTP_PORT=8080\nAPP_URL=https://app.example.test\nAUTH_URL=https://auth.example.test\nSMOKE_USER=smoke-tester\nSMOKE_PASSWORD=pw-deploy-test\n",
   );
-  writeFileSync(join(dep, "keycloak", "master-realm.sh"), "#!/usr/bin/env bash\nexit 0\n");
+  writeFileSync(
+    join(dep, "keycloak", "master-realm.sh"),
+    `#!/usr/bin/env bash\necho master-realm >> '${events}'\nexit 0\n`,
+  );
   writeFileSync(
     join(dep, "scripts", "smoke.sh"),
     `#!/usr/bin/env bash
+echo smoke >> '${events}'
 printf 'base=%s auth=%s authopts=%s user=%s password=%s\\n' "$1" "$SMOKE_AUTH_URL" "$SMOKE_AUTH_CURL_OPTS" "$SMOKE_USER" "\${SMOKE_PASSWORD:+set}" >> '${log}'
 [ "$(wc -l < '${log}')" -eq 1 ] && exit 1
 exit 0
 `,
   );
-  // docker compose: no volume yet, the api and keycloak answer healthy, no database running (no backup).
+  // docker compose: no volume yet, the api and keycloak answer healthy, no database running (no backup). The realm answers
+  // inside keycloak unless STUB_REALM=never.
   writeFileSync(
     join(stubs, "docker"),
     `#!/usr/bin/env bash
 case "$*" in
   *"volume inspect"*) exit 1 ;;
-  *"--format"*) printf 'api healthy\\nkeycloak healthy\\n' ;;
+  *"--format"*) printf 'api healthy\\nkeycloak healthy\\n'; echo health >> '${events}' ;;
+  *"exec"*"keycloak"*) echo realm >> '${events}'; [ "\${STUB_REALM:-}" != never ] || exit 1 ;;
 esac
 exit 0
 `,
@@ -529,10 +539,11 @@ esac
 exit 0
 `,
   );
-  for (const name of ["docker", "git"]) chmodSync(join(stubs, name), 0o755);
+  writeFileSync(join(stubs, "sleep"), "#!/usr/bin/env bash\nexit 0\n");
+  for (const name of ["docker", "git", "sleep"]) chmodSync(join(stubs, name), 0o755);
   chmodSync(join(dep, "keycloak", "master-realm.sh"), 0o755);
   chmodSync(join(dep, "scripts", "smoke.sh"), 0o755);
-  return { dep, stubs, log };
+  return { dep, stubs, log, events };
 }
 
 test("US-DEV-06 a failed sign-in smoke test still rolls deploy.sh back, and smoke.sh gets the tester and the sign-in address (#1404)", () => {
@@ -552,4 +563,179 @@ test("US-DEV-06 a failed sign-in smoke test still rolls deploy.sh back, and smok
     assert.match(call, /user=smoke-tester password=set/);
   }
   assert.doesNotMatch(r.stdout + r.stderr, /pw-deploy-test/);
+});
+
+// --- Realm wait (TE-03, #1002): one wait for the realm before master-realm.sh, keycloak-mcp and the smoke test ------------
+
+const REALM_PATH = "/realms/pflanzendex/.well-known/openid-configuration";
+
+// The function `name` of deploy.sh, extracted as text (deploy.sh runs main when sourced).
+function functionSource(name) {
+  const text = readFileSync(deployScript, "utf8");
+  const start = text.indexOf(`${name}() {`);
+  const end = text.indexOf("\n}\n", start);
+  assert.ok(start > 0 && end > start, `${name} is in deploy.sh`);
+  return text.slice(start, end + 3);
+}
+
+// A folder with stubs for the keycloak container: `compose` runs the probe here, with its port 8080 (the only 8080 in the
+// probe, in /dev/tcp/127.0.0.1/8080) aimed at the realm stand-in (port in STUB_REALM_PORT); `sleep` returns at once.
+const realmBin = tempDir("realm-wait-bin-");
+writeFileSync(
+  join(realmBin, "compose"),
+  `#!/usr/bin/env bash
+while [ "$1" != bash ]; do shift; done
+shift
+args=()
+for a in "$@"; do args+=("\${a//8080/$STUB_REALM_PORT}"); done
+exec bash "\${args[@]}"
+`,
+);
+writeFileSync(join(realmBin, "sleep"), "#!/usr/bin/env bash\nexit 0\n");
+for (const name of ["compose", "sleep"]) chmodSync(join(realmBin, name), 0o755);
+
+// A stand-in for port 8080 of the keycloak container. The discovery URL answers with the statuses in turn (the last one
+// again after them): 200, 503 (the import), or "silent" (no answer at all). Every request path is recorded.
+async function startRealm(statuses) {
+  const seen = [];
+  const server = createServer((req, res) => {
+    seen.push(req.url);
+    const status = statuses[Math.min(seen.length, statuses.length) - 1];
+    if (status === "silent") return undefined;
+    if (status === 200)
+      return json(res, 200, { issuer: "https://auth.example.test/realms/pflanzendex" });
+    return html(res, status, "Request received during bootstrapping, returning a 503 error");
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  return {
+    port: server.address().port,
+    seen,
+    close: () =>
+      new Promise((resolve) => {
+        server.closeAllConnections();
+        server.close(resolve);
+      }),
+  };
+}
+
+// A port that nothing listens on (the stand-in closed again): the probe cannot connect.
+async function closedPort() {
+  const realm = await startRealm([200]);
+  await realm.close();
+  return realm.port;
+}
+
+// Runs a bash script asynchronously (the stand-in answers in this process), with the keycloak stubs first on PATH.
+function runBash(script, env) {
+  return new Promise((resolve, reject) => {
+    const child = spawn("bash", ["-c", script], {
+      env: { PATH: `${realmBin}:${process.env.PATH}`, ...env },
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stderr.on("data", (chunk) => (stderr += chunk));
+    child.on("error", reject);
+    child.on("close", (status) => resolve({ status, stdout, stderr }));
+  });
+}
+
+// wait_realm of deploy.sh, called the way deploy_ref calls it (realm pflanzendex, with a number of tries).
+function runRealmWait(port, tries) {
+  return runBash(
+    `${functionSource("wait_realm")}\ncompose=("$STUB_COMPOSE")\nwait_realm pflanzendex ${tries}`,
+    { STUB_COMPOSE: join(realmBin, "compose"), STUB_REALM_PORT: String(port) },
+  );
+}
+
+test("TE-03 the realm wait passes at once when the discovery URL answers 200 inside keycloak (#1002)", async () => {
+  const realm = await startRealm([200]);
+  try {
+    const r = await runRealmWait(realm.port, 3);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(realm.seen, [REALM_PATH]);
+  } finally {
+    await realm.close();
+  }
+});
+
+test("TE-03 the realm wait retries through the 503 answers of the import until the realm answers 200 (#1002)", async () => {
+  const realm = await startRealm([503, 503, 200]);
+  try {
+    const r = await runRealmWait(realm.port, 5);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(
+      realm.seen,
+      [REALM_PATH, REALM_PATH, REALM_PATH],
+      "two 503 answers, then the 200",
+    );
+  } finally {
+    await realm.close();
+  }
+});
+
+test("TE-03 the realm wait fails after its tries, naming the step, the URL and the log to read (#1002)", async () => {
+  const realm = await startRealm([503]);
+  try {
+    const r = await runRealmWait(realm.port, 3);
+    assert.equal(r.status, 1);
+    assert.equal(realm.seen.length, 3, "one probe per try");
+    assert.match(
+      r.stderr,
+      /realm pflanzendex did not answer 200 at http:\/\/127\.0\.0\.1:8080\/realms\/pflanzendex\/\.well-known\/openid-configuration inside keycloak after 3 tries/,
+    );
+    assert.match(r.stderr, /logs: .* logs keycloak/);
+  } finally {
+    await realm.close();
+  }
+});
+
+test("TE-03 a keycloak container that is not running counts as not ready and ends in the same message (#1002)", async () => {
+  const r = await runRealmWait(await closedPort(), 2);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /realm pflanzendex did not answer 200 at/);
+});
+
+test("TE-03 a probe that gets no answer gives up after its read timeout, so the wait cannot hang (#1002)", async () => {
+  const realm = await startRealm(["silent"]);
+  try {
+    const r = await runRealmWait(realm.port, 1);
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /did not answer 200 at/);
+  } finally {
+    await realm.close();
+  }
+});
+
+test("TE-03 the realm wait runs after keycloak is healthy and before master-realm.sh and the smoke test (#1002)", () => {
+  const { dep, stubs, events } = deployHarness();
+  const r = spawnSync("bash", [join(dep, "scripts", "deploy.sh")], {
+    encoding: "utf8",
+    env: { PATH: `${stubs}:${process.env.PATH}` },
+  });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  // The first deploy: api and keycloak healthy, the realm answers, master-realm.sh, then the smoke test fails. The
+  // rollback repeats the same steps.
+  const steps = readFileSync(events, "utf8").trim().split("\n");
+  assert.deepEqual(steps.slice(0, 5), ["health", "health", "realm", "master-realm", "smoke"]);
+});
+
+test("TE-03 a realm that never answers stops the deploy before master-realm.sh and the smoke test, and the rollback is tried too (#1002)", () => {
+  const { dep, stubs, events } = deployHarness();
+  const r = spawnSync("bash", [join(dep, "scripts", "deploy.sh")], {
+    encoding: "utf8",
+    env: { PATH: `${stubs}:${process.env.PATH}`, STUB_REALM: "never" },
+  });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stderr, /ERROR: deploy of origin\/main failed; rolling back to abc1234fullsha/);
+  assert.match(
+    r.stderr,
+    /realm pflanzendex did not answer 200 at http:\/\/127\.0\.0\.1:8080\/realms\/pflanzendex\/\.well-known\/openid-configuration inside keycloak after 60 tries/,
+  );
+  assert.match(r.stderr, /ROLLBACK FAILED: manual intervention required/);
+  const steps = readFileSync(events, "utf8").trim().split("\n");
+  assert.ok(!steps.includes("master-realm"), "master-realm.sh did not run");
+  assert.ok(!steps.includes("smoke"), "the smoke test did not run");
+  // 60 tries for the deploy and 60 for the rollback: the previous commit waits for the same realm.
+  assert.equal(steps.filter((step) => step === "realm").length, 120);
 });
