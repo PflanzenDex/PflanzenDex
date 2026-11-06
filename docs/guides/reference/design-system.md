@@ -36,7 +36,7 @@ src/
 ├── app/                         # composition root (FR-QG-23 step 3): the only layer that combines several modules
 │   ├── main.tsx                 # bootstrap: providers, router, service worker registration
 │   ├── routes.tsx               # route table: composes module index.ts exports and shared components (DS-05)
-│   ├── title.ts, sammlung-view.ts
+│   ├── sammlung-view.ts
 │   ├── frame/                   # AppShell and its parts (app-shell, global-header, mobile-nav-bar, side-nav), the app root (app/)
 │   ├── destinations/            # the areas: today-area, collection-area, discover-area, account-area; area-parts/
 │   ├── flows/                   # onboarding, unlock, add-plant; index.ts is their public interface
