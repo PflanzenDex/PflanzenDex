@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { baselineChanges } from "../../../.claude/hooks/baseline-growth.mjs";
 import { idsIn, problems, specIds } from "./merge-pr.mjs";
 
 const known = new Set(["US-BES-06", "FR-QG-11"]);
@@ -137,4 +138,117 @@ test("US-DEV-02: other checks and a missing ci-status run do not count as green"
     startedAt: "2026-01-01T23:15:00Z",
   });
   assert.match(problems(other, known)[0], /not reported/);
+});
+
+// Baseline growth (US-QG-07): the versions come from the merge base and the head; the test injects them.
+const UI = "app/config/gates/baselines/ui-text-baseline.json";
+const ui = (count) =>
+  JSON.stringify(
+    { maxTotal: count, entries: [{ file: "app/packages/web/src/a.tsx", count }] },
+    null,
+    2,
+  );
+const withBaseline = (...paths) => ({
+  ...ok,
+  baseRefOid: "base0",
+  headRefOid: "head0",
+  files: [...ok.files, ...paths.map((path) => ({ path }))],
+});
+/** Dependencies that read `before` at the merge base and `after` at the head. */
+const versions = (before, after, named = () => true) => ({
+  mergeBase: () => "merge0",
+  readAt: (sha) => (sha === "merge0" ? before : after),
+  namedAtHead: named,
+});
+
+test("US-QG-07: a PR that grows a baseline is refused, and the refusal names the file", () => {
+  const pr = withBaseline(UI);
+  const found = problems(pr, known, baselineChanges(pr, versions(ui(2), ui(3))));
+  assert.equal(found.length, 1);
+  assert.match(found[0], /baseline grows: app\/config\/gates\/baselines\/ui-text-baseline\.json/);
+  assert.match(found[0], /count rose from 2 to 3/);
+});
+
+test("US-QG-07: a PR that only shrinks baselines merges as before", () => {
+  const pr = withBaseline(UI);
+  assert.deepEqual(problems(pr, known, baselineChanges(pr, versions(ui(3), ui(2)))), []);
+});
+
+test("US-QG-07: a PR that adds a baseline file is refused, the file named", () => {
+  const pr = withBaseline(UI);
+  const found = problems(pr, known, baselineChanges(pr, versions(null, ui(1))));
+  assert.match(
+    found[0],
+    /baseline grows: app\/config\/gates\/baselines\/ui-text-baseline\.json \(a new baseline file\)/,
+  );
+});
+
+test("US-QG-07: a PR that deletes a baseline is refused while code at the head still names it, and merges when none does", () => {
+  const pr = withBaseline(UI);
+  const named = problems(
+    pr,
+    known,
+    baselineChanges(
+      pr,
+      versions(ui(2), null, () => true),
+    ),
+  );
+  assert.match(named[0], /deleted while its gate still names it/);
+  assert.deepEqual(
+    problems(
+      pr,
+      known,
+      baselineChanges(
+        pr,
+        versions(ui(2), null, () => false),
+      ),
+    ),
+    [],
+  );
+});
+
+test("US-QG-07: a version that cannot be fetched refuses the PR and names the file", () => {
+  const pr = withBaseline(UI);
+  const changes = baselineChanges(pr, {
+    mergeBase: () => "merge0",
+    readAt: () => {
+      throw new Error("HTTP 500");
+    },
+    namedAtHead: () => true,
+  });
+  const found = problems(pr, known, changes);
+  assert.equal(found.length, 1);
+  assert.match(
+    found[0],
+    /baseline app\/config\/gates\/baselines\/ui-text-baseline\.json: a version cannot be read \(HTTP 500\)/,
+  );
+});
+
+test("US-QG-07: a merge base that cannot be found refuses every changed baseline, the files named", () => {
+  const pr = withBaseline(UI);
+  const changes = baselineChanges(pr, {
+    mergeBase: () => {
+      throw new Error("no such commit");
+    },
+    readAt: () => ui(1),
+    namedAtHead: () => true,
+  });
+  assert.match(problems(pr, known, changes)[0], /ui-text-baseline\.json.*no such commit/);
+});
+
+test("US-QG-07: baseline versions are read at the merge base and at the head, and no other file is read", () => {
+  const calls = [];
+  const pr = withBaseline(UI);
+  baselineChanges(pr, {
+    mergeBase: () => "merge0",
+    readAt: (sha, path) => {
+      calls.push([sha, path]);
+      return ui(2);
+    },
+    namedAtHead: () => true,
+  });
+  assert.deepEqual(calls, [
+    ["merge0", UI],
+    ["head0", UI],
+  ]);
 });

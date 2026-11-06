@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { baselineGrows, isBaselineFile, textAfter } from "./baseline-growth.mjs";
 import {
   isCodePath,
   isGateFile,
@@ -40,12 +41,34 @@ function codeFingerprint() {
 }
 const stateFile = () => path.join(run("git", ["rev-parse", "--absolute-git-dir"]).trim(), "claude-gates-fingerprint");
 
+// Why an edit of a baseline grows it, or null when it only shrinks it (US-QG-07). The file on disk and the tool input
+// give the resulting text; an edit that cannot be placed exactly counts as growth.
+function baselineEditGrowth(file, toolInput) {
+  const abs = path.join(root, file);
+  const before = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+  if (before === null) return "a new baseline file";
+  const after = textAfter(toolInput, before);
+  if (after === null) return "the edit cannot be placed exactly on the file";
+  const { grows, reasons } = baselineGrows(file, before, after);
+  return grows ? reasons.join("; ") : null;
+}
+
 const handlers = {
   "guard-edit"() {
     const file = relative(input.tool_input?.file_path ?? input.tool_input?.notebook_path);
     if (isMigrationFile(file) && fs.existsSync(path.join(root, file))) return preToolUse("deny", MIGRATION_REASON);
     if (isGateFile(file)) {
       preToolUse("ask", `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green (US-QG-07).`);
+    } else if (isBaselineFile(file)) {
+      let reason;
+      try {
+        reason = baselineEditGrowth(file, input.tool_input ?? {});
+      } catch (e) {
+        // Fail closed: a baseline that cannot be judged goes to a human.
+        reason = `it could not be judged (${e.message.split("\n")[0]})`;
+      }
+      if (reason)
+        preToolUse("ask", `${file} is a baseline and this change grows it: ${reason}. A baseline may only shrink; growth needs a human (US-QG-07, FR-QG-17).`);
     }
   },
   "guard-bash"() {
