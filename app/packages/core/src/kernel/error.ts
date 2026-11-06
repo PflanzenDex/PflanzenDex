@@ -121,6 +121,12 @@ export const ERROR_TEXTS = {
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
+  "discover.undo_not_last":
+    "Nur die letzte Ja- oder Nein-Entscheidung lässt sich zurücknehmen. Seither hast du eine andere Karte entschieden; diese Art bleibt, wie sie ist.",
+  "discover.undo_changed":
+    "Der Wunsch wurde seit der Entscheidung geändert, zum Beispiel gekauft oder verworfen. Deshalb lässt er sich nicht mehr zurücknehmen; ändere ihn in der Wunschliste.",
+  "discover.not_a_decision":
+    "Diese Art hast du nicht auf einer Entdecken-Karte entschieden. Es wurde nichts zurückgenommen; ändere sie in der Wunschliste.",
   ...ONBOARDING_ERROR_TEXTS,
   ...WUN_ERROR_TEXTS,
   "pokedex.not_caught":

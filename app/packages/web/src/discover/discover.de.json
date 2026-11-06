@@ -8,6 +8,7 @@
   "deck.end.title": "Für heute durch. {saved} neu auf der Wunschliste.",
   "deck.end.description": "Weitere Vorschläge gibt es mit einem neuen Stapel.",
   "deck.newDeck": "Neuer Stapel",
+  "deck.undo": "Rückgängig",
   "deck.position": "Vorschlag {position} von {total}",
   "deck.hint": "„Ja“ legt die Art auf die Wunschliste, „Nein“ verwirft sie dort, „Später“ speichert nichts.",
   "page.signIn": "Bitte melde dich an.",
