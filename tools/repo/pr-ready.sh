@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# `make pr [PR=<n>]` (US-DEV-10): the step before a pull request goes to review. Pushes the branch and marks the PR
+# `make pr [PR=<n>]` (US-DEV-13): the step before a pull request goes to review. Pushes the branch and marks the PR
 # ready. It does not touch README.md: the statistics block changes with every merge into dev, so regenerating it
 # per PR made parallel PRs conflict (owner decision 2026-10-05). The block is regenerated once per release PR
 # (skill release-checklist) or by hand with `make repo-stats`.

@@ -1,4 +1,4 @@
-// Tests for tools/repo/repo-stats.sh and tools/repo/pr-ready.sh (US-DEV-10) against a throwaway git repository.
+// Tests for tools/repo/repo-stats.sh (US-DEV-10) and tools/repo/pr-ready.sh (US-DEV-13) against a throwaway git repository.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -172,7 +172,7 @@ function prFixture(t) {
   return { dir, origin, run, ghCalls };
 }
 
-test("US-DEV-10: make pr leaves README.md alone, pushes and marks the PR ready", (t) => {
+test("US-DEV-13: make pr leaves README.md alone, pushes and marks the PR ready", (t) => {
   const { dir, origin, run, ghCalls } = prFixture(t);
   const before = readme(dir);
   const head = git(dir, "rev-parse", "HEAD");
@@ -189,7 +189,7 @@ test("US-DEV-10: make pr leaves README.md alone, pushes and marks the PR ready",
   assert.deepEqual(ghCalls(), ["pr ready 42", "pr ready"]);
 });
 
-test("US-DEV-10: make pr refuses on dev, on main and when detached, and changes nothing", (t) => {
+test("US-DEV-13: make pr refuses on dev, on main and when detached, and changes nothing", (t) => {
   const { dir, run, ghCalls } = prFixture(t);
   for (const [setup, reason] of [
     [() => git(dir, "switch", "-q", "dev"), /branch dev/],
@@ -206,7 +206,7 @@ test("US-DEV-10: make pr refuses on dev, on main and when detached, and changes 
   assert.deepEqual(ghCalls(), []);
 });
 
-test("US-DEV-10: make pr refuses with uncommitted changes or while a merge is in progress", (t) => {
+test("US-DEV-13: make pr refuses with uncommitted changes or while a merge is in progress", (t) => {
   const { dir, run, ghCalls } = prFixture(t);
   write(dir, "notes.txt", "draft\n");
   const dirty = run();

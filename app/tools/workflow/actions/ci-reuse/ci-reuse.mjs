@@ -5,7 +5,7 @@
 // failed, cancelled, still running after the wait) answers `none`, and the job runs in full.
 // Usage (ci.yml, job `reuse`): node ci-reuse.mjs <job name>... with GH_TOKEN, GITHUB_REPOSITORY, HEAD_SHA,
 // GITHUB_RUN_ID and GITHUB_OUTPUT set. Writes `<job name>=success|none` per job.
-// The check-run evidence that `make ci-wait` judges (evidenceOf, scanRowsOf, US-DEV-10) is here too, next to runIdOf.
+// The check-run evidence that `make ci-wait` judges (evidenceOf, scanRowsOf, US-DEV-13) is here too, next to runIdOf.
 import { appendFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
