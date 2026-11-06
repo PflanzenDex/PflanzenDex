@@ -4,5 +4,6 @@
   "welcome.register": "Konto anlegen",
   "welcome.otherAccount": "Anderes Konto",
   "loading.label": "Einen Moment, die Anmeldung wird geprüft …",
-  "error.retry": "Erneut versuchen"
+  "error.retry": "Erneut versuchen",
+  "signOut.failed": "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal."
 }
