@@ -19,3 +19,7 @@ ADR 0001 required one human approval on `dev` and kept agents from merging. In a
 - A PR with a green `ci-status` and a known story reaches `dev` without a second look; the quality bar is the gates and the tests, not a reviewer. Weak gates now matter more, and every gate change still needs a human.
 - The conditions are checked by a script, not by GitHub: an agent running under an admin account could still call the API directly. The hook and `AGENTS.md` stop that; if it proves insufficient, run agents under a bot account that has no bypass.
 - Apply the ruleset change on GitHub after the merge (`tools/repo/rulesets-apply.sh`); the file in the repo alone changes nothing.
+
+## Note (2026-11-06)
+
+The `dev-review` entry above says that code-owner review still applies to agent configuration. It does not: `.github/rulesets/dev-review.json` sets `require_code_owner_review` to false. Review happens from `dev` to `main` (owner decision 2026-11-06, issue 1408). The text above stays as recorded.
