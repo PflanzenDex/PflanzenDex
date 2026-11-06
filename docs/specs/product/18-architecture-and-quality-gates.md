@@ -157,6 +157,7 @@ Acceptance criteria:
 - Task-specific **playbooks** (e.g. "add a new operation", "implement a new epic") live as skills in the repo; the agent checks before improvising whether one fits.
 - Before "done" the agent runs `make ci` (or the equivalent) and reports the result honestly (pass/fail), not just "should work".
 - The agent does not commit unasked; it changes no gates or thresholds to get around a failure (exceptions need a reason in the PR).
+- The Claude Code hook asks a human before the first edit of each gate file on a branch. The edit that went through is recorded in the git directory of the worktree (not tracked, not shared with other worktrees), keyed by branch; later edits of that file on that branch ask nothing. Another gate file, the same file on another branch or in another worktree, and a detached HEAD ask again. A record that is missing, unreadable or malformed asks (fail closed), and an edit of the record itself asks. Applied migrations and the rule for baselines that grow do not change.
 
 ### US-QG-08 · Complexity stays manageable · 🟨
 
