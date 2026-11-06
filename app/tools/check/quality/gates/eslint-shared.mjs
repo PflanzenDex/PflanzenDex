@@ -17,13 +17,16 @@ export const RESULTS_ENV = "GATES_ESLINT_RESULTS";
 const SWITCHES = ["QUALITY_BASELINE", "CONSTANTS_BASELINE", "UI_TEXT_BASELINE"];
 
 // What a result depends on beyond the file itself (issue 1608): the config and the locked dependencies, the rule code, the
-// rule filter of the shared pass (the gates folder), and the source of core, which the constants rule reads when it loads
-// (eslint-constants.mjs). ESLint's own cache sees none of these, so a change in one of them must change the key.
+// rule filter of the shared pass (the gates folder), the source of core, which the constants rule reads when it loads
+// (eslint-constants.mjs), and config/gates: eslint.config.js reads the baselines and quality limits from there when it
+// loads. Every one of them is keyed here by its own content, so the key does not wait for ESLint's config hash to notice
+// a change. ESLint's own cache sees none of these, so a change in one of them must change the key.
 const KEY_FILES = ["eslint.config.js", "package-lock.json"];
 const KEY_DIRS = [
   "tools/check/code",
   "tools/check/quality/gates",
   "config/lint",
+  "config/gates",
   "packages/core/src",
 ];
 const HEX_NAME = /^[0-9a-f]{64}\.json$/;

@@ -139,13 +139,15 @@ describe("US-QG-01 shared ESLint pass", () => {
 });
 
 // The inputs of the ESLint cache key (issue 1608) in a small app folder: the config, the lock file, the rule code, the
-// rule filter of the shared pass, the lint config and core's source. The web source is not one of them.
+// rule filter of the shared pass, the lint config, core's source and config/gates. The web source is not one of them.
 const KEYED_FILES = {
   "eslint.config.js": "export default [];\n",
   "package-lock.json": "{}\n",
   "tools/check/code/rule.mjs": "export const rule = 1;\n",
   "tools/check/quality/gates/filter.mjs": "export const filter = 1;\n",
   "config/lint/layout.config.mjs": "export default {};\n",
+  "config/gates/quality-limits.json": '{ "default": { "maxLines": 200 } }\n',
+  "config/gates/baselines/quality-baseline.json": "{}\n",
   "packages/core/src/enum.ts": 'export const X = ["a"] as const;\n',
 };
 
@@ -169,6 +171,20 @@ describe("US-QG-01 ESLint cache key and file", () => {
         fs.writeFileSync(file, text);
         assert.equal(eslintCacheKey(dir), before, `${name} restored`);
       }
+    }));
+
+  it("US-QG-01 (issue 1608): a change in a file under config/gates changes the key, also in a new file of its subfolder", () =>
+    withTempDir((dir) => {
+      writeKeyedApp(dir);
+      const before = eslintCacheKey(dir);
+      fs.writeFileSync(
+        path.join(dir, "config/gates/quality-limits.json"),
+        '{ "default": { "maxLines": 201 } }\n',
+      );
+      const limits = eslintCacheKey(dir);
+      assert.notEqual(limits, before);
+      fs.writeFileSync(path.join(dir, "config/gates/baselines/new-baseline.json"), "{}\n");
+      assert.notEqual(eslintCacheKey(dir), limits);
     }));
 
   it("a file outside the keyed inputs, such as web source, leaves the key alone", () =>

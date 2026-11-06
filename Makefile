@@ -1,6 +1,11 @@
 # One entry point for every task (US-DEV-01). Local runs and CI use the same targets (FR-QG-01).
 # The Makefile holds no domain logic, only calls; an error stops the run and is never hidden (D-05).
 APP := app
+# Make exports command-line variables to every recipe and to every $(shell) call, and expands their values there. SCREEN
+# (of `make one-screen`) and FILES (of `make gate-plan`) are unexported before the first $(shell) below, so their raw values
+# are never expanded by make (issue 1608, measured with GNU make 4.4.1).
+unexport SCREEN
+unexport FILES
 # Test database (E-01: PostgreSQL in Docker). In CI the workflow provides it as a service.
 # In a worktree (US-DEV-08) .env.worktree supplies its own port; otherwise the fixed port 54329 is used.
 -include .env.worktree
@@ -156,7 +161,7 @@ ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories
 e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
-one-screen: $(if $(and $(SCREEN),$(SHARD)),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(SCREEN),$(filter 1,$(ONE_SCREEN_WRITE))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs one shard of the screens (CI, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
+one-screen: $(if $(and $(value SCREEN),$(value SHARD)),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(ONE_SCREEN_WRITE))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs one shard of the screens (CI, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD=$(SHARD) npm run one-screen
 

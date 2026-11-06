@@ -137,13 +137,38 @@ test("US-DEV-02: deleting a ref runs no gate", () => {
   assert.equal(remoteHas(sb, "feat"), false);
 });
 
-test("US-DEV-02: an empty commit with origin/dev's tree (the make claim push) runs no gate", () => {
+test("US-DEV-02: an empty commit with origin/dev's tree (the make claim push) runs only the secret scan", () => {
   const sb = sandbox();
   branchCommit(sb, "claim-x");
   const out = push(sb, ["origin", "claim-x"]);
   assert.equal(out.status, 0, out.stderr);
-  assert.deepEqual(makeCalls(sb), []);
+  assert.deepEqual(makeCalls(sb), ["secrets"]);
+  assert.match(
+    out.stdout + out.stderr,
+    /adds no content compared with origin\/dev, only the secret scan runs/,
+  );
   assert.equal(remoteHas(sb, "claim-x"), true);
+});
+
+test("US-DEV-02: a failing secret scan blocks a push with dev's tree, and the remote gets no ref", () => {
+  const sb = sandbox();
+  branchCommit(sb, "claim-s");
+  const out = push(sb, ["origin", "claim-s"], { MAKE_EXIT: "1" });
+  assert.notEqual(out.status, 0);
+  assert.match(out.stderr, /Push aborted: the secret scan failed/);
+  assert.deepEqual(makeCalls(sb), ["secrets"]);
+  assert.equal(remoteHas(sb, "claim-s"), false);
+});
+
+test("US-DEV-02: a deletion next to a push with dev's tree runs the secret scan once and no gate", () => {
+  const sb = sandbox();
+  gitOk(sb.repo, ["push", "-q", "origin", "dev:refs/heads/feat-d"]);
+  branchCommit(sb, "claim-d");
+  const out = push(sb, ["origin", ":feat-d", "claim-d"]);
+  assert.equal(out.status, 0, out.stderr);
+  assert.deepEqual(makeCalls(sb), ["secrets"]);
+  assert.equal(remoteHas(sb, "feat-d"), false);
+  assert.equal(remoteHas(sb, "claim-d"), true);
 });
 
 test("US-DEV-02: a push that adds content runs make gates and goes through when they pass", () => {
