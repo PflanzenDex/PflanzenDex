@@ -3,6 +3,7 @@ import assert from "node:assert";
 import { execSync, spawnSync } from "child_process";
 import {
   appendFileSync,
+  chmodSync,
   copyFileSync,
   cpSync,
   mkdirSync,
@@ -263,5 +264,56 @@ test("US-QG-02: symbolic links are not followed, so nothing outside the reposito
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("US-QG-04: a Markdown file that cannot be read fails the check and is named", (t) => {
+  // Root reads a file whatever its mode, so chmod cannot make it unreadable there.
+  if (process.getuid?.() === 0) return t.skip("root can read a file without permissions");
+  const root = fixtureRoot({
+    "docs/guides/ok.md": "# Ok\n",
+    "docs/guides/locked.md": "# Locked\n",
+  });
+  const locked = join(root, "docs", "guides", "locked.md");
+  try {
+    chmodSync(locked, 0o000);
+    const run = runCheck(root);
+    assert.strictEqual(
+      run.status,
+      1,
+      `expected exit 1, got ${run.status}\n${run.stdout}${run.stderr}`,
+    );
+    assert.match(run.stderr, /docs\/guides\/locked\.md: cannot be read \(/);
+    assert.match(run.stderr, /1 of 2 Markdown files were not checked/);
+    assert.doesNotMatch(run.stdout, /All relative links are valid/);
+    assert.doesNotMatch(run.stderr, /All relative links are valid/);
+  } finally {
+    chmodSync(locked, 0o644);
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("US-QG-04: a broken link and an unreadable file in one run are both reported", (t) => {
+  if (process.getuid?.() === 0) return t.skip("root can read a file without permissions");
+  const root = fixtureRoot({
+    "docs/guides/broken.md": "# Broken\n\nSee [the missing page](./missing.md).\n",
+    "docs/guides/locked.md": "# Locked\n",
+  });
+  const locked = join(root, "docs", "guides", "locked.md");
+  try {
+    chmodSync(locked, 0o000);
+    const run = runCheck(root);
+    assert.strictEqual(
+      run.status,
+      1,
+      `expected exit 1, got ${run.status}\n${run.stdout}${run.stderr}`,
+    );
+    assert.match(run.stderr, /docs\/guides\/broken\.md:3 \[the missing page\]\(\.\/missing\.md\)/);
+    assert.match(run.stderr, /docs\/guides\/locked\.md: cannot be read \(/);
+    assert.doesNotMatch(run.stdout, /All relative links are valid/);
+    assert.doesNotMatch(run.stderr, /All relative links are valid/);
+  } finally {
+    chmodSync(locked, 0o644);
+    rmSync(root, { recursive: true, force: true });
   }
 });
