@@ -254,7 +254,7 @@ test("US-QG-07: baseline versions are read at the merge base and at the head, an
   ]);
 });
 
-// US-DEV-10: the per-job reading that `make merge` adds to the ci-status check. A green ci-status of a text-edit run
+// US-DEV-13: the per-job reading that `make merge` adds to the ci-status check. A green ci-status of a text-edit run
 // does not stand in for the full run: running, cancelled, failed or missing required jobs refuse the merge.
 const REQUIRED = [
   "changes",
@@ -303,11 +303,11 @@ const greenRuns = () => [
   check("ci-status", "completed", "success"),
 ];
 
-test("US-DEV-10: a PR whose required jobs all succeeded has no CI problem for make merge", () => {
+test("US-DEV-13: a PR whose required jobs all succeeded has no CI problem for make merge", () => {
   assert.deepEqual(problemsNow(headOf(greenRuns())), []);
 });
 
-test("US-DEV-10: make merge refuses while a job of the full run is unfinished, although the text edit's ci-status is green", () => {
+test("US-DEV-13: make merge refuses while a job of the full run is unfinished, although the text edit's ci-status is green", () => {
   const runs = greenRuns().map((c) =>
     c.name === "app-gates" ? check("app-gates", "in_progress", null, 2) : c,
   );
@@ -315,21 +315,21 @@ test("US-DEV-10: make merge refuses while a job of the full run is unfinished, a
   assert.match(problem, /^CI is still running \(app-gates\); wait for it with make ci-wait PR=7$/);
 });
 
-test("US-DEV-10: make merge refuses a required job that was cancelled in the full run", () => {
+test("US-DEV-13: make merge refuses a required job that was cancelled in the full run", () => {
   const runs = greenRuns().map((c) =>
     c.name === "app-gates" ? check("app-gates", "completed", "cancelled", 2) : c,
   );
   assert.ok(problemsNow(headOf(runs)).includes("CI: app-gates: cancelled"));
 });
 
-test("US-DEV-10: make merge refuses a required job that failed", () => {
+test("US-DEV-13: make merge refuses a required job that failed", () => {
   const runs = greenRuns().map((c) =>
     c.name === "app-gates" ? check("app-gates", "completed", "failure", 2) : c,
   );
   assert.ok(problemsNow(headOf(runs)).includes("CI: app-gates: failure"));
 });
 
-test("US-DEV-10: make merge refuses a required job that never ran", () => {
+test("US-DEV-13: make merge refuses a required job that never ran", () => {
   const runs = greenRuns().filter((c) => c.name !== "app-gates");
   assert.ok(
     problemsNow(headOf(runs)).includes(

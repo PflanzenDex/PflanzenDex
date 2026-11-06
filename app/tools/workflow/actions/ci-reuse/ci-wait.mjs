@@ -1,4 +1,4 @@
-// Waits until the CI of a pull request is final and prints the real result per job (US-DEV-10, `make ci-wait PR=<n>`).
+// Waits until the CI of a pull request is final and prints the real result per job (US-DEV-13, `make ci-wait PR=<n>`).
 // The judgement lives in ci-verdict.mjs (pure) and the text in ci-report.mjs; this module reads GitHub over REST, polls, and
 // decides when the PR is final. A PR is final when nothing on its head is unfinished for SETTLE_MS, because a run can start
 // shortly after another one finishes (ci.yml cancels and queues runs of one concurrency group).

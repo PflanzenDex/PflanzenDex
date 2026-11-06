@@ -23,4 +23,4 @@ The ruleset rule `code_scanning` in `.github/rulesets/dev-protection.json` and `
 
 ## Evidence
 
-The CodeQL analysis job is not in `ci-status`; the blocking part is the ruleset, which GitHub enforces on the merge. A failed `CodeQL` or `analyze (<language>)` check on the head is also named by `make ci-wait` and refuses `make merge` (US-DEV-10). No CI job compares the live rulesets with the versioned files. Results appear under Security, Code scanning.
+The CodeQL analysis job is not in `ci-status`; the blocking part is the ruleset, which GitHub enforces on the merge. A failed `CodeQL` or `analyze (<language>)` check on the head is also named by `make ci-wait` and refuses `make merge` (US-DEV-13). No CI job compares the live rulesets with the versioned files. Results appear under Security, Code scanning.
