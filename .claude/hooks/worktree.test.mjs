@@ -63,6 +63,20 @@ function assertAsks(output, reason) {
   assert.match(output.permissionDecisionReason, reason);
 }
 
+/** The hook denies an edit of an applied migration. */
+function assertDenies(output) {
+  assert.equal(output?.permissionDecision, "deny", JSON.stringify(output));
+  assert.match(output.permissionDecisionReason, /^Applied migrations are immutable/);
+}
+
+/** A migration file written in the repository at `dir`; it is not added to git. */
+function writeMigration(dir, name) {
+  const folder = join(dir, "app/packages/db/migrations");
+  mkdirSync(folder, { recursive: true });
+  writeFileSync(join(folder, name), "select 1;\n");
+  return join(folder, name);
+}
+
 // A ui-text baseline with one entry; the edits below change only its count.
 const baselineText = (count) =>
   `{\n  "maxTotal": ${count},\n  "entries": [{ "file": "app/packages/web/src/a.tsx", "count": ${count} }]\n}\n`;
@@ -72,12 +86,51 @@ test("US-QG-07, FR-QG-17: a session in the main checkout asks before an edit of 
   assertAsks(guard(main, { file_path: join(wt, "Makefile") }), /^Makefile defines a gate/);
 });
 
-test("US-QG-07, FR-QG-17: a session in the main checkout denies an edit of an applied migration in a worktree", (t) => {
+test("US-QG-07, US-DEV-07: a session in the main checkout denies an edit of a committed migration in a worktree", (t) => {
   const { main, wt } = checkout(t);
-  const dir = join(wt, "app/packages/db/migrations");
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "0001_fixture.sql"), "select 1;\n");
-  assert.equal(guard(main, { file_path: join(dir, "0001_fixture.sql") })?.permissionDecision, "deny");
+  const file_path = writeMigration(wt, "0001_fixture.sql");
+  git(wt, ["add", "--", "app/packages/db/migrations/0001_fixture.sql"]);
+  git(wt, ["commit", "-q", "-m", "fixture"]);
+  assertDenies(guard(main, { file_path }));
+});
+
+test("US-QG-07, US-DEV-07: an untracked new migration in a worktree is not denied", (t) => {
+  const { wt } = checkout(t);
+  assert.equal(guard(wt, { file_path: writeMigration(wt, "0002_new.sql") }), null);
+  // A migration that is not on disk yet is created by the edit itself, as before.
+  assert.equal(guard(wt, { file_path: join(wt, "app/packages/db/migrations/0003_missing.sql") }), null);
+});
+
+test("US-QG-07, US-DEV-07: an untracked new migration in the main checkout is not denied", (t) => {
+  const { main } = checkout(t);
+  assert.equal(guard(main, { file_path: writeMigration(main, "0002_new.sql") }), null);
+});
+
+test("US-QG-07, US-DEV-07: a new migration that is staged but in no commit is not denied", (t) => {
+  const { wt } = checkout(t);
+  const file_path = writeMigration(wt, "0002_new.sql");
+  git(wt, ["add", "--", "app/packages/db/migrations/0002_new.sql"]);
+  assert.equal(guard(wt, { file_path }), null);
+});
+
+test("US-QG-07, US-DEV-07: a committed migration in the main checkout is denied", (t) => {
+  const { main } = checkout(t);
+  const file_path = writeMigration(main, "0001_fixture.sql");
+  git(main, ["add", "--", "app/packages/db/migrations/0001_fixture.sql"]);
+  git(main, ["commit", "-q", "-m", "fixture"]);
+  assertDenies(guard(main, { file_path }));
+});
+
+test("US-QG-07, US-DEV-07: a migration that git cannot judge is denied (fail closed)", (t) => {
+  // Not a repository: the session root is the folder itself, so the migration path matches with no repository behind it.
+  const outside = mkdtempSync(join(tmpdir(), "hook-outside-migration-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  assertDenies(guard(outside, { file_path: writeMigration(outside, "0001_fixture.sql") }));
+  // A repository without a commit: HEAD does not exist, so git cannot say what it holds.
+  const unborn = mkdtempSync(join(tmpdir(), "hook-unborn-migration-"));
+  t.after(() => rmSync(unborn, { recursive: true, force: true }));
+  git(unborn, ["init", "-q", "-b", "main"]);
+  assertDenies(guard(unborn, { file_path: writeMigration(unborn, "0001_fixture.sql") }));
 });
 
 test("US-QG-07, FR-QG-17: a baseline in a worktree is judged by its own text, not by the copy in the main checkout", (t) => {

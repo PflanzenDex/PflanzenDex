@@ -9,20 +9,17 @@ import {
 import type { UserManager, User } from "oidc-client-ts";
 import { setProfileTimeZone } from "../shared/data";
 import { clearPhotoCache } from "../shared/platform/browser/use-stored-photo";
-import {
-  signOutEverywhere,
-  apiUrl,
-  getAccount,
-  oidcSettings,
-  type Account,
-} from "./api/account-api";
+import { signOutEverywhere, apiUrl, getAccount, type Account } from "./api/account-api";
+import { newManager, processReturn } from "./api/sign-in-client";
+import { texts } from "../shared/lib/text-rules/texts";
+import table from "./views/views.de.json";
 
 export type State =
   | { kind: "loading" }
-  | { kind: "signedOut"; hint?: string }
+  | { kind: "signedOut"; hint?: string; error?: string | undefined }
   /** Signed in at the sign-in service, but registration needs an invitation code (US-ACC-05). */
-  | { kind: "invitationNeeded" }
-  | { kind: "signedIn"; account: Account; error?: string }
+  | { kind: "invitationNeeded"; error?: string | undefined }
+  | { kind: "signedIn"; account: Account; error?: string | undefined }
   | { kind: "error"; text: string };
 
 const env = import.meta.env as Record<string, string | undefined>;
@@ -31,31 +28,7 @@ const MARKER = "pflanzendex.signed_out";
 const SILENT_TRIED = "pflanzendex.silent_tried";
 // "Konto anlegen" (US-ACC-01): "check" during its silent check, "after_logout" while the session ends.
 const REGISTER = "pflanzendex.register";
-
-// The sign-in library is about a seventh of the initial JavaScript; it loads as its own chunk, started at once
-// (the loading state paints meanwhile) instead of travelling inside the entry chunk (US-QS-07, DS-08).
-const library = import("oidc-client-ts");
-
-async function newManager(): Promise<UserManager> {
-  const { UserManager: Manager, WebStorageStateStore } = await library;
-  return new Manager({
-    ...oidcSettings(env, window.location.origin),
-    // The sign-in stays on the device (US-ACC-01); revocable via "sign out on all devices".
-    userStore: new WebStorageStateStore({ store: window.localStorage }),
-  });
-}
-
-// The redirect back from the sign-in service may be processed only once (React Strict Mode calls effects twice).
-let callback: Promise<User | undefined> | null = null;
-function processReturn(mgr: UserManager): Promise<User | undefined> {
-  const q = new URLSearchParams(window.location.search);
-  if (q.has("code") && q.has("state")) {
-    callback ??= mgr.signinCallback().then((u) => u ?? undefined);
-    return callback.finally(() => window.history.replaceState({}, "", window.location.pathname));
-  }
-  if (q.has("error")) window.history.replaceState({}, "", window.location.pathname);
-  return mgr.getUser().then((u) => (u && !u.expired ? u : undefined));
-}
+const t = texts(table);
 
 // Once per tab, never after an explicit sign-out and never while the address still carries a result of the detour.
 function shouldTrySilently(): boolean {
@@ -126,10 +99,29 @@ async function loadState(mgr: UserManager): Promise<State> {
   }
 }
 
+// The error of a sign-out sits on the screen the person pressed the button on; a state without that field stays as it is.
+function withError(z: State, error: string | undefined): State {
+  if (z.kind === "signedIn" || z.kind === "signedOut" || z.kind === "invitationNeeded")
+    return { ...z, error };
+  return z;
+}
+
 function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetStateAction<State>>) {
   // "Abmelden" and "Anderes Konto" end the session first: `prompt=login` would not help, because Keycloak refuses
   // another person while the first session is alive ("already signed in with another user", Keycloak 26.8).
-  const signOut = () => void manager.then((mgr) => endSession(mgr));
+  // A failure (the sign-in service unreachable, the sign-in library not loading) is said where the button was pressed
+  // and the marker is as it was: this press signed nobody out, but a real sign-out before it still counts. Each press
+  // starts without the old error and may retry.
+  const signOut = () => {
+    const signedOutBefore = window.sessionStorage.getItem(MARKER) !== null;
+    setState((z) => withError(z, undefined));
+    void manager
+      .then((mgr) => endSession(mgr))
+      .catch(() => {
+        setState((z) => withError(z, t("signOut.failed")));
+        if (!signedOutBefore) window.sessionStorage.removeItem(MARKER);
+      });
+  };
   return {
     signIn: () => {
       window.sessionStorage.removeItem(MARKER);
@@ -145,6 +137,7 @@ function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetSta
     signOut,
     useAnotherAccount: signOut,
     everywhereSignOut: async () => {
+      setState((z) => withError(z, undefined));
       const mgr = await manager;
       const user = await mgr.getUser();
       try {

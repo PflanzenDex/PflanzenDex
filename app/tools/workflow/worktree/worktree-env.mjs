@@ -40,6 +40,7 @@ export function worktreeEnv(branch) {
 
 const exec = promisify(execFile);
 const MB = 1024 * 1024;
+const TOOL_CACHES = [".vite", ".vitest-cache"];
 
 const lockOf = (app) => {
   const file = path.join(app, "package-lock.json");
@@ -80,6 +81,9 @@ export async function copyTree(source, target) {
       const to = path.join(target, folder);
       const flags = process.platform === "linux" ? ["-a", "--reflink=auto"] : ["-a"];
       await exec("cp", [...flags, from, to], { maxBuffer: MB });
+      // Test caches describe the source's files: a stale one fails tests in the new worktree (US-DEV-08).
+      for (const cache of TOOL_CACHES)
+        rmSync(path.join(to, cache), { recursive: true, force: true });
       const { stdout } = await exec("find", [to, "-type", "l", "-lname", `${source}/*`], {
         maxBuffer: MB,
       });

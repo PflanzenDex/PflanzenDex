@@ -94,6 +94,26 @@ function bashWhere() {
   }
 }
 
+// Whether HEAD of the file's repository lacks the file, so it is a new migration (US-QG-07, US-DEV-07). An untracked or
+// only staged file is missing from HEAD; an applied one is in it. `git ls-tree HEAD -- <file>` exits 0 and prints nothing
+// for a missing path. `git cat-file -e HEAD:<file>` was the first choice, but it exits 128 for a missing path as well as
+// for every git failure, so its exit status cannot tell the two apart. Any other failure (not a repository, no commit
+// yet, git missing, timeout) gives no answer and counts as "in HEAD": the caller denies.
+function notInHead(folder, file) {
+  try {
+    const listed = execFileSync("git", ["ls-tree", "HEAD", "--", file], {
+      cwd: folder,
+      encoding: "utf8",
+      timeout: 3000,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return listed === "";
+  } catch {
+    // Fail closed: git did not say the file is missing.
+    return false;
+  }
+}
+
 const print = (obj) => process.stdout.write(JSON.stringify(obj));
 const preToolUse = (permissionDecision, permissionDecisionReason) =>
   print({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, permissionDecisionReason } });
@@ -126,7 +146,9 @@ function baselineEditGrowth(fileRoot, file, toolInput) {
 const handlers = {
   "guard-edit"() {
     const { root: fileRoot, file } = locate(input.tool_input?.file_path ?? input.tool_input?.notebook_path);
-    if (isMigrationFile(file) && fs.existsSync(path.join(fileRoot, file))) return preToolUse("deny", MIGRATION_REASON);
+    // An applied migration is immutable. A new one, not yet in HEAD, is filled in after `make migration` (US-DEV-07).
+    const migration = isMigrationFile(file) && fs.existsSync(path.join(fileRoot, file));
+    if (migration && !notInHead(fileRoot, file)) return preToolUse("deny", MIGRATION_REASON);
     if (isGateFile(file)) {
       preToolUse("ask", `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green (US-QG-07).`);
     } else if (isBaselineFile(file)) {

@@ -1,4 +1,4 @@
-// The verdict on the CI of one pull request, as a pure function of one snapshot (US-DEV-10, `make ci-wait PR=<n>`).
+// The verdict on the CI of one pull request, as a pure function of one snapshot (US-DEV-13, `make ci-wait PR=<n>`).
 // A text edit or a ready-for-review starts a CI run that skips the heavy jobs (reused from an earlier run, see ci-reuse.mjs),
 // and its `ci-status` is green while the full run is still going. So the verdict is per job, from every check run on the
 // head commit: the latest real result of each job (a skipped or cancelled run is no result). The jobs that count are the
