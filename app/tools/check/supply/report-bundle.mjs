@@ -95,7 +95,7 @@ export function sumByGroup(chunks) {
     .sort((a, b) => b.gzip - a.gzip || a.group.localeCompare(b.group));
 }
 
-/** Measure the initial chunks of a built dist; per-package numbers need `.map` files next to the chunks. */
+/** Measure the initial chunks of a built dist. Per-package numbers need `.map` files next to the chunks; a chunk without one is one "(no sourcemap)" package. */
 export function buildReport(dist) {
   const chunks = initialChunks(dist).map((abs) => {
     // the trailing sourceMappingURL comment only exists in this build; the gate's build has none
@@ -118,10 +118,11 @@ export function buildReport(dist) {
     return {
       file: path.relative(dist, abs),
       gzip: zlib.gzipSync(buf, { level: 9 }).length,
-      groups,
+      mapped: groups !== null,
+      groups: groups ?? new Map([["(no sourcemap)", buf.length]]),
     };
   });
-  const hasMaps = chunks.length > 0 && chunks.every((c) => c.groups);
+  const hasMaps = chunks.some((c) => c.mapped);
   return {
     total: chunks.reduce((s, c) => s + c.gzip, 0),
     hasMaps,
