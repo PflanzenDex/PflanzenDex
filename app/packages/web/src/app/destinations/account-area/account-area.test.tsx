@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { FeaturesProvider } from "@/shared/data";
+import { FeaturesProvider, type FeatureStates } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AccountArea } from "./account-area";
 
@@ -493,5 +493,68 @@ describe("US-QS-14 · US-QS-17 Konto has exactly one h1 on every width", () => {
     show("/account");
     await screen.findByRole("navigation", { name: "Abschnitte von Konto" });
     expect(headings1()).toEqual(["Konto"]);
+  });
+});
+
+describe("US-ONB-09 the keeper's switch achievement_views hides the section Erfolge in Konto", () => {
+  /** Konto with the keeper's features, the way the signed-in shell gives them to the area. */
+  const showWith = (path: string, features: FeatureStates) =>
+    render(
+      <FeaturesProvider features={features}>
+        <MemoryRouter initialEntries={[path]}>
+          <Address />
+          <AccountArea
+            api="http://api"
+            token={async () => "tok"}
+            account={account}
+            onSignOut={() => undefined}
+            onEverywhereSignOut={() => undefined}
+          />
+        </MemoryRouter>
+      </FeaturesProvider>,
+    );
+  const index = () => screen.findByRole("navigation", { name: "Abschnitte von Konto" });
+
+  it("US-ONB-09 with achievement_views off the index has no row Erfolge and asks nothing of /achievements", async () => {
+    fakeServer();
+    showWith("/account", { achievement_views: false });
+    const list = await index();
+    await within(list).findByRole("link", { name: /^Erinnerungen/ });
+    expect(within(list).queryByRole("link", { name: /^Erfolge/ })).toBeNull();
+    const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
+    expect(asked.some((path) => path.startsWith("/achievements"))).toBe(false);
+  });
+
+  it("US-ONB-09 with achievement_views on the index has the row Erfolge", async () => {
+    fakeServer();
+    showWith("/account", { achievement_views: true });
+    expect(await within(await index()).findByRole("link", { name: /^Erfolge/ })).toBeTruthy();
+  });
+
+  it("US-ONB-09 with achievement_views off the address /account/achievements leads to the index", async () => {
+    fakeServer();
+    showWith("/account/achievements", { achievement_views: false });
+    await waitFor(() => expect(screen.getByTestId("address").textContent).toBe("/account"));
+    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge" })).toBeNull();
+  });
+
+  it("US-ONB-09 with achievement_views off the former anchor /account#erfolge does not land on the section", async () => {
+    fakeServer();
+    showWith("/account#erfolge", { achievement_views: false });
+    await waitFor(() => expect(screen.getByTestId("address").textContent).toBe("/account"));
+    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge" })).toBeNull();
+  });
+
+  it("US-ONB-09 with achievement_views on the address /account/achievements opens the section Erfolge", async () => {
+    fakeServer();
+    showWith("/account/achievements", { achievement_views: true });
+    expect(await screen.findByRole("heading", { level: 1, name: "Erfolge" })).toBeTruthy();
+    expect(screen.getByTestId("address").textContent).toBe("/account/achievements");
+  });
+
+  it("US-ONB-09 a switch state that is not sent counts as on: the index has the row Erfolge", async () => {
+    fakeServer();
+    showWith("/account", {});
+    expect(await within(await index()).findByRole("link", { name: /^Erfolge/ })).toBeTruthy();
   });
 });

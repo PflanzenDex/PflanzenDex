@@ -19,6 +19,18 @@ const parse = (v: string | null | undefined): DiscoverView | null =>
   v === "suggestions" || v === "catalog" ? v : null;
 
 /**
+ * Whether the suggestions are offered. They are the function "discover" (US-ENT), and every Ja or Nein on a card writes a
+ * wish (US-ENT-04): so the keeper's switch of the wishlist (US-ONB-09) hides them as well as the switch of "discover".
+ * Without them the catalog stays.
+ */
+export function useSuggestionsOn(): boolean {
+  // Both are read before the result, so the hooks run in the same order on every render.
+  const discover = useFeature("discover");
+  const wishlist = useFeature("wishlist");
+  return discover && wishlist;
+}
+
+/**
  * The mode of the destination "Entdecken" (US-QS-14): from the address, else the one remembered on this device, else
  * the suggestions; an unknown value falls back like a missing one. Switching adds a history entry (back works),
  * remembers the choice and tells screen readers; the state `keepFocus` leaves the focus on the control (RouteFocus).
@@ -26,11 +38,10 @@ const parse = (v: string | null | undefined): DiscoverView | null =>
 export function useDiscoverView(): { view: DiscoverView; choose: (v: DiscoverView) => void } {
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
-  // The suggestions are the function "discover" (US-ENT): switched off by the keeper (US-ONB-09), the catalog stays.
-  const discover = useFeature("discover");
+  const suggestions = useSuggestionsOn();
   const asked =
     parse(params.get(DISCOVER_VIEW_PARAM)) ?? parse(readStored(DISCOVER_VIEW_KEY)) ?? "suggestions";
-  const view: DiscoverView = asked === "suggestions" && !discover ? "catalog" : asked;
+  const view: DiscoverView = asked === "suggestions" && !suggestions ? "catalog" : asked;
   const choose = (next: DiscoverView) => {
     if (next === view) return;
     writeStored(DISCOVER_VIEW_KEY, next);

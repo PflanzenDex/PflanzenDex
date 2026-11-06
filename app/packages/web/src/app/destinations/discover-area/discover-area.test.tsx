@@ -4,6 +4,7 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { FeaturesProvider, type FeatureStates } from "@/shared/data";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { DiscoverArea } from "./discover-area";
 import { DISCOVER_VIEW_KEY } from "./discover-view";
@@ -22,12 +23,12 @@ const empty = {
   },
 };
 
-function stubServer() {
+function stubServer(deck: unknown = empty) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
       const path = new URL(String(url)).pathname;
-      if (path === "/discover/suggestions") return response(200, empty);
+      if (path === "/discover/suggestions") return response(200, deck);
       if (path === "/species") return response(200, { species: [] });
       return response(200, {});
     }),
@@ -39,19 +40,21 @@ function Probe() {
   return <p data-testid="address">{l.pathname + l.search}</p>;
 }
 
-const renderAt = (path: string) =>
+const renderAt = (path: string, features?: FeatureStates) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <AnnouncerProvider>
-        <DiscoverArea
-          api="http://api"
-          token={async () => "tok"}
-          onChoose={() => {}}
-          profileSection={() => null}
-        />
-        <Probe />
-      </AnnouncerProvider>
-    </MemoryRouter>,
+    <FeaturesProvider features={features}>
+      <MemoryRouter initialEntries={[path]}>
+        <AnnouncerProvider>
+          <DiscoverArea
+            api="http://api"
+            token={async () => "tok"}
+            onChoose={() => {}}
+            profileSection={() => null}
+          />
+          <Probe />
+        </AnnouncerProvider>
+      </MemoryRouter>
+    </FeaturesProvider>,
   );
 
 const radio = (name: string) => screen.getByRole("button", { name });
@@ -179,5 +182,53 @@ describe("US-QS-14 the destination Entdecken with its switch Vorschläge | Katal
       "Vorschläge",
       "Katalog",
     ]);
+  });
+});
+
+describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions with Ja and Nein", () => {
+  /** One suggestion on the deck: a card with its buttons Nein, Später and Ja. */
+  const deckWithCard = {
+    deck: 1,
+    suggestions: [
+      {
+        species: "Aspidistra elatior",
+        germanName: "Schusterpalme",
+        summary: "Eine robuste Zimmerpflanze.",
+        family: "Asparagaceae",
+        lightZone: 3,
+        difficulty: 2,
+        imageUrl: "https://upload.example/aspidistra.jpg",
+        sourceUrl: "https://de.wikipedia.org/wiki/Aspidistra",
+        attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+        reasons: ["Diese Art hast du noch nicht gefangen."],
+      },
+    ],
+    empty: null,
+    zoneFilter: null,
+  };
+
+  it("US-ONB-09 with wishlist off Entdecken offers the catalog only: no Vorschläge, no Ja and no Nein, and no suggestion is asked", async () => {
+    stubServer(deckWithCard);
+    renderAt("/discover?view=suggestions", { wishlist: false });
+    await catalogShown();
+    expect(screen.queryByRole("button", { name: "Vorschläge" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ja" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Nein" })).toBeNull();
+    const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
+    expect(asked).not.toContain("/discover/suggestions");
+  });
+
+  it("US-ONB-09 with wishlist on Entdecken shows the card with Nein and Ja", async () => {
+    stubServer(deckWithCard);
+    renderAt("/discover", { wishlist: true });
+    expect(await screen.findByRole("article")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Nein" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ja" })).toBeTruthy();
+  });
+
+  it("US-ONB-09 with discover off Entdecken offers the catalog only, as before", async () => {
+    renderAt("/discover", { discover: false, wishlist: true });
+    await catalogShown();
+    expect(screen.queryByRole("button", { name: "Vorschläge" })).toBeNull();
   });
 });
