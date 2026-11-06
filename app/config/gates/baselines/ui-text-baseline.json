@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1279,
+  "maxTotal": 1265,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -656,10 +656,6 @@
     {
       "file": "packages/web/src/app/flows/add-plant/add-plant.tsx",
       "count": 8
-    },
-    {
-      "file": "packages/web/src/app/flows/onboarding/function-overview/function-overview.tsx",
-      "count": 14
     },
     {
       "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/onboarding-wizard.tsx",
