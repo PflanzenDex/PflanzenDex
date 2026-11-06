@@ -84,7 +84,7 @@ Acceptance criteria:
 - **CI stays cold (issue 1608):** Given a CI run, when it starts, then no cache of `app/.cache/gates/` is restored: `setup-app` caches `node_modules` only, and no workflow caches `app/.cache/`. The CI run depends on no local cache.
 - **Green result (issue 1608):** the record is one JSON file in the git directory of the worktree, keyed by the content: the tree of the working copy (uncommitted and untracked files that are not ignored), the commit of `origin/dev` (empty when missing), the lock stamp in `app/node_modules`, the Node version and `DUPLICATES_BASE`. Given `make gates` on a content whose record says that it passed, when it runs, then the steps are skipped, the output names the time of the pass and that `FRESH=1` runs them, and the exit code is 0. Given a changed tracked file, a new untracked file, a deleted file, a moved `origin/dev`, a changed lock stamp or another `DUPLICATES_BASE`, when it runs, then every step runs. Given `FRESH=1`, then every step runs and a pass is recorded again. Given a failed run, then the record is removed. Given an edit during the run, then nothing is recorded. Given an error while the key is computed or the record cannot be read, then every step runs and the output says why, and the run is never failed by it. Given `CI` is set, then no record is read or written and every step runs (D-02). `make gates` runs `secrets` and `workflows` before the check, every time (test: `run-gates.test.mjs`).
 
-### US-QG-02 · CI decides on the merge · ⬜
+### US-QG-02 · CI decides on the merge · 🟨
 
 As a **developer** I want a release (merge from `dev` to `main`) to happen only with a green pipeline.
 
