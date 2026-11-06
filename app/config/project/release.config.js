@@ -2,6 +2,8 @@
 // Result: git tag `vX.Y.Z` and a GitHub release with notes. Nothing is committed back to `main`
 // (rulesets block direct pushes; the version comes from the tag, ADR 0002).
 
+import { fileURLToPath } from "node:url";
+
 // `0.x` until the first release for outside users (stage 2): a breaking change only bumps the minor version.
 // Remove this rule in a dedicated PR to release 1.0.0.
 const BEFORE_1_0 = [{ breaking: true, release: "minor" }];
@@ -39,6 +41,9 @@ export default {
       "@semantic-release/release-notes-generator",
       { preset: "conventionalcommits", presetConfig: { types: SECTIONS } },
     ],
+    // US-DEV-06, FR-DEV-07: the data state of the catalog and the tree, appended to the notes (tools/release/data-state-notes.mjs).
+    // An absolute path: semantic-release resolves relative plugin paths from the app folder, knip from this file.
+    fileURLToPath(new URL("../../../tools/release/data-state-notes.mjs", import.meta.url)),
     [
       "@semantic-release/github",
       { successCommentCondition: false, failCommentCondition: false, releasedLabels: false },
