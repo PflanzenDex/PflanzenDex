@@ -158,6 +158,12 @@
     "title": "Was die App kann"
   },
   {
+    "id": "account-news",
+    "account": "test2",
+    "path": "/account/news",
+    "title": "Neu in PflanzenDéx"
+  },
+  {
     "id": "account-data",
     "account": "test2",
     "path": "/account/data",

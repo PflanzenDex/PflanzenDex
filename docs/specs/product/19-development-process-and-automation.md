@@ -45,6 +45,20 @@ Acceptance criteria:
 - The targets run on Linux, macOS and under WSL; path differences (Python or Node call, virtualenv directories) are resolved **in one place**, not three times (finding from Tombola).
 - The Makefile contains no domain logic, only calls. Everything non-trivial lives in scripts (`scripts/`) with tests.
 
+Scope of `make ci` against CI (issue 1397): `make ci` runs the three parts that every pull request runs, in CI order: `make ci-gates` (job `app-gates`), `make ci-tests-base`, `make ci-tests-web` and `make ci-coverage` (jobs `app-tests`, `app-tests-web`, `app-coverage`) and `make ci-ui` (job `app-ui`). The other CI jobs stay CI-only, because each needs something a quick local run should not demand. Each still has its own `make` target, so it can be run locally on demand with the same command CI uses:
+
+| CI job                        | Local target                                    | Why it is not part of `make ci`                                                                                                         |
+| ----------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ds-snapshots`                | `make ds-snapshots-check`                       | Runs in the pinned Playwright container so the pictures match pixel for pixel; it needs Docker and takes minutes.                       |
+| `lighthouse`                  | `make lighthouse`                               | Three Lighthouse runs on a production build; a laptop's numbers differ from CI's, so its limits are judged in CI.                       |
+| `one-screen`, `a11y-routes`   | `make one-screen`, `make a11y-routes`           | Need the real stack with the sign-in service (`auth-up`), a migrated database, the demo seed and browsers.                              |
+| `e2e`                         | `make e2e`                                      | Release pull requests into `main` and manual runs only (E-15); it needs the same stack.                                                 |
+| `audit`                       | `make audit`                                    | Release pull requests into `main` only; it asks the npm registry, so its answer changes without a code change.                          |
+| `metadata`                    | `make commitlint MSG=…`, `make changelog-check` | Checks the pull request title and description, which exist only on GitHub; the `commit-msg` hook runs commitlint on every local commit. |
+| `dependency-review`, `CodeQL` | none                                            | GitHub services without a local equivalent.                                                                                             |
+
+So the criterion "`make ci` has the same scope as the CI jobs" holds for the jobs every pull request into `dev` must pass to merge, except the ones in this table; CI repeats every check anyway (D-02).
+
 ### US-DEV-02 · Hooks catch early without annoying · 🟨
 
 As a **developer** I want checks exactly when they are cheapest.
@@ -141,7 +155,7 @@ Acceptance criteria:
 - **Trigger and chain:** a release is the merge from `dev` to `main` via pull request with the full suite. The release workflow runs on `main` **only for commits with a green `ci-status`** (pattern: `workflow_run` on "CI Pipeline" with a status check), only then the deploy. A red CI aborts both without creating a version. After the release `main` is merged back into `dev`, so that changelog and version commits do not let the branches diverge.
 - **Result of a release:** git tag, release notes from the commits as a GitHub release (instead of `CHANGELOG.md` in the repo, ADR [0002](../../adr/0002-release-from-tags.md)), container image, database migrations (US-DEV-07), catalog/tree state (versioned, separate from the code, US-POK-03).
 - **Version visible:** the version is in the app (footer/about page), in error reports and in the health endpoint. One source (tag), no second maintenance (pattern `sync_version.py`, but without writing into versioned files).
-- **User-facing changelog:** for `feat:` and `fix:` QG-U3 demands a short German entry ("New in this version") that the app displays. For internal changes `[skip-changelog]` suffices.
+- **User-facing changelog:** for `feat:` and `fix:` QG-U3 demands a short German entry ("New in this version") that the app displays. For internal changes `[skip-changelog]` suffices. State of implementation (#1403): the lines show on the page "Neu in PflanzenDéx" in "Konto", and once on "Heute" a hint names the lines this device has not seen yet.
 - **Cut:** release contents follow R0 to R6 (`16-…`). A release is approved only when the core flows of its cut are green (FR-QG-08) and, for social releases, QG-D1/QG-D2 stand.
 - **Feature flags:** social functions (R2, R3), AI (R4) and recommendations (R5) can be switched off per account or globally. This allows shipping code early and opening the function first for the three start users. A function the operator switched off is never announced as "coming soon"; staged introduction by the keeper is a different thing (epic ONB, FR-ONB-03). The keeper's own switches (US-ONB-09, P-12) are a second, separate level: they hide a feature for one keeper only and never change the operator's switches.
   - **Global switch** (assumption, decided by the PO): the environment variable `FEATURES`, a list of `social`, `ai`, `recommendations` (e.g. `social,ai`). In production nothing set means all off; in development and tests nothing set means all on. An unknown name stops the start.

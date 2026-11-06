@@ -163,4 +163,11 @@ describe("US-QS-17 the index of Konto", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
+
+  it("US-DEV-06 the index has a row that opens the page Neu in PflanzenDéx", async () => {
+    fakeServer();
+    show();
+    const link = await screen.findByRole("link", { name: "Neu in PflanzenDéx" });
+    expect(link.getAttribute("href")).toBe("/account/news");
+  });
 });

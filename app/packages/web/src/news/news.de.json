@@ -1,9 +1,11 @@
 {
   "unreleased": [
+    "Fotos: Sendest du ein Foto nach einer ausgebliebenen Antwort noch einmal, bleibt es ein einziges Foto. Die App fragt dann nicht, ob das Foto ersetzt werden soll.",
     "Entdecken: Ein Ja oder Nein lässt sich jetzt mit „Rückgängig“ zurücknehmen, und die nächste Karte ist darunter schon zu sehen.",
     "Name: Die App schreibt sich jetzt überall PflanzenDéx, auch beim Anmelden, in Mails und in Benachrichtigungen.",
     "Installieren: PflanzenDéx lässt sich jetzt auf dem Startbildschirm deines Handys ablegen und öffnet sich dann ohne Browserleiste. Die App hat dafür ein eigenes Symbol: eine Pflanze im Topf in der Markenfarbe.",
     "Schlechte Verbindung: Wird eine Eingabe nach einer ausgebliebenen Antwort erneut gesendet, entsteht kein doppelter Eintrag mehr, etwa eine zweite Messung.",
+    "Neu in PflanzenDéx: Unter Konto zeigt die Seite „Neu in PflanzenDéx“, was sich geändert hat, und Heute weist einmal auf neue Einträge hin.",
     "Tastatur: Öffnest du die App über „/“ oder eine alte Adresse, bleibt der Fokus nach der Weiterleitung oben auf der Seite. Die Tab-Taste erreicht zuerst „Zum Inhalt springen“.",
     "Klarere Worte: Die Verteilung auf die Zonen sagt jetzt „am leersten“ und schlägt die Wunschliste vor. Die Einstellungen der Erinnerungen nennen die Pause „Erinnerungspause“.",
     "Wunschbilder: Die Karten der Wunschliste laden jetzt ein kleines Vorschaubild statt des großen Bildes. Das geht schneller und braucht weniger Daten.",

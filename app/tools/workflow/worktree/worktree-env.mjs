@@ -1,6 +1,7 @@
 // Unique resources per worktree (US-DEV-08): port and database name are derived deterministically
 // from the branch name, so parallel runs never share a test database or a port.
-// Usage: node app/tools/workflow/worktree-env.mjs <branch>   -> prints KEY=VALUE lines (for .env.worktree)
+// Usage: node app/tools/workflow/worktree/worktree-env.mjs <branch>   -> prints KEY=VALUE lines (for .env.worktree)
+// `make dev` reads the file back (dev-servers.mjs, same folder).
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
