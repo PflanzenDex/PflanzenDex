@@ -159,3 +159,157 @@ describe("NFR-12 · DS-08 a first open says that the window is loading", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 });
+
+/** Records every `role="status"` node that enters the DOM, also one that leaves again before anyone looks (US-QS-07). */
+function watchStatus() {
+  const entered: string[] = [];
+  const collect = (records: MutationRecord[]) => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        for (const el of [node, ...Array.from(node.querySelectorAll("[role='status']"))]) {
+          if (el.matches("[role='status']")) entered.push(el.textContent ?? "");
+        }
+      }
+    }
+  };
+  const observer = new MutationObserver(collect);
+  observer.observe(document.body, { childList: true, subtree: true });
+  return {
+    /** The number of status nodes that have entered the DOM since the watch started. */
+    count: () => {
+      collect(observer.takeRecords());
+      return entered.length;
+    },
+    stop: () => {
+      collect(observer.takeRecords());
+      observer.disconnect();
+    },
+  };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that opens quickly shows none", () => {
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-08 a %s whose chunk arrives at once opens without a loading status, which never enters the DOM",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const watch = watchStatus();
+      await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+      expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+      expect(watch.count()).toBe(0);
+      watch.stop();
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-08 a %s whose chunk is already loaded opens at once, and no loading status enters the DOM",
+    async (kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      // Pointer enter starts the preload (DS-08); the test then waits until the module has arrived.
+      await userEvent.hover(trigger);
+      await (kind === "dialog"
+        ? import("./dialog-modal")
+        : import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"));
+      const watch = watchStatus();
+      await userEvent.click(trigger);
+      expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+      expect(watch.count()).toBe(0);
+      watch.stop();
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-08 a slow %s shows its loading status only after 300 ms, and the status goes when it opens",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+      await sleep(250);
+      expect(screen.queryByRole("status")).toBeNull();
+      await sleep(100);
+      expect(screen.getByRole("status").textContent).toBe("Fenster wird geladen …");
+      release();
+      expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+      expect(screen.queryByRole("status")).toBeNull();
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-07 · DS-08 a second open of the %s shows no loading status, because its chunk is loaded",
+    async (_kind, width) => {
+      const ResponsiveModal = await freshResponsiveModal();
+      setViewportWidth(width);
+      const release = holdChunk();
+      render(
+        <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+          <button>Speichern</button>
+        </ResponsiveModal>,
+      );
+      const trigger = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(trigger);
+      await screen.findByRole("status");
+      release();
+      await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog")).toBeNull();
+      const watch = watchStatus();
+      await userEvent.click(trigger);
+      expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+      expect(watch.count()).toBe(0);
+      watch.stop();
+    },
+  );
+
+  it("US-QS-07 · DS-23 the sheet's loading status is a centred panel, not anchored to the bottom edge, so it covers no navigation label", async () => {
+    const ResponsiveModal = await freshResponsiveModal();
+    setViewportWidth(360);
+    const release = holdChunk();
+    render(
+      <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+        <button>Speichern</button>
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const cls = (await screen.findByRole("status")).className;
+    expect(cls).toContain("left-1/2");
+    expect(cls).toContain("top-1/2");
+    expect(cls).toContain("-translate-y-1/2");
+    expect(cls).not.toContain("bottom-0");
+    expect(cls).not.toContain("inset-x-0");
+    release();
+    await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
+  });
+});

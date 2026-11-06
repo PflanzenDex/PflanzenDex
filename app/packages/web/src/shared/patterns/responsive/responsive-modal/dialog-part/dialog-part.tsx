@@ -3,20 +3,22 @@ import { Slot } from "@radix-ui/react-slot";
 import { Button } from "@/shared/ui/button/button";
 import { ChunkErrorBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
+import { useLoadingWindow } from "@/shared/platform/routing/lazy-page/loading-window";
 import { texts } from "@/shared/lib/text-rules/texts";
+import type { DialogModalProps } from "./dialog-modal/dialog-modal";
 import table from "./dialog-part.de.json";
 
 const t = texts(table);
 
 // The dialog (Radix: focus trap, scroll lock, portal) is only needed once a dialog opens, so its code is a lazy chunk
 // (DS-08, NFR-12). It loads on the first open, or earlier while the browser is idle (`ResponsiveModal`).
-const loadDialog = () =>
-  import("./dialog-modal/dialog-modal").then((m) => ({ default: m.DialogModal }));
-const DialogModal = lazyPage(loadDialog);
+const DialogModal = lazyPage(() =>
+  import("./dialog-modal/dialog-modal").then((m) => ({ default: m.DialogModal })),
+);
 
 /** Starts fetching the dialog code; a failure here is retried by the real open, which shows the error (P-10). */
 export function preloadDialog(): void {
-  void loadDialog().catch(() => undefined);
+  void DialogModal.load().catch(() => undefined);
 }
 
 /**
@@ -32,6 +34,16 @@ function DialogLoading() {
       <p className="text-base font-semibold">{t("dialog.loading")}</p>
     </div>
   );
+}
+
+/**
+ * The dialog once its chunk has loaded. Until then it shows the loading state, but only after the delay, so a dialog
+ * that is already loaded opens without a flash (US-QS-07, DS-08).
+ */
+function DialogWindow(props: DialogModalProps) {
+  const { Component, waiting } = useLoadingWindow(DialogModal, props.open);
+  if (Component) return <Component {...props} />;
+  return waiting ? <DialogLoading /> : null;
 }
 
 /** The error view of a dialog whose chunk failed: the text, a retry and a way out (P-10, DS-08). */
@@ -111,19 +123,17 @@ export function DialogPart(props: DialogPartProps) {
             ) : null
           }
         >
-          <React.Suspense fallback={open ? <DialogLoading /> : null}>
-            <DialogModal
-              open={open}
-              onOpenChange={onOpenChange}
-              title={title}
-              {...(description ? { description } : {})}
-              {...(closeLabel ? { closeLabel } : {})}
-              {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
-              returnFocusTo={opener}
-            >
-              {body}
-            </DialogModal>
-          </React.Suspense>
+          <DialogWindow
+            open={open}
+            onOpenChange={onOpenChange}
+            title={title}
+            {...(description ? { description } : {})}
+            {...(closeLabel ? { closeLabel } : {})}
+            {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
+            returnFocusTo={opener}
+          >
+            {body}
+          </DialogWindow>
         </ChunkErrorBoundary>
       ) : null}
     </>
