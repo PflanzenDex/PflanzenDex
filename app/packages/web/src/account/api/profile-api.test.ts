@@ -10,6 +10,7 @@ const PROFILE = {
   replenishBuffer: 2,
   positionThresholds: null,
   rarityConsent: false,
+  keyboardShortcuts: "plain" as const,
   notifications: {
     phase: true,
     treatment: false,

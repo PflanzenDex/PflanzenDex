@@ -2,6 +2,7 @@ import type { AccessCounts, AccessStore } from "./access";
 import type { OperatorCostFigure } from "./operator/operator-cost";
 import {
   defaultNotifications,
+  KEYBOARD_SHORTCUT_DEFAULT,
   REPLENISH_BUFFER_LIMITS,
   type AccountProfile,
   type ProfileChanges,
@@ -26,6 +27,7 @@ export class InMemoryProfiles implements ProfileStore {
         replenishBuffer: REPLENISH_BUFFER_LIMITS.default,
         rarityConsent: false,
         positionThresholds: null,
+        keyboardShortcuts: KEYBOARD_SHORTCUT_DEFAULT,
       });
   }
 
@@ -44,6 +46,7 @@ export class InMemoryProfiles implements ProfileStore {
       replenishBuffer: changes.replenishBuffer ?? stored.replenishBuffer,
       rarityConsent: changes.rarityConsent ?? stored.rarityConsent,
       positionThresholds: changes.positionThresholds ?? stored.positionThresholds,
+      keyboardShortcuts: changes.keyboardShortcuts ?? stored.keyboardShortcuts,
     };
     this.rows.set(userId, saved);
     return saved;

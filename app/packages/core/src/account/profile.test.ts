@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ERROR_TEXTS, execute } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { accountUpdateProfile, defaultNotifications, REPLENISH_BUFFER_LIMITS } from "./index";
+import {
+  accountUpdateProfile,
+  defaultNotifications,
+  KEYBOARD_SHORTCUT_DEFAULT,
+  KEYBOARD_SHORTCUT_MODES,
+  REPLENISH_BUFFER_LIMITS,
+} from "./index";
 import { InMemoryProfiles } from "./test-helpers";
 
 let profiles: InMemoryProfiles;
@@ -310,5 +316,45 @@ describe("US-LIC-03 · adjustable position thresholds (FR-LIC-05)", () => {
     await save(valid({ positionThresholds: [70_000, 20_000, 9_000, 3_000] }));
     expect(profiles.rows.get("ben")?.positionThresholds?.[0]).toBe(60_000);
     expect(profiles.rows.get("anna")?.positionThresholds?.[0]).toBe(70_000);
+  });
+});
+
+describe("US-QS-11 · the keyboard shortcut mode is an account setting", () => {
+  it("is plain until the keeper changes it (starting value)", () => {
+    expect(KEYBOARD_SHORTCUT_DEFAULT).toBe("plain");
+    expect(profiles.rows.get("anna")?.keyboardShortcuts).toBe("plain");
+  });
+
+  it.each(KEYBOARD_SHORTCUT_MODES)("saves the mode %s", async (keyboardShortcuts) => {
+    const r = await save(valid({ keyboardShortcuts }));
+    expect(r.ok && r.value.keyboardShortcuts).toBe(keyboardShortcuts);
+    expect(profiles.rows.get("anna")?.keyboardShortcuts).toBe(keyboardShortcuts);
+  });
+
+  it.each(["Plain", "alt", "on", "single", "", 1, true, {}, []])(
+    "refuses %j and names the field, nothing is written (P-10)",
+    async (keyboardShortcuts) => {
+      const r = await save(valid({ keyboardShortcuts }));
+      expect(!r.ok && r.error.details).toEqual([
+        { field: "keyboardShortcuts", code: "input.invalid" },
+      ]);
+      expect(profiles.writes).toBe(0);
+    },
+  );
+
+  it.each([null, undefined])(
+    "%s keeps the stored mode, so an older client cannot switch the shortcuts back",
+    async (v) => {
+      await save(valid({ keyboardShortcuts: "disabled" }));
+      const r = await save(valid({ keyboardShortcuts: v, timeZone: "UTC" }));
+      expect(r.ok && r.value).toMatchObject({ keyboardShortcuts: "disabled", timeZone: "UTC" });
+    },
+  );
+
+  it("changes only the own account", async () => {
+    await save(valid({ keyboardShortcuts: "modifier" }), "ben");
+    await save(valid({ keyboardShortcuts: "disabled" }));
+    expect(profiles.rows.get("ben")?.keyboardShortcuts).toBe("modifier");
+    expect(profiles.rows.get("anna")?.keyboardShortcuts).toBe("disabled");
   });
 });

@@ -7,13 +7,18 @@ import { SearchInput } from "./search-input";
 
 afterEach(cleanup);
 
-function Harness(props: { initial: string; disabled?: boolean }) {
+function Harness(props: {
+  initial: string;
+  disabled?: boolean;
+  keyHint?: { visible: string; aria: string };
+}) {
   const [text, setText] = useState(props.initial);
   return (
     <SearchInput
       aria-label="Suche"
       value={text}
       disabled={props.disabled}
+      keyHint={props.keyHint}
       onChange={(e) => setText(e.target.value)}
       onClear={() => setText("")}
     />
@@ -59,5 +64,19 @@ describe("SearchInput (US-QS-24, US-ONB-01, issue 1094)", () => {
   it("US-QS-24 a disabled field has no clear button", () => {
     render(<Harness initial="Ficus" disabled />);
     expect(screen.queryByRole("button", { name: "Suche leeren" })).toBeNull();
+  });
+});
+
+describe("US-QS-11 · the search field shows its key", () => {
+  it("US-QS-11 the field names its shortcut for assistive technology and shows the key while it is empty", () => {
+    render(<Harness initial="" keyHint={{ visible: "/", aria: "/" }} />);
+    const field = screen.getByRole("searchbox");
+    expect(field.getAttribute("aria-keyshortcuts")).toBe("/");
+    expect(field.closest("div")?.querySelector("kbd")?.textContent).toBe("/");
+  });
+
+  it("US-QS-11 the key goes while the field holds text, where the clear button sits", () => {
+    render(<Harness initial="Monstera" keyHint={{ visible: "/", aria: "/" }} />);
+    expect(screen.getByRole("searchbox").closest("div")?.querySelector("kbd")).toBeNull();
   });
 });

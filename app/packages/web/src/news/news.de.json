@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Tastatur: Mit „?“ siehst du alle Tastenkürzel. Häufige Wege wie Heute, Sammlung, Pokédex und Wunschliste gehen per Taste, und unter Konto → Einstellungen lassen sich die Einzeltasten abschalten oder mit Alt und Umschalt nutzen.",
     "Anmelden: Die Startseite bietet jetzt „Anderes Konto“, und „Konto anlegen“ beendet eine noch offene Anmeldung beim Anmeldedienst, sodass du mit einem anderen Konto nicht mehr auf eine Fehlerseite stößt.",
     "KI-Clients: Dein KI-Client kann jetzt auch Pflegephasen, Behandlungen, fällige Wassergaben, Erinnerungen, Wünsche, Pokédex, Erfolge, deine Pflegeprofile, die Lichtverteilung, Schwierigkeit und Hinweise deiner Sammlung, deine Katalog-Korrekturen, freigeschaltete Funktionen sowie sein eigenes Protokoll und seine Entwürfe lesen, mit genau den Werten, die die App zeigt. Daten von Freunden, Freigaben, Angebote, Tausch und Empfehlungen bleiben für ihn gesperrt.",
     "Fotos: Sendest du ein Foto nach einer ausgebliebenen Antwort noch einmal, bleibt es ein einziges Foto. Die App fragt dann nicht, ob das Foto ersetzt werden soll.",

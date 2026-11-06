@@ -9,6 +9,8 @@ export type SearchInputProps = Omit<InputProps, "type" | "value" | "defaultValue
   value: string;
   /** Called by the clear button. Set the value to "" here; the field takes the focus back by itself. */
   onClear: () => void;
+  /** The keyboard shortcut that focuses this field (US-QS-11): shown on desktop while the field is empty, and announced. */
+  keyHint?: { visible: string; aria: string } | undefined;
 };
 
 /**
@@ -18,7 +20,7 @@ export type SearchInputProps = Omit<InputProps, "type" | "value" | "defaultValue
  * `className` styles the wrapper, so a caller can size the field in its row.
  */
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ className, value, onClear, disabled, ...props }, ref) => {
+  ({ className, value, onClear, disabled, keyHint, ...props }, ref) => {
     const inner = React.useRef<HTMLInputElement | null>(null);
     return (
       <div className={cn("relative", className)}>
@@ -32,9 +34,18 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           type="search"
           value={value}
           disabled={disabled}
+          aria-keyshortcuts={keyHint?.aria}
           // Room for the button, so the text never runs under it; the native cancel icon is hidden (WebKit, Blink).
           className="pr-11 [&::-webkit-search-cancel-button]:appearance-none"
         />
+        {keyHint && value === "" && !disabled && (
+          <kbd
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-3 hidden items-center font-mono text-sm text-muted-foreground md:flex"
+          >
+            {keyHint.visible}
+          </kbd>
+        )}
         {value !== "" && !disabled && (
           <Button
             type="button"
