@@ -81,9 +81,11 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
 }
 
 /**
- * Sticky bottom bar below `md` (US-QS-07, DS-25, DS-22). Takes plain items, never modules (DS-44): the first four
+ * Fixed bottom bar below `md` (US-QS-07, DS-25, DS-22). Takes plain items, never modules (DS-44): the first four
  * stay in the bar, the rest move into the "Mehr" drawer. The active one has the accent pill, a semibold label and
- * `aria-current`, so color is never the only signal (DS-19). Greenhouse look: ADR 0011 decision 6.
+ * `aria-current`, so color is never the only signal (DS-19). Greenhouse look: ADR 0011 decision 6. It follows the content
+ * in the flow, after `main`, so it stays reachable at the end of the page (US-QS-14); from 30 rem of window height (the
+ * `tall-window` variant) it is fixed to the window bottom.
  */
 export function MobileNavBar({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation();
@@ -96,7 +98,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
     <nav
       aria-label="Navigation unten"
       data-bottom-bar
-      className="@container fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="@container inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden"
     >
       {inBar.map((item) => (
         <NavLink

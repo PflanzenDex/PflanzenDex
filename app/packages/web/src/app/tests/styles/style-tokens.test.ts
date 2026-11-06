@@ -210,10 +210,13 @@ describe("US-QS-15 the filling view at a larger text size (issue 1113)", () => {
 
   it("US-QS-15 the filling view scrolls inside itself, so its last line ends above the bottom bar, and reaches into the padding of main by as much as it pads itself", () => {
     const base = rule("");
-    expect(base).toContain("overflow-y: auto;");
-    expect(base).toContain("height: calc(100% + 1rem);");
+    // Base style: the bleed and the padding hold in every window; the height and the inner scroll come with the tall window
+    // (from 30 rem of height, the variant), below it the page scrolls.
     expect(base).toContain("margin: -0.5rem -1rem;");
     expect(base).toContain("padding: 0.5rem 1rem;");
+    expect(base).toContain("overflow-y: visible;");
+    expect(rule("@variant tall-window")).toContain("height: calc(100% + 1rem);");
+    expect(rule("@variant tall-window")).toContain("overflow-y: auto;");
     expect(rule("@media (width >= 48rem)")).toContain("margin-inline: -1.5rem;");
     expect(rule("@media (width >= 80rem)")).toContain("margin-inline: -2.5rem;");
     // The bleed matches the side padding of main: 1 rem, 1.5 rem from md, 2.5 rem from xl.
