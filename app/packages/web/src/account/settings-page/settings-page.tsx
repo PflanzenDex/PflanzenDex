@@ -11,7 +11,6 @@ import {
   notificationsValue,
   privacyValue,
   profileValue,
-  shortcutsValue,
   styleValue,
   wishlistValue,
 } from "./groups/group-values";
@@ -80,6 +79,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
         <div className="flex flex-col gap-4">
           <KeeperStyleSection api={props.api} token={props.token} />
           <CalmModeSection api={props.api} token={props.token} />
+          <ShortcutsGroup saver={saver} />
         </div>
       ),
     },
@@ -90,12 +90,6 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       body: <WishlistGroup saver={saver} />,
     },
     { id: ids.light, title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
-    {
-      id: ids.shortcuts,
-      title: "Tastenkürzel",
-      value: shortcutsValue(p),
-      body: <ShortcutsGroup saver={saver} />,
-    },
   ];
   return <SettingsLayers layers={layers} />;
 }

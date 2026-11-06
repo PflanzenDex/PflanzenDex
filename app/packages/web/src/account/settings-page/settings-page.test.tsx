@@ -759,8 +759,6 @@ function ModeOut() {
 }
 
 describe("US-QS-11 settings: keyboard shortcuts", () => {
-  const row = (title: string) =>
-    screen.findByRole("button", { name: (name) => name.startsWith(title) });
   const targets = {
     search: "/discover?view=catalog",
     today: "/today",
@@ -770,19 +768,13 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
   };
   const showWithProvider = () =>
     render(
-      <MemoryRouter initialEntries={["/?sheet=shortcuts"]}>
+      <MemoryRouter initialEntries={["/?sheet=style"]}>
         <ShortcutProvider mode="plain" targets={targets}>
           <ModeOut />
           <SettingsPage api="http://api" token={token} />
         </ShortcutProvider>
       </MemoryRouter>,
     );
-
-  it("US-QS-11 the list shows the mode, 'Einzeltasten an' while nothing is changed", async () => {
-    fakeServer();
-    show();
-    expect((await row("Tastenkürzel")).textContent).toContain("Einzeltasten an");
-  });
 
   it("US-QS-11 the choice 'Alt und Umschalt' saves at once with the profile and takes effect at once", async () => {
     const puts = fakeServer();

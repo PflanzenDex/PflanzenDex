@@ -136,6 +136,7 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
   );
   return (
     <div className="flex flex-col gap-3">
+      <p className="m-0 font-semibold">{t("shortcuts.label")}</p>
       <SegmentedControl
         label={t("shortcuts.label")}
         options={CHOICES}
@@ -144,7 +145,7 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
           if (mode !== saver.saved.keyboardShortcuts) void change({ keyboardShortcuts: mode });
         }}
       />
-      <MoreHelp more={<p>{t("shortcuts.more")}</p>}>{t("shortcuts.help")}</MoreHelp>
+      <p className="m-0 text-sm text-muted-foreground">{t("shortcuts.help")}</p>
       <Feedback error={error} saved={saved} />
     </div>
   );

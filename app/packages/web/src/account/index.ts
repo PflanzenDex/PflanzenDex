@@ -11,7 +11,6 @@ export const SETTINGS_LAYER = {
   style: "style",
   wishlist: "wishlist",
   light: "light",
-  shortcuts: "shortcuts",
 } as const;
 export const SETTINGS_LAYER_IDS: readonly string[] = Object.values(SETTINGS_LAYER);
 export const SettingsPage = lazyPage(() =>

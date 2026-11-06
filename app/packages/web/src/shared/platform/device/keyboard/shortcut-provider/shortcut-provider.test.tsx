@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
-import { ShortcutOverview } from "../../../../patterns/elements/shortcut-overview/shortcut-overview";
+import { ShortcutOverview } from "../shortcut-overview/shortcut-overview";
 import { ShortcutProvider, useShortcuts, type ShortcutTargets } from "./shortcut-provider";
 
 const TARGETS: ShortcutTargets = {

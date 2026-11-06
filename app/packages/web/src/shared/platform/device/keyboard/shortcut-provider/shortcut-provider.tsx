@@ -10,7 +10,7 @@ import {
 import { useNavigate } from "react-router";
 import type { KeyboardShortcutMode } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
-import table from "../keyboard.de.json";
+import table from "./keyboard.de.json";
 import { isTextTarget, matchesShortcut, SHORTCUT_MODE } from "../keys";
 import { KEY_OF, REGISTER, type ShortcutId } from "../register";
 

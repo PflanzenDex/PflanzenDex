@@ -1,10 +1,11 @@
+import { Keyboard } from "lucide-react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
 import {
   focusModalTitle,
   ResponsiveModal,
 } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
-import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { useShortcuts } from "../shortcut-provider/shortcut-provider";
 import table from "./shortcut-overview.de.json";
 
 const t = texts(table);
@@ -62,23 +63,28 @@ export function ShortcutOverview(props: {
 }
 
 /**
- * The help entry of the shortcuts (US-QS-09, US-QS-11): the same overview that `?` opens, as a button with the key of `?`
- * shown on desktop and named for assistive technology.
+ * The help entry of the shortcuts (US-QS-09, US-QS-11): the same overview that `?` opens. An icon button of 44 px in the
+ * section header, named for assistive technology; on desktop its key is shown beside the icon.
  */
 export function ShortcutHelpButton() {
   const { openOverview, hint } = useShortcuts();
   const key = hint("overview");
   return (
-    <div className="flex flex-col items-start gap-2">
-      <p className="m-0 text-sm text-muted-foreground">{t("help.text")}</p>
-      <Button type="button" variant="outline" aria-keyshortcuts={key?.aria} onClick={openOverview}>
-        {t("help.button")}
-        {key ? (
-          <kbd aria-hidden="true" className="hidden font-mono text-xs font-normal md:inline">
-            {key.visible}
-          </kbd>
-        ) : null}
-      </Button>
-    </div>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="w-auto shrink-0 gap-2 px-3"
+      aria-label={t("help.button")}
+      aria-keyshortcuts={key?.aria}
+      onClick={openOverview}
+    >
+      <Keyboard aria-hidden="true" className="size-5" />
+      {key ? (
+        <kbd aria-hidden="true" className="hidden font-mono text-xs font-normal md:inline">
+          {key.visible}
+        </kbd>
+      ) : null}
+    </Button>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { SHORTCUT_MODE } from "@/shared/platform/device/keyboard/keys";
 import { SHORTCUT_TARGETS } from "./shortcut-targets";
-import { ShortcutOverview } from "@/shared/patterns/elements/shortcut-overview/shortcut-overview";
+import { ShortcutOverview } from "@/shared/platform/device/keyboard/shortcut-overview/shortcut-overview";
 import { Banner } from "../../../shared/patterns/states/banner/banner";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { GlobalHeader } from "../global-header/global-header";
