@@ -18,6 +18,10 @@ function matchingParen(text, start) {
       while (j < text.length && text[j] !== '"') j += text[j] === "\\" ? 2 : 1;
       if (j >= text.length) break;
       i = j;
+    } else if (c === "#" && /[\s;&|()]/.test(text[i - 1])) {
+      // A comment that starts a word runs to the newline inside a substitution too: a `)` or a quote in it is text.
+      const newline = text.indexOf("\n", i);
+      i = newline < 0 ? text.length : newline;
     } else if (c === "(") {
       depth++;
     } else if (c === ")" && --depth === 0) {
@@ -50,6 +54,10 @@ export function tokenize(text) {
     if (c === " " || c === "\t" || c === "\r") {
       end();
       i++;
+    } else if (c === "#" && word === null) {
+      // A `#` that starts a word is a comment up to the newline. The newline itself stays and still ends the command.
+      const newline = text.indexOf("\n", i);
+      i = newline < 0 ? text.length : newline;
     } else if (c === "'") {
       const close = text.indexOf("'", i + 1);
       if (close < 0) throw new ParseError("unclosed '");

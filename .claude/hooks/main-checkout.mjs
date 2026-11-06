@@ -17,6 +17,9 @@ const PREFIXES = new Set([
   "env", "command", "exec", "nohup", "time", "sudo", "!", "{", "}", "if", "then", "else", "elif", "do", "while", "until",
 ]);
 const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
+// git reset takes any unique prefix of --hard as --hard: `--h`, `--ha`, `--har` and `--hard` all reset the working tree
+// (probed with git 2.56 in a throwaway repository; `--hardx` is unknown to git, so it does nothing). Shared with rules.mjs.
+export const HARD_RESET_FLAG = /^--h(a(r(d)?)?)?$/;
 
 // A command the check refuses. Its message is the reason the agent reads.
 class Refusal extends Error {}
@@ -121,7 +124,7 @@ function judgeGit(args, env, base, ctx) {
   if (!sub) return;
   if (sub.dynamic) throw new Refusal(unknownReason("A git subcommand given through a variable or substitution"));
   const destructive =
-    sub.value === "clean" || (sub.value === "reset" && args.slice(i + 1).some((w) => w.value === "--hard"));
+    sub.value === "clean" || (sub.value === "reset" && args.slice(i + 1).some((w) => HARD_RESET_FLAG.test(w.value)));
   if (!destructive) return;
   // A git dir and a work tree named together decide where the command acts; the cwd then matters only for relative ones.
   const given = [gitDir, workTree].filter((w) => w !== undefined);
@@ -264,6 +267,8 @@ export function mainCheckoutRefusal(command, where = {}) {
     return null;
   } catch (error) {
     if (error instanceof Refusal) return error.message;
-    return /\b(reset|clean)\b/.test(command) ? UNREADABLE : null;
+    // Only a command that names git and reset or clean can hide the reset or clean this check is for. A case or a
+    // function without git cannot run one, so it is not refused for being unreadable (US-QG-07).
+    return /\bgit\b/.test(command) && /\b(reset|clean)\b/.test(command) ? UNREADABLE : null;
   }
 }

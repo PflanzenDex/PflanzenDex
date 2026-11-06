@@ -1,6 +1,6 @@
 // Rules for the Claude Code hooks (US-QG-07, US-DEV-02). Pure functions, tested in rules.test.mjs.
 // Hooks support the gates; the gates themselves live in CI and the rulesets (D-02).
-import { mainCheckoutRefusal } from "./main-checkout.mjs";
+import { HARD_RESET_FLAG, mainCheckoutRefusal } from "./main-checkout.mjs";
 
 // Files that define gates, thresholds or exception lists. Agents may only change them after a human confirms (US-QG-07).
 const GATE_FILES = [
@@ -108,7 +108,7 @@ function discardsWork(tokens) {
   const rest = tokens.slice(subIndex + 1);
   switch (tokens[subIndex]) {
     case "reset":
-      return rest.includes("--hard");
+      return rest.some((t) => HARD_RESET_FLAG.test(t));
     case "clean":
       return rest.some((t) => t === "--force" || /^-[a-zA-Z]*f/.test(t));
     case "checkout":
