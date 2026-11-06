@@ -16,8 +16,8 @@ const cell = (r: Result | undefined, baseline: Baseline): string => {
   return `${f(r.page)}/${f(r.inner)} \u2194 ${f(r.pageX)}/${f(r.innerX)}${mark}`;
 };
 
-/** The table for the job summary: page/inner per screen and size, failures marked. */
-function reportMarkdown(results: readonly Result[], baseline: Baseline): string {
+/** The table for the job summary: page/inner per screen and size, failures marked. The merge of the shards uses it too (US-QG-01). */
+export function reportMarkdown(results: readonly Result[], baseline: Baseline): string {
   const names = SIZES.map((s) => s.name);
   const lines = [
     "## One screen (US-QS-15, QG-U8)",
