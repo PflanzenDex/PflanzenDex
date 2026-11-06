@@ -1,9 +1,9 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
-import { LoadFrame } from "../../shared/data";
+import { LoadFrame, type Response } from "../../shared/data";
 import { DeckView } from "../deck-view/deck-view";
-import { decideSuggestion, loadSuggestions } from "./discover-api";
+import { decideSuggestion, loadSuggestions, undoSuggestionDecision } from "./discover-api";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
 
@@ -13,6 +13,15 @@ const SIGN_IN_NEEDED = {
   ok: false as const,
   error: { code: "access.not_signed_in", text: t("page.signIn") },
 };
+
+/** Runs a write with the token of the keeper; without a sign-in the answer says so (P-10). */
+async function signedIn<T>(
+  token: () => Promise<string | undefined>,
+  write: (t: string) => Promise<Response<T>>,
+): Promise<Response<T>> {
+  const t = await token();
+  return t ? write(t) : SIGN_IN_NEEDED;
+}
 
 /** Placeholder with the layout of a card on a phone: image, name, text, three buttons (DS-52). */
 function DeckSkeleton({ label }: { label: string }) {
@@ -45,10 +54,12 @@ export function DiscoverPage(props: {
     [api, deck, zone],
   );
   const decide = useCallback(
-    async (species: string, decision: "yes" | "no") => {
-      const t = await token();
-      return t ? decideSuggestion(api, t, { species, decision }) : SIGN_IN_NEEDED;
-    },
+    (species: string, decision: "yes" | "no") =>
+      signedIn(token, (t) => decideSuggestion(api, t, { species, decision })),
+    [api, token],
+  );
+  const undo = useCallback(
+    (species: string) => signedIn(token, (t) => undoSuggestionDecision(api, t, species)),
     [api, token],
   );
   return (
@@ -79,6 +90,7 @@ export function DiscoverPage(props: {
               takeFocus={deck > 1}
               deck={value}
               onDecide={decide}
+              onUndo={undo}
               onNewDeck={() => setDeck((d) => d + 1)}
             />
           </>
