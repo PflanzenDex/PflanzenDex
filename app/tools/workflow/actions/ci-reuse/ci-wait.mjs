@@ -38,7 +38,7 @@ async function pagedKey(client, path, key) {
 }
 
 /** The jobs of the ci.yml at the head commit; none when the head has no workflow file (then no CI runs at all). */
-async function definedAt(client, repo, head) {
+export async function definedAt(client, repo, head) {
   try {
     const path = `repos/${repo}/contents/.github/workflows/ci.yml?ref=${head}`;
     const body = await json(client, ["api", path]);
