@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { baselineChanges } from "../../../.claude/hooks/baseline-growth.mjs";
+import { assess, JOBS, problemsNow } from "./actions/ci-reuse/ci-verdict.mjs";
 import { idsIn, problems, specIds } from "./merge-pr.mjs";
 
 const known = new Set(["US-BES-06", "FR-QG-11"]);
@@ -251,4 +252,88 @@ test("US-QG-07: baseline versions are read at the merge base and at the head, an
     ["merge0", UI],
     ["head0", UI],
   ]);
+});
+
+// US-DEV-10: the per-job reading that `make merge` adds to the ci-status check. A green ci-status of a text-edit run
+// does not stand in for the full run: running, cancelled, failed or missing required jobs refuse the merge.
+const REQUIRED = [
+  "changes",
+  "layout",
+  "dependency-review",
+  "metadata",
+  "app-gates",
+  "app-tests",
+  "app-tests-web",
+  "app-coverage",
+  "app-ui",
+  "ds-snapshots",
+  "lighthouse",
+];
+const check = (name, status, conclusion, run = 1) => ({
+  name,
+  status,
+  conclusion,
+  completed_at: status === "completed" ? "2026-01-01T10:00:00Z" : null,
+  details_url: `https://github.com/PflanzenDex/PflanzenDex/actions/runs/${run}/job/1`,
+  app: { slug: "github-actions" },
+});
+const headOf = (checkRuns) =>
+  assess({
+    pr: {
+      number: 7,
+      title: "x",
+      url: "https://example.org/pr/7",
+      state: "open",
+      merged: false,
+      mergedAt: null,
+      draft: false,
+      base: "dev",
+      head: "abc",
+      mergeable: true,
+      mergeableState: "clean",
+    },
+    head: "abc",
+    files: ["app/packages/core/src/a.ts"],
+    defined: new Set(JOBS),
+    checkRuns,
+    workflowRuns: [],
+  });
+const greenRuns = () => [
+  ...REQUIRED.map((name) => check(name, "completed", "success")),
+  check("ci-status", "completed", "success"),
+];
+
+test("US-DEV-10: a PR whose required jobs all succeeded has no CI problem for make merge", () => {
+  assert.deepEqual(problemsNow(headOf(greenRuns())), []);
+});
+
+test("US-DEV-10: make merge refuses while a job of the full run is unfinished, although the text edit's ci-status is green", () => {
+  const runs = greenRuns().map((c) =>
+    c.name === "app-gates" ? check("app-gates", "in_progress", null, 2) : c,
+  );
+  const [problem] = problemsNow(headOf(runs));
+  assert.match(problem, /^CI is still running \(app-gates\); wait for it with make ci-wait PR=7$/);
+});
+
+test("US-DEV-10: make merge refuses a required job that was cancelled in the full run", () => {
+  const runs = greenRuns().map((c) =>
+    c.name === "app-gates" ? check("app-gates", "completed", "cancelled", 2) : c,
+  );
+  assert.ok(problemsNow(headOf(runs)).includes("CI: app-gates: cancelled"));
+});
+
+test("US-DEV-10: make merge refuses a required job that failed", () => {
+  const runs = greenRuns().map((c) =>
+    c.name === "app-gates" ? check("app-gates", "completed", "failure", 2) : c,
+  );
+  assert.ok(problemsNow(headOf(runs)).includes("CI: app-gates: failure"));
+});
+
+test("US-DEV-10: make merge refuses a required job that never ran", () => {
+  const runs = greenRuns().filter((c) => c.name !== "app-gates");
+  assert.ok(
+    problemsNow(headOf(runs)).includes(
+      "CI: app-gates: never ran, but ci.yml requires it for this PR",
+    ),
+  );
 });
