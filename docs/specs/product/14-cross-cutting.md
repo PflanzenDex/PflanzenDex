@@ -156,6 +156,8 @@ Acceptance criteria:
 - Given forced colors (Windows contrast themes) or the dark scheme, then focus indicator, borders of controls and status texts stay visible (1.4.11, 2.4.7).
 - Given content that appears on hover or focus (tooltip), then it can be closed with Esc, stays while the pointer is over it and does not disappear by itself (1.4.13).
 
+Exception: a text clamped to a few lines, with a button that opens the rest, is not cut off, because the rest is one press away (P-10).
+
 ### US-QS-13 · Accessibility statement and feedback · ⬜ new
 
 As a **plant keeper who meets a barrier** I want to report it and learn how accessible the app is.

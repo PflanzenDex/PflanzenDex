@@ -46,6 +46,11 @@ export async function openView(page: Page, path: string): Promise<void> {
  * sticks out of the viewport, or a box hides part of its own content (overflow hidden or clip with more
  * content than room, which is how fixed heights and `overflow-hidden` cut text off). Visually hidden helpers
  * (boxes of 1 px or less, such as sr-only texts) do not count.
+ *
+ * A text clamped on purpose (US-QS-12) is no "cuts off below" when it carries `data-clamped` and its parent holds a
+ * visible button with `aria-expanded='false'` that opens the rest. The rest is one press away, so nothing is lost
+ * (P-10). Only that one finding is skipped: sideways cut-offs and ellipses on the same element still count, and so does
+ * a clamp without such a button, because nothing on the page would show the rest.
  */
 export async function layoutProblems(page: Page): Promise<string[]> {
   return page.evaluate(() => {
@@ -61,6 +66,13 @@ export async function layoutProblems(page: Page): Promise<string[]> {
       return style.display !== "none" && style.visibility !== "hidden" && !tiny;
     };
     const clips = (value: string) => value === "hidden" || value === "clip";
+    /** A deliberate clamp (US-QS-12): marked `data-clamped`, its parent holds a visible collapsed button that opens it. */
+    const deliberateClamp = (el: Element): boolean => {
+      if (!el.hasAttribute("data-clamped") || !el.parentElement) return false;
+      return Array.from(el.parentElement.querySelectorAll("button[aria-expanded='false']")).some(
+        (b) => shown(b, getComputedStyle(b)),
+      );
+    };
     const problemsOf = (el: Element, style: CSSStyleDeclaration): string[] => {
       const r = el.getBoundingClientRect();
       const found: string[] = [];
@@ -68,7 +80,7 @@ export async function layoutProblems(page: Page): Promise<string[]> {
         found.push(`sticks out (${Math.round(r.left)}..${Math.round(r.right)} of ${width})`);
       if (clips(style.overflowX) && el.scrollWidth > el.clientWidth + 1)
         found.push(`cuts off sideways (${el.scrollWidth} > ${el.clientWidth})`);
-      if (clips(style.overflowY) && el.scrollHeight > el.clientHeight + 1)
+      if (clips(style.overflowY) && el.scrollHeight > el.clientHeight + 1 && !deliberateClamp(el))
         found.push(`cuts off below (${el.scrollHeight} > ${el.clientHeight})`);
       if (style.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth + 1)
         found.push("ellipsis hides text");

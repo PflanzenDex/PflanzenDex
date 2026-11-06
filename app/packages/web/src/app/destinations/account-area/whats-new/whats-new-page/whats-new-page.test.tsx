@@ -86,6 +86,24 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
     expect(lineTexts()).toEqual([long]);
   });
 
+  it("US-DEV-06 US-QS-12 a long line is marked as clamped until Mehr anzeigen opens it, a short line is not", async () => {
+    const long = Array(40).fill("Wort").join(" ");
+    render(
+      <MemoryRouter>
+        <WhatsNewList lines={[long, "Kurz"]} version="1.2.3" />
+      </MemoryRouter>,
+    );
+    const clamped = (index: number) =>
+      screen.getAllByRole("listitem")[index]?.querySelector("p")?.hasAttribute("data-clamped");
+    expect(clamped(0)).toBe(true);
+    expect(clamped(1)).toBe(false);
+    await userEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    expect(clamped(0)).toBe(false);
+    expect(
+      screen.getByRole("button", { name: "Weniger anzeigen" }).getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+
   it("US-DEV-06 shows the version as unknown when the build did not set one (P-08)", () => {
     vi.stubEnv("VITE_APP_VERSION", "");
     render(

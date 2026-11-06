@@ -21,13 +21,20 @@ const PAGE_LG = 3;
 /** A line longer than this shows its start in three lines and the button "Mehr anzeigen" for the rest (P-10). */
 const LONG = 80;
 
-/** One line of the changelog; a long one is clamped to three lines until the keeper asks for all of it. */
+/**
+ * One line of the changelog; a long one is clamped to three lines until the keeper asks for all of it. While clamped,
+ * the text carries `data-clamped`, so the display check reads the clamp as deliberate (US-QS-12, see layoutProblems).
+ */
 function NewsLine({ line }: { line: string }) {
   const [open, setOpen] = useState(false);
   const long = line.length > LONG;
+  const clamped = long && !open;
   return (
     <div className="flex min-w-0 flex-col items-start gap-1 rounded-card border border-border p-3">
-      <p className={cn("m-0 w-full min-w-0 break-words", long && !open && "line-clamp-3")}>
+      <p
+        {...(clamped ? { "data-clamped": "" } : {})}
+        className={cn("m-0 w-full min-w-0 break-words", clamped && "line-clamp-3")}
+      >
         {line}
       </p>
       {long && (
