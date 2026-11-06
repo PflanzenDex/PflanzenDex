@@ -23,7 +23,7 @@ function viewSearch(search: string): string {
  * Orientation on a view change (US-QS-09, WCAG 2.4.2, 2.4.3): sets the page title (`titleOf` returns it whole), and once the new view has
  * loaded moves the focus to its main heading and announces the title politely (through the shared announcer, US-QS-10). Going back restores the focus to the
  * control that opened the view. It never moves the focus on the first load, so Tab still reaches the skip link first
- * (US-QS-08). A navigation with the state `keepFocus`, and one that only opens or closes a layer or turns the page of a list, only sets the title: the layer and the pager own their focus (US-QS-15). Render it inside the main region; it renders nothing itself.
+ * (US-QS-08), also when the app redirects to its first view (issue 1423). A navigation with the state `keepFocus`, and one that only opens or closes a layer or turns the page of a list, only sets the title: the layer and the pager own their focus (US-QS-15). Render it inside the main region; it renders nothing itself.
  */
 export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string }) {
   const { pathname, search, key, state } = useLocation();
@@ -36,6 +36,9 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
   const view = useRef<string | null>(null);
   const here = pathname + viewSearch(search);
   const mover = useRef<Promise<Awaited<ReturnType<typeof load>>> | null>(null);
+  // Whether the person has pushed or popped a view on this page yet, and the path of the last view (issue 1423).
+  const navigated = useRef(false);
+  const viewPath = useRef<string | null>(null);
 
   useEffect(() => {
     const loaded = load();
@@ -61,9 +64,16 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
     document.title = title;
     const left = previous.current;
     const sameView = view.current === here;
+    // A redirect of the app (`<Navigate replace>`: the root address or an old one) before the person has navigated on
+    // this page is the arrival at the first view, not a view change they made (issue 1423): the focus stays where it is.
+    const arrival =
+      left !== null && type === "REPLACE" && !navigated.current && pathname !== viewPath.current;
+    if (left !== null && left !== key && type !== "REPLACE") navigated.current = true;
     previous.current = key;
     view.current = here;
+    viewPath.current = pathname;
     if (left === null || left === key || keepFocus || sameView) return;
+    if (arrival) return void announcer?.announce(title);
     let stop = () => {};
     let cancelled = false;
     // The mover is a chunk of its own: a key or tap before it has loaded is the person taking over, too (issue 1362).
