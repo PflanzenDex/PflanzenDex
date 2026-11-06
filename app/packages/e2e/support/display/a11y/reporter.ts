@@ -46,8 +46,8 @@ const EXPECTED = SCREENS.length * A11Y_SIZES.length;
 const countOf = (findings: readonly Finding[], kind: Finding["kind"]) =>
   findings.filter((f) => f.kind === kind).reduce((sum, f) => sum + f.count, 0);
 
-/** The tables for the job summary: elements per rule and size, then per screen and size. */
-function reportMarkdown(results: readonly Result[], baseline: Baseline): string {
+/** The tables for the job summary: elements per rule and size, then per screen and size. The merge of the shards uses it too (US-QG-01). */
+export function reportMarkdown(results: readonly Result[], baseline: Baseline): string {
   const sizes = A11Y_SIZES.map((s) => s.name);
   const lines = [
     "## Accessibility per route (FR-QG-24, QG-U7)",

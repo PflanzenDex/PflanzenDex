@@ -18,6 +18,7 @@ import {
   judgeScreen,
   lostScreen,
 } from "../../../support/display/one-screen/baseline";
+import { coverageProblems } from "./merge-shards";
 
 // US-QS-15, DS-58, QG-U8 (issue 1137): every screen of the register fits at every size; opened once, resized through the
 // sizes, writes aborted. `make one-screen`; the project "one-screen" is not part of `make e2e`.
@@ -176,4 +177,18 @@ sidewaysSelfTests(raw, sizeOf);
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
   expect(lostScreen("http://x/today?sheet=plan", "http://x/today")).toBeNull();
+});
+
+test("US-QG-01 self-test: the shards of a gate together measure every screen and size exactly once", () => {
+  const screens = ["a", "b"];
+  const sizes = ["s1", "s2"];
+  const all = screens.flatMap((screen) => sizes.map((size) => ({ screen, size })));
+  expect(coverageProblems(all, screens, sizes)).toEqual([]);
+  expect(coverageProblems(all.slice(1), screens, sizes)[0]).toContain("not measured (1)");
+  expect(coverageProblems([...all, ...all.slice(0, 1)], screens, sizes)[0]).toContain(
+    "measured more than once",
+  );
+  expect(coverageProblems([...all, { screen: "x", size: "s1" }], screens, sizes)[0]).toContain(
+    "not in the register",
+  );
 });
