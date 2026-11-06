@@ -25,11 +25,10 @@ const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
-// The files the script needs in a checkout: the script, the env writer, the dependency copy and its stamp check.
+// The files the script needs in a checkout: the script, the worktree helper (env and dependency copy) and the stamp check.
 const FILES = [
   "tools/repo/worktree-new.sh",
   "app/tools/workflow/worktree/worktree-env.mjs",
-  "tools/repo/deps-reuse.mjs",
   "app/tools/check/supply/check-deps.mjs",
 ];
 const LOCK = '{"lockfileVersion":3}\n';

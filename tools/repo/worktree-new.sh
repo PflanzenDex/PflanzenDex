@@ -3,7 +3,7 @@
 # Usage: tools/repo/worktree-new.sh <branch>   e.g. feat/dev-08-parallel
 # The branch starts from origin/dev (or continues origin/<branch> when `make claim` created it).
 # The directory is <main checkout>/.worktrees/<name>/, also when this runs inside another worktree (#1487: it used to nest).
-# Dependencies (#1487): an install with the same package-lock.json is copied when one exists (deps-reuse.mjs); then `make setup`
+# Dependencies (#1487): an install with the same package-lock.json is copied when one exists (worktree-env.mjs --deps); then `make setup`
 # runs there: it installs when nothing was copied and skips npm ci when the stamp matches. The worktree is ready to commit in.
 # Unique ports and database names go into .worktrees/<name>/.env.worktree (see app/tools/workflow/worktree/worktree-env.mjs).
 set -euo pipefail
@@ -45,7 +45,7 @@ echo "Environment: $dir/.env.worktree"
 cat "$dir/.env.worktree"
 
 # Dependencies (#1487): reuse an install with the same lock file; make setup then checks the stamp (npm ci only when it does not match).
-node "$here/tools/repo/deps-reuse.mjs" "$dir/app" "$here/app" \
+node "$here/app/tools/workflow/worktree/worktree-env.mjs" --deps "$dir/app" "$here/app" \
   || echo "deps: no copy, make setup installs them" >&2
 if ! make -C "$dir" setup; then
   echo "worktree is there, but make setup failed in $dir: run make setup there before the first commit" >&2
