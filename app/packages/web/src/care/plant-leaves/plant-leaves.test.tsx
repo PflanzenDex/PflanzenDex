@@ -88,7 +88,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(posts[0]?.body).toHaveProperty("timeZone");
   });
 
-  it("US-WAC-07 the count and the leaves are listed newest first, with unknown sizes shown as unbekannt (P-08)", async () => {
+  it("US-WAC-07 the count and the leaves are listed newest first, one leaf per page, with unknown sizes shown as unbekannt (P-08)", async () => {
     server({
       "GET /specimens/e1/leaves": () =>
         json(
@@ -99,14 +99,50 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
           ]),
         ),
     });
+    const user = userEvent.setup();
     show();
     expect(await screen.findByText("2 Blätter")).toBeTruthy();
     const list = screen.getByRole("list", { name: "Neue Blätter" });
-    const items = within(list).getAllByRole("listitem");
-    expect(items[0]?.textContent).toContain("09.10.2026");
-    expect(items[0]?.textContent).toContain("Länge 40 mm · Breite 12 mm");
-    expect(items[0]?.textContent).toContain("Fensterung");
-    expect(items[1]?.textContent).toContain("Länge unbekannt · Breite unbekannt");
+    const first = within(list).getAllByRole("listitem");
+    expect(first).toHaveLength(1);
+    expect(first[0]?.textContent).toContain("09.10.2026");
+    expect(first[0]?.textContent).toContain("Länge 40 mm · Breite 12 mm");
+    expect(first[0]?.textContent).toContain("Fensterung");
+    // The second leaf is one press away on the pager of the list (US-WAC-07, P-09).
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Weiter" }));
+    const second = within(list).getAllByRole("listitem");
+    expect(second).toHaveLength(1);
+    expect(second[0]?.textContent).toContain("Länge unbekannt · Breite unbekannt");
+  });
+
+  it("US-WAC-07 the two buttons of the log share one row of two equal columns, so they do not wrap on a phone", async () => {
+    server({ "GET /specimens/e1/leaves": () => json(200, view([])) });
+    show();
+    const quick = await screen.findByRole("button", { name: "Neues Blatt" });
+    const details = screen.getByRole("button", { name: "Mit Details" });
+    expect(quick.parentElement).toBe(details.parentElement);
+    expect(quick.parentElement?.className).toContain("grid-cols-2");
+  });
+
+  it("US-WAC-07 a leaf row keeps its date and sizes with Entfernen on one line, and the note below them", async () => {
+    server({
+      "GET /specimens/e1/leaves": () =>
+        json(200, view([leaf(9, { lengthMm: 40, widthMm: 12, note: "Fensterung" })])),
+    });
+    show();
+    const row = within(await screen.findByRole("list", { name: "Neue Blätter" })).getByRole(
+      "listitem",
+    );
+    const remove = within(row).getByRole("button", { name: "Blatt vom 09.10.2026 entfernen" });
+    // The button sits in the top line with the date and the sizes; the note is a line of its own below it.
+    const line = remove.parentElement;
+    expect(line?.textContent).toContain("09.10.2026");
+    expect(line?.textContent).toContain("Länge 40 mm · Breite 12 mm");
+    expect(line?.textContent).not.toContain("Fensterung");
+    expect(row.textContent?.indexOf("Fensterung")).toBeGreaterThan(
+      row.textContent?.indexOf("Länge 40 mm") ?? Number.POSITIVE_INFINITY,
+    );
   });
 
   it("US-WAC-07 the comparison of the newest leaf with the last earlier one is shown", async () => {

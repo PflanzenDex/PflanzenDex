@@ -131,7 +131,7 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     expect(plant).toBeDefined();
     const view = await api.ok(SUBJECTS.test2, "GET", `/specimens/${plant?.id}/leaves`);
     expect(view["keeperOff"]).toBe(false);
-    // Two leaves per page in the web view (PAGE_SIZE in plant-leaves.tsx): four leaves give a pager with two pages.
+    // The leaf log pages by PAGE_SIZE (plant-leaves.tsx, one leaf now): four leaves give a pager at two per page or fewer.
     expect(view["count"]).toBe(4);
     const leaves = view["leaves"] as {
       lengthMm: number | null;

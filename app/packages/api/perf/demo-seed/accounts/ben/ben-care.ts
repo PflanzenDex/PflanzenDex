@@ -71,7 +71,7 @@ type LeafDef = { days: number; lengthMm: number; widthMm: number; note?: string 
 
 /**
  * The leaves of Ben's Birkenfeige (Ficus benjamina): the leaf log shows its filled view, the count, the comparison and
- * more leaves than one page holds (US-WAC-07, two leaves per page in the web view). Demo values in whole millimetres,
+ * more leaves than one page holds (US-WAC-07, one leaf per page in the web view). Demo values in whole millimetres,
  * logged oldest first; the newest leaf carries a note, so the first page shows one (US-WAC-07).
  */
 const BIRKENFEIGE_LEAVES: readonly LeafDef[] = [
