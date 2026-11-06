@@ -102,7 +102,7 @@ describe("US-MON-08 reminder settings in layers", () => {
   it("US-MON-08 ends a pause on its page without touching the other occasions", async () => {
     const puts = fakeServer({ ...SAVED, paused: { watering: "2026-11-01", swap: "2026-11-02" } });
     const user = userEvent.setup();
-    show("/?sheet=pauses&lpage=2");
+    show("/?sheet=pauses&lfrom=2");
     await screen.findByLabelText("Gießen pausiert bis");
     await user.click(screen.getByRole("button", { name: "Gießen: Pause beenden" }));
     await user.click(screen.getByRole("button", { name: "Pausen speichern" }));
@@ -116,7 +116,7 @@ describe("US-MON-08 reminder settings in layers", () => {
     try {
       fakeServer();
       const user = userEvent.setup({ advanceTimers: () => undefined });
-      show("/?sheet=pauses&lpage=2");
+      show("/?sheet=pauses&lfrom=2");
       await screen.findByLabelText("Gießen pausiert bis");
       await user.click(screen.getByRole("button", { name: "Gießen: eine Woche pausieren" }));
       expect(screen.getByLabelText<HTMLInputElement>("Gießen pausiert bis").value).toBe(

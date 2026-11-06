@@ -45,7 +45,9 @@ export const COLLECTION_TOOLS: readonly McpTool[] = [
     title: "Search the species catalog",
     description:
       "Searches the species visible to the keeper (approved ones and own proposals) by Latin name, German name or " +
-      "synonym, like the catalog of the app. Use it before proposing a species: if it exists, use its id.",
+      "synonym, like the catalog of the app. Use it before proposing a species: if it exists, use its id. When more " +
+      "is true, more species match than are listed (total counts only the listed ones): search with a longer or " +
+      "more exact term.",
     operation: "search_species",
     inputSchema: inputOf(searchSpeciesSchema, {
       query: "Part of a Latin name, German name or synonym, at least 2 characters.",

@@ -26,8 +26,8 @@ const Loading = ({ text }: { text: string }) => (
 );
 
 /** The address parts of the two lists of the layer: each list keeps its own page (US-QS-23, US-QS-15). */
-const OPEN_PARAM = "offen";
-const DONE_PARAM = "erledigt";
+const OPEN_PARAM = "ofrom";
+const DONE_PARAM = "efrom";
 
 /** The open treatments of this plant with "Erledigt" (US-BEH-02, US-BEH-03). */
 function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Specimen }) {

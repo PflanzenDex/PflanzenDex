@@ -125,6 +125,7 @@ test("US-DEV-10: the path filters are the ones that the changes job of ci.yml us
 });
 
 test("US-DEV-10: the path filters match the same files as the changes job", () => {
+  assert.ok(PATHS.app.test(".claude/hooks/rules.mjs"));
   assert.ok(PATHS.docs.test("README.md"));
   assert.ok(PATHS.docs.test("app/src/notes.md"));
   assert.ok(PATHS.app.test("app/config/gates/coverage-thresholds.json"));

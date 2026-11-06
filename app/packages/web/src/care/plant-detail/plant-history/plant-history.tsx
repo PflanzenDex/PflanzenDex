@@ -80,7 +80,7 @@ export function PlantHistory(props: {
           items={view.measurements}
           pageSize={PAGE_SIZE}
           label="Messungen und Fotos"
-          param="verlauf"
+          param="vfrom"
           replace
           getKey={(m) => m.id}
           renderItem={(m) => <Entry row={m} access={{ api, token, specimenId }} />}

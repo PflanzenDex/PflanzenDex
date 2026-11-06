@@ -21,7 +21,7 @@ Closes #
 - [ ] Input validated, no secrets in code, access and tenant isolation checked (P-04)
 - [ ] Module boundaries respected, no magic strings
 - [ ] View, flow or control changed? Tested keyboard-only and with axe (FR-QG-10 item 11): say here how (Tab path, focus visible, Escape), and `make a11y-routes` shows no new finding (FR-QG-24, US-QS-08 to US-QS-12, playbook `accessibility-check`)
-- [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/news/news.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
+- [ ] `feat:`/`fix:` PR: a new fragment `app/packages/web/src/news/unreleased/<issue>-<slug>.json` with a short German `line` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3). Never edit `news.de.json`: the release moves the lines there.
 - [ ] Spec status and counters in `docs/specs/product/readme.md` updated in this PR
 - [ ] New API routes and core operations named in `docs/guides/reference/app.md`, new shared UI components in the inventory of `docs/guides/reference/design-system.md` (`make reference-check`, US-QG-10)
 - [ ] `make ci` green locally

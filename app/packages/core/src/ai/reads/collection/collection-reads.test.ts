@@ -63,12 +63,15 @@ function source(): CollectionReadSource {
     }),
   ];
   return {
-    searchSpecies: async (_u, text) =>
-      [ficus, aloe].filter((s) =>
+    searchSpecies: async (_u, text) => ({
+      species: [ficus, aloe].filter((s) =>
         [s.latinName, s.germanName ?? "", ...s.synonyms].some((n) =>
           n.toLowerCase().includes(text.toLowerCase()),
         ),
       ),
+      more: false,
+    }),
+    exactSpecies: async () => [],
     species: async (_u, id) => [aloe, ficus].find((s) => s.id === id) ?? null,
     specimens: async (u) => (mine(u) ? rows : []),
     specimen: async (u, id) => (mine(u) ? (rows.find((r) => r.id === id) ?? null) : null),
@@ -141,6 +144,74 @@ describe("US-KI-11 read the catalog by name", () => {
       ["search_species", "read: 1 of 1 species"],
       ["get_species", "refused: species.not_found"],
     ]);
+  });
+});
+
+describe("FR-BES-24 the cut of the species search is said, never guessed", () => {
+  const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  const species = (i: number, latinName: string): SpeciesItem => ({
+    ...aloe,
+    id: uuid(300 + i),
+    latinName,
+    germanName: null,
+    synonyms: [],
+    specimens: 0,
+  });
+  /**
+   * Fifty names "Ca.. Zzvera" and the target "Zzvera": every name contains "vera" and "zzvera"; the search shows the
+   * first 50 in name order (as the app's search does), so the target, the 51st, is beyond the cap.
+   */
+  const cut = (extra: readonly SpeciesItem[] = []): CollectionReadSource => {
+    const all = [
+      ...Array.from({ length: 50 }, (_, i) => species(i, `Ca${letters(i)} Zzvera`)),
+      species(60, "Zzvera"),
+      ...extra,
+    ].sort((a, b) => a.latinName.localeCompare(b.latinName));
+    const names = (x: SpeciesItem) => [x.latinName, ...x.synonyms].map((n) => n.toLowerCase());
+    const base = source();
+    return {
+      ...base,
+      searchSpecies: async (_u, text) => {
+        const hits = all.filter((x) => names(x).some((n) => n.includes(text.toLowerCase())));
+        return { species: hits.slice(0, 50), more: hits.length > 50 };
+      },
+      exactSpecies: async (_u, text) => all.filter((x) => names(x).includes(text.toLowerCase())),
+      species: async (u, id) => all.find((x) => x.id === id) ?? base.species(u, id),
+    };
+  };
+
+  it("FR-BES-24 search_species says more when more species match than it lists, and shows the cap", async () => {
+    const s = { source: cut(), log: new InMemoryAiLog() };
+    const r = value(await aiSearchSpecies(s, call({ query: "vera" })));
+    expect(r).toMatchObject({ total: 50, nextOffset: null, more: true });
+    expect(r.items).toHaveLength(50);
+    expect(s.log.rows.map((x) => x.effect)).toEqual(["read: 50 of 50 species, more match"]);
+  });
+
+  it("FR-BES-24 search_species says more false when the list is complete", async () => {
+    const s = setup();
+    expect(value(await aiSearchSpecies(s, call({ query: "aloe" }))).more).toBe(false);
+    expect(value(await aiSearchSpecies(s, call({ query: "ar" }))).more).toBe(false);
+  });
+
+  it("FR-BES-24 an exact name beyond the cap of the search is still resolved for get_species", async () => {
+    const s = { source: cut(), log: new InMemoryAiLog() };
+    const r = await aiGetSpecies(s, call({ species: "Zzvera" }));
+    expect(value(r).species).toMatchObject({ id: uuid(360), latinName: "Zzvera" });
+  });
+
+  it("FR-BES-24 a shown species of that name does not hide a second one beyond the cap: the reference is ambiguous", async () => {
+    const shown = { ...species(61, "Aaa Zzvera"), synonyms: ["Zzvera"] };
+    const s = { source: cut([shown]), log: new InMemoryAiLog() };
+    const r = await aiGetSpecies(s, call({ species: "Zzvera" }));
+    expect(code(r)).toBe("ai.reference_ambiguous");
+  });
+
+  it("FR-BES-24 a name that is not exact and beyond the cap is not_found, with the nearest names", async () => {
+    const s = { source: cut(), log: new InMemoryAiLog() };
+    const r = await aiGetSpecies(s, call({ species: "Zzvar" }));
+    expect(code(r)).toBe("species.not_found");
+    expect(r.ok ? null : r.error.data).toMatchObject({ nearest: expect.any(Array) });
   });
 });
 

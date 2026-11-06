@@ -125,7 +125,7 @@ describe("US-QS-23 Verlauf", () => {
     ).toEqual(["17\u00a0cm · 07.10.2026", "16\u00a0cm · 06.10.2026", "15\u00a0cm · 05.10.2026"]);
     expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?verlauf=2");
+    expect(screen.getByTestId("address").textContent).toBe("?vfrom=3");
     expect(screen.getByText("14 cm · 04.10.2026")).toBeTruthy();
   });
 

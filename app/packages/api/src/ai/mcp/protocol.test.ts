@@ -146,6 +146,12 @@ describe("FR-KI-12 FR-KI-03 the tools", () => {
     expect(() => toolRight({ ...tool("get_session"), operation: "manage_connections" })).toThrow();
   });
 
+  it("FR-BES-24 FR-KI-03 search_species tells the model what 'more' means and what to do then", () => {
+    const description = tool("search_species").description;
+    expect(description).toContain("When more is true, more species match than are listed");
+    expect(description).toContain("more exact term");
+  });
+
   it("FR-KI-03 the arguments are checked for required, unknown and wrongly typed fields", () => {
     const decide = tool("decide_discover_suggestion");
     expect(

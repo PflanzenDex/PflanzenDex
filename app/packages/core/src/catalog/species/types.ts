@@ -94,6 +94,11 @@ export interface SpeciesSearch {
 export interface SpeciesStore {
   /** `norm`: normalized search text, `null` lists all visible species. Shows at most the cap; `more` says if others match. */
   search(userId: string, norm: string | null): Promise<SpeciesSearch>;
+  /**
+   * The visible species with a name (Latin, German, English or synonym) that equals `norm` as a whole, with no cap:
+   * an exact match beyond the cap of `search` is found too (FR-BES-24). Same visibility, same hit as `search`.
+   */
+  exact(userId: string, norm: string): Promise<readonly SpeciesHit[]>;
   find(userId: string, id: string): Promise<Species | null>;
   /** `find` for many IDs in one step (NFR-12): one result per ID in the same order, `null` where `find` gives `null`. */
   findMany(userId: string, ids: readonly string[]): Promise<readonly (Species | null)[]>;
