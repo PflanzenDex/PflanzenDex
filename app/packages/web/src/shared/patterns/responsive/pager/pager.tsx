@@ -2,7 +2,14 @@ import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { usePageFit } from "./use-page-fit";
-import { PAGE_PARAM, hasOldPart, namedEntry, pagedIn, position } from "./paging/address";
+import {
+  PAGE_PARAM,
+  hasOldPart,
+  namedEntry,
+  pagedIn,
+  position,
+  type PagerPart,
+} from "./paging/address";
 import {
   PagingNote,
   usePageAddress,
@@ -14,12 +21,11 @@ import {
 } from "./paging/paging";
 
 export type { PagerPaging } from "./paging/paging";
-export { PAGE_PARAM, dropPageParts } from "./paging/address";
+export type { PagerPart } from "./paging/address";
+export { LAYER_PARAM, PAGE_PARAM, dropPageParts } from "./paging/address";
 
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
-/** The address part of the pages of a list inside a layer, so it does not compete with the screen behind it (US-QS-22). */
-export const LAYER_PARAM = "lfrom";
 
 /** Pointer handlers that turn a horizontal swipe into a page change, as an alternative to the buttons. */
 function useSwipe(page: number, pages: number, turn: (delta: 1 | -1) => void) {
@@ -108,8 +114,11 @@ export type PagerProps<T> = {
   listClassName?: string;
   /** A changed value (filter, search) starts again at the first entry. */
   resetKey?: string | number;
-  /** Name of the address part that holds the first entry; `from` unless another pager shares the address (a list in a layer passes `LAYER_PARAM`). */
-  param?: string;
+  /**
+   * Name of the address part that holds the first entry; `from` unless another pager shares the address (a list in a layer
+   * passes `LAYER_PARAM`). Only the parts of `PAGER_PARTS` are accepted, so `RouteFocus` knows each one (issue 1550).
+   */
+  param?: PagerPart;
   /** Replaces the history entry instead of pushing one, so Back leaves a layer in one step. */
   replace?: boolean;
   /**

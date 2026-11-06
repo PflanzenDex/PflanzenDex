@@ -2,7 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import type { TodayList } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LAYER_PARAM, Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { dateText } from "@/shared/lib/format";
 import { LoadFrame, useRequest } from "../../shared/data";
@@ -63,7 +63,7 @@ function Content(props: {
 function FurtherTasks(props: {
   list: TodayList;
   onOpen: (d: TodayDestination) => void;
-  param?: string;
+  param?: PagerPart;
   /** The page takes the free height below the tiles (the page, not the layer). */
   fit?: boolean;
 }) {

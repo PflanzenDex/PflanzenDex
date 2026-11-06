@@ -1,21 +1,20 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router";
 import { useAnnounce } from "@/shared/platform/announcer/context";
+import { OLD_PARTS, PAGER_PARTS } from "@/shared/patterns/responsive/pager/paging/address";
 
 const load = () => import("./focus-moves").then((m) => m.createFocusMover());
 
 /**
- * The address without the parts that are no view: a layer (`?sheet=`), the first entry of a list (`?from=`, `?lfrom=`) and
- * the tab or part of a layer (`ltab`, `tab`, `teil`) (US-QS-15, issue 1315). The old page numbers (`?page=`, `?lpage=`) go
- * too: converting one to its first entry (issue 1492) is then no view change, and neither is a turned page.
+ * The address without the parts that are no view: a layer (`?sheet=`), the first entry of a list (every part of
+ * `PAGER_PARTS`, such as `?from=`, `?lfrom=`, `?vfrom=`) and the tab or part of a layer (`ltab`, `tab`, `teil`) (US-QS-15,
+ * issue 1315). The old page numbers of the lists (`?page=`, `?lpage=`, `?verlauf=` …) go too: converting one to its first
+ * entry (issue 1492) is then no view change, and neither is a turned page (issue 1550).
  */
 function viewSearch(search: string): string {
   const params = new URLSearchParams(search);
   params.delete("sheet");
-  params.delete("from");
-  params.delete("lfrom");
-  params.delete("page");
-  params.delete("lpage");
+  for (const part of [...PAGER_PARTS, ...OLD_PARTS.values()]) params.delete(part);
   params.delete("ltab");
   params.delete("tab");
   params.delete("teil");
