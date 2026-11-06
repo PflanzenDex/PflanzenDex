@@ -1,4 +1,5 @@
 import {
+  keeperOffOf,
   localToday,
   readAchievementSettings,
   readKeeperStyle,
@@ -9,6 +10,7 @@ import {
   AchievementSettingsPostgres,
   HintPostgres,
   KeeperStylePostgres,
+  KeeperSwitchPostgres,
   ManualUnlockPostgres,
   unlockSummaryOf,
 } from "@pflanzendex/db";
@@ -30,6 +32,7 @@ export function unlockSources(
   const existing = existingDataOf(pool);
   const calm = new AchievementSettingsPostgres(pool);
   const styles = new KeeperStylePostgres(pool);
+  const switches = new KeeperSwitchPostgres(pool);
   const style = opt.style ?? ((userId: string) => readKeeperStyle(styles, userId));
   const featureSet = async (userId: string) =>
     new Set(
@@ -41,14 +44,16 @@ export function unlockSources(
   // connections, the pool's size), and none of them takes a second connection while holding one, so the parallel
   // reads cannot wait for each other. A failing read rejects the whole answer, never a partial one (P-10).
   const facts = async (userId: string, timeZone: string): Promise<UnlockInput> => {
-    const [summary, keeperStyle, settings, features, manual, existingData] = await Promise.all([
-      unlockSummaryOf(pool, userId),
-      style(userId),
-      readAchievementSettings(calm, userId),
-      featureSet(userId),
-      unlocks.list(userId),
-      existing(userId),
-    ]);
+    const [summary, keeperStyle, settings, features, manual, existingData, keeperSwitches] =
+      await Promise.all([
+        unlockSummaryOf(pool, userId),
+        style(userId),
+        readAchievementSettings(calm, userId),
+        featureSet(userId),
+        unlocks.list(userId),
+        existing(userId),
+        switches.list(userId),
+      ]);
     return {
       style: keeperStyle,
       activeSpecimens: summary.active,
@@ -62,6 +67,7 @@ export function unlockSources(
       features,
       manualUnlocks: new Set(manual.map((u) => u.id)),
       existingData,
+      keeperOff: keeperOffOf(keeperSwitches),
     };
   };
   const hints = new HintPostgres(pool);
@@ -70,5 +76,7 @@ export function unlockSources(
     style: await style(userId),
     calmMode: (await readAchievementSettings(calm, userId)).calmMode,
   });
-  return { unlocks, styles, featureSet, facts, hints, hintContext };
+  // The keeper switches as the account's own rows (US-ONB-09); an unlock refuses a feature the keeper switched off.
+  const keeperOff = async (userId: string) => keeperOffOf(await switches.list(userId));
+  return { unlocks, styles, switches, featureSet, facts, keeperOff, hints, hintContext };
 }

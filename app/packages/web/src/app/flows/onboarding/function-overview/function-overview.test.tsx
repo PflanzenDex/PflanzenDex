@@ -10,7 +10,7 @@ import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { UnlocksProvider } from "../../unlock/model/unlocks/unlocks";
 import { FUNCTION_EMPTY, FUNCTION_NAMES, functionAddress } from "../../unlock/model/unlock-texts";
 import FunctionOverview from "./function-overview";
-import { FUNCTION_PURPOSES } from "./function-purposes";
+import { FUNCTION_PURPOSES } from "./function-layer/function-purposes";
 
 // A phone (US-QS-15): the list is in pages of four and each function opens as a layer.
 beforeAll(() => setViewportWidth(390));
@@ -18,7 +18,7 @@ beforeAll(() => setViewportWidth(390));
 const json = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
-type State = "open" | "locked";
+type State = "open" | "locked" | "keeper_off";
 const entry = (id: string, state: State, extra: Record<string, unknown> = {}) => ({
   id,
   state,
@@ -28,6 +28,16 @@ const entry = (id: string, state: State, extra: Record<string, unknown> = {}) =>
   mayUnlockNow: state === "locked",
   ...extra,
 });
+
+/** A function the keeper switched off (US-ONB-09): its switch names the keeper switch, it is never announced. */
+const keeperOff = (id: string, keeperSwitch: string) =>
+  entry(id, "keeper_off", {
+    announced: false,
+    mayUnlockNow: false,
+    reasons: [],
+    ways: [],
+    keeperSwitch,
+  });
 
 /** What the API sends for style `many` (everything open) or `few` (a few locked); switched-off ones are missing. */
 const allIds = UNLOCK_FUNCTIONS.map((f) => f.id as string);
@@ -253,5 +263,95 @@ describe("US-ONB-06 registry test (FR-ONB-02, P-06)", () => {
       if (id !== "today") expect(functionAddress(id), id).not.toBe(PATHS.today);
     }
     expect(Object.keys(FUNCTION_PURPOSES).sort()).toEqual(allIds.slice().sort());
+  });
+});
+
+/** Like `show`, but keeps every write with its method, path and body (US-ONB-09: the keeper's switches). */
+function showWrites(functions: unknown[]) {
+  const writes: { method: string; path: string; body: unknown }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url, init) => {
+      const u = new URL(String(url));
+      if (init?.method && init.method !== "GET")
+        writes.push({
+          method: init.method,
+          path: u.pathname,
+          body: init.body ? JSON.parse(String(init.body)) : undefined,
+        });
+      return init?.method && init.method !== "GET" ? json(200, {}) : json(200, { functions });
+    }),
+  );
+  render(
+    <MemoryRouter>
+      <UnlocksProvider api="http://api.test" token={async () => "tok"}>
+        <FunctionOverview api="http://api.test" token={async () => "tok"} />
+      </UnlocksProvider>
+    </MemoryRouter>,
+  );
+  return writes;
+}
+
+describe("US-ONB-09 keeper switches in Was die App kann", () => {
+  it("US-ONB-09 a switched-off function is listed as Ausgeschaltet, never as Gesperrt or Bald", async () => {
+    showWrites(few.map((e) => (e.id === "wishlist" ? keeperOff("wishlist", "wishlist") : e)));
+    const list = await rows();
+    expect(list.find((r) => r.name === "Wunschliste")?.state).toBe("Ausgeschaltet");
+    expect(list.map((r) => r.state)).not.toContain("Bald");
+    expect(list.find((r) => r.name === "Wunschliste")?.state).not.toBe("Gesperrt");
+  });
+
+  it("US-ONB-09 its layer has the switch to turn it on again, and no link to a function that is off", async () => {
+    showWrites(few.map((e) => (e.id === "wishlist" ? keeperOff("wishlist", "wishlist") : e)));
+    await openFunction("Wunschliste");
+    const dialog = await screen.findByRole("dialog");
+    const box = within(dialog).getByRole("checkbox", { name: "Eingeschaltet" }) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    expect(within(dialog).queryByRole("link", { name: /Wunschliste/ })).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: /Jetzt freischalten/ })).toBeNull();
+  });
+
+  it("US-ONB-09 turning the switch on sends PUT with enabled true and the time zone, and shows the change", async () => {
+    const writes = showWrites(
+      few.map((e) => (e.id === "wishlist" ? keeperOff("wishlist", "wishlist") : e)),
+    );
+    await openFunction("Wunschliste");
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("checkbox", { name: "Eingeschaltet" }));
+    await screen.findByText("Wunschliste ist eingeschaltet.");
+    expect(writes).toEqual([
+      {
+        method: "PUT",
+        path: "/onboarding/switches/wishlist",
+        body: { enabled: true, timeZone: expect.any(String) },
+      },
+    ]);
+  });
+
+  it("US-ONB-09 a switched-on switchable function shows its switch checked; switching it off says the data stays", async () => {
+    const writes = showWrites(
+      many.map((e) => (e.id === "wishlist" ? { ...e, keeperSwitch: "wishlist" } : e)),
+    );
+    await openFunction("Wunschliste");
+    const dialog = await screen.findByRole("dialog");
+    const box = within(dialog).getByRole("checkbox", { name: "Eingeschaltet" }) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    await userEvent.click(box);
+    await screen.findByText(/Wunschliste ist ausgeschaltet\. Deine Daten bleiben erhalten\./);
+    expect(writes[0]).toMatchObject({
+      method: "PUT",
+      path: "/onboarding/switches/wishlist",
+      body: { enabled: false },
+    });
+  });
+
+  it("US-ONB-09 a core function has no switch and says why in one sentence", async () => {
+    showWrites(many);
+    await openFunction("Sammlung");
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText("Gehört zum Kern der App: Sammlung, Pflege und Pokédex bleiben an."),
+    ).toBeTruthy();
+    expect(within(dialog).queryByRole("checkbox")).toBeNull();
   });
 });

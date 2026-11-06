@@ -7,6 +7,7 @@ import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skelet
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView } from "./discover-view";
+import { useFeature } from "@/shared/data";
 
 /** The light zone of "Discover for <zone>" from the address (`?zone=3`, US-ENT-07); anything but 2 to 4 means no filter. */
 function zoneOf(value: string | null): number | undefined {
@@ -34,13 +35,17 @@ export function DiscoverArea(props: {
 }) {
   const { view, choose } = useDiscoverView();
   const zone = zoneOf(useSearchParams()[0].get("zone"));
+  // Without the suggestions (US-ONB-09) only the catalog is offered.
+  const options = useFeature("discover")
+    ? DISCOVER_VIEWS
+    : DISCOVER_VIEWS.filter((o) => o.value === "catalog");
   return (
     <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <SammlungHeader
         title="Entdecken"
         switchLabel="Ansicht von Entdecken"
         view={view}
-        options={DISCOVER_VIEWS}
+        options={options}
         onChoose={choose}
         caption={null}
       />

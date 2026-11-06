@@ -45,6 +45,21 @@ export const UNLOCK_RULES: Readonly<Record<UnlockRuleId, readonly UnlockConditio
   year_in_review: [{ kind: "days_since_first_specimen", days: 365 }],
 };
 
+/**
+ * The keeper switches (US-ONB-09, P-12): the features outside the core purpose that a keeper may leave out. Several
+ * functions can share one switch (friends and swapping, the three achievement functions). Stored per keeper in
+ * `account_keeper_switch`; a switch without a row is on.
+ */
+export const KEEPER_SWITCH_IDS = [
+  "wishlist",
+  "discover",
+  "equipment",
+  "friends",
+  "ai_access",
+  "achievement_views",
+] as const;
+export type KeeperSwitchId = (typeof KEEPER_SWITCH_IDS)[number];
+
 export interface UnlockFunction {
   readonly id: string;
   readonly epic: string;
@@ -54,13 +69,20 @@ export interface UnlockFunction {
   readonly feature?: Feature;
   /** Hidden in calm mode (US-ACH-08), also as locked (US-ONB-05). */
   readonly hiddenInCalmMode?: true;
+  /** The keeper switch the function belongs to (US-ONB-09); no switch means core: it has no switch (P-12). */
+  readonly keeperSwitch?: KeeperSwitchId;
 }
 
 const fn = (
   id: string,
   epic: string,
   destination: UnlockDestination,
-  rest: { rule: UnlockRuleId; feature?: Feature; hiddenInCalmMode?: true },
+  rest: {
+    rule: UnlockRuleId;
+    feature?: Feature;
+    hiddenInCalmMode?: true;
+    keeperSwitch?: KeeperSwitchId;
+  },
 ): UnlockFunction => ({ id, epic, destination, ...rest });
 
 /** In navigation order (US-ONB-06: ordered by the navigation, not by state). */
@@ -74,15 +96,31 @@ export const UNLOCK_FUNCTIONS = [
   fn("growth", "WAC", "collection", { rule: "first_plant" }),
   fn("treatments", "BEH", "today", { rule: "first_plant" }),
   fn("pokedex", "POK", "collection", { rule: "first_plant" }),
-  fn("wishlist", "WUN", "collection", { rule: "wishes_and_discover" }),
-  fn("discover", "ENT", "discover", { rule: "wishes_and_discover" }),
-  fn("equipment", "EQU", "account", { rule: "equipment", feature: "recommendations" }),
-  fn("friends", "SOZ", "friends", { rule: "social", feature: "social" }),
-  fn("swapping", "TAU", "friends", { rule: "social", feature: "social" }),
-  fn("ai_access", "KI", "account", { rule: "ai", feature: "ai" }),
-  fn("care_rhythm", "ACH", "account", { rule: "care_rhythm", hiddenInCalmMode: true }),
-  fn("anniversaries", "ACH", "account", { rule: "anniversaries", hiddenInCalmMode: true }),
-  fn("year_in_review", "ACH", "account", { rule: "year_in_review", hiddenInCalmMode: true }),
+  fn("wishlist", "WUN", "collection", { rule: "wishes_and_discover", keeperSwitch: "wishlist" }),
+  fn("discover", "ENT", "discover", { rule: "wishes_and_discover", keeperSwitch: "discover" }),
+  fn("equipment", "EQU", "account", {
+    rule: "equipment",
+    feature: "recommendations",
+    keeperSwitch: "equipment",
+  }),
+  fn("friends", "SOZ", "friends", { rule: "social", feature: "social", keeperSwitch: "friends" }),
+  fn("swapping", "TAU", "friends", { rule: "social", feature: "social", keeperSwitch: "friends" }),
+  fn("ai_access", "KI", "account", { rule: "ai", feature: "ai", keeperSwitch: "ai_access" }),
+  fn("care_rhythm", "ACH", "account", {
+    rule: "care_rhythm",
+    hiddenInCalmMode: true,
+    keeperSwitch: "achievement_views",
+  }),
+  fn("anniversaries", "ACH", "account", {
+    rule: "anniversaries",
+    hiddenInCalmMode: true,
+    keeperSwitch: "achievement_views",
+  }),
+  fn("year_in_review", "ACH", "account", {
+    rule: "year_in_review",
+    hiddenInCalmMode: true,
+    keeperSwitch: "achievement_views",
+  }),
 ] as const satisfies readonly UnlockFunction[];
 
 export type UnlockFunctionId = (typeof UNLOCK_FUNCTIONS)[number]["id"];
@@ -91,3 +129,18 @@ export const UNLOCK_FUNCTION_IDS: readonly UnlockFunctionId[] = UNLOCK_FUNCTIONS
 
 export const isUnlockFunctionId = (id: string): id is UnlockFunctionId =>
   (UNLOCK_FUNCTION_IDS as readonly string[]).includes(id);
+
+/** The core functions (US-ONB-09): the registry without a keeper switch. They have no switch and say why in one sentence. */
+export const CORE_FUNCTION_IDS: readonly UnlockFunctionId[] = UNLOCK_FUNCTIONS.filter(
+  (f) => f.keeperSwitch === undefined,
+).map((f) => f.id);
+
+export const isKeeperSwitchId = (id: string): id is KeeperSwitchId =>
+  (KEEPER_SWITCH_IDS as readonly string[]).includes(id);
+
+export const isCoreFunctionId = (id: string): id is UnlockFunctionId =>
+  (CORE_FUNCTION_IDS as readonly string[]).includes(id);
+
+/** The functions a keeper switch turns on or off, in registry order (derived, never listed twice). */
+export const keeperSwitchFunctions = (sw: KeeperSwitchId): readonly UnlockFunctionId[] =>
+  UNLOCK_FUNCTIONS.filter((f) => f.keeperSwitch === sw).map((f) => f.id);

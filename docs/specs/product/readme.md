@@ -83,11 +83,11 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | DEV Development process          | 12      | 2      | 9       | 1      | 1 · 2 · 7                 | 0                      | 12      |
 | ACH Achievements                 | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching               | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
-| ONB Introduction and unlocking   | 9       | 5      | 3       | 1      | 1 · 0 · 10                | 0                      | 9       |
+| ONB Introduction and unlocking   | 9       | 5      | 4       | 0      | 1 · 0 · 10                | 0                      | 9       |
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **211** | **41** | **131** | **39** |                           | **50**                 | **161** |
+| **Total**                        | **211** | **41** | **132** | **38** |                           | **50**                 | **161** |
 
 <!-- spec-status:end -->
 

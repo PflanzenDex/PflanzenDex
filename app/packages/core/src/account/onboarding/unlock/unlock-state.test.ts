@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { ALL_FEATURES, NO_FEATURES, knownFeatures } from "../../../kernel";
-import { UNLOCK_FUNCTIONS, UNLOCK_FUNCTION_IDS } from "./unlock-registry";
+import {
+  CORE_FUNCTION_IDS,
+  KEEPER_SWITCH_IDS,
+  UNLOCK_FUNCTIONS,
+  UNLOCK_FUNCTION_IDS,
+  keeperSwitchFunctions,
+} from "./unlock-registry";
 import {
   addDays,
   unlockState,
@@ -21,6 +27,7 @@ const input = (over: Partial<UnlockInput> = {}): UnlockInput => ({
   features: ALL_FEATURES,
   manualUnlocks: new Set(),
   existingData: new Set(),
+  keeperOff: new Set(),
   ...over,
 });
 
@@ -224,5 +231,84 @@ describe("US-ONB-04 determinism and registry", () => {
     expect(
       of("care_rhythm", input({ firstSpecimenDate: "2026-01-31", today: "2026-02-27" })).ways,
     ).toEqual([{ kind: "wait", days: 1, unlockDate: "2026-02-28" }]);
+  });
+});
+
+describe("US-ONB-09 keeper switch (P-12): a third state beside operator switch and lock", () => {
+  const off = (...ids: string[]) => input({ keeperOff: new Set(ids) });
+  const keeperFunctions = UNLOCK_FUNCTIONS.filter((f) => f.keeperSwitch !== undefined);
+
+  it.each(keeperFunctions.map((f) => [f.id, f.keeperSwitch] as const))(
+    "US-ONB-09 %s is keeper_off while its switch is off, never locked and never announced",
+    (id, sw) => {
+      const s = of(id, off(sw as string));
+      expect(s).toMatchObject({ state: "keeper_off", announced: false, mayUnlockNow: false });
+      expect(s.reasons).toEqual([]);
+      expect(s.ways).toEqual([]);
+    },
+  );
+
+  it("US-ONB-09 an unlock never switches a feature on: a manual unlock, existing data or many do not beat the switch", () => {
+    const over = {
+      style: "many" as const,
+      manualUnlocks: new Set(["wishlist"]),
+      existingData: new Set(["wishlist"]),
+      keeperOff: new Set(["wishlist"]),
+    };
+    expect(state("wishlist", input(over))).toBe("keeper_off");
+  });
+
+  it("US-ONB-09 switching the feature on again shows its state as before (locked with reason and way)", () => {
+    expect(state("wishlist", off())).toBe("locked");
+    expect(of("wishlist", off()).reasons.length).toBeGreaterThan(0);
+  });
+
+  it("US-ONB-09 the operator switch wins: a feature switched off by the operator is switched_off, not keeper_off", () => {
+    expect(
+      state("friends", input({ features: NO_FEATURES, keeperOff: new Set(["friends"]) })),
+    ).toBe("switched_off");
+  });
+
+  it("US-ONB-09 friends and swapping share one keeper switch", () => {
+    expect(state("friends", off("friends"))).toBe("keeper_off");
+    expect(state("swapping", off("friends"))).toBe("keeper_off");
+    expect(state("swapping", off("wishlist"))).toBe("locked");
+  });
+
+  it("US-ONB-09 the three achievement functions share the achievements switch", () => {
+    for (const id of ["care_rhythm", "anniversaries", "year_in_review"])
+      expect(state(id, off("achievement_views"))).toBe("keeper_off");
+  });
+
+  it("US-ONB-09 core functions have no keeper switch and stay open or locked whatever the switches say", () => {
+    const everything = input({ keeperOff: new Set(KEEPER_SWITCH_IDS) });
+    for (const id of CORE_FUNCTION_IDS) expect(state(id, everything)).toBe(state(id, input()));
+  });
+
+  it("US-ONB-09 the core functions are the nine of the owner's table (Heute, collection, catalog, zones, measuring, photos, growth, treatments, Pokedex)", () => {
+    expect(CORE_FUNCTION_IDS).toEqual([
+      "today",
+      "collection",
+      "species_catalog",
+      "light_zones",
+      "measuring",
+      "photos",
+      "growth",
+      "treatments",
+      "pokedex",
+    ]);
+  });
+
+  it("US-ONB-09 the switchable features are derived from the registry: every keeper switch covers at least one function", () => {
+    for (const sw of KEEPER_SWITCH_IDS) expect(keeperSwitchFunctions(sw).length).toBeGreaterThan(0);
+    expect(KEEPER_SWITCH_IDS).toEqual([
+      "wishlist",
+      "discover",
+      "equipment",
+      "friends",
+      "ai_access",
+      "achievement_views",
+    ]);
+    expect(UNLOCK_FUNCTIONS.length).toBe(CORE_FUNCTION_IDS.length + keeperFunctions.length);
   });
 });

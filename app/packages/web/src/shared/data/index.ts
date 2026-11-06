@@ -18,5 +18,6 @@ export {
   type Request,
 } from "./client/request/use-request";
 export { SIGN_IN, WRITE_SUCCEEDED, useWriteAction } from "./use-write-action";
-export { FeaturesProvider, useFeature } from "./client/features/features";
+export { FeaturesProvider, useFeature, useFeatures } from "./client/features/features";
+export type { FeatureStates } from "./client/features/features";
 export { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "./time-zone";

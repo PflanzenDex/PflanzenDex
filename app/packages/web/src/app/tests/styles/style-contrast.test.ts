@@ -184,7 +184,7 @@ describe("US-QS-07 · DS-20 colour helper", () => {
 
 // --- Issue #249: the version line (was the footer) ----------------------------------------------------------------------------------------
 
-const footerClasses = /<p className="([^"]*)">Version /.exec(appSource)?.[1] ?? "";
+const footerClasses = /<p className="([^"]*)">\s*\{t\("version"/.exec(appSource)?.[1] ?? "";
 const footerToken =
   /(?:^|\s)text-([a-z-]+)(?=\s|$)/.exec(
     footerClasses.replace(/text-(xs|sm|base|center)/g, ""),
