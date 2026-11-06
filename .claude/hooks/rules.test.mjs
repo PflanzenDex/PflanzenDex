@@ -213,15 +213,16 @@ test("US-QG-07: the moved check scripts, their libraries and the layout config s
   }
 });
 
-test("US-QG-07: the display tolerances (one-screen baseline, a11y findings) are gate files; their neighbours are not (FR-QG-17)", () => {
+test("US-QG-07: the display tolerances (one-screen baseline and judge, a11y findings) are gate files; their neighbours are not (FR-QG-17)", () => {
   for (const f of [
     "app/packages/e2e/support/display/one-screen/baseline.ts",
+    "app/packages/e2e/support/display/one-screen/judge.ts",
     "app/packages/e2e/support/display/a11y/findings.ts",
+    "app/packages/e2e/support/display/a11y/axe-findings.ts",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
   for (const f of [
-    "app/packages/e2e/support/display/a11y/axe-findings.ts",
     "app/packages/e2e/support/display/a11y/baseline-cli.ts",
     "app/packages/e2e/support/display/screens.json",
     "app/packages/e2e/support/display/one-screen/register.ts",
