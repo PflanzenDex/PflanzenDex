@@ -15,7 +15,7 @@ Number of entries in `app/config/gates/baselines/quality-baseline.json` (`maxEnt
 
 ## Checked by
 
-`app/tools/check/quality/check-baseline.mjs`, `app/config/gates/baselines/quality-baseline.json`.
+`app/tools/check/quality/gates/check-baseline.mjs`, `app/config/gates/baselines/quality-baseline.json`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Number of entries in `app/config/gates/baselines/quality-baseline.json` (`maxEnt
 
 ## Evidence
 
-Tests in `app/tools/check/quality/check-baseline.test.mjs`. The script runs ESLint with `QUALITY_BASELINE=off`, so the allowance of the baseline cannot hide a violation. Because the baseline is empty, any new excess fails at once. Changing the baseline file is a change to a gate file and needs a reason in the PR.
+Tests in `app/tools/check/quality/gates/check-baseline.test.mjs`. The script runs ESLint with `QUALITY_BASELINE=off`, so the allowance of the baseline cannot hide a violation. Because the baseline is empty, any new excess fails at once. Changing the baseline file is a change to a gate file and needs a reason in the PR.
