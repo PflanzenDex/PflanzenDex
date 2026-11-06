@@ -30,9 +30,9 @@ describe("FR-POK-13 the shared tree of the collector cards", () => {
   it("FR-POK-13 answers from the kept tree while the build version is unchanged", async () => {
     const { source, state } = fakeSource("v1");
     const read = sharedTreeCache(source);
-    expect(await read()).toBe("tree of v1");
-    expect(await read()).toBe("tree of v1");
-    expect(await read()).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
     expect(state.treeReads).toBe(1);
     expect(state.versionReads).toBe(3);
   });
@@ -42,7 +42,7 @@ describe("FR-POK-13 the shared tree of the collector cards", () => {
     const read = sharedTreeCache(source);
     await read();
     state.version = "v2";
-    expect(await read()).toBe("tree of v2");
+    expect((await read()).tree).toBe("tree of v2");
     expect(state.treeReads).toBe(2);
   });
 
@@ -53,7 +53,7 @@ describe("FR-POK-13 the shared tree of the collector cards", () => {
     state.version = "v2";
     await read();
     state.version = "v1";
-    expect(await read()).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
     expect(state.treeReads).toBe(3);
   });
 
@@ -63,7 +63,7 @@ describe("FR-POK-13 the shared tree of the collector cards", () => {
     state.treeFails = true;
     await expect(read()).rejects.toThrow("tree read failed");
     state.treeFails = false;
-    expect(await read()).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
     expect(state.treeReads).toBe(2);
   });
 
@@ -75,7 +75,7 @@ describe("FR-POK-13 the shared tree of the collector cards", () => {
     state.treeFails = true;
     await expect(read()).rejects.toThrow("tree read failed");
     state.treeFails = false;
-    expect(await read()).toBe("tree of v2");
+    expect((await read()).tree).toBe("tree of v2");
   });
 
   it("FR-POK-13 a failed version read is an error, never the kept tree (P-10)", async () => {
@@ -86,26 +86,35 @@ describe("FR-POK-13 the shared tree of the collector cards", () => {
     await expect(read()).rejects.toThrow("version read failed");
     expect(state.treeReads).toBe(1);
     state.versionFails = false;
-    expect(await read()).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
   });
 
   it("FR-POK-13 without a build yet the tree is read on every request and nothing is kept", async () => {
     const { source, state } = fakeSource(null);
     const read = sharedTreeCache(source);
-    expect(await read()).toBe("tree of null");
-    expect(await read()).toBe("tree of null");
+    expect((await read()).tree).toBe("tree of null");
+    expect((await read()).tree).toBe("tree of null");
     expect(state.treeReads).toBe(2);
+  });
+
+  it("FR-POK-13 reports whether a build exists, so the progress can say the tree is not built yet (P-08)", async () => {
+    const { source, state } = fakeSource(null);
+    const read = sharedTreeCache(source);
+    expect((await read()).built).toBe(false);
+    state.version = "v1";
+    expect(await read()).toEqual({ built: true, tree: "tree of v1" });
+    expect((await read()).built).toBe(true);
   });
 
   it("NFR-12 concurrent first reads both answer with the same tree and later reads use the kept entry", async () => {
     const { source, state } = fakeSource("v1");
     const read = sharedTreeCache(source);
     const [a, b] = await Promise.all([read(), read()]);
-    expect(a).toBe("tree of v1");
-    expect(b).toBe("tree of v1");
+    expect(a.tree).toBe("tree of v1");
+    expect(b.tree).toBe("tree of v1");
     expect(state.treeReads).toBeLessThanOrEqual(2);
     const reads = state.treeReads;
-    expect(await read()).toBe("tree of v1");
+    expect((await read()).tree).toBe("tree of v1");
     expect(state.treeReads).toBe(reads);
   });
 });

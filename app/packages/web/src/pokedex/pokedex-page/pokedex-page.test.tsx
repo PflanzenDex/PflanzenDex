@@ -45,10 +45,14 @@ const riddle = {
 };
 const unidentified = [riddle];
 
-function fakeServer(answer: () => Promise<Response>) {
+/** The taxonomy tree of the server (US-POK-11); by default not built yet, so the progress says so (P-08). */
+const notBuilt = () => response(200, { tree: null });
+
+function fakeServer(answer: () => Promise<Response>, tree: () => Promise<Response> = notBuilt) {
   const fetchFn = vi.fn<typeof fetch>(async (url) => {
     const path = new URL(String(url)).pathname;
     if (path === "/pokedex/cards") return response(200, { cards: [] });
+    if (path === "/pokedex/tree") return tree();
     return path === "/pokedex/ownership" ? answer() : response(404, {});
   });
   vi.stubGlobal("fetch", fetchFn);
@@ -158,6 +162,94 @@ describe("US-POK-06 page of the caught species", () => {
   });
 });
 
+/** A built tree of five species: 2 of them caught (Citrus limon, Opuntia microdasys), 3 orders, 2 families. */
+const tree = [
+  {
+    latin: "Citrus limon",
+    german: "Zitrone",
+    family: "Rutaceae",
+    genus: "Citrus",
+    order: "Sapindales",
+  },
+  {
+    latin: "Citrus aurantium",
+    german: "Bitterorange",
+    family: "Rutaceae",
+    genus: "Citrus",
+    order: "Sapindales",
+  },
+  {
+    latin: "Opuntia microdasys",
+    german: "Hasenohr-Kaktus",
+    family: "Cactaceae",
+    genus: "Opuntia",
+    order: "Caryophyllales",
+  },
+  {
+    latin: "Opuntia ficus-indica",
+    german: "Feigenkaktus",
+    family: "Cactaceae",
+    genus: "Opuntia",
+    order: "Caryophyllales",
+  },
+  {
+    latin: "Aloe vera",
+    german: null,
+    family: "Xanthorrhoeaceae",
+    genus: "Aloe",
+    order: "Asparagales",
+  },
+];
+const treeCalls = (fetchFn: { mock: { calls: Parameters<typeof fetch>[] } }) =>
+  fetchFn.mock.calls.filter(([url]) => new URL(String(url)).pathname === "/pokedex/tree").length;
+
+describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () => {
+  it("US-POK-10 · US-POK-11 the row shows the total, the layer the percent, the orders and the milestone targets", async () => {
+    fakeServer(
+      () => response(200, { ownership: { caught, unidentified: [] } }),
+      () => response(200, { tree: { species: tree } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    const row = await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ });
+    await userEvent.click(row);
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(within(layer).getByText("2 von 3 Ordnungen entdeckt")).toBeTruthy();
+    expect(within(layer).getByText("Noch 3 bis „Setzling“")).toBeTruthy();
+    expect(within(layer).getByText("Citrus: Vollständig")).toBeTruthy();
+    expect(within(layer).getByText("Noch 1: Bitterorange (Citrus aurantium)")).toBeTruthy();
+    expect(within(layer).getByText("4 Meilensteine erreicht")).toBeTruthy();
+    expect(within(layer).queryByText(/noch nicht aufgebaut/)).toBeNull();
+    expect(within(layer).queryByText(/Ordnungen: unbekannt/)).toBeNull();
+  });
+
+  it("US-POK-10 · P-10 if the tree cannot be read the layer says so and offers a retry, the row keeps the caught count", async () => {
+    fakeServer(
+      () => response(200, { ownership: { caught, unidentified: [] } }),
+      () => response(500, serverError),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    const row = await screen.findByRole("button", { name: /· 2 gefangen/ });
+    await userEvent.click(row);
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect((await within(layer).findByRole("alert")).textContent).toContain(
+      "Der Server antwortet nicht.",
+    );
+    expect(within(layer).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+
+  it("US-POK-10 the tree is requested once for the row and the layer together (NFR-12)", async () => {
+    const fetchFn = fakeServer(
+      () => response(200, { ownership: { caught, unidentified: [] } }),
+      () => response(200, { tree: { species: tree } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ }));
+    expect(await screen.findByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(treeCalls(fetchFn)).toBe(1);
+  });
+});
+
 describe("US-POK-07 catch date on the card", () => {
   it("US-POK-07 an exact date reads 'gefangen TT.MM.JJJJ', a creation date reads '≈ TT.MM.JJJJ'", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
@@ -249,7 +341,8 @@ describe("US-QS-22 the species fit one screen", () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=progress");
     const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
-    expect(within(layer).getByText("Ordnungen: unbekannt")).toBeTruthy();
+    // The rank waits for the tree of the server; until it is there the layer shows its loader (US-POK-10).
+    expect(await within(layer).findByText("Ordnungen: unbekannt")).toBeTruthy();
     expect(within(layer).getByRole("button", { name: "Sammlerkarten ansehen" })).toBeTruthy();
   });
 

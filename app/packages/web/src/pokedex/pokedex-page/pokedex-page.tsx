@@ -1,17 +1,28 @@
-import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
+import {
+  milestoneTreeOf,
+  treeTotalsOf,
+  type CaughtSpecies,
+  type Ownership,
+  type PokedexTree,
+  type UnidentifiedSpecimen,
+} from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
 import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame } from "../../shared/data";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { LoadFrame, SCREEN_STALE_TIME, useRequest } from "../../shared/data";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
 import { PokedexPageSkeleton } from "./pokedex-page.skeleton";
 import { CARD } from "../pokedex-cards/pokedex-cards";
 import { CollectorRank, PROGRESS_LAYER, ProgressRow } from "../collector-rank/collector-rank";
+import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
 import { Milestones } from "../milestones/milestones";
 import { NewlyCaught } from "../caught/newly-caught/newly-caught";
+import table from "./pokedex-page.de.json";
 
+const ui = texts(table);
 const CARDS_LAYER = "cards";
 const UNCOUNTED_LAYER = "uncounted";
 
@@ -69,8 +80,10 @@ export function PokedexPage(props: {
               </h1>
             )}
             <NewlyCaught api={api} token={token} caught={ownership.caught} />
-            <ProgressRow
-              caught={ownership.caught.length}
+            <ProgressLine
+              api={api}
+              token={token}
+              caught={ownership.caught}
               uncounted={ownership.unidentified.length}
             />
             <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
@@ -82,19 +95,64 @@ export function PokedexPage(props: {
   );
 }
 
+/** The keys of the caught species, as the tree totals count them (US-POK-10). */
+const caughtKeys = (caught: readonly CaughtSpecies[]) => new Set(caught.map((c) => c.species));
+
+/**
+ * The progress row (US-QS-22) with the totals of the tree once it is there (US-POK-10). Until then, or when the tree
+ * cannot be read, the row names the caught count alone and the layer says why (P-08, P-10). Same copy as the layer.
+ */
+function ProgressLine(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  caught: readonly CaughtSpecies[];
+  uncounted: number;
+}) {
+  const { api, token, caught, uncounted } = props;
+  const load = useCallback((t: string) => loadTree(api, t), [api]);
+  const tree = useRequest({ queryKey: TREE_KEY, token, load, staleTime: SCREEN_STALE_TIME });
+  const totals =
+    tree.status === "ready" && tree.value
+      ? treeTotalsOf(tree.value.species, caughtKeys(caught))
+      : null;
+  return <ProgressRow caught={caught.length} uncounted={uncounted} tree={totals} />;
+}
+
+/** The rank and the milestones of the tree (US-POK-10, US-POK-11); `null` = the tree is not built yet (P-08). */
+function ProgressDetail(props: { caught: readonly CaughtSpecies[]; tree: PokedexTree | null }) {
+  const { caught, tree } = props;
+  return (
+    <>
+      <CollectorRank
+        caught={caught.length}
+        tree={tree ? treeTotalsOf(tree.species, caughtKeys(caught)) : null}
+      />
+      <Milestones caught={caught} tree={tree ? milestoneTreeOf(tree.species) : null} />
+    </>
+  );
+}
+
 /** The layers of the progress, the collector cards and the specimens that do not count yet (US-QS-22). */
 function Layers(props: {
   api: string;
   token: () => Promise<string | undefined>;
   ownership: Ownership;
 }) {
-  const { ownership } = props;
+  const { api, token, ownership } = props;
+  const load = useCallback((t: string) => loadTree(api, t), [api]);
   return (
     <>
       <LayerSheet id={PROGRESS_LAYER} title="Fortschritt">
         <div className="flex flex-col gap-3">
-          <CollectorRank caught={ownership.caught.length} />
-          <Milestones caught={ownership.caught} />
+          <LoadFrame
+            queryKey={TREE_KEY}
+            token={token}
+            load={load}
+            staleTime={SCREEN_STALE_TIME}
+            loadingText={ui("progressLoading")}
+          >
+            {(tree: PokedexTree | null) => <ProgressDetail caught={ownership.caught} tree={tree} />}
+          </LoadFrame>
           <LayerOpener id={CARDS_LAYER}>Sammlerkarten ansehen</LayerOpener>
           {ownership.unidentified.length > 0 ? (
             <LayerOpener id={UNCOUNTED_LAYER}>
