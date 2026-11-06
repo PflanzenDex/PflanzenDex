@@ -144,6 +144,30 @@ describe.each([
   });
 });
 
+/**
+ * US-QS-14 (WCAG 1.4.11): the boundary of a secondary or outline button is `--input` (secondary) or `--primary`
+ * (outline), and it reaches 3:1 on every surface a button can sit on. `--warning` and `--muted` are such surfaces too.
+ */
+const BUTTON_BOUNDARY_PAIRS: [string, string][] = [
+  "background",
+  "card",
+  "warning",
+  "secondary",
+  "muted",
+].flatMap((surface): [string, string][] => [
+  ["input", surface],
+  ["primary", surface],
+]);
+
+describe.each([
+  ["light", lightDecl],
+  ["dark", darkDecl],
+] as const)("US-QS-14 · button boundary contrast in the %s scheme", (_scheme, decl) => {
+  it.each(BUTTON_BOUNDARY_PAIRS)("US-QS-14 · boundary --%s against --%s reaches 3:1", (fg, bg) => {
+    expect(contrast(resolve(decl, fg), resolve(decl, bg))).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("US-QS-07 · DS-20 token coverage", () => {
   it("US-QS-07 · DS-20 every colour token is in a contrast pair or listed as decorative", () => {
     const unpaired = colorTokens.filter((n) => !pairedTokens.has(n) && !DECORATIVE.includes(n));

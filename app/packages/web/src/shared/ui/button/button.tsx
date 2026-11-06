@@ -16,7 +16,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        // The quiet fill keeps its boundary in the field boundary colour (US-QS-14, WCAG 1.4.11): --input reaches 3:1 on background, card, warning, secondary and muted.
+        secondary:
+          "border border-input bg-secondary text-secondary-foreground hover:bg-secondary/80",
         // Green marks intent (ADR 0017): the outline carries the primary colour, its border reaches 6:1 (WCAG 1.4.11).
         // Ghost stays neutral, because tabs, segments, navigation and accordions build on it.
         outline:
