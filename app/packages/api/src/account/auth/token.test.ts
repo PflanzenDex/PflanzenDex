@@ -60,6 +60,21 @@ describe("verify token (US-ACC-01)", () => {
     expect(await reviewer(await sign({}, { key: foreign.privateKey }))).toBeNull();
   });
 
+  it("rejects a valid token whose payload was changed after signing (forged signature)", async () => {
+    const token = await sign({ email: "a@b.test" });
+    const [header, payload, signature] = token.split(".");
+    const claims = JSON.parse(Buffer.from(payload ?? "", "base64url").toString()) as Record<
+      string,
+      unknown
+    >;
+    // Same signature, another subject: only the changed payload differs from the accepted token.
+    const forged = Buffer.from(JSON.stringify({ ...claims, sub: "someone-else" })).toString(
+      "base64url",
+    );
+    expect((await reviewer(token))?.["sub"]).toBe("abc");
+    expect(await reviewer(`${header}.${forged}.${signature}`)).toBeNull();
+  });
+
   it("rejects nonsense and unsigned tokens", async () => {
     expect(await reviewer("no-token")).toBeNull();
     const without = `${btoa('{"alg":"none"}')}.${btoa(`{"iss":"${ISSUER}","aud":"${AUDIENCE}","sub":"x"}`)}.`;

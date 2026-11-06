@@ -134,3 +134,19 @@ Recommendation, for the owner to decide: take variant 1a. Move `baseline`, `cons
 - Three full runs (two warm, one cold) and two passes per step.
 - Not measured: CI wall time (the issue quotes 136 s for one CI run of `make ci-gates`; not checked here), disk speed, and the pre-push hook run during the push, which runs the same chain once more and is not part of this table.
 - The raw per-unit timings and logs stay outside the repo.
+
+## Result after the change (issue 1471)
+
+The owner chose neither option above: the gates now run in parallel, at most four at a time, and `baseline`, `constants` and `ui-text` read one shared ESLint pass. No step left pre-push, and CI runs the same checks.
+
+| Run | Runner s | `make gates` wall s | Exit | 1-minute load at start |
+| --- | -------: | ------------------: | ---- | ---------------------: |
+| 1   |     31.0 |        not recorded | 0    |                   6.58 |
+| 2   |     28.9 |        not recorded | 0    |                   5.83 |
+| 3   |     29.8 |        not recorded | 0    |                   7.28 |
+| 4   |     30.0 |                32.6 | 0    |                   6.30 |
+
+- **The 60 s budget holds:** 32.6 s for a full `make gates`, so the budget stays as it is. Runs 1 to 3 lost their wall time to a broken timing script; the runner's own time excludes `secrets`, `workflows` and `check-deps`, about 2.5 s.
+- **These runs were under load,** above the threshold of about 4 in this record, on the same machine. A quiet machine was not measured.
+- **The longest steps now set the time:** in run 3 `typecheck` took 29.8 s, `lint` 27.9 s, `format-check` 23.3 s and the shared ESLint pass 15.3 s.
+- **`lint` keeps its own ESLint run.** It runs with the baseline allowances on, so ESLint runs twice instead of four times.

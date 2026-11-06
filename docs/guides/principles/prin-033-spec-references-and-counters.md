@@ -19,7 +19,7 @@ Number of references to `US-`, `FR-`, `DM-`, `NFR-` and `E-` IDs in `docs/specs/
 
 ## Gate
 
-`make gates` (step `npm run specs`, which runs `spec-status.mjs --check`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`) and `ci-status` requires it. Locally: `make spec-check`.
+`make gates` (step `npm run specs`, which runs `spec-status.mjs --check`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`); a pull request that changes only documentation runs it in the job `docs-gates` (`make ci-docs`) instead, and `ci-status` requires both. Locally: `make spec-check`.
 
 ## Evidence
 

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp } from "../app";
 import { onlyWithConfirmedEmail, type TokenVerifier } from "./index";
 
@@ -89,6 +89,18 @@ describe("GET /account (US-ACC-01)", () => {
     const after = await account(app, using(`valid:${sub2}:yes`));
     expect(after.id).toBe(before.id);
     expect(after).toMatchObject({ emailConfirmed: true, mayShareWithFriends: true });
+  });
+
+  it("US-QS-11 the keyboard shortcut mode comes with the account: plain for a new one, the own mode for each person", async () => {
+    const app = createApp({ reviewer, pool });
+    const a = await account(app, using(`valid:${sub1}:no`));
+    expect(a.keyboardShortcuts).toBe("plain");
+    await withAccount(pool, a.id, (c) =>
+      c.query("update account_data set keyboard_shortcuts = 'modifier'"),
+    );
+    const b = await account(app, using(`valid:${sub2}:yes`));
+    expect(b.keyboardShortcuts).toBe("plain");
+    expect((await account(app, using(`valid:${sub1}:no`))).keyboardShortcuts).toBe("modifier");
   });
 
   it("each person sees only their own account", async () => {

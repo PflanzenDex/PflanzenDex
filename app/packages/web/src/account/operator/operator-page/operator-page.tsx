@@ -8,7 +8,7 @@ import { IntroductionSection } from "../introduction-section/introduction-sectio
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
 import { InvitationsArea, ModeSection, OperatorRow } from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
-import { refusalText } from "../../refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { keepTogether } from "@/shared/lib/format";
 import {
   OPERATOR_KEY,

@@ -9,7 +9,7 @@ import {
 } from "../../shared/data";
 import { LightView, type LightActions } from "../views/light-view/light-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
-import { refusalText } from "../shared/texts";
+import { refusalText } from "@/shared/lib/error-text";
 import {
   createWrite,
   loadDerivation,

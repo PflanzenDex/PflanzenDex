@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryAiLog } from "../test-helpers";
+import { InMemoryAiLog } from "../../test-helpers";
 import { aiGetSpecies, aiSearchSpecies } from "./catalog-reads";
 import {
   aiGetSpecimen,
@@ -8,7 +8,7 @@ import {
   aiListMeasurements,
   aiListSpecimens,
 } from "./collection-reads";
-import type { CollectionReadSource, SpeciesItem, SpecimenItem } from "./types";
+import type { CollectionReadSource, SpeciesItem, SpecimenItem } from "../types";
 
 const now = new Date("2026-11-02T08:00:00Z");
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;

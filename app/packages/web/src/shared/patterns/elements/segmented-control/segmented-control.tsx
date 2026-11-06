@@ -2,7 +2,12 @@ import { Check } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "../../../ui/button/button";
 
-export type SegmentedOption<V extends string> = { value: V; label: string };
+export type SegmentedOption<V extends string> = {
+  value: V;
+  label: string;
+  /** The keyboard shortcut of this choice (US-QS-11): shown on desktop, announced with the choice. */
+  keyHint?: { visible: string; aria: string } | undefined;
+};
 
 export type SegmentedControlProps<V extends string> = {
   /** Accessible name of the whole group (German); the options carry their own names. */
@@ -41,6 +46,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             type="button"
             variant="ghost"
             aria-pressed={selected}
+            aria-keyshortcuts={o.keyHint?.aria}
             onClick={() => onChange(o.value)}
             className={cn(
               "min-w-[44px] shrink-0 gap-1 rounded-full px-2 font-semibold",
@@ -51,6 +57,11 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
           >
             {selected ? <Check aria-hidden="true" className="size-4 shrink-0" /> : null}
             {o.label}
+            {o.keyHint ? (
+              <kbd aria-hidden="true" className="hidden font-mono text-xs font-normal md:inline">
+                {o.keyHint.visible}
+              </kbd>
+            ) : null}
           </Button>
         );
       })}

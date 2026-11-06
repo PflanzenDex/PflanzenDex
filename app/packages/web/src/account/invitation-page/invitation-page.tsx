@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { SIGN_IN, type ApiError } from "../../shared/data";
 import { redeemInvitation } from "../api/access-api";
-import { useServerRefusal } from "../refusal";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { invitationCodeSchema, type InvitationCodeFields } from "../schemas";
 
@@ -25,7 +25,7 @@ function useRedeem(api: string, token: Token, onRegistered: () => void) {
   });
   const [error, setError] = useState<ApiError | null>(null);
   const busy = useRef(false);
-  useServerRefusal<InvitationCodeFields>(error, form.setError, codeField);
+  useServerRefusal(error, form.setError, codeField);
   const submit = form.handleSubmit(async ({ code }) => {
     if (busy.current) return;
     busy.current = true;

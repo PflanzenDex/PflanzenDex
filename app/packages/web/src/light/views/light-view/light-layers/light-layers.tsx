@@ -10,7 +10,7 @@ import { DerivationForm } from "../../../zones/derivation-view/derivation-view";
 import { LocationForm } from "../../../zones/locations-view/locations-view";
 import { ZoneForm } from "../../../zones/zones-view/zones-view";
 import type { LightData, LightOverview, Response } from "../../../shared/light-api/light-api";
-import { refusalText } from "../../../shared/texts";
+import { refusalText } from "@/shared/lib/error-text";
 import type { LightActions } from "../light-view";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../light.de.json";

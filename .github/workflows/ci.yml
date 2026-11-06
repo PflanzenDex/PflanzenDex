@@ -1,5 +1,6 @@
 # CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
-# Path filter: the app suite only runs when `app/`, the Makefile or the workflows change.
+# Path filters: the app suite only runs when `app/`, the Makefile or the workflows change; the docs and spec gates
+# (`docs-gates`) run when documentation changes (US-QG-02, #1389).
 # `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
 
@@ -30,6 +31,7 @@ jobs:
     outputs:
       app: ${{ steps.filter.outputs.app }}
       one-screen: ${{ steps.filter.outputs.one-screen }}
+      docs: ${{ steps.filter.outputs.docs }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,7 +45,7 @@ jobs:
           base="$PUSH_BEFORE"
           if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; fi
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-            echo "app=true" >> "$GITHUB_OUTPUT"; echo "one-screen=true" >> "$GITHUB_OUTPUT"; exit 0
+            { echo "app=true"; echo "one-screen=true"; echo "docs=true"; } >> "$GITHUB_OUTPUT"; exit 0
           fi
           # QG-U8: the one-screen run only when the UI, the e2e package, the demo seed it measures or the gate files change
           # (issues 1137, 1164).
@@ -56,6 +58,13 @@ jobs:
             echo "app=true" >> "$GITHUB_OUTPUT"
           else
             echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
+          # US-QG-02 (issue 1389): documentation changed, so the docs and spec gates run (job `docs-gates`). Every `.md` file
+          # counts, the link check reads all of them; `.agents/` and `.claude/skills/` hold the skill check.
+          if git diff --name-only "$base" HEAD | grep -qE '^(docs/|\.agents/|\.claude/skills/|\.markdownlint-cli2\.jsonc$)|\.md$'; then
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=false" >> "$GITHUB_OUTPUT"
           fi
 
   # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*`,
@@ -116,6 +125,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
       - run: make ci-gates
+      # US-QG-08: the five most complex functions in the job summary. Report only: it runs after a failure too, and a
+      # failing report never fails the job; the summary then gets one line instead of nothing (P-10).
+      - name: Health report
+        if: always()
+        run: make health-report >> "$GITHUB_STEP_SUMMARY" || echo "Health report unavailable (report only), see the step log." >> "$GITHUB_STEP_SUMMARY"
 
   app-tests:
     needs: [changes, reuse]
@@ -426,6 +440,25 @@ jobs:
           node-version-file: .nvmrc
       - run: make layout
 
+  # US-QG-02 (issue 1389): the docs and spec gates for a change that touches documentation (the `docs` output of
+  # `changes`). The `app-*` jobs skip such a pull request, so without this job markdownlint, the link check and the spec
+  # checks ran only in pre-push and the nightly. Same targets as the docs part of `make gates` (`make ci-docs`); light:
+  # no database, no browser, no build. Not in `reuse` and no draft skip: it runs in full on an edit and on
+  # `ready_for_review` too, so `ci-status` never shows green for documentation that was not checked on that commit.
+  # `fetch-depth: 0`: check-reference compares its baseline with origin/dev (RF-5), as the `layout` job does.
+  docs-gates:
+    needs: changes
+    if: needs.changes.result == 'success' && needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      - run: make ci-docs
+
   # QG-U5 / US-QS-07 (ADR 0010): visual regression of the `components/ui` stories (360 px, light and dark) in the
   # pinned Playwright container, so the pictures equal the baselines in `app/packages/web/.storybook/snapshots` made on a laptop.
   # On failure the diff images are attached. Never updates baselines (`make ds-snapshots` is a local step).
@@ -463,6 +496,7 @@ jobs:
         app-coverage,
         app-ui,
         layout,
+        docs-gates,
         ds-snapshots,
         metadata,
         dependency-review,
@@ -485,6 +519,7 @@ jobs:
           APP_COVERAGE: ${{ needs.app-coverage.result }}
           APP_UI: ${{ needs.app-ui.result }}
           LAYOUT: ${{ needs.layout.result }}
+          DOCS_GATES: ${{ needs.docs-gates.result }}
           DS_SNAPSHOTS: ${{ needs.ds-snapshots.result }}
           METADATA: ${{ needs.metadata.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
@@ -494,7 +529,7 @@ jobs:
           ONE_SCREEN: ${{ needs.one-screen.result }}
           A11Y_ROUTES: ${{ needs.a11y-routes.result }}
         run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN" "$A11Y_ROUTES"; do
+          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_COVERAGE" "$APP_UI" "$LAYOUT" "$DOCS_GATES" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$ONE_SCREEN" "$A11Y_ROUTES"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;

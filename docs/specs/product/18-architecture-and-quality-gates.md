@@ -77,7 +77,7 @@ As a **developer** I want the fast checks to run before the push, so that CI is 
 Acceptance criteria:
 
 - `commit-msg`: a violation of QG-C1 rejects the commit and names the rule.
-- `pre-push`: QG-C2 to QG-C5 run in this order, the first error aborts and names the command to re-run.
+- `pre-push`: QG-C2 to QG-C5 run together, at most four at a time. A failing check does not stop the others; the run then names every failed check and the command to re-run it.
 - The checks run within the time budget of **60 seconds** (assumption) on a normal development machine; what takes longer belongs in CI.
 - The same commands exist as `make`/`npm` targets (`lint`, `test`, `ci`), so that locally and CI run the same thing (FR-QG-01).
 
@@ -111,7 +111,7 @@ As a **developer (or AI)** I want to get from each story to its tests and back (
 
 Acceptance criteria:
 
-- Every story in `docs/specs/product/` with status ✅ has at least one test whose name carries the story ID (e.g. `US-PHA-01`).
+- Every story in `docs/specs/product/` with status ✅ has at least one test whose name carries the story ID (e.g. `US-PHA-01`). A skipped or todo test does not count, because it cannot fail.
 - A test that names an unknown or ⬜ story ID is reported (hint, no error).
 - The script additionally checks the consistency of the spec itself: IDs unique, status overview in `README.md` matches the files, references to `US-/FR-/DM-/E-` IDs point to existing entries (references to IDs of the prototype folder are marked as such and excluded).
 - A change to domain logic without a green story test does not count as done (DoD, FR-QG-10).

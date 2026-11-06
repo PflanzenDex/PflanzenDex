@@ -1,4 +1,9 @@
-import { FOREIGN_AUDIENCE, foreignAudienceToken } from "../support/account";
+import {
+  createTestAccount,
+  FOREIGN_AUDIENCE,
+  foreignAudienceToken,
+  liveSessionCount,
+} from "../support/account";
 import { axeReport } from "../support/axe";
 import { signIn, expect, test } from "../support/fixtures";
 
@@ -54,7 +59,8 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.locator("#password").fill("falsches-Passwort-123");
     await page.locator("#kc-login").click();
     await expect(page.getByText(/Ungültig/)).toBeVisible();
-    await expect(page).toHaveURL(/localhost:18081/);
+    // Still at the sign-in service, whichever port it runs on (E2E_KEYCLOAK_URL).
+    await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
   });
 
   test("US-ACC-01 signing out ends the session and says so", async ({ page, account }) => {
@@ -64,6 +70,65 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+  });
+});
+
+// US-ACC-01 another account (issue 667): the way out of a live sign-in at the sign-in service, end to end.
+test.describe("US-ACC-01 another account", () => {
+  test("US-ACC-01 a live sign-in at the sign-in service ends first, then the other person signs in", async ({
+    page,
+    account,
+  }) => {
+    const other = await createTestAccount();
+    await signIn(page, account);
+    // The state of the bug: the app holds no sign-in any more (cleared storage), the sign-in service still does.
+    // The silent attempt was made once in this tab already, so the welcome page shows.
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload();
+    await page.getByRole("button", { name: "Anderes Konto" }).click();
+    // Without an id token the sign-in service asks once before it ends the session, then returns to the app.
+    await page.getByRole("button", { name: "Abmelden", exact: true }).click();
+    await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
+    await signIn(page, other);
+    await page.getByRole("link", { name: "Konto", exact: true }).click();
+    const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
+    await expect(index.getByText(other.email, { exact: true })).toBeVisible();
+    await expect(index.getByText(account.email, { exact: true })).toHaveCount(0);
+  });
+
+  test("US-ACC-01 Konto anlegen with a live sign-in of another person ends it first, then the registration opens", async ({
+    page,
+    account,
+  }) => {
+    await signIn(page, account);
+    // The state of the bug: the app holds no sign-in any more, the sign-in service still holds the session of `account`.
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload();
+    const shown: string[] = [];
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) shown.push(frame.url());
+    });
+    await page.getByRole("button", { name: "Konto anlegen" }).click();
+    // The registration form of the sign-in service; the refusal "already signed in with another user" would come at the end.
+    await expect(page.locator('input[name="email"]')).toBeVisible();
+    await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
+    await expect.poll(() => liveSessionCount(account)).toBe(0);
+    // The session ends without a logout page of the sign-in service (it has the id token of the session).
+    expect(shown.some((url) => url.includes("/openid-connect/logout"))).toBe(false);
+  });
+
+  test("US-ACC-01 Konto anlegen without a sign-in opens the registration directly, with no sign-out page", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const shown: string[] = [];
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) shown.push(frame.url());
+    });
+    await page.getByRole("button", { name: "Konto anlegen" }).click();
+    await expect(page.locator('input[name="email"]')).toBeVisible();
+    await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
+    expect(shown.some((url) => url.includes("/openid-connect/logout"))).toBe(false);
   });
 });
 

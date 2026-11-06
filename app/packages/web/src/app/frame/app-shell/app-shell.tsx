@@ -1,7 +1,15 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
+import type { KeyboardShortcutMode } from "@pflanzendex/core";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { useOnline } from "@/shared/platform/browser/network";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
+import {
+  ShortcutProvider,
+  useShortcuts,
+} from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { SHORTCUT_MODE } from "@/shared/platform/device/keyboard/keys";
+import { SHORTCUT_TARGETS } from "./shortcut-targets";
+import { ShortcutOverview } from "@/shared/platform/device/keyboard/shortcut-overview/shortcut-overview";
 import { Banner } from "../../../shared/patterns/states/banner/banner";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { GlobalHeader } from "../global-header/global-header";
@@ -87,48 +95,68 @@ function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
  * (`max-w-480`) the frame keeps its 1920 px layout and is centred; the page colour fills the sides (US-QS-14, issue 1160).
  * One `items` list is the single source of destinations for bar, rail and sidebar. The skip link comes first (US-QS-08).
  */
+/** The overview of the shortcuts, opened by `?` and by the help entry; it reads the state of the shortcut provider (US-QS-11). */
+function ShortcutOverviewLayer() {
+  const s = useShortcuts();
+  const off = s.mode === undefined || s.mode === SHORTCUT_MODE.disabled;
+  return (
+    <ShortcutOverview
+      open={s.overviewOpen}
+      onOpenChange={s.setOverviewOpen}
+      rows={s.rows}
+      off={off}
+    />
+  );
+}
+
 export function AppShell({
   items,
   titleOf,
+  shortcutMode,
   children,
 }: {
   items: NavItem[];
   /** The page title of an address; with it the shell also moves the focus to the new view's heading (US-QS-09). */
   titleOf?: (pathname: string) => string;
+  /** The keyboard shortcut mode of the account; `undefined` while it is not known: then no shortcut fires (US-QS-11). */
+  shortcutMode?: KeyboardShortcutMode | undefined;
   children: ReactNode;
 }) {
   const shell = useRef<HTMLDivElement>(null);
   useStickyScrollPadding(shell);
   return (
-    <AnnouncerProvider>
-      <ToastProvider>
-        <div
-          ref={shell}
-          className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row"
-        >
-          <a
-            href={`#${MAIN_ID}`}
-            onClick={skipToContent}
-            className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <ShortcutProvider mode={shortcutMode} targets={SHORTCUT_TARGETS}>
+      <AnnouncerProvider>
+        <ToastProvider>
+          <div
+            ref={shell}
+            className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row"
           >
-            Zum Inhalt springen
-          </a>
-          <SideNav items={items} />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <GlobalHeader />
-            <main
-              id={MAIN_ID}
-              tabIndex={-1}
-              className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10"
+            <a
+              href={`#${MAIN_ID}`}
+              onClick={skipToContent}
+              className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
-              <OfflineBanner />
-              {children}
-            </main>
+              Zum Inhalt springen
+            </a>
+            <SideNav items={items} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <GlobalHeader />
+              <main
+                id={MAIN_ID}
+                tabIndex={-1}
+                className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10"
+              >
+                {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
+                <OfflineBanner />
+                {children}
+              </main>
+            </div>
+            <MobileNavBar items={items} />
+            <ShortcutOverviewLayer />
           </div>
-          <MobileNavBar items={items} />
-        </div>
-      </ToastProvider>
-    </AnnouncerProvider>
+        </ToastProvider>
+      </AnnouncerProvider>
+    </ShortcutProvider>
   );
 }

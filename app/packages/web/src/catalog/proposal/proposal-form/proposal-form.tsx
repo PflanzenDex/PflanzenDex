@@ -7,7 +7,8 @@ import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../shared/data";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
-import { refusalText } from "../../shared/refusal";
+import { refusalText } from "@/shared/lib/error-text";
+import { ALERT_CLASSES } from "@/shared/ui/fields/form/server-refusal";
 import { NameStepFields, REQUIRED_STEP, TextStepFields } from "../required-fields/required-fields";
 import {
   EMPTY_PROPOSAL,
@@ -16,9 +17,6 @@ import {
   toProposalInput,
   type ProposalFields,
 } from "../../shared/schemas";
-
-const ALERT =
-  "rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 /** Hands a server refusal to the form: the fields it names take its message and the focus, otherwise the alert does. */
 function useRefusal(error: ApiError | null, refuse: UseFormSetError<ProposalFields>) {
@@ -61,7 +59,12 @@ function RefusalNotice(props: {
   return (
     <>
       {error && !props.namesField && (
-        <div role="alert" tabIndex={-1} ref={props.alertRef} className={cn(ALERT, "md:col-span-2")}>
+        <div
+          role="alert"
+          tabIndex={-1}
+          ref={props.alertRef}
+          className={cn(ALERT_CLASSES, "md:col-span-2")}
+        >
           <p>{refusalText(error)}</p>
         </div>
       )}

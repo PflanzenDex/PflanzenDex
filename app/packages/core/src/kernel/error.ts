@@ -87,6 +87,7 @@ export const ERROR_TEXTS = {
     "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
   "ai.reference_ambiguous":
     "Der Name passt auf mehrere Einträge. Es wurde nichts getan; wähle einen der genannten Einträge.",
+  "ai.not_released": "Freundesdaten, Freigaben, Tausch und Empfehlungen bleiben in der App.",
   "ai.no_client":
     "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",

@@ -1,14 +1,7 @@
 import { useWatch, type Control, type FieldValues, type Path } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
 import type { SpecimenCard } from "@pflanzendex/core";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/fields/form/form";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Quiet } from "../../../specimens/cards/parts/parts";
 import type { CreateFields } from "../../../specimens/model/schemas";
@@ -40,27 +33,23 @@ export function MarkerInput<T extends FieldValues>(props: {
   example?: string;
 }) {
   return (
-    <FormField
+    <Field
       control={props.control}
       name={props.name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Input
-              {...field}
-              value={String(field.value ?? "")}
-              required={props.required ?? false}
-              maxLength={40}
-              autoComplete="off"
-              placeholder={`zum Beispiel ${props.example ?? "rot"}`}
-            />
-          </FormControl>
-          {props.description && <FormDescription>{props.description}</FormDescription>}
-          <FormMessage />
-        </FormItem>
+      label={props.label}
+      description={props.description}
+    >
+      {(field) => (
+        <Input
+          {...field}
+          value={String(field.value ?? "")}
+          required={props.required ?? false}
+          maxLength={40}
+          autoComplete="off"
+          placeholder={`zum Beispiel ${props.example ?? "rot"}`}
+        />
       )}
-    />
+    </Field>
   );
 }
 
