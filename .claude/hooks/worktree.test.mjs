@@ -40,12 +40,13 @@ function checkout(t) {
 }
 
 /**
- * The hook's output for one tool call in a session rooted at `session`: hookSpecificOutput, or null when the hook is
- * silent. The hook swallows its own errors (exit 0, message on stderr), so a line on stderr fails the test.
+ * The hook's output for one tool call of a session whose project is `session` and whose shell is in `cwd` (the
+ * session folder by default): hookSpecificOutput, or null when the hook is silent. The hook swallows its own errors
+ * (exit 0, message on stderr), so a line on stderr fails the test.
  */
-function runHook(event, session, toolInput) {
+function runHook(event, session, toolInput, cwd = session) {
   const result = spawnSync("node", [HOOK, event], {
-    input: JSON.stringify({ tool_name: "Edit", cwd: session, tool_input: toolInput }),
+    input: JSON.stringify({ tool_name: event === "guard-bash" ? "Bash" : "Edit", cwd, tool_input: toolInput }),
     env: { ...ENV, CLAUDE_PROJECT_DIR: session },
     encoding: "utf8",
   });
@@ -54,6 +55,7 @@ function runHook(event, session, toolInput) {
   return result.stdout === "" ? null : JSON.parse(result.stdout).hookSpecificOutput;
 }
 const guard = (session, toolInput) => runHook("guard-edit", session, toolInput);
+const bash = (session, command, cwd = session) => runHook("guard-bash", session, { command }, cwd);
 
 /** The hook asks a human, and its reason matches. */
 function assertAsks(output, reason) {
@@ -195,4 +197,35 @@ test("US-QG-07, FR-QG-17: a spec edited in a worktree runs the spec check in tha
   const output = runHook("after-edit", main, { file_path });
   assert.match(output?.additionalContext ?? "", /^Spec check failed after editing docs\/specs\/product\/00-test\.md/);
   assert.match(output.additionalContext, /checked in .*\.worktrees[/\\]x/);
+});
+
+// The Bash guard reads git's view of the repository the hook runs in. These commands are only judged, never run.
+test("US-QG-07: a reset --hard typed in the main checkout is refused with the reason; in a worktree it stays a question", (t) => {
+  const { main, wt } = checkout(t);
+  const inMain = bash(main, "git reset --hard");
+  assert.equal(inMain?.permissionDecision, "deny");
+  assert.match(inMain.permissionDecisionReason, /would act on the main checkout/);
+  assert.equal(bash(wt, "git reset --hard")?.permissionDecision, "ask");
+  assert.equal(bash(wt, "git clean -fd")?.permissionDecision, "ask");
+});
+
+test("US-QG-07: git -C or a cd that names the main checkout is refused from a worktree; a cd into a worktree is not", (t) => {
+  const { main, wt } = checkout(t);
+  assert.equal(bash(wt, `git -C ${main} clean -fd`)?.permissionDecision, "deny");
+  assert.equal(bash(wt, `cd ${main} && git reset --hard`)?.permissionDecision, "deny");
+  assert.equal(bash(main, `cd ${wt} && git reset --hard`)?.permissionDecision, "ask");
+  // The worktree is allowed. The existing question (discardsWork) does not read `-C`, so it may stay silent here.
+  assert.notEqual(bash(main, `git -C ${wt} clean -fd`)?.permissionDecision, "deny");
+});
+
+test("US-QG-07: a failed cd does not move the shell out of the main checkout", (t) => {
+  const { main } = checkout(t);
+  assert.equal(bash(main, `cd ${join(main, "missing")} ; git clean -fd`)?.permissionDecision, "deny");
+});
+
+test("US-QG-07: a repository other than the hook's is judged by its own folder, not as the main checkout", (t) => {
+  const { main } = checkout(t);
+  const other = makeRepo(t, "hook-other");
+  // The project is `main`; the shell is in `other`. A reset there is an ordinary question, as before this guard.
+  assert.equal(bash(main, "git reset --hard", other)?.permissionDecision, "ask");
 });
