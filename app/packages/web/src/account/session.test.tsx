@@ -263,6 +263,8 @@ describe("US-ACC-01 Sitzung", () => {
     renderHook(() => session());
     await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "create" }));
     expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
+    // Nobody signed out: the tab of the new account keeps its silent sign-in.
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
   });
 
   it("US-ACC-01 Konto anlegen under Strict Mode: the registration opens once", async () => {

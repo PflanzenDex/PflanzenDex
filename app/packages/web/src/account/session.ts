@@ -66,8 +66,8 @@ function shouldTrySilently(): boolean {
 
 // Ends the session at the sign-in service; `then` says what the return does (see registerReturn).
 function endSession(mgr: UserManager, then?: "after_logout"): Promise<void> {
-  window.sessionStorage.setItem(MARKER, "1");
-  if (then) window.sessionStorage.setItem(REGISTER, then);
+  // On the way to the registration nobody signed out: the marker would stay in the tab of the new account.
+  window.sessionStorage.setItem(then ? REGISTER : MARKER, then ?? "1");
   return mgr.signoutRedirect();
 }
 
