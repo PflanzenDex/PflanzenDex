@@ -17,10 +17,19 @@ export async function boardStatusOf(client, { repo, number }) {
   return item?.status ?? null;
 }
 
+/** A board write that failed part way: `written` names the fields set before the failure (P-10, nothing misreported). */
+class BoardWriteError extends Error {
+  constructor(cause, written) {
+    super(cause?.message ?? String(cause));
+    this.name = "BoardWriteError";
+    this.written = written;
+  }
+}
+
 /**
  * Sets the fields of the issue at `url` on the project. `fields` maps a field name to the key of its option (see
- * findOption): { Typ: "Story", Epic: "ACC", Priority: "P1" }. Every option is resolved before the issue is added, so a
- * wrong key writes nothing.
+ * findOption): { Typ: "Story", Epic: "ACC", Priority: "P1", Release: "R2" }. Every option is resolved before the issue is
+ * added, so a wrong key writes nothing; a failing edit throws a BoardWriteError that names the fields already set.
  */
 export async function setBoardFields(client, { url, owner, fields }) {
   const meta = await projectMeta(client, owner);
@@ -29,10 +38,17 @@ export async function setBoardFields(client, { url, owner, fields }) {
     if (!field) throw new Error(`project field "${name}" does not exist`);
     const option = findOption(field.options, key);
     if (!option) throw new Error(`project field "${name}" has no option for "${key}"`);
-    return { field, option };
+    return { name, field, option };
   });
   const itemId = await addBoardItem(client, owner, url);
-  for (const { field, option } of edits)
-    await editBoardField(client, { meta, itemId, field, option });
+  const written = [];
+  for (const { name, field, option } of edits) {
+    try {
+      await editBoardField(client, { meta, itemId, field, option });
+    } catch (e) {
+      throw new BoardWriteError(e, written);
+    }
+    written.push(name);
+  }
   return itemId;
 }

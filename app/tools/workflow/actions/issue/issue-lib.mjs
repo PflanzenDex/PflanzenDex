@@ -9,11 +9,13 @@ export { REPORT_LABEL, TRIAGE_LABEL };
 const EPIC_PREFIX = "epic:";
 
 /**
- * The board option for `key`: the option whose name is `key` (Typ: "Story") or whose first word is `key` (Epic and
- * Priority: "ACC · …", "P1 high"). Matching by code keeps the German option texts of the board out of the repository.
+ * The board option for `key`: the option whose name is `key` (Typ: "Story") or starts with `key` and a space (Epic and
+ * Priority: "ACC · …", "P1 high"; Release: "R2 Soziales", and the key "Stufe 2" for "Stufe 2 – …"). Matching by code keeps
+ * the German option texts of the board out of the repository; the taxonomy names an option only where its text does not
+ * start with the code.
  */
 export function findOption(options = [], key) {
-  return options.find((o) => o.name === key || o.name.split(" ")[0] === key);
+  return options.find((o) => o.name === key || o.name.startsWith(`${key} `));
 }
 
 const norm = (value) => String(value ?? "").trim();
@@ -28,6 +30,30 @@ export function typeEntryOf(taxonomy, label) {
 export function epicEntryOf(taxonomy, code) {
   const wanted = norm(code).toUpperCase();
   return taxonomy.epics.find((e) => e.code === wanted);
+}
+
+/** Release entry of the taxonomy for a code (case-insensitive), or undefined. */
+function releaseEntryOf(taxonomy, code) {
+  const wanted = norm(code).toUpperCase();
+  return taxonomy.releases.find((r) => r.code === wanted);
+}
+
+/** Release the rule gives a new issue of this type and priority (owner rule 2026-11-06); null for an epic. */
+const BUG_RELEASE = { P0: "R1", P1: "R1", P2: "R2", P3: "R4" };
+function defaultReleaseOf(type, priority) {
+  if (type === "epic") return null;
+  if (type === "bug") return BUG_RELEASE[priority] ?? null;
+  return "R2";
+}
+
+/** The Release entry of a new issue: the RELEASE override when one is given (checked by the caller), else the rule. */
+function releaseEntryFor(taxonomy, { type, priority, override }) {
+  const code = override
+    ? releaseEntryOf(taxonomy, override).code
+    : defaultReleaseOf(type, priority);
+  const entry = code ? releaseEntryOf(taxonomy, code) : null;
+  if (code && !entry) throw new Error(`release ${code} of the rule is not in issue-taxonomy.json`);
+  return entry;
 }
 
 /**
@@ -108,15 +134,17 @@ export function commentBody(verdict, taxonomy) {
 
 /**
  * Checks the input of `make issue` before anything is created. Returns { ok, errors }; with ok, the labels to set,
- * the board fields (a new item starts with Status Todo, FR-DEV-10 (e)) and the normalised title and body.
+ * the board fields (a new item starts with Status Todo, FR-DEV-10 (e)) and the normalised title and body. The Release
+ * is the RELEASE override when one is given, otherwise the rule of defaultReleaseOf; an epic without an override has none.
  */
-export function validateNewIssue({ type, epic, priority, title, body }, taxonomy) {
+export function validateNewIssue({ type, epic, priority, release, title, body }, taxonomy) {
   const errors = [];
   const t = typeEntryOf(taxonomy, type);
   const e = epicEntryOf(taxonomy, epic);
   const p = taxonomy.priorities.includes(norm(priority).toUpperCase())
     ? norm(priority).toUpperCase()
     : null;
+  const override = norm(release);
   if (!t)
     errors.push(
       `unknown type "${norm(type)}"; allowed: ${taxonomy.types.map((x) => x.label).join(", ")}`,
@@ -127,11 +155,16 @@ export function validateNewIssue({ type, epic, priority, title, body }, taxonomy
     );
   if (!p)
     errors.push(`unknown priority "${norm(priority)}"; allowed: ${taxonomy.priorities.join(", ")}`);
+  if (override && !releaseEntryOf(taxonomy, override))
+    errors.push(
+      `unknown release "${override}"; allowed: ${taxonomy.releases.map((x) => x.code).join(", ")}`,
+    );
   const cleanTitle = norm(title);
   if (!cleanTitle) errors.push("missing title");
   else if (/[\r\n]/.test(cleanTitle)) errors.push("the title must be one line");
   if (!norm(body)) errors.push("the body file is empty");
   if (errors.length) return { ok: false, errors };
+  const releaseEntry = releaseEntryFor(taxonomy, { type: t.label, priority: p, override });
   return {
     ok: true,
     errors,
@@ -140,7 +173,13 @@ export function validateNewIssue({ type, epic, priority, title, body }, taxonomy
     title: cleanTitle,
     body: String(body),
     labels: [t.label, e.label],
-    fields: { Typ: t.typ, Epic: e.code, Priority: p, Status: STATUS.todo },
+    fields: {
+      Typ: t.typ,
+      Epic: e.option ?? e.code,
+      Priority: p,
+      ...(releaseEntry ? { Release: releaseEntry.option ?? releaseEntry.code } : {}),
+      Status: STATUS.todo,
+    },
   };
 }
 

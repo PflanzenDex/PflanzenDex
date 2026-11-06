@@ -1,9 +1,12 @@
 // Tests for the agent hook rules (US-QG-07, US-DEV-02).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { BASELINE_FORMATS, isBaselineFile } from "./baseline-growth.mjs";
 import {
   isCodePath,
   isGateFile,
@@ -55,20 +58,22 @@ test("US-QG-07: each threshold and exception list in app/config/gates is a gate 
   }
 });
 
-test("US-QG-07: the shrink-only baselines in app/config/gates/baselines stay out of the gate files, as measured", () => {
-  const baselines = readdirSync(new URL("../../app/config/gates/baselines/", import.meta.url));
+test("US-QG-07: baselines are not gate files by path, so a shrink needs no human; each file has a growth format", () => {
+  const baselines = readdirSync(new URL("../../app/config/gates/baselines/", import.meta.url)).sort();
   assert.ok(baselines.length > 0, "the baseline folder has files");
+  assert.deepEqual(baselines, Object.keys(BASELINE_FORMATS).sort(), "each file has a format and each format a file");
   for (const f of baselines) {
     assert.equal(isGateFile(`app/config/gates/baselines/${f}`), false, f);
+    assert.equal(isBaselineFile(`app/config/gates/baselines/${f}`), true, f);
   }
 });
 
-test("US-QG-07: an agent edit to a threshold or exception list asks a human, an edit to a baseline does not", () => {
+test("US-QG-07: an agent edit to a threshold or exception list asks a human; an identical rewrite of a baseline does not", () => {
   const hook = fileURLToPath(new URL("./run.mjs", import.meta.url));
   const root = fileURLToPath(new URL("../..", import.meta.url));
-  const guard = (file_path) =>
+  const guard = (file_path, extra = {}) =>
     execFileSync("node", [hook, "guard-edit"], {
-      input: JSON.stringify({ tool_input: { file_path } }),
+      input: JSON.stringify({ tool_input: { file_path, ...extra } }),
       env: { ...process.env, CLAUDE_PROJECT_DIR: root },
       encoding: "utf8",
     });
@@ -76,7 +81,109 @@ test("US-QG-07: an agent edit to a threshold or exception list asks a human, an 
     const out = JSON.parse(guard(`${root}/app/config/gates/${f}`));
     assert.equal(out.hookSpecificOutput.permissionDecision, "ask", f);
   }
-  assert.equal(guard(`${root}/app/config/gates/baselines/ui-text-baseline.json`), "");
+  const baseline = `${root}/app/config/gates/baselines/ui-text-baseline.json`;
+  assert.equal(guard(baseline, { content: readFileSync(baseline, "utf8") }), "");
+});
+
+// A small baseline with unique counts, so that each old_string below occurs exactly once.
+const UI_TEXT = `{
+  "maxTotal": 10,
+  "entries": [
+    { "file": "app/packages/web/src/a.tsx", "count": 6 },
+    { "file": "app/packages/web/src/b.tsx", "count": 4 }
+  ]
+}
+`;
+
+/** A temporary project with one baseline file; the hook reads it from disk (US-QG-07). */
+function baselineProject(t) {
+  const root = mkdtempSync(join(tmpdir(), "baseline-hook-"));
+  // The folder goes again, also when an assertion fails (#1297).
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const folder = join(root, "app/config/gates/baselines");
+  mkdirSync(folder, { recursive: true });
+  const file = join(folder, "ui-text-baseline.json");
+  writeFileSync(file, UI_TEXT);
+  const hook = fileURLToPath(new URL("./run.mjs", import.meta.url));
+  // The hook swallows its own errors (exit 0, message on stderr): a silent failure must not pass as "no question".
+  const guard = (tool_input) => {
+    const result = spawnSync("node", [hook, "guard-edit"], {
+      input: JSON.stringify({ tool_input }),
+      env: { ...process.env, CLAUDE_PROJECT_DIR: root },
+      encoding: "utf8",
+    });
+    assert.equal(result.stderr, "", `the hook reports an error for ${JSON.stringify(tool_input)}`);
+    assert.equal(result.status, 0);
+    return result.stdout;
+  };
+  return {
+    file,
+    /** The hook asks a human, and its reason matches. */
+    asks(tool_input, reason) {
+      const out = JSON.parse(guard(tool_input));
+      assert.equal(out.hookSpecificOutput.permissionDecision, "ask", JSON.stringify(tool_input));
+      assert.match(out.hookSpecificOutput.permissionDecisionReason, reason);
+    },
+    /** The hook says nothing: the edit passes without a question. */
+    passes(tool_input) {
+      assert.equal(guard(tool_input), "", JSON.stringify(tool_input));
+    },
+  };
+}
+
+test("US-QG-07: an Edit that raises a count, adds an entry or raises maxTotal asks a human, and names the file and the reason", (t) => {
+  const project = baselineProject(t);
+  const file_path = project.file;
+  project.asks({ file_path, old_string: '"count": 6', new_string: '"count": 7' }, /ui-text-baseline\.json.*a\.tsx: count rose from 6 to 7/);
+  project.asks(
+    {
+      file_path,
+      old_string: '{ "file": "app/packages/web/src/b.tsx", "count": 4 }',
+      new_string: '{ "file": "app/packages/web/src/b.tsx", "count": 4 },\n    { "file": "app/packages/web/src/c.tsx", "count": 1 }',
+    },
+    /new entry .*c\.tsx/,
+  );
+  project.asks({ file_path, old_string: '"maxTotal": 10', new_string: '"maxTotal": 11' }, /maxTotal raised from 10 to 11/);
+});
+
+test("US-QG-07: an Edit that only lowers a count, lowers maxTotal or removes an entry passes without asking", (t) => {
+  const project = baselineProject(t);
+  const file_path = project.file;
+  project.passes({ file_path, old_string: '"count": 6', new_string: '"count": 5' });
+  project.passes({ file_path, old_string: '"maxTotal": 10', new_string: '"maxTotal": 9' });
+  project.passes({
+    file_path,
+    old_string: ',\n    { "file": "app/packages/web/src/b.tsx", "count": 4 }',
+    new_string: "",
+  });
+});
+
+test("US-QG-07: a Write and a MultiEdit are judged by the text they leave; an edit that cannot be placed exactly or a text that does not parse asks", (t) => {
+  const project = baselineProject(t);
+  const file_path = project.file;
+  const shrunk = JSON.stringify({ maxTotal: 6, entries: [{ file: "app/packages/web/src/a.tsx", count: 6 }] });
+  project.passes({ file_path, content: shrunk });
+  project.asks(
+    { file_path, content: JSON.stringify({ maxTotal: 10, entries: [{ file: "app/packages/web/src/a.tsx", count: 6 }, { file: "app/packages/web/src/z.tsx", count: 1 }] }) },
+    /new entry .*z\.tsx/,
+  );
+  project.passes({
+    file_path,
+    edits: [
+      { old_string: '"count": 6', new_string: '"count": 5' },
+      { old_string: '"maxTotal": 10', new_string: '"maxTotal": 9' },
+    ],
+  });
+  project.asks({ file_path, content: "{" }, /does not parse/);
+  project.asks({ file_path, old_string: '"count": 99', new_string: '"count": 100' }, /cannot be placed exactly/);
+  project.asks({ file_path, old_string: '"file": "app/packages/web/src/', new_string: "x" }, /cannot be placed exactly/);
+});
+
+test("US-QG-07: a new baseline file asks a human, whatever it contains, and so does an edit of a file that does not exist", (t) => {
+  const project = baselineProject(t);
+  const folder = join(project.file, "..");
+  project.asks({ file_path: join(folder, "new-thing-baseline.json"), content: "{}" }, /new baseline file/);
+  project.asks({ file_path: join(folder, "missing-baseline.json"), old_string: "a", new_string: "b" }, /new baseline file/);
 });
 
 test("US-QG-07: the moved check scripts, their libraries and the layout config stay gate files (FR-QG-21)", () => {

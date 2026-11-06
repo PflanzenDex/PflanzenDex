@@ -22,12 +22,22 @@ const taxonomy = {
   types: [
     { label: "story", typ: "Story" },
     { label: "bug", typ: "Bug" },
+    { label: "epic", typ: "Epic" },
   ],
   epics: [
     { code: "ACC", label: "epic:ACC" },
     { code: "DEV", label: "epic:DEV" },
   ],
-  priorities: ["P0", "P1"],
+  priorities: ["P0", "P1", "P2", "P3"],
+  // R5 is allowed for RELEASE= but has no option on the board below: a write to it fails after the issue is created.
+  releases: [
+    { code: "R1" },
+    { code: "R2" },
+    { code: "R3" },
+    { code: "R4" },
+    { code: "R5" },
+    { code: "S2", option: "Stufe 2" },
+  ],
 };
 
 const board = {
@@ -38,6 +48,7 @@ const board = {
       options: [
         { id: "OT-S", name: "Story" },
         { id: "OT-B", name: "Bug" },
+        { id: "OT-E", name: "Epic" },
       ],
     },
     {
@@ -48,7 +59,27 @@ const board = {
         { id: "OE-DEV", name: "DEV · Process" },
       ],
     },
-    { id: "FP", name: "Priority", options: [{ id: "OP-1", name: "P1 high" }] },
+    {
+      id: "FP",
+      name: "Priority",
+      options: [
+        { id: "OP-0", name: "P0 critical" },
+        { id: "OP-1", name: "P1 high" },
+        { id: "OP-2", name: "P2 normal" },
+        { id: "OP-3", name: "P3 low" },
+      ],
+    },
+    {
+      id: "FR",
+      name: "Release",
+      options: [
+        { id: "OR-1", name: "R1 Parität" },
+        { id: "OR-2", name: "R2 Soziales" },
+        { id: "OR-3", name: "R3 Tausch und Erinnerungen" },
+        { id: "OR-4", name: "R4 KI-Zugang" },
+        { id: "OR-S", name: "Stufe 2 – Öffnung für Externe" },
+      ],
+    },
     {
       id: "FS",
       name: "Status",
@@ -178,7 +209,7 @@ test("FR-DEV-10 (c): make issue with an unknown type writes nothing on GitHub", 
   assert.equal(client.calls.length, 0);
 });
 
-test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ, Epic, Priority and Status Todo on the board", async () => {
+test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ, Epic, Priority, Release and Status Todo on the board", async () => {
   const client = fakeGh({ ...boardAnswers, ...created(1230) });
   const logs = [];
   const result = await createIssue(
@@ -194,13 +225,146 @@ test("FR-DEV-10 (e): make issue creates the issue with both labels and sets Typ,
   const create = client.calls.find((c) => c.startsWith("gh api -X POST"));
   assert.match(create, /-f labels\[\]=story -f labels\[\]=epic:ACC/);
   const edits = client.calls.filter((c) => c.startsWith("gh project item-edit"));
-  assert.equal(edits.length, 4);
+  assert.equal(edits.length, 5);
   assert.match(edits[0], /--field-id FT --single-select-option-id OT-S/);
   assert.match(edits[1], /--field-id FE --single-select-option-id OE-ACC/);
   assert.match(edits[2], /--field-id FP --single-select-option-id OP-1/);
-  assert.match(edits[3], /--field-id FS --single-select-option-id OS-T/);
+  assert.match(edits[3], /--field-id FR --single-select-option-id OR-2/);
+  assert.match(edits[4], /--field-id FS --single-select-option-id OS-T/);
   assert.ok(logs.some((l) => /Created #1230/.test(l)));
-  assert.ok(logs.some((l) => /Board: Status Todo, Typ Story, Epic ACC, Priority P1/.test(l)));
+  assert.ok(
+    logs.some((l) => /Board: Typ Story, Epic ACC, Priority P1, Release R2, Status Todo/.test(l)),
+  );
+});
+
+test("FR-DEV-10: make issue sets the Release by the rule on the board: a bug by its priority, a story R2, an epic none", async () => {
+  const cases = [
+    ["bug", "DEV", "P0", "OR-1"],
+    ["bug", "DEV", "P1", "OR-1"],
+    ["bug", "DEV", "P2", "OR-2"],
+    ["bug", "DEV", "P3", "OR-4"],
+    ["story", "ACC", "P1", "OR-2"],
+    ["epic", "DEV", "P1", null],
+  ];
+  for (const [type, epic, priority, option] of cases) {
+    const client = fakeGh({ ...boardAnswers, ...created(1240) });
+    await createIssue(
+      client,
+      { type, epic, priority, title: "T", body: "B" },
+      { taxonomy, env: { GH_REPO: REPO }, log: quiet },
+    );
+    const release = client.calls.find((c) => c.includes("--field-id FR "));
+    if (option) assert.equal(release?.split(" ").pop(), option, type);
+    else assert.equal(release, undefined, `${type} gets no Release`);
+  }
+});
+
+test("FR-DEV-10: a RELEASE override is written to the board, also for an epic, and the stage 2 release by its code", async () => {
+  const cases = [
+    ["epic", "DEV", "P1", "R3", "OR-3"],
+    ["bug", "DEV", "P0", "S2", "OR-S"],
+  ];
+  for (const [type, epic, priority, release, option] of cases) {
+    const client = fakeGh({ ...boardAnswers, ...created(1241) });
+    const logs = [];
+    await createIssue(
+      client,
+      { type, epic, priority, release, title: "T", body: "B" },
+      { taxonomy, env: { GH_REPO: REPO }, log: (l) => logs.push(l) },
+    );
+    const edit = client.calls.find((c) => c.includes("--field-id FR "));
+    assert.equal(edit?.split(" ").pop(), option, release);
+    assert.ok(
+      logs.some((l) => /Release/.test(l)),
+      release,
+    );
+  }
+});
+
+test("FR-DEV-10: make issue --release R3 reaches the board write through the command line, an unknown RELEASE is refused before creation", async () => {
+  const client = fakeGh({ ...boardAnswers, ...created(1242) });
+  const args = ["create", "--type", "story", "--epic", "ACC", "--priority", "P1", "--title", "T"];
+  const body = path.join(tempDir("issue-test-"), "body.md");
+  writeFileSync(body, "## Story\n");
+  const code = await main([...args, "--body-file", body, "--release", "R3"], {
+    client,
+    taxonomy,
+    env: { GH_REPO: REPO },
+    log: quiet,
+  });
+  assert.equal(code, 0);
+  assert.ok(client.calls.some((c) => c.includes("--field-id FR") && c.endsWith("OR-3")));
+  const refused = fakeGh({ ...boardAnswers, ...created(1243) });
+  await assert.rejects(
+    main([...args, "--body-file", body, "--release", "R9"], {
+      client: refused,
+      taxonomy,
+      env: { GH_REPO: REPO },
+      log: quiet,
+    }),
+    (e) => e instanceof IssueRefused && /unknown release "R9"/.test(e.message),
+  );
+  assert.equal(refused.calls.length, 0, "nothing is created for an unknown RELEASE");
+});
+
+test("FR-DEV-10: a failed Release write after the other fields were set is reported with the fields that are set and the one that is not", async () => {
+  const client = fakeGh({
+    ...boardAnswers,
+    ...created(1244),
+    "gh project item-edit": (line) =>
+      line.includes("--field-id FR ") ? new Error("GraphQL: Resource not accessible") : "",
+  });
+  const logs = [];
+  const result = await createIssue(
+    client,
+    { type: "story", epic: "ACC", priority: "P1", title: "T", body: "B" },
+    { taxonomy, env: { GH_REPO: REPO }, log: (l) => logs.push(l) },
+  );
+  assert.equal(result.board, "missing");
+  assert.ok(
+    logs.some((l) =>
+      /WARNING: #1244 is created, but only some of its board fields are set \(GraphQL: Resource not accessible\)\./.test(
+        l,
+      ),
+    ),
+  );
+  assert.ok(logs.some((l) => l === "  Set: Typ Story, Epic ACC, Priority P1."));
+  assert.ok(logs.some((l) => l === "  Not set yet: Release R2, Status Todo."));
+  assert.ok(
+    !client.calls.some((c) => c.includes("--field-id FS ")),
+    "the Status is not written after the failed Release",
+  );
+});
+
+test("FR-DEV-10: a Release the board has no option for is reported after the issue is created, and nothing is written to the board", async () => {
+  const client = fakeGh({ ...boardAnswers, ...created(1245) });
+  const logs = [];
+  const result = await createIssue(
+    client,
+    { type: "story", epic: "ACC", priority: "P1", release: "R5", title: "T", body: "B" },
+    { taxonomy, env: { GH_REPO: REPO }, log: (l) => logs.push(l) },
+  );
+  assert.equal(result.board, "missing");
+  assert.ok(
+    client.calls.some((c) => c.startsWith("gh api -X POST")),
+    "the issue is created first",
+  );
+  assert.ok(
+    !client.calls.some((c) => c.startsWith("gh project item-add")),
+    "nothing is written to the board",
+  );
+  assert.ok(
+    logs.some((l) =>
+      /WARNING: #1245 is created, but its board fields are NOT set \(project field "Release" has no option for "R5"\)\./.test(
+        l,
+      ),
+    ),
+  );
+  assert.ok(
+    logs.some(
+      (l) => l === "  Not set yet: Typ Story, Epic ACC, Priority P1, Release R5, Status Todo.",
+    ),
+  );
 });
 
 test("FR-DEV-10 (#1412): a board that cannot be reached is a warning, the issue stays, exit 0, and it says what is missing", async () => {
@@ -231,8 +395,12 @@ test("FR-DEV-10 (#1412): a board that cannot be reached is a warning, the issue 
       ),
     ),
   );
-  assert.ok(logs.some((l) => /Not set yet: Typ Bug, Epic DEV, Status Todo, Priority P1/.test(l)));
-  assert.ok(logs.some((l) => /CI does not set Priority/.test(l)));
+  assert.ok(
+    logs.some((l) =>
+      /Not set yet: Typ Bug, Epic DEV, Priority P1, Release R1, Status Todo\./.test(l),
+    ),
+  );
+  assert.ok(logs.some((l) => /CI does not set Priority or Release/.test(l)));
   assert.ok(
     !client.calls.some((c) => c.startsWith("gh project item-add")),
     "nothing is written to the board",
@@ -438,4 +606,24 @@ test("FR-DEV-10: the allowed list in app/config/project holds the five types and
   assert.equal(new Set(file.epics.map((e) => e.code)).size, 24);
   assert.ok(!file.epics.some((e) => e.code === "MIG" || e.label === "epic:MIG"));
   assert.deepEqual(file.priorities, ["P0", "P1", "P2", "P3"]);
+  assert.deepEqual(
+    file.releases.map((r) => r.code),
+    ["R0", "R1", "R2", "R3", "R4", "R5", "R6", "S2"],
+  );
+  assert.equal(file.releases.find((r) => r.code === "S2").option, "Stufe 2");
+});
+
+test("FR-DEV-10: sync never writes the Release, so a Release set by hand on the board is kept", async () => {
+  const client = fakeGh({
+    ...boardAnswers,
+    "gh api graphql": issueOnBoard(itemOnBoard("In Progress")),
+  });
+  await syncIssue(client, 12, {
+    type: "bug",
+    epic: "DEV",
+    taxonomy,
+    env: { GH_REPO: REPO },
+    log: quiet,
+  });
+  assert.ok(!client.calls.some((c) => c.includes("--field-id FR ")));
 });
