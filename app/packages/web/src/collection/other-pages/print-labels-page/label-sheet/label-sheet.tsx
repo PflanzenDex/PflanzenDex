@@ -56,8 +56,9 @@ export function LabelSheet(props: {
 }
 
 /**
- * The labels in the print-only region at the end of the body (US-BES-17): hidden on screen, shown in print; the shell is
- * hidden in print as well, so only the labels reach the paper.
+ * The labels in the print-only region at the end of the body (US-BES-17): hidden on screen, shown in print. The section
+ * is marked `data-print-labels`; while it is on the page, tokens.css hides the rest of the body in print, so only the
+ * labels reach the paper.
  */
 export function PrintRegion(props: {
   label: string;
@@ -66,7 +67,12 @@ export function PrintRegion(props: {
 }) {
   const { label, plants, format } = props;
   return createPortal(
-    <section aria-label={label} data-format={format} className="hidden print:block">
+    <section
+      aria-label={label}
+      data-format={format}
+      data-print-labels
+      className="hidden print:block"
+    >
       <LabelSheet plants={plants} format={format} origin={window.location.origin} />
     </section>,
     document.body,

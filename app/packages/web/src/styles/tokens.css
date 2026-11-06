@@ -403,10 +403,20 @@
 }
 
 /*
- * Print (US-BES-17): the pot labels are A4 sheets of 70 x 37 mm labels, three in a row, so the page has no margin of its
- * own; each label sizes itself in mm. The rest of the app is hidden in print by `print:hidden` on the shell.
+ * Print (US-BES-17): the pot labels are A4 sheets of 70 x 37 mm labels, three in a row, so the sheet has no margin of its
+ * own; each label sizes itself in mm. The sheet is the section marked `data-print-labels` (PrintRegion, portalled into
+ * body) and uses the named page `labels`, so only a label sheet is resized: printing any other page keeps its margins.
+ * While a sheet is on the page, the rest of the body is hidden in print, so only the labels reach the paper.
  */
-@page {
+@media print {
+  body:has(> [data-print-labels]) > :not([data-print-labels]) {
+    display: none;
+  }
+  [data-print-labels] {
+    page: labels;
+  }
+}
+@page labels {
   size: A4;
   margin: 0;
 }

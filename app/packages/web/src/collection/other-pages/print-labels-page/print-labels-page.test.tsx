@@ -161,6 +161,16 @@ describe("US-BES-17 printing QR pot labels", () => {
     expect(labelsOf().every((l) => l.dataset.format === "single")).toBe(true);
   });
 
+  it("US-BES-17 the labels sit in a section marked data-print-labels, a direct child of body, so only they print", async () => {
+    server([card()], { s1: species(null) });
+    const user = userEvent.setup();
+    show();
+    await pick(user, /Aloe vera/);
+    await chooseFormat(user, "A4-Bogen");
+    expect(printRegion().hasAttribute("data-print-labels")).toBe(true);
+    expect(printRegion().parentElement).toBe(document.body);
+  });
+
   it("US-BES-17 with nothing chosen Drucken is disabled and says what to do next (P-09)", async () => {
     server([card()], { s1: species(null) });
     const user = userEvent.setup();

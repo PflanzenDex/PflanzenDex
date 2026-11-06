@@ -133,7 +133,7 @@ export function AppShell({
         <ToastProvider>
           <div
             ref={shell}
-            className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row print:hidden"
+            className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row"
           >
             <a
               href={`#${MAIN_ID}`}
