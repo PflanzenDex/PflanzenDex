@@ -59,10 +59,23 @@ function fakeServer(a: Answers = {}) {
 }
 
 const show = (
-  props: { signOut?: () => void; everywhere?: () => void; ai?: boolean; current?: "settings" } = {},
+  props: {
+    signOut?: () => void;
+    everywhere?: () => void;
+    ai?: boolean;
+    achievements?: boolean;
+    current?: "settings";
+  } = {},
 ) =>
   render(
-    <FeaturesProvider features={{ social: true, ai: props.ai ?? true, recommendations: false }}>
+    <FeaturesProvider
+      features={{
+        social: true,
+        ai: props.ai ?? true,
+        recommendations: false,
+        achievement_views: props.achievements ?? true,
+      }}
+    >
       <MemoryRouter initialEntries={["/account"]}>
         <AccountIndex
           api="http://api"
@@ -169,5 +182,28 @@ describe("US-QS-17 the index of Konto", () => {
     show();
     const link = await screen.findByRole("link", { name: "Neu in PflanzenDéx" });
     expect(link.getAttribute("href")).toBe("/account/news");
+  });
+});
+
+describe("US-ONB-09 the keeper's switch achievement_views in the index", () => {
+  it("US-ONB-09 with achievement_views off the index has no row Erfolge and asks nothing of /achievements", async () => {
+    fakeServer();
+    show({ achievements: false });
+    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    await waitFor(() =>
+      expect(within(list).getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Europe/Berlin",
+      ),
+    );
+    expect(within(list).queryByRole("link", { name: /^Erfolge/ })).toBeNull();
+    const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
+    expect(asked.some((path) => path.startsWith("/achievements"))).toBe(false);
+  });
+
+  it("US-ONB-09 with achievement_views on the index has the row Erfolge with its count", async () => {
+    fakeServer();
+    show({ achievements: true });
+    const row = await screen.findByRole("link", { name: /^Erfolge/ });
+    await waitFor(() => expect(row.textContent).toContain("3"));
   });
 });
