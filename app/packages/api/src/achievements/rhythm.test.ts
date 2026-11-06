@@ -13,6 +13,8 @@ const treatment = (dueAt: string, doneAt: string | null) => ({
   doneAt,
 });
 type Spec = ReturnType<typeof spec>;
+// The IDs each read was asked for, in call order (NFR-12: one read per kind).
+type Calls = Record<"open" | "done" | "measured", string[][]>;
 function deps(
   rows: Spec[],
   opt: {
@@ -21,6 +23,7 @@ function deps(
     dates?: Record<string, string[]>;
     days?: number;
     users?: string[];
+    calls?: Calls;
     pauses?: { id: string; from: string; until: string }[];
     dormancy?: { dormancyFrom: string | null; dormancyUntil: string | null };
   } = {},
@@ -33,17 +36,24 @@ function deps(
       },
     },
     treatments: {
-      open: async () => new Map(Object.entries(opt.open ?? {})),
-      doneMany: async (_u: string, ids: string[]) =>
-        new Map(ids.map((id) => [id, opt.done?.[id] ?? []] as const)),
+      open: async (_u: string, ids: string[]) => {
+        opt.calls?.open.push(ids);
+        return new Map(Object.entries(opt.open ?? {}));
+      },
+      doneMany: async (_u: string, ids: string[]) => {
+        opt.calls?.done.push(ids);
+        return new Map(ids.map((id) => [id, opt.done?.[id] ?? []] as const));
+      },
     },
     measurements: {
-      listMany: async (_u: string, ids: string[]) =>
-        new Map(
+      listMany: async (_u: string, ids: string[]) => {
+        opt.calls?.measured.push(ids);
+        return new Map(
           ids.map(
             (id) => [id, (opt.dates?.[id] ?? []).map((date) => ({ date })).reverse()] as const,
           ),
-        ),
+        );
+      },
     },
     pauses: { listPauses: async () => opt.pauses ?? [] },
     species: {
@@ -146,5 +156,65 @@ describe("US-ACH-04 care rhythm through the API logic", () => {
       deps([spec("p", "2026-08-01")], { open: { p: [treatment("2026-09-22", null)] } }),
     );
     expect(r.openTasks).toBeGreaterThan(0);
+  });
+
+  it("US-ACH-04 NFR-12 measurements are read for the active specimens only; treatments keep the archived ones", async () => {
+    const calls: Calls = { open: [], done: [], measured: [] };
+    await run(
+      deps(
+        [
+          spec("p", "2026-08-01"),
+          spec("c", "2026-08-01", { status: "cutting" }),
+          spec("x", "2026-08-01", { status: "archived", archivedAt: "2026-09-15" }),
+        ],
+        { calls, dates: { p: ["2026-08-20"], c: ["2026-08-20"], x: ["2026-08-10"] } },
+      ),
+    );
+    expect(calls.measured).toEqual([["p", "c"]]);
+    expect(calls.open).toEqual([["p", "c", "x"]]);
+    expect(calls.done).toEqual([["p", "c", "x"]]);
+  });
+
+  it("US-ACH-04 NFR-12 the measurements of an archived specimen do not change the answer; its treatments still count", async () => {
+    const rows = [
+      spec("p", "2026-09-01"),
+      spec("x", "2026-08-01", { status: "archived", archivedAt: "2026-09-15" }),
+    ];
+    const treatments = {
+      // Due before the archiving, still open: kept, so it is named as open.
+      open: { x: [treatment("2026-09-01", null)] },
+      // Done before the archiving: kept, so the two weeks make the longest run.
+      done: { x: [treatment("2026-08-10", "2026-08-10"), treatment("2026-08-17", "2026-08-17")] },
+    };
+    const plant = { p: ["2026-09-20"] };
+    const without = await run(deps(rows, { ...treatments, dates: plant }));
+    const withArchived = await run(
+      deps(rows, { ...treatments, dates: { ...plant, x: ["2026-08-10", "2026-08-20"] } }),
+    );
+    expect(withArchived).toEqual(without);
+    expect(withArchived).toMatchObject({
+      hasTasks: true,
+      openTasks: 1,
+      currentRun: 1,
+      longestRun: 2,
+    });
+  });
+
+  it("US-ACH-04 NFR-12 a keeper with only archived specimens still gets the rhythm of their kept treatments", async () => {
+    const r = await run(
+      deps([spec("x", "2026-08-01", { status: "archived", archivedAt: "2026-09-15" })], {
+        open: { x: [treatment("2026-08-20", null)] },
+        done: { x: [treatment("2026-08-10", "2026-08-11")] },
+        dates: { x: ["2026-08-10"] },
+      }),
+    );
+    expect(r).toMatchObject({
+      calmMode: false,
+      hasTasks: true,
+      openTasks: 1,
+      currentRun: 0,
+      longestRun: 1,
+      pauses: [],
+    });
   });
 });
