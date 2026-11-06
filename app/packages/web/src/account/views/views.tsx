@@ -25,7 +25,10 @@ export function Welcome(props: {
   onSignIn: Action;
   onAnotherAccount: Action;
   hint?: string | undefined;
-  /** The error of a failed "Anderes Konto" (US-ACC-01): it says what to do, and the buttons stay for another try. */
+  /**
+   * The error of a failed press on this page (US-ACC-01): "Anmelden", "Konto anlegen" or "Anderes Konto". It says what
+   * to do, and the buttons stay for another try.
+   */
   error?: string | undefined;
 }) {
   return (

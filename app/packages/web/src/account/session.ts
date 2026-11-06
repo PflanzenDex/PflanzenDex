@@ -89,6 +89,7 @@ async function loadState(mgr: UserManager): Promise<State> {
     setProfileTimeZone(account.timeZone ?? null);
     return { kind: "signedIn", account };
   } catch (e) {
+    window.sessionStorage.removeItem(REGISTER); // a failed end of the registration leaves no flag behind
     if (e instanceof Error && e.message === "not_signed_in") {
       await mgr.removeUser();
       return { kind: "signedOut" };
@@ -99,7 +100,7 @@ async function loadState(mgr: UserManager): Promise<State> {
   }
 }
 
-// The error of a sign-out sits on the screen the person pressed the button on; a state without that field stays as it is.
+// The error of a press sits on the screen the person pressed the button on; a state without that field stays as it is.
 function withError(z: State, error: string | undefined): State {
   if (z.kind === "signedIn" || z.kind === "signedOut" || z.kind === "invitationNeeded")
     return { ...z, error };
@@ -107,40 +108,46 @@ function withError(z: State, error: string | undefined): State {
 }
 
 function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetStateAction<State>>) {
-  // "Abmelden" and "Anderes Konto" end the session first: `prompt=login` would not help, because Keycloak refuses
-  // another person while the first session is alive ("already signed in with another user", Keycloak 26.8).
-  // A failure (the sign-in service unreachable, the sign-in library not loading) is said where the button was pressed
-  // and the marker is as it was: this press signed nobody out, but a real sign-out before it still counts. Each press
-  // starts without the old error and may retry.
-  const signOut = () => {
-    const signedOutBefore = window.sessionStorage.getItem(MARKER) !== null;
+  let detourRunning = false;
+  // A press that starts a detour (US-ACC-01) restores the keys it may change when it fails and says so there.
+  // A press during a detour is ignored. Released on success too: a back/forward return resolves the redirect (`pageshow`).
+  const press = (keys: string[], failed: string, detour: (mgr: UserManager) => Promise<void>) => {
+    if (detourRunning) return;
+    detourRunning = true;
+    const before = keys.map((key) => [key, window.sessionStorage.getItem(key)] as const);
     setState((z) => withError(z, undefined));
     void manager
-      .then((mgr) => endSession(mgr))
+      .then(detour)
       .catch(() => {
-        setState((z) => withError(z, t("signOut.failed")));
-        if (!signedOutBefore) window.sessionStorage.removeItem(MARKER);
-      });
+        for (const [key, value] of before)
+          if (value === null) window.sessionStorage.removeItem(key);
+          else window.sessionStorage.setItem(key, value);
+        setState((z) => withError(z, failed));
+      })
+      .finally(() => (detourRunning = false));
   };
   return {
-    signIn: () => {
-      window.sessionStorage.removeItem(MARKER);
-      void manager.then((mgr) => mgr.signinRedirect());
-    },
+    signIn: () =>
+      press([MARKER], t("signIn.failed"), (mgr) => {
+        window.sessionStorage.removeItem(MARKER);
+        return mgr.signinRedirect();
+      }),
     // "Konto anlegen": a silent check first (prompt=none), registerReturn continues (Keycloak refuses at the end).
-    register: () => {
-      window.sessionStorage.removeItem(MARKER);
-      window.sessionStorage.setItem(REGISTER, "check");
-      window.sessionStorage.setItem(SILENT_TRIED, "1");
-      void manager.then((mgr) => mgr.signinRedirect({ prompt: "none" }));
-    },
-    signOut,
-    useAnotherAccount: signOut,
+    register: () =>
+      press([MARKER, REGISTER, SILENT_TRIED], t("register.failed"), (mgr) => {
+        window.sessionStorage.removeItem(MARKER);
+        window.sessionStorage.setItem(REGISTER, "check");
+        window.sessionStorage.setItem(SILENT_TRIED, "1");
+        return mgr.signinRedirect({ prompt: "none" });
+      }),
+    // "Abmelden" and "Anderes Konto" end the session first: prompt=login does not help while another session lives.
+    signOut: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
+    useAnotherAccount: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
     everywhereSignOut: async () => {
       setState((z) => withError(z, undefined));
-      const mgr = await manager;
-      const user = await mgr.getUser();
       try {
+        const mgr = await manager;
+        const user = await mgr.getUser();
         if (user) await signOutEverywhere(mgr.settings.authority, user.access_token);
         await mgr.removeUser();
         setProfileTimeZone(null);
