@@ -261,9 +261,9 @@ State of implementation (cut 1, corrections and history for the three text field
 
 ### US-BES-17 · QR pot labels: print them, scan to open the plant and log in one tap · ⬜ new
 
-As a **plant keeper** I want to print QR labels for my pots, so that a scan opens the plant and I log watering or fertilizing with one tap.
+As a **plant keeper** I want to print QR labels for my pots, so that a scan opens the plant and I log watering with one tap.
 
-Scope note: the first version covers the keeper only: printing, scanning while signed in, the quick actions. Plant sitters exist in no product spec; their access is a later story with its own privacy rules (P-05) (owner decision 2026-11-06, issue 1322).
+Scope note: the first version covers the keeper only: printing, scanning while signed in, the quick actions. Plant sitters exist in no product spec; their access is a later story with its own privacy rules (P-05) (owner decision 2026-11-06, issue 1322). Logging fertilizing is not part of this story, because no fertilizing log exists and spec 09 lists fertilizer tracking as out of scope; a later story decides it (owner decision 2026-11-06, issue 1322).
 
 Acceptance criteria:
 
@@ -271,8 +271,8 @@ Acceptance criteria:
 - Given a plant, when I choose the single format, then I get one label sized for a label printer (62 mm wide, starting value, assumption).
 - Given a label, then it shows the plant's name, its cultivar when it has one, and the QR code; a plant without a cultivar shows no empty line.
 - Given a QR code, then it holds only the app's address with an opaque identifier: no name, species, location or account (P-05).
-- Given a printed label, when I scan it signed in as its keeper, then the plant opens with the large actions "Gegossen", "Gedüngt" and "Messen".
-- Given the plant open from a scan, when I tap "Gegossen" or "Gedüngt", then the care is logged for today in my time zone through the same validating operation as everywhere else (P-03), and the view confirms it; a refused write says why (P-10).
+- Given a printed label, when I scan it signed in as its keeper, then the plant opens with the large actions "Gegossen" and "Messen".
+- Given the plant open from a scan, when I tap "Gegossen", then the watering is logged for today in my time zone in the watering log of US-MON-05, through the same validating operation as everywhere else (P-03), and the view confirms it; a refused write says why (P-10).
 - Given the plant open from a scan, when I tap "Messen", then the measurement form of that plant opens.
 - Given I scan a label and am not signed in, then I am asked to sign in and see nothing of the plant before that; after sign-in as its keeper the plant opens with the quick actions.
 - Given a person signed in with another account scans my label, then they see the same "nicht gefunden" view as for an unknown address: nothing of my collection, and not whether the plant exists (P-05).
