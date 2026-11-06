@@ -1,5 +1,5 @@
 import type { Suggestion } from "@pflanzendex/core";
-import { useState } from "react";
+import { useId, useState, type Ref } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { cn } from "@/shared/lib/utils";
@@ -99,14 +99,20 @@ function Details({ s, more }: { s: Suggestion; more: boolean }) {
 /**
  * One suggestion as a large card (US-ENT-01): image with source and license (FR-POK-07), names, text, zone, difficulty
  * and the attributes of DM-ENT-01, the reasons below. The gesture and its stamps are the shared `SwipeCard` around it;
- * the buttons stay the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06).
+ * the buttons stay the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06). Its heading id is made
+ * per card (`useId`), so the next card can be rendered underneath without a duplicate id on the page.
  */
-export function SuggestionCard(props: { suggestion: Suggestion }) {
+export function SuggestionCard(props: {
+  suggestion: Suggestion;
+  /** The name heading, so the view can move the focus to this card (SC 2.4.3). */
+  titleRef?: Ref<HTMLHeadingElement>;
+}) {
   const s = props.suggestion;
   const [more, setMore] = useState(false);
+  const titleId = useId();
   return (
     <article
-      aria-labelledby="suggestion-title"
+      aria-labelledby={titleId}
       className={cn(
         "mx-auto flex min-h-48 w-full min-w-0 max-w-md flex-1 basis-0 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
         "rounded-xl border border-border bg-card p-3 text-card-foreground",
@@ -119,7 +125,12 @@ export function SuggestionCard(props: { suggestion: Suggestion }) {
             {t("card.exploration")}
           </Badge>
         )}
-        <h2 id="suggestion-title" tabIndex={-1} className="m-0 scroll-mb-24 text-xl font-semibold">
+        <h2
+          id={titleId}
+          ref={props.titleRef}
+          tabIndex={-1}
+          className="m-0 scroll-mb-24 text-xl font-semibold"
+        >
           {s.species}
         </h2>
         <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>

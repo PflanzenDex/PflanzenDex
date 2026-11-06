@@ -22,6 +22,27 @@ wait_healthy() {
   return 1
 }
 
+# Waits until the discovery document of the realm answers 200 inside the keycloak container (every 2 seconds, at most
+# <tries> times; TE-03, #1002). Keycloak reports healthy about 20 s before the import of a first start has ended, and until
+# then every realm URL answers 503. The image has no curl: the probe is bash's /dev/tcp, as the healthcheck of
+# docker-compose.yml does on the management port. It runs inside the container, so the host does not need to reach Keycloak.
+# `read -t` bounds the answer and `timeout` the whole exec, so a stuck container cannot hang the deploy.
+wait_realm() {
+  local realm="$1" tries="$2" path url
+  path="/realms/$realm/.well-known/openid-configuration"
+  url="http://127.0.0.1:8080$path"
+  for _ in $(seq 1 "$tries"); do
+    if timeout 20 "${compose[@]}" exec -T keycloak bash -c '
+      exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1
+      printf "GET %s HTTP/1.0\r\nHost: localhost\r\n\r\n" "$1" >&3
+      IFS=" " read -r -t 5 _ code _ <&3 || exit 1
+      [ "$code" = 200 ]' realm-wait "$path"; then return 0; fi
+    sleep 2
+  done
+  echo "realm $realm did not answer 200 at $url inside keycloak after $tries tries (a first start that failed to import the realm is in its log); logs: ${compose[*]} logs keycloak" >&2
+  return 1
+}
+
 # Refuses to start a PostgreSQL image on a data volume of another major or layout (US-DEV-07, P-10). The official image
 # only refuses the old layout (PG_VERSION at the volume root); a 16 image on an 18 volume would start an empty cluster in
 # its own data folder and nothing would fail. Layout: up to 16 the data sits at the volume root, from 18 on in <major>/docker.
@@ -70,6 +91,9 @@ deploy_ref() {
   wait_healthy api 30 || return 1
   # The sign-in service starts slowly on a small host (first start imports the realm), hence the longer wait.
   wait_healthy keycloak 90 || return 1
+  # The import of a first start ends about 20 s after keycloak is healthy (TE-03, #1002). master-realm.sh, keycloak-mcp and
+  # the smoke sign-in all need the realm, so this one wait comes before them all. 60 tries of 2 s: a starting value (assumption).
+  wait_realm pflanzendex 60 || return 1
   # Brute-force protection in the master realm (#758); idempotent, a no-op after the admin handover.
   ./keycloak/master-realm.sh || return 1
   # MCP readiness of the app realm (US-KI-07); idempotent. Skipped for a ref that predates the job (rollback).

@@ -1,4 +1,4 @@
-import type { DecideResult, SuggestionDeck } from "@pflanzendex/core";
+import type { DecideResult, SuggestionDeck, UndoDecisionResult } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 /** Loads deck `deck` of the suggestions (US-ENT-01), optionally only for light zone `zone` (US-ENT-07): derived on every request, in the zone of the profile (NFR-08). */
@@ -30,4 +30,15 @@ export async function decideSuggestion(
     timeZone: currentTimeZone(),
   });
   return r.ok ? { ok: true, value: r.value as DecideResult } : r;
+}
+
+/** "Rückgängig" on a card (US-ENT-04): the server takes back the account's last Yes or No, and only that one. */
+export async function undoSuggestionDecision(
+  api: string,
+  token: string,
+  species: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<UndoDecisionResult>> {
+  const r = await createWrite(api, token, fetchFn)("POST", "/discover/decisions/undo", { species });
+  return r.ok ? { ok: true, value: r.value as UndoDecisionResult } : r;
 }

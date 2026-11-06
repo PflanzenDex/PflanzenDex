@@ -54,8 +54,13 @@ export interface SwipeCardProps {
   onExited: (direction: SwipeDirection) => void;
   /** No gesture while the parent is busy. */
   disabled?: boolean;
-  /** A next card waits underneath: a blank frame that grows to full size while this card leaves. */
+  /** A next card waits underneath: a frame that grows to full size while this card leaves. */
   stacked?: boolean;
+  /**
+   * The content of the next card, shown underneath in the frame (the frame stays blank without it). It is hidden from
+   * assistive technology and not focusable (`aria-hidden`, `inert`); its element ids must differ from the front card's.
+   */
+  under?: ReactNode;
   className?: string;
 }
 
@@ -132,7 +137,7 @@ function Stamp(props: { direction: SwipeDirection; opacity: number; text: string
  */
 export function SwipeCard(props: SwipeCardProps) {
   const { children, exit, stamps, onSwipe, onExited, className } = props;
-  const { disabled = false, stacked = true } = props;
+  const { disabled = false, stacked = true, under } = props;
   const reduced = useReducedMotion();
   useFlightEnd(exit, onExited, reduced);
   const { drag, handlers } = useCardGesture(disabled || exit !== null, onSwipe);
@@ -144,12 +149,15 @@ export function SwipeCard(props: SwipeCardProps) {
       {stacked && (
         <div
           aria-hidden="true"
+          inert
           className={cn(
-            "pointer-events-none absolute inset-0 rounded-xl border border-border bg-card scale-(--under-scale)",
+            "pointer-events-none absolute inset-0 flex flex-col rounded-xl border border-border bg-card scale-(--under-scale)",
             MOTION,
           )}
           style={cssVars({ "--under-scale": exit === null ? "0.95" : "1" })}
-        />
+        >
+          {under}
+        </div>
       )}
       <div
         className={cn(

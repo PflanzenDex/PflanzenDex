@@ -22,7 +22,9 @@ There is one source: the git tag. No version is written into versioned files.
 
 On the host, in the checkout: `make deploy` (or `app/config/deploy/scripts/deploy.sh [ref]`, default `origin/main`; pass a tag such as `v0.1.0` to deploy a specific release).
 
-Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, run the smoke test.
+Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, wait for the keycloak healthcheck, then for the realm `pflanzendex` (`wait_realm`), run the master realm and MCP steps, run the smoke test.
+
+**The realm wait (TE-03, #1002).** Keycloak reports healthy about 20 s before the realm import of a first start has ended, and until then every realm URL answers 503. `wait_realm` therefore waits until the realm's discovery URL (`/realms/pflanzendex/.well-known/openid-configuration`) answers 200 inside the keycloak container, with a probe from bash's `/dev/tcp` (the image has no curl; the host does not need to reach Keycloak). It is one wait before everything that needs the realm: `master-realm.sh`, `keycloak-mcp` and the smoke sign-in. Starting value, assumption: 60 tries every 2 s. A realm that does not answer in time fails the deploy with `realm pflanzendex did not answer 200 at http://127.0.0.1:8080/realms/pflanzendex/.well-known/openid-configuration inside keycloak after 60 tries`, followed by the command for the keycloak log (a failed import of a first start shows there), and the deploy rolls back like any other failed step.
 
 ## Smoke test
 
@@ -69,10 +71,10 @@ It retries (`SMOKE_RETRIES`, default 15, every `SMOKE_DELAY`, default 2 s) becau
 
 ## Automatic rollback
 
-If the api does not become healthy or the smoke test fails, `deploy.sh` redeploys the previous commit (build, start, health, smoke test again) and exits non-zero with a clear message:
+If the api does not become healthy, the realm `pflanzendex` does not answer 200 in time, or the smoke test fails, `deploy.sh` redeploys the previous commit (build, start, health, realm, smoke test again) and exits non-zero with a clear message:
 
 - `ROLLBACK ok ...`: the previous version is live again, the new one is not. Exit code is still 1, so the failed deploy is not mistaken for a success.
-- `ROLLBACK FEHLGESCHLAGEN`: intervene manually (below).
+- `ROLLBACK FAILED`: intervene manually (below).
 
 Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `app/config/deploy/scripts/restore/restore.sh`.
 

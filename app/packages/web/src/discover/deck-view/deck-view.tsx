@@ -1,6 +1,5 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
-import { useEffect, useRef, useState } from "react";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { useState } from "react";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
@@ -10,7 +9,9 @@ import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useDecisions, type Decision, type OnDecide } from "./use-decisions";
+import { useDecisions, type Decision, type OnDecide, type OnUndo } from "./use-decisions";
+import { useDeckPosition } from "./use-deck-position";
+import { DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
 
 const t = texts(table);
 
@@ -109,47 +110,48 @@ function ZoneNotice(props: {
   );
 }
 
-/** One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). */
+/**
+ * One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). The next card waits
+ * underneath with its content (aria-hidden, inert). A Yes or No can be taken back with "Rückgängig" (US-ENT-04).
+ */
 function Cards(props: {
   deck: SuggestionDeck;
   /** Writes "Ja" or "Nein" (US-ENT-04); the card moves on only after it is saved, so nothing is lost silently (P-10). */
   onDecide: OnDecide;
+  /** Takes the last Yes or No back (US-ENT-04); the card returns to the deck once it is taken back. */
+  onUndo: OnUndo;
   onNewDeck: () => void;
   /** True for a deck the keeper asked for ("Neuer Stapel"): the button that had the focus is gone, so the focus moves here (SC 2.4.3). */
   takeFocus?: boolean;
 }) {
   const { deck } = props;
-  const [position, setPosition] = useState(0);
-  const { saved, error, decide, exit, setExit } = useDecisions(props.onDecide, () =>
-    setPosition((p) => p + 1),
+  const { position, moves, endTitle, frontTitle } = useDeckPosition(props.takeFocus === true);
+  const { saved, error, taken, decide, undo, exit, setExit } = useDecisions(
+    props.onDecide,
+    props.onUndo,
+    moves,
   );
-  const endTitle = useRef<HTMLHeadingElement>(null);
-  const takeFocus = props.takeFocus === true;
-  useEffect(() => {
-    // The next card, the end card or the empty state: the heading of the new view gets the focus, never the body.
-    if (position > 0 || takeFocus)
-      (endTitle.current ?? document.getElementById("suggestion-title"))?.focus();
-  }, [position, takeFocus]);
   if (deck.empty !== null)
     return (
-      <EmptyState
-        title={deck.empty.text}
-        description={deck.empty.nextAction}
+      <DeckEmpty
+        empty={deck.empty}
         compact={deck.zoneFilter?.shortfall != null}
         titleRef={endTitle}
-        action={{ label: t("deck.propose"), href: CATALOG_ADDRESS }}
       />
     );
   const current = deck.suggestions[position];
   if (current === undefined)
     return (
-      <EmptyState
-        title={t("deck.end.title", { saved })}
-        description={t("deck.end.description")}
+      <DeckEnd
+        saved={saved}
+        error={error}
+        taken={taken !== null}
         titleRef={endTitle}
-        action={{ label: t("deck.newDeck"), onClick: props.onNewDeck }}
+        onUndo={undo}
+        onNewDeck={props.onNewDeck}
       />
     );
+  const next = deck.suggestions[position + 1];
   return (
     <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
@@ -159,14 +161,16 @@ function Cards(props: {
         key={current.species}
         exit={exit}
         stamps={STAMPS}
-        stacked={position + 1 < deck.suggestions.length}
+        stacked={next !== undefined}
+        under={next === undefined ? undefined : <SuggestionCard suggestion={next} />}
         onSwipe={setExit}
         onExited={(d) => void decide(current.species, DECISION[d])}
         className="mx-auto flex min-h-48 w-full max-w-md flex-1 basis-0"
       >
-        <SuggestionCard suggestion={current} />
+        <SuggestionCard suggestion={current} titleRef={frontTitle} />
       </SwipeCard>
       {error !== null && <Banner variant="error">{error}</Banner>}
+      {taken !== null && <UndoButton onClick={undo} />}
       <p className="sr-only">{t("deck.hint")}</p>
       <Actions onDecide={(d) => exit === null && setExit(FLIGHT[d])} />
     </div>

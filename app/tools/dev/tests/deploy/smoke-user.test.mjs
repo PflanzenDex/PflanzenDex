@@ -174,6 +174,15 @@ test("US-DEV-06 smoke-user refuses when the bootstrap admin cannot sign in and c
   assert.equal(existsSync(h.dbLog), false, "the database was not touched");
 });
 
+test("TE-03 smoke-user names a realm import that is still running as a cause of a failed sign-in to the master realm (#1002)", () => {
+  const h = userHarness();
+  const r = runUser(h, { KC_BOOTSTRAP_ADMIN_PASSWORD: "wrong" });
+  assert.equal(r.status, 1);
+  // During the import of a first start every realm URL answers 503, so the sign-in to master fails the same way.
+  assert.match(r.stderr, /may still be importing the realm \(every realm URL answers 503/);
+  assert.match(r.stderr, /wait a minute and run again/);
+});
+
 test("US-DEV-06 a failed account write after the user was created keeps the printed password and says to run again (#1404)", () => {
   const h = userHarness();
   const r = runUser(h, { FAKE_DB_FAIL: "1" });
