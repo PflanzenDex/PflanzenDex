@@ -19,10 +19,14 @@ class InMemoryUnlocks implements ManualUnlockStore {
   }
 }
 
-const setup = (features = ALL_FEATURES) => {
+const setup = (features = ALL_FEATURES, keeperOff = new Set<string>()) => {
   const unlocks = new InMemoryUnlocks();
   const idempotency = new InMemoryIdempotencyStore();
-  const op = onboardingUnlockFunction({ unlocks, features: async () => features });
+  const op = onboardingUnlockFunction({
+    unlocks,
+    features: async () => features,
+    keeperOff: async () => keeperOff,
+  });
   let n = 0;
   const run = (userId: string, input: unknown) =>
     execute(op, { idempotency }, { context: { userId }, input, idempotencyKey: `k${++n}` });
@@ -81,5 +85,21 @@ describe("US-ONB-05 unlock by tap", () => {
     const { unlocks, run } = setup();
     await run("anna", { id: "wishlist", on: "2026-10-18" });
     expect(await unlocks.list("ben")).toEqual([]);
+  });
+});
+
+describe("US-ONB-09 unlock never switches a keeper feature on", () => {
+  it("US-ONB-09 a function the keeper switched off is refused with onboarding.keeper_off and nothing is stored", async () => {
+    const { unlocks, run } = setup(ALL_FEATURES, new Set(["wishlist"]));
+    expect(await run("anna", { id: "wishlist", on: "2026-11-06" })).toMatchObject({
+      ok: false,
+      error: { code: "onboarding.keeper_off" },
+    });
+    expect(await unlocks.list("anna")).toEqual([]);
+  });
+
+  it("US-ONB-09 a core function is not affected by the keeper switches", async () => {
+    const { run } = setup(ALL_FEATURES, new Set(["wishlist"]));
+    expect(await run("anna", { id: "pokedex", on: "2026-11-06" })).toMatchObject({ ok: true });
   });
 });

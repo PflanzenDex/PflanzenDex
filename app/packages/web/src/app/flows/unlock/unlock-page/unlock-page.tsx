@@ -9,7 +9,7 @@ import {
   accountAddress,
 } from "../../../../shared/patterns/navigation/navigation/navigation";
 import type { UnlockFunctionId } from "@pflanzendex/core";
-import { FUNCTION_PURPOSES } from "../../onboarding/function-overview/function-purposes";
+import { FUNCTION_PURPOSES } from "../../onboarding/function-overview/function-layer/function-purposes";
 import { unlockFunction } from "../model/unlock-api";
 import {
   functionAddress,

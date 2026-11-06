@@ -73,6 +73,8 @@ function walkDir(dir) {
 const files = walkDir(repoRoot).map((f) => f.substring(repoRoot.length + 1));
 
 let brokenLinks = [];
+// Files that could not be read. Such a file was not checked, so the run fails for it (US-QG-04).
+let unreadableFiles = [];
 
 // Regular expression to find markdown links
 // Matches [text](path) and [text](path#anchor)
@@ -122,7 +124,7 @@ for (const file of files) {
       }
     }
   } catch (error) {
-    console.error(`Error reading file ${file}: ${error.message}`);
+    unreadableFiles.push({ file, message: error.message });
   }
 }
 
@@ -132,6 +134,18 @@ if (brokenLinks.length > 0) {
     console.error(`${link.file}:${link.line} [${link.text}](${link.href})`);
   }
   console.error(`\nTotal broken links: ${brokenLinks.length}`);
+}
+
+if (unreadableFiles.length > 0) {
+  console.error("\nMarkdown files that cannot be read:\n");
+  for (const { file, message } of unreadableFiles) {
+    console.error(`${file}: cannot be read (${message})`);
+  }
+  console.error(`\n${unreadableFiles.length} of ${files.length} Markdown files were not checked.`);
+}
+
+// Success is reported only when every file was read and no link is broken (US-QG-04).
+if (brokenLinks.length > 0 || unreadableFiles.length > 0) {
   process.exit(1);
 } else {
   console.log(`All relative links are valid (${files.length} Markdown files checked).`);

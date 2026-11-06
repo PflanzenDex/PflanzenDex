@@ -59,9 +59,14 @@ export function authentication(
   };
 }
 
-/** Sharing with friends exists only with a confirmed email address (US-ACC-01). */
+/**
+ * Sharing with friends exists only with a confirmed email address (US-ACC-01). Behind `authentication`, so the account is
+ * set; the answer is the domain error body of every route (`account.email_unconfirmed`, 403).
+ */
 export const onlyWithConfirmedEmail: MiddlewareHandler<AuthEnv> = async (c, next) => {
-  if (!mayShareWithFriends(c.get("account").data))
-    return c.json({ error: { code: "email_unbestaetigt" } }, 403);
+  if (!mayShareWithFriends(c.get("account").data)) {
+    const unconfirmed = appError("account.email_unconfirmed");
+    return c.json(errorBody(unconfirmed), statusFor(unconfirmed));
+  }
   await next();
 };

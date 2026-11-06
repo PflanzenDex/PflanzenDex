@@ -1,6 +1,7 @@
 import type { TargetLocationSource } from "@pflanzendex/core";
 import type { Hono, MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
+import { onlyWithConfirmedEmail } from "./account";
 import { featureGate, type FeatureAccess } from "./kernel";
 import {
   FEED_PATHS,
@@ -46,6 +47,8 @@ export function bindFriends(
     app.use(`${path}/*`, auth);
     // Behind the sign-in guard: while "social" is off for the account these paths answer 404 (US-DEV-06).
     if (gate) app.use(`${path}/*`, gate);
+    // After the feature gate: a switched-off feature answers 404 first; then the email must be confirmed (US-ACC-01).
+    app.use(`${path}/*`, onlyWithConfirmedEmail);
   }
   app.route("/", friendRoutes(pool, clock, cancelOrphanedSwaps(pool)));
   app.route("/", sharingRoutes(pool));
