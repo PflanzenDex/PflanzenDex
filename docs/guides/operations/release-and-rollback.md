@@ -15,7 +15,7 @@ There is one source: the git tag. No version is written into versioned files.
 - `deploy.sh` computes `APP_VERSION="$(git describe --tags --always)"`, for example `v0.1.0` (exactly on the tag) or `v0.1.0-3-gabc1234` (3 commits after it), and `GIT_SHA` (short commit).
 - `docker-compose.yml` passes both as build args. The api image sets them as env vars, the web image as `VITE_APP_VERSION` at build time.
 - `GET /health/details` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>","checks":{…}}` (checks of database and job queue, see `staging-deploy-and-backup.md`). The proxy does not serve it on the public name; the public `GET /health` answers only `{"status":"ok"}` (#759). Both show `unknown` if the build did not get a value (P-08).
-- The web app shows `Version <describe>` in the footer.
+- The web app shows `Version <describe>` as the last line of "Was die App kann" (Konto, `/account/functions`).
 - Local dev (`make dev`) has no build arg, so both show `unknown`.
 
 ## Deploy
@@ -207,4 +207,4 @@ Three function groups can be switched: `social` (friends, feed, swap, sharing, s
 ## Open
 
 - FR-DEV-05: check that the latest `v*` tag on `main` was created by semantic-release (no manual tags). Not implemented, no simple CI check exists; options are a tag ruleset on GitHub (only the release workflow may create `v*` tags) or a scheduled check.
-- The smoke test does not yet check that the web footer shows the same version (the root is only checked for 200).
+- The smoke test does not yet check that the web app shows the same version (the root is only checked for 200).
