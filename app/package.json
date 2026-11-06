@@ -10,7 +10,7 @@
     "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
   },
   "scripts": {
-    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @pflanzendex/api\" \"npm run dev -w @pflanzendex/web\"",
+    "dev": "node tools/workflow/worktree/dev-servers.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

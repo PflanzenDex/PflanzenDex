@@ -59,7 +59,7 @@ This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the br
 
 ## Own ports and database per worktree
 
-`app/tools/workflow/worktree-env.mjs` derives these deterministically from the branch name:
+`app/tools/workflow/worktree/worktree-env.mjs` derives these deterministically from the branch name:
 
 | Variable                                                | Meaning                                            |
 | ------------------------------------------------------- | -------------------------------------------------- |
@@ -67,7 +67,23 @@ This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the br
 | `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`        |
 | `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899)                |
 
-The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a`. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
+The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+
+### `make dev` in a worktree (#904)
+
+`make dev` runs `app/tools/workflow/worktree/dev-servers.mjs` (the `dev` script of `app/package.json`). When `.env.worktree` exists at the worktree root, it starts the two servers with that worktree's values and nothing has to be set by hand:
+
+- the API on `PFLANZENDEX_DEV_API_PORT`, with `PORT`, `WEB_ORIGIN`, `AI_RESOURCE_URL` (the API's `/mcp`) and `DATABASE_URL` of the worktree;
+- Vite on `PFLANZENDEX_DEV_WEB_PORT` with `--port` and `--strictPort`, and `VITE_API_URL` pointing at the API;
+- the test database `pflanzendex_test` on `PFLANZENDEX_TEST_DB_PORT`. This is the database that `make db-up` creates (`POSTGRES_DB`) and that `make migrate` and the tests use through `PFLANZENDEX_TEST_DATABASE_URL`. `PFLANZENDEX_TEST_DB_NAME` is written by `worktree-env.mjs`, but no target reads it: the port already makes the database unique per worktree, and a database under that name would be empty and unmigrated.
+
+Rules of the launcher:
+
+- A busy API or web port stops the start before any server runs, and the message names the port. Vite never moves to another port. If one server fails, the other is stopped too.
+- A variable already set in the environment wins over the file, so `PORT=4000 make dev` starts the API on 4000 and `VITE_API_URL` follows it. An empty variable counts as not set.
+- Without `.env.worktree` (the main checkout) the command is the one from before: 3000 and 5173, no variables, no port flags.
+- `TAXONOMY_BUILD` is not set. It changes what the Pokédex shows (the foreign taxonomy build runs or is skipped), so a worktree should not differ from the main checkout by default. Set it per run when a worktree should skip the build: `TAXONOMY_BUILD=off make dev`.
+- Sign-in on the worktree port still needs the redirect step below (`web-port.mjs`), because the shared Keycloak only knows port 5173. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
 
 ### One shared Keycloak for every checkout
 
