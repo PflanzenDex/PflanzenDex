@@ -226,6 +226,44 @@ describe("US-BES-10 approve and reject", () => {
   });
 });
 
+describe("US-BES-10 an approval refuses a Latin name that an approved species has", () => {
+  it("US-BES-10 approving such a proposal answers 409 review.name_approved with the species; nothing changes", async () => {
+    const latinName = `Twinus ${run}${"q".repeat(++counter)}`;
+    const first = await propose(subKeeper, { latinName });
+    const second = await propose(subOther, { latinName });
+    expect(
+      (await call(subOperator, "POST", `/review/${first.caseId}/decide`, { status: "reviewed" }))
+        .status,
+    ).toBe(200);
+    const refused = await call(subOperator, "POST", `/review/${second.caseId}/decide`, {
+      status: "reviewed",
+    });
+    expect(refused).toMatchObject({
+      status: 409,
+      body: {
+        error: {
+          code: "review.name_approved",
+          data: { existing: { id: first.speciesId, latinName } },
+        },
+      },
+    });
+    const list = await call(subOperator, "GET", "/review");
+    expect(
+      list.body["entries"].find(
+        (e: { reviewCase: { id: string } }) => e.reviewCase.id === second.caseId,
+      ),
+    ).toMatchObject({
+      reviewCase: { status: "proposal" },
+      issues: [{ field: "latinName", reason: "name_approved" }],
+    });
+  });
+
+  it("US-BES-10 the review list carries the duplicates of approved Latin names for reviewers", async () => {
+    const list = await call(subOperator, "GET", "/review");
+    expect(Array.isArray(list.body["duplicates"])).toBe(true);
+  });
+});
+
 describe("US-BES-10 merge (FR-BES-11, P-10)", () => {
   it("US-BES-10 the creator's specimens move to the existing species, the proposal disappears", async () => {
     const target = await approve(subOther);

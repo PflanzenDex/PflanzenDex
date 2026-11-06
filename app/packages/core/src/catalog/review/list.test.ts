@@ -83,7 +83,12 @@ describe("US-BES-10 review list", () => {
   it("US-BES-10 an empty list has no open proposals and no oldest date", async () => {
     const w = new ReviewWorld();
     const r = await catalogList(w.reviews, w.species, "operator");
-    expect(r.ok && r.value).toEqual({ open: 0, oldestOpenAt: null, entries: [] });
+    expect(r.ok && r.value).toEqual({
+      open: 0,
+      oldestOpenAt: null,
+      entries: [],
+      duplicates: [],
+    });
   });
 });
 
@@ -124,5 +129,54 @@ describe("FR-BES-24 similar species past the cap of the search", () => {
       latinName: "Zzcap",
       matchedOn: "Zzcap",
     });
+  });
+});
+
+describe("US-BES-10 approved Latin names in the review list", () => {
+  const TWIN = { ...FULL, synonyms: [] };
+
+  it("US-BES-10 an open proposal whose Latin name an approved species has carries the name issue and keeps its similar species; a free one has none", async () => {
+    const w = new ReviewWorld();
+    const open = await w.proposeSpecies("keeper", TWIN);
+    const twin = await w.approvedSpecies(TWIN);
+    const free = await w.proposeSpecies("other", { ...TWIN, latinName: "Aloe vera" });
+    const r = await catalogList(w.reviews, w.species, "reviewer");
+    if (!r.ok) throw new Error(r.error.code);
+    const entryOf = (caseId: string) => r.value.entries.find((e) => e.reviewCase.id === caseId);
+    expect(entryOf(open.caseId)?.issues).toEqual([{ field: "latinName", reason: "name_approved" }]);
+    expect(entryOf(open.caseId)?.similar).toEqual([
+      { id: twin.speciesId, latinName: "Dracaena trifasciata", matchedOn: "Dracaena trifasciata" },
+    ]);
+    expect(entryOf(free.caseId)?.issues).toEqual([]);
+    expect(entryOf(free.caseId)?.similar).toEqual([]);
+  });
+
+  it("US-BES-10 duplicates lists the approved Latin names that two or more species hold, and no open proposal", async () => {
+    const w = new ReviewWorld();
+    const first = await w.proposeSpecies("anna", TWIN);
+    const second = await w.proposeSpecies("ben", TWIN);
+    await w.proposeSpecies("cara", TWIN);
+    w.species.approve(first.speciesId);
+    w.species.approve(second.speciesId);
+    await w.approvedSpecies({ ...TWIN, latinName: "Aloe vera" });
+    const r = await catalogList(w.reviews, w.species, "reviewer");
+    if (!r.ok) throw new Error(r.error.code);
+    expect(r.value.duplicates).toEqual([
+      {
+        latinName: "Dracaena trifasciata",
+        species: [
+          { id: first.speciesId, latinName: "Dracaena trifasciata" },
+          { id: second.speciesId, latinName: "Dracaena trifasciata" },
+        ],
+      },
+    ]);
+  });
+
+  it("US-BES-10 duplicates is empty when no approved Latin name is held twice", async () => {
+    const w = new ReviewWorld();
+    await w.approvedSpecies(TWIN);
+    await w.proposeSpecies("keeper", { ...TWIN, latinName: "Aloe vera" });
+    const r = await catalogList(w.reviews, w.species, "reviewer");
+    expect(r.ok && r.value.duplicates).toEqual([]);
   });
 });

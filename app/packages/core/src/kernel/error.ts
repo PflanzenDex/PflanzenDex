@@ -1,6 +1,7 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
 import { ONBOARDING_ERROR_TEXTS } from "./error-texts/onboarding";
 import { WUN_ERROR_TEXTS } from "./error-texts/wun";
+import { REVIEW_ERROR_TEXTS } from "./error-texts/catalog";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -19,18 +20,6 @@ export const ERROR_TEXTS = {
     "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code.",
   "invitation.required":
     "Die Registrierung ist im Moment nur mit Einladungscode möglich. Gib den Code ein, den du bekommen hast.",
-  "review.already_exists": "Für dieses Objekt läuft schon eine Prüfung.",
-  "review.not_found": "Diesen Prüfvorgang gibt es nicht.",
-  "review.status_invalid": "Dieser Vorgang ist schon entschieden.",
-  "review.reason_missing": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
-  "review.approval_incomplete":
-    "Die Art ist nicht vollständig genug zur Freigabe. Prüfe die fehlenden Angaben und Quellen.",
-  "review.merge_target_invalid":
-    "Mit dieser Art lässt sich der Vorschlag nicht zusammenführen. Wähle eine bereits freigegebene Art, die nicht der Vorschlag selbst ist.",
-  "review.merge_conflict":
-    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon eine Pflanze mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
-  "review.merge_lock_failed":
-    "Der Vorschlag konnte für das Zusammenführen gerade nicht gesperrt werden. Es wurde nichts geändert; versuche es gleich noch einmal.",
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",
@@ -130,6 +119,7 @@ export const ERROR_TEXTS = {
     "Diese Art hast du nicht auf einer Entdecken-Karte entschieden. Es wurde nichts zurückgenommen; ändere sie in der Wunschliste.",
   ...ONBOARDING_ERROR_TEXTS,
   ...WUN_ERROR_TEXTS,
+  ...REVIEW_ERROR_TEXTS,
   "pokedex.not_caught":
     "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":

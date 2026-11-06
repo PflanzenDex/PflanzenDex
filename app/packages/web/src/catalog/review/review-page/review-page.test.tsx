@@ -6,7 +6,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ReviewPage } from "./review-page";
-import { ageText, issueText, movedText, summaryText } from "../review-text";
+import { ageText, flagsOf, issueText, movedText, summaryText } from "../review-text";
 
 const NOW = Date.parse("2026-10-10T12:00:00Z");
 const token = async () => "tok";
@@ -74,10 +74,12 @@ const entry = (
 const list = (
   entries: ReviewEntry[],
   open = entries.filter((e) => e.reviewCase.status !== "curated").length,
+  duplicates: ReviewList["duplicates"] = [],
 ): ReviewList => ({
   open,
   oldestOpenAt: open > 0 ? "2026-10-07T08:00:00Z" : null,
   entries,
+  duplicates,
 });
 
 type Posted = { path: string; body: Record<string, unknown>; key: string | undefined };
@@ -219,6 +221,55 @@ describe("US-BES-10 review list shows the open cases", () => {
       within(dialog).getByText(/Quelle fehlt \(Pflicht für Lichtbedarf und Ruhephase\)/),
     ).toBeTruthy();
     expect(within(dialog).getByText("unbekannt", { selector: "dd" })).toBeTruthy();
+  });
+
+  it("US-BES-10 a name that is approved already blocks approval and offers the merge in Entscheiden", async () => {
+    server(
+      list([
+        entry({
+          issues: [{ field: "latinName", reason: "name_approved" }],
+          similar: [
+            { id: "t1", latinName: "Echeveria elegans 'Albicans'", matchedOn: "Echeveria elegans" },
+          ],
+        }),
+      ]),
+    );
+    const user = userEvent.setup();
+    show();
+    const dialog = await openRow("Echeveria elegans");
+    const approve = within(dialog).getByRole("button", { name: "Freigeben" });
+    expect((approve as HTMLButtonElement).disabled).toBe(true);
+    expect(within(dialog).getByText(/Name schon freigegeben/)).toBeTruthy();
+    await user.click(within(dialog).getByRole("tab", { name: "Entscheiden" }));
+    expect(
+      within(dialog).getByRole("button", {
+        name: /Mit Echeveria elegans 'Albicans' zusammenführen/,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("US-BES-10 approved Latin names held twice are named read-only on both choices, with the reason (P-09, P-10)", async () => {
+    const twice = [
+      {
+        latinName: "Aloe vera",
+        species: [
+          { id: "a1", latinName: "Aloe vera" },
+          { id: "a2", latinName: "Aloe vera" },
+        ],
+      },
+    ];
+    server(list([entry({}, "proposal", "c1")], 1, twice));
+    const user = userEvent.setup();
+    show();
+    expect(
+      await screen.findByText(/lateinischer Name ist bei mehreren freigegebenen Arten/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Diese Arten lassen sich noch nicht zusammenführen/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /zusammenführen/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Freigegeben" }));
+    expect(
+      await screen.findByText(/lateinischer Name ist bei mehreren freigegebenen Arten/),
+    ).toBeTruthy();
   });
 
   it("US-BES-10 approving in the layer sends one write with an Idempotency-Key, closes it and reloads the list", async () => {
@@ -455,6 +506,18 @@ describe("US-BES-10 texts", () => {
       "2 offene Vorschläge",
     );
     expect(summaryText(list([], 0), NOW)).toBe("");
+  });
+
+  it("flags: a name that is approved already has its own flag, apart from missing fields (P-09)", () => {
+    const nameIssue = { field: "latinName" as const, reason: "name_approved" as const };
+    const sourceIssue = { field: "source" as const, reason: "source_missing" as const };
+    expect(flagsOf(entry({ issues: [nameIssue] }))).toEqual(["Name schon freigegeben"]);
+    expect(flagsOf(entry({ issues: [sourceIssue] }))).toEqual(["Angaben fehlen"]);
+    expect(flagsOf(entry({ issues: [nameIssue, sourceIssue] }))).toEqual([
+      "Angaben fehlen",
+      "Name schon freigegeben",
+    ]);
+    expect(flagsOf(entry())).toEqual([]);
   });
 
   it("issues and moved references", () => {
