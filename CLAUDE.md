@@ -22,7 +22,7 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 ## Language
 
 - **English:** everything in the repo: specs, glossary, code identifiers (`account`, `specimen`, `withAccount`, …), database objects, error codes, scripts, workflows, docs, PR/issue templates, labels, branch names, commit messages, PR titles and descriptions (ADR `docs/adr/0004-english-repository.md`).
-- **German:** only the text users see in the app UI (kept in message tables: `ERROR_TEXTS` for error codes, one `web/src/<feature>/<feature>.de.json` per feature read through `texts()`; enforced by the ESLint rule `ui-text/no-literal-text` with a shrinking baseline, FR-QG-26) and quoted terms of the vault prototype (`docs/specs/prototype/`, vault paths, original data keys). The product name "PflanzenDex" stays.
+- **German:** only the text users see in the app UI (kept in message tables: `ERROR_TEXTS` for error codes, one `web/src/<feature>/<feature>.de.json` per feature read through `texts()`; enforced by the ESLint rule `ui-text/no-literal-text` with a shrinking baseline, FR-QG-26) and quoted terms of the vault prototype (`docs/specs/prototype/`, vault paths, original data keys). The app shows the product name as "PflanzenDéx" (owner decision, 2026-11-05); the repo and code name stay "PflanzenDex".
 - Never mix languages within one file. When you touch a file that still contains German outside UI texts or quoted prototype terms, translate it completely. Dated records (`docs/records/spikes/`, `docs/records/test-logs/`) are English too; raw `.txt` logs stay as recorded. Applied migrations `0001`–`0007` stay as they are (German history); `0008` renames everything.
 
 ## Spec conventions (keep when editing)
