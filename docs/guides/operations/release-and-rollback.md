@@ -185,6 +185,34 @@ The folder is a one-off. Remove it in a later pull request once every host that 
 
 **Must never run on production:** `npm run seed:catalog` and `npm run seed:demo` (dev and test only, they use a superuser connection and invented demo data; both refuse unless `PFLANZENDEX_ENV` is `local` or `test` and the database is on this machine). Do not run `catalog:load` against a database you did not name in `--confirm`.
 
+## Data state of a release (US-DEV-06, FR-DEV-07)
+
+The release notes end with a section "Data state": the approved species of the catalog with the time of the reading, and the taxonomy tree with the time of its last build, its resolved species and its errors (species the build could not resolve). The values are in the production database, which the release workflow on GitHub cannot reach. So the reading is part of the release preparation (release checklist, step 4c), and the release workflow only prints it.
+
+Read the database on the host, in the checkout (`c` as in "Filling the catalog"):
+
+```bash
+c="docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml"
+$c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atf -' <<'SQL'
+select json_build_object(
+  'readAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+  'catalog', json_build_object(
+    'approvedSpecies', (select count(*) from species s join review_case v on v.object_kind = 'species' and v.object_id = s.id where v.status in ('curated', 'reviewed'))),
+  'tree', (select case when count(*) = 0 then null else json_build_object(
+    'builtAt', to_char(max(built_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+    'species', count(*) filter (where status = 'resolved'),
+    'errors', count(*) filter (where status = 'unresolved')) end
+    from taxon)
+);
+SQL
+```
+
+1. Save the one line the query prints as `docs/records/data-state.json` and format it: `cd app && npx --no-install prettier --write ../docs/records/data-state.json`. `tree` is `null` while no build has stored a tree.
+2. Commit it as `docs(dev): data state <date> (US-DEV-06)` on a branch from `dev` and merge it into `dev` through a pull request (as the news release, step 7b). It must be in `dev` before the release pull request.
+3. `make release-dry-run BRANCH=dev` prints the section with the version and the notes (step 7).
+
+A reading that is missing, not valid JSON or not in this shape makes the section say "unknown" with the reason (`tools/release/data-state-notes.mjs`); the release is not stopped by it, and the step 4c answer in the pull request then says so. The reading date is printed, so an old reading shows as old. Open: the catalog's number of errors has no source yet, so it is not printed (US-DEV-06, FR-DEV-07).
+
 ## Hotfix path (E-13)
 
 1. Branch from `main` (`fix/...`), keep the change small.

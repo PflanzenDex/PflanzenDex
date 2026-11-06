@@ -47,6 +47,8 @@ export function InvitationPage(props: {
   token: Token;
   onRegistered: () => void;
   onSignOut: () => void;
+  /** The error of a failed "Abmelden" (US-ACC-01): the page stays, so the button can be pressed again. */
+  error?: string;
 }) {
   const { form, submit, pending } = useRedeem(props.api, props.token, props.onRegistered);
   return (
@@ -88,6 +90,14 @@ export function InvitationPage(props: {
               Abmelden
             </Button>
           </div>
+          {props.error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+            >
+              {props.error}
+            </p>
+          )}
         </FormRoot>
       </Form>
     </section>
