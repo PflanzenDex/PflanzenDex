@@ -354,7 +354,29 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
+      # US-QG-01 (issue 1485): the system packages of the browser install come from a cache of the same Playwright version,
+      # saved on `dev` (deps-cache.yml) or by an earlier run of this branch. A miss runs the full install, slowly if the
+      # mirror is throttled. Only a complete install is saved, after the browser is proved present (install-browsers.sh).
+      - id: playwright
+        run: echo "version=$(make -s playwright-version)" >> "$GITHUB_OUTPUT"
+      - id: apt-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
       - run: make one-screen SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
+      - id: apt-complete
+        if: always() && steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -f "$RUNNER_TEMP/apt-debs/COMPLETE" ]; then echo "complete=true" >> "$GITHUB_OUTPUT"; else echo "complete=false" >> "$GITHUB_OUTPUT"; fi
+      - if: always() && steps.apt-complete.outputs.complete == 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -439,7 +461,27 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
+      # The same apt cache as one-screen-shard (US-QG-01, issue 1485).
+      - id: playwright
+        run: echo "version=$(make -s playwright-version)" >> "$GITHUB_OUTPUT"
+      - id: apt-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
       - run: make a11y-routes SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
+      - id: apt-complete
+        if: always() && steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -f "$RUNNER_TEMP/apt-debs/COMPLETE" ]; then echo "complete=true" >> "$GITHUB_OUTPUT"; else echo "complete=false" >> "$GITHUB_OUTPUT"; fi
+      - if: always() && steps.apt-complete.outputs.complete == 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:

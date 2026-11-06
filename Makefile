@@ -16,7 +16,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report one-screen-merge a11y-routes a11y-routes-report a11y-routes-merge crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers playwright-version conformance e2e one-screen one-screen-report one-screen-merge a11y-routes a11y-routes-report a11y-routes-merge crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report
 
 help: ## List all targets with a one-line description
 	@grep -hE '^[a-z0-9][a-z0-9-]*:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-20s %s\n", $$1, $$2}'
@@ -117,6 +117,9 @@ coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet ch
 
 browsers: ## Install the Chromium that Playwright uses (e2e, conformance run); CI: the system packages and the download are time-limited and retried once (US-QG-01)
 	cd $(APP) && $(if $(CI),sh ../tools/repo/install-browsers.sh,npx --no-install playwright install chromium)
+
+playwright-version: ## Print the installed version of Playwright (the key of the CI cache of the browser's system packages, US-QG-01)
+	@cd $(APP) && node -p "require('./node_modules/@playwright/test/package.json').version"
 
 conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px; 8 pages at once, CONFORMANCE_PAGES=<n> overrides (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
