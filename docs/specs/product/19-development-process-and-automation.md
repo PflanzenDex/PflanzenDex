@@ -193,7 +193,7 @@ Background: while writing these specs two sessions wrote in the same folder at t
 Acceptance criteria:
 
 - **One task, one branch, one working directory:** parallel work runs in separate git worktrees (pattern `.worktrees/` in Tombola). Two sessions never write in the same directory.
-- **Owner per area:** a `CODEOWNERS` file names an owner per epic or folder. Changes to it require review; a change in a foreign area without agreement stands out.
+- **Owner per area:** a `CODEOWNERS` file names an owner per epic or folder. Changes to it are reviewed on the way from `dev` to `main`, where the ruleset requires an approval; `dev` requires none (ADR 0005, owner decision 2026-11-06, issue 1408). An agent is stopped earlier by the gate file rule, a human can merge such a change into `dev` alone. A change in a foreign area without agreement stands out.
 - **Number assignment protected:** spec files and IDs (`US-/FR-/DM-/E-`) are assigned centrally; the spec check (QG-U2) rejects duplicate file numbers and duplicate IDs.
 - **Tests not in parallel on shared resources:** a test lock mechanism prevents two runs from using the same database or the same port (pattern `with-test-lock.cjs` in Tombola); unique ports/database names per worktree are an alternative.
 - **Local containers are capped, production is not affected:** given a developer starts the local test database or auth server, then each container runs with a memory limit (starting values for a small dev box, assumption) that can be raised locally. Given a deploy file or deploy workflow, then it never loads the local container setup or its cap settings; production keeps its own limits.
