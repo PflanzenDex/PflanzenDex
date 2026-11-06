@@ -115,8 +115,8 @@ test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check sc
 coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/config/gates/coverage-thresholds.json)
 	cd $(APP) && npm run coverage
 
-browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
-	cd $(APP) && npx --no-install playwright install $(if $(CI),--with-deps) chromium
+browsers: ## Install the Chromium that Playwright uses (e2e, conformance run); CI: the system packages and the download are time-limited and retried once (US-QG-01)
+	cd $(APP) && $(if $(CI),sh ../tools/repo/install-browsers.sh,npx --no-install playwright install chromium)
 
 conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px; 8 pages at once, CONFORMANCE_PAGES=<n> overrides (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
