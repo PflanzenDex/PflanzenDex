@@ -451,6 +451,17 @@ describe("US-WUN-01 recording a wish", () => {
     expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).not.toBe("true");
   });
 
+  it("US-WUN-01 · FR-QG-11 an unreachable server shows the app's network text in the alert that takes the focus, not the generic error text", async () => {
+    fakeServer(list([candidate()]), () => Promise.reject(new TypeError("Failed to fetch")));
+    view(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Der Server ist gerade nicht erreichbar");
+    expect(alert.textContent).not.toContain("Es ist ein Fehler aufgetreten");
+    await vi.waitFor(() => expect(document.activeElement).toBe(alert));
+  });
+
   it("US-WUN-01 refuses an empty name before sending: field marked, described, focused", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
     view(<WishlistPage api="http://api" token={token} />);
