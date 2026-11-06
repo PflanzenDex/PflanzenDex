@@ -6,8 +6,7 @@ import { SpeciesPage } from "@/catalog";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
-import { DISCOVER_VIEWS, useDiscoverView } from "./discover-view";
-import { useFeature } from "@/shared/data";
+import { DISCOVER_VIEWS, useDiscoverView, useSuggestionsOn } from "./discover-view";
 
 /** The light zone of "Discover for <zone>" from the address (`?zone=3`, US-ENT-07); anything but 2 to 4 means no filter. */
 function zoneOf(value: string | null): number | undefined {
@@ -35,8 +34,8 @@ export function DiscoverArea(props: {
 }) {
   const { view, choose } = useDiscoverView();
   const zone = zoneOf(useSearchParams()[0].get("zone"));
-  // Without the suggestions (US-ONB-09) only the catalog is offered.
-  const options = useFeature("discover")
+  // Without the suggestions (function "discover" or wishlist switched off, US-ONB-09) only the catalog is offered.
+  const options = useSuggestionsOn()
     ? DISCOVER_VIEWS
     : DISCOVER_VIEWS.filter((o) => o.value === "catalog");
   return (

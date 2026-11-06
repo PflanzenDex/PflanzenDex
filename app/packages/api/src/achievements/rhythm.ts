@@ -1,6 +1,7 @@
 import {
   careRhythm,
   effectiveDormancy,
+  isActive,
   restPauses,
   type CareProfileReader,
   type RhythmPauseStore,
@@ -68,10 +69,12 @@ export async function achievementsRhythm(
 ) {
   const rows = await src.specimens.list(userId);
   const ids = rows.map((r) => r.id);
-  // One read per kind for all specimens (NFR-12); the loop does not use the measurements of archived specimens.
+  // One read per kind for all specimens (NFR-12). Treatments include the archived ones, whose tasks still count; the
+  // measurements are read for the active ones only, the loop below skips the archived ones.
   const open = await src.treatments.open(userId, ids);
   const done = await src.treatments.doneMany(userId, ids);
-  const measured = await src.measurements.listMany(userId, ids);
+  const active = rows.filter(isActive).map((r) => r.id);
+  const measured = await src.measurements.listMany(userId, active);
   const { measurementDays } = await src.reminders.settings(userId);
   const tasks: RhythmTask[] = [];
   for (const r of rows) {

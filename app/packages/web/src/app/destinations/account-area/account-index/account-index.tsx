@@ -100,7 +100,8 @@ function SignOutRow(props: {
 /**
  * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
  * "Abmelden…". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
- * bar and bold text, not by colour alone. Sections that are off (calm mode, function "ai", no overview) have no row.
+ * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
+ * function "ai", no overview) have no row.
  */
 export function AccountIndex(props: {
   api: string;
