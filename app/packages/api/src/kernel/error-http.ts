@@ -146,3 +146,10 @@ export const errorBody = (f: AppError) => ({
     ...(f.data !== undefined ? { data: f.data } : {}),
   },
 });
+
+/**
+ * The version of the running API: `APP_VERSION`, the tag the deploy builds from (`deploy.sh`), the same variable the
+ * health endpoint reports. `unknown` when none is set (P-08). Error logs name it, so an error report says which build
+ * failed (US-DEV-06).
+ */
+export const runningVersion = (): string => process.env["APP_VERSION"] || "unknown";

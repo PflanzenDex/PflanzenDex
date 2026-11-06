@@ -8,7 +8,7 @@ import {
 import { isDatabaseUnavailable } from "@pflanzendex/db";
 import type { Context } from "hono";
 import type { AuthEnv } from "./auth-env";
-import { errorBody, statusFor } from "./error-http";
+import { errorBody, runningVersion, statusFor } from "./error-http";
 
 export type Ctx = Context<AuthEnv>;
 
@@ -35,7 +35,8 @@ export async function write<E, A>(
   });
   if (!r.ok) {
     const failure = answeredFailure(r.error);
-    if (failure.code === "system.unexpected") console.error("Operation failed", failure.cause);
+    if (failure.code === "system.unexpected")
+      console.error(`Operation failed (version ${runningVersion()})`, failure.cause);
     return c.json(errorBody(failure), statusFor(failure));
   }
   return c.json(form.wrapper ? form.wrapper(r.value) : (r.value as object), form.success ?? 200);
