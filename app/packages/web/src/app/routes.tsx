@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router";
 import { useFeature } from "../shared/data";
 import { FriendsNewsLayer, FriendsNewsTile } from "../social";
@@ -31,6 +32,12 @@ import {
   type LinkTarget,
   type View,
 } from "../shared/patterns/navigation/navigation/navigation";
+/** The one-time hint of "Heute" after an update (US-DEV-06): a lazy part, so its lines load beside "Heute", not with the shell. */
+const WhatsNewHint = lazy(() =>
+  import("@/app/destinations/account-area/whats-new/whats-new-hint/whats-new-hint").then((m) => ({
+    default: m.WhatsNewHint,
+  })),
+);
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
@@ -73,15 +80,20 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
       onOpen={props.onOpen}
       tiles={tiles}
       intro={(sections, fallback) => (
-        <TodayIntro
-          lookup={SPECIES_LOOKUP}
-          api={props.api}
-          token={props.token}
-          onOpen={props.onOpen}
-          fallback={fallback}
-        >
-          {sections}
-        </TodayIntro>
+        <>
+          <Suspense fallback={null}>
+            <WhatsNewHint />
+          </Suspense>
+          <TodayIntro
+            lookup={SPECIES_LOOKUP}
+            api={props.api}
+            token={props.token}
+            onOpen={props.onOpen}
+            fallback={fallback}
+          >
+            {sections}
+          </TodayIntro>
+        </>
       )}
     />
   );

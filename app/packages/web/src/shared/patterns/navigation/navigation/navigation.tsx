@@ -90,6 +90,7 @@ export type AccountSection =
   | "aiClients"
   | "measured"
   | "functions"
+  | "news"
   | "data";
 /** The path segment of a section is its key in kebab-case (`aiClients` is `ai-clients`). */
 export const accountAddress = (section: AccountSection) =>
