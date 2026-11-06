@@ -36,7 +36,41 @@ describe("fetch account from the API", () => {
     expect(k.email).toBe("a@b.test");
     expect(f).toHaveBeenCalledWith("http://api/account", {
       headers: { Authorization: "Bearer tok" },
+      signal: expect.any(AbortSignal),
     });
+  });
+
+  it("US-ACC-01 loading the account gives up after the same 15 seconds", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    try {
+      const f = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ id: "1", email: "a@b.test" }), { status: 200 }),
+        );
+      await getAccount("http://api", "tok", f);
+      expect(timeout).toHaveBeenCalledWith(15_000);
+    } finally {
+      timeout.mockRestore();
+    }
+  });
+
+  it("US-ACC-01 an API that never answers makes the account load reject once the limit passes", async () => {
+    const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => realTimeout(1));
+    try {
+      // Answers only by the abort, the way a request ends when its signal fires.
+      const never = vi.fn<typeof fetch>(
+        (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => reject(init?.signal?.reason));
+          }),
+      );
+      const error = await getAccount("http://api", "tok", never).catch((e: unknown) => e);
+      expect((error as Error).name).toBe("TimeoutError");
+    } finally {
+      timeout.mockRestore();
+    }
   });
 
   it("reports 401 as not signed in", async () => {
