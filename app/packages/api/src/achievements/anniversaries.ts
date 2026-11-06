@@ -2,6 +2,7 @@ import {
   anniversaries,
   localToday,
   measurementPhotoPath,
+  type MeasurementRow,
   type MeasurementStore,
   type SpecimenStore,
 } from "@pflanzendex/core";
@@ -9,7 +10,7 @@ import {
 /** The ports of the anniversaries: the own specimens and measurements only (P-04). */
 export interface AnniversarySources {
   readonly specimens: Pick<SpecimenStore, "list">;
-  readonly measurements: Pick<MeasurementStore, "list">;
+  readonly measurements: Pick<MeasurementStore, "listMany">;
 }
 
 /** A photo of the anniversary: its address carries the version of the photo (NFR-12). */
@@ -34,19 +35,21 @@ export async function achievementsAnniversaries(
     rows.map((r) => ({ id: r.id, name: r.name, caughtOn: r.caughtAt, archivedOn: r.archivedAt })),
     localToday(now, timeZone),
   );
-  const items = await Promise.all(
-    due.map(async (a) => {
-      const photos = (await src.measurements.list(userId, a.specimenId))
-        .flatMap((m) => (m.photo === null ? [] : [{ id: m.id, date: m.date, photo: m.photo }]))
-        .sort((x, y) => x.date.localeCompare(y.date));
-      const first = photos[0];
-      const latest = photos.length > 1 ? photos[photos.length - 1] : undefined;
-      return {
-        ...a,
-        first: first ? photoOf(a.specimenId, first) : null,
-        latest: latest ? photoOf(a.specimenId, latest) : null,
-      };
-    }),
-  );
+  // One read for all anniversaries of the day (NFR-12); a day without anniversaries reads nothing.
+  const ids = [...new Set(due.map((a) => a.specimenId))];
+  const measured: ReadonlyMap<string, readonly MeasurementRow[]> =
+    ids.length > 0 ? await src.measurements.listMany(userId, ids) : new Map();
+  const items = due.map((a) => {
+    const photos = (measured.get(a.specimenId) ?? [])
+      .flatMap((m) => (m.photo === null ? [] : [{ id: m.id, date: m.date, photo: m.photo }]))
+      .sort((x, y) => x.date.localeCompare(y.date));
+    const first = photos[0];
+    const latest = photos.length > 1 ? photos[photos.length - 1] : undefined;
+    return {
+      ...a,
+      first: first ? photoOf(a.specimenId, first) : null,
+      latest: latest ? photoOf(a.specimenId, latest) : null,
+    };
+  });
   return { calmMode: false as const, items };
 }
