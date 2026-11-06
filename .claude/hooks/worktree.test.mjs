@@ -229,3 +229,77 @@ test("US-QG-07: a repository other than the hook's is judged by its own folder, 
   // The project is `main`; the shell is in `other`. A reset there is an ordinary question, as before this guard.
   assert.equal(bash(main, "git reset --hard", other)?.permissionDecision, "ask");
 });
+
+// The gate file confirmations of one worktree (US-QG-07): the record lives in the worktree's git directory, keyed by branch.
+const gitDirOf = (dir) => execFileSync("git", ["rev-parse", "--absolute-git-dir"], { cwd: dir, env: ENV, encoding: "utf8" }).trim();
+const recordOf = (dir) => join(gitDirOf(dir), "claude-gate-confirmations.json");
+/** The PostToolUse event of an edit that went through: after-edit records a confirmed gate file. */
+const applied = (session, toolInput) => runHook("after-edit", session, toolInput);
+
+test("US-QG-07: a gate file asks once per branch: after its edit went through, later edits pass, another gate file and another branch ask", (t) => {
+  const { main, wt } = checkout(t);
+  const makefile = join(wt, "Makefile");
+  const pre = join(wt, ".githooks/pre-commit");
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  writeFileSync(makefile, "all:\n");
+  assert.equal(applied(wt, { file_path: makefile }), null);
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  // The folder the session started in does not matter: the file's own worktree and branch decide.
+  assert.equal(guard(main, { file_path: makefile }), null);
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  // A new branch asks again; the confirmation of fix/x stays for fix/x.
+  git(wt, ["switch", "-q", "-c", "fix/y"]);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  applied(wt, { file_path: makefile });
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  git(wt, ["switch", "-q", "fix/x"]);
+  assert.equal(guard(wt, { file_path: makefile }), null);
+});
+
+test("US-QG-07: a gate file asks in another worktree and on a detached HEAD; an edit on a detached HEAD records nothing", (t) => {
+  const { main, wt } = checkout(t);
+  const makefile = join(wt, "Makefile");
+  const pre = join(wt, ".githooks/pre-commit");
+  writeFileSync(makefile, "all:\n");
+  applied(wt, { file_path: makefile });
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  // Another worktree has its own record, which holds nothing for this file.
+  const other = join(main, ".worktrees", "y");
+  git(main, ["worktree", "add", "-q", "--detach", other]);
+  assertAsks(guard(other, { file_path: join(other, "Makefile") }), /^Makefile defines a gate/);
+  // A detached HEAD has no branch to key a record by: it always asks, and an edit there records nothing.
+  git(wt, ["checkout", "-q", "--detach"]);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  applied(wt, { file_path: pre });
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  git(wt, ["switch", "-q", "fix/x"]);
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  assert.equal(guard(wt, { file_path: makefile }), null);
+});
+
+test("US-QG-07: a confirmation record that is missing, unreadable or malformed asks, and an edit of the record itself asks", (t) => {
+  const { wt } = checkout(t);
+  const makefile = join(wt, "Makefile");
+  const record = recordOf(wt);
+  // An ordinary file records nothing.
+  writeFileSync(join(wt, "notes.txt"), "x\n");
+  applied(wt, { file_path: join(wt, "notes.txt") });
+  assert.equal(existsSync(record), false);
+  writeFileSync(makefile, "all:\n");
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  applied(wt, { file_path: makefile });
+  assert.equal(guard(wt, { file_path: makefile }), null);
+  // Missing: the record is gone.
+  rmSync(record);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  // Malformed.
+  writeFileSync(record, "{ not json");
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  // Unreadable: a folder stands where the record should be.
+  rmSync(record);
+  mkdirSync(record);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  // The record is written by the hook only: an edit of it asks, whatever it holds.
+  rmSync(record, { recursive: true });
+  assertAsks(guard(wt, { file_path: record }), /^claude-gate-confirmations\.json records which gate files/);
+});

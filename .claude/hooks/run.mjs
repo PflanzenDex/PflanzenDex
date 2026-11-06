@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { baselineGrows, isBaselineFile, textAfter } from "./baseline-growth.mjs";
+import { CONFIRMATIONS_FILE, needsQuestion, withConfirmation } from "./gate-confirmations.mjs";
 import {
   isCodePath,
   isGateFile,
@@ -114,6 +115,48 @@ function notInHead(folder, file) {
   }
 }
 
+// Where a worktree keeps its confirmations of gate files and which branch it is on: the git directory of the worktree
+// (private to it, not tracked, not shared with the other worktrees) and the full ref of HEAD, null when HEAD is detached.
+// Null when git cannot tell (US-QG-07).
+function confirmationSpot(folder) {
+  const gitOut = (args) =>
+    execFileSync("git", args, { cwd: folder, encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim();
+  try {
+    const gitDir = gitOut(["rev-parse", "--absolute-git-dir"]);
+    let branch = null;
+    try {
+      branch = gitOut(["symbolic-ref", "-q", "HEAD"]) || null;
+    } catch {
+      // A detached HEAD: symbolic-ref exits 1, and there is no branch to key the record by.
+    }
+    return { file: path.join(gitDir, CONFIRMATIONS_FILE), branch };
+  } catch {
+    return null;
+  }
+}
+
+// The text of the record of confirmations, or null when it is missing or cannot be read (US-QG-07).
+function readConfirmations(file) {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+// Whether an edit of this gate file needs the human's question (US-QG-07): always when the place of the record is unknown.
+function gateEditNeedsQuestion(folder, file) {
+  const spot = confirmationSpot(folder);
+  return !spot || needsQuestion(file, spot.branch, readConfirmations(spot.file));
+}
+
+// After an edit of a gate file went through, the file counts as confirmed on this branch (US-QG-07). Without a branch or a
+// known place nothing is recorded, and the next edit asks again.
+function recordGateEdit(folder, file) {
+  const spot = confirmationSpot(folder);
+  if (spot?.branch) fs.writeFileSync(spot.file, withConfirmation(readConfirmations(spot.file), spot.branch, file));
+}
+
 const print = (obj) => process.stdout.write(JSON.stringify(obj));
 const preToolUse = (permissionDecision, permissionDecisionReason) =>
   print({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, permissionDecisionReason } });
@@ -145,12 +188,20 @@ function baselineEditGrowth(fileRoot, file, toolInput) {
 
 const handlers = {
   "guard-edit"() {
-    const { root: fileRoot, file } = locate(input.tool_input?.file_path ?? input.tool_input?.notebook_path);
+    const target = input.tool_input?.file_path ?? input.tool_input?.notebook_path;
+    const { root: fileRoot, file } = locate(target);
     // An applied migration is immutable. A new one, not yet in HEAD, is filled in after `make migration` (US-DEV-07).
     const migration = isMigrationFile(file) && fs.existsSync(path.join(fileRoot, file));
     if (migration && !notInHead(fileRoot, file)) return preToolUse("deny", MIGRATION_REASON);
-    if (isGateFile(file)) {
-      preToolUse("ask", `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green (US-QG-07).`);
+    if (path.basename(target ?? "") === CONFIRMATIONS_FILE) {
+      // Only after-edit writes the record: an agent's edit of it could confirm gate files nobody was asked about (US-QG-07).
+      preToolUse("ask", `${CONFIRMATIONS_FILE} records which gate files a human confirmed. Only the hook writes it (US-QG-07).`);
+    } else if (isGateFile(file)) {
+      if (gateEditNeedsQuestion(fileRoot, file))
+        preToolUse(
+          "ask",
+          `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green. A confirmed edit lets later edits of this file on this branch pass (US-QG-07).`,
+        );
     } else if (isBaselineFile(file)) {
       let reason;
       try {
@@ -172,6 +223,8 @@ const handlers = {
   },
   "after-edit"() {
     const { root: fileRoot, file } = locate(input.tool_input?.file_path);
+    // The edit went through, so a gate file edit is confirmed on this branch from now on (US-QG-07).
+    if (isGateFile(file)) recordGateEdit(fileRoot, file);
     if (prettierCanFormat(file)) run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], { cwd: path.join(fileRoot, "app") });
     if (isSpecPath(file)) {
       try {
