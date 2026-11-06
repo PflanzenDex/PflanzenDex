@@ -1,4 +1,4 @@
-import { FOREIGN_AUDIENCE, foreignAudienceToken } from "../support/account";
+import { createTestAccount, FOREIGN_AUDIENCE, foreignAudienceToken } from "../support/account";
 import { axeReport } from "../support/axe";
 import { signIn, expect, test } from "../support/fixtures";
 
@@ -64,6 +64,30 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+  });
+});
+
+// US-ACC-01 another account (issue 667): the way out of a live sign-in at the sign-in service, end to end.
+test.describe("US-ACC-01 another account", () => {
+  test("US-ACC-01 a live sign-in at the sign-in service ends first, then the other person signs in", async ({
+    page,
+    account,
+  }) => {
+    const other = await createTestAccount();
+    await signIn(page, account);
+    // The state of the bug: the app holds no sign-in any more (cleared storage), the sign-in service still does.
+    // The silent attempt was made once in this tab already, so the welcome page shows.
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload();
+    await page.getByRole("button", { name: "Anderes Konto" }).click();
+    // Without an id token the sign-in service asks once before it ends the session, then returns to the app.
+    await page.getByRole("button", { name: "Abmelden", exact: true }).click();
+    await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
+    await signIn(page, other);
+    await page.getByRole("link", { name: "Konto", exact: true }).click();
+    const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
+    await expect(index.getByText(other.email, { exact: true })).toBeVisible();
+    await expect(index.getByText(account.email, { exact: true })).toHaveCount(0);
   });
 });
 

@@ -2,7 +2,11 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Button } from "@/shared/ui/button/button";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { DISPLAY_NAME } from "@/shared/patterns/navigation/nav-item";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { AuthFrame } from "./auth-frame/auth-frame";
+import table from "./views.de.json";
+
+const t = texts(table);
 
 type Action = () => void;
 
@@ -12,18 +16,22 @@ const ACTIONS = "flex flex-col gap-3";
 
 /**
  * The welcome page in the frame of the sign-in pages (US-QS-14): the wordmark, one line of text, the filled sign-in
- * button and the outline registration button, in that order, as on the sign-in service.
+ * button and the outline registration button, in that order, as on the sign-in service. Below them the text action
+ * "Anderes Konto" (US-ACC-01): it ends the session at the sign-in service, so another person can sign in.
  */
-export function Welcome(props: { onRegister: Action; onSignIn: Action; hint?: string }) {
+export function Welcome(props: {
+  onRegister: Action;
+  onSignIn: Action;
+  onAnotherAccount: Action;
+  hint?: string;
+}) {
   return (
     <AuthFrame>
       <section aria-labelledby="title" className="flex flex-col gap-4">
         <h1 id="title" className="text-[1.5rem] leading-tight font-bold">
           {DISPLAY_NAME}
         </h1>
-        <p className="text-muted-foreground">
-          Deine Pflanzen, deine Sammlung. Lege ein Konto an, um zu starten.
-        </p>
+        <p className="text-muted-foreground">{t("welcome.tagline")}</p>
         {props.hint && (
           <p role="status" className="rounded-lg border border-border p-3">
             {props.hint}
@@ -31,7 +39,7 @@ export function Welcome(props: { onRegister: Action; onSignIn: Action; hint?: st
         )}
         <div className={ACTIONS}>
           <Button type="button" size="touch" onClick={props.onSignIn} className="text-base">
-            Anmelden
+            {t("welcome.signIn")}
           </Button>
           <Button
             type="button"
@@ -40,7 +48,16 @@ export function Welcome(props: { onRegister: Action; onSignIn: Action; hint?: st
             onClick={props.onRegister}
             className="text-base"
           >
-            Konto anlegen
+            {t("welcome.register")}
+          </Button>
+          <Button
+            type="button"
+            variant="link"
+            size="touch"
+            onClick={props.onAnotherAccount}
+            className="text-base"
+          >
+            {t("welcome.otherAccount")}
           </Button>
         </div>
       </section>
@@ -51,7 +68,7 @@ export function Welcome(props: { onRegister: Action; onSignIn: Action; hint?: st
 /** Placeholder with the layout of the signed-in card while the session is checked (DS-52, DS-53). */
 export function Loading() {
   return (
-    <SkeletonGroup label="Einen Moment, die Anmeldung wird geprüft …" className={CARD}>
+    <SkeletonGroup label={t("loading.label")} className={CARD}>
       <Skeleton className="h-8 w-2/3" />
       <Skeleton className="h-11 w-full" />
       <Skeleton className="h-12 w-full" />
@@ -64,7 +81,7 @@ export function AppError(props: { text: string; onReload: Action }) {
     <EmptyState
       variant="error"
       title={props.text}
-      action={{ label: "Erneut versuchen", onClick: props.onReload }}
+      action={{ label: t("error.retry"), onClick: props.onReload }}
       className="w-full max-w-md"
     />
   );
