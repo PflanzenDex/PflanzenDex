@@ -6,8 +6,8 @@
 //   BL-3  the list grew beyond `maxEntries` (lower `maxEntries` when entries are removed; never raise it).
 // ESLint runs with QUALITY_BASELINE=off so the baseline allowance in eslint.config.js does not hide anything.
 import fs from "node:fs";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { lintFindings } from "../gates/eslint-shared.mjs";
 
 export const METRIC_RULES = [
   "complexity",
@@ -58,14 +58,10 @@ export function checkBaseline(findings, baseline) {
 }
 
 async function currentFindings() {
-  process.env.QUALITY_BASELINE = "off";
-  const { ESLint } = await import("eslint");
-  const results = await new ESLint().lintFiles(["."]);
-  return results.flatMap((r) =>
-    r.messages.flatMap((m) => {
-      if (!METRIC_RULES.includes(m.ruleId)) return [];
+  const results = await lintFindings({ dirs: ["."], rules: METRIC_RULES });
+  return results.flatMap(({ file, messages }) =>
+    messages.flatMap((m) => {
       const p = parseFinding(m.ruleId, m.message, m.line);
-      const file = path.relative(process.cwd(), r.filePath).split(path.sep).join("/");
       return p ? [{ rule: m.ruleId, file, ...p }] : [];
     }),
   );

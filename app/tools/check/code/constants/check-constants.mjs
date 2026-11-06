@@ -8,8 +8,8 @@
 //   CN-2  an entry is higher than the file's count or the file has none left (lower or remove the entry),
 //   CN-3  the counts add up to more than `maxTotal` (lower `maxTotal` when hits move; never raise it).
 import fs from "node:fs";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { lintFindings } from "../../gates/eslint-shared.mjs";
 
 export const RULES = { numbers: "constants/no-magic-number", enums: "constants/no-enum-literal" };
 export const BASELINE_FILE = "config/gates/baselines/constants-baseline.json";
@@ -51,15 +51,14 @@ export function toBaseline(counts) {
 }
 
 async function currentCounts() {
-  process.env.CONSTANTS_BASELINE = "off";
-  const { ESLint } = await import("eslint");
-  const ids = Object.values(RULES);
-  const eslint = new ESLint({ ruleFilter: ({ ruleId }) => ids.includes(ruleId) });
   const counts = new Map();
-  for (const r of await eslint.lintFiles(SOURCES)) {
+  for (const { file, messages } of await lintFindings({
+    dirs: SOURCES,
+    rules: Object.values(RULES),
+  })) {
     const c = {};
-    for (const kind of KINDS) c[kind] = r.messages.filter((m) => m.ruleId === RULES[kind]).length;
-    if (sumOf(c)) counts.set(path.relative(process.cwd(), r.filePath).split(path.sep).join("/"), c);
+    for (const kind of KINDS) c[kind] = messages.filter((m) => m.ruleId === RULES[kind]).length;
+    if (sumOf(c)) counts.set(file, c);
   }
   return counts;
 }

@@ -34,13 +34,13 @@ Acceptance criteria:
   | `test`, `test-e2e`                  | Tests (unit/integration, end-to-end with auto-start)                         |
   | `spec-check`                        | Spec consistency and traceability (QG-T4, QG-U2)                             |
   | `gates`                             | all fast gates (QG-C, QG-K, QG-S1), identical to pre-push                    |
-  | `ci`                                | **all** gates in the order of CI, aborts at the first error                  |
+  | `ci`                                | **all** gates in the order of CI, stops at the first failing part            |
   | `db-migrate`, `db-reset`, `db-seed` | Database (see US-DEV-07)                                                     |
   | `pokedex-build`                     | Taxonomy build (US-POK-03)                                                   |
   | `release-dry-run`                   | shows the next version and the notes without publishing anything             |
   | `clean`, `clean-ports`              | Clean up                                                                     |
 
-- `make ci` **aborts at the first error** and has the same scope as the CI jobs. An error is never hidden by `|| true`, `tail` or a pipe (D-05).
+- `make ci` **stops at the first failing part** (gates, tests, UI) and has the same scope as the CI jobs. Inside the gates part every check runs and every failure is named (US-QG-01). An error is never hidden by `|| true`, `tail` or a pipe (D-05).
 - The CI workflows call the `make` targets. If there is a deviation (e.g. services in CI), it stands as an environment query in the target (`ifndef CI`), not as a second implementation.
 - The targets run on Linux, macOS and under WSL; path differences (Python or Node call, virtualenv directories) are resolved **in one place**, not three times (finding from Tombola).
 - The Makefile contains no domain logic, only calls. Everything non-trivial lives in scripts (`scripts/`) with tests.
