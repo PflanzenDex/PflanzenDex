@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1262,
+  "maxTotal": 1248,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -772,10 +772,6 @@
     {
       "file": "packages/web/src/wishlist/actions/actions.tsx",
       "count": 7
-    },
-    {
-      "file": "packages/web/src/wishlist/candidate-card/candidate-card.tsx",
-      "count": 14
     },
     {
       "file": "packages/web/src/wishlist/candidate-card/discard/discard.tsx",
