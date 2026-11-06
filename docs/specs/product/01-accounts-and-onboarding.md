@@ -22,6 +22,9 @@ Acceptance criteria:
 - Given the welcome page shows while the sign-in service still has a live session for this browser, when I choose "Anderes Konto", then that session ends at the sign-in service first and the welcome page comes back with "Du bist abgemeldet."; the next sign-in asks for credentials, it never ends on the sign-in service's "already signed in with another user" page.
 - Given the sign-in service still has a live session of another person for this browser, when I choose "Konto anlegen", then that session ends at the sign-in service before the registration opens, and the registration never ends on the "already signed in with another user" page. Given no live session, when I choose "Konto anlegen", then the registration opens with no sign-out page in between (the silent check is not shown).
 - Given the sign-in service cannot be reached, when I choose "Anmelden" or "Konto anlegen", then the welcome page says so and what to do next, the buttons stay for another try, and what the tab remembers about sign-out, registration and the silent attempt is as it was before the press.
+- Given the sign-in service cannot be reached when the app opens, then the welcome page shows and says so and what to do next, and nothing blames the account.
+- Given the sign-in library cannot be loaded, when the app opens, then the page says so and offers "Seite neu laden", and it never stays on the loading state.
+- Given the sign-in service does not answer, then a sign-in call gives up after 15 s (starting value, assumption) and the failure is shown as above.
 
 ### US-ACC-02 · Profile and settings · 🟨 new
 

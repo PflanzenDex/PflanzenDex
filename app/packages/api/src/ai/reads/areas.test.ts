@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
-import { AREA_NAMES, AREA_READS, NO_FEATURES } from "@pflanzendex/core";
+import { AI_OPERATION_CLASSES, AREA_NAMES, AREA_READS, NO_FEATURES } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -312,5 +312,107 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
       }
     const res = await call(ai(subB), "GET", `/mcp/treatments/history?specimen=${A.specimen["id"]}`);
     expect(res.status).toBe(404); // never 403: no existence leak
+  });
+});
+
+// US-ONB-09: the AI client reads the keeper's switches through list_unlocks and has no tool to change them (FR-KI-22).
+describe("US-ONB-09 the AI client and the keeper switches", () => {
+  // An account of its own: its switch is set and cleared here, so no other test of this file reads a changed state.
+  const subS = `ki12-switch-${randomUUID()}`;
+  const WISH = "wishlist";
+  let beforeSwitch: Json | undefined;
+  let switchedOff: Json | undefined;
+
+  beforeAll(async () => {
+    await call(web(subS), "GET", "/account");
+  });
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subS]);
+  });
+
+  /** One function as the AI client's list_unlocks answers it (the tool pages its items). */
+  const toolEntry = async (sub: string, id: string) => {
+    const r = await tool(sub, "list_unlocks", { timeZone: TZ, limit: 100 });
+    expect(r.error).toBe(false);
+    return (r.body["items"] as Json[]).find((f) => f["id"] === id);
+  };
+  /** The same function in the app's own answer, `GET /onboarding/unlocks`, through the web token. */
+  const appEntry = async (sub: string, id: string) =>
+    ((await call(web(sub), "GET", `/onboarding/unlocks${q}`)).body["functions"] as Json[]).find(
+      (f) => f["id"] === id,
+    );
+  /** The whole JSON-RPC answer, result or error, for a method or a tool that is not offered. */
+  const rawRpc = async (sub: string, method: string, params: Json, scope?: string) => {
+    const res = await app.request("/mcp", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${ai(sub, scope)}`,
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: rpcId++, method, params }),
+    });
+    return (await res.json()) as Json;
+  };
+
+  it("US-ONB-09 a switched-off feature reads as keeper_off through list_unlocks: not announced, with its keeperSwitch (FR-KI-22)", async () => {
+    beforeSwitch = await toolEntry(subS, WISH);
+    expect(beforeSwitch).toBeDefined();
+    const off = await call(web(subS), "PUT", "/onboarding/switches/wishlist", {
+      enabled: false,
+      timeZone: TZ,
+    });
+    expect(off.status).toBe(200);
+    switchedOff = await toolEntry(subS, WISH);
+    expect(switchedOff).toMatchObject({
+      state: "keeper_off",
+      announced: false,
+      keeperSwitch: WISH,
+    });
+    expect(switchedOff).toEqual(await appEntry(subS, WISH));
+  });
+
+  it("US-ONB-09 the switch of one account is not visible to another: B's AI client reads no keeper_off (P-04)", async () => {
+    const bEntry = await toolEntry(subB, WISH);
+    expect(bEntry).toBeDefined();
+    expect(bEntry?.["state"]).not.toBe("keeper_off");
+    expect(bEntry).toEqual(await appEntry(subB, WISH));
+  });
+
+  it("US-ONB-09 an AI client has no tool to switch a feature; its PUT is refused and the state stays (FR-KI-22, KI-R8)", async () => {
+    expect(Object.keys(AI_OPERATION_CLASSES).filter((op) => op.includes("switch"))).toEqual([]);
+    for (const scope of ["pflanzen:read", "pflanzen:write"]) {
+      const listed = (await rawRpc(subS, "tools/list", {}, scope))["result"]["tools"] as Json[];
+      expect(listed.map((t) => String(t["name"])).filter((n) => n.includes("switch"))).toEqual([]);
+    }
+    for (const name of ["switch_feature", "account.switch_feature"]) {
+      const answer = await rawRpc(
+        subS,
+        "tools/call",
+        { name, arguments: { feature: WISH, enabled: true } },
+        "pflanzen:write",
+      );
+      expect(answer["result"]).toBeUndefined();
+      expect(answer["error"]["message"]).toBe(`Unknown tool: ${name}`);
+    }
+    const put = await call(ai(subS, "pflanzen:write"), "PUT", "/onboarding/switches/wishlist", {
+      enabled: true,
+      timeZone: TZ,
+    });
+    expect(put.status).toBe(401);
+    expect(put.body["error"].code).toBe("not_signed_in");
+    expect(await appEntry(subS, WISH)).toEqual(switchedOff);
+  });
+
+  it("US-ONB-09 switching the feature on again reads as not keeper_off, as before the switch (FR-KI-22)", async () => {
+    const on = await call(web(subS), "PUT", "/onboarding/switches/wishlist", {
+      enabled: true,
+      timeZone: TZ,
+    });
+    expect(on.status).toBe(200);
+    const entry = await toolEntry(subS, WISH);
+    expect(entry?.["state"]).not.toBe("keeper_off");
+    expect(entry).toEqual(beforeSwitch);
+    expect(entry).toEqual(await appEntry(subS, WISH));
   });
 });

@@ -1,31 +1,30 @@
 // The transport of the claim tools (US-DEV-08, #1487): how a gh or git call is made, paged and checked. Tests inject a fake with the
-// same shape: { run(cmd, args) -> Promise<string> }. The domain reads and writes are in claim-client.mjs and board-client.mjs.
-// A real call may get a time limit (realClient timeoutMs, set by make claim): a call that does not answer ends with an error that
-// names it, so the claim undoes its writes instead of waiting in silence.
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+// same shape: { run(cmd, args, options) -> Promise<string> }. The domain reads and writes are in claim-client.mjs and board-client.mjs.
+// A real call may get a time limit (realClient timeoutMs, set by make claim): a call that does not answer ends with a CallTimeout that
+// names it, so the claim undoes its writes instead of waiting in silence. A call may ask for another limit by name (option `limit`,
+// realClient `limits`): the claim push has one of its own, because git push runs the pre-push hook, which runs make gates (#1559).
+// A call with a limit runs in a process group of its own. A timeout ends the whole group, and so does a Ctrl+C in the claim, so no
+// process of a gate run is left behind.
+import { KILL_GRACE_MS, runCommand } from "./process-group.mjs";
 
-const exec = promisify(execFile);
+export { CallTimeout } from "./process-group.mjs";
 
-export function realClient({ cwd = process.cwd(), timeoutMs } = {}) {
+export const PUSH_LIMIT = "push"; // the limit name of git push: the claim push and its undo (claim-steps.mjs)
+
+/**
+ * The gh and git calls of the claim tools. `timeoutMs` is the default limit; `limits` names other limits that a call may ask for
+ * with its option `limit` (PUSH_LIMIT). `killGraceMs` is how long a process group may take to end after SIGTERM.
+ */
+export function realClient({
+  cwd = process.cwd(),
+  timeoutMs,
+  limits = {},
+  killGraceMs = KILL_GRACE_MS,
+} = {}) {
   return {
-    async run(cmd, args) {
-      try {
-        const { stdout } = await exec(cmd, args, {
-          cwd,
-          maxBuffer: 32 * 1024 * 1024,
-          ...(timeoutMs ? { timeout: timeoutMs } : {}),
-        });
-        return stdout;
-      } catch (e) {
-        if (timeoutMs && e.killed) {
-          throw new Error(
-            `${cmd} ${args.slice(0, 2).join(" ")} did not answer within ${timeoutMs / 1000} s (network or GitHub too slow); run it again`,
-            { cause: e },
-          );
-        }
-        throw e;
-      }
+    run(cmd, args, { limit } = {}) {
+      const limitMs = limit === undefined ? timeoutMs : (limits[limit] ?? timeoutMs);
+      return runCommand(cmd, args, { cwd, limitMs, killGraceMs });
     },
   };
 }

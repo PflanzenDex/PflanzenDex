@@ -68,8 +68,7 @@ type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
 type SignedOut = Extract<State, { kind: "signedOut" }>;
 
 /** The shell with its navigation; a destination that is not open yet stays in place, marked with text (US-ONB-05). */
-function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
-  const { account } = props;
+function SignedInShell({ account, children }: { account: SignedInAccount; children: ReactNode }) {
   const friends = useUnlocks().entries.find((e) => e.id === "friends");
   const social = useFeature("social");
   return (
@@ -83,7 +82,7 @@ function SignedInShell(props: { account: SignedInAccount; children: ReactNode })
         locks: friends && isShownLocked(friends) ? { friends: lockMark(friends) } : {},
       })}
     >
-      {props.children}
+      {children}
     </AppShell>
   );
 }
@@ -103,12 +102,13 @@ function useEntryTitle(kind: State["kind"]) {
 }
 
 /** What shows before there is an account to work with: loading, an error, the invitation code (the welcome page has its own frame). */
-function EntryStates(props: { state: State; session: Session }) {
-  const { state: z, session: s } = props;
+function EntryStates({ state: z, session: s }: { state: State; session: Session }) {
   return (
     <>
       {z.kind === "loading" && <Loading />}
-      {z.kind === "error" && <AppError text={z.text} onReload={() => void s.reload()} />}
+      {z.kind === "error" && (
+        <AppError text={z.text} reloadPage={z.reloadPage} onReload={() => void s.reload()} />
+      )}
       {z.kind === "invitationNeeded" && (
         <RouteBoundary resetKey="invitation">
           <InvitationPage

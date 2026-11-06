@@ -6,7 +6,6 @@ import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
-import { errorText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../shared/data";
 import { OPTIONAL_FIELDS, OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
 import {
@@ -18,9 +17,6 @@ import {
 } from "../schemas";
 import type { EquipmentInput } from "../equipment-api";
 import type { EquipmentPrefill } from "../overviews/wishes-view/wishes-api";
-
-/** This form shows the German text of the error code, also for an unreachable server (kept as it was, P-10). */
-const codeText = (error: ApiError) => errorText(error.code);
 
 /** "Gekauft" on an equipment wish fills the form with what the wish knows (US-EQU-08); the rest stays empty (P-08). */
 function usePrefill(
@@ -65,12 +61,7 @@ export function EquipmentForm(props: {
     resolver: zodResolver(equipmentSchema),
     defaultValues: EMPTY_FIELDS,
   });
-  const { alertText, alertRef } = useServerRefusal(
-    props.error,
-    form.setError,
-    fieldsOfRefusal,
-    codeText,
-  );
+  const { alertText, alertRef } = useServerRefusal(props.error, form.setError, fieldsOfRefusal);
   usePrefill(form, props.prefill);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;

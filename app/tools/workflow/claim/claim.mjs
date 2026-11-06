@@ -4,7 +4,9 @@
 // Speed (#1487): the reads that do not depend on each other run at once, the branch list comes from the refs the fetch has just
 // updated, the assignee answer shows the assignees (no second read), and the status is two GraphQL writes.
 // Safety (#1487): every GitHub or git call has a time limit (CLAIM_TIMEOUT_S, starting value 60 s), each undo step is tried three
-// times, and a step that still fails prints the command to run by hand (claim-undo.mjs, claim-writes.mjs).
+// times, and a step that still fails prints the command to run by hand (claim-undo.mjs, claim-writes.mjs). A git push of the claim
+// and of its undo has a limit of its own (CLAIM_PUSH_TIMEOUT_S, starting value 300 s): it runs make gates (#1559). A timed-out call
+// ends its process group, so no gate run is left behind.
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
 import { fileURLToPath } from "node:url";
@@ -13,6 +15,7 @@ import {
   fetchIssue,
   fetchPrs,
   me,
+  PUSH_LIMIT,
   realClient,
   repoName,
 } from "./lib/claim-client.mjs";
@@ -26,6 +29,24 @@ import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs"
 export { ClaimRefused };
 
 export const DEFAULT_TIMEOUT_S = 60; // assumption: a starting value; a GitHub call here takes well under a second
+// assumption: a starting value; measured 104 s on the devbox (#1559), where git push runs the pre-push hook (make gates)
+export const DEFAULT_PUSH_TIMEOUT_S = 300;
+
+/**
+ * The time limits of `make claim` from the environment: CLAIM_TIMEOUT_S for every call, CLAIM_PUSH_TIMEOUT_S for the claim push
+ * and its undo. Throws a RangeError when a value is not a positive number of seconds.
+ */
+export function timeoutsOf(env) {
+  const millis = (name, fallback) => {
+    const seconds = env[name] ? Number(env[name]) : fallback;
+    if (!(seconds > 0)) throw new RangeError(`${name} must be a positive number of seconds`);
+    return seconds * 1000;
+  };
+  return {
+    timeoutMs: millis("CLAIM_TIMEOUT_S", DEFAULT_TIMEOUT_S),
+    limits: { [PUSH_LIMIT]: millis("CLAIM_PUSH_TIMEOUT_S", DEFAULT_PUSH_TIMEOUT_S) },
+  };
+}
 
 /**
  * The board item of this issue, read once: its Typ decides the branch type, its priority the warning. A failed lookup is
@@ -98,14 +119,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("usage: make claim ISSUE=<issue number>");
     process.exit(2);
   }
-  const timeoutS = process.env.CLAIM_TIMEOUT_S
-    ? Number(process.env.CLAIM_TIMEOUT_S)
-    : DEFAULT_TIMEOUT_S;
-  if (!(timeoutS > 0)) {
-    console.error("CLAIM_TIMEOUT_S must be a positive number of seconds");
+  let limits;
+  try {
+    limits = timeoutsOf(process.env);
+  } catch (e) {
+    console.error(e.message);
     process.exit(2);
   }
-  claim(realClient({ timeoutMs: timeoutS * 1000 }), number, { env: process.env }).catch((e) => {
+  claim(realClient(limits), number, { env: process.env }).catch((e) => {
     if (e instanceof PreflightFailed) {
       console.error(
         `claim not started for #${number}: preflight failed, nothing was written.\n${e.message}`,
