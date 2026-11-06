@@ -38,6 +38,7 @@
     "spec-numbers": "node --import tsx tools/check/docs/specs/spec-numbers/check-spec-numbers.mjs",
     "dod-numbers": "node tools/check/docs/specs/spec-numbers/check-dod-numbers.mjs",
     "principles": "node tools/check/docs/check-principles.mjs",
+    "principles-review": "node tools/check/docs/check-principles-review.mjs",
     "test": "npm run test --workspaces --if-present && node --test \"tools/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\" \"../tools/lighthouse/*.test.mjs\" \"../tools/repo/*.test.mjs\"",
     "coverage": "npm run test --workspaces --if-present -- --coverage && node --test \"tools/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\" \"../tools/lighthouse/*.test.mjs\" \"../tools/repo/*.test.mjs\" && node tools/check/quality/coverage/check-coverage-ratchet.mjs",
     "build": "npm run build --workspaces --if-present",
