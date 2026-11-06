@@ -1,6 +1,7 @@
 import { appError, failed, fingerprintOf } from "@pflanzendex/core";
 import type { SourceClient, SourceOutcome, TaxonomyStore } from "@pflanzendex/core";
-import { describe, expect, it, vi } from "vitest";
+import { migrate, openPool, testOwnerUrl } from "@pflanzendex/db";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { runTaxonomyBuildCommand, runTaxonomyBuildOnce } from "./run-taxonomy-build";
 
 // US-POK-03: the one-off build from the command line. The database is a fake store and the sources are a fake client,
@@ -45,6 +46,14 @@ const noMatch = (): { ok: true; value: SourceOutcome } => ({
 });
 
 describe("US-POK-03 pokedex-build", () => {
+  // The command line test reads the migrated database of the api tests; like every api test file that needs tables, this
+  // file migrates it (the global setup only creates it).
+  beforeAll(async () => {
+    const setup = openPool(testOwnerUrl());
+    await migrate(setup);
+    await setup.end();
+  });
+
   it("US-POK-03 an empty catalog builds nothing and sends no request", async () => {
     const { store, replaced } = storeWith(null);
     const { sources, requests } = sourcesThat(failing);
@@ -119,7 +128,11 @@ describe("US-POK-03 pokedex-build", () => {
       printed.push(String(line));
     });
     try {
-      const code = await runTaxonomyBuildCommand(["--dry-run"], process.env);
+      // The migrated database of the api tests, the same as every other api test (CI migrates only that one).
+      const code = await runTaxonomyBuildCommand(["--dry-run"], {
+        ...process.env,
+        DATABASE_URL: testOwnerUrl(),
+      });
       expect(code).toBe(0);
       expect(printed).toHaveLength(1);
       expect(printed[0]).toMatch(/^pokedex-build: /);
