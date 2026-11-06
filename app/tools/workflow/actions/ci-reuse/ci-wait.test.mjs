@@ -4,10 +4,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { evidenceOf } from "./ci-evidence.mjs";
 import { report } from "./ci-report.mjs";
 import {
   assess,
-  evidenceOf,
   exitCodeOf,
   JOBS,
   jobsDefinedIn,
@@ -539,4 +539,110 @@ test("US-DEV-10: a head without a ci.yml defines no job, so nothing is required 
   assert.equal(snap.defined.size, 0);
   const a = assess(open(snap));
   assert.deepEqual(a.problems, ["no CI run on the head commit"]);
+});
+
+// US-DEV-10: code scanning. The fixture pr1503earlier is real: PR 1503 at its earlier head 4316b1d2, where the GitHub Advanced
+// Security app failed `CodeQL` with 2 new high alerts while `make ci-wait` printed green (issue 1510). The CI jobs of that head
+// are the ones the fixture keeps; the code-scanning checks are the real records of the same head.
+const scanOpen = () => open(snapOf("pr1503earlier"));
+const withCheck = (s, name, change) => ({
+  ...s,
+  checkRuns: s.checkRuns.map((c) => (c.name === name ? { ...c, ...change } : c)),
+});
+
+test("US-DEV-10: a failed CodeQL check of PR 1503's earlier head is a problem that names it", () => {
+  const a = assess(scanOpen());
+  assert.equal(a.status, "settled");
+  assert.deepEqual(a.problems, ["CodeQL: failure"]);
+  assert.equal(rowOf(a, "CodeQL").result, "failure");
+  assert.equal(
+    rowOf(a, "CodeQL").run,
+    "127847930786",
+    "a check run without an actions run is named by its id",
+  );
+  assert.equal(exitCodeOf(a), 1);
+  assert.match(
+    report(a),
+    /CodeQL\s+failure\s+scanning\s+run 127847930786, completed 2026-11-06T10:41:33Z/,
+  );
+  assert.match(report(a), /ci-wait: not green: CodeQL: failure$/);
+  assert.deepEqual(problemsNow(a), ["CI: CodeQL: failure"]);
+});
+
+test("US-DEV-10: a failed analyze check of the advanced workflow is a problem that names it", () => {
+  const s = withCheck(scanOpen(), "CodeQL", { conclusion: "success" });
+  const a = assess(withCheck(s, "analyze (javascript-typescript)", { conclusion: "failure" }));
+  assert.deepEqual(a.problems, ["analyze (javascript-typescript): failure"]);
+  assert.equal(exitCodeOf(a), 1);
+  assert.match(report(a), /analyze \(javascript-typescript\)\s+failure\s+scanning\s+run /);
+});
+
+test("US-DEV-10: the green CodeQL and analyze checks of PR 1465 are judged and pass", () => {
+  const a = assess(open(snapOf("pr1465")));
+  assert.equal(rowOf(a, "CodeQL").result, "success");
+  assert.equal(rowOf(a, "analyze (javascript-typescript)").result, "success");
+  assert.equal(rowOf(a, "analyze (actions)").result, "success");
+  assert.deepEqual(a.problems, []);
+});
+
+test("US-DEV-10: a PR without a CodeQL or analyze check is no problem (docs-only PRs may have none)", () => {
+  const s = scanOpen();
+  const none = { ...s, checkRuns: s.checkRuns.filter((c) => !/^(CodeQL|analyze )/.test(c.name)) };
+  const a = assess(none);
+  assert.deepEqual(a.problems, []);
+  assert.equal(exitCodeOf(a), 0);
+  assert.equal(rowOf(a, "CodeQL"), undefined);
+});
+
+test("US-DEV-10: a neutral, cancelled or skipped CodeQL result is no problem", () => {
+  for (const conclusion of ["neutral", "cancelled", "skipped"]) {
+    const a = assess(withCheck(scanOpen(), "CodeQL", { conclusion }));
+    assert.deepEqual(a.problems, [], conclusion);
+    assert.equal(rowOf(a, "CodeQL").result, conclusion);
+  }
+});
+
+test("US-DEV-10: a CodeQL re-run that passes after the failed run is no problem", () => {
+  const s = scanOpen();
+  const failed = s.checkRuns.find((c) => c.name === "CodeQL");
+  const rerun = {
+    ...failed,
+    id: failed.id + 1,
+    conclusion: "success",
+    started_at: "2026-11-06T10:55:00Z",
+    completed_at: "2026-11-06T10:55:02Z",
+    details_url: `https://github.com/${REPO}/runs/${failed.id + 1}`,
+  };
+  const a = assess({ ...s, checkRuns: [...s.checkRuns, rerun] });
+  assert.equal(rowOf(a, "CodeQL").result, "success");
+  assert.equal(rowOf(a, "CodeQL").run, String(failed.id + 1));
+  assert.deepEqual(a.problems, []);
+});
+
+test("US-DEV-10: a CodeQL check that is still running keeps the PR waiting, and make merge refuses", () => {
+  const running = withCheck(scanOpen(), "CodeQL", {
+    status: "in_progress",
+    conclusion: null,
+    completed_at: null,
+  });
+  const a = assess(running);
+  assert.equal(a.status, "running");
+  assert.deepEqual(a.unfinished, ["CodeQL"]);
+  assert.match(
+    problemsNow(a)[0],
+    /CI is still running \(CodeQL\); wait for it with make ci-wait PR=1503/,
+  );
+});
+
+test("US-DEV-10: a CodeQL check of another app with the same name does not count, as with the CI jobs", () => {
+  const s = scanOpen();
+  const faked = {
+    ...s,
+    checkRuns: s.checkRuns.map((c) =>
+      c.name === "CodeQL" ? { ...c, app: { slug: "someone-else" } } : c,
+    ),
+  };
+  const a = assess(faked);
+  assert.deepEqual(a.problems, []);
+  assert.equal(rowOf(a, "CodeQL"), undefined);
 });

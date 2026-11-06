@@ -5,18 +5,20 @@ import { NOT_IN_WORKFLOW, shortSha } from "./ci-verdict.mjs";
 const NAME_WIDTH = 18;
 const RESULT_WIDTH = 15;
 
-function rowLine(r) {
+function rowLine(r, width) {
   const detail = r.at
     ? `run ${r.run}, completed ${r.at}`
     : r.result === "skipped"
-      ? "not required for this PR"
+      ? r.scanning
+        ? "no analysis ran on this head"
+        : "not required for this PR"
       : r.result === "running"
         ? "still running"
         : r.result === NOT_IN_WORKFLOW
           ? "the workflow of this head commit does not define it"
           : "no run finished it";
-  const need = r.required ? "required" : "optional";
-  return `  ${r.job.padEnd(NAME_WIDTH)} ${r.result.padEnd(RESULT_WIDTH)} ${need.padEnd(8)} ${detail}`;
+  const need = r.scanning ? "scanning" : r.required ? "required" : "optional";
+  return `  ${r.job.padEnd(width)} ${r.result.padEnd(RESULT_WIDTH)} ${need.padEnd(8)} ${detail}`;
 }
 
 function verdictOf(a) {
@@ -43,7 +45,8 @@ function verdictOf(a) {
 /** The report of one assessment as printed by `make ci-wait`. */
 export function report(a) {
   const { pr } = a;
+  const width = Math.max(NAME_WIDTH, ...a.rows.map((r) => r.job.length));
   const title = `ci-wait: PR #${pr.number} "${pr.title}" on ${shortSha(a.head)} (base ${pr.base}${pr.draft ? ", draft" : ""})`;
-  const ci = `  ${"ci-status".padEnd(NAME_WIDTH)} aggregate, not judged: ${a.aggregate?.conclusion ?? "none"}`;
-  return [title, ...a.rows.map(rowLine), ci, verdictOf(a)].join("\n");
+  const ci = `  ${"ci-status".padEnd(width)} aggregate, not judged: ${a.aggregate?.conclusion ?? "none"}`;
+  return [title, ...a.rows.map((r) => rowLine(r, width)), ci, verdictOf(a)].join("\n");
 }
