@@ -118,12 +118,17 @@ function SheetLoading() {
 
 /**
  * The sheet panel once its chunk has loaded. Until then it shows the loading state, but only after the delay, so a
- * sheet that is already loaded opens without a flash (US-QS-07, DS-08).
+ * sheet that is already loaded opens without a flash (US-QS-07, DS-08). The body keeps its boundary: a lazy part inside
+ * it waits under the same fallback instead of reaching the route's boundary.
  */
 const SheetWindow = React.forwardRef<HTMLDivElement, SheetPanelProps>((props, ref) => {
   const { Component, waiting } = useLoadingWindow(SheetPanel, props.open);
-  if (Component) return <Component ref={ref} {...props} />;
-  return waiting ? <SheetLoading /> : null;
+  if (!Component) return waiting ? <SheetLoading /> : null;
+  return (
+    <React.Suspense fallback={props.open ? <SheetLoading /> : null}>
+      <Component ref={ref} {...props} />
+    </React.Suspense>
+  );
 });
 SheetWindow.displayName = "SheetWindow";
 

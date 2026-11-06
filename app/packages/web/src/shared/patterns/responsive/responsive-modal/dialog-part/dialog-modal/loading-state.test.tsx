@@ -1,11 +1,20 @@
 // @vitest-environment jsdom
+import * as React from "react";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
+import { DialogPart } from "../dialog-part";
 
 // A chunk that waits until the test releases it, as on a slow network: while `hold` is set, a lazy page does not load.
-const chunk = vi.hoisted(() => ({ hold: null as Promise<void> | null, loaded: 0 }));
+// While `fail` is set the request fails (offline, or a deployment replaced the file); `attempts` counts every request.
+const chunk = vi.hoisted(() => ({
+  hold: null as Promise<void> | null,
+  loaded: 0,
+  fail: false,
+  attempts: 0,
+}));
 vi.mock("@/shared/platform/routing/lazy-page/lazy-page", async (importOriginal) => {
   const real =
     await importOriginal<typeof import("@/shared/platform/routing/lazy-page/lazy-page")>();
@@ -13,6 +22,8 @@ vi.mock("@/shared/platform/routing/lazy-page/lazy-page", async (importOriginal) 
     ...real,
     lazyPage: ((load: () => Promise<never>) =>
       real.lazyPage(async () => {
+        chunk.attempts += 1;
+        if (chunk.fail) throw new Error("Failed to fetch dynamically imported module");
         if (chunk.hold) await chunk.hold;
         const loaded = await load();
         chunk.loaded += 1;
@@ -42,6 +53,7 @@ async function freshResponsiveModal() {
 
 afterEach(() => {
   chunk.hold = null;
+  chunk.fail = false;
   cleanup();
 });
 
@@ -311,5 +323,127 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
     expect(cls).not.toContain("inset-x-0");
     release();
     await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
+  });
+});
+
+/** A child that suspends until the test releases it: a lazy page inside the body of a window (US-QS-07). */
+function suspendingChild() {
+  let release: () => void = () => undefined;
+  const Late = React.lazy(
+    () =>
+      new Promise<{ default: () => React.ReactElement }>((resolve) => {
+        release = () => resolve({ default: () => <p>Späterer Inhalt</p> });
+      }),
+  );
+  return { Late, release: () => release() };
+}
+
+/** A dialog part whose body is `body`; it mounts at the first open, as `ResponsiveModal` does. */
+function DialogExample({ body }: { body: React.ReactNode }) {
+  const [open, setOpen] = React.useState(false);
+  const [opened, setOpened] = React.useState(false);
+  return (
+    <DialogPart
+      title="Pflanze bearbeiten"
+      trigger={<button>Öffnen</button>}
+      open={open}
+      opened={opened}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) setOpened(true);
+      }}
+      body={body}
+    />
+  );
+}
+
+describe("US-QS-07 · DS-08 a window keeps its boundary for what its body loads", () => {
+  it("US-QS-07 · DS-08 a dialog whose body suspends waits inside the dialog, and the outer boundary shows nothing", async () => {
+    setViewportWidth(1024);
+    const { Late, release } = suspendingChild();
+    render(
+      <React.Suspense fallback={<p>outer</p>}>
+        <DialogExample body={<Late />} />
+      </React.Suspense>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    await sleep(100);
+    expect(screen.queryByText("outer")).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("Fenster wird geladen …");
+    release();
+    expect(await screen.findByText("Späterer Inhalt")).toBeTruthy();
+    expect(screen.queryByText("outer")).toBeNull();
+  });
+
+  it("US-QS-07 · DS-08 a sheet whose body suspends waits inside the sheet, and the outer boundary shows nothing", async () => {
+    setViewportWidth(360);
+    const { Late, release } = suspendingChild();
+    render(
+      <React.Suspense fallback={<p>outer</p>}>
+        <Sheet>
+          <SheetTrigger asChild>
+            <button>Öffnen</button>
+          </SheetTrigger>
+          <SheetContent title="Filter">
+            <Late />
+          </SheetContent>
+        </Sheet>
+      </React.Suspense>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    await sleep(100);
+    expect(screen.queryByText("outer")).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("Fenster wird geladen …");
+    release();
+    expect(await screen.findByText("Späterer Inhalt")).toBeTruthy();
+    expect(screen.queryByText("outer")).toBeNull();
+  });
+});
+
+describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and close, and retry opens it", () => {
+  it("US-QS-07 · DS-08 · P-10 a dialog whose chunk fails shows the error with retry and close; retry requests the chunk again and the dialog opens", async () => {
+    const ResponsiveModal = await freshResponsiveModal();
+    setViewportWidth(1024);
+    chunk.fail = true;
+    render(
+      <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+        <button>Speichern</button>
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Das Fenster konnte nicht geladen werden.");
+    expect(alert.textContent).not.toContain("Failed to fetch");
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Schließen" })).toBeTruthy();
+    const failedAttempts = chunk.attempts;
+    chunk.fail = false;
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+    expect(chunk.attempts).toBe(failedAttempts + 1);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("US-QS-07 · DS-08 · P-10 a sheet whose chunk fails shows the error with retry and close; retry requests the chunk again and the sheet opens", async () => {
+    const ResponsiveModal = await freshResponsiveModal();
+    setViewportWidth(360);
+    chunk.fail = true;
+    render(
+      <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+        <button>Speichern</button>
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Das Fenster konnte nicht geladen werden.");
+    expect(alert.textContent).not.toContain("Failed to fetch");
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Schließen" })).toBeTruthy();
+    const failedAttempts = chunk.attempts;
+    chunk.fail = false;
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
+    expect(chunk.attempts).toBe(failedAttempts + 1);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

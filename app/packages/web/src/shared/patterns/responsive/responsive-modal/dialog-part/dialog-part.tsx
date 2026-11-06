@@ -38,12 +38,17 @@ function DialogLoading() {
 
 /**
  * The dialog once its chunk has loaded. Until then it shows the loading state, but only after the delay, so a dialog
- * that is already loaded opens without a flash (US-QS-07, DS-08).
+ * that is already loaded opens without a flash (US-QS-07, DS-08). The body keeps its boundary: a lazy part inside it
+ * waits under the same fallback instead of reaching the route's boundary.
  */
 function DialogWindow(props: DialogModalProps) {
   const { Component, waiting } = useLoadingWindow(DialogModal, props.open);
-  if (Component) return <Component {...props} />;
-  return waiting ? <DialogLoading /> : null;
+  if (!Component) return waiting ? <DialogLoading /> : null;
+  return (
+    <React.Suspense fallback={props.open ? <DialogLoading /> : null}>
+      <Component {...props} />
+    </React.Suspense>
+  );
 }
 
 /** The error view of a dialog whose chunk failed: the text, a retry and a way out (P-10, DS-08). */

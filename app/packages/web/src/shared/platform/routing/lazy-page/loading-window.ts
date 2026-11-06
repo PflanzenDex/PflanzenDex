@@ -12,9 +12,10 @@ export const LOADING_STATUS_DELAY_MS = 300;
  * window is open and the wait is longer than `LOADING_STATUS_DELAY_MS` (US-QS-07). A failed load throws into the nearest
  * `ChunkErrorBoundary`, which shows the error with retry (P-10).
  *
- * There is no Suspense fallback on purpose. React holds back the reveal of content for about 300 ms after any fallback
- * has been shown, so a fallback that shows the status would flash it on a fast open and race that hold (issue 1575).
- * A component that is already loaded renders at once.
+ * Only the chunk wait is outside a Suspense boundary. The window keeps a Suspense around the loaded component for what its
+ * body loads (a lazy part inside the window waits under the window's fallback and does not reach the route's boundary).
+ * A fallback around the chunk wait would start React's hold of about 300 ms on the reveal of content and flash the
+ * status on a fast open (issue 1575), so the chunk is waited for here instead, and a loaded component renders at once.
  */
 export function useLoadingWindow<C extends AnyComponent>(page: LazyPage<C>, open: boolean) {
   const [component, setComponent] = useState<C | null>(page.loaded);
