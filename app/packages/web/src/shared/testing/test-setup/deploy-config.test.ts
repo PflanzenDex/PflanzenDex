@@ -9,6 +9,7 @@ const compose = read("deploy/docker-compose.yml");
 const testOverlay = read("deploy/docker-compose.test.yml");
 const mailRoute = read("deploy/proxy.mail.caddy");
 const funnel = read("deploy/docker-compose.funnel.yml");
+const store = read("deploy/docker-compose.store.yml");
 const serveConfig = JSON.parse(read("deploy/docker/tailscale/serve.json")) as {
   TCP: Record<string, { HTTPS: boolean }>;
   Web: Record<string, { Handlers: Record<string, { Proxy: string }> }>;
@@ -203,7 +204,7 @@ describe("TE-03 · log size limits (#762)", () => {
 
 describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () => {
   const hardened = /security_opt: \[no-new-privileges:true\]\n\s+cap_drop: \[ALL\]\n/;
-  const files = { compose, testOverlay, funnel };
+  const files = { compose, testOverlay, funnel, store };
   const apiImage = read("deploy/docker/api.Dockerfile");
   const webImage = read("deploy/docker/web.Dockerfile");
   /** Names of the services a file defines with an image of its own (not the ones it only extends). */
@@ -229,6 +230,9 @@ describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () =>
       expect(service(compose, "proxy")).not.toMatch(/\n {4}image: /);
     },
     mailpit: () => expect(service(testOverlay, "mailpit")).toContain('user: "65534:65534"'),
+    // US-WAC-06: the store runs as the image's own user (nonroot, named here); the bucket one-shot is the API image (USER node).
+    "object-store": () => expect(service(store, "object-store")).toContain('user: "65532:65532"'),
+    "object-store-bucket": () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
     // Documented exception: uid 0 for the root-owned registered state, but without any capability (funnel file).
     "ts-app": () => expect(funnel).toContain("The nodes stay uid 0, but without any"),
     "ts-auth": () => expect(funnel).toContain("The nodes stay uid 0, but without any"),
@@ -516,5 +520,52 @@ describe("US-DEV-07 · PostgreSQL 18 in the stack", () => {
     const check = deployScript.indexOf("check_db_volume || return 1");
     expect(check).toBeGreaterThan(-1);
     expect(check).toBeLessThan(deployScript.indexOf('"${compose[@]}" up -d --build'));
+  });
+});
+
+describe("US-WAC-06 · object store of the test environment (opt-in overlay)", () => {
+  const limit = /logging:\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/;
+  const devStorage = read("dev/storage.compose.yaml");
+
+  it("US-WAC-06 the store runs the image of the development storage, pinned by digest, with a 256 MB limit", () => {
+    const image = /image: (cgr\.dev\/chainguard\/minio:\S+)/;
+    expect(image.exec(store)?.[1]).toBe(image.exec(devStorage)?.[1]);
+    expect(service(store, "object-store")).toMatch(/limits:\s+memory: 256m/);
+    expect(service(store, "object-store")).toMatch(limit);
+    expect(service(store, "object-store-bucket")).toMatch(limit);
+  });
+
+  it("US-WAC-06 the store publishes no port: photos reach it over the Docker network only", () => {
+    expect(store).not.toMatch(/^\s+ports:/m);
+  });
+
+  it("US-WAC-06 the bucket one-shot runs the API image before the API starts, and the API gets the store settings", () => {
+    const bucket = service(store, "object-store-bucket");
+    expect(bucket).toContain('command: ["npx", "tsx", "src/media/ensure-bucket-cli.ts"]');
+    expect(bucket).toContain('restart: "no"');
+    expect(bucket).toMatch(/limits:\s+memory: 512m/);
+    expect(service(store, "api")).toContain("<<: *s3");
+    expect(service(store, "api")).toContain(
+      "object-store-bucket:\n        condition: service_completed_successfully",
+    );
+  });
+
+  it("US-WAC-06 the S3 settings are written once, and every password line takes the store's password from the environment", () => {
+    expect(store.match(/S3_ENDPOINT: /g)).toHaveLength(1);
+    expect(store).toContain("S3_ENDPOINT: http://object-store:9000");
+    expect(store).toContain("S3_BUCKET: pflanzendex-photos");
+    const passwordLines = store
+      .split("\n")
+      .filter((line) => /PASSWORD/.test(line) && !line.trimStart().startsWith("#"));
+    expect(passwordLines.length).toBeGreaterThan(1);
+    for (const line of passwordLines) expect(line, line).toContain("${MINIO_ROOT_PASSWORD:?");
+  });
+
+  it("US-WAC-06 .env.example names the store's variables, and its password stays optional and commented", () => {
+    const assigned = envExample.split("\n").map((line) => line.replace(/^#/, "").split("=")[0]);
+    for (const name of new Set([...store.matchAll(/\$\{([A-Z_]+):\?/g)].map((m) => m[1])))
+      expect(assigned, name).toContain(name);
+    expect(envExample).toMatch(/^#MINIO_ROOT_PASSWORD=PUT_A_LONG_RANDOM_PASSWORD_HERE$/m);
+    expect(envExample).toMatch(/^#COMPOSE_FILE=.*docker-compose\.store\.yml$/m);
   });
 });

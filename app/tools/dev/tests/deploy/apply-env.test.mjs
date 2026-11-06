@@ -179,6 +179,10 @@ const excluded = {
   BACKUP_DIR: "where the dumps (password hashes, realm keys) are written is a host decision",
   BACKUP_REMOTE:
     "the rsync target of the dumps; from GitHub, a writer of the environment could send them elsewhere",
+  // US-WAC-06: the test host's object store (docker-compose.store.yml) takes its password from the host's .env, set by hand.
+  // An allowlisted secret needs its mapping in the Deploy workflow (a gate file) and would fail the step without it.
+  MINIO_ROOT_PASSWORD:
+    "root password of the test host's object store, set by hand in the host's .env (docker-compose.store.yml)",
 };
 const envExample = readFileSync(join(deploy, ".env.example"), "utf8");
 const templateKeys = new Set([...envExample.matchAll(/^#?([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]));
