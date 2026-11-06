@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router";
 import { readStored, writeStored } from "@/shared/platform/browser/storage";
+import { useFeatures } from "@/shared/data";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { GROUP_PARAM, MANAGE_PARAM } from "../shared/patterns/navigation/navigation/navigation";
 
@@ -34,14 +35,29 @@ const parse = (v: string | null | undefined): SammlungView | null =>
   v === "plants" || v === "species" || v === "wishlist" || v === "equipment" ? v : null;
 
 /**
+ * Whether a mode is offered: Wunschliste and Geräte follow the keeper's switches of the wishlist and the equipment (US-ONB-09);
+ * the plants and the species always are.
+ */
+export function useOfferedView(): (v: SammlungView) => boolean {
+  const features = useFeatures();
+  const offered: Partial<Record<SammlungView, boolean>> = {
+    wishlist: features?.wishlist !== false,
+    equipment: features?.equipment !== false,
+  };
+  return (v) => offered[v] ?? true;
+}
+
+/**
  * The mode of the destination "Sammlung" (US-QS-14): from the address, else the one remembered on this device, else
- * the plants. Switching adds a history entry (back works), remembers the choice and tells screen readers; the state
- * `keepFocus` leaves the focus on the control (RouteFocus).
+ * the plants. A mode that is not offered (US-ONB-09) falls back to the plants. Switching adds a history entry (back
+ * works), remembers the choice and tells screen readers; the state `keepFocus` leaves the focus on the control (RouteFocus).
  */
 export function useSammlungView(): { view: SammlungView; choose: (v: SammlungView) => void } {
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
-  const view = parse(params.get(VIEW_PARAM)) ?? parse(readStored(VIEW_KEY)) ?? "plants";
+  const offered = useOfferedView();
+  const asked = parse(params.get(VIEW_PARAM)) ?? parse(readStored(VIEW_KEY)) ?? "plants";
+  const view: SammlungView = offered(asked) ? asked : "plants";
   const choose = (next: SammlungView) => {
     if (next === view) return;
     writeStored(VIEW_KEY, next);

@@ -26,7 +26,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   ],
   "account/settings-page/settings-page.tsx": ["account/settings-page/settings-page.tsx"],
   "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx": [ACCOUNT],
-  "app/flows/onboarding/function-overview/function-overview.tsx": [ACCOUNT],
+  "app/flows/onboarding/function-overview/function-layer/function-layer.tsx": [ACCOUNT],
   "catalog/review/review-layer/review-layer.tsx": ["catalog/review/review-page/review-page.tsx"],
   "catalog/search-view/search-filters/search-filters.tsx": [DISCOVER],
   "catalog/species-page/species-page.tsx": [DISCOVER, PROFILE],

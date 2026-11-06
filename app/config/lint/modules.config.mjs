@@ -51,6 +51,7 @@ const MODULES = [
       "account_unlock",
       "account_style",
       "account_hint",
+      "account_keeper_switch",
     ],
     dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
