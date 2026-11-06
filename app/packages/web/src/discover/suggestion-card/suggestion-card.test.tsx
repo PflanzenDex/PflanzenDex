@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import type { Suggestion } from "@pflanzendex/core";
+import { createRef } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
@@ -28,7 +29,7 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
   exploration: false,
   ...extra,
 });
-const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} onSwipe={() => undefined} />);
+const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} />);
 
 describe("US-QS-21 the German name scales with the text size (issue 1019)", () => {
   it("US-QS-21 the German name is set in a rem size, not inherited, so 200 % text scales it with the title", () => {
@@ -193,5 +194,32 @@ describe("NFR-12 the suggestion picture loads when it is near the viewport", () 
     const img = screen.getByRole("img");
     expect(img.getAttribute("loading")).toBe("lazy");
     expect(img.getAttribute("src")).toBe("https://upload.wikimedia.org/a.jpg");
+  });
+});
+
+describe("US-ENT-01 every card has element ids of its own (axe duplicate-id)", () => {
+  it("US-ENT-01 two cards on one page each name themselves by their own heading, and no id occurs twice", () => {
+    render(
+      <>
+        <SuggestionCard suggestion={suggestion({ species: "Aloe vera" })} />
+        <SuggestionCard suggestion={suggestion({ species: "Ficus lyrata" })} />
+      </>,
+    );
+    const articles = screen.getAllByRole("article");
+    expect(articles).toHaveLength(2);
+    for (const article of articles) {
+      const heading = document.getElementById(article.getAttribute("aria-labelledby") ?? "");
+      expect(heading?.tagName).toBe("H2");
+      expect(heading?.closest("article")).toBe(article);
+    }
+    const ids = Array.from(document.querySelectorAll("[id]"), (e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("US-ENT-01 the name heading takes the focus through titleRef, so the focus follows the card the keeper sees", () => {
+    const title = createRef<HTMLHeadingElement>();
+    render(<SuggestionCard suggestion={suggestion()} titleRef={title} />);
+    title.current?.focus();
+    expect(document.activeElement).toBe(title.current);
   });
 });

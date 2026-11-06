@@ -53,7 +53,11 @@ Acceptance criteria:
 - Given I use a keyboard or a screen reader, then every action is reachable and announced with species and giver ("Yes: request Echeveria elegans from Anna"); the result of an action is announced as text (FR-TAU-08).
 - Given `prefers-reduced-motion: reduce`, then the card leaves without motion and the next card appears at once (US-QS-14).
 - Given I answered, when I press "Undo" (shown for the next card), then my last answer is taken back, as long as it was No or Later; a Yes is a request and is withdrawn in "Requests" (US-SOZ-10), not here.
-- Given a swipe is shorter than the threshold or ends in a scroll, then no answer is recorded (starting value of the threshold: 40 percent of the card width, assumption).
+- Given a swipe is shorter than the threshold or ends in a scroll, then no answer is recorded (starting value of the threshold: 40 percent of the card width, assumption; a flick of at least 0.6 px per ms over at least 15 percent of the width decides too, starting value, assumption).
+- Given a drag up or down past the threshold, then the card leaves as Later; the drag starts on the grip at the top edge of the card, so that scrolling the text keeps working.
+- Given a drag to the right past the threshold, then the card returns to its place and the confirmation asks first (FR-TAU-03); nothing is sent before it. The button Yes sends at once, except on a card that fits both ways, where it asks first (US-TAU-05).
+- Given a drag left, a drag up or down, or a button answers a card, then the card flies off in the direction of the answer and the answer is written once it has left; a refused write brings the card back with the error (P-10).
+- Given `prefers-reduced-motion: reduce`, then a drag does not move the card and the answer, the stamp and the next card appear at once (NFR-13).
 - After the last card: "Done for now. N requested, M for later." with the next step (open "Requests" or the Later list, P-09).
 
 ### US-TAU-03 · A request arises only from Yes · 🟨 new
@@ -142,7 +146,7 @@ Acceptance criteria:
 | FR-TAU-07 | Every view says what to do next, including every empty state (P-09). Nothing disappears silently: Later, No and ended offers stay findable until the keeper removes them (P-10).                                                                            | 🟨              |
 | FR-TAU-08 | Accessibility (NFR-13): all actions as buttons with text, operable by keyboard, announced by screen reader, 360 px layout, targets large enough, reduced motion respected; the swipe is only an extra.                                                      | ⬜              |
 | FR-TAU-09 | Out of scope: endless feed, notifications about new match cards, matching against strangers or the public, rankings, chat, selling for money, matching by genus or family, suggestions of species the giver does not offer (that is ENT).                   | ⬜ (deliberate) |
-| FR-TAU-10 | Hidden with the feature switch `social` (US-DEV-06) and under calm mode as described in US-TAU-07; dates are local dates (NFR-08).                                                                                                                          | 🟨              |
+| FR-TAU-10 | Hidden with the feature switch `social` (US-DEV-06) and under calm mode as described in US-TAU-07 and by the keeper switch (US-ONB-09, P-12); dates are local dates (NFR-08).                                                                               | 🟨              |
 
 ## Assumptions, decided by the PO (revisable)
 

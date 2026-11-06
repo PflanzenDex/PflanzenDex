@@ -1,4 +1,4 @@
-// US-DEV-08: `make claim` with an injected gh/git client
+// US-DEV-08: `make claim` with an injected gh/git client (REST for the repository, GraphQL only for the board: FR-DEV-10, #1412)
 import test from "node:test";
 import assert from "node:assert/strict";
 import { claim, ClaimRefused } from "./claim.mjs";
@@ -13,6 +13,30 @@ const issue = {
   assignees: [],
 };
 
+const REPO = "PflanzenDex/PflanzenDex";
+const PULLS_POST = /-X POST repos\/PflanzenDex\/PflanzenDex\/pulls/;
+
+/** The issue as the REST route answers it: state in lower case, the browser URL as html_url. */
+const restIssue = (i) => ({
+  ...i,
+  state: i.state.toLowerCase(),
+  html_url: i.url,
+  labels: i.labels ?? [],
+  assignees: i.assignees ?? [],
+  updated_at: "2026-11-01T00:00:00Z",
+});
+
+/** A pull request as the REST pulls route answers it. */
+const restPr = (p) => ({
+  number: p.number,
+  title: p.title,
+  body: p.body ?? "",
+  state: p.state === "OPEN" ? "open" : "closed",
+  merged_at: p.mergedAt ?? null,
+  draft: false,
+  head: { ref: p.headRefName ?? "" },
+});
+
 // Fake client: answers by the first matching rule on "cmd arg arg ..."; records every call.
 function fake({
   issues = [issue],
@@ -20,40 +44,80 @@ function fake({
   branches = "",
   pushFails = false,
   prFails = false,
+  graphqlFails = false,
   board,
 } = {}) {
   const calls = [];
   let views = 0;
-  const fields = {
-    fields: [
-      {
-        id: "F",
-        name: "Status",
-        options: [
-          { id: "O", name: "In Progress" },
-          { id: "T", name: "Todo" },
-        ],
-      },
-    ],
-  };
   const fail = (message) => () => {
     throw new Error(message);
   };
+  const meta = {
+    data: {
+      organization: {
+        projectV2: {
+          id: "PROJ",
+          fields: {
+            nodes: [
+              {
+                id: "F",
+                name: "Status",
+                options: [
+                  { id: "O", name: "In Progress" },
+                  { id: "T", name: "Todo" },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    },
+  };
+  // The board item of issue 62, in the shape of the single-issue GraphQL query (board-client.mjs).
+  const itemOfBoard = (number) => {
+    const hit = (board?.items ?? []).find((i) => i.content?.number === number);
+    if (!hit) return null;
+    const value = (name) => (name ? { name } : null);
+    return {
+      id: hit.id,
+      project: { number: 2, owner: { login: "PflanzenDex" } },
+      status: value(hit.status),
+      priority: value(hit.priority),
+      typ: value(hit.typ),
+      epic: null,
+      release: null,
+    };
+  };
+  const graphql = (line) => {
+    if (graphqlFails) throw new Error("GraphQL: API rate limit already exceeded for user ID 1.");
+    if (line.includes("fields(first")) return JSON.stringify(meta);
+    if (!board) throw new Error("no board");
+    const nodes = [itemOfBoard(62)].filter(Boolean);
+    return JSON.stringify({ data: { repository: { issue: { projectItems: { nodes } } } } });
+  };
   const rules = [
-    ["gh issue view", () => JSON.stringify(issues[Math.min(views++, issues.length - 1)])],
-    ["gh pr list", () => JSON.stringify(prs)],
-    ["git ls-remote", () => branches],
+    [
+      `gh api repos/${REPO}/issues/62`,
+      () => JSON.stringify(restIssue(issues[Math.min(views++, issues.length - 1)])),
+    ],
+    [`gh api repos/${REPO}/pulls`, () => JSON.stringify(prs.map(restPr))],
+    ["gh api repos/{owner}/{repo}", () => `${REPO}\n`],
     ["gh api user", () => "max\n"],
-    ["gh repo view", () => "PflanzenDex\n"],
+    ["git ls-remote", () => branches],
+    ["gh api graphql", graphql],
+    [`gh api -X POST repos/${REPO}/issues/62/assignees`, () => "{}"],
+    [`gh api -X DELETE repos/${REPO}/issues/62/assignees`, () => "{}"],
+    [
+      `gh api -X POST repos/${REPO}/pulls`,
+      prFails
+        ? fail("gh down")
+        : () => JSON.stringify({ html_url: "https://github.com/o/r/pull/9" }),
+    ],
     ["gh project item-add", () => JSON.stringify({ id: "ITEM" })],
-    ["gh project item-list", board ? () => JSON.stringify(board) : fail("no board")],
-    ["gh project field-list", () => JSON.stringify(fields)],
-    ["gh project view", () => JSON.stringify({ id: "PROJ" })],
     ["git rev-parse", () => "tree\n"],
     ["git commit-tree", () => "abc123\n"],
     ["git push origin --delete", () => ""],
     ["git push", pushFails ? fail("rejected") : () => ""],
-    ["gh pr create", prFails ? fail("gh down") : () => "https://github.com/o/r/pull/9\n"],
   ];
   return {
     calls,
@@ -61,7 +125,7 @@ function fake({
       const line = `${cmd} ${args.join(" ")}`;
       calls.push(line);
       const rule = rules.find(([prefix]) => line.startsWith(prefix));
-      return rule ? rule[1]() : "";
+      return rule ? rule[1](line) : "";
     },
   };
 }
@@ -73,15 +137,42 @@ test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as
   const result = await claim(client, 62, quiet);
   assert.equal(result.branch, "feat/bes-06-delete-specimen");
   const all = client.calls.join("\n");
-  assert.match(all, /gh issue edit 62 --add-assignee @me/);
+  assert.match(
+    all,
+    /-X POST repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees -f assignees\[\]=max/,
+  );
   assert.match(
     all,
     /gh project item-edit --id ITEM --project-id PROJ --field-id F --single-select-option-id O/,
   );
   assert.match(all, /git push origin abc123:refs\/heads\/feat\/bes-06-delete-specimen/);
-  assert.match(all, /gh pr create --draft --base dev --head feat\/bes-06-delete-specimen/);
+  assert.match(
+    all,
+    /-X POST repos\/PflanzenDex\/PflanzenDex\/pulls .*-f head=feat\/bes-06-delete-specimen -f base=dev -F draft=true/,
+  );
   assert.doesNotMatch(all, /--no-verify|--force/);
-  assert.ok(client.calls.every((c) => !c.startsWith("gh issue view") || c.includes("--json")));
+});
+
+test("FR-DEV-10: a claim reads the board once and runs no gh issue or gh pr command (GraphQL) for the repository", async () => {
+  const client = fake({ board: { items: [{ id: "I", content: { number: 62 }, priority: "P1" }] } });
+  await claim(client, 62, quiet);
+  assert.equal(client.calls.filter((c) => c.includes("projectItems")).length, 1);
+  assert.ok(!client.calls.some((c) => /^gh (issue|pr) /.test(c)));
+});
+
+test("FR-DEV-10: a claim survives an exhausted GraphQL budget: REST writes go through, the board status is a warning", async () => {
+  const logs = [];
+  const client = fake({ graphqlFails: true });
+  const result = await claim(client, 62, { log: (l) => logs.push(l) });
+  assert.equal(result.url, "https://github.com/o/r/pull/9");
+  assert.ok(logs.some((l) => /WARNING: project status not set \(.*rate limit/.test(l)));
+  assert.ok(
+    logs.some((l) => /Could not read the board type|could not read the board type/.test(l)),
+  );
+  assert.ok(
+    client.calls.some((c) => PULLS_POST.test(c)),
+    "the draft PR is opened over REST",
+  );
 });
 
 test("US-DEV-08: an assigned issue is refused and nothing is written", async () => {
@@ -90,7 +181,7 @@ test("US-DEV-08: an assigned issue is refused and nothing is written", async () 
     claim(client, 62, quiet),
     (e) => e instanceof ClaimRefused && /@konradhe14/.test(e.message),
   );
-  assert.ok(!client.calls.some((c) => /issue edit|git push|pr create/.test(c)));
+  assert.ok(!client.calls.some((c) => /-X |git push/.test(c)));
 });
 
 test("US-DEV-08: a PR that closes the issue refuses the claim and names the PR", async () => {
@@ -112,31 +203,31 @@ test("US-DEV-08: losing the race for the assignee steps back and deletes its own
   const taken = { ...issue, assignees: [{ login: "konradhe14" }] };
   const client = fake({ issues: [issue, taken] });
   await assert.rejects(claim(client, 62, quiet), /claimed #62 first/);
-  assert.ok(client.calls.some((c) => c.includes("--remove-assignee")));
+  assert.ok(client.calls.some((c) => /-X DELETE .*assignees/.test(c)));
   assert.ok(
     client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
   );
-  assert.ok(!client.calls.some((c) => c.startsWith("gh pr create")));
+  assert.ok(!client.calls.some((c) => PULLS_POST.test(c)));
 });
 
 test("US-DEV-08: the branch is pushed before the issue is assigned", async () => {
   const client = fake();
   await claim(client, 62, quiet);
   const at = (re) => client.calls.findIndex((c) => re.test(c));
-  assert.ok(at(/^git push origin abc123/) < at(/--add-assignee/));
+  assert.ok(at(/^git push origin abc123/) < at(/-X POST .*assignees/));
 });
 
 test("US-DEV-08: a failing push leaves no assignee behind and writes nothing", async () => {
   const client = fake({ pushFails: true });
   await assert.rejects(claim(client, 62, quiet), /rejected/);
-  assert.ok(!client.calls.some((c) => /issue edit|pr create/.test(c)));
+  assert.ok(!client.calls.some((c) => /-X /.test(c)));
 });
 
 test("US-DEV-08: a failing PR creation rolls back assignee, status and branch", async () => {
   const client = fake({ prFails: true });
   await assert.rejects(claim(client, 62, quiet), /gh down/);
   const all = client.calls.join("\n");
-  assert.match(all, /--remove-assignee @me/);
+  assert.match(all, /-X DELETE repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees/);
   assert.match(all, /git push origin --delete feat\/bes-06-delete-specimen/);
   assert.match(all, /item-edit .*--single-select-option-id T/);
 });
@@ -154,7 +245,7 @@ test("FR-DEV-10: a needs-triage issue is refused by make claim and nothing is wr
     claim(client, 62, quiet),
     (e) => e instanceof ClaimRefused && /needs-triage/.test(e.message),
   );
-  assert.ok(!client.calls.some((c) => /issue edit|git push|pr create/.test(c)));
+  assert.ok(!client.calls.some((c) => /-X |git push/.test(c)));
 });
 
 test("US-DEV-08: a half claim of the caller with a branch on origin is still refused", async () => {
@@ -169,31 +260,21 @@ test("US-DEV-08: a failing preflight stops before any write", async () => {
     throw new PreflightFailed(["node_modules missing: run make setup"]);
   };
   await assert.rejects(claim(client, 62, { ...quiet, preflight }), /make setup/);
-  assert.ok(!client.calls.some((c) => /issue edit|git push|pr create/.test(c)));
+  assert.ok(!client.calls.some((c) => /-X |git push/.test(c)));
 });
 
 test("US-DEV-08: the draft PR title carries type, epic scope and story ID", async () => {
   const client = fake();
   await claim(client, 62, quiet);
-  const create = client.calls.find((c) => c.startsWith("gh pr create"));
-  assert.match(create, /--title feat\(bes\): delete specimen \(US-BES-06\)/);
+  const create = client.calls.find((c) => PULLS_POST.test(c));
+  assert.match(create, /-f title=feat\(bes\): delete specimen \(US-BES-06\)/);
 });
-
-function withProjectItems(client, items) {
-  return {
-    calls: client.calls,
-    run: (cmd, args) =>
-      cmd === "gh" && args[0] === "project" && args[1] === "item-list"
-        ? Promise.resolve(JSON.stringify({ items }))
-        : client.run(cmd, args),
-  };
-}
 
 test("US-DEV-05: a claim of an issue without a priority warns, and still succeeds", async () => {
   const logs = [];
-  const client = withProjectItems(fake(), [
-    { id: "I", content: { type: "Issue", number: 62 }, status: "Todo" },
-  ]);
+  const client = fake({
+    board: { items: [{ id: "I", content: { number: 62 }, status: "Todo" }] },
+  });
   await claim(client, 62, { log: (m) => logs.push(m) });
   assert.ok(logs.some((l) => /Warning: #62 has no priority/.test(l)));
   assert.ok(logs.some((l) => /Draft PR/.test(l)));
@@ -201,9 +282,9 @@ test("US-DEV-05: a claim of an issue without a priority warns, and still succeed
 
 test("US-DEV-05: no warning when the priority is set; a failed lookup is reported, not swallowed", async () => {
   const logs = [];
-  const set = withProjectItems(fake(), [
-    { id: "I", content: { type: "Issue", number: 62 }, status: "Todo", priority: "P1 high" },
-  ]);
+  const set = fake({
+    board: { items: [{ id: "I", content: { number: 62 }, status: "Todo", priority: "P1 high" }] },
+  });
   await claim(set, 62, { log: (m) => logs.push(m) });
   assert.ok(!logs.some((l) => /Warning/.test(l)));
   await claim(fake(), 62, { log: (m) => logs.push(m) });
@@ -211,7 +292,7 @@ test("US-DEV-05: no warning when the priority is set; a failed lookup is reporte
 });
 
 test("US-DEV-08: the branch type comes from the board type, not from the issue labels", async () => {
-  const board = { items: [{ id: "I", content: { type: "Issue", number: 62 }, typ: "Bug" }] };
+  const board = { items: [{ id: "I", content: { number: 62 }, typ: "Bug" }] };
   const result = await claim(fake({ board }), 62, quiet);
   assert.equal(result.branch, "fix/bes-06-delete-specimen");
 });

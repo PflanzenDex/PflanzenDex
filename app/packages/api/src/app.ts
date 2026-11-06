@@ -39,6 +39,7 @@ import {
   accountEtag,
   errorBody,
   featureAccess,
+  runningVersion,
   statusFor,
   writeLimit,
   type FeatureAccess,
@@ -157,13 +158,13 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
 /**
  * Failures that no route answered (NFR-12, FR-QG-11, P-10). A database that did not answer in time, or cannot be reached,
  * gets the stable code `system.database_unavailable` (503); any other failure is a server error with the code
- * `system.unexpected`. The cause is logged, never sent.
+ * `system.unexpected`. The cause is logged with the running version (US-DEV-06), never sent.
  */
 function failureAnswer(error: Error | HTTPException, c: Context) {
   if (error instanceof HTTPException) return error.getResponse();
   const unavailable = isDatabaseUnavailable(error);
   if (unavailable) console.error("Database unavailable", error.message);
-  else console.error("Request failed", error);
+  else console.error(`Request failed (version ${runningVersion()})`, error);
   const failure = appError(unavailable ? "system.database_unavailable" : "system.unexpected");
   return c.json(errorBody(failure), statusFor(failure));
 }

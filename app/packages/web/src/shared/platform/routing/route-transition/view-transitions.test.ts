@@ -10,7 +10,11 @@ function setup(opts: { supported: boolean; reduced: boolean }) {
   })) as typeof window.matchMedia;
   const started = vi.fn((update: () => Promise<void>) => {
     void update();
-    return { finished: Promise.resolve() };
+    return {
+      ready: Promise.resolve(),
+      finished: Promise.resolve(),
+      updateCallbackDone: Promise.resolve(),
+    };
   });
   if (opts.supported) doc.startViewTransition = started;
   else delete doc.startViewTransition;
@@ -62,5 +66,23 @@ describe("US-QS-14 · route transition (progressive enhancement, ADR 0011 decisi
     await Promise.resolve();
     await Promise.resolve();
     expect(document.documentElement.dataset.routeTransition).toBeUndefined();
+  });
+
+  it("US-QS-14 a skipped transition (ready rejects with AbortError) leaves no unhandled rejection and the marker goes", async () => {
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    try {
+      doc.startViewTransition = () => ({
+        ready: Promise.reject(new DOMException("Transition was skipped", "AbortError")),
+        finished: Promise.resolve(),
+        updateCallbackDone: Promise.resolve(),
+      });
+      createTransitions().run(a, b, vi.fn());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(document.documentElement.dataset.routeTransition).toBeUndefined();
+    } finally {
+      process.off("unhandledRejection", unhandled);
+    }
   });
 });

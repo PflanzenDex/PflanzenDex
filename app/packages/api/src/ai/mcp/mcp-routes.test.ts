@@ -274,6 +274,8 @@ describe("US-KI-07 FR-KI-06 the protocol", () => {
       "list_measurements",
       "list_locations",
       "list_light_zones",
+      "describe_rules",
+      "check_species_name",
       ...AREA_NAMES,
     ]);
     for (const t of tools) expect(t["inputSchema"]).toMatchObject({ type: "object" });
@@ -413,6 +415,7 @@ describe("US-KI-09 US-KI-08 US-KI-04 KI-R6 drafts, tasks and photos stay in the 
       type: "wish",
       source: "https://example.test/source",
       content: { name },
+      idempotencyKey: randomUUID(),
     });
     expect(r.result["isError"]).toBe(false);
     expect(r.result["structuredContent"]).toMatchObject({
@@ -441,12 +444,31 @@ describe("US-KI-09 US-KI-08 US-KI-04 KI-R6 drafts, tasks and photos stay in the 
     expect(JSON.stringify(strangers.result)).not.toContain(id);
     const foreign = await tool(ai(subB, "pflanzen:draft", `${OTHER}/drafter`), "claim_task", {
       taskId: id,
+      idempotencyKey: randomUUID(),
     });
     expect(foreign.result["structuredContent"].error.code).toBe("ai.task_not_found");
-    const own = await tool(ai(subA, "pflanzen:draft"), "claim_task", { taskId: id });
+    const own = await tool(ai(subA, "pflanzen:draft"), "claim_task", {
+      taskId: id,
+      idempotencyKey: randomUUID(),
+    });
     expect(own.result["structuredContent"]).toMatchObject({ id, status: "in_progress" });
-    const declined = await tool(ai(subA, "pflanzen:draft"), "decline_task", { taskId: id });
+    const declined = await tool(ai(subA, "pflanzen:draft"), "decline_task", {
+      taskId: id,
+      idempotencyKey: randomUUID(),
+    });
     expect(declined.result["structuredContent"]).toMatchObject({ id, status: "declined" });
+  });
+
+  it("US-QS-03 a write tool called without a key answers a tool error with idempotency.key_missing and stores nothing", async () => {
+    const r = await tool(ai(subA, "pflanzen:draft"), "propose_draft", {
+      type: "wish",
+      source: "https://example.test/keyless",
+      content: { name: `Keyless ${name}` },
+    });
+    expect(r.result["isError"]).toBe(true);
+    expect(r.result["structuredContent"].error.code).toBe("idempotency.key_missing");
+    const inbox = (await rest(web(subA), "GET", "/ai/drafts")).body["drafts"] as Json[];
+    expect(inbox.some((d) => d["content"].name === `Keyless ${name}`)).toBe(false);
   });
 
   it("US-KI-04 the photo comes as image content to the own client only", async () => {

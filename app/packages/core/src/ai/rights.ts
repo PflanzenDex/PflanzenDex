@@ -82,6 +82,9 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   get_profile: "read",
   list_ai_log: "read",
   list_ai_drafts: "read",
+  // Rule discovery (US-KI-13): the rules a client respects before it writes, the same for every account.
+  describe_rules: "read",
+  check_species_name: "read",
   claim_task: "draft",
   decline_task: "draft",
   // Never released via connections (FR-KI-10): friends' data, sharing, swaps, account, connections, partners.

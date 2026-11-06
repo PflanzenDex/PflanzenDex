@@ -1,9 +1,8 @@
 import type { Suggestion } from "@pflanzendex/core";
-import { useRef, useState, type PointerEvent } from "react";
+import { useId, useState, type Ref } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { cn } from "@/shared/lib/utils";
-import { swipeDirection } from "../swipe/swipe";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
 import { DifficultyStars, WikipediaSource } from "@/pokedex";
 import table from "../discover.de.json";
@@ -99,31 +98,21 @@ function Details({ s, more }: { s: Suggestion; more: boolean }) {
 
 /**
  * One suggestion as a large card (US-ENT-01): image with source and license (FR-POK-07), names, text, zone, difficulty
- * and the attributes of DM-ENT-01, the reasons below. A swipe left or right decides like the buttons; the buttons stay
- * the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06).
+ * and the attributes of DM-ENT-01, the reasons below. The gesture and its stamps are the shared `SwipeCard` around it;
+ * the buttons stay the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06). Its heading id is made
+ * per card (`useId`), so the next card can be rendered underneath without a duplicate id on the page.
  */
 export function SuggestionCard(props: {
   suggestion: Suggestion;
-  onSwipe: (direction: "left" | "right") => void;
+  /** The name heading, so the view can move the focus to this card (SC 2.4.3). */
+  titleRef?: Ref<HTMLHeadingElement>;
 }) {
   const s = props.suggestion;
   const [more, setMore] = useState(false);
-  const start = useRef<{ x: number; y: number } | null>(null);
-  const down = (e: PointerEvent) => {
-    start.current = { x: e.clientX, y: e.clientY };
-  };
-  const up = (e: PointerEvent) => {
-    const from = start.current;
-    start.current = null;
-    const direction = from && swipeDirection(e.clientX - from.x, e.clientY - from.y);
-    if (direction) props.onSwipe(direction);
-  };
+  const titleId = useId();
   return (
     <article
-      aria-labelledby="suggestion-title"
-      onPointerDown={down}
-      onPointerUp={up}
-      onPointerCancel={() => (start.current = null)}
+      aria-labelledby={titleId}
       className={cn(
         "mx-auto flex min-h-48 w-full min-w-0 max-w-md flex-1 basis-0 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
         "rounded-xl border border-border bg-card p-3 text-card-foreground",
@@ -136,7 +125,12 @@ export function SuggestionCard(props: {
             {t("card.exploration")}
           </Badge>
         )}
-        <h2 id="suggestion-title" tabIndex={-1} className="m-0 scroll-mb-24 text-xl font-semibold">
+        <h2
+          id={titleId}
+          ref={props.titleRef}
+          tabIndex={-1}
+          className="m-0 scroll-mb-24 text-xl font-semibold"
+        >
           {s.species}
         </h2>
         <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>

@@ -54,7 +54,8 @@ export const seg = (v: unknown) => encodeURIComponent(String(v));
 export const keyOf = (args: Json) =>
   typeof args["idempotencyKey"] === "string" ? { idempotencyKey: args["idempotencyKey"] } : {};
 export const IDEMPOTENCY = str(
-  "Optional key that makes a repeated call count once; reuse it when you retry the same call.",
+  "Key that makes a repeated call count once: use a new one for each new call and reuse it when you retry the " +
+    "same call. The write is refused without it (idempotency.key_missing).",
   { minLength: 1, maxLength: 200 },
 );
 

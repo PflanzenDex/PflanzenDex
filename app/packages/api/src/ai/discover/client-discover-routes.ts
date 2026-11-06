@@ -8,7 +8,7 @@ import {
   type DraftStore,
 } from "@pflanzendex/core";
 import { Hono } from "hono";
-import { errorBody, statusFor } from "../../kernel";
+import { errorBody, keyMissing, statusFor } from "../../kernel";
 import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
 
 const bad = (field: string) =>
@@ -47,6 +47,8 @@ export function clientDiscoverRoutes(
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
   });
   client.post("/mcp/discover/decisions", clientAuthentication(guard, "drafts"), async (c) => {
+    const key = c.req.header("idempotency-key");
+    if (!key) return keyMissing(c);
     const { connection, rights } = c.get("ai");
     const input: unknown = await c.req.json().catch(() => null);
     const r = await aiDiscoverDecide(stores, {
@@ -55,7 +57,7 @@ export function clientDiscoverRoutes(
       rights,
       now: clock(),
       input,
-      key: c.req.header("idempotency-key") ?? crypto.randomUUID(),
+      key,
     });
     if (!r.ok) return c.json(errorBody(r.error), statusFor(r.error));
     return c.json(r.value, r.value.mode === "draft" && r.value.created ? 201 : 200);

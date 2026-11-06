@@ -22,14 +22,12 @@ type Req = {
   otherName: string | null;
   direction: string;
   status: string;
-  requestedAt: string;
 };
 const req = (extra: Partial<Req> = {}): Req => ({
   id: "r1",
   otherName: "Ben",
   direction: "received",
   status: "requested",
-  requestedAt: "2026-10-06T10:00:00.000Z",
   ...extra,
 });
 

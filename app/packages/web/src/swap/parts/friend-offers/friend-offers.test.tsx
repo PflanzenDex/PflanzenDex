@@ -9,7 +9,6 @@ const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
 const offer = (extra: Record<string, unknown> = {}) => ({
-  ownerId: "ben",
   ownerName: "Ben",
   offerId: "o1",
   specimenId: "s9",

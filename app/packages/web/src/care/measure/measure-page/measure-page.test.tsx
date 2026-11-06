@@ -27,7 +27,7 @@ function fakeServer(
     save?: () => Promise<Response>;
     signs?: string | null;
     withPhoto?: boolean;
-    photoSave?: () => Promise<Response>;
+    photoSave?: (key?: string) => Promise<Response>;
     existing?: unknown[];
   } = {},
 ) {
@@ -46,7 +46,9 @@ function fakeServer(
       if (init?.method === "POST" && String(url).includes("/measurements/photo")) {
         const h = init.headers as Record<string, string>;
         photoPosts.push({ url: String(url), type: h["Content-Type"], key: h["Idempotency-Key"] });
-        return opts.photoSave ? opts.photoSave() : response(201, { photo: "p.webp" });
+        return opts.photoSave
+          ? opts.photoSave(h["Idempotency-Key"])
+          : response(201, { photo: "p.webp" });
       }
       if (init?.method === "POST") {
         posts.push({
@@ -71,7 +73,7 @@ function fakeServer(
       });
     }),
   );
-  return { posts, photoPosts };
+  return { posts, photoPosts, loads: () => loadAttempts };
 }
 
 const show = (token: () => Promise<string | undefined> = async () => "tok", onBack = vi.fn()) =>
@@ -134,6 +136,22 @@ describe("US-WAC-01 Seite Messen", () => {
     ).toBeTruthy();
     expect(posts[0]?.body).toMatchObject({ value: 12.5, quality: "healthy" });
     expect(posts[0]?.key).toBeTruthy();
+  });
+
+  it("US-QS-03 a second try after a lost answer sends the same Idempotency-Key: one measurement", async () => {
+    const save = vi
+      .fn<() => Promise<Response>>()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockImplementation(() => response(201, measurement));
+    const { posts } = fakeServer({ save });
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    expect(posts).toHaveLength(2);
+    expect(posts[1]?.key).toBe(posts[0]?.key);
   });
 
   it('US-WAC-02 "Wie erkennen?" opens the etiolation signs of the species; etiolated/thin is sent', async () => {
@@ -427,6 +445,43 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     await openEntries();
     await screen.findAllByRole("heading", { level: 3 });
     expect(screen.getAllByLabelText(/Foto hinzufügen/)).toHaveLength(1);
+  });
+
+  it("US-QS-03 a lost answer to a photo, then the same file again: the keeper gets the normal success and no replace question", async () => {
+    setViewportWidth(1024);
+    // The server keeps one photo per measurement and answers a repeated key with the answer it stored (US-QS-03).
+    // Its first answer is lost after the photo is stored, so the client sees a network error.
+    const answered = new Set<string>();
+    let hasPhoto = false;
+    let answerLost = false;
+    const { photoPosts, loads } = fakeServer({
+      existing: [measurement],
+      photoSave: async (key) => {
+        if (key !== undefined && answered.has(key)) return response(201, { photo: "p.webp" });
+        if (hasPhoto) return exists();
+        hasPhoto = true;
+        if (key !== undefined) answered.add(key);
+        if (!answerLost) {
+          answerLost = true;
+          throw new TypeError("Failed to fetch");
+        }
+        return response(201, { photo: "p.webp" });
+      },
+    });
+    show();
+    await openEntries();
+    await pick(/Foto hinzufügen/);
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    const reloadsBefore = loads();
+    await pick(/Foto hinzufügen/);
+    await vi.waitFor(() => expect(photoPosts).toHaveLength(2));
+    // The answer is handled once it has opened the replace question or reloaded the list after the saved photo.
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("dialog") !== null || loads() > reloadsBefore).toBe(true),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(photoPosts[1]?.key).toBe(photoPosts[0]?.key);
   });
 });
 

@@ -3,6 +3,8 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys } from "../../exact-keys-test-helpers";
+import { EXCHANGE_OFFER } from "./exchange-shapes.test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -150,6 +152,44 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     expect(
       (await exchange(subA)).body.offers.map((x: { offerId: string }) => x.offerId),
     ).not.toContain(o.offerId);
+  });
+
+  it("US-QG-05 QG-D2 the exchange list carries the offer fields and the health reason and date, and no account id", async () => {
+    const id = await specimen(subA, "Q1");
+    await share(subA, id);
+    const planned = await call(subA, "POST", "/treatments", {
+      specimenIds: [id],
+      reason: "Wollläuse",
+      date: "2026-10-01",
+    });
+    expect(planned.status).toBeLessThan(300);
+    const treatmentId = planned.body.treatments[0].id as string;
+    expect(
+      (
+        await call(subA, "POST", `/treatments/${treatmentId}/complete`, {
+          timeZone: "Europe/Berlin",
+        })
+      ).status,
+    ).toBe(200);
+    const created = await call(subA, "POST", "/offers", {
+      specimenId: id,
+      type: "cutting",
+      mode: "swap",
+      wish: "Tausch gegen Sukkulenten",
+      note: "Gut bewurzelt",
+      confirmTreatment: true,
+    });
+    expect(created.status).toBe(201);
+    const body = (await exchange(subB)).body;
+    const mine = body.offers.find((x: { offerId: string }) => x.offerId === created.body.id);
+    // The treated offer is non-null here, so the nested health keys are checked too (see expectExactKeys).
+    expect(mine.health.lastTreated).not.toBeNull();
+    expect(mine.health.lastTreated).toEqual({
+      reason: "Wollläuse",
+      doneAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
+    expectExactKeys(mine.health.lastTreated, { reason: true, doneAt: true }, "health.lastTreated");
+    expectExactKeys(body, { offers: [EXCHANGE_OFFER] }, "GET /exchange/offers");
   });
 
   it("an offer is hidden when the specimen is not shared (P-05) and filters narrow the list", async () => {

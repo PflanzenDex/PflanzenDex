@@ -91,6 +91,9 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "swap.counter_not_shared": 409,
   "offer.not_active": 409,
   "discover.not_suggested": 409,
+  "discover.undo_not_last": 409,
+  "discover.undo_changed": 409,
+  "discover.not_a_decision": 409,
   "wish.name_taken": 409,
   "equipment.name_taken": 409,
   "equipment.not_found": 404,
@@ -147,3 +150,10 @@ export const errorBody = (f: AppError) => ({
     ...(f.data !== undefined ? { data: f.data } : {}),
   },
 });
+
+/**
+ * The version of the running API: `APP_VERSION`, the tag the deploy builds from (`deploy.sh`), the same variable the
+ * health endpoint reports. `unknown` when none is set (P-08). Error logs name it, so an error report says which build
+ * failed (US-DEV-06).
+ */
+export const runningVersion = (): string => process.env["APP_VERSION"] || "unknown";

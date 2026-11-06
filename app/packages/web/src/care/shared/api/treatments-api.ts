@@ -47,7 +47,7 @@ export interface TreatmentInput {
 }
 
 /**
- * Plans treatments (US-BEH-01). The repeat-guard key is created per call, so a double tap or a retry writes once.
+ * Plans treatments (US-BEH-01). The repeat-guard key stays with the write until it is answered (`createWrite`), so a double tap or a retry writes once.
  */
 export async function planTreatments(
   api: string,

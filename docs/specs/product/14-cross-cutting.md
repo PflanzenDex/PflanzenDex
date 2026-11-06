@@ -1,6 +1,6 @@
 # 14 – Epic QS: Cross-Cutting (Privacy, Security, Mobile, Quality)
 
-Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-11 (`00-Product-Overview.md`).
+Non-functional requirements for all epics. All ⬜. The yardstick is the product principles P-01 to P-12 (`00-Product-Overview.md`).
 
 ## User stories
 
@@ -33,7 +33,7 @@ Acceptance criteria:
 - Every writing operation is idempotent or prevents double execution (double click, repeat after abort).
 - Background jobs (reminders, catalog enrichment, photo processing) deliver the same result on repetition.
 
-State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** no job type yet (reminders, catalog enrichment, photo processing come with their stories) and the redelivery of buffered write actions.
+State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. A write whose answer was lost keeps its repeat-guard key until it is answered: a retry by the user and the redelivery of a buffered write send the same key, so the API writes once (`createWrite` in the web data layer, held in memory until the page closes). Every write route needs the `Idempotency-Key`: the engine checks it first, and `write-key-routes.test.ts` walks every non-GET route of the app without one, each answering `idempotency.key_missing`, apart from the named exceptions in that test. **Open:** keys and buffered writes that survive a reload of the page (US-QS-07).
 
 ### US-QS-04 · Deviations become visible · 🟨 (prototype ✅)
 
@@ -67,7 +67,7 @@ Acceptance criteria:
 
 State of implementation: the collector card (US-POK-01) and the suggestion card (US-ENT-01) link the Wikipedia article with "Quelle: Wikipedia (CC BY-SA)" or "Bild und Text: Wikipedia (CC BY-SA)"; when text or image are shown without a known article link, source and license are still named as text ("…, Link unbekannt", P-08); a card without Wikipedia content shows no attribution. User images (measurement photos, US-WAC-06) are served only to their owner and are not passed on (the photo switch of US-SOZ-04 does not act yet). **Open:** the label of partner links (FR-EQU-05; equipment does not exist yet) and the license of each image (a Wikimedia Commons image can carry a license other than CC BY-SA; the catalog does not store it yet).
 
-### US-QS-07 · Usable on mobile · ⬜ new
+### US-QS-07 · Usable on mobile · 🟨 new
 
 As a **plant keeper** I want to operate the app on the phone next to the plant.
 

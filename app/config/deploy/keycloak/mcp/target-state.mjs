@@ -46,7 +46,7 @@ export const CLIENT_AUDIENCE_KEY = "included.client.audience";
 
 export const resourceClientOf = (resourceUrl) => ({
   clientId: RESOURCE_CLIENT_ID,
-  name: "PflanzenDex MCP (resource)",
+  name: "PflanzenDéx MCP (resource)",
   enabled: true,
   publicClient: false,
   bearerOnly: false,

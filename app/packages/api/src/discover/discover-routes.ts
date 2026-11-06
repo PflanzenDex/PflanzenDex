@@ -1,6 +1,7 @@
 import {
   appError,
   discoverDecide,
+  discoverUndo,
   isTimeZone,
   NO_APP_RARITY,
   suggestions,
@@ -8,6 +9,7 @@ import {
   type ZoneStockSource,
 } from "@pflanzendex/core";
 import {
+  DecisionsPostgres,
   IdempotencyPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
@@ -37,6 +39,9 @@ const MAX_DECK = 1000;
  * `Idempotency-Key`) runs `discover.decide` and answers `{ decision, saved }`; Yes writes an open wish with
  * `source: discover`, No a discarded one, Later nothing. A species that is not suggested to the account is refused with
  * 409 `discover.not_suggested`. The decision is as private as the wishlist (P-04, FR-ENT-08).
+ * Undo (US-ENT-04): `POST /discover/decisions/undo` `{ species }` (with `Idempotency-Key`) runs `discover.undo` and
+ * answers `{ undone }`; it takes back the account's last Yes or No only (409 `discover.undo_not_last`, `undo_changed`,
+ * `not_a_decision`), and a species without such a decision answers `undone: false`.
  */
 export function discoverDependencies(pool: Pool, stock: ZoneStockSource = zoneStockFor(pool)) {
   const specimens = new SpecimenPostgres(pool);
@@ -58,7 +63,11 @@ export function discoverDependencies(pool: Pool, stock: ZoneStockSource = zoneSt
       SuggestionsDependencies["attributes"]
     >,
   };
-  return { deps, decide: discoverDecide({ ...deps, clock: () => new Date() }) };
+  return {
+    deps,
+    decide: discoverDecide({ ...deps, clock: () => new Date() }),
+    undo: discoverUndo({ decisions: new DecisionsPostgres(pool) }),
+  };
 }
 
 export function discoverRoutes(
@@ -66,7 +75,7 @@ export function discoverRoutes(
   auth: MiddlewareHandler,
   stock: ZoneStockSource = zoneStockFor(pool),
 ): Hono<AuthEnv> {
-  const { deps, decide } = discoverDependencies(pool, stock);
+  const { deps, decide, undo } = discoverDependencies(pool, stock);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   for (const path of DISCOVER_PATHS) routes.use(`${path}/*`, auth);
@@ -89,6 +98,9 @@ export function discoverRoutes(
   });
   routes.post("/discover/decisions", async (c) =>
     write(c, writes, decide, { input: await body(c) }),
+  );
+  routes.post("/discover/decisions/undo", async (c) =>
+    write(c, writes, undo, { input: await body(c) }),
   );
   return routes;
 }

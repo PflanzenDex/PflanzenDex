@@ -65,15 +65,51 @@ export async function call<T, D = unknown>(
   }
 }
 
+/** Answers that do not say whether the server applied the write: its key stays for the repeat (US-QS-03). */
+const UNANSWERED = new Set(["network.not_reachable", "idempotency.in_progress"]);
+
 /**
- * Writes carry a fresh repeat-guard key per call (`Idempotency-Key`). A write that succeeded tells quiet observers
- * (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
+ * The repeat-guard key (`Idempotency-Key`) of each write whose answer is still open, by its logical write (method, URL
+ * and body; a photo upload uses its URL and the hash of the file), oldest first. A repeat of that write carries the same key, so the server writes it once (US-QS-03). A
+ * refusal frees its own key. A success frees its own key and every older one: the user moved on, and replaying an
+ * older write would swallow the newer one (archive, restore, archive). The token is not part of the key: the server
+ * scopes keys per account.
+ */
+const openKeys = new Map<string, string>();
+
+/** A success: frees the write's own key and every older open key; newer open keys stay (see `openKeys`). */
+function settle(logical: string): void {
+  if (!openKeys.has(logical)) return;
+  for (const k of openKeys.keys()) {
+    openKeys.delete(k);
+    if (k === logical) return;
+  }
+}
+
+/**
+ * Sends one logical write under its repeat-guard key (see `openKeys`). `logical` names the write (its identity, e.g. the
+ * method, URL and body); `send` sends it with the key it is given. A repeat of an open write gets the same key, so the
+ * server answers it with the stored answer (US-QS-03).
+ */
+export async function withRepeatKey<T, D = unknown>(
+  logical: string,
+  send: (key: string) => Promise<Response<T, D>>,
+): Promise<Response<T, D>> {
+  const key = openKeys.get(logical) ?? crypto.randomUUID();
+  openKeys.set(logical, key);
+  const r = await send(key);
+  if (r.ok) settle(logical);
+  else if (!UNANSWERED.has(r.error.code)) openKeys.delete(logical);
+  return r;
+}
+
+/**
+ * Writes carry the repeat-guard key of their logical write (see `withRepeatKey`). A write that succeeded tells quiet
+ * observers (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
  */
 export const createWrite =
   <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
   (method, path, body) =>
-    call<unknown, D>(fetchFn, `${api}${path}`, token, {
-      method: method,
-      body,
-      key: crypto.randomUUID(),
-    });
+    withRepeatKey<unknown, D>(JSON.stringify([api, method, path, body ?? null]), (key) =>
+      call<unknown, D>(fetchFn, `${api}${path}`, token, { method, body, key }),
+    );

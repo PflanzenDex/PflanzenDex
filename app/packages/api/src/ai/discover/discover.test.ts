@@ -172,6 +172,24 @@ describe("US-ENT-08 Discover through the AI client", () => {
     expect(await wishes(subB)).not.toContain(species[0]);
   });
 
+  it("US-QS-03 a decision without the key answers 400 idempotency.key_missing and writes nothing, even with 'write'", async () => {
+    await allow(subA, "pflanzen:write", "write");
+    const before = await wishes(subA);
+    const res = await app.request("/mcp/discover/decisions", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${ai(subA, "pflanzen:write")}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ species: species[0], decision: "yes", timeZone: "Europe/Berlin" }),
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      "idempotency.key_missing",
+    );
+    expect(await wishes(subA)).toBe(before);
+  });
+
   it("US-ENT-08 US-KI-10 the calls show in the log", async () => {
     const ops = (await call(web(subA), "GET", "/ai/log")).body["log"].map(
       (e: { operation: string }) => e.operation,

@@ -516,10 +516,6 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/discover/deck-view/deck-view.tsx",
-      "enums": 1
-    },
-    {
       "file": "packages/web/src/equipment/equipment-form/fields/fields.tsx",
       "enums": 1
     },

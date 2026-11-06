@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Motif C "rosette": a succulent seen from above, six outer and six inner leaves. Glyph only, the colours come from the tokens. -->
+  <path transform="translate(256 256) rotate(0) translate(0 -36) scale(0.9)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(60) translate(0 -36) scale(0.9)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(120) translate(0 -36) scale(0.9)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(180) translate(0 -36) scale(0.9)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(240) translate(0 -36) scale(0.9)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(300) translate(0 -36) scale(0.9)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(30) translate(0 -20) scale(0.6)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(90) translate(0 -20) scale(0.6)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(150) translate(0 -20) scale(0.6)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(210) translate(0 -20) scale(0.6)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(270) translate(0 -20) scale(0.6)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(256 256) rotate(330) translate(0 -20) scale(0.6)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+</svg>

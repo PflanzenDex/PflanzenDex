@@ -12,7 +12,7 @@ import {
 import { IdempotencyPostgres, SpeciesPostgres, SwapsPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../../kernel";
+import { body, withoutKey, write, type AuthEnv } from "../../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const SWAP_PATHS = ["/swaps"] as const;
@@ -49,7 +49,13 @@ export function swapRoutes(
     clock,
   });
   const routes = new Hono<AuthEnv>();
-  routes.get("/swaps", async (c) => c.json(await swapOverview({ swaps }, c.get("account").id)));
+  routes.get("/swaps", async (c) => {
+    const overview = await swapOverview({ swaps }, c.get("account").id);
+    return c.json({
+      received: overview.received.map(publicSide),
+      sent: overview.sent.map(publicSide),
+    });
+  });
   routes.get("/swaps/history", async (c) =>
     c.json(await swapHistory({ swaps }, c.get("account").id)),
   );
@@ -61,6 +67,12 @@ export function swapRoutes(
   );
   return routes;
 }
+
+/**
+ * One side of a swap as the screen gets it: the account id of the other side stays on the server (P-05, US-QG-05); the
+ * friend is named by the display name stored at the request.
+ */
+const publicSide = <T extends { otherId: string | null }>(side: T) => withoutKey(side, "otherId");
 
 /** The hook after ending a friendship (ADR 0012): cancels the open swaps that lost their friendship. */
 export const cancelOrphanedSwaps = (pool: Pool) => {

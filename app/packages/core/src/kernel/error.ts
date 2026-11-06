@@ -87,8 +87,7 @@ export const ERROR_TEXTS = {
     "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
   "ai.reference_ambiguous":
     "Der Name passt auf mehrere Einträge. Es wurde nichts getan; wähle einen der genannten Einträge.",
-  "ai.not_released":
-    "Das gibt die App an KI-Clients nicht heraus: Daten von Freunden, Freigaben, Angebote, Tausch und Empfehlungen bleiben in der App.",
+  "ai.not_released": "Freundesdaten, Freigaben, Tausch und Empfehlungen bleiben in der App.",
   "ai.no_client":
     "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
@@ -123,6 +122,12 @@ export const ERROR_TEXTS = {
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
+  "discover.undo_not_last":
+    "Nur die letzte Ja- oder Nein-Entscheidung lässt sich zurücknehmen. Seither hast du eine andere Karte entschieden; diese Art bleibt, wie sie ist.",
+  "discover.undo_changed":
+    "Der Wunsch wurde seit der Entscheidung geändert, zum Beispiel gekauft oder verworfen. Deshalb lässt er sich nicht mehr zurücknehmen; ändere ihn in der Wunschliste.",
+  "discover.not_a_decision":
+    "Diese Art hast du nicht auf einer Entdecken-Karte entschieden. Es wurde nichts zurückgenommen; ändere sie in der Wunschliste.",
   ...ONBOARDING_ERROR_TEXTS,
   ...WUN_ERROR_TEXTS,
   "pokedex.not_caught":

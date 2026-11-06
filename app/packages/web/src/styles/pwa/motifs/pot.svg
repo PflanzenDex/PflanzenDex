@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Motif B "pot": a plant in its pot, three leaves over a rim. Glyph only, the colours come from the tokens. -->
+  <rect x="124" y="268" width="264" height="48" rx="14"/>
+  <path d="M146 314H366L346 418Q343 430 331 430H181Q169 430 166 418Z"/>
+  <path transform="translate(256 296) scale(1.13)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(250 300) rotate(-42) scale(0.95)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+  <path transform="translate(262 300) rotate(42) scale(0.95)" d="M0 0C46 -40 46 -110 0 -150C-46 -110 -46 -40 0 0Z"/>
+</svg>

@@ -73,19 +73,20 @@ const BEGIN_ERROR: Record<"running" | "conflict", AppError> = {
 };
 
 /**
- * The only way for writes (P-03, AB-3). Order: validate input, check access,
- * reserve idempotency key, run. If an earlier step fails, nothing is written.
+ * The only way for writes (P-03, AB-3). Order: check that the idempotency key is present (US-QS-03: every write
+ * carries one, whatever else is wrong with the call), validate input, check access, reserve the key, run. Reserving
+ * the key comes after validation, so invalid input does not reserve it. If an earlier step fails, nothing is written.
  */
 export async function execute<E, A>(
   op: Operation<E, A>,
   deps: Dependencies,
   call: Call,
 ): Promise<Result<A>> {
+  if (!call.idempotencyKey) return failed(appError("idempotency.key_missing"));
   const input = op.schema(call.input);
   if (!input.ok) return input;
   const authorized = await access(op, call.context, input.value);
   if (!authorized.ok) return authorized;
-  if (!call.idempotencyKey) return failed(appError("idempotency.key_missing"));
   const key: IdempotencyKey = {
     userId: authorized.value.userId,
     operation: op.name,

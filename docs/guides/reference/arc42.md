@@ -23,7 +23,7 @@ The release cut R0 (foundation) to R6 (sensors) is in `16-releases-and-decisions
 
 ### 1.2 Quality goals
 
-The top quality goals, derived from the principles P-01 to P-11 (`00-product-overview.md`) and the non-functional requirements NFR-01 to NFR-18 (`14-cross-cutting.md`):
+The top quality goals, derived from the principles P-01 to P-12 (`00-product-overview.md`) and the non-functional requirements NFR-01 to NFR-18 (`14-cross-cutting.md`):
 
 | Priority | Quality goal                     | Motivation                                                                                                |
 | -------- | -------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -306,7 +306,7 @@ Release and rollback: `docs/guides/operations/release-and-rollback.md`; staging 
 | Feature switches      | Social, AI and recommendations can be switched off per installation                                                                                                       | US-DEV-06                                                   |
 | UI and design system  | Component library with Storybook, visual regression of stories, bundle budget, German UI texts                                                                            | ADR 0007, ADR 0010, ADR 0011, `design-system.md`            |
 | Testing               | Tests come from Given/When/Then acceptance criteria and carry the story ID; e2e with Playwright (mobile and desktop); manual test protocols where automation cannot reach | P-06, skills `spec-to-tests`, `story-test-protocol`         |
-| Quality gates         | `make ci`: lint, typecheck, architecture boundaries, file layout, format, tests, build; same checks in git hooks and CI                                                   | `18-architecture-and-quality-gates.md`, principles register |
+| Quality gates         | `make ci`: lint, typecheck, file layout, architecture boundaries, format, tests, build; same checks in git hooks and CI                                                   | `18-architecture-and-quality-gates.md`, principles register |
 
 ## 9. Architecture decisions
 

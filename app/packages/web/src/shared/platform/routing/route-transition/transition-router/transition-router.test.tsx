@@ -35,7 +35,11 @@ describe("US-QS-14 · TransitionRouter keeps focus and announcements", () => {
   it("US-QS-14 inside a view transition the heading still takes the focus and the title is announced", async () => {
     const started = vi.fn((update: () => Promise<void>) => {
       void update();
-      return { finished: Promise.resolve() };
+      return {
+        ready: Promise.resolve(),
+        finished: Promise.resolve(),
+        updateCallbackDone: Promise.resolve(),
+      };
     });
     doc.startViewTransition = started;
     window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;

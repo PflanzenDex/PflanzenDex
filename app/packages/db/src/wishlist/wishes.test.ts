@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createFixtureSpecimen } from "../fixtures.ts";
 import { ZonePostgres } from "../light/index.ts";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
-import { hasOpenOrBoughtWish, WishesPostgres } from "./index.ts";
+import { DecisionsPostgres, hasOpenOrBoughtWish, WishesPostgres } from "./index.ts";
 
 // US-WUN-01, DM-WUN-01, P-04: wishes per account (real PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -505,5 +505,100 @@ describe("US-ENT-04 decision columns", () => {
       c.query("select source, decided_at from wish where name = $1", ["Manuell rara"]),
     );
     expect(r.rows).toEqual([{ source: "manual", decided_at: null }]);
+  });
+});
+
+describe("US-ENT-04 the last Discover decision in the database", () => {
+  const decisions = () => new DecisionsPostgres(pool);
+  const decision = (name: string, lastDecision: "yes" | "no", status: "wishlist" | "discarded") =>
+    wishes.create(
+      anna,
+      values({
+        name,
+        source: "discover",
+        decidedAt: "2026-11-06",
+        status,
+        lastDecision,
+      }),
+    );
+  const idOf = async (name: string) => {
+    const r = await withAccount(pool, anna, (c) =>
+      c.query<{ id: string }>("select id from wish where name = $1", [name]),
+    );
+    return r.rows[0]?.id ?? "";
+  };
+
+  it("US-ENT-04 a Yes or No marks its wish as the account's last decision, and the next one moves the mark", async () => {
+    await decision("Undo Alpha", "yes", "wishlist");
+    await decision("Undo Beta", "no", "discarded");
+    expect(await decisions().decisionOf(anna, keyOf("Undo Alpha"))).toMatchObject({
+      source: "discover",
+      decision: null,
+    });
+    expect(await decisions().decisionOf(anna, keyOf("Undo Beta"))).toMatchObject({
+      source: "discover",
+      decision: "no",
+    });
+  });
+
+  it("US-ENT-04 two decisions at once leave exactly one mark for the account (one per account)", async () => {
+    await Promise.all([
+      decision("Undo Gamma", "yes", "wishlist"),
+      decision("Undo Delta", "yes", "wishlist"),
+    ]);
+    const marks = await withAccount(pool, anna, (c) =>
+      c.query("select name from wish where last_decision is not null and name like 'Undo %'"),
+    );
+    expect(marks.rows).toHaveLength(1);
+  });
+
+  it("US-ENT-04 a manual wish has no decision and another account sees no decision of mine (P-04)", async () => {
+    await wishes.create(anna, values({ name: "Undo Manuell" }));
+    expect(await decisions().decisionOf(anna, keyOf("Undo Manuell"))).toMatchObject({
+      source: "manual",
+      decision: null,
+    });
+    expect(await decisions().decisionOf(ben, keyOf("Undo Beta"))).toBeNull();
+  });
+
+  it("US-ENT-04 takeBackDecision removes only the marked wish, and only while its status is the one the decision gave", async () => {
+    const w = await decision("Undo Epsilon", "yes", "wishlist");
+    if (typeof w === "string") throw new Error(w);
+    expect(
+      await decisions().takeBackDecision(anna, { wishId: w.id, decision: "yes", status: "bought" }),
+    ).toBe("changed");
+    expect(
+      await decisions().takeBackDecision(ben, {
+        wishId: w.id,
+        decision: "yes",
+        status: "wishlist",
+      }),
+    ).toBe("not_found");
+    expect(
+      await decisions().takeBackDecision(anna, {
+        wishId: w.id,
+        decision: "yes",
+        status: "wishlist",
+      }),
+    ).toMatchObject({
+      id: w.id,
+      name: "Undo Epsilon",
+    });
+    expect(await decisions().decisionOf(anna, keyOf("Undo Epsilon"))).toBeNull();
+    expect(await decisions().decisionOf(anna, keyOf("Undo Manuell"))).not.toBeNull();
+  });
+
+  it("US-ENT-04 an earlier decision is not_last and stays", async () => {
+    const earlier = await decision("Undo Zeta", "no", "discarded");
+    await decision("Undo Eta", "yes", "wishlist");
+    if (typeof earlier === "string") throw new Error(earlier);
+    expect(
+      await decisions().takeBackDecision(anna, {
+        wishId: earlier.id,
+        decision: "no",
+        status: "discarded",
+      }),
+    ).toBe("not_last");
+    expect(await idOf("Undo Zeta")).toBe(earlier.id);
   });
 });

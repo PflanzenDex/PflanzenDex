@@ -45,6 +45,20 @@ Acceptance criteria:
 - The targets run on Linux, macOS and under WSL; path differences (Python or Node call, virtualenv directories) are resolved **in one place**, not three times (finding from Tombola).
 - The Makefile contains no domain logic, only calls. Everything non-trivial lives in scripts (`scripts/`) with tests.
 
+Scope of `make ci` against CI (issue 1397): `make ci` runs the three parts that every pull request runs, in CI order: `make ci-gates` (job `app-gates`), `make ci-tests-base`, `make ci-tests-web` and `make ci-coverage` (jobs `app-tests`, `app-tests-web`, `app-coverage`) and `make ci-ui` (job `app-ui`). The other CI jobs stay CI-only, because each needs something a quick local run should not demand. Each still has its own `make` target, so it can be run locally on demand with the same command CI uses:
+
+| CI job                        | Local target                                    | Why it is not part of `make ci`                                                                                                         |
+| ----------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ds-snapshots`                | `make ds-snapshots-check`                       | Runs in the pinned Playwright container so the pictures match pixel for pixel; it needs Docker and takes minutes.                       |
+| `lighthouse`                  | `make lighthouse`                               | Three Lighthouse runs on a production build; a laptop's numbers differ from CI's, so its limits are judged in CI.                       |
+| `one-screen`, `a11y-routes`   | `make one-screen`, `make a11y-routes`           | Need the real stack with the sign-in service (`auth-up`), a migrated database, the demo seed and browsers.                              |
+| `e2e`                         | `make e2e`                                      | Release pull requests into `main` and manual runs only (E-15); it needs the same stack.                                                 |
+| `audit`                       | `make audit`                                    | Release pull requests into `main` only; it asks the npm registry, so its answer changes without a code change.                          |
+| `metadata`                    | `make commitlint MSG=…`, `make changelog-check` | Checks the pull request title and description, which exist only on GitHub; the `commit-msg` hook runs commitlint on every local commit. |
+| `dependency-review`, `CodeQL` | none                                            | GitHub services without a local equivalent.                                                                                             |
+
+So the criterion "`make ci` has the same scope as the CI jobs" holds for the jobs every pull request into `dev` must pass to merge, except the ones in this table; CI repeats every check anyway (D-02).
+
 ### US-DEV-02 · Hooks catch early without annoying · 🟨
 
 As a **developer** I want checks exactly when they are cheapest.
@@ -88,7 +102,7 @@ Acceptance criteria: every routine stands in the table with trigger, owner, outp
 
 - Recurring agent tasks (e.g. weekly gate health report) may run as a **scheduled agent**; they only write reports and open proposals, they change no gates.
 
-### US-DEV-04 · Skills and playbooks for recurring tasks · 🟨
+### US-DEV-04 · Skills and playbooks for recurring tasks · ✅
 
 As a **developer (and AI)** I want a proven guide for recurring tasks instead of improvising every time.
 
@@ -99,23 +113,19 @@ Acceptance criteria:
 - A check script (`make skills-check`) ensures: frontmatter complete, referenced paths and commands exist, links not broken, no orphaned skills.
 - Initial set (derived from the epics, not copied from Tombola):
 
-  | Skill                                                              | Purpose                                                                                                                              |
-  | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-  | `spec-to-tests`                                                    | create tests with story ID from the acceptance criteria of a story (P-06)                                                            |
-  | `add-core-operation`                                               | new validating operation in `core` with test, error code, AI release (KI-R1)                                                         |
-  | `add-epic-feature`                                                 | story → test → code → gates → update spec status                                                                                     |
-  | `tenant-isolation-test`                                            | tenant test for a new operation (QG-D1)                                                                                              |
-  | `privacy-whitelist`                                                | field whitelist and contract test for social/partner outputs (QG-D2)                                                                 |
-  | `db-migration`                                                     | forward-compatible migration with test and fallback plan (US-DEV-07)                                                                 |
-  | `error-code`                                                       | new error code with translation (FR-QG-11)                                                                                           |
-  | `date-and-timezone`                                                | local date and time zone (NFR-08, cause of B-01)                                                                                     |
-  | `photo-pipeline`                                                   | photo processing and EXIF test (US-WAC-06)                                                                                           |
-  | `catalog-batch`                                                    | create a catalog batch (20–40 species), run the build, check warnings (US-POK-02)                                                    |
-  | `ki-tool-contract`                                                 | release or change an operation for the AI interface: description, schema, error codes, contract test, whitelist (FR-KI-03, FR-KI-10) |
-  | `release-checklist`                                                | prepare and check a release (US-DEV-06)                                                                                              |
-  | `story-test-protocol`                                              | manual test protocol for flows that tests do not cover (pattern `ticket-test-protocol` from Tombola)                                 |
-  | `recap-and-learnings`                                              | after a task, extract lessons and transfer them to the principles register or skills                                                 |
-  | `discovery-review`, `compliance-review`, `review-failure-analysis` | review cycle (US-DEV-05)                                                                                                             |
+  | Skill                   | Purpose                                                                                                                              |
+  | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+  | `spec-to-tests`         | create tests with story ID from the acceptance criteria of a story (P-06)                                                            |
+  | `add-core-operation`    | new validating operation in `core` with test, error code, AI release (KI-R1)                                                         |
+  | `tenant-isolation-test` | tenant test for a new table with user data (QG-D1)                                                                                   |
+  | `privacy-whitelist`     | field whitelist and contract test for social/partner outputs (QG-D2)                                                                 |
+  | `db-migration`          | forward-compatible migration with test and fallback plan (US-DEV-07)                                                                 |
+  | `error-code`            | new error code with translation (FR-QG-11)                                                                                           |
+  | `date-and-timezone`     | local date and time zone (NFR-08, cause of B-01)                                                                                     |
+  | `ki-tool-contract`      | release or change an operation for the AI interface: description, schema, error codes, contract test, whitelist (FR-KI-03, FR-KI-10) |
+  | `release-checklist`     | prepare and check a release (US-DEV-06)                                                                                              |
+  | `story-test-protocol`   | manual test protocol for flows that tests do not cover (pattern `ticket-test-protocol` from Tombola)                                 |
+  | `recap-and-learnings`   | after a task, extract lessons and transfer them to the principles register or skills                                                 |
 
 - Promotion: if a skill step becomes a gate (e.g. "check that field X is not output"), the step in the skill is replaced by a reference to the gate (D-03).
 
@@ -130,7 +140,7 @@ Acceptance criteria:
 - **Flow:** read story → derive tests from the criteria (skill `spec-to-tests`) → implement → `make ci` green → PR with description (story IDs, deviations from the spec) → review → merge.
 - **Definition of Ready:** a story may be started when criteria are formulated verifiably (Given/When/Then), dependencies in `16-…` are clarified and open decisions (E-nn) are decided.
 - **Definition of Done:** FR-QG-10.
-- **Review (two-stage, optional from R1):** first **blind** by an agent that does not know the principles register, then failure analysis (`review-failure-analysis`) that records "why better, how measurable, how checkable" for every finding and presents it to the maintainer **for confirmation**. Compliance review against known principles only on request or before releases (Tombola pattern, E-18).
+- **Review (two-stage, optional from R1):** first **blind** by an agent that does not know the principles register, then a failure analysis that records "why better, how measurable, how checkable" for every finding and presents it to the maintainer **for confirmation**. Compliance review against known principles only on request or before releases (Tombola pattern, E-18).
 - **Decisions as ADR:** when an E-nn is decided, an entry arises under `docs/adr/NNNN-title.md` (context, decision, consequences); the row in `16-…` refers to it.
 - **Pitfalls register:** recurring errors (time zones, error texts, test synchronization) stand as short entries under `docs/guides/pitfalls/` and are added to when something is found (pattern `common-pitfalls`). Entries that can be checked become gates.
 - **Documentation process:** a code change without a matching spec or docs change stands out in review; docs commits carry `docs:`; docs are gated with markdown lint and link checking (QG-U2).
@@ -145,15 +155,15 @@ Acceptance criteria:
 - **Trigger and chain:** a release is the merge from `dev` to `main` via pull request with the full suite. The release workflow runs on `main` **only for commits with a green `ci-status`** (pattern: `workflow_run` on "CI Pipeline" with a status check), only then the deploy. A red CI aborts both without creating a version. After the release `main` is merged back into `dev`, so that changelog and version commits do not let the branches diverge.
 - **Result of a release:** git tag, release notes from the commits as a GitHub release (instead of `CHANGELOG.md` in the repo, ADR [0002](../../adr/0002-release-from-tags.md)), container image, database migrations (US-DEV-07), catalog/tree state (versioned, separate from the code, US-POK-03).
 - **Version visible:** the version is in the app (footer/about page), in error reports and in the health endpoint. One source (tag), no second maintenance (pattern `sync_version.py`, but without writing into versioned files).
-- **User-facing changelog:** for `feat:` and `fix:` QG-U3 demands a short German entry ("New in this version") that the app displays. For internal changes `[skip-changelog]` suffices.
+- **User-facing changelog:** for `feat:` and `fix:` QG-U3 demands a short German entry ("New in this version") that the app displays. For internal changes `[skip-changelog]` suffices. State of implementation (#1403): the lines show on the page "Neu in PflanzenDéx" in "Konto", and once on "Heute" a hint names the lines this device has not seen yet.
 - **Cut:** release contents follow R0 to R6 (`16-…`). A release is approved only when the core flows of its cut are green (FR-QG-08) and, for social releases, QG-D1/QG-D2 stand.
-- **Feature flags:** social functions (R2, R3), AI (R4) and recommendations (R5) can be switched off per account or globally. This allows shipping code early and opening the function first for the three start users. A function the operator switched off is never announced as "coming soon"; staged introduction by the keeper is a different thing (epic ONB, FR-ONB-03).
+- **Feature flags:** social functions (R2, R3), AI (R4) and recommendations (R5) can be switched off per account or globally. This allows shipping code early and opening the function first for the three start users. A function the operator switched off is never announced as "coming soon"; staged introduction by the keeper is a different thing (epic ONB, FR-ONB-03). The keeper's own switches (US-ONB-09, P-12) are a second, separate level: they hide a feature for one keeper only and never change the operator's switches.
   - **Global switch** (assumption, decided by the PO): the environment variable `FEATURES`, a list of `social`, `ai`, `recommendations` (e.g. `social,ai`). In production nothing set means all off; in development and tests nothing set means all on. An unknown name stops the start.
   - **Per account** (assumption, decided by the PO): the operator opens a function for single accounts in the database (table `account_feature`, default off, no row means off). A function is on for an account when the global switch is on **or** the account switch is on, so the three start users are opened first without the global switch. Only the operator sets it (database console, like the operator role, TE-08); there is no UI for it.
   - **Off means invisible** (assumption, decided by the PO): the API answers 404 (not 403, no hint of existence), navigation and sections do not appear, background jobs and reminders of the function do not run, the data stays unchanged (P-10), switching on restores everything.
   - **One place:** the evaluation lives in one place (`featureEnabled` in the kernel, `featureGate` for routes); the web receives the effective state with `GET /account` (`features`). `recommendations` is only a placeholder switch until EQU-10/11 (stage 2).
   - Groups: `social` = friends, feed, sharing, offers and swaps, exchange, shared equipment; `ai` = `/mcp/*`, `/ai/*`, the AI clients section; `recommendations` = nothing yet.
-- **Deploy:** deliberate, manual deploy (E-14; production only from `main` with a released, non-snapshot version, the test environment from any branch), then an automatic **smoke test** against the health endpoint and a core flow (sign in, Today list); if it fails, **automatic fallback** to the previous version.
+- **Deploy:** deliberate, manual deploy (E-14; production only from `main` with a released, non-snapshot version, the test environment from any branch), then an automatic **smoke test** against the health endpoint and a core flow (sign in, Today list); if it fails, **automatic fallback** to the previous version. State of implementation (#1404): the smoke test checks the health endpoint, the version and the web root, and it signs in as a tester and opens the Today list when the tester's credentials are configured on the host (without them it says so in its output).
 - **Fallback and hotfix:** the previous container stays available; a hotfix is a branch from `main`, via PR with the full suite to `main`, only a small cut, not past the gates; afterwards back-merge into `dev`.
 - **Release checklist** (skill `release-checklist`): CI green, migrations checked and backup fresh, changelog complete, feature flags set, privacy gates green, fallback plan known, operator informed.
 - `make release-dry-run` shows version and notes without publishing.

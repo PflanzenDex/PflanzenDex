@@ -561,3 +561,58 @@ describe("US-KI-08 tasks from the app to the AI client", () => {
     expect(ops).toEqual(expect.arrayContaining(["list_tasks", "claim_task", "decline_task"]));
   });
 });
+
+describe("US-QS-03 the AI client's write routes refuse a call without the key", () => {
+  // Its own keeper, connected before the calls, so the guard's right is the default "create drafts".
+  const subD = `ki-${randomUUID()}`;
+  const token = ai(subD, "pflanzen:draft");
+  // A call without `Idempotency-Key`: the guard runs first, then the route answers before it reads anything.
+  const bare = async (path: string) => {
+    const res = await app.request(path, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: "{}",
+    });
+    return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+  const taskStatus = async (id: string) =>
+    (await call(web(subD), "GET", "/ai/tasks")).body["tasks"].find(
+      (t: { id: string }) => t.id === id,
+    )?.status;
+
+  beforeAll(async () => {
+    await call(web(subD), "GET", "/account");
+    await call(token, "GET", "/mcp/session");
+  });
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subD]);
+  });
+
+  it("US-QS-03 a draft without the key answers 400 idempotency.key_missing and stores no draft", async () => {
+    const before = (await call(web(subD), "GET", "/ai/drafts")).body["drafts"].length;
+    const res = await app.request("/mcp/drafts", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ type: "wish", source: "s", content: { name: "Keyless" } }),
+    });
+    expect([res.status, ((await res.json()) as { error: { code: string } }).error.code]).toEqual([
+      400,
+      "idempotency.key_missing",
+    ]);
+    expect((await call(web(subD), "GET", "/ai/drafts")).body["drafts"]).toHaveLength(before);
+  });
+
+  it("US-QS-03 a claim and a decline without the key answer 400 and leave the tasks open", async () => {
+    const claimed = (
+      await call(web(subD), "POST", "/ai/tasks", { type: "species_profile", reference: "Aloe" })
+    ).body["task"].id as string;
+    const declined = (
+      await call(web(subD), "POST", "/ai/tasks", { type: "species_profile", reference: "Gasteria" })
+    ).body["task"].id as string;
+    expect((await bare(`/mcp/tasks/${claimed}/claim`)).body["error"].code).toBe(
+      "idempotency.key_missing",
+    );
+    expect((await bare(`/mcp/tasks/${declined}/decline`)).status).toBe(400);
+    expect([await taskStatus(claimed), await taskStatus(declined)]).toEqual(["open", "open"]);
+  });
+});

@@ -1,6 +1,16 @@
 // Tools over the connection, the daily status, the tasks and the drafts of the AI interface (US-KI-02, -07, -08, -09).
 import { DRAFT_CONTENT_SCHEMA } from "../draft-content";
-import { ID, object, query, seg, str, TIME_ZONE, type McpTool } from "../schema";
+import {
+  ID,
+  IDEMPOTENCY,
+  keyOf,
+  object,
+  query,
+  seg,
+  str,
+  TIME_ZONE,
+  type McpTool,
+} from "../schema";
 
 export const ACCOUNT_TOOLS: readonly McpTool[] = [
   {
@@ -40,18 +50,26 @@ export const ACCOUNT_TOOLS: readonly McpTool[] = [
     title: "Take over a task",
     description: "Marks an open task as in progress by you before you work on it.",
     operation: "claim_task",
-    inputSchema: object({ taskId: ID("task") }, ["taskId"]),
+    inputSchema: object({ taskId: ID("task"), idempotencyKey: IDEMPOTENCY }, ["taskId"]),
     readOnly: false,
-    request: (a) => ({ method: "POST", path: `/mcp/tasks/${seg(a["taskId"])}/claim` }),
+    request: (a) => ({
+      method: "POST",
+      path: `/mcp/tasks/${seg(a["taskId"])}/claim`,
+      ...keyOf(a),
+    }),
   },
   {
     name: "decline_task",
     title: "Decline a task",
     description: "Declines a task you cannot do; the keeper sees it as declined.",
     operation: "decline_task",
-    inputSchema: object({ taskId: ID("task") }, ["taskId"]),
+    inputSchema: object({ taskId: ID("task"), idempotencyKey: IDEMPOTENCY }, ["taskId"]),
     readOnly: false,
-    request: (a) => ({ method: "POST", path: `/mcp/tasks/${seg(a["taskId"])}/decline` }),
+    request: (a) => ({
+      method: "POST",
+      path: `/mcp/tasks/${seg(a["taskId"])}/decline`,
+      ...keyOf(a),
+    }),
   },
   {
     name: "list_draft_types",
@@ -92,14 +110,16 @@ export const ACCOUNT_TOOLS: readonly McpTool[] = [
           format: "uuid",
         },
         content: DRAFT_CONTENT_SCHEMA,
+        idempotencyKey: IDEMPOTENCY,
       },
       ["type", "source", "content"],
     ),
     readOnly: false,
-    request: (a) => ({
+    request: ({ idempotencyKey, ...a }) => ({
       method: "POST",
       path: "/mcp/drafts",
       body: { reference: null, taskId: null, ...a },
+      ...keyOf({ idempotencyKey }),
     }),
   },
 ];

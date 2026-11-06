@@ -192,4 +192,22 @@ describe("FR-KI-12 FR-KI-03 the tools", () => {
       content: {},
     });
   });
+
+  it("US-QS-03 the write tools accept the key and forward it to their route; the draft body carries no key", () => {
+    const draft = tool("propose_draft");
+    const args = { type: "wish", source: "s", content: {}, idempotencyKey: "k" };
+    expect(checkArguments(draft, args)).toEqual([]);
+    const sent = draft.request(args);
+    expect(sent).toMatchObject({ method: "POST", path: "/mcp/drafts", idempotencyKey: "k" });
+    expect(sent.body).not.toHaveProperty("idempotencyKey");
+    expect(tool("claim_task").request({ taskId: "t", idempotencyKey: "k" })).toMatchObject({
+      path: "/mcp/tasks/t/claim",
+      idempotencyKey: "k",
+    });
+    expect(tool("decline_task").request({ taskId: "t", idempotencyKey: "k" })).toMatchObject({
+      path: "/mcp/tasks/t/decline",
+      idempotencyKey: "k",
+    });
+    expect(tool("claim_task").request({ taskId: "t" })).not.toHaveProperty("idempotencyKey");
+  });
 });

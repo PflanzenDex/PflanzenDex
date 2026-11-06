@@ -11,7 +11,7 @@ import { FriendsPostgres, IdempotencyPostgres, SharingPostgres } from "@pflanzen
 import type { Context } from "hono";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
+import { body, errorBody, statusFor, withoutKey, write, type AuthEnv } from "../../kernel";
 import { sharingPorts } from "./wiring";
 
 /** Paths the sign-in guard (bearer token) must cover. */
@@ -55,7 +55,9 @@ export function friendSharedRoute(pool: Pool) {
       const error = appError("friend.not_found");
       return c.json(errorBody(error), statusFor(error));
     }
-    return c.json(await friendView({ sharing, privacy, facts }, me, owner));
+    const view = await friendView({ sharing, privacy, facts }, me, owner);
+    // repottedAt stays in friendView for the feed's "Potted" event; it stops here (US-SOZ-04 lists no repot day).
+    return c.json({ specimens: view.specimens.map((s) => withoutKey(s, "repottedAt")) });
   };
 }
 

@@ -15,14 +15,16 @@ There is one source: the git tag. No version is written into versioned files.
 - `deploy.sh` computes `APP_VERSION="$(git describe --tags --always)"`, for example `v0.1.0` (exactly on the tag) or `v0.1.0-3-gabc1234` (3 commits after it), and `GIT_SHA` (short commit).
 - `docker-compose.yml` passes both as build args. The api image sets them as env vars, the web image as `VITE_APP_VERSION` at build time.
 - `GET /health/details` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>","checks":{…}}` (checks of database and job queue, see `staging-deploy-and-backup.md`). The proxy does not serve it on the public name; the public `GET /health` answers only `{"status":"ok"}` (#759). Both show `unknown` if the build did not get a value (P-08).
-- The web app shows `Version <describe>` in the footer.
+- The web app shows `Version <describe>` as the last line of "Was die App kann" (Konto, `/account/functions`).
 - Local dev (`make dev`) has no build arg, so both show `unknown`.
 
 ## Deploy
 
 On the host, in the checkout: `make deploy` (or `app/config/deploy/scripts/deploy.sh [ref]`, default `origin/main`; pass a tag such as `v0.1.0` to deploy a specific release).
 
-Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, run the smoke test.
+Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, wait for the keycloak healthcheck, then for the realm `pflanzendex` (`wait_realm`), run the master realm and MCP steps, run the smoke test.
+
+**The realm wait (TE-03, #1002).** Keycloak reports healthy about 20 s before the realm import of a first start has ended, and until then every realm URL answers 503. `wait_realm` therefore waits until the realm's discovery URL (`/realms/pflanzendex/.well-known/openid-configuration`) answers 200 inside the keycloak container, with a probe from bash's `/dev/tcp` (the image has no curl; the host does not need to reach Keycloak). It is one wait before everything that needs the realm: `master-realm.sh`, `keycloak-mcp` and the smoke sign-in. Starting value, assumption: 60 tries every 2 s. A realm that does not answer in time fails the deploy with `realm pflanzendex did not answer 200 at http://127.0.0.1:8080/realms/pflanzendex/.well-known/openid-configuration inside keycloak after 60 tries`, followed by the command for the keycloak log (a failed import of a first start shows there), and the deploy rolls back like any other failed step.
 
 ## Smoke test
 
@@ -32,18 +34,49 @@ Steps: fetch (with tags), remember the current commit as the rollback target, ba
 - `/health/details` reports the version just deployed as its `version`; `deploy.sh` reads it inside the api container (`SMOKE_DETAILS_CMD`, default: `curl <base-url>/health/details`), and
 - `GET <base-url>/` (web root, through the proxy) answers 200.
 
-It retries (`SMOKE_RETRIES`, default 15, every `SMOKE_DELAY`, default 2 s) because the proxy needs a moment. `deploy.sh` derives the base URL from `SITE_ADDRESS`/`HTTPS_PORT` in `deploy/.env`; override with `SMOKE_URL`. For `localhost` it uses `curl -k` (internal Caddy CA).
+When the tester's credentials are set (below), the core flow of US-DEV-06 must work as well (#1404):
 
-Not covered yet: the core flow named in US-DEV-06 (sign in, Heute list). That needs a smoke user and the Heute view and is still open.
+- the tester signs in at the sign-in service the way a browser does: authorization code flow with PKCE (S256) for the public client `pflanzendex-web`, with curl only (direct grants stay off); the login form is read from the page, the password is posted on stdin, and the code is taken from the redirect to `<APP_URL>/` without following it; the code is exchanged at the token endpoint with the verifier, and
+- `GET <base-url>/api/today?timeZone=Europe/Berlin` ("Heute") with the bearer token answers 200 with a `date` and an `items` list (it may be empty for a new tester).
+
+**Output.** Without the credentials the check is skipped, and the output says so in one line, then the usual result:
+
+```
+smoke: sign-in check skipped: SMOKE_USER/SMOKE_PASSWORD not set (#1404)
+smoke ok: v0.1.0 at https://localhost:8443
+```
+
+With one of the two missing, the line names it. With both set and a passing check: `smoke: sign-in ok and Heute answered for the smoke user (#1404)`. A failing sign-in or Heute check fails the smoke test (exit 1), and `deploy.sh` rolls back as for any failed smoke test (see "Automatic rollback"). A refused sign-in (wrong password, or an action pending for the tester) is not retried, because every refused sign-in counts against the tester's brute-force protection; the reason is printed without the password.
+
+**Variables** (all in `app/config/deploy/.env` on the host; the Deploy workflow does not send them, `.github/deploy-env-allowlist.txt` does not list them):
+
+| Variable               | Meaning                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `SMOKE_USER`           | The tester's sign-in name (`smoke-tester` by default, lower case letters, digits, dots, dashes and underscores).                      |
+| `SMOKE_PASSWORD`       | The tester's password (48 hex characters, generated by the script below).                                                             |
+| `SMOKE_AUTH_URL`       | Set by `deploy.sh`: the sign-in service as the host reaches it (through the proxy, `AUTH_URL` with the `Host` header of `AUTH_HOST`). |
+| `SMOKE_AUTH_CURL_OPTS` | Set by `deploy.sh`: curl options for the sign-in service (`-H Host:…` behind the proxy, `-k --resolve …` on `localhost`).             |
+| `SMOKE_APP_URL`        | The app address the sign-in service has as redirect target. Default `APP_URL`.                                                        |
+
+**One-time setup** (on the host, in the checkout; the script needs the keycloak and db containers running):
+
+1. `app/config/deploy/keycloak/smoke-user.sh` creates the user in the realm `pflanzendex` (verified email, enabled, no required actions, a generated password) and the app's account row for its subject (`insert into account … on conflict do nothing`, through the cluster user `POSTGRES_USER`, as the backup and restore scripts do). It needs the bootstrap admin of the master realm, as `master-realm.sh` does. Registration by invitation (`invitation-phase.md`) would refuse a new tester at its first sign-in (`invitation.required`); the account row written here avoids that. Without invitation-only registration the first smoke sign-in would create the row anyway.
+2. The script prints two lines, `SMOKE_USER=…` and `SMOKE_PASSWORD=…`. Add them to `app/config/deploy/.env` (replace older lines of the same name). The password is printed only when the user is created or rotated; it is not stored anywhere else.
+3. Run the script again: it reports that the tester exists and changes nothing. `smoke-user.sh --rotate-password` sets a new password and prints new lines (then update `.env`).
+4. The next deploy shows the sign-in line above. The tester holds no real data and must stay that way: nobody signs in as the tester by hand.
+
+The sign-in service after the admin handover: the bootstrap admin is gone, so the script stops with "FAILED (ERROR login)". Create the user as the named admin instead, with the same attributes: `kcadm.sh create users -r pflanzendex -s username=smoke-tester -s email=smoke-tester@example.com -s emailVerified=true -s enabled=true -s firstName=Smoke -s lastName=Tester -i`, then `kcadm.sh set-password -r pflanzendex --username smoke-tester --new-password <generated>`, then the account row as in step 1, and the two `.env` lines.
+
+It retries (`SMOKE_RETRIES`, default 15, every `SMOKE_DELAY`, default 2 s) because the proxy needs a moment. `deploy.sh` derives the base URL from `APP_HOST`, `CADDY_SCHEME`, `HTTP_PORT` and `HTTPS_PORT` in `deploy/.env`; override with `SMOKE_URL` (then the sign-in service is reached at `AUTH_URL`). For `localhost` it uses `curl -k` (internal Caddy CA).
 
 ## Automatic rollback
 
-If the api does not become healthy or the smoke test fails, `deploy.sh` redeploys the previous commit (build, start, health, smoke test again) and exits non-zero with a clear message:
+If the api does not become healthy, the realm `pflanzendex` does not answer 200 in time, or the smoke test fails, `deploy.sh` redeploys the previous commit (build, start, health, realm, smoke test again) and exits non-zero with a clear message:
 
 - `ROLLBACK ok ...`: the previous version is live again, the new one is not. Exit code is still 1, so the failed deploy is not mistaken for a success.
-- `ROLLBACK FEHLGESCHLAGEN`: intervene manually (below).
+- `ROLLBACK FAILED`: intervene manually (below).
 
-Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `scripts/restore/restore.sh`.
+Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `app/config/deploy/scripts/restore/restore.sh`.
 
 ## Manual rollback
 
@@ -144,6 +177,7 @@ Per species the selection requires: created by the operator, source = the batch 
    ```
 
    It commits only if exactly `expected` rows changed; otherwise it rolls back and exits with status 3. Without `-v expected` it changes nothing. Running it again is harmless: the next dry run reports `rows_to_change` 0.
+
 4. **Check.** The next dry run reports `rows_to_change` 0. The species profile on the test host shows "unbekannt" for the six fields (open one species; the profile is the check of P-08).
 5. **Rollback.** A failed run changes nothing (one transaction). For a wrong result after the commit, restore the dump of step 1 as described in `staging-deploy-and-backup.md` ("Backup and restore").
 
@@ -175,5 +209,4 @@ Three function groups can be switched: `social` (friends, feed, swap, sharing, s
 ## Open
 
 - FR-DEV-05: check that the latest `v*` tag on `main` was created by semantic-release (no manual tags). Not implemented, no simple CI check exists; options are a tag ruleset on GitHub (only the release workflow may create `v*` tags) or a scheduled check.
-- Smoke test of a core flow (sign in, Heute list).
-- The smoke test does not yet check that the web footer shows the same version (the root is only checked for 200).
+- The smoke test does not yet check that the web app shows the same version (the root is only checked for 200).

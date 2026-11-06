@@ -31,6 +31,9 @@ const EPICS = {
   ACH: "Achievements",
   TAU: "Swipe matching",
   ONB: "Introduction and unlocking",
+  VAR: "Variegated cultivars",
+  SUB: "Substrate",
+  DEAL: "Shop offers and sale alerts",
 };
 
 /** @param {string[]} texts contents of the numbered spec files */

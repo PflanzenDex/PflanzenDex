@@ -82,4 +82,4 @@ export interface OfferHealth {
 
 /** A static notice on plant law (FR-SOZ-09): no block, no legal review, no list of species that could be wrong. */
 export const SPECIES_PROTECTION_NOTICE =
-  "Manche Arten sind geschützt (zum Beispiel viele Kakteen und Orchideen nach CITES). Prüfe vor dem Anbieten, ob für diese Art Handelsbeschränkungen gelten. Das ist ein Hinweis, keine Rechtsberatung; ein Versand über Landesgrenzen gehört nicht zu PflanzenDex.";
+  "Manche Arten sind geschützt (zum Beispiel viele Kakteen und Orchideen nach CITES). Prüfe vor dem Anbieten, ob für diese Art Handelsbeschränkungen gelten. Das ist ein Hinweis, keine Rechtsberatung; ein Versand über Landesgrenzen gehört nicht zu PflanzenDéx.";

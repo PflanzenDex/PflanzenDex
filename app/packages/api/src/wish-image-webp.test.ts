@@ -152,3 +152,62 @@ describe("NFR-12 US-WUN-04 a stored wish image is WebP", () => {
     expect(store.objectCount()).toBe(2); // the stored copy and its thumbnail, nothing else
   });
 });
+
+describe("NFR-12 US-WUN-04 the wish card reads the thumbnail of its stored image", () => {
+  /** A wish with a stored copy; returns its ID and the object name the store keeps it under. */
+  const storedWish = async () => {
+    const created = await call("POST", "/wishes", {
+      name: `Vorschau ${randomUUID().slice(0, 8)}`,
+      imageUrl: FILE,
+      imageSource: "Wikipedia",
+    });
+    const id = created.body["wish"].id as string;
+    expect((await call("POST", `/wishes/${id}/image`)).status).toBe(200);
+    const row = await admin.query("select account_id, image_object from wish where id = $1", [id]);
+    const { account_id: account, image_object: name } = row.rows[0] as {
+      account_id: string;
+      image_object: string;
+    };
+    return { id, account, name };
+  };
+  const read = (id: string, query = "") =>
+    app.request(`/wishes/${id}/image${query}`, {
+      headers: { authorization: `Bearer valid:${sub}` },
+    });
+  const longEdge = async (bytes: Uint8Array) => {
+    const meta = await sharp(bytes).metadata();
+    return Math.max(meta.width ?? 0, meta.height ?? 0);
+  };
+
+  it("NFR-12 US-WUN-04 size=thumb answers the 256 px WebP thumbnail, without size the larger stored copy", async () => {
+    const { id } = await storedWish();
+    const small = await read(id, "?size=thumb");
+    const full = await read(id);
+    expect([small.status, small.headers.get("content-type")]).toEqual([200, "image/webp"]);
+    expect(small.headers.get("cache-control")).toContain("private");
+    const smallBytes = new Uint8Array(await small.arrayBuffer());
+    const fullBytes = new Uint8Array(await full.arrayBuffer());
+    expect([await longEdge(smallBytes), await longEdge(fullBytes)]).toEqual([256, 1600]);
+    expect(smallBytes.byteLength).toBeLessThan(fullBytes.byteLength);
+  });
+
+  it("NFR-12 US-WUN-04 size is validated: only thumb is allowed, anything else is input.invalid (400)", async () => {
+    const { id } = await storedWish();
+    for (const query of ["?size=big", "?size=full", "?size=", "?size=thumb&size=thumb"]) {
+      const r = await read(id, query);
+      expect(r.status).toBe(400);
+      expect(((await r.json()) as { error: { code: string } }).error.code).toBe("input.invalid");
+    }
+  });
+
+  it("NFR-12 US-WUN-04 a wish image stored without its thumbnail answers the stored copy for size=thumb, never 404", async () => {
+    const { id, account, name } = await storedWish();
+    await store.delete(account, thumbnailName(name));
+    const small = await read(id, "?size=thumb");
+    const full = await read(id);
+    expect(small.status).toBe(200);
+    expect(Array.from(new Uint8Array(await small.arrayBuffer()))).toEqual(
+      Array.from(new Uint8Array(await full.arrayBuffer())),
+    );
+  });
+});

@@ -19,6 +19,16 @@ make board               # who works on what (optional: RELEASE="R0 Fundament")
 
 Before any write a preflight checks that `node_modules` exists and matches `package-lock.json` (`make setup` records the lock hash in `node_modules/.setup-lock-hash`; `app/tools/check/supply/check-deps.mjs`; hooks and `make gates` run the same check, so a pull that changed the lock file stops with "run make setup") and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (field and option ids are read at run time) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (branch deleted, assignee removed, status back to "Todo"); an issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
 
+## The GraphQL budget (shared account, #1412)
+
+All sessions share one account and 5,000 GraphQL points an hour; a failed call returns HTTP 200 with the error in the body. The tools keep the board calls few and survive the limit:
+
+- Repository, issue, pull request and assignee reads and writes use REST, which has its own budget and spends no points. `make claim` (except the board status), `make worktree`, `make issue` (creating the issue) and the draft PR keep working when GraphQL is used up.
+- The board is GraphQL. Measured with GitHub's `rateLimit.cost` on 2026-11-05: one issue's board item 1 point, the project's field ids 1 point, one page of 100 board items 1 point (the whole board, 704 items, about 8 points). `gh project item-list` and `gh project field-list` cost about 100 points each, so the tools do not call them (PF-005).
+- `make claim` without the board warns, keeps the claim and says that the project status must be set by hand (P-10).
+- `make issue` creates the issue even when the board cannot be reached. Its output names the board fields that are not set. CI sets Typ, Epic and an empty Status once the labels are valid (`issue-check.yml`, App token); CI does not set Priority, so Priority is set by hand on the board.
+- `make pr` marks the PR ready with GraphQL, which has no REST route. On a rate limit it reads the reset from the failing response's `X-RateLimit-Reset` header, waits for it if that is within five minutes, tries at most three times, and otherwise exits 75 and says when to run `make pr` again. The branch is pushed in every case.
+
 **Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/actions/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift, missing priorities and open items without a Status. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is.
 
 **The board tracks, the issue describes:** release, type and epic are the project fields Release, Typ and Epic, not milestones or labels. `make board` lists the open items whose Typ is Story or Enabler for one Release (default: the first release in board order with open work). The issue templates add new issues to the board; set Typ, Release, Epic and Priority there.
@@ -49,7 +59,7 @@ This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the br
 
 ## Own ports and database per worktree
 
-`app/tools/workflow/worktree-env.mjs` derives these deterministically from the branch name:
+`app/tools/workflow/worktree/worktree-env.mjs` derives these deterministically from the branch name:
 
 | Variable                                                | Meaning                                            |
 | ------------------------------------------------------- | -------------------------------------------------- |
@@ -57,7 +67,23 @@ This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the br
 | `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`        |
 | `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899)                |
 
-The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a`. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
+The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+
+### `make dev` in a worktree (#904)
+
+`make dev` runs `app/tools/workflow/worktree/dev-servers.mjs` (the `dev` script of `app/package.json`). When `.env.worktree` exists at the worktree root, it starts the two servers with that worktree's values and nothing has to be set by hand:
+
+- the API on `PFLANZENDEX_DEV_API_PORT`, with `PORT`, `WEB_ORIGIN`, `AI_RESOURCE_URL` (the API's `/mcp`) and `DATABASE_URL` of the worktree;
+- Vite on `PFLANZENDEX_DEV_WEB_PORT` with `--port` and `--strictPort`, and `VITE_API_URL` pointing at the API;
+- the test database `pflanzendex_test` on `PFLANZENDEX_TEST_DB_PORT`. This is the database that `make db-up` creates (`POSTGRES_DB`) and that `make migrate` and the tests use through `PFLANZENDEX_TEST_DATABASE_URL`. `PFLANZENDEX_TEST_DB_NAME` is written by `worktree-env.mjs`, but no target reads it: the port already makes the database unique per worktree, and a database under that name would be empty and unmigrated.
+
+Rules of the launcher:
+
+- A busy API or web port stops the start before any server runs, and the message names the port. Vite never moves to another port. If one server fails, the other is stopped too.
+- A variable already set in the environment wins over the file, so `PORT=4000 make dev` starts the API on 4000 and `VITE_API_URL` follows it. An empty variable counts as not set.
+- Without `.env.worktree` (the main checkout) the command is the one from before: 3000 and 5173, no variables, no port flags.
+- `TAXONOMY_BUILD` is not set. It changes what the Pokédex shows (the foreign taxonomy build runs or is skipped), so a worktree should not differ from the main checkout by default. Set it per run when a worktree should skip the build: `TAXONOMY_BUILD=off make dev`.
+- Sign-in on the worktree port still needs the redirect step below (`web-port.mjs`), because the shared Keycloak only knows port 5173. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
 
 ### One shared Keycloak for every checkout
 

@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys } from "../../exact-keys-test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -101,6 +102,28 @@ describe("US-EQU-12 share equipment with friends through the API", () => {
     expect((await call(subA, "GET", "/equipment/sharing")).body.shared).toEqual([
       { equipmentId: lampId, note: "sehr hell, läuft ruhig" },
     ]);
+  });
+
+  it("US-QG-05 QG-D2 the friend's device list carries the whitelisted device fields and the friend's name, nothing else", async () => {
+    const r = (await call(subB, "GET", `/equipment/friends/${friendOfBen}`)).body;
+    expect(r.devices.length).toBeGreaterThan(0);
+    expectExactKeys(
+      r,
+      {
+        friend: { name: true },
+        devices: [
+          {
+            id: true,
+            type: true,
+            name: true,
+            model: true,
+            luxCeiling: true,
+            note: true,
+          },
+        ],
+      },
+      "GET /equipment/friends/:id",
+    );
   });
 
   it("US-EQU-12 a shared device does not appear in the feed of a friend", async () => {

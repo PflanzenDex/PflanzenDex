@@ -31,7 +31,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: shown in the app footer and by the health endpoint
+      description: The line "Version …" at the bottom of "Was die App kann" (Konto, address /account/functions); it reads "unbekannt" when the build has no version. The public /health shows only the status, /health/details (inside the stack) also the version.
   - type: textarea
     id: context
     attributes:

@@ -64,7 +64,7 @@ describe("US-WUN-04 the stored image of a candidate", () => {
     );
     const img = await screen.findByRole("img", { name: "Bild von Geigenfeige (Ficus lyrata)" });
     expect(img.getAttribute("src")).toBe("blob:wish");
-    expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/wishes/w1/image");
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/wishes/w1/image?size=thumb");
     expect(screen.getByText(/Quelle: Anna Beispiel/)).toBeTruthy();
     expect(screen.getByText(/Lizenz: CC BY-SA 4.0/)).toBeTruthy();
     expect(screen.queryByText("Bild ansehen (öffnet extern)")).toBeNull();
@@ -127,5 +127,18 @@ describe("US-WUN-04 the stored image of a candidate", () => {
       <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
     );
     expect(await screen.findByText(/gibt es bei Wikimedia Commons nicht/)).toBeTruthy();
+  });
+
+  it("NFR-12 US-WUN-04 the card asks the API for the 256 px thumbnail of its stored image, not the full copy", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(new Uint8Array([1])));
+    vi.stubGlobal("fetch", fetchFn);
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await screen.findByRole("img", { name: "Bild von Geigenfeige (Ficus lyrata)" });
+    const pictureRequests = fetchFn.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.includes("/image"));
+    expect(pictureRequests).toEqual(["http://api/wishes/w1/image?size=thumb"]);
   });
 });
