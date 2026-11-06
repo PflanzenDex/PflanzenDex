@@ -103,6 +103,24 @@ describe("US-POK-01 collector cards", () => {
     expect(card).toMatchObject({ germanName: null, difficulty: null, lightZone: null });
   });
 
+  it("US-POK-01 two approved species with one Latin name: the card takes the first facts given, in either order", () => {
+    const first = facts("Ficus benjamina", {
+      germanName: "Birkenfeige",
+      difficulty: 1,
+      lightZone: 3,
+    });
+    const second = facts("Ficus benjamina", {
+      germanName: "Zweite Art",
+      difficulty: 3,
+      lightZone: 4,
+    });
+    const tree = [row("Ficus benjamina")];
+    const [forward] = collectorCards(tree, [first, second], []);
+    const [backward] = collectorCards(tree, [second, first], []);
+    expect(forward).toMatchObject({ germanNameFull: "Birkenfeige", difficulty: 1, lightZone: 3 });
+    expect(backward).toMatchObject({ germanNameFull: "Zweite Art", difficulty: 3, lightZone: 4 });
+  });
+
   it("US-QS-14 carries the language of the summary to the card, null when unknown", () => {
     const cards = collectorCards(
       [
