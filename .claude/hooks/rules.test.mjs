@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   isCodePath,
@@ -39,6 +40,43 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
   ]) {
     assert.equal(isGateFile(f), false, f);
   }
+});
+
+const GATE_LISTS = [
+  "coverage-thresholds.json",
+  "quality-limits.json",
+  "audit-allowlist.json",
+  "conformance-allowlist.json",
+];
+
+test("US-QG-07: each threshold and exception list in app/config/gates is a gate file", () => {
+  for (const f of GATE_LISTS) {
+    assert.equal(isGateFile(`app/config/gates/${f}`), true, f);
+  }
+});
+
+test("US-QG-07: the shrink-only baselines in app/config/gates/baselines stay out of the gate files, as measured", () => {
+  const baselines = readdirSync(new URL("../../app/config/gates/baselines/", import.meta.url));
+  assert.ok(baselines.length > 0, "the baseline folder has files");
+  for (const f of baselines) {
+    assert.equal(isGateFile(`app/config/gates/baselines/${f}`), false, f);
+  }
+});
+
+test("US-QG-07: an agent edit to a threshold or exception list asks a human, an edit to a baseline does not", () => {
+  const hook = fileURLToPath(new URL("./run.mjs", import.meta.url));
+  const root = fileURLToPath(new URL("../..", import.meta.url));
+  const guard = (file_path) =>
+    execFileSync("node", [hook, "guard-edit"], {
+      input: JSON.stringify({ tool_input: { file_path } }),
+      env: { ...process.env, CLAUDE_PROJECT_DIR: root },
+      encoding: "utf8",
+    });
+  for (const f of GATE_LISTS) {
+    const out = JSON.parse(guard(`${root}/app/config/gates/${f}`));
+    assert.equal(out.hookSpecificOutput.permissionDecision, "ask", f);
+  }
+  assert.equal(guard(`${root}/app/config/gates/baselines/ui-text-baseline.json`), "");
 });
 
 test("US-QG-07: the moved check scripts, their libraries and the layout config stay gate files (FR-QG-21)", () => {

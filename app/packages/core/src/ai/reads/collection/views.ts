@@ -1,7 +1,7 @@
 // The collection as the AI client reads it (US-KI-11): the rows of the app with the ids and readable names of species,
 // location and light zone attached, so every reference the client sees can be used again by id or by name (FR-KI-15).
 // Light zones are numbered by their order (1 = cutting light, US-LIC-05); what is unknown stays `null` (P-08).
-import type { CollectionReadSource, LocationRow, SpecimenItem, ZoneRow } from "./types";
+import type { CollectionReadSource, LocationRow, SpecimenItem, ZoneRow } from "../types";
 
 export interface ZoneRef {
   readonly id: string;

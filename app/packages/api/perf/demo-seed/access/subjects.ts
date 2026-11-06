@@ -51,11 +51,10 @@ function adminPassword(): string {
   return main;
 }
 
-/** Looks the three ids up through the Keycloak admin API (`make auth-up` must be running). */
-export async function subjectsFromKeycloak(
+/** Admin access to the dev realm (`make auth-up` must be running): the Keycloak base URL and the bearer header. */
+export async function keycloakAdmin(
   env: NodeJS.ProcessEnv = process.env,
-): Promise<Subjects> {
-  if (env["DEMO_SEED_SUBJECTS"]) return parseSubjects(env["DEMO_SEED_SUBJECTS"]);
+): Promise<{ keycloak: string; headers: Record<string, string> }> {
   const keycloak = env["E2E_KEYCLOAK_URL"] ?? "http://localhost:18081";
   const login = await fetch(`${keycloak}/realms/master/protocol/openid-connect/token`, {
     method: "POST",
@@ -71,9 +70,16 @@ export async function subjectsFromKeycloak(
     );
   });
   if (!login.ok) throw new Error(`Keycloak admin login failed: ${login.status}`);
-  const headers = {
-    Authorization: `Bearer ${((await login.json()) as { access_token: string }).access_token}`,
-  };
+  const token = ((await login.json()) as { access_token: string }).access_token;
+  return { keycloak, headers: { Authorization: `Bearer ${token}` } };
+}
+
+/** Looks the three ids up through the Keycloak admin API (`make auth-up` must be running). */
+export async function subjectsFromKeycloak(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<Subjects> {
+  if (env["DEMO_SEED_SUBJECTS"]) return parseSubjects(env["DEMO_SEED_SUBJECTS"]);
+  const { keycloak, headers } = await keycloakAdmin(env);
   const entries: [DemoUser, string][] = [];
   for (const user of DEMO_USERS) {
     const found = (await (

@@ -82,6 +82,7 @@ export const discoverDecide = (deps: DecideDependencies) =>
         source: "discover",
         decidedAt: localToday(deps.clock(), input.timeZone),
         status: input.decision === "yes" ? "wishlist" : "discarded",
+        lastDecision: input.decision,
       });
       if (r === "name_taken") return ok<DecideResult>({ decision: input.decision, saved: false });
       // The zone comes from the account's own stock; if it vanished meanwhile nothing is written (P-10).

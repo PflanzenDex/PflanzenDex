@@ -56,7 +56,7 @@ echo "ID $id"
 '
 
 if ! out="$(printf '%s\n' "$tester" "$email" "$mode" "$password" | $KC_EXEC sh -c "$inside")"; then
-  echo "smoke-user: FAILED (${out:-no answer from the keycloak container}). The keycloak container must run, and the bootstrap admin must still sign in; after the admin handover, create the user by hand (runbook release-and-rollback.md, \"Smoke test\")." >&2
+  echo "smoke-user: FAILED (${out:-no answer from the keycloak container}). Check in this order: the keycloak container runs; a first start may still be importing the realm (every realm URL answers 503 until the import has ended, about 20 s after keycloak is healthy: wait a minute and run again); the bootstrap admin still signs in (after the admin handover, create the user by hand: runbook release-and-rollback.md, \"Smoke test\")." >&2
   exit 1
 fi
 state="$(printf '%s\n' "$out" | sed -n 's/^STATE //p')"

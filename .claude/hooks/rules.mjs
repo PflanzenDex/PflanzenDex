@@ -25,6 +25,9 @@ const GATE_FILES = [
   /^app\/tools\/check\/(?:.+\/)?(?!.*\.(?:test|selftest)\.mjs$)[^/]+\.mjs$/,
   /^app\/tools\/workflow\/merge-pr(\.test)?\.mjs$/,
   /^app\/config\/lint\/layout\.config\.mjs$/,
+  // Thresholds and exception lists (US-QG-07, FR-QG-18): every JSON file directly in app/config/gates/ (coverage,
+  // code limits, audit and conformance allowlists). The shrink-only baselines sit in app/config/gates/baselines/ and stay out.
+  /^app\/config\/gates\/[^/]+\.json$/,
   /^app\/packages\/[^/]+\/(vitest\.config\.ts|tsconfig\.json)$/,
 ];
 

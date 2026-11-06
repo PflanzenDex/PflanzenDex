@@ -125,6 +125,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
       - run: make ci-gates
+      # US-QG-08: the five most complex functions in the job summary. Report only: it runs after a failure too, and a
+      # failing report never fails the job; the summary then gets one line instead of nothing (P-10).
+      - name: Health report
+        if: always()
+        run: make health-report >> "$GITHUB_STEP_SUMMARY" || echo "Health report unavailable (report only), see the step log." >> "$GITHUB_STEP_SUMMARY"
 
   app-tests:
     needs: [changes, reuse]

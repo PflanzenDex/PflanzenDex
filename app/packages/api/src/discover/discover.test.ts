@@ -269,3 +269,123 @@ describe("US-ENT-06 exploration through the API", () => {
     expect(await mine(other)).toEqual(await mine(other));
   });
 });
+
+describe("US-ENT-04 taking back the last decision through the API", () => {
+  const undoer = `ent4-undo-${randomUUID()}`;
+  const alpha = `${genus} rueck a`;
+  const beta = `${genus} rueck b`;
+  const gamma = `${genus} rueck c`;
+  const call = (
+    sub: string | null,
+    path: string,
+    body: unknown,
+    key: string | null = randomUUID(),
+  ) =>
+    app.request(path, {
+      method: "POST",
+      headers: {
+        ...(sub ? { authorization: `Bearer valid:${sub}` } : {}),
+        "content-type": "application/json",
+        ...(key ? { "idempotency-key": key } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  const decideFor = (sub: string | null, species: string, decision: string, key?: string) =>
+    call(sub, "/discover/decisions", { species, decision, timeZone: "Europe/Berlin" }, key);
+  const undo = (sub: string | null, species: string, key?: string) =>
+    call(sub, "/discover/decisions/undo", { species }, key);
+  const wishesNamed = async (sub: string) =>
+    (
+      await admin.query<{ id: string; name: string; status: string }>(
+        `select id, name, status from wish where account_id in (select id from account where subject = $1) and name like $2 order by name`,
+        [sub, `${genus}%`],
+      )
+    ).rows;
+  const errorCode = async (r: Response) =>
+    ((await r.json()) as { error: { code: string } }).error.code;
+
+  beforeAll(async () => {
+    for (const latinName of [alpha, beta, gamma])
+      await admin.query(
+        `insert into taxon (latin_name, status, accepted_name, genus, family, catalog_fingerprint, built_at)
+         values ($1, 'resolved', $1, $2, 'Testaceae', 'ent4undo', now())`,
+        [latinName, genus],
+      );
+    const account = await app.request("/account", {
+      headers: { authorization: `Bearer valid:${undoer}` },
+    });
+    expect(account.status).toBe(200);
+  });
+  afterAll(async () => {
+    await admin.query(
+      "delete from wish where account_id in (select id from account where subject = $1)",
+      [undoer],
+    );
+    await admin.query("delete from account where subject = $1", [undoer]);
+  });
+
+  it("US-ENT-04 answers 401 without a token and 400 idempotency.key_missing without the key (US-QS-03)", async () => {
+    expect((await undo(null, alpha)).status).toBe(401);
+    const noKey = await call(undoer, "/discover/decisions/undo", { species: alpha }, null);
+    expect(noKey.status).toBe(400);
+    expect(await errorCode(noKey)).toBe("idempotency.key_missing");
+  });
+
+  it("US-ENT-04 undo of the last Yes removes its wish, the species is back in the deck, and a repeat answers undone false", async () => {
+    expect((await decideFor(undoer, alpha, "yes")).status).toBe(200);
+    const r = await undo(undoer, alpha);
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ undone: true });
+    expect((await wishesNamed(undoer)).map((w) => w.name)).not.toContain(alpha);
+    expect(await species(undoer)).toContain(alpha);
+    const again = await undo(undoer, alpha);
+    expect(await again.json()).toEqual({ undone: false });
+  });
+
+  it("US-ENT-04 an earlier decision is refused with 409 discover.undo_not_last and nothing is removed", async () => {
+    expect((await decideFor(undoer, beta, "no")).status).toBe(200);
+    expect((await decideFor(undoer, gamma, "yes")).status).toBe(200);
+    const r = await undo(undoer, beta);
+    expect(r.status).toBe(409);
+    expect(await errorCode(r)).toBe("discover.undo_not_last");
+    expect(await wishesNamed(undoer)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: beta, status: "discarded" }),
+        expect.objectContaining({ name: gamma, status: "wishlist" }),
+      ]),
+    );
+  });
+
+  it("US-ENT-04 a wish changed since the decision is refused with 409 discover.undo_changed and kept", async () => {
+    const gammaWish = (await wishesNamed(undoer)).find((w) => w.name === gamma);
+    const bought = await call(undoer, `/wishes/${gammaWish?.id}/buy`, {});
+    expect(bought.status).toBe(200);
+    const r = await undo(undoer, gamma);
+    expect(r.status).toBe(409);
+    expect(await errorCode(r)).toBe("discover.undo_changed");
+    expect((await wishesNamed(undoer)).find((w) => w.name === gamma)?.status).toBe("bought");
+  });
+
+  it("US-ENT-04 a manual wish of the species is refused with 409 discover.not_a_decision and kept", async () => {
+    const manual = `${genus} rueck manuell`;
+    expect((await call(undoer, "/wishes", { name: manual })).status).toBe(201);
+    const r = await undo(undoer, manual);
+    expect(r.status).toBe(409);
+    expect(await errorCode(r)).toBe("discover.not_a_decision");
+    expect((await wishesNamed(undoer)).map((w) => w.name)).toContain(manual);
+  });
+
+  it("US-ENT-04 the same Idempotency-Key answers the stored answer and does not undo a later decision again", async () => {
+    const key = randomUUID();
+    expect((await decideFor(undoer, alpha, "yes")).status).toBe(200);
+    expect(await (await undo(undoer, alpha, key)).json()).toEqual({ undone: true });
+    expect((await decideFor(undoer, alpha, "yes")).status).toBe(200);
+    expect(await (await undo(undoer, alpha, key)).json()).toEqual({ undone: true });
+    expect((await wishesNamed(undoer)).map((w) => w.name)).toContain(alpha);
+  });
+
+  it("US-ENT-04 another account cannot take back my decision: it answers undone false and my wish stays (P-04)", async () => {
+    expect(await (await undo(other, alpha)).json()).toEqual({ undone: false });
+    expect((await wishesNamed(undoer)).map((w) => w.name)).toContain(alpha);
+  });
+});
