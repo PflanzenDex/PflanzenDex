@@ -1,5 +1,6 @@
 // Rules for the Claude Code hooks (US-QG-07, US-DEV-02). Pure functions, tested in rules.test.mjs.
 // Hooks support the gates; the gates themselves live in CI and the rulesets (D-02).
+import { mainCheckoutRefusal } from "./main-checkout.mjs";
 
 // Files that define gates, thresholds or exception lists. Agents may only change them after a human confirms (US-QG-07).
 const GATE_FILES = [
@@ -121,9 +122,13 @@ function discardsWork(tokens) {
   }
 }
 
-export function judgeCommand(rawCommand) {
+// `where` tells the main checkout guard where the command runs (see main-checkout.mjs); without it, a reset or clean
+// is refused, because the place is not known (US-QG-07).
+export function judgeCommand(rawCommand, where = {}) {
   const command = stripText(rawCommand);
   for (const [pattern, reason] of FORBIDDEN_COMMANDS) if (pattern.test(command)) return { decision: "deny", reason };
+  const refusal = mainCheckoutRefusal(rawCommand, where);
+  if (refusal) return { decision: "deny", reason: refusal };
   for (const [pattern, reason] of CONFIRM_COMMANDS) if (pattern.test(command)) return { decision: "ask", reason };
   if (ADD_DEPENDENCY.test(command)) return { decision: "ask", reason: ADD_DEPENDENCY_REASON };
   const segments = commandSegments(command);
