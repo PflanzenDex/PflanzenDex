@@ -280,6 +280,32 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(turner);
   });
+
+  it("US-WAC-07 · US-QS-15 choosing the list of the course (?course) is no new view: the focus stays on the switch", async () => {
+    function Chooser() {
+      const [, setParams] = useSearchParams();
+      return (
+        <button type="button" onClick={() => setParams({ course: "leaves" }, { replace: true })}>
+          Blätter
+        </button>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/b"]}>
+        <AnnouncerProvider>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={titleOf} />
+            <h1>Zweite Seite</h1>
+            <Chooser />
+          </main>
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const chooser = screen.getByRole("button", { name: "Blätter" });
+    await userEvent.click(chooser);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(chooser);
+  });
 });
 
 /** A view that shows its heading and then redirects to the start view, as a page does after a check. */

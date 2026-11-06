@@ -7,6 +7,6 @@ export {
   targetLocationFor,
 } from "./source";
 export { CARE_PATHS, careRoutes } from "./care-routes";
-export { LEAF_PATHS, leafRoutes } from "./leaves/leaves-routes";
+export { leafRoutes } from "./leaves/leaves-routes";
 export { CARE_PHASES_PATHS, carePhasesRoutes } from "./care-phases-routes";
 export { TREATMENT_PATHS, treatmentRoutes } from "./treatments-routes";

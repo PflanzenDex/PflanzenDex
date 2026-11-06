@@ -100,6 +100,8 @@ Acceptance criteria:
 
 State of implementation (issue 1325, first slice): `leaf.record` writes a leaf with one tap (today in the keeper's time zone, no size) or with the optional date, length and width in millimetres (whole numbers 1 to 5,000) and a note (at most 500 characters); a date in the future is refused with `leaf.date_in_future`, a bad size or note with `leaf.size_invalid` or `leaf.note_invalid`. `leaf.remove` takes a leaf back after confirmation; the read of a plant's leaves gives the count, the comparison and the leaves newest first. The comparison (`compareLeaves`, core, pure) takes the newest leaf (latest date, a tie is the leaf created last) against the last earlier leaf with a length; without that pair the width is compared the same way; length and width are never compared with each other; without a pair nothing is shown. Storage: table `leaf` (DM-WAC-02, tenant row rule, composite foreign key to the plant), migration `0108`. The keeper switch `leaf_log` is on by default (P-12): switched off, the list is empty and writes are refused with `onboarding.keeper_off`, and the rows stay. The web shows the leaf log in "Verlauf" of the plant layer: the count, the comparison sentence, the leaves in pages (`blfrom`), "Neues Blatt", the details form and removal that asks first. **Missing:** the photo of a leaf (the criterion of this story, a follow-up of issue 1325; DM-WAC-02 `Photo?` is not built); the status stays 🟨.
 
+Decision (owner, 2026-11-06): the leaves sit behind a switch "Messungen | Blätter" in "Verlauf" of the plant layer. One list is shown at a time, and the address keeps the choice. With the keeper switch off, the switch is not shown.
+
 ## Data model
 
 ### DM-WAC-01 Measurement

@@ -17,9 +17,6 @@ import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../../kernel";
 import type { CareOptions } from "../care-routes";
 
-/** Paths the sign-in guard (bearer token) must cover (US-WAC-07). */
-export const LEAF_PATHS = ["/specimens/:id/leaves", "/specimens/:id/leaves/:leafId"] as const;
-
 /**
  * The leaf log of a plant (US-WAC-07): the list with its count and comparison, one tap or a detailed leaf, and the removal
  * of a leaf logged by mistake. Writes go only through `leaf.record` and `leaf.remove` (P-03, `Idempotency-Key`). While the

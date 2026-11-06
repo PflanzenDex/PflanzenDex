@@ -16,7 +16,6 @@ import type { AppOptions } from "./app-options";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
-  LEAF_PATHS,
   TREATMENT_PATHS,
   careRoutes,
   leafRoutes,
@@ -42,7 +41,7 @@ export function bindCareOne(
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
-  for (const path of LEAF_PATHS) app.use(path, auth);
+  // The leaf log is guarded by `/specimens/*` (SPECIMEN_PATHS) already; a second guard would read the account twice (NFR-12).
   app.route("/", leafRoutes(pool, opt));
   for (const path of CARE_PHASES_PATHS) app.use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
