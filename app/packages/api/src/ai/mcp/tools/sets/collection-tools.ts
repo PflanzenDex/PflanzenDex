@@ -21,7 +21,8 @@ export const PAGE = {
 };
 export const REF = (what: string, example: string) =>
   `The ${what}: its id or its readable name (e.g. '${example}'). Several matches return the candidates and nothing ` +
-  "else (error ai.reference_ambiguous); no match returns not_found with up to 5 nearest names.";
+  "else (error ai.reference_ambiguous); more: true in its data means more match than the candidates list, so ask " +
+  "for a more exact name. No match returns not_found with up to 5 nearest names.";
 export const TZ = "IANA time zone of the keeper, e.g. Europe/Berlin (decides what 'today' is).";
 
 /** The tool's input schema: the check's fields with a description each (throws when one is missing). */
