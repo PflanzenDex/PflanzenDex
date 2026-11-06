@@ -105,6 +105,7 @@ Acceptance criteria:
 - Given a function that uses swiping or dragging (swipe suggestions in Discover, dragging a sheet, reordering), when I use the keyboard or a single tap, then the same result is reachable without the gesture (2.5.1, 2.5.7).
 - Given any widget, when it has the focus, then the focus can always leave it again with the keys named above; there is no keyboard trap (2.1.2).
 - Given an everyday flow (US-QS-07: measuring with photo, confirming watering or location, ticking off a treatment, Today list), when its end-to-end test runs, then a keyboard-only variant of the test passes (guardrail, P-06).
+- Given the shortcut overview opened from its help button, when I press Esc, then the focus is back on that button; opened with `?`, the focus goes to the heading of the view and never stays on `body` (2.4.3, DS-40).
 
 ### US-QS-09 · Oriented and guided through the app · 🟨 new
 
