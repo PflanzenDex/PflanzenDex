@@ -511,3 +511,166 @@ describe("US-ACC-01 Abmelden und Anderes Konto bei einem Fehler", () => {
     expect(result.current.state).toEqual({ kind: "signedIn", account });
   });
 });
+
+describe("US-ACC-01 Anmelden and Konto anlegen when the sign-in service cannot be reached", () => {
+  const SIGN_IN_FAILED =
+    "Anmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
+  const REGISTER_FAILED =
+    "Konto anlegen hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
+  const SIGN_OUT_FAILED =
+    "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
+  const MARKER = "pflanzendex.signed_out";
+  const SILENT_TRIED = "pflanzendex.silent_tried";
+  const REGISTER = "pflanzendex.register";
+  // One macrotask lets every press reach the sign-in library and every failure run its catch.
+  const settle = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
+  it("US-ACC-01 Anmelden fails: the welcome page says so, and the sign-out marker from before is back with its hint", async () => {
+    window.sessionStorage.setItem(MARKER, "1");
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", hint: "Du bist abgemeldet." }),
+    );
+    act(() => result.current.signIn());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        kind: "signedOut",
+        hint: "Du bist abgemeldet.",
+        error: SIGN_IN_FAILED,
+      }),
+    );
+    expect(window.sessionStorage.getItem(MARKER)).toBe("1");
+  });
+
+  it("US-ACC-01 Anmelden fails without a sign-out before: the welcome page says so and no marker stays behind", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    act(() => result.current.signIn());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", error: SIGN_IN_FAILED }),
+    );
+    expect(window.sessionStorage.getItem(MARKER)).toBeNull();
+  });
+
+  it("US-ACC-01 Anmelden can be tried again: the next press calls the sign-in again, and its success leaves no error", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.signIn());
+    await waitFor(() => expect(result.current.state).toMatchObject({ error: SIGN_IN_FAILED }));
+    act(() => result.current.signIn());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenCalledTimes(2));
+    expect(result.current.state).toEqual({ kind: "signedOut" });
+  });
+
+  it("US-ACC-01 Konto anlegen fails: the welcome page says so, the registration flags are as before and the sign-out marker is back", async () => {
+    window.sessionStorage.setItem(MARKER, "1");
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", hint: "Du bist abgemeldet." }),
+    );
+    act(() => result.current.register());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        kind: "signedOut",
+        hint: "Du bist abgemeldet.",
+        error: REGISTER_FAILED,
+      }),
+    );
+    expect(window.sessionStorage.getItem(REGISTER)).toBeNull();
+    expect(window.sessionStorage.getItem(SILENT_TRIED)).toBe("1");
+    expect(window.sessionStorage.getItem(MARKER)).toBe("1");
+  });
+
+  it("US-ACC-01 Konto anlegen fails with no silent attempt before: the silent attempt flag stays absent", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    // Removed after the page has loaded: the load itself would otherwise make the silent attempt.
+    window.sessionStorage.removeItem(SILENT_TRIED);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    act(() => result.current.register());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", error: REGISTER_FAILED }),
+    );
+    expect(window.sessionStorage.getItem(REGISTER)).toBeNull();
+    expect(window.sessionStorage.getItem(SILENT_TRIED)).toBeNull();
+  });
+
+  it("US-ACC-01 Anmelden pressed twice while it fails: the sign-in is called once and the sign-out marker is as it was", async () => {
+    window.sessionStorage.setItem(MARKER, "1");
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => {
+      result.current.signIn();
+      result.current.signIn();
+    });
+    await settle();
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+    await waitFor(() => expect(result.current.state).toMatchObject({ error: SIGN_IN_FAILED }));
+    expect(window.sessionStorage.getItem(MARKER)).toBe("1");
+  });
+
+  it("US-ACC-01 Abmelden pressed twice while it fails: the sign-out is called once and no marker stays behind", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    act(() => {
+      result.current.signOut();
+      result.current.signOut();
+    });
+    await settle();
+    expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedIn", account, error: SIGN_OUT_FAILED }),
+    );
+    expect(window.sessionStorage.getItem(MARKER)).toBeNull();
+  });
+
+  it("US-ACC-01 after a failed Anmelden has finished, the next press is not ignored: Konto anlegen starts its check", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.signIn());
+    await settle();
+    act(() => result.current.register());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "none" }));
+    expect(window.sessionStorage.getItem(REGISTER)).toBe("check");
+  });
+
+  it("US-ACC-01 signing out on all devices when the stored sign-in cannot be read: the error shows on the account and nothing is removed", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    mgr.getUser.mockRejectedValueOnce(new Error("storage unavailable"));
+    await act(() => result.current.everywhereSignOut());
+    expect(result.current.state).toMatchObject({
+      kind: "signedIn",
+      error: "Abmelden auf allen Geräten ist fehlgeschlagen.",
+    });
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 Konto anlegen returns with a live session but the session cannot end: the page shows its error and the registration flag is removed", async () => {
+    const session = await freshUseSession();
+    window.sessionStorage.setItem(REGISTER, "check");
+    window.history.replaceState({}, "", "/?code=abc&state=xyz");
+    mgr.signinCallback.mockResolvedValue(user);
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => session());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+    expect(window.sessionStorage.getItem(REGISTER)).toBeNull();
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+});
