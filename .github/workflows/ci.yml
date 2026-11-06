@@ -1,6 +1,7 @@
 # CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
 # Path filters: the app suite only runs when `app/`, the Makefile, `.github/` or `.claude/hooks/` change; the docs and spec gates
 # (`docs-gates`) run when documentation changes (US-QG-02, #1389).
+# A draft PR runs no job and no CodeQL analysis (issue 1608): `make pr` marks it ready, and that run is the first CI run.
 # `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
 
@@ -8,7 +9,8 @@ on:
   pull_request:
     branches: [dev, main]
     # `edited`: the squash turns the PR title into the commit message, so a changed title is checked again.
-    # `ready_for_review`: a draft (e.g. from `make claim`, placeholder title) skips the metadata jobs; this run checks them.
+    # `ready_for_review`: the CI run of a PR that leaves draft (issue 1608). `make pr` marks the PR ready only once GitHub
+    # shows the pushed head, so this run tests that head.
     types: [opened, synchronize, reopened, edited, ready_for_review]
   # Push runs only on `main` (the release workflow needs them). The PR run already checked what a squash merges into `dev`.
   push:
@@ -16,16 +18,19 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Title/body edits and leaving draft change no code: they get their own group, so they never cancel the run that is
-  # testing the same commit; their `reuse` job waits for that run instead (US-QG-02, #404).
-  group: ci-${{ github.ref }}${{ contains(fromJSON('["edited","ready_for_review"]'), github.event.action) && '-meta' || '' }}
+  # A title or body edit (`edited`) changes no code: it gets its own group, so it never cancels the run that is testing
+  # the same commit; its `reuse` job waits for that run instead (US-QG-02, issue 404). Every other run shares the group of
+  # its ref, `ready_for_review` too, so a later push cancels a run that is still going (issue 1608).
+  group: ci-${{ github.ref }}${{ github.event.action == 'edited' && '-meta' || '' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  # A draft runs no job (issue 1608): this job is skipped on a draft, and so is every job that needs it.
   changes:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -67,22 +72,25 @@ jobs:
             echo "docs=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app-*`,
-  # `ds-snapshots`, `one-screen`, `a11y-routes` or `lighthouse` job of that head commit is reused (issue 1184: the two gates were skipped
-  # on edits without this proof, so an edit turned a red gate green) (waiting while a run of it is still going); a failed, cancelled or
-  # missing result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
+  # US-QG-02 (issue 404): a title/body edit starts a run on an unchanged commit. A green `app-*`, `ds-snapshots`, `one-screen`,
+  # `a11y-routes` or `lighthouse` job of that head commit is reused (issue 1184: the two gates were skipped on edits without
+  # this proof, so an edit turned a red gate green) (waiting while a run of it is still going); a failed, cancelled or missing
+  # result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
+  # An edited run whose PR head has moved on is superseded (issue 1608): it reuses nothing and its heavy jobs do not run.
   reuse:
     if: >-
       github.event_name == 'pull_request'
-      && contains(fromJSON('["edited","ready_for_review"]'), github.event.action)
+      && github.event.action == 'edited'
       && !github.event.changes.base
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       contents: read
       checks: read
+      pull-requests: read
     outputs:
+      superseded: ${{ steps.reuse.outputs.superseded }}
       app-gates: ${{ steps.reuse.outputs['app-gates'] }}
       app-tests: ${{ steps.reuse.outputs['app-tests'] }}
       app-tests-web: ${{ steps.reuse.outputs['app-tests-web'] }}
@@ -103,18 +111,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: make ci-reuse JOBS="app-gates app-tests app-tests-web app-coverage app-ui ds-snapshots one-screen a11y-routes lighthouse"
 
-  # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, #1118): in one job it ran
+  # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, issue 1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
-  # `make ci` chains locally, so nothing is dropped. Editing a draft's title or body (Handoff updates) does not rerun
-  # them; `ready_for_review` runs everything unless `reuse` found a green result for the same commit. `!cancelled()`
+  # `make ci` chains locally, so nothing is dropped. A title or body edit does not rerun them when `reuse` found a green result
+  # for the same commit; `ready_for_review` runs everything, since `reuse` does not run for it (issue 1608). `!cancelled()`
   # because `reuse` is skipped on most events.
   app-gates:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.app-gates != 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -135,7 +144,7 @@ jobs:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && (needs.reuse.outputs.app-tests != 'success' || needs.reuse.outputs.app-coverage != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -171,7 +180,7 @@ jobs:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.app-coverage != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -216,7 +225,7 @@ jobs:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.app-ui != 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -235,7 +244,7 @@ jobs:
 
   # QG-S2 for dependencies a PR adds or changes: known high-severity vulnerabilities block the merge.
   dependency-review:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -269,7 +278,7 @@ jobs:
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && needs.changes.outputs.app == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.lighthouse != 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -290,7 +299,9 @@ jobs:
 
   # QG-T3 + QG-U1 (axe blocks on serious/critical): Playwright against the real stack, mobile and desktop. Release PRs into `main` and manual runs only (E-15).
   e2e:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+    if: >-
+      (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main'))
+      && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
@@ -331,7 +342,7 @@ jobs:
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.one-screen != 'success'))
     strategy:
       fail-fast: false
@@ -438,7 +449,7 @@ jobs:
       !cancelled() && needs.changes.result == 'success'
       && (github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs.a11y-routes != 'success'))
     strategy:
       fail-fast: false
@@ -561,6 +572,7 @@ jobs:
   # (the `app-*` jobs are skipped for those). The check needs no dependencies; the full history gives it `origin/dev`
   # for the "baseline must not grow" comparison (a missing ref fails in CI).
   layout:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -576,8 +588,9 @@ jobs:
   # US-QG-02 (issue 1389): the docs and spec gates for a change that touches documentation (the `docs` output of
   # `changes`). The `app-*` jobs skip such a pull request, so without this job markdownlint, the link check and the spec
   # checks ran only in pre-push and the nightly. Same targets as the docs part of `make gates` (`make ci-docs`); light:
-  # no database, no browser, no build. Not in `reuse` and no draft skip: it runs in full on an edit and on
-  # `ready_for_review` too, so `ci-status` never shows green for documentation that was not checked on that commit.
+  # no database, no browser, no build. Not in `reuse`, and no draft clause of its own: `changes` skips it on a draft
+  # (issue 1608). It runs in full on an edit and on `ready_for_review` too, so `ci-status` never shows green for
+  # documentation that was not checked on that commit.
   # `fetch-depth: 0`: check-reference compares its baseline with origin/dev (RF-5), as the `layout` job does.
   docs-gates:
     needs: changes
@@ -599,7 +612,7 @@ jobs:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
-      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.superseded != 'true'
       && needs.reuse.outputs['ds-snapshots'] != 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -618,7 +631,11 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # Issue 1608: a draft run must leave no check named `ci-status` on the head. A skipped required check counts as passing,
+  # so on a draft this job reports as `draft-no-ci`, and the required check stays pending until a run of the ready PR reports
+  # it. Every other run (pushes, dispatches and non-draft pull requests) reports as `ci-status`.
   ci-status:
+    name: ${{ github.event.pull_request.draft && 'draft-no-ci' || 'ci-status' }}
     needs:
       [
         changes,

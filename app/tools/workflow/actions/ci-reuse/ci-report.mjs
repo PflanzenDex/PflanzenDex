@@ -30,6 +30,8 @@ function verdictOf(a) {
       return `ci-wait: PR #${n} was closed without a merge.`;
     case "conflict":
       return `ci-wait: PR #${n} conflicts with dev. A conflicting PR gets no CI run, so nothing would finish: resolve the conflict and push.`;
+    case "draft":
+      return `ci-wait: PR #${n} is a draft, and a draft has no CI run. make pr marks it ready for review and starts the CI run; then wait again.`;
     case "timeout": {
       const minutes = Math.round((a.afterMs ?? 0) / 60_000);
       const open = a.unfinished?.join(", ") ?? "GitHub has not computed mergeability yet";
@@ -47,6 +49,8 @@ export function report(a) {
   const { pr } = a;
   const width = Math.max(NAME_WIDTH, ...a.rows.map((r) => r.job.length));
   const title = `ci-wait: PR #${pr.number} "${pr.title}" on ${shortSha(a.head)} (base ${pr.base}${pr.draft ? ", draft" : ""})`;
+  // A draft is not judged job by job: it has no CI run (issue 1608).
+  if (a.status === "draft") return [title, verdictOf(a)].join("\n");
   const ci = `  ${"ci-status".padEnd(width)} aggregate, not judged: ${a.aggregate?.conclusion ?? "none"}`;
   return [title, ...a.rows.map((r) => rowLine(r, width)), ci, verdictOf(a)].join("\n");
 }
@@ -67,6 +71,8 @@ export function stateLine(a) {
       return "not run: the PR conflicts with dev, so it gets no CI run";
     case "computing":
       return "not known yet: GitHub has not computed whether the PR merges";
+    case "draft":
+      return "not run: the PR is a draft, make pr marks it ready and starts its CI";
     case "running":
       return `running, not waited for: ${shortList(a.unfinished)} (${aggregate})`;
     case "settled":

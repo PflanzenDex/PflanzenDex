@@ -1,6 +1,6 @@
 // The verdict on the CI of one pull request, as a pure function of one snapshot (US-DEV-13, `make ci-wait PR=<n>`).
-// A text edit or a ready-for-review starts a CI run that skips the heavy jobs (reused from an earlier run, see ci-reuse.mjs),
-// and its `ci-status` is green while the full run is still going. So the verdict is per job, from every check run on the
+// A text edit starts a CI run that skips the heavy jobs (reused from an earlier run, see ci-reuse.mjs),
+// and its `ci-status` is green while the full run is still going. A draft has no CI run at all (issue 1608). So the verdict is per job, from every check run on the
 // head commit: the latest real result of each job (a skipped or cancelled run is no result). The jobs that count are the
 // ones that the head's own workflow defines and that its path filter and base branch require (ci.yml, `changes`).
 import { evidenceOf, isActionsCheck, scanRowsOf } from "./ci-reuse.mjs";
@@ -61,15 +61,15 @@ export function jobsDefinedIn(ciYml) {
 }
 
 /**
- * The jobs that the workflow of the head requires for this PR: its path filter and base branch decide, a draft gets no
- * metadata job, and a job the head's workflow does not define is never required.
+ * The jobs that the workflow of the head requires for this PR: its path filter and base branch decide, and a job the
+ * head's workflow does not define is never required. A draft requires nothing: it runs no CI (issue 1608).
  */
 export function requiredJobs({ files, base, draft, defined }) {
+  if (draft) return new Set();
   // With the maximum number of files the filters cannot be told apart, so every filter counts as matched.
   const all = files.length >= MAX_FILES;
   const hit = (re) => all || files.some((f) => re.test(f));
-  const jobs = ["changes", "layout", "dependency-review"];
-  if (!draft) jobs.push("metadata");
+  const jobs = ["changes", "layout", "dependency-review", "metadata"];
   if (hit(PATHS.app)) jobs.push(...APP_JOBS);
   if (hit(PATHS.oneScreen)) jobs.push(...UI_JOBS);
   if (hit(PATHS.docs)) jobs.push("docs-gates");
@@ -122,6 +122,8 @@ export function assess(snap) {
   const base = { pr, head, rows, aggregate };
   if (pr.merged) return { ...base, status: "merged" };
   if (pr.state !== "open") return { ...base, status: "closed" };
+  // A draft has no CI run to wait for, so its jobs are not judged (issue 1608).
+  if (pr.draft) return { ...base, rows: [], status: "draft" };
   if (pr.mergeable === false || pr.mergeableState === "dirty")
     return { ...base, status: "conflict" };
   if (pr.mergeable === null) return { ...base, status: "computing" };
@@ -151,6 +153,8 @@ export function pullOf(p) {
     draft: Boolean(p.draft),
     base: p.base?.ref ?? "",
     head: p.head?.sha ?? "",
+    // The commit whose workflow a `pull_request` run uses (issue 1608); null while GitHub has not computed it.
+    mergeCommit: p.merge_commit_sha ?? null,
     mergeable: p.mergeable ?? null,
     mergeableState: p.mergeable_state ?? "",
   };
@@ -173,6 +177,10 @@ export function problemsNow(a) {
       ];
     case "conflict":
       return ["the PR conflicts with dev, so it gets no CI run"];
+    case "draft":
+      return [
+        "the PR is a draft and has no CI run: make pr marks it ready for review and starts the run",
+      ];
     case "computing":
       return ["GitHub has not computed whether the PR merges yet; try again"];
     default:

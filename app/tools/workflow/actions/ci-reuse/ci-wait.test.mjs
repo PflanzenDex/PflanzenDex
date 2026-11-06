@@ -164,11 +164,11 @@ test("US-DEV-13: the jobs required for a PR follow the path filter, the draft st
   const core = requiredJobs({
     files: ["app/packages/core/src/a.ts"],
     base: "dev",
-    draft: true,
+    draft: false,
     defined,
   });
-  assert.ok(core.has("app-gates") && core.has("lighthouse"));
-  assert.ok(!core.has("one-screen") && !core.has("metadata") && !core.has("audit"));
+  assert.ok(core.has("app-gates") && core.has("lighthouse") && core.has("metadata"));
+  assert.ok(!core.has("one-screen") && !core.has("audit"));
   const ui = requiredJobs({
     files: ["app/packages/web/src/x.tsx"],
     base: "main",
@@ -652,4 +652,62 @@ test("US-DEV-13: the make gate-review state line names the failed CodeQL check o
     stateLine(assess(scanOpen())),
     "not green: CodeQL: failure (ci-status: success, not judged)",
   );
+});
+
+test("US-DEV-13 (issue 1608): a draft requires no job, has no job table and exits 1 with the way to start its CI", () => {
+  const s = open(snapOf("pr1476"));
+  const draft = { ...s, pr: { ...s.pr, draft: true } };
+  assert.deepEqual(
+    [...requiredJobs({ files: s.files, base: "dev", draft: true, defined: s.defined })],
+    [],
+  );
+  const a = assess(draft);
+  assert.equal(a.status, "draft");
+  assert.deepEqual(a.rows, []);
+  assert.equal(exitCodeOf(a), 1);
+  const text = report(a);
+  assert.match(text, /is a draft, and a draft has no CI run\. make pr marks it ready/);
+  assert.doesNotMatch(text, /app-gates|ci-status/);
+  assert.match(problemsNow(a)[0], /make pr marks it ready for review/);
+});
+
+test("US-DEV-13 (issue 1608): ci-wait ends at once on a draft, without polling", async () => {
+  const s = open(snapOf("pr1476"));
+  const c = clock();
+  const r = reads([{ ...s, pr: { ...s.pr, draft: true } }]);
+  const out = await waitForCi(1476, waitOpts(c, r.read));
+  assert.equal(out.status, "draft");
+  assert.equal(r.calls.length, 1);
+  assert.deepEqual(c.sleeps, []);
+});
+
+test("US-DEV-13 (issue 1608): the jobs come from the ci.yml of the merge commit, which a pull_request run uses", async () => {
+  const merge = "c".repeat(40);
+  const pull = { ...fixtures.pr1476.pull, merge_commit_sha: merge };
+  const s = snapOf("pr1476");
+  const refs = [];
+  const client = {
+    async run(cmd, args) {
+      const path = args[1];
+      if (path === "repos/{owner}/{repo}") return `${REPO}\n`;
+      if (path === `repos/${REPO}/pulls/1476`) return JSON.stringify(pull);
+      if (path.includes("/files")) return JSON.stringify(s.files.map((filename) => ({ filename })));
+      if (path.includes("/check-runs?")) return JSON.stringify({ total_count: 0, check_runs: [] });
+      if (path.includes("/actions/runs?"))
+        return JSON.stringify({ total_count: 0, workflow_runs: [] });
+      const ref = /\/contents\/\.github\/workflows\/ci\.yml\?ref=(\w+)$/.exec(path);
+      if (ref) {
+        refs.push(ref[1]);
+        const yml =
+          ref[1] === merge
+            ? "jobs:\n  changes:\n    runs-on: x\n"
+            : "jobs:\n  ci-status:\n    needs: []\n";
+        return JSON.stringify({ content: Buffer.from(yml).toString("base64") });
+      }
+      throw new Error(`unexpected call: ${path}`);
+    },
+  };
+  const snap = await readSnapshot(client, 1476);
+  assert.deepEqual([...snap.defined], ["changes"]);
+  assert.deepEqual(refs, [merge]);
 });
