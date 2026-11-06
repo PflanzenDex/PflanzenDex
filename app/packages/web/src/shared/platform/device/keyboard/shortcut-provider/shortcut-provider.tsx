@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import type { KeyboardShortcutMode } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./shortcut-provider.de.json";
@@ -106,9 +106,18 @@ export function ShortcutProvider(props: {
 }) {
   const { targets } = props;
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [mode, setMode] = useState(props.mode);
   useEffect(() => setMode(props.mode), [props.mode]);
   const [overviewOpen, setOverviewOpen] = useState(false);
+  // A change of the page closes the overview, also while its window is still loading (US-QS-07): the overview lives in
+  // the app shell and would otherwise open on the new page. It is adjusted while rendering, so the old overview is not
+  // painted on the new page. A change of the search parameters alone keeps it open.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (pathname !== shownPath) {
+    setShownPath(pathname);
+    setOverviewOpen(false);
+  }
 
   useEffect(() => {
     if (mode === undefined || mode === SHORTCUT_MODE.disabled) return;
