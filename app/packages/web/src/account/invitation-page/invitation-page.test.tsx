@@ -81,6 +81,33 @@ describe("US-ACC-05 registration with an invitation code", () => {
     expect(document.activeElement).toBe(field);
   });
 
+  it("US-ACC-05 a refusal by the rate limit shows its text at the code, and the form takes another try", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn<typeof fetch>()
+        .mockImplementationOnce(() =>
+          json(429, { error: { code: "request.rate_limited", text: "RAW SERVER TEXT" } }),
+        )
+        .mockImplementationOnce(() => json(200, { registered: true })),
+    );
+    open();
+    const user = userEvent.setup();
+    const field = screen.getByRole("textbox", { name: "Einladungscode" }) as HTMLInputElement;
+    await user.type(field, "ABCD");
+    await user.click(screen.getByRole("button", { name: "Registrieren" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(
+      "Zu viele Versuche in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
+    );
+    expect(field.value).toBe("ABCD");
+    expect(document.activeElement).toBe(field);
+    expect(onRegistered).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Registrieren" }));
+    await waitFor(() => expect(onRegistered).toHaveBeenCalledOnce());
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it("US-ACC-05 an empty field sends nothing and asks for the code", async () => {
     open();
     await userEvent.setup().click(screen.getByRole("button", { name: "Registrieren" }));
