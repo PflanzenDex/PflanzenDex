@@ -14,7 +14,7 @@ import {
   type Id,
 } from "../common/shared.ts";
 import { BEN_LOCATIONS, BEN_SPECIMENS, CUTTING_SERIES, seriesFor } from "./ben-plants.ts";
-import { seedCareProfiles, seedTreatments } from "./ben-care.ts";
+import { seedCareProfiles, seedLeaves, seedTreatments } from "./ben-care.ts";
 import { seedBenEquipment } from "./ben-gear.ts";
 
 const PHOTOS = 8; // the first specimens get a placeholder photo on their latest measurement
@@ -60,6 +60,10 @@ export async function seedBen(
     ctx,
     pick("Ficus benjamina", "Schefflera arboricola", "Hoya carnosa", "Citrus limon"),
   );
+  // The leaf log of the Birkenfeige, the first plant of the list (US-WAC-07): the one-screen gate
+  // measures its filled view.
+  const birkenfeige = specimens.get("Ficus benjamina");
+  if (birkenfeige) await seedLeaves(ctx, birkenfeige);
   await seedBenEquipment(ctx, zones);
   await ensureWishes(ctx, [
     { name: "Anthurium clarinervium", zone: zones.get("Zone 3") ?? "" },

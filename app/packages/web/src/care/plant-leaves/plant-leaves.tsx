@@ -26,8 +26,12 @@ import { LeafRow } from "./leaf-row/leaf-row";
 import table from "./plant-leaves.de.json";
 
 const t = texts(table);
-/** Leaves per page (starting value, assumption): two whole entries, so the tab fits one screen on a small phone. */
-const PAGE_SIZE = 2;
+/**
+ * Leaves per page (starting value, assumption): one whole entry. The leaf log sits in the tab "Verlauf" under its switch,
+ * count, comparison and buttons, and two entries overflowed a 360 x 640 phone (one-screen gate, issue 1589). `fit` cannot
+ * size the list to its free height here: the containers between the layer and this list are sized by their content.
+ */
+const PAGE_SIZE = 1;
 
 type Token = () => Promise<string | undefined>;
 type Props = { api: string; token: Token; specimenId: string };
@@ -130,7 +134,8 @@ function LeafLog({ api, token, specimenId }: Props) {
       <h3 id="leaf-heading" className="sr-only">
         {t("heading")}
       </h3>
-      <div className="flex flex-wrap gap-2">
+      {/* Two equal columns: both buttons keep their 48 px height and do not wrap on a 360 px phone (US-WAC-07). */}
+      <div className="grid grid-cols-2 gap-2">
         <Button type="button" size="touch" disabled={writes.busy} onClick={() => void quick()}>
           {t("newLeaf")}
         </Button>
