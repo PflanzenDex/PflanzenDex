@@ -236,3 +236,24 @@ describe("US-ENT-01 haptics on a decision, no sound", () => {
     expect(onExited).not.toHaveBeenCalled();
   });
 });
+
+describe("US-ENT-01 the next card underneath shows its content, hidden and not focusable", () => {
+  it("US-ENT-01 the content of the next card is rendered under the front card, aria-hidden and inert", () => {
+    const { container } = render(
+      ui({ stacked: true, under: <button type="button">Nächste Karte</button> }),
+    );
+    const under = container.querySelector<HTMLElement>(".inset-0[aria-hidden='true']");
+    expect(under?.textContent).toContain("Nächste Karte");
+    expect(under?.hasAttribute("inert")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Nächste Karte" })).toBeNull();
+    expect(screen.getByText("Karte")).toBeTruthy();
+  });
+
+  it("US-ENT-01 the content underneath grows to full size while the card leaves, as the blank frame does", () => {
+    const { container, rerender } = render(ui({ stacked: true, under: <p>Nächste</p> }));
+    const under = container.querySelector<HTMLElement>(".inset-0[aria-hidden='true']");
+    expect(under?.style.getPropertyValue("--under-scale")).toBe("0.95");
+    rerender(ui({ exit: "up", stacked: true, under: <p>Nächste</p> }));
+    expect(under?.style.getPropertyValue("--under-scale")).toBe("1");
+  });
+});

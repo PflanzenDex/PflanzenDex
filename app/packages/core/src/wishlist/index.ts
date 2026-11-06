@@ -32,8 +32,10 @@ export type {
 } from "./purchase";
 export type { WishZoneUsageDependencies } from "./zone-usage";
 export type { CreateWishDependencies } from "./create";
-export { WISH_LIMITS, WISH_SOURCES, WISH_STATUS } from "./types";
+export { DISCOVER_SOURCE, WISH_LIMITS, WISH_SOURCES, WISH_STATUS } from "./types";
 export type {
+  DecisionStore,
+  DiscoverDecision,
   WishChange,
   WishPurchase,
   WishRow,
