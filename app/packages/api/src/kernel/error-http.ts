@@ -71,6 +71,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "ai.task_closed": 409,
   "ai.no_client": 409,
   "ai.reference_ambiguous": 409,
+  "ai.not_released": 403,
   "friend.own_code": 409,
   "friend.already_linked": 409,
   "friend.request_not_found": 404,

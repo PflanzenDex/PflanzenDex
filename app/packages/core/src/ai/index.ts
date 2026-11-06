@@ -56,6 +56,23 @@ export { TASK_INSTRUCTIONS, TASK_TITLES } from "./tasks/prompt/texts";
 export { aiDiscoverDecide, aiDiscoverSuggestions } from "./results/discover";
 export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./results/discover";
 export { aiCheckImageSource } from "./results/image-source";
+// Rule discovery (US-KI-13, FR-KI-17).
+export {
+  RULES_VERSION,
+  aiCheckSpeciesName,
+  aiDescribeRules,
+  checkSpeciesNameSchema,
+  describeRules,
+  describeRulesSchema,
+} from "./results/rules";
+export type {
+  NameVerdict,
+  RuleArea,
+  RuleOperation,
+  RulesDependencies,
+  RulesDescription,
+  RulesSource,
+} from "./results/rules";
 export type { ImageSourceCall, ImageSourceChecker } from "./results/image-source";
 // The catalog and the collection by name (US-KI-11, FR-KI-15, FR-KI-16).
 export {
@@ -64,8 +81,8 @@ export {
   getSpeciesSchema,
   resolveSpecies,
   searchSpeciesSchema,
-} from "./reads/catalog-reads";
-export type { ReadDependencies } from "./reads/catalog-reads";
+} from "./reads/collection/catalog-reads";
+export type { ReadDependencies } from "./reads/collection/catalog-reads";
 export {
   aiGetSpecimen,
   aiListLightZones,
@@ -76,7 +93,20 @@ export {
   listMeasurementsSchema,
   listPlacesSchema,
   listSpecimensSchema,
-} from "./reads/collection-reads";
+  resolveSpecimen,
+} from "./reads/collection/collection-reads";
+// Every other area (US-KI-12) and the reads that are never released (FR-KI-10).
+export { aiAreaRead, aiNotReleased, areaSchema } from "./reads/areas/area-reads";
+export type { AreaReadDependencies } from "./reads/areas/area-reads";
+export { AREA_NAMES, AREA_READS, NOT_RELEASED_READS } from "./reads/areas/area-source";
+export type {
+  AreaName,
+  AreaQuery,
+  AreaRead,
+  AreaReadSource,
+  AppAreaReadSource,
+  NotReleasedRead,
+} from "./reads/areas/area-source";
 export { NAMING_LIMITS, normalizeName, resolveName } from "./reads/naming";
 export type { Named, Resolution } from "./reads/naming";
 export { PAGE_SIZE } from "./reads/types";

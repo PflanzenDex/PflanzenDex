@@ -11,6 +11,7 @@ import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
 import { seedTaxonFixture } from "../catalog-seed/taxon-fixture.ts";
 import { PROFILES, seedStates, type Profile } from "./states/profile.ts";
+import { seedGateAccount } from "./accounts/common/gate-account.ts";
 
 // Usage: PFLANZENDEX_ENV=local npm run seed:demo -w @pflanzendex/api
 // Fills the dev accounts test, test2 and test3 (#924). Local or test setups only; idempotent. See app.md "Demo seed".
@@ -54,6 +55,8 @@ try {
     await seedStates(pool, { subjects, log: console.log });
     // The Pokédex tree without foreign servers, so the card layers show content with TAXONOMY_BUILD=off (issue 1164).
     console.log(`Pokédex tree fixture: ${await seedTaxonFixture(pool)}`);
+    // The display gates' account with more than 100 plants (issue 1378); its own account, the three above stay as they are.
+    await seedGateAccount(pool, { log: console.log });
   }
   console.log(`Demo seed done (${profile}): test, test2 and test3 (password testtest12).`);
 } finally {

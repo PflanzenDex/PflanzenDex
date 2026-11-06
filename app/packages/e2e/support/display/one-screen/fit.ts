@@ -23,7 +23,15 @@ function locatorOf(page: Page, step: Step) {
   return page.getByRole(role, step.re ? { name } : { name, exact: true }).nth(nth);
 }
 
-/** Opens the path of a screen and follows its click steps. */
+// One step: a key press on the page, the choice of an option in a select (`select`), or a click (issue 1378).
+async function act(page: Page, step: Step): Promise<void> {
+  if (step.key !== undefined) return page.keyboard.press(step.key);
+  const target = locatorOf(page, step);
+  if (step.select !== undefined) await target.selectOption(step.select, { timeout: 8000 });
+  else await target.click({ timeout: 8000 });
+}
+
+/** Opens the path of a screen and follows its steps (clicks, or the choice of an option). */
 export async function openScreen(page: Page, base: string, screen: Screen): Promise<void> {
   await page.goto(base + screen.path);
   await settle(page);
@@ -31,9 +39,9 @@ export async function openScreen(page: Page, base: string, screen: Screen): Prom
   if (lost) throw new Error(`${screen.id}: ${lost}`);
   for (const step of screen.steps ?? []) {
     const failed = (error: Error) => {
-      throw new Error(`${screen.id}: click ${JSON.stringify(step)} failed: ${error.message}`);
+      throw new Error(`${screen.id}: step ${JSON.stringify(step)} failed: ${error.message}`);
     };
-    await locatorOf(page, step).click({ timeout: 8000 }).catch(failed);
+    await act(page, step).catch(failed);
     await settle(page);
   }
 }

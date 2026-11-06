@@ -1,6 +1,7 @@
 {
   "unreleased": [
     "Anmelden: Bist du beim Anmeldedienst noch angemeldet, bietet die Startseite jetzt „Anderes Konto“. Damit beendest du die Anmeldung dort, und du meldest dich mit dem anderen Konto an, ohne auf eine Fehlerseite zu stoßen.",
+    "KI-Clients: Dein KI-Client kann jetzt auch Pflegephasen, Behandlungen, fällige Wassergaben, Erinnerungen, Wünsche, Pokédex, Erfolge, deine Pflegeprofile, die Lichtverteilung, Schwierigkeit und Hinweise deiner Sammlung, deine Katalog-Korrekturen, freigeschaltete Funktionen sowie sein eigenes Protokoll und seine Entwürfe lesen, mit genau den Werten, die die App zeigt. Daten von Freunden, Freigaben, Angebote, Tausch und Empfehlungen bleiben für ihn gesperrt.",
     "Fotos: Sendest du ein Foto nach einer ausgebliebenen Antwort noch einmal, bleibt es ein einziges Foto. Die App fragt dann nicht, ob das Foto ersetzt werden soll.",
     "Entdecken: Ein Ja oder Nein lässt sich jetzt mit „Rückgängig“ zurücknehmen, und die nächste Karte ist darunter schon zu sehen.",
     "Name: Die App schreibt sich jetzt überall PflanzenDéx, auch beim Anmelden, in Mails und in Benachrichtigungen.",

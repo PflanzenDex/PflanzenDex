@@ -3,6 +3,7 @@ import {
   aiConnections,
   aiRevoke,
   aiSetRights,
+  type AppAreaReadSource,
   type CollectionReadSource,
   type DiscoverSource,
   type PhotoSource,
@@ -54,6 +55,8 @@ export interface AiPorts {
   photo: PhotoSource;
   discover: DiscoverSource;
   collection: CollectionReadSource;
+  /** Every other area (US-KI-12), over the same functions as the app's routes. */
+  areas: AppAreaReadSource;
   sources?: SourceClient;
 }
 
