@@ -103,14 +103,14 @@ export function appRarityLine(r: AppRarity | null): CardLine {
     return {
       key: "app",
       unknown: true,
-      node: <span className="text-sm">In PflanzenDex: unbekannt (noch kein Konto nimmt teil)</span>,
+      node: <span className="text-sm">In PflanzenDéx: unbekannt (noch kein Konto nimmt teil)</span>,
     };
   const accounts = r.participants === 1 ? "Konto" : "Konten";
   return {
     key: "app",
     unknown: false,
     node: (
-      <span className="text-sm">{`In PflanzenDex: ${percentText(r)} (${r.owners} von ${r.participants} ${accounts})`}</span>
+      <span className="text-sm">{`In PflanzenDéx: ${percentText(r)} (${r.owners} von ${r.participants} ${accounts})`}</span>
     ),
   };
 }

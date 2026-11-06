@@ -281,7 +281,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const user = userEvent.setup();
     show("privacy");
     const box = await screen.findByRole("checkbox", {
-      name: "Meine Sammlung in die Seltenheit in PflanzenDex einrechnen",
+      name: "Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen",
     });
     expect((box as HTMLInputElement).checked).toBe(false);
     await user.click(box);

@@ -69,7 +69,7 @@ export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
 const PRIVACY_SWITCHES: readonly { name: Flag; label: string }[] = [
   { name: "everythingPrivate", label: "Alles privat" },
   { name: "noRecommendations", label: "Keine Empfehlungen" },
-  { name: "rarityConsent", label: "Meine Sammlung in die Seltenheit in PflanzenDex einrechnen" },
+  { name: "rarityConsent", label: "Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen" },
 ];
 
 /** Group "Datenschutz und Empfehlungen": three switches, one line of help and the rest behind "Mehr erfahren". */
@@ -96,7 +96,7 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
               die App keine Ausrüstungsvorschläge.
             </p>
             <p>
-              Die Seltenheit in PflanzenDex zählt nur Konten, die hier zustimmen (Vorgabe: aus); es
+              Die Seltenheit in PflanzenDéx zählt nur Konten, die hier zustimmen (Vorgabe: aus); es
               fließt nur eine Zahl pro Art ein, nie wer eine Art besitzt.
             </p>
           </>

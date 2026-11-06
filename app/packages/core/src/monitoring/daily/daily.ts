@@ -2,7 +2,7 @@
 // time, and the handler of that job (TE-06, repeatable): derive what needs action through the central status function,
 // bundle it, store it and hand it to the channel. Local calendar days throughout (NFR-08).
 import { enqueueJob, type JobHandler, type JobQueue, type JobRow } from "../../jobs";
-import { isTimeZone, localInstant, localToday } from "../../kernel";
+import { isTimeZone, localInstant, localToday, productTitle } from "../../kernel";
 import { bundleOf, deliveryTime } from "./bundle";
 import {
   REMINDER_LIMITS,
@@ -70,7 +70,7 @@ export interface ReminderDependencies {
 export function messageOf(row: Pick<ReminderRow, "items">): ReminderMessage {
   const n = row.items.length;
   return {
-    title: "PflanzenDex",
+    title: productTitle(),
     body: n === 1 ? "1 Sache braucht heute dich." : `${n} Sachen brauchen heute dich.`,
     items: row.items,
   };

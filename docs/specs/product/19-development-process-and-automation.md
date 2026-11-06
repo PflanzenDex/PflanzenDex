@@ -88,7 +88,7 @@ Acceptance criteria: every routine stands in the table with trigger, owner, outp
 
 - Recurring agent tasks (e.g. weekly gate health report) may run as a **scheduled agent**; they only write reports and open proposals, they change no gates.
 
-### US-DEV-04 · Skills and playbooks for recurring tasks · 🟨
+### US-DEV-04 · Skills and playbooks for recurring tasks · ✅
 
 As a **developer (and AI)** I want a proven guide for recurring tasks instead of improvising every time.
 

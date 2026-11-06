@@ -20,7 +20,7 @@ const occasion = (n: number): Occasion => ({
   nextAction: "Miss die Pflanze und trage die Messung ein.",
 });
 const message = (n: number): ReminderMessage => ({
-  title: "PflanzenDex",
+  title: "PflanzenDéx",
   body: `${n} Sachen brauchen heute dich.`,
   items: Array.from({ length: n }, (_, i) => occasion(i + 1)),
 });
@@ -50,7 +50,7 @@ describe("US-MON-01 the push payload stays under the Web Push size limit", () =>
   it("US-MON-01 carries every occasion when they fit, in the order of the bundle", () => {
     const json = JSON.parse(pushPayload(message(3)));
     expect(json).toMatchObject({
-      title: "PflanzenDex",
+      title: "PflanzenDéx",
       body: "3 Sachen brauchen heute dich.",
       more: 0,
     });
@@ -230,7 +230,7 @@ describe("US-MON-01 the sender speaks standard Web Push to the endpoint (RFC 803
     const [token, key] = (request?.headers["authorization"] ?? "").split(", ");
     expect(token).toMatch(/^vapid t=[\w-]+\.[\w-]+\.[\w-]+$/); // a signed JWT (RFC 8292)
     expect(key).toBe(`k=${keys.publicKey}`);
-    expect(request?.body.includes(Buffer.from("PflanzenDex"))).toBe(false);
+    expect(request?.body.includes(Buffer.from("PflanzenDéx"))).toBe(false);
     expect(decrypt(request?.body ?? Buffer.alloc(0), browser, authSecret)).toBe(payload);
   });
 
