@@ -14,6 +14,7 @@ let pool: Pool;
 let admin: Pool;
 const subA = `mcp-${randomUUID()}`;
 const subB = `mcp-${randomUUID()}`;
+const subU = `mcp-unknown-${randomUUID()}`;
 const RESOURCE = "https://pflanzendex.example/api/mcp";
 const METADATA = "https://pflanzendex.example/api/.well-known/oauth-protected-resource";
 const CLIENT = "https://claude.ai/oauth/mcp-oauth-client-metadata";
@@ -102,12 +103,13 @@ beforeAll(async () => {
   admin = openFixturePool();
   await migrate(pool);
   app = createApp(options());
-  for (const sub of [subA, subB]) await rest(web(sub), "GET", "/account");
+  for (const sub of [subA, subB, subU]) await rest(web(sub), "GET", "/account");
   // The first call connects the client with the default right "create drafts" (US-KI-07).
   await rest(ai(subA, "pflanzen:draft"), "GET", "/mcp/session");
+  await rest(ai(subU, "pflanzen:read"), "GET", "/mcp/session");
 });
 afterAll(async () => {
-  const subs = [[subA, subB]];
+  const subs = [[subA, subB, subU]];
   await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     subs,
@@ -312,6 +314,17 @@ describe("US-KI-07 FR-KI-06 the protocol", () => {
       timeZone: "Mars/Base",
     });
     expect(tz.result["structuredContent"].error.code).toBe("input.invalid");
+  });
+
+  it("FR-KI-22 a name that is no tool and no human-only name is -32602 Unknown tool and writes no log entry, also a name of Object.prototype", async () => {
+    const logged = async () =>
+      ((await rest(web(subU), "GET", "/ai/log")).body["log"] as Json[]).length;
+    const before = await logged();
+    for (const name of ["drop_tables", "constructor", "toString", "__proto__"]) {
+      const r = await rpc(ai(subU, "pflanzen:write"), "tools/call", { name, arguments: {} });
+      expect(r.body["error"]).toMatchObject({ code: -32602, message: `Unknown tool: ${name}` });
+    }
+    expect(await logged()).toBe(before);
   });
 });
 

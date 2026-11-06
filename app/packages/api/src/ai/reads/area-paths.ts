@@ -1,4 +1,4 @@
-import type { AreaName, NotReleasedRead } from "@pflanzendex/core";
+import type { AreaName, NotReleasedCall } from "@pflanzendex/core";
 
 /** The route of each area read of the AI interface (US-KI-12); the tools call these with the caller's token. */
 export const AREA_PATHS: Readonly<Record<AreaName, string>> = {
@@ -27,5 +27,5 @@ export const AREA_PATHS: Readonly<Record<AreaName, string>> = {
   list_ai_drafts: "/mcp/drafts",
 };
 
-/** The reads that are never released (FR-KI-10): `GET /mcp/not-released/<subject>` answers `ai.not_released`. */
-export const notReleasedPath = (subject: NotReleasedRead) => `/mcp/not-released/${subject}`;
+/** The calls that are never released (FR-KI-10, FR-KI-22): `GET /mcp/not-released/<subject>` answers `ai.not_released`. */
+export const notReleasedPath = (subject: NotReleasedCall) => `/mcp/not-released/${subject}`;
