@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { Button } from "@/shared/ui/button/button";
 import { ChunkErrorBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
+import { useLoadingWindow } from "@/shared/platform/routing/lazy-page/loading-window";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { SheetPanelProps } from "@/shared/ui/overlays/sheet/sheet-panel/sheet-panel";
 import table from "./sheet.de.json";
@@ -24,7 +25,7 @@ function useSheet(): SheetState {
 
 /** Starts fetching the sheet code; a failure here is retried by the real open, which shows the error (P-10). */
 function preload(): void {
-  void loadPanel().catch(() => undefined);
+  void SheetPanel.load().catch(() => undefined);
 }
 
 export type SheetProps = {
@@ -100,19 +101,36 @@ SheetTrigger.displayName = "SheetTrigger";
 export type SheetContentProps = Omit<SheetPanelProps, "open" | "onOpenChange">;
 
 /**
- * The loading state of a sheet whose chunk is still on its way (NFR-12, P-10): a bottom panel with the look of the error
- * view. It takes no focus, so the trigger keeps it while the code loads.
+ * The loading state of a sheet whose chunk is still on its way (NFR-12, P-10): a centred panel with the same look as the
+ * dialog's (US-QS-07). Pinned to the bottom edge it covered the navigation labels on a phone (issue 1575). It takes no
+ * focus, so the trigger keeps it while the code loads.
  */
 function SheetLoading() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-3 border-t border-border bg-background p-4 pb-[env(safe-area-inset-bottom)] text-center text-foreground"
+      className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-card border border-border bg-background p-6 text-center text-foreground shadow-elevation-2"
     >
       <p className="text-base font-semibold">{t("sheet.loading")}</p>
     </div>
   );
 }
+
+/**
+ * The sheet panel once its chunk has loaded. Until then it shows the loading state, but only after the delay, so a
+ * sheet that is already loaded opens without a flash (US-QS-07, DS-08). The body keeps its boundary: a lazy part inside
+ * it waits under the same fallback instead of reaching the route's boundary.
+ */
+const SheetWindow = React.forwardRef<HTMLDivElement, SheetPanelProps>((props, ref) => {
+  const { Component, waiting } = useLoadingWindow(SheetPanel, props.open);
+  if (!Component) return waiting ? <SheetLoading /> : null;
+  return (
+    <React.Suspense fallback={props.open ? <SheetLoading /> : null}>
+      <Component ref={ref} {...props} />
+    </React.Suspense>
+  );
+});
+SheetWindow.displayName = "SheetWindow";
 
 /** Bottom sheet content (US-QS-07, DS-23, DS-40): see `shared/patterns/elements/sheet-panel`. A failed chunk shows an error with retry. */
 const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props, ref) => {
@@ -138,9 +156,7 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props,
         ) : null
       }
     >
-      <React.Suspense fallback={open ? <SheetLoading /> : null}>
-        <SheetPanel ref={ref} {...props} open={open} onOpenChange={setOpen} />
-      </React.Suspense>
+      <SheetWindow ref={ref} {...props} open={open} onOpenChange={setOpen} />
     </ChunkErrorBoundary>
   );
 });
