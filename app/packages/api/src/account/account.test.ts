@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ERROR_TEXTS } from "@pflanzendex/core";
 import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp } from "../app";
 import { onlyWithConfirmedEmail, type TokenVerifier } from "./index";
@@ -161,7 +162,9 @@ describe("sharing with friends only with a confirmed email address (US-ACC-01)",
       ...using(`valid:${sub1}:no`),
     });
     expect(res.status).toBe(403);
-    expect(await res.json()).toEqual({ error: { code: "email_unbestaetigt" } });
+    expect(await res.json()).toEqual({
+      error: { code: "account.email_unconfirmed", text: ERROR_TEXTS["account.email_unconfirmed"] },
+    });
   });
 
   it("confirmed: allowed", async () => {
