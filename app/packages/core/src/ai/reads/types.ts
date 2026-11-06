@@ -18,6 +18,12 @@ export interface SpeciesItem {
   readonly specimens: number;
 }
 
+/** The species of the app's search (FR-BES-24): at most the cap; `more` is true when more species match. */
+export interface SpeciesSearchItems {
+  readonly species: readonly SpeciesItem[];
+  readonly more: boolean;
+}
+
 /** A specimen as the collection shows it: the card of an active one (US-BES-06), the archive entry of an archived one. */
 export interface SpecimenItem {
   readonly id: string;
@@ -62,7 +68,10 @@ export interface MeasurementsRead {
  * "not found or not the account's" (both look the same).
  */
 export interface CollectionReadSource {
-  searchSpecies(userId: string, text: string): Promise<readonly SpeciesItem[]>;
+  /** The species the app's search shows for `text` (at most the cap), and whether more match (FR-BES-24). */
+  searchSpecies(userId: string, text: string): Promise<SpeciesSearchItems>;
+  /** The species whose name equals `text` as a whole, also beyond the cap of `searchSpecies` (FR-BES-24). */
+  exactSpecies(userId: string, text: string): Promise<readonly SpeciesItem[]>;
   species(userId: string, id: string): Promise<object | null>;
   /** All specimens, active and archived. `timeZone` decides "today" of the cards (NFR-08). */
   specimens(userId: string, timeZone: string): Promise<readonly SpecimenItem[]>;

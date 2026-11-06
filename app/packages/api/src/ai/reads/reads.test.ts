@@ -295,3 +295,50 @@ describe("US-KI-11 tenant isolation per tool (P-04, FR-KI-23)", () => {
     expect(text).toContain("Regal bernd");
   });
 });
+
+describe("FR-BES-24 the AI search says when its list is cut", () => {
+  // Fifty proposals of anna contain "Zz<tag>" and sort before the target "Zz<tag>" in name order (letters only).
+  const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  const proposal = (latinName: string) => ({
+    latinName,
+    synonyms: [],
+    difficulty: 2,
+    standardLevel: 3,
+    lightDemandLux: 40000,
+    growthMeasure: "rosette_diameter",
+    etiolationSigns: "Rosette streckt sich.",
+    successCriteria: "Dichte, flache Rosette.",
+  });
+  let targetId = "";
+  beforeAll(async () => {
+    for (let i = 0; i < 50; i++)
+      expect(
+        (await call(web(subA), "POST", "/species", proposal(`Ka${letters(i)} Zz${tag}`))).status,
+      ).toBe(201);
+    const target = await call(web(subA), "POST", "/species", proposal(`Zz${tag}`));
+    expect(target.status).toBe(201);
+    targetId = target.body["id"];
+  });
+
+  it("FR-BES-24 search_species says more when more species match than the list shows, and shows the cap", async () => {
+    const r = await tool(subA, "search_species", { query: `Zz${tag}` });
+    expect(r.error).toBe(false);
+    expect(r.body).toMatchObject({ total: 50, nextOffset: null, more: true });
+    expect(r.body["items"]).toHaveLength(50);
+    expect(r.body["items"].map((i: Json) => i["id"])).not.toContain(targetId);
+  });
+
+  it("FR-BES-24 search_species says more false when the list is complete (P-08: no count is guessed)", async () => {
+    const own = await tool(subA, "search_species", { query: `Kiread${tag}anna` });
+    expect(own.body).toMatchObject({ total: 1, more: false });
+    // Foreign proposals never count toward `more` (P-05): B sees none of A's.
+    const foreign = await tool(subB, "search_species", { query: `Zz${tag}` });
+    expect(foreign.body).toMatchObject({ items: [], total: 0, more: false });
+  });
+
+  it("FR-BES-24 get_species resolves an exact name beyond the cap of the search", async () => {
+    const r = await tool(subA, "get_species", { species: `Zz${tag}` });
+    expect(r.error).toBe(false);
+    expect(r.body["species"]).toMatchObject({ id: targetId, latinName: `Zz${tag}` });
+  });
+});

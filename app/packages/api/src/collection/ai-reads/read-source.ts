@@ -1,6 +1,7 @@
 import {
   localToday,
   measurementView,
+  speciesExact,
   speciesLoad,
   speciesSearch,
   specimenArchived,
@@ -10,6 +11,7 @@ import {
   type CollectionReadSource,
   type SpecimenCard,
   type SpecimenItem,
+  type SpeciesHit,
 } from "@pflanzendex/core";
 import {
   LocationPostgres,
@@ -47,6 +49,18 @@ async function archivedItems(
   }));
 }
 
+/** Species of the app's search as the AI items: the own specimens of each species are counted from `mine`. */
+const itemsOf = (hits: readonly SpeciesHit[], mine: readonly { readonly speciesId: string }[]) =>
+  hits.map((s) => ({
+    id: s.id,
+    latinName: s.latinName,
+    germanName: s.germanName,
+    synonyms: s.synonyms,
+    reviewStatus: s.reviewStatus,
+    own: s.own,
+    specimens: mine.filter((m) => m.speciesId === s.id).length,
+  }));
+
 /** A card of the app (`specimenCards`) as an item. */
 const cardItem = (c: SpecimenCard): SpecimenItem => ({
   id: c.id,
@@ -83,20 +97,18 @@ export function collectionReadSourceFor(
 
   return {
     async searchSpecies(userId, text) {
-      const [{ species: hits }, mine] = await Promise.all([
+      const [{ species: hits, more }, mine] = await Promise.all([
         speciesSearch(species, userId, text),
         specimenList(specimens, userId),
       ]);
-      const count = (id: string) => mine.filter((s) => s.speciesId === id).length;
-      return hits.map((s) => ({
-        id: s.id,
-        latinName: s.latinName,
-        germanName: s.germanName,
-        synonyms: s.synonyms,
-        reviewStatus: s.reviewStatus,
-        own: s.own,
-        specimens: count(s.id),
-      }));
+      return { species: itemsOf(hits, mine), more };
+    },
+    async exactSpecies(userId, text) {
+      const [hits, mine] = await Promise.all([
+        speciesExact(species, userId, text),
+        specimenList(specimens, userId),
+      ]);
+      return itemsOf(hits, mine);
     },
     species: (userId, id) => speciesLoad(species, userId, id),
     async specimens(userId, timeZone) {
