@@ -30,6 +30,10 @@ const GATE_FILES = [
   // a shrink needs no human, a change that grows one is judged by baseline-growth.mjs (US-QG-07, FR-QG-17).
   /^app\/config\/gates\/[^/]+\.json$/,
   /^app\/packages\/[^/]+\/(vitest\.config\.ts|tsconfig\.json)$/,
+  // The display tolerances (US-QG-07, FR-QG-17): the one-screen limits in baseline.ts and the a11y judgement in
+  // findings.ts (what counts as worse than the baseline). Loosening either one turns a red run green.
+  /^app\/packages\/e2e\/support\/display\/one-screen\/baseline\.ts$/,
+  /^app\/packages\/e2e\/support\/display\/a11y\/findings\.ts$/,
 ];
 
 export function isGateFile(relativePath) {
