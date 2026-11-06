@@ -38,6 +38,12 @@
     "title": "Sammlung"
   },
   {
+    "id": "collection-labels",
+    "account": "test2",
+    "path": "/collection/labels",
+    "title": "Etiketten drucken"
+  },
+  {
     "id": "collection-view-wishlist",
     "account": "test2",
     "path": "/collection?view=wishlist",
@@ -864,6 +870,13 @@
     "path": "/unlock/unbekannt",
     "route": "/unlock/:id",
     "title": "Freischalten: unbekannt"
+  },
+  {
+    "id": "label-unbekannt",
+    "account": "test2",
+    "path": "/label/unbekannt",
+    "route": "/label/:id",
+    "title": "Pflanze nicht gefunden"
   },
   {
     "id": "operator-sheet-zahlen",

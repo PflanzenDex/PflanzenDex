@@ -21,7 +21,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [00-Product-Overview.md](00-product-overview.md)                                     | Vision, target group, actors, principles, domain model, glossary                                                                              |
 | [01-Accounts-and-Onboarding.md](01-accounts-and-onboarding.md)                       | Epic ACC: account, sign-in, profile, invitation                                                                                               |
-| [02-Collection.md](02-collection.md)                                                 | Epic BES: species catalog, enrichment from sources, corrections, care profile, review, specimens, cutting, archive                            |
+| [02-Collection.md](02-collection.md)                                                 | Epic BES: species catalog, enrichment from sources, corrections, care profile, review, specimens, cutting, archive, QR pot labels             |
 | [03-Light-and-Locations.md](03-light-and-locations.md)                               | Epic LIC: light zones, locations, distribution, position                                                                                      |
 | [04-Care-Phases.md](04-care-phases.md)                                               | Epic PHA: dormancy/growth phase, location reconciliation                                                                                      |
 | [05-Growth-and-Photos.md](05-growth-and-photos.md)                                   | Epic WAC: measurement, trend, etiolation, photos                                                                                              |
@@ -65,7 +65,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | Epic                             | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
 | -------------------------------- | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
 | ACC Accounts                     | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
-| BES Collection                   | 17      | 2      | 14      | 1      | 0 · 8 · 15                | 8                      | 9       |
+| BES Collection                   | 18      | 2      | 15      | 1      | 1 · 8 · 15                | 8                      | 10      |
 | LIC Light and locations          | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
 | PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
 | WAC Growth/photos                | 7       | 4      | 3       | 0      | 5 · 0 · 1                 | 6                      | 1       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **215** | **43** | **133** | **39** |                           | **50**                 | **165** |
+| **Total**                        | **216** | **43** | **134** | **39** |                           | **50**                 | **166** |
 
 <!-- spec-status:end -->
 

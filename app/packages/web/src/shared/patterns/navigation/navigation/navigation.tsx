@@ -54,6 +54,8 @@ export const PATHS: Record<View, string> = {
  */
 /** The quick flow for a further plant, below the Sammlung (US-ONB-01). */
 export const ADD_PLANT_PATH = `${PATHS.collection}/new`;
+/** The print of the QR pot labels of the plants (US-BES-17); a sub-page of the Sammlung, shown only while "pot_labels" is on. */
+export const LABELS_PATH = `${PATHS.collection}/labels`;
 export const LEGACY_SPECIES_PATH = "/species";
 export const CATALOG_ADDRESS = `${PATHS.discover}?view=catalog`;
 export const PROFILE_BASE = `${PATHS.discover}/species`;
