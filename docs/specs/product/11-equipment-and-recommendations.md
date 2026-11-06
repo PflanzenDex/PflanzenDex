@@ -2,19 +2,22 @@
 
 Goal: the keeper records their plant equipment (lamps, timers, sensors, substrate, fertilizer, pots, …). This ties the light zones to real devices, makes gaps and maintenance visible and is the **honest basis for labeled affiliate recommendations** (stage 2 in `13-Business-Case.md`). The recommendation is a by-product of a real need, not the purpose of the tracking.
 
+Note (US-BES-19): a pot is an equipment record of type `Pot` (DM-EQU-05). The repot planner that uses pots, with the free-pot list and the repot hints, is US-BES-19 in `02-collection.md`.
+
 Replacement: replaces `../prototype/13-equipment-and-affiliate.md`. Dropped: equipment notes in the vault, `processFrontMatter`, "equipment in the vault is the truth" (FR-EQU-02). In terms of content the stories and the rules for recommendations apply unchanged.
 
 ## Terms
 
-| Term           | Meaning                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Equipment      | Everything material for care except the plants. One record per device or per consumable type.                     |
-| Device         | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                           |
-| Consumable     | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                           |
-| Lamp device    | Device of type lamp, assigned to a light zone (US-LIC-05).                                                        |
-| Product id     | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not. |
-| Recommendation | Product suggestion shown by the system with reasoning from own data.                                              |
-| Affiliate link | Labeled product link with commission; arises only at display time.                                                |
+| Term           | Meaning                                                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Equipment      | Everything material for care except the plants. One record per device or per consumable type.                              |
+| Device         | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                                    |
+| Consumable     | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                                    |
+| Pot            | Equipment with a state and a size that holds one plant at a time (DM-EQU-05, US-BES-19); no lifetime, operation or supply. |
+| Lamp device    | Device of type lamp, assigned to a light zone (US-LIC-05).                                                                 |
+| Product id     | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not.          |
+| Recommendation | Product suggestion shown by the system with reasoning from own data.                                                       |
+| Affiliate link | Labeled product link with commission; arises only at display time.                                                         |
 
 ## User stories
 
@@ -181,6 +184,10 @@ Decisions (assumption, decided by the PO): the setting `private` (default) or `f
 ### DM-EQU-04 Recommendation configuration
 
 Per account: `Recommendations_Active` (default `true`), `Hidden`, `Click_Measurement_Consent` (date or empty). The **partner configuration** (programs, partner IDs) belongs to the operator and never to user data (FR-EQU-04).
+
+### DM-EQU-05 Pot (extension)
+
+`Diameter_cm` and `Height_cm` (centimeters, 1 to 300, starting value, assumption), `Material` (text up to 60 characters) and `Drainage` (`yes | no`) are optional; an unknown value reads "unbekannt" (P-08). A pot is an equipment record of type `Pot` with a `Status` (`active | defective | retired`, DM-EQU-01) and no operation data. It holds one plant at a time (US-BES-19). Shared under US-EQU-12, a pot shows only the whitelist (type, name or model, note); its size, material, drainage and location are never shared. Assumption, to confirm by the owner: US-EQU-04 counts every record with a state as a device, which would include pots; a pot carries no operation data and no check interval.
 
 ## Requirements
 
