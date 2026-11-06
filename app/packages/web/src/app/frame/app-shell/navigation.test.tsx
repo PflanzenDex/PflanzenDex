@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./app-shell";
 import {
   BRAND_HREF,
@@ -351,5 +351,75 @@ describe("US-QS-11 · the desktop navigation shows the key of its destination", 
     const heute = within(sidebar).getByRole("link", { name: "Heute" });
     expect(heute.getAttribute("aria-keyshortcuts")).toBeNull();
     expect(heute.querySelector("kbd")).toBeNull();
+  });
+});
+
+describe("US-QS-14 the bars below and from 30 rem of window height", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-14 the app bar and the bottom bar are in the flow by default and fixed or sticky only in the tall window", () => {
+    render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const header = document.querySelector("header") as HTMLElement;
+    const bar = document.querySelector("nav[data-bottom-bar]") as HTMLElement;
+    const main = screen.getByRole("main");
+    // The base classes carry no position; the tall-window variant (from 30 rem of height) adds the sticky and fixed ones.
+    expect(header.classList).toContain("tall-window:sticky");
+    expect(header.classList).not.toContain("sticky");
+    expect(bar.classList).toContain("tall-window:fixed");
+    expect(bar.classList).not.toContain("fixed");
+    expect(header.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(main.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("US-QS-14 the shell writes the measured heights as variables, and removes them when it unmounts", () => {
+    // jsdom has no layout and no ResizeObserver: a 45 px app bar and a 75 px bottom bar are measured by hand.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      const height = this.matches("nav[data-bottom-bar]") ? 75 : this.tagName === "HEADER" ? 45 : 0;
+      return {
+        x: 0,
+        y: 0,
+        width: 320,
+        height,
+        top: 0,
+        left: 0,
+        right: 320,
+        bottom: height,
+      } as DOMRect;
+    });
+    const { unmount } = render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const html = document.documentElement.style;
+    const main = screen.getByRole("main");
+    // The ring room of 8 px is added to each bar; tokens.css applies these only in the tall window (from 30 rem).
+    expect(html.getPropertyValue("--header-clearance")).toBe("53px");
+    expect(html.getPropertyValue("--bar-clearance")).toBe("83px");
+    expect(main.style.getPropertyValue("--bar-reserve")).toBe("75px");
+    unmount();
+    expect(html.getPropertyValue("--header-clearance")).toBe("");
+    expect(html.getPropertyValue("--bar-clearance")).toBe("");
+    expect(main.style.getPropertyValue("--bar-reserve")).toBe("");
   });
 });

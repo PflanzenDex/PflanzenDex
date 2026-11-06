@@ -27,6 +27,15 @@
 /* Dark mode follows the system, as today (ADR 0007 decision 6). */
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
+/*
+ * The tall window (US-QS-14, owner decision 2026-11-06): from about 30 rem of window height (starting value, assumption;
+ * `min-height` includes 30 rem itself) the app bar is sticky and the bottom bar fixed, and the one-screen frames keep the
+ * viewport height. Below it both bars are in the flow and scroll with the content: that is the base style of this file and
+ * of the classes. This is the one definition of the threshold: the sticky decision row (DS-25, #648) and the rules of this
+ * file use the variant.
+ */
+@custom-variant tall-window (@media (min-height: 30rem));
+
 :root {
   --background: #fafafa;
   --foreground: #18181b;
@@ -254,15 +263,12 @@
    * the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Done in CSS with
    * `:has` (never nested: a `:has` inside `:has` is invalid and drops the whole rule), so the app shell needs no code and no route list for it and the initial JavaScript stays within its budget (QG-U6).
    */
-  div:has(> div > main [data-fit-screen]) {
-    height: 100dvh;
-  }
+  /* In a window shorter than the tall window the frame grows with its content: the page scrolls (see the variant below). */
   div:has(> main [data-fit-screen]) {
     min-height: 0;
   }
-  /* A view that fills the height (`data-fit-fill`, e.g. the suggestion card) gets it through the wrapper of the route. */
   main > div:has(> [data-fit-fill]) {
-    height: 100%;
+    height: auto;
   }
   /*
    * The filling view itself (issue 1113): its height is the free height, and at a larger text size whatever no longer
@@ -272,11 +278,10 @@
    * edge is cut off (main pads 1 rem, 1.5 rem from `md`, 2.5 rem from `xl`).
    */
   main > div > [data-fit-fill] {
-    height: calc(100% + 1rem);
     margin: -0.5rem -1rem;
     padding: 0.5rem 1rem;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow-y: visible;
+    overscroll-behavior: auto;
   }
   @media (width >= 48rem) {
     main > div > [data-fit-fill] {
@@ -291,8 +296,44 @@
     }
   }
   main:has([data-fit-screen]) {
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+  /*
+   * The bars and the room they reserve (US-QS-08, US-QS-14): AppShell writes the real heights of the sticky app bar and
+   * of the fixed bottom bar as variables, so a focused element stays clear of them (WCAG 2.4.11). The base style keeps
+   * no scroll padding for them, because the bars scroll with the content; the tall window applies the variables.
+   */
+  html {
+    scroll-padding-top: 0;
+    scroll-padding-bottom: 0;
+  }
+  /*
+   * The tall window (US-QS-14, from 30 rem of height): the bars are sticky and fixed as before, the scroll padding follows
+   * their real heights, and a one-screen view keeps the frame exactly the viewport, with `main` and the filling view
+   * scrolling inside themselves when their content cannot fit (400 % zoom and large text, DS-61). Below it nothing is
+   * pinned to the window height: the page scrolls and the bars follow the content in the flow.
+   */
+  @variant tall-window {
+    html {
+      scroll-padding-top: var(--header-clearance, 0px);
+      scroll-padding-bottom: var(--bar-clearance, 0px);
+    }
+    div:has(> div > main [data-fit-screen]) {
+      height: 100dvh;
+    }
+    main > div:has(> [data-fit-fill]) {
+      height: 100%;
+    }
+    main > div > [data-fit-fill] {
+      height: calc(100% + 1rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    main:has([data-fit-screen]) {
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
   }
 }
 
