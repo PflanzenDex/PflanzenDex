@@ -25,6 +25,7 @@ describe("US-QS-15 every route is in the register of the one-screen gate", () =>
   const ROUTES = [
     "/",
     "/unlock/:id",
+    "/label/:id",
     ...Object.values(PATHS),
     ADD_PLANT_PATH,
     EXCHANGE_PATH,
@@ -45,6 +46,7 @@ describe("US-QS-15 every route is in the register of the one-screen gate", () =>
     '"*"',
     '"/"',
     '"/unlock/:id"',
+    '"/label/:id"',
     '":friendId"',
     "ADD_PLANT_PATH",
     "EXCHANGE_PATH",

@@ -866,6 +866,13 @@
     "title": "Freischalten: unbekannt"
   },
   {
+    "id": "label-unbekannt",
+    "account": "test2",
+    "path": "/label/unbekannt",
+    "route": "/label/:id",
+    "title": "Pflanze nicht gefunden"
+  },
+  {
     "id": "operator-sheet-zahlen",
     "account": "test3",
     "path": "/operator?sheet=zahlen",

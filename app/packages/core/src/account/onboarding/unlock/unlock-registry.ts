@@ -58,6 +58,7 @@ export const KEEPER_SWITCH_IDS = [
   "ai_access",
   "achievement_views",
   "leaf_log",
+  "pot_labels",
 ] as const;
 export type KeeperSwitchId = (typeof KEEPER_SWITCH_IDS)[number];
 
@@ -96,6 +97,7 @@ export const UNLOCK_FUNCTIONS = [
   fn("photos", "WAC", "collection", { rule: "first_plant" }),
   fn("growth", "WAC", "collection", { rule: "first_plant" }),
   fn("leaf_log", "WAC", "collection", { rule: "first_plant", keeperSwitch: "leaf_log" }),
+  fn("pot_labels", "BES", "collection", { rule: "first_plant", keeperSwitch: "pot_labels" }),
   fn("treatments", "BEH", "today", { rule: "first_plant" }),
   fn("pokedex", "POK", "collection", { rule: "first_plant" }),
   fn("wishlist", "WUN", "collection", { rule: "wishes_and_discover", keeperSwitch: "wishlist" }),

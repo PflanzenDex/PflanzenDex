@@ -8,6 +8,7 @@ import {
   type HandOver,
 } from "@/app/destinations/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "../account";
+import { PotLabelPage } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
 import {
@@ -146,6 +147,8 @@ export function AppRoutes(props: {
         {/* "Heute" is the home screen: the root address, old bookmarks and the brand lead there (US-QS-16). */}
         <Route path="/" element={<Navigate to={PATHS.today} replace />} />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
+        {/* A scanned pot label opens its plant (US-BES-17); the id is opaque and the page asks the server as the keeper. */}
+        <Route path="/label/:id" element={<PotLabelPage api={api} token={s.token} />} />
         {social && socialRoutes(api, s.token, locks.page, locks.mark)}
         <Route
           path={PATHS.today}
