@@ -139,8 +139,18 @@ main() {
   local previous
   previous="$(git rev-parse HEAD)"
 
-  # Backup before the deploy (US-DEV-07), only if the database is already running.
-  if "${compose[@]}" ps --status running --services 2> /dev/null | grep -qx db; then ./scripts/backup.sh; fi
+  # Backup before the deploy (US-DEV-07), only if the database is already running. A failing `compose ps` stops the deploy
+  # before any change: an empty answer would look like a stopped database and skip the backup without a word (P-10).
+  local running
+  if ! running="$("${compose[@]}" ps --status running --services)"; then
+    echo "ERROR: ${compose[*]} ps --status running --services failed; the database state is unknown, so no backup decision can be made and nothing was changed." >&2
+    exit 1
+  fi
+  if grep -qx db <<< "$running"; then
+    ./scripts/backup.sh
+  else
+    echo "backup skipped: the database is not running (a first deploy or a stopped stack)"
+  fi
 
   if deploy_ref "$ref"; then echo "Deploy ok: $APP_VERSION ($GIT_SHA, $ref)"; exit 0; fi
 
