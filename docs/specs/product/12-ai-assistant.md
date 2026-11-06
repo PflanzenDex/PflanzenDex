@@ -157,7 +157,7 @@ Acceptance criteria:
 - Given a species that already exists, when the client proposes it again, then the error names the existing species with its id (`species.duplicate` with the id in the details) so the client can use it instead.
 - Tenant isolation (P-04, FR-KI-23): given two accounts A and B, when a connection of A searches, lists or resolves a name, then nothing of B appears, not even B's species proposals or B's location names; an id of B answers `not_found`, never `access.denied` (no existence leak).
 
-### US-KI-12 · Read every other area · ⬜ new
+### US-KI-12 · Read every other area · 🟨 new
 
 As a **plant keeper** I want my AI client to answer questions about every area of my plants, not only "what is due today".
 

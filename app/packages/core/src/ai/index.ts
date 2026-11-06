@@ -81,8 +81,8 @@ export {
   getSpeciesSchema,
   resolveSpecies,
   searchSpeciesSchema,
-} from "./reads/catalog-reads";
-export type { ReadDependencies } from "./reads/catalog-reads";
+} from "./reads/collection/catalog-reads";
+export type { ReadDependencies } from "./reads/collection/catalog-reads";
 export {
   aiGetSpecimen,
   aiListLightZones,
@@ -93,7 +93,20 @@ export {
   listMeasurementsSchema,
   listPlacesSchema,
   listSpecimensSchema,
-} from "./reads/collection-reads";
+  resolveSpecimen,
+} from "./reads/collection/collection-reads";
+// Every other area (US-KI-12) and the reads that are never released (FR-KI-10).
+export { aiAreaRead, aiNotReleased, areaSchema } from "./reads/areas/area-reads";
+export type { AreaReadDependencies } from "./reads/areas/area-reads";
+export { AREA_NAMES, AREA_READS, NOT_RELEASED_READS } from "./reads/areas/area-source";
+export type {
+  AreaName,
+  AreaQuery,
+  AreaRead,
+  AreaReadSource,
+  AppAreaReadSource,
+  NotReleasedRead,
+} from "./reads/areas/area-source";
 export { NAMING_LIMITS, normalizeName, resolveName } from "./reads/naming";
 export type { Named, Resolution } from "./reads/naming";
 export { PAGE_SIZE } from "./reads/types";

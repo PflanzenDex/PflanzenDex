@@ -4,6 +4,7 @@
 // here reads or writes data itself.
 import { rightNeeded, type AiRights } from "@pflanzendex/core";
 import { ACCOUNT_TOOLS } from "./sets/account-tools";
+import { AREA_TOOLS } from "./sets/area-tools";
 import { COLLECTION_TOOLS } from "./sets/collection-tools";
 import { RESEARCH_TOOLS } from "./sets/research-tools";
 import { RULES_TOOLS } from "./sets/rules-tools";
@@ -11,6 +12,7 @@ import type { McpTool } from "./schema";
 
 export { checkArguments } from "./schema";
 export type { McpTool } from "./schema";
+export { NOT_RELEASED_TOOLS } from "./sets/area-tools";
 
 /** The tools per area, in a fixed order; the rule discovery describes them by these areas (US-KI-13). */
 export const MCP_TOOL_SETS: Readonly<Record<string, readonly McpTool[]>> = {
@@ -18,6 +20,7 @@ export const MCP_TOOL_SETS: Readonly<Record<string, readonly McpTool[]>> = {
   research: RESEARCH_TOOLS,
   collection: COLLECTION_TOOLS,
   rules: RULES_TOOLS,
+  areas: AREA_TOOLS,
 };
 
 /** The tools in a fixed order (deterministic `tools/list`). */

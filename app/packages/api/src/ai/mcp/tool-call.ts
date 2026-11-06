@@ -1,11 +1,12 @@
 // Running a tool of the MCP endpoint (E-04): structural check of the arguments, then the tool's route with the caller's
 // token; the route's answer becomes the tool result (KI-R1, KI-R8). Nothing here touches data itself.
-import { appError, rankOf } from "@pflanzendex/core";
+import { appError, rankOf, type NotReleasedRead } from "@pflanzendex/core";
 import type { Context, Hono } from "hono";
 import { errorBody } from "../../kernel";
 import type { AiEnv } from "../guard/client-auth";
 import { RPC } from "./protocol";
-import { checkArguments, MCP_TOOLS, toolRight, type McpTool } from "./tools";
+import { checkArguments, MCP_TOOLS, NOT_RELEASED_TOOLS, toolRight, type McpTool } from "./tools";
+import { notReleasedPath } from "../reads/area-paths";
 
 /** What the endpoint needs besides the guard: the routes the tools call, the allowed origins and the server's version. */
 export interface McpOptions {
@@ -69,6 +70,14 @@ async function runTool(
   return toolResult(res);
 }
 
+/** A call for data that is never released (FR-KI-10): its route answers `ai.not_released` and logs the call. */
+async function notReleased(c: Context<AiEnv>, opt: McpOptions, subject: NotReleasedRead) {
+  const res = await opt.routes.request(notReleasedPath(subject), {
+    headers: { authorization: c.req.header("authorization") ?? "" },
+  });
+  return toolResult(res);
+}
+
 export function available(opt: McpOptions) {
   return MCP_TOOLS.filter((t) => opt.sources || !t.needsSources);
 }
@@ -80,6 +89,8 @@ export async function callTool(
 ): Promise<Answer> {
   const { name, arguments: raw = {} } = params;
   const tool = available(opt).find((t) => t.name === name);
+  const refused = NOT_RELEASED_TOOLS[String(name)];
+  if (!tool && refused) return { result: await notReleased(c, opt, refused) };
   if (!tool)
     return { error: { code: RPC.invalidParams, message: `Unknown tool: ${String(name)}` } };
   if (typeof raw !== "object" || raw === null || Array.isArray(raw))
