@@ -112,7 +112,7 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
     const long = Array(40).fill("Wort").join(" ");
     render(
       <MemoryRouter>
-        <WhatsNewList lines={[long, "Kurz"]} version="1.2.3" />
+        <WhatsNewList entries={entriesOf([long, "Kurz"])} version="1.2.3" />
       </MemoryRouter>,
     );
     const clamped = (index: number) =>
