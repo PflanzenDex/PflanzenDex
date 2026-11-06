@@ -275,6 +275,15 @@ describe("US-ONB-09 keeper switch (P-12): a third state beside operator switch a
     expect(state("swapping", off("wishlist"))).toBe("locked");
   });
 
+  it("US-WAC-07 the leaf log has a keeper switch of its own: off means keeper_off, on means open or locked by the first plant", () => {
+    expect(state("leaf_log", off("leaf_log"))).toBe("keeper_off");
+    expect(of("leaf_log", off("leaf_log"))).toMatchObject({ announced: false, reasons: [] });
+    expect(state("leaf_log", input())).toBe("open");
+    expect(state("leaf_log", input({ activeSpecimens: 0, firstSpecimenDate: null }))).toBe(
+      "locked",
+    );
+  });
+
   it("US-ONB-09 the three achievement functions share the achievements switch", () => {
     for (const id of ["care_rhythm", "anniversaries", "year_in_review"])
       expect(state(id, off("achievement_views"))).toBe("keeper_off");
@@ -308,6 +317,7 @@ describe("US-ONB-09 keeper switch (P-12): a third state beside operator switch a
       "friends",
       "ai_access",
       "achievement_views",
+      "leaf_log",
     ]);
     expect(UNLOCK_FUNCTIONS.length).toBe(CORE_FUNCTION_IDS.length + keeperFunctions.length);
   });

@@ -68,7 +68,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | BES Collection                   | 16      | 2      | 14      | 0      | 0 · 8 · 14                | 8                      | 8       |
 | LIC Light and locations          | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
 | PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
-| WAC Growth/photos                | 6       | 4      | 2       | 0      | 5 · 0 · 1                 | 6                      | 0       |
+| WAC Growth/photos                | 7       | 4      | 3       | 0      | 5 · 0 · 1                 | 6                      | 1       |
 | BEH Treatments                   | 4       | 4      | 0       | 0      | 4 · 0 · 2                 | 4                      | 0       |
 | WUN Wishlist                     | 6       | 1      | 5       | 0      | 2 · 0 · 5                 | 5                      | 1       |
 | POK Pokédex                      | 12      | 0      | 11      | 1      | 0 · 0 · 11                | 10                     | 2       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **213** | **43** | **132** | **38** |                           | **50**                 | **163** |
+| **Total**                        | **214** | **43** | **133** | **38** |                           | **50**                 | **164** |
 
 <!-- spec-status:end -->
 
