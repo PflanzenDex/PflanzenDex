@@ -11,7 +11,7 @@ export const ERROR_TEXTS = {
     "Dieser Schlüssel wurde bereits mit anderen Angaben verwendet. Bitte versuche es neu.",
   "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
   "request.rate_limited":
-    "Zu viele Änderungen in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
+    "Zu viele Versuche in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
   "system.unexpected":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
   "system.database_unavailable":
@@ -76,7 +76,7 @@ export const ERROR_TEXTS = {
     "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
   "ai.reference_ambiguous":
     "Der Name passt auf mehrere Einträge. Es wurde nichts getan; wähle einen der genannten Einträge.",
-  "ai.not_released": "Freundesdaten, Freigaben, Tausch und Empfehlungen bleiben in der App.",
+  "ai.not_released": "Das geht nur in der App, nicht über eine KI-Verbindung.",
   "ai.no_client":
     "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",

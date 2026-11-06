@@ -3,20 +3,23 @@ import { Slot } from "@radix-ui/react-slot";
 import { Button } from "@/shared/ui/button/button";
 import { ChunkErrorBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
+import { useLoadingWindow } from "@/shared/platform/routing/lazy-page/loading-window";
+import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
 import { texts } from "@/shared/lib/text-rules/texts";
+import type { DialogModalProps } from "./dialog-modal/dialog-modal";
 import table from "./dialog-part.de.json";
 
 const t = texts(table);
 
 // The dialog (Radix: focus trap, scroll lock, portal) is only needed once a dialog opens, so its code is a lazy chunk
 // (DS-08, NFR-12). It loads on the first open, or earlier while the browser is idle (`ResponsiveModal`).
-const loadDialog = () =>
-  import("./dialog-modal/dialog-modal").then((m) => ({ default: m.DialogModal }));
-const DialogModal = lazyPage(loadDialog);
+const DialogModal = lazyPage(() =>
+  import("./dialog-modal/dialog-modal").then((m) => ({ default: m.DialogModal })),
+);
 
 /** Starts fetching the dialog code; a failure here is retried by the real open, which shows the error (P-10). */
 export function preloadDialog(): void {
-  void loadDialog().catch(() => undefined);
+  void DialogModal.load().catch(() => undefined);
 }
 
 /**
@@ -31,6 +34,21 @@ function DialogLoading() {
     >
       <p className="text-base font-semibold">{t("dialog.loading")}</p>
     </div>
+  );
+}
+
+/**
+ * The dialog once its chunk has loaded. Until then it shows the loading state, but only after the delay, so a dialog
+ * that is already loaded opens without a flash (US-QS-07, DS-08). The body keeps its boundary: a lazy part inside it
+ * waits under the same fallback instead of reaching the route's boundary.
+ */
+function DialogWindow(props: DialogModalProps) {
+  const { Component, waiting } = useLoadingWindow(DialogModal, props.open, props.onOpenChange);
+  if (!Component) return waiting ? <DialogLoading /> : null;
+  return (
+    <React.Suspense fallback={props.open ? <DialogLoading /> : null}>
+      <Component {...props} />
+    </React.Suspense>
   );
 }
 
@@ -62,6 +80,8 @@ export type DialogPartProps = {
   opened: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenAutoFocus?: ((event: Event) => void) | undefined;
+  /** The element the focus returns to when there is no trigger (US-QS-08); the view's start when it has left the page. */
+  returnFocusTo?: React.RefObject<HTMLElement | null> | undefined;
   body: React.ReactNode;
 };
 
@@ -79,9 +99,13 @@ export function DialogPart(props: DialogPartProps) {
     opened,
     onOpenChange,
     onOpenAutoFocus,
+    returnFocusTo,
     body,
   } = props;
   const opener = React.useRef<HTMLElement>(null);
+  // Radix would return the focus to its own trigger, which a controlled dialog does not render (issue 1247, US-QS-08):
+  // the focus goes to the opener of the trigger, or to the one given, and to the view's start when that has left.
+  const closeFocus = returnFocusOnClose(trigger ? opener : returnFocusTo);
   return (
     <>
       {trigger ? (
@@ -111,19 +135,17 @@ export function DialogPart(props: DialogPartProps) {
             ) : null
           }
         >
-          <React.Suspense fallback={open ? <DialogLoading /> : null}>
-            <DialogModal
-              open={open}
-              onOpenChange={onOpenChange}
-              title={title}
-              {...(description ? { description } : {})}
-              {...(closeLabel ? { closeLabel } : {})}
-              {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
-              returnFocusTo={opener}
-            >
-              {body}
-            </DialogModal>
-          </React.Suspense>
+          <DialogWindow
+            open={open}
+            onOpenChange={onOpenChange}
+            title={title}
+            {...(description ? { description } : {})}
+            {...(closeLabel ? { closeLabel } : {})}
+            {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
+            {...(closeFocus ? { onCloseAutoFocus: closeFocus } : {})}
+          >
+            {body}
+          </DialogWindow>
         </ChunkErrorBoundary>
       ) : null}
     </>

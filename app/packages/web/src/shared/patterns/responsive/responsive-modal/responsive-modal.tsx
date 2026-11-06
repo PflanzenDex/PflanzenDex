@@ -2,6 +2,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
 import { DialogPart, preloadDialog } from "./dialog-part/dialog-part";
 
 const TEXT_FIELD =
@@ -39,6 +40,11 @@ export type ResponsiveModalProps = {
   onOpenChange?: (open: boolean) => void;
   /** Focus on open; Radix's default (the first focusable element) unless given, e.g. `focusModalTitle` for a layer. */
   onOpenAutoFocus?: (event: Event) => void;
+  /**
+   * The element the focus returns to when the modal closes, for a controlled modal without a trigger (US-QS-08). When it
+   * has left the page, the focus goes to the start of the view (`returnFocus`). Omit it to keep the default of each container.
+   */
+  returnFocusTo?: React.RefObject<HTMLElement | null> | undefined;
   children: React.ReactNode;
 };
 
@@ -74,6 +80,7 @@ export function ResponsiveModal({
   open: openProp,
   onOpenChange,
   onOpenAutoFocus,
+  returnFocusTo,
   children,
 }: ResponsiveModalProps) {
   const isMd = useIsMd();
@@ -94,6 +101,8 @@ export function ResponsiveModal({
 
   const { host, body } = useHost();
   const copy = description ? { description } : {};
+  // A sheet returns the focus to the element given, as the dialog does (US-QS-08); Vaul would use what had the focus at open.
+  const sheetCloseFocus = returnFocusOnClose(returnFocusTo);
 
   return (
     <>
@@ -107,12 +116,18 @@ export function ResponsiveModal({
           opened={opened}
           onOpenChange={setOpen}
           onOpenAutoFocus={onOpenAutoFocus}
+          returnFocusTo={returnFocusTo}
           body={body}
         />
       ) : (
         <Sheet open={open} onOpenChange={setOpen}>
           {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
-          <SheetContent title={title} {...copy} {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}>
+          <SheetContent
+            title={title}
+            {...copy}
+            {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
+            {...(sheetCloseFocus ? { onCloseAutoFocus: sheetCloseFocus } : {})}
+          >
             {body}
           </SheetContent>
         </Sheet>

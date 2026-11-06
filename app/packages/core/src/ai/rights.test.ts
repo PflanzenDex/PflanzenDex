@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NOT_RELEASED_CALLS } from "./reads/areas/area-source";
 import {
   AI_OPERATION_CLASSES,
   AI_RIGHTS,
@@ -46,5 +47,12 @@ describe("US-KI-07 rights are ascending scopes", () => {
       "unknown_operation",
     ])
       expect(mayCall("write", name)).toBe(false);
+  });
+
+  it("FR-KI-22 every operation of a human-only call is of class never, so no right reaches it", () => {
+    for (const operation of new Set(Object.values(NOT_RELEASED_CALLS))) {
+      expect(AI_OPERATION_CLASSES[operation]).toBe("never");
+      for (const right of AI_RIGHTS) expect(mayCall(right, operation)).toBe(false);
+    }
   });
 });

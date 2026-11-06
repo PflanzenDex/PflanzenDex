@@ -39,6 +39,7 @@ import {
   accountEtag,
   errorBody,
   featureAccess,
+  redeemGate,
   runningVersion,
   statusFor,
   writeLimit,
@@ -80,7 +81,10 @@ function bindAccount(
     pool,
     opt.invitationOnly === undefined ? {} : { invitationOnly: opt.invitationOnly },
   );
-  app.route("/", registrationRoutes(pool, verifier));
+  app.route(
+    "/",
+    registrationRoutes(pool, verifier, opt.redeemLimit ? redeemGate(opt.redeemLimit) : undefined),
+  );
   // `/account/*` also matches `/account` itself: one registration guards both (NFR-12).
   app.use("/account/*", auth);
   app.route("/account", accountRoutes(pool, opt.access));
