@@ -214,8 +214,8 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(pressed("Nach Pflegephase")).toBe(true);
   });
 
-  it("US-QS-19 choosing a grouping changes the address, starts at page 1, returns the focus to Ansicht and announces it", async () => {
-    renderAt("/collection?view=plants&page=2");
+  it("US-QS-19 choosing a grouping changes the address, starts at the first entry, returns the focus to Ansicht and announces it", async () => {
+    renderAt("/collection?view=plants&from=6");
     await screen.findByText("4 Pflanzen");
     await openView();
     await userEvent.click(screen.getByRole("button", { name: "Nach Standort" }));

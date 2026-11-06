@@ -7,6 +7,7 @@ import {
   LayerSheet,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { errorText } from "@/shared/lib/error-text";
@@ -31,17 +32,16 @@ const PART_VALUES = ["mine", "friends", "requests", "history"] as const;
 type Part = (typeof PART_VALUES)[number];
 const isPart = (v: string | null): v is Part => PART_VALUES.some((p) => p === v);
 
-/** The part of the exchange from the address (`part=`); choosing one starts its list at page 1 (the parts share `page`). */
+/** The part of the exchange from the address (`part=`); choosing one starts its list at the first entry (the parts share `from`). */
 function usePart(): [Part, (value: Part) => void] {
   const [params, setParams] = useSearchParams();
   const raw = params.get("part");
   const part: Part = isPart(raw) ? raw : "mine";
-  // A changed part starts at its first page: the parts share the address part `page`.
+  // A changed part starts at its first entry: the parts share the address part `from`; `rfrom` and `sfrom` go with it,
+  // as `rpage` and `spage` did.
   const choose = (value: Part) => {
     const next = new URLSearchParams(params);
-    next.delete("page");
-    next.delete("rpage");
-    next.delete("spage");
+    dropPageParts(next, PAGE_PARAM, "rfrom", "sfrom");
     if (value === "mine") next.delete("part");
     else next.set("part", value);
     setParams(next, { replace: true });

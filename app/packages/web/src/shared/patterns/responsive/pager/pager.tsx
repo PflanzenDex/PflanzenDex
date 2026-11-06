@@ -1,27 +1,28 @@
 import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
-import { pageAfterResize, usePageFit } from "./use-page-fit";
+import { usePageFit } from "./use-page-fit";
+import { PAGE_PARAM, hasOldPart, namedEntry, pagedIn, position } from "./paging/address";
 import {
   PagingNote,
-  parsePage,
   usePageAddress,
   usePagingMore,
+  useFirstEntryWrite,
   useResetPage,
   useRetryFocus,
   type PagerPaging,
 } from "./paging/paging";
 
 export type { PagerPaging } from "./paging/paging";
+export { PAGE_PARAM, dropPageParts } from "./paging/address";
 
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
-const PARAM = "page";
 /** The address part of the pages of a list inside a layer, so it does not compete with the screen behind it (US-QS-22). */
-export const LAYER_PARAM = "lpage";
+export const LAYER_PARAM = "lfrom";
 
 /** Pointer handlers that turn a horizontal swipe into a page change, as an alternative to the buttons. */
-function useSwipe(page: number, pages: number, go: (target: number) => void) {
+function useSwipe(page: number, pages: number, turn: (delta: 1 | -1) => void) {
   const start = React.useRef<{ x: number; y: number } | null>(null);
   return {
     onPointerDown: (e: React.PointerEvent) => {
@@ -34,8 +35,8 @@ function useSwipe(page: number, pages: number, go: (target: number) => void) {
       const dx = e.clientX - from.x;
       const dy = e.clientY - from.y;
       if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      if (dx < 0 && page < pages) go(page + 1);
-      if (dx > 0 && page > 1) go(page - 1);
+      if (dx < 0 && page < pages) turn(1);
+      if (dx > 0 && page > 1) turn(-1);
     },
     onPointerCancel: () => {
       start.current = null;
@@ -54,11 +55,11 @@ const DISABLED_PAGE_BUTTON =
 function PagerBar({
   page,
   pages,
-  go,
+  turn,
 }: {
   page: number;
   pages: number;
-  go: (target: number) => void;
+  turn: (delta: 1 | -1) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -67,7 +68,7 @@ function PagerBar({
         variant="outline"
         className={DISABLED_PAGE_BUTTON}
         disabled={page <= 1}
-        onClick={() => go(page - 1)}
+        onClick={() => turn(-1)}
       >
         Zurück
       </Button>
@@ -83,7 +84,7 @@ function PagerBar({
         variant="outline"
         className={DISABLED_PAGE_BUTTON}
         disabled={page >= pages}
-        onClick={() => go(page + 1)}
+        onClick={() => turn(1)}
       >
         Weiter
       </Button>
@@ -105,9 +106,9 @@ export type PagerProps<T> = {
   label: string;
   /** Classes of the list, e.g. a grid of tiles; the default is a column. */
   listClassName?: string;
-  /** A changed value (filter, search) starts again at page 1. */
+  /** A changed value (filter, search) starts again at the first entry. */
   resetKey?: string | number;
-  /** Name of the address part that holds the page; `page` unless another pager shares the address (a list in a layer passes `LAYER_PARAM`). */
+  /** Name of the address part that holds the first entry; `from` unless another pager shares the address (a list in a layer passes `LAYER_PARAM`). */
   param?: string;
   /** Replaces the history entry instead of pushing one, so Back leaves a layer in one step. */
   replace?: boolean;
@@ -124,8 +125,10 @@ export type PagerProps<T> = {
 
 /**
  * Pages of whole entries instead of a long scroll (US-QS-15, DS-58): "Zurück" and "Weiter", the position "Seite n von m"
- * in a polite live region, swipe as an alternative. The page is in the address (`?page=n`, 1-based); a page outside the
- * range shows the nearest valid one. Pages change without sliding, so reduced motion needs nothing extra.
+ * in a polite live region, swipe as an alternative. The address names the first entry on screen (`?from=n`, counted from
+ * 0, FR-BES-23): a page size differs per screen, so only an entry means the same plants everywhere. A step of the person
+ * writes it; a resize writes nothing; an entry past the end shows the last page and the address follows. An old page
+ * number (`?page=n`) is converted once, at the first measurement, and then the address holds the entry.
  */
 export function Pager<T>({
   items,
@@ -135,7 +138,7 @@ export function Pager<T>({
   label,
   listClassName,
   resetKey,
-  param = PARAM,
+  param = PAGE_PARAM,
   replace: replaceEntry = false,
   fit = false,
   paging,
@@ -144,28 +147,18 @@ export function Pager<T>({
   const list = React.useRef<HTMLUListElement>(null);
   const fitted = usePageFit(list, fit);
   const measured = fitted?.size ?? null;
-  const pageSize = measured ?? startingSize;
+  const size = measured ?? startingSize;
   // The entries of the list: all of them on the server (`paging.total`), at least the loaded ones.
   const count = paging ? Math.max(paging.total, items.length) : items.length;
-  const pages = Math.max(1, Math.ceil(count / pageSize));
-  const raw = parsePage(params.get(param));
-  const page = Math.min(raw, pages);
-  const first = (page - 1) * pageSize;
-  const missing = usePagingMore(paging, items.length, first + pageSize, count);
+  const named = namedEntry(params, param, size);
+  const { first, page, pages } = position({ from: named, size, count });
+  const missing = usePagingMore(paging, items.length, first + size, count);
   const note = useRetryFocus(paging, missing, list);
-  // The address follows the page (see pageAfterResize, issue 1029). Passive, not a layout effect: the router subscribes to
-  // the address in its own layout effect, after the children's, so a navigation made earlier would be lost on mount.
-  const measuredBefore = React.useRef<number | null>(null);
-  React.useEffect(() => {
-    const before = measuredBefore.current;
-    measuredBefore.current = measured;
-    if (fit && measured === null) return; // no layout yet: the starting value must not rewrite the address
-    const target = pageAfterResize({ before, measured, raw, count, page });
-    if (params.has(param) && raw !== target) go(target, true);
-  });
-
-  useResetPage(resetKey, params.has(param), go);
-  const swipe = useSwipe(page, pages, go);
+  // The address names the first entry (FR-BES-23, issue 1492); a fit list writes nothing before its layout.
+  useFirstEntryWrite(go, { first, named, old: hasOldPart(params, param), fit, measured });
+  useResetPage(resetKey, pagedIn(params, param), go);
+  const turn = (delta: 1 | -1) => go(Math.max(0, first + delta * size));
+  const swipe = useSwipe(page, pages, turn);
 
   return (
     <div
@@ -179,12 +172,12 @@ export function Pager<T>({
         aria-label={label}
         className={cn("flex flex-col gap-2", fit && "min-h-0 flex-1 content-start", listClassName)}
       >
-        {items.slice(first, first + pageSize).map((item, i) => (
+        {items.slice(first, first + size).map((item, i) => (
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}
       </ul>
       {missing && note ? <PagingNote paging={note} /> : null}
-      {pages > 1 ? <PagerBar page={page} pages={pages} go={go} /> : null}
+      {pages > 1 ? <PagerBar page={page} pages={pages} turn={turn} /> : null}
     </div>
   );
 }
