@@ -156,7 +156,12 @@ export function collectorCards(
   basis: AppRarityBasis = NO_APP_RARITY,
 ): CollectorCard[] {
   const owned = new Map(caught.map((c) => [c.species, c]));
-  const known = new Map(facts.map((f) => [f.latinName, f]));
+  // Two approved species may share a Latin name (no database rule forbids it). The first fact given wins; the read orders
+  // the facts by Latin name and id, so the card takes the same species on every read (US-POK-01).
+  const known = new Map<string, SpeciesFacts>();
+  for (const f of facts) {
+    if (!known.has(f.latinName)) known.set(f.latinName, f);
+  }
   return [...tree].sort(byTree).map((t, i) =>
     cardOf(i + 1, t, {
       facts: known.get(t.latinName) ?? NO_FACTS,

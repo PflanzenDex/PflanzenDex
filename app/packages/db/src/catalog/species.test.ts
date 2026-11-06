@@ -327,6 +327,36 @@ describe("species catalog and review status (TE-08)", () => {
     expect(names).not.toContain(proposal.latinName);
     expect(names).not.toContain(cultivar.latinName);
   });
+
+  it("US-POK-01 two approved species with one Latin name: approvedFacts returns them in id order, the same on every read", async () => {
+    const latin = name("Aloe doppelt ");
+    // Each proposer sees only its own proposal, so the second one is no duplicate for it; the reviewer approves both.
+    const first = await create(
+      anna,
+      values(latin, { germanName: "Erste Aloe", difficulty: 1, standardLevel: 2 }),
+    );
+    const second = await create(
+      ben,
+      values(latin, { germanName: "Zweite Aloe", difficulty: 3, standardLevel: 4 }),
+    );
+    const lower = first.id < second.id ? first : second;
+    const higher = lower === first ? second : first;
+    // The higher id is approved first: each approval rewrites the row, so the rows lie in the reverse of the id order and
+    // a read without ORDER BY would show them the other way round.
+    await approve(higher.id);
+    await approve(lower.id);
+    const expected = [lower, higher].map((s) => ({
+      latinName: latin,
+      germanName: s.germanName,
+      difficulty: s.difficulty,
+      lightZone: s.standardLevel,
+    }));
+    const read = async () =>
+      (await species.approvedFacts(ben)).filter((f) => f.latinName === latin);
+    expect(await read()).toEqual(expected);
+    expect(await read()).toEqual(expected);
+  });
+
   it("NFR-12 findMany equals find per ID: same order, unknown and foreign private species are null", async () => {
     const mine = await create(anna, values(name("Aloe batch-eigen ")));
     const shared = await create(anna, values(name("Aloe batch-frei ")));

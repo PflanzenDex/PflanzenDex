@@ -51,12 +51,15 @@ export const NOT_MERGED = `not exists (select from review_case v where v.object_
 
 /**
  * The Pokedex facts of the approved species (US-POK-01): German name, difficulty and standard light zone, no cultivars.
- * `SpeciesPostgres.approvedFacts` runs it; the NFR-12 scaling gate measures this statement, so the two never drift.
+ * Ordered by Latin name and id, so the rows come in the same order on every read (two approved species may share a
+ * Latin name; the cards take the first). `SpeciesPostgres.approvedFacts` runs it; the NFR-12 scaling gate measures this
+ * statement, so the two never drift.
  */
 export const APPROVED_FACTS = `select a.latin_name as "latinName", a.german_name as "germanName", a.difficulty,
                 a.standard_level as "lightZone"
            from species a
-          where a.cultivar is null and a.review_status in ('curated', 'reviewed')`;
+          where a.cultivar is null and a.review_status in ('curated', 'reviewed')
+          order by a.latin_name, a.id`;
 
 const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
 
