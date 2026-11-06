@@ -181,6 +181,7 @@ export function AccountArea(props: Props) {
             hasOverview={props.overview !== undefined}
             onSignOut={props.onSignOut}
             onEverywhereSignOut={props.onEverywhereSignOut}
+            {...(props.error ? { error: props.error } : {})}
           />
         </div>
         {open !== undefined ? (

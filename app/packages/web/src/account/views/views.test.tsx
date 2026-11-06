@@ -15,6 +15,20 @@ const account: Account = {
 const nothing = () => undefined;
 
 describe("welcome (US-ACC-01)", () => {
+  it("US-ACC-01 a failed Anderes Konto shows its error as an alert, and the buttons stay for another try (P-10)", () => {
+    const html = renderToString(
+      <Welcome
+        onRegister={nothing}
+        onSignIn={nothing}
+        onAnotherAccount={nothing}
+        error="Abmelden hat nicht geklappt: Prüfe deine Verbindung und versuche es noch einmal."
+      />,
+    );
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Abmelden hat nicht geklappt");
+    expect(html).toContain("Anderes Konto");
+  });
+
   it("offers register and sign in", () => {
     const html = renderToString(
       <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,

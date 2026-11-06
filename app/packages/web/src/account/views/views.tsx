@@ -13,6 +13,7 @@ type Action = () => void;
 const CARD =
   "flex w-full max-w-md min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card p-5";
 const ACTIONS = "flex flex-col gap-3";
+const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 /**
  * The welcome page in the frame of the sign-in pages (US-QS-14): the wordmark, one line of text, the filled sign-in
@@ -23,7 +24,9 @@ export function Welcome(props: {
   onRegister: Action;
   onSignIn: Action;
   onAnotherAccount: Action;
-  hint?: string;
+  hint?: string | undefined;
+  /** The error of a failed "Anderes Konto" (US-ACC-01): it says what to do, and the buttons stay for another try. */
+  error?: string | undefined;
 }) {
   return (
     <AuthFrame>
@@ -35,6 +38,11 @@ export function Welcome(props: {
         {props.hint && (
           <p role="status" className="rounded-lg border border-border p-3">
             {props.hint}
+          </p>
+        )}
+        {props.error && (
+          <p role="alert" className={NOTICE}>
+            {props.error}
           </p>
         )}
         <div className={ACTIONS}>

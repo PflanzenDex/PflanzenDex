@@ -423,3 +423,74 @@ describe("US-ACC-01 Sitzung", () => {
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
   });
 });
+
+describe("US-ACC-01 Abmelden und Anderes Konto bei einem Fehler", () => {
+  const FAILED =
+    "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
+
+  it("US-ACC-01 Abmelden: a failed sign-out says what to do, the person stays signed in and no marker stays behind", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    act(() => result.current.signOut());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedIn", account, error: FAILED }),
+    );
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 Anderes Konto: a failed sign-out on the welcome page says so there, and no marker stays behind", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.useAnotherAccount());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut", error: FAILED }));
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+  });
+
+  it("US-ACC-01 Abmelden on the invitation page: a failed sign-out is said there too", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(403, { error: { code: "invitation.required" } })),
+    );
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("invitationNeeded"));
+    act(() => result.current.signOut());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "invitationNeeded", error: FAILED }),
+    );
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+  });
+
+  it("US-ACC-01 Abmelden can be tried again: the next press calls the sign-out again, and its success leaves no error", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    act(() => result.current.signOut());
+    await waitFor(() => expect(result.current.state).toMatchObject({ error: FAILED }));
+    act(() => result.current.signOut());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedIn", account }));
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBe("1");
+  });
+
+  it("US-ACC-01 Abmelden sets the marker before the redirect starts, so the return shows the hint", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    let markerAtRedirect: string | null = null;
+    mgr.signoutRedirect.mockImplementationOnce(async () => {
+      markerAtRedirect = window.sessionStorage.getItem("pflanzendex.signed_out");
+    });
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    act(() => result.current.signOut());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    expect(markerAtRedirect).toBe("1");
+    expect(result.current.state).toEqual({ kind: "signedIn", account });
+  });
+});
