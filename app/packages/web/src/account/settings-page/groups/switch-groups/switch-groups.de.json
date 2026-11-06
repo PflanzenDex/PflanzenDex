@@ -1,0 +1,8 @@
+{
+  "shortcuts.label": "Tastenkürzel",
+  "shortcuts.plain": "Einzeltasten",
+  "shortcuts.modifier": "Alt und Umschalt",
+  "shortcuts.off": "Aus",
+  "shortcuts.help": "Die Tasten führen schnell zu Heute, Sammlung, Pokédex und Wunschliste. Alles geht auch mit Knöpfen.",
+  "shortcuts.more": "Einzeltasten wie h oder ? wirken nur, solange der Fokus nicht in einem Textfeld steht. Mit Alt und Umschalt drückst du die Taste zusammen mit diesen beiden Tasten, so löst eine einzelne Taste nichts aus. Aus schaltet alle Tastenkürzel ab. Die Übersicht mit ? findest du auch unter „Was die App kann“."
+}

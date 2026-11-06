@@ -5,6 +5,10 @@ import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { currentTimeZone, setProfileTimeZone } from "../../shared/data";
+import {
+  ShortcutProvider,
+  useShortcuts,
+} from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { SettingsPage } from "./settings-page";
 
 const response = (status: number, body: unknown) =>
@@ -28,6 +32,7 @@ const PROFILE = {
   replenishBuffer: 2,
   positionThresholds: null,
   rarityConsent: false,
+  keyboardShortcuts: "plain" as const,
 };
 
 type Put = { body: Record<string, unknown>; key: string | undefined };
@@ -745,5 +750,81 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
+  });
+});
+
+/** Shows the mode the shortcut provider holds, so a test sees the change take effect at once (US-QS-11). */
+function ModeOut() {
+  return <output data-testid="mode">{useShortcuts().mode ?? "unbekannt"}</output>;
+}
+
+describe("US-QS-11 settings: keyboard shortcuts", () => {
+  const row = (title: string) =>
+    screen.findByRole("button", { name: (name) => name.startsWith(title) });
+  const targets = {
+    search: "/discover?view=catalog",
+    today: "/today",
+    collection: "/collection",
+    species: "/collection?view=species",
+    wishlist: "/collection?view=wishlist",
+  };
+  const showWithProvider = () =>
+    render(
+      <MemoryRouter initialEntries={["/?sheet=shortcuts"]}>
+        <ShortcutProvider mode="plain" targets={targets}>
+          <ModeOut />
+          <SettingsPage api="http://api" token={token} />
+        </ShortcutProvider>
+      </MemoryRouter>,
+    );
+
+  it("US-QS-11 the list shows the mode, 'Einzeltasten an' while nothing is changed", async () => {
+    fakeServer();
+    show();
+    expect((await row("Tastenkürzel")).textContent).toContain("Einzeltasten an");
+  });
+
+  it("US-QS-11 the choice 'Alt und Umschalt' saves at once with the profile and takes effect at once", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    showWithProvider();
+    await user.click(await screen.findByRole("button", { name: "Alt und Umschalt" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]?.body["keyboardShortcuts"]).toBe("modifier");
+    expect(puts[0]?.body["notifications"]).toEqual(PROFILE.notifications);
+    expect(screen.getByTestId("mode").textContent).toBe("modifier");
+    expect(
+      screen.getByRole("button", { name: "Alt und Umschalt" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("US-QS-11 the choice 'Aus' turns every shortcut off; choosing the stored one again sends nothing", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    showWithProvider();
+    await user.click(await screen.findByRole("button", { name: "Aus" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]?.body["keyboardShortcuts"]).toBe("disabled");
+    expect(screen.getByTestId("mode").textContent).toBe("disabled");
+    await user.click(screen.getByRole("button", { name: "Aus" }));
+    expect(puts).toHaveLength(1);
+  });
+
+  it("US-QS-11 · P-10 a refused choice keeps the stored mode and shows the German text of the error code", async () => {
+    const puts = fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+          details: [{ field: "keyboardShortcuts", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    showWithProvider();
+    await user.click(await screen.findByRole("button", { name: "Aus" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByTestId("mode").textContent).toBe("plain");
   });
 });

@@ -88,3 +88,25 @@ describe("US-QS-15 the switch at a larger text size (issue 1019)", () => {
       expect(choice.className).toContain("shrink-0");
   });
 });
+
+describe("US-QS-11 · a choice shows its key", () => {
+  it("US-QS-11 a choice with a shortcut names it for assistive technology and shows the key on desktop", () => {
+    render(
+      <SegmentedControl
+        label="Ansicht"
+        options={[
+          { value: "a", label: "Pflanzen" },
+          { value: "b", label: "Arten", keyHint: { visible: "p", aria: "p" } },
+        ]}
+        value="a"
+        onChange={() => undefined}
+      />,
+    );
+    const arten = screen.getByRole("button", { name: "Arten" });
+    expect(arten.getAttribute("aria-keyshortcuts")).toBe("p");
+    expect(arten.querySelector("kbd")?.textContent).toBe("p");
+    expect(
+      screen.getByRole("button", { name: "Pflanzen" }).getAttribute("aria-keyshortcuts"),
+    ).toBeNull();
+  });
+});

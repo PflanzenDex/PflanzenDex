@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
-import type { Species } from "@pflanzendex/core";
+import type { KeyboardShortcutMode, Species } from "@pflanzendex/core";
 import {
   AppError,
   Loading,
@@ -66,12 +66,17 @@ type Session = ReturnType<typeof useSession>;
 type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
 
 /** The shell with its navigation; a destination that is not open yet stays in place, marked with text (US-ONB-05). */
-function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
+function SignedInShell(props: {
+  account: SignedInAccount;
+  shortcutMode: KeyboardShortcutMode | undefined;
+  children: ReactNode;
+}) {
   const { account } = props;
   const friends = useUnlocks().entries.find((e) => e.id === "friends");
   return (
     <AppShell
       titleOf={viewTitle}
+      shortcutMode={props.shortcutMode}
       items={navItems({
         reviewer: account.reviewer === true,
         operator: account.operator === true,
@@ -151,7 +156,7 @@ export function App() {
   return (
     <FeaturesProvider features={z.account.features}>
       <UnlocksProvider api={api} token={s.token}>
-        <SignedInShell account={z.account}>
+        <SignedInShell account={z.account} shortcutMode={z.account.keyboardShortcuts}>
           {/* The width cap of the page is lifted for a destination with layers: its frame takes the main column and caps only its content, so a pane fits beside it (US-QS-15, #1027). */}
           <div className="mx-auto w-full max-w-180 has-[[data-layer-host]]:max-w-none">
             <div className="mx-auto w-full max-w-180">

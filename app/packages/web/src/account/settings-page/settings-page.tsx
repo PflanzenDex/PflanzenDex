@@ -11,12 +11,17 @@ import {
   notificationsValue,
   privacyValue,
   profileValue,
+  shortcutsValue,
   styleValue,
   wishlistValue,
 } from "./groups/group-values";
 import { useProfileSaver } from "./groups/profile-saver";
 import { SettingsRow } from "./groups/settings-row/settings-row";
-import { NotificationsGroup, PrivacyGroup } from "./groups/switch-groups/switch-groups";
+import {
+  NotificationsGroup,
+  PrivacyGroup,
+  ShortcutsGroup,
+} from "./groups/switch-groups/switch-groups";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
@@ -85,15 +90,28 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       body: <WishlistGroup saver={saver} />,
     },
     { id: ids.light, title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
+    {
+      id: ids.shortcuts,
+      title: "Tastenkürzel",
+      value: shortcutsValue(p),
+      body: <ShortcutsGroup saver={saver} />,
+    },
   ];
+  return <SettingsLayers layers={layers} />;
+}
+
+/** The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. */
+function SettingsLayers(props: {
+  layers: readonly { id: string; title: string; value: string; body: ReactNode }[];
+}) {
   return (
     <>
       <div className="flex min-w-0 max-w-xl flex-1 flex-col">
-        {layers.map((l) => (
+        {props.layers.map((l) => (
           <SettingsRow key={l.id} id={l.id} title={l.title} value={l.value} />
         ))}
       </div>
-      {layers.map((l) => (
+      {props.layers.map((l) => (
         <LayerSheet key={l.id} id={l.id} title={l.title}>
           {l.body}
         </LayerSheet>

@@ -39,3 +39,11 @@ export function styleValue(style: "few" | "many", calm: boolean | undefined): st
   const text = style === "many" ? "viel, alles offen" : "ein paar Pflanzen";
   return calm === true ? `${text} · Ruhemodus an` : text;
 }
+
+/** Row "Tastenkürzel": the mode of the keyboard shortcuts (US-QS-11); "Einzeltasten an" is the starting value. */
+const SHORTCUT_VALUE: Record<AccountProfile["keyboardShortcuts"], string> = {
+  plain: "Einzeltasten an",
+  modifier: "mit Alt und Umschalt",
+  disabled: "aus",
+};
+export const shortcutsValue = (p: AccountProfile) => SHORTCUT_VALUE[p.keyboardShortcuts];

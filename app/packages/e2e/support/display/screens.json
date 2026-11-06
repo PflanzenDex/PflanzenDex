@@ -713,6 +713,13 @@
     "title": "Einstellungen: Licht"
   },
   {
+    "id": "account-settings-sheet-shortcuts",
+    "account": "test2",
+    "path": "/account/settings?sheet=shortcuts",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Tastenkürzel"
+  },
+  {
     "id": "account-dialog-delete-account",
     "account": "test2",
     "path": "/account/data",

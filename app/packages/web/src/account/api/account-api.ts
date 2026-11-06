@@ -14,6 +14,8 @@ export type Account = {
   operator?: boolean;
   /** Which function groups are on for this account (US-DEV-06); absent counts as on. */
   features?: { social: boolean; ai: boolean; recommendations: boolean };
+  /** How the keyboard shortcuts are taken (US-QS-11): all, only with Alt+Shift, or none; absent means none is known. */
+  keyboardShortcuts?: "plain" | "modifier" | "disabled";
 };
 
 export const OCCASIONS = [
@@ -40,6 +42,8 @@ export type AccountProfile = {
   rarityConsent: boolean;
   /** Lux lower bounds of the four closest positions in the light overview (US-LIC-03); `null` = standard values. */
   positionThresholds: number[] | null;
+  /** How the keyboard shortcuts are taken (US-QS-11): all of them, only with Alt+Shift, or none. */
+  keyboardShortcuts: "plain" | "modifier" | "disabled";
 };
 
 type Environment = Record<string, string | undefined>;

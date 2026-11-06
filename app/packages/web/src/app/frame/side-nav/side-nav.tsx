@@ -11,7 +11,9 @@ import {
   stackedPill,
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
-import { NavNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
+import { NavNote, ShortcutKeyNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
+import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { navigationHint } from "../app-shell/shortcut-targets";
 
 /**
  * The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar, and
@@ -26,6 +28,7 @@ const PRIMARY = 4;
  * label and `aria-current`, not colour alone (DS-19).
  */
 function NavRail({ items, className }: { items: NavItem[]; className?: string }) {
+  const { hint } = useShortcuts();
   return (
     <nav
       aria-label="Navigation seitlich"
@@ -43,22 +46,27 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
         <Leaf aria-hidden="true" className="size-5" />
       </Link>
       <div className="flex min-h-0 flex-1 scroll-py-3 flex-col gap-1 overflow-y-auto pb-3">
-        {items.map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            end={item.href === "/"}
-            className={({ isActive }) => cn(stackedItem, "w-full", stackedLabel(isActive))}
-          >
-            {({ isActive }) => (
-              <>
-                <span className={stackedPill(isActive)}>{item.icon}</span>
-                <span className="max-w-full break-words hyphens-auto">{item.label}</span>
-                <NavNote text={item.note} />
-              </>
-            )}
-          </NavLink>
-        ))}
+        {items.map((item) => {
+          const key = navigationHint(hint, item.href);
+          return (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              end={item.href === "/"}
+              aria-keyshortcuts={key?.aria}
+              className={({ isActive }) => cn(stackedItem, "w-full", stackedLabel(isActive))}
+            >
+              {({ isActive }) => (
+                <>
+                  <span className={stackedPill(isActive)}>{item.icon}</span>
+                  <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+                  <ShortcutKeyNote hint={key} />
+                  <NavNote text={item.note} />
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </div>
     </nav>
   );
@@ -81,12 +89,15 @@ const groupId = (group: string) => `nav-group-${group.toLowerCase()}`;
 
 /** One entry of the sidebar; a hairline stands before the first entry after the primary ones. */
 function SidebarLink({ item, index, total }: { item: NavItem; index: number; total: number }) {
+  const { hint } = useShortcuts();
+  const key = navigationHint(hint, item.href);
   return (
     <Fragment>
       {index === PRIMARY && total > PRIMARY ? <hr className="my-2 shrink-0 border-border" /> : null}
       <NavLink
         to={item.href}
         end={item.href === "/"}
+        aria-keyshortcuts={key?.aria}
         className={({ isActive }) =>
           cn(
             "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-base font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -98,6 +109,7 @@ function SidebarLink({ item, index, total }: { item: NavItem; index: number; tot
       >
         {item.icon}
         <span className="min-w-0 break-words">{item.label}</span>
+        <ShortcutKeyNote hint={key} inline />
         <NavNote text={item.note} inline />
       </NavLink>
     </Fragment>

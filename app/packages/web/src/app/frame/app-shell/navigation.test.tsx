@@ -316,3 +316,40 @@ describe("US-QS-14 the catalog is a mode of Entdecken, not a destination", () =>
     expect(navItems({ reviewer: true }).length).toBe(6);
   });
 });
+
+describe("US-QS-11 · the desktop navigation shows the key of its destination", () => {
+  it("US-QS-11 Heute and Sammlung show their key in the sidebar and tell it to assistive technology; the bottom bar shows none", () => {
+    render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})} shortcutMode="plain">
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const sidebar = document.querySelector('[data-side-nav="sidebar"]') as HTMLElement;
+    const heute = within(sidebar).getByRole("link", { name: "Heute" });
+    expect(heute.getAttribute("aria-keyshortcuts")).toBe("h");
+    expect(heute.querySelector("kbd")?.textContent).toBe("h");
+    expect(heute.querySelector("kbd")?.getAttribute("aria-hidden")).toBe("true");
+    const sammlung = within(sidebar).getByRole("link", { name: "Sammlung" });
+    expect(sammlung.getAttribute("aria-keyshortcuts")).toBe("s");
+    // The link name stays the destination: the key is hidden from the accessible name.
+    expect(heute.textContent).toBe("Heute" + "h");
+    const bottom = document.querySelector("nav[data-bottom-bar]") as HTMLElement;
+    expect(bottom.querySelector("kbd")).toBeNull();
+  });
+
+  it("US-QS-11 with the shortcuts off the navigation shows no key and no keyboard hint", () => {
+    render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})} shortcutMode="disabled">
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const sidebar = document.querySelector('[data-side-nav="sidebar"]') as HTMLElement;
+    const heute = within(sidebar).getByRole("link", { name: "Heute" });
+    expect(heute.getAttribute("aria-keyshortcuts")).toBeNull();
+    expect(heute.querySelector("kbd")).toBeNull();
+  });
+});

@@ -12,6 +12,7 @@ import {
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/shared/ui/button/button";
+import { ShortcutHelpButton } from "@/shared/patterns/elements/shortcut-overview/shortcut-overview";
 import {
   MANAGE_ADDRESS,
   type AccountSection,
@@ -96,7 +97,13 @@ export function SectionContent({ section, ...p }: SectionProps & { section: Acco
     case "measured":
       return <MeasuredView />;
     case "functions":
-      return <>{p.overview}</>;
+      // The help entry of the keyboard shortcuts (US-QS-09, US-QS-11): the same overview as `?` opens.
+      return (
+        <>
+          <ShortcutHelpButton />
+          {p.overview}
+        </>
+      );
     case "news":
       return <WhatsNewPage />;
     case "data":

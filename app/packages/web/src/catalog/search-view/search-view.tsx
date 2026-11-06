@@ -15,6 +15,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";
@@ -59,6 +60,7 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
     resolver: zodResolver(searchSchema),
     defaultValues: { search: props.searchText },
   });
+  const { hint } = useShortcuts();
   return (
     <Form {...form}>
       {/* A 10 rem basis keeps the field from shrinking to a sliver; at a larger text size the row wraps (issue 1019). */}
@@ -75,6 +77,7 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
                   autoComplete="off"
                   maxLength={120}
                   placeholder="Name der Art"
+                  keyHint={hint("search")}
                   onChange={(e) => {
                     field.onChange(e);
                     props.onSearch(e.target.value);
