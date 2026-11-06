@@ -783,4 +783,38 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     });
     expect(result.current.state).not.toHaveProperty("reloadPage");
   });
+
+  it("US-ACC-01 when our API never answers, the account load ends in its error and the retry works", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => realTimeout(1));
+    // The API never answers: the request ends only when its signal fires, the way a real request does.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => reject(init?.signal?.reason));
+          }),
+      ),
+    );
+    const { result } = renderHook(() => useSession());
+    try {
+      await waitFor(() =>
+        expect(result.current.state).toEqual({
+          kind: "error",
+          text: "Das Konto konnte nicht geladen werden.",
+        }),
+      );
+      expect(timeout).toHaveBeenCalledWith(15_000);
+    } finally {
+      timeout.mockRestore();
+    }
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, account)),
+    );
+    await act(() => result.current.reload());
+    expect(result.current.state.kind).toBe("signedIn");
+  });
 });
