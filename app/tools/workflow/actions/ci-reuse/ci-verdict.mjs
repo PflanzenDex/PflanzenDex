@@ -3,7 +3,7 @@
 // and its `ci-status` is green while the full run is still going. So the verdict is per job, from every check run on the
 // head commit: the latest real result of each job (a skipped or cancelled run is no result). The jobs that count are the
 // ones that the head's own workflow defines and that its path filter and base branch require (ci.yml, `changes`).
-import { evidenceOf, isActionsCheck, scanRowsOf } from "./ci-evidence.mjs";
+import { evidenceOf, isActionsCheck, scanRowsOf } from "./ci-reuse.mjs";
 
 export const MAX_FILES = 3000; // the REST list of changed files stops at 3000 entries
 

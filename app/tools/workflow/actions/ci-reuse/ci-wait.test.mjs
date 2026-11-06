@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { evidenceOf } from "./ci-evidence.mjs";
+import { evidenceOf } from "./ci-reuse.mjs";
 import { report } from "./ci-report.mjs";
 import {
   assess,
