@@ -1,10 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
-import { AI_OPERATION_CLASSES, AREA_NAMES, AREA_READS, NO_FEATURES } from "@pflanzendex/core";
+import {
+  AI_LOG_LIMIT,
+  AI_OPERATION_CLASSES,
+  AREA_NAMES,
+  AREA_READS,
+  NO_FEATURES,
+  NOT_RELEASED_CALLS,
+  type NotReleasedCall,
+} from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp, type AppOptions } from "../../app";
+import { NOT_RELEASED_TOOLS } from "../mcp/tools";
 
 // US-KI-12: every other area through the MCP tools, against the app's own views (real PostgreSQL, `make db-up`).
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -70,6 +79,17 @@ async function rpc(sub: string, method: string, params: Json, scope?: string) {
 async function tool(sub: string, name: string, args: Json = {}, scope?: string) {
   const result = await rpc(sub, "tools/call", { name, arguments: args }, scope);
   return { error: result["isError"] as boolean, body: result["structuredContent"] as Json };
+}
+const REFUSED = "refused: ai.not_released";
+/** The AI log of an account as the keeper sees it: newest first, at most AI_LOG_LIMIT entries (FR-KI-19). */
+const logOf = async (sub: string): Promise<Json[]> =>
+  (await call(web(sub), "GET", "/ai/log")).body["log"];
+/** The refusals of an account's log, counted per operation (FR-KI-22). */
+async function refusedBy(sub: string) {
+  const counts: Record<string, number> = {};
+  for (const e of await logOf(sub))
+    if (e["effect"] === REFUSED) counts[e["operation"]] = (counts[e["operation"]] ?? 0) + 1;
+  return counts;
 }
 
 /** One account's data: an own species, a zone, a location, a specimen with a measurement and a treatment, a wish. */
@@ -315,6 +335,56 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
   });
 });
 
+// FR-KI-22 US-KI-12: a human-only name answers ai.not_released whatever the right, is logged with its operation and is not
+// listed; an attempt shows in the log of its own account only (P-04). The accounts are their own, so every log is whole.
+describe("FR-KI-22 US-KI-12 human-only names answer ai.not_released and are logged", () => {
+  const subT = `ki22-names-${randomUUID()}`;
+  const subP = `ki22-attempt-${randomUUID()}`;
+  const subQ = `ki22-other-${randomUUID()}`;
+  const HUMAN_ONLY = Object.keys(NOT_RELEASED_TOOLS);
+  const SCOPES = ["pflanzen:read", "pflanzen:write"];
+
+  beforeAll(async () => {
+    for (const sub of [subT, subP, subQ]) await call(web(sub), "GET", "/account");
+  });
+  afterAll(async () => {
+    await admin.query("delete from account where subject = any($1)", [[subT, subP, subQ]]);
+  });
+
+  it("FR-KI-22 every attempt of the human-only names fits the log window, so each count below is exact", () => {
+    expect(HUMAN_ONLY.length * SCOPES.length).toBeLessThanOrEqual(AI_LOG_LIMIT);
+  });
+
+  it.each(HUMAN_ONLY.flatMap((name) => SCOPES.map((scope) => [name, scope])))(
+    "FR-KI-22 US-KI-12 %s with %s answers ai.not_released, is logged with its operation and is not listed",
+    async (name, scope) => {
+      const before = await refusedBy(subT);
+      // A human-only name never checks its arguments: an unknown field changes nothing of the refusal.
+      const answer = await rpc(subT, "tools/call", { name, arguments: { noSuchField: 1 } }, scope);
+      expect(answer).toMatchObject({
+        isError: true,
+        structuredContent: { error: { code: "ai.not_released" } },
+      });
+      const operation = NOT_RELEASED_CALLS[NOT_RELEASED_TOOLS[name] as NotReleasedCall];
+      expect((await refusedBy(subT))[operation]).toBe((before[operation] ?? 0) + 1);
+      const listed = (await rpc(subT, "tools/list", {}, scope))["tools"] as Json[];
+      expect(listed.map((t) => t["name"])).not.toContain(name);
+    },
+  );
+
+  it("FR-KI-22 US-KI-12 an attempt of account A shows in A's AI log and not in B's (P-04)", async () => {
+    const operation = "profile_settings";
+    const a = await refusedBy(subP);
+    const b = await refusedBy(subQ);
+    await rpc(subP, "tools/call", { name: "set_display_name", arguments: {} }, "pflanzen:write");
+    expect((await refusedBy(subP))[operation]).toBe((a[operation] ?? 0) + 1);
+    expect(await refusedBy(subQ)).toEqual(b);
+    await rpc(subQ, "tools/call", { name: "set_display_name", arguments: {} }, "pflanzen:write");
+    expect((await refusedBy(subQ))[operation]).toBe((b[operation] ?? 0) + 1);
+    expect((await refusedBy(subP))[operation]).toBe((a[operation] ?? 0) + 1);
+  });
+});
+
 // US-ONB-09: the AI client reads the keeper's switches through list_unlocks and has no tool to change them (FR-KI-22).
 describe("US-ONB-09 the AI client and the keeper switches", () => {
   // An account of its own: its switch is set and cleared here, so no other test of this file reads a changed state.
@@ -379,22 +449,28 @@ describe("US-ONB-09 the AI client and the keeper switches", () => {
     expect(bEntry).toEqual(await appEntry(subB, WISH));
   });
 
-  it("US-ONB-09 an AI client has no tool to switch a feature; its PUT is refused and the state stays (FR-KI-22, KI-R8)", async () => {
-    expect(Object.keys(AI_OPERATION_CLASSES).filter((op) => op.includes("switch"))).toEqual([]);
+  it("FR-KI-22 US-ONB-09 an AI client has no tool to switch a feature; a call answers ai.not_released and is logged, its PUT is refused and the state stays (FR-KI-22, KI-R8)", async () => {
+    const switching = Object.entries(AI_OPERATION_CLASSES).filter(([op]) => op.includes("switch"));
+    expect(switching.length).toBeGreaterThan(0);
+    expect(switching.filter(([, cls]) => cls !== "never")).toEqual([]);
     for (const scope of ["pflanzen:read", "pflanzen:write"]) {
       const listed = (await rawRpc(subS, "tools/list", {}, scope))["result"]["tools"] as Json[];
       expect(listed.map((t) => String(t["name"])).filter((n) => n.includes("switch"))).toEqual([]);
     }
+    const refusedBefore = (await refusedBy(subS))["keeper_switches"] ?? 0;
     for (const name of ["switch_feature", "account.switch_feature"]) {
-      const answer = await rawRpc(
+      const answer = await rpc(
         subS,
         "tools/call",
         { name, arguments: { feature: WISH, enabled: true } },
         "pflanzen:write",
       );
-      expect(answer["result"]).toBeUndefined();
-      expect(answer["error"]["message"]).toBe(`Unknown tool: ${name}`);
+      expect(answer).toMatchObject({
+        isError: true,
+        structuredContent: { error: { code: "ai.not_released" } },
+      });
     }
+    expect((await refusedBy(subS))["keeper_switches"]).toBe(refusedBefore + 2);
     const put = await call(ai(subS, "pflanzen:write"), "PUT", "/onboarding/switches/wishlist", {
       enabled: true,
       timeZone: TZ,

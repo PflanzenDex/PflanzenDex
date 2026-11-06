@@ -4,7 +4,7 @@ import { AI_OPERATION_CLASSES, mayCall } from "../../rights";
 import { InMemoryAiLog } from "../../test-helpers";
 import type { CollectionReadSource, SpecimenItem } from "../types";
 import { aiAreaRead, aiNotReleased } from "./area-reads";
-import { AREA_NAMES, NOT_RELEASED_READS, type AreaQuery, type AreaReadSource } from "./area-source";
+import { AREA_NAMES, NOT_RELEASED_CALLS, type AreaQuery, type AreaReadSource } from "./area-source";
 
 const now = new Date("2026-11-02T08:00:00Z");
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -99,7 +99,7 @@ describe("US-KI-12 every other area through the AI client", () => {
 
   it("US-KI-12 friends' data, sharing, offers, swaps and recommendations answer ai.not_released and are logged (FR-KI-10)", async () => {
     const deps = fakes();
-    for (const operation of new Set(Object.values(NOT_RELEASED_READS))) {
+    for (const operation of new Set(Object.values(NOT_RELEASED_CALLS))) {
       expect(mayCall("write", operation)).toBe(false);
       const r = await aiNotReleased(deps, call("anna", {}, "drafts"), operation);
       expect(!r.ok && r.error.code).toBe("ai.not_released");
