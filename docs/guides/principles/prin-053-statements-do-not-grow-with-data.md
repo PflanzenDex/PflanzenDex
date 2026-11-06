@@ -11,7 +11,7 @@ A route that sends one query per row works on a demo and fails on a real collect
 
 ## How it is measured
 
-Per GET route of the API: (a) every route is measured or listed with a reason in the exclusion list; (b) the statement count with the larger seeded data (50 specimens) does not exceed the count with the smaller (5 specimens); (c) no request sends the same statement text twice. Known findings: the growth list `app/packages/api/src/query-count-baseline.json` is empty (`{}`); the repeated-statement list `app/packages/api/src/query-repeat-baseline.json` names 8 routes. Both lists only shrink. Target: 0 new findings.
+Per GET route of the API: (a) every route is measured or listed with a reason in the exclusion list; (b) the statement count with the larger seeded data (50 specimens) does not exceed the count with the smaller (5 specimens); (c) no request sends a statement text more often than there are owners of the fixture (one read per owner passes, one read per offer fails; #1306). Known findings: the growth list `app/packages/api/src/query-count-baseline.json` is empty (`{}`); the repeated-statement list `app/packages/api/src/query-repeat-baseline.json` names 8 routes. Both lists only shrink. Target: 0 new findings.
 
 ## Checked by
 
