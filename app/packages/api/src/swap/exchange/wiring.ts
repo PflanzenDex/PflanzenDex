@@ -4,6 +4,7 @@ import {
   type ExchangeDependencies,
   type MatchContext,
   type OfferDependencies,
+  type Species,
   type WishHints,
 } from "@pflanzendex/core";
 import {
@@ -28,19 +29,29 @@ import type { Pool } from "pg";
  */
 export function exchangeDependencies(pool: Pool, offer: OfferDependencies): ExchangeDependencies {
   const specimens = new SpecimenPostgres(pool);
-  const species = new SpeciesPostgres(pool);
   const wishes = new WishesPostgres(pool);
+  // One species read per owner for everything built here (NFR-12). The routes build these dependencies per request, so no
+  // read outlives its request.
+  const speciesOf = speciesOncePer(new SpeciesPostgres(pool));
+  const speciesSource = {
+    find: async (owner: string, id: string) => (await speciesOf(owner, [id]))[0] ?? null,
+    findMany: speciesOf,
+  };
   return {
     swaps: new SwapsPostgres(pool),
     treatments: offer.treatments,
-    phases: offer.phases,
+    // The phases of a friend's offers take the owner's species from the same read as the facts (NFR-12).
+    phases: {
+      phasesOf: (owner, ids, timeZone) =>
+        offer.phases.phasesOf(owner, ids, timeZone, speciesSource),
+    },
     facts: {
       // One read of the specimens and one of their species for all IDs of the owner (NFR-12).
       async describe(ownerId, ids) {
         const rows = (await specimens.findMany(ownerId, ids)).flatMap((r) =>
           r && r.status !== "archived" ? [r] : [],
         );
-        const read = await species.findMany(
+        const read = await speciesOf(
           ownerId,
           rows.map((r) => r.speciesId),
         );
@@ -58,13 +69,39 @@ export function exchangeDependencies(pool: Pool, offer: OfferDependencies): Exch
     mine: {
       async latinNamesOf(userId) {
         const active = (await specimens.list(userId)).filter((s) => s.status !== "archived");
-        const read = await species.findMany(userId, [...new Set(active.map((s) => s.speciesId))]);
+        const read = await speciesOf(userId, [...new Set(active.map((s) => s.speciesId))]);
         return read.flatMap((s) => (s ? [s.latinName] : []));
       },
     },
     wishes: wishHints(wishes),
   };
 }
+
+/**
+ * One species read per owner for a request (NFR-12, US-SOZ-09, US-TAU-01): the first reader of an owner's species asks the
+ * database for the IDs it does not know yet, and every later reader of the request takes them from here. The read runs as
+ * the owner (`SpeciesPostgres.findMany`, P-04), and the entries are kept per owner, so one owner's answer never serves
+ * another (P-05). An ID asked again while its read is in flight waits for that read.
+ */
+export function speciesOncePer(species: Pick<SpeciesPostgres, "findMany">) {
+  const known = new Map<string, Map<string, Promise<Species | null>>>();
+  return (owner: string, ids: readonly string[]): Promise<(Species | null)[]> => {
+    const own = known.get(owner) ?? new Map<string, Promise<Species | null>>();
+    known.set(owner, own);
+    const missing = [...new Set(ids.map(keyOf))].filter((id) => !own.has(id));
+    if (missing.length > 0) {
+      const read = species.findMany(owner, missing);
+      for (const [i, id] of missing.entries())
+        own.set(
+          id,
+          read.then((rows) => rows[i] ?? null),
+        );
+    }
+    return Promise.all(ids.map((id) => own.get(keyOf(id)) as Promise<Species | null>));
+  };
+}
+
+const keyOf = (id: string) => id.toLowerCase();
 
 /** Only an approved species (curated or reviewed) leaves the owner's account; a private proposal stays unknown (P-05). */
 function approvedOf<T extends { reviewStatus: string }>(s: T | null): T | null {

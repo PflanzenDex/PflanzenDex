@@ -25,7 +25,7 @@ spec: [AB-1, P-02]
 ## Evidence
 ```
 
-Frontmatter fields are all required: `id` (matches the file name prefix), `title`, `maturity`, `spec` (references such as `AB-1`, `P-02`, `FR-QG-05`; list in brackets).
+Frontmatter fields are all required: `id` (matches the file name prefix), `title`, `maturity`, `spec` (references such as `AB-1`, `P-02`, `FR-QG-05`; list in brackets). The optional field `blocking_from` is described under "Report, then blocking".
 
 ## Maturity ladder
 
@@ -46,6 +46,28 @@ Section contents:
 - **Gate:** the make target or CI job that makes it blocking, in backticks (`make gates`, `.github/workflows/ci.yml`).
 - **Evidence:** proof that the gate bites (test names, a past failure caught) and honest limits.
 
+## Report, then blocking (criterion 2)
+
+A new gate starts as a report: an entry at maturity `checked`, whose failure does not block. The owner sets the day from which it blocks with the optional frontmatter field `blocking_from: YYYY-MM-DD`; the length of the report period is the owner's decision. From that day on the entry must be `gated`:
+
+- The switch PR removes `blocking_from`, raises the maturity to `gated` and makes the check block (its Gate section names the make target or CI job).
+- `npm run principles` fails a `gated` entry that still carries the field (PRIN-5).
+- `npm run principles` fails an entry that is not `gated` on its day or later (PRIN-6). The day itself counts; "today" is the calendar day in Europe/Berlin.
+
+An entry without the field has no date. Dates are set by the owner, never guessed.
+
+## Caught lines (criterion 4)
+
+A gate earns its place by what it catches. When a gate or check caught a real failure, the PR that fixes it writes one line into the Evidence section of the principle it guards:
+
+`Caught: YYYY-MM-DD, PR #<n>, <what it caught>`
+
+`YYYY-MM-DD` is the day the failure was caught, `PR #<n>` the pull request that fixed it. The line stands on its own, outside a bullet, and only in Evidence. The validator checks the format, a real calendar day and a day not after today (PRIN-7). A PR that did not fail a check gets no line. The PR template asks for it.
+
+## Quarterly review
+
+`make principles-review` lists every `gated` and `checked` entry without a `Caught:` line of the last three months, with its last catch and its `blocking_from`. Spec 19 (gate health) makes it a quarterly maintainer task. The routine is report only: it prints the list and exits 0, so it never fails CI. For each listed entry the owner keeps it with a reason in its Evidence, or lowers its maturity in a PR of its own.
+
 ## What the validator checks
 
 | Rule     | Meaning                                                                       |
@@ -54,12 +76,15 @@ Section contents:
 | `PRIN-2` | `id` is unique and the file name starts with it.                              |
 | `PRIN-3` | Every section required for the maturity level is present and not empty.       |
 | `PRIN-4` | Repo paths (`dir/file`) and `make <target>` in "Checked by" and "Gate" exist. |
+| `PRIN-5` | A `gated` entry carries no `blocking_from` (the switch is done).              |
+| `PRIN-6` | `blocking_from` is a real date, and from that day on the entry is `gated`.    |
+| `PRIN-7` | A `Caught:` line is in Evidence, in the fixed format, and not after today.    |
 
 ## Rules for changing the register
 
 - Maturity states what is true on `dev` today. Do not claim a level for a check that is still in an open PR; mention it in Evidence instead.
 - Raise the maturity in the same PR that adds the check or gate. Lowering it needs a reason in the PR.
-- A gate that found no failure in three months is reviewed for usefulness, not kept blindly (US-QG-06, US-DEV-03).
+- A gate that found no failure in three months is reviewed for usefulness, not kept blindly: `make principles-review` lists it every quarter (US-QG-06, US-DEV-03).
 - Gotchas that cost time belong in `docs/guides/pitfalls/`; when one becomes a gate, add the principle here and link it from the pitfall.
 
 ## Entries

@@ -80,14 +80,14 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | MIG Migration (dropped)          | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                     | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
 | QG Quality gates                 | 10      | 2      | 7       | 1      | 15 · 10 · 2               | 0                      | 10      |
-| DEV Development process          | 12      | 2      | 9       | 1      | 1 · 3 · 6                 | 0                      | 12      |
+| DEV Development process          | 13      | 3      | 9       | 1      | 1 · 3 · 6                 | 0                      | 13      |
 | ACH Achievements                 | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching               | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
 | ONB Introduction and unlocking   | 9       | 5      | 4       | 0      | 1 · 0 · 10                | 0                      | 9       |
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **212** | **42** | **132** | **38** |                           | **50**                 | **162** |
+| **Total**                        | **213** | **43** | **132** | **38** |                           | **50**                 | **163** |
 
 <!-- spec-status:end -->
 

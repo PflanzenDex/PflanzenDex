@@ -94,7 +94,8 @@ export async function carePhasesList(
 /**
  * The care phase today of the named specimens of the account, read from the same rows as the phase list, so an offer
  * and the list can never disagree. Only the phase is asked: the targets are not read, so the statements do not grow with
- * the specimens (NFR-12). A specimen without a phase (a cutting, an archived one, a species without dormancy period, a
+ * the specimens (NFR-12). Only the named specimens reach the species read, so it asks for their species and no others
+ * (NFR-12, US-SOZ-09). A specimen without a phase (a cutting, an archived one, a species without dormancy period, a
  * foreign one) is missing from the map, which means `null` (P-08). `timeZone` decides "today" (NFR-08) and is checked
  * by the caller.
  */
@@ -105,13 +106,15 @@ export async function carePhasesOf(
   timeZone: string,
 ): Promise<ReadonlyMap<string, CarePhase>> {
   if (specimenIds.length === 0) return new Map();
+  const wanted = new Set(specimenIds);
+  const specimens = {
+    list: async (owner: string) =>
+      (await deps.specimens.list(owner)).filter((z) => wanted.has(z.id)),
+  };
   const rows = await phaseRows(
-    { ...deps, targets: NO_PHASE_LOCATION },
+    { ...deps, specimens, targets: NO_PHASE_LOCATION },
     userId,
     localToday(deps.clock(), timeZone),
   );
-  const wanted = new Set(specimenIds);
-  return new Map(
-    rows.filter((r) => wanted.has(r.specimenId)).map((r) => [r.specimenId, r.phase] as const),
-  );
+  return new Map(rows.map((r) => [r.specimenId, r.phase] as const));
 }

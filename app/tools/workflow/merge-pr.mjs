@@ -2,7 +2,7 @@
 // only if every condition holds; otherwise it names the failed ones and leaves the merge to a human.
 //   1. the PR is open, not a draft, and targets `dev` (never `main`: a release stays a human decision)
 //   2. the newest `ci-status` run on the PR head commit is green (older, cancelled runs do not count), and CI is final
-//      per job (US-DEV-10, ci-wait.mjs): no check run is unfinished, no required job is cancelled, failed or missing
+//      per job (US-DEV-13, ci-wait.mjs): no check run is unfinished, no required job is cancelled, failed or missing
 //   3. the PR names a story or requirement (US-/FR-/DM-/NFR-) that exists in docs/specs/product (the spec is written)
 //   4. the PR changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, this script): a human decides
 //   5. the PR grows no baseline (app/config/gates/baselines/, US-QG-07): the merge base and the head are compared; a
@@ -153,7 +153,7 @@ async function main(number) {
     namedAtHead: (file) => namedAt(pr.headRefOid, file),
   });
   const found = problems(pr, specIds(join(REPO_ROOT, "docs", "specs", "product")), changes);
-  // US-DEV-10: the newest ci-status can be green while the full run is unfinished; the per-job reading decides too.
+  // US-DEV-13: the newest ci-status can be green while the full run is unfinished; the per-job reading decides too.
   found.push(...(await mergeProblems(realClient(), number)));
   if (found.length) {
     console.error(

@@ -24,6 +24,7 @@ Closes #
 - [ ] `feat:`/`fix:` PR: a new fragment `app/packages/web/src/news/unreleased/<issue>-<slug>.json` with a short German `line` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3). Never edit `news.de.json`: the release moves the lines there.
 - [ ] Spec status and counters in `docs/specs/product/readme.md` updated in this PR
 - [ ] New API routes and core operations named in `docs/guides/reference/app.md`, new shared UI components in the inventory of `docs/guides/reference/design-system.md` (`make reference-check`, US-QG-10)
+- [ ] This PR fixes a failure that a gate or check caught? Then the Evidence of the principle it guards gets a line `Caught: YYYY-MM-DD, PR #<n>, <what it caught>` in this PR (US-QG-06, `docs/guides/principles/readme.md`)
 - [ ] `make ci` green locally
 
 ## AI involvement
