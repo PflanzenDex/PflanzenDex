@@ -355,10 +355,10 @@ State of implementation (issue 1328):
   - `specimen.tick_repot_sign` and `specimen.untick_repot_sign` tick and clear an observation.
 - **Plan:** `GET /specimens/:id/repot-plan` derives the plan on every read with the pure `repotPlan`: hints with reason and source, last repot, phase, season advice, current pot and free pots.
 - **Web:**
-  - The tab "Pflege" of a plant shows the section "Umtopfen" with the hints, the pots and the three observations.
+  - The tab "Pflege" of a plant has the part "Umtopfen" beside "Behandlungen" and "Pflegeprofil", with the hints, the pots and the three observations. It is offered only for a plant while the planner is on.
   - "Umgetopft" in "Mehr" opens the repot form with the pot picker; a cutting keeps "Eingetopft".
   - The equipment form has the pot fields for "Topf".
-- **Keeper switch:** `repot_planner`; off hides the section, and the data stays. The name and purpose texts of its unlock function are provisional until the owner confirms them.
+- **Keeper switch:** `repot_planner`; off hides the part, and the data stays. The name and purpose texts of its unlock function are provisional until the owner confirms them.
 
 **Open:**
 
