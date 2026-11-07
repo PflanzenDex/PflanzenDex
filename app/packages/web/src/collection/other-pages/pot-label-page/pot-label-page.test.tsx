@@ -41,7 +41,11 @@ function server(routes: Record<string, () => Response>): Call[] {
         path: u.pathname,
         body: init?.body ? JSON.parse(String(init.body)) : undefined,
       });
-      const make = routes[`${method} ${u.pathname}`];
+      // The label reads the plant's fertilizing too (US-MON-09): nothing is logged unless a test says otherwise.
+      const fertilizing = method === "GET" && u.pathname.endsWith("/fertilizing");
+      const make =
+        routes[`${method} ${u.pathname}`] ??
+        (fertilizing ? () => json(200, { lastFertilizedOn: null }) : undefined);
       return make ? make() : json(404, { error: { code: "specimen.not_found", text: "x" } });
     }),
   );
@@ -176,5 +180,111 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
       "/collection?view=plants&sheet=plant-e1",
     );
     expect(calls.filter((c) => c.path === "/specimens/e1")).toHaveLength(0);
+  });
+});
+
+describe("US-MON-09 Gedüngt on a scanned pot label", () => {
+  it("US-MON-09 Gedüngt writes the fertilizing once for today in the keeper's zone and confirms it", async () => {
+    const calls = server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "POST /fertilizing": () => json(200, { date: "2026-11-07", specimenId: "e1", created: 1 }),
+    });
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Gedüngt" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Als gedüngt eingetragen.");
+    const writes = calls.filter((c) => c.method === "POST");
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({ path: "/fertilizing", body: { specimenId: "e1" } });
+    expect(writes[0]?.body).toHaveProperty("timeZone");
+  });
+
+  it("US-MON-09 the label shows the date of the latest fertilizing", async () => {
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
+    });
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: 02.11.2026")).toBeTruthy();
+  });
+
+  it("US-MON-09 the label says 'noch nie' while no fertilizing is logged (P-08, P-09)", async () => {
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: null }),
+    });
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: noch nie")).toBeTruthy();
+  });
+
+  it("US-MON-09 after Gedüngt the line shows the new date", async () => {
+    let logged: string | null = null;
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: logged }),
+      "POST /fertilizing": () => {
+        logged = "2026-11-07";
+        return json(200, { date: "2026-11-07", specimenId: "e1", created: 1 });
+      },
+    });
+    const user = userEvent.setup();
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: noch nie")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Gedüngt" }));
+    expect(await screen.findByText("Zuletzt gedüngt: 07.11.2026")).toBeTruthy();
+  });
+
+  it("US-MON-09 a failed read shows its text and a retry, not a blank (P-10)", async () => {
+    let reads = 0;
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => {
+        reads += 1;
+        return reads === 1
+          ? json(503, { error: { code: "system.database_unavailable", text: "raw server text" } })
+          : json(200, { lastFertilizedOn: "2026-11-02" });
+      },
+    });
+    const user = userEvent.setup();
+    show();
+    expect(await screen.findByText(ERROR_TEXTS["system.database_unavailable"])).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByText("Zuletzt gedüngt: 02.11.2026")).toBeTruthy();
+  });
+
+  it("US-MON-09 a refused Gedüngt shows the German text of its code, never the raw server text (P-10)", async () => {
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "POST /fertilizing": () =>
+        json(409, { error: { code: "specimen.archived", text: "raw server text" } }),
+    });
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Gedüngt" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(ERROR_TEXTS["specimen.archived"]);
+    expect(alert.textContent).not.toContain("raw server text");
+  });
+
+  it("US-MON-09 an archived plant offers no Gedüngt and no fertilizing line (P-09, P-10)", async () => {
+    server({
+      "GET /specimens/e1": () =>
+        json(
+          200,
+          specimen({ status: "archived", archivedAt: "2026-10-01", archivedReason: "verschenkt" }),
+        ),
+    });
+    show();
+    expect(await screen.findByRole("heading", { level: 1, name: "Aloe vera" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Gedüngt" })).toBeNull();
+    expect(screen.queryByText(/Zuletzt gedüngt/)).toBeNull();
+  });
+
+  it("US-MON-09 with the keeper switch for pot labels off the scan logs nothing and shows no Gedüngt (P-12)", async () => {
+    const calls = server({ "GET /specimens/e1": () => json(200, specimen()) });
+    show("e1", false);
+    expect(await screen.findByTestId("address")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Gedüngt" })).toBeNull();
+    expect(calls.filter((c) => c.path.endsWith("/fertilizing"))).toHaveLength(0);
   });
 });

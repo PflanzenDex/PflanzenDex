@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { isActive, type Specimen } from "@pflanzendex/core";
 import { MeasurePage } from "@/care";
-import { markWatered } from "@/monitoring";
+import { markFertilized, markWatered } from "@/monitoring";
 import { call, useFeature, useInvalidate, useRequest, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -17,6 +17,7 @@ import { RequestState } from "@/shared/patterns/states/request-state/request-sta
 import { Button } from "@/shared/ui/button/button";
 import { plantLayerId } from "../../plants-screen/rows/plant-tile/plant-tile";
 import table from "./pot-label-page.de.json";
+import { LastFertilized } from "./last-fertilized/last-fertilized";
 
 type Token = () => Promise<string | undefined>;
 const ui = texts(table);
@@ -74,16 +75,17 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
   );
 }
 
-/** The plant with its two quick actions; an archived plant says so and offers no action (US-BES-17, P-09, P-10). */
+/**
+ * The plant with its two quick actions; an archived plant says so and offers no action (US-BES-17, P-09, P-10).
+ * "Gegossen" and "Gedüngt" refresh all monitoring data, so the watering and the fertilizing line show the new state (US-MON-05, US-MON-09).
+ */
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
   const { api, token, specimen, onMeasure } = props;
-  const refresh = useInvalidate(["monitoring", "watering"]);
-  const write = useWriteAction(token, refresh);
-  const archived = !isActive(specimen);
+  const write = useWriteAction(token, useInvalidate(["monitoring"]));
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
-      {archived ? (
+      {!isActive(specimen) ? (
         <>
           <p className="text-sm">{errorText("specimen.archived")}</p>
           <Button asChild variant="outline" size="touch">
@@ -92,7 +94,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
         </>
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <Button
               type="button"
               size="touch"
@@ -103,10 +105,22 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
             >
               {ui("water")}
             </Button>
+            <Button
+              type="button"
+              size="touch"
+              variant="outline"
+              disabled={write.running}
+              onClick={() =>
+                void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
+              }
+            >
+              {ui("fertilize")}
+            </Button>
             <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
               {ui("measure")}
             </Button>
           </div>
+          <LastFertilized api={api} token={token} specimenId={specimen.id} />
           {write.message ? (
             <p role="status" className="text-sm">
               {write.message}

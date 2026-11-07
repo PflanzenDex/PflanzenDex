@@ -1,4 +1,4 @@
-import type { ReminderRow, ReminderSettings } from "@pflanzendex/core";
+import type { FertilizingView, ReminderRow, ReminderSettings } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 type FetchFn = typeof fetch;
@@ -85,5 +85,26 @@ export const markWatered = (
 ) =>
   createWrite(api, token, fetchFn)("POST", "/watering", {
     specimenIds,
+    timeZone: currentTimeZone(),
+  });
+
+/** The date of the latest fertilizing of one plant, `null` when none is logged (US-MON-09, P-08). */
+export const loadLastFertilized = (
+  api: string,
+  token: string,
+  specimenId: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<FertilizingView>> =>
+  call(fetchFn, `${api}/specimens/${encodeURIComponent(specimenId)}/fertilizing`, token);
+
+/** "Gedüngt" for one plant (US-MON-09); the server takes today's date in the zone of the profile. */
+export const markFertilized = (
+  api: string,
+  token: string,
+  specimenId: string,
+  fetchFn: FetchFn = fetch,
+) =>
+  createWrite(api, token, fetchFn)("POST", "/fertilizing", {
+    specimenId,
     timeZone: currentTimeZone(),
   });

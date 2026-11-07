@@ -12,6 +12,9 @@ export type {
   ReminderRow,
   ReminderSettings,
   ReminderStatus,
+  FertilizingEntry,
+  FertilizingStore,
+  FertilizingView,
   ReminderStore,
   WateringEntry,
   WateringStore,
@@ -31,4 +34,6 @@ export {
   sendRemindersHandler,
 } from "./daily/daily";
 export { MAX_WATERED, monitoringWater, wateringDue, wateringOccasions } from "./watering/watering";
+export { fertilizingOf, monitoringFertilize } from "./fertilizing/fertilizing";
+export type { FertilizedDependencies } from "./fertilizing/fertilizing";
 export type { WateredDependencies, WateringCandidate, WateringDue } from "./watering/watering";

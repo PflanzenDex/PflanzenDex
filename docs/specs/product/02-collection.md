@@ -263,7 +263,7 @@ State of implementation (cut 1, corrections and history for the three text field
 
 As a **plant keeper** I want to print QR labels for my pots, so that a scan opens the plant and I log watering with one tap.
 
-Scope note: the first version covers the keeper only: printing, scanning while signed in, the quick actions. Plant sitters exist in no product spec; their access is a later story with its own privacy rules (P-05) (owner decision 2026-11-06, issue 1322). Logging fertilizing is not part of this story, because no fertilizing log exists and spec 09 lists fertilizer tracking as out of scope; a later story decides it (owner decision 2026-11-06, issue 1322).
+Scope note: the first version covers the keeper only: printing, scanning while signed in, the quick actions. Plant sitters exist in no product spec; their access is a later story with its own privacy rules (P-05) (owner decision 2026-11-06, issue 1322). Logging fertilizing was first left out, because no fertilizing log existed (owner decision 2026-11-06, issue 1322). It comes as US-MON-09: a log of its own like watering, tapped on the label page only (owner decisions 2026-11-06 and 2026-11-07, issue 1605).
 
 Acceptance criteria:
 
@@ -274,6 +274,7 @@ Acceptance criteria:
 - Given a printed label, when I scan it signed in as its keeper, then the plant opens with the large actions "Gegossen" and "Messen".
 - Given the plant open from a scan, when I tap "Gegossen", then the watering is logged for today in my time zone in the watering log of US-MON-05, through the same validating operation as everywhere else (P-03), and the view confirms it; a refused write says why (P-10).
 - Given the plant open from a scan, when I tap "Messen", then the measurement form of that plant opens.
+- Given the plant open from a scan, then it also offers "Gedüngt" and shows when the plant was last fertilized; a tap logs fertilizing for today (US-MON-09).
 - Given I scan a label and am not signed in, then I am asked to sign in and see nothing of the plant before that; after sign-in as its keeper the plant opens with the quick actions.
 - Given a person signed in with another account scans my label, then they see the same "nicht gefunden" view as for an unknown address: nothing of my collection, and not whether the plant exists (P-05).
 - Given a label of a plant I archived, when I scan it, then the view says it is archived and offers no quick actions (P-09, P-10).

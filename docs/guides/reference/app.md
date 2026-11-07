@@ -309,11 +309,21 @@ make ci      # all gates: lint, types, boundaries, format, tests, build; every p
 
 ## Pot labels: the scan page (US-BES-17, slice 1 of issue 1322)
 
-- **What:** the address `/label/:id` (`PotLabelPage` in `web/src/collection/other-pages/pot-label-page/`, the route in `app/routes.tsx`, signed in only): the plant of the keeper with "Gegossen" and "Messen" (size `touch`) and the link "Zur Pflanze" (`/collection?view=plants&sheet=plant-<id>`). The id is the specimen id (opaque, FR-BES-25); no new table and no new read.
+- **What:** the address `/label/:id` (`PotLabelPage` in `web/src/collection/other-pages/pot-label-page/`, the route in `app/routes.tsx`, signed in only): the plant of the keeper with "Gegossen", "Gedüngt" (US-MON-09) and "Messen" (size `touch`) and the link "Zur Pflanze" (`/collection?view=plants&sheet=plant-<id>`). The id is the specimen id (opaque, FR-BES-25); no new table and no new read.
 - **API:** `GET /specimens/:id` (existing). A foreign and an unknown id answer the same 404 `specimen.not_found`, and the page shows the same "Pflanze nicht gefunden" view; an archived plant answers 200 with `status: "archived"`, and the page says so (`specimen.archived` text) and offers no action.
 - **Writes:** "Gegossen" calls `markWatered` (`POST /watering`, existing, `monitoring.water`) for today in the keeper's zone; the success text is the status line, a refusal is shown by its code. "Messen" renders the existing `MeasurePage` of `care`, its back control leads to the plant in the Sammlung.
 - **Keeper switch:** `pot_labels` (BES, rule `first_plant`, `keeperSwitch: "pot_labels"`). Off, the address redirects to the plant's normal view without a request (`useFeature("pot_labels")`).
 - **Limits:** no printing and no QR code yet (slice 2). After sign-in the address is not kept: the sign-in returns to `/` (`redirect_uri` of `oidcSettings`), so a scan that is not signed in ends on "Heute".
+
+## Fertilizing from the pot label (US-MON-09, issue 1605)
+
+- **What:** "Gedüngt" on the scan page (the third quick action beside "Gegossen" and "Messen", `pot-label-page.tsx`) logs fertilizing for today in the keeper's zone. A log of its own like watering (US-MON-05): no planned date, no interval, no amount and no reminder; treatments (US-BEH-01) are a different thing. Below the actions the line "Zuletzt gedüngt: <date>" or "Zuletzt gedüngt: noch nie" (`last-fertilized/last-fertilized.tsx`); a failed read shows its code's text with "Erneut versuchen".
+- **Core:** `monitoring.fertilize` (`core/src/monitoring/fertilizing/fertilizing.ts`, schema `specimenId`, `timeZone`; result `{ date, specimenId, created }`). An unknown or foreign specimen is `specimen.not_found`, an archived one `specimen.archived`; nothing is written then. One entry per specimen and day (the unique key), so a repeat writes nothing new. The read `fertilizingOf` answers the latest date, `null` when none is logged, and treats a malformed id as not found.
+- **Table:** `fertilizing_log` (migration `0110`, module `monitoring`, DM-MON-01): `account_id`, `specimen_id` (composite foreign key to `specimen`), `fertilized_on` (local date), unique per specimen and day, tenant protection with a fixture. Adapter `FertilizingPostgres` (`db/src/monitoring/fertilizing.ts`). The privacy export and the deletion take it up as every tenant table (tested in `db/src/privacy/export/account-data-source.contract.test.ts`).
+- **API:** `POST /fertilizing` (`Idempotency-Key`; body `specimenId`, `timeZone`; 200 with `{ date, specimenId, created }`; 400 `input.invalid`, 409 `specimen.archived`, 404 `specimen.not_found`), guarded by `monitoringRoutes` (`api/src/monitoring/monitoring-routes.ts`); `GET /specimens/:id/fertilizing` answers `{ lastFertilizedOn: "YYYY-MM-DD" | null }`, guarded by the `/specimens` guard. A foreign and an unknown id answer the same 404 `specimen.not_found` (P-05). Route file `api/src/monitoring/fertilizing-routes.ts`.
+- **Web:** `markFertilized` (`POST /fertilizing`, with the zone of the profile) and `loadLastFertilized` (`GET /specimens/:id/fertilizing`) in `web/src/monitoring/api/reminders-api.ts`, exported from `@/monitoring`; the refresh after a tap is `useInvalidate(["monitoring"])`.
+- **AI:** no tool for it, the same gap as for "Gegossen" (KI-R10, FR-KI-14); the operation is not in `core/src/ai/rights.ts`.
+- **Limits:** no amount, product, schedule or reminder; no entry for an earlier day; no list of past entries and no way to remove one; no action outside the scan page.
 
 ## Open treatments (US-BEH-02)
 
