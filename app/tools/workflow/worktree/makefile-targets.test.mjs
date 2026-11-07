@@ -217,7 +217,8 @@ test("US-DEV-13 a value of the job list, the layout options or the branch runs n
 });
 
 // US-QG-01 (owner decision 2026-11-07): the UI gates of CI run once per shard. ui-gates seeds the demo once, then runs
-// one-screen and a11y-routes on the same shard; a failed one-screen does not stop a11y-routes, and the run fails.
+// one-screen and a11y-routes on the same shard in one Playwright run (US-QG-02, issue 1698): both projects, no early stop, so a
+// failed one-screen test does not stop a11y-routes, and the run fails.
 test("US-QG-01 the UI gates run once per shard: one seed, then one-screen and a11y-routes on the same shard", (t) => {
   const prerequisites = ["-o", "db-up", "-o", "auth-up", "-o", "migrate", "-o", "browsers"];
   const args = [...prerequisites, "ui-gates", "SHARD=2/4", "-j3", "-Otarget"];
@@ -226,23 +227,35 @@ test("US-QG-01 the UI gates run once per shard: one seed, then one-screen and a1
   const npm = calls(run).filter((call) => call.tool === "npm");
   assert.deepEqual(
     npm.map((call) => call.args[1]),
-    ["seed:demo", "one-screen", "a11y-routes"],
-    "one seed, then the two gates",
+    ["seed:demo", "ui-gates"],
+    "one seed, then one run of both gates",
   );
   assert.equal(npm[1].env.ONE_SCREEN_SHARD, "2/4");
-  assert.equal(npm[2].env.A11Y_ROUTES_SHARD, "2/4");
+  assert.equal(npm[1].env.A11Y_ROUTES_SHARD, "2/4");
   assert.equal(npm[1].env.TAXONOMY_BUILD, "off");
-  assert.equal(npm[2].env.TAXONOMY_BUILD, "off");
+
+  // The one run holds both gate projects and never stops early, so a11y-routes runs and is judged after one-screen failed.
+  const e2e = JSON.parse(
+    readFileSync(new URL("../../../packages/e2e/package.json", import.meta.url), "utf8"),
+  );
+  const script = e2e.scripts["ui-gates"];
+  assert.match(script, /--project=one-screen\b/);
+  assert.match(script, /--project=a11y-routes\b/);
+  assert.doesNotMatch(
+    script,
+    /--max-failures|\s-x\b|--pass-with-no-tests|--last-failed|--only-changed/,
+  );
+  assert.match(
+    script,
+    /E2E_WEB_BUILD=1/,
+    "the gates run against the production build (issue 1680)",
+  );
 
   const failing = makeRun(t, args, {
     env: { CI: "1" },
-    npm: 'case "$2" in one-screen) exit 1 ;; esac',
+    npm: 'case "$2" in ui-gates) exit 1 ;; esac',
   });
   assert.notEqual(failing.status, 0, failing.out);
-  const ran = calls(failing)
-    .filter((call) => call.tool === "npm")
-    .map((call) => call.args[1]);
-  assert.deepEqual(ran, ["seed:demo", "one-screen", "a11y-routes"], "a11y-routes runs after it");
 });
 
 test("US-QG-01 ui-gates refuses SCREEN, with or without SHARD: one screen is make one-screen", (t) => {
