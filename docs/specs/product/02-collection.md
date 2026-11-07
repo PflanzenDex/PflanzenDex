@@ -301,6 +301,8 @@ Acceptance criteria:
 - Given a file that is not readable as CSV, has no species name column or exceeds the limits of FR-BES-26, then nothing is written and the page says why and what to do next.
 - Given a row with notes, then they become the notes of the specimen. Given a specimen, when I choose "Notizen" on the overview of its layer, then its notes open as their own layer (`?sheet=notes-<id>`, US-QS-23), where I can read and change them; a long note scrolls inside that layer (US-QS-15). Given an archived specimen, when I try to change its notes, then nothing is written and the answer is `specimen.archived`; its notes stay unchanged, as its marker, location and light zone do (US-BES-07). Notes stay private: they are never part of a sharing setting, a friend's view, the feed or a swap offer (P-05).
 
+State of implementation (issue 1330, slice 2): the core and the API are built (`core/src/collection/import/`, `POST /specimens/import/preview` as a read, `POST /specimens/import` as the one guarded write, the keeper switch `csv_import`, limits of FR-BES-26, details in `docs/guides/reference/app.md`); the page, the template and the preview screen are slice 3, so the criteria about the screen are open until then.
+
 ## Data model
 
 ### DM-BES-01 Species (catalog)
