@@ -174,7 +174,12 @@ jobs:
       # US-QG-02 (issue 1698): the throwaway database without fsync, as db-up does locally (issue 1636).
       - run: make ci-db-tune
       - uses: ./.github/actions/setup-app
+      # TEMPORARY (issue 1698): CPU of the job; removed before the final runs.
+      - run: (vmstat -n 5 | while IFS= read -r l; do echo "$(date +%T) $l"; done > "$RUNNER_TEMP/vmstat.log" 2>&1 &)
       - run: make ci-tests-base
+      - name: vmstat (TEMPORARY, issue 1698)
+        if: always()
+        run: cat "$RUNNER_TEMP/vmstat.log" || true
       # Only what the ratchet (coverage-summary.json) and the CRAP check (coverage-final.json) read in the results job.
       - uses: actions/upload-artifact@v7
         with:
@@ -230,8 +235,13 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
+      # TEMPORARY (issue 1698): CPU of the job; removed before the final runs.
+      - run: (vmstat -n 5 | while IFS= read -r l; do echo "$(date +%T) $l"; done > "$RUNNER_TEMP/vmstat.log" 2>&1 &)
       - run: make browsers # QG-U5: the conformance run drives Chromium over the stories
       - run: make ci-ui
+      - name: vmstat (TEMPORARY, issue 1698)
+        if: always()
+        run: cat "$RUNNER_TEMP/vmstat.log" || true
       # QG-U6 report (FR-QG-10): initial JS per chunk and package in the job summary. Report only: runs after a
       # failure too, and a failing report never fails the job (the blocking gate is the budget step inside `make ci-ui`).
       - name: Initial JS bundle report
