@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 import { composeStories } from "@storybook/react-vite";
-import { cleanup, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { prepareStories } from "../../harness/story-test-helpers";
+import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
 import * as stories from "./entdecken.stories";
 
 prepareStories();
 const { SuggestionsPhone, CatalogDesktopDark, AllDecided } = composeStories(stories);
 
 describe("US-QS-14 · page story Entdecken", () => {
-  afterEach(cleanup);
+  afterEach(unmountStoryRuns);
 
   it("US-QS-14 · the suggestions mode shows the first card of the deck", async () => {
     await SuggestionsPhone.run();
