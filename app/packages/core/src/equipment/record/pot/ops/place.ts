@@ -15,7 +15,7 @@ import { isActive, type SpecimenStore } from "../../../../collection";
 import { EQUIPMENT_KEEPER_SWITCH, type PlacementResult, type PotPlacementStore } from "../types";
 
 /** The plant side of a placement: the plant must exist, be active and be a plant (a cutting is potted out first). */
-export type PlaceSpecimens = Pick<SpecimenStore, "find">;
+type PlaceSpecimens = Pick<SpecimenStore, "find">;
 
 /**
  * Places a plant into one of the keeper's pots (or takes it out of its pot with `potId` null) on `day` (US-BES-19,

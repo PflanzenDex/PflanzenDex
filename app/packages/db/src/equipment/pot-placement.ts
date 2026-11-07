@@ -1,5 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import { specimenStatusesOn } from "../collection/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface PotRecord {
@@ -45,12 +46,18 @@ export async function placePotOn(
       [potId],
     );
     if (!pot.rowCount) return "pot_not_found";
-    const held = await c.query(
-      `select 1 from pot_placement p join specimen s on s.account_id = p.account_id and s.id = p.specimen_id
-        where p.pot_id = $1 and p.left_on is null and p.specimen_id <> $2 and s.status <> 'archived' limit 1`,
+    const holders = await c.query<{ specimenId: string }>(
+      `select specimen_id as "specimenId" from pot_placement
+        where pot_id = $1 and left_on is null and specimen_id <> $2`,
       [potId, specimenId],
     );
-    if (held.rowCount) return "pot_taken";
+    if (
+      await anyActiveOn(
+        c,
+        holders.rows.map((h) => h.specimenId),
+      )
+    )
+      return "pot_taken";
   }
   const open = await openPlacement(c, specimenId);
   if (open && open.potId === potId) return { potId, placedOn: open.placedOn, changed: false };
@@ -83,17 +90,31 @@ export async function currentPotOn(c: PoolClient, specimenId: string): Promise<P
   return r.rows[0] ?? null;
 }
 
+/** Whether any of the plants is not archived (the status is read by the collection module, AB-9). */
+async function anyActiveOn(c: PoolClient, specimenIds: readonly string[]): Promise<boolean> {
+  const statuses = await specimenStatusesOn(c, specimenIds);
+  return [...statuses.values()].some((status) => status !== "archived");
+}
+
 /** The active pots that no plant which is not archived holds, by name (US-BES-19). */
 export async function freePotsOn(c: PoolClient): Promise<readonly PotRecord[]> {
-  const r = await c.query<PotRecord>(
+  const pots = await c.query<PotRecord>(
     `select e.id, e.name, e.diameter_cm::float8 as "diameterCm" from equipment e
-      where e.type = 'Pot' and e.status = 'active'
-        and not exists (select 1 from pot_placement p
-                          join specimen s on s.account_id = p.account_id and s.id = p.specimen_id
-                         where p.pot_id = e.id and p.left_on is null and s.status <> 'archived')
-      order by lower(e.name)`,
+      where e.type = 'Pot' and e.status = 'active' order by lower(e.name)`,
   );
-  return r.rows;
+  const open = await c.query<{ potId: string; specimenId: string }>(
+    `select pot_id as "potId", specimen_id as "specimenId" from pot_placement where left_on is null`,
+  );
+  const statuses = await specimenStatusesOn(c, [...new Set(open.rows.map((o) => o.specimenId))]);
+  const held = new Set(
+    open.rows
+      .filter((o) => {
+        const status = statuses.get(o.specimenId);
+        return status !== undefined && status !== "archived";
+      })
+      .map((o) => o.potId),
+  );
+  return pots.rows.filter((pot) => !held.has(pot.id));
 }
 
 /**

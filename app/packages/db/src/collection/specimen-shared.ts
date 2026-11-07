@@ -167,3 +167,16 @@ export async function findSpecimenOn(c: PoolClient, id: string): Promise<Specime
   const r = await c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = $1`, [id]);
   return r.rows[0] ?? null;
 }
+
+/** The status of each of the given specimens of the account the connection is set to; unknown or foreign ones are absent. */
+export async function specimenStatusesOn(
+  c: PoolClient,
+  ids: readonly string[],
+): Promise<ReadonlyMap<string, string>> {
+  if (ids.length === 0) return new Map();
+  const r = await c.query<{ id: string; status: string }>(
+    `select id, status from specimen where id = any($1::uuid[])`,
+    [ids],
+  );
+  return new Map(r.rows.map((z) => [z.id, z.status] as const));
+}

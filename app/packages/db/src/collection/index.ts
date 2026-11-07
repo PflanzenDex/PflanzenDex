@@ -22,6 +22,7 @@ export {
   archiveSpecimenOn,
   createSpecimenOn,
   findSpecimenOn,
+  specimenStatusesOn,
   listSpecimensOn,
   type NewSpecimen,
 } from "./specimen-shared.ts";

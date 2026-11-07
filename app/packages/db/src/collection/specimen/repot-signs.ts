@@ -49,16 +49,14 @@ export class RepotPostgres {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, string>> {
-    const latest = new Map<string, string>();
-    await withAccount(this.pool, userId, async (c) => {
-      const found = await c.query<{ specimenId: string; day: string }>(
+    const found = await withAccount(this.pool, userId, (c) =>
+      c.query<{ specimenId: string; day: string }>(
         `select specimen_id as "specimenId", to_char(max(repotted_on), 'YYYY-MM-DD') as day
            from repot where specimen_id = any($1::uuid[]) group by specimen_id`,
         [specimenIds],
-      );
-      for (const z of found.rows) latest.set(z.specimenId, z.day);
-    });
-    return latest;
+      ),
+    );
+    return new Map(found.rows.map((z) => [z.specimenId, z.day] as const));
   }
 
   /** The open observations of one specimen; a refusal when it is not an active plant. */
