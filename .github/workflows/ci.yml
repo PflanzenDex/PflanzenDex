@@ -451,11 +451,7 @@ jobs:
           path: app/packages
           merge-multiple: true
       - name: Web test shards (app-tests passed, app-tests-web passed; the blob reports of both shards, US-QG-02)
-        if: >-
-          needs.app-tests.result == 'success'
-          && (needs.app-tests-web.result == 'success'
-          || (needs.app-tests-web.result == 'skipped' && needs.changes.outputs.ui == 'false'))
-          && needs.app-tests-web.result == 'success'
+        if: needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
         uses: actions/download-artifact@v7
         with:
           pattern: web-blob-*
@@ -464,11 +460,7 @@ jobs:
           merge-multiple: true
       - name: Merge the web test shards (every shard present, coverage of the whole suite)
         id: web-merge
-        if: >-
-          needs.app-tests.result == 'success'
-          && (needs.app-tests-web.result == 'success'
-          || (needs.app-tests-web.result == 'skipped' && needs.changes.outputs.ui == 'false'))
-          && needs.app-tests-web.result == 'success'
+        if: needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
         run: make ci-tests-web-merge
       - name: Coverage ratchet and CRAP check
         id: coverage

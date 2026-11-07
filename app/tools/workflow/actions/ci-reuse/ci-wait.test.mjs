@@ -159,7 +159,7 @@ test("US-QG-02 (issue 1608): the ui output is the app paths without workflow and
 
 test("US-QG-02 (issue 1608): a workflow-only change runs the app jobs and the results job, but no UI gate and no web tests", () => {
   const req = requiredJobs({
-    files: ["app/tools/workflow/actions/ci-reuse/ci-verdict.mjs"],
+    files: ["app/tools/workflow/actions/ci-reuse/verdict/ci-verdict.mjs"],
     base: "dev",
     draft: false,
     defined: new Set(JOBS),
