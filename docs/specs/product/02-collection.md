@@ -328,6 +328,8 @@ Acceptance criteria:
 Assumptions (to confirm by the PO):
 
 - The last repot is the day of the last repot recorded with `specimen.repot`, the potting out of a cutting included (US-BES-04). The catch date is no repot date (P-08).
+- A repot of a plant is recorded with `specimen.repot` as well: until now it only potted out a cutting and refused a plant (`specimen.not_a_cutting`). A plant stays a plant; the feed event "Potted" (US-SOZ-05) and the achievement "Cutting rooted" stay limited to the potting out of a cutting.
+- While the keeper has switched equipment off (US-ONB-09), the hint lists no pots and a repot names none; the recorded pots stay.
 - The interval counts whole calendar months from the repot day, in the keeper's time zone (NFR-08); the hint says how many months ago the last repot was.
 - A cutting gets no repot hint: it is potted out (US-BES-04), not repotted.
 - A pot is free when it is `active` (US-EQU-01) and no plant names it; a defective or retired pot is not offered. Archiving a plant frees its pot.
@@ -336,11 +338,12 @@ Assumptions (to confirm by the PO):
 - The three observations are fixed. A repot clears all ticked ones; the day of each tick and of its clearing stay in the history.
 - Sharing (US-EQU-12): a shared pot shows friends its type, name or model and note only. A shared plant shows its repot day only through the existing "Potted" event of the feed (US-SOZ-05), never its pot, observations or hints.
 
-Open (owner decisions, not decided here):
+Decisions (owner, 2026-11-07, issue 1328):
 
-- Care phase: FR-PHA-01 says every species carries dormancy values, while US-PHA-01 and US-BES-08 say that a species without a dormancy period has no care phase. Criterion 7 needs a phase; for a plant without one, the form of the hint is open.
-- Keeper switch: US-ONB-09 lists collection (BES) as core, and core features have no switch. Criterion 11 needs a switchable row for the repot planner in that table.
-- Release: a pot is equipment of epic EQU, which `16-releases-and-decisions.md` places in R5. This story sits in R2 as ordered; the owner confirms whether the pot inventory waits for US-EQU-01.
+- Keeper switch: the repot planner is its own switchable row in the table of US-ONB-09, like the CSV import (US-BES-18). Off hides the hints and the observations; the pots and all data stay (P-12).
+- Release: the whole story is in R2. The pot fields extend the existing equipment record of type `Pot`; the rest of EQU stays in R5.
+- Interval: 24 months is the general starting value (assumption) when no cited source gives an interval for the species.
+- No care phase: for a plant whose species has no dormancy values, the hint shows without the dormancy warning and says that the care phase is unknown, so spring is the safe time (P-08).
 
 ## Data model
 
