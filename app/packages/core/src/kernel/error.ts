@@ -1,7 +1,7 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
 import { ONBOARDING_ERROR_TEXTS } from "./error-texts/onboarding";
 import { WUN_ERROR_TEXTS } from "./error-texts/wun";
-import { REVIEW_ERROR_TEXTS } from "./error-texts/catalog";
+import { IMPORT_ERROR_TEXTS, REVIEW_ERROR_TEXTS } from "./error-texts/catalog";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -120,6 +120,7 @@ export const ERROR_TEXTS = {
   ...ONBOARDING_ERROR_TEXTS,
   ...WUN_ERROR_TEXTS,
   ...REVIEW_ERROR_TEXTS,
+  ...IMPORT_ERROR_TEXTS,
   "pokedex.not_caught":
     "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":

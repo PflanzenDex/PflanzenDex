@@ -13,6 +13,8 @@ export const FUNCTION_PURPOSES: Record<UnlockFunctionId, string> = {
   leaf_log: "Halte neue Blätter deiner Pflanzen fest, mit einem Tipp oder mit Maßen und Notiz.",
   pot_labels:
     "Drucke QR-Etiketten für deine Töpfe: ein Scan öffnet die Pflanze mit Gießen und Messen.",
+  csv_import:
+    "Importiere Pflanzen aus einer CSV-Datei. Eine Vorschau zeigt jede Zeile, bevor etwas gespeichert wird.",
   treatments: "Plane Behandlungen und hake sie ab, wenn sie erledigt sind.",
   pokedex: "Zeigt, welche Arten du schon hast, und was dir noch fehlt.",
   wishlist: "Merke dir Arten, die du gern hättest.",

@@ -25,6 +25,12 @@ export const PrintLabelsPage = lazyPage(() =>
     default: m.PrintLabelsPage,
   })),
 );
+/** The import of plants from a CSV file (US-BES-18, FR-BES-26): its own address `/collection/import`, shown while "csv_import" is on. */
+export const ImportPage = lazyPage(() =>
+  import("./other-pages/import-page/import-page").then((m) => ({ default: m.ImportPage })),
+);
+/** The entry "Aus Datei importieren" where plants are added (US-BES-18); hidden while "csv_import" is off. */
+export { ImportEntry } from "./other-pages/import-page/views/import-entry/import-entry";
 export const DifficultyPage = lazyPage(() =>
   import("./other-pages/difficulty-page/difficulty-page").then((m) => ({
     default: m.DifficultyPage,

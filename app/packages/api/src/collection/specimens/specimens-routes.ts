@@ -39,6 +39,7 @@ import { markerRoutes } from "../markers/marker-routes";
 import { locationRoutes } from "../markers/location-routes";
 import { derivedRoutes } from "../insights/derived-routes";
 import { cardRoutes } from "../cards/cards-routes";
+import { importRoutes } from "../bulk/import-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const SPECIMEN_PATHS = ["/specimens"] as const;
@@ -109,6 +110,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   );
   // The card list, its summary, the treatment list and one card (US-BES-06, FR-BES-23); before `/specimens/:id`, otherwise
   // "cards" would be read as an ID.
+  // US-BES-18: the CSV import of plants (literal paths `/specimens/import…`, so no ID route can take them); before `/specimens/:id`.
+  routes.route("/", importRoutes(pool, { clock, targetLocation: opt.targetLocation }));
   routes.route("/", cardRoutes(cardsDeps, clock));
   // The start page only needs the numbers of active and archived specimens (US-ACC-03); before `/specimens/:id`.
   routes.get("/specimens/count", async (c) => {
