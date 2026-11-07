@@ -1,8 +1,8 @@
 // Shows why one screen does not fit (US-QG-01, issue 1199): every scroll region with its overflow, and below the ones
 // that overflow the tree of their children with top, height and width, so the part that takes the room stands out.
 //
-// Usage: node tools/measure/probe.mjs <id>@<WxH> [--dark] [--text=200] [--user=test3] [--depth=7] [--shot=file.png]
-import { chromium, openScreen, register, screenContext, sessions } from "./lib.mjs";
+// Usage: node tools/measure/screens/probe.mjs <id>@<WxH> [--dark] [--text=200] [--user=test3] [--depth=7] [--shot=file.png]
+import { chromium, openScreen, register, screenContext, sessions } from "../lib.mjs";
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => {
@@ -13,7 +13,7 @@ const option = (name, fallback) => {
 const [target] = args.filter((a) => !a.startsWith("--"));
 if (!target) {
   console.error(
-    "usage: node tools/measure/probe.mjs <id>@<WxH> [--dark] [--text=200] [--user=…] [--depth=7] [--shot=file.png]",
+    "usage: node tools/measure/screens/probe.mjs <id>@<WxH> [--dark] [--text=200] [--user=…] [--depth=7] [--shot=file.png]",
   );
   process.exit(2);
 }

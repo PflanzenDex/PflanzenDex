@@ -327,9 +327,12 @@ jobs:
   # and by hand.
   # US-QG-01 (owner decision 2026-11-07): one job per shard runs both gates for the screens of its shard, so the stack (Postgres,
   # Keycloak, migrations, browsers, demo seed) starts once per shard instead of once per gate. The screens are split by measured
-  # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/4`): every screen runs in
+  # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/6`): every screen runs in
   # exactly one shard. Each shard uploads the reports and results of both gates; the job `results` below merges them, and it is
   # the result these gates report to `ci-status`. A failed one-screen run does not stop a11y-routes in the same shard.
+  # Six shards (issue 1667): a runner takes 0.65 to 1.24 times the median time for the same screens, so no weight balances four
+  # shards; six keep the slowest shard near five minutes and use the six job slots the separate gate jobs used before (Free plan,
+  # 20 jobs at once). The weights are medians of several runs (`make ui-weights RUNS="<id> <id> <id>"`).
   ui-shard:
     needs: [changes, reuse]
     if: >-
@@ -341,7 +344,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     name: ui shard ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
