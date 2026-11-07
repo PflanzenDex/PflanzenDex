@@ -12,8 +12,8 @@
   "scripts": {
     "dev": "node tools/workflow/worktree/dev-servers.mjs",
     "lint": "eslint . --cache --cache-strategy content --cache-location \"$(node tools/check/quality/gates/eslint-shared.mjs --cache-file lint)\"",
-    "format": "prettier --write .",
-    "format:check": "prettier --check . --cache --cache-strategy content --cache-location .cache/gates/prettier",
+    "format": "prettier --write . \"../tools/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"../.claude/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"!../.claude/settings.local.json\" --config .prettierrc.json",
+    "format:check": "prettier --check . \"../tools/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"../.claude/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"!../.claude/settings.local.json\" --config .prettierrc.json --cache --cache-strategy content --cache-location .cache/gates/prettier",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "boundaries": "node tools/check/code/check-boundaries.mjs",
     "layout": "node tools/check/code/layout/check-layout.mjs",
@@ -112,6 +112,7 @@
       "prettier --write",
       "eslint --max-warnings=0 --no-warn-ignored"
     ],
-    "*.{json,md,css,html,yml,yaml}": "prettier --write"
+    "*.{json,md,css,html,yml,yaml}": "prettier --write",
+    "../{tools,.claude}/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}": "prettier --write --config .prettierrc.json"
   }
 }
