@@ -182,6 +182,19 @@ describe("US-BES-18 the preview writes nothing and says why a row is flagged", (
     ]);
   });
 
+  it("US-BES-18 an exact synonym makes the row ready through the catalog lookup, ignoring case and accents", async () => {
+    const created = await call(subA, "POST", "/species", {
+      ...profile(`Clusia${run} rosea`, `Gummibaum ${run}`),
+      synonyms: [`Klusie${run}`],
+    });
+    expect(created.status).toBe(201);
+    const r = await preview(subA, [HEADER, `KLUSÍE${run},,,,`].join("\n"));
+    expect(r.body["rows"][0]).toMatchObject({
+      state: "ready",
+      species: { id: created.body["id"], name: `KLUSÍE${run}` },
+    });
+  });
+
   it("US-BES-18 a file without a species column or with a broken row is refused as a whole", async () => {
     expect(await preview(subA, "Spitzname\nLulu")).toMatchObject({
       status: 400,
