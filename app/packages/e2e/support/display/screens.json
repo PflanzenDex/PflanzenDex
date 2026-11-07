@@ -44,6 +44,12 @@
     "title": "Etiketten drucken"
   },
   {
+    "id": "collection-import",
+    "account": "test2",
+    "path": "/collection/import",
+    "title": "Pflanzen importieren"
+  },
+  {
     "id": "collection-view-wishlist",
     "account": "test2",
     "path": "/collection?view=wishlist",
