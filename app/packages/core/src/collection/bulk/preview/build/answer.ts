@@ -1,10 +1,10 @@
 // The answer of the import preview (US-BES-18): one row per line of the file in file order, the counts, the locations the
 // import would create and the markers the keeper still has to give. Pure.
-import { normalizeName } from "../../../kernel";
+import { normalizeName } from "../../../../kernel";
 import type { Draft } from "./draft";
 import { speciesIdOf } from "./draft";
 import type { MarkerRequest, Plan } from "./plan";
-import { displayName, type LocationMatch, type Reason, type SpeciesMatch } from "./rules";
+import { displayName, type LocationMatch, type Reason, type SpeciesMatch } from "../rules";
 
 export type RowState = "ready" | "flagged" | "already_there" | "skipped";
 

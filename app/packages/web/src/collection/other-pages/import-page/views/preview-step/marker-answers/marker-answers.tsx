@@ -5,6 +5,7 @@ import type { MarkerRequest } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
 import { Label } from "@/shared/ui/display/label/label";
+import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import type { MarkerAnswer } from "../../../import-api";
 import table from "../../../import-page.de.json";
@@ -22,10 +23,9 @@ function AnswerField(props: {
   const id = `import-answer-${missing.id}`;
   const text = marker.trim();
   return (
-    <form
+    <FormRoot
       className="flex flex-col gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={() => {
         if (text !== "") props.onAnswer({ specimenId: missing.id, speciesId, marker: text });
       }}
     >
@@ -36,7 +36,7 @@ function AnswerField(props: {
           {ui("markerSave")}
         </Button>
       </div>
-    </form>
+    </FormRoot>
   );
 }
 

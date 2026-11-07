@@ -2,5 +2,5 @@
 export { specimenImportPreview } from "./preview";
 export type { ImportPreview, PreviewRow, PreviewDependencies, RowState } from "./preview";
 export type { ImportOverride } from "./overrides";
-export type { MarkerRequest } from "./plan";
+export type { MarkerRequest } from "./build/plan";
 export type { LocationMatch, Reason } from "./rules";

@@ -1,10 +1,10 @@
 // One draft per row of the file (US-BES-18): the species the name matches, the values and the reasons the row is flagged for
 // on its own, and whether the specimen it names already exists (archived ones included, so a second import creates nothing
 // twice). Each distinct species name is looked up once, however often it stands in the file.
-import { isActive, type SpecimenRow } from "../../shared/types";
-import { specimenName } from "../../shared/name";
-import type { LightLocation } from "../../../light";
-import type { ImportSpeciesSource, ParsedRow } from "../types";
+import { isActive, type SpecimenRow } from "../../../shared/types";
+import { specimenName } from "../../../shared/name";
+import type { LightLocation } from "../../../../light";
+import type { ImportSpeciesSource, ParsedRow } from "../../types";
 import {
   checkRow,
   displayName,
@@ -12,7 +12,7 @@ import {
   type Reason,
   type RowValues,
   type SpeciesMatch,
-} from "./rules";
+} from "../rules";
 
 export interface Draft {
   readonly row: ParsedRow;

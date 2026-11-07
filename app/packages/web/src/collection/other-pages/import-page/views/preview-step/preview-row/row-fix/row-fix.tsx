@@ -5,6 +5,7 @@ import type { PreviewRow } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
 import { Label } from "@/shared/ui/display/label/label";
+import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import type { RowFix } from "../../../../import-api";
 import table from "../../../../import-page.de.json";
@@ -45,12 +46,9 @@ function MarkerFix(props: { row: Row; onFix: OnFix }) {
   const [marker, setMarker] = useState(row.marker ?? "");
   const id = `import-marker-${row.line}`;
   return (
-    <form
+    <FormRoot
       className="flex flex-col gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onFix(row.line, { marker: marker.trim() });
-      }}
+      onSubmit={() => onFix(row.line, { marker: marker.trim() })}
     >
       <Label htmlFor={id}>{ui("markerLabel")}</Label>
       <Input
@@ -67,7 +65,7 @@ function MarkerFix(props: { row: Row; onFix: OnFix }) {
           {ui("markerSave")}
         </Button>
       </div>
-    </form>
+    </FormRoot>
   );
 }
 
