@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../../kernel";
-import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { specimenRepot } from "../index";
-import { InMemorySpecimens } from "../shared/test-helpers";
+import { execute } from "../../../../kernel";
+import { InMemoryIdempotencyStore } from "../../../../kernel/test-helpers";
+import { specimenRepot } from "../../../index";
+import { specimenTickRepotSign, specimenUntickRepotSign } from "./sign";
+import { InMemorySpecimens } from "../../../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const anna = { userId: "anna" };
@@ -82,19 +83,39 @@ describe("US-BES-04 repotted", () => {
     expect(r.ok && r.value).toEqual({ ...cutting, status: "plant", repottedAt: null });
   });
 
-  it("US-BES-04: a plant is not a cutting, the status stays and nothing is written", async () => {
+  it("US-BES-19: a plant is repotted too: the status and its repot day stay, the repot is recorded", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    const r = await execute(
+      specimenRepot({ specimens, clock: () => new Date("2026-10-09T23:30:00Z") }),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId: plant.id, timeZone: "Europe/Berlin" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+    expect(r.ok && r.value).toEqual(plant);
+    expect(specimens.repotLog.repots).toEqual([
+      { userId: "anna", specimenId: plant.id, repottedOn: "2026-10-10" },
+    ]);
+    expect((await specimens.find("anna", plant.id))?.repottedAt ?? null).toBeNull();
+  });
+
+  it("US-BES-19: a plant without a time zone has no repot day and is refused, nothing is written (P-08)", async () => {
     const plant = await create("anna", "Bogenhanf", "plant");
     const before = specimens.writes;
     const r = await repot(plant.id);
-    expect(!r.ok && r.error.code).toBe("specimen.not_a_cutting");
+    expect(!r.ok && r.error.code).toBe("input.invalid");
+    expect(!r.ok && r.error.details).toEqual([{ field: "timeZone", code: "input.invalid" }]);
     expect(specimens.writes).toBe(before);
+    expect(specimens.repotLog.repots).toEqual([]);
   });
 
-  it("US-BES-04: an archived cutting is not repotted", async () => {
+  it("US-BES-04: an archived cutting is not repotted (US-BES-07: the specimen is read only)", async () => {
     const cutting = await create("anna", "Bogenhanf", "cutting");
     await specimens.archive("anna", cutting.id, "abgegeben", "2026-10-01");
     const r = await repot(cutting.id);
-    expect(!r.ok && r.error.code).toBe("specimen.not_a_cutting");
+    expect(!r.ok && r.error.code).toBe("specimen.archived");
     expect((await specimens.find("anna", cutting.id))?.status).toBe("archived");
   });
 
@@ -241,5 +262,211 @@ describe("US-BES-04 the chosen day is not before the catch date (issue 1103)", (
     const r = await chosen(foreign.id, { timeZone: "Europe/Berlin", date: "2026-08-01" });
     expect(!r.ok && r.error.code).toBe("specimen.not_found");
     expect((await specimens.find("ben", foreign.id))?.status).toBe("cutting");
+  });
+});
+
+describe("US-BES-19 a repot records the day and clears the open repot observations", () => {
+  const at = (specimenId: string, input: object = {}) =>
+    execute(
+      specimenRepot({ specimens, clock: () => new Date("2026-10-09T23:30:00Z") }),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId, timeZone: "Europe/Berlin", ...input },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+  const tick = (specimenId: string, sign: "roots_out" | "dries_fast" | "tips_over", day: string) =>
+    execute(
+      specimenTickRepotSign({
+        repots: specimens.repotLog,
+        keeperOff: async () => false,
+        clock: () => new Date(`${day}T10:00:00Z`),
+      }),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId, sign, timeZone: "Europe/Berlin" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+
+  it("US-BES-19: a repot clears every open observation of the plant on its day, and the history keeps them", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    await tick(plant.id, "roots_out", "2026-09-20");
+    await tick(plant.id, "tips_over", "2026-09-21");
+    expect((await at(plant.id, { date: "2026-10-05" })).ok).toBe(true);
+    expect(specimens.repotLog.signs.filter((s) => s.specimenId === plant.id)).toEqual([
+      {
+        userId: "anna",
+        specimenId: plant.id,
+        sign: "roots_out",
+        tickedOn: "2026-09-20",
+        clearedOn: "2026-10-05",
+      },
+      {
+        userId: "anna",
+        specimenId: plant.id,
+        sign: "tips_over",
+        tickedOn: "2026-09-21",
+        clearedOn: "2026-10-05",
+      },
+    ]);
+  });
+
+  it("US-BES-19: a repot day before the tick clears it on the tick day, never before (the history stays ordered)", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    await tick(plant.id, "dries_fast", "2026-10-08");
+    expect((await at(plant.id, { date: "2026-10-01" })).ok).toBe(true);
+    expect(specimens.repotLog.signs[0]?.clearedOn).toBe("2026-10-08");
+  });
+
+  it("US-BES-19: a repot of a cutting records the day and leaves no observation to clear", async () => {
+    const cutting = await create("anna", "Bogenhanf", "cutting");
+    expect((await at(cutting.id, { date: "2026-09-30" })).ok).toBe(true);
+    expect(specimens.repotLog.repots).toEqual([
+      { userId: "anna", specimenId: cutting.id, repottedOn: "2026-09-30" },
+    ]);
+    expect((await specimens.find("anna", cutting.id))?.repottedAt).toBe("2026-09-30");
+  });
+
+  it("US-BES-19: a plant's repot day before its catch date is refused like a cutting's, nothing is written", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    const before = specimens.writes;
+    const r = await at(plant.id, { date: "2026-08-31" });
+    expect(!r.ok && r.error.code).toBe("specimen.repotted_before_caught");
+    expect(specimens.writes).toBe(before);
+    expect(specimens.repotLog.repots).toEqual([]);
+  });
+
+  it("US-BES-19: a plant's future day is refused like a cutting's (P-10, nothing written)", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    const r = await at(plant.id, { date: "2026-10-11" });
+    expect(!r.ok && r.error.code).toBe("specimen.repotted_in_future");
+    expect(specimens.repotLog.repots).toEqual([]);
+  });
+});
+
+describe("US-BES-19 tick and untick a repot observation (DM-BES-09)", () => {
+  const sign = (
+    specimenId: string,
+    op: "tick" | "untick",
+    name: "roots_out" | "dries_fast" | "tips_over",
+    day = "2026-10-09T10:00:00Z",
+  ) => {
+    const operation = op === "tick" ? specimenTickRepotSign : specimenUntickRepotSign;
+    return execute(
+      operation({
+        repots: specimens.repotLog,
+        keeperOff: async () => false,
+        clock: () => new Date(day),
+      }),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId, sign: name, timeZone: "Europe/Berlin" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+  };
+
+  it("US-BES-19: a tick is open on the local day and is shown with the open observations", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    const r = await sign(plant.id, "tick", "roots_out", "2026-10-09T23:30:00Z");
+    expect(r.ok && r.value).toEqual({
+      specimenId: plant.id,
+      signs: [{ sign: "roots_out", tickedOn: "2026-10-10" }],
+    });
+  });
+
+  it("US-BES-19 / US-QS-03: a tick that is open already writes nothing", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    await sign(plant.id, "tick", "tips_over");
+    const before = specimens.writes;
+    const again = await sign(plant.id, "tick", "tips_over", "2026-10-12T10:00:00Z");
+    expect(again.ok && again.value).toEqual({
+      specimenId: plant.id,
+      signs: [{ sign: "tips_over", tickedOn: "2026-10-09" }],
+    });
+    expect(specimens.writes).toBe(before);
+  });
+
+  it("US-BES-19: an untick clears the open observation and keeps its day; nothing open writes nothing", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    await sign(plant.id, "tick", "dries_fast");
+    const cleared = await sign(plant.id, "untick", "dries_fast", "2026-10-11T10:00:00Z");
+    expect(cleared.ok && cleared.value).toEqual({ specimenId: plant.id, signs: [] });
+    expect(specimens.repotLog.signs[0]).toMatchObject({
+      tickedOn: "2026-10-09",
+      clearedOn: "2026-10-11",
+    });
+    const before = specimens.writes;
+    expect((await sign(plant.id, "untick", "dries_fast")).ok).toBe(true);
+    expect(specimens.writes).toBe(before);
+  });
+
+  it("US-BES-19: a cutting cannot be ticked, an archived plant cannot either; a foreign plant looks unknown (P-04)", async () => {
+    const cutting = await create("anna", "Steckling", "cutting");
+    const cut = await sign(cutting.id, "tick", "roots_out");
+    expect(!cut.ok && cut.error.code).toBe("specimen.not_a_plant");
+    const archived = await create("anna", "Archiv", "plant");
+    await specimens.archive("anna", archived.id, "abgegeben", "2026-10-01");
+    const arch = await sign(archived.id, "tick", "roots_out");
+    expect(!arch.ok && arch.error.code).toBe("specimen.archived");
+    const foreign = await create("ben", "Fremd", "plant");
+    const other = await sign(foreign.id, "tick", "roots_out");
+    expect(!other.ok && other.error.code).toBe("specimen.not_found");
+    expect(specimens.repotLog.signs).toEqual([]);
+  });
+
+  it("US-BES-19: an unknown observation is refused by the operation, nothing is written (P-03)", async () => {
+    const plant = await create("anna", "Bogenhanf", "plant");
+    const r = await execute(
+      specimenTickRepotSign({
+        repots: specimens.repotLog,
+        keeperOff: async () => false,
+        clock: () => new Date("2026-10-09T10:00:00Z"),
+      }),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId: plant.id, sign: "yellow_leaves", timeZone: "Europe/Berlin" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+    expect(!r.ok && r.error.details).toEqual([{ field: "sign", code: "input.invalid" }]);
+    expect(specimens.repotLog.signs).toEqual([]);
+  });
+});
+
+describe("US-BES-19 the keeper switch of the repot planner hides and writes nothing (US-ONB-09, P-12)", () => {
+  it("US-BES-19: while the switch is off a tick and an untick are refused with onboarding.keeper_off and nothing is written", async () => {
+    const plant = await create("anna", "Ausgeschaltet", "plant");
+    const off = {
+      repots: specimens.repotLog,
+      keeperOff: async () => true,
+      clock: () => new Date("2026-10-09T10:00:00Z"),
+    };
+    const tick = await execute(
+      specimenTickRepotSign(off),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId: plant.id, sign: "roots_out", timeZone: "Europe/Berlin" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+    expect(!tick.ok && tick.error.code).toBe("onboarding.keeper_off");
+    const untick = await execute(
+      specimenUntickRepotSign(off),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId: plant.id, sign: "roots_out", timeZone: "Europe/Berlin" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+    expect(!untick.ok && untick.error.code).toBe("onboarding.keeper_off");
+    expect(specimens.repotLog.signs).toEqual([]);
   });
 });

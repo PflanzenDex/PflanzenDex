@@ -1,11 +1,9 @@
-import { zoneLabel } from "@pflanzendex/core";
 import { Suspense, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
 import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Badge } from "@/shared/ui/display/badge/badge";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
@@ -14,10 +12,13 @@ import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
-import { MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
+import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
 
 const t = texts(table);
 const TAB_PARAM = "tab";
+/** The status names of a plant and a cutting, compared as values (FR-QG-12); a cutting gets no repot plan (US-BES-04). */
+const PLANT_STATUS = "plant" as const;
+const CUTTING_STATUS = "cutting" as const;
 /** The tabs and their values in the address (`&tab=`); an absent or unknown value means the overview (US-QS-23). */
 const TABS = [
   { value: "ueberblick", label: t("tabs.overview") },
@@ -56,40 +57,12 @@ function closing<E>(
     : undefined;
 }
 
-/**
- * Light zone, location and the open treatment as text chips (P-08: unknown reads as such). A long chip wraps inside its
- * pill, so the row keeps the "Mehr" button inside the window at 200 % text (NFR-13, issue 1228).
- */
-function Chips({ card }: { card: SpecimenCard }) {
-  return (
-    <ul aria-label={t("chips.label")} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-      <li>
-        <Badge variant="outline" className="whitespace-normal">
-          {card.lightZone ? zoneLabel(card.lightZone) : t("chips.zoneUnknown")}
-        </Badge>
-      </li>
-      <li>
-        <Badge variant="outline" className="whitespace-normal">
-          {card.location ?? t("chips.locationUnknown")}
-        </Badge>
-      </li>
-      {card.treatment ? (
-        <li>
-          <Badge variant="warning" className="whitespace-normal">
-            {t("chips.treatment")}
-          </Badge>
-        </li>
-      ) : null}
-    </ul>
-  );
-}
-
 /** The rarer actions behind "Mehr": each opens its existing flow; archiving keeps its confirmation (P-10). */
 function moreItems(card: SpecimenCard, h: Handlers, close: () => void): MenuItem[] {
   const run = (act: ((e: SpecimenCard) => void) | undefined, label: string): MenuItem[] =>
     act ? [{ label, onSelect: () => closing(close, act)?.(card) }] : [];
   return [
-    ...run(card.status === "cutting" ? h.onRepot : undefined, t("menu.repot")),
+    ...run(h.onRepot, card.status === CUTTING_STATUS ? t("menu.repot") : t("menu.repotPlant")),
     ...run(h.onMark, t("menu.mark")),
     ...run(h.onCatchDate, t("menu.catchDate")),
     ...run(h.onArchive, t("menu.archive")),
@@ -135,7 +108,17 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
       />
     ),
     verlauf: p.slots?.history ? slot(p.slots.history) : <Measurement card={card} />,
-    pflege: <PlantCareTab card={card} care={slot(p.slots?.care)} />,
+    pflege: (
+      <PlantCareTab
+        card={card}
+        care={slot(p.slots?.care)}
+        repot={
+          card.status === PLANT_STATUS && p.onRepot
+            ? { access: p.photoAccess, onRepot: () => closing(close, p.onRepot)?.(card) }
+            : undefined
+        }
+      />
+    ),
     standort: (
       <PlantLocation
         card={card}

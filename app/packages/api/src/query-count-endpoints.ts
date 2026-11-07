@@ -83,6 +83,7 @@ export const MEASURED: Record<string, Query> = {
   "/specimens/:id/fertilizing": none,
   "/specimens/:id/leaves": none,
   "/specimens/:id/measurements": zone,
+  "/specimens/:id/repot-plan": zone,
   "/swaps": none,
   "/swaps/history": none,
   "/today": zone,

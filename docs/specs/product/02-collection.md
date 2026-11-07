@@ -304,6 +304,68 @@ Acceptance criteria:
 
 State of implementation (issue 1330): the core and the API are built (`core/src/collection/bulk/`, `POST /specimens/import/preview` as a read, which takes the keeper's fixes as `overrides` (a chosen species, a marker, a skip, FR-BES-26), `POST /specimens/import` as the one guarded write, the keeper switch `csv_import`, limits of FR-BES-26, details in `docs/guides/reference/app.md`). The page `/collection/import` (template, preview with the fixes, result) and the entries "Aus Datei importieren" in "Pflanze anlegen" and in the first-plant guide are built too. The criteria about the screen are covered by the web tests. Status 🟨: the one-screen and a11y gates reach only the first step, because the preview and the result need a file upload, and the accessibility walk by hand and a real CSV file on a phone are still open.
 
+### US-BES-19 · Repot planner and pot inventory · 🟨 new
+
+As a **plant keeper** I want to see when a plant needs repotting and which pot I have free, so that I repot at the right moment with what I own.
+
+Scope: which pot a plant sits in is new data. A pot is an equipment record of type `Pot` (DM-EQU-05), and a repot can place the plant in it (pot placement, DM-EQU-06; the repot day is DM-BES-09). The soil stays in epic SUB: a repot may assign a soil recipe there (US-SUB-03), this story records no soil. A repot hint is advice, never a task or a reminder; reminders are not part of this story. It builds on the repot operation `specimen.repot` (US-BES-04), the care profile (US-BES-09), equipment (US-EQU-01, US-EQU-12), the phase change (US-PHA-04) and the keeper switch (US-ONB-09).
+
+Acceptance criteria:
+
+- Given my equipment, when I add a pot, then it holds diameter, height, material and drainage; a value I do not know reads "unbekannt" (P-08).
+- Given a pot, then it is free, or in use by exactly one plant; when I record a repot I can name the pot, and the pot the plant left becomes free. A pot that another plant holds cannot be named; then nothing is written.
+- Given a plant whose time since its last repot exceeds the interval, then it shows a repot hint that names the reason and how long ago the last repot was. The interval comes from the species when a cited source gives one, and the hint names that source; otherwise it is a starting value of 24 months (assumption), and the hint says it is a general value (P-08).
+- Given a plant with no known repot date, then no time hint shows, and the view says that the repot date is unknown (P-08).
+- Given I tick an observation on a plant, "Wurzeln aus dem Topf", "Erde trocknet zu schnell" or "Pflanze kippt", then the plant shows a repot hint with that observation as its reason.
+- Given the growth of a plant against its pot size, then a hint shows only when the catalog holds a cited rule for that species; without a source no such hint exists, never a guessed ratio (P-08).
+- Given a repot hint while the plant is in dormancy, then the hint warns and suggests repotting in spring; in the growth phase it shows without the warning.
+- Given a repot hint and free pots, then the hint lists my free pots with their size, those larger than the current pot first when the current pot's diameter is known; given that no pot is free, then it says none is free and what to do next (P-09).
+- Given I record a repot, then the time hint starts anew and the ticked observations of that plant are cleared; both stay in the plant's history (P-10).
+- Given hints, then they are derived live and never stored; the ticked observations are the keeper's data.
+- Given the keeper switch for the repot planner is off, then hints and observations are hidden and the data stays (P-12, US-ONB-09). The pots stay in the equipment.
+- Given another keeper, then they see none of my observations, hints or pots, unless an existing sharing rule of equipment already covers pots (US-EQU-12, P-05).
+
+Assumptions (to confirm by the PO):
+
+- The last repot is the day of the last repot recorded with `specimen.repot`, the potting out of a cutting included (US-BES-04). The catch date is no repot date (P-08).
+- A repot of a plant is recorded with `specimen.repot` as well: until now it only potted out a cutting and refused a plant (`specimen.not_a_cutting`). A plant stays a plant; the feed event "Potted" (US-SOZ-05) and the achievement "Cutting rooted" stay limited to the potting out of a cutting.
+- While the keeper has switched equipment off (US-ONB-09), the hint lists no pots and a repot names none; the recorded pots stay.
+- The interval counts whole calendar months from the repot day, in the keeper's time zone (NFR-08); the hint says how many months ago the last repot was.
+- A cutting gets no repot hint: it is potted out (US-BES-04), not repotted.
+- A pot is free when it is `active` (US-EQU-01) and no plant names it; a defective or retired pot is not offered. Archiving a plant frees its pot.
+- A plant without a recorded pot cannot compare sizes: its free pots are listed by name, and the hint says that the current pot is unknown (P-08).
+- A pot holds one plant at a time; several plants in one pot are not covered.
+- The three observations are fixed. A repot clears all ticked ones; the day of each tick and of its clearing stay in the history.
+- Sharing (US-EQU-12): a shared pot shows friends its type, name or model and note only. A shared plant shows its repot day only through the existing "Potted" event of the feed (US-SOZ-05), never its pot, observations or hints.
+
+Decisions (owner, 2026-11-07, issue 1328):
+
+- Keeper switch: the repot planner is its own switchable row in the table of US-ONB-09, like the CSV import (US-BES-18). Off hides the hints and the observations; the pots and all data stay (P-12).
+- Release: the whole story is in R2. The pot fields extend the existing equipment record of type `Pot`; the rest of EQU stays in R5.
+- Interval: 24 months is the general starting value (assumption) when no cited source gives an interval for the species.
+- No care phase: for a plant whose species has no dormancy values, the hint shows without the dormancy warning and says that the care phase is unknown, so spring is the safe time (P-08).
+
+State of implementation (issue 1328):
+
+- **Data:** migrations `0111` (pot fields on `equipment`, pots only), `0112` (tables `repot` and `repot_sign`, module collection; `repot` backfilled from `specimen.repotted_at`) and `0113` (table `pot_placement`, module equipment, one open placement per pot and per plant).
+- **Operations:**
+  - `specimen.repot` also records the repot of a plant and clears its open signs. A plant needs a time zone, so that a day is recorded. An archived specimen is `specimen.archived`.
+  - `specimen.repot_with_pot` repots and places the pot in one transaction; a refused placement writes nothing.
+  - `equipment.place_pot` places a plant or takes it out of its pot (`equipment.pot_not_found`, `equipment.pot_taken`, `equipment.not_a_plant`; with equipment switched off, naming a pot is `onboarding.keeper_off`).
+  - `specimen.tick_repot_sign` and `specimen.untick_repot_sign` tick and clear an observation.
+- **Plan:** `GET /specimens/:id/repot-plan` derives the plan on every read with the pure `repotPlan`: hints with reason and source, last repot, phase, season advice, current pot and free pots.
+- **Web:**
+  - The tab "Pflege" of a plant has the part "Umtopfen" beside "Behandlungen" and "Pflegeprofil", with the hints, the pots and the three observations. It is offered only for a plant while the planner is on.
+  - "Umgetopft" in "Mehr" opens the repot form with the pot picker; a cutting keeps "Eingetopft".
+  - The equipment form has the pot fields for "Topf".
+- **Keeper switch:** `repot_planner`; off hides the part, and the data stays. The name and purpose texts of its unlock function are provisional until the owner confirms them.
+
+**Open:**
+
+- The cited repot interval and pot-size rule per species (DM-BES-01) are not in the catalog yet (#1686). The time hint always uses the general starting value, and no pot-size hint exists.
+- The plant's history does not list repots, placements or cleared observations yet.
+- The server routes answer while the switch is off; only the interface hides them, as for the other switches (US-ONB-09).
+
 ## Data model
 
 ### DM-BES-01 Species (catalog)
@@ -321,6 +383,8 @@ State of implementation (issue 1330): the core and the API are built (`core/src/
 | Dormancy from/until                             | Month-day       | may cross the new year                                                                                                                                                                                                                           |
 | Location growth/dormancy (hint)                 | Text            | Recommendation (e.g. "cool windowsill"); the keeper assigns own locations                                                                                                                                                                        |
 | Growth measure                                  | Enum/text       | exactly one measurement dimension (height, rosette diameter, shoot length, leaf length; FR-BES-22)                                                                                                                                               |
+| Repot interval (months)                         | Number          | Cited interval for a repot, set by a reviewer with its source (FR-BES-02); unknown without a source, the hint then uses the starting value of 24 months (US-BES-19, P-08)                                                                        |
+| Pot size rule                                   | Text            | Cited rule that relates the growth measure (FR-BES-22) to the pot's diameter, set by a reviewer with its source; no rule without a source (US-BES-19, P-08)                                                                                      |
 | Etiolation signs                                | Text            | species-specific symptoms of lack of light                                                                                                                                                                                                       |
 | Watering hint, substrate, pruning, growth hacks | Text            | one sentence each                                                                                                                                                                                                                                |
 | Success criteria                                | Text            | observable signs of optimal care                                                                                                                                                                                                                 |
@@ -349,6 +413,7 @@ Decision (assumption, decided by the PO, #1005): growth measure, etiolation sign
 | Light zone (override) | no               | own zone of the specimen, same account (composite foreign key); overrides location and species zone, a cutting stays under cutting light                                 |
 | Status                | yes              | `Plant`, `Cutting`, `Archived`                                                                                                                                           |
 | Caught_At             | no               | Date, optional on creation (back-dating allowed, never in the future, FR-BES-04), correctable later (US-BES-11); if missing, the creation date counts as "≈" (US-POK-07) |
+| Pot                   | no               | Derived, not stored here: the own pot of the open pot placement (DM-EQU-06, US-BES-19); none = not recorded, reads "unbekannt" (P-08)                                    |
 | Provenance            | no               | `{From, Swap, Date}` (US-SOZ-11)                                                                                                                                         |
 | Notes                 | no               | Private free text of the keeper, at most 2000 characters (starting value, assumption); never shared (US-BES-18, P-05)                                                    |
 | Share, Share_Photos   | no               | Sharing setting (US-SOZ-04)                                                                                                                                              |
@@ -424,6 +489,16 @@ One account's "Stimmt" or "Stimmt nicht" on a catalog value or an open correctio
 | Direction     | `confirm` or `dispute`                                                          |
 | At            | Date; votes are counted, never shown per person                                 |
 
+### DM-BES-09 Repot record and observations (specimen)
+
+The pot a repot names is recorded as a pot placement in equipment (DM-EQU-06): equipment depends on the collection, never the other way round.
+
+| Field       | Required | Meaning                                                                                                                                                                           |
+| ----------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Specimen    | yes      | Reference to the plant (DM-BES-02)                                                                                                                                                |
+| Repot day   | yes      | Local calendar day of a repot recorded with `specimen.repot` (US-BES-04); the latest one is the last repot, earlier ones stay as history (P-10)                                   |
+| Observation | no       | One of "Wurzeln aus dem Topf", "Erde trocknet zu schnell", "Pflanze kippt", with the local day it was ticked and, once a repot has cleared it, the day it was cleared (US-BES-19) |
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Status                                                                                    |
@@ -454,3 +529,4 @@ One account's "Stimmt" or "Stimmt nicht" on a catalog value or an open correctio
 | FR-BES-24 | **Visible cap of the species search (P-10):** the search shows at most 50 hits (starting value, assumption). When more species match, it says so; a cut result never looks complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | FR-BES-25 | **Opaque label code:** the identifier in a QR code is opaque, reveals nothing without sign-in, and carries no private data (US-BES-17, P-05).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | ✅                                                                                        |
 | FR-BES-26 | **Limits of the CSV import (US-BES-18):** a file holds at most 500 rows and 1 MB (starting values, assumption), UTF-8 with or without a byte order mark, separated by comma or semicolon. Dates are `YYYY-MM-DD` or `DD.MM.YYYY`. The preview is a read and writes nothing; confirming is one guarded write (repeat guard, US-QS-03).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | ✅ limits built and tested in core and the API (#1330)                                    |
+| FR-BES-27 | **Repot hint with reason and source:** a repot hint always carries its reason and its source, or says that it uses a general starting value (US-BES-19, P-08, P-09).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | ⬜                                                                                        |

@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router";
+import type { SpecimenCard } from "@pflanzendex/core";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { Button } from "@/shared/ui/button/button";
@@ -9,7 +10,12 @@ import { ArchivedList } from "../../archived/archived-list/archived-list";
 import { loadCard } from "../../specimens/cards/cards-api";
 import { COLLECTION_KEY } from "../../specimens/hooks/use-collection";
 import { PlantLayer } from "./plant-layer/plant-layer";
-import { CareProfileLayer, careProfileLayerId } from "./plant-layer/plant-care-tab/plant-care-tab";
+import {
+  CareProfileLayer,
+  careProfileLayerId,
+  RepotSignsLayer,
+} from "./plant-layer/plant-care-tab/plant-care-tab";
+import { signsLayerId } from "../../markers/repot/repot-plan/repot-plan";
 import { NotesLayer, notesLayerId } from "./plant-layer/plant-notes/plant-notes";
 import { plantLayerId } from "../rows/plant-tile/plant-tile";
 import { ZONES_LAYER } from "../rows/zone-insight/zone-insight";
@@ -20,12 +26,13 @@ const t = texts(table);
 
 /** The ID of the plant a layer address names: `plant-<id>`, `profil-<id>` or `notes-<id>` (US-QS-19, US-QS-23); `undefined` otherwise. */
 function plantIdOf(sheet: string | null): string | undefined {
-  return /^(?:plant|profil|notes)-(.+)$/.exec(sheet ?? "")?.[1];
+  return /^(?:plant|profil|notes|signs)-(.+)$/.exec(sheet ?? "")?.[1];
 }
 
 /** The title of a layer whose plant is still being read, or could not be read. */
 function unreadTitle(sheet: string): string {
   if (sheet.startsWith("profil-")) return t("layer.profile");
+  if (sheet.startsWith("signs-")) return t("layer.signs");
   return sheet.startsWith("notes-") ? t("layer.notes") : t("layer.plant");
 }
 
@@ -63,14 +70,24 @@ function ArchiveLayer(props: LayerProps) {
   );
 }
 
+/** The plant whose layer (`layer` names it for a plant id) the address opens; nothing when another layer or none is open. */
+function plantOpenAt(
+  card: SpecimenCard | undefined,
+  layer: (specimenId: string) => string,
+  sheet: string | null,
+): SpecimenCard | undefined {
+  return card && layer(card.id) === sheet ? card : undefined;
+}
+
 /** The layers of the plants: the light zones, the archive and the plant of a chosen tile with its tabs (US-QS-19, US-QS-23). */
 export function PlantLayers(props: LayerProps) {
   const [params] = useSearchParams();
   const sheet = params.get("sheet");
   const { card, direct } = useLayerPlant(props, plantIdOf(sheet));
-  const plant = card && plantLayerId(card.id) === sheet ? card : undefined;
-  const profile = card && careProfileLayerId(card.id) === sheet ? card : undefined;
-  const notes = card && notesLayerId(card.id) === sheet ? card : undefined;
+  const plant = plantOpenAt(card, plantLayerId, sheet);
+  const profile = plantOpenAt(card, careProfileLayerId, sheet);
+  const notes = plantOpenAt(card, notesLayerId, sheet);
+  const signs = plantOpenAt(card, signsLayerId, sheet);
   // A plant that is being read, or could not be read, has its layer with that state (P-10), never a silent nothing.
   const unread = plantIdOf(sheet) !== undefined && card === undefined;
   return (
@@ -113,6 +130,7 @@ export function PlantLayers(props: LayerProps) {
       ) : null}
       {profile ? <CareProfileLayer card={profile} access={props.photoAccess} /> : null}
       {notes ? <NotesLayer card={notes} access={props.photoAccess} /> : null}
+      {signs ? <RepotSignsLayer card={signs} access={props.photoAccess} /> : null}
     </>
   );
 }

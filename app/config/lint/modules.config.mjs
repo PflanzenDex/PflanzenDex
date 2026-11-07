@@ -75,7 +75,7 @@ const MODULES = [
   {
     name: "collection",
     epics: ["BES"],
-    tables: ["specimen", "care_profile", "specimen_provenance"],
+    tables: ["specimen", "care_profile", "specimen_provenance", "repot", "repot_sign"],
     dependsOn: ["kernel", "catalog", "light"],
     ports: ["TargetLocationSource", "MeasurementSource", "TreatmentSource"],
   },
@@ -118,7 +118,8 @@ const MODULES = [
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting"],
+    // prettier-ignore
+    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting", "pot_placement"],
     dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },

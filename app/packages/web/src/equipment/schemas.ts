@@ -1,7 +1,13 @@
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import { z } from "zod";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { EquipmentInput } from "./equipment-api";
 import type { EquipmentWishInput } from "./overviews/wishes-view/wishes-api";
+import { isSizeCm, POT_FORM, potInput, type PotInput } from "./equipment-form/pot-form";
+import { LAMP_TYPE, POT_TYPE } from "./labels";
+import table from "./equipment.de.json";
+
+const t = texts(table);
 
 const NOT_URL = "Die Produkt-ID sagt, was das Produkt ist, und ist keine Adresse: Bitte keine URL.";
 
@@ -42,14 +48,27 @@ export const equipmentSchema = z
     boughtAt: z.string(),
     note: z.string(),
     lightZoneId: z.string(),
+    diameterCm: z.string(),
+    heightCm: z.string(),
+    material: z.string(),
+    drainage: z.enum(["unknown", "yes", "no"]),
   })
   .superRefine((f, ctx) => {
-    if (f.type === "Lamp" && f.lightZoneId === "")
+    if (f.type === LAMP_TYPE && f.lightZoneId === "")
       ctx.addIssue({
         code: "custom",
         path: ["lightZoneId"],
         message: "Bitte wähle die Lichtzone, in der die Lampe hängt.",
       });
+    // The pot fields are checked for a pot only: a value typed before a change of type does not block another type.
+    if (f.type !== POT_TYPE) return;
+    for (const field of ["diameterCm", "heightCm"] as const) {
+      const value = f[field].trim();
+      if (value !== "" && !isSizeCm(value))
+        ctx.addIssue({ code: "custom", path: [field], message: t("pot.sizeInvalid") });
+    }
+    if (f.material.trim().length > POT_FORM.material.max)
+      ctx.addIssue({ code: "custom", path: ["material"], message: t("pot.materialTooLong") });
   });
 
 export type EquipmentFields = z.input<typeof equipmentSchema>;
@@ -64,10 +83,14 @@ export const EMPTY_FIELDS: EquipmentFields = {
   boughtAt: "",
   note: "",
   lightZoneId: "",
+  diameterCm: "",
+  heightCm: "",
+  material: "",
+  drainage: "unknown",
 };
 
-/** The API input of a checked form: empty fields stay out (unknown, P-08). */
-export function toEquipmentInput(f: EquipmentFields): EquipmentInput {
+/** The API input of a checked form: empty fields stay out (unknown, P-08); the pot fields go to a pot only. */
+export function toEquipmentInput(f: EquipmentFields): EquipmentInput & PotInput {
   const text = (v: string) => v.trim();
   const optional = (key: "manufacturer" | "model" | "productId" | "note") =>
     text(f[key]) ? { [key]: text(f[key]) } : {};
@@ -80,12 +103,24 @@ export function toEquipmentInput(f: EquipmentFields): EquipmentInput {
     ...optional("note"),
     ...(f.priceEur.trim() ? { priceEur: Number(f.priceEur.trim().replace(",", ".")) } : {}),
     ...(f.boughtAt ? { boughtAt: f.boughtAt } : {}),
-    ...(f.type === "Lamp" && f.lightZoneId ? { lightZoneId: f.lightZoneId } : {}),
+    ...(f.type === LAMP_TYPE && f.lightZoneId ? { lightZoneId: f.lightZoneId } : {}),
+    ...(f.type === POT_TYPE ? potInput(f) : {}),
   };
 }
 
 /** Fields of the form a server refusal can point at. */
-const REFUSABLE = ["type", "name", "productId", "priceEur", "boughtAt", "lightZoneId"] as const;
+const REFUSABLE = [
+  "type",
+  "name",
+  "productId",
+  "priceEur",
+  "boughtAt",
+  "lightZoneId",
+  "diameterCm",
+  "heightCm",
+  "material",
+  "drainage",
+] as const;
 export type RefusableField = (typeof REFUSABLE)[number];
 
 export function fieldsOfRefusal(error: {

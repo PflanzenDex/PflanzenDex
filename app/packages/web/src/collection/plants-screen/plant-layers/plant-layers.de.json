@@ -6,6 +6,7 @@
   "tabs.location": "Standort",
   "menu.label": "Mehr",
   "menu.repot": "Eingetopft",
+  "menu.repotPlant": "Umgetopft",
   "menu.mark": "Kennzeichen",
   "menu.catchDate": "Fangdatum",
   "menu.archive": "Archivieren",
@@ -26,5 +27,6 @@
   "list.retry": "Erneut versuchen",
   "layer.plant": "Pflanze",
   "layer.profile": "Pflegeprofil",
-  "layer.notes": "Notizen"
+  "layer.notes": "Notizen",
+  "layer.signs": "Beobachtungen"
 }

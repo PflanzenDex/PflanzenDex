@@ -15,6 +15,8 @@ export const FUNCTION_PURPOSES: Record<UnlockFunctionId, string> = {
     "Drucke QR-Etiketten für deine Töpfe: ein Scan öffnet die Pflanze mit Gießen und Messen.",
   csv_import:
     "Importiere Pflanzen aus einer CSV-Datei. Eine Vorschau zeigt jede Zeile, bevor etwas gespeichert wird.",
+  repot_planner:
+    "Zeigt, wann eine Pflanze umgetopft werden sollte, und welche Töpfe du frei hast. Ein Hinweis ist ein Rat, keine Aufgabe.",
   treatments: "Plane Behandlungen und hake sie ab, wenn sie erledigt sind.",
   pokedex: "Zeigt, welche Arten du schon hast, und was dir noch fehlt.",
   wishlist: "Merke dir Arten, die du gern hättest.",

@@ -19,6 +19,23 @@ export type {
   Recommendation,
 } from "./derived";
 export { equipmentSetStatus } from "./record";
+export {
+  EQUIPMENT_KEEPER_SWITCH,
+  equipmentPlacePot,
+  placePlant,
+  specimenRepotWithPot,
+} from "./record/pot";
+export type {
+  PlaceDependencies,
+  PlaceRefusal,
+  PlacementResult,
+  PotPlacementStore,
+  PotRecord,
+  PotRepotSteps,
+  PotRepotUnit,
+  RepotWithPotDependencies,
+  RepotWithPotResult,
+} from "./record/pot";
 export type { SetStatusDependencies } from "./record";
 export {
   equipmentDescribeLamp,

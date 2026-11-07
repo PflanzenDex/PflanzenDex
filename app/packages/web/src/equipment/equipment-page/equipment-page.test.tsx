@@ -47,6 +47,10 @@ const item = (extra: Record<string, unknown> = {}) => ({
   agentLink: null,
   assignedSpecimenId: null,
   assignedLocationId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
   ...extra,
 });
 

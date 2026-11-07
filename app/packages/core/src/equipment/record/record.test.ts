@@ -112,3 +112,58 @@ describe("US-EQU-01 record equipment (DM-EQU-01, P-08, FR-EQU-03)", () => {
     expect(equipment.rows).toHaveLength(1);
   });
 });
+
+describe("US-BES-19 a pot has a size, a material and drainage (DM-EQU-05, P-08)", () => {
+  const pot = (extra: Record<string, unknown> = {}) => ({ type: "Pot", name: "Topf 12", ...extra });
+
+  it("US-BES-19 a pot needs only type and name; its size, material and drainage stay unknown", async () => {
+    const r = await record(pot());
+    expect(r).toMatchObject({
+      ok: true,
+      value: {
+        type: "Pot",
+        status: "active",
+        diameterCm: null,
+        heightCm: null,
+        material: null,
+        drainage: null,
+      },
+    });
+  });
+
+  it("US-BES-19 stores the pot fields as given, the size with one decimal", async () => {
+    const r = await record(
+      pot({ diameterCm: 12.5, heightCm: 10, material: "Terrakotta", drainage: false }),
+    );
+    expect(r).toMatchObject({
+      ok: true,
+      value: { diameterCm: 12.5, heightCm: 10, material: "Terrakotta", drainage: false },
+    });
+  });
+
+  it("US-BES-19 refuses a size outside 1 to 300 cm, more than one decimal, a long material and a text as drainage", async () => {
+    for (const bad of [
+      { diameterCm: 0.9 },
+      { diameterCm: 301 },
+      { heightCm: 12.34 },
+      { heightCm: "10" },
+      { material: "x".repeat(61) },
+      { drainage: "ja" },
+    ]) {
+      const r = await record(pot(bad));
+      expect(r).toMatchObject({ ok: false, error: { code: "input.invalid" } });
+    }
+    expect(equipment.writes).toBe(0);
+  });
+
+  it("US-BES-19 a device or a consumable refuses the pot fields, each one named (P-08)", async () => {
+    const r = await record(lamp({ diameterCm: 12 }));
+    expect(r).toMatchObject({
+      ok: false,
+      error: { code: "input.invalid", details: [{ field: "diameterCm", code: "input.invalid" }] },
+    });
+    const soil = await record({ type: "Substrate", name: "Kakteenerde", material: "Torf" });
+    expect(soil).toMatchObject({ ok: false, error: { code: "input.invalid" } });
+    expect(equipment.writes).toBe(0);
+  });
+});

@@ -7,7 +7,10 @@ import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields"
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
 import type { ApiError } from "../../shared/data";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { OPTIONAL_FIELDS, OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
+import { PotFields } from "./pot-fields/pot-fields";
+import table from "../equipment.de.json";
 import {
   EMPTY_FIELDS,
   equipmentSchema,
@@ -35,12 +38,14 @@ function usePrefill(
   }, [prefill, form]);
 }
 
+const t = texts(table);
+
 /** Sticky: the form may scroll inside the layer while the save button stays visible. */
 function SaveBar({ pending }: { pending: boolean }) {
   return (
     <div className="sticky bottom-0 bg-card py-2">
       <Button type="submit" size="touch" className="w-full" disabled={pending}>
-        {pending ? "Speichert …" : "Equipment speichern"}
+        {pending ? t("form.saving") : t("form.save")}
       </Button>
     </div>
   );
@@ -70,7 +75,7 @@ export function EquipmentForm(props: {
   });
   // No heading here: the layer "Neues Equipment" already names the form (US-QS-24, issue 1032).
   return (
-    <section aria-label="Equipment erfassen" className="flex flex-col gap-3">
+    <section aria-label={t("form.label")} className="flex flex-col gap-3">
       <FormNotices
         message={refused ? null : props.message}
         alertText={alertText}
@@ -80,6 +85,7 @@ export function EquipmentForm(props: {
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
+          <PotFields control={form.control} />
           <FormMoreFields control={form.control} names={OPTIONAL_FIELDS}>
             <OptionalFields control={form.control} />
           </FormMoreFields>

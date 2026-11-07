@@ -337,6 +337,7 @@ describe("US-ONB-09 keeper switch (P-12): a third state beside operator switch a
       "leaf_log",
       "pot_labels",
       "csv_import",
+      "repot_planner",
     ]);
     expect(UNLOCK_FUNCTIONS.length).toBe(CORE_FUNCTION_IDS.length + keeperFunctions.length);
   });

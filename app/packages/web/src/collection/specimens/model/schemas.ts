@@ -47,9 +47,13 @@ export type CatchDateFields = z.infer<typeof catchDateSchema>;
 
 export const REPOT_DATE_MISSING = "Bitte gib ein Datum an: heute oder ein früheres Datum.";
 
-/** The form to pot a cutting (US-BES-04); the server checks the date again (P-03). */
+/**
+ * The form to pot a cutting (US-BES-04) or repot a plant (US-BES-19); the server checks the date again (P-03). `potId` is
+ * empty for "Kein erfasster Topf" and for a cutting.
+ */
 export const repotSchema = z.object({
   date: z.string().min(1, REPOT_DATE_MISSING),
+  potId: z.string(),
 });
 export type RepotFields = z.infer<typeof repotSchema>;
 
