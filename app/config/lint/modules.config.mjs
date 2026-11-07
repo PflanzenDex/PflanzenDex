@@ -86,6 +86,7 @@ const MODULES = [
       "reminder",
       "reminder_setting",
       "watering_log",
+      "fertilizing_log",
       "sensor",
       "measurements",
       "delivery_channel",
