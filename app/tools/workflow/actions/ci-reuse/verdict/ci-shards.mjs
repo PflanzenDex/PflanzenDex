@@ -27,7 +27,10 @@ export function shardsOf(checkRuns, job) {
  * and a run of it is still going; `success` only when every shard succeeded; otherwise the fallback. `ev` is the evidence
  * that decides, else the latest one.
  */
-export function resultOf(shards, fallback) {
+export function resultOf(all, fallback) {
+  // A name with only skipped runs did no work, as for a plain job: a text-edit run skips the matrix job unexpanded, under
+  // the plain job name (PR 1683), and that check run is no shard.
+  const shards = all.filter((s) => s.ev || s.open);
   const finished = shards.filter((s) => s.ev);
   const latest = finished.map((s) => s.ev).sort((a, b) => doneTime(b) - doneTime(a))[0] ?? null;
   const failed = finished.find((s) => s.ev.conclusion !== "success");

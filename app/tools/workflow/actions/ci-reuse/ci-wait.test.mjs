@@ -938,6 +938,19 @@ test("US-QG-02 (issue 1682): both web test shards succeeded, so the job app-test
   assert.equal(exitCodeOf(a), 0);
 });
 
+// PR 1683: a title edit runs `reuse`, the matrix job is skipped unexpanded, and its one check run is the plain job name.
+test("US-QG-02 (issue 1682): the skipped plain check of a text-edit run does not stand for a shard without a result", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "success"],
+      ["app-tests-web", "skipped"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "success");
+  assert.deepEqual(a.problems, []);
+});
+
 test("US-QG-02 (issue 1682): a failed web test shard fails the job, although the other shard succeeded", () => {
   const a = assess(
     withShards([
