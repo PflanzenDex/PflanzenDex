@@ -100,6 +100,7 @@ Acceptance criteria:
 - **One results job:** Given a run in which the app test jobs or the one-screen or a11y-routes shards run, when the run ends, then the job `results` fails unless every part that ran passed: the coverage ratchet when both test jobs passed, each shard set together with its merge (every screen and size measured exactly once, US-QG-01), and no test job that failed or was cancelled. Given a green `results` on a head, when a later edited run starts on that head, then `reuse` may take it as the proof for the test jobs and the shards (issue 1608).
 - **UI gates follow UI changes:** Given a change whose files are all workflow or dev tooling, hooks, documentation or Markdown, when the run starts, then `app-ui`, `ds-snapshots` and `lighthouse` do not run, while `app-gates`, `app-tests` and `app-tests-web` still run. Given a change to any other app path, then the three UI gates run (issue 1608).
 - Every job has a time limit; exceeding it is an error, not silent hanging.
+- **Local run** (issue 1636): Given a developer who runs `make ci`, when its parts run (secrets, workflows, database, gates, tests, coverage, UI build), then they run one at a time and a failed part does not stop the others. When the run ends, then every failed part is listed with the command that re-runs it, and the exit code is 1 when any part failed. The CI jobs keep their own `make ci-*` targets.
 - Error messages name the violated rule and the file (not just "failed").
 
 ### US-QG-03 · Architecture boundaries are checked by machine · ✅

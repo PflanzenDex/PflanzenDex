@@ -5,7 +5,16 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { formatBlock, runArgv, runGates, summarize } from "./run-gates.mjs";
-import { ESLINT_SHARED, GATE_PARALLEL_LIMIT, GATE_STEPS, runGateSteps } from "./gate-steps.mjs";
+import {
+  CI_PARALLEL_LIMIT,
+  CI_PARTS,
+  ciPartsFor,
+  ESLINT_SHARED,
+  GATE_PARALLEL_LIMIT,
+  GATE_STEPS,
+  runCiParts,
+  runGateSteps,
+} from "./gate-steps.mjs";
 import { RESULTS_ENV } from "./eslint-shared.mjs";
 
 const pause = () => new Promise((resolve) => setTimeout(resolve, 5));
@@ -483,5 +492,122 @@ describe("US-QG-01 green result", () => {
     assert.match(run.out, /gates: the green result is not used \(/);
     assert.equal(JSON.parse(fs.readFileSync(repo.record, "utf8")).key.length, 64);
     assert.deepEqual((await greenRun(repo)).ran, []);
+  });
+});
+
+describe("US-QG-02 the parts of make ci", () => {
+  // A runner that records the start and the end of each part and fails the parts that `fail` names. `peak` is the most parts
+  // that ran at the same time.
+  const partRunner = (fail = []) => {
+    const log = [];
+    let running = 0;
+    let peak = 0;
+    const runOne = async (step) => {
+      running += 1;
+      peak = Math.max(peak, running);
+      log.push(`start ${step.name}`);
+      await pause();
+      log.push(`end ${step.name}`);
+      running -= 1;
+      return {
+        name: step.name,
+        ok: !fail.includes(step.name),
+        output: `${step.name} output\n`,
+        seconds: 0,
+      };
+    };
+    return { runOne, log, peak: () => peak };
+  };
+  const partNames = (env = {}) => ciPartsFor(env).map((part) => part.name);
+  const scriptsOfApp = () =>
+    JSON.parse(fs.readFileSync(new URL("../../../../package.json", import.meta.url), "utf8"))
+      .scripts;
+
+  it("US-QG-02 a failing part does not stop the later parts: every part runs, every failure is listed with its re-run command, exit 1", async () => {
+    const runner = partRunner(["tests-workspaces", "build"]);
+    const { code, summary } = await runCiParts({ env: {}, runOne: runner.runOne });
+    assert.equal(runner.log.filter((line) => line.startsWith("start ")).length, partNames().length);
+    assert.ok(
+      runner.log.includes("start coverage"),
+      "the coverage part ran after the failed test part",
+    );
+    assert.ok(
+      runner.log.includes("start conformance"),
+      "the conformance part ran after the failed build",
+    );
+    assert.equal(code, 1);
+    assert.match(summary, /^ci: 11 parts in [\d.]+ s, one at a time, 2 failed$/m);
+    assert.match(summary, /FAILED tests-workspaces: re-run: cd app && npm run ci:tests:workspaces/);
+    assert.match(summary, /FAILED build: re-run: cd app && npm run build/);
+    assert.doesNotMatch(summary, /FAILED (gates|coverage|conformance)/);
+  });
+
+  it("US-QG-02 all parts green gives exit 0 and no FAILED line", async () => {
+    const { code, summary } = await runCiParts({ env: {}, runOne: partRunner().runOne });
+    assert.equal(code, 0);
+    assert.match(summary, /, 0 failed\n$/);
+    assert.doesNotMatch(summary, /FAILED/);
+  });
+
+  it("US-QG-02 the parts run one at a time, and a part starts only after the parts it needs have finished", async () => {
+    assert.equal(CI_PARALLEL_LIMIT, 1);
+    const runner = partRunner();
+    await runCiParts({ env: {}, runOne: runner.runOne });
+    assert.equal(runner.peak(), 1);
+    const ended = (name) => runner.log.indexOf(`end ${name}`);
+    const started = (name) => runner.log.indexOf(`start ${name}`);
+    assert.ok(started("coverage") > ended("tests-workspaces"));
+    assert.ok(started("coverage") > ended("tests-web"));
+    assert.ok(started("bundle-budget") > ended("build"));
+    assert.ok(started("conformance") > ended("build"));
+  });
+
+  it("US-QG-02 in CI the local database part is left out, and the part that needed it runs without it", async () => {
+    assert.ok(partNames().includes("database"));
+    assert.ok(!partNames({ CI: "true" }).includes("database"));
+    assert.deepEqual(
+      ciPartsFor({ CI: "true" }).find((part) => part.name === "tests-workspaces").needs,
+      [],
+    );
+    const runner = partRunner();
+    const { code } = await runCiParts({ env: { CI: "true" }, runOne: runner.runOne });
+    assert.equal(code, 0);
+    assert.ok(runner.log.includes("start tests-workspaces"));
+  });
+
+  it("US-QG-02 the npm parts of make ci are the scripts of app/package.json, and the chains of ci:ui and ci:tests:base are split into those parts", () => {
+    const scripts = scriptsOfApp();
+    for (const part of CI_PARTS.filter((p) => p.argv[0] === "npm")) {
+      assert.ok(
+        scripts[part.argv[2]],
+        `${part.name} runs ${part.argv[2]}, which package.json does not define`,
+      );
+    }
+    const commandOf = (name) => `npm run ${CI_PARTS.find((part) => part.name === name).argv[2]}`;
+    assert.deepEqual(
+      scripts["ci:ui"].split(" && "),
+      ["build", "bundle-budget", "conformance"].map(commandOf),
+    );
+    assert.deepEqual(
+      scripts["ci:tests:base"].split(" && "),
+      ["tests-workspaces", "tests-tools"].map(commandOf),
+    );
+    assert.deepEqual(
+      scripts["ci:tests"].split(" && "),
+      ["ci:tests:base", "ci:tests:web", "ci:coverage"].map((s) => `npm run ${s}`),
+    );
+    assert.equal(scripts.ci, "node tools/dev/agent/ci-parts.mjs");
+  });
+
+  it("US-QG-02 the make parts are targets of the Makefile, and each one runs in the root", () => {
+    const makefile = fs.readFileSync(new URL("../../../../../Makefile", import.meta.url), "utf8");
+    for (const part of CI_PARTS.filter((p) => p.argv[0] === "make")) {
+      const target = part.argv.at(-1);
+      assert.ok(
+        makefile.split("\n").some((line) => line.startsWith(`${target}:`)),
+        `${target} is not a Makefile target`,
+      );
+      assert.deepEqual(part.argv.slice(0, 4), ["make", "--no-print-directory", "-C", ".."]);
+    }
   });
 });

@@ -42,7 +42,9 @@ test("US-DEV-08 the dev mail catcher has a memory limit (#1084)", () => {
 
 test("US-DEV-08 make db-up starts the local test database with a memory limit (#1084)", () => {
   assert.match(makefile, /^DB_MEMORY \?= \d+[mg]$/m);
-  assert.match(makefile, /docker run -d --name \$\(DB_CONTAINER\) --memory \$\(DB_MEMORY\)/);
+  // The recipe reads the cap from the environment (RAW_DB_MEMORY, issue 1636): a command-line value never reaches the shell as text.
+  assert.match(makefile, /^export RAW_DB_MEMORY := \$\(value DB_MEMORY\)$/m);
+  assert.match(makefile, /docker run -d --name \$\(DB_CONTAINER\) --memory "\$\$RAW_DB_MEMORY"/);
 });
 
 test("US-DEV-08 no deploy file or deploy workflow loads a dev compose file (#1084)", () => {

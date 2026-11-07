@@ -27,7 +27,7 @@ Inside each layer package the code is cut into module folders with the same name
 ```bash
 make setup   # install dependencies
 make dev     # start API and web (Vite): 3000 and 5173; in a worktree its own ports from .env.worktree (parallel-work.md)
-make ci      # all gates: lint, types, boundaries, format, tests, build
+make ci      # all gates: lint, types, boundaries, format, tests, build; every part runs, the failed ones are listed at the end
 ```
 
 - **Node:** version 26 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
@@ -49,7 +49,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 ## Database and tenant isolation (TE-02)
 
-- **Test database:** `make db-up` starts PostgreSQL 18 in Docker (port 54329; `make test` and `make ci` do this themselves, in CI it runs as a service). Another server: `PFLANZENDEX_TEST_DATABASE_URL`.
+- **Test database:** `make db-up` starts PostgreSQL 18 in Docker (port 54329; `make test` and `make ci` do this themselves, in CI it runs as a service). Another server: `PFLANZENDEX_TEST_DATABASE_URL`. The database is throw-away, so every start runs it with `fsync`, `synchronous_commit` and `full_page_writes` off (issue 1636: a `DROP DATABASE` checkpoint took 18-19 s and the API suite 46-65 s; with the settings off 0.1 s and 31 s). An existing container gets them on the next `make db-up`; CI keeps the service's defaults.
 - **Test database owner (#294, QG-D1):** `PFLANZENDEX_TEST_DATABASE_URL` is the cluster superuser, which bypasses row-level security. The `db` suite therefore does not use it: the vitest global setup (`packages/db/src/test-global-setup.ts`) creates the login role `pflanzendex_test_owner` (no superuser, no BYPASSRLS) and the database `<name>_owner` it owns, and every test connects with `openOwnerPool()`, so row security applies to every query as in production. The superuser is used only where a test deliberately works across tenants or needs superuser-only settings: `openFixturePool()` (fixture helpers in `src/fixtures.ts`, cleanup and observation of forced tables in tests, the `observer` argument of `checkTenantIsolation`) and `openAdminPool()` (scratch databases and roles). `rls-guard.test.ts` fails if the suite connection ever becomes a superuser. The `api` suite does the same (#476): its vitest global setup (`packages/api/src/test-global-setup.ts`, #485) creates the owner role first, its test files open `openOwnerPool()` plus `openFixturePool()` for setup, cleanup and cross-tenant observation; `packages/api/src/rls-guard.test.ts` fails if the api suite connection becomes a superuser.
 - **Migrations:** SQL files in `packages/db/migrations/`, forward only, with a checksum (an applied file must never change). Apply with `make migrate`. Every migration after `0012` runs in `realistic-migration.test.ts` over a fixture of prototype size (2 accounts, 13 species, 17 specimens with locations and zones, measurement series), which checks counts, values, references and tenant isolation afterwards (US-DEV-07); a new migration is covered by adding its file, nothing else.
 - **New user-owned table:** column `account_id uuid not null references account(id) on delete cascade`, then `select tenant_protection('table');` and an entry in `packages/db/src/<module>/fixtures.ts` (aggregated in `packages/db/src/fixtures.ts`). If any of these is missing, the generic test (`tenant.test.ts`) fails. Tables without an account (e.g. the species catalog) need an entry with a reason in `WITHOUT_ACCOUNT_ID`.
