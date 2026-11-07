@@ -315,14 +315,6 @@
       "enums": 1
     },
     {
-      "file": "packages/core/src/equipment/record/fields.ts",
-      "numbers": 5
-    },
-    {
-      "file": "packages/core/src/equipment/record/record.ts",
-      "enums": 1
-    },
-    {
       "file": "packages/core/src/equipment/sensors/view.ts",
       "enums": 1
     },
