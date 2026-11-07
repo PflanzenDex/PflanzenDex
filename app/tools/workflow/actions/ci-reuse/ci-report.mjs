@@ -1,6 +1,6 @@
 // The text of a final CI assessment (US-DEV-13, `make ci-wait PR=<n>`): one line per judged job with its real result and the
 // run that gave it, the aggregate `ci-status` for comparison, and the verdict. Pure, see ci-verdict.mjs.
-import { NOT_IN_WORKFLOW, shortSha } from "./ci-verdict.mjs";
+import { NOT_IN_WORKFLOW, shortSha } from "./verdict/ci-verdict.mjs";
 
 const NAME_WIDTH = 18;
 const RESULT_WIDTH = 15;

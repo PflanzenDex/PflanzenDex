@@ -7,7 +7,7 @@ import { isBaselineFile } from "../../../../../../.claude/hooks/baseline-growth.
 import { isGateFile } from "../../../../../../.claude/hooks/rules.mjs";
 import { json, realClient, repoName, restList } from "../../../claim/lib/claim-client.mjs";
 import { definedAt, readSnapshot } from "../ci-wait.mjs";
-import { assess, MAX_FILES } from "../ci-verdict.mjs";
+import { assess, MAX_FILES } from "../verdict/ci-verdict.mjs";
 import { stateLine } from "../ci-report.mjs";
 import { classifyFile, directionOf, needsText } from "./gate-direction.mjs";
 

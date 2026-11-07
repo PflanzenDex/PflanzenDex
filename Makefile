@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -346,13 +346,34 @@ ci-docs: ## Docs and spec gates (markdown lint and links, spec checks, spec numb
 ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and the ratchet, then the CRAP check
 	cd $(APP) && npm run ci:tests
 
-# Part 2 in CI as three jobs (issue 1125): the web suite runs beside the others, the ratchet and CRAP check read both
-# coverage outputs afterwards. Together they are exactly `make ci-tests`.
+# Part 2 in CI as jobs (issue 1125): the web suite runs as two shard jobs whose blob reports the job `results` merges (issue 1682);
+# the ratchet and CRAP check read the coverage outputs afterwards. Together they are exactly `make ci-tests`.
 ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests
 	cd $(APP) && npm run ci:tests:base
 
-ci-tests-web: ## Part 2b: web tests with coverage
-	cd $(APP) && npm run ci:tests:web
+ci-tests-web: ## Part 2b: web tests with coverage; SHARD=<i>/<n> runs one part and writes its blob report (CI, US-QG-02)
+	cd $(APP) && if [ -n "$$RAW_SHARD" ]; then npm run ci:tests:web:shard -- --shard="$$RAW_SHARD"; else npm run ci:tests:web; fi
+
+# CI only (issue 1682): the blob reports of the two web shards become the coverage of the whole suite. The shell check runs
+# first and fails on a missing, stray or mismatched report, because Vitest merges whatever it finds and does not notice a gap.
+ci-tests-web-merge: ## CI only: merges the blob reports of the web shards (app/packages/web/.vitest/blob) into the coverage of the whole suite; fails unless every shard i of n is there exactly once (US-QG-02)
+	@( cd $(APP)/packages/web || exit 1; dir=.vitest/blob; \
+	  [ -d "$$dir" ] || { echo "ci-tests-web-merge: no folder $$dir: every web shard writes its blob report there first" >&2; exit 1; }; \
+	  n=""; have=""; \
+	  for f in $$(ls -1A "$$dir"); do \
+	    case "$$f" in blob-[1-9]*-[1-9]*.json) ;; *) echo "ci-tests-web-merge: $$dir/$$f is no blob report (blob-<i>-<n>.json)" >&2; exit 1 ;; esac; \
+	    i=$${f#blob-}; i=$${i%%-*}; m=$${f#blob-$$i-}; m=$${m%.json}; \
+	    case "$$i$$m" in *[!0-9]*) echo "ci-tests-web-merge: $$dir/$$f is no blob report (blob-<i>-<n>.json)" >&2; exit 1 ;; esac; \
+	    if [ -n "$$n" ] && [ "$$m" != "$$n" ]; then echo "ci-tests-web-merge: the blob reports name $$n and $$m shards, all of them must come from one run with the same n" >&2; exit 1; fi; \
+	    if [ "$$i" -lt 1 ] || [ "$$i" -gt "$$m" ]; then echo "ci-tests-web-merge: $$dir/$$f names shard $$i of $$m, which does not exist" >&2; exit 1; fi; \
+	    n=$$m; have="$$have $$i"; \
+	  done; \
+	  [ -n "$$n" ] || { echo "ci-tests-web-merge: $$dir holds no blob report" >&2; exit 1; }; \
+	  k=1; while [ $$k -le $$n ]; do \
+	    case " $$have " in *" $$k "*) ;; *) echo "ci-tests-web-merge: shard $$k of $$n has no blob report in $$dir" >&2; exit 1 ;; esac; \
+	    k=$$((k + 1)); \
+	  done \
+	) && cd $(APP) && npm run ci:tests:web:merge
 
 ci-coverage: ## Part 2c: coverage ratchet and CRAP check over the coverage of all packages (run 2a and 2b first)
 	cd $(APP) && npm run ci:coverage

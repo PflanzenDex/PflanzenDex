@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { baselineChanges } from "../../../.claude/hooks/baseline-growth.mjs";
-import { assess, JOBS, problemsNow } from "./actions/ci-reuse/ci-verdict.mjs";
+import { assess, JOBS, problemsNow } from "./actions/ci-reuse/verdict/ci-verdict.mjs";
 import { idsIn, problems, specIds } from "./merge-pr.mjs";
 
 const known = new Set(["US-BES-06", "FR-QG-11"]);
