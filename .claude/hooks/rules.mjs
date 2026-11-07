@@ -59,22 +59,51 @@ export function asksBeforeEdit(relativePath) {
 
 // Shell commands an agent must never run. Each entry: pattern, reason shown to the agent.
 const FORBIDDEN_COMMANDS = [
-  [/--no-verify\b/, "Skipping git hooks is not allowed for agents (US-QG-07). Fix the failing check instead."],
-  [/\bgit\s+commit\b[^|;&]*\s-[a-zA-Z]*n[a-zA-Z]*\b/, "`git commit -n` skips the hooks (US-QG-07)."],
-  [/\bgh\s+pr\s+merge\b/, "Do not call `gh pr merge` directly; use `make merge PR=<n>`, which checks the conditions of ADR 0005."],
-  [/\bgit\s+push\b[^|;&]*\s(origin\s+)?(\S+:)?(main|dev)(?![\w/.-])/, "Never push to `main` or `dev`; open a pull request (E-13)."],
-  [/\bgit\s+push\b[^|;&]*\s(--force|-f)\b(?!-)/, "Plain force pushes are not allowed; use --force-with-lease on your own feature branch."],
-  [/\bgit\s+config\b[^|;&]*\bcore\.hooksPath\b/, "Changing core.hooksPath disables the git hooks; use `make hooks`."],
-  [/\bgh\s+issue\s+create\b/, "Create issues with `make issue TYPE= EPIC= PRIORITY= TITLE= BODY=` (FR-DEV-10): it sets the type and epic labels and the board fields."],
+  [
+    /--no-verify\b/,
+    "Skipping git hooks is not allowed for agents (US-QG-07). Fix the failing check instead.",
+  ],
+  [
+    /\bgit\s+commit\b[^|;&]*\s-[a-zA-Z]*n[a-zA-Z]*\b/,
+    "`git commit -n` skips the hooks (US-QG-07).",
+  ],
+  [
+    /\bgh\s+pr\s+merge\b/,
+    "Do not call `gh pr merge` directly; use `make merge PR=<n>`, which checks the conditions of ADR 0005.",
+  ],
+  [
+    /\bgit\s+push\b[^|;&]*\s(origin\s+)?(\S+:)?(main|dev)(?![\w/.-])/,
+    "Never push to `main` or `dev`; open a pull request (E-13).",
+  ],
+  [
+    /\bgit\s+push\b[^|;&]*\s(--force|-f)\b(?!-)/,
+    "Plain force pushes are not allowed; use --force-with-lease on your own feature branch.",
+  ],
+  [
+    /\bgit\s+config\b[^|;&]*\bcore\.hooksPath\b/,
+    "Changing core.hooksPath disables the git hooks; use `make hooks`.",
+  ],
+  [
+    /\bgh\s+issue\s+create\b/,
+    "Create issues with `make issue TYPE= EPIC= PRIORITY= TITLE= BODY=` (FR-DEV-10): it sets the type and epic labels and the board fields.",
+  ],
 ];
 
 // Commands that change repo-wide GitHub settings: allowed only after a human confirms.
 const CONFIRM_COMMANDS = [
-  [/\bgh\s+api\b[^|;&]*(-X|--method)\s*(PUT|PATCH|POST|DELETE)\b[^|;&]*\b(rulesets|branches\/[^/\s]+\/protection|code-scanning|vulnerability-alerts)\b/i,
-    "This changes GitHub protection settings; update .github/rulesets/ and use tools/repo/rulesets-apply.sh instead."],
+  [
+    /\bgh\s+api\b[^|;&]*(-X|--method)\s*(PUT|PATCH|POST|DELETE)\b[^|;&]*\b(rulesets|branches\/[^/\s]+\/protection|code-scanning|vulnerability-alerts)\b/i,
+    "This changes GitHub protection settings; update .github/rulesets/ and use tools/repo/rulesets-apply.sh instead.",
+  ],
   [/\bgh\s+repo\s+edit\b/, "This changes repository settings."],
-  [/\bgh\s+release\s+(create|delete|edit)\b|\bgit\s+push\b[^|;&]*\s(--tags|v\d)/, "Releases and tags come from the release workflow only (ADR 0002)."],
-  [/\bgh\s+label\s+(create|edit|delete|clone)\b/, "Label changes need the owner (FR-DEV-10): a new type or epic is a pull request to app/config/project/issue-taxonomy.json."],
+  [
+    /\bgh\s+release\s+(create|delete|edit)\b|\bgit\s+push\b[^|;&]*\s(--tags|v\d)/,
+    "Releases and tags come from the release workflow only (ADR 0002).",
+  ],
+  [
+    /\bgh\s+label\s+(create|edit|delete|clone)\b/,
+    "Label changes need the owner (FR-DEV-10): a new type or epic is a pull request to app/config/project/issue-taxonomy.json.",
+  ],
 ];
 
 // Heredoc bodies and quoted strings are text (commit messages, PR bodies), not commands; drop them before judging.
@@ -87,7 +116,8 @@ export function stripText(command) {
 }
 
 // Adding a dependency (a package name after install/add). Bare `npm ci` and `npm install` are fine.
-const ADD_DEPENDENCY = /\b(?:npm\s+(?:install|i|add)|pnpm\s+(?:add|install|i)|yarn\s+add)(?:\s+-\S+)*\s+[^-\s|;&]/;
+const ADD_DEPENDENCY =
+  /\b(?:npm\s+(?:install|i|add)|pnpm\s+(?:add|install|i)|yarn\s+add)(?:\s+-\S+)*\s+[^-\s|;&]/;
 const ADD_DEPENDENCY_REASON =
   "New dependencies need a justification (supply chain, knip, bundle size). Say why the package is needed and why no existing one fits.";
 
@@ -125,7 +155,8 @@ function discardsWork(tokens) {
     case "checkout":
       return rest.includes(".");
     case "restore": {
-      const stagedOnly = rest.includes("--staged") && !rest.includes("--worktree") && !rest.includes("-W");
+      const stagedOnly =
+        rest.includes("--staged") && !rest.includes("--worktree") && !rest.includes("-W");
       return !stagedOnly && rest.includes(".");
     }
     default:
@@ -158,17 +189,27 @@ export function namesRecord(text) {
 export function judgeCommand(rawCommand, where = {}) {
   if (namesRecord(rawCommand)) return { decision: "deny", reason: RECORD_REASON };
   const command = stripText(rawCommand);
-  for (const [pattern, reason] of FORBIDDEN_COMMANDS) if (pattern.test(command)) return { decision: "deny", reason };
+  for (const [pattern, reason] of FORBIDDEN_COMMANDS)
+    if (pattern.test(command)) return { decision: "deny", reason };
   const refusal = mainCheckoutRefusal(rawCommand, where);
   if (refusal) return { decision: "deny", reason: refusal };
-  for (const [pattern, reason] of CONFIRM_COMMANDS) if (pattern.test(command)) return { decision: "ask", reason };
+  for (const [pattern, reason] of CONFIRM_COMMANDS)
+    if (pattern.test(command)) return { decision: "ask", reason };
   if (ADD_DEPENDENCY.test(command)) return { decision: "ask", reason: ADD_DEPENDENCY_REASON };
   const segments = commandSegments(command);
   if (segments.some(removesOutsideThrowaway)) {
-    return { decision: "ask", reason: "`rm -rf` outside node_modules, dist, coverage and .cache can destroy work. Confirm the exact path." };
+    return {
+      decision: "ask",
+      reason:
+        "`rm -rf` outside node_modules, dist, coverage and .cache can destroy work. Confirm the exact path.",
+    };
   }
   if (segments.some(discardsWork)) {
-    return { decision: "ask", reason: "This discards uncommitted work (reset --hard, clean -f, checkout/restore of the whole tree). Commit or stash first, or confirm." };
+    return {
+      decision: "ask",
+      reason:
+        "This discards uncommitted work (reset --hard, clean -f, checkout/restore of the whole tree). Commit or stash first, or confirm.",
+    };
   }
   return null;
 }
@@ -195,7 +236,9 @@ export const MIGRATION_REASON =
 
 // Files whose changes count as "code" for the Stop reminder.
 export function isCodePath(relativePath) {
-  return /^(app\/|scripts\/|\.githooks\/|\.github\/|\.claude\/hooks\/|Makefile$)/.test(relativePath);
+  return /^(app\/|scripts\/|\.githooks\/|\.github\/|\.claude\/hooks\/|Makefile$)/.test(
+    relativePath,
+  );
 }
 
 export function ranGates(command) {
@@ -203,7 +246,10 @@ export function ranGates(command) {
 }
 
 export function prettierCanFormat(relativePath) {
-  return /^app\/.+\.(ts|tsx|js|mjs|json|md|css|html|ya?ml)$/.test(relativePath) && !relativePath.includes("node_modules/");
+  return (
+    /^app\/.+\.(ts|tsx|js|mjs|json|md|css|html|ya?ml)$/.test(relativePath) &&
+    !relativePath.includes("node_modules/")
+  );
 }
 
 export function isSpecPath(relativePath) {

@@ -10,7 +10,8 @@ import path from "node:path";
 import { PLAN_FILE, normalizePaths, planWith } from "./gate-confirmations.mjs";
 import { asksBeforeEdit } from "./rules.mjs";
 
-const git = (args) => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const git = (args) =>
+  execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 
 // What the plan says back (US-QG-07): the files it names, that nothing is confirmed, and, once, that the gate tests it names
 // ask no question in the hook and are reviewed when the PR merges.
@@ -18,9 +19,12 @@ function report(branch, files) {
   const asking = files.filter(asksBeforeEdit);
   const tests = files.filter((file) => !asksBeforeEdit(file));
   const lines = [`gate-plan: ${branch} plans ${files.join(", ")}.`];
-  if (asking.length > 0) lines.push("Nothing is confirmed: the first edit of each file still asks a human.");
+  if (asking.length > 0)
+    lines.push("Nothing is confirmed: the first edit of each file still asks a human.");
   if (tests.length > 0)
-    lines.push(`Test files ask no question in the hook (${tests.join(", ")}): make merge refuses a PR that changes one, so a human reviews it there.`);
+    lines.push(
+      `Test files ask no question in the hook (${tests.join(", ")}): make merge refuses a PR that changes one, so a human reviews it there.`,
+    );
   return `${lines.join(" ")}\n`;
 }
 

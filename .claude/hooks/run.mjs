@@ -34,18 +34,32 @@ const event = process.argv[2];
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const run = (cmd, args, opts = {}) =>
-  execFileSync(cmd, args, { cwd: root, encoding: "utf8", timeout: 20000, stdio: ["ignore", "pipe", "pipe"], ...opts });
+  execFileSync(cmd, args, {
+    cwd: root,
+    encoding: "utf8",
+    timeout: 20000,
+    stdio: ["ignore", "pipe", "pipe"],
+    ...opts,
+  });
 // Git's view of a folder: the top of its worktree, the common git dir that every worktree of one repository shares, and
 // the folder with its links resolved (git reports resolved paths). Null outside a repository or when git fails (US-QG-07).
 function repoAt(folder) {
   try {
-    const [toplevel, common] = execFileSync("git", ["rev-parse", "--show-toplevel", "--git-common-dir"], {
-      cwd: folder,
-      encoding: "utf8",
-      timeout: 3000,
-      stdio: ["ignore", "pipe", "ignore"],
-    }).split("\n");
-    return { toplevel: fs.realpathSync(toplevel), common: fs.realpathSync(path.resolve(folder, common)), folder: fs.realpathSync(folder) };
+    const [toplevel, common] = execFileSync(
+      "git",
+      ["rev-parse", "--show-toplevel", "--git-common-dir"],
+      {
+        cwd: folder,
+        encoding: "utf8",
+        timeout: 3000,
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    ).split("\n");
+    return {
+      toplevel: fs.realpathSync(toplevel),
+      common: fs.realpathSync(path.resolve(folder, common)),
+      folder: fs.realpathSync(folder),
+    };
   } catch {
     return null;
   }
@@ -64,7 +78,10 @@ function locate(file) {
   const owner = session && repoAt(folder);
   if (!owner || owner.common !== session.common) return fromRoot;
   const real = path.join(owner.folder, path.relative(folder, abs));
-  return { root: owner.toplevel, file: path.relative(owner.toplevel, real).split(path.sep).join("/") };
+  return {
+    root: owner.toplevel,
+    file: path.relative(owner.toplevel, real).split(path.sep).join("/"),
+  };
 }
 
 // The path with its links resolved: the nearest folder that exists is resolved, the rest is kept as written (US-QG-07).
@@ -87,7 +104,8 @@ function landingPlace(p, depth = 0) {
   } catch {
     // Not there: the path is judged as it is written.
   }
-  if (stat?.isSymbolicLink() && depth < 16) return landingPlace(path.resolve(path.dirname(p), fs.readlinkSync(p)), depth + 1);
+  if (stat?.isSymbolicLink() && depth < 16)
+    return landingPlace(path.resolve(path.dirname(p), fs.readlinkSync(p)), depth + 1);
   return realpath(p);
 }
 
@@ -99,11 +117,15 @@ function bashWhere() {
   try {
     const repo = repoAt(root);
     if (!repo) return {};
-    const listed = run("git", ["worktree", "list", "--porcelain"], { cwd: repo.folder, timeout: 3000 })
+    const listed = run("git", ["worktree", "list", "--porcelain"], {
+      cwd: repo.folder,
+      timeout: 3000,
+    })
       .split("\n")
       .filter((line) => line.startsWith("worktree "))
       .map((line) => realpath(line.slice("worktree ".length)));
-    const isMain = (p) => fs.existsSync(path.join(p, ".git")) && fs.statSync(path.join(p, ".git")).isDirectory();
+    const isMain = (p) =>
+      fs.existsSync(path.join(p, ".git")) && fs.statSync(path.join(p, ".git")).isDirectory();
     const main = listed.find(isMain);
     if (!main) return {};
     const isFolder = (p) => {
@@ -113,7 +135,13 @@ function bashWhere() {
         return false;
       }
     };
-    return { cwd: input.cwd ?? root, main, linked: listed.filter((p) => p !== main), isFolder, realpath };
+    return {
+      cwd: input.cwd ?? root,
+      main,
+      linked: listed.filter((p) => p !== main),
+      isFolder,
+      realpath,
+    };
   } catch {
     return {};
   }
@@ -144,7 +172,12 @@ function notInHead(folder, file) {
 // cannot tell (US-QG-07).
 function confirmationSpot(folder) {
   const gitOut = (args) =>
-    execFileSync("git", args, { cwd: folder, encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim();
+    execFileSync("git", args, {
+      cwd: folder,
+      encoding: "utf8",
+      timeout: 3000,
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
   try {
     const dir = gitOut(["rev-parse", "--absolute-git-dir"]);
     let branch = null;
@@ -175,7 +208,9 @@ function gateQuestion(folder, file) {
   const spot = confirmationSpot(folder);
   const record = spot ? readRecord(spot.file) : null;
   if (spot && !needsQuestion(file, spot.branch, record)) return null;
-  const planned = spot?.branch ? plannedFiles(readRecord(path.join(spot.dir, PLAN_FILE)), spot.branch) : null;
+  const planned = spot?.branch
+    ? plannedFiles(readRecord(path.join(spot.dir, PLAN_FILE)), spot.branch)
+    : null;
   const list = spot?.branch ? questionFiles(file, planned, record, spot.branch) : [file];
   writeSnapshot(spot, file, list);
   return list;
@@ -190,7 +225,9 @@ function writeSnapshot(spot, file, list) {
     fs.rmSync(asked, { force: true });
     if (spot.branch) fs.writeFileSync(asked, snapshotText(spot.branch, file, list));
   } catch (error) {
-    process.stderr.write(`hook: the question could not be recorded (${error.message.split("\n")[0]})\n`);
+    process.stderr.write(
+      `hook: the question could not be recorded (${error.message.split("\n")[0]})\n`,
+    );
   }
 }
 
@@ -198,7 +235,8 @@ function writeSnapshot(spot, file, list) {
 // reason lists them all, and says that confirming this edit confirms them too.
 function gateReason(file, list) {
   const base = `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green.`;
-  if (list.length === 1) return `${base} A confirmed edit lets later edits of this file on this branch pass (US-QG-07).`;
+  if (list.length === 1)
+    return `${base} A confirmed edit lets later edits of this file on this branch pass (US-QG-07).`;
   return `${base} The plan of this branch (make gate-plan) lists these files, not confirmed yet: ${list.join(", ")}. Confirming this edit also confirms them, and later edits of them on this branch pass (US-QG-07).`;
 }
 
@@ -224,7 +262,13 @@ function recordGateEdit(folder, file) {
 
 const print = (obj) => process.stdout.write(JSON.stringify(obj));
 const preToolUse = (permissionDecision, permissionDecisionReason) =>
-  print({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, permissionDecisionReason } });
+  print({
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision,
+      permissionDecisionReason,
+    },
+  });
 
 // Fingerprint of all code changes relative to origin/dev (committed, staged, unstaged, untracked).
 function codeFingerprint() {
@@ -234,10 +278,14 @@ function codeFingerprint() {
   const files = [...new Set([...changed, ...untracked])].filter((f) => f && isCodePath(f)).sort();
   if (files.length === 0) return null;
   const hash = createHash("sha256");
-  for (const f of files) hash.update(f).update(fs.existsSync(path.join(root, f)) ? fs.readFileSync(path.join(root, f)) : "deleted");
+  for (const f of files)
+    hash
+      .update(f)
+      .update(fs.existsSync(path.join(root, f)) ? fs.readFileSync(path.join(root, f)) : "deleted");
   return hash.digest("hex");
 }
-const stateFile = () => path.join(run("git", ["rev-parse", "--absolute-git-dir"]).trim(), "claude-gates-fingerprint");
+const stateFile = () =>
+  path.join(run("git", ["rev-parse", "--absolute-git-dir"]).trim(), "claude-gates-fingerprint");
 
 // Why an edit of a baseline grows it, or null when it only shrinks it (US-QG-07). The file on disk and the tool input
 // give the resulting text; an edit that cannot be placed exactly counts as growth.
@@ -253,8 +301,12 @@ function baselineEditGrowth(fileRoot, file, toolInput) {
 
 // The new text of a Write, Edit, MultiEdit or NotebookEdit call: what the tool writes, not what it replaces (US-QG-07).
 function newTexts(toolInput) {
-  const edits = Array.isArray(toolInput.edits) ? toolInput.edits.map((edit) => edit?.new_string) : [];
-  return [toolInput.content, toolInput.new_string, toolInput.new_source, ...edits].filter((text) => typeof text === "string");
+  const edits = Array.isArray(toolInput.edits)
+    ? toolInput.edits.map((edit) => edit?.new_string)
+    : [];
+  return [toolInput.content, toolInput.new_string, toolInput.new_source, ...edits].filter(
+    (text) => typeof text === "string",
+  );
 }
 
 const handlers = {
@@ -285,7 +337,10 @@ const handlers = {
         reason = `it could not be judged (${e.message.split("\n")[0]})`;
       }
       if (reason)
-        preToolUse("ask", `${file} is a baseline and this change grows it: ${reason}. A baseline may only shrink; growth needs a human (US-QG-07, FR-QG-17).`);
+        preToolUse(
+          "ask",
+          `${file} is a baseline and this change grows it: ${reason}. A baseline may only shrink; growth needs a human (US-QG-07, FR-QG-17).`,
+        );
     }
   },
   "guard-bash"() {
@@ -300,24 +355,36 @@ const handlers = {
     // The edit went through, so a gate file edit is confirmed on this branch from now on (US-QG-07). A gate test asks nothing,
     // so there is nothing to confirm.
     if (asksBeforeEdit(file)) recordGateEdit(fileRoot, file);
-    if (prettierCanFormat(file)) run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], { cwd: path.join(fileRoot, "app") });
+    if (prettierCanFormat(file))
+      run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], {
+        cwd: path.join(fileRoot, "app"),
+      });
     if (isSpecPath(file)) {
       try {
         run("node", ["app/tools/check/docs/specs/check-specs.mjs"], { cwd: fileRoot });
       } catch (e) {
-        print({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: `Spec check failed after editing ${file}:\n${e.stderr || e.stdout}` } });
+        print({
+          hookSpecificOutput: {
+            hookEventName: "PostToolUse",
+            additionalContext: `Spec check failed after editing ${file}:\n${e.stderr || e.stdout}`,
+          },
+        });
       }
     }
   },
   "after-bash"() {
-    if (ranGates(input.tool_input?.command ?? "")) fs.writeFileSync(stateFile(), codeFingerprint() ?? "");
+    if (ranGates(input.tool_input?.command ?? ""))
+      fs.writeFileSync(stateFile(), codeFingerprint() ?? "");
   },
   stop() {
     const current = codeFingerprint();
     if (!current) return;
     const last = fs.existsSync(stateFile()) ? fs.readFileSync(stateFile(), "utf8") : "";
     if (current !== last) {
-      print({ systemMessage: "Heads-up: code changed since `make ci` or `make gates` last ran in this worktree. Run it before calling the work done (US-QG-07)." });
+      print({
+        systemMessage:
+          "Heads-up: code changed since `make ci` or `make gates` last ran in this worktree. Run it before calling the work done (US-QG-07).",
+      });
     }
   },
 };

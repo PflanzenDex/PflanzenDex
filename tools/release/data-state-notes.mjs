@@ -29,8 +29,14 @@ export function parseDataState(text) {
   if (!isObject(reading.catalog) || !isCount(reading.catalog.approvedSpecies))
     return { ok: false, reason: "catalog.approvedSpecies is missing or not a count" };
   const tree = reading.tree;
-  if (tree !== null && (!isObject(tree) || !isStamp(tree.builtAt) || !isCount(tree.species) || !isCount(tree.errors)))
-    return { ok: false, reason: "tree is neither null nor a build with builtAt, species and errors" };
+  if (
+    tree !== null &&
+    (!isObject(tree) || !isStamp(tree.builtAt) || !isCount(tree.species) || !isCount(tree.errors))
+  )
+    return {
+      ok: false,
+      reason: "tree is neither null nor a build with builtAt, species and errors",
+    };
   return { ok: true, reading };
 }
 
@@ -42,7 +48,8 @@ export function readDataState(read = readRecord) {
   try {
     text = read();
   } catch (error) {
-    if (error?.code === "ENOENT") return { ok: false, reason: "no reading recorded for this release" };
+    if (error?.code === "ENOENT")
+      return { ok: false, reason: "no reading recorded for this release" };
     return { ok: false, reason: `the record cannot be read (${error?.code ?? "unknown error"})` };
   }
   return parseDataState(text);

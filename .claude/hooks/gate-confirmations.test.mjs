@@ -94,12 +94,17 @@ test("US-QG-07: the planned files of a branch are its list, none without an entr
 test("US-QG-07: a question about a planned file names every planned file that is not confirmed yet, the file included", () => {
   const planned = [".githooks/pre-commit", "Makefile", "app/eslint.config.js"];
   const confirmed = withConfirmation(null, A, "app/eslint.config.js");
-  assert.deepEqual(questionFiles("Makefile", planned, confirmed, A), [".githooks/pre-commit", "Makefile"]);
+  assert.deepEqual(questionFiles("Makefile", planned, confirmed, A), [
+    ".githooks/pre-commit",
+    "Makefile",
+  ]);
   assert.deepEqual(questionFiles("Makefile", planned, null, A), planned);
 });
 
 test("US-QG-07: a question about a file outside the plan, with no plan or an unusable one, names the file alone", () => {
-  assert.deepEqual(questionFiles(".githooks/pre-commit", ["Makefile"], null, A), [".githooks/pre-commit"]);
+  assert.deepEqual(questionFiles(".githooks/pre-commit", ["Makefile"], null, A), [
+    ".githooks/pre-commit",
+  ]);
   assert.deepEqual(questionFiles("Makefile", null, null, A), ["Makefile"]);
   assert.deepEqual(questionFiles("Makefile", [], null, A), ["Makefile"]);
 });
@@ -110,7 +115,9 @@ test("US-QG-07: an answer confirms the list of the snapshot of its own question,
   assert.deepEqual(snapshotList(text, A, "Makefile"), list);
   assert.equal(snapshotList(text, A, ".githooks/pre-commit"), null);
   assert.equal(snapshotList(text, B, "Makefile"), null);
-  assert.deepEqual(JSON.parse(withConfirmations(null, A, snapshotList(text, A, "Makefile"))), { [A]: list });
+  assert.deepEqual(JSON.parse(withConfirmations(null, A, snapshotList(text, A, "Makefile"))), {
+    [A]: list,
+  });
 });
 
 test("US-QG-07: a snapshot that is missing, unreadable, names another file, or lists a non-gate file confirms nothing", () => {
@@ -124,7 +131,8 @@ test("US-QG-07: a snapshot that is missing, unreadable, names another file, or l
     JSON.stringify({ branch: A, file: "Makefile", list: [".githooks/pre-commit"] }),
     JSON.stringify({ branch: A, file: "Makefile" }),
   ];
-  for (const text of unusable) assert.equal(snapshotList(text, A, "Makefile"), null, JSON.stringify(text));
+  for (const text of unusable)
+    assert.equal(snapshotList(text, A, "Makefile"), null, JSON.stringify(text));
 });
 
 test("US-QG-07: the answer confirms the list the question showed, not the plan as it is later", () => {
@@ -132,14 +140,26 @@ test("US-QG-07: the answer confirms the list the question showed, not the plan a
   const later = [".githooks/pre-commit", "Makefile", ".github/CODEOWNERS"];
   const confirmed = withConfirmations(null, A, snapshotList(shown, A, "Makefile"));
   assert.equal(needsQuestion(".github/CODEOWNERS", A, confirmed), true);
-  assert.deepEqual(questionFiles(".github/CODEOWNERS", later, confirmed, A), [".github/CODEOWNERS"]);
+  assert.deepEqual(questionFiles(".github/CODEOWNERS", later, confirmed, A), [
+    ".github/CODEOWNERS",
+  ]);
 });
 
 test("US-QG-07: planWith records the gate files of a branch sorted and unique, keeps the other branches, and refuses what is not a gate file", () => {
-  const text = planWith(JSON.stringify({ [B]: ["Makefile"] }), A, ["Makefile", ".githooks/pre-commit", "Makefile"]);
-  assert.deepEqual(JSON.parse(text), { [B]: ["Makefile"], [A]: [".githooks/pre-commit", "Makefile"] });
+  const text = planWith(JSON.stringify({ [B]: ["Makefile"] }), A, [
+    "Makefile",
+    ".githooks/pre-commit",
+    "Makefile",
+  ]);
+  assert.deepEqual(JSON.parse(text), {
+    [B]: ["Makefile"],
+    [A]: [".githooks/pre-commit", "Makefile"],
+  });
   assert.throws(() => planWith(null, A, ["README.md", "Makefile"]), /not a gate file: README\.md/);
-  assert.throws(() => planWith(null, A, normalizePaths(["../Makefile"])), /not a gate file: \.\.\/Makefile/);
+  assert.throws(
+    () => planWith(null, A, normalizePaths(["../Makefile"])),
+    /not a gate file: \.\.\/Makefile/,
+  );
   assert.throws(() => planWith(null, A, []), /no gate file is named/);
   assert.deepEqual(JSON.parse(planWith("{", A, ["Makefile"])), { [A]: ["Makefile"] });
 });

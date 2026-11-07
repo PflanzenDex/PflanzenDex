@@ -27,7 +27,9 @@ export function parseConfirmations(text) {
     return null;
   }
   if (record === null || typeof record !== "object" || Array.isArray(record)) return null;
-  const wellFormed = Object.values(record).every((files) => Array.isArray(files) && files.every((f) => typeof f === "string"));
+  const wellFormed = Object.values(record).every(
+    (files) => Array.isArray(files) && files.every((f) => typeof f === "string"),
+  );
   return wellFormed ? record : null;
 }
 
@@ -96,7 +98,7 @@ export function questionFiles(file, planned, confirmedText, branch) {
 // The plan record after a branch declares its gate files (US-QG-07). Each path must be a gate file, so a refused list
 // throws and nothing is written; a plan that cannot be read is replaced by the new one.
 export function planWith(text, branch, files) {
-  if (files.length === 0) throw new Error("no gate file is named (FILES=\"<gate file> ...\")");
+  if (files.length === 0) throw new Error('no gate file is named (FILES="<gate file> ...")');
   const refused = files.filter((file) => !isGateFile(file));
   if (refused.length > 0) throw new Error(`not a gate file: ${refused.join(", ")}`);
   const plan = parsePlan(text) ?? {};
