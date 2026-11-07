@@ -445,6 +445,29 @@ test("US-QG-02 ci-tests-base runs the api suite first, then db, core and the too
     "db started before the api suite ended",
   );
 
+  // The suites of CI are the workspaces of the local part ci:tests:workspaces, each with the same arguments: a workspace
+  // added there and not here would be skipped in CI.
+  const scripts = JSON.parse(
+    readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
+  ).scripts;
+  const [head, args] = scripts["ci:tests:workspaces"].split(" -- ");
+  assert.ok(head.startsWith("npm run test -w ") && args, scripts["ci:tests:workspaces"]);
+  const workspaces = head
+    .slice("npm run test".length)
+    .split(" -w ")
+    .map((w) => w.trim())
+    .filter(Boolean);
+  assert.deepEqual(
+    workspaces.map((w) => scripts[`ci:tests:${w.replace("@pflanzendex/", "")}`]).sort(),
+    workspaces.map((w) => `npm run test -w ${w} -- ${args}`).sort(),
+    "every workspace of ci:tests:workspaces has its suite script with the same arguments",
+  );
+  assert.deepEqual(
+    workspaces.map((w) => `ci:tests:${w.replace("@pflanzendex/", "")}`).sort(),
+    suites.filter((s) => s !== "ci:tests:tools").sort(),
+    "ci-tests-base runs exactly those suites",
+  );
+
   for (const failing of ["ci:tests:api", "ci:tests:core"]) {
     const failed = makeRun(t, ["-o", "db-up", "ci-tests-base"], {
       env: { CI: "1" },
