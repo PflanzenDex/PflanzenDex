@@ -19,8 +19,8 @@ import {
   withConfirmations,
 } from "./gate-confirmations.mjs";
 import {
+  asksBeforeEdit,
   isCodePath,
-  isGateFile,
   isMigrationFile,
   isSpecPath,
   judgeCommand,
@@ -248,7 +248,8 @@ const handlers = {
     if (Object.hasOwn(RECORD_REASONS, record)) {
       // Only the hook (guard-edit and after-edit) and make gate-plan write the records: an agent's edit of one could confirm gate files nobody was asked about (US-QG-07).
       preToolUse("ask", RECORD_REASONS[record]);
-    } else if (isGateFile(file)) {
+    } else if (asksBeforeEdit(file)) {
+      // A gate test is not asked about (US-QG-07): it is a gate file for make merge only, and make merge reviews it there.
       const list = gateQuestion(fileRoot, file);
       if (list) preToolUse("ask", gateReason(file, list));
     } else if (isBaselineFile(file)) {
@@ -272,8 +273,9 @@ const handlers = {
   },
   "after-edit"() {
     const { root: fileRoot, file } = locate(input.tool_input?.file_path);
-    // The edit went through, so a gate file edit is confirmed on this branch from now on (US-QG-07).
-    if (isGateFile(file)) recordGateEdit(fileRoot, file);
+    // The edit went through, so a gate file edit is confirmed on this branch from now on (US-QG-07). A gate test asks nothing,
+    // so there is nothing to confirm.
+    if (asksBeforeEdit(file)) recordGateEdit(fileRoot, file);
     if (prettierCanFormat(file)) run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], { cwd: path.join(fileRoot, "app") });
     if (isSpecPath(file)) {
       try {

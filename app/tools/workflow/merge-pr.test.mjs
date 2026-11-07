@@ -71,6 +71,19 @@ test("US-DEV-02: a PR that changes a gate file is left to a human", () => {
   assert.match(problems(gate, known)[0], /gate files.*ci\.yml.*merge-pr\.mjs/);
 });
 
+test("US-QG-07: a PR that changes only a gate test is left to a human too: the hook asks no question for a test, make merge still refuses it", () => {
+  for (const f of [
+    ".claude/hooks/rules.test.mjs",
+    ".claude/hooks/worktree.test.mjs",
+    "app/tools/workflow/merge-pr.test.mjs",
+  ]) {
+    const found = problems({ ...ok, files: [{ path: f }] }, known);
+    assert.equal(found.length, 1, f);
+    assert.match(found[0], /gate files, which a human must merge/, f);
+    assert.ok(found[0].includes(f), f);
+  }
+});
+
 test("US-QG-07: a PR that changes a threshold or an exception list is refused, a PR that only shrinks a baseline is not", () => {
   for (const f of [
     "coverage-thresholds.json",

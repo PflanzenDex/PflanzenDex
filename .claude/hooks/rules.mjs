@@ -46,6 +46,17 @@ export function isGateFile(relativePath) {
   return GATE_FILES.some((p) => p.test(relativePath));
 }
 
+// The gate test files: `*.test.mjs`, `*.test.ts`, `*.test.js` and `*.selftest.mjs` (US-QG-07). They stay gate files: merge-pr.mjs
+// refuses a PR that changes one, so a human sees it at the merge. An edit of one asks no question in the hook, because a test
+// changes no threshold or exception list (owner decision 2026-11-07).
+const GATE_TEST = /\.(?:test\.(?:mjs|ts|js)|selftest\.mjs)$/;
+
+// Whether an edit of this file asks a human in the hook (US-QG-07): a gate file that is not a gate test. guard-edit, after-edit
+// and the list a question names use it. merge-pr.mjs and gate-review.mjs keep isGateFile, which counts the tests too.
+export function asksBeforeEdit(relativePath) {
+  return isGateFile(relativePath) && !GATE_TEST.test(relativePath);
+}
+
 // Shell commands an agent must never run. Each entry: pattern, reason shown to the agent.
 const FORBIDDEN_COMMANDS = [
   [/--no-verify\b/, "Skipping git hooks is not allowed for agents (US-QG-07). Fix the failing check instead."],
@@ -122,9 +133,23 @@ function discardsWork(tokens) {
   }
 }
 
+// The hook's record files in the git directory of a worktree: claude-gate-confirmations.json, claude-gate-plan.json,
+// claude-gate-plan-asked.json and claude-gates-fingerprint (gate-confirmations.mjs, run.mjs). Only the hook and `make gate-plan`
+// write them (US-QG-07). A command that names one is refused, reads included: a text check cannot tell a write from a read (cp
+// and mv take either direction, a script writes by its code), and no agent needs to read them. The pattern also covers the globs
+// that name them, such as `claude-gate-*`. Quotes and backslashes are dropped first, so `claude-"gate"-plan.json` is caught too.
+// What a text check cannot catch: a name assembled at run time (a variable, printf escapes, a brace expansion), and a script that
+// an agent wrote to a file, whose name is in the file and not in the command. The rulesets, CI and the merge review (make merge
+// refuses a gate change) stay the real gate (D-02).
+const RECORD_NAME = /claude-gates?-/;
+const RECORD_REASON =
+  "claude-gate* files are the hook's records of confirmed gate files and of the plan (US-QG-07). Only the hook and `make gate-plan FILES=...` write them, so no command names them.";
+
 // `where` tells the main checkout guard where the command runs (see main-checkout.mjs); without it, a reset or clean
-// is refused, because the place is not known (US-QG-07).
+// is refused, because the place is not known (US-QG-07). The record check reads the raw text: stripText would drop a quoted
+// name, so it runs first.
 export function judgeCommand(rawCommand, where = {}) {
+  if (RECORD_NAME.test(rawCommand.replace(/["'\\]/g, ""))) return { decision: "deny", reason: RECORD_REASON };
   const command = stripText(rawCommand);
   for (const [pattern, reason] of FORBIDDEN_COMMANDS) if (pattern.test(command)) return { decision: "deny", reason };
   const refusal = mainCheckoutRefusal(rawCommand, where);

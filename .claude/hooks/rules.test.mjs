@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BASELINE_FORMATS, isBaselineFile } from "./baseline-growth.mjs";
 import {
+  asksBeforeEdit,
   isCodePath,
   isGateFile,
   isMigrationFile,
@@ -262,6 +263,58 @@ test("US-QG-07: the news logic behind the changelog check is a gate file; its ty
     "app/packages/web/src/app/destinations/account-area/whats-new/whats-new.ts",
   ]) {
     assert.equal(isGateFile(f), false, f);
+  }
+});
+
+test("US-QG-07: a gate test stays a gate file for make merge but asks no question in the hook; the code it tests still asks", () => {
+  for (const f of [
+    ".claude/hooks/rules.test.mjs",
+    ".claude/hooks/worktree.test.mjs",
+    ".claude/hooks/any.selftest.mjs",
+    "app/tools/workflow/merge-pr.test.mjs",
+  ]) {
+    assert.equal(isGateFile(f), true, f);
+    assert.equal(asksBeforeEdit(f), false, f);
+  }
+  for (const f of [
+    ".claude/hooks/rules.mjs",
+    ".claude/hooks/rules.test.mjs.bak",
+    "app/tools/workflow/merge-pr.mjs",
+    "app/config/gates/quality-limits.json",
+    "Makefile",
+  ]) {
+    assert.equal(asksBeforeEdit(f), true, f);
+  }
+  assert.equal(asksBeforeEdit("app/packages/core/src/index.test.ts"), false);
+});
+
+test("US-QG-07: a shell command that names a gate record is refused, writes and reads alike; make gate-plan and ordinary commands are not", () => {
+  for (const cmd of [
+    `echo '{}' > "$(git rev-parse --git-dir)/claude-gate-confirmations.json"`,
+    "echo '{}' >> .git/claude-gate-plan.json",
+    "echo '{}' | tee .git/claude-gate-plan-asked.json",
+    "cp /tmp/x.json .git/claude-gate-confirmations.json",
+    "mv /tmp/x.json .git/claude-gate-plan.json",
+    "sed -i 's/a/b/' .git/claude-gate-plan.json",
+    `node -e "require('fs').writeFileSync('.git/claude-gate-confirmations.json', '{}')"`,
+    `python3 -c "open('.git/claude-gate-plan.json', 'w').write('{}')"`,
+    "cat .git/claude-gate-confirmations.json",
+    "cp /tmp/x.json .git/claude-gate-*",
+    "echo '{}' > .git/claude-gates-fingerprint",
+    'echo x > .git/claude-"gate"-plan.json',
+  ]) {
+    assert.equal(decision(cmd), "deny", cmd);
+  }
+  assert.match(judgeCommand("cat .git/claude-gate-plan.json", WORKTREE).reason, /claude-gate\* files/);
+  for (const cmd of [
+    'make gate-plan FILES=".claude/hooks/rules.mjs .claude/hooks/rules.test.mjs"',
+    "make gate-plan FILES=Makefile",
+    "node .claude/hooks/gate-plan.mjs",
+    "git status",
+    "make ci",
+    "npm run test:tools",
+  ]) {
+    assert.equal(decision(cmd), "none", cmd);
   }
 });
 

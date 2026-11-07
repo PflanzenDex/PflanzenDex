@@ -11,7 +11,7 @@
 //   it, so an edit confirms only what its own question showed.
 // Pure functions, tested in gate-confirmations.test.mjs. run.mjs and gate-plan.mjs read and write the records.
 import path from "node:path";
-import { isGateFile } from "./rules.mjs";
+import { asksBeforeEdit, isGateFile } from "./rules.mjs";
 
 export const CONFIRMATIONS_FILE = "claude-gate-confirmations.json";
 export const PLAN_FILE = "claude-gate-plan.json";
@@ -59,7 +59,8 @@ export function normalizePaths(files) {
 }
 
 // The plan record: { "<branch>": ["<gate file>", ...] }, or null when the text is missing, unreadable, not in that shape, or
-// lists a path that is not a gate file. Null makes the question name its own file alone (fail closed).
+// lists a path that is not a gate file. A gate test may be planned: it counts as a gate file here, it asks no question
+// (questionFiles leaves it out) and make merge reviews it. Null makes the question name its own file alone (fail closed).
 export function parsePlan(text) {
   if (typeof text !== "string") return null;
   let record;
@@ -83,12 +84,13 @@ export function plannedFiles(planText, branch) {
 }
 
 // The files that one question names (US-QG-07). A file the plan lists shows every planned file of the branch that is not
-// confirmed yet, the file itself included. Any other file, and a plan that cannot be read, names the file alone.
+// confirmed yet, the file itself included; a planned gate test asks no question, so it is left out. Any other file, and a plan
+// that cannot be read, names the file alone.
 export function questionFiles(file, planned, confirmedText, branch) {
   if (!planned?.includes(file)) return [file];
   const record = parseConfirmations(confirmedText);
   const confirmed = record !== null && Object.hasOwn(record, branch) ? record[branch] : [];
-  return planned.filter((f) => f === file || !confirmed.includes(f));
+  return planned.filter((f) => f === file || (asksBeforeEdit(f) && !confirmed.includes(f)));
 }
 
 // The plan record after a branch declares its gate files (US-QG-07). Each path must be a gate file, so a refused list
@@ -107,7 +109,8 @@ export function snapshotText(branch, file, list) {
 }
 
 // The list that an edit of `file` on `branch` confirms, from the snapshot of the last question, or null when the snapshot
-// does not match: missing, unreadable, written for another file or branch, or not naming the file. Null confirms nothing.
+// does not match: missing, unreadable, written for another file or branch, not naming the file, or listing a file that asks no
+// question (a gate test). Null confirms nothing.
 export function snapshotList(text, branch, file) {
   if (typeof text !== "string") return null;
   let snapshot;
@@ -122,6 +125,6 @@ export function snapshotList(text, branch, file) {
     snapshot?.file === file &&
     Array.isArray(list) &&
     list.includes(file) &&
-    list.every((f) => typeof f === "string" && isGateFile(f));
+    list.every((f) => typeof f === "string" && asksBeforeEdit(f));
   return matches ? list : null;
 }

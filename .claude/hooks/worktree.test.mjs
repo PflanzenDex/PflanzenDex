@@ -416,3 +416,49 @@ test("US-QG-07: an edit of the plan or of the question record asks the human, wh
   assertAsks(guard(wt, { file_path: planOf(wt) }), /^claude-gate-plan\.json lists the gate files/);
   assertAsks(guard(wt, { file_path: askedOf(wt) }), /^claude-gate-plan-asked\.json is the question/);
 });
+
+test("US-QG-07: an edit of a gate test passes without a question, the code it tests still asks, and a planned test is named by no question", (t) => {
+  const { wt } = checkout(t);
+  const { makefile } = gateFiles(wt);
+  const hookTest = join(wt, ".claude/hooks/rules.test.mjs");
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  writeFileSync(hookTest, "// test\n");
+  // The test is a gate file for make merge: the other test file of the list and the merge tool's test pass the same way.
+  assert.equal(guard(wt, { file_path: hookTest }), null);
+  assert.equal(guard(wt, { file_path: join(wt, "app/tools/workflow/merge-pr.test.mjs") }), null);
+  assertAsks(guard(wt, { file_path: join(wt, "app/tools/workflow/merge-pr.mjs") }), /^app\/tools\/workflow\/merge-pr\.mjs defines a gate/);
+  // make gate-plan accepts the test, says once that it asks no question, and the Makefile's question does not name it.
+  const planned = plan(wt, "Makefile .claude/hooks/rules.test.mjs");
+  assert.equal(planned.status, 0, planned.stderr);
+  assert.equal(planned.stdout.split("Test files ask no question").length - 1, 1);
+  assert.match(planned.stdout, /Test files ask no question in the hook \(\.claude\/hooks\/rules\.test\.mjs\): make merge refuses/);
+  const asked = guard(wt, { file_path: makefile });
+  assertAsks(asked, /^Makefile defines a gate/);
+  assert.doesNotMatch(asked.permissionDecisionReason, /rules\.test\.mjs/);
+  // An answer confirms the Makefile only; the test was never part of the question, so an edit of it records nothing.
+  writeFileSync(hookTest, "// changed\n");
+  assert.equal(applied(wt, { file_path: hookTest }), null);
+  assert.equal(existsSync(recordOf(wt)), false);
+});
+
+test("US-QG-07: a plan that names only a gate test is recorded, prints that no file asks, and every edit of the test passes", (t) => {
+  const { wt } = checkout(t);
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  const hookTest = join(wt, ".claude/hooks/gate-plan.test.mjs");
+  writeFileSync(hookTest, "// test\n");
+  const planned = plan(wt, ".claude/hooks/gate-plan.test.mjs");
+  assert.equal(planned.status, 0, planned.stderr);
+  assert.doesNotMatch(planned.stdout, /Nothing is confirmed/);
+  assert.deepEqual(JSON.parse(readFileSync(planOf(wt), "utf8")), { [BRANCH]: [".claude/hooks/gate-plan.test.mjs"] });
+  assert.equal(guard(wt, { file_path: hookTest }), null);
+});
+
+test("US-QG-07: the Bash guard refuses a command that names a gate record, and passes make gate-plan and ordinary commands", (t) => {
+  const { wt } = checkout(t);
+  const written = bash(wt, `echo '{}' > "$(git rev-parse --git-dir)/claude-gate-confirmations.json"`);
+  assert.equal(written?.permissionDecision, "deny");
+  assert.match(written.permissionDecisionReason, /claude-gate\* files/);
+  assert.equal(bash(wt, `cp /tmp/x.json "$(git rev-parse --git-dir)/claude-gate-plan.json"`)?.permissionDecision, "deny");
+  assert.equal(bash(wt, "make gate-plan FILES=Makefile"), null);
+  assert.equal(bash(wt, "git status"), null);
+});
