@@ -118,7 +118,8 @@ const MODULES = [
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting"],
+    // prettier-ignore
+    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting", "pot_placement"],
     dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },

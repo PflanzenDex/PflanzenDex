@@ -211,6 +211,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
       expect.stringMatching(/^AB-10 foreign key leaf_specimen/),
       expect.stringMatching(/^AB-10 foreign key measurement_specimen/),
       expect.stringMatching(/^AB-10 foreign key offer_specimen/),
+      expect.stringMatching(/^AB-10 foreign key pot_placement_specimen/),
       expect.stringMatching(/^AB-10 foreign key sharing_specimen/),
       expect.stringMatching(/^AB-10 foreign key specimen_species/),
       expect.stringMatching(/^AB-10 foreign key swap_counter_specimen/),

@@ -13,7 +13,8 @@ import {
 import type { SpecimenStore } from "../shared/types";
 
 export interface RepotDependencies {
-  readonly specimens: SpecimenStore;
+  /** Only the repot is needed here: a repot with a pot runs it inside its own unit of work (`equipment`, US-BES-19). */
+  readonly specimens: Pick<SpecimenStore, "repot">;
   /** The clock for the repot date (NFR-08); without it no date is recorded. */
   readonly clock?: () => Date;
 }
