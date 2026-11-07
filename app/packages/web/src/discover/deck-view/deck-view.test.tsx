@@ -72,8 +72,9 @@ describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)",
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     size.mockRestore();
     const row = rowOf()?.parentElement;
-    expect(row?.className).toContain("static");
-    expect(row?.className).toContain("mb-20");
+    // The row is in the flow (no sticky class), and keeps the room of the phone bar while that bar is fixed (tall window).
+    expect(row?.classList).not.toContain("tall-window:sticky");
+    expect(row?.classList).toContain("tall-window:mb-20");
   });
 });
 
@@ -99,10 +100,13 @@ describe("US-QS-14 decision buttons stay with the card", () => {
     );
   });
 
-  it("US-QS-14 lets the row scroll with the content in a window lower than 30 rem (400 % zoom)", () => {
+  it("US-QS-14 keeps the row in the flow in a window lower than 30 rem (400 % zoom) and sticky from 30 rem of height", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Ja" }).parentElement?.parentElement;
-    expect(row?.className).toContain("[@media(max-height:30rem)]:static");
+    // Base style: no sticky class; the tall-window variant (from 30 rem of height) makes it sticky with the bar's offset.
+    expect(row?.classList).toContain("tall-window:sticky");
+    expect(row?.classList).not.toContain("sticky");
+    expect(row?.className).toContain("tall-window:md:bottom-0");
   });
 });
 

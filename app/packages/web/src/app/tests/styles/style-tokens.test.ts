@@ -210,10 +210,13 @@ describe("US-QS-15 the filling view at a larger text size (issue 1113)", () => {
 
   it("US-QS-15 the filling view scrolls inside itself, so its last line ends above the bottom bar, and reaches into the padding of main by as much as it pads itself", () => {
     const base = rule("");
-    expect(base).toContain("overflow-y: auto;");
-    expect(base).toContain("height: calc(100% + 1rem);");
+    // Base style: the bleed and the padding hold in every window; the height and the inner scroll come with the tall window
+    // (from 30 rem of height, the variant), below it the page scrolls.
     expect(base).toContain("margin: -0.5rem -1rem;");
     expect(base).toContain("padding: 0.5rem 1rem;");
+    expect(base).toContain("overflow-y: visible;");
+    expect(rule("@variant tall-window")).toContain("height: calc(100% + 1rem);");
+    expect(rule("@variant tall-window")).toContain("overflow-y: auto;");
     expect(rule("@media (width >= 48rem)")).toContain("margin-inline: -1.5rem;");
     expect(rule("@media (width >= 80rem)")).toContain("margin-inline: -2.5rem;");
     // The bleed matches the side padding of main: 1 rem, 1.5 rem from md, 2.5 rem from xl.
@@ -239,5 +242,24 @@ describe("US-QS-15 no fixed pixel text size (issue 1019)", () => {
       return /text-\[[\d.]+px\]/.test(text) || /fontSize:\s*["']?[\d.]+px/.test(text);
     });
     expect(offenders.map((file) => file.slice(file.indexOf("/src/") + 5))).toEqual([]);
+  });
+});
+
+describe("US-BES-17 · print rules in tokens.css", () => {
+  const printBlock = css.slice(css.indexOf("@media print {"), css.indexOf("@page labels {"));
+  it("US-BES-17 there is no bare @page rule, so no page of the app is resized or loses its margins", () => {
+    expect(css).not.toMatch(/@page\s*\{/);
+  });
+  it("US-BES-17 the named page labels is A4 without margin", () => {
+    expect(css).toMatch(/@page labels \{\s*size: A4;\s*margin: 0;\s*\}/);
+  });
+  it("US-BES-17 the rest of the body is hidden in print only while a label sheet is on the page", () => {
+    expect(printBlock).toMatch(
+      /body:has\(> \[data-print-labels\]\) > :not\(\[data-print-labels\]\) \{\s*display: none;\s*\}/,
+    );
+  });
+  it("US-BES-17 only the label sheet takes the labels page", () => {
+    expect(printBlock).toMatch(/\[data-print-labels\] \{\s*page: labels;\s*\}/);
+    expect(css.match(/page: labels;/g)).toHaveLength(1);
   });
 });

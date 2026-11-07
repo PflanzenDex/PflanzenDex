@@ -104,6 +104,8 @@ const TZ = { timeZone: "Europe/Berlin" };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const value = (r: { ok: boolean }) => (r as any).value;
 const code = (r: { ok: boolean; error?: { code: string } }) => (r.ok ? "ok" : r.error?.code);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const refusal = (r: { ok: boolean }) => (r as any).error.data;
 
 describe("US-KI-11 read the catalog by name", () => {
   it("US-KI-11 search by Latin name, German name or synonym (at least 2 characters), with id, status and own specimens", async () => {
@@ -205,6 +207,23 @@ describe("FR-BES-24 the cut of the species search is said, never guessed", () =>
     const s = { source: cut([shown]), log: new InMemoryAiLog() };
     const r = await aiGetSpecies(s, call({ species: "Zzvera" }));
     expect(code(r)).toBe("ai.reference_ambiguous");
+    expect(refusal(r)).toMatchObject({ more: false });
+  });
+
+  it("FR-BES-24 a partial name beyond the cap of the search is refused as ambiguous with more true", async () => {
+    const s = { source: cut(), log: new InMemoryAiLog() };
+    const r = await aiGetSpecies(s, call({ species: "vera" }));
+    expect(code(r)).toBe("ai.reference_ambiguous");
+    expect(refusal(r)).toMatchObject({ more: true });
+    expect(refusal(r).candidates).toHaveLength(20);
+  });
+
+  it("FR-BES-24 one partial hit of a cut search is not found: the reference is ambiguous with more true (KI-R4)", async () => {
+    const cutToOne = { ...source(), searchSpecies: async () => ({ species: [aloe], more: true }) };
+    const s = { source: cutToOne, log: new InMemoryAiLog() };
+    const r = await aiGetSpecies(s, call({ species: "echte" }));
+    expect(code(r)).toBe("ai.reference_ambiguous");
+    expect(refusal(r)).toMatchObject({ more: true });
   });
 
   it("FR-BES-24 a name that is not exact and beyond the cap is not_found, with the nearest names", async () => {
@@ -253,6 +272,7 @@ describe("US-KI-11 read the collection by name", () => {
     expect(code(r)).toBe("ai.reference_ambiguous");
     expect(r.ok ? null : r.error.data).toMatchObject({
       candidates: [{ id: uuid(101) }, { id: uuid(102) }],
+      more: false,
     });
   });
 

@@ -3,8 +3,9 @@
 // origin would show (#1487).
 import test from "node:test";
 import assert from "node:assert/strict";
-import { claim, ClaimRefused } from "./claim.mjs";
+import { claim, ClaimRefused, timeoutsOf } from "./claim.mjs";
 import { PreflightFailed } from "./claim-preflight.mjs";
+import { PUSH_LIMIT } from "./lib/claim-client.mjs";
 import { deleteClaimBranch } from "./lib/writes/claim-steps.mjs";
 
 const issue = {
@@ -80,6 +81,7 @@ function fake(options = {}) {
     board,
   } = { ...DEFAULTS, ...options };
   const calls = [];
+  const limits = []; // every call with the limit option it was given (undefined for the default)
   let views = 0;
   let undoFailuresLeft = undoFails;
   const origin = new Map([
@@ -213,9 +215,11 @@ function fake(options = {}) {
   ];
   return {
     calls,
-    async run(cmd, args) {
+    limits,
+    async run(cmd, args, options = {}) {
       const line = `${cmd} ${args.join(" ")}`;
       calls.push(line);
+      limits.push({ line, limit: options.limit });
       const rule = rules.find(([prefix]) => line.startsWith(prefix));
       return rule ? rule[1](line) : "";
     },
@@ -558,4 +562,45 @@ test("US-DEV-08: a board that cannot be read is reported and the labels decide (
   const result = await claim(fake(), 62, { log: (l) => lines.push(l), retryDelayMs: 0 });
   assert.equal(result.branch, "feat/bes-06-delete-specimen");
   assert.ok(lines.some((l) => /could not read the board type of #62/.test(l)));
+});
+
+test("US-DEV-08: the claim's push runs under the push limit; every other call of the claim keeps the default limit", async () => {
+  const client = fake();
+  await claim(client, 62, quiet);
+  const limited = client.limits.filter((c) => c.limit !== undefined);
+  assert.deepEqual(limited, [
+    {
+      line: "git push origin abc123:refs/heads/feat/bes-06-delete-specimen",
+      limit: PUSH_LIMIT,
+    },
+  ]);
+});
+
+test("US-DEV-08: the undo's push --delete runs under the push limit too, because the pre-push hook runs on a delete", async () => {
+  const client = fake({ raceWith: "konradhe14" });
+  await assert.rejects(claim(client, 62, quiet), /claimed #62 first/);
+  const remove = client.limits.find((c) => c.line.startsWith("git push origin --delete"));
+  assert.equal(remove?.limit, PUSH_LIMIT);
+  assert.ok(
+    client.limits
+      .filter((c) => c.limit !== undefined)
+      .every((c) => c.line.startsWith("git push origin ")),
+    "only git push calls carry the push limit",
+  );
+});
+
+test("US-DEV-08: CLAIM_TIMEOUT_S (60 s) and CLAIM_PUSH_TIMEOUT_S (300 s) are the starting values; a value that is not a positive number is refused", () => {
+  assert.deepEqual(timeoutsOf({}), { timeoutMs: 60_000, limits: { [PUSH_LIMIT]: 300_000 } });
+  assert.deepEqual(timeoutsOf({ CLAIM_TIMEOUT_S: "30", CLAIM_PUSH_TIMEOUT_S: "500" }), {
+    timeoutMs: 30_000,
+    limits: { [PUSH_LIMIT]: 500_000 },
+  });
+  assert.throws(
+    () => timeoutsOf({ CLAIM_PUSH_TIMEOUT_S: "soon" }),
+    /CLAIM_PUSH_TIMEOUT_S must be a positive number of seconds/,
+  );
+  assert.throws(
+    () => timeoutsOf({ CLAIM_TIMEOUT_S: "0" }),
+    /CLAIM_TIMEOUT_S must be a positive number of seconds/,
+  );
 });

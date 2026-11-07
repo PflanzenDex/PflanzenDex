@@ -5,8 +5,9 @@
   "description": "HTTP API: calls core only through its public interface",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/api.tsbuildinfo",
     "test": "vitest run",
+    "ensure-bucket": "tsx src/media/ensure-bucket-cli.ts",
     "perf:measure": "tsx perf/load/measure.ts",
     "perf:concurrency": "tsx perf/load/concurrency.ts",
     "catalog:check-data": "tsx src/catalog/load/research/run-check.ts",

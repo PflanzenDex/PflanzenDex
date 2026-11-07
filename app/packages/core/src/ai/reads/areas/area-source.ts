@@ -14,7 +14,7 @@ export interface AreaQuery {
 
 /**
  * The read areas (US-KI-12), named after their tools. Equipment (EQU) follows in its own slice; friends' data, sharing,
- * offers, swaps and recommendations are never released (FR-KI-10, `NOT_RELEASED_READS`).
+ * offers, swaps, recommendations and the human-only functions are never released (FR-KI-10, FR-KI-22, `NOT_RELEASED_CALLS`).
  */
 export const AREA_READS = {
   // Care (PHA, BEH, MON): phases and the location they ask for, treatments, watering, reminders.
@@ -88,15 +88,32 @@ export type AreaReadSource = Readonly<
 export type AppAreaReadSource = Omit<AreaReadSource, "list_ai_log" | "list_ai_drafts">;
 
 /**
- * What a client may ask for but never gets through a connection (FR-KI-10): the subject of the call and the operation
- * of class `never` it falls under. A call answers `ai.not_released` and is logged (US-KI-12).
+ * What a client may ask for but never gets through a connection (FR-KI-10, FR-KI-22): the subject of the call and the
+ * operation of class `never` it falls under. A call answers `ai.not_released` and is logged (US-KI-12, FR-KI-19), whatever
+ * the connection's rights. Reads and writes alike: the route carries no payload, so the arguments are never read.
  */
-export const NOT_RELEASED_READS = {
+export const NOT_RELEASED_CALLS = {
+  // Friends' data, sharing, offers, swaps and partner data (FR-KI-10).
   friends: "friends_data",
   feed: "friends_data",
   sharing: "sharing_settings",
   offers: "offers_and_swaps",
   swaps: "offers_and_swaps",
   recommendations: "partner_data",
+  // Human-only functions (FR-KI-22): profile, devices, calm mode, onboarding, keeper switches, visibility for friends,
+  // reviewer and operator functions, connections, swap acceptance and handover, account deletion and export.
+  profile: "profile_settings",
+  push: "push_subscriptions",
+  "calm-mode": "calm_mode",
+  onboarding: "onboarding_settings",
+  switches: "keeper_switches",
+  visibility: "friend_visibility",
+  review: "review_functions",
+  operator: "operator_functions",
+  connections: "manage_connections",
+  "swap-accept": "accept_swap",
+  handover: "hand_over",
+  "account-deletion": "delete_account",
+  "account-export": "export_account",
 } as const;
-export type NotReleasedRead = keyof typeof NOT_RELEASED_READS;
+export type NotReleasedCall = keyof typeof NOT_RELEASED_CALLS;

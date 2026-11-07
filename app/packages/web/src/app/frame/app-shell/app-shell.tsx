@@ -29,9 +29,9 @@ function clearance(bar: Element | null | undefined): string {
 }
 
 /**
- * The bottom padding of `main` for the bar: its real height, because the class reserves 4 rem and a bar whose labels wrap
- * is taller (93 px at 412 px wide): the last line of the content sat under it. Empty while the bar is hidden (from `md`),
- * so the classes of `main` apply again.
+ * The bottom padding of `main` for the bar, as the variable `--bar-reserve`: its real height, because the class reserves
+ * 4 rem and a bar whose labels wrap is taller (93 px at 412 px wide): the last line of the content sat under it. Empty
+ * while the bar is hidden (from `md`), so the classes of `main` apply again.
  */
 function barReserve(bar: Element | null | undefined): string {
   const height = bar?.getBoundingClientRect().height ?? 0;
@@ -40,7 +40,10 @@ function barReserve(bar: Element | null | undefined): string {
 
 /**
  * Keeps the focused element out from under the sticky header and the fixed bottom bar (US-QS-08, WCAG 2.4.11): the
- * page's scroll padding follows their real height, which changes with wrapping, safe areas and the `md` breakpoint.
+ * real heights of both are written as variables (`--header-clearance`, `--bar-clearance`, `--bar-reserve`), because they
+ * change with wrapping, safe areas and the `md` breakpoint. tokens.css applies them as scroll padding and bottom padding
+ * of `main` only in the tall window (`tall-window`, from 30 rem of height, US-QS-14); below it the bars scroll with the
+ * content. Variables, not inline padding, so the stylesheet decides; this component only measures.
  */
 function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
   useEffect(() => {
@@ -52,18 +55,18 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
     // From `md` the header and the bar are `display: none` and measure 0, so rail and sidebar add no padding.
     const html = document.documentElement.style;
     const update = () => {
-      html.scrollPaddingTop = clearance(header);
-      html.scrollPaddingBottom = clearance(bar);
-      if (main) main.style.paddingBottom = barReserve(bar);
+      html.setProperty("--header-clearance", clearance(header));
+      html.setProperty("--bar-clearance", clearance(bar));
+      main?.style.setProperty("--bar-reserve", barReserve(bar));
     };
     const observer = new ResizeObserver(update);
     for (const el of [header, bar]) if (el) observer.observe(el);
     update();
     return () => {
       observer.disconnect();
-      html.scrollPaddingTop = "";
-      html.scrollPaddingBottom = "";
-      if (main) main.style.paddingBottom = "";
+      html.removeProperty("--header-clearance");
+      html.removeProperty("--bar-clearance");
+      main?.style.removeProperty("--bar-reserve");
     };
   }, [shell]);
 }
@@ -105,6 +108,7 @@ function ShortcutOverviewLayer() {
       onOpenChange={s.setOverviewOpen}
       rows={s.rows}
       off={off}
+      returnFocusTo={s.overviewOpener}
     />
   );
 }
@@ -145,7 +149,7 @@ export function AppShell({
               <main
                 id={MAIN_ID}
                 tabIndex={-1}
-                className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10"
+                className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[var(--bar-reserve,calc(4rem+env(safe-area-inset-bottom)))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10"
               >
                 {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
                 <OfflineBanner />

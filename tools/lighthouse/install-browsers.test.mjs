@@ -94,7 +94,10 @@ function run({
       PFLANZENDEX_APT_CACHE: cache ? cacheDir : "",
       PFLANZENDEX_BROWSER_EXECUTABLE: chrome,
       ...(limits
-        ? { PFLANZENDEX_BROWSER_SYSTEM_LIMIT: "2", PFLANZENDEX_BROWSER_DOWNLOAD_LIMIT: "2" }
+        ? {
+            PFLANZENDEX_BROWSER_SYSTEM_LIMIT: "2",
+            PFLANZENDEX_BROWSER_DOWNLOAD_LIMIT: "2",
+          }
         : {}),
     },
   });
@@ -116,103 +119,165 @@ const APT = "npx --no-install playwright install-deps chromium";
 const DOWNLOAD = "npx --no-install playwright install chromium";
 const DEBS = ["fonts-freefont-ttf_20211204_all.deb", "xfonts-utils_7.7_amd64.deb"];
 
-test("US-QG-01: a healthy install without a cache runs both parts once and keeps nothing", { skip: !hasTimeout }, () => {
-  const r = run({});
-  try {
-    assert.equal(r.status, 0, r.stderr);
-    assert.deepEqual(r.calls, [APT, DOWNLOAD]);
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: a healthy install without a cache runs both parts once and keeps nothing",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({});
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      // The parts run at the same time (issue 1667), so their order in the log is not fixed.
+      assert.deepEqual([...r.calls].sort(), [DOWNLOAD, APT].sort());
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: a complete install with the cache on keeps the packages and the COMPLETE marker", { skip: !hasTimeout }, () => {
-  const r = run({ cache: true, archivedDebs: DEBS });
-  try {
-    assert.equal(r.status, 0, r.stderr);
-    assert.ok(r.calls.some((c) => c.startsWith("sudo tee /etc/apt/apt.conf.d/99pflanzendex-keep-packages")));
-    assert.deepEqual(r.cached(), [...DEBS, "COMPLETE"].sort());
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: a complete install with the cache on keeps the packages and the COMPLETE marker",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ cache: true, archivedDebs: DEBS });
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      assert.ok(
+        r.calls.some((c) =>
+          c.startsWith("sudo tee /etc/apt/apt.conf.d/99pflanzendex-keep-packages"),
+        ),
+      );
+      assert.deepEqual(r.cached(), [...DEBS, "COMPLETE"].sort());
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: a cache hit restores the packages before apt runs, and apt is still asked to install", { skip: !hasTimeout }, () => {
-  const r = run({ cache: true, cachedDebs: DEBS });
-  try {
-    assert.equal(r.status, 0, r.stderr);
-    assert.ok(r.calls.some((c) => c.startsWith("sudo cp -n")));
-    assert.ok(r.calls.includes(APT));
-    assert.deepEqual(r.archives(), DEBS);
-    assert.match(r.stdout, /restoring the cached system packages/);
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: a cache hit restores the packages before apt runs, and apt is still asked to install",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ cache: true, cachedDebs: DEBS });
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      assert.ok(r.calls.some((c) => c.startsWith("sudo cp -n")));
+      assert.ok(r.calls.includes(APT));
+      assert.deepEqual(r.archives(), DEBS);
+      assert.match(r.stdout, /restoring the cached system packages/);
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: a stalled apt part is stopped after its limit, dpkg is repaired and the part runs once more", { skip: !hasTimeout }, () => {
-  const r = run({ deps: "stall ok" });
-  try {
-    assert.equal(r.status, 0, r.stderr);
-    assert.deepEqual(r.calls.filter((c) => c.startsWith("npx")), [APT, APT, DOWNLOAD]);
-    assert.ok(r.calls.includes("sudo pkill -KILL -x apt-get"));
-    assert.ok(r.calls.includes("sudo dpkg --configure -a"));
-    assert.match(r.stderr, /system packages \(apt\) failed or took longer than 2 s \(attempt 1 of 2\)/);
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: a stalled apt part is stopped after its limit, dpkg is repaired and the part runs once more",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ deps: "stall ok" });
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      assert.deepEqual(
+        r.calls.filter((c) => c.startsWith("npx")).sort(),
+        [APT, APT, DOWNLOAD].sort(),
+      );
+      assert.ok(r.calls.includes("sudo pkill -KILL -x apt-get"));
+      assert.ok(r.calls.includes("sudo dpkg --configure -a"));
+      assert.match(
+        r.stderr,
+        /system packages \(apt\) failed or took longer than 2 s \(attempt 1 of 2\)/,
+      );
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: an apt part that stalls twice fails the job by name, and nothing is kept", { skip: !hasTimeout }, () => {
-  const r = run({ deps: "stall stall", cache: true, archivedDebs: DEBS });
-  try {
-    assert.notEqual(r.status, 0);
-    assert.match(r.stderr, /system packages \(apt\) .*\(attempt 2 of 2\)/);
-    assert.equal(r.calls.filter((c) => c === DOWNLOAD).length, 0);
-    assert.deepEqual(r.cached(), []);
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: an apt part that stalls twice fails the job by name, and nothing is kept",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ deps: "stall stall", cache: true, archivedDebs: DEBS });
+    try {
+      assert.notEqual(r.status, 0);
+      assert.match(r.stderr, /system packages \(apt\) .*\(attempt 2 of 2\)/);
+      // The download runs at the same time and passed, yet the install fails and nothing is kept (issue 1667).
+      assert.doesNotMatch(r.stderr, /no Chromium at/);
+      assert.deepEqual(r.cached(), []);
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: a failed browser download is retried once, and a second failure fails the job", { skip: !hasTimeout }, () => {
-  const retried = run({ download: "fail ok" });
-  try {
-    assert.equal(retried.status, 0, retried.stderr);
-    assert.equal(retried.calls.filter((c) => c === DOWNLOAD).length, 2);
-  } finally {
-    retried.cleanup();
-  }
-  const failed = run({ download: "fail fail" });
-  try {
-    assert.notEqual(failed.status, 0);
-    assert.match(failed.stderr, /Chromium download failed or took longer than 2 s \(attempt 2 of 2\)/);
-  } finally {
-    failed.cleanup();
-  }
-});
+test(
+  "US-QG-01: a failed browser download is retried once, and a second failure fails the job",
+  { skip: !hasTimeout },
+  () => {
+    const retried = run({ download: "fail ok" });
+    try {
+      assert.equal(retried.status, 0, retried.stderr);
+      assert.equal(retried.calls.filter((c) => c === DOWNLOAD).length, 2);
+    } finally {
+      retried.cleanup();
+    }
+    const failed = run({ download: "fail fail" });
+    try {
+      assert.notEqual(failed.status, 0);
+      assert.match(
+        failed.stderr,
+        /Chromium download failed or took longer than 2 s \(attempt 2 of 2\)/,
+      );
+    } finally {
+      failed.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: a missing browser fails the job before any test, and nothing is kept", { skip: !hasTimeout }, () => {
-  const r = run({ cache: true, archivedDebs: DEBS, browserPresent: false });
-  try {
-    assert.notEqual(r.status, 0);
-    assert.match(r.stderr, /no Chromium at .* after the install/);
-    assert.deepEqual(r.cached(), []);
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: a failed browser download is retried without touching apt, which runs at the same time",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ download: "fail ok" });
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      assert.equal(r.calls.filter((c) => c === APT).length, 1);
+      assert.ok(!r.calls.some((c) => c.startsWith("sudo pkill") || c.startsWith("sudo dpkg")));
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
-test("US-QG-01: an install that kept no packages succeeds but saves no cache", { skip: !hasTimeout }, () => {
-  const r = run({ cache: true });
-  try {
-    assert.equal(r.status, 0, r.stderr);
-    assert.match(r.stderr, /no complete set of system packages to keep; the cache is not saved/);
-    assert.deepEqual(r.cached(), []);
-  } finally {
-    r.cleanup();
-  }
-});
+test(
+  "US-QG-01: a missing browser fails the job before any test, and nothing is kept",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ cache: true, archivedDebs: DEBS, browserPresent: false });
+    try {
+      assert.notEqual(r.status, 0);
+      assert.match(r.stderr, /no Chromium at .* after the install/);
+      assert.deepEqual(r.cached(), []);
+    } finally {
+      r.cleanup();
+    }
+  },
+);
+
+test(
+  "US-QG-01: an install that kept no packages succeeds but saves no cache",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ cache: true });
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      assert.match(r.stderr, /no complete set of system packages to keep; the cache is not saved/);
+      assert.deepEqual(r.cached(), []);
+    } finally {
+      r.cleanup();
+    }
+  },
+);
 
 test("US-QG-01: the defaults give the throttled apt download room: 720 s for apt and 180 s for the browser", () => {
   const text = readFileSync(SCRIPT, "utf8");

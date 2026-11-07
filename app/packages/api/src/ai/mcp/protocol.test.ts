@@ -11,7 +11,8 @@ import {
   type Call,
   type Reply,
 } from "./protocol";
-import { checkArguments, describeTool, MCP_TOOLS, toolRight } from "./tools";
+import { NOT_RELEASED_CALLS } from "@pflanzendex/core";
+import { checkArguments, describeTool, MCP_TOOLS, NOT_RELEASED_TOOLS, toolRight } from "./tools";
 
 // FR-KI-03, FR-KI-06: contract tests of the MCP wire format (JSON-RPC 2.0, Streamable HTTP, dual-era versioning).
 const meta = (version = MODERN_VERSION) => ({
@@ -215,5 +216,40 @@ describe("FR-KI-12 FR-KI-03 the tools", () => {
       idempotencyKey: "k",
     });
     expect(tool("claim_task").request({ taskId: "t" })).not.toHaveProperty("idempotencyKey");
+  });
+
+  it("FR-KI-22 no human-only name is a tool, and the decided names are in the map of human-only names", () => {
+    const toolNames = MCP_TOOLS.map((t) => t.name);
+    const humanOnly = Object.keys(NOT_RELEASED_TOOLS);
+    for (const name of humanOnly) expect(toolNames).not.toContain(name);
+    for (const name of [
+      "update_profile",
+      "set_display_name",
+      "subscribe_push",
+      "unsubscribe_push",
+      "set_calm_mode",
+      "set_onboarding_style",
+      "dismiss_onboarding_hint",
+      "switch_feature",
+      "account.switch_feature",
+      "set_wish_visibility",
+      "set_equipment_visibility",
+      "decide_proposal",
+      "list_review_proposals",
+      "set_registration_mode",
+      "create_invitation_code",
+      "change_connection_rights",
+      "revoke_connection",
+      "accept_swap",
+      "hand_over",
+      "delete_account",
+      "export_account",
+    ])
+      expect(humanOnly).toContain(name);
+  });
+
+  it("FR-KI-22 every subject of a human-only call has at least one name, so each call is reachable as a tool", () => {
+    const subjects = new Set(Object.values(NOT_RELEASED_TOOLS));
+    for (const subject of Object.keys(NOT_RELEASED_CALLS)) expect(subjects).toContain(subject);
   });
 });

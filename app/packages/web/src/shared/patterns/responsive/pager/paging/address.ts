@@ -25,6 +25,7 @@ export const PAGER_PARTS = [
   "rfrom",
   "zfrom",
   "sfrom",
+  "blfrom",
 ] as const;
 
 /** An address part of a paged list (see `PAGER_PARTS`). */

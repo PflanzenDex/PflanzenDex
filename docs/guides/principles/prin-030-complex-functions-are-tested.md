@@ -19,7 +19,7 @@ Number of functions in changed files whose CRAP score (complexity squared times 
 
 ## Gate
 
-`make ci-coverage` (CI job `app-coverage`), which runs `npm run crap` after the ratchet; `ci-status` requires the job.
+`make ci-coverage` (the coverage part of the CI job `results`), which runs `npm run crap` after the ratchet; `ci-status` requires the job.
 
 ## Evidence
 

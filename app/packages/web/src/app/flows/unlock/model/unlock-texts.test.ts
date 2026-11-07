@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UnlockEntry } from "./unlock-api";
-import { isShownLocked, lockLine, lockMark } from "./unlock-texts";
+import { functionAddress, isShownLocked, lockLine, lockMark } from "./unlock-texts";
 
 const locked = (over: Partial<UnlockEntry>): UnlockEntry => ({
   id: "friends",
@@ -58,5 +58,11 @@ describe("US-ONB-05 lock texts", () => {
     expect(isShownLocked(locked({}))).toBe(true);
     expect(isShownLocked(locked({ announced: false }))).toBe(false);
     expect(isShownLocked(locked({ state: "open", mayUnlockNow: false }))).toBe(false);
+  });
+});
+
+describe("US-BES-18 the lock page of the import", () => {
+  it("US-BES-18 the lock page of csv_import leads to the import page, not to the collection", () => {
+    expect(functionAddress("csv_import")).toBe("/collection/import");
   });
 });

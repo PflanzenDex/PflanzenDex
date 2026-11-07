@@ -8,18 +8,15 @@ import {
   UnknownSpecimen,
   createSpecimenOn,
   pgError,
-  repotCutting,
   setCaughtAt,
   takenBy,
   type SpecimenRow,
+  type SpecimenValues,
 } from "./specimen-shared.ts";
-import { setLightZone, setLocations, zoneUsers } from "./specimen-locations.ts";
+import { setLightZone, setLocations, zoneUsers } from "./specimen/specimen-locations.ts";
+import { repotSpecimen } from "./specimen/specimen-repot.ts";
 
-export type { SpecimenRow };
-export type SpecimenValues = Pick<
-  SpecimenRow,
-  "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
-> & { readonly status?: "plant" | "cutting"; readonly lightZoneId?: string | null };
+export type { SpecimenRow, SpecimenValues };
 
 export interface MarkerAssignment {
   readonly specimenId: string;
@@ -128,14 +125,17 @@ export class SpecimenPostgres {
     }
   }
 
-  /** Only a cutting becomes a plant (US-BES-04); see `repotCutting` in `specimen-shared.ts` (issue 1103). */
+  /**
+   * The repot of a specimen (US-BES-04, US-BES-19): a cutting becomes a plant, a plant stays one; the repot day is
+   * recorded and the open repot observations are cleared, all in one transaction (see `repotSpecimen`).
+   */
   async repot(
     userId: string,
     id: string,
     date: string | null,
     chosenDate: string | null,
-  ): Promise<SpecimenRow | "not_found" | "not_a_cutting" | "before_caught"> {
-    return repotCutting(this.pool, userId, id, { date, chosenDate });
+  ): Promise<SpecimenRow | "not_found" | "archived" | "before_caught" | "day_unknown"> {
+    return repotSpecimen(this.pool, userId, id, { date, chosenDate });
   }
 
   /**

@@ -5,7 +5,11 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { findDrift } from "./check-ci-drift.mjs";
+import { findDrift, readRepo } from "./check-ci-drift.mjs";
+
+// The check and the repository it reads: the script in this folder, and the root four folders above it (US-QG-02).
+const SCRIPT = fileURLToPath(new URL("./check-ci-drift.mjs", import.meta.url));
+const ROOT = path.resolve(path.dirname(SCRIPT), "../../../..");
 
 describe("US-DEV-01: CI drift checker", () => {
   test("US-DEV-01: returns empty findings for valid config", () => {
@@ -285,6 +289,137 @@ jobs:
     const result = findDrift({ makefile, workflows });
     // All should be valid (even test123 and underscore targets are extracted from Makefile)
     assert.deepStrictEqual(result.findings, []);
+  });
+});
+
+describe("US-QG-02: the drift check reads the repository and never passes on nothing", () => {
+  const PARTS = `ci-gates: ## Part 1
+	npm run gates
+
+ci-tests-base: ## Part 2a
+	npm test
+
+ci-tests-web: ## Part 2b
+	npm test
+
+ci-coverage: ## Part 2c
+	npm run coverage
+
+ci-ui: ## Part 3
+	npm run ui
+`;
+  const ciYml = (...lines) =>
+    `jobs:\n  app:\n    steps:\n${lines.map((line) => `      - run: ${line}`).join("\n")}\n`;
+
+  test("US-QG-02: a CI workflow that calls every part of make ci passes; one that misses a part names the missing one", () => {
+    const all = ciYml(
+      "make ci-gates",
+      "make ci-tests-base",
+      "make ci-tests-web",
+      "make ci-coverage",
+      "make ci-ui",
+    );
+    assert.deepStrictEqual(
+      findDrift({ makefile: PARTS, workflows: { "ci.yml": all } }).findings,
+      [],
+    );
+    const missing = ciYml("make ci-gates", "make ci-tests-base", "make ci-tests-web", "make ci-ui");
+    const { findings } = findDrift({ makefile: PARTS, workflows: { "ci.yml": missing } });
+    assert.equal(findings.length, 1);
+    assert.match(
+      findings[0],
+      /ci\.yml must call make ci, or every part of it \(FR-QG-01\): missing ci-coverage$/,
+    );
+  });
+
+  test("US-QG-02: a make call with a flag names its target, and a missing target is found", () => {
+    const { findings } = findDrift({
+      makefile: PARTS,
+      workflows: {
+        "ci.yml": ciYml(
+          "make -s ci-gates",
+          "make -j3 -Otarget missing-target",
+          "make ci-tests-base",
+        ),
+      },
+    });
+    assert.deepStrictEqual(
+      findings.filter((f) => f.includes("not defined")),
+      ["make target 'missing-target' called in ci.yml but not defined in Makefile"],
+    );
+  });
+
+  test("US-DEV-01: a direct npm, npx or node call is flagged wherever it starts a command; an actions/ folder does not allow it", () => {
+    const makefile = "ci: ## Run ci\n\tnpm run gates\n";
+    for (const cmd of [
+      "node app/tools/workflow/actions/x/x.mjs event",
+      "cd app && npm run test",
+      "echo ok; npx playwright install",
+      "npm ci && npm test",
+    ]) {
+      const { findings } = findDrift({ makefile, workflows: { "ci.yml": ciYml(cmd, "make ci") } });
+      assert.ok(
+        findings.some((f) => f.includes(cmd)),
+        cmd,
+      );
+    }
+    // The allowance is the bare setup command, and no other.
+    assert.deepStrictEqual(
+      findDrift({ makefile, workflows: { "ci.yml": ciYml("npm ci", "make ci") } }).findings,
+      [],
+    );
+  });
+
+  test("US-QG-02: readRepo fails without a Makefile and without workflows, and reads the workflows it finds", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "ci-drift-root-"));
+    try {
+      assert.throws(() => readRepo(root), /no Makefile at /);
+      fs.writeFileSync(path.join(root, "Makefile"), "ci: ## Run ci\n\tnpm run gates\n");
+      assert.throws(() => readRepo(root), /no workflow \(\.yml or \.yaml\) in /);
+      fs.mkdirSync(path.join(root, ".github", "workflows"), { recursive: true });
+      fs.writeFileSync(path.join(root, ".github", "workflows", "ci.yml"), ciYml("make ci"));
+      assert.deepStrictEqual(Object.keys(readRepo(root).workflows), ["ci.yml"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("US-QG-02: the check reads the same files from app/, from the root and from any other folder, and passes on the repository", () => {
+    const runs = [ROOT, path.join(ROOT, "app"), os.tmpdir()].map((cwd) =>
+      spawnSync(process.execPath, [SCRIPT], { cwd, encoding: "utf8" }),
+    );
+    for (const run of runs) {
+      assert.equal(run.stderr, "");
+      assert.equal(run.status, 0, run.stdout);
+      assert.equal(run.stdout, runs[0].stdout);
+    }
+    assert.ok(runs[0].stdout.includes(`checked against ${ROOT}/Makefile`), runs[0].stdout);
+  });
+
+  test("US-QG-02: the check fails loudly, with a message and exit 1, when the tree it finds has no Makefile or no workflow", (t) => {
+    const tree = fs.mkdtempSync(path.join(os.tmpdir(), "ci-drift-tree-"));
+    t.after(() => fs.rmSync(tree, { recursive: true, force: true }));
+    // A copy of the script at the same depth: its root is the temporary tree, which has nothing in it yet.
+    const folder = path.join(tree, "app", "tools", "check", "release");
+    fs.mkdirSync(folder, { recursive: true });
+    fs.copyFileSync(SCRIPT, path.join(folder, "check-ci-drift.mjs"));
+    const run = () =>
+      spawnSync(process.execPath, [path.join(folder, "check-ci-drift.mjs")], {
+        cwd: tree,
+        encoding: "utf8",
+      });
+    let result = run();
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /^check-ci-drift: error: no Makefile at /);
+    fs.writeFileSync(path.join(tree, "Makefile"), "ci: ## Run ci\n\tnpm run gates\n");
+    result = run();
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /^check-ci-drift: error: no workflow \(\.yml or \.yaml\) in /);
+    fs.mkdirSync(path.join(tree, ".github", "workflows"), { recursive: true });
+    fs.writeFileSync(path.join(tree, ".github", "workflows", "ci.yml"), ciYml("make ci"));
+    result = run();
+    assert.equal(result.status, 0, result.stdout);
+    assert.match(result.stdout, /checked against .*Makefile/);
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeName, referenceError, resolveName, type Named } from "./naming";
+import { normalizeName, referenceError, resolveName, type Named, type Resolution } from "./naming";
 
 const item = (id: string, ...names: string[]): Named => ({ id, label: names[0] ?? id, names });
 const specimens = [
@@ -31,6 +31,7 @@ describe("US-KI-11 names instead of ids (FR-KI-15)", () => {
         { id: "a", name: "Aloe vera – blau" },
         { id: "b", name: "Aloe vera – rot" },
       ],
+      more: false,
     });
   });
 
@@ -53,15 +54,72 @@ describe("US-KI-11 names instead of ids (FR-KI-15)", () => {
 
   it("US-KI-11 the refusal carries a stable code with the candidates or the nearest names", () => {
     const amb = referenceError(
-      { kind: "ambiguous", candidates: [{ id: "a", name: "A" }] },
+      { kind: "ambiguous", candidates: [{ id: "a", name: "A" }], more: false },
       "specimen",
       "specimen.not_found",
     );
     expect(amb).toMatchObject({
       code: "ai.reference_ambiguous",
-      data: { field: "specimen", candidates: [{ id: "a", name: "A" }] },
+      data: { field: "specimen", candidates: [{ id: "a", name: "A" }], more: false },
     });
     const none = referenceError({ kind: "none", nearest: ["B"] }, "location", "location.not_found");
     expect(none).toMatchObject({ code: "location.not_found", data: { nearest: ["B"] } });
+  });
+});
+
+describe("FR-KI-15 candidates say when more match than they list", () => {
+  const candidatesOf = (r: Resolution) => (r.kind === "ambiguous" ? r.candidates : []);
+  const regals = (n: number) => Array.from({ length: n }, (_, i) => item(String(i), `Regal ${i}`));
+
+  it("FR-KI-15 21 hits: 20 candidates and more true", () => {
+    const r = resolveName(regals(21), "Regal");
+    expect(r).toMatchObject({ kind: "ambiguous", more: true });
+    expect(candidatesOf(r)).toHaveLength(20);
+  });
+
+  it("FR-KI-15 exactly 20 hits: 20 candidates and more false (the boundary)", () => {
+    const r = resolveName(regals(20), "Regal");
+    expect(r).toMatchObject({ kind: "ambiguous", more: false });
+    expect(candidatesOf(r)).toHaveLength(20);
+  });
+
+  it("FR-KI-15 partial hits with a cut pool: more true, even with few hits", () => {
+    expect(resolveName(specimens, "Aloe vera", true)).toMatchObject({
+      kind: "ambiguous",
+      more: true,
+    });
+  });
+
+  it("FR-KI-15 exact hits with a cut pool: more false", () => {
+    const twins = [item("x", "Regal"), item("y", "Regal")];
+    expect(resolveName(twins, "regal", true)).toMatchObject({ kind: "ambiguous", more: false });
+  });
+
+  it("FR-KI-15 one partial hit with a cut pool: ambiguous with that one candidate and more true, not found", () => {
+    expect(resolveName([item("m", "Monstera deliciosa")], "monstera", true)).toEqual({
+      kind: "ambiguous",
+      candidates: [{ id: "m", name: "Monstera deliciosa" }],
+      more: true,
+    });
+  });
+
+  it("FR-KI-15 one exact hit with a cut pool: found", () => {
+    expect(resolveName(specimens, "Monstera deliciosa", true)).toEqual({ kind: "found", id: "c" });
+  });
+
+  it("FR-KI-15 one partial hit with a complete pool: found", () => {
+    expect(resolveName(specimens, "monstera", false)).toEqual({ kind: "found", id: "c" });
+  });
+
+  it("FR-KI-15 the refusal carries more in its data", () => {
+    const amb = referenceError(
+      { kind: "ambiguous", candidates: [{ id: "a", name: "A" }], more: true },
+      "species",
+      "species.not_found",
+    );
+    expect(amb).toMatchObject({
+      code: "ai.reference_ambiguous",
+      data: { field: "species", more: true },
+    });
   });
 });

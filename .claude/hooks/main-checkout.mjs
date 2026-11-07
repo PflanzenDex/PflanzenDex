@@ -14,7 +14,22 @@ import { ParseError, tokenize } from "./shell-words.mjs";
 const HEREDOC = /<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\s*\2(?=\n|$)/g;
 // Words in front of a command name that do not change where it runs, or that run the word after them.
 const PREFIXES = new Set([
-  "env", "command", "exec", "nohup", "time", "sudo", "!", "{", "}", "if", "then", "else", "elif", "do", "while", "until",
+  "env",
+  "command",
+  "exec",
+  "nohup",
+  "time",
+  "sudo",
+  "!",
+  "{",
+  "}",
+  "if",
+  "then",
+  "else",
+  "elif",
+  "do",
+  "while",
+  "until",
 ]);
 const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
 // git reset takes any unique prefix of --hard as --hard: `--h`, `--ha`, `--har` and `--hard` all reset the working tree
@@ -122,9 +137,11 @@ function judgeGit(args, env, base, ctx) {
   }
   const sub = args[i];
   if (!sub) return;
-  if (sub.dynamic) throw new Refusal(unknownReason("A git subcommand given through a variable or substitution"));
+  if (sub.dynamic)
+    throw new Refusal(unknownReason("A git subcommand given through a variable or substitution"));
   const destructive =
-    sub.value === "clean" || (sub.value === "reset" && args.slice(i + 1).some((w) => HARD_RESET_FLAG.test(w.value)));
+    sub.value === "clean" ||
+    (sub.value === "reset" && args.slice(i + 1).some((w) => HARD_RESET_FLAG.test(w.value)));
   if (!destructive) return;
   // A git dir and a work tree named together decide where the command acts; the cwd then matters only for relative ones.
   const given = [gitDir, workTree].filter((w) => w !== undefined);

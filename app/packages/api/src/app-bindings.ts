@@ -18,6 +18,7 @@ import {
   CARE_PHASES_PATHS,
   TREATMENT_PATHS,
   careRoutes,
+  leafRoutes,
   treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
@@ -40,6 +41,8 @@ export function bindCareOne(
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
+  // The leaf log is guarded by `/specimens/*` (SPECIMEN_PATHS) already; a second guard would read the account twice (NFR-12).
+  app.route("/", leafRoutes(pool, opt));
   for (const path of CARE_PHASES_PATHS) app.use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
   for (const path of TREATMENT_PATHS) app.use(`${path}/*`, auth);

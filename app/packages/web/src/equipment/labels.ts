@@ -14,6 +14,10 @@ export const TYPE_LABELS: Record<EquipmentType, string> = {
   Other: "Sonstiges",
 };
 
+/** The types the code branches on, compared as values (FR-QG-12): a lamp has a light zone, a pot a size (DM-EQU-01, DM-EQU-05). */
+export const LAMP_TYPE = "Lamp" as const;
+export const POT_TYPE = "Pot" as const;
+
 export const STATUS_LABELS: Record<EquipmentStatus, string> = {
   active: "Aktiv",
   defective: "Defekt",

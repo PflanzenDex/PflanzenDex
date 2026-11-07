@@ -46,6 +46,18 @@ export interface MergeOutcome {
   readonly moved: readonly MergeMoved[];
 }
 
+/** An approved species (`curated` or `reviewed`) that already holds a Latin name (US-BES-10). */
+export interface ApprovedTwin {
+  readonly id: string;
+  readonly latinName: string;
+}
+
+/** Approved species that share one Latin name (US-BES-10); listed read-only until they can be merged (issue 1583). */
+export interface ApprovedDuplicate {
+  readonly latinName: string;
+  readonly species: readonly ApprovedTwin[];
+}
+
 /** Persistence port (adapter in `db`). The adapter additionally enforces the rights via row rule and trigger. */
 export interface ReviewStore {
   /** Roles of the signed-in account (empty = plant keeper). */
@@ -65,6 +77,18 @@ export interface ReviewStore {
     status: "reviewed" | "rejected",
     reason: string | null,
   ): Promise<ReviewCase | null>;
+  /**
+   * Approves an open species case (US-BES-10). The check for an approved species that holds the Latin name key
+   * `latinKey` and the approval are one step: `{ twin }` names such a species and nothing is decided. `null`: the case
+   * does not exist. A separate method, because the check and the approval must share one transaction.
+   */
+  approve(
+    userId: string,
+    id: string,
+    latinKey: string,
+  ): Promise<ReviewCase | { twin: ApprovedTwin } | null>;
+  /** Approved species that share a Latin name key (two or more), for the read-only notice of the review list. */
+  approvedDuplicates(userId: string): Promise<readonly ApprovedDuplicate[]>;
   /**
    * Folds an open proposal into an existing approved species: re-points the creator's references to the target
    * and marks the case `merged`, all in one transaction (all or nothing, FR-BES-11, P-10). `null`: the case is

@@ -22,6 +22,10 @@ const bare = {
   boughtAt: null,
   note: null,
   lightZoneId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 const entry = (equipmentId: string, extra = {}) => ({
   equipmentId,

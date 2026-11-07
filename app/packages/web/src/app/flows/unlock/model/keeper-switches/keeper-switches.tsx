@@ -30,6 +30,9 @@ export function withKeeperSwitches(
     discover: !off.has("discover"),
     equipment: !off.has("equipment"),
     achievement_views: !off.has("achievement_views"),
+    leaf_log: !off.has("leaf_log"),
+    pot_labels: !off.has("pot_labels"),
+    csv_import: !off.has("csv_import"),
   };
 }
 

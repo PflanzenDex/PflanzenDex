@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Operation } from "../../kernel";
 import { execute } from "../../kernel";
-import { catalogCurate, catalogReview, catalogPropose } from "../index";
+import { catalogCurate, catalogMerge, catalogReview, catalogPropose } from "../index";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { InMemoryReview } from "../test-helpers";
+import { FULL, InMemoryReview, ReviewWorld } from "../test-helpers";
 import { InMemorySpecies } from "../species/test-helpers";
 
 const OBJECT = "6f1c2f0e-4b8a-4c52-9d51-0a3f6f2c7e11";
@@ -133,5 +133,86 @@ describe("FR-BES-14 only operators and reviewers set the review status", () => {
     expect(!no.ok && no.error.code).toBe("access.denied");
     const yes = await call(catalogCurate(store), "operator", fresh);
     expect(yes.ok && yes.value).toMatchObject({ status: "curated", reviewedBy: "operator" });
+  });
+});
+
+describe("US-BES-10 approval refuses a Latin name that an approved species already has", () => {
+  const TWIN = { ...FULL, synonyms: [] };
+  const approve = (w: ReviewWorld, caseId: string) =>
+    w.call(catalogReview(w.reviews, w.species), "operator", { id: caseId, status: "reviewed" });
+
+  it("US-BES-10 a proposal whose Latin name an approved species has is refused with review.name_approved, naming it; nothing changes", async () => {
+    const w = new ReviewWorld();
+    const proposal = await w.proposeSpecies("keeper", TWIN);
+    const twin = await w.approvedSpecies(TWIN);
+    const r = await approve(w, proposal.caseId);
+    expect(!r.ok && r.error.code).toBe("review.name_approved");
+    expect(!r.ok && r.error.data).toEqual({
+      existing: { id: twin.speciesId, latinName: "Dracaena trifasciata" },
+    });
+    expect(w.reviews.rows.find((z) => z.id === proposal.caseId)?.status).toBe("proposal");
+    expect(w.species.rows.find((z) => z.id === proposal.speciesId)?.reviewStatus).toBe("proposal");
+  });
+
+  it.each(["DRACAENA TRIFASCIATA", "Dracaëna trifasciata"])(
+    "US-BES-10 the same name in another case or with an accent (%s) is refused too",
+    async (variant) => {
+      const w = new ReviewWorld();
+      const proposal = await w.proposeSpecies("keeper", { ...TWIN, latinName: variant });
+      await w.approvedSpecies(TWIN);
+      const r = await approve(w, proposal.caseId);
+      expect(!r.ok && r.error.code).toBe("review.name_approved");
+    },
+  );
+
+  it("US-BES-10 a free Latin name is approved as before", async () => {
+    const w = new ReviewWorld();
+    await w.approvedSpecies(TWIN);
+    const proposal = await w.proposeSpecies("keeper", { ...TWIN, latinName: "Aloe vera" });
+    const r = await approve(w, proposal.caseId);
+    expect(r.ok && r.value).toMatchObject({ status: "reviewed" });
+  });
+
+  it("US-BES-10 a name equal only to a synonym of an approved species is approved; the synonym stays a hint", async () => {
+    const w = new ReviewWorld();
+    const proposal = await w.proposeSpecies("keeper", {
+      ...TWIN,
+      latinName: "Sansevieria trifasciata",
+    });
+    await w.approvedSpecies(FULL);
+    const r = await approve(w, proposal.caseId);
+    expect(r.ok && r.value).toMatchObject({ status: "reviewed" });
+  });
+
+  it("US-BES-10 a cultivar of an approved name is another name and is approved", async () => {
+    const w = new ReviewWorld();
+    await w.approvedSpecies(TWIN);
+    const proposal = await w.proposeSpecies("keeper", {
+      ...TWIN,
+      latinName: "Dracaena trifasciata 'Laurentii'",
+    });
+    const r = await approve(w, proposal.caseId);
+    expect(r.ok && r.value).toMatchObject({ status: "reviewed" });
+  });
+
+  it("US-BES-10 such a proposal can still be rejected, and merged into the approved species", async () => {
+    const w = new ReviewWorld();
+    const rejectable = await w.proposeSpecies("keeper", TWIN);
+    const mergeable = await w.proposeSpecies("other", TWIN);
+    const twin = await w.approvedSpecies(TWIN);
+    const rejected = await w.call(catalogReview(w.reviews, w.species), "operator", {
+      id: rejectable.caseId,
+      status: "rejected",
+      reason: "Quelle prüfen",
+    });
+    expect(rejected.ok && rejected.value).toMatchObject({ status: "rejected" });
+    const merged = await w.call(catalogMerge(w.reviews, w.species), "operator", {
+      proposalId: mergeable.caseId,
+      targetSpeciesId: twin.speciesId,
+    });
+    expect(merged.ok && merged.value.reviewCase).toMatchObject({
+      status: "merged",
+      mergedInto: twin.speciesId,
+    });
   });
 });

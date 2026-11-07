@@ -6,6 +6,7 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+.idea/
 .worktrees/
 .env.worktree
 .claude/settings.local.json

@@ -1,7 +1,13 @@
 // FR-DEV-10 (#1412): the repository, issue and pull request reads use REST, and a GraphQL error is never an empty answer
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
+  CallTimeout,
   createIssueRest,
   fetchBranches,
   fetchIssue,
@@ -9,9 +15,11 @@ import {
   fetchPrs,
   graphql,
   graphqlIds,
+  PUSH_LIMIT,
   realClient,
   setAssignee,
 } from "./claim-client.mjs";
+import { pushClaimBranch } from "./writes/claim-steps.mjs";
 
 const REPO = "PflanzenDex/PflanzenDex";
 
@@ -242,4 +250,146 @@ test("US-DEV-08: graphqlIds sends every variable as a string, so an option id of
   await graphqlIds(client, "mutation($option: String!) { ok }", { option: "12345678" });
   assert.ok(client.calls[0].includes(" -f option=12345678"));
   assert.ok(!client.calls[0].includes(" -F option="));
+});
+
+/** A process that runs: alive, and not a zombie where /proc shows one. */
+function isRunning(pid) {
+  try {
+    process.kill(pid, 0);
+  } catch {
+    return false;
+  }
+  try {
+    return !/\) Z /.test(readFileSync(`/proc/${pid}/stat`, "utf8"));
+  } catch {
+    return true; // no /proc (macOS): being alive is all there is to tell
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function until(check, ms = 10_000) {
+  const end = Date.now() + ms;
+  while (!check()) {
+    if (Date.now() > end) throw new Error("the condition was not met in time");
+    await sleep(50);
+  }
+}
+
+// Stands in for the pre-push hook of git push: a long-lived child of the command (its pid goes to argv[2]), and the command itself
+// keeps running. With the argument "ignore-term" both ignore SIGTERM.
+const HOOK_STAND_IN = `
+import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
+const [pidFile, mode] = process.argv.slice(2);
+const ignoreTerm = mode === "ignore-term";
+const sleeper = (ignoreTerm ? "process.on('SIGTERM', () => {});" : "") + "setInterval(() => {}, 1000);";
+const child = spawn(process.execPath, ["-e", sleeper], { stdio: "ignore" });
+writeFileSync(pidFile, String(child.pid));
+if (ignoreTerm) process.on("SIGTERM", () => {});
+setInterval(() => {}, 1000);
+`;
+
+/** Runs `run(dir)` in a scratch folder that holds the stand-in hook (hook.mjs); the folder is removed afterwards. */
+async function withScratch(run) {
+  const dir = mkdtempSync(path.join(tmpdir(), "claim-limit-"));
+  try {
+    writeFileSync(path.join(dir, "hook.mjs"), HOOK_STAND_IN);
+    return await run(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test("US-DEV-08: a call with a limit runs under that limit, a call without one under the client's default", async () => {
+  const client = realClient({ timeoutMs: 200, limits: { [PUSH_LIMIT]: 5000 } });
+  const late = ["-e", "setTimeout(() => process.stdout.write('late'), 600)"];
+  assert.equal(await client.run(process.execPath, late, { limit: PUSH_LIMIT }), "late");
+  await assert.rejects(client.run(process.execPath, late), CallTimeout);
+});
+
+test("US-DEV-08: a timed-out command leaves no process behind: its child is gone when the call fails", () =>
+  withScratch(async (dir) => {
+    const pidFile = path.join(dir, "pid");
+    await assert.rejects(
+      realClient({ timeoutMs: 2000 }).run(process.execPath, [path.join(dir, "hook.mjs"), pidFile]),
+      CallTimeout,
+    );
+    assert.equal(
+      isRunning(Number(readFileSync(pidFile, "utf8"))),
+      false,
+      "the child of the timed-out command still runs",
+    );
+  }));
+
+test("US-DEV-08: a process that ignores SIGTERM is killed when the grace time of its group is over", () =>
+  withScratch(async (dir) => {
+    const pidFile = path.join(dir, "pid");
+    const client = realClient({ timeoutMs: 2000, killGraceMs: 300 });
+    await assert.rejects(
+      client.run(process.execPath, [path.join(dir, "hook.mjs"), pidFile, "ignore-term"]),
+      CallTimeout,
+    );
+    assert.equal(
+      isRunning(Number(readFileSync(pidFile, "utf8"))),
+      false,
+      "a process that ignores SIGTERM survived the call",
+    );
+  }));
+
+test("US-DEV-08: Ctrl+C in make claim ends the groups of its calls too: the claim exits with 130 and nothing is left running", () =>
+  withScratch(async (dir) => {
+    const pidFile = path.join(dir, "pid");
+    const claimLike = path.join(dir, "claim-like.mjs");
+    const groupsUrl = new URL("./calls/github-calls.mjs", import.meta.url).href;
+    writeFileSync(
+      claimLike,
+      `import { realClient } from ${JSON.stringify(groupsUrl)};\n` +
+        "await realClient({ timeoutMs: 60000 }).run(process.execPath, [process.argv[2], process.argv[3]]).catch(() => {});\n",
+    );
+    const claim = spawn(process.execPath, [claimLike, path.join(dir, "hook.mjs"), pidFile], {
+      stdio: "ignore",
+    });
+    await until(() => existsSync(pidFile));
+    claim.kill("SIGINT");
+    const [code] = await once(claim, "exit");
+    assert.equal(code, 130, "the claim should exit with 128 + SIGINT");
+    assert.equal(
+      isRunning(Number(readFileSync(pidFile, "utf8"))),
+      false,
+      "the child of the call still runs after Ctrl+C",
+    );
+  }));
+
+test("US-DEV-08: a git push that outlives its limit is ended with its hook; the message names the pre-push gates, not the network", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "claim-push-"));
+  const oldPath = process.env.PATH;
+  try {
+    // Stands in for git push: a child that keeps running, as the pre-push hook does while make gates runs.
+    const pidFile = path.join(dir, "hook.pid");
+    writeFileSync(
+      path.join(dir, "git"),
+      `#!/bin/sh\nsleep 60 &\necho $! > ${JSON.stringify(pidFile)}\nwait\n`,
+      { mode: 0o755 },
+    );
+    process.env.PATH = `${dir}${path.delimiter}${oldPath}`;
+    const client = realClient({ timeoutMs: 60_000, limits: { [PUSH_LIMIT]: 2000 } });
+    const error = await pushClaimBranch(client, "feat/x-01-a", "abc123").then(
+      () => null,
+      (e) => e,
+    );
+    assert.ok(error, "the push should have timed out");
+    assert.match(error.message, /did not finish within 2 s/);
+    assert.match(error.message, /the pre-push gates \(make gates\) took longer than that/);
+    assert.match(error.message, /CLAIM_PUSH_TIMEOUT_S/);
+    assert.doesNotMatch(error.message, /run it again|network/);
+    assert.equal(
+      isRunning(Number(readFileSync(pidFile, "utf8"))),
+      false,
+      "the stand-in for the hook still runs",
+    );
+  } finally {
+    process.env.PATH = oldPath;
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

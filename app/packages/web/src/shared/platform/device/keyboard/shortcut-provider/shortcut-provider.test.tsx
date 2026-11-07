@@ -25,13 +25,13 @@ function Probe() {
 function HelpButton() {
   const s = useShortcuts();
   return (
-    <button type="button" onClick={s.openOverview}>
+    <button type="button" onClick={() => s.openOverview()}>
       Hilfe
     </button>
   );
 }
 
-/** The overview as the app shell renders it: the rows and the open state come from the provider. */
+/** The overview as the app shell renders it: the rows, the open state and the opener come from the provider. */
 function OverviewHost() {
   const s = useShortcuts();
   return (
@@ -40,6 +40,7 @@ function OverviewHost() {
       onOpenChange={s.setOverviewOpen}
       rows={s.rows}
       off={s.mode === "disabled" || s.mode === undefined}
+      returnFocusTo={s.overviewOpener}
     />
   );
 }

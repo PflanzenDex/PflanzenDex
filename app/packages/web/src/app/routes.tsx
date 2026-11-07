@@ -8,6 +8,7 @@ import {
   type HandOver,
 } from "@/app/destinations/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "../account";
+import { ImportPage, PotLabelPage, PrintLabelsPage } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
 import {
@@ -27,6 +28,8 @@ import {
 } from "@/app/destinations/area-parts/simple-routes/simple-routes";
 import { legacyRoutes } from "@/app/legacy-routes/legacy-routes";
 import {
+  IMPORT_PATH,
+  LABELS_PATH,
   PATHS,
   destinationHeading,
   type LinkTarget,
@@ -52,6 +55,25 @@ function useLockPages(api: string, token: Token) {
       return entry ? lockMark(entry) : undefined;
     },
   };
+}
+
+/**
+ * The sub-pages of the Sammlung that a keeper switch turns off (US-BES-17, US-BES-18): each page sends its address to the
+ * collection while its switch is off (P-12), or shows the lock page of the function when it is locked.
+ */
+function collectionSubRoutes(api: string, token: Token, locks: ReturnType<typeof useLockPages>) {
+  return (
+    <>
+      <Route
+        path={LABELS_PATH}
+        element={locks.page("pot_labels") ?? <PrintLabelsPage api={api} token={token} />}
+      />
+      <Route
+        path={IMPORT_PATH}
+        element={locks.page("csv_import") ?? <ImportPage api={api} token={token} />}
+      />
+    </>
+  );
 }
 
 /**
@@ -146,6 +168,9 @@ export function AppRoutes(props: {
         {/* "Heute" is the home screen: the root address, old bookmarks and the brand lead there (US-QS-16). */}
         <Route path="/" element={<Navigate to={PATHS.today} replace />} />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
+        {/* A scanned pot label opens its plant (US-BES-17); the id is opaque and the page asks the server as the keeper. */}
+        <Route path="/label/:id" element={<PotLabelPage api={api} token={s.token} />} />
+        {collectionSubRoutes(api, s.token, locks)}
         {social && socialRoutes(api, s.token, locks.page, locks.mark)}
         <Route
           path={PATHS.today}

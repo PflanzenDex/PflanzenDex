@@ -61,20 +61,25 @@ export const aiSearchSpecies = (deps: ReadDependencies, call: ReadCall) =>
 /**
  * The visible species a name may mean: the app's search for the name, with an exact name beyond the cap of that search
  * added (FR-BES-24; the rule of the duplicate check, restated here because this module may not import the catalog),
- * else the search for the beginning of the name (nearest names).
+ * else the search for the beginning of the name (nearest names). `more` is whether the search that gave the hits was
+ * cut at the cap: a cut pool does not prove a single hit (FR-BES-24, KI-R4).
  */
-async function speciesPool(deps: ReadDependencies, userId: string, ref: string) {
+async function speciesPool(
+  deps: ReadDependencies,
+  userId: string,
+  ref: string,
+): Promise<{ readonly hits: readonly SpeciesItem[]; readonly more: boolean }> {
   const shown = await deps.source.searchSpecies(userId, ref);
   const beyond = shown.more ? await deps.source.exactSpecies(userId, ref) : [];
   const hits = [
     ...shown.species,
     ...beyond.filter((b) => !shown.species.some((s) => s.id === b.id)),
   ];
-  if (hits.length > 0) return hits;
+  if (hits.length > 0) return { hits, more: shown.more };
   const start = normalizeName(ref).slice(0, NAMING_LIMITS.prefix);
-  return start.length < NAMING_LIMITS.minSearch
-    ? []
-    : (await deps.source.searchSpecies(userId, start)).species;
+  if (start.length < NAMING_LIMITS.minSearch) return { hits: [], more: false };
+  const prefix = await deps.source.searchSpecies(userId, start);
+  return { hits: prefix.species, more: prefix.more };
 }
 
 /** The id a species reference names (FR-KI-15), or the refusal with candidates or nearest names. */
@@ -86,7 +91,7 @@ export async function resolveSpecies(
 ): Promise<Result<string>> {
   if (isId(ref)) return ok(ref.toLowerCase());
   const pool = await speciesPool(deps, userId, ref);
-  const r = resolveName(pool.map(named), ref);
+  const r = resolveName(pool.hits.map(named), ref, pool.more);
   return r.kind === "found" ? ok(r.id) : failed(referenceError(r, field, "species.not_found"));
 }
 

@@ -22,6 +22,10 @@ Acceptance criteria:
 - Given the welcome page shows while the sign-in service still has a live session for this browser, when I choose "Anderes Konto", then that session ends at the sign-in service first and the welcome page comes back with "Du bist abgemeldet."; the next sign-in asks for credentials, it never ends on the sign-in service's "already signed in with another user" page.
 - Given the sign-in service still has a live session of another person for this browser, when I choose "Konto anlegen", then that session ends at the sign-in service before the registration opens, and the registration never ends on the "already signed in with another user" page. Given no live session, when I choose "Konto anlegen", then the registration opens with no sign-out page in between (the silent check is not shown).
 - Given the sign-in service cannot be reached, when I choose "Anmelden" or "Konto anlegen", then the welcome page says so and what to do next, the buttons stay for another try, and what the tab remembers about sign-out, registration and the silent attempt is as it was before the press.
+- Given the sign-in service cannot be reached when the app opens, then the welcome page shows and says so and what to do next, and nothing blames the account.
+- Given the sign-in library cannot be loaded, when the app opens, then the page says so and offers "Seite neu laden", and it never stays on the loading state.
+- Given the sign-in service does not answer, then a sign-in call gives up after 15 s (starting value, assumption) and the failure is shown as above.
+- Given our API does not answer while the account loads, then the call gives up after 15 s (starting value, assumption), the page says "Das Konto konnte nicht geladen werden." and offers "Erneut versuchen", and it never stays on the loading state.
 
 ### US-ACC-02 · Profile and settings · 🟨 new
 
@@ -78,6 +82,10 @@ Details (decided with the story):
 - The operator switches "registration only with invitation code" on and off in the operator area. It is off by default, so nothing changes for existing installations until the operator switches it on. Existing accounts always sign in as before.
 - A person who signed in at the sign-in service but has no account yet enters the code before the account is created. Without a valid code no account and no data exist.
 - A code is unguessable (120 bits), shown to the operator exactly once, and valid for 7 days by default (assumption, starting value; the operator picks 1 to 30 days). The system stores only a hash of it. An unknown, used, expired or malformed code gets the same answer, so a refusal says nothing about which case it was.
+- **Limit on redeeming a code** (issue 305; starting values, assumption: 5 attempts per subject and 20 per address and minute). A code has 120 bits, so the limit bounds the database work of an attempt, not guessing. Only a verified token is counted, and the subject is checked first; a refused attempt counts nowhere. The address is the first `X-Forwarded-For` value, which the front proxy sets, so it is only as good as that proxy.
+  - Given a subject that has made five attempts in the last minute, when it redeems a sixth code, then it gets 429 `request.rate_limited` with `Retry-After` in seconds, the database is not asked, and the code stays unused.
+  - Given 20 attempts from one address in the last minute, when a 21st comes from another subject, then it gets the same 429.
+  - Given a forged or invalid token, then it gets 401 and uses up no attempt of its address.
 - An account counts as active if it opened the app in the last 30 days (assumption, starting value).
 - Only the operator role (not the reviewer role) uses the operator area; the database checks the role again. The operator sees counts and the state of invitations, never the content of an account.
 - **Cost per user from a manual monthly figure** (owner decision 2026-10-05, until TE-10 measures costs automatically): the operator enters the real hosting cost of one month (amount from 0 to 1,000,000.00 with at most two decimals, currency as a three-letter ISO 4217 code, month not after the current month in UTC; limits are an assumption, starting value). There is one figure per installation; a new entry replaces the old one. Only the operator can enter it, the database checks the role again; it is no tenant data.

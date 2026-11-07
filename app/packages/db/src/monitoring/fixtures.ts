@@ -13,5 +13,9 @@ export const FIXTURES_MONITORING: Fixtures = {
     specimen_id: await createFixtureSpecimenAt(k),
     watered_on: "2026-10-10",
   }),
+  fertilizing_log: async (k) => ({
+    specimen_id: await createFixtureSpecimenAt(k),
+    fertilized_on: "2026-10-10",
+  }),
   reminder: () => ({ local_date: "2026-10-10", status: "none" }),
 };

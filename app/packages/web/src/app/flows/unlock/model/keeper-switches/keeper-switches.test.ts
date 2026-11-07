@@ -55,6 +55,20 @@ describe("US-ONB-09 keeper switches in the interface", () => {
     });
   });
 
+  it("US-BES-17 the pot labels group follows its keeper switch", () => {
+    expect(withKeeperSwitches(undefined, new Set(["pot_labels"]))).toMatchObject({
+      pot_labels: false,
+    });
+    expect(withKeeperSwitches(undefined, new Set())).toMatchObject({ pot_labels: true });
+  });
+
+  it("US-BES-18 the import follows its keeper switch csv_import", () => {
+    expect(withKeeperSwitches(undefined, new Set(["csv_import"]))).toMatchObject({
+      csv_import: false,
+    });
+    expect(withKeeperSwitches(undefined, new Set())).toMatchObject({ csv_import: true });
+  });
+
   it("US-ONB-09 no state sent counts as on: only an explicit off hides, nothing is hidden by the lock states failing (P-10)", () => {
     expect(withKeeperSwitches(undefined, new Set())).toMatchObject({ social: true, ai: true });
     expect(keeperSwitchesOff([])).toEqual(new Set());

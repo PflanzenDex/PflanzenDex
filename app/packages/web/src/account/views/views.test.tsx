@@ -1,5 +1,8 @@
+// @vitest-environment jsdom
 import { renderToString } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppError, Loading, Welcome } from "./views";
 import { AccountView } from "./account-views/account-views";
 import type { Account } from "../api/account-api";
@@ -137,5 +140,37 @@ describe("loading and error states (US-ACC-01 · DS-26, DS-52)", () => {
     expect(html).toContain('role="alert"');
     expect(html).toContain("Der Server antwortet nicht.");
     expect(html).toContain("Erneut versuchen");
+  });
+});
+
+describe("error with a reload of the page (US-ACC-01)", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-ACC-01 an error with reloadPage offers Seite neu laden instead of Erneut versuchen, and the click reloads the page", async () => {
+    const reload = vi.fn();
+    vi.stubGlobal("location", { ...window.location, reload });
+    const onReload = vi.fn();
+    render(
+      <AppError
+        text="Die Anmeldung konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu."
+        reloadPage
+        onReload={onReload}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Seite neu laden" }));
+    expect(reload).toHaveBeenCalledOnce();
+    expect(onReload).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 an error without reloadPage keeps Erneut versuchen, and the click calls the retry", async () => {
+    const onReload = vi.fn();
+    render(<AppError text="Das Konto konnte nicht geladen werden." onReload={onReload} />);
+    expect(screen.queryByRole("button", { name: "Seite neu laden" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(onReload).toHaveBeenCalledOnce();
   });
 });

@@ -10,6 +10,13 @@ export const FUNCTION_PURPOSES: Record<UnlockFunctionId, string> = {
   measuring: "Halte Maße deiner Pflanzen fest, um ihr Wachstum zu verfolgen.",
   photos: "Hänge Fotos an deine Pflanzen und sieh, wie sie sich verändern.",
   growth: "Zeigt den Verlauf deiner Pflanzen anhand deiner eigenen Messungen.",
+  leaf_log: "Halte neue Blätter deiner Pflanzen fest, mit einem Tipp oder mit Maßen und Notiz.",
+  pot_labels:
+    "Drucke QR-Etiketten für deine Töpfe: ein Scan öffnet die Pflanze mit Gießen und Messen.",
+  csv_import:
+    "Importiere Pflanzen aus einer CSV-Datei. Eine Vorschau zeigt jede Zeile, bevor etwas gespeichert wird.",
+  repot_planner:
+    "Zeigt, wann eine Pflanze umgetopft werden sollte, und welche Töpfe du frei hast. Ein Hinweis ist ein Rat, keine Aufgabe.",
   treatments: "Plane Behandlungen und hake sie ab, wenn sie erledigt sind.",
   pokedex: "Zeigt, welche Arten du schon hast, und was dir noch fehlt.",
   wishlist: "Merke dir Arten, die du gern hättest.",

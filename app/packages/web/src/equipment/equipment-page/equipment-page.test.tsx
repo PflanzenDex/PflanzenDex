@@ -47,6 +47,10 @@ const item = (extra: Record<string, unknown> = {}) => ({
   agentLink: null,
   assignedSpecimenId: null,
   assignedLocationId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
   ...extra,
 });
 
@@ -258,6 +262,19 @@ describe("US-EQU-01 equipment page", () => {
     await user.type(screen.getByLabelText("Name"), "Zone 3");
     await user.click(screen.getByRole("button", { name: "Equipment speichern" }));
     expect(await screen.findByText(/Dieses Equipment gibt es schon/)).toBeTruthy();
+  });
+
+  it("US-EQU-01 · FR-QG-11 an unreachable server shows the app's network text in the form, not the generic error text", async () => {
+    fakeServer([], () => Promise.reject(new TypeError("Failed to fetch")));
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=new");
+    await screen.findByLabelText("Art");
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText("Art"), "Timer");
+    await user.type(screen.getByLabelText("Name"), "Neue Lampe");
+    await user.click(screen.getByRole("button", { name: "Equipment speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Der Server ist gerade nicht erreichbar");
+    expect(alert.textContent).not.toContain("Es ist ein Fehler aufgetreten");
   });
 
   it("US-EQU-03 a lamp without a measurement says not measured and shows the zone value", async () => {

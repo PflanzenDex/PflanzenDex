@@ -75,7 +75,7 @@ const MODULES = [
   {
     name: "collection",
     epics: ["BES"],
-    tables: ["specimen", "care_profile", "specimen_provenance"],
+    tables: ["specimen", "care_profile", "specimen_provenance", "repot", "repot_sign"],
     dependsOn: ["kernel", "catalog", "light"],
     ports: ["TargetLocationSource", "MeasurementSource", "TreatmentSource"],
   },
@@ -86,6 +86,7 @@ const MODULES = [
       "reminder",
       "reminder_setting",
       "watering_log",
+      "fertilizing_log",
       "sensor",
       "measurements",
       "delivery_channel",
@@ -96,7 +97,7 @@ const MODULES = [
   {
     name: "care",
     epics: ["PHA", "BEH", "WAC"],
-    tables: ["treatment", "measurement"],
+    tables: ["treatment", "measurement", "leaf"],
     dependsOn: ["kernel", "catalog", "light", "collection", "monitoring", "achievements"],
     ports: [],
   },
@@ -117,7 +118,8 @@ const MODULES = [
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting"],
+    // prettier-ignore
+    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting", "pot_placement"],
     dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },

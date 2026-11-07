@@ -1,9 +1,17 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../kernel/index.ts";
 import type { SpeciesRepointer } from "./references/repointer.ts";
+import { lockedTwin } from "./species/latin-twin.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
-import type { MergeOutcome, ReviewCase, ReviewStatus, Role } from "@pflanzendex/core";
+import type {
+  ApprovedDuplicate,
+  ApprovedTwin,
+  MergeOutcome,
+  ReviewCase,
+  ReviewStatus,
+  Role,
+} from "@pflanzendex/core";
 export type { MergeOutcome, ReviewCase, ReviewStatus, Role };
 
 const COLUMNS = `id, account_id as "creatorId", object_kind as "objectKind", object_id as "objectId",
@@ -12,6 +20,20 @@ const COLUMNS = `id, account_id as "creatorId", object_kind as "objectKind", obj
 const UNIQUE_VIOLATION = "23505";
 /** Latest operator batches shown next to the open proposals (assumption: starting value, no paging yet). */
 const BATCH_LIMIT = 50;
+
+/** Sets the status of an open case and returns it; `null` if there is no such case. */
+async function setStatus(
+  c: PoolClient,
+  id: string,
+  status: "reviewed" | "rejected",
+  reason: string | null,
+): Promise<ReviewCase | null> {
+  const r = await c.query<ReviewCase>(
+    `update review_case set status = $2, reason = $3 where id = $1 returning ${COLUMNS}`,
+    [id, status, reason],
+  );
+  return r.rows[0] ?? null;
+}
 
 /** Adapter for the review status; every call runs as the caller's account under the row rules (P-04). */
 export class ReviewPostgres {
@@ -73,13 +95,38 @@ export class ReviewPostgres {
     status: "reviewed" | "rejected",
     reason: string | null,
   ): Promise<ReviewCase | null> {
+    return withAccount(this.pool, userId, (c) => setStatus(c, id, status, reason));
+  }
+
+  /**
+   * Approves an open species case (US-BES-10). The check for an approved twin and the approval are one transaction:
+   * `{ twin }` names the approved species and nothing is decided.
+   */
+  async approve(
+    userId: string,
+    id: string,
+    latinKey: string,
+  ): Promise<ReviewCase | { twin: ApprovedTwin } | null> {
+    return withAccount(this.pool, userId, async (c) => {
+      const twin = await lockedTwin(c, id, latinKey);
+      return twin ? { twin } : setStatus(c, id, "reviewed", null);
+    });
+  }
+
+  /** Approved species that share a Latin name key (two or more), one query, ordered by name (US-BES-10). */
+  async approvedDuplicates(userId: string): Promise<readonly ApprovedDuplicate[]> {
     const r = await withAccount(this.pool, userId, (c) =>
-      c.query<ReviewCase>(
-        `update review_case set status = $2, reason = $3 where id = $1 returning ${COLUMNS}`,
-        [id, status, reason],
+      c.query<ApprovedDuplicate>(
+        `select min(a.latin_name) as "latinName",
+                json_agg(json_build_object('id', a.id, 'latinName', a.latin_name)
+                         order by a.latin_name, a.id) as species
+           from species_name n join species a on a.id = n.species_id
+          where n.field = 'latin' and a.review_status in ('curated', 'reviewed')
+          group by n.norm having count(*) > 1
+          order by min(a.latin_name), n.norm`,
       ),
     );
-    return r.rows[0] ?? null;
+    return r.rows;
   }
 
   /**

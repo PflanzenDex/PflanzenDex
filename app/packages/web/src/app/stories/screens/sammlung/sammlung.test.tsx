@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 import { composeStories } from "@storybook/react-vite";
-import { cleanup, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { prepareStories } from "../../harness/story-test-helpers";
+import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
 import * as stories from "./sammlung.stories";
 
 prepareStories();
 const { PlantsPhone, SpeciesDesktopDark, WishlistPhone, PlantsEmpty } = composeStories(stories);
 
 describe("US-QS-14 · page story Sammlung", () => {
-  afterEach(cleanup);
+  afterEach(unmountStoryRuns);
 
   it("US-QS-19 · the plants mode shows the tiles with their data and no loading state", async () => {
     await PlantsPhone.run();

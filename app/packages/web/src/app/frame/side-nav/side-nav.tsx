@@ -59,7 +59,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
               {({ isActive }) => (
                 <>
                   <span className={stackedPill(isActive)}>{item.icon}</span>
-                  <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+                  <span className="max-w-full whitespace-nowrap">{item.label}</span>
                   <ShortcutKeyNote hint={key} />
                   <NavNote text={item.note} />
                 </>
@@ -100,7 +100,7 @@ function SidebarLink({ item, index, total }: { item: NavItem; index: number; tot
         aria-keyshortcuts={key?.aria}
         className={({ isActive }) =>
           cn(
-            "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-base font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "flex min-h-[44px] shrink-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-control border border-transparent px-3 text-base font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             isActive
               ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
               : "text-muted-foreground hover:bg-muted",
@@ -108,7 +108,7 @@ function SidebarLink({ item, index, total }: { item: NavItem; index: number; tot
         }
       >
         {item.icon}
-        <span className="min-w-0 break-words">{item.label}</span>
+        <span className="whitespace-nowrap">{item.label}</span>
         <ShortcutKeyNote hint={key} inline />
         <NavNote text={item.note} inline />
       </NavLink>

@@ -252,8 +252,14 @@ describe("AppShell (US-QS-07, DS-21, DS-22, DS-25)", () => {
     at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
     const main = screen.getByRole("main");
     expect(main.textContent).toBe("Inhalt");
-    expect(main.className).toContain("pb-[calc(4rem+env(safe-area-inset-bottom))]");
+    // In the tall window (from 30 rem of height) the reserve of the fixed bar; from `md` the bar is gone and the 1.5 rem
+    // of `md` win again, also in the tall window (the variant `md:` combination comes after the reserve).
+    expect(main.className).toContain(
+      "tall-window:pb-[var(--bar-reserve,calc(4rem+env(safe-area-inset-bottom)))]",
+    );
+    expect(main.className).toContain("tall-window:md:pb-6");
     expect(main.className).toContain("md:pb-6");
+    expect(main.className).toContain("pb-4");
     for (const gutter of ["px-4", "md:px-6", "xl:px-10"]) expect(main.className).toContain(gutter);
   });
 
@@ -316,10 +322,11 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
       });
     const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
     // US-QS-14: 8 px more than the bars, so a focus ring (2 px ring, 2 px offset) of the focused element stays clear.
-    expect(document.documentElement.style.scrollPaddingTop).toBe("60px");
-    expect(document.documentElement.style.scrollPaddingBottom).toBe("76px");
+    // Written as variables: tokens.css applies them as scroll padding in the tall window only (US-QS-14).
+    expect(document.documentElement.style.getPropertyValue("--header-clearance")).toBe("60px");
+    expect(document.documentElement.style.getPropertyValue("--bar-clearance")).toBe("76px");
     unmount();
-    expect(document.documentElement.style.scrollPaddingTop).toBe("");
+    expect(document.documentElement.style.getPropertyValue("--header-clearance")).toBe("");
     height.mockRestore();
     vi.unstubAllGlobals();
   });
@@ -336,8 +343,8 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
       .spyOn(HTMLElement.prototype, "getBoundingClientRect")
       .mockImplementation(() => ({ height: 0 }) as DOMRect);
     const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
-    expect(document.documentElement.style.scrollPaddingTop).toBe("0px");
-    expect(document.documentElement.style.scrollPaddingBottom).toBe("0px");
+    expect(document.documentElement.style.getPropertyValue("--header-clearance")).toBe("0px");
+    expect(document.documentElement.style.getPropertyValue("--bar-clearance")).toBe("0px");
     unmount();
     height.mockRestore();
     vi.unstubAllGlobals();
@@ -358,7 +365,7 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
         return { height: this.hasAttribute("data-bottom-bar") ? 93 : 0 } as DOMRect;
       });
     const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
-    expect(document.querySelector("main")?.style.paddingBottom).toBe("93px");
+    expect(document.querySelector("main")?.style.getPropertyValue("--bar-reserve")).toBe("93px");
     unmount();
     expect(document.querySelector("main")).toBeNull();
     height.mockRestore();

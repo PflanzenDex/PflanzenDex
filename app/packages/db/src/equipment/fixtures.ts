@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Fixtures } from "../kernel/index.ts";
+import { createFixtureSpecimenAt } from "../collection/index.ts";
 
 // Tables of the `equipment` module (FR-QG-07).
 export const FIXTURES_EQUIPMENT: Fixtures = {
@@ -17,4 +18,16 @@ export const FIXTURES_EQUIPMENT: Fixtures = {
     };
   },
   equipment_setting: () => ({ deviation_percent: 20 }),
+  // A placement puts a plant of the same account into a pot of the same account (US-BES-19, DM-EQU-06).
+  pot_placement: async (k) => {
+    const r = await k.query.query<{ id: string }>(
+      "insert into equipment (account_id, type, name, status) values ($1, 'Pot', $2, 'active') returning id",
+      [k.accountId, `Topf ${randomUUID()}`],
+    );
+    return {
+      pot_id: (r.rows[0] as { id: string }).id,
+      specimen_id: await createFixtureSpecimenAt(k),
+      placed_on: "2026-10-01",
+    };
+  },
 };

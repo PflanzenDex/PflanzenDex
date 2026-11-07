@@ -173,4 +173,19 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(pill).toContain("active:scale-[0.98]");
     expect(screen.getByRole("button", { name: "Mehr" }).className).toContain("rounded-control");
   });
+
+  it("US-QS-14 · the secondary variant draws its boundary in --input (WCAG 1.4.11)", () => {
+    render(<Button variant="secondary">Abbrechen</Button>);
+    const classes = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
+    expect(classes).toContain("border");
+    expect(classes).toContain("border-input");
+    expect(classes).toContain("bg-secondary");
+  });
+
+  it("US-QS-14 · the outline variant draws its boundary in --primary (ADR 0017)", () => {
+    render(<Button variant="outline">Mehr Angaben</Button>);
+    const classes = screen.getByRole("button", { name: "Mehr Angaben" }).className.split(/\s+/);
+    expect(classes).toContain("border");
+    expect(classes).toContain("border-primary");
+  });
 });

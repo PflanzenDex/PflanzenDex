@@ -1,6 +1,7 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
 import { ONBOARDING_ERROR_TEXTS } from "./error-texts/onboarding";
 import { WUN_ERROR_TEXTS } from "./error-texts/wun";
+import { IMPORT_ERROR_TEXTS, REVIEW_ERROR_TEXTS } from "./error-texts/catalog";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -10,7 +11,7 @@ export const ERROR_TEXTS = {
     "Dieser Schlüssel wurde bereits mit anderen Angaben verwendet. Bitte versuche es neu.",
   "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
   "request.rate_limited":
-    "Zu viele Änderungen in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
+    "Zu viele Versuche in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
   "system.unexpected":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
   "system.database_unavailable":
@@ -19,18 +20,6 @@ export const ERROR_TEXTS = {
     "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code.",
   "invitation.required":
     "Die Registrierung ist im Moment nur mit Einladungscode möglich. Gib den Code ein, den du bekommen hast.",
-  "review.already_exists": "Für dieses Objekt läuft schon eine Prüfung.",
-  "review.not_found": "Diesen Prüfvorgang gibt es nicht.",
-  "review.status_invalid": "Dieser Vorgang ist schon entschieden.",
-  "review.reason_missing": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
-  "review.approval_incomplete":
-    "Die Art ist nicht vollständig genug zur Freigabe. Prüfe die fehlenden Angaben und Quellen.",
-  "review.merge_target_invalid":
-    "Mit dieser Art lässt sich der Vorschlag nicht zusammenführen. Wähle eine bereits freigegebene Art, die nicht der Vorschlag selbst ist.",
-  "review.merge_conflict":
-    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon eine Pflanze mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
-  "review.merge_lock_failed":
-    "Der Vorschlag konnte für das Zusammenführen gerade nicht gesperrt werden. Es wurde nichts geändert; versuche es gleich noch einmal.",
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",
@@ -56,6 +45,8 @@ export const ERROR_TEXTS = {
     "Das Fangdatum liegt nach dem Tag, an dem die Pflanze archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
   "specimen.not_found": "Diese Pflanze gibt es nicht.",
   "specimen.not_a_cutting": "Diese Pflanze ist kein Steckling und muss nicht eingetopft werden.",
+  "specimen.not_a_plant":
+    "Beobachtungen zum Umtopfen gibt es nur bei einer Pflanze. Dieser Steckling wird zuerst eingetopft; danach kannst du beobachten.",
   "specimen.already_archived": "Diese Pflanze ist schon archiviert.",
   "specimen.not_archived": "Diese Pflanze ist nicht archiviert.",
   "specimen.archived":
@@ -87,7 +78,7 @@ export const ERROR_TEXTS = {
     "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
   "ai.reference_ambiguous":
     "Der Name passt auf mehrere Einträge. Es wurde nichts getan; wähle einen der genannten Einträge.",
-  "ai.not_released": "Freundesdaten, Freigaben, Tausch und Empfehlungen bleiben in der App.",
+  "ai.not_released": "Das geht nur in der App, nicht über eine KI-Verbindung.",
   "ai.no_client":
     "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
@@ -130,6 +121,8 @@ export const ERROR_TEXTS = {
     "Diese Art hast du nicht auf einer Entdecken-Karte entschieden. Es wurde nichts zurückgenommen; ändere sie in der Wunschliste.",
   ...ONBOARDING_ERROR_TEXTS,
   ...WUN_ERROR_TEXTS,
+  ...REVIEW_ERROR_TEXTS,
+  ...IMPORT_ERROR_TEXTS,
   "pokedex.not_caught":
     "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":
