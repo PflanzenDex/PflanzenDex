@@ -387,14 +387,9 @@ jobs:
         with:
           path: ${{ runner.temp }}/apt-debs
           key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
-      # TEMPORARY (issue 1698): CPU of the shard; removed before the final runs.
-      - run: (vmstat -n 5 | while IFS= read -r l; do echo "$(date +%T) $l"; done > "$RUNNER_TEMP/vmstat.log" 2>&1 &)
       - run: make ui-gates SHARD=${{ matrix.shard }}/${{ strategy.job-total }} -j3 -Otarget
         env:
           PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
-      - name: vmstat (TEMPORARY, issue 1698)
-        if: always()
-        run: cat "$RUNNER_TEMP/vmstat.log" || true
       - name: Output of the background auth-up
         if: always()
         run: cat "$RUNNER_TEMP/pflanzendex-auth-up-background.log" || echo "no background auth-up log"
