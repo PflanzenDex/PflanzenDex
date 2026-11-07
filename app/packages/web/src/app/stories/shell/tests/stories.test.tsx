@@ -31,7 +31,7 @@ const catalog = {
 };
 
 describe("TE-17 · DS-02 shared component stories", () => {
-  afterEach(() => unmountStoryRuns(catalog.Banner.Info));
+  afterEach(unmountStoryRuns);
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

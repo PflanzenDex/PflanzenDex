@@ -11,12 +11,12 @@ setProjectAnnotations([preview]);
 const { Default } = composeStories(badge);
 
 describe("FR-QG-03 · story teardown after run()", () => {
-  afterEach(() => unmountStoryRuns(Default));
+  afterEach(unmountStoryRuns);
 
   it("FR-QG-03 · unmountStoryRuns removes the root and container that run() left in the document", async () => {
     await Default.run();
     expect(document.body.children.length).toBeGreaterThan(0);
-    await unmountStoryRuns(Default);
+    await unmountStoryRuns();
     expect(document.body.children.length).toBe(0);
   });
 
@@ -24,6 +24,6 @@ describe("FR-QG-03 · story teardown after run()", () => {
     await Default.run();
     cleanup();
     expect(document.body.children.length).toBeGreaterThan(0);
-    await unmountStoryRuns(Default);
+    await unmountStoryRuns();
   });
 });

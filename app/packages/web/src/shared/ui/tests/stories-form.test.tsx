@@ -10,7 +10,7 @@ setProjectAnnotations([preview]);
 const catalog = { Form: composeStories(form) };
 
 describe("TE-18 · DS-47 ui form family stories", () => {
-  afterEach(() => unmountStoryRuns(catalog.Form.Default));
+  afterEach(unmountStoryRuns);
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

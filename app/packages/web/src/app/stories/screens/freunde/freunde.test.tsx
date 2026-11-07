@@ -10,7 +10,7 @@ prepareStories();
 const { Phone, NoFriendsYet } = composeStories(stories);
 
 describe("US-QS-14 · page story Freunde", () => {
-  afterEach(() => unmountStoryRuns(Phone));
+  afterEach(unmountStoryRuns);
 
   it("US-QS-20 · the story shows the one-screen overview with its action, tiles and rows", async () => {
     await Phone.run();

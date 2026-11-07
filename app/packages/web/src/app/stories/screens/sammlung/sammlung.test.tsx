@@ -10,7 +10,7 @@ prepareStories();
 const { PlantsPhone, SpeciesDesktopDark, WishlistPhone, PlantsEmpty } = composeStories(stories);
 
 describe("US-QS-14 · page story Sammlung", () => {
-  afterEach(() => unmountStoryRuns(PlantsPhone));
+  afterEach(unmountStoryRuns);
 
   it("US-QS-19 · the plants mode shows the tiles with their data and no loading state", async () => {
     await PlantsPhone.run();

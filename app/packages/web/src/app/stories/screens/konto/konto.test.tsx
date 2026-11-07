@@ -10,7 +10,7 @@ prepareStories();
 const { Phone, DesktopDark } = composeStories(stories);
 
 describe("US-QS-17 · page story Konto", () => {
-  afterEach(() => unmountStoryRuns(Phone));
+  afterEach(unmountStoryRuns);
 
   it("US-QS-17 · the story shows the index with profile row and values from fixture data and no loading state", async () => {
     await Phone.run();

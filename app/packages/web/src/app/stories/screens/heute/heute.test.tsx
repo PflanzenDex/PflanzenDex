@@ -10,7 +10,7 @@ prepareStories();
 const { Phone, NothingDue, PhaseFirst } = composeStories(stories);
 
 describe("US-QS-14 · page story Heute", () => {
-  afterEach(() => unmountStoryRuns(Phone));
+  afterEach(unmountStoryRuns);
 
   it("US-QS-18 · US-QS-14 the story shows the most urgent item, the summary and the tiles of the categories", async () => {
     await Phone.run();

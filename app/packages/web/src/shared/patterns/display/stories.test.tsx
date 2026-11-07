@@ -29,7 +29,7 @@ const catalog = {
 };
 
 describe("TE-17 · DS-02 data-display component stories", () => {
-  afterEach(() => unmountStoryRuns(catalog.Avatar.Initials));
+  afterEach(unmountStoryRuns);
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

@@ -18,7 +18,7 @@ const catalog = {
 };
 
 describe("TE-18 · DS-01 ui form primitive stories", () => {
-  afterEach(() => unmountStoryRuns(catalog.Checkbox.Default));
+  afterEach(unmountStoryRuns);
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

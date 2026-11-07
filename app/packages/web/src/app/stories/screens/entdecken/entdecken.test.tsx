@@ -10,7 +10,7 @@ prepareStories();
 const { SuggestionsPhone, CatalogDesktopDark, AllDecided } = composeStories(stories);
 
 describe("US-QS-14 · page story Entdecken", () => {
-  afterEach(() => unmountStoryRuns(SuggestionsPhone));
+  afterEach(unmountStoryRuns);
 
   it("US-QS-14 · the suggestions mode shows the first card of the deck", async () => {
     await SuggestionsPhone.run();

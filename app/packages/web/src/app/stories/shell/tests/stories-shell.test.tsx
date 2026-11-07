@@ -18,7 +18,7 @@ const catalog = {
 };
 
 describe("TE-18 · DS-25 shared shell stories", () => {
-  afterEach(() => unmountStoryRuns(catalog.AppShell.Default));
+  afterEach(unmountStoryRuns);
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

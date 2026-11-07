@@ -22,7 +22,7 @@ const catalog = {
 };
 
 describe("TE-18 · DS-01 ui primitive stories", () => {
-  afterEach(() => unmountStoryRuns(catalog.Button.Default));
+  afterEach(unmountStoryRuns);
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))
