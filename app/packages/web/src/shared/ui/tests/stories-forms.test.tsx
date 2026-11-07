@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
-import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../.storybook/preview";
+import { unmountStoryRuns } from "../../testing/story-teardown/story-teardown";
 import * as checkbox from "../fields/checkbox/checkbox.stories";
 import * as input from "../fields/input/input.stories";
 import * as select from "../fields/select/select.stories";
@@ -18,7 +18,7 @@ const catalog = {
 };
 
 describe("TE-18 · DS-01 ui form primitive stories", () => {
-  afterEach(cleanup);
+  afterEach(() => unmountStoryRuns(catalog.Checkbox.Default));
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

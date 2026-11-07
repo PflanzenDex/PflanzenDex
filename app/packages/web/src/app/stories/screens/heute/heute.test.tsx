@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 import { composeStories } from "@storybook/react-vite";
-import { cleanup, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { prepareStories } from "../../harness/story-test-helpers";
+import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
 import * as stories from "./heute.stories";
 
 prepareStories();
 const { Phone, NothingDue, PhaseFirst } = composeStories(stories);
 
 describe("US-QS-14 · page story Heute", () => {
-  afterEach(cleanup);
+  afterEach(() => unmountStoryRuns(Phone));
 
   it("US-QS-18 · US-QS-14 the story shows the most urgent item, the summary and the tiles of the categories", async () => {
     await Phone.run();

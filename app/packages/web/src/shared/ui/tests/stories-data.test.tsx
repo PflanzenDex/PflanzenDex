@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
-import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../.storybook/preview";
+import { unmountStoryRuns } from "../../testing/story-teardown/story-teardown";
 import * as skeleton from "../display/skeleton/skeleton.stories";
 import * as table from "../display/table/table.stories";
 
@@ -14,7 +14,7 @@ const catalog = {
 };
 
 describe("TE-18 · DS-01 ui data primitive stories", () => {
-  afterEach(cleanup);
+  afterEach(() => unmountStoryRuns(catalog.Skeleton.Default));
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

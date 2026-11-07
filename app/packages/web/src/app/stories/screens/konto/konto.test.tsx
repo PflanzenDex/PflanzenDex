@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 import { composeStories } from "@storybook/react-vite";
-import { cleanup, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { prepareStories } from "../../harness/story-test-helpers";
+import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
 import * as stories from "./konto.stories";
 
 prepareStories();
 const { Phone, DesktopDark } = composeStories(stories);
 
 describe("US-QS-17 · page story Konto", () => {
-  afterEach(cleanup);
+  afterEach(() => unmountStoryRuns(Phone));
 
   it("US-QS-17 · the story shows the index with profile row and values from fixture data and no loading state", async () => {
     await Phone.run();

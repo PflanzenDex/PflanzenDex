@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
-import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../.storybook/preview";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { unmountStoryRuns } from "../../testing/story-teardown/story-teardown";
 import * as avatar from "./avatar/avatar.stories";
 import * as card from "./card/card.stories";
 import * as accordion from "./panels/accordion/accordion.stories";
@@ -29,7 +29,7 @@ const catalog = {
 };
 
 describe("TE-17 · DS-02 data-display component stories", () => {
-  afterEach(cleanup);
+  afterEach(() => unmountStoryRuns(catalog.Avatar.Initials));
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))

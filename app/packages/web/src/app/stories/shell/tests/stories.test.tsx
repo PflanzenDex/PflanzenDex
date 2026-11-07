@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
-import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../../.storybook/preview";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
 import * as banner from "../../../../shared/patterns/states/banner/banner.stories";
 import * as emptyState from "../../../../shared/patterns/elements/empty-state/empty-state.stories";
 import * as pageSkeleton from "../../../../shared/patterns/states/page-skeleton/page-skeleton.stories";
@@ -31,7 +31,7 @@ const catalog = {
 };
 
 describe("TE-17 · DS-02 shared component stories", () => {
-  afterEach(cleanup);
+  afterEach(() => unmountStoryRuns(catalog.Banner.Info));
 
   for (const [component, stories] of Object.entries(catalog))
     for (const [name, Story] of Object.entries(stories))
