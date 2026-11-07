@@ -79,4 +79,12 @@ describe("US-ACC-04 AccountDataSource: export of all own data", () => {
     const species = (snapshot?.tables["species"] ?? []).map((r) => r["id"]);
     expect(species).toEqual(expect.arrayContaining([shared, proposal]));
   });
+
+  it("US-MON-09 the export carries the fertilizing entries of the keeper, and none of another account", async () => {
+    const snapshot = await new AccountDataPostgres(pool).read(mine);
+    const rows = snapshot?.tables["fertilizing_log"] ?? [];
+    expect(rows.length).toBeGreaterThan(0);
+    expect(JSON.stringify(rows[0])).toContain("2026-10-10");
+    expect(JSON.stringify(rows)).not.toContain(other);
+  });
 });

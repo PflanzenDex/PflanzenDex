@@ -72,7 +72,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | BEH Treatments                   | 4       | 4      | 0       | 0      | 4 · 0 · 2                 | 4                      | 0       |
 | WUN Wishlist                     | 6       | 1      | 5       | 0      | 2 · 0 · 5                 | 5                      | 1       |
 | POK Pokédex                      | 12      | 0      | 11      | 1      | 0 · 0 · 11                | 10                     | 2       |
-| MON Reminders/sensors            | 8       | 0      | 6       | 2      | 0 · 0 · 8                 | 0                      | 8       |
+| MON Reminders/sensors            | 9       | 0      | 7       | 2      | 0 · 0 · 8                 | 0                      | 9       |
 | SOZ Social                       | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                    | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
 | KI AI access                     | 17      | 2      | 10      | 5      | 1 · 4 · 18                | 3                      | 14      |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **216** | **43** | **135** | **38** |                           | **50**                 | **166** |
+| **Total**                        | **217** | **43** | **136** | **38** |                           | **50**                 | **167** |
 
 <!-- spec-status:end -->
 

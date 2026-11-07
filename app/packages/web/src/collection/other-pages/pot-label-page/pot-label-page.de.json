@@ -4,6 +4,10 @@
   "notFound": "Pflanze nicht gefunden",
   "water": "Gegossen",
   "measure": "Messen",
+  "fertilize": "Gedüngt",
+  "fertilized": "Als gedüngt eingetragen.",
+  "lastFertilized": "Zuletzt gedüngt: {date}",
+  "neverFertilized": "Zuletzt gedüngt: noch nie",
   "watered": "Heute als gegossen eingetragen.",
   "toPlant": "Zur Pflanze",
   "toCollection": "Zur Sammlung"

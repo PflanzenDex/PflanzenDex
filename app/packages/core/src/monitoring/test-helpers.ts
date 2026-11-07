@@ -3,6 +3,8 @@ import {
   REMINDER_LIMITS,
   defaultReminderSettings,
   type ChannelStore,
+  type FertilizingEntry,
+  type FertilizingStore,
   type Occasion,
   type OccasionSource,
   type PushSubscription,
@@ -142,6 +144,27 @@ export class InMemoryWatering implements WateringStore {
   }
 
   async record(userId: string, entries: readonly WateringEntry[]) {
+    const before = this.entries.size;
+    for (const e of entries) this.entries.add(`${userId}|${e.specimenId}|${e.date}`);
+    return { created: this.entries.size - before };
+  }
+}
+
+/** In-memory fertilizing log for tests: one entry per account, specimen and day (US-MON-09). */
+export class InMemoryFertilizing implements FertilizingStore {
+  readonly entries = new Set<string>();
+
+  async lastFertilized(userId: string, specimenIds: readonly string[]) {
+    const last = new Map<string, string>();
+    for (const e of this.entries) {
+      const [user, specimen, date] = e.split("|") as [string, string, string];
+      if (user === userId && specimenIds.includes(specimen) && date > (last.get(specimen) ?? ""))
+        last.set(specimen, date);
+    }
+    return last;
+  }
+
+  async record(userId: string, entries: readonly FertilizingEntry[]) {
     const before = this.entries.size;
     for (const e of entries) this.entries.add(`${userId}|${e.specimenId}|${e.date}`);
     return { created: this.entries.size - before };
