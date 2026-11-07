@@ -1,6 +1,6 @@
 // The pot a plant sits in (US-BES-19, DM-EQU-06): placements of plants into own pots. Ports for persistence; the adapter
 // lives in `db` (AB-1). A placement is written by the pot operations only; the repot itself is `specimen.repot`.
-import type { SpecimenStore } from "../../collection";
+import type { SpecimenStore } from "../../../collection";
 
 /** The pot as the plan and the placement show it; `diameterCm` is `null` while unknown (P-08). */
 export interface PotRecord {

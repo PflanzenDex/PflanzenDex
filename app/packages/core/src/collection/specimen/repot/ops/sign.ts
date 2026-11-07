@@ -8,13 +8,13 @@ import {
   shape,
   timeZoneField,
   choiceField,
-} from "../../kernel";
+} from "../../../../kernel";
 import {
   REPOT_PLANNER_KEEPER_SWITCH,
   REPOT_SIGNS,
   type RepotStore,
   type SignRefusal,
-} from "./types";
+} from "../types";
 
 export interface SignDependencies {
   readonly repots: RepotStore;

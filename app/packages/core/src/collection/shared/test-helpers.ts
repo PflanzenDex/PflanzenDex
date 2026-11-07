@@ -1,7 +1,7 @@
 import type { SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
 import type { MarkerAssignment, LocationAssignment } from "./types";
 import type { NotesStore, SpecimenNotes } from "../notes/types";
-import { InMemoryRepotLog } from "../repot/test-helpers";
+import { InMemoryRepotLog } from "../specimen/repot/test-helpers";
 
 export * from "./test-helpers.species";
 

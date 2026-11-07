@@ -1,5 +1,5 @@
-import { InMemoryEquipment } from "../store/test-helpers";
-import { InMemorySpecimens } from "../../collection/shared/test-helpers";
+import { InMemoryEquipment } from "../../store/test-helpers";
+import { InMemorySpecimens } from "../../../collection/shared/test-helpers";
 import { InMemoryPotPlacements, InMemoryPotRepotUnit } from "./test-helpers";
 
 export const PRIMARY = "anna";

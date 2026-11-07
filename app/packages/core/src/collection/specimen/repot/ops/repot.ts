@@ -9,8 +9,8 @@ import {
   shape,
   ok,
   timeZoneField,
-} from "../../kernel";
-import type { SpecimenStore } from "../shared/types";
+} from "../../../../kernel";
+import type { SpecimenStore } from "../../../shared/types";
 
 export interface RepotDependencies {
   /** Only the repot is needed here: a repot with a pot runs it inside its own unit of work (`equipment`, US-BES-19). */

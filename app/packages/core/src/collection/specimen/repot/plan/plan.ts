@@ -1,6 +1,6 @@
 // The repot plan of one plant (US-BES-19, FR-BES-27): pure, derived on every request and never stored (P-01). The inputs
 // are plain data that the caller reads from the store, the care phase and the equipment; this module reads nothing.
-import type { RepotSign } from "../repot/types";
+import type { RepotSign } from "../types";
 
 /** Starting value, assumption (owner decision, 2026-11-07): a repot is due after 24 months without a cited interval. */
 export const REPOT_INTERVAL_STARTING_MONTHS = 24;
@@ -31,8 +31,8 @@ export interface RepotPlanInput {
   /** The observations ticked and not cleared yet (DM-BES-09). */
   readonly openSigns: readonly { readonly sign: RepotSign; readonly tickedOn: string }[];
   readonly phase: PlanPhase;
-  /** The pot the plant sits in; `null` = no pot recorded, its size is unknown (P-08). */
-  readonly currentPot: { readonly diameterCm: number | null } | null;
+  /** The pot the plant sits in (its open placement, DM-EQU-06); `null` = no pot recorded, its size unknown (P-08). */
+  readonly currentPot: PlanPot | null;
   readonly freePots: readonly PlanPot[];
   /** A repot interval a reviewer cited for the species, with its source; `null` = none cited (no catalog field yet). */
   readonly citedInterval: { readonly months: number; readonly source: string } | null;
@@ -61,8 +61,8 @@ export interface RepotPlan {
   readonly phase: PlanPhase;
   /** Set only with hints: `spring` in dormancy, `phase_unknown` while the phase is unknown, none in growth. */
   readonly seasonAdvice: "spring" | "phase_unknown" | null;
-  /** The current pot, as far as its size is known (the list of free pots is sorted by it). */
-  readonly currentPot: { readonly diameterCm: number | null } | null;
+  /** The current pot; its size decides the order of the free pots. */
+  readonly currentPot: PlanPot | null;
   readonly freePots: readonly PlanPot[];
 }
 

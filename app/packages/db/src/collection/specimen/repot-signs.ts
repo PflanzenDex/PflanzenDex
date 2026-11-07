@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from "pg";
-import { withAccount } from "../kernel/index.ts";
+import { withAccount } from "../../kernel/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export type RepotSign = "roots_out" | "dries_fast" | "tips_over";

@@ -24,7 +24,7 @@ export {
   equipmentPlacePot,
   placePlant,
   specimenRepotWithPot,
-} from "./pot";
+} from "./record/pot";
 export type {
   PlaceDependencies,
   PlaceRefusal,
@@ -35,7 +35,7 @@ export type {
   PotRepotUnit,
   RepotWithPotDependencies,
   RepotWithPotResult,
-} from "./pot";
+} from "./record/pot";
 export type { SetStatusDependencies } from "./record";
 export {
   equipmentDescribeLamp,

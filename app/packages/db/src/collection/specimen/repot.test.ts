@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
-import { createFixtureSpeciesAt } from "../fixtures.ts";
-import { RepotPostgres, SpecimenPostgres } from "./index.ts";
+import { migrate, withAccount, openOwnerPool, openFixturePool } from "../../kernel/index.ts";
+import { createFixtureSpeciesAt } from "../../fixtures.ts";
+import { RepotPostgres, SpecimenPostgres } from "../index.ts";
 
 // US-BES-19, DM-BES-09, P-04, P-10: the repot history and the repot observations (real PostgreSQL, `make db-up`).
 let pool: Pool;

@@ -10,9 +10,9 @@ import {
   shape,
   timeZoneField,
   type Result,
-} from "../../kernel";
-import { isActive, type SpecimenStore } from "../../collection";
-import { EQUIPMENT_KEEPER_SWITCH, type PlacementResult, type PotPlacementStore } from "./types";
+} from "../../../../kernel";
+import { isActive, type SpecimenStore } from "../../../../collection";
+import { EQUIPMENT_KEEPER_SWITCH, type PlacementResult, type PotPlacementStore } from "../types";
 
 /** The plant side of a placement: the plant must exist, be active and be a plant (a cutting is potted out first). */
 export type PlaceSpecimens = Pick<SpecimenStore, "find">;

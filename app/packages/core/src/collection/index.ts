@@ -6,7 +6,34 @@ export type { MarkDependencies } from "./specimen/mark";
 // The private notes of a specimen (US-BES-18): set or clear them, and the keeper's own read of them.
 export { specimenSetNotes, specimenNotes } from "./notes/notes";
 export type { NotesDependencies } from "./notes/notes";
-export { specimenRepot } from "./specimen/repot";
+// The repot of a specimen and its history (US-BES-04, US-BES-19): the operation, the observations and the plan.
+export {
+  REPOT_PLANNER_KEEPER_SWITCH,
+  REPOT_SIGNS,
+  GENERAL_STARTING_VALUE,
+  REPOT_INTERVAL_STARTING_MONTHS,
+  orderFreePots,
+  repotPlan,
+  specimenRepot,
+  specimenTickRepotSign,
+  specimenUntickRepotSign,
+  wholeMonthsBetween,
+} from "./specimen/repot";
+export type {
+  IntervalHint,
+  OpenSign,
+  PlanPhase,
+  PlanPot,
+  RepotDependencies,
+  RepotHint,
+  RepotPlan,
+  RepotPlanInput,
+  RepotSign,
+  RepotStore,
+  SignDependencies,
+  SignHint,
+  SignRefusal,
+} from "./specimen/repot";
 export {
   specimenSetLocation,
   specimenSetLightZone,
@@ -14,31 +41,6 @@ export {
   LIGHT_ZONE_ERROR,
 } from "./placement/locate";
 export type { LocateDependencies } from "./placement/locate";
-export type { RepotDependencies } from "./specimen/repot";
-// The repot history and the repot observations (US-BES-19): tick and clear an observation of a plant.
-export {
-  REPOT_PLANNER_KEEPER_SWITCH,
-  REPOT_SIGNS,
-  specimenTickRepotSign,
-  specimenUntickRepotSign,
-} from "./repot";
-export type { OpenSign, RepotSign, RepotStore, SignDependencies, SignRefusal } from "./repot";
-export {
-  GENERAL_STARTING_VALUE,
-  REPOT_INTERVAL_STARTING_MONTHS,
-  orderFreePots,
-  repotPlan,
-  wholeMonthsBetween,
-} from "./repot-plan";
-export type {
-  IntervalHint,
-  PlanPhase,
-  PlanPot,
-  RepotHint,
-  RepotPlan,
-  RepotPlanInput,
-  SignHint,
-} from "./repot-plan";
 export { cuttingLight } from "./placement/cutting-light";
 export type { ZoneSource } from "./placement/effective-zone";
 export { careProfileUpdate } from "./care-profile/care-profile";

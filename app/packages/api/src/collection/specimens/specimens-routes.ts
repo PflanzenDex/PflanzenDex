@@ -6,7 +6,9 @@ import {
   NO_TARGET_LOCATION,
   specimenCreate,
   specimenCorrectCatchDate,
-  specimenRepot,
+  specimenRepotWithPot,
+  EQUIPMENT_KEEPER_SWITCH,
+  keeperOffOf,
   specimenLoad,
   specimenList,
   specimenNotes,
@@ -20,6 +22,8 @@ import {
 } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
+  KeeperSwitchPostgres,
+  PotRepotPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
   SpecimenNotesPostgres,
@@ -35,6 +39,7 @@ import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../../kernel";
 import { archivedRoutes } from "../archived/archived-routes";
+import { repotPlanRoutes } from "../repot/repot-plan-routes";
 import { repotSignRoutes } from "../repot/repot-routes";
 import { markerRoutes } from "../markers/marker-routes";
 import { locationRoutes } from "../markers/location-routes";
@@ -85,6 +90,20 @@ export const cardsDependencies = (
 });
 
 /**
+ * The repot with its pot (US-BES-04, US-BES-19): one unit of work, so the repot and the placement commit or roll back
+ * together (`PotRepotPostgres`). With the equipment switch off a pot is refused (P-12).
+ */
+function specimenRepotWithPotOf(pool: Pool, clock: () => Date) {
+  const switches = new KeeperSwitchPostgres(pool);
+  return specimenRepotWithPot({
+    unit: new PotRepotPostgres(pool),
+    clock,
+    keeperOff: async (userId) =>
+      keeperOffOf(await switches.list(userId)).has(EQUIPMENT_KEEPER_SWITCH),
+  });
+}
+
+/**
  * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.correct_catch_date`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
  * `Idempotency-Key`); lists and cards show no archived specimens, `/specimens/archived` does. Reading returns only
  * specimens of the own account, a foreign or unknown specimen looks the same: 404 (P-04).
@@ -99,7 +118,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     targetLocation: opt.targetLocation ?? NO_TARGET_LOCATION,
     clock,
   });
-  const repot = specimenRepot({ specimens, clock });
+  const repot = specimenRepotWithPotOf(pool, clock);
   const correct = specimenCorrectCatchDate({ specimens, clock });
   const notes = new SpecimenNotesPostgres(pool);
   const setNotes = specimenSetNotes({ specimens: notes });
@@ -123,6 +142,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   routes.route("/", archivedRoutes(pool, clock));
   // US-BES-19: tick or clear one repot observation of a plant (P-03, `Idempotency-Key`); before `/specimens/:id`.
   routes.route("/", repotSignRoutes(pool, clock));
+  // US-BES-19: the repot plan (read) and the placement into a pot (P-03); before `/specimens/:id`.
+  routes.route("/", repotPlanRoutes(pool, clock));
   // US-BES-03: give a specimen a marker or change it.
   routes.route("/", markerRoutes(pool));
   // US-PHA-03: set the location of a specimen (BES-08 "location missing").
@@ -142,8 +163,12 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     write(c, deps, create, { input: await body(c), success: 201 }),
   );
   // US-BES-04: a cutting becomes a plant; only the status changes (P-03, with `Idempotency-Key`).
+  // The answer is the plant as before (`id`, `status`, `repottedAt`) and the pot it sits in now (`pot`, null if none).
   routes.post("/specimens/:id/repot", async (c) =>
-    write(c, deps, repot, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
+    write(c, deps, repot, {
+      input: { ...(await body(c)), specimenId: c.req.param("id") },
+      wrapper: (v) => ({ ...v.specimen, pot: v.pot }),
+    }),
   );
   // US-BES-11: correct the catch date; only `caught_at` changes, same rules as on creation (P-03, `Idempotency-Key`).
   routes.post("/specimens/:id/catch-date", async (c) =>

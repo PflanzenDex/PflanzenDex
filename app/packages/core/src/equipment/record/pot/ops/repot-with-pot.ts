@@ -10,9 +10,9 @@ import {
   shape,
   timeZoneField,
   type Result,
-} from "../../kernel";
-import { specimenRepot, type SpecimenRow } from "../../collection";
-import { EQUIPMENT_KEEPER_SWITCH, type PlacementResult, type PotRepotUnit } from "./types";
+} from "../../../../kernel";
+import { specimenRepot, type SpecimenRow } from "../../../../collection";
+import { EQUIPMENT_KEEPER_SWITCH, type PlacementResult, type PotRepotUnit } from "../types";
 import { placePlant } from "./place";
 
 export interface RepotWithPotDependencies {

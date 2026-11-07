@@ -20,7 +20,7 @@ const base: RepotPlanInput = {
   lastRepot: "2024-11-07",
   openSigns: [],
   phase: "growth",
-  currentPot: { diameterCm: 12 },
+  currentPot: { id: "cur", name: "Aktuell", diameterCm: 12 },
   freePots: [],
   citedInterval: null,
 };
@@ -126,9 +126,9 @@ describe("US-BES-19 the free pots (US-EQU-01, DM-EQU-05)", () => {
   });
 
   it("US-BES-19: the plan lists the free pots in that order and names the current pot's size", () => {
-    const r = plan({ freePots: pots, currentPot: { diameterCm: 12 } });
+    const r = plan({ freePots: pots, currentPot: { id: "cur", name: "Aktuell", diameterCm: 12 } });
     expect(r.freePots.map((p) => p.id)).toEqual(["c", "b", "a", "e", "d"]);
-    expect(r.currentPot).toEqual({ diameterCm: 12 });
+    expect(r.currentPot).toEqual({ id: "cur", name: "Aktuell", diameterCm: 12 });
   });
 
   it("US-BES-19: a plant without a recorded pot lists its free pots by name and has no size to compare (P-08)", () => {
@@ -140,7 +140,7 @@ describe("US-BES-19 the free pots (US-EQU-01, DM-EQU-05)", () => {
   it("US-BES-19: there is no hint about the pot size, no cited rule exists (P-08)", () => {
     const r = plan({
       lastRepot: "2026-10-01",
-      currentPot: { diameterCm: 6 },
+      currentPot: { id: "klein", name: "Klein", diameterCm: 6 },
       freePots: [pot("x", "Groß", 40)],
     });
     expect(r.hints).toEqual([]);

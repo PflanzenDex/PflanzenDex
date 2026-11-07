@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../../kernel";
-import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { execute } from "../../../../kernel";
+import { InMemoryIdempotencyStore } from "../../../../kernel/test-helpers";
 import { specimenRepotWithPot } from "./repot-with-pot";
-import { makePlant, makePot, PRIMARY, world } from "./test-helpers-world";
+import { makePlant, makePot, PRIMARY, world } from "../test-helpers-world";
 
 let w: ReturnType<typeof world>;
 let idem: InMemoryIdempotencyStore;

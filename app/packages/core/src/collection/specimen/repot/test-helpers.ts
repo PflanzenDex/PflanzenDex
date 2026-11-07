@@ -1,4 +1,4 @@
-import type { SpecimenRow } from "../shared/types";
+import type { SpecimenRow } from "../../shared/types";
 import {
   REPOT_SIGNS,
   type OpenSign,
