@@ -157,16 +157,25 @@ test("US-QG-02 (issue 1608): the ui output is the app paths without workflow and
   assert.ok(!PATHS.ui.test("README.md"));
 });
 
-test("US-QG-02 (issue 1608): a workflow-only change runs the app jobs and the results job, but no UI gate", () => {
+test("US-QG-02 (issue 1608): a workflow-only change runs the app jobs and the results job, but no UI gate and no web tests", () => {
   const req = requiredJobs({
     files: ["app/tools/workflow/actions/ci-reuse/ci-verdict.mjs"],
     base: "dev",
     draft: false,
     defined: new Set(JOBS),
   });
-  for (const job of ["app-gates", "app-tests", "app-tests-web", "results"])
-    assert.ok(req.has(job), job);
-  for (const job of ["app-ui", "ds-snapshots", "lighthouse", "one-screen", "a11y-routes"]) {
+  for (const job of ["app-gates", "app-tests", "results"]) assert.ok(req.has(job), job);
+  // A change without UI leaves the web package as it was, so the web tests are not required (US-QG-02).
+  for (const job of [
+    "app-tests-web",
+    "app-ui",
+    "ds-snapshots",
+    "lighthouse",
+    "one-screen",
+    "a11y-routes",
+    "layout",
+    "docs-gates",
+  ]) {
     assert.ok(!req.has(job), job);
   }
   const docs = requiredJobs({
@@ -175,7 +184,34 @@ test("US-QG-02 (issue 1608): a workflow-only change runs the app jobs and the re
     draft: false,
     defined: new Set(JOBS),
   });
-  assert.ok(!docs.has("results") && !docs.has("app-tests"));
+  assert.ok(!docs.has("results") && !docs.has("app-tests") && !docs.has("app-tests-web"));
+  assert.ok(docs.has("docs-gates") && docs.has("layout"));
+});
+
+test("US-QG-02 (issue 1608): an app PR runs the layout and docs checks in app-gates, and the web tests for a UI change only", () => {
+  const defined = new Set(JOBS);
+  const cases = [
+    // [files, jobs that are required, jobs that are not required]
+    [["docs/x.md"], ["docs-gates", "layout"], ["app-gates", "app-tests-web"]],
+    [["README.md"], ["docs-gates", "layout"], ["app-gates"]],
+    [[".githooks/pre-push"], ["layout"], ["docs-gates", "app-gates"]],
+    [["app/packages/core/src/a.ts"], ["app-gates", "app-tests-web"], ["layout", "docs-gates"]],
+    [
+      ["app/packages/core/src/a.ts", "docs/x.md"],
+      ["app-gates", "app-tests-web"],
+      ["layout", "docs-gates"],
+    ],
+    [
+      ["app/tools/workflow/x.mjs", "docs/x.md"],
+      ["app-gates", "app-tests"],
+      ["layout", "docs-gates", "app-tests-web"],
+    ],
+  ];
+  for (const [files, yes, no] of cases) {
+    const req = requiredJobs({ files, base: "dev", draft: false, defined });
+    for (const job of yes) assert.ok(req.has(job), `${files}: ${job} is required`);
+    for (const job of no) assert.ok(!req.has(job), `${files}: ${job} is not required`);
+  }
 });
 
 test("US-DEV-13: the path filters are the ones that the changes job of ci.yml uses, with the same text", () => {
@@ -228,7 +264,9 @@ test("US-DEV-13: the jobs required for a PR follow the path filter, the draft st
 test("US-DEV-13: when GitHub lists 3000 files, every path filter counts as matched", () => {
   const files = Array.from({ length: 3000 }, () => "x.txt");
   const req = requiredJobs({ files, base: "dev", draft: false, defined: new Set(JOBS) });
-  assert.ok(req.has("app-gates") && req.has("one-screen") && req.has("docs-gates"));
+  assert.ok(req.has("app-gates") && req.has("one-screen") && req.has("app-tests-web"));
+  // The app path counts as matched, so the docs and layout checks are the ones that app-gates runs (US-QG-02).
+  assert.ok(!req.has("docs-gates") && !req.has("layout"));
 });
 
 test("US-DEV-13: a job that the head's workflow does not define is never required (PR 1465 predates docs-gates)", () => {
@@ -246,10 +284,21 @@ test("US-DEV-13: a job that the head's workflow does not define is never require
     draft: false,
     defined: new Set(JOBS),
   });
-  assert.ok(ifDefined.has("docs-gates"), "docs/ changed, so the job is required where it exists");
+  // PR 1465 changes app paths too, so the docs checks are app-gates' and the job is not required (US-QG-02).
+  assert.ok(!ifDefined.has("docs-gates"), "an app PR runs the docs checks in app-gates");
+  const docsOnly = requiredJobs({
+    files: ["docs/x.md"],
+    base: "dev",
+    draft: false,
+    defined: new Set(JOBS),
+  });
+  assert.ok(
+    docsOnly.has("docs-gates"),
+    "docs/ changed without an app path, so the job is required",
+  );
 });
 
-test("US-DEV-13: PR 1476 requires the app, UI and docs jobs of its own workflow, but not the main-only ones", () => {
+test("US-DEV-13: PR 1476 requires the app and UI jobs of its own workflow, not the docs jobs and not the main-only ones", () => {
   const s = snapOf("pr1476");
   const required = requiredJobs({ files: s.files, base: "dev", draft: false, defined: s.defined });
   for (const job of [
@@ -258,11 +307,12 @@ test("US-DEV-13: PR 1476 requires the app, UI and docs jobs of its own workflow,
     "lighthouse",
     "one-screen",
     "a11y-routes",
-    "docs-gates",
     "metadata",
   ]) {
     assert.ok(required.has(job), job);
   }
+  // PR 1476 changes app paths, so app-gates runs the docs and layout checks (US-QG-02).
+  assert.ok(!required.has("docs-gates") && !required.has("layout"));
   assert.ok(!required.has("audit") && !required.has("e2e"));
 });
 

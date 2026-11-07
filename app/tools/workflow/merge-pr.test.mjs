@@ -294,7 +294,7 @@ const check = (name, status, conclusion, run = 1) => ({
   details_url: `https://github.com/PflanzenDex/PflanzenDex/actions/runs/${run}/job/1`,
   app: { slug: "github-actions" },
 });
-const headOf = (checkRuns) =>
+const headOf = (checkRuns, files = ["app/packages/core/src/a.ts"]) =>
   assess({
     pr: {
       number: 7,
@@ -310,7 +310,7 @@ const headOf = (checkRuns) =>
       mergeableState: "clean",
     },
     head: "abc",
-    files: ["app/packages/core/src/a.ts"],
+    files,
     defined: DEFINED,
     checkRuns,
     workflowRuns: [],
@@ -322,6 +322,22 @@ const greenRuns = () => [
 
 test("US-DEV-13: a PR whose required jobs all succeeded has no CI problem for make merge", () => {
   assert.deepEqual(problemsNow(headOf(greenRuns())), []);
+});
+
+// US-QG-02: a PR without UI needs no web tests, and an app PR needs no layout job of its own (app-gates runs the layout and
+// docs checks). A failed job that is not required still refuses the merge: nothing that ran is ignored.
+test("US-QG-02: a PR without UI needs no web tests, but a failed web job still refuses the merge", () => {
+  const tooling = ["app/tools/workflow/merge-pr.mjs"];
+  const withoutWeb = greenRuns().filter((c) => c.name !== "app-tests-web");
+  assert.deepEqual(problemsNow(headOf(withoutWeb, tooling)), []);
+  const failedWeb = greenRuns().map((c) =>
+    c.name === "app-tests-web" ? check("app-tests-web", "completed", "failure", 2) : c,
+  );
+  assert.ok(problemsNow(headOf(failedWeb, tooling)).includes("CI: app-tests-web: failure"));
+});
+
+test("US-QG-02: an app PR needs no layout job of its own, app-gates runs the layout check", () => {
+  assert.deepEqual(problemsNow(headOf(greenRuns().filter((c) => c.name !== "layout"))), []);
 });
 
 test("US-DEV-13: make merge refuses while a job of the full run is unfinished, although the text edit's ci-status is green", () => {

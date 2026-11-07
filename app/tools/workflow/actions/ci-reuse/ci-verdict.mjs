@@ -44,8 +44,9 @@ export const JOBS = [
   "a11y-routes",
 ];
 const CI_NAMES = new Set([...JOBS, "ci-status"]);
-const APP_JOBS = ["app-gates", "app-tests", "app-tests-web", "results", "app-coverage"];
-const UI_APP_JOBS = ["app-ui", "ds-snapshots", "lighthouse"];
+// The web tests run for a UI change only (the `ui` output of ci.yml, as app-ui does), so they are judged with the UI group.
+const APP_JOBS = ["app-gates", "app-tests", "results", "app-coverage"];
+const UI_APP_JOBS = ["app-tests-web", "app-ui", "ds-snapshots", "lighthouse"];
 const UI_JOBS = ["one-screen", "a11y-routes"];
 const MAIN_ONLY_JOBS = ["audit", "e2e"];
 export const NOT_IN_WORKFLOW = "not in workflow";
@@ -68,11 +69,17 @@ export function requiredJobs({ files, base, draft, defined }) {
   // With the maximum number of files the filters cannot be told apart, so every filter counts as matched.
   const all = files.length >= MAX_FILES;
   const hit = (re) => all || files.some((f) => re.test(f));
-  const jobs = ["changes", "layout", "dependency-review", "metadata"];
-  if (hit(PATHS.app)) jobs.push(...APP_JOBS);
+  const jobs = ["changes", "dependency-review", "metadata"];
+  // An app PR runs the layout and docs checks inside app-gates (`npm run gates`), so the jobs `layout` and `docs-gates` are
+  // required only for a PR without an app path (US-QG-02, ci.yml).
+  if (hit(PATHS.app)) {
+    jobs.push(...APP_JOBS);
+  } else {
+    jobs.push("layout");
+    if (hit(PATHS.docs)) jobs.push("docs-gates");
+  }
   if (hit(PATHS.ui)) jobs.push(...UI_APP_JOBS);
   if (hit(PATHS.oneScreen)) jobs.push(...UI_JOBS);
-  if (hit(PATHS.docs)) jobs.push("docs-gates");
   if (base === "main") jobs.push(...MAIN_ONLY_JOBS);
   return new Set(jobs.filter((j) => defined.has(j)));
 }

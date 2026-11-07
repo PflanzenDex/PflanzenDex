@@ -2,12 +2,14 @@
 // CRAP = comp^2 * (1 - cov)^3 + comp. Complexity and CRAP come from `fallow health` (fixed devDependency),
 // per-function coverage from the Istanbul maps (coverage-final.json) that `npm run coverage` writes per package.
 // Functions in files without coverage data are scored with fallow's conservative estimate.
+// A package named in COVERAGE_UNMEASURED (US-QG-02) is left out: its tests did not run, so its functions are not judged.
 // Usage: node tools/check/quality/check-crap.mjs [--all]   (--all: whole project instead of files changed vs. the base)
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { UNMEASURED_ENV, unmeasuredFrom } from "./coverage/coverage-config.mjs";
 
 /** The threshold lives in quality-limits.json (`crap.max`, FR-QG-16/18); a function above it fails. */
 export function readMaxCrap(
@@ -55,6 +57,21 @@ export function resolveBase(env, refExists) {
   return refExists(ref) ? ref : null;
 }
 
+/** Whether a file lies in one of the packages: its path has the segments `packages/<name>`, relative or absolute. */
+export function inUnmeasured(file, unmeasured) {
+  const parts = String(file).split("/");
+  return unmeasured.some((pkg) =>
+    parts.some((part, i) => part === "packages" && parts[i + 1] === pkg),
+  );
+}
+
+/** The report without the findings of the packages left out of this run (COVERAGE_UNMEASURED). */
+export function withoutUnmeasured(report, unmeasured) {
+  if (unmeasured.length === 0) return report;
+  const findings = (report.findings ?? []).filter((f) => !inUnmeasured(f.path, unmeasured));
+  return { ...report, findings };
+}
+
 function writeMergedCoverage(root) {
   const maps = [];
   const pkgs = path.join(root, "packages");
@@ -71,6 +88,13 @@ function writeMergedCoverage(root) {
 function main() {
   const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../..");
   const all = process.argv.includes("--all");
+  let unmeasured;
+  try {
+    unmeasured = unmeasuredFrom(process.env[UNMEASURED_ENV]);
+  } catch (error) {
+    console.error(`FAIL: ${error.message}`);
+    process.exit(1);
+  }
   const refExists = (ref) =>
     spawnSync("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: root }).status === 0;
   const base = all ? null : resolveBase(process.env, refExists);
@@ -94,8 +118,13 @@ function main() {
     process.exit(1);
   }
   const scope = base ? `functions in files changed vs. ${base}` : "all functions";
-  const offenders = findOffenders(report);
-  console.log(`CRAP (${scope}): max ${maxCrap(report)}, limit ${MAX_CRAP}`);
+  const judged = withoutUnmeasured(report, unmeasured);
+  const offenders = findOffenders(judged);
+  console.log(`CRAP (${scope}): max ${maxCrap(judged)}, limit ${MAX_CRAP}`);
+  if (unmeasured.length)
+    console.log(
+      `note: left out, its tests did not run in this CI run (${UNMEASURED_ENV}): ${unmeasured.join(", ")}`,
+    );
   for (const f of offenders) console.error(`FAIL: ${formatOffender(f)}`);
   if (offenders.length) process.exit(1);
   console.log("crap: ok");

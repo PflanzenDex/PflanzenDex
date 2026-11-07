@@ -19,7 +19,7 @@ Line, branch, function and statement coverage of each package (`coverage-summary
 
 ## Gate
 
-`make ci-coverage` (the coverage part of the CI job `results`, which runs after the two test jobs and is required by `ci-status`; issue 1608). Locally `make coverage` runs the tests and the ratchet.
+`make ci-coverage` (the coverage part of the CI job `results`, which runs after the test jobs and is required by `ci-status`; issue 1608). For a change without UI the web package is left out, because its tests were skipped: the input `COVERAGE_UNMEASURED=web` names it, and an unknown name fails (US-QG-02). Locally `make coverage` runs the tests and the ratchet.
 
 ## Evidence
 

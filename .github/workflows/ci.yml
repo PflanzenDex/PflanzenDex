@@ -1,6 +1,7 @@
 # CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
 # Path filters: the app suite only runs when `app/`, the Makefile, `.github/` or `.claude/hooks/` change; the docs and spec gates
-# (`docs-gates`) run when documentation changes (US-QG-02, #1389).
+# (`docs-gates`) and the file layout (`layout`) run only without an app change, since `app-gates` runs them for one (US-QG-02,
+# #1389). The web tests (`app-tests-web`) run for a UI change only, as the UI gates do.
 # A draft PR runs no job and no CodeQL analysis (issue 1608): `make pr` marks it ready, and that run is the first CI run.
 # `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
@@ -126,7 +127,8 @@ jobs:
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
   # `make ci` chains locally, so nothing is dropped. A title or body edit does not rerun them when `reuse` found a green result
   # for the same commit; `ready_for_review` runs everything, since `reuse` does not run for it (issue 1608). `!cancelled()`
-  # because `reuse` is skipped on most events.
+  # because `reuse` is skipped on most events. `app-gates` also runs the layout check and the docs and spec checks (`npm run gates`
+  # has every step of `make ci-docs`), so `layout` and `docs-gates` do not run for an app change (US-QG-02).
   app-gates:
     needs: [changes, reuse]
     if: >-
@@ -183,11 +185,13 @@ jobs:
           retention-days: 1
 
   # The web suite beside app-tests (issue 1125): in one job it ran after api, core and db and made app-tests the slowest
-  # job. Reused only together with `results`, so the ratchet never runs on half the coverage (issue 1608).
+  # job. Reused only together with `results`, so the ratchet never runs on half the coverage (issue 1608). It runs for a UI
+  # change only (`ui`, as app-ui does): a change to workflow or dev tooling, a hook or documentation leaves the web package as
+  # it was, and `results` then leaves the web package out of the coverage ratchet and the CRAP check (US-QG-02).
   app-tests-web:
     needs: [changes, reuse]
     if: >-
-      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.ui == 'true'
       && needs.reuse.outputs.superseded != 'true'
       && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.results != 'success')
     runs-on: ubuntu-24.04
@@ -455,6 +459,8 @@ jobs:
   # next one. The last step fails unless every part that ran passed, and it names the part that did not (US-QG-02).
   # A test job that failed or was cancelled fails this job too: `reuse` takes a green `results` as the proof for the test jobs
   # and the shards, so a green `results` must never come from a run in which a failed test job skipped the coverage part.
+  # The web tests are skipped for a change without UI (US-QG-02): then the coverage part runs for api, core and db, with the web
+  # package named in COVERAGE_UNMEASURED, and a missing summary of any other package still fails.
   results:
     needs: [changes, reuse, app-tests, app-tests-web, one-screen-shard, a11y-routes-shard]
     if: >-
@@ -469,8 +475,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
-      - name: Coverage inputs (both test jobs passed)
-        if: needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
+      - name: Coverage inputs (app-tests passed, app-tests-web passed or skipped for a change without UI)
+        if: >-
+          needs.app-tests.result == 'success'
+          && (needs.app-tests-web.result == 'success'
+          || (needs.app-tests-web.result == 'skipped' && needs.changes.outputs.ui == 'false'))
         uses: actions/download-artifact@v7
         with:
           pattern: coverage-*
@@ -478,7 +487,14 @@ jobs:
           merge-multiple: true
       - name: Coverage ratchet and CRAP check
         id: coverage
-        if: needs.app-tests.result == 'success' && needs.app-tests-web.result == 'success'
+        if: >-
+          needs.app-tests.result == 'success'
+          && (needs.app-tests-web.result == 'success'
+          || (needs.app-tests-web.result == 'skipped' && needs.changes.outputs.ui == 'false'))
+        # The web package is named only when its tests were skipped for a change without UI (`ui` is false). The scripts then
+        # leave it out and judge every other package; without the name a missing web summary fails (US-QG-02).
+        env:
+          COVERAGE_UNMEASURED: ${{ needs.changes.outputs.ui == 'false' && 'web' || '' }}
         run: make ci-coverage
       - name: One-screen shard reports
         if: always() && needs.one-screen-shard.result != 'skipped'
@@ -527,6 +543,7 @@ jobs:
         env:
           APP_TESTS: ${{ needs.app-tests.result }}
           APP_TESTS_WEB: ${{ needs.app-tests-web.result }}
+          UI: ${{ needs.changes.outputs.ui }}
           COVERAGE: ${{ steps.coverage.outcome }}
           ONE_SCREEN_SHARDS: ${{ needs.one-screen-shard.result }}
           ONE_SCREEN_MERGE: ${{ steps.merge-one-screen.outcome }}
@@ -537,7 +554,11 @@ jobs:
           for r in "$APP_TESTS" "$APP_TESTS_WEB"; do
             case "$r" in success | skipped) ;; *) bad="$bad test-job=$r" ;; esac
           done
-          if [ "$APP_TESTS" = "success" ] && [ "$APP_TESTS_WEB" = "success" ] && [ "$COVERAGE" != "success" ]; then
+          # The coverage part is due wherever its steps run (the same condition): app-tests passed, and app-tests-web passed or
+          # was skipped for a change without UI.
+          web_due=false
+          if [ "$APP_TESTS_WEB" = "success" ] || { [ "$APP_TESTS_WEB" = "skipped" ] && [ "$UI" = "false" ]; }; then web_due=true; fi
+          if [ "$APP_TESTS" = "success" ] && [ "$web_due" = "true" ] && [ "$COVERAGE" != "success" ]; then
             bad="$bad coverage=$COVERAGE"
           fi
           if [ "$ONE_SCREEN_SHARDS" != "skipped" ] && { [ "$ONE_SCREEN_SHARDS" != "success" ] || [ "$ONE_SCREEN_MERGE" != "success" ]; }; then
@@ -576,11 +597,13 @@ jobs:
           PR_BASE_REF: ${{ github.base_ref }}
         run: make changelog-check
 
-  # QG-C4: the file layout is checked for every change, also when only `docs/` or the repo root changed
-  # (the `app-*` jobs are skipped for those). The check needs no dependencies; the full history gives it `origin/dev`
+  # QG-C4: the file layout is checked for every change without an app path, also when only `docs/` or the repo root changed
+  # (the `app-*` jobs are skipped for those). `app-gates` runs the same check (`npm run gates` has the `layout` step) for an
+  # app change, so this job is skipped then (US-QG-02). The check needs no dependencies; the full history gives it `origin/dev`
   # for the "baseline must not grow" comparison (a missing ref fails in CI).
   layout:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    needs: changes
+    if: needs.changes.result == 'success' && needs.changes.outputs.app != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -593,16 +616,19 @@ jobs:
           node-version-file: .nvmrc
       - run: make layout
 
-  # US-QG-02 (issue 1389): the docs and spec gates for a change that touches documentation (the `docs` output of
-  # `changes`). The `app-*` jobs skip such a pull request, so without this job markdownlint, the link check and the spec
-  # checks ran only in pre-push and the nightly. Same targets as the docs part of `make gates` (`make ci-docs`); light:
-  # no database, no browser, no build. Not in `reuse`, and no draft clause of its own: `changes` skips it on a draft
-  # (issue 1608). It runs in full on an edit and on `ready_for_review` too, so `ci-status` never shows green for
-  # documentation that was not checked on that commit.
+  # US-QG-02 (issue 1389): the docs and spec gates for a change that touches documentation (the `docs` output of `changes`)
+  # and no app path. `app-gates` runs the same checks for an app change (`npm run gates` has every step of `make ci-docs`), so
+  # this job is skipped then; without it, markdownlint, the link check and the spec checks ran only in pre-push and the
+  # nightly for a documentation change. Same targets as the docs part of `make gates` (`make ci-docs`); light: no database,
+  # no browser, no build. Not in `reuse`, and no draft clause of its own: `changes` skips it on a draft (issue 1608). It runs
+  # in full on an edit and on `ready_for_review` too, so `ci-status` never shows green for documentation that was not checked
+  # on that commit.
   # `fetch-depth: 0`: check-reference compares its baseline with origin/dev (RF-5), as the `layout` job does.
   docs-gates:
     needs: changes
-    if: needs.changes.result == 'success' && needs.changes.outputs.docs == 'true'
+    if: >-
+      needs.changes.result == 'success' && needs.changes.outputs.docs == 'true'
+      && needs.changes.outputs.app != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
