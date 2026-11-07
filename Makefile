@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -358,8 +358,20 @@ ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and
 
 # Part 2 in CI as jobs (issue 1125): the web suite runs as two shard jobs whose blob reports the job `results` merges (issue 1682);
 # the ratchet and CRAP check read the coverage outputs afterwards. Together they are exactly `make ci-tests`.
-ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests
-	cd $(APP) && npm run ci:tests:base
+# Measured in run 42421391215 (issue 1698): the api suite 60-92 s at 85 % CPU, the db suite 40-59 s at about 30 % CPU (its files
+# run one after another, fileParallelism: false), the core suite 13-19 s and the tool tests 22-26 s. api and db share the test
+# database (db creates tables), so db starts only after api has ended; core and the tool tests need no database and run beside db.
+ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests; the api suite first, then the db suite (its files one after another), the core suite and the tool tests at once, since api and db share the test database (US-QG-02, issue 1698); every suite runs even when another failed
+	cd $(APP) && rc=0; npm run ci:tests:api || rc=1; cd .. && $(MAKE) --no-print-directory -k -j3 -Otarget ci-tests-db ci-tests-core ci-tests-tools || rc=1; exit $$rc
+
+ci-tests-db: ## Part of ci-tests-base (US-QG-02, issue 1698): the db suite with coverage, its files one after another
+	cd $(APP) && npm run ci:tests:db
+
+ci-tests-core: ## Part of ci-tests-base (US-QG-02, issue 1698): the core suite with coverage
+	cd $(APP) && npm run ci:tests:core
+
+ci-tests-tools: ## Part of ci-tests-base (US-QG-02, issue 1698): the tool tests
+	cd $(APP) && npm run ci:tests:tools
 
 ci-tests-web: ## Part 2b: web tests with coverage; SHARD=<i>/<n> runs one part and writes its blob report (CI, US-QG-02)
 	cd $(APP) && if [ -n "$$RAW_SHARD" ]; then npm run ci:tests:web:shard -- --shard="$$RAW_SHARD"; else npm run ci:tests:web; fi

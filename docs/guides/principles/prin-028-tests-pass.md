@@ -15,11 +15,11 @@ Number of failing tests in the test run of each package (api, core, db, web) and
 
 ## Checked by
 
-`app/package.json` (scripts `test` and `ci:tests:base`, `ci:tests:web`), `app/packages/api/vitest.config.ts` and the other per-package Vitest configurations.
+`app/package.json` (scripts `test`, `ci:tests:base` and `ci:tests:web`, and the suite scripts `ci:tests:api`, `ci:tests:core`, `ci:tests:db` and `ci:tests:tools` that CI runs through `make ci-tests-base`), `app/packages/api/vitest.config.ts` and the other per-package Vitest configurations.
 
 ## Gate
 
-`make ci-tests-base` (CI job `app-tests`) and `make ci-tests-web` (CI job `app-tests-web`, two shard jobs with `SHARD=i/2`; the job `results` merges their blob reports with `make ci-tests-web-merge`, issue 1682). `ci-status` requires `app-tests` for every app change and `app-tests-web` for a change with UI (the `ui` output of `changes`, issue 1608): a change without UI leaves the web package as it was. Locally `make ci-tests` runs both and the coverage check.
+`make ci-tests-base` (CI job `app-tests`: the api suite first, then the db, core and tool suites at once; every suite runs even when another one failed, issue 1698) and `make ci-tests-web` (CI job `app-tests-web`, two shard jobs with `SHARD=i/2`; the job `results` merges their blob reports with `make ci-tests-web-merge`, issue 1682). `ci-status` requires `app-tests` for every app change and `app-tests-web` for a change with UI (the `ui` output of `changes`, issue 1608): a change without UI leaves the web package as it was. Locally `make ci-tests` runs both and the coverage check.
 
 ## Evidence
 

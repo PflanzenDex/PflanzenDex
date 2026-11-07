@@ -74,9 +74,12 @@ test("US-DEV-01 the local-only targets name this worktree's database, not a valu
 // exits 0. The recipes run in a real shell, so a value that a shell would execute stays text, and a tool gets exactly the
 // arguments of its recipe. `extra` is shell code that runs before the exit (docker: `start` decides a new or a reused container).
 const fakeTool = (extra = "") => `#!/bin/sh
+# The number is taken under a lock (mkdir is atomic): the suites of ci-tests-base run at once (US-QG-02, issue 1698).
+while ! mkdir "$RECORD_DIR/lock" 2>/dev/null; do :; done
 n=$(cat "$RECORD_DIR/seq" 2>/dev/null || echo 0)
 n=$((n + 1))
 echo "$n" > "$RECORD_DIR/seq"
+rmdir "$RECORD_DIR/lock"
 rec="$RECORD_DIR/$(printf '%04d' "$n")-$(basename "$0")"
 { for a in "$@"; do printf '%s\\0' "$a"; done; } > "$rec.args"
 env > "$rec.env"
@@ -413,4 +416,45 @@ test("US-DEV-13 FRESH reaches npm run gates as the environment variable: set whe
   const value = `x$(shell touch ${marker.file})`;
   assert.equal(callOf(gates([`FRESH=${value}`]), "gates").env.FRESH, value);
   assert.equal(marker.ran(), false, "FRESH ran a command");
+});
+
+// US-QG-02 (issue 1698): ci-tests-base runs the api suite first; db, core and the tool tests run after it, at once. Every suite
+// runs even when another one failed, and the run fails when one did. The fake npm marks the end of the api suite, so a db suite
+// that starts before the api suite has ended is recorded as an overlap (api and db share the test database).
+const SUITE_ORDER = `case "$2" in ci:tests:api) : > "$RECORD_DIR/api-done" ;; ci:tests:db) test -f "$RECORD_DIR/api-done" || : > "$RECORD_DIR/overlap" ;; esac`;
+
+test("US-QG-02 ci-tests-base runs the api suite first, then db, core and the tool tests, and every suite also after a failure (issue 1698)", (t) => {
+  const suites = ["ci:tests:api", "ci:tests:db", "ci:tests:core", "ci:tests:tools"];
+  const ran = (run) =>
+    calls(run)
+      .filter((call) => call.tool === "npm")
+      .map((call) => call.args[1]);
+
+  const run = makeRun(t, ["-o", "db-up", "ci-tests-base"], { env: { CI: "1" }, npm: SUITE_ORDER });
+  assert.equal(run.status, 0, run.out);
+  const order = ran(run);
+  assert.equal(order[0], "ci:tests:api", "the api suite runs first");
+  assert.deepEqual(
+    order.slice(1).sort(),
+    suites.slice(1).sort(),
+    "then db, core and the tool tests",
+  );
+  assert.equal(
+    existsSync(path.join(run.record, "overlap")),
+    false,
+    "db started before the api suite ended",
+  );
+
+  for (const failing of ["ci:tests:api", "ci:tests:core"]) {
+    const failed = makeRun(t, ["-o", "db-up", "ci-tests-base"], {
+      env: { CI: "1" },
+      npm: `${SUITE_ORDER}\ncase "$2" in ${failing}) exit 1 ;; esac`,
+    });
+    assert.notEqual(failed.status, 0, `${failing} fails the run`);
+    assert.deepEqual(
+      ran(failed).sort(),
+      [...suites].sort(),
+      `every suite runs when ${failing} failed`,
+    );
+  }
 });
