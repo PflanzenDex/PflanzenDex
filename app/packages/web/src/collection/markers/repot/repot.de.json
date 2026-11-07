@@ -49,5 +49,8 @@
   "free.link": "Topf unter Geräte anlegen",
   "observe.legend": "Was fällt dir auf?",
   "observe.hint": "Hake an, was du siehst. Nach dem Umtopfen sind die Haken wieder leer.",
-  "plan.repot": "Umgetopft"
+  "plan.repot": "Umgetopft",
+  "plan.signsNone": "Beobachtungen: keine",
+  "plan.signsList": "Beobachtungen: {list}",
+  "plan.signsOpen": "Beobachtungen notieren"
 }

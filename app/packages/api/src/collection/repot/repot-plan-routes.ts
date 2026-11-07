@@ -34,6 +34,10 @@ function invalidTimeZone(c: Context<AuthEnv>) {
   return c.json(errorBody(failure), statusFor(failure));
 }
 
+/** Whether the keeper switched a switch off (P-12); the keeper's switches are read once per call. */
+const switchOffOf = async (switches: KeeperSwitchPostgres, userId: string, switchId: string) =>
+  keeperOffOf(await switches.list(userId)).has(switchId);
+
 /**
  * The repot plan of a plant (US-BES-19, FR-BES-27): `GET /specimens/:id/repot-plan?timeZone=` derives the hints, the free
  * pots and the season advice on every request (P-01), from the repot history, the observations, the care phase and the
@@ -47,8 +51,6 @@ export function repotPlanRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
   const repots = new RepotPostgres(pool);
   const pots = new PotPlacementPostgres(pool);
   const switches = new KeeperSwitchPostgres(pool);
-  const switchOff = async (userId: string, switchId: string) =>
-    keeperOffOf(await switches.list(userId)).has(switchId);
   const phaseDeps = {
     specimens,
     species: new SpeciesPostgres(pool),
@@ -59,7 +61,7 @@ export function repotPlanRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
     specimens,
     pots,
     clock,
-    keeperOff: (userId) => switchOff(userId, EQUIPMENT_KEEPER_SWITCH),
+    keeperOff: (userId) => switchOffOf(switches, userId, EQUIPMENT_KEEPER_SWITCH),
   });
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();

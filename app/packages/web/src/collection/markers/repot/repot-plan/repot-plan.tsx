@@ -12,11 +12,12 @@ import { dateText } from "@/shared/lib/format";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, Warning } from "../../../specimens/cards/parts/parts";
 import { loadRepotPlan, REPOT_PLAN_KEY, type RepotPlanView } from "../repot-api";
-import { Observations, signLabel } from "./observations/observations";
+import { signLabel } from "./observations/observations";
 import { potItemText, potSizeText } from "./pot-text";
 import table from "../repot.de.json";
 
@@ -25,11 +26,14 @@ const t = texts(table);
 /** The mode "Geräte" of the Sammlung, where the keeper adds a pot (US-BES-19, US-EQU-01). */
 const EQUIPMENT_MODE_ADDRESS = `${PATHS.collection}?view=equipment`;
 
+/** The id of the layer "Beobachtungen" of a plant in the address (US-BES-19, like `profil-<id>` and `notes-<id>`). */
+export const signsLayerId = (specimenId: string): string => `signs-${specimenId}`;
+
 /** No token while no access is given: a cutting has no repot part, so its plan is never read (US-BES-04). */
 const noToken = async () => undefined;
 
 /**
- * The repot plan of a plant, read for the tab "Pflege" (US-BES-19): it is read only while the plant has the repot part
+ * The repot plan of a plant (US-BES-19): it is read only while the plant has the repot part or its layer is open
  * (`access` given), and it is read again on every opening (`fresh`), so the hints follow the last write.
  */
 export function useRepotPlan(
@@ -46,17 +50,17 @@ export function useRepotPlan(
 }
 
 /**
- * The part "Umtopfen" of a plant (US-BES-19, FR-BES-27): the last repot, the repot hints with their reason and source, the
- * season, the current pot, the free pots and the three observations, derived by the API on every read (P-01). The part
- * is named by its segment, so the section is a labelled region without a second heading (issue 1328).
+ * The part "Umtopfen" of a plant (US-BES-19, FR-BES-27): the last repot, the current pot, the repot hints with their reason
+ * and source, the season, the free pots, the observations in one line, and the two actions in one row. The observations
+ * are ticked in their own layer (`signsLayerId`), so the part stays short on a phone (issue 1328). The part is named by its
+ * segment, so the section is a labelled region without a second heading.
  */
 export function RepotPlanSection(props: {
   card: SpecimenCard;
-  access: PhotoAccess;
   plan: Request<RepotPlanView>;
   onRepot: () => void;
 }) {
-  const { card, access, plan } = props;
+  const { card, plan } = props;
   if (plan.status === "pending")
     return (
       <p role="status" className="text-sm text-muted-foreground">
@@ -79,18 +83,23 @@ export function RepotPlanSection(props: {
   if (view === undefined || view.hidden) return null;
   return (
     <section aria-label={t("plan.title")} className="grid gap-2 text-sm">
-      <p>
-        {view.lastRepot === null
-          ? t("plan.lastUnknown")
-          : t("plan.lastKnown", { date: dateText(view.lastRepot) })}
-      </p>
+      <div>
+        <p>
+          {view.lastRepot === null
+            ? t("plan.lastUnknown")
+            : t("plan.lastKnown", { date: dateText(view.lastRepot) })}
+        </p>
+        <CurrentPot pot={view.currentPot} />
+      </div>
       <HintList hints={view.hints} season={view.seasonAdvice} />
-      <CurrentPot pot={view.currentPot} />
       {view.equipmentOff ? null : <FreePots pots={view.freePots} />}
-      <Observations access={access} id={card.id} hints={view.hints} reload={plan.retry} />
-      <Button type="button" variant="outline" size="touch" onClick={props.onRepot}>
-        {t("plan.repot")}
-      </Button>
+      <SignsLine hints={view.hints} />
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" onClick={props.onRepot}>
+          {t("plan.repot")}
+        </Button>
+        <LayerOpener id={signsLayerId(card.id)}>{t("plan.signsOpen")}</LayerOpener>
+      </div>
     </section>
   );
 }
@@ -150,28 +159,41 @@ function CurrentPot(props: { pot: PlanPot | null }) {
   );
 }
 
-/** The free pots in the order the API gives; none free says so and links to the equipment (P-09). */
+/**
+ * The free pots in the order the API gives. With none, one line says so and links to the equipment, on the same line
+ * (P-09); with pots, they are listed (US-BES-19).
+ */
 function FreePots(props: { pots: readonly PlanPot[] }) {
+  if (props.pots.length === 0)
+    return (
+      <div className="flex flex-wrap items-center gap-x-2">
+        <p>{t("free.none")}</p>
+        <Link
+          to={EQUIPMENT_MODE_ADDRESS}
+          className="inline-flex min-h-[44px] items-center underline"
+        >
+          {t("free.link")}
+        </Link>
+      </div>
+    );
   return (
     <div className="grid gap-1">
       <h4 className="font-semibold">{t("free.heading")}</h4>
-      {props.pots.length === 0 ? (
-        <>
-          <p>{t("free.none")}</p>
-          <Link
-            to={EQUIPMENT_MODE_ADDRESS}
-            className="inline-flex min-h-[44px] items-center underline"
-          >
-            {t("free.link")}
-          </Link>
-        </>
-      ) : (
-        <ul aria-label={t("free.heading")} className="m-0 grid list-none gap-1 p-0">
-          {props.pots.map((pot) => (
-            <li key={pot.id}>{potItemText(pot)}</li>
-          ))}
-        </ul>
-      )}
+      <ul aria-label={t("free.heading")} className="m-0 grid list-none gap-1 p-0">
+        {props.pots.map((pot) => (
+          <li key={pot.id}>{potItemText(pot)}</li>
+        ))}
+      </ul>
     </div>
+  );
+}
+
+/** The ticked observations on one line: "Beobachtungen: keine" or their names (US-BES-19, DM-BES-09). */
+function SignsLine(props: { hints: readonly RepotHint[] }) {
+  const names = props.hints.flatMap((h) => (h.reason === "interval" ? [] : [signLabel(h.reason)]));
+  return (
+    <p>
+      {names.length === 0 ? t("plan.signsNone") : t("plan.signsList", { list: names.join(", ") })}
+    </p>
   );
 }

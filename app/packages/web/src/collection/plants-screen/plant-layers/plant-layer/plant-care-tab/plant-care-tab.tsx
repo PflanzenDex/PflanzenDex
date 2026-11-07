@@ -8,8 +8,15 @@ import {
 } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { Quiet } from "../../../../specimens/cards/parts/parts";
-import { RepotPlanSection, useRepotPlan } from "../../../../markers/repot/repot-plan/repot-plan";
+import { refusalText } from "@/shared/lib/error-text";
+import { Button } from "@/shared/ui/button/button";
+import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
+import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
+import {
+  RepotPlanSection,
+  signsLayerId,
+  useRepotPlan,
+} from "../../../../markers/repot/repot-plan/repot-plan";
 import table from "./plant-care-tab.de.json";
 
 const t = texts(table);
@@ -99,6 +106,40 @@ export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAcces
 }
 
 /**
+ * The layer "Beobachtungen" of one plant (US-BES-19): the three observations, ticked here. The plan is read while the layer
+ * is open, and a tick reloads it, so the line of the part follows at once.
+ */
+export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
+  const plan = useRepotPlan(props.card, props.access);
+  return (
+    <LayerSheet id={signsLayerId(props.card.id)} title={t("signs.layerTitle")}>
+      {plan.status === "pending" ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          {t("signs.loading")}
+        </p>
+      ) : null}
+      {plan.status === "error" ? (
+        <Warning>
+          <p>{t("signs.failed")}</p>
+          {plan.error ? <p>{refusalText(plan.error)}</p> : null}
+          <Button type="button" variant="outline" onClick={plan.retry}>
+            {t("signs.retry")}
+          </Button>
+        </Warning>
+      ) : null}
+      {plan.value !== undefined && !plan.value.hidden ? (
+        <Observations
+          access={props.access}
+          id={props.card.id}
+          hints={plan.value.hints}
+          reload={plan.retry}
+        />
+      ) : null}
+    </LayerSheet>
+  );
+}
+
+/**
  * "Pflege" of the plant layer (US-QS-23): the segment "Behandlungen | Pflegeprofil", and "Umtopfen" (US-BES-19) for a
  * plant while the repot planner is on. The treatments and the care phase (`care`, a slot) are the first part; the own
  * care profile opens its own layer; the repot plan is its own part, so the tab fits a phone (issue 1328).
@@ -120,12 +161,7 @@ export function PlantCareTab(props: {
       {part === "profil" ? <ProfilePart card={props.card} /> : null}
       {part === "behandlungen" ? props.care : null}
       {part === "umtopfen" && props.repot ? (
-        <RepotPlanSection
-          card={props.card}
-          access={props.repot.access}
-          plan={plan}
-          onRepot={props.repot.onRepot}
-        />
+        <RepotPlanSection card={props.card} plan={plan} onRepot={props.repot.onRepot} />
       ) : null}
     </div>
   );
