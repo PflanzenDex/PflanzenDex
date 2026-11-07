@@ -19,10 +19,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const script = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "pr-ready.sh",
-);
+const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "pr-ready.sh");
 const madeDirs = [];
 after(() => {
   for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
@@ -180,8 +177,7 @@ function setup({
   };
 }
 
-const remoteHead = (ctx) =>
-  git(ctx.origin, ["rev-parse", `refs/heads/${ctx.branch}`]).trim();
+const remoteHead = (ctx) => git(ctx.origin, ["rev-parse", `refs/heads/${ctx.branch}`]).trim();
 const localHead = (ctx) => git(ctx.repo, ["rev-parse", "HEAD"]).trim();
 const readyCalls = (out) => out.calls.filter((c) => c.startsWith("pr ready"));
 
@@ -313,7 +309,11 @@ test("US-DEV-13 (issue 1608): a title that fails commitlint pushes nothing, mark
   assert.match(out.stderr, /make pr-text/);
   assert.equal(remoteHead(ctx), oldRemote, "the remote head is unchanged");
   assert.deepEqual(readyCalls(out), [], "gh did not mark the PR");
-  assert.equal(out.makeCalls.length, 1, "the changelog check did not run after the title check failed");
+  assert.equal(
+    out.makeCalls.length,
+    1,
+    "the changelog check did not run after the title check failed",
+  );
 });
 
 test("US-DEV-13 (issue 1608): a failing changelog check pushes nothing, marks nothing and names the news entry", () => {
@@ -333,11 +333,18 @@ test("US-DEV-13 (issue 1608): the title and body reach the checks only as enviro
   const ctx = setup({ unpushed: 1, title, body });
   const out = runScript(ctx);
   assert.equal(out.status, 0, out.stderr);
-  assert.deepEqual(out.makeCalls.map((m) => m.args), ["-s commitlint", "-s changelog-check"]);
+  assert.deepEqual(
+    out.makeCalls.map((m) => m.args),
+    ["-s commitlint", "-s changelog-check"],
+  );
   assert.equal(out.makeCalls[0].MSG, title);
   assert.equal(out.makeCalls[1].PR_TITLE, title);
   assert.equal(out.makeCalls[1].PR_BODY, body);
-  assert.equal(existsSync(path.join(ctx.repo, "PWNED")), false, "nothing in the title or body ran as a command");
+  assert.equal(
+    existsSync(path.join(ctx.repo, "PWNED")),
+    false,
+    "nothing in the title or body ran as a command",
+  );
 });
 
 test("US-DEV-13 (issue 1608): a base commit that is not in the clone and cannot be fetched refuses before anything is pushed", () => {
@@ -348,7 +355,10 @@ test("US-DEV-13 (issue 1608): a base commit that is not in the clone and cannot 
   const oldRemote = remoteHead(ctx);
   const out = runScript(ctx);
   assert.equal(out.status, 1);
-  assert.match(out.stderr, /is not in this clone and could not be fetched; nothing was pushed or marked/);
+  assert.match(
+    out.stderr,
+    /is not in this clone and could not be fetched; nothing was pushed or marked/,
+  );
   assert.equal(remoteHead(ctx), oldRemote, "the remote head is unchanged");
   assert.deepEqual(readyCalls(out), []);
   assert.equal(out.makeCalls.length, 0, "no check ran");
@@ -394,7 +404,10 @@ test("US-DEV-13 (issue 1608): a gh error that is not a rate limit, after the pus
     message: "GraphQL: Could not resolve to a PullRequest",
   });
   assert.equal(out.status, 1);
-  assert.match(out.stderr, /marking the PR ready failed; the branch is pushed, the PR is still a draft/);
+  assert.match(
+    out.stderr,
+    /marking the PR ready failed; the branch is pushed, the PR is still a draft/,
+  );
   assert.equal(remoteHead(ctx), localHead(ctx), "the branch is pushed");
   assert.equal(readyCalls(out).length, 1);
 });
@@ -466,10 +479,7 @@ for (const op of [
 ]) {
   test(`US-DEV-13 (#1547): make pr refuses while ${op} is in progress and changes nothing`, () => {
     const ctx = setup({ unpushed: 1 });
-    const marker = path.resolve(
-      ctx.repo,
-      git(ctx.repo, ["rev-parse", "--git-path", op]).trim(),
-    );
+    const marker = path.resolve(ctx.repo, git(ctx.repo, ["rev-parse", "--git-path", op]).trim());
     if (op.startsWith("rebase-")) mkdirSync(marker);
     else writeFileSync(marker, `${localHead(ctx)}\n`);
     const oldRemote = remoteHead(ctx);

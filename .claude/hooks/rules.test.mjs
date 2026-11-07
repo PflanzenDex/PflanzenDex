@@ -81,21 +81,31 @@ test("US-QG-07: baselines are not gate files by path, so a shrink needs no human
   }
 });
 
-test("US-QG-07: an agent edit to a threshold or exception list asks a human; an identical rewrite of a baseline does not", () => {
+test("US-QG-07: an agent edit to a threshold or exception list asks a human; an identical rewrite of a baseline does not", (t) => {
   const hook = fileURLToPath(new URL("./run.mjs", import.meta.url));
   const root = fileURLToPath(new URL("../..", import.meta.url));
-  const guard = (file_path, extra = {}) =>
+  const guard = (dir, file_path, extra = {}) =>
     execFileSync("node", [hook, "guard-edit"], {
       input: JSON.stringify({ tool_input: { file_path, ...extra } }),
-      env: { ...process.env, CLAUDE_PROJECT_DIR: root },
+      env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
       encoding: "utf8",
     });
+  // Every question writes its snapshot (claude-gate-plan-asked.json) into the git directory of the project it is asked in.
+  // The gate lists are asked in a temporary repository, which goes again, so this worktree's git directory gets no file from
+  // the test (issue 1636: the last list of the loop used to stay there).
+  const project = mkdtempSync(join(tmpdir(), "gate-question-"));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+  execFileSync("git", ["init", "-q", project], { stdio: "ignore" });
+  mkdirSync(join(project, "app/config/gates"), { recursive: true });
   for (const f of GATE_LISTS) {
-    const out = JSON.parse(guard(`${root}/app/config/gates/${f}`));
+    const file = join(project, "app/config/gates", f);
+    writeFileSync(file, "{}\n");
+    const out = JSON.parse(guard(project, file));
     assert.equal(out.hookSpecificOutput.permissionDecision, "ask", f);
   }
+  // A baseline edit that changes nothing passes; it is read only, so it writes nothing.
   const baseline = `${root}/app/config/gates/baselines/ui-text-baseline.json`;
-  assert.equal(guard(baseline, { content: readFileSync(baseline, "utf8") }), "");
+  assert.equal(guard(root, baseline, { content: readFileSync(baseline, "utf8") }), "");
 });
 
 // A small baseline with unique counts, so that each old_string below occurs exactly once.
