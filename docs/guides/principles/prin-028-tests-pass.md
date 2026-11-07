@@ -19,7 +19,7 @@ Number of failing tests in the test run of each package (api, core, db, web) and
 
 ## Gate
 
-`make ci-tests-base` (CI job `app-tests`) and `make ci-tests-web` (CI job `app-tests-web`), both required by `ci-status`. Locally `make ci-tests` runs both and the coverage check.
+`make ci-tests-base` (CI job `app-tests`) and `make ci-tests-web` (CI job `app-tests-web`). `ci-status` requires `app-tests` for every app change and `app-tests-web` for a change with UI (the `ui` output of `changes`, issue 1608): a change without UI leaves the web package as it was. Locally `make ci-tests` runs both and the coverage check.
 
 ## Evidence
 

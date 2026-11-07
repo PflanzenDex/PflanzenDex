@@ -12,39 +12,26 @@ export const { chromium } = require("@playwright/test");
 
 /** The web app and the API to measure: `PDX_WEB` and `PDX_API`, else the dev ports of `.env.worktree`. */
 export const WEB =
-  process.env.PDX_WEB ??
-  `http://localhost:${process.env.PFLANZENDEX_DEV_WEB_PORT ?? 5173}`;
+  process.env.PDX_WEB ?? `http://localhost:${process.env.PFLANZENDEX_DEV_WEB_PORT ?? 5173}`;
 export const API =
-  process.env.PDX_API ??
-  `http://localhost:${process.env.PFLANZENDEX_DEV_API_PORT ?? 3000}`;
+  process.env.PDX_API ?? `http://localhost:${process.env.PFLANZENDEX_DEV_API_PORT ?? 3000}`;
 /** The password of the demo users test, test2 and test3 (demo seed, docs/guides/reference/app.md). */
 export const PASSWORD = process.env.PDX_PASSWORD ?? "testtest12";
 
 /** The window sizes of US-QS-15 (issue 1160). */
-export const SIZES = [
-  "360x640",
-  "390x844",
-  "768x1024",
-  "1024x768",
-  "1920x1080",
-  "2560x1440",
-];
+export const SIZES = ["360x640", "390x844", "768x1024", "1024x768", "1920x1080", "2560x1440"];
 
 /** The screens of the one-screen gate: id, account, path and the click steps that open a layer or dialog. */
 export function register() {
   return JSON.parse(
-    readFileSync(
-      join(ROOT, "app/packages/e2e/support/display/screens.json"),
-      "utf8",
-    ),
+    readFileSync(join(ROOT, "app/packages/e2e/support/display/screens.json"), "utf8"),
   );
 }
 
 /** "1024x768" as width and height. */
 export function parseSize(size) {
   const [width, height] = size.split("x").map(Number);
-  if (!(width > 0 && height > 0))
-    throw new Error(`not a size: ${size} (expected e.g. 360x640)`);
+  if (!(width > 0 && height > 0)) throw new Error(`not a size: ${size} (expected e.g. 360x640)`);
   return { width, height };
 }
 
@@ -90,15 +77,9 @@ export async function screenContext(browser, storageState, size, dark = false) {
 
 /** Waits until the data is there and the sheets have slid in. */
 async function settle(page) {
+  await page.waitForLoadState("networkidle", { timeout: 6000 }).catch(() => undefined);
   await page
-    .waitForLoadState("networkidle", { timeout: 6000 })
-    .catch(() => undefined);
-  await page
-    .waitForFunction(
-      () => !document.querySelector("[aria-busy='true']"),
-      null,
-      { timeout: 5000 },
-    )
+    .waitForFunction(() => !document.querySelector("[aria-busy='true']"), null, { timeout: 5000 })
     .catch(() => undefined);
   await page.waitForTimeout(900);
 }
@@ -113,9 +94,7 @@ export async function openScreen(page, screen, textPercent = 100) {
       : page
           .getByRole(
             step.role,
-            step.re
-              ? { name: new RegExp(step.re, "i") }
-              : { name: step.name, exact: true },
+            step.re ? { name: new RegExp(step.re, "i") } : { name: step.name, exact: true },
           )
           .first();
     await target.click({ timeout: 10_000 });

@@ -1,19 +1,22 @@
 import { expect, type Page } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
-import { lostScreen } from "../../../support/display/one-screen/baseline";
 import { openScreen, settle } from "../../../support/display/one-screen/fit";
-import { SCREENS, type Screen } from "../../../support/display/one-screen/register";
+import { lostScreen } from "../../../support/display/one-screen/baseline";
+import { screensOf, type Screen } from "../../../support/display/one-screen/register";
 import { axeFindings } from "../../../support/display/a11y/axe-findings";
 import { A11Y_SIZES, judgeResult, type Result } from "../../../support/display/a11y/findings";
 import { readBaseline, saveResults } from "../../../support/display/a11y/reporter";
 import { escapeWalk, keyboardWalk, skipLinkWalk } from "../../../support/display/a11y/walk/walk";
 
 // FR-QG-24, QG-U7 (issue 467): axe and the keyboard walk over every screen of the register at phone and desktop size; the
-// screen is opened once and resized, writes are aborted. `make a11y-routes`; the project "a11y-routes" is not part of
-// `make e2e`. The self-test of the comparison is in a11y-routes-self-test.spec.ts.
+// screen is opened once and resized, writes are aborted. `make a11y-routes`, or one shard of the CI job of both UI gates
+// (`make ui-gates`, US-QG-01); the project "a11y-routes" is not part of `make e2e`. The self-test of the comparison is in
+// a11y-routes-self-test.spec.ts.
 
 const API = `http://localhost:${process.env["E2E_API_PORT"] ?? "3000"}`;
 const WRITE = process.env["A11Y_ROUTES_WRITE"] === "1";
+// SHARD of make ui-gates or of make a11y-routes (US-QG-01): the screens of one shard of the plan, all when unset.
+const SHARD = process.env["A11Y_ROUTES_SHARD"] ?? "";
 
 test.describe.configure({ mode: "parallel", timeout: 240_000 });
 
@@ -35,7 +38,7 @@ async function checkAll(page: Page, screen: Screen): Promise<Result[]> {
 }
 
 test.describe("FR-QG-24 accessibility per route (QG-U7)", () => {
-  for (const screen of SCREENS) {
+  for (const screen of screensOf("", SHARD)) {
     test(`FR-QG-24 axe and keyboard walk: ${screen.id}`, async ({ browser, states }) => {
       const storageState = await states(screen.account);
       const context = await browser.newContext({
