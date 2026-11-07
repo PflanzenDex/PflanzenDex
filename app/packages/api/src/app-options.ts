@@ -14,7 +14,7 @@ import type {
 import type { TokenVerifier } from "./account";
 import type { AiAccessOptions } from "./ai";
 import type { WishImageSources } from "./wishlist";
-import type { WriteLimit } from "./kernel";
+import type { RedeemLimit, WriteLimit } from "./kernel";
 
 export type AppOptions = {
   /** The global feature switch (US-DEV-06, env `FEATURES`); without it every function is on (development and tests). */
@@ -56,6 +56,11 @@ export type AppOptions = {
    * limited, because tests and the demo seed write through the app in process, many times per minute.
    */
   writeLimit?: WriteLimit;
+  /**
+   * Redeeming invitation codes per subject and address (US-ACC-05, issue 305). The server (`main.ts`) passes
+   * `REDEEM_LIMIT`; without it nothing is limited, as with `writeLimit`.
+   */
+  redeemLimit?: RedeemLimit;
   /** The operator's product catalog for equipment recommendations (US-EQU-10); without it nothing is recommended. */
   products?: readonly ProductEntry[];
 };

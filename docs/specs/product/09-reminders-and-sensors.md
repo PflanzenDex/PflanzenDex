@@ -94,11 +94,31 @@ Acceptance criteria:
 
 Assumptions, decided by the PO (revisable): saved as one settings row per account (`reminder_setting`, `PUT /reminders/settings`): time of the daily check (`HH:MM`, default 08:00), quiet hours (both times or none; a window may reach over midnight; when the chosen time falls into it the message goes out at its end and is never dropped), a pause per occasion until a local date (inclusive; the occasion is left out of the message, nothing else changes) and the days of an overdue measurement. Switching an occasion off for good stays with the profile switches (US-ACC-02), which the occasion source respects. The data model for push subscriptions (`delivery_channel`, at most 10 per account, only https endpoints) is part of this story. The screens are the section "Erinnerungen" of the destination "Konto" (US-QS-14): inbox, the settings form (time, quiet hours, days of an overdue measurement, a date per occasion and the button "Eine Woche", which sets the pause to seven days from today in the zone of the profile) and the list of push subscriptions with "Abmelden" (`GET /reminders/subscriptions` returns the endpoints only, never the keys). A browser cannot register itself yet: that needs the VAPID key and the service worker (operator tasks above), so the screen says that push sending is not set up. Not built yet: the occasion "swap" and "friends" (reminders for them come with US-SOZ-12).
 
+### US-MON-09 · Log fertilizing in one tap from a pot label · 🟨 new
+
+As a **plant keeper** I want to log with one tap that I fertilized a plant, and see when I last did, so that I do not fertilize it twice or forget it.
+
+Owner decisions: issue 1605 (2026-11-06 and 2026-11-07). Fertilizing is a log of its own, like watering (US-MON-05), not a treatment: treatments are planned dates that get ticked off (US-BEH-01). The entry is "fertilized today" with no planned date, no interval and no reminder. The first version offers the action only on the page a scanned pot label opens (US-BES-17). There is no undo, as for watering.
+
+Acceptance criteria:
+
+- Given the plant open from a scan, when I tap "Gedüngt", then fertilizing is logged for today in my time zone (NFR-08) through a validating operation (P-03), and the view confirms it; a refused write says why (P-10).
+- Given the plant was already logged as fertilized today, when I tap "Gedüngt" again or the request repeats, then there is still one entry for that day (US-QS-03).
+- Given the plant open from a scan, then the view shows the date of the latest fertilizing, or "noch nie" when none is logged (P-08, P-09).
+- Given an archived plant, then nothing can be logged: the label page offers no actions (US-BES-17), and the operation refuses it.
+- Given a plant of another account or an unknown plant, when fertilizing is logged for it, then the answer is the same "not found" and nothing is written (P-04, P-05).
+- Given the keeper switch for pot labels is off, then the label page shows the plant's normal view without "Gedüngt"; logged entries stay (P-12).
+- Given I export my data, then the fertilizing entries are in the export (US-ACC-04).
+
+Limits of the first version: no amount, no product, no schedule and no reminder; no entry for an earlier day; no list of past entries and no way to remove one; no action outside the label page. The AI interface gets no tool for it yet, the same gap as for "Gegossen" (KI-R10, FR-KI-14).
+
+State of implementation (issue 1605). Built: the operation `monitoring.fertilize` (`POST /fertilizing`, `Idempotency-Key`) with the table `fertilizing_log` (migration `0110`, one entry per plant and day), the read `GET /specimens/:id/fertilizing` (the latest date, or none), the button "Gedüngt" beside "Gegossen" and "Messen" on the pot label page with the line "Zuletzt gedüngt", and the entries in the data export. Each criterion has a test named US-MON-09 in core, the database, the API and the web. Open: the owner's check of a real phone scan of a printed label, by hand; the entries of the pot label are not yet in the AI interface (see above).
+
 ## Requirements
 
 ### DM-MON-01 Data
 
-`Watering_Interval_Days` per species: `{Growth, Dormancy}`; `Watering_Log` per specimen: `{Date, Source}`; `Sensor`: `{Id, Type, Specimen? or area, Calibration, Thresholds}`; `Measurement_Series`: raw values outside the user data, aggregated into `Sensor_Status`.
+`Watering_Interval_Days` per species: `{Growth, Dormancy}`; `Watering_Log` per specimen: `{Date, Source}`; `Fertilizing_Log` per specimen: `{Date}`, at most one entry per specimen and day (US-MON-09); `Sensor`: `{Id, Type, Specimen? or area, Calibration, Thresholds}`; `Measurement_Series`: raw values outside the user data, aggregated into `Sensor_Status`.
 
 ### Functional
 
@@ -127,7 +147,7 @@ ESP32 controller (~€8), capacitive soil moisture sensors V1.2 (4 + 2 spare, ~�
 
 ### Out of scope
 
-Automatic watering, fertilizer tracking, photo evaluation for moisture or height, continuous light measurement, PPFD meter (€200+).
+Automatic watering, fertilizer products, amounts, schedules and reminders (logging that a plant was fertilized is US-MON-09), photo evaluation for moisture or height, continuous light measurement, PPFD meter (€200+).
 
 ## Implementation phases
 

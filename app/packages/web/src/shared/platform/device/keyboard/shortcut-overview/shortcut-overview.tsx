@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import { Keyboard } from "lucide-react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
@@ -23,6 +24,8 @@ export function ShortcutOverview(props: {
   rows: readonly ShortcutOverviewRow[];
   /** The shortcuts are switched off: the list still shows the keys, and the overview says so (P-10). */
   off: boolean;
+  /** The control that had the focus when the overview opened (US-QS-08); `null` returns it to the start of the view. */
+  returnFocusTo?: RefObject<HTMLElement | null> | undefined;
 }) {
   return (
     <ResponsiveModal
@@ -31,6 +34,7 @@ export function ShortcutOverview(props: {
       open={props.open}
       onOpenChange={props.onOpenChange}
       onOpenAutoFocus={focusModalTitle}
+      returnFocusTo={props.returnFocusTo}
     >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">{t("overview.intro")}</p>
@@ -77,7 +81,7 @@ export function ShortcutHelpButton() {
       className="w-auto shrink-0 gap-2 px-3"
       aria-label={t("help.button")}
       aria-keyshortcuts={key?.aria}
-      onClick={openOverview}
+      onClick={(event) => openOverview(event.currentTarget)}
     >
       <Keyboard aria-hidden="true" className="size-5" />
       {key ? (

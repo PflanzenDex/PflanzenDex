@@ -1,6 +1,45 @@
 #!/usr/bin/env sh
 # US-QG-01: fast gates before pushing. --no-verify skips this, but CI repeats every check (D-02).
+# US-DEV-02 (issue 1608): git sends one line per pushed ref on stdin, `<local ref> <local sha> <remote ref> <remote sha>`.
+# Nothing pushed exits at once, and so does a push of deleted refs only: nothing new reaches the remote. A commit whose tree
+# equals origin/dev's (the empty commit of `make claim`) runs only the secret scan, because gitleaks reads the history, which
+# the tree does not show: a branch that adds and removes a secret still stops here. Any other push runs `make gates`.
+# When origin/dev cannot be read, the gates run.
 . "$(dirname "$0")/_lib.sh"
+
+# Read stdin once, before anything else: the gates must not see these lines.
+pushes="$(cat)"
+if [ -z "$pushes" ]; then
+  echo "pre-push: nothing is pushed, no gate runs"
+  exit 0
+fi
+
+zero=0000000000000000000000000000000000000000
+dev_tree="$(git rev-parse -q --verify 'origin/dev^{tree}' 2>/dev/null || true)"
+adds_content=no
+same_tree=no
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  if [ -z "$dev_tree" ]; then adds_content=yes; break; fi
+  tree="$(git rev-parse -q --verify "$local_sha^{tree}" 2>/dev/null || true)"
+  if [ -z "$tree" ] || [ "$tree" != "$dev_tree" ]; then adds_content=yes; break; fi
+  same_tree=yes
+done <<EOF
+$pushes
+EOF
+if [ "$adds_content" = no ]; then
+  if [ "$same_tree" = no ]; then
+    echo "pre-push: the push adds no content compared with origin/dev, no gate runs"
+    exit 0
+  fi
+  echo "pre-push: the push adds no content compared with origin/dev, only the secret scan runs"
+  cd "$root" && make secrets || {
+    echo "Push aborted: the secret scan failed. Re-run with: make secrets" >&2
+    exit 1
+  }
+  exit 0
+fi
+
 need_setup
 cd "$root" && make gates || {
   echo "Push aborted: a gate failed. Re-run with: make gates" >&2

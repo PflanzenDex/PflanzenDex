@@ -7,7 +7,6 @@ import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
-import { errorText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../shared/data";
 import { SpeciesPick } from "./species-pick/species-pick";
 import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
@@ -19,9 +18,6 @@ import {
   type WishFields,
 } from "../schemas";
 import type { WishInput } from "../wishlist-api";
-
-/** This form shows the German text of the error code, also for an unreachable server (kept as it was, P-10). */
-const codeText = (error: ApiError) => errorText(error.code);
 
 /** Every field behind "Mehr Angaben": a value or a refusal opens it (P-10). */
 const FOLDED: readonly (keyof WishFields)[] = [
@@ -85,12 +81,7 @@ export function WishForm(props: {
     resolver: zodResolver(wishSchema),
     defaultValues: EMPTY_FIELDS,
   });
-  const { alertText, alertRef } = useServerRefusal(
-    props.error,
-    form.setError,
-    fieldsOfRefusal,
-    codeText,
-  );
+  const { alertText, alertRef } = useServerRefusal(props.error, form.setError, fieldsOfRefusal);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {

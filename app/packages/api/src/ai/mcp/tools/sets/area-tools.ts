@@ -1,8 +1,9 @@
 // Tools over every other area (US-KI-12): care, wishlist, Pokédex, achievements, collection views, catalog and account.
 // Each is a thin adapter over its route in AREA_PATHS; the input schema comes from the read operation's check (FR-KI-17)
 // and every field gets a description here. Values are the app's: derived values are never recomputed (P-01), `null`
-// means unknown (P-08). Friends' data and the like are never released and answer `ai.not_released` (FR-KI-10).
-import { AREA_READS, areaSchema, type AreaName, type NotReleasedRead } from "@pflanzendex/core";
+// means unknown (P-08). Friends' data and the human-only functions are never released (FR-KI-10, FR-KI-22): their names
+// are in ../not-released-tools.ts and answer `ai.not_released`.
+import { AREA_READS, areaSchema, type AreaName } from "@pflanzendex/core";
 import { AREA_PATHS } from "../../../reads/area-paths";
 import { query, type McpTool } from "../schema";
 import { inputOf, PAGE, REF, TZ } from "./collection-tools";
@@ -151,17 +152,3 @@ export const AREA_TOOLS: readonly McpTool[] = [
     "The drafts this connection delivered, with status (open, adopted, discarded, expired).",
   ),
 ];
-
-/**
- * Names a client may try for data that is never released (FR-KI-10). They are not listed; a call answers
- * `ai.not_released` through its route, logged like every call.
- */
-export const NOT_RELEASED_TOOLS: Readonly<Record<string, NotReleasedRead>> = {
-  list_friends: "friends",
-  get_friend_collection: "friends",
-  get_feed: "feed",
-  get_sharing_settings: "sharing",
-  list_offers: "offers",
-  list_swaps: "swaps",
-  get_recommendations: "recommendations",
-};

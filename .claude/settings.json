@@ -27,6 +27,7 @@
       "Bash(git fetch origin)",
       "Bash(git fetch -q origin)",
       "Bash(make ci-wait PR=*)",
+      "Bash(make auto-merge PR=*)",
       "Bash(make board)",
       "Bash(make status-check)",
       "Bash(make layout)",
@@ -40,9 +41,19 @@
       "Bash(make claim ISSUE=*)",
       "Bash(make pr PR=*)",
       "Bash(git push origin HEAD)",
-      "Bash(git push -q origin HEAD)"
+      "Bash(git push -q origin HEAD)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(sed -n:*)",
+      "Bash(make pr-state PR=*)",
+      "Bash(make issue-read ISSUE=*)",
+      "Bash(make pr-text PR=*)",
+      "Bash(make issue-comment ISSUE=*)",
+      "Bash(make gate-plan FILES=*)"
     ],
     "deny": [
+      "Bash(sed -n -i:*)",
+      "Bash(rg --pre:*)",
       "Bash(gh pr merge:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
@@ -58,26 +69,56 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-edit", "timeout": 10 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-edit",
+            "timeout": 10
+          }
+        ]
       },
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-bash", "timeout": 10 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-bash",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-edit", "timeout": 30 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-edit",
+            "timeout": 30
+          }
+        ]
       },
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-bash", "timeout": 15 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-bash",
+            "timeout": 15
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" stop", "timeout": 15 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" stop",
+            "timeout": 15
+          }
+        ]
       }
     ]
   }

@@ -38,6 +38,18 @@
     "title": "Sammlung"
   },
   {
+    "id": "collection-labels",
+    "account": "test2",
+    "path": "/collection/labels",
+    "title": "Etiketten drucken"
+  },
+  {
+    "id": "collection-import",
+    "account": "test2",
+    "path": "/collection/import",
+    "title": "Pflanzen importieren"
+  },
+  {
     "id": "collection-view-wishlist",
     "account": "test2",
     "path": "/collection?view=wishlist",
@@ -442,6 +454,27 @@
     "title": "Birkenfeige"
   },
   {
+    "id": "collection-plant-leaves",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Verlauf"
+      },
+      {
+        "role": "button",
+        "name": "Blätter"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Birkenfeige"
+  },
+  {
     "id": "collection-plant-care",
     "account": "test2",
     "path": "/collection?view=plants",
@@ -457,6 +490,52 @@
     ],
     "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
     "title": "Birkenfeige"
+  },
+  {
+    "id": "collection-plant-repot",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Pflege"
+      },
+      {
+        "role": "button",
+        "name": "Umtopfen"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
+    "title": "Birkenfeige"
+  },
+  {
+    "id": "collection-plant-repot-signs",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Pflege"
+      },
+      {
+        "role": "button",
+        "name": "Umtopfen"
+      },
+      {
+        "role": "button",
+        "name": "Beobachtungen notieren"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
+    "title": "Beobachtungen"
   },
   {
     "id": "collection-plant-location",
@@ -845,6 +924,13 @@
     "title": "Freischalten: unbekannt"
   },
   {
+    "id": "label-unbekannt",
+    "account": "test2",
+    "path": "/label/unbekannt",
+    "route": "/label/:id",
+    "title": "Pflanze nicht gefunden"
+  },
+  {
     "id": "operator-sheet-zahlen",
     "account": "test3",
     "path": "/operator?sheet=zahlen",
@@ -1020,6 +1106,52 @@
     ],
     "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
     "title": "Pflegeprofil"
+  },
+  {
+    "id": "collection-plant-notes",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Überblick"
+      },
+      {
+        "role": "button",
+        "re": "^Notizen"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.tsx",
+    "title": "Notizen"
+  },
+  {
+    "id": "collection-plant-notes-form",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Überblick"
+      },
+      {
+        "role": "button",
+        "re": "^Notizen"
+      },
+      {
+        "role": "button",
+        "re": "^Notiz (schreiben|bearbeiten)$"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.tsx",
+    "title": "Notizen"
   },
   {
     "id": "collection-plants-course",

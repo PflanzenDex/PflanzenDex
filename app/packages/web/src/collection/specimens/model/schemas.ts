@@ -47,11 +47,22 @@ export type CatchDateFields = z.infer<typeof catchDateSchema>;
 
 export const REPOT_DATE_MISSING = "Bitte gib ein Datum an: heute oder ein früheres Datum.";
 
-/** The form to pot a cutting (US-BES-04); the server checks the date again (P-03). */
+/**
+ * The form to pot a cutting (US-BES-04) or repot a plant (US-BES-19); the server checks the date again (P-03). `potId` is
+ * empty for "Kein erfasster Topf" and for a cutting.
+ */
 export const repotSchema = z.object({
   date: z.string().min(1, REPOT_DATE_MISSING),
+  potId: z.string(),
 });
 export type RepotFields = z.infer<typeof repotSchema>;
+
+/**
+ * The form of the private notes (US-BES-18): the text as typed. An empty text clears the notes; the server trims it
+ * and checks the length again (P-03).
+ */
+export const notesSchema = z.object({ notes: z.string() });
+export type NotesFields = z.infer<typeof notesSchema>;
 
 export const OTHER_REASON = "other";
 

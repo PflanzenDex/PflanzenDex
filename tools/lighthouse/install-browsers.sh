@@ -18,11 +18,13 @@ CACHE="${PFLANZENDEX_APT_CACHE:-}"
 SYSTEM_LIMIT="${PFLANZENDEX_BROWSER_SYSTEM_LIMIT:-720}"
 DOWNLOAD_LIMIT="${PFLANZENDEX_BROWSER_DOWNLOAD_LIMIT:-180}"
 
-# attempt <limit in seconds> <what> <command...>: runs the command, stops it after the limit, retries it once.
+# attempt <limit in seconds> <what> <apt|plain> <command...>: runs the command, stops it after the limit, retries it once.
+# Only an apt part repairs apt and dpkg before its retry: the download runs at the same time and must not stop apt.
 attempt() {
   limit=$1
   what=$2
-  shift 2
+  kind=$3
+  shift 3
   try=1
   while :; do
     if timeout -k 10 "$limit" "$@"; then
@@ -33,6 +35,9 @@ attempt() {
       return 1
     fi
     try=$((try + 1))
+    if [ "$kind" != apt ]; then
+      continue
+    fi
     # A stopped apt-get can leave dpkg locked, and under sudo the process may run outside the group that timeout stops.
     # So the leftovers are killed and dpkg is brought back to a consistent state before the retry. Finding no process
     # to kill is normal, which is why only pkill gets `|| true`.
@@ -56,8 +61,19 @@ CONF
   fi
 fi
 
-attempt "$SYSTEM_LIMIT" "system packages (apt)" npx --no-install playwright install-deps chromium
-attempt "$DOWNLOAD_LIMIT" "Chromium download" npx --no-install playwright install chromium
+# The two parts touch different things (apt and the system packages; the browser in the Playwright cache), so they run at
+# the same time and the install takes as long as the slower one (issue 1667). Each keeps its own limit and retry, and the
+# install fails when either part failed.
+attempt "$SYSTEM_LIMIT" "system packages (apt)" apt npx --no-install playwright install-deps chromium &
+system=$!
+attempt "$DOWNLOAD_LIMIT" "Chromium download" plain npx --no-install playwright install chromium &
+download=$!
+failed=0
+wait "$system" || failed=1
+wait "$download" || failed=1
+if [ "$failed" -ne 0 ]; then
+  exit 1
+fi
 
 # The browser must be there before any test starts: the executable that Playwright launches has to exist.
 browser="${PFLANZENDEX_BROWSER_EXECUTABLE:-$(cd packages/e2e && node -e "process.stdout.write(require('@playwright/test').chromium.executablePath())")}"

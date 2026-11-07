@@ -1,6 +1,6 @@
 import {
   AREA_NAMES,
-  NOT_RELEASED_READS,
+  NOT_RELEASED_CALLS,
   aiAreaRead,
   aiGetSpecies,
   aiNotReleased,
@@ -12,7 +12,7 @@ import {
   aiSearchSpecies,
   type AiLogStore,
   type AreaReadSource,
-  type NotReleasedRead,
+  type NotReleasedCall,
   type CollectionReadSource,
   type ReadCall,
   type Result,
@@ -42,8 +42,8 @@ function inputOf(c: Context<AiEnv>, params: Record<string, string>) {
  * specimens, one specimen, locations, light zones and the measurements of a specimen. References in the path are an id
  * or a readable name (FR-KI-15); lists take `offset` and `limit` (FR-KI-16). Each route runs the read operation of
  * `core` over the same functions as the app's own routes (KI-R10, FR-KI-14); a foreign id answers 404 (P-04).
- * Every other area (US-KI-12) has its route in `AREA_PATHS`; friends' data, sharing, offers, swaps and recommendations
- * answer `ai.not_released` under `/mcp/not-released/:subject` (FR-KI-10).
+ * Every other area (US-KI-12) has its route in `AREA_PATHS`; friends' data, sharing, offers, swaps, recommendations and the
+ * human-only functions answer `ai.not_released` under `/mcp/not-released/:subject` (FR-KI-10, FR-KI-22).
  */
 export function clientReadRoutes(
   guard: ClientGuardOptions,
@@ -72,9 +72,9 @@ export function clientReadRoutes(
   route("/mcp/locations", aiListLocations);
   route("/mcp/light-zones", aiListLightZones);
   for (const name of AREA_NAMES) route(AREA_PATHS[name], aiAreaRead(name));
-  for (const subject of Object.keys(NOT_RELEASED_READS) as NotReleasedRead[])
+  for (const subject of Object.keys(NOT_RELEASED_CALLS) as NotReleasedCall[])
     route(notReleasedPath(subject), (d, call) =>
-      aiNotReleased(d, call, NOT_RELEASED_READS[subject]),
+      aiNotReleased(d, call, NOT_RELEASED_CALLS[subject]),
     );
   return client;
 }

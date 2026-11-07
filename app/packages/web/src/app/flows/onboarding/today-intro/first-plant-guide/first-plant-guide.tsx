@@ -1,4 +1,5 @@
 import type { QueryKey } from "@tanstack/react-query";
+import { ImportEntry } from "@/collection";
 import { useInvalidate } from "../../../../../shared/data";
 import { OnboardingWizard } from "../../onboarding-wizard/onboarding-wizard";
 import type { SpeciesLookup } from "../../onboarding-wizard/species-step/species-step";
@@ -22,6 +23,7 @@ export function FirstPlantGuide(props: {
       token={props.token}
       onChoosePlant={() => props.onOpen("species")}
       onSkip={props.onLeave}
+      entry={<ImportEntry />}
       onCreated={() => {
         props.onLeave();
         refresh();

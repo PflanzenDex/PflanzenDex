@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import type { SpecimenCard } from "@pflanzendex/core";
+import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
+import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -13,6 +14,7 @@ import {
 import { UNKNOWN } from "../../../../specimens/model/text";
 import { tileState } from "../../../rows/plant-tile/plant-tile";
 import table from "../../plant-layers.de.json";
+import { NotesButton } from "../plant-notes/plant-notes";
 
 const t = texts(table);
 
@@ -32,9 +34,38 @@ export function MeasureButton(props: { card: SpecimenCard; onMeasure: () => void
 }
 
 /**
+ * Light zone, location and the open treatment as text chips (P-08: unknown reads as such). A long chip wraps inside its
+ * pill, so the row keeps the "Mehr" button inside the window at 200 % text (NFR-13, issue 1228).
+ */
+export function Chips({ card }: { card: SpecimenCard }) {
+  return (
+    <ul aria-label={t("chips.label")} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+      <li>
+        <Badge variant="outline" className="whitespace-normal">
+          {card.lightZone ? zoneLabel(card.lightZone) : t("chips.zoneUnknown")}
+        </Badge>
+      </li>
+      <li>
+        <Badge variant="outline" className="whitespace-normal">
+          {card.location ?? t("chips.locationUnknown")}
+        </Badge>
+      </li>
+      {card.treatment ? (
+        <li>
+          <Badge variant="warning" className="whitespace-normal">
+            {t("chips.treatment")}
+          </Badge>
+        </li>
+      ) : null}
+    </ul>
+  );
+}
+
+/**
  * "Überblick" (US-QS-23): fits the layer without scroll on a phone. The latest photo as a thumbnail beside the last
  * measurement, the growth trend of the own history (a slot of `care`, P-08), the state and the open treatment; "Gießen"
- * (a slot of `monitoring`) and "Behandeln" are outline buttons, the filled "Messen" sits in the layer's primary slot.
+ * (a slot of `monitoring`), "Behandeln" and "Notizen" are outline buttons, the filled "Messen" sits in the layer's
+ * primary slot.
  */
 export function PlantOverview(props: {
   card: SpecimenCard;
@@ -74,9 +105,10 @@ export function PlantOverview(props: {
         </Quiet>
       </div>
       <Provenance value={card.provenance} />
-      {/* Two equal buttons side by side; when both labels do not fit (200 % text, NFR-13) each takes its own row. A message
-          of "Gießen" always takes a row of its own. */}
-      <div className="flex flex-wrap gap-2 [&>button]:grow [&>button]:basis-2/5 [&>p]:basis-full">
+      {/* Three buttons side by side: the row costs no height at 360 px, where the overview has about 10 px left (US-QS-23).
+          When the labels do not fit (200 % text, NFR-13) a button moves to the next row. A message of "Gießen" always takes
+          a row of its own. The private notes open as their own layer (US-BES-18). */}
+      <div className="flex flex-wrap gap-2 [&>button]:grow [&>button]:basis-1/4 [&>p]:basis-full">
         {props.water}
         <Button
           type="button"
@@ -86,6 +118,7 @@ export function PlantOverview(props: {
         >
           {t("overview.treat")}
         </Button>
+        <NotesButton card={card} />
       </div>
     </div>
   );

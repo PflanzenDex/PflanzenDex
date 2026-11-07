@@ -2,4 +2,4 @@
 export * from "./validation";
 export { described, jsonSchemaOf, nullable } from "./json-schema";
 export type { JsonSchema } from "./json-schema";
-export { canonical } from "./canonical";
+export { canonical, normalizeName } from "./canonical";

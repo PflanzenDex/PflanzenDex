@@ -8,18 +8,23 @@ import { ChannelsPostgres, IdempotencyPostgres, RemindersPostgres } from "@pflan
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
+import { fertilizingRoutes } from "./fertilizing-routes";
 
-/** Paths the sign-in guard (bearer token) must cover. */
-const MONITORING_PATHS = ["/reminders"] as const;
+/** Paths the sign-in guard (bearer token) must cover; `/specimens/:id/fertilizing` is covered by the guard of `/specimens`. */
+const MONITORING_PATHS = ["/reminders", "/fertilizing"] as const;
 
 /**
  * Reminders (epic MON), always for the own account (P-04, P-05):
  * `GET /reminders` the in-app inbox, newest first (days with nothing due are not listed; a failed delivery shows its status,
  * FR-MON-08); `GET`/`PUT /reminders/settings` the time of the daily check, quiet hours, pauses per occasion and the days of
- * an overdue measurement (US-MON-08); `GET`/`POST`/`DELETE /reminders/subscriptions` the push subscriptions of the browsers (the list shows endpoints only). The guard is applied here. Writes
+ * an overdue measurement (US-MON-08); `GET`/`POST`/`DELETE /reminders/subscriptions` the push subscriptions of the browsers (the list shows endpoints only). The guard is applied here. The fertilizing log (US-MON-09) is `POST /fertilizing` and `GET /specimens/:id/fertilizing`. Writes
  * need an `Idempotency-Key` and go through validating operations (P-03).
  */
-export function monitoringRoutes(pool: Pool, auth: MiddlewareHandler): Hono<AuthEnv> {
+export function monitoringRoutes(
+  pool: Pool,
+  auth: MiddlewareHandler,
+  clock: () => Date = () => new Date(),
+): Hono<AuthEnv> {
   const reminders = new RemindersPostgres(pool);
   const channels = new ChannelsPostgres(pool);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
@@ -49,5 +54,7 @@ export function monitoringRoutes(pool: Pool, auth: MiddlewareHandler): Hono<Auth
   routes.delete("/reminders/subscriptions", async (c) =>
     write(c, writes, unsubscribe, { input: await body(c) }),
   );
+  // The fertilizing log (US-MON-09): `POST /fertilizing` and `GET /specimens/:id/fertilizing`.
+  routes.route("/", fertilizingRoutes(pool, clock));
   return routes;
 }

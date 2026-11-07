@@ -1,6 +1,6 @@
 // Running a tool of the MCP endpoint (E-04): structural check of the arguments, then the tool's route with the caller's
 // token; the route's answer becomes the tool result (KI-R1, KI-R8). Nothing here touches data itself.
-import { appError, rankOf, type NotReleasedRead } from "@pflanzendex/core";
+import { appError, rankOf, type NotReleasedCall } from "@pflanzendex/core";
 import type { Context, Hono } from "hono";
 import { errorBody } from "../../kernel";
 import type { AiEnv } from "../guard/client-auth";
@@ -70,8 +70,8 @@ async function runTool(
   return toolResult(res);
 }
 
-/** A call for data that is never released (FR-KI-10): its route answers `ai.not_released` and logs the call. */
-async function notReleased(c: Context<AiEnv>, opt: McpOptions, subject: NotReleasedRead) {
+/** A call for data or a function that is never released (FR-KI-10, FR-KI-22): its route answers `ai.not_released`, logged. */
+async function notReleased(c: Context<AiEnv>, opt: McpOptions, subject: NotReleasedCall) {
   const res = await opt.routes.request(notReleasedPath(subject), {
     headers: { authorization: c.req.header("authorization") ?? "" },
   });
@@ -89,7 +89,10 @@ export async function callTool(
 ): Promise<Answer> {
   const { name, arguments: raw = {} } = params;
   const tool = available(opt).find((t) => t.name === name);
-  const refused = NOT_RELEASED_TOOLS[String(name)];
+  // Own keys only: a name such as `constructor` or `__proto__` is no human-only name (Object.prototype has them).
+  const refused = Object.hasOwn(NOT_RELEASED_TOOLS, String(name))
+    ? NOT_RELEASED_TOOLS[String(name)]
+    : undefined;
   if (!tool && refused) return { result: await notReleased(c, opt, refused) };
   if (!tool)
     return { error: { code: RPC.invalidParams, message: `Unknown tool: ${String(name)}` } };

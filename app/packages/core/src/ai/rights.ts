@@ -97,6 +97,18 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   export_account: "never",
   manage_connections: "never",
   partner_data: "never",
+  // Human-only functions (FR-KI-22): no connection reaches them; a call answers `ai.not_released` (NOT_RELEASED_CALLS).
+  profile_settings: "never",
+  push_subscriptions: "never",
+  calm_mode: "never",
+  onboarding_settings: "never",
+  keeper_switches: "never",
+  friend_visibility: "never",
+  review_functions: "never",
+  operator_functions: "never",
+  // The private notes of a specimen (US-BES-18, P-05) and the CSV import of plants (US-BES-18, owner decision 2026-11-06).
+  private_notes: "never",
+  csv_import: "never",
 };
 
 const NEEDED: Readonly<Record<Exclude<OperationClass, "never">, AiRights>> = {

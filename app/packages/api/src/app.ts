@@ -39,6 +39,7 @@ import {
   accountEtag,
   errorBody,
   featureAccess,
+  redeemGate,
   runningVersion,
   statusFor,
   writeLimit,
@@ -80,7 +81,10 @@ function bindAccount(
     pool,
     opt.invitationOnly === undefined ? {} : { invitationOnly: opt.invitationOnly },
   );
-  app.route("/", registrationRoutes(pool, verifier));
+  app.route(
+    "/",
+    registrationRoutes(pool, verifier, opt.redeemLimit ? redeemGate(opt.redeemLimit) : undefined),
+  );
   // `/account/*` also matches `/account` itself: one registration guards both (NFR-12).
   app.use("/account/*", auth);
   app.route("/account", accountRoutes(pool, opt.access));
@@ -127,7 +131,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
   app.route("/", achievementsRoutes(pool, auth, opt.clock));
   app.route("/", unlockRoutes(pool, auth, features, opt));
-  app.route("/", monitoringRoutes(pool, auth));
+  app.route("/", monitoringRoutes(pool, auth, opt.clock));
   for (const path of CARE_PROFILE_PATHS) app.use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));
   bindWishlist(app, pool, auth, opt);

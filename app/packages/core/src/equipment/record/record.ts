@@ -1,5 +1,5 @@
 import { appError, defineOperation, failed, ok } from "../../kernel";
-import { CONSUMABLE_TYPES, type EquipmentStore } from "../store/types";
+import { CONSUMABLE_TYPES, LAMP_TYPE, POT_TYPE, type EquipmentStore } from "../store/types";
 import { recordSchema } from "./fields";
 
 export interface RecordEquipmentDependencies {
@@ -18,9 +18,19 @@ export const equipmentRecord = (deps: RecordEquipmentDependencies) =>
     schema: recordSchema,
     run: async ({ userId }, input) => {
       // A lamp belongs to exactly one light zone, no other type to any (DM-EQU-02, US-EQU-02).
-      if ((input.type === "Lamp") !== (input.lightZoneId !== null))
+      if ((input.type === LAMP_TYPE) !== (input.lightZoneId !== null))
         return failed(
           appError("input.invalid", { details: [{ field: "lightZoneId", code: "input.invalid" }] }),
+        );
+      // The pot fields belong to a pot only (US-BES-19, DM-EQU-05): any other type refuses each one it is given.
+      const potFields = (["diameterCm", "heightCm", "material", "drainage"] as const).filter(
+        (field) => input[field] !== null,
+      );
+      if (input.type !== POT_TYPE && potFields.length > 0)
+        return failed(
+          appError("input.invalid", {
+            details: potFields.map((field) => ({ field, code: "input.invalid" as const })),
+          }),
         );
       const status = CONSUMABLE_TYPES.includes(input.type) ? null : "active";
       const row = await deps.equipment.create(userId, input, status);

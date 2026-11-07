@@ -8,9 +8,14 @@ import type {
   SpeciesValues,
 } from "./types";
 
+import type { ApprovedDuplicate, ApprovedTwin } from "../types";
+
 const RANK = { latin: 0, german: 1, english: 2, synonym: 3 } as const;
 
 type Row = Species & { creator: string; names: readonly SpeciesName[] };
+
+const isApproved = (z: Row) => z.reviewStatus === "curated" || z.reviewStatus === "reviewed";
+const latinKeyOf = (z: Row) => z.names.find((n) => n.field === "latin")?.norm ?? "";
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. Visibility as in FR-BES-11. */
 export class InMemorySpecies implements SpeciesStore {
@@ -23,6 +28,30 @@ export class InMemorySpecies implements SpeciesStore {
     const i = this.rows.findIndex((z) => z.id === id);
     const z = this.rows[i];
     if (z) this.rows[i] = { ...z, reviewStatus: "reviewed" };
+  }
+
+  /** The approved species that holds this Latin name key, other than `exceptId` (the approval check, US-BES-10). */
+  approvedTwin(key: string, exceptId: string): ApprovedTwin | null {
+    const z = this.rows.find((x) => x.id !== exceptId && isApproved(x) && latinKeyOf(x) === key);
+    return z ? { id: z.id, latinName: z.latinName } : null;
+  }
+
+  /** The Latin names that two or more approved species hold, each with its species (the duplicates, US-BES-10). */
+  approvedDuplicates(): ApprovedDuplicate[] {
+    const groups = new Map<string, Row[]>();
+    for (const z of this.rows.filter(isApproved)) {
+      const key = latinKeyOf(z);
+      groups.set(key, [...(groups.get(key) ?? []), z]);
+    }
+    return [...groups.values()]
+      .filter((g) => g.length > 1)
+      .map((g) => {
+        const species = g
+          .map((z) => ({ id: z.id, latinName: z.latinName }))
+          .sort((a, b) => a.latinName.localeCompare(b.latinName) || a.id.localeCompare(b.id));
+        return { latinName: species[0]?.latinName ?? "", species };
+      })
+      .sort((a, b) => a.latinName.localeCompare(b.latinName));
   }
 
   private visible(userId: string): Row[] {

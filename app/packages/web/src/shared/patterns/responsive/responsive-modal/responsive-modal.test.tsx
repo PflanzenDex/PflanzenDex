@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ResponsiveModal } from "./responsive-modal";
@@ -81,4 +81,71 @@ describe("ResponsiveModal (US-QS-07, DS-23)", () => {
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
   });
+});
+
+/** A controlled modal without a trigger: `opener` is the element it returns the focus to (US-QS-08). */
+function ControlledExample(props: {
+  opener: RefObject<HTMLButtonElement | null>;
+  withOpener: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      {props.withOpener ? (
+        <button ref={props.opener} type="button" onClick={() => setOpen(true)}>
+          Öffnen
+        </button>
+      ) : null}
+      <main id="inhalt" tabIndex={-1}>
+        <h1>Heute</h1>
+      </main>
+      <ResponsiveModal
+        title="Filter"
+        open={open}
+        onOpenChange={setOpen}
+        returnFocusTo={props.opener}
+      >
+        <button>Anwenden</button>
+      </ResponsiveModal>
+    </>
+  );
+}
+
+describe("US-QS-08 · DS-40 a controlled modal returns the focus to the element it is given", () => {
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-08 · DS-40 Esc returns the focus to the element named by returnFocusTo (as a %s)",
+    async (_kind, width) => {
+      setViewportWidth(width);
+      const opener: RefObject<HTMLButtonElement | null> = { current: null };
+      render(<ControlledExample opener={opener} withOpener />);
+      const button = screen.getByRole("button", { name: "Öffnen" });
+      await userEvent.click(button);
+      await screen.findByRole("dialog", { name: "Filter" });
+      await userEvent.keyboard("{Escape}");
+      await waitFor(() => expect(document.activeElement).toBe(button));
+    },
+  );
+
+  it.each([
+    ["dialog", 1024],
+    ["sheet", 360],
+  ])(
+    "US-QS-08 · DS-40 when the named element has left the page, Esc moves the focus to the heading of the view (as a %s)",
+    async (_kind, width) => {
+      setViewportWidth(width);
+      const opener: RefObject<HTMLButtonElement | null> = { current: null };
+      const { rerender } = render(<ControlledExample opener={opener} withOpener />);
+      await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+      await screen.findByRole("dialog", { name: "Filter" });
+      // The opener leaves the page while the modal is open; the focus falls back to the heading of the view.
+      rerender(<ControlledExample opener={opener} withOpener={false} />);
+      expect(opener.current).toBeNull();
+      await userEvent.keyboard("{Escape}");
+      const heading = screen.getByRole("heading", { level: 1, name: "Heute" });
+      await waitFor(() => expect(document.activeElement).toBe(heading));
+    },
+  );
 });

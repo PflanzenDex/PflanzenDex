@@ -78,35 +78,6 @@ export async function setCaughtAt(
   });
 }
 
-/**
- * One statement: only a cutting becomes a plant (US-BES-04). Plants and archived specimens stay unchanged and report
- * `not_a_cutting`; foreign specimens are invisible to the row rule. A chosen day before the catch date changes nothing
- * and reports `before_caught` (issue 1103); without a catch date, or without a chosen day, nothing is compared.
- */
-export async function repotCutting(
-  pool: Pool,
-  userId: string,
-  id: string,
-  days: { readonly date: string | null; readonly chosenDate: string | null },
-): Promise<SpecimenRow | "not_found" | "not_a_cutting" | "before_caught"> {
-  return withAccount(pool, userId, async (c) => {
-    const r = await c.query<SpecimenRow>(
-      `update specimen set status = 'plant', repotted_at = $2::date
-        where id = $1 and status = 'cutting'
-          and ($3::date is null or caught_at is null or caught_at <= $3::date)
-        returning ${COLUMNS}`,
-      [id, days.date, days.chosenDate],
-    );
-    if (r.rows[0]) return r.rows[0];
-    const there = await c.query<{ status: string }>("select status from specimen where id = $1", [
-      id,
-    ]);
-    if (!there.rows[0]) return "not_found";
-    // The update matched only cuttings, so a cutting it did not take is refused by the catch date.
-    return there.rows[0].status === "cutting" ? "before_caught" : "not_a_cutting";
-  });
-}
-
 /** A specimen of the marker assignments that is unknown, foreign, archived or already has a marker: the transaction is undone. */
 export class UnknownSpecimen extends Error {}
 
@@ -118,7 +89,15 @@ export interface NewSpecimen {
   readonly lightZoneId?: string | null;
   readonly caughtAt: string | null;
   readonly status?: "plant" | "cutting";
+  /** Private notes (US-BES-18); the swap handover passes none, so a note never moves to the recipient. */
+  readonly notes?: string | null;
 }
+
+/** What `specimen.create` writes for a new specimen (US-BES-02, US-BES-18): the same fields as `NewSpecimen`. */
+export type SpecimenValues = Pick<
+  NewSpecimen,
+  "speciesId" | "name" | "marker" | "locationId" | "caughtAt" | "status" | "lightZoneId" | "notes"
+>;
 
 /**
  * Creates a specimen inside the open transaction of `c`, as the account the connection is set to (ADR 0012: the
@@ -141,8 +120,8 @@ export async function createSpecimenOn(
     if (!done.rowCount) throw new UnknownSpecimen();
   }
   const r = await c.query<SpecimenRow>(
-    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id)
-     values ($1, $2, $3, $4, $5, $6, $7, $8) returning ${COLUMNS}`,
+    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id, notes)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning ${COLUMNS}`,
     [
       userId,
       w.speciesId,
@@ -152,6 +131,7 @@ export async function createSpecimenOn(
       w.caughtAt,
       w.status ?? "plant",
       w.lightZoneId ?? null,
+      w.notes ?? null,
     ],
   );
   await ensureSpeciesVisible(c, w.speciesId);
@@ -186,4 +166,17 @@ export async function listSpecimensOn(c: PoolClient): Promise<readonly SpecimenR
 export async function findSpecimenOn(c: PoolClient, id: string): Promise<SpecimenRow | null> {
   const r = await c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = $1`, [id]);
   return r.rows[0] ?? null;
+}
+
+/** The status of each of the given specimens of the account the connection is set to; unknown or foreign ones are absent. */
+export async function specimenStatusesOn(
+  c: PoolClient,
+  ids: readonly string[],
+): Promise<ReadonlyMap<string, string>> {
+  if (ids.length === 0) return new Map();
+  const r = await c.query<{ id: string; status: string }>(
+    `select id, status from specimen where id = any($1::uuid[])`,
+    [ids],
+  );
+  return new Map(r.rows.map((z) => [z.id, z.status] as const));
 }

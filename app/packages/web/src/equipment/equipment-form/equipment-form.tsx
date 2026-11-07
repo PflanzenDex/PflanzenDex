@@ -6,9 +6,11 @@ import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
-import { errorText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../shared/data";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { OPTIONAL_FIELDS, OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
+import { PotFields } from "./pot-fields/pot-fields";
+import table from "../equipment.de.json";
 import {
   EMPTY_FIELDS,
   equipmentSchema,
@@ -18,9 +20,6 @@ import {
 } from "../schemas";
 import type { EquipmentInput } from "../equipment-api";
 import type { EquipmentPrefill } from "../overviews/wishes-view/wishes-api";
-
-/** This form shows the German text of the error code, also for an unreachable server (kept as it was, P-10). */
-const codeText = (error: ApiError) => errorText(error.code);
 
 /** "Gekauft" on an equipment wish fills the form with what the wish knows (US-EQU-08); the rest stays empty (P-08). */
 function usePrefill(
@@ -39,12 +38,14 @@ function usePrefill(
   }, [prefill, form]);
 }
 
+const t = texts(table);
+
 /** Sticky: the form may scroll inside the layer while the save button stays visible. */
 function SaveBar({ pending }: { pending: boolean }) {
   return (
     <div className="sticky bottom-0 bg-card py-2">
       <Button type="submit" size="touch" className="w-full" disabled={pending}>
-        {pending ? "Speichert …" : "Equipment speichern"}
+        {pending ? t("form.saving") : t("form.save")}
       </Button>
     </div>
   );
@@ -65,12 +66,7 @@ export function EquipmentForm(props: {
     resolver: zodResolver(equipmentSchema),
     defaultValues: EMPTY_FIELDS,
   });
-  const { alertText, alertRef } = useServerRefusal(
-    props.error,
-    form.setError,
-    fieldsOfRefusal,
-    codeText,
-  );
+  const { alertText, alertRef } = useServerRefusal(props.error, form.setError, fieldsOfRefusal);
   usePrefill(form, props.prefill);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;
@@ -79,7 +75,7 @@ export function EquipmentForm(props: {
   });
   // No heading here: the layer "Neues Equipment" already names the form (US-QS-24, issue 1032).
   return (
-    <section aria-label="Equipment erfassen" className="flex flex-col gap-3">
+    <section aria-label={t("form.label")} className="flex flex-col gap-3">
       <FormNotices
         message={refused ? null : props.message}
         alertText={alertText}
@@ -89,6 +85,7 @@ export function EquipmentForm(props: {
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
+          <PotFields control={form.control} />
           <FormMoreFields control={form.control} names={OPTIONAL_FIELDS}>
             <OptionalFields control={form.control} />
           </FormMoreFields>

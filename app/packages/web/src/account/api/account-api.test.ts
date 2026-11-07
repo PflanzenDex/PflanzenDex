@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { signOutEverywhere, getAccount, oidcSettings } from "./account-api";
+import { signOutEverywhere, getAccount, oidcSettings, returnAddress } from "./account-api";
 
 describe("OIDC settings (US-ACC-01)", () => {
   it("have defaults for local development (make auth-up)", () => {
@@ -19,6 +19,31 @@ describe("OIDC settings (US-ACC-01)", () => {
     expect(e.authority).toBe("https://id.example/realms/x");
     expect(e.post_logout_redirect_uri).toBe("https://app.example/");
   });
+
+  it("US-ACC-01 a sign-in request gives up after 15 seconds (starting value, assumption)", () => {
+    expect(oidcSettings({}, "http://localhost:5173").requestTimeoutInSeconds).toBe(15);
+  });
+});
+
+describe("US-BES-17 the return address after the sign-in (#1619)", () => {
+  const origin = "http://localhost:5173";
+
+  it("US-BES-17 keeps the path the person is on, such as a scanned label", () => {
+    expect(returnAddress(origin, "/label/abc")).toBe(`${origin}/label/abc`);
+  });
+
+  it("US-BES-17 the start page stays the start page", () => {
+    expect(returnAddress(origin, "/")).toBe(`${origin}/`);
+  });
+
+  it("US-BES-17 a path that leads to another origin falls back to the start page", () => {
+    expect(returnAddress(origin, "//evil.example/x")).toBe(`${origin}/`);
+    expect(returnAddress(origin, "/\\evil.example/x")).toBe(`${origin}/`);
+  });
+
+  it("US-BES-17 the query and the hash are not kept, the callback adds its own", () => {
+    expect(returnAddress(origin, "/label/abc?code=x&state=y#top")).toBe(`${origin}/label/abc`);
+  });
 });
 
 describe("fetch account from the API", () => {
@@ -32,7 +57,41 @@ describe("fetch account from the API", () => {
     expect(k.email).toBe("a@b.test");
     expect(f).toHaveBeenCalledWith("http://api/account", {
       headers: { Authorization: "Bearer tok" },
+      signal: expect.any(AbortSignal),
     });
+  });
+
+  it("US-ACC-01 loading the account gives up after the same 15 seconds", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    try {
+      const f = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ id: "1", email: "a@b.test" }), { status: 200 }),
+        );
+      await getAccount("http://api", "tok", f);
+      expect(timeout).toHaveBeenCalledWith(15_000);
+    } finally {
+      timeout.mockRestore();
+    }
+  });
+
+  it("US-ACC-01 an API that never answers makes the account load reject once the limit passes", async () => {
+    const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => realTimeout(1));
+    try {
+      // Answers only by the abort, the way a request ends when its signal fires.
+      const never = vi.fn<typeof fetch>(
+        (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => reject(init?.signal?.reason));
+          }),
+      );
+      const error = await getAccount("http://api", "tok", never).catch((e: unknown) => e);
+      expect((error as Error).name).toBe("TimeoutError");
+    } finally {
+      timeout.mockRestore();
+    }
   });
 
   it("reports 401 as not signed in", async () => {
@@ -48,7 +107,16 @@ describe("sign out on all devices", () => {
     expect(f).toHaveBeenCalledWith("http://id/realms/x/account/sessions", {
       method: "DELETE",
       headers: { Authorization: "Bearer tok", Accept: "application/json" },
+      signal: expect.any(AbortSignal),
     });
+  });
+
+  it("US-ACC-01 signing out on all devices gives up after the same 15 seconds", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    const f = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    await signOutEverywhere("http://id/realms/x", "tok", f);
+    expect(timeout).toHaveBeenCalledWith(15_000);
+    timeout.mockRestore();
   });
 
   it("throws on errors so the UI reports nothing wrong", async () => {

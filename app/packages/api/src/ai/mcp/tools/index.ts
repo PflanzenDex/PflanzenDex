@@ -12,7 +12,7 @@ import type { McpTool } from "./schema";
 
 export { checkArguments } from "./schema";
 export type { McpTool } from "./schema";
-export { NOT_RELEASED_TOOLS } from "./sets/area-tools";
+export { NOT_RELEASED_TOOLS } from "./not-released-tools";
 
 /** The tools per area, in a fixed order; the rule discovery describes them by these areas (US-KI-13). */
 export const MCP_TOOL_SETS: Readonly<Record<string, readonly McpTool[]>> = {

@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODULE_CONFIG } from "../../../../config/lint/modules.config.mjs";
 import { coverageByModule } from "../../code/modules/module-report.mjs";
+import { UNMEASURED_ENV, unmeasuredFrom } from "./coverage-config.mjs";
 
 export const METRICS = ["lines", "branches", "functions", "statements"];
 export const RAISE_HINT_GAP = 2;
@@ -13,13 +14,18 @@ export const RAISE_HINT_GAP = 2;
 /**
  * @param {Record<string, Record<string, number> | null>} thresholds per package, null = not measured yet
  * @param {Record<string, Record<string, {pct: number}> | null>} measured per package summary.total, null = missing
+ * @param {string[]} unmeasured packages whose tests did not run in this CI run (COVERAGE_UNMEASURED); only these are left out
  * @returns {{failures: string[], hints: string[], notes: string[]}}
  */
-export function compare(thresholds, measured) {
+export function compare(thresholds, measured, unmeasured = []) {
   const failures = [];
   const hints = [];
   const notes = [];
   for (const [pkg, limits] of Object.entries(thresholds)) {
+    if (unmeasured.includes(pkg)) {
+      notes.push(`${pkg}: left out, its tests did not run in this CI run (${UNMEASURED_ENV})`);
+      continue;
+    }
     if (!limits) {
       notes.push(`${pkg}: no thresholds yet (not measured); set them from the first CI run`);
       continue;
@@ -60,7 +66,18 @@ function main() {
   const { packages } = JSON.parse(
     fs.readFileSync(path.join(root, "config/gates/coverage-thresholds.json"), "utf8"),
   );
-  const { failures, hints, notes } = compare(packages, loadMeasured(root, Object.keys(packages)));
+  let unmeasured;
+  try {
+    unmeasured = unmeasuredFrom(process.env[UNMEASURED_ENV], Object.keys(packages));
+  } catch (error) {
+    console.error(`FAIL: ${error.message}`);
+    process.exit(1);
+  }
+  const { failures, hints, notes } = compare(
+    packages,
+    loadMeasured(root, Object.keys(packages)),
+    unmeasured,
+  );
   const summaries = {};
   for (const pkg of Object.keys(packages)) {
     const file = path.join(root, "packages", pkg, "coverage", "coverage-summary.json");

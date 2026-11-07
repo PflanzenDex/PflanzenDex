@@ -14,6 +14,10 @@ export const EQUIPMENT_TYPES = [
 ] as const;
 export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
 
+/** The types the rules name by value (a lamp belongs to a light zone, US-EQU-02; a pot holds a plant, US-BES-19). */
+export const LAMP_TYPE = "Lamp" satisfies EquipmentType;
+export const POT_TYPE = "Pot" satisfies EquipmentType;
+
 /** Consumables are used up; they have no operating status (DM-EQU-01: `Status` is not used for them). */
 export const CONSUMABLE_TYPES: readonly EquipmentType[] = [
   "Substrate",
@@ -47,7 +51,18 @@ export interface EquipmentValues {
   readonly note: string | null;
   /** The light zone of a lamp (DM-EQU-02, US-EQU-02); `null` for every other type. */
   readonly lightZoneId: string | null;
+  /** Pot fields (US-BES-19, DM-EQU-05): only a record of type `Pot` has them; `null` = unknown (P-08). */
+  readonly diameterCm: number | null;
+  readonly heightCm: number | null;
+  readonly material: string | null;
+  readonly drainage: boolean | null;
 }
+
+/** Limits of a pot (US-BES-19, DM-EQU-05); assumptions (starting values), the database checks the same values. */
+export const POT_LIMITS = {
+  sizeCm: { min: 1, max: 300 },
+  material: { min: 1, max: 60 },
+} as const;
 
 /** Limits of the lamp data (US-EQU-03, DM-EQU-02); assumptions (starting values). */
 export const LAMP_LIMITS = {

@@ -25,7 +25,7 @@ const PER_PAGE = 100;
 const MAX_PAGES = 50;
 
 /** Every page of a REST list that wraps its items (`check_runs`, `workflow_runs`), 100 per page. */
-async function pagedKey(client, path, key) {
+export async function pagedKey(client, path, key) {
   const sep = path.includes("?") ? "&" : "?";
   const out = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
@@ -37,10 +37,14 @@ async function pagedKey(client, path, key) {
   return out;
 }
 
-/** The jobs of the ci.yml at the head commit; none when the head has no workflow file (then no CI runs at all). */
-export async function definedAt(client, repo, head) {
+/**
+ * The jobs of the ci.yml at a commit; none when that commit has no workflow file (then no CI runs at all). The commit is
+ * the merge commit of the PR when GitHub has one (issue 1608): a `pull_request` run uses that workflow, and the head of
+ * an older branch may still define jobs that no longer run.
+ */
+export async function definedAt(client, repo, sha) {
   try {
-    const path = `repos/${repo}/contents/.github/workflows/ci.yml?ref=${head}`;
+    const path = `repos/${repo}/contents/.github/workflows/ci.yml?ref=${sha}`;
     const body = await json(client, ["api", path]);
     return jobsDefinedIn(Buffer.from(body.content, "base64").toString("utf8"));
   } catch (err) {
@@ -50,25 +54,36 @@ export async function definedAt(client, repo, head) {
 }
 
 /**
- * One snapshot of the PR: the PR, its head commit, the files, the jobs of the head's workflow, every check run and workflow
- * run of the head. The files and the workflow jobs are read once per head commit (`cache`).
+ * One snapshot of the PR: the PR, its head commit, the files, the jobs of the workflow that its runs use, every check run
+ * and workflow run of the head. The files are read once per head commit and the jobs once per workflow commit (`cache`).
  */
 export async function readSnapshot(client, number, cache = new Map()) {
   const repo = await repoName(client);
   const pr = pullOf(await json(client, ["api", `repos/${repo}/pulls/${number}`]));
   const head = pr.head;
-  if (!cache.has(head)) {
+  if (!cache.has(`files:${head}`)) {
     const files = await restList(client, `repos/${repo}/pulls/${number}/files`, MAX_FILES);
-    cache.set(head, {
-      files: files.map((f) => f.filename),
-      defined: await definedAt(client, repo, head),
-    });
+    cache.set(
+      `files:${head}`,
+      files.map((f) => f.filename),
+    );
+  }
+  const workflowSha = pr.mergeCommit ?? head;
+  if (!cache.has(`defined:${workflowSha}`)) {
+    cache.set(`defined:${workflowSha}`, await definedAt(client, repo, workflowSha));
   }
   const checks = `repos/${repo}/commits/${head}/check-runs?filter=all`;
   const runs = `repos/${repo}/actions/runs?head_sha=${head}`;
   const checkRuns = await pagedKey(client, checks, "check_runs");
   const workflowRuns = await pagedKey(client, runs, "workflow_runs");
-  return { pr, head, ...cache.get(head), checkRuns, workflowRuns };
+  return {
+    pr,
+    head,
+    files: cache.get(`files:${head}`),
+    defined: cache.get(`defined:${workflowSha}`),
+    checkRuns,
+    workflowRuns,
+  };
 }
 
 const progressOf = (a) => {
@@ -81,7 +96,7 @@ const progressOf = (a) => {
 };
 
 /**
- * Polls until the PR is final: merged, closed, conflicting, or settled (nothing unfinished for SETTLE_MS, measured
+ * Polls until the PR is final: merged, closed, a draft (no CI run, issue 1608), conflicting, or settled (nothing unfinished for SETTLE_MS, measured
  * from the first settled poll of the head). Returns the last assessment; `status: "timeout"` when the time is up.
  * deps: read(number) -> snapshot, sleep(ms), now() -> ms, log(line), timeoutMs.
  */
@@ -103,7 +118,7 @@ export async function waitForCi(number, deps) {
       await sleep(pollMs);
       continue;
     }
-    if (a.status === "merged" || a.status === "closed" || a.status === "conflict") return a;
+    if (["merged", "closed", "conflict", "draft"].includes(a.status)) return a;
     if (a.status === "settled") {
       if (quiet?.head !== a.head) quiet = { head: a.head, since: now() };
       if (now() - quiet.since >= settleMs) return a;

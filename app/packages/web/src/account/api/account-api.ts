@@ -49,6 +49,13 @@ export type AccountProfile = {
 type Environment = Record<string, string | undefined>;
 type FetchFn = typeof fetch;
 
+/**
+ * A request to the sign-in service (discovery, token exchange, sign-out there) or to our own API (the account load)
+ * gives up after this many seconds, so an unanswering service shows its error instead of a loading state (US-ACC-01).
+ * Starting value, assumption.
+ */
+export const REQUEST_TIMEOUT_SECONDS = 15;
+
 /** Settings for the sign-in service (code flow with PKCE); defaults match `make auth-up`. */
 export function oidcSettings(env: Environment, origin: string): UserManagerSettings {
   return {
@@ -60,7 +67,18 @@ export function oidcSettings(env: Environment, origin: string): UserManagerSetti
     scope: "openid profile email",
     ui_locales: "de",
     automaticSilentRenew: true,
+    requestTimeoutInSeconds: REQUEST_TIMEOUT_SECONDS,
   };
+}
+
+/**
+ * The address the sign-in returns to: the path the person is on (US-BES-17, #1619). Same origin only: a path like
+ * `//evil.example/x` or `/\evil.example` resolves to another origin and falls back to the start page. The query and the
+ * hash are dropped, because the callback adds its own.
+ */
+export function returnAddress(origin: string, pathname: string): string {
+  const url = new URL(pathname, origin);
+  return url.origin === origin ? `${origin}${url.pathname}` : `${origin}/`;
 }
 
 export const apiUrl = (env: Environment): string => env["VITE_API_URL"] ?? "http://localhost:3000";
@@ -76,7 +94,10 @@ export async function getAccount(
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Account> {
-  const res = await fetchFn(`${api}/account`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetchFn(`${api}/account`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
+  });
   if (res.status === 401) throw new Error("not_signed_in");
   if (res.status === 403 && (await invitationRequired(res))) throw new Error("invitation_required");
   if (!res.ok) throw new Error("account_not_loadable");
@@ -92,6 +113,7 @@ export async function signOutEverywhere(
   const res = await fetchFn(`${authority}/account/sessions`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
   });
   if (!res.ok) throw new Error("sign_out_failed");
 }

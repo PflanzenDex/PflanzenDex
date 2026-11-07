@@ -485,14 +485,18 @@ test("US-DEV-06 on localhost the sign-in host is resolved to the loopback with t
 // A deploy.sh copy in a folder of its own, with stubs for git, docker compose and sleep, and a smoke.sh stub that records what
 // it gets and fails on its first call only: the deploy fails, the rollback to the previous commit passes. The events log
 // lists the steps in order: health (a healthy check), realm (the realm wait inside keycloak), master-realm, smoke.
-// STUB_REALM=never makes the realm wait fail: the realm never answers 200.
+// STUB_REALM=never makes the realm wait fail: the realm never answers 200. The changes log lists, in order, the steps that
+// change the host or the stack: backup (backup.sh, only when the database runs; STUB_BACKUP_EXIT sets its exit status),
+// checkout (git) and up (compose). STUB_DB=running makes `compose ps --status running` list db; STUB_PS=fail makes it fail.
 function deployHarness() {
   const root = tempDir("deploy-harness-");
   const dep = join(root, "config", "deploy");
   const stubs = join(root, "stubs");
   const log = join(root, "smoke-calls.log");
   const events = join(root, "events.log");
+  const changes = join(root, "changes.log");
   writeFileSync(events, "");
+  writeFileSync(changes, "");
   mkdirSync(join(dep, "scripts"), { recursive: true });
   mkdirSync(join(dep, "keycloak"), { recursive: true });
   mkdirSync(stubs);
@@ -515,15 +519,24 @@ printf 'base=%s auth=%s authopts=%s user=%s password=%s\\n' "$1" "$SMOKE_AUTH_UR
 exit 0
 `,
   );
-  // docker compose: no volume yet, the api and keycloak answer healthy, no database running (no backup). The realm answers
-  // inside keycloak unless STUB_REALM=never.
+  // A backup stub: it runs only when the database runs (US-DEV-07).
+  writeFileSync(
+    join(dep, "scripts", "backup.sh"),
+    `#!/usr/bin/env bash\necho backup >> '${changes}'\nexit \${STUB_BACKUP_EXIT:-0}\n`,
+  );
+  // docker compose: no volume yet, the api and keycloak answer healthy, no database running (no backup) unless STUB_DB=running.
+  // The realm answers inside keycloak unless STUB_REALM=never.
   writeFileSync(
     join(stubs, "docker"),
     `#!/usr/bin/env bash
 case "$*" in
   *"volume inspect"*) exit 1 ;;
+  *"ps --status running"*)
+    if [ "\${STUB_PS:-}" = fail ]; then echo "compose: cannot reach the daemon" >&2; exit 1; fi
+    if [ "\${STUB_DB:-}" = running ]; then echo db; fi ;;
   *"--format"*) printf 'api healthy\\nkeycloak healthy\\n'; echo health >> '${events}' ;;
   *"exec"*"keycloak"*) echo realm >> '${events}'; [ "\${STUB_REALM:-}" != never ] || exit 1 ;;
+  *" up "*) echo up >> '${changes}' ;;
 esac
 exit 0
 `,
@@ -535,6 +548,7 @@ case "$*" in
   "rev-parse --short HEAD") echo abc1234 ;;
   "rev-parse HEAD") echo abc1234fullsha ;;
   "describe --tags --always") echo v0.1.0 ;;
+  checkout*) echo checkout >> '${changes}' ;;
 esac
 exit 0
 `,
@@ -543,7 +557,8 @@ exit 0
   for (const name of ["docker", "git", "sleep"]) chmodSync(join(stubs, name), 0o755);
   chmodSync(join(dep, "keycloak", "master-realm.sh"), 0o755);
   chmodSync(join(dep, "scripts", "smoke.sh"), 0o755);
-  return { dep, stubs, log, events };
+  chmodSync(join(dep, "scripts", "backup.sh"), 0o755);
+  return { dep, stubs, log, events, changes };
 }
 
 test("US-DEV-06 a failed sign-in smoke test still rolls deploy.sh back, and smoke.sh gets the tester and the sign-in address (#1404)", () => {
@@ -738,4 +753,66 @@ test("TE-03 a realm that never answers stops the deploy before master-realm.sh a
   assert.ok(!steps.includes("smoke"), "the smoke test did not run");
   // 60 tries for the deploy and 60 for the rollback: the previous commit waits for the same realm.
   assert.equal(steps.filter((step) => step === "realm").length, 120);
+});
+
+// --- Backup before the deploy (US-DEV-07, P-10): a failing `compose ps` stops the deploy before any change; a running
+// database is backed up first; a stopped one (a first deploy) is said so on stdout and the deploy goes on.
+
+// Runs the deploy.sh of a harness with the stub variables of env.
+function runDeploy(harness, env = {}) {
+  return spawnSync("bash", [join(harness.dep, "scripts", "deploy.sh")], {
+    encoding: "utf8",
+    env: { PATH: `${harness.stubs}:${process.env.PATH}`, ...env },
+  });
+}
+
+// The lines of a log of the harness (an empty log has none).
+const logLines = (file) => readFileSync(file, "utf8").split("\n").filter(Boolean);
+
+test("US-DEV-07 a failing compose ps stops the deploy before any change, with an ERROR line and compose's own text (P-10)", () => {
+  const harness = deployHarness();
+  const r = runDeploy(harness, { STUB_PS: "fail" });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(
+    r.stderr,
+    /^ERROR: docker compose --env-file \.env ps --status running --services failed; the database state is unknown/m,
+  );
+  assert.match(r.stderr, /compose: cannot reach the daemon/);
+  assert.doesNotMatch(r.stderr, /rolling back/, "nothing was changed, so nothing is rolled back");
+  assert.deepEqual(logLines(harness.changes), [], "no backup, no checkout, no compose up");
+  assert.deepEqual(logLines(harness.events), [], "no health check, realm wait or smoke test");
+});
+
+test("US-DEV-07 a running database is backed up first, before the checkout and the up", () => {
+  const harness = deployHarness();
+  // The smoke test fails once, so the deploy rolls back, as in the other deploy tests; the backup runs once, for the deploy.
+  const r = runDeploy(harness, { STUB_DB: "running" });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const changes = logLines(harness.changes);
+  assert.equal(changes[0], "backup");
+  assert.equal(changes.filter((step) => step === "backup").length, 1, "one backup per deploy");
+  assert.ok(changes.indexOf("checkout") > 0, "the checkout follows the backup");
+  assert.doesNotMatch(r.stdout, /backup skipped/);
+});
+
+test("US-DEV-07 a failing backup stops the deploy before any change, with the backup's exit status (P-10)", () => {
+  const harness = deployHarness();
+  const r = runDeploy(harness, { STUB_DB: "running", STUB_BACKUP_EXIT: "3" });
+  assert.equal(r.status, 3, r.stdout + r.stderr);
+  assert.deepEqual(logLines(harness.changes), ["backup"], "no checkout, no compose up");
+  assert.deepEqual(logLines(harness.events), []);
+  assert.doesNotMatch(r.stderr, /rolling back/);
+});
+
+test("US-DEV-07 a stopped database (a first deploy) skips the backup and says so on stdout, then the deploy goes on (P-10)", () => {
+  const harness = deployHarness();
+  const r = runDeploy(harness, {});
+  assert.match(
+    r.stdout,
+    /^backup skipped: the database is not running \(a first deploy or a stopped stack\)$/m,
+  );
+  const changes = logLines(harness.changes);
+  assert.ok(!changes.includes("backup"), "no backup");
+  assert.equal(changes[0], "checkout");
+  assert.ok(changes.includes("up"), "the deploy went on");
 });

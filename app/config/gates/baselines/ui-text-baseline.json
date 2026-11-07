@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1248,
+  "maxTotal": 1228,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -286,10 +286,6 @@
       "count": 7
     },
     {
-      "file": "packages/web/src/collection/care-profile/sections/kept-profile-card/kept-profile-card.tsx",
-      "count": 1
-    },
-    {
       "file": "packages/web/src/collection/collection-page/collection-page.tsx",
       "count": 1
     },
@@ -322,16 +318,8 @@
       "count": 5
     },
     {
-      "file": "packages/web/src/collection/markers/repot/repot-form/repot-form.tsx",
-      "count": 5
-    },
-    {
       "file": "packages/web/src/collection/other-pages/difficulty-page/difficulty-page.tsx",
       "count": 12
-    },
-    {
-      "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
-      "count": 6
     },
     {
       "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-location/plant-location.tsx",
@@ -398,10 +386,6 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/app/destinations/collection-area/area-header/area-header.tsx",
-      "count": 2
-    },
-    {
       "file": "packages/web/src/app/destinations/collection-area/collection-area.tsx",
       "count": 3
     },
@@ -423,10 +407,6 @@
     },
     {
       "file": "packages/web/src/app/destinations/collection-area/sammlung-header/sammlung-header.tsx",
-      "count": 2
-    },
-    {
-      "file": "packages/web/src/collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
       "count": 2
     },
     {
@@ -474,20 +454,12 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/equipment/equipment-form/equipment-form.tsx",
-      "count": 3
-    },
-    {
       "file": "packages/web/src/equipment/equipment-form/fields/fields.tsx",
       "count": 14
     },
     {
       "file": "packages/web/src/equipment/equipment-page/equipment-page.tsx",
       "count": 7
-    },
-    {
-      "file": "packages/web/src/equipment/equipment-page/equipment-screen/item-card/item-card.tsx",
-      "count": 1
     },
     {
       "file": "packages/web/src/equipment/equipment-page/lamp-actions/save-with-undo.ts",

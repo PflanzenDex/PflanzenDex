@@ -83,8 +83,8 @@ export const aiAreaRead = (name: AreaName) => (deps: AreaReadDependencies, call:
 };
 
 /**
- * A read of friends' data, sharing, offers, swaps or partner data (FR-KI-10): never released, refused with
- * `ai.not_released` and logged like every call (FR-KI-19), whatever the connection's rights.
+ * A call for friends' data, sharing, offers, swaps, partner data or a human-only function (FR-KI-10, FR-KI-22): never
+ * released, refused with `ai.not_released` and logged like every call (FR-KI-19), whatever the connection's rights.
  */
 export async function aiNotReleased(
   deps: { readonly log: AiLogStore },

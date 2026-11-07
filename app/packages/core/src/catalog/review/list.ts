@@ -1,7 +1,7 @@
 import { appError, failed, ok, type Result } from "../../kernel";
 import { checkApprovalReadiness, type ApprovalIssue } from "./approval";
 import { normalize, withExactBeyondCap, type Species, type SpeciesStore } from "../species";
-import { OPEN, type ReviewCase, type ReviewStore } from "../types";
+import { OPEN, type ApprovedDuplicate, type ReviewCase, type ReviewStore } from "../types";
 
 /** An existing approved species that looks like the proposal (duplicate hint, US-BES-10). */
 export interface SimilarSpecies {
@@ -27,6 +27,16 @@ export interface ReviewList {
   /** Creation time of the oldest open proposal, `null` if none; the age is derived from it, never stored. */
   readonly oldestOpenAt: string | null;
   readonly entries: readonly ReviewEntry[];
+  /** Approved species that share a Latin name, read-only: they cannot be merged yet (US-BES-10, issue 1583). */
+  readonly duplicates: readonly ApprovedDuplicate[];
+}
+
+/** The name issue of an open entry: an approved species (in `similar`) holds the same Latin name (US-BES-10). */
+function nameIssues(content: Species, similar: readonly SimilarSpecies[]): ApprovalIssue[] {
+  const key = normalize(content.latinName);
+  return similar.some((s) => normalize(s.latinName) === key)
+    ? [{ field: "latinName", reason: "name_approved" }]
+    : [];
 }
 
 async function similarTo(species: SpeciesStore, userId: string, s: Species) {
@@ -67,16 +77,21 @@ export async function catalogList(
           ? await species.findForReview(userId, reviewCase.objectId)
           : null;
       const open = OPEN.includes(reviewCase.status);
+      const similar = content && open ? await similarTo(species, userId, content) : [];
       return {
         reviewCase,
         species: content,
         aiCreated: reviewCase.status === "ai_unreviewed",
-        issues: content && open ? checkApprovalReadiness(content) : [],
-        similar: content && open ? await similarTo(species, userId, content) : [],
+        issues:
+          content && open
+            ? [...checkApprovalReadiness(content), ...nameIssues(content, similar)]
+            : [],
+        similar,
       };
     }),
   );
   const stillOpen = cases.filter((c) => OPEN.includes(c.status));
   const oldest = stillOpen.map((c) => c.createdAt).sort()[0] ?? null;
-  return ok({ open: stillOpen.length, oldestOpenAt: oldest, entries });
+  const duplicates = await store.approvedDuplicates(userId);
+  return ok({ open: stillOpen.length, oldestOpenAt: oldest, entries, duplicates });
 }

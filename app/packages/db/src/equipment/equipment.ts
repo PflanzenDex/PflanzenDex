@@ -53,8 +53,10 @@ export class EquipmentPostgres {
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<EquipmentRow>(
-          `insert into equipment (account_id, type, name, status, manufacturer, model, product_id, price_eur, bought_at, note, light_zone_id, supply)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, case when $4::text is null then 'available' end) returning ${COLUMNS}`,
+          `insert into equipment (account_id, type, name, status, manufacturer, model, product_id, price_eur, bought_at, note, light_zone_id, supply,
+                                  diameter_cm, height_cm, material, drainage)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, case when $4::text is null then 'available' end,
+                   $12, $13, $14, $15) returning ${COLUMNS}`,
           [
             userId,
             v.type,
@@ -67,6 +69,10 @@ export class EquipmentPostgres {
             v.boughtAt,
             v.note,
             v.lightZoneId,
+            v.diameterCm,
+            v.heightCm,
+            v.material,
+            v.drainage,
           ],
         ),
       );

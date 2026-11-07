@@ -8,7 +8,8 @@ import type { SpeciesValues } from "../species";
 
 export interface ApprovalIssue {
   readonly field: keyof SpeciesValues;
-  readonly reason: "missing" | "source_missing";
+  /** `name_approved`: an approved species holds the same Latin name; the review list adds it (US-BES-10), not this check. */
+  readonly reason: "missing" | "source_missing" | "name_approved";
 }
 
 const blank = (value: string | null | undefined): boolean => !value || value.trim() === "";

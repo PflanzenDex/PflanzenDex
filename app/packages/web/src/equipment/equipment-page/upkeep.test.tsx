@@ -42,6 +42,10 @@ const base = {
   agentLink: null,
   assignedSpecimenId: null,
   assignedLocationId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 const ITEMS = [
   { ...base, id: "t1", type: "Timer", name: "Timer A", status: "active" },

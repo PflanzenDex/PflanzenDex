@@ -18,6 +18,12 @@ export const EQUIPMENT_ERROR_TEXTS = {
   "equipment.target_unknown":
     "Diese Pflanze oder diesen Standort gibt es nicht. Lade die Auswahl neu.",
   "equipment.no_status": "Verbrauchsmaterial hat keinen Betriebszustand. Es wurde nichts geändert.",
+  "equipment.pot_not_found":
+    "Diesen Topf gibt es nicht, oder er ist nicht aktiv. Wähle einen anderen Topf oder lege einen neuen an.",
+  "equipment.pot_taken":
+    "Dieser Topf ist schon mit einer anderen Pflanze belegt. Wähle einen freien Topf; es wurde nichts geändert.",
+  "equipment.not_a_plant":
+    "Nur eine Pflanze steht in einem Topf. Topfe den Steckling zuerst ein, dann kannst du ihm einen Topf zuordnen.",
   "location.in_use":
     "Dieser Standort wird noch genutzt (Pflanzen, Pflegeprofile oder Sensoren) und kann nicht gelöscht werden. Ordne sie zuerst einem anderen Standort zu.",
   "location.not_empty":
