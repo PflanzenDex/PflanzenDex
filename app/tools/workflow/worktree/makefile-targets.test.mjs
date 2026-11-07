@@ -74,9 +74,12 @@ test("US-DEV-01 the local-only targets name this worktree's database, not a valu
 // exits 0. The recipes run in a real shell, so a value that a shell would execute stays text, and a tool gets exactly the
 // arguments of its recipe. `extra` is shell code that runs before the exit (docker: `start` decides a new or a reused container).
 const fakeTool = (extra = "") => `#!/bin/sh
+# The number is taken under a lock (mkdir is atomic): the suites of ci-tests-base run at once (US-QG-02, issue 1698).
+while ! mkdir "$RECORD_DIR/lock" 2>/dev/null; do :; done
 n=$(cat "$RECORD_DIR/seq" 2>/dev/null || echo 0)
 n=$((n + 1))
 echo "$n" > "$RECORD_DIR/seq"
+rmdir "$RECORD_DIR/lock"
 rec="$RECORD_DIR/$(printf '%04d' "$n")-$(basename "$0")"
 { for a in "$@"; do printf '%s\\0' "$a"; done; } > "$rec.args"
 env > "$rec.env"
@@ -88,7 +91,7 @@ const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 
 // Runs `make --no-print-directory -C <root> <args>` with the fakes on the PATH; `docker` adds a fake docker, `new` when its
 // `start` fails (the container is created) and `reused` when it succeeds (docker start reuses the container).
-function makeRun(t, args, { env = {}, docker = null, npm = "" } = {}) {
+function makeRun(t, args, { env = {}, docker = null, dockerShell = null, npm = "" } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "make-values-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const bin = path.join(dir, "bin");
@@ -99,6 +102,8 @@ function makeRun(t, args, { env = {}, docker = null, npm = "" } = {}) {
   const tools = { node: fakeTool(), npm: fakeTool(npm), npx: fakeTool() };
   if (docker === "new") tools.docker = fakeTool('case "$1" in start) exit 1 ;; esac');
   if (docker === "reused") tools.docker = fakeTool('case "$1" in start) exit 0 ;; esac');
+  // `dockerShell` is shell code for a fake docker that answers by subcommand (ci-db-tune: `ps`, `show fsync`).
+  if (dockerShell !== null) tools.docker = fakeTool(dockerShell);
   for (const [name, text] of Object.entries(tools))
     writeFileSync(path.join(bin, name), text, { mode: 0o755 });
   // MAKEFLAGS, MAKELEVEL and MFLAGS come from an outer make; CI and FRESH are set only where a test says so (a FRESH of the
@@ -217,7 +222,8 @@ test("US-DEV-13 a value of the job list, the layout options or the branch runs n
 });
 
 // US-QG-01 (owner decision 2026-11-07): the UI gates of CI run once per shard. ui-gates seeds the demo once, then runs
-// one-screen and a11y-routes on the same shard; a failed one-screen does not stop a11y-routes, and the run fails.
+// one-screen and a11y-routes on the same shard in one Playwright run (US-QG-02, issue 1698): both projects, no early stop, so a
+// failed one-screen test does not stop a11y-routes, and the run fails.
 test("US-QG-01 the UI gates run once per shard: one seed, then one-screen and a11y-routes on the same shard", (t) => {
   const prerequisites = ["-o", "db-up", "-o", "auth-up", "-o", "migrate", "-o", "browsers"];
   const args = [...prerequisites, "ui-gates", "SHARD=2/4", "-j3", "-Otarget"];
@@ -226,23 +232,35 @@ test("US-QG-01 the UI gates run once per shard: one seed, then one-screen and a1
   const npm = calls(run).filter((call) => call.tool === "npm");
   assert.deepEqual(
     npm.map((call) => call.args[1]),
-    ["seed:demo", "one-screen", "a11y-routes"],
-    "one seed, then the two gates",
+    ["seed:demo", "ui-gates"],
+    "one seed, then one run of both gates",
   );
   assert.equal(npm[1].env.ONE_SCREEN_SHARD, "2/4");
-  assert.equal(npm[2].env.A11Y_ROUTES_SHARD, "2/4");
+  assert.equal(npm[1].env.A11Y_ROUTES_SHARD, "2/4");
   assert.equal(npm[1].env.TAXONOMY_BUILD, "off");
-  assert.equal(npm[2].env.TAXONOMY_BUILD, "off");
+
+  // The one run holds both gate projects and never stops early, so a11y-routes runs and is judged after one-screen failed.
+  const e2e = JSON.parse(
+    readFileSync(new URL("../../../packages/e2e/package.json", import.meta.url), "utf8"),
+  );
+  const script = e2e.scripts["ui-gates"];
+  assert.match(script, /--project=one-screen\b/);
+  assert.match(script, /--project=a11y-routes\b/);
+  assert.doesNotMatch(
+    script,
+    /--max-failures|\s-x\b|--pass-with-no-tests|--last-failed|--only-changed/,
+  );
+  assert.match(
+    script,
+    /E2E_WEB_BUILD=1/,
+    "the gates run against the production build (issue 1680)",
+  );
 
   const failing = makeRun(t, args, {
     env: { CI: "1" },
-    npm: 'case "$2" in one-screen) exit 1 ;; esac',
+    npm: 'case "$2" in ui-gates) exit 1 ;; esac',
   });
   assert.notEqual(failing.status, 0, failing.out);
-  const ran = calls(failing)
-    .filter((call) => call.tool === "npm")
-    .map((call) => call.args[1]);
-  assert.deepEqual(ran, ["seed:demo", "one-screen", "a11y-routes"], "a11y-routes runs after it");
 });
 
 test("US-QG-01 ui-gates refuses SCREEN, with or without SHARD: one screen is make one-screen", (t) => {
@@ -338,6 +356,46 @@ test("US-QG-02 db-up sets fsync, synchronous_commit and full_page_writes off aft
     assert.ok(reusedSettings.args.includes(statement), statement);
 });
 
+// A fake docker for ci-db-tune: `ps` prints the container ids (space-separated, none for ""), `show fsync` prints `fsync`.
+const ciDocker = (ids, fsync) =>
+  `case "$1" in ps) printf '%s\\n' ${ids} ;; esac\ncase "$*" in *"show fsync"*) echo ${fsync} ;; esac`;
+
+test("US-QG-02 ci-db-tune sets fsync, synchronous_commit and full_page_writes off on the one Postgres service of the CI job (issue 1698)", (t) => {
+  const offStatements = [
+    "alter system set fsync = off",
+    "alter system set synchronous_commit = off",
+    "alter system set full_page_writes = off",
+    "select pg_reload_conf()",
+  ];
+
+  const one = makeRun(t, ["ci-db-tune"], { dockerShell: ciDocker("abc123", "off") });
+  assert.equal(one.status, 0, one.out);
+  assert.match(one.out, /ci-db-tune: fsync, synchronous_commit and full_page_writes off/);
+  const execs = calls(one).filter((call) => call.tool === "docker" && call.args[0] === "exec");
+  for (const call of execs)
+    assert.equal(call.args[1], "abc123", "every exec goes to the one service container");
+  const settings = execs.find((call) => call.args.includes(offStatements[0]));
+  assert.ok(settings, "the alter system statements run in the container");
+  for (const statement of offStatements) assert.ok(settings.args.includes(statement), statement);
+  assert.ok(
+    execs.some((call) => call.args.includes("show fsync")),
+    "the setting is read back",
+  );
+
+  const none = makeRun(t, ["ci-db-tune"], { dockerShell: ciDocker("", "off") });
+  assert.notEqual(none.status, 0, "no container is an error");
+  assert.match(none.out, /expected one container that publishes port \S+, found 0/);
+  assert.equal(
+    calls(none).some((call) => call.tool === "docker" && call.args[0] === "exec"),
+    false,
+    "nothing runs when no container is found",
+  );
+
+  const stuck = makeRun(t, ["ci-db-tune"], { dockerShell: ciDocker("abc123", "on") });
+  assert.notEqual(stuck.status, 0, "a database that still reports fsync on is an error");
+  assert.match(stuck.out, /does not report fsync off after 10 checks/);
+});
+
 test("US-QG-02 make ci has no prerequisite that could stop the parts runner, and the CI targets keep theirs", (t) => {
   const ci = makeRun(t, ["-n", "ci"]);
   assert.equal(ci.out.trim(), "cd app && npm run ci");
@@ -358,4 +416,68 @@ test("US-DEV-13 FRESH reaches npm run gates as the environment variable: set whe
   const value = `x$(shell touch ${marker.file})`;
   assert.equal(callOf(gates([`FRESH=${value}`]), "gates").env.FRESH, value);
   assert.equal(marker.ran(), false, "FRESH ran a command");
+});
+
+// US-QG-02 (issue 1698): ci-tests-base runs the api suite first; db, core and the tool tests run after it, at once. Every suite
+// runs even when another one failed, and the run fails when one did. The fake npm marks the end of the api suite, so a db suite
+// that starts before the api suite has ended is recorded as an overlap (api and db share the test database).
+const SUITE_ORDER = `case "$2" in ci:tests:api) : > "$RECORD_DIR/api-done" ;; ci:tests:db) test -f "$RECORD_DIR/api-done" || : > "$RECORD_DIR/overlap" ;; esac`;
+
+test("US-QG-02 ci-tests-base runs the api suite first, then db, core and the tool tests, and every suite also after a failure (issue 1698)", (t) => {
+  const suites = ["ci:tests:api", "ci:tests:db", "ci:tests:core", "ci:tests:tools"];
+  const ran = (run) =>
+    calls(run)
+      .filter((call) => call.tool === "npm")
+      .map((call) => call.args[1]);
+
+  const run = makeRun(t, ["-o", "db-up", "ci-tests-base"], { env: { CI: "1" }, npm: SUITE_ORDER });
+  assert.equal(run.status, 0, run.out);
+  const order = ran(run);
+  assert.equal(order[0], "ci:tests:api", "the api suite runs first");
+  assert.deepEqual(
+    order.slice(1).sort(),
+    suites.slice(1).sort(),
+    "then db, core and the tool tests",
+  );
+  assert.equal(
+    existsSync(path.join(run.record, "overlap")),
+    false,
+    "db started before the api suite ended",
+  );
+
+  // The suites of CI are the workspaces of the local part ci:tests:workspaces, each with the same arguments: a workspace
+  // added there and not here would be skipped in CI.
+  const scripts = JSON.parse(
+    readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
+  ).scripts;
+  const [head, args] = scripts["ci:tests:workspaces"].split(" -- ");
+  assert.ok(head.startsWith("npm run test -w ") && args, scripts["ci:tests:workspaces"]);
+  const workspaces = head
+    .slice("npm run test".length)
+    .split(" -w ")
+    .map((w) => w.trim())
+    .filter(Boolean);
+  assert.deepEqual(
+    workspaces.map((w) => scripts[`ci:tests:${w.replace("@pflanzendex/", "")}`]).sort(),
+    workspaces.map((w) => `npm run test -w ${w} -- ${args}`).sort(),
+    "every workspace of ci:tests:workspaces has its suite script with the same arguments",
+  );
+  assert.deepEqual(
+    workspaces.map((w) => `ci:tests:${w.replace("@pflanzendex/", "")}`).sort(),
+    suites.filter((s) => s !== "ci:tests:tools").sort(),
+    "ci-tests-base runs exactly those suites",
+  );
+
+  for (const failing of ["ci:tests:api", "ci:tests:core"]) {
+    const failed = makeRun(t, ["-o", "db-up", "ci-tests-base"], {
+      env: { CI: "1" },
+      npm: `${SUITE_ORDER}\ncase "$2" in ${failing}) exit 1 ;; esac`,
+    });
+    assert.notEqual(failed.status, 0, `${failing} fails the run`);
+    assert.deepEqual(
+      ran(failed).sort(),
+      [...suites].sort(),
+      `every suite runs when ${failing} failed`,
+    );
+  }
 });

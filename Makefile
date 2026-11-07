@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -127,13 +127,21 @@ docs-check: ## Lint markdown and check relative links (QG-U2)
 # Docker host: DROP DATABASE forced a checkpoint that took 18-19 s, up to 12 s of it the disk sync, past the 10 s limit of the
 # afterAll hook of the API suite. With the three settings off a checkpoint takes 0.1 s and the API suite 31 s instead of 46-65 s.
 # The settings are applied after every start, so a container that `docker start` reuses gets them too: ALTER SYSTEM writes
-# postgresql.auto.conf, and all three are reloadable (no restart). CI does not call this target: its Postgres service keeps
-# the defaults.
+# postgresql.auto.conf, and all three are reloadable (no restart). CI does not call this target; its jobs with a Postgres
+# service call `ci-db-tune` right after checkout, which sets the same three on the service container (issue 1698).
 db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running; fsync, synchronous_commit and full_page_writes off on every start (issue 1636)
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory "$$RAW_DB_MEMORY" \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395 >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -h 127.0.0.1 -d pflanzendex_test; do sleep 1; done
 	@docker exec $(DB_CONTAINER) psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null
+
+# CI only (issue 1698). The service container is found by its published port: the runner may have no psql, and right after
+# checkout there is no node_modules, so the recipe uses docker alone. It fails unless exactly one container publishes the port.
+ci-db-tune: ## CI only (US-QG-02, issue 1698): the Postgres service of a CI job runs with fsync, synchronous_commit and full_page_writes off, as db-up does locally (issue 1636); the database is throwaway; fails when the database refuses
+	@set -- $$(docker ps -q --filter publish=$(DB_PORT)); [ $$# -eq 1 ] || { echo "ci-db-tune: expected one container that publishes port $(DB_PORT), found $$#" >&2; exit 1; }; id=$$1; \
+	docker exec "$$id" psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null && n=0 && \
+	while [ "$$(docker exec "$$id" psql -U postgres -tAc "show fsync")" != off ]; do n=$$((n + 1)); [ $$n -lt 10 ] || { echo "ci-db-tune: the database does not report fsync off after $$n checks" >&2; exit 1; }; sleep 0.2; done && \
+	echo "ci-db-tune: fsync, synchronous_commit and full_page_writes off"
 
 db-down: ## Remove the test database with its data (the volume too), so the next db-up starts empty
 	-docker rm -f -v $(DB_CONTAINER)
@@ -226,9 +234,11 @@ a11y-routes: $(if $(CI),,db-up) auth-up migrate browsers ## axe and keyboard wal
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes
 
-ui-gates: $(if $(value SCREEN),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up migrate browsers ## CI only (US-QG-01): both UI gates in one pass over the screens of SHARD=<i>/<n>, the split of the register; the demo is seeded once, then one-screen runs and a11y-routes runs too when one-screen failed; exit 1 when either gate failed; needs Docker
+ui-gates-seed: $(if $(CI),,db-up) auth-up migrate ## CI only (US-QG-02, issue 1698): seeds the demo for make ui-gates (DEMO_SEED_PROFILE=states); a prerequisite of ui-gates, so with -j it runs while the browsers install; needs Keycloak and a migrated database
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
-	cd $(APP) || exit 1; rc=0; TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen || rc=1; TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes || rc=1; exit $$rc
+
+ui-gates: $(if $(value SCREEN),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up migrate browsers ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browsers install; every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
+	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
 
 a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
 	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."
@@ -348,8 +358,20 @@ ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and
 
 # Part 2 in CI as jobs (issue 1125): the web suite runs as two shard jobs whose blob reports the job `results` merges (issue 1682);
 # the ratchet and CRAP check read the coverage outputs afterwards. Together they are exactly `make ci-tests`.
-ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests
-	cd $(APP) && npm run ci:tests:base
+# Measured in run 42421391215 (issue 1698): the api suite 60-92 s at 85 % CPU, the db suite 40-59 s at about 30 % CPU (its files
+# run one after another, fileParallelism: false), the core suite 13-19 s and the tool tests 22-26 s. api and db share the test
+# database (db creates tables), so db starts only after api has ended; core and the tool tests need no database and run beside db.
+ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests; the api suite first, then the db suite (its files one after another), the core suite and the tool tests at once, since api and db share the test database (US-QG-02, issue 1698); every suite runs even when another failed
+	cd $(APP) && rc=0; npm run ci:tests:api || rc=1; cd .. && $(MAKE) --no-print-directory -k -j3 -Otarget ci-tests-db ci-tests-core ci-tests-tools || rc=1; exit $$rc
+
+ci-tests-db: ## Part of ci-tests-base (US-QG-02, issue 1698): the db suite with coverage, its files one after another
+	cd $(APP) && npm run ci:tests:db
+
+ci-tests-core: ## Part of ci-tests-base (US-QG-02, issue 1698): the core suite with coverage
+	cd $(APP) && npm run ci:tests:core
+
+ci-tests-tools: ## Part of ci-tests-base (US-QG-02, issue 1698): the tool tests
+	cd $(APP) && npm run ci:tests:tools
 
 ci-tests-web: ## Part 2b: web tests with coverage; SHARD=<i>/<n> runs one part and writes its blob report (CI, US-QG-02)
 	cd $(APP) && if [ -n "$$RAW_SHARD" ]; then npm run ci:tests:web:shard -- --shard="$$RAW_SHARD"; else npm run ci:tests:web; fi

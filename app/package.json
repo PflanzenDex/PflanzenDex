@@ -51,6 +51,9 @@
     "ci:tests": "npm run ci:tests:base && npm run ci:tests:web && npm run ci:coverage",
     "ci:tests:base": "npm run ci:tests:workspaces && npm run ci:tests:tools",
     "ci:tests:workspaces": "npm run test -w @pflanzendex/api -w @pflanzendex/core -w @pflanzendex/db -- --coverage",
+    "ci:tests:api": "npm run test -w @pflanzendex/api -- --coverage",
+    "ci:tests:core": "npm run test -w @pflanzendex/core -- --coverage",
+    "ci:tests:db": "npm run test -w @pflanzendex/db -- --coverage",
     "ci:tests:tools": "npm run test:tools",
     "ci:tests:web": "npm run test -w @pflanzendex/web -- --coverage --maxWorkers=100%",
     "ci:tests:web:shard": "npm run ci:tests:web -- --coverage.thresholds=false --reporter=default --reporter=blob",
@@ -71,6 +74,7 @@
     "a11y-routes": "npm run a11y-routes -w @pflanzendex/e2e",
     "a11y-routes:write": "npm run a11y-routes:write -w @pflanzendex/e2e",
     "a11y-routes:baseline": "npm run a11y-routes:baseline -w @pflanzendex/e2e --",
+    "ui-gates": "npm run ui-gates -w @pflanzendex/e2e",
     "changelog": "node tools/check/release/check-changelog.mjs",
     "storybook": "npm run storybook -w @pflanzendex/web",
     "build-storybook": "npm run build-storybook -w @pflanzendex/web"
