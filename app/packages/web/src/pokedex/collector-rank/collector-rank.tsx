@@ -7,6 +7,7 @@ import {
   milestoneTreeOf,
   treeTotalsOf,
   type CaughtSpecies,
+  type CollectorRank as Rank,
   type PokedexTree,
   type TreeTotals,
 } from "@pflanzendex/core";
@@ -18,6 +19,17 @@ import table from "./collector-rank.de.json";
 export const PROGRESS_LAYER = "progress";
 
 const ui = texts(table);
+
+/** The text key of each rank: the keys of a message table are camelCase (FR-QG-26). */
+const RANK_KEY: Record<Rank, keyof typeof table> = {
+  seedling: "seedling",
+  sapling: "sapling",
+  young_plant: "youngPlant",
+  bloomer: "bloomer",
+  treetop: "treetop",
+  botanist: "botanist",
+};
+const rankText = (rank: Rank) => ui(RANK_KEY[rank]);
 
 /** Species caught outside the tree: named as not counted yet, so they do not vanish (US-POK-10, P-10). */
 const notInTree = (count: number) =>
@@ -38,14 +50,14 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
       : ui("countWithPercent", { caught: species.caught, total, percent: species.percent });
   return (
     <section aria-label={ui("sectionLabel")} className="mb-3 grid gap-1 rounded-lg border p-3">
-      <p className="text-lg font-semibold">{ui(p.rank)}</p>
+      <p className="text-lg font-semibold">{rankText(p.rank)}</p>
       <p>{count}</p>
       {p.notInTree !== null && p.notInTree > 0 ? <p>{notInTree(p.notInTree)}</p> : null}
       {p.next ? (
         <>
           <div
             role="progressbar"
-            aria-label={ui("progressTo", { rank: ui(p.next.rank) })}
+            aria-label={ui("progressTo", { rank: rankText(p.next.rank) })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(p.fraction * 100)}
@@ -56,7 +68,7 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
               style={{ "--value": p.fraction * 100 } as CSSProperties}
             />
           </div>
-          <p>{ui("remaining", { remaining: p.next.remaining, rank: ui(p.next.rank) })}</p>
+          <p>{ui("remaining", { remaining: p.next.remaining, rank: rankText(p.next.rank) })}</p>
         </>
       ) : (
         <p>{ui("topRank")}</p>
@@ -97,7 +109,7 @@ export function ProgressRow(props: {
       id={PROGRESS_LAYER}
       className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal py-1 text-left"
     >
-      <span className="font-semibold">{`${ui(p.rank)} · ${caught}${uncounted}`}</span>
+      <span className="font-semibold">{`${rankText(p.rank)} · ${caught}${uncounted}`}</span>
     </LayerOpener>
   );
 }
