@@ -2,7 +2,7 @@ import type { SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
 import type { MarkerAssignment, LocationAssignment } from "./types";
 import type { NotesStore, SpecimenNotes } from "../notes/types";
 
-export { testSpecies, SpeciesStub } from "./test-helpers.species";
+export * from "./test-helpers.species";
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. Known locations replace the foreign key. */
 export class InMemorySpecimens implements SpecimenStore, NotesStore {

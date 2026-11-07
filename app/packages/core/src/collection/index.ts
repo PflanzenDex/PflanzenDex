@@ -141,3 +141,30 @@ export type {
   TargetLocationSource,
 } from "./shared/types";
 export type { NotesStore, SpecimenNotes } from "./notes/types";
+// The CSV import of plants (US-BES-18, FR-BES-26): the preview reads, the confirmation writes once.
+export {
+  CSV_IMPORT_KEEPER_SWITCH,
+  IMPORT_CANDIDATES,
+  IMPORT_LIMITS,
+  parseImportCsv,
+  specimenImport,
+  specimenImportPreview,
+} from "./bulk";
+export type {
+  ConfirmDependencies,
+  ConfirmInput,
+  ConfirmResult,
+  ConfirmRow,
+  Created,
+  ImportDate,
+  ImportPreview,
+  ImportSpeciesSource,
+  LocationMatch,
+  MarkerRequest,
+  ParsedRow,
+  PreviewDependencies,
+  PreviewRow,
+  Reason,
+  RowState,
+  SpeciesCandidate,
+} from "./bulk";
