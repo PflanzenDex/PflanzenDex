@@ -123,6 +123,12 @@ test("US-QG-01 checkRuns accepts three different run ids and refuses a run given
   assert.throws(() => checkRuns(["1", "1", "2"]), /each run once, repeated: 1/);
 });
 
+test("US-QG-01 checkRuns accepts the attempts of one run as runs of their own (issue 1680)", () => {
+  assert.deepEqual(checkRuns(["7", "7/2", "7/3"]), ["7", "7/2", "7/3"]);
+  assert.throws(() => checkRuns(["7", "7/x", "8"]), /not a CI run id: 7\/x/);
+  assert.throws(() => checkRuns(["7/2", "7/2", "8"]), /each run once, repeated: 7\/2/);
+});
+
 test("US-QG-01 weightsFile names the runs and the refresh command, and keeps the two gates", () => {
   const file = weightsFile({ "one-screen": { a: 1 }, "a11y-routes": { a: 2 } }, ["1", "2", "3"]);
   assert.deepEqual(Object.keys(file), ["source", "gates"]);
