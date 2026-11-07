@@ -27,6 +27,7 @@ import {
   MIGRATION_REASON,
   prettierCanFormat,
   ranGates,
+  recordWriteRefusal,
 } from "./rules.mjs";
 
 const event = process.argv[2];
@@ -75,6 +76,19 @@ function realpath(p) {
     existing = path.dirname(existing);
   }
   return path.join(fs.realpathSync(existing), ...rest);
+}
+
+// The place a write reaches (US-QG-07): a symlink is followed, a dangling one too, because a Write creates the file it points to.
+// Without this a link inside .claude/hooks would hide a file outside it from the record check.
+function landingPlace(p, depth = 0) {
+  let stat = null;
+  try {
+    stat = fs.lstatSync(p);
+  } catch {
+    // Not there: the path is judged as it is written.
+  }
+  if (stat?.isSymbolicLink() && depth < 16) return landingPlace(path.resolve(path.dirname(p), fs.readlinkSync(p)), depth + 1);
+  return realpath(p);
 }
 
 // What the Bash guard needs to place a git command (US-QG-07, #1519): the folder the shell is in (the hook input's cwd,
@@ -237,10 +251,20 @@ function baselineEditGrowth(fileRoot, file, toolInput) {
   return grows ? reasons.join("; ") : null;
 }
 
+// The new text of a Write, Edit, MultiEdit or NotebookEdit call: what the tool writes, not what it replaces (US-QG-07).
+function newTexts(toolInput) {
+  const edits = Array.isArray(toolInput.edits) ? toolInput.edits.map((edit) => edit?.new_string) : [];
+  return [toolInput.content, toolInput.new_string, toolInput.new_source, ...edits].filter((text) => typeof text === "string");
+}
+
 const handlers = {
   "guard-edit"() {
     const target = input.tool_input?.file_path ?? input.tool_input?.notebook_path;
     const { root: fileRoot, file } = locate(target);
+    // A text that names a hook record is refused wherever the write lands outside .claude/hooks (US-QG-07).
+    const reached = locate(landingPlace(path.resolve(root, target ?? ""))).file;
+    const refusal = recordWriteRefusal(reached, newTexts(input.tool_input ?? {}));
+    if (refusal) return preToolUse("deny", refusal);
     // An applied migration is immutable. A new one, not yet in HEAD, is filled in after `make migration` (US-DEV-07).
     const migration = isMigrationFile(file) && fs.existsSync(path.join(fileRoot, file));
     if (migration && !notInHead(fileRoot, file)) return preToolUse("deny", MIGRATION_REASON);

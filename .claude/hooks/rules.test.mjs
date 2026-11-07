@@ -15,6 +15,7 @@ import {
   judgeCommand,
   prettierCanFormat,
   ranGates,
+  recordWriteRefusal,
   stripText,
 } from "./rules.mjs";
 
@@ -316,6 +317,24 @@ test("US-QG-07: a shell command that names a gate record is refused, writes and 
   ]) {
     assert.equal(decision(cmd), "none", cmd);
   }
+});
+
+test("US-QG-07: a Write or Edit whose new text names a record is refused outside .claude/hooks, whatever the file type, and passes inside it", () => {
+  const named = "echo '{}' > \"$(git rev-parse --git-dir)/claude-gate-plan.json\"\n";
+  for (const file of ["scripts/run.mjs", "scripts/run.txt", "docs/notes.md", "../../tmp/outside.mjs"]) {
+    assert.match(recordWriteRefusal(file, [named]), /^This text names a claude-gate\* file/, file);
+  }
+  // Quotes and backslashes are dropped, as for commands.
+  assert.notEqual(recordWriteRefusal("scripts/run.mjs", ['claude-"gate"-plan.json']), null);
+  assert.notEqual(recordWriteRefusal("scripts/run.mjs", ["claude\\-gate-plan.json"]), null);
+  // One new text that names a record is enough, also among the edits of a MultiEdit.
+  assert.notEqual(recordWriteRefusal("scripts/run.mjs", ["export {};", named]), null);
+  // The hook code and its tests may name the records.
+  assert.equal(recordWriteRefusal(".claude/hooks/run.mjs", [named]), null);
+  assert.equal(recordWriteRefusal(".claude/hooks/rules.test.mjs", [named]), null);
+  // Ordinary text passes, and so does a doc that names the records in the glob form.
+  assert.equal(recordWriteRefusal("scripts/run.mjs", ["export const x = 1;\n"]), null);
+  assert.equal(recordWriteRefusal("docs/notes.md", ["The records are `claude-gate*` files.\n"]), null);
 });
 
 test("US-QG-07: skipping hooks, merging and pushing to protected branches are denied", () => {

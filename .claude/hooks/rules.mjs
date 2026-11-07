@@ -138,18 +138,25 @@ function discardsWork(tokens) {
 // write them (US-QG-07). A command that names one is refused, reads included: a text check cannot tell a write from a read (cp
 // and mv take either direction, a script writes by its code), and no agent needs to read them. The pattern also covers the globs
 // that name them, such as `claude-gate-*`. Quotes and backslashes are dropped first, so `claude-"gate"-plan.json` is caught too.
-// What a text check cannot catch: a name assembled at run time (a variable, printf escapes, a brace expansion), and a script that
-// an agent wrote to a file, whose name is in the file and not in the command. The rulesets, CI and the merge review (make merge
-// refuses a gate change) stay the real gate (D-02).
+// What a text check cannot catch: a name assembled at run time (a variable, printf escapes, a brace expansion), and a name built
+// from several writes (a file written in parts, an edit that completes a name already in the file). A script whose new text names
+// a record is refused when it is written (recordWriteRefusal), so only a name split over several writes gets through. The
+// rulesets, CI and the merge review (make merge refuses a gate change) stay the real gate (D-02).
 const RECORD_NAME = /claude-gates?-/;
 const RECORD_REASON =
   "claude-gate* files are the hook's records of confirmed gate files and of the plan (US-QG-07). Only the hook and `make gate-plan FILES=...` write them, so no command names them.";
+
+// Whether a text names a record. Quotes and backslashes are dropped first, so `claude-"gate"-plan.json` is caught too. The shell
+// guard (judgeCommand) and the Write and Edit guard (recordWriteRefusal) share this one check (US-QG-07).
+export function namesRecord(text) {
+  return RECORD_NAME.test(text.replace(/["'\\]/g, ""));
+}
 
 // `where` tells the main checkout guard where the command runs (see main-checkout.mjs); without it, a reset or clean
 // is refused, because the place is not known (US-QG-07). The record check reads the raw text: stripText would drop a quoted
 // name, so it runs first.
 export function judgeCommand(rawCommand, where = {}) {
-  if (RECORD_NAME.test(rawCommand.replace(/["'\\]/g, ""))) return { decision: "deny", reason: RECORD_REASON };
+  if (namesRecord(rawCommand)) return { decision: "deny", reason: RECORD_REASON };
   const command = stripText(rawCommand);
   for (const [pattern, reason] of FORBIDDEN_COMMANDS) if (pattern.test(command)) return { decision: "deny", reason };
   const refusal = mainCheckoutRefusal(rawCommand, where);
@@ -164,6 +171,18 @@ export function judgeCommand(rawCommand, where = {}) {
     return { decision: "ask", reason: "This discards uncommitted work (reset --hard, clean -f, checkout/restore of the whole tree). Commit or stash first, or confirm." };
   }
   return null;
+}
+
+// A Write or Edit whose new text names a record is refused outside .claude/hooks (US-QG-07): a script that names one could write
+// it, and no command needs to. The hook code and its tests may name them. Every file type counts, because a script needs no
+// extension (`bash run.txt` runs it), and a doc that only names a record is refused too: the docs name the records with the glob
+// `claude-gate*`, which the pattern does not match. `relativePath` is the file the write reaches, relative to the top of its worktree.
+const WRITE_RECORD_REASON =
+  "This text names a claude-gate* file, a record of the hook (US-QG-07). Outside .claude/hooks no file may name one, not even a doc, because a script with the name could write it. Name the records as `claude-gate*` in prose.";
+
+export function recordWriteRefusal(relativePath, newTexts) {
+  if (relativePath.startsWith(".claude/hooks/")) return null;
+  return newTexts.some(namesRecord) ? WRITE_RECORD_REASON : null;
 }
 
 // Migrations that exist are applied or about to be: their checksum must not change (forward-only, US-DEV-07).

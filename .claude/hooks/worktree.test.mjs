@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -461,4 +461,41 @@ test("US-QG-07: the Bash guard refuses a command that names a gate record, and p
   assert.equal(bash(wt, `cp /tmp/x.json "$(git rev-parse --git-dir)/claude-gate-plan.json"`)?.permissionDecision, "deny");
   assert.equal(bash(wt, "make gate-plan FILES=Makefile"), null);
   assert.equal(bash(wt, "git status"), null);
+});
+
+test("US-QG-07: a Write, Edit, MultiEdit or NotebookEdit that names a record is denied outside .claude/hooks, and the same text passes inside it", (t) => {
+  const { wt } = checkout(t);
+  const named = `echo '{}' > "$(git rev-parse --git-dir)/claude-gate-plan.json"\n`;
+  const denied = (output) => {
+    assert.equal(output?.permissionDecision, "deny", JSON.stringify(output));
+    assert.match(output.permissionDecisionReason, /^This text names a claude-gate\* file/);
+  };
+  // A script written with Write, of any name and type: the command that runs it names no record.
+  denied(guard(wt, { file_path: join(wt, "scripts/write-record.sh"), content: named }));
+  denied(guard(wt, { file_path: join(wt, "docs/notes.md"), content: named }));
+  // Edit, MultiEdit and NotebookEdit carry the new text in new_string, edits[].new_string and new_source.
+  mkdirSync(join(wt, "scripts"), { recursive: true });
+  writeFileSync(join(wt, "scripts/run.mjs"), "export {};\n");
+  denied(guard(wt, { file_path: join(wt, "scripts/run.mjs"), old_string: "export {};", new_string: named }));
+  denied(
+    guard(wt, {
+      file_path: join(wt, "scripts/run.mjs"),
+      edits: [
+        { old_string: "export", new_string: "export" },
+        { old_string: "{};", new_string: named },
+      ],
+    }),
+  );
+  denied(guard(wt, { notebook_path: join(wt, "notebooks/a.ipynb"), new_source: named }));
+  // A dangling symlink inside .claude/hooks to a file outside it: the Write creates that outside file, so it is refused.
+  const outside = mkdtempSync(join(tmpdir(), "record-outside-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  symlinkSync(join(outside, "run.sh"), join(wt, ".claude/hooks/link.test.mjs"));
+  denied(guard(wt, { file_path: join(wt, ".claude/hooks/link.test.mjs"), content: named }));
+  // Inside .claude/hooks the same text passes (a gate test asks nothing), and ordinary text passes everywhere.
+  assert.equal(guard(wt, { file_path: join(wt, ".claude/hooks/extra.test.mjs"), content: named }), null);
+  assert.equal(guard(wt, { file_path: join(wt, "scripts/ordinary.mjs"), content: "export const x = 1;\n" }), null);
+  // A doc that names the records in the glob form passes.
+  assert.equal(guard(wt, { file_path: join(wt, "docs/notes.md"), content: "The records are `claude-gate*` files.\n" }), null);
 });
