@@ -157,6 +157,7 @@ export type {
   ConfirmRow,
   Created,
   ImportDate,
+  ImportOverride,
   ImportPreview,
   ImportSpeciesSource,
   LocationMatch,

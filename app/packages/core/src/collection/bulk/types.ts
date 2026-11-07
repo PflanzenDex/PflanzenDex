@@ -24,7 +24,9 @@ export interface SpeciesCandidate {
 /**
  * Port: the visible species a name can mean. `exact` answers the species whose name or synonym equals the text as a whole
  * (no cap, FR-BES-24); `search` answers the partial matches of the catalog search, capped, with `more` when more match.
- * The API fills it from the catalog reads, the same ones the app's search uses (KI-R10).
+ * `byId` answers the species with that ID when the account can see it, and `null` for a foreign or an unknown one (P-04):
+ * it is how the keeper's choice of a candidate is checked (US-BES-18). The API fills it from the catalog reads, the same
+ * ones the app's search and the creation of a specimen use (KI-R10).
  */
 export interface ImportSpeciesSource {
   exact(userId: string, text: string): Promise<readonly SpeciesCandidate[]>;
@@ -32,6 +34,7 @@ export interface ImportSpeciesSource {
     userId: string,
     text: string,
   ): Promise<{ readonly species: readonly SpeciesCandidate[]; readonly more: boolean }>;
+  byId(userId: string, id: string): Promise<SpeciesCandidate | null>;
 }
 
 /**

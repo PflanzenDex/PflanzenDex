@@ -324,6 +324,59 @@ describe("US-BES-18 the confirmation writes the confirmed rows", () => {
   });
 });
 
+describe("US-BES-18 the keeper's fixes in the preview (overrides)", () => {
+  it("US-BES-18 a chosen candidate makes a partial name ready; a foreign or an unknown species stays flagged (P-04)", async () => {
+    const own = await speciesOf(subA, `Yucca${run} filifera`, `Palmlilie ${run}`);
+    const csv = [HEADER, `Yucca${run}`].join("\n");
+    expect((await preview(subA, csv)).body["rows"][0]).toMatchObject({
+      state: "flagged",
+      species: { candidates: [{ id: own }] },
+    });
+    const chosen = await preview(subA, csv, { overrides: [{ line: 2, speciesId: own }] });
+    expect(chosen.body["rows"][0]).toMatchObject({ state: "ready", species: { id: own } });
+    const foreign = await speciesOf(subB, `Yucca${run} privat`, `Privat ${run}`);
+    for (const speciesId of [foreign, randomUUID()]) {
+      const r = await preview(subA, csv, { overrides: [{ line: 2, speciesId }] });
+      expect(r.body["rows"][0]).toMatchObject({ state: "flagged", species: { id: null } });
+      expect(r.body["rows"][0]["reasons"]).toEqual([
+        { code: "import.species_not_found", field: "species" },
+      ]);
+    }
+  });
+
+  it("US-BES-18 a marker fix clears marker_required; a skipped row counts toward no plant and is shown as skipped", async () => {
+    const latin = `Zamia${run} furfuracea`;
+    await speciesOf(subA, latin, `Zamie ${run}`);
+    const csv = [HEADER, `${latin},Rot,,,`, `${latin},Blau,,,`, `${latin},,,,`].join("\n");
+    const before = await preview(subA, csv);
+    expect(before.body["rows"].map((x: { state: string }) => x.state)).toEqual([
+      "ready",
+      "ready",
+      "flagged",
+    ]);
+    expect(before.body["rows"][2]["reasons"]).toEqual([
+      { code: "specimen.marker_required", field: "nickname" },
+    ]);
+    const fixed = await preview(subA, csv, { overrides: [{ line: 4, marker: "Gruen" }] });
+    expect(fixed.body["rows"][2]).toMatchObject({ state: "ready", marker: "Gruen" });
+    const skipped = await preview(subA, csv, { overrides: [{ line: 4, skip: true }] });
+    expect(skipped.body["rows"].map((x: { state: string }) => x.state)).toEqual([
+      "ready",
+      "ready",
+      "skipped",
+    ]);
+    expect(skipped.body["counts"]).toEqual({ ready: 2, flagged: 0, alreadyThere: 0, skipped: 1 });
+  });
+
+  it("US-BES-18 an override for a line that is not in the file is refused as input.invalid", async () => {
+    expect(
+      await preview(subA, [HEADER, "Aloe,,,,"].join("\n"), {
+        overrides: [{ line: 7, skip: true }],
+      }),
+    ).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+  });
+});
+
 describe("US-BES-18 limits of the request (FR-BES-26)", () => {
   it("US-BES-18 a file of 1 MB goes through; a file above the body limit answers import.too_large (413)", async () => {
     const big = [

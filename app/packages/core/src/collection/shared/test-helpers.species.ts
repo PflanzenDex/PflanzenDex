@@ -113,6 +113,10 @@ export class InMemoryImportSpecies implements ImportSpeciesSource {
     );
     return { species: hits.slice(0, 50), more: hits.length > 50 };
   }
+
+  async byId(userId: string, id: string): Promise<SpeciesCandidate | null> {
+    return this.visible(userId).find((s) => s.id === id) ?? null;
+  }
 }
 
 const namesOf = (s: SpeciesCandidate): string[] =>
