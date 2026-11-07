@@ -4,25 +4,7 @@
     {
       "advisory": "GHSA-gg6h-894w-4m9c",
       "package": "re2js",
-      "reason": "re2js 2.8.6 (patched 2.8.7) is pinned exactly by markdownlint 0.42.0 (latest), pulled in by markdownlint-cli2 0.24.0; lints only our own docs, dev tooling only. markdownlint-cli2 0.23.3 would bring back two high markdown-it advisories. No overrides: wait for a markdownlint release.",
-      "expires": "2026-11-28"
-    },
-    {
-      "advisory": "GHSA-xjj6-f33q-929c",
-      "package": "undici",
-      "reason": "undici 6.29.0 is frozen inside the npm CLI bundled by @semantic-release/npm 13.2.0 (npm 11.21.1, latest, via node-gyp); release tooling only. No overrides: wait for an npm release that bundles undici >=6.29.1.",
-      "expires": "2026-11-28"
-    },
-    {
-      "advisory": "GHSA-2m5v-pch6-74hx",
-      "package": "undici",
-      "reason": "Same bundled npm CLI copy of undici 6.29.0 as GHSA-xjj6-f33q-929c; release tooling only.",
-      "expires": "2026-11-28"
-    },
-    {
-      "advisory": "GHSA-qrxm-fqhp-jwvm",
-      "package": "undici",
-      "reason": "Same bundled npm CLI copy of undici 6.29.0 as GHSA-xjj6-f33q-929c; release tooling only.",
+      "reason": "re2js 2.8.6 (patched 2.8.7) is pinned exactly by markdownlint 0.42.0, pulled in by markdownlint-cli2 0.24.0 (latest, pins markdownlint 0.42.0 exactly); markdownlint 0.42.1 has the fix (re2js 2.9.1) but cli2 does not take it yet (checked 2026-11-07). Lints only our own docs, dev tooling only. markdownlint-cli2 0.23.3 would bring back two high markdown-it advisories. No overrides (owner, 2026-11-07, issue 1518): wait for a markdownlint-cli2 release.",
       "expires": "2026-11-28"
     }
   ]
