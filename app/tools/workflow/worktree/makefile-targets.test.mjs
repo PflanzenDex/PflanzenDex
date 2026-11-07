@@ -100,8 +100,9 @@ function makeRun(t, args, { env = {}, docker = null } = {}) {
   if (docker === "reused") tools.docker = fakeTool('case "$1" in start) exit 0 ;; esac');
   for (const [name, text] of Object.entries(tools))
     writeFileSync(path.join(bin, name), text, { mode: 0o755 });
-  // MAKEFLAGS, MAKELEVEL and MFLAGS come from an outer make, and CI is set only where a test says so.
-  const outer = ["MAKEFLAGS", "MAKELEVEL", "MFLAGS", "CI"];
+  // MAKEFLAGS, MAKELEVEL and MFLAGS come from an outer make; CI and FRESH are set only where a test says so (a FRESH of the
+  // caller's shell, as in `FRESH=1 make ci`, would otherwise reach every run).
+  const outer = ["MAKEFLAGS", "MAKELEVEL", "MFLAGS", "CI", "FRESH"];
   const base = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => !outer.includes(name)),
   );
