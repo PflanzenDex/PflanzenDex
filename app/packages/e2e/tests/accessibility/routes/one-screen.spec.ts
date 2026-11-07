@@ -18,19 +18,22 @@ import {
   judgeScreen,
   lostScreen,
 } from "../../../support/display/one-screen/baseline";
-import { coverageProblems } from "./merge-shards";
 
 // US-QS-15, DS-58, QG-U8 (issue 1137): every screen of the register fits at every size; opened once, resized through the
-// sizes, writes aborted. `make one-screen`; the project "one-screen" is not part of `make e2e`.
+// sizes, writes aborted. `make one-screen`, or one shard of the CI job of both UI gates (`make ui-gates`, US-QG-01); the
+// project "one-screen" is not part of `make e2e`.
 
 const API = `http://localhost:${process.env["E2E_API_PORT"] ?? "3000"}`;
 const WRITE = process.env["ONE_SCREEN_WRITE"] === "1";
 
-// SCREEN of make one-screen (issue 1608): a partial run writes no baseline and is no shard; make refuses both first.
+// SCREEN of make one-screen (issue 1608) and SHARD of make ui-gates (US-QG-01): a partial run writes no baseline. Make
+// refuses SCREEN with SHARD first; the register refuses it too.
 const ONLY = process.env["ONE_SCREEN_ONLY"] ?? "";
-if (ONLY && (WRITE || process.env["ONE_SCREEN_SHARD"]))
+const SHARD = process.env["ONE_SCREEN_SHARD"] ?? "";
+if (ONLY && (WRITE || SHARD))
   throw new Error("one-screen: SCREEN is a partial run: no baseline write, no shard");
-const SELECTED = screensOf(ONLY);
+if (SHARD && WRITE) throw new Error("one-screen: SHARD is a partial run: no baseline write");
+const SELECTED = screensOf(ONLY, SHARD);
 
 test.describe.configure({ mode: "parallel", timeout: 150_000 });
 
@@ -183,18 +186,4 @@ sidewaysSelfTests(raw, sizeOf);
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
   expect(lostScreen("http://x/today?sheet=plan", "http://x/today")).toBeNull();
-});
-
-test("US-QG-01 self-test: the shards of a gate together measure every screen and size exactly once", () => {
-  const screens = ["a", "b"];
-  const sizes = ["s1", "s2"];
-  const all = screens.flatMap((screen) => sizes.map((size) => ({ screen, size })));
-  expect(coverageProblems(all, screens, sizes)).toEqual([]);
-  expect(coverageProblems(all.slice(1), screens, sizes)[0]).toContain("not measured (1)");
-  expect(coverageProblems([...all, ...all.slice(0, 1)], screens, sizes)[0]).toContain(
-    "measured more than once",
-  );
-  expect(coverageProblems([...all, { screen: "x", size: "s1" }], screens, sizes)[0]).toContain(
-    "not in the register",
-  );
 });

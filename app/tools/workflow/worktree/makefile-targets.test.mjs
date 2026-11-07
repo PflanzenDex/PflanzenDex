@@ -88,14 +88,15 @@ const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 
 // Runs `make --no-print-directory -C <root> <args>` with the fakes on the PATH; `docker` adds a fake docker, `new` when its
 // `start` fails (the container is created) and `reused` when it succeeds (docker start reuses the container).
-function makeRun(t, args, { env = {}, docker = null } = {}) {
+function makeRun(t, args, { env = {}, docker = null, npm = "" } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "make-values-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const bin = path.join(dir, "bin");
   const record = path.join(dir, "record");
   mkdirSync(bin);
   mkdirSync(record);
-  const tools = { node: fakeTool(), npm: fakeTool(), npx: fakeTool() };
+  // `npm` is shell code for the fake npm (for one run that must fail, e.g. a failed one-screen gate).
+  const tools = { node: fakeTool(), npm: fakeTool(npm), npx: fakeTool() };
   if (docker === "new") tools.docker = fakeTool('case "$1" in start) exit 1 ;; esac');
   if (docker === "reused") tools.docker = fakeTool('case "$1" in start) exit 0 ;; esac');
   for (const [name, text] of Object.entries(tools))
@@ -213,6 +214,50 @@ test("US-DEV-13 a value of the job list, the layout options or the branch runs n
   assert.equal(branch.status, 0, branch.out);
   assert.match(branch.out, /tools\/repo\/worktree-new\.sh "\$RAW_BRANCH"/);
   assert.equal(marker.ran(), false, "a value ran a command");
+});
+
+// US-QG-01 (owner decision 2026-11-07): the UI gates of CI run once per shard. ui-gates seeds the demo once, then runs
+// one-screen and a11y-routes on the same shard; a failed one-screen does not stop a11y-routes, and the run fails.
+test("US-QG-01 the UI gates run once per shard: one seed, then one-screen and a11y-routes on the same shard", (t) => {
+  const prerequisites = ["-o", "db-up", "-o", "auth-up", "-o", "migrate", "-o", "browsers"];
+  const args = [...prerequisites, "ui-gates", "SHARD=2/4", "-j3", "-Otarget"];
+  const run = makeRun(t, args, { env: { CI: "1" } });
+  assert.equal(run.status, 0, run.out);
+  const npm = calls(run).filter((call) => call.tool === "npm");
+  assert.deepEqual(
+    npm.map((call) => call.args[1]),
+    ["seed:demo", "one-screen", "a11y-routes"],
+    "one seed, then the two gates",
+  );
+  assert.equal(npm[1].env.ONE_SCREEN_SHARD, "2/4");
+  assert.equal(npm[2].env.A11Y_ROUTES_SHARD, "2/4");
+  assert.equal(npm[1].env.TAXONOMY_BUILD, "off");
+  assert.equal(npm[2].env.TAXONOMY_BUILD, "off");
+
+  const failing = makeRun(t, args, {
+    env: { CI: "1" },
+    npm: 'case "$2" in one-screen) exit 1 ;; esac',
+  });
+  assert.notEqual(failing.status, 0, failing.out);
+  const ran = calls(failing)
+    .filter((call) => call.tool === "npm")
+    .map((call) => call.args[1]);
+  assert.deepEqual(ran, ["seed:demo", "one-screen", "a11y-routes"], "a11y-routes runs after it");
+});
+
+test("US-QG-01 ui-gates refuses SCREEN, with or without SHARD: one screen is make one-screen", (t) => {
+  const prerequisites = ["-o", "db-up", "-o", "auth-up", "-o", "migrate", "-o", "browsers"];
+  // SCREEN alone is refused by ui-gates; SCREEN with SHARD by the guard of the one-screen rule, which make reads with every target.
+  const refusals = [
+    [["SCREEN=today"], /ui-gates: SCREEN measures one screen/],
+    [["SCREEN=today", "SHARD=1/4"], /one-screen: SCREEN cannot be combined with SHARD/],
+  ];
+  for (const [extra, message] of refusals) {
+    const run = makeRun(t, [...prerequisites, "ui-gates", ...extra], { env: { CI: "1" } });
+    assert.notEqual(run.status, 0, extra.join(" "));
+    assert.match(run.out, message);
+    assert.equal(calls(run).length, 0, "nothing ran");
+  }
 });
 
 test("US-DEV-13 the CI forms still run the same commands: one-screen and a11y-routes take the shard, ci-reuse the job list", (t) => {

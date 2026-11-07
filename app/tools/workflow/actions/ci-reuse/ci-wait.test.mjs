@@ -111,10 +111,10 @@ const waitOpts = (c, read, timeoutMs = 600_000) => ({
   timeoutMs,
 });
 
-// US-QG-01 (issue 1485): the matrix shards of one-screen and a11y-routes are jobs of their own in ci.yml. Their check runs are
-// named "<gate> shard <n>", so the verdict cannot read them by job name; their result reaches the verdict through the
-// job `results` (issue 1608), which needs every shard and fails unless all of them passed.
-const MATRIX_SHARDS = ["a11y-routes-shard", "one-screen-shard"];
+// US-QG-01 (issue 1485, owner decision 2026-11-07): the matrix shards of the UI gates are jobs of their own in ci.yml (one job
+// per shard runs both gates). Their check runs are named "ui shard <n>", so the verdict cannot read them by job name; their
+// result reaches the verdict through the job `results` (issue 1608), which needs every shard and fails unless all of them passed.
+const MATRIX_SHARDS = ["ui-shard"];
 // Jobs that `results` replaced (issue 1608): the verdict keeps them, so a head whose ci.yml still defines them is judged.
 const RETIRED_JOBS = ["app-coverage", "one-screen", "a11y-routes"];
 
@@ -816,9 +816,8 @@ const ALL_PASSED = {
   APP_TESTS: "success",
   APP_TESTS_WEB: "success",
   COVERAGE: "success",
-  ONE_SCREEN_SHARDS: "success",
+  UI_SHARDS: "success",
   ONE_SCREEN_MERGE: "success",
-  A11Y_ROUTES_SHARDS: "success",
   A11Y_ROUTES_MERGE: "success",
 };
 
@@ -847,12 +846,7 @@ test("US-QG-02 (issue 1608): the results job passes when every part that ran pas
   assert.equal(resultsOf({}).status, 0);
   const reused = { APP_TESTS: "skipped", APP_TESTS_WEB: "skipped", COVERAGE: "skipped" };
   assert.equal(resultsOf(reused).status, 0, "reused test jobs need no coverage");
-  const noUi = {
-    ONE_SCREEN_SHARDS: "skipped",
-    ONE_SCREEN_MERGE: "skipped",
-    A11Y_ROUTES_SHARDS: "skipped",
-    A11Y_ROUTES_MERGE: "skipped",
-  };
+  const noUi = { UI_SHARDS: "skipped", ONE_SCREEN_MERGE: "skipped", A11Y_ROUTES_MERGE: "skipped" };
   assert.equal(resultsOf(noUi).status, 0, "no UI shards ran");
 });
 
@@ -875,19 +869,17 @@ test("US-QG-02 (issue 1608): the coverage ratchet fails the results job when bot
   );
 });
 
-test("US-QG-01 (issue 1608): a failed one-screen shard, or a one-screen merge that fails, fails the results job", () => {
-  for (const parts of [{ ONE_SCREEN_SHARDS: "failure" }, { ONE_SCREEN_MERGE: "failure" }]) {
-    const out = resultsOf(parts);
-    assert.equal(out.status, 1, JSON.stringify(parts));
-    assert.match(out.stderr, /one-screen \(shards/);
-  }
+test("US-QG-01 (issue 1608, owner decision 2026-11-07): a failed UI shard job fails the results job", () => {
+  const out = resultsOf({ UI_SHARDS: "failure" });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /ui-shards=failure/);
 });
 
-test("US-QG-01 (issue 1608): a failed a11y-routes shard, or an a11y-routes merge that fails, fails the results job", () => {
-  for (const parts of [{ A11Y_ROUTES_SHARDS: "failure" }, { A11Y_ROUTES_MERGE: "failure" }]) {
+test("US-QG-01 (issue 1608): a one-screen merge that fails, or an a11y-routes merge that fails, fails the results job", () => {
+  for (const parts of [{ ONE_SCREEN_MERGE: "failure" }, { A11Y_ROUTES_MERGE: "failure" }]) {
     const out = resultsOf(parts);
     assert.equal(out.status, 1, JSON.stringify(parts));
-    assert.match(out.stderr, /a11y-routes \(shards/);
+    assert.match(out.stderr, /(one-screen|a11y-routes)-merge=failure/);
   }
 });
 
@@ -899,5 +891,6 @@ test("US-QG-02 (issue 1608): every failed part is named in the one message of th
   });
   assert.equal(out.status, 1);
   assert.match(out.stderr, /test-job=failure/);
-  assert.match(out.stderr, /a11y-routes \(shards success, merge failure\)/);
+  assert.match(out.stderr, /a11y-routes-merge=failure/);
+  assert.doesNotMatch(out.stderr, /ui-shards=/, "the shards passed");
 });
