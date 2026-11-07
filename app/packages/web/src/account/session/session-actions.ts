@@ -3,6 +3,7 @@ import type { UserManager } from "oidc-client-ts";
 import { setProfileTimeZone } from "../../shared/data";
 import { clearPhotoCache } from "../../shared/platform/browser/use-stored-photo";
 import { signOutEverywhere } from "../api/account-api";
+import { here } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
 import type { State } from "./session";
@@ -56,7 +57,7 @@ export function sessionActions(
     signIn: () =>
       press([MARKER], t("signIn.failed"), (mgr) => {
         window.sessionStorage.removeItem(MARKER);
-        return mgr.signinRedirect();
+        return mgr.signinRedirect({ redirect_uri: here() });
       }),
     // "Konto anlegen": a silent check first (prompt=none), registerReturn continues (Keycloak refuses at the end).
     register: () =>

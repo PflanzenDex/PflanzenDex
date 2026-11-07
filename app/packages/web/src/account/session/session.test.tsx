@@ -220,7 +220,11 @@ describe("US-ACC-01 session", () => {
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
     act(() => result.current.signIn());
-    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
+        redirect_uri: `${window.location.origin}/`,
+      }),
+    );
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
     act(() => result.current.register());
     await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "none" }));
@@ -398,7 +402,12 @@ describe("US-ACC-01 session", () => {
     window.sessionStorage.removeItem("pflanzendex.silent_tried");
     mgr.getUser.mockResolvedValue(null);
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "none" }));
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenCalledWith({
+        prompt: "none",
+        redirect_uri: `${window.location.origin}/`,
+      }),
+    );
     expect(result.current.state).toEqual({ kind: "loading" });
     expect(window.sessionStorage.getItem("pflanzendex.silent_tried")).toBe("1");
   });
@@ -706,7 +715,10 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     await waitFor(() =>
       expect(result.current.state).toEqual({ kind: "signedOut", error: UNREACHABLE }),
     );
-    expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "none" });
+    expect(mgr.signinRedirect).toHaveBeenCalledWith({
+      prompt: "none",
+      redirect_uri: `${window.location.origin}/`,
+    });
     expect(window.sessionStorage.getItem(SILENT_TRIED)).toBe("1");
   });
 
@@ -731,7 +743,11 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
       expect(result.current.state).toEqual({ kind: "signedOut", error: UNREACHABLE }),
     );
     act(() => result.current.signIn());
-    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
+        redirect_uri: `${window.location.origin}/`,
+      }),
+    );
     await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
   });
 
@@ -816,5 +832,69 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     );
     await act(() => result.current.reload());
     expect(result.current.state.kind).toBe("signedIn");
+  });
+});
+
+describe("US-BES-17 the sign-in returns to the address that asked for it (#1619)", () => {
+  it("US-BES-17 a silent check made from a scanned label returns to that label", async () => {
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    window.history.replaceState({}, "", "/label/abc");
+    mgr.getUser.mockResolvedValue(null);
+    renderHook(() => useSession());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenCalledWith({
+        prompt: "none",
+        redirect_uri: `${window.location.origin}/label/abc`,
+      }),
+    );
+  });
+
+  it("US-BES-17 a refused silent check comes back to the label, which shows the welcome page there without a second attempt", async () => {
+    window.history.replaceState({}, "", "/label/abc?error=login_required&state=abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(window.location.pathname).toBe("/label/abc");
+    expect(window.location.search).toBe("");
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
+  it("US-BES-17 pressing Anmelden on a scanned label returns to that label", async () => {
+    window.history.replaceState({}, "", "/label/abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.signIn());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
+        redirect_uri: `${window.location.origin}/label/abc`,
+      }),
+    );
+  });
+
+  it("US-BES-17 Konto anlegen keeps the start page: a new account begins on Heute, not on the label", async () => {
+    window.history.replaceState({}, "", "/label/abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.register());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
+        prompt: "none",
+        redirect_uri: undefined,
+      }),
+    );
+  });
+
+  it("US-BES-17 a return at a scanned label ends signed in with that label as the address", async () => {
+    const session = await freshUseSession();
+    mgr.signinCallback.mockClear();
+    window.history.replaceState({}, "", "/label/abc?code=x&state=y");
+    mgr.signinCallback.mockResolvedValue(user);
+    const { result } = renderHook(() => session());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    expect(mgr.signinCallback).toHaveBeenCalledOnce();
+    expect(window.location.pathname).toBe("/label/abc");
+    expect(window.location.search).toBe("");
   });
 });

@@ -1,5 +1,5 @@
 import type { UserManager, User } from "oidc-client-ts";
-import { oidcSettings } from "./account-api";
+import { oidcSettings, returnAddress } from "./account-api";
 
 const env = import.meta.env as Record<string, string | undefined>;
 
@@ -16,14 +16,22 @@ export async function newManager(): Promise<UserManager> {
   });
 }
 
+// The address this page is at, as the sign-in returns to it (US-BES-17, #1619).
+export const here = (): string => returnAddress(window.location.origin, window.location.pathname);
+
+// Drops code, state and error from the address. Only the same-origin path: replaceState throws on `//host/x`.
+function cleanAddress(): void {
+  window.history.replaceState({}, "", new URL(here()).pathname);
+}
+
 // The redirect back from the sign-in service may be processed only once (React Strict Mode calls effects twice).
 let callback: Promise<User | undefined> | null = null;
 export function processReturn(mgr: UserManager): Promise<User | undefined> {
   const q = new URLSearchParams(window.location.search);
   if (q.has("code") && q.has("state")) {
     callback ??= mgr.signinCallback().then((u) => u ?? undefined);
-    return callback.finally(() => window.history.replaceState({}, "", window.location.pathname));
+    return callback.finally(cleanAddress);
   }
-  if (q.has("error")) window.history.replaceState({}, "", window.location.pathname);
+  if (q.has("error")) cleanAddress();
   return mgr.getUser().then((u) => (u && !u.expired ? u : undefined));
 }
