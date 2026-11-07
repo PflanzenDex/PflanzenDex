@@ -27,6 +27,10 @@ const base = {
   priceEur: null,
   boughtAt: null,
   note: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 async function lampsIn(equipment: InMemoryEquipment, entries: [string, string, string][]) {
   for (const [name, lightZoneId, status] of entries) {

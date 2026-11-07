@@ -22,6 +22,10 @@ const bare = {
   boughtAt: null,
   note: null,
   lightZoneId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 
 beforeAll(async () => {
@@ -98,6 +102,40 @@ describe("US-EQU-01 equipment in the database", () => {
         ),
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe("US-BES-19 pot fields in the database (DM-EQU-05, P-08)", () => {
+  it("US-BES-19 stores a pot's size, material and drainage, and an unknown one reads null", async () => {
+    const pot = { ...bare, type: "Pot" as const, name: "Topf 12" };
+    expect(
+      await equipment.create(
+        anna,
+        { ...pot, diameterCm: 12.5, heightCm: null, material: "Terrakotta", drainage: true },
+        "active",
+      ),
+    ).toMatchObject({ diameterCm: 12.5, heightCm: null, material: "Terrakotta", drainage: true });
+    expect(await equipment.create(anna, { ...pot, name: "Topf leer" }, "active")).toMatchObject({
+      diameterCm: null,
+      heightCm: null,
+      material: null,
+      drainage: null,
+    });
+  });
+
+  it("US-BES-19 the database refuses pot fields on any other type and sizes out of 1 to 300", async () => {
+    await expect(
+      equipment.create(anna, { ...bare, name: "Lampe mit Topfmaß", diameterCm: 10 }, "active"),
+    ).rejects.toThrow();
+    for (const diameterCm of [0.5, 301]) {
+      await expect(
+        equipment.create(
+          anna,
+          { ...bare, type: "Pot", name: `Topf ${diameterCm}`, diameterCm },
+          "active",
+        ),
+      ).rejects.toThrow();
+    }
   });
 });
 
