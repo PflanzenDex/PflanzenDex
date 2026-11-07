@@ -366,8 +366,6 @@ jobs:
       # background, while the job installs node_modules; `auth-up` inside `make ui-gates` waits for it on one lock.
       - run: make auth-up-background
       - uses: ./.github/actions/setup-app
-      # Temporary probe (issue 1667, removed before merge): CPU use during the gates, to judge more Playwright workers.
-      - run: nohup vmstat -n 5 > "$RUNNER_TEMP/vmstat.log" 2>&1 < /dev/null &
       # US-QG-01 (issue 1485): the system packages of the browser install come from a cache of the same Playwright version,
       # saved on `dev` (deps-cache.yml) or by an earlier run of this branch. A miss runs the full install, slowly if the
       # mirror is throttled. Only a complete install is saved, after the browser is proved present (install-browsers.sh).
@@ -384,9 +382,6 @@ jobs:
       - name: Output of the background auth-up
         if: always()
         run: cat "$RUNNER_TEMP/pflanzendex-auth-up-background.log" || echo "no background auth-up log"
-      - name: Temporary probe output (issue 1667, removed before merge)
-        if: always()
-        run: cat "$RUNNER_TEMP/vmstat.log" || echo "no vmstat log"
       - id: apt-complete
         if: always() && steps.apt-cache.outputs.cache-hit != 'true'
         run: |
