@@ -304,7 +304,7 @@ Acceptance criteria:
 
 State of implementation (issue 1330): the core and the API are built (`core/src/collection/bulk/`, `POST /specimens/import/preview` as a read, which takes the keeper's fixes as `overrides` (a chosen species, a marker, a skip, FR-BES-26), `POST /specimens/import` as the one guarded write, the keeper switch `csv_import`, limits of FR-BES-26, details in `docs/guides/reference/app.md`). The page `/collection/import` (template, preview with the fixes, result) and the entries "Aus Datei importieren" in "Pflanze anlegen" and in the first-plant guide are built too. The criteria about the screen are covered by the web tests. Status 🟨: the one-screen and a11y gates reach only the first step, because the preview and the result need a file upload, and the accessibility walk by hand and a real CSV file on a phone are still open.
 
-### US-BES-19 · Repot planner and pot inventory · ⬜ new
+### US-BES-19 · Repot planner and pot inventory · 🟨 new
 
 As a **plant keeper** I want to see when a plant needs repotting and which pot I have free, so that I repot at the right moment with what I own.
 
@@ -344,6 +344,27 @@ Decisions (owner, 2026-11-07, issue 1328):
 - Release: the whole story is in R2. The pot fields extend the existing equipment record of type `Pot`; the rest of EQU stays in R5.
 - Interval: 24 months is the general starting value (assumption) when no cited source gives an interval for the species.
 - No care phase: for a plant whose species has no dormancy values, the hint shows without the dormancy warning and says that the care phase is unknown, so spring is the safe time (P-08).
+
+State of implementation (issue 1328):
+
+- **Data:** migrations `0111` (pot fields on `equipment`, pots only), `0112` (tables `repot` and `repot_sign`, module collection; `repot` backfilled from `specimen.repotted_at`) and `0113` (table `pot_placement`, module equipment, one open placement per pot and per plant).
+- **Operations:**
+  - `specimen.repot` also records the repot of a plant and clears its open signs. A plant needs a time zone, so that a day is recorded. An archived specimen is `specimen.archived`.
+  - `specimen.repot_with_pot` repots and places the pot in one transaction; a refused placement writes nothing.
+  - `equipment.place_pot` places a plant or takes it out of its pot (`equipment.pot_not_found`, `equipment.pot_taken`, `equipment.not_a_plant`; with equipment switched off, naming a pot is `onboarding.keeper_off`).
+  - `specimen.tick_repot_sign` and `specimen.untick_repot_sign` tick and clear an observation.
+- **Plan:** `GET /specimens/:id/repot-plan` derives the plan on every read with the pure `repotPlan`: hints with reason and source, last repot, phase, season advice, current pot and free pots.
+- **Web:**
+  - The tab "Pflege" of a plant shows the section "Umtopfen" with the hints, the pots and the three observations.
+  - "Umgetopft" in "Mehr" opens the repot form with the pot picker; a cutting keeps "Eingetopft".
+  - The equipment form has the pot fields for "Topf".
+- **Keeper switch:** `repot_planner`; off hides the section, and the data stays. The name and purpose texts of its unlock function are provisional until the owner confirms them.
+
+**Open:**
+
+- The cited repot interval and pot-size rule per species (DM-BES-01) are not in the catalog yet (#1686). The time hint always uses the general starting value, and no pot-size hint exists.
+- The plant's history does not list repots, placements or cleared observations yet.
+- The server routes answer while the switch is off; only the interface hides them, as for the other switches (US-ONB-09).
 
 ## Data model
 
