@@ -189,6 +189,17 @@ Per account: `Recommendations_Active` (default `true`), `Hidden`, `Click_Measure
 
 `Diameter_cm` and `Height_cm` (centimeters, 1 to 300, starting value, assumption), `Material` (text up to 60 characters) and `Drainage` (`yes | no`) are optional; an unknown value reads "unbekannt" (P-08). A pot is an equipment record of type `Pot` with a `Status` (`active | defective | retired`, DM-EQU-01) and no operation data. It holds one plant at a time (US-BES-19). Shared under US-EQU-12, a pot shows only the whitelist (type, name or model, note); its size, material, drainage and location are never shared. Assumption, to confirm by the owner: US-EQU-04 counts every record with a state as a device, which would include pots; a pot carries no operation data and no check interval.
 
+### DM-EQU-06 Pot placement (pot × plant)
+
+| Field     | Required | Meaning                                                                                                      |
+| --------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| Pot       | yes      | Own equipment record of type `Pot` (DM-EQU-05)                                                               |
+| Plant     | yes      | Own specimen (DM-BES-02)                                                                                     |
+| Placed on | yes      | Local calendar day the plant went into the pot, usually the day of a repot (US-BES-19, NFR-08)               |
+| Left on   | no       | Local calendar day the plant left the pot; empty = the plant is in it now. Placements stay as history (P-10) |
+
+A pot has at most one open placement and a plant at most one. A pot is free when it is `active` and has no open placement of a plant that is not archived, so archiving a plant frees its pot without a write (US-BES-19).
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                          | Status |

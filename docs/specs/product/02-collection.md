@@ -308,7 +308,7 @@ State of implementation (issue 1330): the core and the API are built (`core/src/
 
 As a **plant keeper** I want to see when a plant needs repotting and which pot I have free, so that I repot at the right moment with what I own.
 
-Scope: which pot a plant sits in is new data. A pot is an equipment record of type `Pot` (DM-EQU-05), and a repot records it on the plant (DM-BES-02, DM-BES-09). The soil stays in epic SUB: a repot may assign a soil recipe there (US-SUB-03), this story records no soil. A repot hint is advice, never a task or a reminder; reminders are not part of this story. It builds on the repot operation `specimen.repot` (US-BES-04), the care profile (US-BES-09), equipment (US-EQU-01, US-EQU-12), the phase change (US-PHA-04) and the keeper switch (US-ONB-09).
+Scope: which pot a plant sits in is new data. A pot is an equipment record of type `Pot` (DM-EQU-05), and a repot can place the plant in it (pot placement, DM-EQU-06; the repot day is DM-BES-09). The soil stays in epic SUB: a repot may assign a soil recipe there (US-SUB-03), this story records no soil. A repot hint is advice, never a task or a reminder; reminders are not part of this story. It builds on the repot operation `specimen.repot` (US-BES-04), the care profile (US-BES-09), equipment (US-EQU-01, US-EQU-12), the phase change (US-PHA-04) and the keeper switch (US-ONB-09).
 
 Acceptance criteria:
 
@@ -392,7 +392,7 @@ Decision (assumption, decided by the PO, #1005): growth measure, etiolation sign
 | Light zone (override) | no               | own zone of the specimen, same account (composite foreign key); overrides location and species zone, a cutting stays under cutting light                                 |
 | Status                | yes              | `Plant`, `Cutting`, `Archived`                                                                                                                                           |
 | Caught_At             | no               | Date, optional on creation (back-dating allowed, never in the future, FR-BES-04), correctable later (US-BES-11); if missing, the creation date counts as "≈" (US-POK-07) |
-| Pot                   | no               | Own pot the plant sits in (DM-EQU-05), taken over by a repot (US-BES-19); empty = not recorded, reads "unbekannt" (P-08)                                                 |
+| Pot                   | no               | Derived, not stored here: the own pot of the open pot placement (DM-EQU-06, US-BES-19); none = not recorded, reads "unbekannt" (P-08)                                    |
 | Provenance            | no               | `{From, Swap, Date}` (US-SOZ-11)                                                                                                                                         |
 | Notes                 | no               | Private free text of the keeper, at most 2000 characters (starting value, assumption); never shared (US-BES-18, P-05)                                                    |
 | Share, Share_Photos   | no               | Sharing setting (US-SOZ-04)                                                                                                                                              |
@@ -470,11 +470,12 @@ One account's "Stimmt" or "Stimmt nicht" on a catalog value or an open correctio
 
 ### DM-BES-09 Repot record and observations (specimen)
 
+The pot a repot names is recorded as a pot placement in equipment (DM-EQU-06): equipment depends on the collection, never the other way round.
+
 | Field       | Required | Meaning                                                                                                                                                                           |
 | ----------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Specimen    | yes      | Reference to the plant (DM-BES-02)                                                                                                                                                |
 | Repot day   | yes      | Local calendar day of a repot recorded with `specimen.repot` (US-BES-04); the latest one is the last repot, earlier ones stay as history (P-10)                                   |
-| Pot         | no       | Own pot (DM-EQU-05) the plant went into; empty = not named                                                                                                                        |
 | Observation | no       | One of "Wurzeln aus dem Topf", "Erde trocknet zu schnell", "Pflanze kippt", with the local day it was ticked and, once a repot has cleared it, the day it was cleared (US-BES-19) |
 
 ## Requirements
