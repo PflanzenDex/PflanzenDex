@@ -10,23 +10,29 @@ export interface TreeVersionSource<T> {
   tree(): Promise<T>;
 }
 
+/** The answer of the cache: `built` is `false` before the first taxonomy build, then `tree` is what the build left. */
+export interface SharedTree<T> {
+  readonly built: boolean;
+  readonly tree: T;
+}
+
 /**
  * Returns a reader of the tree that answers from the kept entry while the version is unchanged. One entry only: a new
  * version replaces it. The version is read first, then the tree, so a build committed in between stores a newer tree
  * under an older key, which the next read misses. A failed read is an error and is not kept (P-10), so a build that
  * failed never serves the tree of the one before. Concurrent first reads may both read the tree; both answers are right.
  */
-export function sharedTreeCache<T>(source: TreeVersionSource<T>): () => Promise<T> {
+export function sharedTreeCache<T>(source: TreeVersionSource<T>): () => Promise<SharedTree<T>> {
   let kept: { readonly version: string; readonly tree: T } | null = null;
   return async () => {
     const version = await source.version();
     if (version === null) {
       kept = null;
-      return source.tree();
+      return { built: false, tree: await source.tree() };
     }
-    if (kept !== null && kept.version === version) return kept.tree;
+    if (kept !== null && kept.version === version) return { built: true, tree: kept.tree };
     const tree = await source.tree();
     kept = { version, tree };
-    return tree;
+    return { built: true, tree };
   };
 }

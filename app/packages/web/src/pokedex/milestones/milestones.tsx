@@ -1,32 +1,56 @@
 import type { CSSProperties } from "react";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { texts } from "@/shared/lib/text-rules/texts";
 import {
   milestoneOverview,
   milestones,
   type CaughtSpecies,
   type Milestone,
-  type MilestoneLevel,
   type MilestoneTree,
 } from "@pflanzendex/core";
+import table from "./milestones.de.json";
 
-const LEVEL: Record<MilestoneLevel, string> = {
-  discovered: "Entdeckt",
-  connoisseur: "Kenner",
-  complete: "Vollständig",
-  explorer: "Entdecker der Ordnungen",
-};
+const ui = texts(table);
 
-const label = (m: Milestone) => (m.title === "" ? LEVEL[m.level] : `${m.title}: ${LEVEL[m.level]}`);
+/** The layer that holds the milestones, opened from the progress layer (US-POK-11). */
+export const MILESTONES_LAYER = "milestones";
+/** Open milestones per page: two, so the layer fits one screen at 360 x 640 (DS-58, starting value, assumption). */
+const PAGE_SIZE = 2;
+
+const label = (m: Milestone) => (m.title === "" ? ui(m.level) : `${m.title}: ${ui(m.level)}`);
 const named = (s: { latin: string; german: string | null }) =>
   s.german === null ? s.latin : `${s.german} (${s.latin})`;
+
+/** The milestones of the tree with the catch date of each species (US-POK-11). */
+function overviewOf(caught: readonly CaughtSpecies[], tree: MilestoneTree) {
+  const dates = new Map(caught.map((c) => [c.species, c.caughtDate.date]));
+  return milestoneOverview(milestones(tree, dates));
+}
+
+/**
+ * The opener of the layer "Meilensteine" in the progress layer (US-POK-11). Without the tree, or without any milestone,
+ * the place says why instead (P-08, P-09). When every milestone is reached the opener stays, so the reached ones remain
+ * reachable (P-10).
+ */
+export function MilestonesOpener(props: {
+  caught: readonly CaughtSpecies[];
+  tree: MilestoneTree | null;
+}) {
+  if (!props.tree) return <p className="text-sm">{ui("needTree")}</p>;
+  const { open, reached } = overviewOf(props.caught, props.tree);
+  if (open.length + reached.length === 0) return <p>{ui("none")}</p>;
+  return <LayerOpener id={MILESTONES_LAYER}>{ui("opener")}</LayerOpener>;
+}
 
 function Open(props: { milestone: Milestone }) {
   const m = props.milestone;
   return (
-    <li className="grid gap-1 rounded-lg border p-3">
+    <div className="grid gap-1 rounded-lg border p-3">
       <span className="font-semibold">{label(m)}</span>
       <div
         role="progressbar"
-        aria-label={`Fortschritt ${label(m)}`}
+        aria-label={ui("progressOf", { name: label(m) })}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round((m.current / m.target) * 100)}
@@ -37,39 +61,44 @@ function Open(props: { milestone: Milestone }) {
           style={{ "--value": (m.current / m.target) * 100 } as CSSProperties}
         />
       </div>
-      <span>{`Noch ${m.remaining}: ${m.missing.map(named).join(", ")}`}</span>
-    </li>
+      <span>
+        {ui("remaining", { remaining: m.remaining, missing: m.missing.map(named).join(", ") })}
+      </span>
+    </div>
   );
 }
 
 /**
- * Milestones with an instruction for action (US-POK-11), derived from the caught species and the taxonomy tree
- * (US-POK-03). Without the tree there are no targets, so the section says so (P-08, P-10).
+ * Milestones with an instruction for action (US-POK-11), in their own layer: the open ones paged two per page, the reached
+ * ones collapsed with their date. Derived from the caught species and the taxonomy tree (US-POK-03); without the tree there
+ * are no targets, so the section says so (P-08, P-10).
  */
 export function Milestones(props: {
   caught: readonly CaughtSpecies[];
   tree?: MilestoneTree | null;
 }) {
-  if (!props.tree) {
-    return (
-      <p className="mb-3 text-sm">
-        Meilensteine brauchen den Baum der Arten, der noch nicht aufgebaut ist.
-      </p>
-    );
-  }
-  const dates = new Map(props.caught.map((c) => [c.species, c.caughtDate.date]));
-  const { open, reached } = milestoneOverview(milestones(props.tree, dates));
+  if (!props.tree) return <p className="text-sm">{ui("needTree")}</p>;
+  const { open, reached } = overviewOf(props.caught, props.tree);
   return (
-    <section aria-label="Meilensteine" className="mb-3 grid gap-2">
-      <ul className="grid gap-2">
-        {open.map((m) => (
-          <Open key={m.id} milestone={m} />
-        ))}
-      </ul>
+    <section aria-label={ui("sectionLabel")} className="grid gap-3">
+      {open.length > 0 ? (
+        <Pager
+          items={open}
+          pageSize={PAGE_SIZE}
+          label={ui("openList")}
+          param={LAYER_PARAM}
+          getKey={(m) => m.id}
+          renderItem={(m) => <Open milestone={m} />}
+        />
+      ) : (
+        <p>{ui("none")}</p>
+      )}
       {reached.length > 0 && (
         <details>
-          <summary>{`${reached.length} Meilensteine erreicht`}</summary>
-          <ul>
+          <summary>
+            {reached.length === 1 ? ui("reachedOne") : ui("reachedMany", { count: reached.length })}
+          </summary>
+          <ul className="grid gap-1 pt-2">
             {reached.map((m) => (
               <li key={m.id}>{m.reachedOn ? `${label(m)} (${m.reachedOn})` : label(m)}</li>
             ))}

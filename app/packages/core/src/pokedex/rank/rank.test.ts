@@ -32,15 +32,45 @@ describe("US-POK-10 collector rank and progress", () => {
   });
 
   it("US-POK-10 with a tree shows N / M (P %) and k of K orders, K taken from the tree", () => {
-    const p = collectorProgress(30, { speciesTotal: 600, orderTotal: 42, ordersDiscovered: 7 });
+    const p = collectorProgress(30, {
+      speciesTotal: 600,
+      speciesCaught: 30,
+      orderTotal: 42,
+      ordersDiscovered: 7,
+    });
     expect(p.treeState).toBe("built");
     expect(p.species).toEqual({ caught: 30, total: 600, percent: 5 });
     expect(p.orders).toEqual({ discovered: 7, total: 42 });
+    expect(p.notInTree).toBe(0);
   });
 
   it("US-POK-10 rounds the percentage to a whole number", () => {
-    const p = collectorProgress(1, { speciesTotal: 3, orderTotal: 1, ordersDiscovered: 1 });
+    const p = collectorProgress(1, {
+      speciesTotal: 3,
+      speciesCaught: 1,
+      orderTotal: 1,
+      ordersDiscovered: 1,
+    });
     expect(p.species.percent).toBe(33);
+  });
+
+  it("US-POK-10 with a tree the rank comes from the caught species of the tree, not from all caught species (owner decision 2026-11-07)", () => {
+    const p = collectorProgress(6, {
+      speciesTotal: 10,
+      speciesCaught: 4,
+      orderTotal: 1,
+      ordersDiscovered: 1,
+    });
+    expect(p.rank).toBe("seedling");
+    expect(p.next).toEqual({ rank: "sapling", remaining: 1 });
+    expect(p.species).toEqual({ caught: 4, total: 10, percent: 40 });
+    expect(p.notInTree).toBe(2);
+  });
+
+  it("US-POK-10 without a tree the rank counts all caught species and nothing about the tree is known (P-08)", () => {
+    const p = collectorProgress(6, null);
+    expect(p.rank).toBe("sapling");
+    expect(p.notInTree).toBeNull();
   });
 
   it("US-POK-10 without a tree total, percent and orders stay unknown, never invented (P-08)", () => {
@@ -51,7 +81,12 @@ describe("US-POK-10 collector rank and progress", () => {
   });
 
   it("US-POK-10 an empty tree (0 species) gives no percentage instead of dividing by zero", () => {
-    const p = collectorProgress(0, { speciesTotal: 0, orderTotal: 0, ordersDiscovered: 0 });
+    const p = collectorProgress(0, {
+      speciesTotal: 0,
+      speciesCaught: 0,
+      orderTotal: 0,
+      ordersDiscovered: 0,
+    });
     expect(p.species.percent).toBeNull();
   });
 });
