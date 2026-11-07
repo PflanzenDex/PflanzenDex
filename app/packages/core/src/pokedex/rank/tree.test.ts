@@ -78,6 +78,7 @@ describe("US-POK-10 the totals of the tree", () => {
   it("US-POK-10 the species total counts every species, the orders count the distinct orders (K from the tree)", () => {
     expect(treeTotalsOf(rows, new Set())).toEqual({
       speciesTotal: 4,
+      speciesCaught: 0,
       orderTotal: 2,
       ordersDiscovered: 0,
     });
@@ -86,6 +87,7 @@ describe("US-POK-10 the totals of the tree", () => {
   it("US-POK-10 an order counts as discovered once one of its species is caught; a species without order is no order", () => {
     expect(treeTotalsOf(rows, new Set(["Citrus limon", "Aloe vera"]))).toEqual({
       speciesTotal: 4,
+      speciesCaught: 2,
       orderTotal: 2,
       ordersDiscovered: 1,
     });
@@ -97,9 +99,45 @@ describe("US-POK-10 the totals of the tree", () => {
     expect(collectorProgress(2, totals).orders).toEqual({ discovered: 2, total: 2 });
   });
 
+  it("US-POK-10 a caught species outside the tree is not counted: N, the percentage and the rank come from the tree only (owner decision 2026-11-07)", () => {
+    const totals = treeTotalsOf(rows, new Set(["Citrus limon", "Ficus elastica"]));
+    expect(totals.speciesCaught).toBe(1);
+    const p = collectorProgress(2, totals);
+    expect(p.species).toEqual({ caught: 1, total: 4, percent: 25 });
+    expect(p.notInTree).toBe(1);
+    expect(p.rank).toBe("seedling");
+  });
+
+  it("US-POK-10 with every tree species caught the percentage is 100 %, never more, whatever is caught outside the tree", () => {
+    const totals = treeTotalsOf(
+      rows,
+      new Set([
+        "Citrus limon",
+        "Citrus aurantium",
+        "Opuntia microdasys",
+        "Aloe vera",
+        "Ficus elastica",
+      ]),
+    );
+    const p = collectorProgress(5, totals);
+    expect(p.species).toEqual({ caught: 4, total: 4, percent: 100 });
+    expect(p.notInTree).toBe(1);
+  });
+
+  it("US-POK-10 a Latin name that the tree holds twice counts once in the total and in N", () => {
+    const twice = [row("Aloe vera", null, null), row("Aloe vera", null, null)];
+    expect(treeTotalsOf(twice, new Set(["Aloe vera"]))).toEqual({
+      speciesTotal: 1,
+      speciesCaught: 1,
+      orderTotal: 0,
+      ordersDiscovered: 0,
+    });
+  });
+
   it("US-POK-10 a built tree without species has the total zero, not unknown", () => {
     expect(treeTotalsOf([], new Set())).toEqual({
       speciesTotal: 0,
+      speciesCaught: 0,
       orderTotal: 0,
       ordersDiscovered: 0,
     });

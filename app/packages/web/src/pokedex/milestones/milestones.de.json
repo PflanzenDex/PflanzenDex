@@ -1,0 +1,15 @@
+{
+  "discovered": "Entdeckt",
+  "connoisseur": "Kenner",
+  "complete": "Vollständig",
+  "explorer": "Entdecker der Ordnungen",
+  "sectionLabel": "Meilensteine",
+  "openList": "Offene Meilensteine",
+  "progressOf": "Fortschritt {name}",
+  "remaining": "Noch {remaining}: {missing}",
+  "needTree": "Meilensteine brauchen den Baum der Arten, der noch nicht aufgebaut ist.",
+  "none": "Keine offenen Meilensteine.",
+  "reachedOne": "1 Meilenstein erreicht",
+  "reachedMany": "{count} Meilensteine erreicht",
+  "opener": "Meilensteine ansehen"
+}

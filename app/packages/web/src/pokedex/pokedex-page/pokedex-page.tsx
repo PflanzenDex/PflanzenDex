@@ -1,7 +1,5 @@
 import {
   milestoneTreeOf,
-  treeTotalsOf,
-  type CaughtSpecies,
   type Ownership,
   type PokedexTree,
   type UnidentifiedSpecimen,
@@ -11,14 +9,14 @@ import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame, SCREEN_STALE_TIME, useRequest } from "../../shared/data";
+import { LoadFrame, SCREEN_STALE_TIME } from "../../shared/data";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
 import { PokedexPageSkeleton } from "./pokedex-page.skeleton";
 import { CARD } from "../pokedex-cards/pokedex-cards";
-import { CollectorRank, PROGRESS_LAYER, ProgressRow } from "../collector-rank/collector-rank";
+import { PROGRESS_LAYER, ProgressDetail, ProgressLine } from "../collector-rank/collector-rank";
 import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
-import { Milestones } from "../milestones/milestones";
+import { Milestones, MILESTONES_LAYER } from "../milestones/milestones";
 import { NewlyCaught } from "../caught/newly-caught/newly-caught";
 import table from "./pokedex-page.de.json";
 
@@ -41,8 +39,9 @@ function ReportCaption({ host, caught }: { host: Host | undefined; caught: numbe
 /**
  * The species the account has caught (US-POK-06) on one screen (US-QS-22): derived from the active specimens, never
  * stored (P-01). The screen holds the progress row, the search with "Filter" and a page of compact entries; the
- * progress, the filters, the details of a species, the collector cards and the specimens that do not count yet are
- * layers. Species caught since the last visit are announced above the progress until the keeper confirms (US-POK-12).
+ * progress, the milestones, the filters, the details of a species, the collector cards and the specimens that do not
+ * count yet are layers. Species caught since the last visit are announced above the progress until the keeper confirms
+ * (US-POK-12).
  */
 export function PokedexPage(props: {
   api: string;
@@ -60,9 +59,9 @@ export function PokedexPage(props: {
         queryKey={["pokedex", "ownership"]}
         token={token}
         load={load}
-        loadingText="Pokédex wird geladen …"
-        {...(host ? {} : { heading: "Pokédex" })}
-        loadingFallback={<PokedexPageSkeleton label="Pokédex wird geladen …" />}
+        loadingText={ui("loading")}
+        {...(host ? {} : { heading: ui("heading") })}
+        loadingFallback={<PokedexPageSkeleton label={ui("loading")} />}
       >
         {(ownership: Ownership) => (
           <section
@@ -72,11 +71,11 @@ export function PokedexPage(props: {
             <ReportCaption host={host} caught={ownership.caught.length} />
             {host ? (
               <h2 id="pokedex-title" className="sr-only">
-                Arten
+                {ui("sectionHeading")}
               </h2>
             ) : (
               <h1 id="pokedex-title" className="text-2xl font-semibold">
-                Pokédex
+                {ui("heading")}
               </h1>
             )}
             <NewlyCaught api={api} token={token} caught={ownership.caught} />
@@ -95,44 +94,7 @@ export function PokedexPage(props: {
   );
 }
 
-/** The keys of the caught species, as the tree totals count them (US-POK-10). */
-const caughtKeys = (caught: readonly CaughtSpecies[]) => new Set(caught.map((c) => c.species));
-
-/**
- * The progress row (US-QS-22) with the totals of the tree once it is there (US-POK-10). Until then, or when the tree
- * cannot be read, the row names the caught count alone and the layer says why (P-08, P-10). Same copy as the layer.
- */
-function ProgressLine(props: {
-  api: string;
-  token: () => Promise<string | undefined>;
-  caught: readonly CaughtSpecies[];
-  uncounted: number;
-}) {
-  const { api, token, caught, uncounted } = props;
-  const load = useCallback((t: string) => loadTree(api, t), [api]);
-  const tree = useRequest({ queryKey: TREE_KEY, token, load, staleTime: SCREEN_STALE_TIME });
-  const totals =
-    tree.status === "ready" && tree.value
-      ? treeTotalsOf(tree.value.species, caughtKeys(caught))
-      : null;
-  return <ProgressRow caught={caught.length} uncounted={uncounted} tree={totals} />;
-}
-
-/** The rank and the milestones of the tree (US-POK-10, US-POK-11); `null` = the tree is not built yet (P-08). */
-function ProgressDetail(props: { caught: readonly CaughtSpecies[]; tree: PokedexTree | null }) {
-  const { caught, tree } = props;
-  return (
-    <>
-      <CollectorRank
-        caught={caught.length}
-        tree={tree ? treeTotalsOf(tree.species, caughtKeys(caught)) : null}
-      />
-      <Milestones caught={caught} tree={tree ? milestoneTreeOf(tree.species) : null} />
-    </>
-  );
-}
-
-/** The layers of the progress, the collector cards and the specimens that do not count yet (US-QS-22). */
+/** The layers of the progress, its milestones, the collector cards and the specimens that do not count yet (US-QS-22). */
 function Layers(props: {
   api: string;
   token: () => Promise<string | undefined>;
@@ -142,7 +104,7 @@ function Layers(props: {
   const load = useCallback((t: string) => loadTree(api, t), [api]);
   return (
     <>
-      <LayerSheet id={PROGRESS_LAYER} title="Fortschritt">
+      <LayerSheet id={PROGRESS_LAYER} title={ui("progressTitle")}>
         <div className="flex flex-col gap-3">
           <LoadFrame
             queryKey={TREE_KEY}
@@ -153,18 +115,34 @@ function Layers(props: {
           >
             {(tree: PokedexTree | null) => <ProgressDetail caught={ownership.caught} tree={tree} />}
           </LoadFrame>
-          <LayerOpener id={CARDS_LAYER}>Sammlerkarten ansehen</LayerOpener>
+          <LayerOpener id={CARDS_LAYER}>{ui("cardsOpener")}</LayerOpener>
           {ownership.unidentified.length > 0 ? (
             <LayerOpener id={UNCOUNTED_LAYER}>
-              {`Noch nicht gezählt (${ownership.unidentified.length})`}
+              {ui("uncountedOpener", { count: ownership.unidentified.length })}
             </LayerOpener>
           ) : null}
         </div>
       </LayerSheet>
-      <LayerSheet id={CARDS_LAYER} title="Sammlerkarten">
+      <LayerSheet id={MILESTONES_LAYER} title={ui("milestonesTitle")}>
+        <LoadFrame
+          queryKey={TREE_KEY}
+          token={token}
+          load={load}
+          staleTime={SCREEN_STALE_TIME}
+          loadingText={ui("progressLoading")}
+        >
+          {(tree: PokedexTree | null) => (
+            <Milestones
+              caught={ownership.caught}
+              tree={tree ? milestoneTreeOf(tree.species) : null}
+            />
+          )}
+        </LoadFrame>
+      </LayerSheet>
+      <LayerSheet id={CARDS_LAYER} title={ui("cardsTitle")}>
         <CollectorCards api={props.api} token={props.token} />
       </LayerSheet>
-      <LayerSheet id={UNCOUNTED_LAYER} title="Noch nicht gezählt">
+      <LayerSheet id={UNCOUNTED_LAYER} title={ui("uncountedTitle")}>
         <Unidentified specimens={ownership.unidentified} />
       </LayerSheet>
     </>
@@ -177,7 +155,7 @@ function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
     <Pager
       items={props.specimens}
       pageSize={4}
-      label="Noch nicht gezählt"
+      label={ui("uncountedTitle")}
       param={LAYER_PARAM}
       getKey={(s) => s.specimenId}
       renderItem={(s) => (

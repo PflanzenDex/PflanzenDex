@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1228,
+  "maxTotal": 1205,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -578,14 +578,6 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/pokedex/collector-rank/collector-rank.tsx",
-      "count": 8
-    },
-    {
-      "file": "packages/web/src/pokedex/milestones/milestones.tsx",
-      "count": 5
-    },
-    {
       "file": "packages/web/src/pokedex/pokedex-browse/pokedex-browse.tsx",
       "count": 9
     },
@@ -599,10 +591,6 @@
     },
     {
       "file": "packages/web/src/pokedex/pokedex-detail/pokedex-detail.tsx",
-      "count": 10
-    },
-    {
-      "file": "packages/web/src/pokedex/pokedex-page/pokedex-page.tsx",
       "count": 10
     },
     {

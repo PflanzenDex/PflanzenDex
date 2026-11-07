@@ -204,7 +204,7 @@ const treeCalls = (fetchFn: { mock: { calls: Parameters<typeof fetch>[] } }) =>
   fetchFn.mock.calls.filter(([url]) => new URL(String(url)).pathname === "/pokedex/tree").length;
 
 describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () => {
-  it("US-POK-10 · US-POK-11 the row shows the total, the layer the percent, the orders and the milestone targets", async () => {
+  it("US-POK-10 · US-POK-11 the row shows the total, the layer the percent and the orders, the milestones open as their own layer", async () => {
     fakeServer(
       () => response(200, { ownership: { caught, unidentified: [] } }),
       () => response(200, { tree: { species: tree } }),
@@ -216,11 +216,56 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
     expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
     expect(within(layer).getByText("2 von 3 Ordnungen entdeckt")).toBeTruthy();
     expect(within(layer).getByText("Noch 3 bis „Setzling“")).toBeTruthy();
-    expect(within(layer).getByText("Citrus: Vollständig")).toBeTruthy();
-    expect(within(layer).getByText("Noch 1: Bitterorange (Citrus aurantium)")).toBeTruthy();
-    expect(within(layer).getByText("4 Meilensteine erreicht")).toBeTruthy();
     expect(within(layer).queryByText(/noch nicht aufgebaut/)).toBeNull();
     expect(within(layer).queryByText(/Ordnungen: unbekannt/)).toBeNull();
+    expect(within(layer).queryByText(/weil sie nicht im Baum/)).toBeNull();
+    // The progress layer holds only the opener; the milestones are their own layer (DS-58, US-QS-22).
+    expect(within(layer).queryByText("Citrus: Vollständig")).toBeNull();
+    await userEvent.click(within(layer).getByRole("button", { name: "Meilensteine ansehen" }));
+    const milestones = await screen.findByRole("dialog", { name: "Meilensteine" });
+    expect(within(milestones).getByText("4 Meilensteine erreicht")).toBeTruthy();
+    expect(within(milestones).getByText("Entdecker der Ordnungen")).toBeTruthy();
+    expect(within(milestones).getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(milestones).getByText("Cactaceae: Vollständig")).toBeTruthy();
+    await userEvent.click(within(milestones).getByRole("button", { name: "Weiter" }));
+    expect(await within(milestones).findByText("Citrus: Vollständig")).toBeTruthy();
+    expect(within(milestones).getByText("Noch 1: Bitterorange (Citrus aurantium)")).toBeTruthy();
+  });
+
+  it("US-POK-10 the rank and N count the caught species of the tree; a caught species outside it is named as not counted yet (owner decision 2026-11-07)", async () => {
+    const outside = { ...lemon, species: "Ficus elastica", genus: "Ficus" };
+    fakeServer(
+      () => response(200, { ownership: { caught: [...caught, outside], unidentified: [] } }),
+      () => response(200, { tree: { species: tree } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ }));
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(
+      within(layer).getByText(
+        "1 gefangene Art zählt noch nicht, weil sie nicht im Baum der Arten steht.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-POK-11 without open or reached milestones the progress layer says so instead of an opener (P-09)", async () => {
+    fakeServer(
+      () => response(200, { ownership: { caught: [], unidentified: [] } }),
+      () => response(200, { tree: { species: [] } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=progress");
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(await within(layer).findByText("Keine offenen Meilensteine.")).toBeTruthy();
+    expect(within(layer).queryByRole("button", { name: "Meilensteine ansehen" })).toBeNull();
+  });
+
+  it("US-POK-11 while the tree is missing the progress layer names the reason and offers no milestones (P-08)", async () => {
+    fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=progress");
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(await within(layer).findByText(/Meilensteine brauchen den Baum der Arten/)).toBeTruthy();
+    expect(within(layer).queryByRole("button", { name: "Meilensteine ansehen" })).toBeNull();
   });
 
   it("US-POK-10 · P-10 if the tree cannot be read the layer says so and offers a retry, the row keeps the caught count", async () => {

@@ -1,3 +1,12 @@
 {
-  "progressLoading": "Fortschritt wird geladen …"
+  "progressLoading": "Fortschritt wird geladen …",
+  "loading": "Pokédex wird geladen …",
+  "heading": "Pokédex",
+  "sectionHeading": "Arten",
+  "progressTitle": "Fortschritt",
+  "milestonesTitle": "Meilensteine",
+  "cardsOpener": "Sammlerkarten ansehen",
+  "cardsTitle": "Sammlerkarten",
+  "uncountedOpener": "Noch nicht gezählt ({count})",
+  "uncountedTitle": "Noch nicht gezählt"
 }

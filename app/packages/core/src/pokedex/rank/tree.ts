@@ -49,19 +49,26 @@ export function pokedexTreeOf(
 }
 
 /**
- * The totals of the collector rank (US-POK-10): every species of the tree, the distinct orders of the tree and the orders
- * with a caught species. A species without order counts as a species but not as an order, as the milestones do.
+ * The totals of the collector rank (US-POK-10): every species of the tree, the caught species that are in the tree (the
+ * count the rank and "N / M" use, so a caught species outside the tree never lifts the percentage above 100), the distinct
+ * orders of the tree and the orders with a caught species. A species without order counts as a species but not as an
+ * order, as the milestones do. A Latin name that the tree holds twice counts once.
  */
 export function treeTotalsOf(rows: readonly TreeRow[], caught: ReadonlySet<string>): TreeTotals {
+  const species = new Map(rows.map((r) => [r.latin, r] as const));
   const orders = new Set<string>();
   const discovered = new Set<string>();
-  for (const r of rows) {
+  let speciesCaught = 0;
+  for (const r of species.values()) {
+    const isCaught = caught.has(r.latin);
+    if (isCaught) speciesCaught += 1;
     if (r.order === null) continue;
     orders.add(r.order);
-    if (caught.has(r.latin)) discovered.add(r.order);
+    if (isCaught) discovered.add(r.order);
   }
   return {
-    speciesTotal: rows.length,
+    speciesTotal: species.size,
+    speciesCaught,
     orderTotal: orders.size,
     ordersDiscovered: discovered.size,
   };
