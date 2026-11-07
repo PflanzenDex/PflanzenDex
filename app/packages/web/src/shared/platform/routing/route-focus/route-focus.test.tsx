@@ -13,6 +13,8 @@ import {
 } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/paging/address";
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
 
@@ -306,6 +308,67 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(chooser);
   });
+});
+
+/** A view with a pager on `param` (seven entries, three per page): its heading is the view's own. */
+function PagedView({ param }: { param: PagerPart }) {
+  const entries = Array.from({ length: 7 }, (_, i) => `Eintrag ${i + 1}`);
+  return (
+    <main id="inhalt" tabIndex={-1}>
+      <RouteFocus titleOf={titleOf} />
+      <h1>Zweite Seite</h1>
+      <Pager items={entries} pageSize={3} label="Liste" param={param} renderItem={(t) => t} />
+    </main>
+  );
+}
+
+describe("US-QS-15 · turning a page of a list is no view change (issue 1550)", () => {
+  it("US-QS-15 turning a page of the measurements (?vfrom) keeps the focus on the pager", async () => {
+    render(
+      <MemoryRouter initialEntries={["/b"]}>
+        <AnnouncerProvider>
+          <PagedView param="vfrom" />
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const next = screen.getByRole("button", { name: "Weiter" });
+    await userEvent.click(next);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(screen.getByText("Seite 2 von 3")).toBeTruthy();
+    expect(document.activeElement).toBe(next);
+  });
+
+  it("US-QS-15 turning a page of the classification rules (?rfrom) keeps the focus on the pager", async () => {
+    render(
+      <MemoryRouter initialEntries={["/b"]}>
+        <AnnouncerProvider>
+          <PagedView param="rfrom" />
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const next = screen.getByRole("button", { name: "Weiter" });
+    await userEvent.click(next);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(screen.getByText("Seite 2 von 3")).toBeTruthy();
+    expect(document.activeElement).toBe(next);
+  });
+
+  it("US-QS-15 turning a page of any list (every address part of PAGER_PARTS) keeps the focus on the pager", async () => {
+    for (const part of PAGER_PARTS) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/b"]}>
+          <AnnouncerProvider>
+            <PagedView param={part} />
+          </AnnouncerProvider>
+        </MemoryRouter>,
+      );
+      const next = screen.getByRole("button", { name: "Weiter" });
+      await userEvent.click(next);
+      await new Promise((r) => setTimeout(r, 400));
+      expect(document.activeElement, `?${part}`).toBe(next);
+      unmount();
+    }
+  }, 20000);
 });
 
 /** A view that shows its heading and then redirects to the start view, as a page does after a check. */

@@ -9,6 +9,28 @@
  */
 export const PAGE_PARAM = "from";
 
+/** The address part of the pages of a list inside a layer, so it does not compete with the screen behind it (US-QS-22). */
+export const LAYER_PARAM = "lfrom";
+
+/**
+ * Every address part a paged list may hold (FR-BES-23, US-QS-15): `Pager` takes only these as its `param`, and
+ * `RouteFocus` leaves them out when it tells a view change apart (issue 1550). A new list adds its part here once.
+ */
+export const PAGER_PARTS = [
+  PAGE_PARAM,
+  LAYER_PARAM,
+  "vfrom",
+  "ofrom",
+  "efrom",
+  "rfrom",
+  "zfrom",
+  "sfrom",
+  "blfrom",
+] as const;
+
+/** An address part of a paged list (see `PAGER_PARTS`). */
+export type PagerPart = (typeof PAGER_PARTS)[number];
+
 /**
  * The address part that a list held before issue 1492, by its name now: a page number (`?page=2`, counted from 1). Such an
  * address is converted once, see `Pager`. Two lists share `rpage` on different screens, so they share `rfrom`.
