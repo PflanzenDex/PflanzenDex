@@ -878,11 +878,9 @@ describe("US-BES-17 the sign-in returns to the address that asked for it (#1619)
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
     act(() => result.current.register());
+    // Strict: the register check carries no return address at all, not even an undefined one.
     await waitFor(() =>
-      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
-        prompt: "none",
-        redirect_uri: undefined,
-      }),
+      expect(mgr.signinRedirect.mock.lastCall?.[0]).toStrictEqual({ prompt: "none" }),
     );
   });
 
