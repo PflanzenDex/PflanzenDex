@@ -7,7 +7,6 @@ import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/l
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
-import { RepotPlanSection } from "../../../markers/repot/repot-plan/repot-plan";
 import { plantLayerId } from "../../rows/plant-tile/plant-tile";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
@@ -114,13 +113,9 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
         card={card}
         care={slot(p.slots?.care)}
         repot={
-          card.status === PLANT_STATUS && p.onRepot ? (
-            <RepotPlanSection
-              card={card}
-              access={p.photoAccess}
-              onRepot={() => closing(close, p.onRepot)?.(card)}
-            />
-          ) : undefined
+          card.status === PLANT_STATUS && p.onRepot
+            ? { access: p.photoAccess, onRepot: () => closing(close, p.onRepot)?.(card) }
+            : undefined
         }
       />
     ),

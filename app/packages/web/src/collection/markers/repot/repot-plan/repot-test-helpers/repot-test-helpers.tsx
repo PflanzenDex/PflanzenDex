@@ -111,10 +111,10 @@ export function fakeRepotServer(
   return posts;
 }
 
-/** The collection page with the plant of the fake server. */
-export function renderCollection() {
+/** The collection page with the plant of the fake server, opened at `at` (a tab or a part in the address, US-BES-19). */
+export function renderCollection(at = "/collection?view=plants") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[at]}>
       <CollectionPage
         api="http://api"
         token={async () => "tok"}

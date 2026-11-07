@@ -7,7 +7,7 @@ import {
   type RepotPlan,
   type SpecimenCard,
 } from "@pflanzendex/core";
-import { useRequest } from "@/shared/data";
+import { useRequest, type Request } from "@/shared/data";
 import { dateText } from "@/shared/lib/format";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -25,24 +25,38 @@ const t = texts(table);
 /** The mode "Geräte" of the Sammlung, where the keeper adds a pot (US-BES-19, US-EQU-01). */
 const EQUIPMENT_MODE_ADDRESS = `${PATHS.collection}?view=equipment`;
 
+/** No token while no access is given: a cutting has no repot part, so its plan is never read (US-BES-04). */
+const noToken = async () => undefined;
+
 /**
- * The section "Umtopfen" of a plant (US-BES-19, FR-BES-27): the last repot, the repot hints with their reason and source,
- * the season, the current pot, the free pots and the three observations. The plan is read when the tab opens and derived
- * by the API on every read (P-01). While the keeper switch for the repot planner is off the section is not shown at all.
+ * The repot plan of a plant, read for the tab "Pflege" (US-BES-19): it is read only while the plant has the repot part
+ * (`access` given), and it is read again on every opening (`fresh`), so the hints follow the last write.
+ */
+export function useRepotPlan(
+  card: SpecimenCard,
+  access: PhotoAccess | undefined,
+): Request<RepotPlanView> {
+  return useRequest<RepotPlanView>({
+    queryKey: REPOT_PLAN_KEY(card.id),
+    token: access?.token ?? noToken,
+    load: (token) => loadRepotPlan(access?.api ?? "", token, card.id),
+    fresh: true,
+    enabled: access !== undefined,
+  });
+}
+
+/**
+ * The part "Umtopfen" of a plant (US-BES-19, FR-BES-27): the last repot, the repot hints with their reason and source, the
+ * season, the current pot, the free pots and the three observations, derived by the API on every read (P-01). The part
+ * is named by its segment, so the section is a labelled region without a second heading (issue 1328).
  */
 export function RepotPlanSection(props: {
   card: SpecimenCard;
   access: PhotoAccess;
+  plan: Request<RepotPlanView>;
   onRepot: () => void;
 }) {
-  const { card, access } = props;
-  const plan = useRequest<RepotPlanView>({
-    queryKey: REPOT_PLAN_KEY(card.id),
-    token: access.token,
-    load: (token) => loadRepotPlan(access.api, token, card.id),
-    fresh: true,
-  });
-  const headingId = `repot-plan-${card.id}`;
+  const { card, access, plan } = props;
   if (plan.status === "pending")
     return (
       <p role="status" className="text-sm text-muted-foreground">
@@ -51,10 +65,7 @@ export function RepotPlanSection(props: {
     );
   if (plan.status === "error")
     return (
-      <section aria-labelledby={headingId} className="grid gap-2">
-        <h3 id={headingId} className="font-semibold">
-          {t("plan.title")}
-        </h3>
+      <section aria-label={t("plan.title")} className="grid gap-2">
         <Warning>
           <p>{t("plan.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
@@ -67,10 +78,7 @@ export function RepotPlanSection(props: {
   const view = plan.value;
   if (view === undefined || view.hidden) return null;
   return (
-    <section aria-labelledby={headingId} className="grid gap-3 text-sm">
-      <h3 id={headingId} className="font-semibold">
-        {t("plan.title")}
-      </h3>
+    <section aria-label={t("plan.title")} className="grid gap-2 text-sm">
       <p>
         {view.lastRepot === null
           ? t("plan.lastUnknown")

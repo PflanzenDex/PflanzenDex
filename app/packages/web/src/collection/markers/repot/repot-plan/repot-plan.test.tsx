@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { openPlant, openTab } from "../../../specimens/tests/plants-test-helpers";
@@ -10,8 +10,9 @@ import {
   type Post,
 } from "./repot-test-helpers/repot-test-helpers";
 
-// US-BES-19: the section "Umtopfen" of the plant layer, through what the keeper sees: the hints with their reason and
-// source, the season, the pots and the observations. The fake server keeps the observations between reads and writes.
+// US-BES-19: the part "Umtopfen" of the plant layer's tab Pflege, through what the keeper sees: the hints with their
+// reason and source, the season, the pots and the observations. The fake server keeps the observations between the reads
+// and the writes.
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
   Element.prototype.releasePointerCapture ??= () => undefined;
@@ -21,17 +22,48 @@ afterEach(() => {
   cleanup();
 });
 
-/** Opens the Pflege tab of the plant and waits until the plan has loaded (or is not shown). */
-async function openPlan(): Promise<HTMLElement | null> {
+/** Opens the tab Pflege of the plant and lets its plan answer: the plan is read with the tab. */
+async function openPflege() {
   await openPlant("Bogenhanf");
   await openTab("Pflege");
+  await waitFor(() => expect(planReads().length).toBeGreaterThan(0));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  });
+}
+
+/** The labels of the parts of "Pflege", in their order. */
+const partsOf = () =>
+  within(screen.getByRole("group", { name: "Teile der Pflege" }))
+    .getAllByRole("button")
+    .map((b) => b.textContent);
+
+/**
+ * Opens the part "Umtopfen" of the open tab Pflege and returns its region, once the plan has loaded. Without the part (the
+ * repot planner switched off) it returns null.
+ */
+async function openPlan(): Promise<HTMLElement | null> {
+  await openPflege();
+  const part = screen.queryByRole("button", { name: "Umtopfen" });
+  if (part === null) return null;
+  await userEvent.click(part);
   await waitFor(() => expect(screen.queryByText("Umtopfen wird geladen …")).toBeNull());
-  return screen.queryByRole("heading", { name: "Umtopfen" })?.closest("section") ?? null;
+  return screen.getByRole("region", { name: "Umtopfen" });
 }
 
 const posts = (all: Post[]) => all.filter((p) => p.path === "/specimens/e1/repot-signs");
 
-describe("US-BES-19 the plant layer shows the repot plan in the tab Pflege", () => {
+describe("US-BES-19 the plant layer shows the repot plan as the part Umtopfen of the tab Pflege", () => {
+  it("US-BES-19 the tab Pflege offers Umtopfen as a third part, and Behandlungen stays the first part", async () => {
+    fakeRepotServer();
+    renderCollection();
+    await openPflege();
+    expect(partsOf()).toEqual(["Behandlungen", "Pflegeprofil", "Umtopfen"]);
+    expect(screen.getByRole("button", { name: "Behandlungen" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+  });
+
   it("US-BES-19 without a hint it says there is no reason to repot and shows the day of the last repot", async () => {
     fakeRepotServer();
     renderCollection();
@@ -167,18 +199,47 @@ describe("US-BES-19 the plant layer shows the repot plan in the tab Pflege", () 
     expect(section.queryByRole("link", { name: "Topf unter Geräte anlegen" })).toBeNull();
   });
 
-  it("US-BES-19 · P-12 with the repot planner switched off the section is not shown at all", async () => {
+  it("US-BES-19 · P-12 with the repot planner switched off the part Umtopfen is not offered", async () => {
     fakeRepotServer({ plan: { hidden: true, currentPot: null, freePots: [] } });
     renderCollection();
     expect(await openPlan()).toBeNull();
-    expect(planReads().length).toBeGreaterThan(0);
+    expect(partsOf()).toEqual(["Behandlungen", "Pflegeprofil"]);
   });
 
-  it("US-BES-19 · P-10 a failed plan read says so and offers a retry", async () => {
-    fakeRepotServer({ planFails: true });
+  it("US-BES-19 a cutting has no part Umtopfen and its plan is never read", async () => {
+    fakeRepotServer({ card: { status: "cutting" } });
     renderCollection();
     await openPlant("Bogenhanf");
     await openTab("Pflege");
+    expect(partsOf()).toEqual(["Behandlungen", "Pflegeprofil"]);
+    expect(planReads()).toEqual([]);
+  });
+
+  it("US-BES-19 an address on Umtopfen falls back to Behandlungen while the part is not offered", async () => {
+    fakeRepotServer({ plan: { hidden: true } });
+    renderCollection("/collection?view=plants&teil=umtopfen");
+    await openPflege();
+    expect(screen.getByRole("button", { name: "Behandlungen" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.queryByRole("region", { name: "Umtopfen" })).toBeNull();
+  });
+
+  it("US-BES-19 an address on Umtopfen opens the part when it is offered", async () => {
+    fakeRepotServer();
+    renderCollection("/collection?view=plants&teil=umtopfen");
+    await openPflege();
+    expect(screen.getByRole("button", { name: "Umtopfen" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(await screen.findByRole("region", { name: "Umtopfen" })).toBeTruthy();
+  });
+
+  it("US-BES-19 · P-10 a failed plan read says so and offers a retry, in the part Umtopfen", async () => {
+    fakeRepotServer({ planFails: true });
+    renderCollection();
+    await openPflege();
+    await userEvent.click(screen.getByRole("button", { name: "Umtopfen" }));
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("Das Umtopfen konnte nicht geladen werden.")).toBeTruthy();
     expect(within(alert).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();

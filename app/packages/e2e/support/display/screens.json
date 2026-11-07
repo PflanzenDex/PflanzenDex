@@ -492,6 +492,27 @@
     "title": "Birkenfeige"
   },
   {
+    "id": "collection-plant-repot",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Pflege"
+      },
+      {
+        "role": "button",
+        "name": "Umtopfen"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx",
+    "title": "Birkenfeige"
+  },
+  {
     "id": "collection-plant-location",
     "account": "test2",
     "path": "/collection?view=plants",
