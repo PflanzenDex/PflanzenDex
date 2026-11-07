@@ -195,13 +195,36 @@ jobs:
       && needs.reuse.outputs.superseded != 'true'
       && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.results != 'success')
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
-      - run: make ci-tests-web
+      # TEMPORARY measurement (issue 1682), removed before the final runs: the variants on the same runner, CPU every 5 s.
+      - name: Measure variants (temporary, issue 1682)
+        working-directory: app/packages/web
+        run: |
+          vmstat -n 5 > "$RUNNER_TEMP/vmstat.log" &
+          nproc
+          run() { label="$1"; shift; echo "::group::$label"; s=$SECONDS; npx vitest run --coverage "$@" > "$RUNNER_TEMP/$label.log" 2>&1 || echo "FAILED $label"; echo "TIMING $label $((SECONDS - s))s"; sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/$label.log" | grep -E "Test Files|Tests |Duration|Statements|Branches|Functions|Lines|workers spawned" || true; echo "VMSTAT-MARK $label end line $(wc -l < "$RUNNER_TEMP/vmstat.log")"; echo "::endgroup::"; }
+          run workers4 --maxWorkers=4
+          cp coverage/coverage-summary.json "$RUNNER_TEMP/cov-workers4.json"
+          run shard1 --shard=1/2 --reporter=default --reporter=blob
+          run shard2 --shard=2/2 --reporter=default --reporter=blob
+          s=$SECONDS; npx vitest --merge-reports --coverage > "$RUNNER_TEMP/merge.log" 2>&1 || echo "FAILED merge"; echo "TIMING merge $((SECONDS - s))s"
+          sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/merge.log" | grep -E "Test Files|Tests |Statements|Branches|Functions|Lines" || true
+          cp coverage/coverage-summary.json "$RUNNER_TEMP/cov-merged.json"
+          echo "VMSTAT-MARK merge end line $(wc -l < "$RUNNER_TEMP/vmstat.log")"
+          rm -rf .vitest coverage
+      - name: Default run (timed)
+        run: s=$SECONDS; make ci-tests-web; echo "TIMING default $((SECONDS - s))s"
+      - name: Results of the measurement (temporary, issue 1682)
+        if: always()
+        working-directory: app/packages/web
+        run: |
+          echo "== vmstat"; cat "$RUNNER_TEMP/vmstat.log"
+          for f in workers4 merged; do echo "== diff default vs $f"; diff <(jq -S .total coverage/coverage-summary.json) <(jq -S .total "$RUNNER_TEMP/cov-$f.json") && echo same-total; cmp <(jq -S . coverage/coverage-summary.json) <(jq -S . "$RUNNER_TEMP/cov-$f.json") && echo same-per-file; done
       - uses: actions/upload-artifact@v7
         with:
           name: coverage-web
