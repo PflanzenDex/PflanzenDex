@@ -71,6 +71,16 @@ export function oidcSettings(env: Environment, origin: string): UserManagerSetti
   };
 }
 
+/**
+ * The address the sign-in returns to: the path the person is on (US-BES-17, #1619). Same origin only: a path like
+ * `//evil.example/x` or `/\evil.example` resolves to another origin and falls back to the start page. The query and the
+ * hash are dropped, because the callback adds its own.
+ */
+export function returnAddress(origin: string, pathname: string): string {
+  const url = new URL(pathname, origin);
+  return url.origin === origin ? `${origin}${url.pathname}` : `${origin}/`;
+}
+
 export const apiUrl = (env: Environment): string => env["VITE_API_URL"] ?? "http://localhost:3000";
 
 /** Whether the 403 means "registration needs an invitation code" (US-ACC-05), judged by the code, never by the text. */
