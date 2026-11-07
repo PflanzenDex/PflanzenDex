@@ -19,12 +19,20 @@ import {
   SpeciesPostgres,
   SpecimenPostgres,
 } from "@pflanzendex/db";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
+import { body, errorBody, keyMissing, statusFor, write, type AuthEnv } from "../../kernel";
 
 /** The status of a plant that is potted and repotted (US-BES-04); a name, compared as a value. */
 const PLANT_STATUS = "plant" as const;
+
+/** A plan needs the keeper's day, so a missing or unknown time zone is `input.invalid` on `timeZone` (NFR-08). */
+function invalidTimeZone(c: Context<AuthEnv>) {
+  const failure = appError("input.invalid", {
+    details: [{ field: "timeZone", code: "input.invalid" }],
+  });
+  return c.json(errorBody(failure), statusFor(failure));
+}
 
 /**
  * The repot plan of a plant (US-BES-19, FR-BES-27): `GET /specimens/:id/repot-plan?timeZone=` derives the hints, the free
@@ -60,16 +68,13 @@ export function repotPlanRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
     const userId = c.get("account").id;
     const id = c.req.param("id");
     const timeZone = c.req.query("timeZone");
-    if (!isTimeZone(timeZone)) {
-      const failure = appError("input.invalid", {
-        details: [{ field: "timeZone", code: "input.invalid" }],
-      });
-      return c.json(errorBody(failure), statusFor(failure));
-    }
+    if (!isTimeZone(timeZone)) return invalidTimeZone(c);
     const specimen = await specimens.find(userId, id);
     if (!specimen) return c.json(errorBody(appError("specimen.not_found")), 404);
-    const hidden = await switchOff(userId, REPOT_PLANNER_KEEPER_SWITCH);
-    const equipmentOff = await switchOff(userId, EQUIPMENT_KEEPER_SWITCH);
+    // One read of the keeper's switches answers both flags (the query-count gate measures one read per request).
+    const off = keeperOffOf(await switches.list(userId));
+    const hidden = off.has(REPOT_PLANNER_KEEPER_SWITCH);
+    const equipmentOff = off.has(EQUIPMENT_KEEPER_SWITCH);
     const [last, open, phases, current, free] = await Promise.all([
       repots.lastRepotted(userId, [id]),
       repots.openSigns(userId, id),
@@ -91,8 +96,11 @@ export function repotPlanRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
     return c.json({ specimenId: id, status: specimen.status, hidden, equipmentOff, ...plan });
   });
 
-  routes.post("/specimens/:id/pot", async (c) =>
-    write(c, writes, place, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
-  );
+  routes.post("/specimens/:id/pot", async (c) => {
+    if (!c.req.header("idempotency-key")) return keyMissing(c);
+    return write(c, writes, place, {
+      input: { ...(await body(c)), specimenId: c.req.param("id") },
+    });
+  });
   return routes;
 }

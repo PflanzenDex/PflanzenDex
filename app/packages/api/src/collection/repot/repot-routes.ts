@@ -8,7 +8,7 @@ import {
 import { IdempotencyPostgres, KeeperSwitchPostgres, RepotPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
+import { body, errorBody, keyMissing, statusFor, write, type AuthEnv } from "../../kernel";
 
 /**
  * Repot observations (US-BES-19): `POST /specimens/:id/repot-signs` ticks (`ticked: true`) or clears (`ticked: false`) one
@@ -29,6 +29,8 @@ export function repotSignRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.post("/specimens/:id/repot-signs", async (c) => {
+    // The repeat guard first, before the body is read or checked (US-QS-03), as the other write routes do.
+    if (!c.req.header("idempotency-key")) return keyMissing(c);
     const { ticked, ...rest } = await body(c);
     if (typeof ticked !== "boolean") {
       const failure = appError("input.invalid", {
