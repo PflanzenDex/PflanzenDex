@@ -88,7 +88,7 @@ const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 
 // Runs `make --no-print-directory -C <root> <args>` with the fakes on the PATH; `docker` adds a fake docker, `new` when its
 // `start` fails (the container is created) and `reused` when it succeeds (docker start reuses the container).
-function makeRun(t, args, { env = {}, docker = null, npm = "" } = {}) {
+function makeRun(t, args, { env = {}, docker = null, dockerShell = null, npm = "" } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "make-values-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const bin = path.join(dir, "bin");
@@ -99,6 +99,8 @@ function makeRun(t, args, { env = {}, docker = null, npm = "" } = {}) {
   const tools = { node: fakeTool(), npm: fakeTool(npm), npx: fakeTool() };
   if (docker === "new") tools.docker = fakeTool('case "$1" in start) exit 1 ;; esac');
   if (docker === "reused") tools.docker = fakeTool('case "$1" in start) exit 0 ;; esac');
+  // `dockerShell` is shell code for a fake docker that answers by subcommand (ci-db-tune: `ps`, `show fsync`).
+  if (dockerShell !== null) tools.docker = fakeTool(dockerShell);
   for (const [name, text] of Object.entries(tools))
     writeFileSync(path.join(bin, name), text, { mode: 0o755 });
   // MAKEFLAGS, MAKELEVEL and MFLAGS come from an outer make; CI and FRESH are set only where a test says so (a FRESH of the
@@ -349,6 +351,46 @@ test("US-QG-02 db-up sets fsync, synchronous_commit and full_page_writes off aft
   const reusedSettings = reusedCalls.find((call) => call.args.includes("psql"));
   for (const statement of offStatements)
     assert.ok(reusedSettings.args.includes(statement), statement);
+});
+
+// A fake docker for ci-db-tune: `ps` prints the container ids (space-separated, none for ""), `show fsync` prints `fsync`.
+const ciDocker = (ids, fsync) =>
+  `case "$1" in ps) printf '%s\\n' ${ids} ;; esac\ncase "$*" in *"show fsync"*) echo ${fsync} ;; esac`;
+
+test("US-QG-02 ci-db-tune sets fsync, synchronous_commit and full_page_writes off on the one Postgres service of the CI job (issue 1698)", (t) => {
+  const offStatements = [
+    "alter system set fsync = off",
+    "alter system set synchronous_commit = off",
+    "alter system set full_page_writes = off",
+    "select pg_reload_conf()",
+  ];
+
+  const one = makeRun(t, ["ci-db-tune"], { dockerShell: ciDocker("abc123", "off") });
+  assert.equal(one.status, 0, one.out);
+  assert.match(one.out, /ci-db-tune: fsync, synchronous_commit and full_page_writes off/);
+  const execs = calls(one).filter((call) => call.tool === "docker" && call.args[0] === "exec");
+  for (const call of execs)
+    assert.equal(call.args[1], "abc123", "every exec goes to the one service container");
+  const settings = execs.find((call) => call.args.includes(offStatements[0]));
+  assert.ok(settings, "the alter system statements run in the container");
+  for (const statement of offStatements) assert.ok(settings.args.includes(statement), statement);
+  assert.ok(
+    execs.some((call) => call.args.includes("show fsync")),
+    "the setting is read back",
+  );
+
+  const none = makeRun(t, ["ci-db-tune"], { dockerShell: ciDocker("", "off") });
+  assert.notEqual(none.status, 0, "no container is an error");
+  assert.match(none.out, /expected one container that publishes port \S+, found 0/);
+  assert.equal(
+    calls(none).some((call) => call.tool === "docker" && call.args[0] === "exec"),
+    false,
+    "nothing runs when no container is found",
+  );
+
+  const stuck = makeRun(t, ["ci-db-tune"], { dockerShell: ciDocker("abc123", "on") });
+  assert.notEqual(stuck.status, 0, "a database that still reports fsync on is an error");
+  assert.match(stuck.out, /does not report fsync off after 10 checks/);
 });
 
 test("US-QG-02 make ci has no prerequisite that could stop the parts runner, and the CI targets keep theirs", (t) => {

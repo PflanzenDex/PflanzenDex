@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -127,13 +127,21 @@ docs-check: ## Lint markdown and check relative links (QG-U2)
 # Docker host: DROP DATABASE forced a checkpoint that took 18-19 s, up to 12 s of it the disk sync, past the 10 s limit of the
 # afterAll hook of the API suite. With the three settings off a checkpoint takes 0.1 s and the API suite 31 s instead of 46-65 s.
 # The settings are applied after every start, so a container that `docker start` reuses gets them too: ALTER SYSTEM writes
-# postgresql.auto.conf, and all three are reloadable (no restart). CI does not call this target: its Postgres service keeps
-# the defaults.
+# postgresql.auto.conf, and all three are reloadable (no restart). CI does not call this target; its jobs with a Postgres
+# service call `ci-db-tune` right after checkout, which sets the same three on the service container (issue 1698).
 db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running; fsync, synchronous_commit and full_page_writes off on every start (issue 1636)
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory "$$RAW_DB_MEMORY" \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395 >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -h 127.0.0.1 -d pflanzendex_test; do sleep 1; done
 	@docker exec $(DB_CONTAINER) psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null
+
+# CI only (issue 1698). The service container is found by its published port: the runner may have no psql, and right after
+# checkout there is no node_modules, so the recipe uses docker alone. It fails unless exactly one container publishes the port.
+ci-db-tune: ## CI only (US-QG-02, issue 1698): the Postgres service of a CI job runs with fsync, synchronous_commit and full_page_writes off, as db-up does locally (issue 1636); the database is throwaway; fails when the database refuses
+	@set -- $$(docker ps -q --filter publish=$(DB_PORT)); [ $$# -eq 1 ] || { echo "ci-db-tune: expected one container that publishes port $(DB_PORT), found $$#" >&2; exit 1; }; id=$$1; \
+	docker exec "$$id" psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null && n=0 && \
+	while [ "$$(docker exec "$$id" psql -U postgres -tAc "show fsync")" != off ]; do n=$$((n + 1)); [ $$n -lt 10 ] || { echo "ci-db-tune: the database does not report fsync off after $$n checks" >&2; exit 1; }; sleep 0.2; done && \
+	echo "ci-db-tune: fsync, synchronous_commit and full_page_writes off"
 
 db-down: ## Remove the test database with its data (the volume too), so the next db-up starts empty
 	-docker rm -f -v $(DB_CONTAINER)
