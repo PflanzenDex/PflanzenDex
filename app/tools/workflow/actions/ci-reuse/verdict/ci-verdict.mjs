@@ -3,7 +3,8 @@
 // and its `ci-status` is green while the full run is still going. A draft has no CI run at all (issue 1608). So the verdict is per job, from every check run on the
 // head commit: the latest real result of each job (a skipped or cancelled run is no result). The jobs that count are the
 // ones that the head's own workflow defines and that its path filter and base branch require (ci.yml, `changes`).
-import { evidenceOf, isActionsCheck, scanRowsOf } from "./ci-reuse.mjs";
+import { evidenceOf, isActionsCheck, scanRowsOf } from "../ci-reuse.mjs";
+import { jobOf, resultOf, shardsOf } from "./ci-shards.mjs";
 
 export const MAX_FILES = 3000; // the REST list of changed files stops at 3000 entries
 
@@ -96,12 +97,9 @@ function problemOf(job, result, required) {
 /** One row per judged job: its result, the run that gave it and the problem it causes (null when none). */
 export function rowsOf(checkRuns, required, defined) {
   return JOBS.map((job) => {
-    const runs = checkRuns.filter((c) => c.name === job && isActionsCheck(c));
-    const ev = evidenceOf(runs);
     const isRequired = required.has(job);
-    const unfinished = runs.some((r) => r.status !== "completed");
     const fallback = isRequired ? "never ran" : defined.has(job) ? "skipped" : NOT_IN_WORKFLOW;
-    const result = ev?.conclusion ?? (unfinished ? "running" : fallback);
+    const { result, ev } = resultOf(shardsOf(checkRuns, job), fallback);
     return {
       job,
       required: isRequired,
@@ -141,7 +139,8 @@ export function assess(snap) {
       .map((w) => `${w.name} workflow run (${w.status})`),
   ];
   if (unfinished.length) return { ...base, status: "running", unfinished };
-  const ciRan = checkRuns.some((c) => isActionsCheck(c) && CI_NAMES.has(c.name));
+  // A matrix shard counts as its job (issue 1682): `app-tests-web (1)` is a CI check of the job `app-tests-web`.
+  const ciRan = checkRuns.some((c) => isActionsCheck(c) && CI_NAMES.has(jobOf(c.name)));
   const problems = ciRan
     ? rows.map((r) => r.problem).filter(Boolean)
     : ["no CI run on the head commit"];

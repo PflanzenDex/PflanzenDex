@@ -104,7 +104,6 @@ jobs:
       superseded: ${{ steps.reuse.outputs.superseded }}
       app-gates: ${{ steps.reuse.outputs['app-gates'] }}
       app-tests: ${{ steps.reuse.outputs['app-tests'] }}
-      app-tests-web: ${{ steps.reuse.outputs['app-tests-web'] }}
       app-ui: ${{ steps.reuse.outputs['app-ui'] }}
       ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
       results: ${{ steps.reuse.outputs['results'] }}
@@ -121,7 +120,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: make ci-reuse JOBS="app-gates app-tests app-tests-web results app-ui ds-snapshots lighthouse"
+        run: make ci-reuse JOBS="app-gates app-tests results app-ui ds-snapshots lighthouse"
 
   # The app suite (`make ci`) in three parallel parts, each with its own time limit (US-QG-02, issue 1118): in one job it ran
   # 10 to 15 minutes and was cancelled at its 15-minute limit although every step passed. The parts call the targets
@@ -185,53 +184,34 @@ jobs:
           retention-days: 1
 
   # The web suite beside app-tests (issue 1125): in one job it ran after api, core and db and made app-tests the slowest
-  # job. Reused only together with `results`, so the ratchet never runs on half the coverage (issue 1608). It runs for a UI
-  # change only (`ui`, as app-ui does): a change to workflow or dev tooling, a hook or documentation leaves the web package as
-  # it was, and `results` then leaves the web package out of the coverage ratchet and the CRAP check (US-QG-02).
+  # job. Since issue 1682 it runs as two shards (one job ran 236 to 273 s and was the slowest job): each writes a blob report,
+  # and the job `results` merges the blobs of both shards into the coverage of the whole suite. Reused only together with
+  # `results`, so the ratchet never runs on half the coverage (issue 1608). It runs for a UI change only (`ui`, as app-ui
+  # does): a change to workflow or dev tooling, a hook or documentation leaves the web package as it was, and `results` then
+  # leaves the web package out of the coverage ratchet and the CRAP check (US-QG-02).
   app-tests-web:
     needs: [changes, reuse]
     if: >-
       !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.ui == 'true'
       && needs.reuse.outputs.superseded != 'true'
-      && (needs.reuse.outputs.app-tests-web != 'success' || needs.reuse.outputs.results != 'success')
+      && needs.reuse.outputs.results != 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
-      # TEMPORARY measurement (issue 1682), removed before the final runs: the variants on the same runner, CPU every 5 s.
-      - name: Measure variants (temporary, issue 1682)
-        working-directory: app/packages/web
-        run: |
-          vmstat -n 5 > "$RUNNER_TEMP/vmstat.log" &
-          nproc
-          run() { label="$1"; shift; echo "::group::$label"; s=$SECONDS; npx vitest run --coverage "$@" > "$RUNNER_TEMP/$label.log" 2>&1 || echo "FAILED $label"; echo "TIMING $label $((SECONDS - s))s"; sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/$label.log" | grep -E "Test Files|Tests |Duration|Statements|Branches|Functions|Lines|workers spawned" || true; echo "VMSTAT-MARK $label end line $(wc -l < "$RUNNER_TEMP/vmstat.log")"; echo "::endgroup::"; }
-          run workers4 --maxWorkers=4
-          cp coverage/coverage-summary.json "$RUNNER_TEMP/cov-workers4.json"
-          run shard1 --shard=1/2 --reporter=default --reporter=blob
-          run shard2 --shard=2/2 --reporter=default --reporter=blob
-          s=$SECONDS; npx vitest --merge-reports --coverage > "$RUNNER_TEMP/merge.log" 2>&1 || echo "FAILED merge"; echo "TIMING merge $((SECONDS - s))s"
-          sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/merge.log" | grep -E "Test Files|Tests |Statements|Branches|Functions|Lines" || true
-          cp coverage/coverage-summary.json "$RUNNER_TEMP/cov-merged.json"
-          echo "VMSTAT-MARK merge end line $(wc -l < "$RUNNER_TEMP/vmstat.log")"
-          rm -rf .vitest coverage
-      - name: Default run (timed)
-        run: s=$SECONDS; make ci-tests-web; echo "TIMING default $((SECONDS - s))s"
-      - name: Results of the measurement (temporary, issue 1682)
-        if: always()
-        working-directory: app/packages/web
-        run: |
-          echo "== vmstat"; cat "$RUNNER_TEMP/vmstat.log"
-          for f in workers4 merged; do echo "== diff default vs $f"; diff <(jq -S .total coverage/coverage-summary.json) <(jq -S .total "$RUNNER_TEMP/cov-$f.json") && echo same-total; cmp <(jq -S . coverage/coverage-summary.json) <(jq -S . "$RUNNER_TEMP/cov-$f.json") && echo same-per-file; done
+      - run: make ci-tests-web SHARD=${{ matrix.shard }}/${{ strategy.job-total }}
       - uses: actions/upload-artifact@v7
         with:
-          name: coverage-web
-          # Same pattern as coverage-base: the wildcard keeps `web/coverage/` in the artifact, so the download lands there.
-          path: |
-            app/packages/*/coverage/coverage-summary.json
-            app/packages/*/coverage/coverage-final.json
+          name: web-blob-${{ matrix.shard }}
+          # The blob report of this shard. `results` merges the blobs of both shards (US-QG-02, issue 1682).
+          path: app/packages/web/.vitest/blob/
           if-no-files-found: error
           retention-days: 1
 
@@ -350,12 +330,13 @@ jobs:
   # and by hand.
   # US-QG-01 (owner decision 2026-11-07): one job per shard runs both gates for the screens of its shard, so the stack (Postgres,
   # Keycloak, migrations, browsers, demo seed) starts once per shard instead of once per gate. The screens are split by measured
-  # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/6`): every screen runs in
+  # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/5`): every screen runs in
   # exactly one shard. Each shard uploads the reports and results of both gates; the job `results` below merges them, and it is
   # the result these gates report to `ci-status`. A failed one-screen run does not stop a11y-routes in the same shard.
-  # Six shards (issue 1667): a runner takes 0.65 to 1.24 times the median time for the same screens, so no weight balances four
-  # shards; six keep the slowest shard near five minutes and use the six job slots the separate gate jobs used before (Free plan,
-  # 20 jobs at once). The weights are medians of several runs (`make ui-weights RUNS="<id> <id> <id>"`).
+  # Five shards since issue 1682 (six since issue 1667): a runner takes 0.65 to 1.24 times the median time for the same screens,
+  # so no weight balances four shards. The two web test jobs take two job slots, so five shards and those two jobs use the seven
+  # slots that six shards and one web job used (Free plan, 20 jobs at once). The weights are medians of several runs
+  # (`make ui-weights RUNS="<id> <id> <id>"`).
   ui-shard:
     needs: [changes, reuse]
     if: >-
@@ -367,7 +348,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5]
     name: ui shard ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -443,6 +424,8 @@ jobs:
   # and the shards, so a green `results` must never come from a run in which a failed test job skipped the coverage part.
   # The web tests are skipped for a change without UI (US-QG-02): then the coverage part runs for api, core and db, with the web
   # package named in COVERAGE_UNMEASURED, and a missing summary of any other package still fails.
+  # The web coverage is merged here (issue 1682): the two web test shards upload their blob reports, and `make ci-tests-web-merge`
+  # merges them into the coverage of the whole web suite before the ratchet and the CRAP check read it.
   results:
     needs: [changes, reuse, app-tests, app-tests-web, ui-shard]
     if: >-
@@ -467,6 +450,26 @@ jobs:
           pattern: coverage-*
           path: app/packages
           merge-multiple: true
+      - name: Web test shards (app-tests passed, app-tests-web passed; the blob reports of both shards, US-QG-02)
+        if: >-
+          needs.app-tests.result == 'success'
+          && (needs.app-tests-web.result == 'success'
+          || (needs.app-tests-web.result == 'skipped' && needs.changes.outputs.ui == 'false'))
+          && needs.app-tests-web.result == 'success'
+        uses: actions/download-artifact@v7
+        with:
+          pattern: web-blob-*
+          # The file names differ per shard (blob-<i>-<n>.json), so one folder holds both and nothing is overwritten.
+          path: app/packages/web/.vitest/blob
+          merge-multiple: true
+      - name: Merge the web test shards (every shard present, coverage of the whole suite)
+        id: web-merge
+        if: >-
+          needs.app-tests.result == 'success'
+          && (needs.app-tests-web.result == 'success'
+          || (needs.app-tests-web.result == 'skipped' && needs.changes.outputs.ui == 'false'))
+          && needs.app-tests-web.result == 'success'
+        run: make ci-tests-web-merge
       - name: Coverage ratchet and CRAP check
         id: coverage
         if: >-
@@ -527,6 +530,7 @@ jobs:
           APP_TESTS_WEB: ${{ needs.app-tests-web.result }}
           UI: ${{ needs.changes.outputs.ui }}
           COVERAGE: ${{ steps.coverage.outcome }}
+          WEB_MERGE: ${{ steps.web-merge.outcome }}
           UI_SHARDS: ${{ needs.ui-shard.result }}
           ONE_SCREEN_MERGE: ${{ steps.merge-one-screen.outcome }}
           A11Y_ROUTES_MERGE: ${{ steps.merge-a11y-routes.outcome }}
@@ -542,6 +546,7 @@ jobs:
           if [ "$APP_TESTS" = "success" ] && [ "$web_due" = "true" ] && [ "$COVERAGE" != "success" ]; then
             bad="$bad coverage=$COVERAGE"
           fi
+          if [ "$APP_TESTS_WEB" = "success" ] && [ "$APP_TESTS" = "success" ] && [ "$WEB_MERGE" != "success" ]; then bad="$bad web-merge=$WEB_MERGE"; fi
           # The UI gates: the shard jobs (one job per shard, both gates) and the merge of the shard reports of each gate.
           if [ "$UI_SHARDS" != "skipped" ]; then
             if [ "$UI_SHARDS" != "success" ]; then bad="$bad ui-shards=$UI_SHARDS"; fi

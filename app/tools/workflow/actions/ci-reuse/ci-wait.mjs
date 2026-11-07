@@ -14,7 +14,7 @@ import {
   problemsNow,
   pullOf,
   shortSha,
-} from "./ci-verdict.mjs";
+} from "./verdict/ci-verdict.mjs";
 
 // Starting values (assumption): a full run ends within about 30 minutes, and a queued run starts within about a minute.
 const POLL_MS = 30_000;

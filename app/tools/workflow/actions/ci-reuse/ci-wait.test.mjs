@@ -16,7 +16,7 @@ import {
   problemsNow,
   pullOf,
   requiredJobs,
-} from "./ci-verdict.mjs";
+} from "./verdict/ci-verdict.mjs";
 import { readSnapshot, waitForCi } from "./ci-wait.mjs";
 
 const fixtures = JSON.parse(
@@ -816,6 +816,7 @@ const ALL_PASSED = {
   APP_TESTS: "success",
   APP_TESTS_WEB: "success",
   COVERAGE: "success",
+  WEB_MERGE: "success",
   UI_SHARDS: "success",
   ONE_SCREEN_MERGE: "success",
   A11Y_ROUTES_MERGE: "success",
@@ -869,6 +870,17 @@ test("US-QG-02 (issue 1608): the coverage ratchet fails the results job when bot
   );
 });
 
+test("US-QG-02 (issue 1682): a failed merge of the web test shards fails the results job, when both web shards passed", () => {
+  const out = resultsOf({ WEB_MERGE: "failure" });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /web-merge=failure/);
+  assert.equal(
+    resultsOf({ APP_TESTS_WEB: "skipped", WEB_MERGE: "skipped" }).status,
+    0,
+    "no web shards ran",
+  );
+});
+
 test("US-QG-01 (issue 1608, owner decision 2026-11-07): a failed UI shard job fails the results job", () => {
   const out = resultsOf({ UI_SHARDS: "failure" });
   assert.equal(out.status, 1);
@@ -893,4 +905,100 @@ test("US-QG-02 (issue 1608): every failed part is named in the one message of th
   assert.match(out.stderr, /test-job=failure/);
   assert.match(out.stderr, /a11y-routes-merge=failure/);
   assert.doesNotMatch(out.stderr, /ui-shards=/, "the shards passed");
+});
+
+// US-QG-02 (issue 1682): the web tests run as two matrix shards, named `app-tests-web (1)` and `(2)`. The verdict reads them as
+// one job. The fixture PR 1476 is a UI change; its plain `app-tests-web` runs are replaced by the shard runs of each test.
+/** PR 1476 with its web tests as shard runs: [check run name, conclusion] per shard, a null conclusion is still running. */
+function withShards(shards) {
+  const s = open(snapOf("pr1476"));
+  const web = s.checkRuns.find((c) => c.name === "app-tests-web");
+  const runs = shards.map(([name, conclusion], i) => ({
+    ...web,
+    id: web.id + i + 1,
+    name,
+    status: conclusion ? "completed" : "in_progress",
+    conclusion: conclusion ?? null,
+    completed_at: conclusion ? "2026-11-06T08:07:10Z" : null,
+    details_url: `https://github.com/${REPO}/actions/runs/${9100 + i}/job/${web.id + i + 1}`,
+  }));
+  return { ...s, checkRuns: [...s.checkRuns.filter((c) => c.name !== "app-tests-web"), ...runs] };
+}
+
+test("US-QG-02 (issue 1682): both web test shards succeeded, so the job app-tests-web is a success", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "success"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "success");
+  assert.equal(rowOf(a, "app-tests-web").problem, null);
+  assert.deepEqual(a.problems, []);
+  assert.equal(exitCodeOf(a), 0);
+});
+
+test("US-QG-02 (issue 1682): a failed web test shard fails the job, although the other shard succeeded", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "failure"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "failure");
+  assert.deepEqual(a.problems, ["app-tests-web: failure"]);
+  assert.equal(exitCodeOf(a), 1);
+});
+
+test("US-QG-02 (issue 1682): a cancelled web test shard is no success, although the other shard succeeded", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "cancelled"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "cancelled");
+  assert.deepEqual(a.problems, ["app-tests-web: cancelled"]);
+  assert.equal(exitCodeOf(a), 1);
+});
+
+test("US-QG-02 (issue 1682): a web test shard that is still running keeps the PR waiting, and no shard counts as a success before it finished", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", null],
+    ]),
+  );
+  assert.equal(a.status, "running");
+  assert.deepEqual(a.unfinished, ["app-tests-web (2)"]);
+  assert.equal(rowOf(a, "app-tests-web").result, "running");
+});
+
+test("US-QG-02 (issue 1682): the shard check runs alone name a CI run, so the head is not judged as one without CI", () => {
+  const only = withShards([
+    ["app-tests-web (1)", "success"],
+    ["app-tests-web (2)", "success"],
+  ]);
+  const a = assess({
+    ...only,
+    checkRuns: only.checkRuns.filter((c) => c.name.startsWith("app-tests-web (")),
+  });
+  assert.ok(!a.problems.includes("no CI run on the head commit"));
+  assert.equal(rowOf(a, "app-tests-web").result, "success");
+});
+
+test("US-QG-02 (issue 1682): a plain app-tests-web check of an older head still counts, green or red", () => {
+  const s = open(snapOf("pr1476"));
+  const plain = s.checkRuns.find((c) => c.name === "app-tests-web");
+  assert.equal(rowOf(assess(s), "app-tests-web").result, "success");
+  const red = {
+    ...s,
+    checkRuns: [
+      ...s.checkRuns.filter((c) => c.name !== "app-tests-web"),
+      { ...plain, conclusion: "failure" },
+    ],
+  };
+  const a = assess(red);
+  assert.equal(rowOf(a, "app-tests-web").result, "failure");
+  assert.deepEqual(a.problems, ["app-tests-web: failure"]);
 });
