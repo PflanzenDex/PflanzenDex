@@ -1,6 +1,6 @@
 // The verdict on the CI of one pull request, as a pure function of one snapshot (US-DEV-13, `make ci-wait PR=<n>`).
-// A text edit or a ready-for-review starts a CI run that skips the heavy jobs (reused from an earlier run, see ci-reuse.mjs),
-// and its `ci-status` is green while the full run is still going. So the verdict is per job, from every check run on the
+// A text edit starts a CI run that skips the heavy jobs (reused from an earlier run, see ci-reuse.mjs),
+// and its `ci-status` is green while the full run is still going. A draft has no CI run at all (issue 1608). So the verdict is per job, from every check run on the
 // head commit: the latest real result of each job (a skipped or cancelled run is no result). The jobs that count are the
 // ones that the head's own workflow defines and that its path filter and base branch require (ci.yml, `changes`).
 import { evidenceOf, isActionsCheck, scanRowsOf } from "./ci-reuse.mjs";
@@ -15,9 +15,14 @@ export const PATHS = {
   oneScreen:
     /^(app\/packages\/(web|e2e)\/|app\/packages\/api\/perf\/(demo-seed|catalog-seed)\/|app\/config\/gates\/|Makefile$|\.github\/)/,
   docs: /^(docs\/|\.agents\/|\.claude\/skills\/|\.markdownlint-cli2\.jsonc$)|\.md$/,
+  // The `ui` output (issue 1608): an app path that is neither workflow or dev tooling, a hook, documentation nor Markdown.
+  // A changed file counts when it matches this (a negative lookahead, as the PCRE grep of the `changes` job reads it).
+  ui: /^(?!(app\/tools\/workflow\/|app\/tools\/dev\/|\.claude\/hooks\/|docs\/|\.agents\/|\.claude\/skills\/)|.*\.md$)(app\/|Makefile$|\.github\/|\.nvmrc$|\.claude\/hooks\/)/,
 };
 
 // The jobs of ci.yml that this reading judges, in workflow order. `ci-status` aggregates them: it is shown, not judged.
+// `app-coverage`, `one-screen` and `a11y-routes` are the jobs that `results` replaced (issue 1608); they stay for a head whose
+// ci.yml still defines them. A job that the head's workflow does not define is never required.
 export const JOBS = [
   "changes",
   "layout",
@@ -27,26 +32,21 @@ export const JOBS = [
   "app-gates",
   "app-tests",
   "app-tests-web",
-  "app-coverage",
+  "results",
   "app-ui",
   "ds-snapshots",
   "lighthouse",
-  "one-screen",
-  "a11y-routes",
   "docs-gates",
   "audit",
   "e2e",
+  "app-coverage",
+  "one-screen",
+  "a11y-routes",
 ];
 const CI_NAMES = new Set([...JOBS, "ci-status"]);
-const APP_JOBS = [
-  "app-gates",
-  "app-tests",
-  "app-tests-web",
-  "app-coverage",
-  "app-ui",
-  "ds-snapshots",
-  "lighthouse",
-];
+// The web tests run for a UI change only (the `ui` output of ci.yml, as app-ui does), so they are judged with the UI group.
+const APP_JOBS = ["app-gates", "app-tests", "results", "app-coverage"];
+const UI_APP_JOBS = ["app-tests-web", "app-ui", "ds-snapshots", "lighthouse"];
 const UI_JOBS = ["one-screen", "a11y-routes"];
 const MAIN_ONLY_JOBS = ["audit", "e2e"];
 export const NOT_IN_WORKFLOW = "not in workflow";
@@ -61,18 +61,25 @@ export function jobsDefinedIn(ciYml) {
 }
 
 /**
- * The jobs that the workflow of the head requires for this PR: its path filter and base branch decide, a draft gets no
- * metadata job, and a job the head's workflow does not define is never required.
+ * The jobs that the workflow of the head requires for this PR: its path filter and base branch decide, and a job the
+ * head's workflow does not define is never required. A draft requires nothing: it runs no CI (issue 1608).
  */
 export function requiredJobs({ files, base, draft, defined }) {
+  if (draft) return new Set();
   // With the maximum number of files the filters cannot be told apart, so every filter counts as matched.
   const all = files.length >= MAX_FILES;
   const hit = (re) => all || files.some((f) => re.test(f));
-  const jobs = ["changes", "layout", "dependency-review"];
-  if (!draft) jobs.push("metadata");
-  if (hit(PATHS.app)) jobs.push(...APP_JOBS);
+  const jobs = ["changes", "dependency-review", "metadata"];
+  // An app PR runs the layout and docs checks inside app-gates (`npm run gates`), so the jobs `layout` and `docs-gates` are
+  // required only for a PR without an app path (US-QG-02, ci.yml).
+  if (hit(PATHS.app)) {
+    jobs.push(...APP_JOBS);
+  } else {
+    jobs.push("layout");
+    if (hit(PATHS.docs)) jobs.push("docs-gates");
+  }
+  if (hit(PATHS.ui)) jobs.push(...UI_APP_JOBS);
   if (hit(PATHS.oneScreen)) jobs.push(...UI_JOBS);
-  if (hit(PATHS.docs)) jobs.push("docs-gates");
   if (base === "main") jobs.push(...MAIN_ONLY_JOBS);
   return new Set(jobs.filter((j) => defined.has(j)));
 }
@@ -122,6 +129,8 @@ export function assess(snap) {
   const base = { pr, head, rows, aggregate };
   if (pr.merged) return { ...base, status: "merged" };
   if (pr.state !== "open") return { ...base, status: "closed" };
+  // A draft has no CI run to wait for, so its jobs are not judged (issue 1608).
+  if (pr.draft) return { ...base, rows: [], status: "draft" };
   if (pr.mergeable === false || pr.mergeableState === "dirty")
     return { ...base, status: "conflict" };
   if (pr.mergeable === null) return { ...base, status: "computing" };
@@ -151,6 +160,8 @@ export function pullOf(p) {
     draft: Boolean(p.draft),
     base: p.base?.ref ?? "",
     head: p.head?.sha ?? "",
+    // The commit whose workflow a `pull_request` run uses (issue 1608); null while GitHub has not computed it.
+    mergeCommit: p.merge_commit_sha ?? null,
     mergeable: p.mergeable ?? null,
     mergeableState: p.mergeable_state ?? "",
   };
@@ -173,6 +184,10 @@ export function problemsNow(a) {
       ];
     case "conflict":
       return ["the PR conflicts with dev, so it gets no CI run"];
+    case "draft":
+      return [
+        "the PR is a draft and has no CI run: make pr marks it ready for review and starts the run",
+      ];
     case "computing":
       return ["GitHub has not computed whether the PR merges yet; try again"];
     default:

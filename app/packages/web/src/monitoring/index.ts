@@ -9,3 +9,5 @@ export const WateringList = lazyPage(() =>
 export const WaterAction = lazyPage(() =>
   import("./watering/water-action/water-action").then((m) => ({ default: m.WaterAction })),
 );
+/** "Gegossen" and "Gedüngt" of one plant from the outside, e.g. the scanned pot label (US-BES-17, US-MON-09); "Gegossen" is the same write as the list on "Heute". */
+export { loadLastFertilized, markFertilized, markWatered } from "./api/reminders-api";

@@ -9,6 +9,8 @@ import {
   maxCrap,
   formatOffender,
   resolveBase,
+  inUnmeasured,
+  withoutUnmeasured,
 } from "./check-crap.mjs";
 
 const finding = (crap, extra = {}) => ({
@@ -89,4 +91,28 @@ test("the threshold is read from quality-limits.json", () => {
   assert.equal(typeof MAX_CRAP, "number");
   const file = new URL("../../../config/gates/quality-limits.json", import.meta.url);
   assert.equal(readMaxCrap(file), MAX_CRAP);
+});
+
+test("US-QG-02: a package named as unmeasured is left out of the findings, the others are still judged", () => {
+  const report = {
+    findings: [
+      finding(500, { path: "app/packages/web/src/a.tsx" }),
+      finding(500, { path: "app/packages/api/src/a.ts" }),
+    ],
+  };
+  assert.equal(withoutUnmeasured(report, []), report);
+  const judged = withoutUnmeasured(report, ["web"]);
+  assert.deepEqual(
+    judged.findings.map((f) => f.path),
+    ["app/packages/api/src/a.ts"],
+  );
+  assert.equal(findOffenders(judged).length, 1);
+});
+
+test("US-QG-02: a file lies in a package by its path segments, relative or absolute; a similar name does not match", () => {
+  assert.equal(inUnmeasured("packages/web/src/a.tsx", ["web"]), true);
+  assert.equal(inUnmeasured("/work/app/packages/web/src/a.tsx", ["web"]), true);
+  assert.equal(inUnmeasured("app/packages/webx/src/a.ts", ["web"]), false);
+  assert.equal(inUnmeasured("app/tools/packages-web/x.mjs", ["web"]), false);
+  assert.equal(inUnmeasured("app/packages/api/src/a.ts", ["web"]), false);
 });

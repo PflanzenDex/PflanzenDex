@@ -25,5 +25,6 @@
   "list.failed": "Die Pflanzen konnten nicht geladen werden.",
   "list.retry": "Erneut versuchen",
   "layer.plant": "Pflanze",
-  "layer.profile": "Pflegeprofil"
+  "layer.profile": "Pflegeprofil",
+  "layer.notes": "Notizen"
 }

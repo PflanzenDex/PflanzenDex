@@ -26,6 +26,8 @@ const EXCEPTIONS: Record<string, string> = {
   "PUT /mcp": "answers 405 and writes nothing (ai/mcp/mcp-routes.ts)",
   "PATCH /mcp": "answers 405 and writes nothing (ai/mcp/mcp-routes.ts)",
   "DELETE /mcp": "answers 405 and writes nothing (ai/mcp/mcp-routes.ts)",
+  "POST /specimens/import/preview":
+    "a read whose file travels in the body: it answers every row and writes nothing, the write is POST /specimens/import with the key (collection/bulk/import-routes.ts, US-BES-18; import.test.ts checks that nothing is written)",
 };
 
 const KEY_MISSING = "idempotency.key_missing";

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "icons": "node src/styles/pwa/build-icons.mjs",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/web.tsbuildinfo",
     "test": "vitest run",
     "lighthouse": "lighthouse",
     "storybook": "storybook dev -p 6006",
@@ -28,6 +28,7 @@
     "react-hook-form": "7.91.0",
     "react-router": "8.5.0",
     "tailwind-merge": "3.7.0",
+    "uqr": "0.1.3",
     "vaul": "1.1.2",
     "zod": "4.6.7"
   },

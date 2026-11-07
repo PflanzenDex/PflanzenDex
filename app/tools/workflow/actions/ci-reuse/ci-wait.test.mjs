@@ -2,6 +2,7 @@
 // (ci-wait.fixtures.json: pull request, changed files, check runs, workflow runs, and the jobs of the head's ci.yml, trimmed
 // to the fields that the reading uses; read 2026-11-06). A state "at a time" is made from those final records.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { evidenceOf } from "./ci-reuse.mjs";
@@ -110,24 +111,106 @@ const waitOpts = (c, read, timeoutMs = 600_000) => ({
   timeoutMs,
 });
 
-// US-QG-01 (issue 1485): the matrix shards of one-screen and a11y-routes are jobs of their own in ci.yml. Their check runs are
-// named "<gate> shard <n>", so the verdict cannot read them by job name; their result reaches the verdict through the
-// aggregate job of the gate (`one-screen`, `a11y-routes`), which needs every shard and fails unless all of them passed.
-const MATRIX_SHARDS = ["a11y-routes-shard", "one-screen-shard"];
+// US-QG-01 (issue 1485, owner decision 2026-11-07): the matrix shards of the UI gates are jobs of their own in ci.yml (one job
+// per shard runs both gates). Their check runs are named "ui shard <n>", so the verdict cannot read them by job name; their
+// result reaches the verdict through the job `results` (issue 1608), which needs every shard and fails unless all of them passed.
+const MATRIX_SHARDS = ["ui-shard"];
+// Jobs that `results` replaced (issue 1608): the verdict keeps them, so a head whose ci.yml still defines them is judged.
+const RETIRED_JOBS = ["app-coverage", "one-screen", "a11y-routes"];
 
-test("US-DEV-13: the judged jobs are the jobs of ci.yml, ci-status and the matrix shards excluded", () => {
+test("US-DEV-13 (issue 1608): every job of ci.yml is judged, except ci-status and the matrix shards", () => {
   const defined = jobsDefinedIn(readFileSync(CI_YML, "utf8"));
-  assert.deepEqual([...defined].sort(), [...JOBS, "ci-status", ...MATRIX_SHARDS].sort());
+  const judged = [...defined].filter((j) => j !== "ci-status" && !MATRIX_SHARDS.includes(j));
+  assert.deepEqual(
+    judged.filter((j) => !JOBS.includes(j)),
+    [],
+    "a job of ci.yml that is not judged",
+  );
+  assert.deepEqual(
+    JOBS.filter((j) => !RETIRED_JOBS.includes(j) && !defined.has(j)),
+    [],
+    "a judged job that ci.yml does not define",
+  );
 });
 
-test("US-QG-01: every matrix shard is needed by its aggregate job, and that job is judged", () => {
+test("US-QG-01 (issue 1608): every matrix shard is needed by the results job, and that job is judged", () => {
   const text = readFileSync(CI_YML, "utf8");
+  const block = text.slice(text.indexOf("\n  results:\n"));
+  const needs = block.split("\n").find((line) => line.startsWith("    needs:"));
   for (const shard of MATRIX_SHARDS) {
-    const aggregate = shard.replace(/-shard$/, "");
-    assert.ok(JOBS.includes(aggregate), aggregate);
-    const block = text.slice(text.indexOf(`\n  ${aggregate}:\n`));
-    const needs = block.split("\n").find((line) => line.startsWith("    needs:"));
-    assert.ok(needs?.includes(shard), `${aggregate} needs ${shard}: ${needs}`);
+    assert.ok(needs?.includes(shard), `results needs ${shard}: ${needs}`);
+  }
+  assert.ok(JOBS.includes("results"));
+});
+
+test("US-QG-02 (issue 1608): the ui output is the app paths without workflow and dev tooling, hooks, docs and Markdown", () => {
+  assert.ok(PATHS.ui.test("app/packages/web/src/x.tsx"));
+  assert.ok(PATHS.ui.test("app/tools/check/x.mjs"), "a check script is an app path");
+  assert.ok(PATHS.ui.test("Makefile"));
+  assert.ok(PATHS.ui.test(".github/workflows/ci.yml"));
+  assert.ok(!PATHS.ui.test("app/tools/workflow/x.mjs"));
+  assert.ok(!PATHS.ui.test("app/tools/dev/x.mjs"));
+  assert.ok(!PATHS.ui.test(".claude/hooks/rules.mjs"));
+  assert.ok(!PATHS.ui.test("docs/guides/x.md"));
+  assert.ok(!PATHS.ui.test("app/packages/web/src/x.md"));
+  assert.ok(!PATHS.ui.test(".agents/skills/x/SKILL.md"));
+  assert.ok(!PATHS.ui.test("README.md"));
+});
+
+test("US-QG-02 (issue 1608): a workflow-only change runs the app jobs and the results job, but no UI gate and no web tests", () => {
+  const req = requiredJobs({
+    files: ["app/tools/workflow/actions/ci-reuse/ci-verdict.mjs"],
+    base: "dev",
+    draft: false,
+    defined: new Set(JOBS),
+  });
+  for (const job of ["app-gates", "app-tests", "results"]) assert.ok(req.has(job), job);
+  // A change without UI leaves the web package as it was, so the web tests are not required (US-QG-02).
+  for (const job of [
+    "app-tests-web",
+    "app-ui",
+    "ds-snapshots",
+    "lighthouse",
+    "one-screen",
+    "a11y-routes",
+    "layout",
+    "docs-gates",
+  ]) {
+    assert.ok(!req.has(job), job);
+  }
+  const docs = requiredJobs({
+    files: ["docs/x.md"],
+    base: "dev",
+    draft: false,
+    defined: new Set(JOBS),
+  });
+  assert.ok(!docs.has("results") && !docs.has("app-tests") && !docs.has("app-tests-web"));
+  assert.ok(docs.has("docs-gates") && docs.has("layout"));
+});
+
+test("US-QG-02 (issue 1608): an app PR runs the layout and docs checks in app-gates, and the web tests for a UI change only", () => {
+  const defined = new Set(JOBS);
+  const cases = [
+    // [files, jobs that are required, jobs that are not required]
+    [["docs/x.md"], ["docs-gates", "layout"], ["app-gates", "app-tests-web"]],
+    [["README.md"], ["docs-gates", "layout"], ["app-gates"]],
+    [[".githooks/pre-push"], ["layout"], ["docs-gates", "app-gates"]],
+    [["app/packages/core/src/a.ts"], ["app-gates", "app-tests-web"], ["layout", "docs-gates"]],
+    [
+      ["app/packages/core/src/a.ts", "docs/x.md"],
+      ["app-gates", "app-tests-web"],
+      ["layout", "docs-gates"],
+    ],
+    [
+      ["app/tools/workflow/x.mjs", "docs/x.md"],
+      ["app-gates", "app-tests"],
+      ["layout", "docs-gates", "app-tests-web"],
+    ],
+  ];
+  for (const [files, yes, no] of cases) {
+    const req = requiredJobs({ files, base: "dev", draft: false, defined });
+    for (const job of yes) assert.ok(req.has(job), `${files}: ${job} is required`);
+    for (const job of no) assert.ok(!req.has(job), `${files}: ${job} is not required`);
   }
 });
 
@@ -164,11 +247,11 @@ test("US-DEV-13: the jobs required for a PR follow the path filter, the draft st
   const core = requiredJobs({
     files: ["app/packages/core/src/a.ts"],
     base: "dev",
-    draft: true,
+    draft: false,
     defined,
   });
-  assert.ok(core.has("app-gates") && core.has("lighthouse"));
-  assert.ok(!core.has("one-screen") && !core.has("metadata") && !core.has("audit"));
+  assert.ok(core.has("app-gates") && core.has("lighthouse") && core.has("metadata"));
+  assert.ok(!core.has("one-screen") && !core.has("audit"));
   const ui = requiredJobs({
     files: ["app/packages/web/src/x.tsx"],
     base: "main",
@@ -181,7 +264,9 @@ test("US-DEV-13: the jobs required for a PR follow the path filter, the draft st
 test("US-DEV-13: when GitHub lists 3000 files, every path filter counts as matched", () => {
   const files = Array.from({ length: 3000 }, () => "x.txt");
   const req = requiredJobs({ files, base: "dev", draft: false, defined: new Set(JOBS) });
-  assert.ok(req.has("app-gates") && req.has("one-screen") && req.has("docs-gates"));
+  assert.ok(req.has("app-gates") && req.has("one-screen") && req.has("app-tests-web"));
+  // The app path counts as matched, so the docs and layout checks are the ones that app-gates runs (US-QG-02).
+  assert.ok(!req.has("docs-gates") && !req.has("layout"));
 });
 
 test("US-DEV-13: a job that the head's workflow does not define is never required (PR 1465 predates docs-gates)", () => {
@@ -199,10 +284,21 @@ test("US-DEV-13: a job that the head's workflow does not define is never require
     draft: false,
     defined: new Set(JOBS),
   });
-  assert.ok(ifDefined.has("docs-gates"), "docs/ changed, so the job is required where it exists");
+  // PR 1465 changes app paths too, so the docs checks are app-gates' and the job is not required (US-QG-02).
+  assert.ok(!ifDefined.has("docs-gates"), "an app PR runs the docs checks in app-gates");
+  const docsOnly = requiredJobs({
+    files: ["docs/x.md"],
+    base: "dev",
+    draft: false,
+    defined: new Set(JOBS),
+  });
+  assert.ok(
+    docsOnly.has("docs-gates"),
+    "docs/ changed without an app path, so the job is required",
+  );
 });
 
-test("US-DEV-13: PR 1476 requires the app, UI and docs jobs of its own workflow, but not the main-only ones", () => {
+test("US-DEV-13: PR 1476 requires the app and UI jobs of its own workflow, not the docs jobs and not the main-only ones", () => {
   const s = snapOf("pr1476");
   const required = requiredJobs({ files: s.files, base: "dev", draft: false, defined: s.defined });
   for (const job of [
@@ -211,11 +307,12 @@ test("US-DEV-13: PR 1476 requires the app, UI and docs jobs of its own workflow,
     "lighthouse",
     "one-screen",
     "a11y-routes",
-    "docs-gates",
     "metadata",
   ]) {
     assert.ok(required.has(job), job);
   }
+  // PR 1476 changes app paths, so app-gates runs the docs and layout checks (US-QG-02).
+  assert.ok(!required.has("docs-gates") && !required.has("layout"));
   assert.ok(!required.has("audit") && !required.has("e2e"));
 });
 
@@ -652,4 +749,148 @@ test("US-DEV-13: the make gate-review state line names the failed CodeQL check o
     stateLine(assess(scanOpen())),
     "not green: CodeQL: failure (ci-status: success, not judged)",
   );
+});
+
+test("US-DEV-13 (issue 1608): a draft requires no job, has no job table and exits 1 with the way to start its CI", () => {
+  const s = open(snapOf("pr1476"));
+  const draft = { ...s, pr: { ...s.pr, draft: true } };
+  assert.deepEqual(
+    [...requiredJobs({ files: s.files, base: "dev", draft: true, defined: s.defined })],
+    [],
+  );
+  const a = assess(draft);
+  assert.equal(a.status, "draft");
+  assert.deepEqual(a.rows, []);
+  assert.equal(exitCodeOf(a), 1);
+  const text = report(a);
+  assert.match(text, /is a draft, and a draft has no CI run\. make pr marks it ready/);
+  assert.doesNotMatch(text, /app-gates|ci-status/);
+  assert.match(problemsNow(a)[0], /make pr marks it ready for review/);
+});
+
+test("US-DEV-13 (issue 1608): ci-wait ends at once on a draft, without polling", async () => {
+  const s = open(snapOf("pr1476"));
+  const c = clock();
+  const r = reads([{ ...s, pr: { ...s.pr, draft: true } }]);
+  const out = await waitForCi(1476, waitOpts(c, r.read));
+  assert.equal(out.status, "draft");
+  assert.equal(r.calls.length, 1);
+  assert.deepEqual(c.sleeps, []);
+});
+
+test("US-DEV-13 (issue 1608): the jobs come from the ci.yml of the merge commit, which a pull_request run uses", async () => {
+  const merge = "c".repeat(40);
+  const pull = { ...fixtures.pr1476.pull, merge_commit_sha: merge };
+  const s = snapOf("pr1476");
+  const refs = [];
+  const client = {
+    async run(cmd, args) {
+      const path = args[1];
+      if (path === "repos/{owner}/{repo}") return `${REPO}\n`;
+      if (path === `repos/${REPO}/pulls/1476`) return JSON.stringify(pull);
+      if (path.includes("/files")) return JSON.stringify(s.files.map((filename) => ({ filename })));
+      if (path.includes("/check-runs?")) return JSON.stringify({ total_count: 0, check_runs: [] });
+      if (path.includes("/actions/runs?"))
+        return JSON.stringify({ total_count: 0, workflow_runs: [] });
+      const ref = /\/contents\/\.github\/workflows\/ci\.yml\?ref=(\w+)$/.exec(path);
+      if (ref) {
+        refs.push(ref[1]);
+        const yml =
+          ref[1] === merge
+            ? "jobs:\n  changes:\n    runs-on: x\n"
+            : "jobs:\n  ci-status:\n    needs: []\n";
+        return JSON.stringify({ content: Buffer.from(yml).toString("base64") });
+      }
+      throw new Error(`unexpected call: ${path}`);
+    },
+  };
+  const snap = await readSnapshot(client, 1476);
+  assert.deepEqual([...snap.defined], ["changes"]);
+  assert.deepEqual(refs, [merge]);
+});
+
+// US-QG-02 (issue 1608): the job `results` fails for each part that failed, and for nothing else. Its last step is run here
+// with the results that ci.yml gives it as environment (the needs of the job and the outcomes of its steps).
+const RESULTS_LAST_STEP = "Every part that ran passed (US-QG-01, US-QG-02)";
+const ALL_PASSED = {
+  APP_TESTS: "success",
+  APP_TESTS_WEB: "success",
+  COVERAGE: "success",
+  UI_SHARDS: "success",
+  ONE_SCREEN_MERGE: "success",
+  A11Y_ROUTES_MERGE: "success",
+};
+
+/** The bash of the step `name` in ci.yml: the lines of its `run: |` block, which are indented deeper than the `run:` key. */
+function stepScript(ciText, name) {
+  const lines = ciText.split("\n");
+  const at = lines.findIndex((l) => l.trim() === `- name: ${name}`);
+  assert.ok(at >= 0, `step ${name}`);
+  const runAt = lines.findIndex((l, i) => i > at && l.trim() === "run: |");
+  const indent = lines[runAt].indexOf("run:") + 2;
+  const body = [];
+  for (let i = runAt + 1; i < lines.length; i++) {
+    if (lines[i].trim() !== "" && lines[i].search(/\S/) < indent) break;
+    body.push(lines[i].slice(indent));
+  }
+  return body.join("\n");
+}
+
+const resultsOf = (parts) =>
+  spawnSync("bash", ["-c", stepScript(readFileSync(CI_YML, "utf8"), RESULTS_LAST_STEP)], {
+    encoding: "utf8",
+    env: { PATH: process.env.PATH, ...ALL_PASSED, ...parts },
+  });
+
+test("US-QG-02 (issue 1608): the results job passes when every part that ran passed, and a part that did not run is no failure", () => {
+  assert.equal(resultsOf({}).status, 0);
+  const reused = { APP_TESTS: "skipped", APP_TESTS_WEB: "skipped", COVERAGE: "skipped" };
+  assert.equal(resultsOf(reused).status, 0, "reused test jobs need no coverage");
+  const noUi = { UI_SHARDS: "skipped", ONE_SCREEN_MERGE: "skipped", A11Y_ROUTES_MERGE: "skipped" };
+  assert.equal(resultsOf(noUi).status, 0, "no UI shards ran");
+});
+
+test("US-QG-02 (issue 1608): a failed or cancelled test job fails the results job", () => {
+  for (const result of ["failure", "cancelled"]) {
+    const out = resultsOf({ APP_TESTS_WEB: result, COVERAGE: "skipped" });
+    assert.equal(out.status, 1, result);
+    assert.match(out.stderr, /test-job=/);
+  }
+});
+
+test("US-QG-02 (issue 1608): the coverage ratchet fails the results job when both test jobs passed", () => {
+  const out = resultsOf({ COVERAGE: "failure" });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /coverage=failure/);
+  assert.equal(
+    resultsOf({ COVERAGE: "skipped" }).status,
+    1,
+    "a coverage step that did not run is a failure",
+  );
+});
+
+test("US-QG-01 (issue 1608, owner decision 2026-11-07): a failed UI shard job fails the results job", () => {
+  const out = resultsOf({ UI_SHARDS: "failure" });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /ui-shards=failure/);
+});
+
+test("US-QG-01 (issue 1608): a one-screen merge that fails, or an a11y-routes merge that fails, fails the results job", () => {
+  for (const parts of [{ ONE_SCREEN_MERGE: "failure" }, { A11Y_ROUTES_MERGE: "failure" }]) {
+    const out = resultsOf(parts);
+    assert.equal(out.status, 1, JSON.stringify(parts));
+    assert.match(out.stderr, /(one-screen|a11y-routes)-merge=failure/);
+  }
+});
+
+test("US-QG-02 (issue 1608): every failed part is named in the one message of the results job", () => {
+  const out = resultsOf({
+    APP_TESTS: "failure",
+    COVERAGE: "skipped",
+    A11Y_ROUTES_MERGE: "failure",
+  });
+  assert.equal(out.status, 1);
+  assert.match(out.stderr, /test-job=failure/);
+  assert.match(out.stderr, /a11y-routes-merge=failure/);
+  assert.doesNotMatch(out.stderr, /ui-shards=/, "the shards passed");
 });

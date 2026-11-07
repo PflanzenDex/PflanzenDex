@@ -1,3 +1,5 @@
+import { focusIt, mainHeading, mainRegion } from "./view-start";
+
 // The focus handling of RouteFocus, loaded after the shell is painted instead of with it (DS-08).
 /** Longest wait for a view to finish loading before the focus falls back to the main region. */
 const MAX_WAIT_MS = 2500;
@@ -50,13 +52,6 @@ function locate(o: Opener): HTMLElement | null {
   return same.find((el) => el.checkVisibility?.() ?? true) ?? null;
 }
 
-function focusIt(el: HTMLElement): boolean {
-  if (!el.hasAttribute("tabindex") && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(el.tagName))
-    el.setAttribute("tabindex", "-1");
-  el.focus({ preventScroll: false });
-  return document.activeElement === el;
-}
-
 /** Calls `done` as soon as `find` yields an element, watching the page while a lazy view loads; `cancel` stops it. */
 function waitFor(find: () => HTMLElement | null, done: (el: HTMLElement | null) => void) {
   const first = find();
@@ -88,8 +83,3 @@ function waitFor(find: () => HTMLElement | null, done: (el: HTMLElement | null) 
   observer.observe(document.body, { childList: true, subtree: true });
   return stop;
 }
-
-// The heading of a route's loading skeleton is not the view's own (issue 1097): focusing it would lose the focus when the page replaces it.
-const mainHeading = () =>
-  document.querySelector<HTMLElement>("#inhalt h1:not([data-route-fallback])");
-const mainRegion = () => document.getElementById("inhalt");

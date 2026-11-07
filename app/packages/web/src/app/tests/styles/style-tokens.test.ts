@@ -244,3 +244,22 @@ describe("US-QS-15 no fixed pixel text size (issue 1019)", () => {
     expect(offenders.map((file) => file.slice(file.indexOf("/src/") + 5))).toEqual([]);
   });
 });
+
+describe("US-BES-17 · print rules in tokens.css", () => {
+  const printBlock = css.slice(css.indexOf("@media print {"), css.indexOf("@page labels {"));
+  it("US-BES-17 there is no bare @page rule, so no page of the app is resized or loses its margins", () => {
+    expect(css).not.toMatch(/@page\s*\{/);
+  });
+  it("US-BES-17 the named page labels is A4 without margin", () => {
+    expect(css).toMatch(/@page labels \{\s*size: A4;\s*margin: 0;\s*\}/);
+  });
+  it("US-BES-17 the rest of the body is hidden in print only while a label sheet is on the page", () => {
+    expect(printBlock).toMatch(
+      /body:has\(> \[data-print-labels\]\) > :not\(\[data-print-labels\]\) \{\s*display: none;\s*\}/,
+    );
+  });
+  it("US-BES-17 only the label sheet takes the labels page", () => {
+    expect(printBlock).toMatch(/\[data-print-labels\] \{\s*page: labels;\s*\}/);
+    expect(css.match(/page: labels;/g)).toHaveLength(1);
+  });
+});

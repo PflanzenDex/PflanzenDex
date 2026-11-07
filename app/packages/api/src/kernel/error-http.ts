@@ -6,6 +6,10 @@ type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 502 | 
 const STATUS: Partial<Record<ErrorCode, Status>> = {
   "input.invalid": 400,
   "idempotency.key_missing": 400,
+  "import.file_unreadable": 400,
+  "import.no_species_column": 400,
+  "import.column_repeated": 400,
+  "import.too_large": 413,
   "operator_cost.month_in_future": 400,
   "access.not_signed_in": 401,
   "access.denied": 403,

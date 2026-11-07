@@ -71,6 +71,19 @@ test("US-DEV-02: a PR that changes a gate file is left to a human", () => {
   assert.match(problems(gate, known)[0], /gate files.*ci\.yml.*merge-pr\.mjs/);
 });
 
+test("US-QG-07: a PR that changes only a gate test is left to a human too: the hook asks no question for a test, make merge still refuses it", () => {
+  for (const f of [
+    ".claude/hooks/rules.test.mjs",
+    ".claude/hooks/worktree.test.mjs",
+    "app/tools/workflow/merge-pr.test.mjs",
+  ]) {
+    const found = problems({ ...ok, files: [{ path: f }] }, known);
+    assert.equal(found.length, 1, f);
+    assert.match(found[0], /gate files, which a human must merge/, f);
+    assert.ok(found[0].includes(f), f);
+  }
+});
+
 test("US-QG-07: a PR that changes a threshold or an exception list is refused, a PR that only shrinks a baseline is not", () => {
   for (const f of [
     "coverage-thresholds.json",
@@ -264,11 +277,15 @@ const REQUIRED = [
   "app-gates",
   "app-tests",
   "app-tests-web",
-  "app-coverage",
+  "results",
   "app-ui",
   "ds-snapshots",
   "lighthouse",
 ];
+// The jobs that `results` replaced (issue 1608): the ci.yml of the head no longer defines them, so the fixture defines every
+// other job of JOBS, and a green run of an app PR needs none of them.
+const RETIRED = new Set(["app-coverage", "one-screen", "a11y-routes"]);
+const DEFINED = new Set(JOBS.filter((job) => !RETIRED.has(job)));
 const check = (name, status, conclusion, run = 1) => ({
   name,
   status,
@@ -277,7 +294,7 @@ const check = (name, status, conclusion, run = 1) => ({
   details_url: `https://github.com/PflanzenDex/PflanzenDex/actions/runs/${run}/job/1`,
   app: { slug: "github-actions" },
 });
-const headOf = (checkRuns) =>
+const headOf = (checkRuns, files = ["app/packages/core/src/a.ts"]) =>
   assess({
     pr: {
       number: 7,
@@ -293,8 +310,8 @@ const headOf = (checkRuns) =>
       mergeableState: "clean",
     },
     head: "abc",
-    files: ["app/packages/core/src/a.ts"],
-    defined: new Set(JOBS),
+    files,
+    defined: DEFINED,
     checkRuns,
     workflowRuns: [],
   });
@@ -305,6 +322,22 @@ const greenRuns = () => [
 
 test("US-DEV-13: a PR whose required jobs all succeeded has no CI problem for make merge", () => {
   assert.deepEqual(problemsNow(headOf(greenRuns())), []);
+});
+
+// US-QG-02: a PR without UI needs no web tests, and an app PR needs no layout job of its own (app-gates runs the layout and
+// docs checks). A failed job that is not required still refuses the merge: nothing that ran is ignored.
+test("US-QG-02: a PR without UI needs no web tests, but a failed web job still refuses the merge", () => {
+  const tooling = ["app/tools/workflow/merge-pr.mjs"];
+  const withoutWeb = greenRuns().filter((c) => c.name !== "app-tests-web");
+  assert.deepEqual(problemsNow(headOf(withoutWeb, tooling)), []);
+  const failedWeb = greenRuns().map((c) =>
+    c.name === "app-tests-web" ? check("app-tests-web", "completed", "failure", 2) : c,
+  );
+  assert.ok(problemsNow(headOf(failedWeb, tooling)).includes("CI: app-tests-web: failure"));
+});
+
+test("US-QG-02: an app PR needs no layout job of its own, app-gates runs the layout check", () => {
+  assert.deepEqual(problemsNow(headOf(greenRuns().filter((c) => c.name !== "layout"))), []);
 });
 
 test("US-DEV-13: make merge refuses while a job of the full run is unfinished, although the text edit's ci-status is green", () => {

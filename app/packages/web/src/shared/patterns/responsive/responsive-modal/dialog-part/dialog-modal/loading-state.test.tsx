@@ -446,6 +446,31 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     expect(chunk.attempts).toBe(failedAttempts + 1);
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("US-QS-07 · DS-23 the sheet's failed-chunk view is a centred panel like the dialog's, not anchored to the bottom edge", async () => {
+    const ResponsiveModal = await freshResponsiveModal();
+    setViewportWidth(360);
+    chunk.fail = true;
+    render(
+      <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
+        <button>Speichern</button>
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const cls = (await screen.findByRole("alert")).className;
+    for (const token of [
+      "fixed",
+      "left-1/2",
+      "top-1/2",
+      "-translate-x-1/2",
+      "-translate-y-1/2",
+      "rounded-card",
+      "border-destructive",
+    ])
+      expect(cls).toContain(token);
+    expect(cls).not.toContain("bottom-0");
+    expect(cls).not.toContain("inset-x-0");
+  });
 });
 
 describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => {

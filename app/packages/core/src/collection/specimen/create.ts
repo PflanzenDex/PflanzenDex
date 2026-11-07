@@ -13,6 +13,7 @@ import {
   choiceField,
 } from "../../kernel";
 import { withDerivations } from "../shared/read";
+import { notesField } from "../notes/notes";
 import { speciesDisplayName, specimenName } from "../shared/name";
 import { markerAnswersField, planMarkers } from "../shared/markers";
 import { CREATE_STATUS, SPECIMEN_LIMITS } from "../shared/types";
@@ -57,6 +58,8 @@ const schema = shape({
   locationId: orNull(idField("locationId")),
   // Own light zone from the start (US-LIC-02); chosen by ID from the own zones.
   lightZoneId: orNull(idField("lightZoneId")),
+  // Private notes from the start (US-BES-18, the import): empty or left out means none.
+  notes: orNull(notesField("notes")),
   status: orNull(choiceField("status", CREATE_STATUS)),
   // Back-dating (FR-BES-04): a calendar date `YYYY-MM-DD`, not after the keeper's local today.
   catchDate: orNull(calendarDateField("catchDate")),
@@ -109,6 +112,7 @@ export const specimenCreate = (deps: CreateDependencies) =>
           lightZoneId: input.lightZoneId,
           caughtAt: input.catchDate ?? today,
           status,
+          notes: input.notes,
         },
         plan.assignments,
       );

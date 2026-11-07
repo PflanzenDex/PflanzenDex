@@ -25,15 +25,10 @@ for (const user of USERS) {
   await page.waitForURL(`${WEB}/**`, { timeout: 30_000 });
   await page.waitForTimeout(1500);
   const sub = await page.evaluate(() => {
-    const stored = [
-      ...Object.values(sessionStorage),
-      ...Object.values(localStorage),
-    ].join(" ");
+    const stored = [...Object.values(sessionStorage), ...Object.values(localStorage)].join(" ");
     for (const token of stored.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g) ?? []) {
       try {
-        const claims = JSON.parse(
-          atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-        );
+        const claims = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
         if (claims.sub) return claims.sub;
       } catch {
         // not a JWT payload: try the next token

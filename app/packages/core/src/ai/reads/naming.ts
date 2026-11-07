@@ -1,7 +1,10 @@
 // Names instead of IDs (FR-KI-15, KI-R4): one rule that turns a reference given by id or by readable name into exactly
 // one entity of the account, or into the candidates, or into "not found" with the nearest names. Every tool that takes a
 // reference uses it; later slices (writes, import) resolve the same way.
-import { appError, isId, type AppError, type ErrorCode } from "../../kernel";
+import { appError, isId, normalizeName, type AppError, type ErrorCode } from "../../kernel";
+
+// The one name rule of the product lives in `kernel` (the import of `collection` uses it too); re-exported here.
+export { normalizeName };
 
 /** An entity that can be named: its id, every name it answers to and the name shown to the client. */
 export interface Named {
@@ -31,15 +34,6 @@ export type Resolution =
  * assumption.
  */
 export const NAMING_LIMITS = { nearest: 5, candidates: 20, prefix: 3, minSearch: 2 } as const;
-
-/** Case, accents, dashes, brackets and repeated spaces do not matter: "Aloe vera (blau)" = "Aloe vera – blau". */
-export const normalizeName = (text: string): string =>
-  text
-    .normalize("NFKD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim();
 
 function distance(a: string, b: string): number {
   let row = Array.from({ length: b.length + 1 }, (_, j) => j);
