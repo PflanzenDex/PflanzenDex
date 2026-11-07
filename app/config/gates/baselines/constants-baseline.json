@@ -480,10 +480,6 @@
       "enums": 2
     },
     {
-      "file": "packages/web/src/collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
-      "enums": 1
-    },
-    {
       "file": "packages/web/src/collection/plants-screen/rows/plant-tile/plant-tile.tsx",
       "enums": 2
     },
@@ -512,14 +508,6 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/equipment/equipment-page/equipment-screen/item-card/item-card.tsx",
-      "enums": 1
-    },
-    {
-      "file": "packages/web/src/equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-      "enums": 1
-    },
-    {
       "file": "packages/web/src/equipment/equipment-page/lamp-actions/lamp-actions.tsx",
       "enums": 1
     },
@@ -538,10 +526,6 @@
     {
       "file": "packages/web/src/equipment/overviews/wishes-view/wishes-view.tsx",
       "enums": 1
-    },
-    {
-      "file": "packages/web/src/equipment/schemas.ts",
-      "enums": 2
     },
     {
       "file": "packages/web/src/light/shared/texts/text.ts",
