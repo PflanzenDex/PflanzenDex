@@ -1,10 +1,14 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet } from "../../../../specimens/cards/parts/parts";
+import table from "./plant-care-tab.de.json";
+
+const t = texts(table);
 
 const CareProfile = lazy(() =>
   import("../../../../care-profile-page/care-profile-page").then((m) => ({
@@ -14,8 +18,8 @@ const CareProfile = lazy(() =>
 
 const PART_PARAM = "teil";
 const PARTS = [
-  { value: "behandlungen", label: "Behandlungen" },
-  { value: "profil", label: "Pflegeprofil" },
+  { value: "behandlungen", label: t("parts.treatments") },
+  { value: "profil", label: t("parts.profile") },
 ] as const;
 type Part = (typeof PARTS)[number]["value"];
 
@@ -46,10 +50,10 @@ function ProfilePart({ card }: { card: SpecimenCard }) {
   return (
     <section aria-labelledby="own-profile" className="grid gap-2">
       <h3 id="own-profile" className="font-semibold">
-        Eigenes Pflegeprofil
+        {t("profile.title")}
       </h3>
-      <Quiet>Das Profil gilt für alle deine Pflanzen dieser Art und ist privat.</Quiet>
-      <LayerOpener id={careProfileLayerId(card.id)}>Pflegeprofil bearbeiten</LayerOpener>
+      <Quiet>{t("profile.hint")}</Quiet>
+      <LayerOpener id={careProfileLayerId(card.id)}>{t("profile.open")}</LayerOpener>
     </section>
   );
 }
@@ -60,11 +64,11 @@ function ProfilePart({ card }: { card: SpecimenCard }) {
  */
 export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
   return (
-    <LayerSheet id={careProfileLayerId(props.card.id)} title="Pflegeprofil">
+    <LayerSheet id={careProfileLayerId(props.card.id)} title={t("profile.layerTitle")}>
       <Suspense
         fallback={
           <p role="status" className="text-sm text-muted-foreground">
-            Pflegeprofil wird geladen …
+            {t("profile.loading")}
           </p>
         }
       >
@@ -80,14 +84,22 @@ export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAcces
 
 /**
  * "Pflege" of the plant layer (US-QS-23): a segment "Behandlungen | Pflegeprofil". The treatments and the care phase
- * (`care`, a slot) are one part, the own care profile is the other and opens its own layer, so the tab fits a phone.
+ * (`care`, a slot) and the repot plan (`repot`, US-BES-19) are one part, the own care profile is the other and opens its
+ * own layer, so the tab fits a phone.
  */
-export function PlantCareTab(props: { card: SpecimenCard; care: ReactNode }) {
+export function PlantCareTab(props: { card: SpecimenCard; care: ReactNode; repot?: ReactNode }) {
   const [part, choose] = usePart();
   return (
     <div className="grid gap-4">
-      <SegmentedControl label="Teile der Pflege" options={PARTS} value={part} onChange={choose} />
-      {part === "profil" ? <ProfilePart card={props.card} /> : props.care}
+      <SegmentedControl label={t("parts.label")} options={PARTS} value={part} onChange={choose} />
+      {part === "profil" ? (
+        <ProfilePart card={props.card} />
+      ) : (
+        <>
+          {props.care}
+          {props.repot}
+        </>
+      )}
     </div>
   );
 }

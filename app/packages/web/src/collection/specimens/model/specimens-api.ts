@@ -31,19 +31,24 @@ export async function createSpecimen(
 }
 
 /**
- * Repots a cutting (US-BES-04): the cutting becomes a plant on the chosen local day `date` (`YYYY-MM-DD`, not after
- * today in the profile's time zone). Without a date the server records today. The key is created per call.
+ * Repots a cutting (US-BES-04) or a plant (US-BES-19): the specimen becomes or stays a plant on the chosen local day
+ * `date` (`YYYY-MM-DD`, not after today in the profile's time zone). Without a date the server records today. A `potId`
+ * places the plant into that pot on the same day; without it the plant leaves its pot. The key is created per call.
  */
 export async function repotSpecimen(
   api: string,
   token: string,
-  input: { id: string; date?: string },
+  input: { id: string; date?: string; potId?: string },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
   const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/repot`,
-    { timeZone: currentTimeZone(), ...(input.date === undefined ? {} : { date: input.date }) },
+    {
+      timeZone: currentTimeZone(),
+      ...(input.date === undefined ? {} : { date: input.date }),
+      ...(input.potId === undefined ? {} : { potId: input.potId }),
+    },
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }

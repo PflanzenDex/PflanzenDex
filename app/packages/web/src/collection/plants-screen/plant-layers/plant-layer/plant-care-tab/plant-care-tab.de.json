@@ -1,0 +1,10 @@
+{
+  "parts.label": "Teile der Pflege",
+  "parts.treatments": "Behandlungen",
+  "parts.profile": "Pflegeprofil",
+  "profile.title": "Eigenes Pflegeprofil",
+  "profile.hint": "Das Profil gilt für alle deine Pflanzen dieser Art und ist privat.",
+  "profile.open": "Pflegeprofil bearbeiten",
+  "profile.layerTitle": "Pflegeprofil",
+  "profile.loading": "Pflegeprofil wird geladen …"
+}

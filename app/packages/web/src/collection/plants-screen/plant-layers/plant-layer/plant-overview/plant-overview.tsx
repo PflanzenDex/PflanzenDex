@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import type { SpecimenCard } from "@pflanzendex/core";
+import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
+import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -29,6 +30,34 @@ export function MeasureButton(props: { card: SpecimenCard; onMeasure: () => void
     >
       {t("overview.measure")}
     </Button>
+  );
+}
+
+/**
+ * Light zone, location and the open treatment as text chips (P-08: unknown reads as such). A long chip wraps inside its
+ * pill, so the row keeps the "Mehr" button inside the window at 200 % text (NFR-13, issue 1228).
+ */
+export function Chips({ card }: { card: SpecimenCard }) {
+  return (
+    <ul aria-label={t("chips.label")} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+      <li>
+        <Badge variant="outline" className="whitespace-normal">
+          {card.lightZone ? zoneLabel(card.lightZone) : t("chips.zoneUnknown")}
+        </Badge>
+      </li>
+      <li>
+        <Badge variant="outline" className="whitespace-normal">
+          {card.location ?? t("chips.locationUnknown")}
+        </Badge>
+      </li>
+      {card.treatment ? (
+        <li>
+          <Badge variant="warning" className="whitespace-normal">
+            {t("chips.treatment")}
+          </Badge>
+        </li>
+      ) : null}
+    </ul>
   );
 }
 

@@ -2,14 +2,18 @@ import { useSearchParams } from "react-router";
 import { zoneLabel } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { withUnit } from "@/shared/lib/format";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { EquipmentData, EquipmentRow } from "../../../equipment-api";
-import { STATUS_LABELS, TYPE_LABELS } from "../../../labels";
+import { LAMP_TYPE, POT_TYPE, STATUS_LABELS, TYPE_LABELS } from "../../../labels";
+import table from "../../../equipment.de.json";
 import type { useLampActions } from "../../lamp-actions/lamp-actions";
 import { ItemCard } from "../item-card/item-card";
 
 const ITEM_PREFIX = "item-";
+const t = texts(table);
 
-/** One record as a row (name, kind, state, zone); the full record opens as a layer (US-QS-22). */
+/** One record as a row (name, kind, state, zone or pot size); the full record opens as a layer (US-QS-22). */
 export function ItemRow(props: { item: EquipmentRow; zone: string | undefined }) {
   const { item, zone } = props;
   const sheet = ITEM_PREFIX + item.id;
@@ -17,7 +21,12 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
   const facts = [
     TYPE_LABELS[item.type],
     item.status ? STATUS_LABELS[item.status] : null,
-    item.type === "Lamp" ? (zone ?? "ohne Zone") : null,
+    item.type === LAMP_TYPE ? (zone ?? "ohne Zone") : null,
+    item.type === POT_TYPE
+      ? item.diameterCm === null
+        ? t("pot.sizeUnknown")
+        : withUnit(item.diameterCm, "cm")
+      : null,
   ].filter(Boolean);
   return (
     <Button

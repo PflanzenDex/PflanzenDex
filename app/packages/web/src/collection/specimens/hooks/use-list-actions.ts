@@ -8,7 +8,7 @@ import type { useMarker } from "../../markers/marker/use-marker";
 import { setSpecimenLocation } from "../model/specimens-api";
 import type { useArchive } from "./use-archive";
 import { COLLECTION_KEY, type Token } from "./use-collection";
-import type { useRepot } from "./use-repot";
+import type { RepotTarget, useRepot } from "./use-repot";
 
 export type ListActions = {
   archived: ReturnType<typeof useArchive>;
@@ -51,7 +51,7 @@ export function useListActions(api: string, token: Token, a: ListActions) {
         clearMessages();
         archived.setOpen(e);
       },
-      onRepot: (e: Named) => {
+      onRepot: (e: RepotTarget) => {
         clearMessages();
         potted.setOpen(e);
       },
