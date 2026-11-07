@@ -79,7 +79,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | QS Cross-cutting                 | 24      | 0      | 23      | 1      | 0 · 0 · 0                 | 6                      | 18      |
 | MIG Migration (dropped)          | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                     | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
-| QG Quality gates                 | 10      | 2      | 7       | 1      | 15 · 10 · 2               | 0                      | 10      |
+| QG Quality gates                 | 10      | 2      | 8       | 0      | 15 · 10 · 2               | 0                      | 10      |
 | DEV Development process          | 13      | 3      | 9       | 1      | 1 · 3 · 6                 | 0                      | 13      |
 | ACH Achievements                 | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching               | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **216** | **43** | **135** | **38** |                           | **50**                 | **166** |
+| **Total**                        | **216** | **43** | **136** | **37** |                           | **50**                 | **166** |
 
 <!-- spec-status:end -->
 

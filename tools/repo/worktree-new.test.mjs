@@ -21,10 +21,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../..",
-);
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 // The files the script needs in a checkout: the script, the worktree helper (env and dependency copy) and the stamp check.
 const FILES = [
   "tools/repo/worktree-new.sh",
@@ -96,19 +93,15 @@ function stubMake(root, { failing = false } = {}) {
 
 /** Runs the script in `cwd` for `branch`, with the stub make first on PATH and the claim check opted out. */
 function worktreeNew(cwd, branch, bin) {
-  return spawnSync(
-    "bash",
-    [path.join(cwd, "tools/repo/worktree-new.sh"), branch],
-    {
-      cwd,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        SKIP_CLAIM_CHECK: "1",
-      },
+  return spawnSync("bash", [path.join(cwd, "tools/repo/worktree-new.sh"), branch], {
+    cwd,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      SKIP_CLAIM_CHECK: "1",
     },
-  );
+  });
 }
 
 const makeCalls = (log) => (existsSync(log) ? readFileSync(log, "utf8") : "");
@@ -123,10 +116,7 @@ test("US-DEV-08: make worktree puts the new worktree into the main checkout's .w
     existsSync(path.join(dir, ".env.worktree")),
     "the worktree is in the main checkout's .worktrees",
   );
-  assert.ok(
-    makeCalls(log).includes(`-C ${dir} setup`),
-    "make setup runs in the new worktree",
-  );
+  assert.ok(makeCalls(log).includes(`-C ${dir} setup`), "make setup runs in the new worktree");
 });
 
 test("US-DEV-08: run inside a worktree, the new worktree still lands in the main checkout's .worktrees (#1487: it nested)", () => {
@@ -136,11 +126,7 @@ test("US-DEV-08: run inside a worktree, the new worktree still lands in the main
   const first = path.join(main, ".worktrees", "feat-gate-first");
   const res = worktreeNew(first, "feat/gate-second", bin);
   assert.equal(res.status, 0, res.stderr);
-  assert.ok(
-    existsSync(
-      path.join(main, ".worktrees", "feat-gate-second", ".env.worktree"),
-    ),
-  );
+  assert.ok(existsSync(path.join(main, ".worktrees", "feat-gate-second", ".env.worktree")));
   assert.equal(
     existsSync(path.join(first, ".worktrees")),
     false,
@@ -156,11 +142,7 @@ test("US-DEV-08: the new worktree is ready to commit in: its dependencies are an
   const copied = path.join(dir, "app", "node_modules", "left-pad", "index.js");
   const source = path.join(main, "app", "node_modules", "left-pad", "index.js");
   assert.equal(readFileSync(copied, "utf8"), readFileSync(source, "utf8"));
-  assert.notEqual(
-    statSync(copied).ino,
-    statSync(source).ino,
-    "an own copy, no shared file",
-  );
+  assert.notEqual(statSync(copied).ino, statSync(source).ino, "an own copy, no shared file");
   assert.ok(makeCalls(log).includes(`-C ${dir} setup`));
   const check = spawnSync(
     "node",
@@ -187,13 +169,6 @@ test("US-DEV-08: a make setup that fails leaves the worktree, exits 1 and names 
   const { bin } = stubMake(root, { failing: true });
   const res = worktreeNew(main, "feat/gate-broken", bin);
   assert.equal(res.status, 1);
-  assert.match(
-    res.stderr,
-    /make setup failed in .*feat-gate-broken: run make setup there/,
-  );
-  assert.ok(
-    existsSync(
-      path.join(main, ".worktrees", "feat-gate-broken", ".env.worktree"),
-    ),
-  );
+  assert.match(res.stderr, /make setup failed in .*feat-gate-broken: run make setup there/);
+  assert.ok(existsSync(path.join(main, ".worktrees", "feat-gate-broken", ".env.worktree")));
 });

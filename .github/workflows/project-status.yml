@@ -41,4 +41,4 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           GH_REPO: ${{ github.repository }}
-        run: node app/tools/workflow/actions/project-status/project-status.mjs event "$GITHUB_EVENT_PATH"
+        run: make project-status

@@ -16,8 +16,8 @@ import {
   reportMarkdown as a11yMarkdown,
 } from "../../../support/display/a11y/reporter";
 
-// US-QG-01 (issue 1485): the shards of a gate run one Playwright `--shard` each on their own runner. Each shard writes the
-// results of its screens into its own report folder; this CLI merges them into the report of the whole run for the job
+// US-QG-01 (issue 1485): the shards of a gate run the screens that the split of register.ts (planShards) gives them, one
+// shard per runner. Each shard writes the results of its screens into its own report folder; this CLI merges them into the report of the whole run for the job
 // summary and the results.json the baseline is built from. It fails unless every screen and size of the register was
 // measured exactly once, so a shard that did not run, or a screen that no shard picked up, turns the gate red.
 // `npm run merge-shards -w @pflanzendex/e2e -- <gate> <folder with one folder per shard>` (Makefile: one-screen-merge,

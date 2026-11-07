@@ -56,11 +56,20 @@ export const BASELINE_FORMATS = {
   },
   "quality-ds-baseline.json": {
     limits: [],
-    entries: { key: ["rule", "file"], fields: { rule: TEXT, file: TEXT, count: NUMBER }, judged: ["count"] },
+    entries: {
+      key: ["rule", "file"],
+      fields: { rule: TEXT, file: TEXT, count: NUMBER },
+      judged: ["count"],
+    },
   },
   "constants-baseline.json": {
     limits: ["maxTotal"],
-    entries: { key: ["file"], fields: { file: TEXT }, optional: { numbers: 0, enums: 0 }, judged: ["numbers", "enums"] },
+    entries: {
+      key: ["file"],
+      fields: { file: TEXT },
+      optional: { numbers: 0, enums: 0 },
+      judged: ["numbers", "enums"],
+    },
   },
   "ui-text-baseline.json": {
     limits: ["maxTotal"],
@@ -78,7 +87,8 @@ const CHECK = { [TEXT]: isText, [NUMBER]: isCount };
 /** Throws when an object has a field that the format does not know. */
 function onlyKeys(object, allowed) {
   for (const key of Object.keys(object))
-    if (!allowed.includes(key)) throw new Error(`the file has the field ${key}, which the format does not know`);
+    if (!allowed.includes(key))
+      throw new Error(`the file has the field ${key}, which the format does not know`);
 }
 
 function parseObject(text) {
@@ -101,9 +111,11 @@ function rowsOf(list, spec) {
     if (!isObject(entry)) throw new Error("an entry is not an object");
     onlyKeys(entry, [...Object.keys(spec.fields), ...Object.keys(optional)]);
     for (const [name, type] of Object.entries(spec.fields))
-      if (!CHECK[type](entry[name])) throw new Error(`entry field ${name} is missing or not a ${type}`);
+      if (!CHECK[type](entry[name]))
+        throw new Error(`entry field ${name} is missing or not a ${type}`);
     for (const name of Object.keys(optional))
-      if (entry[name] !== undefined && !isCount(entry[name])) throw new Error(`entry field ${name} is not a number`);
+      if (entry[name] !== undefined && !isCount(entry[name]))
+        throw new Error(`entry field ${name} is not a number`);
     const label = spec.key.map((name) => entry[name]).join(" ");
     const key = JSON.stringify(spec.key.map((name) => entry[name]));
     if (rows.has(key)) throw new Error(`duplicate entry ${label}`);
@@ -120,7 +132,8 @@ function listsOf(root, names) {
   const rows = new Map();
   for (const name of names) {
     const list = root[name] ?? [];
-    if (!Array.isArray(list) || !list.every(isText)) throw new Error(`${name} is not a list of texts`);
+    if (!Array.isArray(list) || !list.every(isText))
+      throw new Error(`${name} is not a list of texts`);
     for (const item of list) {
       const key = JSON.stringify([name, item]);
       if (rows.has(key)) throw new Error(`duplicate ${name} entry ${item}`);
@@ -133,10 +146,14 @@ function listsOf(root, names) {
 function nestedOf(root) {
   const rows = new Map();
   for (const [rule, directories] of Object.entries(root)) {
-    if (!/^LY-\d+$/.test(rule) || !isObject(directories)) throw new Error(`${rule} is not a layout rule with directories`);
+    if (!/^LY-\d+$/.test(rule) || !isObject(directories))
+      throw new Error(`${rule} is not a layout rule with directories`);
     for (const [directory, value] of Object.entries(directories)) {
       if (!isCount(value)) throw new Error(`${rule} ${directory} is not a number`);
-      rows.set(JSON.stringify([rule, directory]), { label: `${rule} ${directory}`, values: { value } });
+      rows.set(JSON.stringify([rule, directory]), {
+        label: `${rule} ${directory}`,
+        values: { value },
+      });
     }
   }
   return { limits: new Map(), rows };
@@ -255,7 +272,9 @@ export function baselineChanges(pr, { mergeBase, readAt, namedAtHead }) {
 export function baselineProblems(changes) {
   return changes.flatMap((change) => {
     if (change.error)
-      return [`baseline ${change.path}: a version cannot be read (${change.error}), so growth cannot be ruled out`];
+      return [
+        `baseline ${change.path}: a version cannot be read (${change.error}), so growth cannot be ruled out`,
+      ];
     const { grows, reasons } = baselineGrows(change.path, change.before, change.after, {
       gateNamesFile: change.gateNamesFile,
     });

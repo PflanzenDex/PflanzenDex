@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "icons": "node src/styles/pwa/build-icons.mjs",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/web.tsbuildinfo",
     "test": "vitest run",
     "lighthouse": "lighthouse",
     "storybook": "storybook dev -p 6006",
