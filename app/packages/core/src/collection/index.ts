@@ -23,6 +23,22 @@ export {
   specimenUntickRepotSign,
 } from "./repot";
 export type { OpenSign, RepotSign, RepotStore, SignDependencies, SignRefusal } from "./repot";
+export {
+  GENERAL_STARTING_VALUE,
+  REPOT_INTERVAL_STARTING_MONTHS,
+  orderFreePots,
+  repotPlan,
+  wholeMonthsBetween,
+} from "./repot-plan";
+export type {
+  IntervalHint,
+  PlanPhase,
+  PlanPot,
+  RepotHint,
+  RepotPlan,
+  RepotPlanInput,
+  SignHint,
+} from "./repot-plan";
 export { cuttingLight } from "./placement/cutting-light";
 export type { ZoneSource } from "./placement/effective-zone";
 export { careProfileUpdate } from "./care-profile/care-profile";
