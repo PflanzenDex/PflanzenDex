@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge pr-state issue-read pr-text issue-comment gate-plan
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge pr-state issue-read pr-text issue-comment gate-plan project-status
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -394,6 +394,9 @@ issue-check: ## Check the type and epic labels of an issue (ISSUE=<n> [EVENT=ope
 
 issue-sync: ## Set the board fields Typ and Epic of an issue, and Status Todo when it has none (ISSUE=<n> TYPE=<label> EPIC=<code>); CI runs it with the project token (FR-DEV-10)
 	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs sync --issue "$$REST_ISSUE" --type "$$RAW_TYPE" --epic "$$RAW_EPIC"
+
+project-status: ## Move the project status of the PR that was merged or closed (CI: project-status.yml, US-DEV-05); the GitHub App token comes in GH_TOKEN
+	node $(APP)/tools/workflow/actions/project-status/project-status.mjs event "$$GITHUB_EVENT_PATH"
 
 board: ## Who works on which open story of a release (board field Release, RELEASE="R1 Parität"); flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
 	cd $(APP) && node tools/workflow/board.mjs "$$RAW_RELEASE"
