@@ -165,17 +165,25 @@ describe("US-BES-04 create a cutting and repot it", () => {
     expect(r).toMatchObject({ status: 201, body: { status: "plant" } });
   });
 
-  it("US-BES-04: repotting a plant: 409 not_a_cutting, the status stays", async () => {
+  it("US-BES-19: repotting a plant with its day is recorded and the status stays a plant", async () => {
     const species = await newSpecies(subA);
     const id = (await create(subA, species, { marker: "pot" })).body["id"] as string;
-    expect(await repot(subA, id)).toMatchObject({
-      status: 409,
-      body: { error: { code: "specimen.not_a_cutting" } },
-    });
+    expect(
+      await call(subA, "POST", `/specimens/${id}/repot`, { timeZone: "Europe/Berlin" }),
+    ).toMatchObject({ status: 200, body: { id, status: "plant" } });
     expect((await call(subA, "GET", `/specimens/${id}`)).body["status"]).toBe("plant");
   });
 
-  it("US-BES-04: an archived cutting is not repotted (409)", async () => {
+  it("US-BES-19: repotting a plant without its day is refused on timeZone (400), nothing is written", async () => {
+    const species = await newSpecies(subA);
+    const id = (await create(subA, species, { marker: "nodate" })).body["id"] as string;
+    expect(await repot(subA, id)).toMatchObject({
+      status: 400,
+      body: { error: { code: "input.invalid", details: [{ field: "timeZone" }] } },
+    });
+  });
+
+  it("US-BES-04: an archived cutting is not repotted (409, specimen.archived)", async () => {
     const species = await newSpecies(subA);
     const id = (await create(subA, species, { status: "cutting", marker: "arch" })).body[
       "id"
@@ -184,7 +192,7 @@ describe("US-BES-04 create a cutting and repot it", () => {
       timeZone: "Europe/Berlin",
       reason: "abgegeben",
     });
-    expect((await repot(subA, id)).body["error"].code).toBe("specimen.not_a_cutting");
+    expect((await repot(subA, id)).body["error"].code).toBe("specimen.archived");
     expect((await call(subA, "GET", `/specimens/${id}`)).body["status"]).toBe("archived");
   });
 

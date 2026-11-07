@@ -75,7 +75,7 @@ const MODULES = [
   {
     name: "collection",
     epics: ["BES"],
-    tables: ["specimen", "care_profile", "specimen_provenance"],
+    tables: ["specimen", "care_profile", "specimen_provenance", "repot", "repot_sign"],
     dependsOn: ["kernel", "catalog", "light"],
     ports: ["TargetLocationSource", "MeasurementSource", "TreatmentSource"],
   },

@@ -263,7 +263,7 @@ describe("US-BES-04 cutting in the database", () => {
     expect(await specimens.find(anna, z.id)).toEqual({ ...z, status: "plant" });
   });
 
-  it("US-BES-04: a plant and an archived cutting report not_a_cutting and stay unchanged", async () => {
+  it("US-BES-19: a plant without a day answers day_unknown and an archived cutting answers archived; both stay unchanged", async () => {
     const plant = await specimens.create(anna, { ...values, name: "Pflanze Topf" });
     const archived = await specimens.create(anna, {
       ...values,
@@ -272,8 +272,8 @@ describe("US-BES-04 cutting in the database", () => {
     });
     if (typeof plant === "string" || typeof archived === "string") throw new Error("create");
     await specimens.archive(anna, archived.id, "abgegeben", "2026-10-03");
-    expect(await specimens.repot(anna, plant.id, null, null)).toBe("not_a_cutting");
-    expect(await specimens.repot(anna, archived.id, null, null)).toBe("not_a_cutting");
+    expect(await specimens.repot(anna, plant.id, null, null)).toBe("day_unknown");
+    expect(await specimens.repot(anna, archived.id, null, null)).toBe("archived");
     expect((await specimens.find(anna, archived.id))?.status).toBe("archived");
     expect(await specimens.find(anna, plant.id)).toEqual(plant);
   });
@@ -446,7 +446,11 @@ describe("US-SOZ-05 the day of the repot", () => {
       status: "plant",
       repottedAt: null,
     });
-    expect(await repo.repot(anna, dated, "2026-10-11", "2026-10-11")).toBe("not_a_cutting");
+    // US-BES-19: a plant is repotted too; its repot day (the potting out of the cutting) stays as it was.
+    expect(await repo.repot(anna, dated, "2026-10-11", "2026-10-11")).toMatchObject({
+      status: "plant",
+      repottedAt: "2026-10-10",
+    });
     expect((await repo.find(anna, dated))?.repottedAt).toBe("2026-10-10");
   });
 });

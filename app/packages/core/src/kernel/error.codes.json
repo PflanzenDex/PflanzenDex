@@ -125,6 +125,7 @@
   "specimen.markers_missing",
   "specimen.name_taken",
   "specimen.not_a_cutting",
+  "specimen.not_a_plant",
   "specimen.not_archived",
   "specimen.not_found",
   "specimen.repotted_before_caught",

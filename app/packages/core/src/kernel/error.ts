@@ -45,6 +45,8 @@ export const ERROR_TEXTS = {
     "Das Fangdatum liegt nach dem Tag, an dem die Pflanze archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
   "specimen.not_found": "Diese Pflanze gibt es nicht.",
   "specimen.not_a_cutting": "Diese Pflanze ist kein Steckling und muss nicht eingetopft werden.",
+  "specimen.not_a_plant":
+    "Beobachtungen zum Umtopfen gibt es nur bei einer Pflanze. Dieser Steckling wird zuerst eingetopft; danach kannst du beobachten.",
   "specimen.already_archived": "Diese Pflanze ist schon archiviert.",
   "specimen.not_archived": "Diese Pflanze ist nicht archiviert.",
   "specimen.archived":

@@ -130,17 +130,17 @@ export interface SpecimenStore {
     date: string,
   ): Promise<SpecimenRow | "not_found" | "already_archived">;
   /**
-   * A cutting becomes a plant (US-BES-04); any other specimen stays unchanged and reports `not_a_cutting`. `date` is the
-   * local day recorded as the repot day (`null` = unknown). `chosenDate` is the day the keeper chose (`null` = none
-   * chosen, nothing is compared): a catch date after it changes nothing and answers `before_caught` (issue 1103); a
-   * specimen without a catch date accepts any day (unknown, P-08).
+   * The repot (US-BES-04, US-BES-19), one transaction: a cutting becomes a plant with `date` as its repot day, a plant
+   * stays one; `date` is appended to the repot history and clears the open repot observations (`null` = unknown: only a
+   * cutting may go without it, a plant then answers `day_unknown`). `chosenDate` (`null` = none) answers `before_caught`
+   * when the catch date lies after it (issue 1103). An archived specimen answers `archived`.
    */
   repot(
     userId: string,
     id: string,
     date: string | null,
     chosenDate: string | null,
-  ): Promise<SpecimenRow | "not_found" | "not_a_cutting" | "before_caught">;
+  ): Promise<SpecimenRow | "not_found" | "archived" | "before_caught" | "day_unknown">;
   /**
    * Sets the location of one or several active specimens in one transaction (US-PHA-03, BES-08). All or nothing: an
    * unknown or foreign specimen answers `specimen_unknown`, an archived one `archived`, a location of another account

@@ -131,6 +131,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.markers_missing": 409,
   "specimen.already_archived": 409,
   "specimen.not_a_cutting": 409,
+  "specimen.not_a_plant": 409,
   "specimen.not_archived": 409,
   "specimen.archived": 409,
   "specimen.caught_after_archived": 409,

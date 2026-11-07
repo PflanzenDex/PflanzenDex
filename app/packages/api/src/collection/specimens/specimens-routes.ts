@@ -35,6 +35,7 @@ import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../../kernel";
 import { archivedRoutes } from "../archived/archived-routes";
+import { repotSignRoutes } from "../repot/repot-routes";
 import { markerRoutes } from "../markers/marker-routes";
 import { locationRoutes } from "../markers/location-routes";
 import { derivedRoutes } from "../insights/derived-routes";
@@ -120,6 +121,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   });
   // Archive, archive and restore (US-BES-07); before `/specimens/:id`.
   routes.route("/", archivedRoutes(pool, clock));
+  // US-BES-19: tick or clear one repot observation of a plant (P-03, `Idempotency-Key`); before `/specimens/:id`.
+  routes.route("/", repotSignRoutes(pool, clock));
   // US-BES-03: give a specimen a marker or change it.
   routes.route("/", markerRoutes(pool));
   // US-PHA-03: set the location of a specimen (BES-08 "location missing").

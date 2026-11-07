@@ -1,6 +1,7 @@
 import type { SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
 import type { MarkerAssignment, LocationAssignment } from "./types";
 import type { NotesStore, SpecimenNotes } from "../notes/types";
+import { InMemoryRepotLog } from "../repot/test-helpers";
 
 export * from "./test-helpers.species";
 
@@ -156,13 +157,13 @@ export class InMemorySpecimens implements SpecimenStore, NotesStore {
     }) as SpecimenRow;
   }
 
+  readonly repotLog = new InMemoryRepotLog({
+    find: (userId, id) => this.find(userId, id),
+    update: (userId, id, change) => this.replace(userId, id, change) as SpecimenRow,
+    count: () => this.writes++,
+  });
   async repot(userId: string, id: string, date: string | null, chosenDate: string | null) {
-    const z = await this.find(userId, id);
-    if (!z) return "not_found" as const;
-    if (z.status !== "cutting") return "not_a_cutting" as const;
-    if (chosenDate !== null && z.caughtAt !== null && z.caughtAt > chosenDate)
-      return "before_caught" as const;
-    return this.replace(userId, id, { status: "plant", repottedAt: date }) as SpecimenRow;
+    return this.repotLog.repot(userId, id, date, chosenDate);
   }
 
   async setLocations(userId: string, assignments: readonly LocationAssignment[]) {

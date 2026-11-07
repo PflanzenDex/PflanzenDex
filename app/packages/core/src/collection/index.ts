@@ -15,6 +15,14 @@ export {
 } from "./placement/locate";
 export type { LocateDependencies } from "./placement/locate";
 export type { RepotDependencies } from "./specimen/repot";
+// The repot history and the repot observations (US-BES-19): tick and clear an observation of a plant.
+export {
+  REPOT_PLANNER_KEEPER_SWITCH,
+  REPOT_SIGNS,
+  specimenTickRepotSign,
+  specimenUntickRepotSign,
+} from "./repot";
+export type { OpenSign, RepotSign, RepotStore, SignDependencies, SignRefusal } from "./repot";
 export { cuttingLight } from "./placement/cutting-light";
 export type { ZoneSource } from "./placement/effective-zone";
 export { careProfileUpdate } from "./care-profile/care-profile";
