@@ -43,8 +43,9 @@ export const SCREENS: readonly Screen[] = JSON.parse(
 ) as Screen[];
 
 // US-QG-01 (owner decision 2026-11-07): one CI job per shard runs both UI gates for its screens, so a screen costs its time
-// in both gates. The weights are the measured seconds of CI run 42356054981 (register.weights.json, a companion of this file:
-// one unit of the layout rule). A screen without a weight counts as the median of its gate, so a new screen never breaks the split.
+// in both gates. The weights are medians of several CI runs (seconds per test, each job's runner speed factored out), refreshed
+// with `make ui-weights` (issue 1667; register.weights.json, a companion of this file: one unit of the layout rule). A screen
+// without a weight counts as the median of its gate, so a new screen never breaks the split.
 export type UiGate = "one-screen" | "a11y-routes";
 
 interface WeightsFile {

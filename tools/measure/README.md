@@ -2,12 +2,13 @@
 
 Small Playwright tools to check whether a view, layer or dialog fits the window before you push (US-QG-01, US-QS-15, issue 1199). They read the screens from the register of the one-screen gate (`app/packages/e2e/support/display/screens.json`) and open each one the same way: its path, then its click steps. The CI job `one-screen` (`make one-screen`, QG-U8) stays the reference; these tools are for finding and fixing a screen quickly, one at a time.
 
-| Tool           | What it does                                                                                                                                                                                                               |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `measure.mjs`  | Page ratio, largest inner scroll region, overflow in pixels (the gate allows 1 px), sideways overflow and painted width per screen and window size; light or dark, any text size; optional `results.json` and screenshots. |
-| `probe.mjs`    | One screen at one size: every scroll region with its overflow, and for the ones that overflow the tree of their children (top + height, width), so the part that takes the room stands out.                                |
-| `subjects.mjs` | Prints the Keycloak subjects of the demo users as `DEMO_SEED_SUBJECTS`, to reseed a database after the shared Keycloak was re-imported.                                                                                    |
-| `lib.mjs`      | Shared parts: addresses, register, sign-in, opening a screen with API writes blocked.                                                                                                                                      |
+| Tool                  | What it does                                                                                                                                                                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `screens/measure.mjs` | Page ratio, largest inner scroll region, overflow in pixels (the gate allows 1 px), sideways overflow and painted width per screen and window size; light or dark, any text size; optional `results.json` and screenshots.                          |
+| `screens/probe.mjs`   | One screen at one size: every scroll region with its overflow, and for the ones that overflow the tree of their children (top + height, width), so the part that takes the room stands out.                                                         |
+| `subjects.mjs`        | Prints the Keycloak subjects of the demo users as `DEMO_SEED_SUBJECTS`, to reseed a database after the shared Keycloak was re-imported.                                                                                                             |
+| `ui-weights.mjs`      | The shard weights of the UI gates (`register.weights.json`) as the median seconds per screen of at least three CI runs, each runner's speed factored out (`make ui-weights RUNS="<id> <id> <id>"`); it reads the logs with `gh`, not the local app. |
+| `lib.mjs`             | Shared parts: addresses, register, sign-in, opening a screen with API writes blocked.                                                                                                                                                               |
 
 ## Setup
 
@@ -19,19 +20,19 @@ Small Playwright tools to check whether a view, layer or dialog fits the window 
 
 ```sh
 # Every screen of the register at the six sizes of US-QS-15
-node tools/measure/measure.mjs --out=/tmp/measure
+node tools/measure/screens/measure.mjs --out=/tmp/measure
 
 # Two screens, one size each, dark mode
-node tools/measure/measure.mjs --dark today-sheet-hints@360x640 collection-view-equipment-sheet-costs@1024x768
+node tools/measure/screens/measure.mjs --dark today-sheet-hints@360x640 collection-view-equipment-sheet-costs@1024x768
 
 # One screen at the phone sizes, 200 % text (it may scroll inside its region, never the page)
-node tools/measure/measure.mjs --sizes=360x640,390x844 --text=200 friends-exchange
+node tools/measure/screens/measure.mjs --sizes=360x640,390x844 --text=200 friends-exchange
 
 # The same screen as another demo account than the register names
-node tools/measure/measure.mjs --user=test3 collection-view-wishlist-sheet-bought
+node tools/measure/screens/measure.mjs --user=test3 collection-view-wishlist-sheet-bought
 
 # Why does it not fit?
-node tools/measure/probe.mjs light-zone-edit@360x640 --shot=/tmp/zone.png
+node tools/measure/screens/probe.mjs light-zone-edit@360x640 --shot=/tmp/zone.png
 ```
 
 A measurement is over the gate's limit when the page or a region overflows by more than 1 px (`pagePx`, `innerPx`) or anything sticks out sideways (`sideways`); `painted` is the horizontal extent the app draws (at most 1920 px and centred from 2560 px wide, issue 1160).
