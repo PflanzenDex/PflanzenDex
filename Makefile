@@ -226,9 +226,9 @@ a11y-routes: $(if $(CI),,db-up) auth-up migrate browsers ## axe and keyboard wal
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes
 
-ui-gates: $(if $(value SCREEN),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up migrate browsers ## CI only (US-QG-01): both UI gates in one pass over the screens of SHARD=<i>/<n>, the split of the register; the demo is seeded once, then one-screen runs and a11y-routes runs too when one-screen failed; exit 1 when either gate failed; needs Docker
+ui-gates: $(if $(value SCREEN),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up migrate browsers ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once; every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 4); exit 1 when a test of either gate failed; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
-	cd $(APP) || exit 1; rc=0; TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen || rc=1; TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes || rc=1; exit $$rc
+	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
 
 a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
 	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."

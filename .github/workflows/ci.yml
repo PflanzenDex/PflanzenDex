@@ -332,7 +332,8 @@ jobs:
   # Keycloak, migrations, browsers, demo seed) starts once per shard instead of once per gate. The screens are split by measured
   # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/5`): every screen runs in
   # exactly one shard. Each shard uploads the reports and results of both gates; the job `results` below merges them, and it is
-  # the result these gates report to `ci-status`. A failed one-screen run does not stop a11y-routes in the same shard.
+  # the result these gates report to `ci-status`. Both gates run in one Playwright run per shard (issue 1698): one server start, and
+  # every test of both gates runs, so a failed one-screen test does not stop a11y-routes.
   # Five shards since issue 1682 (six since issue 1667): a runner takes 0.65 to 1.24 times the median time for the same screens,
   # so no weight balances four shards. The two web test jobs take two job slots, so five shards and those two jobs use the seven
   # slots that six shards and one web job used (Free plan, 20 jobs at once). The weights are medians of several runs
