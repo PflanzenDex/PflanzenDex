@@ -6,9 +6,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/e2e.tsbuildinfo",
     "e2e": "playwright test --project=mobil --project=desktop",
-    "one-screen": "playwright test --project=one-screen --workers=${ONE_SCREEN_WORKERS:-4}",
+    "one-screen": "E2E_WEB_BUILD=1 playwright test --project=one-screen --workers=${ONE_SCREEN_WORKERS:-4}",
     "one-screen:write": "ONE_SCREEN_WRITE=1 npm run one-screen",
-    "a11y-routes": "playwright test --project=a11y-routes --workers=${A11Y_ROUTES_WORKERS:-4}",
+    "a11y-routes": "E2E_WEB_BUILD=1 playwright test --project=a11y-routes --workers=${A11Y_ROUTES_WORKERS:-4}",
     "a11y-routes:write": "A11Y_ROUTES_WRITE=1 npm run a11y-routes",
     "a11y-routes:baseline": "tsx support/display/a11y/baseline-cli.ts",
     "merge-shards": "node --import tsx tests/accessibility/routes/merge-shards.ts"

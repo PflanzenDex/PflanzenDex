@@ -3,6 +3,7 @@
 // times the median time of the same screens), is the weight that register.ts splits the screens by.
 //
 // Usage: node tools/measure/ui-weights.mjs <run id> <run id> <run id> [...]   (make ui-weights RUNS="<id> <id> <id>")
+// A run is `<id>` (its latest attempt) or `<id>/<attempt>`, so the attempts of one rerun count as runs of their own (issue 1680).
 // Reads the logs of the CI runs with gh (not the local app) and rewrites
 // app/packages/e2e/support/display/one-screen/register.weights.json.
 import { execFileSync } from "node:child_process";
@@ -109,12 +110,12 @@ export function weightsFile(weights, runIds) {
   };
 }
 
-/** The run ids of the arguments, or an error: numbers only, at least three, each run once. */
+/** The runs of the arguments, or an error: `<id>` or `<id>/<attempt>` (numbers), at least three, each run once. */
 export function checkRuns(args) {
-  const notNumbers = args.filter((arg) => !/^\d+$/.test(arg));
+  const notNumbers = args.filter((arg) => !/^\d+(\/\d+)?$/.test(arg));
   if (notNumbers.length > 0)
     throw new Error(
-      `ui-weights: not a CI run id: ${notNumbers.join(" ")} (a run id is the number in the URL of the run)`,
+      `ui-weights: not a CI run id: ${notNumbers.join(" ")} (a run is the number in the URL of the run, optionally /<attempt>)`,
     );
   if (args.length < MIN_RUNS)
     throw new Error(
@@ -135,14 +136,22 @@ function gh(args) {
 
 /** The samples of each successful shard job of one CI run. */
 function shardJobsOf(run) {
-  const { jobs } = JSON.parse(gh(["run", "view", run, "--json", "jobs"]));
+  const [id, attempt] = run.split("/");
+  const { jobs } = JSON.parse(
+    gh(["run", "view", id, ...(attempt ? ["--attempt", attempt] : []), "--json", "jobs"]),
+  );
   const shards = jobs.filter((job) => SHARD_JOB.test(job.name) && job.conclusion === "success");
   if (shards.length === 0)
     throw new Error(
       `ui-weights: run ${run} has no successful shard job (ui shard, one-screen shard or a11y-routes shard)`,
     );
   return shards.map((job) => {
-    const log = gh(["run", "view", run, "--job", String(job.databaseId), "--log"]);
+    // By job id: `gh run view --job <id> --log` prints the latest attempt's log for the job of every attempt (issue 1680).
+    const log = gh([
+      "api",
+      "--allow-escape-sequences",
+      `repos/{owner}/{repo}/actions/jobs/${job.databaseId}/logs`,
+    ]);
     const samples = parseShardLog(log);
     if (samples.length === 0)
       throw new Error(`ui-weights: job "${job.name}" of run ${run} printed no passed screen test`);
