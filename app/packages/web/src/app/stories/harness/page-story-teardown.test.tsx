@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { composeStories } from "@storybook/react-vite";
 import { afterEach, describe, expect, it } from "vitest";
-import { prepareStories } from "../../../app/stories/harness/story-test-helpers";
-import * as heute from "../../../app/stories/screens/heute/heute.stories";
-import { unmountStoryRuns } from "./story-teardown";
+import { unmountStoryRuns } from "../../../shared/testing/story-teardown/story-teardown";
+import * as heute from "../screens/heute/heute.stories";
+import { prepareStories } from "./story-test-helpers";
 
 prepareStories();
 const { Phone } = composeStories(heute);
