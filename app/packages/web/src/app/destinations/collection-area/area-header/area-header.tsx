@@ -3,9 +3,13 @@ import { VIEW_LAYER } from "@/collection";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { buttonVariants } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { SAMMLUNG_VIEWS, useOfferedView, type SammlungView } from "../../../sammlung-view";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import type { ShortcutId } from "@/shared/platform/device/keyboard/register";
+import table from "./area-header.de.json";
+
+const ui = texts(table);
 
 /** The modes that have a shortcut of their own (US-QS-11): the Pokédex is the species mode, the wishes the wishlist. */
 const SHORTCUT_OF_VIEW: Partial<Record<SammlungView, ShortcutId>> = {
@@ -41,14 +45,14 @@ export function AreaHeader(props: {
       caption={props.caption}
       action={
         arranged ? (
-          <LayerOpener id={VIEW_LAYER}>Ansicht</LayerOpener>
+          <LayerOpener id={VIEW_LAYER}>{ui("view")}</LayerOpener>
         ) : (
           <span
             aria-hidden="true"
             data-testid="view-stand-in"
             className={cn(buttonVariants({ variant: "outline" }), "invisible")}
           >
-            Ansicht
+            {ui("view")}
           </span>
         )
       }

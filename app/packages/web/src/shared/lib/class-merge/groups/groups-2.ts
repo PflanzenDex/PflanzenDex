@@ -80,6 +80,9 @@ export const GROUPS_2: Config<string, string>["classGroups"] = {
   ],
   whitespace: [{ whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"] }],
   break: [{ break: ["normal", "words", "all", "keep"] }],
+  "break-after": [
+    { "break-after": ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"] },
+  ],
   hyphens: [{ hyphens: ["none", "manual", "auto"] }],
   content: [{ content: ["none", isArbitraryVariable, isArbitraryValue] }],
   "bg-attachment": [{ bg: ["fixed", "local", "scroll"] }],

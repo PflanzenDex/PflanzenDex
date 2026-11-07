@@ -13,6 +13,18 @@ export const HintsPage = lazyPage(() =>
 export const CareProfileSection = lazyPage(() =>
   import("./care-profile-page/care-profile-page").then((m) => ({ default: m.CareProfileSection })),
 );
+/** The page a scanned pot label opens (US-BES-17): the plant with "Gegossen" and "Messen", its own address `/label/:id`. */
+export const PotLabelPage = lazyPage(() =>
+  import("./other-pages/pot-label-page/pot-label-page").then((m) => ({
+    default: m.PotLabelPage,
+  })),
+);
+/** The print of the QR pot labels (US-BES-17, FR-BES-25): its own address `/collection/labels`, shown while "pot_labels" is on. */
+export const PrintLabelsPage = lazyPage(() =>
+  import("./other-pages/print-labels-page/print-labels-page").then((m) => ({
+    default: m.PrintLabelsPage,
+  })),
+);
 export const DifficultyPage = lazyPage(() =>
   import("./other-pages/difficulty-page/difficulty-page").then((m) => ({
     default: m.DifficultyPage,
