@@ -1,10 +1,11 @@
-// Reuses a green heavy CI job for the same PR head commit (US-QG-02, #404). Editing a PR title or body and
-// `ready_for_review` start a new CI run on an unchanged commit; without this the app suite (`app-*` jobs) ran again (and the
+// Reuses a green heavy CI job for the same PR head commit (US-QG-02, issue 404). Editing a PR title or body starts a new
+// CI run on an unchanged commit; without this the app suite (`app-*` jobs) ran again (and the
 // shared concurrency group cancelled the run that was still going: 23 of 100 runs on 2026-10-08).
 // Safe by construction: only a `success` of the same job on the same head commit is reused. Anything else (none,
 // failed, cancelled, still running after the wait) answers `none`, and the job runs in full.
-// Usage (ci.yml, job `reuse`): node ci-reuse.mjs <job name>... with GH_TOKEN, GITHUB_REPOSITORY, HEAD_SHA,
-// GITHUB_RUN_ID and GITHUB_OUTPUT set. Writes `<job name>=success|none` per job.
+// An edited run whose PR head has moved on is superseded (issue 1608): every job answers `none` and runs nothing heavy.
+// Usage (ci.yml, job `reuse`): node ci-reuse.mjs <job name>... with GH_TOKEN, GITHUB_REPOSITORY, HEAD_SHA, PR_NUMBER,
+// GITHUB_RUN_ID and GITHUB_OUTPUT set. Writes `<job name>=success|none` per job, and `superseded=true` when superseded.
 // The check-run evidence that `make ci-wait` judges (evidenceOf, scanRowsOf, US-DEV-13) is here too, next to runIdOf.
 import { appendFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -115,17 +116,68 @@ export async function resolve(
   }
 }
 
+/** The head commit of a pull request as GitHub has it now (REST), or null when the answer names none. */
+export async function fetchPullHead({ repo, prNumber, token }) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/pulls/${prNumber}`, {
+    headers: { authorization: `Bearer ${token}`, accept: "application/vnd.github+json" },
+  });
+  if (!res.ok) throw new Error(`GitHub API ${res.status} for the pull request`);
+  return (await res.json()).head?.sha ?? null;
+}
+
+/**
+ * True when the PR head is another commit than the one this run tests (issue 1608). An API error or a missing head is not
+ * superseded: the jobs then run in full, the safe side.
+ */
+export async function isSuperseded(env, { loadHead = fetchPullHead } = {}) {
+  try {
+    const head = await loadHead(env);
+    return Boolean(head) && head !== env.sha;
+  } catch (err) {
+    console.log(`ci-reuse: the PR head is unknown (${err.message}); the jobs run in full`);
+    return false;
+  }
+}
+
+/**
+ * The state of every job of this run (issue 1608). `superseded` is asked before each job, which may wait for a running
+ * one, and once more after the last. A superseded run answers `none` for every job.
+ */
+export async function decideAll(names, { superseded, decideJob }) {
+  const none = () => ({
+    superseded: true,
+    states: Object.fromEntries(names.map((n) => [n, "none"])),
+  });
+  const states = {};
+  for (const name of names) {
+    if (await superseded()) return none();
+    states[name] = await decideJob(name);
+  }
+  if (await superseded()) return none();
+  return { superseded: false, states };
+}
+
 async function main(names) {
   const env = {
     repo: process.env.GITHUB_REPOSITORY,
     sha: process.env.HEAD_SHA,
     token: process.env.GH_TOKEN,
     runId: process.env.GITHUB_RUN_ID,
+    prNumber: process.env.PR_NUMBER,
   };
+  const { superseded, states } = await decideAll(names, {
+    superseded: () => isSuperseded(env),
+    decideJob: (name) => resolve(name, env),
+  });
+  if (superseded) {
+    console.log(
+      `ci-reuse: the PR head is no longer ${env.sha}: this run is superseded and runs no heavy job`,
+    );
+    appendFileSync(process.env.GITHUB_OUTPUT, "superseded=true\n");
+  }
   for (const name of names) {
-    const state = await resolve(name, env);
-    console.log(`ci-reuse: ${name} on ${env.sha}: ${state}`);
-    appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${state}\n`);
+    console.log(`ci-reuse: ${name} on ${env.sha}: ${states[name]}`);
+    appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${states[name]}\n`);
   }
 }
 

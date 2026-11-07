@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../../../account";
@@ -144,6 +144,8 @@ export function OnboardingWizard(props: {
   onSkip: () => void;
   /** The first plant is saved and the keeper goes on to the collection. */
   onCreated: () => void;
+  /** Another way to the first plant, shown on the species step beside the actions (US-BES-18, "Aus Datei importieren"). */
+  entry?: ReactNode;
 }) {
   const f = useFirstPlant(props.api, props.token);
   const step = FIRST_PLANT_STEPS[f.index];
@@ -172,6 +174,7 @@ export function OnboardingWizard(props: {
             onCatalog={props.onChoosePlant}
           />
           <Buttons f={f} onSkip={props.onSkip} />
+          {f.index === 0 ? props.entry : null}
         </>
       )}
     </div>

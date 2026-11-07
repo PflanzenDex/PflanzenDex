@@ -106,6 +106,9 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   friend_visibility: "never",
   review_functions: "never",
   operator_functions: "never",
+  // The private notes of a specimen (US-BES-18, P-05) and the CSV import of plants (US-BES-18, owner decision 2026-11-06).
+  private_notes: "never",
+  csv_import: "never",
 };
 
 const NEEDED: Readonly<Record<Exclude<OperationClass, "never">, AiRights>> = {

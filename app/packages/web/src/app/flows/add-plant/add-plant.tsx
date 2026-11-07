@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { FIRST_PLANT_STEPS, type Species } from "@pflanzendex/core";
+import { ImportEntry } from "@/collection";
 import { Button } from "@/shared/ui/button/button";
 import { PATHS } from "../../../shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
@@ -107,6 +108,7 @@ function Flow(props: Props & { onAnother: () => void }) {
         />
       )}
       <Buttons f={f} species={species} onMore={props.onMore} />
+      {species ? null : <ImportEntry />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { signOutEverywhere, getAccount, oidcSettings } from "./account-api";
+import { signOutEverywhere, getAccount, oidcSettings, returnAddress } from "./account-api";
 
 describe("OIDC settings (US-ACC-01)", () => {
   it("have defaults for local development (make auth-up)", () => {
@@ -22,6 +22,27 @@ describe("OIDC settings (US-ACC-01)", () => {
 
   it("US-ACC-01 a sign-in request gives up after 15 seconds (starting value, assumption)", () => {
     expect(oidcSettings({}, "http://localhost:5173").requestTimeoutInSeconds).toBe(15);
+  });
+});
+
+describe("US-BES-17 the return address after the sign-in (#1619)", () => {
+  const origin = "http://localhost:5173";
+
+  it("US-BES-17 keeps the path the person is on, such as a scanned label", () => {
+    expect(returnAddress(origin, "/label/abc")).toBe(`${origin}/label/abc`);
+  });
+
+  it("US-BES-17 the start page stays the start page", () => {
+    expect(returnAddress(origin, "/")).toBe(`${origin}/`);
+  });
+
+  it("US-BES-17 a path that leads to another origin falls back to the start page", () => {
+    expect(returnAddress(origin, "//evil.example/x")).toBe(`${origin}/`);
+    expect(returnAddress(origin, "/\\evil.example/x")).toBe(`${origin}/`);
+  });
+
+  it("US-BES-17 the query and the hash are not kept, the callback adds its own", () => {
+    expect(returnAddress(origin, "/label/abc?code=x&state=y#top")).toBe(`${origin}/label/abc`);
   });
 });
 

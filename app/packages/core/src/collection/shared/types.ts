@@ -9,6 +9,8 @@ export const SPECIMEN_LIMITS = {
   marker: { min: 1, max: 40 },
   name: { min: 1, max: 250 },
   archivedReason: { min: 1, max: 250 },
+  // The private notes (US-BES-18): characters, counted as the database counts them; starting value (assumption).
+  notes: { min: 1, max: 2000 },
 } as const;
 
 /** What gets stored. Measurements and treatment list are derived and do not belong here (P-01). */
@@ -66,6 +68,8 @@ export type SpecimenValues = Pick<
   readonly status?: CreateStatus;
   /** Own light zone from the start (US-LIC-02); missing/`null` = the zone is derived. */
   readonly lightZoneId?: string | null;
+  /** Private notes from the start (US-BES-18); missing/`null` = none. Never part of a read that leaves the account. */
+  readonly notes?: string | null;
 };
 
 /**

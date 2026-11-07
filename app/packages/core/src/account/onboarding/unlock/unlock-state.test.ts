@@ -284,6 +284,23 @@ describe("US-ONB-09 keeper switch (P-12): a third state beside operator switch a
     );
   });
 
+  it("US-BES-17 the pot labels have a keeper switch of their own: off means keeper_off, on means open or locked by the first plant", () => {
+    expect(state("pot_labels", off("pot_labels"))).toBe("keeper_off");
+    expect(of("pot_labels", off("pot_labels"))).toMatchObject({ announced: false, reasons: [] });
+    expect(state("pot_labels", input())).toBe("open");
+    expect(state("pot_labels", input({ activeSpecimens: 0, firstSpecimenDate: null }))).toBe(
+      "locked",
+    );
+  });
+
+  it("US-BES-18 the CSV import is open from the start, even without plants (rule always), and its switch is its own", () => {
+    expect(state("csv_import", input({ activeSpecimens: 0, firstSpecimenDate: null }))).toBe(
+      "open",
+    );
+    expect(state("csv_import", off("csv_import"))).toBe("keeper_off");
+    expect(of("csv_import", off("csv_import"))).toMatchObject({ announced: false, reasons: [] });
+  });
+
   it("US-ONB-09 the three achievement functions share the achievements switch", () => {
     for (const id of ["care_rhythm", "anniversaries", "year_in_review"])
       expect(state(id, off("achievement_views"))).toBe("keeper_off");
@@ -318,6 +335,8 @@ describe("US-ONB-09 keeper switch (P-12): a third state beside operator switch a
       "ai_access",
       "achievement_views",
       "leaf_log",
+      "pot_labels",
+      "csv_import",
     ]);
     expect(UNLOCK_FUNCTIONS.length).toBe(CORE_FUNCTION_IDS.length + keeperFunctions.length);
   });

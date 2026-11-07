@@ -35,6 +35,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "collection/plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab.tsx": [
     COLLECTION,
   ],
+  "collection/plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.tsx": [COLLECTION],
   "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx": [COLLECTION],
   "collection/plants-screen/plant-layers/plant-layers.tsx": [COLLECTION],
   "app/destinations/today-area/today-area.tsx": [TODAY],

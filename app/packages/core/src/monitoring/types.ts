@@ -165,3 +165,34 @@ export interface WateringStore {
    */
   record(userId: string, entries: readonly WateringEntry[]): Promise<{ readonly created: number }>;
 }
+
+/** One entry of the fertilizing log (US-MON-09): the local calendar date on which the specimen was fertilized (NFR-08). */
+export interface FertilizingEntry {
+  readonly specimenId: string;
+  readonly date: string;
+}
+
+/** What the label page shows of a plant's fertilizing (US-MON-09): the latest date, `null` = never logged. */
+export interface FertilizingView {
+  readonly lastFertilizedOn: string | null;
+}
+
+/**
+ * Port for the fertilizing log (US-MON-09); every call is for the account `userId` only (P-04). The log holds no planned
+ * dates, intervals or amounts: it only records that the keeper fertilized a plant on a day.
+ */
+export interface FertilizingStore {
+  /** The latest fertilizing date per specimen; specimens never fertilized are absent. */
+  lastFertilized(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, string>>;
+  /**
+   * Writes the entries of one call in one transaction. One entry per specimen and day: a repeat creates nothing new.
+   * Returns how many entries are new.
+   */
+  record(
+    userId: string,
+    entries: readonly FertilizingEntry[],
+  ): Promise<{ readonly created: number }>;
+}

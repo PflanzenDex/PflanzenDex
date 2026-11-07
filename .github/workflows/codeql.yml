@@ -5,6 +5,8 @@ name: CodeQL
 on:
   pull_request:
     branches: [dev, main]
+    # `ready_for_review` (issue 1608): a draft runs no analysis; the analysis starts when the PR is marked ready.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [dev, main]
   schedule:
@@ -20,6 +22,8 @@ permissions:
 
 jobs:
   analyze:
+    # Not on a draft (issue 1608): the analysis of a PR starts with `ready_for_review`.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:

@@ -25,7 +25,7 @@ export {
 export type { JsonSchema, PhotoSize, Schema } from "./input";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
-export { canonical } from "./input";
+export { canonical, normalizeName } from "./input";
 export type {
   SignedInContext,
   Begin,

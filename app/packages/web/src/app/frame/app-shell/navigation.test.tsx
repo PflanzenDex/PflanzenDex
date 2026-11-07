@@ -423,3 +423,19 @@ describe("US-QS-14 the bars below and from 30 rem of window height", () => {
     expect(main.style.getPropertyValue("--bar-reserve")).toBe("");
   });
 });
+
+describe("US-BES-17 print of the shell", () => {
+  it("US-BES-17 the shell root has no print:hidden, so printing another page keeps its content and margins", () => {
+    render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    // The skip link is the first child of the shell root (app-shell.tsx).
+    const root = screen.getByRole("link", { name: "Zum Inhalt springen" }).parentElement;
+    expect(root?.className).toContain("md:flex-row");
+    expect(root?.className).not.toContain("print:hidden");
+  });
+});
