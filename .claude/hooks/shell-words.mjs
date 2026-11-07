@@ -33,7 +33,8 @@ function matchingParen(text, start) {
 
 // `&>` and `>&` are redirections, not the background operator.
 function operatorAt(text, i) {
-  if (text[i] === "&" && (text[i + 1] === ">" || text[i - 1] === ">" || text[i - 1] === "<")) return null;
+  if (text[i] === "&" && (text[i + 1] === ">" || text[i - 1] === ">" || text[i - 1] === "<"))
+    return null;
   return OPERATORS.find((op) => text.startsWith(op, i)) ?? null;
 }
 
@@ -120,7 +121,8 @@ export function tokenize(text) {
         i += op.length;
       } else {
         const w = current();
-        if (c === "$" || c === "*" || c === "?" || c === "[" || (c === "~" && w.value === "")) w.dynamic = true;
+        if (c === "$" || c === "*" || c === "?" || c === "[" || (c === "~" && w.value === ""))
+          w.dynamic = true;
         w.value += c;
         i++;
       }

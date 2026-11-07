@@ -2,13 +2,7 @@
 // that overflow the tree of their children with top, height and width, so the part that takes the room stands out.
 //
 // Usage: node tools/measure/probe.mjs <id>@<WxH> [--dark] [--text=200] [--user=test3] [--depth=7] [--shot=file.png]
-import {
-  chromium,
-  openScreen,
-  register,
-  screenContext,
-  sessions,
-} from "./lib.mjs";
+import { chromium, openScreen, register, screenContext, sessions } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => {

@@ -1,6 +1,6 @@
 // Measures screens of the one-screen register at the window sizes of US-QS-15 (US-QG-01, issue 1199): for each screen
 // and size the page ratio, the largest inner scroll region, the overflow in pixels as the gate counts it, sideways
-// overflow and the painted width (for the 1920 px cap). A local helper before pushing; the CI job `one-screen` stays
+// overflow and the painted width (for the 1920 px cap). A local helper before pushing; the CI job `results` (its one-screen part) stays
 // the reference.
 //
 // Usage: node tools/measure/measure.mjs [options] [id[@WxH] ...]
@@ -13,14 +13,7 @@
 //   --out=dir     write results.json there, and screenshots with --shots
 //   --shots       screenshots of every measurement into <out>/shots
 import { mkdirSync, writeFileSync } from "node:fs";
-import {
-  SIZES,
-  chromium,
-  openScreen,
-  register,
-  screenContext,
-  sessions,
-} from "./lib.mjs";
+import { SIZES, chromium, openScreen, register, screenContext, sessions } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => {
@@ -37,17 +30,15 @@ const shots = option("shots", false) === true && out;
 
 const screens = register();
 const wanted = args.filter((a) => !a.startsWith("--"));
-const targets = (wanted.length ? wanted : screens.map((s) => s.id)).flatMap(
-  (t) => {
-    const [id, size] = t.split("@");
-    const screen = screens.find((s) => s.id === id);
-    if (!screen) {
-      console.error(`${id}: not in the register`);
-      return [];
-    }
-    return (size ? [size] : sizes).map((sz) => ({ screen, size: sz }));
-  },
-);
+const targets = (wanted.length ? wanted : screens.map((s) => s.id)).flatMap((t) => {
+  const [id, size] = t.split("@");
+  const screen = screens.find((s) => s.id === id);
+  if (!screen) {
+    console.error(`${id}: not in the register`);
+    return [];
+  }
+  return (size ? [size] : sizes).map((sz) => ({ screen, size: sz }));
+});
 
 /** Runs in the page: the numbers of one measurement. Regions under 80 px are left out, as in the gate. */
 function measurePage() {
@@ -79,25 +70,14 @@ function measurePage() {
     const box = el.getBoundingClientRect();
     if (box.width <= 1 || box.height <= 1) continue;
     const style = getComputedStyle(el);
-    if (
-      style.visibility === "hidden" ||
-      style.display === "none" ||
-      Number(style.opacity) === 0
-    )
+    if (style.visibility === "hidden" || style.display === "none" || Number(style.opacity) === 0)
       continue;
     const paints =
-      /^(IMG|SVG|INPUT|SELECT|TEXTAREA|BUTTON|VIDEO|CANVAS)$/i.test(
-        el.tagName,
-      ) ||
-      [...el.childNodes].some(
-        (n) => n.nodeType === 3 && n.textContent.trim(),
-      ) ||
-      (style.backgroundColor !== "rgba(0, 0, 0, 0)" &&
-        style.backgroundColor !== pageBackground) ||
+      /^(IMG|SVG|INPUT|SELECT|TEXTAREA|BUTTON|VIDEO|CANVAS)$/i.test(el.tagName) ||
+      [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) ||
+      (style.backgroundColor !== "rgba(0, 0, 0, 0)" && style.backgroundColor !== pageBackground) ||
       ["Top", "Right", "Bottom", "Left"].some(
-        (k) =>
-          parseFloat(style[`border${k}Width`]) > 0 &&
-          style[`border${k}Style`] !== "none",
+        (k) => parseFloat(style[`border${k}Width`]) > 0 && style[`border${k}Style`] !== "none",
       );
     if (!paints) continue;
     left = Math.min(left, box.left);
@@ -132,8 +112,7 @@ for (const { screen, size } of targets) {
   try {
     await openScreen(page, screen, text);
     Object.assign(row, await page.evaluate(measurePage));
-    if (shots)
-      await page.screenshot({ path: `${out}/shots/${screen.id}@${size}.png` });
+    if (shots) await page.screenshot({ path: `${out}/shots/${screen.id}@${size}.png` });
   } catch (error) {
     row.error = String(error.message).split("\n")[0].slice(0, 160);
   }
@@ -149,9 +128,7 @@ if (out) {
   mkdirSync(out, { recursive: true });
   writeFileSync(`${out}/results.json`, JSON.stringify(results, null, 1));
 }
-const bad = results.filter(
-  (r) => r.error || r.pagePx > 1 || r.innerPx > 1 || r.sideways > 0,
-);
+const bad = results.filter((r) => r.error || r.pagePx > 1 || r.innerPx > 1 || r.sideways > 0);
 console.log(
   `\n${results.length} measurements, ${bad.length} over the gate's 1 px tolerance or failed`,
 );

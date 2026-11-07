@@ -8,8 +8,22 @@ import { judgeCommand } from "./rules.mjs";
 // The main checkout /repo and its linked worktree /repo/.worktrees/x. Folders listed here exist, so a cd into them works.
 const MAIN = "/repo";
 const WT = "/repo/.worktrees/x";
-const FOLDERS = new Set([MAIN, WT, "/repo/.worktrees", "/repo/app", "/repo/.worktrees/x/app", "/repo/.worktrees/x/sub", "/other"]);
-const placeIn = (cwd) => ({ cwd, main: MAIN, linked: [WT], isFolder: (p) => FOLDERS.has(p), realpath: (p) => p });
+const FOLDERS = new Set([
+  MAIN,
+  WT,
+  "/repo/.worktrees",
+  "/repo/app",
+  "/repo/.worktrees/x/app",
+  "/repo/.worktrees/x/sub",
+  "/other",
+]);
+const placeIn = (cwd) => ({
+  cwd,
+  main: MAIN,
+  linked: [WT],
+  isFolder: (p) => FOLDERS.has(p),
+  realpath: (p) => p,
+});
 const FROM_MAIN = placeIn(MAIN);
 const FROM_WORKTREE = placeIn(WT);
 
@@ -19,7 +33,8 @@ const assertRefused = (commands, where) => {
   for (const command of commands) assert.ok(refused(command, where), `${command} must be refused`);
 };
 const assertAllowed = (commands, where) => {
-  for (const command of commands) assert.ok(allowed(command, where), `${command} must not be refused`);
+  for (const command of commands)
+    assert.ok(allowed(command, where), `${command} must not be refused`);
 };
 
 test("US-QG-07: reset --hard and clean, with any flags, are refused when they would act on the main checkout", () => {
@@ -97,7 +112,7 @@ test("US-QG-07: a cd to the main checkout earlier in the same command is refused
       "(cd /repo && git reset --hard)",
       "{ cd /repo; git reset --hard; }",
       "bash -c 'cd /repo && git reset --hard'",
-      "eval \"cd /repo && git clean -fd\"",
+      'eval "cd /repo && git clean -fd"',
       "echo $(cd /repo && git clean -fd)",
     ],
     FROM_WORKTREE,
@@ -115,7 +130,10 @@ test("US-QG-07: a cd into a linked worktree is not refused; a cd to a worktree f
     ],
     FROM_MAIN,
   );
-  assertRefused(["(cd /repo/.worktrees/x) ; git reset --hard", "cd /repo/app ; git reset --hard"], FROM_MAIN);
+  assertRefused(
+    ["(cd /repo/.worktrees/x) ; git reset --hard", "cd /repo/app ; git reset --hard"],
+    FROM_MAIN,
+  );
 });
 
 test("US-QG-07: a cd that may fail leaves the shell where it was, so the command is judged in both places", () => {
@@ -136,7 +154,12 @@ test("US-QG-07: a relative cd from the main checkout is refused; from a worktree
   assertRefused(["cd .worktrees/x && git reset --hard", "cd app ; git clean -fd"], FROM_MAIN);
   assertRefused(["cd ../../ && git reset --hard", "cd .. && git reset --hard"], FROM_WORKTREE);
   assertAllowed(
-    ["cd ../x && git reset --hard", "cd sub && git reset --hard", "cd ./app && git clean -fd", "cd .worktrees/x && git reset --hard"],
+    [
+      "cd ../x && git reset --hard",
+      "cd sub && git reset --hard",
+      "cd ./app && git clean -fd",
+      "cd .worktrees/x && git reset --hard",
+    ],
     FROM_WORKTREE,
   );
 });
@@ -197,7 +220,11 @@ test("US-QG-07: a fallback after a failed command is judged where it runs; a fal
 
 test("US-QG-07: a command that cannot be read is refused when it names reset or clean, and not otherwise", () => {
   for (const command of ['echo "unterminated git reset --hard', "git reset --hard 'x"]) {
-    assert.match(mainCheckoutRefusal(command, FROM_WORKTREE) ?? "", /cannot be read well enough/, command);
+    assert.match(
+      mainCheckoutRefusal(command, FROM_WORKTREE) ?? "",
+      /cannot be read well enough/,
+      command,
+    );
   }
   assertAllowed(['echo "unterminated', "git status 'x"], FROM_WORKTREE);
 });
@@ -205,22 +232,40 @@ test("US-QG-07: a command that cannot be read is refused when it names reset or 
 // Review of #1519: shell comments, the words that make a command unreadable, git's unique prefixes of --hard (US-QG-07).
 const decide = (command, where) => judgeCommand(command, where)?.decision ?? "allow";
 const assertDecided = (commands, where, expected) => {
-  for (const command of commands) assert.equal(decide(command, where), expected, `${command} from ${where.cwd}`);
+  for (const command of commands)
+    assert.equal(decide(command, where), expected, `${command} from ${where.cwd}`);
 };
 
 test("US-QG-07: an unquoted # that starts a word is a comment up to the newline; the commands after it are still judged", () => {
   // The apostrophes and the words in these comments are text: nothing in them runs.
-  const comments = ["# don't clean this\necho ok", "sed -n 1,5p f # it's the reset part", "echo ok # git reset --hard", "echo ok;#it's\necho ok"];
+  const comments = [
+    "# don't clean this\necho ok",
+    "sed -n 1,5p f # it's the reset part",
+    "echo ok # git reset --hard",
+    "echo ok;#it's\necho ok",
+  ];
   assertDecided(comments, FROM_MAIN, "allow");
   assertDecided(comments, FROM_WORKTREE, "allow");
   // The command after the comment line is a real command, judged where it runs.
-  assertRefused(["# note\ngit reset --hard", "echo ok # it's\ngit clean -fd", "echo ok;#x\ngit reset --hard"], FROM_MAIN);
+  assertRefused(
+    ["# note\ngit reset --hard", "echo ok # it's\ngit clean -fd", "echo ok;#x\ngit reset --hard"],
+    FROM_MAIN,
+  );
 });
 
 test("US-QG-07: a # inside a word, after a $, escaped or inside quotes is text, so a reset after it is still judged", () => {
-  assertAllowed(["echo a#b", "echo $#", "echo \\#", 'echo "x # y"', "echo a#b && git status"], FROM_MAIN);
+  assertAllowed(
+    ["echo a#b", "echo $#", "echo \\#", 'echo "x # y"', "echo a#b && git status"],
+    FROM_MAIN,
+  );
   assertRefused(
-    ["echo a#b; git reset --hard", "echo $# && git clean -fd", "echo \\# && git reset --hard", 'echo "x # y" && git reset --hard', "echo '# y' && git clean -fd"],
+    [
+      "echo a#b; git reset --hard",
+      "echo $# && git clean -fd",
+      "echo \\# && git reset --hard",
+      'echo "x # y" && git reset --hard',
+      "echo '# y' && git clean -fd",
+    ],
     FROM_MAIN,
   );
 });
@@ -234,7 +279,7 @@ test("US-QG-07: a # comment inside $( ... ) is skipped when the substitution is 
 test("US-QG-07: a command that cannot be read is refused only when it names git and reset or clean; a case or a function without git is not", () => {
   const withoutGit = [
     'case "$x" in a) echo clean;; esac',
-    "case \"$x\" in a) make clean;; esac",
+    'case "$x" in a) make clean;; esac',
     "f() { echo clean; }; f",
     'echo "unterminated clean',
     'case "$x" in a) git status;; esac',
@@ -252,17 +297,37 @@ test("US-QG-07: a command that cannot be read is refused only when it names git 
   ];
   for (const command of withGit) {
     for (const where of [FROM_MAIN, FROM_WORKTREE]) {
-      assert.match(mainCheckoutRefusal(command, where) ?? "", /cannot be read well enough/, `${command} from ${where.cwd}`);
+      assert.match(
+        mainCheckoutRefusal(command, where) ?? "",
+        /cannot be read well enough/,
+        `${command} from ${where.cwd}`,
+      );
     }
   }
 });
 
 test("US-QG-07: git accepts any unique prefix of --hard (--h, --ha, --har); each one resets hard and is judged as --hard", () => {
   // Probed with git 2.56 in a throwaway repository: --h, --ha, --har and --hard all reset the working tree; --hardx is unknown.
-  assertRefused(["git reset --h HEAD", "git reset --ha HEAD", "git reset --har HEAD", "git reset HEAD --har", "git reset --har"], FROM_MAIN);
-  assertDecided(["git reset --har HEAD", "git reset --ha HEAD", "git reset --h HEAD"], FROM_WORKTREE, "ask");
+  assertRefused(
+    [
+      "git reset --h HEAD",
+      "git reset --ha HEAD",
+      "git reset --har HEAD",
+      "git reset HEAD --har",
+      "git reset --har",
+    ],
+    FROM_MAIN,
+  );
+  assertDecided(
+    ["git reset --har HEAD", "git reset --ha HEAD", "git reset --h HEAD"],
+    FROM_WORKTREE,
+    "ask",
+  );
   // Not prefixes of --hard: git rejects --hardx, and --soft and --mixed reset without touching the working tree.
-  assertAllowed(["git reset --hardx HEAD", "git reset --soft HEAD~1", "git reset --mixed HEAD"], FROM_MAIN);
+  assertAllowed(
+    ["git reset --hardx HEAD", "git reset --soft HEAD~1", "git reset --mixed HEAD"],
+    FROM_MAIN,
+  );
 });
 
 test("US-QG-07: the verdicts that must not change: reset --soft, reset of a path, status and make clean are allowed; reset --hard and clean in a worktree ask", () => {

@@ -3,7 +3,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import config from "../../app/config/project/release.config.js";
-import { generateNotes, parseDataState, readDataState, renderDataState } from "./data-state-notes.mjs";
+import {
+  generateNotes,
+  parseDataState,
+  readDataState,
+  renderDataState,
+} from "./data-state-notes.mjs";
 
 const reading = {
   readAt: "2026-11-06T10:00:00Z",
@@ -58,16 +63,28 @@ test("US-DEV-06 a record that cannot be read says unknown with the error code an
   const denied = () => {
     throw Object.assign(new Error("denied"), { code: "EACCES" });
   };
-  assert.match(renderDataState(readDataState(denied)), /unknown \(the record cannot be read \(EACCES\)\)/);
+  assert.match(
+    renderDataState(readDataState(denied)),
+    /unknown \(the record cannot be read \(EACCES\)\)/,
+  );
 });
 
 test("US-DEV-06 an invalid record says unknown with the reason, so the release still runs and nothing disappears silently (P-10)", () => {
   const cases = [
     ["not json", "the record is not valid JSON"],
     [{ ...reading, readAt: "6.11.2026" }, "readAt is missing or not a UTC time stamp"],
-    [{ ...reading, catalog: { approvedSpecies: "137" } }, "catalog.approvedSpecies is missing or not a count"],
-    [{ ...reading, catalog: { approvedSpecies: -1 } }, "catalog.approvedSpecies is missing or not a count"],
-    [{ ...reading, tree: { builtAt: reading.tree.builtAt, species: 130 } }, "tree is neither null nor a build"],
+    [
+      { ...reading, catalog: { approvedSpecies: "137" } },
+      "catalog.approvedSpecies is missing or not a count",
+    ],
+    [
+      { ...reading, catalog: { approvedSpecies: -1 } },
+      "catalog.approvedSpecies is missing or not a count",
+    ],
+    [
+      { ...reading, tree: { builtAt: reading.tree.builtAt, species: 130 } },
+      "tree is neither null nor a build",
+    ],
     [{ ...reading, tree: undefined }, "tree is neither null nor a build"],
   ];
   for (const [value, reason] of cases) {
@@ -79,7 +96,10 @@ test("US-DEV-06 an invalid record says unknown with the reason, so the release s
 
 test("US-DEV-06 the release configuration loads this module as the notes plugin", () => {
   assert.ok(
-    config.plugins.some((plugin) => typeof plugin === "string" && plugin.endsWith("tools/release/data-state-notes.mjs")),
+    config.plugins.some(
+      (plugin) =>
+        typeof plugin === "string" && plugin.endsWith("tools/release/data-state-notes.mjs"),
+    ),
     "release.config.js must list tools/release/data-state-notes.mjs as a plugin",
   );
 });
