@@ -94,7 +94,10 @@ function run({
       PFLANZENDEX_APT_CACHE: cache ? cacheDir : "",
       PFLANZENDEX_BROWSER_EXECUTABLE: chrome,
       ...(limits
-        ? { PFLANZENDEX_BROWSER_SYSTEM_LIMIT: "2", PFLANZENDEX_BROWSER_DOWNLOAD_LIMIT: "2" }
+        ? {
+            PFLANZENDEX_BROWSER_SYSTEM_LIMIT: "2",
+            PFLANZENDEX_BROWSER_DOWNLOAD_LIMIT: "2",
+          }
         : {}),
     },
   });
@@ -123,7 +126,8 @@ test(
     const r = run({});
     try {
       assert.equal(r.status, 0, r.stderr);
-      assert.deepEqual(r.calls, [APT, DOWNLOAD]);
+      // The parts run at the same time (issue 1667), so their order in the log is not fixed.
+      assert.deepEqual([...r.calls].sort(), [DOWNLOAD, APT].sort());
     } finally {
       r.cleanup();
     }
@@ -174,8 +178,8 @@ test(
     try {
       assert.equal(r.status, 0, r.stderr);
       assert.deepEqual(
-        r.calls.filter((c) => c.startsWith("npx")),
-        [APT, APT, DOWNLOAD],
+        r.calls.filter((c) => c.startsWith("npx")).sort(),
+        [APT, APT, DOWNLOAD].sort(),
       );
       assert.ok(r.calls.includes("sudo pkill -KILL -x apt-get"));
       assert.ok(r.calls.includes("sudo dpkg --configure -a"));
@@ -197,7 +201,8 @@ test(
     try {
       assert.notEqual(r.status, 0);
       assert.match(r.stderr, /system packages \(apt\) .*\(attempt 2 of 2\)/);
-      assert.equal(r.calls.filter((c) => c === DOWNLOAD).length, 0);
+      // The download runs at the same time and passed, yet the install fails and nothing is kept (issue 1667).
+      assert.doesNotMatch(r.stderr, /no Chromium at/);
       assert.deepEqual(r.cached(), []);
     } finally {
       r.cleanup();
@@ -225,6 +230,21 @@ test(
       );
     } finally {
       failed.cleanup();
+    }
+  },
+);
+
+test(
+  "US-QG-01: a failed browser download is retried without touching apt, which runs at the same time",
+  { skip: !hasTimeout },
+  () => {
+    const r = run({ download: "fail ok" });
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      assert.equal(r.calls.filter((c) => c === APT).length, 1);
+      assert.ok(!r.calls.some((c) => c.startsWith("sudo pkill") || c.startsWith("sudo dpkg")));
+    } finally {
+      r.cleanup();
     }
   },
 );

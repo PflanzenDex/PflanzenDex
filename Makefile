@@ -6,7 +6,7 @@ APP := app
 # is unexported here, before the first $(shell) below: SCREEN (`make one-screen`), FILES (`make gate-plan`) and the values
 # of the recipes. A recipe reads the raw copy of a value from the environment ("$$REST_TITLE", "$$RAW_TYPE", set below with
 # $(value)), never the $(TITLE) text; a guard tests $(value X). FRESH keeps its name for the tools, see below.
-unexport SCREEN FILES PR ISSUE TITLE BODY SHARD NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS
+unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS
 unexport WRITE APPLY DRY_RUN DEMO_SEED_PROFILE PERF_RUNS ONE_SCREEN_WRITE
 ifneq ($(origin FRESH),undefined)
 FRESH_GIVEN := yes
@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates pr-state issue-read pr-text issue-comment gate-plan project-status
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-web ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -56,6 +56,7 @@ export RAW_PERF_RUNS := $(value PERF_RUNS)
 export RAW_PRIORITY := $(value PRIORITY)
 export RAW_RELEASE := $(value RELEASE)
 export RAW_SHARD := $(value SHARD)
+export RAW_RUNS := $(value RUNS)
 export RAW_TYPE := $(value TYPE)
 export RAW_VERSION := $(value VERSION)
 # SCREEN=<id> of `make one-screen` reaches the e2e spec as ONE_SCREEN_ONLY, raw like the REST_ values (issue 1608).
@@ -165,9 +166,14 @@ migration: ## New migration with the next free number, seen from origin/dev and 
 	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$$RAW_NAME"
 
 auth-up: ## Start the shared auth server (Keycloak) and mail catcher; admin password in the main checkout's app/config/dev/.env (not in the repo, only the main checkout creates it; refuses on a password mismatch)
-	cd $(APP) && node tools/keycloak/auth-up.mjs
-	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
+	cd $(APP) && $(if $(CI),flock "$${RUNNER_TEMP:-/tmp}/pflanzendex-auth-up.lock" ,)node tools/keycloak/auth-up.mjs
+	@for i in $$(seq 120); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 1; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
 	@echo "Keycloak: http://localhost:18081 (realm pflanzendex), mail: http://localhost:18025"
+
+# US-QG-01 (issue 1667): in CI, `auth-up` runs under one lock, so the background start below and the `auth-up` of a later
+# target never run `docker compose up` at the same time; whichever comes second waits, then finds the stack running.
+auth-up-background: ## CI only (US-QG-01, issue 1667): starts `make auth-up` in the background and returns at once, so the pull and the boot of Keycloak overlap the setup of the job; a later `make auth-up` waits for it on its lock; the output goes to $$RUNNER_TEMP/pflanzendex-auth-up-background.log
+	@log="$${RUNNER_TEMP:-/tmp}/pflanzendex-auth-up-background.log"; nohup sh -c 'date -u +"start %T"; $(MAKE) --no-print-directory auth-up; echo "exit $$? at $$(date -u +%T)"' > "$$log" 2>&1 < /dev/null & echo "auth-up runs in the background, log: $$log"
 
 auth-down: ## Remove the auth server and mail catcher
 	-$(AUTH_COMPOSE) down -v
@@ -229,6 +235,9 @@ a11y-routes-report: ## The findings per rule and per screen of the last `make a1
 
 a11y-routes-merge: ## CI only: merges the shard reports of a11y-routes (app/packages/e2e/a11y-routes-shards) into the report of the whole run; fails unless every screen and size was measured exactly once (US-QG-01)
 	cd $(APP) && npm run --silent merge-shards -w @pflanzendex/e2e -- a11y-routes a11y-routes-shards
+
+ui-weights: ## Rewrites the shard weights of the UI gates (register.weights.json) as the median seconds per screen and gate of the CI runs RUNS="<id> <id> <id>" (at least 3), read from the logs of their shard jobs; needs gh (US-QG-01, issue 1667)
+	node tools/measure/ui-weights.mjs $$RAW_RUNS
 
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
 	cd $(APP) && node tools/check/quality/check-crap.mjs $$RAW_ARGS

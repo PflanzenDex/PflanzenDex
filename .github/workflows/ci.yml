@@ -327,9 +327,12 @@ jobs:
   # and by hand.
   # US-QG-01 (owner decision 2026-11-07): one job per shard runs both gates for the screens of its shard, so the stack (Postgres,
   # Keycloak, migrations, browsers, demo seed) starts once per shard instead of once per gate. The screens are split by measured
-  # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/4`): every screen runs in
+  # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/6`): every screen runs in
   # exactly one shard. Each shard uploads the reports and results of both gates; the job `results` below merges them, and it is
   # the result these gates report to `ci-status`. A failed one-screen run does not stop a11y-routes in the same shard.
+  # Six shards (issue 1667): a runner takes 0.65 to 1.24 times the median time for the same screens, so no weight balances four
+  # shards; six keep the slowest shard near five minutes and use the six job slots the separate gate jobs used before (Free plan,
+  # 20 jobs at once). The weights are medians of several runs (`make ui-weights RUNS="<id> <id> <id>"`).
   ui-shard:
     needs: [changes, reuse]
     if: >-
@@ -341,7 +344,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     name: ui shard ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -352,12 +355,16 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: pflanzendex_test
         ports: ["54329:5432"]
+        # Checked every 2 s (issue 1667): the job waits for the first healthy check before its first step.
         options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 25
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      # US-QG-01 (issue 1667): Keycloak takes the longest of the stack (pull and boot, about 40 s), so it starts now, in the
+      # background, while the job installs node_modules; `auth-up` inside `make ui-gates` waits for it on one lock.
+      - run: make auth-up-background
       - uses: ./.github/actions/setup-app
       # US-QG-01 (issue 1485): the system packages of the browser install come from a cache of the same Playwright version,
       # saved on `dev` (deps-cache.yml) or by an earlier run of this branch. A miss runs the full install, slowly if the
@@ -372,6 +379,9 @@ jobs:
       - run: make ui-gates SHARD=${{ matrix.shard }}/${{ strategy.job-total }} -j3 -Otarget
         env:
           PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
+      - name: Output of the background auth-up
+        if: always()
+        run: cat "$RUNNER_TEMP/pflanzendex-auth-up-background.log" || echo "no background auth-up log"
       - id: apt-complete
         if: always() && steps.apt-cache.outputs.cache-hit != 'true'
         run: |

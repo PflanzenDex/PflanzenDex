@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { SIZES } from "../../../support/display/one-screen/judge";
 import { A11Y_SIZES } from "../../../support/display/a11y/findings";
@@ -16,8 +17,19 @@ import { coverageProblems } from "./merge-shards";
 // split is one partition of the register, balanced by the measured weights, and merge-shards proves the partition at the end of
 // the run. Pure self-tests, no browser and no web stack; the project "one-screen" runs this file (playwright.config.ts).
 
-const SPLIT = 4;
-const SHARDS = [1, 2, 3, 4];
+// US-QG-01 (issue 1667): the shards are the matrix of the job `ui-shard` in ci.yml (`shard: [1, 2, ...]`), so the self-tests
+// follow the CI matrix and a change of the matrix needs no change here.
+const CI_WORKFLOW = new URL("../../../../../../.github/workflows/ci.yml", import.meta.url);
+function matrixShards(): number[] {
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed file of the repository
+  const workflow = readFileSync(CI_WORKFLOW, "utf8");
+  const start = workflow.indexOf("\n  ui-shard:");
+  const match = /^\s+shard: \[([\d, ]+)\]/m.exec(workflow.slice(Math.max(start, 0)));
+  if (start < 0 || !match) throw new Error("the job ui-shard of ci.yml lists no shard matrix");
+  return (match[1] ?? "").split(",").map((shard) => Number(shard.trim()));
+}
+const SHARDS = matrixShards();
+const SPLIT = SHARDS.length;
 const screenIds = SCREENS.map((screen) => screen.id);
 const shardIds = (index: number): string[] =>
   screensOf("", `${index}/${SPLIT}`).map((screen) => screen.id);
@@ -46,7 +58,13 @@ test("US-QG-01 self-test: the shards of a gate together measure every screen and
 });
 
 test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
-  test("US-QG-01 self-test: the four shards hold every screen of the register once, in both gates", () => {
+  test("US-QG-01 self-test: the CI matrix lists the shards 1 to n, and n is at most 6", () => {
+    expect(SHARDS).toEqual(Array.from({ length: SPLIT }, (_, index) => index + 1));
+    // The Free plan runs at most 20 jobs at once; one job per shard keeps the UI gates inside that budget.
+    expect(SPLIT).toBeLessThanOrEqual(6);
+  });
+
+  test("US-QG-01 self-test: the shards of the CI matrix hold every screen of the register once, in both gates", () => {
     for (const { gate, sizes } of GATE_SIZES) {
       expect(coverageProblems(measuredOf(SHARDS, sizes), screenIds, sizes), gate).toEqual([]);
     }
@@ -61,7 +79,7 @@ test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
     expect(coverageProblems(doubled, screenIds, sizes)[0]).toContain("measured more than once");
   });
 
-  test("US-QG-01 self-test: the split is balanced: no shard exceeds the mean cost of the four by more than 10 %", () => {
+  test("US-QG-01 self-test: the split is balanced: no shard exceeds the mean cost of the shards by more than 10 %", () => {
     const loads = SHARDS.map((index) => shardIds(index).reduce((sum, id) => sum + costOf(id), 0));
     const mean = loads.reduce((sum, load) => sum + load, 0) / SPLIT;
     for (const load of loads) expect(load).toBeLessThanOrEqual(mean * 1.1);

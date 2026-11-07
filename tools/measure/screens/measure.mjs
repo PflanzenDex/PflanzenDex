@@ -3,7 +3,7 @@
 // overflow and the painted width (for the 1920 px cap). A local helper before pushing; the CI job `results` (its one-screen part) stays
 // the reference.
 //
-// Usage: node tools/measure/measure.mjs [options] [id[@WxH] ...]
+// Usage: node tools/measure/screens/measure.mjs [options] [id[@WxH] ...]
 //   no ids        every screen of the register
 //   id@WxH        one screen at one size; a bare id takes --sizes
 //   --sizes=a,b   sizes (default: the six of US-QS-15)
@@ -13,7 +13,7 @@
 //   --out=dir     write results.json there, and screenshots with --shots
 //   --shots       screenshots of every measurement into <out>/shots
 import { mkdirSync, writeFileSync } from "node:fs";
-import { SIZES, chromium, openScreen, register, screenContext, sessions } from "./lib.mjs";
+import { SIZES, chromium, openScreen, register, screenContext, sessions } from "../lib.mjs";
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => {
