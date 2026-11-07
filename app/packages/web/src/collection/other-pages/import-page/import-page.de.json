@@ -5,6 +5,7 @@
   "fileLabel": "CSV-Datei",
   "template": "Vorlage herunterladen",
   "templateName": "pflanzen-vorlage.csv",
+  "columnsShort": "Nur die Spalte „Art“ ist Pflicht.",
   "columnsHead": "Die Vorlage hat fünf Spalten, in dieser Reihenfolge:",
   "columnSpecies": "Art (Pflichtfeld): der Name der Art, wie er im Katalog steht, oder ein Synonym.",
   "columnNickname": "Spitzname: das Kennzeichen der Pflanze, zum Beispiel eine Farbe. Leer lassen, wenn sie keins braucht.",

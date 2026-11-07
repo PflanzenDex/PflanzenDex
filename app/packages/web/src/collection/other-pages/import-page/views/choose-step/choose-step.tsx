@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Label } from "@/shared/ui/display/label/label";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { focusIt } from "@/shared/platform/routing/route-focus/view-start";
@@ -24,20 +25,29 @@ function downloadTemplate(): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** What the columns of the template mean, in their order, and the limits of one file (FR-BES-26). */
+/**
+ * What the columns of the template mean, in their order, and the limits of one file (FR-BES-26). One line shows; the rest
+ * opens behind "Mehr erfahren", so the step fits one screen (US-QS-15: help text holds one line).
+ */
 function Columns() {
   return (
-    <div className="flex flex-col gap-2 text-sm">
-      <p className="m-0 font-semibold">{ui("columnsHead")}</p>
-      <ul className="m-0 flex list-disc flex-col gap-1 pl-5">
-        <li>{ui("columnSpecies")}</li>
-        <li>{ui("columnNickname")}</li>
-        <li>{ui("columnLocation")}</li>
-        <li>{ui("columnPurchase")}</li>
-        <li>{ui("columnNotes")}</li>
-      </ul>
-      <p className="m-0 text-muted-foreground">{ui("limits")}</p>
-    </div>
+    <MoreHelp
+      more={
+        <div className="flex flex-col gap-2">
+          <p className="m-0">{ui("columnsHead")}</p>
+          <ul className="m-0 flex list-disc flex-col gap-1 pl-5">
+            <li>{ui("columnSpecies")}</li>
+            <li>{ui("columnNickname")}</li>
+            <li>{ui("columnLocation")}</li>
+            <li>{ui("columnPurchase")}</li>
+            <li>{ui("columnNotes")}</li>
+          </ul>
+          <p className="m-0">{ui("limits")}</p>
+        </div>
+      }
+    >
+      {ui("columnsShort")}
+    </MoreHelp>
   );
 }
 

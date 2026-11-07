@@ -262,6 +262,16 @@ describe("US-BES-18 the import page follows its keeper switch and offers the tem
     expect(names).toEqual(["pflanzen-vorlage.csv"]);
   });
 
+  it("US-BES-18 the first step shows one line of help; the columns and limits open behind Mehr erfahren (US-QS-15)", () => {
+    server();
+    show();
+    expect(screen.getByText("Nur die Spalte „Art“ ist Pflicht.")).toBeTruthy();
+    const details = screen.getByText("Mehr erfahren").closest("details");
+    expect(details?.open).toBe(false);
+    expect(details?.textContent).toContain("Art (Pflichtfeld)");
+    expect(details?.textContent).toContain("höchstens 500 Pflanzen");
+  });
+
   it("US-BES-18 a file over 1 MB is refused in the browser with the server's text, and nothing is sent", async () => {
     const sent = server();
     show();
