@@ -405,6 +405,60 @@ test("US-QG-07: skipping hooks, merging and pushing to protected branches are de
   }
 });
 
+test("US-QG-07: every form that sets or unsets core.hooksPath is denied (issue 1590)", () => {
+  for (const cmd of [
+    "git config core.hooksPath /dev/null",
+    "git config --local core.hooksPath x",
+    "git config --global core.hooksPath x",
+    "git config --file .git/config core.hooksPath x",
+    'git config core.hooksPath "/dev/null"',
+    "git config core.HooksPath x",
+    "git config --unset core.hooksPath",
+    "git config --unset-all core.hooksPath",
+    "git config --add core.hooksPath x",
+    "git config --replace-all core.hooksPath x",
+    "git config --remove-section core",
+    "git config --rename-section core other",
+    "git config set core.hooksPath x",
+    "git config unset core.hooksPath",
+    "git config remove-section core",
+    "git -C .worktrees/x config core.hooksPath x",
+    "git -c core.hooksPath=/dev/null commit -m x",
+    "git -c core.hooksPath commit -m x",
+    'git -c "core.hooksPath=/dev/null" push',
+    "git --config-env=core.hooksPath=HOOKS commit -m x",
+    "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x",
+    "make hooks && git config core.hooksPath /dev/null",
+    "echo $(git config core.hooksPath x)",
+    'bash -c "git config core.hooksPath /dev/null"',
+    "env git config core.hooksPath x",
+  ]) {
+    assert.equal(decision(cmd), "deny", cmd);
+  }
+});
+
+test("US-QG-07: reading core.hooksPath passes, and quoted text naming it is not a command (issue 1590)", () => {
+  for (const cmd of [
+    "git config --get core.hooksPath",
+    "git config --get-all core.hooksPath",
+    "git config --show-origin --get core.hooksPath",
+    "git config core.hooksPath",
+    "git config --list",
+    "git config -l",
+    "git config get core.hooksPath",
+    "git config list --show-origin",
+    "git -C .worktrees/x config --get core.hooksPath",
+    "git -c color.ui=never config --get core.hooksPath",
+    "git config --get core.hooksPath || make hooks",
+    'git commit -m "docs: never run git config core.hooksPath /dev/null"',
+    "git commit -F - <<'EOF'\nfix: the hook refuses\ngit config core.hooksPath /dev/null\nEOF",
+    "git config --remove-section color",
+    "git config user.name x",
+  ]) {
+    assert.equal(decision(cmd), "none", cmd);
+  }
+});
+
 test("FR-DEV-10: a bare gh issue create is denied, make issue and reading issues are not; label changes need the owner", () => {
   assert.equal(decision("gh issue create --title x --body-file b.md"), "deny");
   assert.equal(decision("cd app && gh issue create -t x"), "deny");

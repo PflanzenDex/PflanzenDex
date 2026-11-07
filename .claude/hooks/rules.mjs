@@ -1,5 +1,6 @@
 // Rules for the Claude Code hooks (US-QG-07, US-DEV-02). Pure functions, tested in rules.test.mjs.
 // Hooks support the gates; the gates themselves live in CI and the rulesets (D-02).
+import { HOOKS_PATH_REASON, changesHooksPath } from "./hooks-path.mjs";
 import { HARD_RESET_FLAG, mainCheckoutRefusal } from "./main-checkout.mjs";
 
 // Files that define gates, thresholds or exception lists. Agents may only change them after a human confirms (US-QG-07).
@@ -78,10 +79,6 @@ const FORBIDDEN_COMMANDS = [
   [
     /\bgit\s+push\b[^|;&]*\s(--force|-f)\b(?!-)/,
     "Plain force pushes are not allowed; use --force-with-lease on your own feature branch.",
-  ],
-  [
-    /\bgit\s+config\b[^|;&]*\bcore\.hooksPath\b/,
-    "Changing core.hooksPath disables the git hooks; use `make hooks`.",
   ],
   [
     /\bgh\s+issue\s+create\b/,
@@ -191,6 +188,8 @@ export function judgeCommand(rawCommand, where = {}) {
   const command = stripText(rawCommand);
   for (const [pattern, reason] of FORBIDDEN_COMMANDS)
     if (pattern.test(command)) return { decision: "deny", reason };
+  // Only a change of core.hooksPath is refused; a read passes (issue 1590). It reads the raw command: quotes matter there.
+  if (changesHooksPath(rawCommand)) return { decision: "deny", reason: HOOKS_PATH_REASON };
   const refusal = mainCheckoutRefusal(rawCommand, where);
   if (refusal) return { decision: "deny", reason: refusal };
   for (const [pattern, reason] of CONFIRM_COMMANDS)
