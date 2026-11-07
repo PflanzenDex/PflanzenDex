@@ -264,11 +264,15 @@ const REQUIRED = [
   "app-gates",
   "app-tests",
   "app-tests-web",
-  "app-coverage",
+  "results",
   "app-ui",
   "ds-snapshots",
   "lighthouse",
 ];
+// The jobs that `results` replaced (issue 1608): the ci.yml of the head no longer defines them, so the fixture defines every
+// other job of JOBS, and a green run of an app PR needs none of them.
+const RETIRED = new Set(["app-coverage", "one-screen", "a11y-routes"]);
+const DEFINED = new Set(JOBS.filter((job) => !RETIRED.has(job)));
 const check = (name, status, conclusion, run = 1) => ({
   name,
   status,
@@ -294,7 +298,7 @@ const headOf = (checkRuns) =>
     },
     head: "abc",
     files: ["app/packages/core/src/a.ts"],
-    defined: new Set(JOBS),
+    defined: DEFINED,
     checkRuns,
     workflowRuns: [],
   });
