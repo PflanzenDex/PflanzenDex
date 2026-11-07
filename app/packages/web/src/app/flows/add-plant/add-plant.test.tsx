@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { AddPlant } from "./add-plant";
+import { FeaturesProvider } from "@/shared/data";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 
 const response = (status: number, body: unknown) =>
@@ -227,5 +228,41 @@ describe("US-ONB-01 the derived light need names its zone the plain way (US-QS-2
     const field = await screen.findByRole("combobox", { name: "Lichtbedarf" });
     expect(within(field).getByRole("option", { name: /^Zone \d \(laut Art\)$/ })).toBeTruthy();
     expect(within(field).queryByText(/Lampe/)).toBeNull();
+  });
+});
+
+describe("US-BES-18 the entry Aus Datei importieren sits where plants are added", () => {
+  it("US-BES-18 the first step of Pflanze anlegen offers the import as a link to its page while the keeper switch is on", async () => {
+    server();
+    view();
+    const link = await screen.findByRole("link", { name: "Aus Datei importieren" });
+    expect(link.getAttribute("href")).toBe("/collection/import");
+  });
+
+  it("US-BES-18 with the keeper switch csv_import off the entry is hidden", async () => {
+    server();
+    render(
+      <MemoryRouter>
+        <FeaturesProvider features={{ csv_import: false }}>
+          <AddPlant
+            lookup={LOOKUP}
+            api="http://api"
+            token={token}
+            onCatalog={() => {}}
+            onMore={onMore}
+          />
+        </FeaturesProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("heading", { level: 1, name: "Pflanze anlegen" });
+    expect(screen.queryByRole("link", { name: "Aus Datei importieren" })).toBeNull();
+  });
+
+  it("US-BES-18 the entry leaves the screen once a species is chosen, so the save step has one way on", async () => {
+    server();
+    view();
+    await toSave();
+    await screen.findByText("Schritt 2 von 2: Pflanze speichern");
+    expect(screen.queryByRole("link", { name: "Aus Datei importieren" })).toBeNull();
   });
 });

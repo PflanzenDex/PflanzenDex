@@ -103,7 +103,7 @@ describe("US-BES-18 CSV preview: every row is ready, flagged or already there", 
     expect(r.rows[2]?.reasons).toEqual([{ code: "import.species_not_found", field: "species" }]);
     expect(r.rows[3]?.reasons).toEqual([{ code: "import.species_missing", field: "species" }]);
     expect(r.rows[4]?.reasons).toEqual([]);
-    expect(r.counts).toEqual({ ready: 2, flagged: 3, alreadyThere: 0 });
+    expect(r.counts).toEqual({ ready: 2, flagged: 3, alreadyThere: 0, skipped: 0 });
   });
 
   it("US-BES-18 a flagged row names the field and the reason: impossible, future and early dates, long texts", async () => {
@@ -189,7 +189,7 @@ describe("US-BES-18 already there and duplicates in the file", () => {
     );
     expect(r.rows.map((x) => x.state)).toEqual(["already_there", "already_there"]);
     expect(r.rows[0]?.reasons).toEqual([{ code: "specimen.name_taken", field: "species" }]);
-    expect(r.counts).toEqual({ ready: 0, flagged: 0, alreadyThere: 2 });
+    expect(r.counts).toEqual({ ready: 0, flagged: 0, alreadyThere: 2, skipped: 0 });
   });
 
   it("US-BES-18 a later row with the same species and marker repeats an earlier one and is flagged", async () => {

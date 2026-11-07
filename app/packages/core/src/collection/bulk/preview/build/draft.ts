@@ -1,10 +1,10 @@
 // One draft per row of the file (US-BES-18): the species the name matches, the values and the reasons the row is flagged for
 // on its own, and whether the specimen it names already exists (archived ones included, so a second import creates nothing
 // twice). Each distinct species name is looked up once, however often it stands in the file.
-import { isActive, type SpecimenRow } from "../../shared/types";
-import { specimenName } from "../../shared/name";
-import type { LightLocation } from "../../../light";
-import type { ImportSpeciesSource, ParsedRow } from "../types";
+import { isActive, type SpecimenRow } from "../../../shared/types";
+import { specimenName } from "../../../shared/name";
+import type { LightLocation } from "../../../../light";
+import type { ImportSpeciesSource, ParsedRow } from "../../types";
 import {
   checkRow,
   displayName,
@@ -12,7 +12,7 @@ import {
   type Reason,
   type RowValues,
   type SpeciesMatch,
-} from "./rules";
+} from "../rules";
 
 export interface Draft {
   readonly row: ParsedRow;
@@ -73,7 +73,10 @@ function draftOf(args: {
   return { row, match, values: checked.values, reasons, name, already };
 }
 
-/** The drafts of the whole file, in file order. */
+/**
+ * The drafts of the whole file, in file order. A line the keeper chose a species for takes that match (US-BES-18); the
+ * other names are looked up by name, each distinct one once.
+ */
 export async function draftsOf(args: {
   readonly source: ImportSpeciesSource;
   readonly userId: string;
@@ -81,17 +84,18 @@ export async function draftsOf(args: {
   readonly today: string;
   readonly locations: readonly LightLocation[];
   readonly specimens: readonly SpecimenRow[];
+  readonly chosen: ReadonlyMap<number, SpeciesMatch>;
 }): Promise<Draft[]> {
-  const { source, userId, rows, today, locations, specimens } = args;
+  const { source, userId, rows, today, locations, specimens, chosen } = args;
   const matches = await matchesOf(
     source,
     userId,
-    rows.map((r) => r.species),
+    rows.filter((r) => !chosen.has(r.line)).map((r) => r.species),
   );
   return rows.map((row) =>
     draftOf({
       row,
-      match: matches.get(row.species) ?? { kind: "none" },
+      match: chosen.get(row.line) ?? matches.get(row.species) ?? { kind: "none" },
       today,
       locations,
       specimens,

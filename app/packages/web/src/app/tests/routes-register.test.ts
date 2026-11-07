@@ -6,6 +6,7 @@ import { ACCOUNT_SECTIONS } from "@/app/destinations/account-area/account-model/
 import {
   ADD_PLANT_PATH,
   EXCHANGE_PATH,
+  IMPORT_PATH,
   LABELS_PATH,
   MATCH_PATH,
   PATHS,
@@ -30,6 +31,7 @@ describe("US-QS-15 every route is in the register of the one-screen gate", () =>
     ...Object.values(PATHS),
     ADD_PLANT_PATH,
     LABELS_PATH,
+    IMPORT_PATH,
     EXCHANGE_PATH,
     MATCH_PATH,
     `${PATHS.friends}/:friendId`,
@@ -52,6 +54,7 @@ describe("US-QS-15 every route is in the register of the one-screen gate", () =>
     '":friendId"',
     "ADD_PLANT_PATH",
     "LABELS_PATH",
+    "IMPORT_PATH",
     "EXCHANGE_PATH",
     "MATCH_PATH",
     "PATHS.discover",

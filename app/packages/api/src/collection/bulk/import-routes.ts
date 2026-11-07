@@ -6,6 +6,7 @@ import {
   keeperOffOf,
   specimenImport,
   specimenImportPreview,
+  speciesLoad,
   type ImportSpeciesSource,
   type TargetLocationSource,
 } from "@pflanzendex/core";
@@ -40,9 +41,23 @@ export interface ImportOptions {
  */
 export function importSpeciesFor(pool: Pool): ImportSpeciesSource {
   const reads = collectionReadSourceFor(pool);
+  const species = new SpeciesPostgres(pool);
   return {
     exact: (userId, text) => reads.exactSpecies(userId, text),
     search: (userId, text) => reads.searchSpecies(userId, text),
+    // The species the keeper chose on the page: the visible read the creation of a specimen uses (P-04); a foreign or
+    // unknown ID is no species for this account.
+    byId: async (userId, id) => {
+      const found = await speciesLoad(species, userId, id);
+      return found
+        ? {
+            id: found.id,
+            latinName: found.latinName,
+            germanName: found.germanName,
+            synonyms: found.synonyms,
+          }
+        : null;
+    },
   };
 }
 

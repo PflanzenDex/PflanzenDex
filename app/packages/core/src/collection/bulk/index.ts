@@ -5,6 +5,7 @@ export type { ImportDate, ImportSpeciesSource, ParsedRow, SpeciesCandidate } fro
 export { parseImportCsv } from "./csv";
 export { specimenImportPreview } from "./preview";
 export type {
+  ImportOverride,
   ImportPreview,
   LocationMatch,
   MarkerRequest,

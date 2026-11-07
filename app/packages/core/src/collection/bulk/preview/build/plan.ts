@@ -1,12 +1,12 @@
 // The file as a whole (US-BES-18): a row that repeats an earlier row of the same species and marker is flagged, the markers
 // are judged per species over every row that would be written (US-BES-03), and the answers the keeper gave for existing
 // specimens are checked against what the file needs. Pure.
-import { appError, failed, ok, type Result } from "../../../kernel";
-import type { MarkerAnswer } from "../../shared/markers";
-import type { SpecimenRow } from "../../shared/types";
-import { ACTIVE_FOR_MARKERS } from "../types";
+import { appError, failed, ok, type Result } from "../../../../kernel";
+import type { MarkerAnswer } from "../../../shared/markers";
+import type { SpecimenRow } from "../../../shared/types";
+import { ACTIVE_FOR_MARKERS } from "../../types";
 import { siblingsOf, speciesIdOf, type Draft } from "./draft";
-import { judgeMarkers, displayName, type ExistingMarkers, type Reason } from "./rules";
+import { judgeMarkers, displayName, type ExistingMarkers, type Reason } from "../rules";
 
 /** A species whose existing specimens need a marker before the file can be imported (US-BES-03). */
 export interface MarkerRequest {

@@ -4,6 +4,7 @@ import type { UnlockFunctionId, UnlockReason, UnlockWay } from "@pflanzendex/cor
 import {
   PATHS,
   CATALOG_ADDRESS,
+  IMPORT_PATH,
   EXCHANGE_PATH,
   MANAGE_ADDRESS,
   SPECIES_MODE_ADDRESS,
@@ -75,8 +76,7 @@ const ADDRESSES: Record<UnlockFunctionId, string> = {
   growth: PATHS.collection,
   leaf_log: PATHS.collection,
   pot_labels: PATHS.collection,
-  // The import page comes with its web slice (US-BES-18, slice 3); until then the collection is the address.
-  csv_import: PATHS.collection,
+  csv_import: IMPORT_PATH,
   treatments: todayAddress("treatments"),
   pokedex: SPECIES_MODE_ADDRESS,
   wishlist: WISHLIST_MODE_ADDRESS,
