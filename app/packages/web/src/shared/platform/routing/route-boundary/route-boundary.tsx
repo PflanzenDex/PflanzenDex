@@ -69,6 +69,7 @@ export function RouteBoundary({
 }: BoundaryProps & { heading?: string | null }) {
   return (
     <ChunkErrorBoundary resetKey={resetKey}>
+      {/* PageSkeleton delays its blocks (US-QS-14, DS-57), the heading stands at once; a page that arrives sooner shows no status. */}
       <Suspense fallback={<PageSkeleton {...(heading ? { heading } : {})} />}>{children}</Suspense>
     </ChunkErrorBoundary>
   );

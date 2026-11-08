@@ -1,4 +1,5 @@
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 export type PageSkeletonProps = {
@@ -8,7 +9,11 @@ export type PageSkeletonProps = {
   heading?: string;
 };
 
-/** Suspense fallback of route-level pages (US-QS-07, DS-55, DS-56): a growing sprout beside a heading block and three card blocks, no numbers (P-08). */
+/**
+ * Suspense fallback of route-level pages (US-QS-07, DS-55, DS-56): a growing sprout beside a heading block and three card
+ * blocks, no numbers (P-08). The blocks show only after the delay (US-QS-14, DS-57, issue 1697); the destination's heading
+ * is text, not a loader, so it stands at once.
+ */
 export function PageSkeleton({ label = "Lädt…", heading }: PageSkeletonProps) {
   if (heading)
     return (
@@ -18,29 +23,33 @@ export function PageSkeleton({ label = "Lädt…", heading }: PageSkeletonProps)
         <h1 data-route-fallback="" className="text-2xl font-semibold">
           {heading}
         </h1>
-        <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <PlantLoader decorative size="lg" />
-            <Skeleton className="h-8 w-2/3 max-w-xs" />
-          </div>
-          <Skeleton className="h-24 w-full rounded-card" />
-          <Skeleton className="h-24 w-full rounded-card" />
-        </SkeletonGroup>
+        <DelayedSkeleton>
+          <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <PlantLoader decorative size="lg" />
+              <Skeleton className="h-8 w-2/3 max-w-xs" />
+            </div>
+            <Skeleton className="h-24 w-full rounded-card" />
+            <Skeleton className="h-24 w-full rounded-card" />
+          </SkeletonGroup>
+        </DelayedSkeleton>
       </div>
     );
   return (
     // Capped like the content of a page, so the skeleton of a destination with layers keeps its width (US-QS-15, #1027).
-    <SkeletonGroup
-      label={label}
-      className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-4 p-4 py-6"
-    >
-      <div className="flex items-center gap-3">
-        <PlantLoader decorative size="lg" />
-        <Skeleton className="h-8 w-2/3 max-w-xs" />
-      </div>
-      <Skeleton className="h-24 w-full rounded-card" />
-      <Skeleton className="h-24 w-full rounded-card" />
-      <Skeleton className="h-24 w-full rounded-card" />
-    </SkeletonGroup>
+    <DelayedSkeleton>
+      <SkeletonGroup
+        label={label}
+        className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-4 p-4 py-6"
+      >
+        <div className="flex items-center gap-3">
+          <PlantLoader decorative size="lg" />
+          <Skeleton className="h-8 w-2/3 max-w-xs" />
+        </div>
+        <Skeleton className="h-24 w-full rounded-card" />
+        <Skeleton className="h-24 w-full rounded-card" />
+        <Skeleton className="h-24 w-full rounded-card" />
+      </SkeletonGroup>
+    </DelayedSkeleton>
   );
 }
