@@ -21,12 +21,16 @@ const LOADING = "Messungen werden geladen …";
  * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Verlauf"
  * (US-QS-15). Every view says what to do next (P-09).
  */
-export function MeasurePage(props: {
+/** `onSaved` is called after a measurement was written; the page stays open (US-QS-15). */
+type MeasurePageProps = {
   api: string;
   token: Token;
   specimen: { id: string; name: string };
   onBack: () => void;
-}) {
+  onSaved?: () => void;
+};
+
+export function MeasurePage(props: MeasurePageProps) {
   const { api, token, specimen } = props;
   const key = useMemo(() => ["care", "measurements", specimen.id], [specimen.id]);
   const invalidate = useInvalidate(key);
@@ -41,6 +45,7 @@ export function MeasurePage(props: {
     token,
     specimenId: specimen.id,
     invalidate,
+    ...(props.onSaved ? { onSaved: props.onSaved } : {}),
   });
   const moments = useGrowthMoments(api, token, specimen.id);
   return (

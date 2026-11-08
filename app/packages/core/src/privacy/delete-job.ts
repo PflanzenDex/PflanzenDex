@@ -11,18 +11,20 @@ export interface ErasedAccount {
   readonly subject: string | null;
 }
 
-/** Port: the one database step that deletes the account and everything that hangs on it, in one transaction. */
+/** Port: the database steps that read the subject, delete the account and mark the identity removal. */
 export interface AccountEraser {
+  /** The sign-in subject of the account, read before anything is erased; `null` if the account has none. */
+  subjectOf(accountId: string): Promise<string | null>;
   /** `null` when nothing is due (no request, or the grace period has not ended). */
   erase(accountId: string, now: Date): Promise<ErasedAccount | null>;
-  /** Marks that the operator-side identity was removed at the identity service. */
+  /** Marks that the identity was removed at the identity service (the deletion log entry of the subject). */
   identityRemoved(subject: string, now: Date): Promise<void>;
 }
 
 /**
- * Port of the identity service (Keycloak). The real removal needs an action in the realm that this application does not
- * do on its own yet: the stub answers `pending` and the subject stays in the deletion log until the operator has removed
- * the user and marked it (runbook `account-deletion`). `removed` marks it done at once.
+ * Port of the identity service (Keycloak). `removed` when the user is gone, `pending` when the removal is not configured
+ * (the stub `identityKept`: the subject stays in the deletion log until the operator removes the user by hand and marks
+ * it, runbook `docs/guides/operations/account-deletion.md`). A failure is an error result, and the job retries.
  */
 export interface IdentityRemoval {
   remove(subject: string): Promise<Result<"removed" | "pending">>;
@@ -36,9 +38,10 @@ export interface DeleteAccountDependencies {
 }
 
 /**
- * Order: photos first, then the database. A failure of the store stops the job before any data is gone (the job retries);
- * a failure after the database step cannot lose the subject, because the database wrote it to the deletion log. The
- * object store is emptied by account prefix, so photos no row names any more go too.
+ * Order: photos, then the identity, then the database. A failure of the store or of the identity service stops the job
+ * before any data is gone, so the retry still finds the request and the subject (nothing is lost, P-10). The identity
+ * goes before the erase, because the erase deletes the request. The object store is emptied by account prefix, so photos
+ * no row names any more go too.
  */
 export const deleteAccountJob =
   (deps: DeleteAccountDependencies): JobHandler =>
@@ -49,11 +52,16 @@ export const deleteAccountJob =
     if (request === null || request.dueAt.getTime() > now.getTime()) return;
     const cleared = await deps.photos.deleteAll(accountId);
     if (!cleared.ok) throw new Error(`photos not removed: ${cleared.error.code}`);
+    const subject = await deps.eraser.subjectOf(accountId);
+    let removed = false;
+    if (subject !== null) {
+      const identity = await deps.identity.remove(subject);
+      if (!identity.ok) throw new Error(`identity not removed: ${identity.error.code}`);
+      removed = identity.value === "removed";
+    }
     const erased = await deps.eraser.erase(accountId, now);
-    if (erased?.subject == null) return;
-    const identity = await deps.identity.remove(erased.subject);
-    if (!identity.ok) throw new Error(`identity not removed: ${identity.error.code}`);
-    if (identity.value === "removed") await deps.eraser.identityRemoved(erased.subject, now);
+    if (erased === null) return;
+    if (removed && erased.subject !== null) await deps.eraser.identityRemoved(erased.subject, now);
   };
 
 export const identityKept: IdentityRemoval = {

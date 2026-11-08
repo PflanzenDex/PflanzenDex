@@ -102,6 +102,8 @@
   "onboarding.unknown_occasion",
   "operator_cost.month_in_future",
   "pokedex.not_caught",
+  "privacy.entry_not_found",
+  "privacy.identity_removal_failed",
   "request.rate_limited",
   "review.already_exists",
   "review.approval_incomplete",

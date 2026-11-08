@@ -63,6 +63,15 @@ const REGISTER: Record<string, readonly [Status, string]> = {
   active_species_of: ["fixed", "0093"],
   erase_catalog_contributions: ["scoped", "own cases, specimens and profiles"],
   erase_account: ["scoped", "own account"],
+  deletion_deadline_rows: [
+    "gated",
+    "worker only (owner role): open deletions for the deadline check, no account id",
+  ],
+  operator_deletion_queue: ["gated", "operator, open deletions without account id"],
+  operator_mark_identity_removed: [
+    "gated",
+    "operator, closes one identity removal of the deletion log",
+  ],
   accept_catalog_correction: ["gated", "reviewer"],
   reject_catalog_correction: ["gated", "reviewer"],
   revert_catalog_field: ["gated", "reviewer"],

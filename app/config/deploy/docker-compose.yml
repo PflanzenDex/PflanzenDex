@@ -260,6 +260,11 @@ services:
       CATALOG_FILL: ${CATALOG_FILL:-}
       ATTRIBUTE_FILL: ${ATTRIBUTE_FILL:-}
       TAXONOMY_BUILD: ${TAXONOMY_BUILD:-}
+      # Removal of the user at the sign-in service (US-ACC-04, issue 1673): all four or none; empty keeps it manual.
+      IDENTITY_ADMIN_URL: ${IDENTITY_ADMIN_URL:-}
+      IDENTITY_TOKEN_URL: ${IDENTITY_TOKEN_URL:-}
+      IDENTITY_ADMIN_CLIENT_ID: ${IDENTITY_ADMIN_CLIENT_ID:-}
+      IDENTITY_ADMIN_CLIENT_SECRET: ${IDENTITY_ADMIN_CLIENT_SECRET:-}
       # Pool and time limits of the database (NFR-12, #1242): empty means the starting values of `poolConfigFromEnv`.
       PFLANZENDEX_DB_POOL_MAX: ${PFLANZENDEX_DB_POOL_MAX:-}
       PFLANZENDEX_DB_CONNECT_TIMEOUT_MS: ${PFLANZENDEX_DB_CONNECT_TIMEOUT_MS:-}

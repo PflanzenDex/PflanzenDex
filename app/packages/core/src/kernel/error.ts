@@ -165,6 +165,10 @@ export const ERROR_TEXTS = {
     "Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
+  "privacy.entry_not_found":
+    "Diesen Eintrag im Löschprotokoll gibt es nicht. Lade die Seite neu, um die offenen Entfernungen zu sehen.",
+  "privacy.identity_removal_failed":
+    "Das Konto konnte im Anmeldedienst nicht entfernt werden. Die Löschung wartet und wird erneut versucht; bisher ist nichts gelöscht.",
 } as const;
 export type ErrorCode = keyof typeof ERROR_TEXTS;
 export const ERROR_CODE_FORMAT = /^[a-z_]+\.[a-z_]+$/;
