@@ -1,5 +1,5 @@
 {
-  "maxTotal": 319,
+  "maxTotal": 315,
   "entries": [
     {
       "file": "packages/api/src/achievements/history/year.ts",
@@ -486,10 +486,6 @@
     {
       "file": "packages/web/src/collection/specimens/cards/specimen-card/specimen-card.tsx",
       "enums": 1
-    },
-    {
-      "file": "packages/web/src/app/destinations/collection-area/collection-area.tsx",
-      "enums": 4
     },
     {
       "file": "packages/web/src/app/destinations/today-area/today-area.tsx",
