@@ -3,10 +3,14 @@ import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import { DiscoverPage } from "@/discover";
 import { SpeciesPage } from "@/catalog";
-import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView, useSuggestionsOn } from "./discover-view";
+import { DiscoverModeSkeleton } from "./discover-area.skeleton";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./discover-area.de.json";
+
+const t = texts(table);
 
 /** The light zone of "Discover for <zone>" from the address (`?zone=3`, US-ENT-07); anything but 2 to 4 means no filter. */
 function zoneOf(value: string | null): number | undefined {
@@ -41,14 +45,14 @@ export function DiscoverArea(props: {
   return (
     <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <SammlungHeader
-        title="Entdecken"
-        switchLabel="Ansicht von Entdecken"
+        title={t("page.title")}
+        switchLabel={t("switch.label")}
         view={view}
         options={options}
         onChoose={choose}
         caption={null}
       />
-      <Suspense fallback={<PageSkeleton />}>
+      <Suspense fallback={<DiscoverModeSkeleton view={view} />}>
         {view === "catalog" ? (
           <SpeciesPage
             api={props.api}
