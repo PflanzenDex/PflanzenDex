@@ -1,0 +1,5 @@
+{
+  "unknown": "Dein Wachstum ist noch unbekannt. Es zeigt sich nach einer zweiten Messung in mindestens 90 Tagen.",
+  "growth": "Wachstumsmoment: {growth} cm seit {since}.",
+  "record": "Neuer persönlicher Rekord: {rate} cm/Jahr."
+}

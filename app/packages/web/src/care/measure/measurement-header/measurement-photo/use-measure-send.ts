@@ -13,7 +13,8 @@ const t = texts(table);
 /**
  * Saves a measurement and then its optional photo (US-WAC-01, US-WAC-05). The measurement is saved either way and says
  * so as a toast; a refused photo is a toast too, with the text of its code (P-10, DS-54), while the form resets.
- * `saved` is the saved measurement's text, `null` before the first save of this view.
+ * `saved` is the saved measurement's text, `null` before the first save of this view; `saves` counts the saves of this
+ * view, so the growth note of a save closes again at the next save (issue 1644).
  */
 export function useMeasureSend(props: {
   api: string;
@@ -26,6 +27,7 @@ export function useMeasureSend(props: {
 }) {
   const { api, token, specimenId, invalidate, say, onSaved } = props;
   const [saved, setSaved] = useState<string | null>(null);
+  const [saves, setSaves] = useState(0);
   const send = useCallback(
     async (input: MeasurementInput, photo?: File): Promise<ApiError | null> => {
       const tok = await token();
@@ -34,6 +36,7 @@ export function useMeasureSend(props: {
       if (!r.ok) return r.error;
       const text = measurementText(r.value);
       setSaved(text);
+      setSaves((n) => n + 1);
       onSaved?.();
       say(t("saved", { measurement: text }));
       if (photo) {
@@ -48,5 +51,5 @@ export function useMeasureSend(props: {
     },
     [api, token, specimenId, invalidate, say, onSaved],
   );
-  return { send, saved };
+  return { send, saved, saves };
 }
