@@ -23,6 +23,12 @@ type LayerControl = {
   closeLayer: () => void;
 };
 
+/**
+ * The id of the element that opens the layer `id`. The opener of a layer has it, so the focus finds the opener again when
+ * its layer closed and the layer above it held the opener (`restoreFocus`, `keptOpener`, US-QS-15, issue 1661).
+ */
+export const layerOpenerId = (id: string): string => `${id}-opener`;
+
 /** State and actions of the layer `id` from the address `?sheet=<id>` (US-QS-15). Use it to build an opener. */
 export function useLayer(id: string): LayerControl {
   const [params, setParams] = useSearchParams();

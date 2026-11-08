@@ -7,7 +7,7 @@ import {
   focusModalTitle,
 } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
-import { keptOpener, restoreFocus, useLayer } from "./use-layer";
+import { keptOpener, layerOpenerId, restoreFocus, useLayer } from "./use-layer";
 import { LayerHostContext } from "./layer-host/layer-host";
 import { LayerBody, LayerPane } from "./layer-host/layer-pane/layer-pane";
 
@@ -30,6 +30,7 @@ export function LayerOpener({
   const { openLayer, open } = useLayer(id);
   return (
     <Button
+      id={layerOpenerId(id)}
       type="button"
       variant="outline"
       {...(size ? { size } : {})}
@@ -82,6 +83,31 @@ function useLeavingBody(open: boolean, replaced: boolean, isLg: boolean) {
 }
 
 /**
+ * The focus leaves a layer with its address (US-QS-15, issue 1363, issue 1661): a close restores it, and so does an unmount
+ * while the layer is open, because a layer mounted only while its address names it has no close of its own. StrictMode
+ * unmounts and mounts each effect back to back, so the unmount restore waits a microtask and only a real unmount restores.
+ */
+function useFocusOnLeave(open: boolean): void {
+  const wasOpen = React.useRef(false);
+  const mounted = React.useRef(false);
+  React.useEffect(() => {
+    if (wasOpen.current && !open) restoreFocus();
+    wasOpen.current = open;
+  }, [open]);
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (wasOpen.current) {
+        queueMicrotask(() => {
+          if (!mounted.current) restoreFocus();
+        });
+      }
+    };
+  }, []);
+}
+
+/**
  * Layer above an overview (US-QS-15, DS-58): open while the address holds `?sheet=<id>`, so Back closes it and a
  * reload or copied link reopens it. Below 768 px a bottom sheet, from 768 px a dialog, from 1024 px a pane beside the
  * content of its `LayerHost`, which is as tall as the viewport less the frame's padding and scrolls inside itself.
@@ -98,15 +124,10 @@ export function LayerSheet({
   const isLg = useIsLg();
   const host = React.useContext(LayerHostContext);
   const pane = host?.pane ?? null;
-  const wasOpen = React.useRef(false);
   // A layer that mounts on Back (a POP) is one that was left for a layer above it: its opener may be back (issue 1363).
   const returning = useNavigationType() === "POP";
   const { showBody, onExited } = useLeavingBody(open, replaced, isLg);
-
-  React.useEffect(() => {
-    if (wasOpen.current && !open) restoreFocus();
-    wasOpen.current = open;
-  }, [open]);
+  useFocusOnLeave(open);
 
   React.useEffect(() => {
     if (import.meta.env.DEV && open && isLg && !host) {
