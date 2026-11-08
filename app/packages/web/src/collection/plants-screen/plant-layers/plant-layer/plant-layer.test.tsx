@@ -243,7 +243,6 @@ describe("US-QS-23 Überblick", () => {
     ).toHaveLength(1);
     await userEvent.click(measure);
     expect(onMeasure).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
   });
 
   it("US-QS-23 Behandeln leads to the tab Pflege", async () => {
@@ -355,7 +354,7 @@ describe("US-QS-23 the other tabs", () => {
 });
 
 describe("US-QS-23 Mehr", () => {
-  it("US-QS-23 the rarer actions sit in the menu Mehr and each opens its flow after the layer closes", async () => {
+  it("US-QS-23 the rarer actions sit in the menu Mehr and each opens its flow", async () => {
     setViewportWidth(360);
     const handlers = { onMark: vi.fn(), onCatchDate: vi.fn(), onArchive: vi.fn() };
     show([card()], handlers);
@@ -369,7 +368,6 @@ describe("US-QS-23 Mehr", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
-    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
   });
 
   it("US-QS-23 Eingetopft is offered for a cutting only", async () => {

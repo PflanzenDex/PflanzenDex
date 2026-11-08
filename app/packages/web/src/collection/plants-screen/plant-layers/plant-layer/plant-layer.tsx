@@ -44,23 +44,13 @@ export function usePlantTab() {
   return { tab, choose };
 }
 
-/** An action of the layer closes the layer first, so the result or the form is not hidden behind it (P-10). */
-function closing<E>(
-  close: () => void,
-  act: ((e: E) => void) | undefined,
-): ((e: E) => void) | undefined {
-  return act
-    ? (e) => {
-        close();
-        act(e);
-      }
-    : undefined;
-}
-
-/** The rarer actions behind "Mehr": each opens its existing flow; archiving keeps its confirmation (P-10). */
-function moreItems(card: SpecimenCard, h: Handlers, close: () => void): MenuItem[] {
+/**
+ * The rarer actions behind "Mehr": each opens its existing flow; archiving keeps its confirmation (P-10). A form opens
+ * its own address (US-QS-15), which replaces this layer: closing the form returns to the list.
+ */
+function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
   const run = (act: ((e: SpecimenCard) => void) | undefined, label: string): MenuItem[] =>
-    act ? [{ label, onSelect: () => closing(close, act)?.(card) }] : [];
+    act ? [{ label, onSelect: () => act(card) }] : [];
   return [
     ...run(h.onRepot, card.status === CUTTING_STATUS ? t("menu.repot") : t("menu.repotPlant")),
     ...run(h.onMark, t("menu.mark")),
@@ -93,7 +83,8 @@ type Props = Handlers &
 
 function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () => void) {
   const { card } = p;
-  const measure = () => closing(close, p.onMeasure)?.(card);
+  const lightZone = p.onLightZone;
+  const measure = () => p.onMeasure?.(card);
   const slot = (render: SlotRender | undefined) => (
     <Slot render={render} card={card} measure={measure} />
   );
@@ -114,7 +105,7 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
         care={slot(p.slots?.care)}
         repot={
           card.status === PLANT_STATUS && p.onRepot
-            ? { access: p.photoAccess, onRepot: () => closing(close, p.onRepot)?.(card) }
+            ? { access: p.photoAccess, onRepot: () => p.onRepot?.(card) }
             : undefined
         }
       />
@@ -131,7 +122,7 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
               }
             : undefined
         }
-        onLightZone={p.onLightZone ? () => closing(close, p.onLightZone)?.(card) : undefined}
+        onLightZone={lightZone ? () => lightZone(card) : undefined}
         onManage={p.onManage}
       />
     ),
@@ -148,17 +139,15 @@ export function PlantLayer(props: Props) {
   const { card } = props;
   const { closeLayer } = useLayer(plantLayerId(card.id));
   const tab = usePlantTab();
-  const items = moreItems(card, props, closeLayer);
+  const items = moreItems(card, props);
+  const measure = props.onMeasure;
   return (
     <LayerSheet
       id={plantLayerId(card.id)}
       title={card.name}
       primaryAction={
-        tab.tab === "ueberblick" && props.onMeasure ? (
-          <MeasureButton
-            card={card}
-            onMeasure={() => closing(closeLayer, props.onMeasure)?.(card)}
-          />
+        tab.tab === "ueberblick" && measure ? (
+          <MeasureButton card={card} onMeasure={() => measure(card)} />
         ) : undefined
       }
     >
