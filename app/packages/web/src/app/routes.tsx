@@ -20,7 +20,7 @@ import {
   useUnlocks,
 } from "./flows";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
-import { routeFallbackOf } from "./frame/app-shell/route-fallback/route-fallback";
+import { routeFallbackOf } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
 import { useSuggestionsOn } from "./destinations/discover-area/discover-view";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 import type { DrawTile, TodayTile } from "@/app/destinations/today-area/today-area";
