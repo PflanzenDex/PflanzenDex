@@ -12,6 +12,14 @@ describe("US-QS-14 · motion in tokens.css", () => {
     );
   });
 
+  it("US-QS-14 the old and the new page keep their end state until the cross-fade ends, so the old page never flashes back (issue 1641)", () => {
+    const rule = css.slice(
+      css.indexOf("::view-transition-old(page),\n::view-transition-new(page) {"),
+    );
+    const body = rule.slice(0, rule.indexOf("}"));
+    expect(body).toMatch(/animation-fill-mode: both;/);
+  });
+
   it("US-QS-14 reduced motion: the transition pseudo-elements get no duration, the list entry follows the token", () => {
     const reduced = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
     expect(reduced).toMatch(/::view-transition-old\(\*\)/);

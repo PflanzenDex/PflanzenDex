@@ -378,10 +378,15 @@
 ::view-transition-group(page) {
   animation: none;
 }
+/*
+ * `animation: none` on the group also resets the fill mode that old and new inherit, so without `both` they snap back to
+ * their start for one frame before the transition ends: the old page flashed at full opacity (issue 1641).
+ */
 ::view-transition-old(page),
 ::view-transition-new(page) {
   animation-duration: var(--motion-slow);
   animation-timing-function: var(--ease-enter);
+  animation-fill-mode: both;
 }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
