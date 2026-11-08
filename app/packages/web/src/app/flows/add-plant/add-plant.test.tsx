@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { cleanup, render, renderHook, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { AddPlant } from "./add-plant";
+import { useFirstPlant } from "../onboarding/onboarding-wizard/use-first-plant";
+import { PATHS } from "../../../shared/patterns/navigation/navigation/navigation";
 import { FeaturesProvider } from "@/shared/data";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 
@@ -377,5 +379,127 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await toSave();
     expect(await screen.findByLabelText("Kennzeichen für „Alt“")).toBeTruthy();
     expect(screen.getByLabelText("Kennzeichen")).toBeTruthy();
+  });
+
+  it("US-BES-03 · US-ONB-01 the answer for the plant still missing a marker is sent with the save (issue 1638)", async () => {
+    server([
+      {
+        id: "e5",
+        name: "Alt",
+        speciesId: "sp1",
+        location: "Zuhause",
+        caughtAt: "2026-02-01",
+        marker: null,
+      },
+      {
+        id: "e6",
+        name: "Neu",
+        speciesId: "sp1",
+        location: "Balkon",
+        caughtAt: "2026-03-01",
+        marker: "Rot",
+      },
+    ]);
+    view();
+    await toSave();
+    await userEvent.type(await screen.findByLabelText("Kennzeichen für „Alt“"), "Gelb");
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({
+      marker: "Klammer",
+      markers: [{ specimenId: "e5", marker: "Gelb" }],
+    });
+  });
+
+  it("US-ONB-01 · US-BES-03 a save whose sign-in has ended shows the sign-in text and writes nothing (issue 1638)", async () => {
+    server(OWNED);
+    let signedIn = true;
+    const endingToken = async () => (signedIn ? "tok" : undefined);
+    render(
+      <MemoryRouter>
+        <AddPlant
+          lookup={LOOKUP}
+          api="http://api"
+          token={endingToken}
+          onCatalog={() => {}}
+          onMore={onMore}
+        />
+      </MemoryRouter>,
+    );
+    await toSave();
+    await untilSaveEnabled();
+    signedIn = false;
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect((await screen.findByRole("alert")).textContent?.length).toBeGreaterThan(0);
+    expect(writes.find((w) => w.path === "/specimens")).toBeUndefined();
+  });
+
+  it("US-ONB-01 · US-BES-03 a refusal that is no marker problem is shown as text at the save (issue 1638)", async () => {
+    server(CARDS, ZONES, LOCATIONS, () => ({ code: "server.error" }));
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect((await screen.findByRole("alert")).textContent?.length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
+    expect(screen.queryByLabelText("Kennzeichen")).toBeNull();
+  });
+
+  it("US-ONB-01 · US-BES-03 Zurück keeps the marker the keeper typed when the second step comes back (issue 1638)", async () => {
+    server(OWNED);
+    view();
+    await toSave();
+    const marker = (await screen.findByLabelText("Kennzeichen")) as HTMLInputElement;
+    await userEvent.clear(marker);
+    await userEvent.type(marker, "Blau");
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(((await screen.findByLabelText("Kennzeichen")) as HTMLInputElement).value).toBe("Blau");
+  });
+
+  it("US-ONB-01 after a saved plant the flow offers another plant at the first step (issue 1638)", async () => {
+    server();
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
+    expect(await screen.findByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
+  });
+
+  it("US-ONB-01 the done screen leads to the collection (issue 1638)", async () => {
+    server();
+    render(
+      <MemoryRouter initialEntries={["/pflanze"]}>
+        <Routes>
+          <Route
+            path="/pflanze"
+            element={
+              <AddPlant
+                lookup={LOOKUP}
+                api="http://api"
+                token={token}
+                onCatalog={() => {}}
+                onMore={onMore}
+              />
+            }
+          />
+          <Route path={PATHS.collection} element={<p>Sammlung offen</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
+    expect(await screen.findByText("Sammlung offen")).toBeTruthy();
+  });
+
+  it("US-ONB-01 · US-BES-03 a save without a chosen species writes nothing (issue 1638)", async () => {
+    server();
+    const { result } = renderHook(() => useFirstPlant("http://api", token));
+    await result.current.save();
+    expect(writes.find((w) => w.path === "/specimens")).toBeUndefined();
   });
 });
