@@ -17,7 +17,7 @@ The layout shift of a cold load (US-QS-14, DS-52, issue 1697) is measured in the
 
 ## Checked by
 
-`app/packages/e2e/tests/accessibility/routes/one-screen.spec.ts`, `app/packages/e2e/tests/accessibility/routes/one-screen-sideways.ts`, `app/packages/e2e/tests/accessibility/routes/one-screen.shift.ts`, `app/packages/e2e/support/display/screens.json`, `app/packages/e2e/support/display/one-screen/judge.shift.ts`, `app/packages/e2e/support/display/one-screen/fit.shift.ts`, `app/config/gates/baselines/one-screen-baseline.json`.
+`app/packages/e2e/tests/accessibility/routes/one-screen.spec.ts`, `app/packages/e2e/tests/accessibility/routes/one-screen-sideways.ts`, `app/packages/e2e/tests/accessibility/routes/one-screen.shift.ts`, `app/packages/e2e/support/display/screens.json`, `app/packages/e2e/support/display/one-screen/judge.shift.ts`, `app/packages/e2e/support/display/one-screen/fit.shift.ts`, `app/config/gates/baselines/one-screen-baseline.json`, `app/config/gates/baselines/layout-shift-baseline.json`.
 
 ## Gate
 
