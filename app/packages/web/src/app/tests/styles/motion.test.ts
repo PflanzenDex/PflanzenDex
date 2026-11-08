@@ -20,6 +20,16 @@ describe("US-QS-14 · motion in tokens.css", () => {
     expect(css).toMatch(/--motion-base: 0ms/);
   });
 
+  it("US-QS-14 · F13 a sheet and its overlay run the slow motion token, not Vaul's 500 ms default, without !important", () => {
+    // Vaul injects its own rules (500 ms on the drawer and the overlay); these selectors are more specific and unlayered.
+    const start = css.indexOf("[data-vaul-drawer][data-state],");
+    expect(start).toBeGreaterThan(-1);
+    const block = css.slice(start, css.indexOf("}", start) + 1);
+    expect(block).toContain("[data-vaul-overlay][data-vaul-snap-points][data-state]");
+    expect(block).toMatch(/animation-duration: var\(--motion-slow\);/);
+    expect(block).not.toContain("!important");
+  });
+
   it("US-QS-14 list entry moves only transform and opacity, so nothing shifts", () => {
     const keyframes = css.slice(css.indexOf("@keyframes list-in"));
     const body = keyframes.slice(0, keyframes.indexOf("\n  }\n") + 5);

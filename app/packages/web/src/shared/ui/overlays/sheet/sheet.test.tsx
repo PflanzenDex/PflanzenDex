@@ -48,6 +48,13 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     expect(cls).toContain("max-h-[90dvh]");
   });
 
+  it("US-QS-15 · DS-37 the sheet title, which takes the focus by script, draws no browser outline", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const title = await screen.findByRole("heading", { name: "Filter" });
+    expect(title.className).toContain("focus-visible:outline-none");
+  });
+
   it("US-QS-07 · DS-40 Esc closes the sheet and focus returns to the trigger", async () => {
     render(<Example />);
     const trigger = screen.getByRole("button", { name: "Öffnen" });

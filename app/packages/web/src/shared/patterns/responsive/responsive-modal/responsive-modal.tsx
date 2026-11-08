@@ -40,6 +40,8 @@ export type ResponsiveModalProps = {
   onOpenChange?: (open: boolean) => void;
   /** Focus on open; Radix's default (the first focusable element) unless given, e.g. `focusModalTitle` for a layer. */
   onOpenAutoFocus?: (event: Event) => void;
+  /** Runs once the modal has closed and left the page, after its exit animation (US-QS-15, F7); a layer keeps its body until then. */
+  onExited?: () => void;
   /**
    * The element the focus returns to when the modal closes, for a controlled modal without a trigger (US-QS-08). When it
    * has left the page, the focus goes to the start of the view (`returnFocus`). Omit it to keep the default of each container.
@@ -51,20 +53,41 @@ export type ResponsiveModalProps = {
 /**
  * The children render once into a stable node that moves into whichever container is open, so their state survives a
  * viewport change across `md` (DS-23). `body` is the container's slot; `host` is what the children render into.
+ * `onExited` runs once a closed modal has left the page: when its container unmounts after the exit animation (a sheet
+ * slides out, a dialog has none), or at once when no container is mounted (US-QS-15, F7).
  */
-function useHost() {
+function useHost(open: boolean, onExited: (() => void) | undefined) {
   const [host] = React.useState(() => {
     const node = document.createElement("div");
     node.className = "contents";
     return node;
   });
+  const mounted = React.useRef<HTMLDivElement | null>(null);
+  const exited = React.useRef(onExited);
+  React.useLayoutEffect(() => {
+    exited.current = onExited;
+  });
   const slot = React.useCallback(
     (el: HTMLDivElement | null) => {
       el?.appendChild(host);
+      mounted.current = el;
+      if (!el) exited.current?.();
     },
     [host],
   );
+  React.useEffect(() => {
+    if (!open && !mounted.current) exited.current?.();
+  }, [open]);
   return { host, body: <div ref={slot} className="contents" /> };
+}
+
+/** Loads the dialog code while the browser is idle, from `md` up (DS-08, NFR-12). */
+function usePreloadDialog(isMd: boolean) {
+  React.useEffect(() => {
+    if (!isMd) return;
+    const id = window.setTimeout(preloadDialog, 1500);
+    return () => window.clearTimeout(id);
+  }, [isMd]);
 }
 
 /**
@@ -80,6 +103,7 @@ export function ResponsiveModal({
   open: openProp,
   onOpenChange,
   onOpenAutoFocus,
+  onExited,
   returnFocusTo,
   children,
 }: ResponsiveModalProps) {
@@ -93,13 +117,8 @@ export function ResponsiveModal({
   const [opened, setOpened] = React.useState(open);
   if (open && !opened) setOpened(true);
 
-  React.useEffect(() => {
-    if (!isMd) return;
-    const id = window.setTimeout(preloadDialog, 1500);
-    return () => window.clearTimeout(id);
-  }, [isMd]);
-
-  const { host, body } = useHost();
+  usePreloadDialog(isMd);
+  const { host, body } = useHost(open, onExited);
   const copy = description ? { description } : {};
   // A sheet returns the focus to the element given, as the dialog does (US-QS-08); Vaul would use what had the focus at open.
   const sheetCloseFocus = returnFocusOnClose(returnFocusTo);
