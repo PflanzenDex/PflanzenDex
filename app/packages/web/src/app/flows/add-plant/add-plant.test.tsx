@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -27,10 +27,14 @@ const CARDS = [
 ];
 
 const writes: { path: string; body: Record<string, unknown> }[] = [];
+/** A refusal the server gives a write instead of saving it (its error code); `null` saves. */
+type Refuse = (body: Record<string, unknown>) => { code: string } | null;
+
 function server(
   cards: unknown[] = CARDS,
   zones: unknown[] = ZONES,
   locations: unknown[] = LOCATIONS,
+  refuse: Refuse = () => null,
 ) {
   writes.length = 0;
   vi.stubGlobal(
@@ -38,7 +42,10 @@ function server(
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       if (init?.method === "POST") {
-        writes.push({ path, body: JSON.parse(String(init.body)) as Record<string, unknown> });
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        writes.push({ path, body });
+        const refused = refuse(body);
+        if (refused) return response(409, { error: { code: refused.code, text: refused.code } });
         return response(201, { id: "e1", speciesId: "sp1" });
       }
       if (path === "/light-zones") return response(200, { zones });
@@ -264,5 +271,109 @@ describe("US-BES-18 the entry Aus Datei importieren sits where plants are added"
     await toSave();
     await screen.findByText("Schritt 2 von 2: Pflanze speichern");
     expect(screen.queryByRole("link", { name: "Aus Datei importieren" })).toBeNull();
+  });
+});
+
+/** The save button of the step is enabled once the zones and the plants of the species are read. */
+async function untilSaveEnabled() {
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+}
+
+// A plant of the chosen species that the keeper already has (US-BES-03): one plant needs a marker from the second on.
+const OWNED = [
+  {
+    id: "e5",
+    name: "Monstera deliciosa",
+    speciesId: "sp1",
+    location: "Zuhause",
+    caughtAt: "2026-02-01",
+    marker: null,
+  },
+];
+// The marker of the new plant is required by the server when none is sent and a plant of the species exists.
+const noMarkerWhenOwned: Refuse = (body) =>
+  body["marker"] === undefined ? { code: "specimen.marker_required" } : null;
+const REFUSED_MARKER_TEXT =
+  "Du hast schon eine Pflanze dieser Art. Gib der neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.";
+
+describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form (issue 1638)", () => {
+  it("US-BES-03 · US-ONB-01 an owned species shows the marker field preset as in the long form and saves with it", async () => {
+    server(OWNED);
+    view();
+    await toSave();
+    const marker = (await screen.findByLabelText("Kennzeichen")) as HTMLInputElement;
+    expect(marker.value).toBe("Klammer");
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({ marker: "Klammer" });
+  });
+
+  it("US-BES-03 · US-ONB-01 a species the keeper does not own shows no marker field", async () => {
+    server();
+    view();
+    await toSave();
+    await screen.findByText("Schritt 2 von 2: Pflanze speichern");
+    await untilSaveEnabled();
+    expect(screen.queryByLabelText(/Kennzeichen/)).toBeNull();
+  });
+
+  it("US-QS-15 · US-BES-03 a cleared marker is refused: the field takes the focus and the text says what to do", async () => {
+    server(OWNED, ZONES, LOCATIONS, noMarkerWhenOwned);
+    view();
+    await toSave();
+    const marker = await screen.findByLabelText("Kennzeichen");
+    await userEvent.clear(marker);
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByText(REFUSED_MARKER_TEXT)).toBeTruthy();
+    expect(document.activeElement).toBe(marker);
+    expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
+  });
+
+  it("US-QS-15 · US-BES-03 a refused marker the form did not show appears, takes the focus, and the next save with it goes through", async () => {
+    // The plants read before were stale: the server knows a plant of the species, the form does not.
+    server(CARDS, ZONES, LOCATIONS, noMarkerWhenOwned);
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    expect(screen.queryByLabelText("Kennzeichen")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    const marker = await screen.findByLabelText("Kennzeichen");
+    expect(await screen.findByText(REFUSED_MARKER_TEXT)).toBeTruthy();
+    expect(document.activeElement).toBe(marker);
+    await userEvent.type(marker, "Blau");
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    expect(writes.at(-1)?.body).toMatchObject({ marker: "Blau" });
+  });
+
+  it("US-BES-03 · US-ONB-01 the third plant asks for the markers the other plants still miss", async () => {
+    server([
+      {
+        id: "e5",
+        name: "Alt",
+        speciesId: "sp1",
+        location: "Zuhause",
+        caughtAt: "2026-02-01",
+        marker: null,
+      },
+      {
+        id: "e6",
+        name: "Neu",
+        speciesId: "sp1",
+        location: "Balkon",
+        caughtAt: "2026-03-01",
+        marker: "Rot",
+      },
+    ]);
+    view();
+    await toSave();
+    expect(await screen.findByLabelText("Kennzeichen für „Alt“")).toBeTruthy();
+    expect(screen.getByLabelText("Kennzeichen")).toBeTruthy();
   });
 });

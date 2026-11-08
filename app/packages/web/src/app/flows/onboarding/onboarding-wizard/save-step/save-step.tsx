@@ -1,7 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { zoneDerive, type LightZone, type Species, zoneLabel } from "@pflanzendex/core";
+import {
+  speciesDisplayName,
+  zoneDerive,
+  type LightZone,
+  type Species,
+  zoneLabel,
+} from "@pflanzendex/core";
+import { Form } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Label } from "@/shared/ui/display/label/label";
+import { MarkerFields, type FurtherMarker } from "@/collection";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
 import { refreshLight, sharedZones } from "../../../../../light";
 import { ensureHome } from "../where-question/where-question";
@@ -73,6 +81,8 @@ export function SaveStep(props: {
   zoneId: string;
   onZone: (id: string) => void;
   error: string | null;
+  /** The marker of a further plant: shown for an owned species or after a refused marker (US-BES-03, US-QS-15). */
+  marker?: FurtherMarker["fields"];
   /** More fields of the step, e.g. the suggested place of a further plant. */
   children?: ReactNode;
 }) {
@@ -87,6 +97,16 @@ export function SaveStep(props: {
         <i>{species.latinName}</i>
         {species.germanName ? ` (${species.germanName})` : ""}
       </p>
+      {props.marker && (
+        <Form {...props.marker.form}>
+          <MarkerFields
+            control={props.marker.form.control}
+            speciesName={speciesDisplayName(species)}
+            required={props.marker.required}
+            missing={props.marker.missing}
+          />
+        </Form>
+      )}
       <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
       <Select
         id="first-plant-zone"

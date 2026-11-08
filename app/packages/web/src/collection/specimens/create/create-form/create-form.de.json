@@ -1,0 +1,7 @@
+{
+  "alreadyThere": "Schon vorhanden: {name}",
+  "withMarker": "Mit einem Kennzeichen heißt die neue Pflanze dann „{name} – Kennzeichen“.",
+  "formLabel": "Pflanze anlegen",
+  "submit": "Pflanze anlegen",
+  "cancel": "Zurück zur Art"
+}

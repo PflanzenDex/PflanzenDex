@@ -22,8 +22,12 @@ import {
 } from "../../../markers/marker/marker-fields/marker-fields";
 import { FormButtons, Warning } from "../../cards/parts/parts";
 import { useEdited, useRefusal } from "../../model/refusal";
-import { createSchema, type CreateFields } from "../../model/schemas";
+import { createSchema, createStart, type CreateFields } from "../../model/schemas";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./create-form.de.json";
 import { nameConflict } from "../../model/text";
+
+const ui = texts(table);
 
 /** The fields a refusal points at: the catch date by its detail, a taken marker at the marker (US-BES-02, US-BES-03). */
 function fieldsOfRefusal(error: ApiError): (keyof CreateFields)[] {
@@ -40,9 +44,9 @@ function ErrorBox({ text, error }: { text: string; error: ApiError }) {
       {conflict && (
         <>
           {conflict.existing.map((v) => (
-            <p key={v.id}>Schon vorhanden: {v.name}</p>
+            <p key={v.id}>{ui("alreadyThere", { name: v.name })}</p>
           ))}
-          <p>Mit einem Kennzeichen heißt die neue Pflanze dann „{conflict.name} – Kennzeichen“.</p>
+          <p>{ui("withMarker", { name: conflict.name })}</p>
         </>
       )}
     </Warning>
@@ -55,16 +59,6 @@ const inputOf = (
   values: CreateFields,
   missing: readonly { id: string }[],
 ) => toCreateInput(values, missing, form.getFieldState("catchDate").isDirty);
-
-/** The fields as they start: the marker preset when one is required, everything else empty (unknown, P-08). */
-const startValues = (rule: ReturnType<typeof markerRule>, today: string): CreateFields => ({
-  marker: rule.required ? rule.preset : "",
-  answers: Object.fromEntries(rule.missing.map((s) => [s.id, ""])),
-  cutting: false,
-  locationId: "",
-  lightZoneId: "",
-  catchDate: today,
-});
 
 /**
  * Create specimen (US-BES-02, US-BES-03): only the species is required for the first specimen. The name is fixed
@@ -89,7 +83,7 @@ export function CreateForm(props: {
   const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
   const form = useForm<CreateFields>({
     resolver: zodResolver(createSchema(rule)),
-    defaultValues: startValues(rule, today),
+    defaultValues: createStart(rule, today),
   });
   const alertText = useRefusal(error, form.setError, fieldsOfRefusal);
   useEdited(
@@ -106,7 +100,7 @@ export function CreateForm(props: {
       <Form {...form}>
         <FormRoot
           onSubmit={submit}
-          aria-label="Pflanze anlegen"
+          aria-label={ui("formLabel")}
           className="flex max-w-xl flex-col gap-4"
         >
           <NamePreview control={form.control} speciesName={speciesName} />
@@ -124,8 +118,8 @@ export function CreateForm(props: {
           />
           {error && alertText !== null && <ErrorBox text={alertText} error={error} />}
           <FormButtons
-            submit="Pflanze anlegen"
-            cancel="Zurück zur Art"
+            submit={ui("submit")}
+            cancel={ui("cancel")}
             pending={form.formState.isSubmitting}
             onCancel={props.onCancel}
           />

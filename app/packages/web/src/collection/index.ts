@@ -38,5 +38,13 @@ export const DifficultyPage = lazyPage(() =>
 );
 export { loadCardSummary, loadSpecimenCount } from "./specimens/cards/cards-api";
 export { createSpecimen, setSpecimenLocation } from "./specimens/model/specimens-api";
+/** The marker of a further plant, in the short form and the first-plant flow (US-BES-03, US-QS-15). */
+export { MarkerFields } from "./markers/marker/marker-fields/marker-fields";
+export {
+  markerInputOf,
+  refusesMarker,
+  useFurtherMarker,
+  type FurtherMarker,
+} from "./markers/marker/use-further-marker";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";
