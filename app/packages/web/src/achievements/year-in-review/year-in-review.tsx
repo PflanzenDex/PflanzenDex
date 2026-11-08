@@ -3,19 +3,22 @@ import { Button } from "@/shared/ui/button/button";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { dateText, valueText } from "@/shared/lib/format";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { useRequest } from "../../shared/data";
 import { loadYear, type YearAnswer, type YearPhoto } from "./year-api";
+import table from "./year-in-review.de.json";
 
+const t = texts(table);
 type Token = () => Promise<string | undefined>;
 
 /** One counted fact per row, with the basis it is counted from (P-08): nothing is rated or compared (FR-ACH-04). */
 const FACTS = [
-  ["speciesCaught", "Arten gefangen", "Fangdatum im Jahr"],
-  ["cuttingsRooted", "Stecklinge bewurzelt", "Eintopfdatum des Stecklings im Jahr"],
-  ["treatmentsCompleted", "Behandlungen abgeschlossen", "letzter erledigter Termin im Jahr"],
-  ["measurements", "Messungen erfasst", "Messdatum im Jahr"],
-  ["handovers", "Übergaben", "von beiden bestätigt im Jahr"],
-  ["achievementsEarned", "Erfolge erreicht", "Datum des Ereignisses im Jahr"],
+  ["speciesCaught", "fact.speciesCaught", "basis.speciesCaught"],
+  ["cuttingsRooted", "fact.cuttingsRooted", "basis.cuttingsRooted"],
+  ["treatmentsCompleted", "fact.treatmentsCompleted", "basis.treatmentsCompleted"],
+  ["measurements", "fact.measurements", "basis.measurements"],
+  ["handovers", "fact.handovers", "basis.handovers"],
+  ["achievementsEarned", "fact.achievementsEarned", "basis.achievementsEarned"],
 ] as const;
 
 function Photo(props: { api: string; token: Token; url: string; photo: YearPhoto; label: string }) {
@@ -26,11 +29,11 @@ function Photo(props: { api: string; token: Token; url: string; photo: YearPhoto
     <figure className="m-0 flex flex-col gap-1">
       <img
         src={state}
-        alt={`${props.label} vom ${dateText(props.photo.date)}`}
+        alt={t("photoAlt", { label: props.label, date: dateText(props.photo.date) })}
         className="max-h-32 w-auto max-w-full rounded-lg object-contain"
       />
       <figcaption className="text-sm text-muted-foreground">
-        {props.label}, {dateText(props.photo.date)}
+        {t("photoCaption", { label: props.label, date: dateText(props.photo.date) })}
       </figcaption>
     </figure>
   );
@@ -40,37 +43,33 @@ type Year = Extract<YearAnswer, { calmMode: false }>;
 
 function Facts({ v }: { v: Year }) {
   if (!v.hasData) {
-    return (
-      <p className="m-0 text-sm text-muted-foreground">
-        {`Für ${v.year} liegen noch keine Daten vor. Fange eine Art, miss eine Pflanze oder erledige eine Behandlung, dann füllt sich der Rückblick.`}
-      </p>
-    );
+    return <p className="m-0 text-sm text-muted-foreground">{t("noData", { year: v.year })}</p>;
   }
   return (
     <>
       <ul className="m-0 flex list-none flex-col gap-1 p-0">
         {FACTS.map(([key, label, basis]) => (
           <li key={key}>
-            <span className="font-bold tabular-nums">{v.counts[key]}</span> {label}{" "}
-            <span className="text-sm text-muted-foreground">({basis})</span>
+            <span className="font-bold tabular-nums">{v.counts[key]}</span> {t(label)}{" "}
+            <span className="text-sm text-muted-foreground">({t(basis)})</span>
           </li>
         ))}
       </ul>
       <p className="m-0">
         {v.growth ? (
           <>
-            {`Größtes gesundes Wachstum: „${v.growth.name}“, ${valueText(v.growth.growth)} zwischen ${dateText(v.growth.from)} und ${dateText(v.growth.until)}.`}{" "}
-            <span className="text-sm text-muted-foreground">
-              (eigene Messungen mit Qualität „gesund“)
-            </span>
+            {t("growth", {
+              name: v.growth.name,
+              growth: valueText(v.growth.growth),
+              from: dateText(v.growth.from),
+              until: dateText(v.growth.until),
+            })}{" "}
+            <span className="text-sm text-muted-foreground">{t("growthBasis")}</span>
           </>
         ) : (
           <>
-            Größtes gesundes Wachstum: unbekannt.{" "}
-            <span className="text-sm text-muted-foreground">
-              Dafür braucht es mindestens zwei gesunde Messungen im Jahr mit etwa 90&nbsp;Tagen
-              Abstand.
-            </span>
+            {t("growthUnknown")}{" "}
+            <span className="text-sm text-muted-foreground">{t("growthNeeded")}</span>
           </>
         )}
       </p>
@@ -87,14 +86,14 @@ function Photos(props: { api: string; token: Token; photos: NonNullable<Year["ph
         token={token}
         url={photos.urls.first}
         photo={photos.first}
-        label={`Erstes Foto des Jahres: ${photos.name}`}
+        label={t("firstPhoto", { name: photos.name })}
       />
       <Photo
         api={api}
         token={token}
         url={photos.urls.last}
         photo={photos.last}
-        label={`Letztes Foto des Jahres: ${photos.name}`}
+        label={t("lastPhoto", { name: photos.name })}
       />
     </div>
   );
@@ -115,7 +114,7 @@ function YearBody(props: { api: string; token: Token }) {
   if (!v) {
     return r.status === "pending" ? (
       <p role="status" className="m-0 text-sm">
-        Jahresrückblick wird geladen …
+        {t("loading")}
       </p>
     ) : null;
   }
@@ -123,10 +122,18 @@ function YearBody(props: { api: string; token: Token }) {
   const running = new Date().getFullYear();
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <p className="m-0 font-semibold">{`Jahresrückblick ${v.year}`}</p>
+      {/* The status sits beside the year, so the buttons below do not move while the other year loads (US-QS-07). */}
+      <p className="m-0 flex flex-wrap items-baseline gap-x-2 font-semibold">
+        {t("heading", { year: v.year })}
+        {r.placeholder && (
+          <span role="status" className="text-sm font-normal text-muted-foreground">
+            {t("refreshing")}
+          </span>
+        )}
+      </p>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={() => setYear(v.year - 1)}>
-          Vorjahr
+          {t("previous")}
         </Button>
         <Button
           type="button"
@@ -134,7 +141,7 @@ function YearBody(props: { api: string; token: Token }) {
           disabled={v.year >= running}
           onClick={() => setYear(v.year + 1 >= running ? null : v.year + 1)}
         >
-          Folgejahr
+          {t("next")}
         </Button>
       </div>
       <Facts v={v} />
@@ -152,7 +159,7 @@ function YearBody(props: { api: string; token: Token }) {
  */
 export function YearInReviewSection(props: { api: string; token: Token }) {
   return (
-    <LayerPart id="year" title="Jahresrückblick" value="Zahlen und Fotos aus deinen Daten">
+    <LayerPart id="year" title={t("title")} value={t("subtitle")}>
       <YearBody api={props.api} token={props.token} />
     </LayerPart>
   );

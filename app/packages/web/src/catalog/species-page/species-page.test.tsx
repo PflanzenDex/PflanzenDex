@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 import { ERROR_TEXTS, type Species } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { createQueryClient } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { SEARCH_KEY } from "../species-hooks";
 import { SpeciesPage } from "./species-page";
 
 const response = (status: number, body: unknown) =>
@@ -328,6 +332,66 @@ describe("US-BES-01 the page starts with the search", () => {
     render(page());
     expect(screen.getByRole("heading", { name: "Art wählen" })).toBeTruthy();
     expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+  });
+});
+
+/**
+ * Answers every search by hand (US-QS-07): a request waits in `asked` until its `answer` is called, so a test can hold
+ * the answer of a new term and look at the screen meanwhile.
+ */
+function manualSearch() {
+  const asked: { term: string; answer: (hits: unknown[]) => void }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>((url) => {
+      const u = new URL(String(url));
+      if (u.pathname !== "/species") return response(200, species);
+      return new Promise<Response>((resolve) => {
+        asked.push({
+          term: u.searchParams.get("q") ?? "",
+          answer: (hits) =>
+            resolve(new Response(JSON.stringify({ species: hits }), { status: 200 })),
+        });
+      });
+    }),
+  );
+  return asked;
+}
+const other = { ...species, id: "a2", latinName: "Sansevieria cylindrica", hit: null };
+
+describe("US-QS-07 the catalog search keeps its status until the new hits are there", () => {
+  it("US-QS-07 while the new term is answered the status shows and the old hits stay on screen; the answer ends the status", async () => {
+    const asked = manualSearch();
+    render(page());
+    await vi.waitFor(() => expect(asked).toHaveLength(1));
+    asked[0]?.answer([hit]);
+    await screen.findByRole("button", { name: /Dracaena trifasciata/ });
+    await userEvent.type(screen.getByLabelText("Lateinischer oder deutscher Name"), "Zylinder");
+    await vi.waitFor(() => expect(asked.map((a) => a.term)).toContain("Zylinder"));
+    expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+    expect(screen.getByRole("button", { name: /Dracaena trifasciata/ })).toBeTruthy();
+    asked.find((a) => a.term === "Zylinder")?.answer([other]);
+    expect(await screen.findByRole("button", { name: /Sansevieria cylindrica/ })).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-07 a background refetch of the term on screen shows no status", async () => {
+    const client = createQueryClient();
+    const asked = manualSearch();
+    function WithClient({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    }
+    render(page(), { wrapper: WithClient });
+    await vi.waitFor(() => expect(asked).toHaveLength(1));
+    asked[0]?.answer([hit]);
+    await screen.findByRole("button", { name: /Dracaena trifasciata/ });
+    await act(async () => {
+      void client.invalidateQueries({ queryKey: SEARCH_KEY });
+    });
+    await vi.waitFor(() => expect(asked).toHaveLength(2));
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("button", { name: /Dracaena trifasciata/ })).toBeTruthy();
+    asked[1]?.answer([hit]);
   });
 });
 

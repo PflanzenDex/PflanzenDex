@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1205,
+  "maxTotal": 1192,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -76,10 +76,6 @@
     {
       "file": "packages/web/src/achievements/overview/overview.tsx",
       "count": 18
-    },
-    {
-      "file": "packages/web/src/achievements/year-in-review/year-in-review.tsx",
-      "count": 13
     },
     {
       "file": "packages/web/src/ai/ai-section/ai-section.tsx",
