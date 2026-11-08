@@ -8,8 +8,14 @@ import { A11Y_SIZES, type Result as A11yResult } from "../../../support/display/
 import {
   REPORT_DIR as ONE_SCREEN_DIR,
   readBaseline as oneScreenBaseline,
+  readShiftBaseline,
   reportMarkdown as oneScreenMarkdown,
 } from "../../../support/display/reporter";
+import {
+  SHIFT_SIZES,
+  shiftMarkdown,
+  type ShiftResult,
+} from "../../../support/display/one-screen/judge.shift";
 import {
   REPORT_DIR as A11Y_DIR,
   readBaseline as a11yBaseline,
@@ -66,6 +72,20 @@ export function shardFiles(dir: string, report: string): string[] {
     .map((path) => join(dir, path));
 }
 
+/** The layout-shift results of every shard: reporter.ts writes one-screen-report/shift/results/<screen>.json (US-QS-14, #1729). */
+export function shiftShardRows(dir: string): ShiftResult[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { recursive: true })
+    .map(String)
+    .filter((path) => /(^|\/)one-screen-report\/shift\/results\/[^/]+\.json$/.test(path))
+    .flatMap((path) => JSON.parse(readFileSync(join(dir, path), "utf8")) as ShiftResult[]);
+}
+
+/** The step summary part of the layout-shift check: reported, not blocking, while its switch is off (#1729). Empty without rows. */
+export function shiftSummary(rows: readonly ShiftResult[]): string {
+  return rows.length === 0 ? "" : shiftMarkdown(rows, readShiftBaseline());
+}
+
 interface Gate {
   dir: URL;
   report: string;
@@ -116,8 +136,18 @@ export function mergeGate(gate: string, shardsDir: string): number {
   const screens = SCREENS.map((s) => s.id);
   const problems = coverageProblems(measured, screens, spec.sizes);
   mkdirSync(spec.dir, { recursive: true });
-  writeFileSync(new URL("report.md", spec.dir), spec.markdown(measured));
   writeFileSync(new URL("results.json", spec.dir), JSON.stringify(measured));
+  const shift = gate === "one-screen" ? shiftShardRows(shardsDir) : [];
+  writeFileSync(new URL("report.md", spec.dir), spec.markdown(measured) + shiftSummary(shift));
+  const shiftExpected = screens.length * SHIFT_SIZES.length;
+  if (gate === "one-screen")
+    console.log(
+      `${gate}: layout shift ${shift.length} of ${shiftExpected} loads (reported, not blocking)`,
+    );
+  if (gate === "one-screen" && shift.length !== shiftExpected)
+    console.error(
+      `${gate}: layout shift: ${shiftExpected - shift.length} loads not measured (reported, not blocking)`,
+    );
   const expected = screens.length * spec.sizes.length;
   console.log(`${gate}: ${shards.length} shards, ${measured.length} of ${expected} measurements`);
   for (const problem of problems) console.error(`${gate}: ${problem}`);

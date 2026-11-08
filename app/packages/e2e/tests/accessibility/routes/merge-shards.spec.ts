@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { SIZES } from "../../../support/display/one-screen/judge";
 import { A11Y_SIZES } from "../../../support/display/a11y/findings";
@@ -11,7 +13,7 @@ import {
   weightOf,
   type Screen,
 } from "../../../support/display/one-screen/register";
-import { coverageProblems } from "./merge-shards";
+import { coverageProblems, shiftShardRows, shiftSummary } from "./merge-shards";
 
 // US-QG-01 (issue 1485, owner decision 2026-11-07): the shards of the UI gates. Each shard runs its screens of both gates. The
 // split is one partition of the register, balanced by the measured weights, and merge-shards proves the partition at the end of
@@ -108,4 +110,32 @@ test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
     expect(screensOf("", "")).toEqual(SCREENS);
     expect(screensOf("today")).toHaveLength(1);
   });
+});
+
+// US-QS-14, DS-52, issue 1697, #1729: the merged job summary carries the layout-shift section, read from every shard folder.
+test("US-QS-14 the merged summary carries the layout-shift section, read from the shard folders (#1729)", () => {
+  const dir = mkdtempSync(join(tmpdir(), "shift-shards-"));
+  try {
+    const shard = join(dir, "shard2", "one-screen-report", "shift", "results");
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- a temporary folder that this test makes with mkdtempSync
+    mkdirSync(shard, { recursive: true });
+    const row = {
+      screen: "today",
+      size: "390x844",
+      cls: 0.02,
+      raw: 0.02,
+      skeleton: true,
+      worst: "li",
+    };
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- a temporary folder that this test makes with mkdtempSync
+    writeFileSync(join(shard, "today.json"), JSON.stringify([row]));
+    expect(shiftShardRows(dir)).toEqual([row]);
+    expect(shiftSummary([])).toBe("");
+    expect(shiftSummary([row])).toContain(
+      "## Layout shift on a cold load (US-QS-14, DS-52, issue 1697)",
+    );
+    expect(shiftSummary([row])).toMatch(/Reported, not yet blocking|Blocking:/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
