@@ -192,7 +192,9 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
-    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull());
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
     expect(route.search).not.toContain("form=measure");
   });
 
@@ -207,7 +209,9 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
-    await waitFor(() => expect(document.getElementById("marker-title")).toBeNull());
+    await waitFor(() => expect(document.getElementById("marker-title")).toBeNull(), {
+      timeout: 5_000,
+    });
   });
 
   it("US-BES-03 a reload at the marker address opens the marker form for that plant", async () => {

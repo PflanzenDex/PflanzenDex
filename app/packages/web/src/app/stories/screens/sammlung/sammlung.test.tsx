@@ -28,7 +28,8 @@ describe("US-QS-14 · page story Sammlung", () => {
   it("US-QS-14 · the species mode shows the caught species of the Pokédex", async () => {
     await SpeciesDesktopDark.run();
     expect(await screen.findByText("Dracaena trifasciata")).toBeTruthy();
-    expect(screen.getByText("3 gefangen")).toBeTruthy();
+    // The count comes from its own request, which can arrive after the species list (issue 1697).
+    expect(await screen.findByText("3 gefangen")).toBeTruthy();
     expect(screen.getByRole("button", { name: /· 3 gefangen/ })).toBeTruthy();
   });
 
