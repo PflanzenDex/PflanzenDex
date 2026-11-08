@@ -24,9 +24,8 @@ describe("US-QS-23 Gießen of a plant", () => {
     vi.stubGlobal("fetch", fetchFn);
     show();
     await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "„Aloe“ als gegossen eingetragen.",
-    );
+    expect(await screen.findByText("„Aloe“ als gegossen eingetragen.")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(new URL(String(url)).pathname).toBe("/watering");
     expect(JSON.parse(String(init?.body))).toMatchObject({ specimenIds: ["e1"] });
@@ -41,6 +40,9 @@ describe("US-QS-23 Gießen of a plant", () => {
     );
     show();
     await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
-    expect((await screen.findByRole("alert")).textContent).not.toContain("raw");
+    // The refusal is an assertive toast with the German text of its code, never the raw server text (P-10).
+    const assertive = () => document.querySelector('[aria-live="assertive"]')?.textContent ?? "";
+    await vi.waitFor(() => expect(assertive()).not.toBe(""));
+    expect(assertive()).not.toContain("raw");
   });
 });

@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { OverlayNotice } from "@/shared/patterns/states/overlay-notice/overlay-notice";
 import { Context, type Api, type Channel } from "./context";
 
-const NO_BREAK_SPACE = " ";
+const NO_BREAK_SPACE = "\u00a0";
 
 /**
  * The one polite live region of the app (US-QS-09 view titles, US-QS-10 results and offline states). It is in the

@@ -205,9 +205,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/marker", body: { marker: "rot" } });
     expect(posts[0]?.key).toBeTruthy();
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "„Bogenhanf“ heißt jetzt „Bogenhanf – rot“",
-    );
+    expect(await screen.findByText(/„Bogenhanf“ heißt jetzt „Bogenhanf – rot“/)).toBeTruthy();
   });
 
   it("starts with the current marker", async () => {

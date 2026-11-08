@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from "react";
 import { GrowthMomentNote, useGrowthMoments } from "@/achievements";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LoadFrame, useInvalidate } from "../../../shared/data";
 import { MeasureForm } from "../measure-form/measure-form";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
@@ -9,9 +10,20 @@ import { MeasurementHeader } from "../measurement-header/measurement-header";
 import { MeasurePageSkeleton } from "./measure-page.skeleton";
 import { CourseLayer } from "./course-layer/course-layer";
 import { useMeasureSend } from "../measurement-header/measurement-photo";
-import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 
 type Token = () => Promise<string | undefined>;
+
+/**
+ * The reserved slot of the growth note (DS-54): the note fills it, so the form below never moves when it appears. The
+ * slot keeps two lines of room even while there is no note.
+ */
+function GrowthSlot(props: { moments: ReturnType<typeof useGrowthMoments>; justSaved: boolean }) {
+  return (
+    <div className="min-h-16" data-slot="growth-note">
+      <GrowthMomentNote moments={props.moments} justSaved={props.justSaved} />
+    </div>
+  );
+}
 
 /** The loading text of the measure page (also its skeleton label). */
 const LOADING = "Messungen werden geladen …";
@@ -36,11 +48,13 @@ export function MeasurePage(props: {
     (t: string) => loadMeasurementView(api, t, specimen.id),
     [api, specimen.id],
   );
-  const { send, photoRefusal, saved } = useMeasureSend({
+  const say = useSay();
+  const { send, saved } = useMeasureSend({
     api,
     token,
     specimenId: specimen.id,
     invalidate,
+    say,
   });
   const moments = useGrowthMoments(api, token, specimen.id);
   return (
@@ -63,9 +77,7 @@ export function MeasurePage(props: {
               view={view}
               action={<LayerOpener id={course}>Verlauf ({view.measurements.length})</LayerOpener>}
             />
-            {saved && <StatusNote>Gespeichert: {saved}.</StatusNote>}
-            <GrowthMomentNote moments={moments} justSaved={Boolean(saved)} />
-            {photoRefusal && <RefusalAlert error={photoRefusal} />}
+            <GrowthSlot moments={moments} justSaved={Boolean(saved)} />
             <MeasureForm unit="cm" signs={view.etiolationSigns} onSend={send} focusRef={valueRef} />
             <CourseLayer
               id={course}

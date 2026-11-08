@@ -1,4 +1,5 @@
 {
   "loading": "Foto wird geladen …",
-  "alt": "Foto der Messung vom {date}"
+  "alt": "Foto der Messung vom {date}",
+  "saved": "Gespeichert: {measurement}."
 }

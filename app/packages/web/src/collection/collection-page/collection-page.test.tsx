@@ -230,8 +230,10 @@ describe("US-BES-02 Seite Sammlung", () => {
       ),
     );
     rerender(page({ newSpecies: null }));
-    expect((await screen.findByRole("status")).textContent).toContain("ist angelegt");
-    expect(screen.getByRole("status").textContent).toContain("Der Standort ist unbekannt");
+    // The result is a toast above the page, not a note inserted above the list (US-QS-07, DS-54).
+    const toast = await screen.findByText(/ist angelegt/);
+    expect(toast.textContent).toContain("Der Standort ist unbekannt");
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });
 

@@ -211,9 +211,8 @@ describe("US-BES-04 repotted on the card", () => {
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/repot", body: { date: "2026-10-01" } });
     expect(posts[0]?.key).toBeTruthy();
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("„Ableger“ ist eingetopft");
-    expect(status.textContent).toContain("Lichtzone");
+    const toast = await screen.findByText(/„Ableger“ ist eingetopft/);
+    expect(toast.textContent).toContain("Lichtzone");
     await vi.waitFor(() =>
       expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull(),
     );

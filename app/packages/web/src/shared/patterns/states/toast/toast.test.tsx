@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toastDuration } from "./toast-item/toast-item";
 import { ToastProvider, useToast, type ToastOptions } from "./toast-provider/toast-provider";
@@ -46,7 +47,8 @@ describe("Toast (US-QS-07, P-10)", () => {
 
   it("US-QS-07 · useToast outside a provider fails loudly (P-10)", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    expect(() => render(<Capture />)).toThrow("ToastProvider");
+    // Rendered without the test wrapper, which mounts a provider for every page.
+    expect(() => renderToString(<Capture />)).toThrow("ToastProvider");
   });
 
   it("US-QS-07 · a confirmation closes by itself after its reading time", () => {

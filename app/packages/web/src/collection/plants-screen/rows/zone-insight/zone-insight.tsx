@@ -27,7 +27,7 @@ export function ZoneInsightRow({ distribution }: { distribution: Distribution })
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="grow basis-[11rem] justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
+      className="grow basis-0 justify-start gap-2 rounded-card bg-secondary px-3 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
     >
       <Gauge aria-hidden="true" className="size-4 shrink-0" />
       <span className="break-normal">{zoneInsightText(distribution)}</span>

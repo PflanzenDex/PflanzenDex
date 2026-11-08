@@ -122,8 +122,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
       body: { lightZoneId: "z3" },
     });
     expect(posts[0]?.key).toBeTruthy();
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Zone 3“");
+    expect(await screen.findByText(/„Bogenhanf“ ist jetzt „Zone 3“/)).toBeTruthy();
     await openPlant("Bogenhanf");
     await openTab("Standort");
     expect(await screen.findByText(/Zone 3 \(von dir für diese Pflanze gesetzt\)/)).toBeTruthy();
@@ -149,9 +148,9 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await save();
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toEqual({ lightZoneId: null });
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "Es gilt wieder die abgeleitete Zone: Zone 2 (vom Standort).",
-    );
+    expect(
+      await screen.findByText(/Es gilt wieder die abgeleitete Zone: Zone 2 \(vom Standort\)\./),
+    ).toBeTruthy();
   });
 
   it("US-LIC-02 clearing with nothing derivable says so and what to do next (P-08, P-09)", async () => {
@@ -165,9 +164,8 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await vi.waitFor(() => expect(field.value).toBe("z3"));
     await userEvent.selectOptions(field, "");
     await save();
-    const text = (await screen.findByRole("status")).textContent ?? "";
+    const text = (await screen.findByText(/Weise dem Standort eine Lichtzone zu/)).textContent;
     expect(text).toContain("unbekannt");
-    expect(text).toContain("Weise dem Standort eine Lichtzone zu");
   });
 
   it("US-BES-04 a cutting keeps its cutting light and the message says when the zone applies", async () => {
@@ -187,9 +185,9 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await vi.waitFor(() => expect(within(field).getAllByRole("option")).toHaveLength(3));
     await userEvent.selectOptions(field, "z2");
     await save();
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "Stecklingslicht; die Zone gilt, sobald du es eintopfst",
-    );
+    expect(
+      await screen.findByText(/Stecklingslicht; die Zone gilt, sobald du es eintopfst/),
+    ).toBeTruthy();
   });
 
   it("US-LIC-02 a refusal stays in the form with its German text and nothing is reported as changed (P-10)", async () => {

@@ -1,10 +1,9 @@
-import { useCallback } from "react";
 import type { Specimen } from "@pflanzendex/core";
 import { useInvalidate } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
-import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
-import { refusalText } from "@/shared/lib/error-text";
+import { PageFrame } from "../specimens/cards/parts/parts";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { CreateWithSiblings } from "./create-with-siblings/create-with-siblings";
 import type { Props } from "./collection-props";
 import { ArchiveForm } from "../archived/archived-form/archived-form";
@@ -25,7 +24,6 @@ import {
   useCatchDate,
 } from "../markers/catch-date/catch-date-field/catch-date-field";
 import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/light-zone-form";
-import { Created } from "./created/created";
 import { ListHint } from "./hint-occasions/hint-occasions";
 import { PlantsScreen } from "../plants-screen/plants-screen";
 import { useListActions, type ListActions } from "../specimens/hooks/use-list-actions";
@@ -41,21 +39,20 @@ export function CollectionPage(props: Props) {
   // The plants are read page by page; the first page is part of the view, a failure of it fails the whole view (P-10).
   const plants = useCardPages(api, token);
   const afterAction = useInvalidate(COLLECTION_KEY);
-  const archived = useArchive(api, token, afterAction);
-  const potted = useRepot(api, token, afterAction);
-  const marked = useMarker(api, token, afterAction);
-  const caught = useCatchDate(api, token, afterAction);
-  const zoned = useLightZone(api, token, afterAction);
-  const clearMessages = useCallback(() => {
-    for (const a of [archived, potted, marked, caught, zoned]) a.setMessage(null);
-  }, [archived, potted, marked, caught, zoned]);
+  // Results of the writes are toasts, so the list keeps its place (DS-54, US-QS-07).
+  const say = useSay();
+  const archived = useArchive(api, token, afterAction, say);
+  const potted = useRepot(api, token, afterAction, say);
+  const marked = useMarker(api, token, afterAction, say);
+  const caught = useCatchDate(api, token, afterAction, say);
+  const zoned = useLightZone(api, token, afterAction, say);
   const opened = [archived.open, potted.open, marked.open, caught.open, zoned.open];
   const formOpen = !!newSpecies || opened.some(Boolean);
   useHostReport(props.host, request.value?.summary.total, formOpen);
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
-    clearMessages,
     completed: props.onCompleted,
+    say,
   });
   // The view waits for the summary and the first page; either failing fails the whole view with its text (P-10).
   const failed = request.status === "error" ? request.error : plants.error;
@@ -85,7 +82,7 @@ export function CollectionPage(props: Props) {
             data={request.value}
             plants={plants}
             create={create}
-            actions={{ archived, potted, marked, caught, zoned, clearMessages }}
+            actions={{ archived, potted, marked, caught, zoned, say }}
             props={props}
           />
         )}
@@ -159,11 +156,9 @@ function List(p: {
 }) {
   const { data, plants } = p;
   const { api, token } = p.props;
-  const { message, error, handlers } = useListActions(api, token, p.actions);
+  const { handlers } = useListActions(api, token, p.actions);
   return (
     <>
-      {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
-      {error && <Warning>{refusalText(error)}</Warning>}
       {p.created === null && <ListHint summary={data.summary} render={p.props.renderHint} />}
       <PlantsScreen
         cards={plants.cards}

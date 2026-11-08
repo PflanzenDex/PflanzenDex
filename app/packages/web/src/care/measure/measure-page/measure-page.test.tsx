@@ -7,6 +7,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { MeasurePage } from "./measure-page";
 
+/** A refused photo is an assertive toast, and the list or form keeps its place (US-QS-07, DS-54). */
+async function refusalToast(): Promise<HTMLElement> {
+  const region = () => document.querySelector<HTMLElement>('[aria-live="assertive"]');
+  await vi.waitFor(() => expect(region()?.textContent).not.toBe(""));
+  return region() as HTMLElement;
+}
+
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const measurement = {
@@ -239,6 +246,15 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(back).toHaveBeenCalledOnce();
   });
 
+  it("US-QS-15 · the growth note has a reserved slot above the form, so the form does not move when the note appears", async () => {
+    fakeServer();
+    show();
+    await screen.findByLabelText(/Messwert/);
+    const slot = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
+    expect(slot?.className).toContain("min-h-16");
+    expect(slot?.querySelector('[role="status"]')).toBeNull();
+  });
+
   it("US-WAC-01 · DS-52 while loading, a skeleton with the one loading status mirrors the page", () => {
     fakeServer();
     const { container } = show();
@@ -361,7 +377,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
     await save();
     expect(await screen.findByText(/Gespeichert:/)).toBeTruthy();
-    const alert = await screen.findByRole("alert");
+    const alert = await refusalToast();
     expect(alert.textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
     expect(alert.textContent).not.toContain("raw server text");
   });
@@ -429,9 +445,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     show();
     await openEntries();
     await pick(/Foto hinzufügen/);
-    expect((await screen.findByRole("alert")).textContent).toContain(
-      ERROR_TEXTS["media.type_unsupported"],
-    );
+    expect((await refusalToast()).textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
   });
 
   it("only the latest measurement of a day offers the photo, because the server attaches it to that one (FR-WAC-07)", async () => {
@@ -471,7 +485,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     show();
     await openEntries();
     await pick(/Foto hinzufügen/);
-    expect(await screen.findByRole("alert")).toBeTruthy();
+    await refusalToast();
     const reloadsBefore = loads();
     await pick(/Foto hinzufügen/);
     await vi.waitFor(() => expect(photoPosts).toHaveLength(2));
