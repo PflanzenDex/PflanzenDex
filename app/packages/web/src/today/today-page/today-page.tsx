@@ -140,7 +140,9 @@ export function TodayPage(props: {
   const first = today.value?.items[0];
   const treatmentFirst = first !== undefined && isTreatment(first) && !!props.treatmentsEntry;
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+    // No min-h-0 here either (issue 1662): the page never shrinks below its content. With min-h-0 the page took the free
+    // height and the content past it lay under the anniversary card that follows; now the card goes below the content.
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
       <h1 id="today-title" className="text-2xl font-semibold">
         {t("page.title")}
       </h1>

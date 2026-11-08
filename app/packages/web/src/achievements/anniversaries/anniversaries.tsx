@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { dateText } from "@/shared/lib/format";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { useRequest } from "../../shared/data";
 import {
@@ -37,7 +38,14 @@ function Photo(props: { api: string; token: Token; photo: AnniversaryPhoto; labe
   );
 }
 
-function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen: () => void }) {
+function Entry(props: {
+  api: string;
+  token: Token;
+  item: AnniversaryItem;
+  onOpen: () => void;
+  /** The photos are part of the entry from the `md` breakpoint (issue 1662); below it the entry is one text row. */
+  photos: boolean;
+}) {
   const { item } = props;
   return (
     <li className="flex min-w-0 flex-col gap-1 rounded-card bg-card p-2 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]">
@@ -59,7 +67,7 @@ function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen
           Zur Sammlung
         </Button>
       </div>
-      {(item.first || item.latest) && (
+      {props.photos && (item.first || item.latest) && (
         <details>
           <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">Fotos</summary>
           <div className="flex flex-wrap gap-3">
@@ -86,9 +94,12 @@ function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen
  * latest photo, if there are any. Derived on the server from the catch date; the entry stays until the end of the
  * week of the anniversary. Calm mode, no anniversary or a read error show nothing (US-ACH-08): a side feature never
  * breaks the page. No push and no pressure (FR-ACH-06); the text says what happened, the button what to do next (P-09).
+ * Below the `md` breakpoint the entry is one compact text row without the photos, so "Heute" fits 360×640 with it
+ * (issue 1662, decision of the owner); the text and the button stay the same.
  */
 export function Anniversaries(props: { api: string; token: Token; onOpen: () => void }) {
   const { api, token } = props;
+  const photos = useIsMd();
   const load = useCallback((t: string) => loadAnniversaries(api, t), [api]);
   const r = useRequest({ queryKey: ["achievements", "anniversaries"], token, load });
   const v = r.value;
@@ -103,6 +114,7 @@ export function Anniversaries(props: { api: string; token: Token; onOpen: () => 
             token={token}
             item={item}
             onOpen={props.onOpen}
+            photos={photos}
           />
         ))}
       </ul>
