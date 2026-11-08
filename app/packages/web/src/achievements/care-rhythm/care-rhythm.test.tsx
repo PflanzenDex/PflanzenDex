@@ -152,3 +152,15 @@ describe("US-ACH-04 explicit pause", () => {
     expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
   });
 });
+
+describe("US-QS-15 the rhythm beside a pane (issue 1640)", () => {
+  it("US-QS-15 the twelve weeks take twelve columns from the width of their layer, not the window: six beside a pane", async () => {
+    show(200, answer());
+    const list = await screen.findByRole("list", { name: "Die letzten 12 Wochen" });
+    expect(list.parentElement?.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toEqual(
+      expect.arrayContaining(["grid-cols-6", "@md:grid-cols-12"]),
+    );
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
+});

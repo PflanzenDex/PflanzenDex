@@ -20,17 +20,17 @@ function Figures(props: { figures: IntroductionFigures }) {
   const f = props.figures;
   return (
     <>
-      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 @lg:grid-cols-[auto_1fr]">
         <dt className="text-sm text-muted-foreground sm:text-base">
           Mediane Zeit bis zur ersten Pflanze
         </dt>
-        <dd className="m-0 mb-2 font-semibold sm:mb-0">
+        <dd className="m-0 mb-2 font-semibold @lg:mb-0">
           {figureText(f.medianSecondsToFirstPlant, seconds, "höchstens 90 Sekunden")}
         </dd>
         <dt className="text-sm text-muted-foreground sm:text-base">
           {`Konten ohne Pflanze nach ${f.settleDays} Tagen`}
         </dt>
-        <dd className="m-0 mb-2 font-semibold sm:mb-0">
+        <dd className="m-0 mb-2 font-semibold @lg:mb-0">
           {figureText(f.withoutPlantPercent, percent, "höchstens 25 Prozent")}
         </dd>
         <dt className="text-sm text-muted-foreground sm:text-base">
@@ -63,7 +63,7 @@ export function IntroductionSection(props: { api: string; token: Token }) {
   const { api, token } = props;
   const load = useCallback((t: string) => loadIntroduction(api, t), [api]);
   return (
-    <section aria-label="Einstieg" className="flex flex-col gap-3">
+    <section aria-label="Einstieg" className="@container flex flex-col gap-3">
       <LoadFrame
         queryKey={["account", "operator", "introduction"]}
         token={token}
