@@ -133,3 +133,22 @@ describe("DelayedSkeleton inside a Suspense boundary (US-QS-14, issue 1697)", ()
     expect(screen.getByText("Inhalt")).toBeTruthy();
   });
 });
+
+describe("DelayedSkeleton nested in a due one (US-QS-14, DS-57, issue 1697)", () => {
+  it("US-QS-14 issue 1697 · a skeleton inside a due skeleton shows at once, so a composed skeleton waits one delay only", () => {
+    render(
+      <DelayedSkeleton>
+        <SkeletonGroup label="Lädt…">
+          <DelayedSkeleton>
+            <Skeleton data-testid="inner" />
+          </DelayedSkeleton>
+        </SkeletonGroup>
+      </DelayedSkeleton>,
+    );
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS);
+    });
+    expect(screen.getByTestId("inner")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+});
