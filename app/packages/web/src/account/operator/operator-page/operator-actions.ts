@@ -1,13 +1,25 @@
 import type { CreatedInvitation, OperatorCostFigure } from "@pflanzendex/core";
 import { useRef, useState } from "react";
 import { SIGN_IN, useInvalidate, type ApiError, type Response } from "../../../shared/data";
-import { createInvitation, setOperatorCost, setRegistrationMode } from "../../api/access-api";
+import {
+  createInvitation,
+  markIdentityRemoved,
+  setOperatorCost,
+  setRegistrationMode,
+} from "../../api/access-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import deletionTable from "../deletion-section/deletion-section.de.json";
+
+const deletionText = texts(deletionTable);
+/** The outcome of marking an identity removal (US-ACC-04): repeating it is a success too. */
+const markDone = (v: { outcome: "marked" | "already" }) =>
+  deletionText(v.outcome === "marked" ? "identity.marked" : "identity.already");
 
 export type Token = () => Promise<string | undefined>;
 export const OPERATOR_KEY = ["account", "operator"] as const;
 
 /** The layer a write belongs to: its outcome is shown in that layer, the one that stays open (P-10). */
-export type Scope = "cost" | "mode" | "codes";
+export type Scope = "cost" | "mode" | "codes" | "deletion";
 export type Notice = { scope: Scope; message: string | null; error: ApiError | null };
 
 /** One write at a time (a double tap sends one); a refusal stays visible (P-10), the page reloads afterwards. */
@@ -57,6 +69,9 @@ export function useOperatorActions(api: string, token: Token) {
         (t) => setOperatorCost(api, t, figure),
         () => "Monatliche Kosten gespeichert.",
       ),
+    /** Closes an identity removal done by hand (US-ACC-04); the card and its row reload afterwards. */
+    markIdentity: (entryId: string) =>
+      run("deletion", (t) => markIdentityRemoved(api, t, entryId), markDone),
     create: (days: number) =>
       run(
         "codes",

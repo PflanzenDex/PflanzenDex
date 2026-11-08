@@ -23,3 +23,4 @@ export type {
   ErasedAccount,
   IdentityRemoval,
 } from "./delete-job";
+export * from "./deadline/index";

@@ -19,7 +19,7 @@ import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
 import { REDEEM_LIMIT, WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
-import { deleteAccountHandlers, NO_STORE } from "./privacy";
+import { deleteAccountHandlers, identityRemovalFromEnv, NO_STORE } from "./privacy";
 import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
@@ -115,7 +115,7 @@ const worker = createJobWorker({
     ...(catalogFill ? catalogFillJobHandlers({ pool, sources }) : {}),
     ...(attributeFill ? attributeFillJobHandlers({ pool }) : {}),
     ...reminders.handlers,
-    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE),
+    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE, identityRemovalFromEnv(process.env)),
   },
 });
 worker.start();

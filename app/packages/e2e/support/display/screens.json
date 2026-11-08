@@ -959,6 +959,13 @@
     "title": "Betreiber: Monatliche Kosten"
   },
   {
+    "id": "operator-sheet-fristen",
+    "account": "test3",
+    "path": "/operator?sheet=fristen",
+    "layerFile": "account/operator/operator-page/operator-page.tsx",
+    "title": "Betreiber: Fristen"
+  },
+  {
     "id": "operator-sheet-registrierung",
     "account": "test3",
     "path": "/operator?sheet=registrierung",
