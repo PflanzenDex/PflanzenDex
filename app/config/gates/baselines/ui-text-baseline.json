@@ -1,5 +1,4 @@
 {
-  "maxTotal": 1189,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -342,10 +341,6 @@
       "count": 11
     },
     {
-      "file": "packages/web/src/collection/specimens/create/create-form/create-form.tsx",
-      "count": 4
-    },
-    {
       "file": "packages/web/src/pokedex/pokedex-cards/collector-card/collector-card.tsx",
       "count": 13
     },
@@ -602,14 +597,6 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/app/flows/add-plant/add-plant.tsx",
-      "count": 8
-    },
-    {
-      "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/onboarding-wizard.tsx",
-      "count": 8
-    },
-    {
       "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/species-step/species-step.tsx",
       "count": 7
     },
@@ -765,5 +752,6 @@
       "file": "packages/web/src/wishlist/wishlist-page/rows/wish-row/wish-row.tsx",
       "count": 4
     }
-  ]
+  ],
+  "maxTotal": 1169
 }

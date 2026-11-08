@@ -1,27 +1,10 @@
 import { useWatch, type Control, type FieldValues, type Path } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import type { SpecimenCard } from "@pflanzendex/core";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Quiet } from "../../../specimens/cards/parts/parts";
 import type { CreateFields } from "../../../specimens/model/schemas";
-
-/** The active specimens of the chosen species, as far as the form needs them (US-BES-03). */
-export type Sibling = Pick<SpecimenCard, "id" | "name" | "marker">;
-
-/** Default marker of the naming rule (DM-BES-03): "clip"; only a preset, freely changeable. */
-const DEFAULT_MARKER = "Klammer";
-
-/** The rule for the new specimen: the 1st needs no marker, the 2nd and later do, from the 3rd on the others too. */
-export function markerRule(siblings: readonly Sibling[]) {
-  return {
-    required: siblings.length >= 1,
-    missing: siblings.length >= 2 ? siblings.filter((s) => s.marker === null) : [],
-    preset: siblings.some((s) => s.marker?.toLowerCase() === DEFAULT_MARKER.toLowerCase())
-      ? ""
-      : DEFAULT_MARKER,
-  };
-}
+import type { Sibling } from "../marker-rule";
 
 /** One labelled marker field of a form; the message of a refused marker is linked to it (DS-38). */
 export function MarkerInput<T extends FieldValues>(props: {

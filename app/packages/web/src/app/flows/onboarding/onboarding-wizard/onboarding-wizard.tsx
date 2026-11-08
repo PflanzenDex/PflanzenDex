@@ -6,6 +6,10 @@ import { SaveStep } from "./save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "./species-step/species-step";
 import { useFirstPlant } from "./use-first-plant";
 import { WhereQuestion } from "./where-question/where-question";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./onboarding-wizard.de.json";
+
+const ui = texts(table);
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
@@ -25,9 +29,9 @@ function Created(props: {
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
-        {props.name} ist angelegt
+        {ui("created", { name: props.name })}
       </h2>
-      <p className="m-0">Miss deine Pflanze: so siehst du, wie sie wächst.</p>
+      <p className="m-0">{ui("howItGrows")}</p>
       {!asked && (
         <WhereQuestion
           api={props.api}
@@ -51,7 +55,7 @@ function Created(props: {
       )}
       <div className={ACTIONS}>
         <Button type="button" onClick={props.onOpen}>
-          Miss deine Pflanze
+          {ui("open")}
         </Button>
       </div>
     </section>
@@ -73,25 +77,25 @@ function Buttons(props: { f: Flow; onSkip: () => void }) {
             {FIRST_PLANT_STEPS[0]?.actionLabel}
           </Button>
           <p id="first-plant-next-hint" className="m-0 self-center text-sm text-muted-foreground">
-            {f.species === null ? "Wähle zuerst eine Art aus den Treffern." : ""}
+            {f.species === null ? ui("pickFirst") : ""}
           </p>
         </>
       ) : (
         <>
           <Button
             type="button"
-            disabled={f.saving || f.zones === null}
+            disabled={f.saving || f.zones === null || f.marker.rule === null}
             onClick={() => void f.save()}
           >
             {FIRST_PLANT_STEPS[1]?.actionLabel}
           </Button>
           <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
-            Zurück
+            {ui("back")}
           </Button>
         </>
       )}
       <Button type="button" variant="ghost" onClick={props.onSkip}>
-        Überspringen
+        {ui("skip")}
       </Button>
     </div>
   );
@@ -113,6 +117,7 @@ function Step(props: {
         zoneId={f.zoneId}
         onZone={f.setZoneId}
         error={f.error}
+        marker={f.marker}
       />
     );
   return (
@@ -151,7 +156,7 @@ export function OnboardingWizard(props: {
   const step = FIRST_PLANT_STEPS[f.index];
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <h1 className="text-2xl font-semibold">Heute</h1>
+      <h1 className="text-2xl font-semibold">{ui("today")}</h1>
       {f.created !== null ? (
         <Created
           name={f.created.name}
@@ -165,7 +170,13 @@ export function OnboardingWizard(props: {
           <p
             className="m-0 self-start rounded-full border border-current px-2.5 py-0.5 text-sm font-semibold"
             role="status"
-          >{`Schritt ${f.index + 1} von ${FIRST_PLANT_STEPS.length}: ${step?.title ?? ""}`}</p>
+          >
+            {ui("step", {
+              n: f.index + 1,
+              total: FIRST_PLANT_STEPS.length,
+              title: step?.title ?? "",
+            })}
+          </p>
           <Step
             f={f}
             lookup={props.lookup}
