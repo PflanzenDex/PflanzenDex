@@ -11,6 +11,7 @@ on:
       - .nvmrc
       - .github/actions/setup-app/**
       - .github/workflows/deps-cache.yml
+      - tools/lint/tool.sh
   workflow_dispatch:
 
 permissions:
@@ -30,6 +31,16 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-app
+      # Issue 1721: the pinned check tools for the `app-gates` job of every PR (a PR restores the cache of its base branch).
+      # Same key as in ci.yml; the cache action saves on a miss.
+      - uses: actions/cache@v6
+        with:
+          path: .cache/tools
+          key: check-tools-${{ runner.os }}-${{ hashFiles('tools/lint/tool.sh') }}
+      - name: Pinned gitleaks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/lint/tool.sh gitleaks
       # US-QG-01 (issue 1485): the apt cache of the browser install, read by the CI shards of every PR (a PR restores the
       # cache of its base branch). Filled here on a miss only; the save follows a complete install, after the browser is
       # proved present (tools/lighthouse/install-browsers.sh).

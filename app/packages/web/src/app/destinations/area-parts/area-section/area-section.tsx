@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { SectionLabel } from "@/shared/patterns/elements/section-label/section-label";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { headingId } from "./use-section-anchor";
 
@@ -24,10 +25,12 @@ export function AreaSection(props: {
       {props.heading ?? <SectionLabel id={headingId(props.anchor)}>{props.title}</SectionLabel>}
       <Suspense
         fallback={
-          <SkeletonGroup label={props.loading} className="flex min-w-0 flex-col gap-3">
-            <Skeleton className="h-24 w-full rounded-card" />
-            <Skeleton className="h-24 w-full rounded-card" />
-          </SkeletonGroup>
+          <DelayedSkeleton>
+            <SkeletonGroup label={props.loading} className="flex min-w-0 flex-col gap-3">
+              <Skeleton className="h-24 w-full rounded-card" />
+              <Skeleton className="h-24 w-full rounded-card" />
+            </SkeletonGroup>
+          </DelayedSkeleton>
         }
       >
         {props.children}

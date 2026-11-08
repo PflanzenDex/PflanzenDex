@@ -95,10 +95,15 @@ describe("US-QS-09 · every view has one main heading and the regions (1.3.1, 2.
     async (_view, path) => {
       renderAt(path);
       const main = screen.getByRole("main");
-      await waitFor(() => expect(within(main).queryByRole("status")).toBeNull(), {
-        timeout: 4000,
-      });
-      expect(within(main).getAllByRole("heading", { level: 1 })).toHaveLength(1);
+      // The skeleton shows only after its delay (US-QS-14, DS-57, issue 1697), so the page has settled when it has its one
+      // h1 and no status: waiting for "no status" alone would pass before the delay has run.
+      await waitFor(
+        () => {
+          expect(within(main).queryByRole("status")).toBeNull();
+          expect(within(main).getAllByRole("heading", { level: 1 })).toHaveLength(1);
+        },
+        { timeout: 4000 },
+      );
       expect(screen.getByRole("banner")).toBeTruthy();
       expect(screen.getAllByRole("navigation").length).toBeGreaterThan(0);
       expect(screen.getAllByRole("main")).toHaveLength(1);
@@ -131,8 +136,14 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
     const link = within(bar).getByRole("link", { name: "Sammlung" });
     link.focus();
     await userEvent.keyboard("{Enter}");
-    const heading = await screen.findByRole("heading", { level: 1, name: "Sammlung" });
-    await waitFor(() => expect(document.activeElement).toBe(heading));
+    // The focus ends on the page's own heading, never on the route's fallback heading (DS-68, issue 1697): the fallback
+    // stays in the document while the page loads, so the test compares the element that holds the focus, not a node found earlier.
+    await waitFor(() => {
+      const active = document.activeElement;
+      expect(active?.tagName).toBe("H1");
+      expect(active?.textContent).toBe("Sammlung");
+      expect(active?.hasAttribute("data-route-fallback")).toBe(false);
+    });
     expect(document.title).toBe("Sammlung – PflanzenDéx");
   });
 });

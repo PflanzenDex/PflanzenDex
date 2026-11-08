@@ -8,6 +8,7 @@ import { dateText } from "@/shared/lib/format";
 import { LoadFrame, useRequest } from "../../shared/data";
 import { loadToday } from "../today-api";
 import { isTreatment, TodayRow, type TodayDestination } from "./today-row/today-row";
+import { NowSkeleton } from "./today-skeleton/today-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../today.de.json";
 
@@ -149,7 +150,13 @@ export function TodayPage(props: {
         <h2 id="now-title" className="sr-only">
           {t("page.now")}
         </h2>
-        <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
+        <LoadFrame
+          queryKey={KEY}
+          token={props.token}
+          load={load}
+          loadingText={loading}
+          loadingFallback={<NowSkeleton label={loading} />}
+        >
           {(list: TodayList) => (
             <Content
               list={list}
@@ -163,7 +170,13 @@ export function TodayPage(props: {
       {today.value && <Below list={today.value} onOpen={props.onOpen} />}
       {/* The former address of the further tasks stays valid: the layer lists the same rows. */}
       <LayerSheet id={TASKS} title={t("tasks.title")}>
-        <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
+        <LoadFrame
+          queryKey={KEY}
+          token={props.token}
+          load={load}
+          loadingText={loading}
+          loadingFallback={<NowSkeleton label={loading} />}
+        >
           {(list: TodayList) => (
             // The rows page by the free height of the layer, so the pager stays inside the pane (issue 1182).
             <FurtherTasks list={list} onOpen={props.onOpen} param={LAYER_PARAM} fit />

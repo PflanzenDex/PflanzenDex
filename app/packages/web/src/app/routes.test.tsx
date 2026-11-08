@@ -65,8 +65,9 @@ afterEach(() => {
 });
 
 describe("US-QS-07 · DS-08 route-level lazy loading", () => {
-  it("US-QS-07 · DS-08 a route shows one loading status while its page chunk loads", () => {
+  it("US-QS-07 · DS-08 a route shows one loading status while its page chunk loads, after the delay (issue 1697)", async () => {
     renderAt("/collection?view=wishlist");
+    expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("Lädt…")).toBeTruthy();
   });
