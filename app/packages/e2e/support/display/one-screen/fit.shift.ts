@@ -82,18 +82,28 @@ async function settleShift(page: Page, name: string, watch: Watch): Promise<void
   const start = Date.now();
   let seen = -1;
   for (;;) {
-    const state = await page.evaluate(() => ({
-      count: ((window as unknown as { __shifts?: unknown[] }).__shifts ?? []).length,
-      status: document.querySelector("[role=status]") !== null,
-    }));
-    if (state.count !== seen) {
-      seen = state.count;
+    let state: { count: number; status: boolean } | undefined;
+    try {
+      state = await page.evaluate(() => ({
+        count: ((window as unknown as { __shifts?: unknown[] }).__shifts ?? []).length,
+        status: document.querySelector("[role=status]") !== null,
+      }));
+    } catch (error) {
+      // A page that navigates while it loads (a sign-in or registration page, a redirect) destroys its context for a moment:
+      // it is still loading, so the wait goes on. Any other error is raised; the cap below names a page that never settles.
+      if (!String(error).includes("Execution context was destroyed")) throw error;
       watch.last = Date.now();
     }
-    watch.skeleton = watch.skeleton || state.status;
+    if (state) {
+      if (state.count !== seen) {
+        seen = state.count;
+        watch.last = Date.now();
+      }
+      watch.skeleton = watch.skeleton || state.status;
+    }
     if (watch.errors.length > 0)
       throw new Error(`${name}: the slow API route failed: ${watch.errors[0]}`);
-    if (watch.pending === 0 && Date.now() - watch.last >= QUIET_MS) return;
+    if (state && watch.pending === 0 && Date.now() - watch.last >= QUIET_MS) return;
     if (Date.now() - start > CAP_MS)
       throw new Error(
         `${name}: not settled after ${CAP_MS / 1000} s (${watch.pending} GET pending)`,
