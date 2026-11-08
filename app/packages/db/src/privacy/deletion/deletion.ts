@@ -37,6 +37,16 @@ export class AccountDeletionPostgres {
     return (r.rowCount ?? 0) > 0;
   }
 
+  /** The sign-in subject of the account, read as the account itself before anything is erased (US-ACC-04, issue 1673). */
+  async subjectOf(userId: string): Promise<string | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ subject: string | null }>(
+        "select subject from account where id = current_account()",
+      ),
+    );
+    return r.rows[0]?.subject ?? null;
+  }
+
   /**
    * Deletes the account with everything that hangs on it, in one transaction (function `erase_account()`). `null` when
    * nothing is due: no request (withdrawn, or the account is already gone) or the grace period has not ended. The

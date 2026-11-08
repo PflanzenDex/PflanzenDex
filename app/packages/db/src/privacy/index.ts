@@ -2,5 +2,7 @@
 export { AccountDataPostgres } from "./export/data-export.ts";
 export type { AccountDataSnapshot, ExportRow, PhotoRef } from "./export/data-export.ts";
 export { AccountDeletionPostgres } from "./deletion/deletion.ts";
+export { DeletionQueuePostgres } from "./deletion/deletion-queue.ts";
+export type { DeletionQueueRecord } from "./deletion/deletion-queue.ts";
 export { FIXTURES_PRIVACY } from "./fixtures.ts";
 export { PRIVACY_TENANT_EXCEPTIONS } from "./tenant-exceptions.ts";

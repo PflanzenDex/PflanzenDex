@@ -13,8 +13,10 @@ export function useMeasureSend(props: {
   token: () => Promise<string | undefined>;
   specimenId: string;
   invalidate: () => void;
+  /** Called after the measurement was written (US-QS-15: the page then knows its input is saved). */
+  onSaved?: () => void;
 }) {
-  const { api, token, specimenId, invalidate } = props;
+  const { api, token, specimenId, invalidate, onSaved } = props;
   const [saved, setSaved] = useState<string | null>(null);
   const [photoRefusal, setPhotoRefusal] = useState<ApiError | null>(null);
   const send = useCallback(
@@ -24,6 +26,7 @@ export function useMeasureSend(props: {
       const r = await recordMeasurement({ api, token: t }, specimenId, input);
       if (!r.ok) return r.error;
       setSaved(measurementText(r.value));
+      onSaved?.();
       setPhotoRefusal(null);
       if (photo) {
         const p = await uploadPhoto({ api, token: t }, specimenId, {
@@ -35,7 +38,7 @@ export function useMeasureSend(props: {
       invalidate();
       return null;
     },
-    [api, token, specimenId, invalidate],
+    [api, token, specimenId, invalidate, onSaved],
   );
   return { send, saved, photoRefusal };
 }

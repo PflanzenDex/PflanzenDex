@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Sibling } from "../../markers/marker/marker-fields/marker-fields";
+import type { Sibling } from "../../markers/marker/marker-rule";
 
 /** Fast client feedback in German (DS-47, DS-49); the server operation validates again (P-03). */
 export const MARKER_MISSING =

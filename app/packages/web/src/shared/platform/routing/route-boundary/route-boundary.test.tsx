@@ -22,10 +22,31 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
         <Page title="Meine Sammlung" />
       </RouteBoundary>,
     );
+    // The skeleton shows after the delay (US-QS-14, DS-57, issue 1697), exactly once.
+    expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("Lädt…")).toBeTruthy();
     release({ default: (p) => <h1>{p.title}</h1> });
     expect(await screen.findByRole("heading", { name: "Meine Sammlung" })).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-14 issue 1697 · a page that arrives within the delay shows no skeleton and no status", async () => {
+    let release: (c: { default: (p: { title: string }) => React.ReactElement }) => void = () =>
+      undefined;
+    const Page = lazyPage<(p: { title: string }) => React.ReactElement>(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    render(
+      <RouteBoundary resetKey="a">
+        <Page title="Schnell" />
+      </RouteBoundary>,
+    );
+    release({ default: (p) => <h1>{p.title}</h1> });
+    expect(await screen.findByRole("heading", { name: "Schnell" })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
   });
 
@@ -42,8 +63,9 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
         <Page />
       </RouteBoundary>,
     );
+    // The name stands at once; only the blocks wait for the delay (US-QS-14, DS-57, issue 1697).
     expect(screen.getByRole("heading", { level: 1, name: "Freunde" })).toBeTruthy();
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findByRole("status")).toBeTruthy();
     release({ default: () => <h1>Freunde</h1> });
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
     const headings = screen.getAllByRole("heading", { level: 1 });

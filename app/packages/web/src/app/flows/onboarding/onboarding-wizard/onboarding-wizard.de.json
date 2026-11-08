@@ -1,0 +1,10 @@
+{
+  "created": "{name} ist angelegt",
+  "howItGrows": "Miss deine Pflanze: so siehst du, wie sie wächst.",
+  "open": "Miss deine Pflanze",
+  "pickFirst": "Wähle zuerst eine Art aus den Treffern.",
+  "back": "Zurück",
+  "skip": "Überspringen",
+  "today": "Heute",
+  "step": "Schritt {n} von {total}: {title}"
+}

@@ -40,6 +40,7 @@ Acceptance criteria:
 
 - Count per zone 2–4 at specimen level (the specimen's own light zone before that of its location and of its species); cutting light does not count.
 - The display names the thinnest zone. On a tie all equally placed ones, with a hint to the wishlist.
+- Given the form "Lichtzone" of a specimen, when I open it, then its address names the form and the specimen (`?form=light-zone&plant=<id>`); Back after a changed zone asks "Eingabe verwerfen?" first (US-QS-15).
 
 State of implementation: complete for the criteria above. The distribution (`GET /specimens/distribution`, derived live, P-01) counts the effective zone of each active specimen (FR-LIC-02: own zone of the specimen before location and species; cutting light does not count), names the thinnest zone, on a tie all tied ones, and the hint points to the wishlist or to the own light zone of a specimen. The own zone of an existing specimen is set, changed or cleared with the card action "Lichtzone" (`POST /specimens/:id/light-zone`, zone chosen from the own zones; clearing says which zone applies again, or that it is unknown and what to do next, P-08, P-09; a refusal stays visible in the form, P-10), and at creation with the field "Eigene Lichtzone".
 
