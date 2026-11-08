@@ -11,7 +11,7 @@ import { keptOpener, restoreFocus, useLayer } from "./use-layer";
 import { LayerHostContext } from "./layer-host/layer-host";
 import { LayerBody, LayerPane } from "./layer-host/layer-pane/layer-pane";
 
-export { useLayer } from "./use-layer";
+export { useExitValue, useLayer } from "./use-layer";
 export { LayerHost } from "./layer-host/layer-host";
 
 /** A button that opens the layer `id` (US-QS-15); outline by default, because a layer owns the one filled action. */
@@ -67,6 +67,21 @@ function focusLayerStart(event: Event, returning: boolean): void {
 }
 
 /**
+ * The body of a layer stays while a sheet that closes slides out, so it leaves as it came (US-QS-15, F7). A layer that
+ * another one replaces, and a pane at a desktop width, have no exit to keep content for: they leave at once.
+ */
+function useLeavingBody(open: boolean, replaced: boolean, isLg: boolean) {
+  const [leaving, setLeaving] = React.useState(false);
+  const [shownOpen, setShownOpen] = React.useState(open);
+  if (open !== shownOpen) {
+    setShownOpen(open);
+    if (!open && !isLg && !replaced) setLeaving(true);
+  }
+  const onExited = React.useCallback(() => setLeaving(false), []);
+  return { showBody: open || (leaving && !replaced), onExited };
+}
+
+/**
  * Layer above an overview (US-QS-15, DS-58): open while the address holds `?sheet=<id>`, so Back closes it and a
  * reload or copied link reopens it. Below 768 px a bottom sheet, from 768 px a dialog, from 1024 px a pane beside the
  * content of its `LayerHost`, which is as tall as the viewport less the frame's padding and scrolls inside itself.
@@ -79,13 +94,14 @@ export function LayerSheet({
   closeLabel = "Schließen",
   children,
 }: LayerSheetProps) {
-  const { open, closeLayer } = useLayer(id);
+  const { open, replaced, closeLayer } = useLayer(id);
   const isLg = useIsLg();
   const host = React.useContext(LayerHostContext);
   const pane = host?.pane ?? null;
   const wasOpen = React.useRef(false);
   // A layer that mounts on Back (a POP) is one that was left for a layer above it: its opener may be back (issue 1363).
   const returning = useNavigationType() === "POP";
+  const { showBody, onExited } = useLeavingBody(open, replaced, isLg);
 
   React.useEffect(() => {
     if (wasOpen.current && !open) restoreFocus();
@@ -127,9 +143,11 @@ export function LayerSheet({
         if (!next) closeLayer();
       }}
       onOpenAutoFocus={(event) => focusLayerStart(event, returning)}
+      onExited={onExited}
     >
-      {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22). */}
-      {open ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
+      {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22),
+          so the body renders only while the layer is open or still leaving (US-QS-15, F7). */}
+      {showBody ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
     </ResponsiveModal>
   );
 }

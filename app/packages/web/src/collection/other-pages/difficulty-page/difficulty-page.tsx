@@ -3,7 +3,11 @@ import { Link, useSearchParams } from "react-router";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { profileAddress } from "@/shared/patterns/navigation/navigation/navigation";
-import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import {
+  LayerSheet,
+  useExitValue,
+  useLayer,
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import {
@@ -124,6 +128,8 @@ function DifficultyTable(props: {
   const size = useRowPageSize();
   const [params] = useSearchParams();
   const chosen = rows.find((r) => layerId(r) === params.get("sheet"));
+  // The comparison layer keeps its species while it slides out: the address has lost it at once (US-QS-15, F12).
+  const shown = useExitValue(chosen);
   const hidden = unknownInEvery(rows, ENTRY_FACTS);
   return (
     <section
@@ -163,9 +169,9 @@ function DifficultyTable(props: {
           />
         </>
       )}
-      {chosen ? (
-        <LayerSheet id={layerId(chosen)} title={chosen.speciesName}>
-          <Values row={chosen} />
+      {shown ? (
+        <LayerSheet id={layerId(shown)} title={shown.speciesName}>
+          <Values row={shown} />
         </LayerSheet>
       ) : null}
     </section>

@@ -365,6 +365,17 @@
 }
 
 /*
+ * Sheet motion (US-QS-14, F13): Vaul injects its own stylesheet, which runs a sheet and its overlay for 500 ms. These
+ * selectors are more specific than Vaul's and unlayered, so the slow token wins without `!important`; reduced motion
+ * still ends them at once (the `*` rule above, and `--motion-slow` is 0 ms there).
+ */
+[data-vaul-drawer][data-state],
+[data-vaul-overlay][data-vaul-snap-points][data-state] {
+  animation-duration: var(--motion-slow);
+  transition-duration: var(--motion-slow);
+}
+
+/*
  * Route transition (US-QS-14, ADR 0011 decision 5): while a view change runs (the marker is set by the router for its
  * duration only), the main content cross-fades over `--motion-slow`; the app bar and navigation stay still. The page
  * snapshot does not animate, and the main group does not morph, so the content never stretches. Under reduced

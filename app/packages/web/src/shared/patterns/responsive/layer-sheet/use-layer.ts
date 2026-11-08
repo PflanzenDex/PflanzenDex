@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 const PARAM = "sheet";
@@ -14,6 +15,8 @@ let returnTo: string | null = null;
 
 type LayerControl = {
   open: boolean;
+  /** The address names another layer: this one is replaced, not closed, so it leaves at once (US-QS-15, F7). */
+  replaced: boolean;
   /** Opens the layer: pushes a history entry, so Back closes it. Pass the event target to return focus to it. */
   openLayer: (from?: HTMLElement | null) => void;
   /** Closes the layer: back when the app opened it, otherwise it only removes the address part. */
@@ -25,10 +28,12 @@ export function useLayer(id: string): LayerControl {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const open = params.get(PARAM) === id;
+  const named = params.get(PARAM);
+  const open = named === id;
   const fromApp = (location.state as Record<string, unknown> | null)?.[FROM_APP] === true;
   return {
     open,
+    replaced: named !== null && !open,
     openLayer: (from) => {
       opener = from ?? (document.activeElement as HTMLElement | null);
       returnTo = null;
@@ -69,4 +74,15 @@ export function restoreFocus(): void {
 export function keptOpener(layer: HTMLElement | null): HTMLElement | null {
   const el = returnTo ? document.getElementById(returnTo) : null;
   return el && layer?.contains(el) ? el : null;
+}
+
+/**
+ * The last value that was set, kept while the address no longer names it (US-QS-15, F12). A layer's content comes from the
+ * address, which loses the layer at once when it closes; the caller keeps rendering the last value, and the layer shows it
+ * only while it is open or still leaving (`LayerSheet`), so a closed layer renders nothing.
+ */
+export function useExitValue<T>(value: T | null | undefined): T | undefined {
+  const last = React.useRef<T | undefined>(undefined);
+  if (value !== null && value !== undefined) last.current = value;
+  return value ?? last.current;
 }

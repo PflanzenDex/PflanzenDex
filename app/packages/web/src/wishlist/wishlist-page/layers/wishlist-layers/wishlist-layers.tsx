@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import type { Candidate, CandidateList, ZoneStock } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import {
+  LayerSheet,
+  useExitValue,
+  useLayer,
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "../../../../shared/data";
 import { CandidateCard } from "../../../candidate-card/candidate-card";
 import { BoughtList } from "../../../history/bought-list/bought-list";
@@ -81,6 +85,8 @@ export function WishlistLayers(props: {
   const [params] = useSearchParams();
   const { data } = props;
   const wish = data.list.candidates.find((c) => wishLayerId(c.id) === params.get("sheet"));
+  // The wish layer keeps its wish and rank while it slides out: the address has lost it at once (US-QS-15, F12).
+  const shown = useExitValue(wish && { wish, rank: data.list.candidates.indexOf(wish) + 1 });
   const create = props.onCreateSpecimen ? { onCreateSpecimen: props.onCreateSpecimen } : {};
   return (
     <>
@@ -91,12 +97,12 @@ export function WishlistLayers(props: {
         error={props.error}
         onSend={props.onSend}
       />
-      {wish ? (
-        <LayerSheet id={wishLayerId(wish.id)} title={t("layers.wish")}>
+      {shown ? (
+        <LayerSheet id={wishLayerId(shown.wish.id)} title={t("layers.wish")}>
           <ul className="m-0 grid list-none gap-3 p-0">
             <CandidateCard
-              c={wish}
-              rank={data.list.candidates.indexOf(wish) + 1}
+              c={shown.wish}
+              rank={shown.rank}
               photoAccess={props.access}
               onStoreImage={props.card.onStoreImage}
               busy={props.card.busy}

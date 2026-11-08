@@ -7,7 +7,7 @@ import {
 import { useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LayerSheet, useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import {
@@ -38,6 +38,8 @@ export function Browse(props: {
   const search = useRef<HTMLInputElement>(null);
   const [params] = useSearchParams();
   const chosen = caught.find((c) => speciesLayerId(c.species) === params.get("sheet"));
+  // The species layer keeps its species while it slides out: the address has lost it at once (US-QS-15, F12).
+  const shownChosen = useExitValue(chosen);
   if (caught.length === 0) return <NothingCaught />;
   const result = browsePokedex(caught, { query, filter, sort });
   const shown =
@@ -74,9 +76,12 @@ export function Browse(props: {
           onSort={setSort}
         />
       </LayerSheet>
-      {chosen ? (
-        <LayerSheet id={speciesLayerId(chosen.species)} title={chosen.germanName ?? chosen.species}>
-          <SpeciesDetail species={chosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
+      {shownChosen ? (
+        <LayerSheet
+          id={speciesLayerId(shownChosen.species)}
+          title={shownChosen.germanName ?? shownChosen.species}
+        >
+          <SpeciesDetail species={shownChosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
         </LayerSheet>
       ) : null}
     </div>

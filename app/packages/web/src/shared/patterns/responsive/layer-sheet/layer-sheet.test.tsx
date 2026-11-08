@@ -1,12 +1,22 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
+import { useExitValue } from "./use-layer";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -14,6 +24,7 @@ beforeAll(() => {
 });
 
 afterEach(cleanup);
+afterEach(releaseSheetExits);
 
 function Back() {
   const navigate = useNavigate();
@@ -78,6 +89,44 @@ describe("LayerSheet (US-QS-15)", () => {
     setViewportWidth(360);
     render(<Example />);
     expect(screen.queryByText("Inhalt")).toBeNull();
+  });
+
+  it("US-QS-15 · F7 a sheet leaves as it came: its body stays while it slides out, then it is removed", async () => {
+    setViewportWidth(360);
+    holdSheetExit();
+    render(<Example at="/?sheet=licht" />);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    await userEvent.keyboard("{Escape}");
+    // The sheet collapses to its title only when its body leaves at once (F7); the body goes with the exit.
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
+    expect(document.querySelector("[data-layer-body]")).toBeNull();
+  });
+
+  it("US-QS-15 · F7 a sheet that closes by Back keeps its body for the exit too", async () => {
+    setViewportWidth(360);
+    holdSheetExit();
+    render(<Example at="/?sheet=licht" />);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    fireEvent.click(screen.getByRole("button", { name: "Browser zurück", hidden: true }));
+    await waitFor(() => expect(screen.getByText("Inhalt")).toBeTruthy());
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
+  });
+
+  it("US-QS-15 the last value of a layer stays while the address no longer names it, so its exit has content", () => {
+    const { result, rerender } = renderHook(
+      ({ value }: { value: string | null }) => useExitValue(value),
+      { initialProps: { value: null as string | null } },
+    );
+    expect(result.current).toBeUndefined();
+    rerender({ value: "plant-e1" });
+    expect(result.current).toBe("plant-e1");
+    rerender({ value: null });
+    expect(result.current).toBe("plant-e1");
+    rerender({ value: "plant-e2" });
+    expect(result.current).toBe("plant-e2");
   });
 
   it("US-QS-15 an address with ?sheet= opens the layer after reload or copied link", async () => {

@@ -8,6 +8,7 @@ import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { openPlant, pagesOf, summaryOf } from "../specimens/tests/plants-test-helpers";
 import { answerCardRead } from "../specimens/tests/cards-fake";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { PlantsScreen } from "./plants-screen";
 
 const card = (id: number, extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
@@ -73,6 +74,7 @@ const screenWith = (cards: SpecimenCard[], extra: Extra = {}, at = "/") =>
 const many = (n: number) => Array.from({ length: n }, (_, i) => card(i + 1));
 
 afterEach(cleanup);
+afterEach(releaseSheetExits);
 
 describe("US-QS-19 tiles of the plants", () => {
   it("US-QS-08 · WCAG 2.5.3 the plant tile's accessible name is its visible text (no aria-label, no decorative glyph in the text)", () => {
@@ -218,6 +220,18 @@ describe("US-QS-19 the layers of the plants", () => {
     expect(within(layer).getByText("Art: Bogenhanf · Status: Pflanze")).toBeTruthy();
     await userEvent.click(within(layer).getByRole("button", { name: "Messen: Aloe" }));
     expect(onMeasure).toHaveBeenCalledOnce();
+  });
+
+  it("US-QS-15 · F12 a plant layer leaves as it came: its tabs stay while it slides out, then it is removed", async () => {
+    holdSheetExit();
+    screenWith([card(1, { name: "Aloe" })]);
+    await openPlant("Aloe");
+    await screen.findByRole("dialog", { name: "Aloe" });
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByTestId("address").textContent).toBe("");
+    expect(screen.getByText("Art: Bogenhanf · Status: Pflanze")).toBeTruthy();
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Art: Bogenhanf · Status: Pflanze")).toBeNull());
   });
 
   it("US-QS-19 · P-10 archived plants stay reachable through the archive layer", async () => {
