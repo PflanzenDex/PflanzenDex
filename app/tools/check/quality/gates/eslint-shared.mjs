@@ -6,7 +6,8 @@
 // GATES_ESLINT_RESULTS; the checks read that file. Run alone (`npm run baseline`), a check runs the pass itself.
 // `lint` does not share the pass: it keeps the allowances on, so its findings differ in baselined files.
 // Both use an ESLint cache whose file name is a key over every input of a result that ESLint's own cache does not see
-// (eslintCacheFile, issue 1608).
+// (eslintCacheFile, issue 1608). The shared pass and each check that runs alone have a cache file of their own per rule
+// set (issue 1685): ESLint's cache does not see the rule filter, so a run with other rules must not answer from it.
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -29,7 +30,8 @@ const KEY_DIRS = [
   "config/gates",
   "packages/core/src",
 ];
-const HEX_NAME = /^[0-9a-f]{64}\.json$/;
+// A cache file name after its kind prefix: the key, and for a shared file the digest of its rule set (rulesDigest).
+const CACHE_NAME = /^([0-9a-f]{64})(?:\.json|-[0-9a-f]{16}\.json)$/;
 
 // Whether a file (relative to app/) lies under one of `dirs`; "." stands for the whole app.
 export const inDirs = (file, dirs) =>
@@ -44,7 +46,7 @@ export async function lintWithoutBaselines(dirs, rules) {
     ruleFilter: ({ ruleId }) => rules.includes(ruleId),
     cache: true,
     cacheStrategy: "content",
-    cacheLocation: path.join(APP_DIR, eslintCacheFile("shared")),
+    cacheLocation: path.join(APP_DIR, eslintCacheFile("shared", APP_DIR, rules)),
   });
   const results = await eslint.lintFiles(dirs);
   return results
@@ -104,18 +106,33 @@ export function eslintCacheKey(appDir = APP_DIR) {
   return hash.digest("hex");
 }
 
+// SHA-256 over the sorted, distinct rule ids of a run, cut to 16 hex characters (issue 1685): the rule set that a shared
+// cache file belongs to. The order of the ids does not matter; a different set of ids does.
+export function rulesDigest(rules) {
+  return createHash("sha256")
+    .update([...new Set(rules)].sort().join("\n"))
+    .digest("hex")
+    .slice(0, 16);
+}
+
 // The ESLint cache file of `kind` ("lint" or "shared"), relative to app/ where the lint runs, named by the key:
-// `.cache/gates/eslint-<kind>-<key>.json`. The folder keeps only the file of the current key; older files of that kind go.
-export function eslintCacheFile(kind, appDir = APP_DIR) {
+// `.cache/gates/eslint-lint-<key>.json`, and `.cache/gates/eslint-shared-<key>-<rules>.json` for the shared kind, where
+// <rules> is rulesDigest(rules) (issue 1685). ESLint's cache does not see the rule filter, so every rule set has a file of
+// its own. The folder keeps the files of the current key, whatever their rule set, and removes the files of an older key.
+export function eslintCacheFile(kind, appDir = APP_DIR, rules) {
   if (!/^[a-z]+$/.test(kind)) throw new Error(`the ESLint cache kind must be a word, got ${kind}`);
+  if (kind === "shared" && rules === undefined)
+    throw new Error("a shared ESLint cache file needs the rule set of its run");
   const folder = path.join(appDir, ".cache", "gates");
-  const name = `eslint-${kind}-${eslintCacheKey(appDir)}.json`;
+  const key = eslintCacheKey(appDir);
+  const ruleSet = rules === undefined ? "" : `-${rulesDigest(rules)}`;
   const prefix = `eslint-${kind}-`;
   fs.mkdirSync(folder, { recursive: true });
-  for (const old of fs.readdirSync(folder))
-    if (old !== name && old.startsWith(prefix) && HEX_NAME.test(old.slice(prefix.length)))
-      fs.rmSync(path.join(folder, old), { force: true });
-  return `.cache/gates/${name}`;
+  for (const old of fs.readdirSync(folder)) {
+    const match = old.startsWith(prefix) ? CACHE_NAME.exec(old.slice(prefix.length)) : null;
+    if (match && match[1] !== key) fs.rmSync(path.join(folder, old), { force: true });
+  }
+  return `.cache/gates/${prefix}${key}${ruleSet}.json`;
 }
 
 // `node eslint-shared.mjs --cache-file <kind>` prints the cache file that the lint script names (issue 1608).

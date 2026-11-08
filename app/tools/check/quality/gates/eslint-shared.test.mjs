@@ -11,6 +11,7 @@ import {
   eslintCacheFile,
   eslintCacheKey,
   inDirs,
+  rulesDigest,
   sharedFindings,
 } from "./eslint-shared.mjs";
 import { METRIC_RULES } from "./check-baseline.mjs";
@@ -196,23 +197,56 @@ describe("US-QG-01 ESLint cache key and file", () => {
       assert.equal(eslintCacheKey(dir), before);
     }));
 
-  it("eslintCacheFile names the cache of the current key and removes older caches of its kind only", () =>
+  it("FR-QG-12 (issue 1685): eslintCacheFile names the shared cache of its rule set and removes the caches of an older key only", () =>
     withTempDir((dir) => {
       writeKeyedApp(dir);
       const folder = path.join(dir, ".cache", "gates");
       fs.mkdirSync(folder, { recursive: true });
-      const old = `eslint-shared-${"0".repeat(64)}.json`;
+      const key = eslintCacheKey(dir);
+      const old = `eslint-shared-${"0".repeat(64)}-${"a".repeat(16)}.json`;
+      const oldWithoutRules = `eslint-shared-${"0".repeat(64)}.json`;
       const otherKind = `eslint-lint-${"0".repeat(64)}.json`;
+      const otherRules = `eslint-shared-${key}-${"b".repeat(16)}.json`;
       const passResults = "eslint-shared-4242.json";
-      for (const name of [old, otherKind, passResults])
+      for (const name of [old, oldWithoutRules, otherKind, otherRules, passResults])
         fs.writeFileSync(path.join(folder, name), "{}");
       assert.equal(
-        eslintCacheFile("shared", dir),
-        `.cache/gates/eslint-shared-${eslintCacheKey(dir)}.json`,
+        eslintCacheFile("shared", dir, ["t/no-foo"]),
+        `.cache/gates/eslint-shared-${key}-${rulesDigest(["t/no-foo"])}.json`,
       );
       assert.equal(fs.existsSync(path.join(folder, old)), false);
+      assert.equal(fs.existsSync(path.join(folder, oldWithoutRules)), false);
       assert.equal(fs.existsSync(path.join(folder, otherKind)), true);
+      assert.equal(fs.existsSync(path.join(folder, otherRules)), true);
       assert.equal(fs.existsSync(path.join(folder, passResults)), true);
+    }));
+
+  it("FR-QG-12 (issue 1685): two rule sets get two cache files, the same rule set in another order gets the same file", () =>
+    withTempDir((dir) => {
+      writeKeyedApp(dir);
+      const both = eslintCacheFile("shared", dir, ["t/no-foo", "t/no-bar"]);
+      const one = eslintCacheFile("shared", dir, ["t/no-foo"]);
+      assert.notEqual(one, both);
+      assert.equal(eslintCacheFile("shared", dir, ["t/no-bar", "t/no-foo"]), both);
+      // The full pass keeps its file when a single check of the same key names another rule set.
+      fs.writeFileSync(path.join(dir, both), "{}");
+      assert.equal(eslintCacheFile("shared", dir, ["t/no-foo"]), one);
+      assert.equal(fs.existsSync(path.join(dir, both)), true);
+    }));
+
+  it("FR-QG-12 (issue 1685): a shared cache file without the rule set of its run is refused", () =>
+    withTempDir((dir) => {
+      writeKeyedApp(dir);
+      assert.throws(() => eslintCacheFile("shared", dir), /rule set/);
+    }));
+
+  it("FR-QG-12 (issue 1685): the lint cache file is named by its key alone, as before", () =>
+    withTempDir((dir) => {
+      writeKeyedApp(dir);
+      assert.equal(
+        eslintCacheFile("lint", dir),
+        `.cache/gates/eslint-lint-${eslintCacheKey(dir)}.json`,
+      );
     }));
 
   it("`--cache-file lint` prints the lint cache file of this checkout", () => {
@@ -261,6 +295,57 @@ describe("US-QG-01 ESLint cache key and file", () => {
       assert.deepEqual(await lint(), ["no foo"]);
       assert.equal(fs.existsSync(cacheLocation), true);
       assert.deepEqual(await lint(), ["no foo"]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("FR-QG-12 (issue 1685): a run with another rule set does not answer from the cache of an earlier run", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "eslint-cache-"));
+    try {
+      writeKeyedApp(dir);
+      fs.writeFileSync(path.join(dir, "a.js"), "foo();\nbar();\n");
+      const plugin = {
+        rules: {
+          "no-foo": {
+            create: (context) => ({
+              Identifier(node) {
+                if (node.name === "foo") context.report({ node, message: "no foo" });
+              },
+            }),
+          },
+          "no-bar": {
+            create: (context) => ({
+              Identifier(node) {
+                if (node.name === "bar") context.report({ node, message: "no bar" });
+              },
+            }),
+          },
+        },
+      };
+      // One run as lintWithoutBaselines does it: the rule filter, the cache, the cache file of its rule set.
+      const lint = async (ruleIds) => {
+        const eslint = new ESLint({
+          cwd: dir,
+          overrideConfigFile: true,
+          overrideConfig: [
+            {
+              files: ["**/*.js"],
+              plugins: { t: plugin },
+              rules: { "t/no-foo": "error", "t/no-bar": "error" },
+            },
+          ],
+          ruleFilter: ({ ruleId }) => ruleIds.includes(ruleId),
+          cache: true,
+          cacheStrategy: "content",
+          cacheLocation: path.join(dir, eslintCacheFile("shared", dir, ruleIds)),
+        });
+        const [result] = await eslint.lintFiles(["a.js"]);
+        return result.messages.map((m) => m.message);
+      };
+      assert.deepEqual(await lint(["t/no-bar"]), ["no bar"]);
+      assert.deepEqual(await lint(["t/no-foo"]), ["no foo"]);
+      assert.deepEqual(await lint(["t/no-bar"]), ["no bar"]);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
