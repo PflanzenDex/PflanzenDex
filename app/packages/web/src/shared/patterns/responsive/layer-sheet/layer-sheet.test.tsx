@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { StrictMode } from "react";
 import {
   act,
   cleanup,
@@ -42,6 +43,17 @@ function Example({ at = "/" }: { at?: string }) {
       </LayerHost>
       <Back />
     </MemoryRouter>
+  );
+}
+
+/** A layer that is mounted only while the address names it, as the care profile of a plant is (US-QS-15, issue 1661). */
+function MountedOnlyLayer() {
+  const [params] = useSearchParams();
+  if (params.get("sheet") !== "karte") return null;
+  return (
+    <LayerSheet id="karte" title="Karte">
+      <p>Inhalt</p>
+    </LayerSheet>
   );
 }
 
@@ -146,6 +158,35 @@ describe("LayerSheet (US-QS-15)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Browser zurück", hidden: true }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  // The app runs under StrictMode, which mounts and unmounts each effect once more: the layer keeps the focus while open.
+  const mountedOnlyEscape = async (width: number, role: "dialog" | "complementary") => {
+    setViewportWidth(width);
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={["/start", "/"]} initialIndex={1}>
+          <LayerOpener id="karte">Karte</LayerOpener>
+          <MountedOnlyLayer />
+          <Back />
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    const opener = screen.getByRole("button", { name: "Karte" });
+    await userEvent.click(opener);
+    const layer = await screen.findByRole(role, { name: "Karte" });
+    await waitFor(() => expect(layer.contains(document.activeElement)).toBe(true));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(layer.isConnected).toBe(false));
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  };
+
+  it("US-QS-15 a layer mounted only while its address names it returns the focus to its opener, as a sheet (issue 1661)", async () => {
+    await mountedOnlyEscape(360, "dialog");
+  });
+
+  it("US-QS-15 a layer mounted only while its address names it returns the focus to its opener, as a pane (issue 1661)", async () => {
+    await mountedOnlyEscape(1100, "complementary");
   });
 
   it("US-QS-15 Escape closes the layer", async () => {
