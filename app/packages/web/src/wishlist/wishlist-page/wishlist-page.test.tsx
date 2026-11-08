@@ -5,7 +5,10 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { WishlistPage } from "./wishlist-page";
+
+afterEach(releaseSheetExits);
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 let at = "/";
@@ -336,6 +339,19 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
     expect(await screen.findByText("1. Neu")).toBeTruthy();
     expect(screen.queryByText(/Korbmarante \(Calathea orbifolia\)/)).toBeNull();
     await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
+  });
+});
+
+describe("US-QS-15 · F12 the wish layer leaves as it came", () => {
+  it("US-QS-15 · F12 a wish layer keeps its card while it slides out, then removes it", async () => {
+    holdSheetExit();
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
+    await screen.findByRole("heading", { name: "Korbmarante (Calathea orbifolia)", level: 2 });
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByText("Mag gleichmäßig feuchte Erde.")).toBeTruthy();
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Mag gleichmäßig feuchte Erde.")).toBeNull());
   });
 });
 

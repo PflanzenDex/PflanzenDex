@@ -92,6 +92,41 @@ describe("US-ACH-07 year in review", () => {
     expect(previous.parentElement?.className).toContain("flex-wrap");
   });
 
+  it("US-QS-07 switching the year keeps the old year on screen with the status until the new year is there", async () => {
+    const asked: { year: string | null; answer: (body: unknown) => void }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        (url) =>
+          new Promise<Response>((resolve) => {
+            asked.push({
+              year: new URL(String(url)).searchParams.get("year"),
+              answer: (body) => resolve(new Response(JSON.stringify(body), { status: 200 })),
+            });
+          }),
+      ),
+    );
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter initialEntries={["/?sheet=year"]}>
+          <YearInReviewSection api="http://api" token={token} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(asked).toHaveLength(1));
+    asked[0]?.answer(answer());
+    expect(await screen.findByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Vorjahr" }));
+    await waitFor(() => expect(asked).toHaveLength(2));
+    expect(asked[1]?.year).toBe(String(thisYear - 1));
+    // The old year stays on screen, and the status says that the new one is on its way.
+    expect(screen.getByRole("status").textContent).toBe("Wird geladen …");
+    expect(screen.getByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
+    asked[1]?.answer(answer({ year: thisYear - 1 }));
+    expect(await screen.findByText(`Jahresrückblick ${thisYear - 1}`)).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
   it("US-ACH-08 calm mode or a failed read shows nothing", async () => {
     show({ calmMode: true });
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());

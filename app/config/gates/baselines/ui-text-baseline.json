@@ -1,5 +1,4 @@
 {
-  "maxTotal": 1185,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -76,10 +75,6 @@
     {
       "file": "packages/web/src/achievements/overview/overview.tsx",
       "count": 18
-    },
-    {
-      "file": "packages/web/src/achievements/year-in-review/year-in-review.tsx",
-      "count": 13
     },
     {
       "file": "packages/web/src/ai/ai-section/ai-section.tsx",
@@ -380,10 +375,6 @@
     {
       "file": "packages/web/src/app/destinations/account-area/account-sections/account-sections.tsx",
       "count": 1
-    },
-    {
-      "file": "packages/web/src/app/destinations/collection-area/collection-area.tsx",
-      "count": 3
     },
     {
       "file": "packages/web/src/app/destinations/collection-area/hand-over-routes/hand-over-routes.tsx",
@@ -761,5 +752,6 @@
       "file": "packages/web/src/wishlist/wishlist-page/rows/wish-row/wish-row.tsx",
       "count": 4
     }
-  ]
+  ],
+  "maxTotal": 1169
 }

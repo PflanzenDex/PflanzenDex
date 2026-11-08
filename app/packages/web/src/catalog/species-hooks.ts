@@ -33,7 +33,9 @@ export function useSearch(api: string, token: Token, searchText: string) {
   return {
     hit: r.value?.species ?? [],
     more: r.value?.more ?? false,
-    loading: r.status === "pending" || term !== searchText,
+    // The hits of the previous term (`placeholder`) count as loading until the new ones are there (US-QS-07). Not
+    // `isFetching`: a background refetch of the term on screen must not flash the status.
+    loading: r.status === "pending" || r.placeholder || term !== searchText,
     error: r.error ?? null,
     offline: r.offline,
     retry: r.retry,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { UserManager, User } from "oidc-client-ts";
 import { setProfileTimeZone } from "../../shared/data";
 import { apiUrl, getAccount, type Account } from "../api/account-api";
-import { here, newManager, processReturn } from "../api/sign-in-client";
+import { here, hereState, newManager, processReturn } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
 import { MARKER, REGISTER, SILENT_TRIED, endSession, sessionActions } from "./session-actions";
@@ -53,8 +53,8 @@ async function registerReturn(
 // sign-in service cannot be reached, the welcome page says so. The attempt stays used up (SILENT_TRIED), so no retry follows.
 async function silentAttempt(mgr: UserManager): Promise<State> {
   try {
-    // The check returns to this address, so a scanned label survives the refused check (US-BES-17, #1619).
-    await mgr.signinRedirect({ prompt: "none", redirect_uri: here() });
+    // The check returns to this address, so a scanned label survives the refused check (US-BES-17, #1619), with its query (#1639).
+    await mgr.signinRedirect({ prompt: "none", redirect_uri: here(), state: hereState() });
     return { kind: "loading" };
   } catch {
     return { kind: "signedOut", error: t("signIn.unreachable") };

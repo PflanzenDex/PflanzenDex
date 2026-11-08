@@ -23,6 +23,51 @@ function viewSearch(search: string): string {
 }
 
 /**
+ * A layer or a form opened on the same view moves no focus, but Back to this view must find the control it opened from
+ * (DS-68): the id of the view it was opened on, else `null`.
+ */
+function layerOpener(nav: {
+  left: string | null;
+  key: string;
+  type: string;
+  keepFocus: boolean;
+  sameView: boolean;
+}): string | null {
+  const { left, key, type, keepFocus, sameView } = nav;
+  return sameView && left !== null && left !== key && !keepFocus && type !== "POP" ? left : null;
+}
+
+/**
+ * Moves the focus once the mover has loaded (a chunk of its own, DS-08). A key or tap before that is the person taking
+ * over, too (issue 1362). Returns the cleanup of the effect.
+ */
+function moveWhenLoaded(move: {
+  mover: Promise<Awaited<ReturnType<typeof load>>> | null;
+  left: string;
+  key: string;
+  type: string;
+  announce: () => void;
+}): () => void {
+  const { mover, left, key, type, announce } = move;
+  let stop = () => {};
+  let cancelled = false;
+  const takeOver = () => void (cancelled = true);
+  const watch = (change: "addEventListener" | "removeEventListener") => {
+    for (const input of ["keydown", "pointerdown"]) document[change](input, takeOver, true);
+  };
+  watch("addEventListener");
+  void mover?.then((m) => {
+    watch("removeEventListener");
+    if (!cancelled) stop = m.move(left, key, type, announce);
+  });
+  return () => {
+    cancelled = true;
+    watch("removeEventListener");
+    stop();
+  };
+}
+
+/**
  * Orientation on a view change (US-QS-09, WCAG 2.4.2, 2.4.3): sets the page title (`titleOf` returns it whole), and once the new view has
  * loaded moves the focus to its main heading and announces the title politely (through the shared announcer, US-QS-10). Going back restores the focus to the
  * control that opened the view. It never moves the focus on the first load, so Tab still reaches the skip link first
@@ -75,25 +120,17 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
     previous.current = key;
     view.current = here;
     viewPath.current = pathname;
+    const opener = layerOpener({ left, key, type, keepFocus, sameView });
+    if (opener !== null) void mover.current?.then((m) => m.remember(opener));
     if (left === null || left === key || keepFocus || sameView) return;
     if (arrival) return void announcer?.announce(title);
-    let stop = () => {};
-    let cancelled = false;
-    // The mover is a chunk of its own: a key or tap before it has loaded is the person taking over, too (issue 1362).
-    const takeOver = () => void (cancelled = true);
-    const watch = (change: "addEventListener" | "removeEventListener") => {
-      for (const input of ["keydown", "pointerdown"]) document[change](input, takeOver, true);
-    };
-    watch("addEventListener");
-    void mover.current?.then((m) => {
-      watch("removeEventListener");
-      if (!cancelled) stop = m.move(left, key, type, () => announcer?.announce(title));
+    return moveWhenLoaded({
+      mover: mover.current,
+      left,
+      key,
+      type,
+      announce: () => announcer?.announce(title),
     });
-    return () => {
-      cancelled = true;
-      watch("removeEventListener");
-      stop();
-    };
   }, [key, type, title, announcer, keepFocus, here]);
 
   return null;

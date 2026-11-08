@@ -17,13 +17,22 @@ function describe(el: Element | null): Opener | null {
 /** Remembers the control that had the focus, so going back can find it again; `dispose` stops it. */
 export function createFocusMover() {
   let last: Opener | null = null;
+  // The last control outside a dialog: a layer takes the focus when it opens, so this is what opened it.
+  let outside: Opener | null = null;
   const openers = new Map<string, Opener>();
   const remember = (e: FocusEvent) => {
-    last = describe(e.target as Element) ?? last;
+    const el = e.target as Element;
+    last = describe(el) ?? last;
+    if (!el.closest?.('[role="dialog"]')) outside = describe(el) ?? outside;
   };
   document.addEventListener("focusin", remember);
   return {
     dispose: () => document.removeEventListener("focusin", remember),
+    /** Remembers the control the person had the focus on, for the view `left`, without moving the focus (a layer opened on the same view). */
+    remember(left: string) {
+      const opener = outside ?? last;
+      if (opener) openers.set(left, opener);
+    },
     /**
      * Moves the focus once the view `key` has loaded: back (`POP`) to the control that opened it, otherwise to its
      * main heading, and falls back to the main region. `done` runs after. The result stops the wait.

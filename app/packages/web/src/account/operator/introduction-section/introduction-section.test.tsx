@@ -71,4 +71,24 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
+
+  it("US-QS-15 the figures take one column beside a pane and two from the width of their layer, not the window (issue 1640)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        json(200, {
+          ...base,
+          medianSecondsToFirstPlant: { known: true, value: 75, targetMet: true },
+          withoutPlantPercent: { known: true, value: 40, targetMet: false },
+        }),
+      ),
+    );
+    render(<IntroductionSection api="http://api" token={async () => "tok"} />);
+    await screen.findByText("75 Sekunden · Ziel: höchstens 90 Sekunden · erreicht");
+    const region = screen.getByRole("region", { name: "Einstieg" });
+    const list = region.querySelector("dl") as HTMLElement;
+    expect(region.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toContain("@lg:grid-cols-[auto_1fr]");
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
 });

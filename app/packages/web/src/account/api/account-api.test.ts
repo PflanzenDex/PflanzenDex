@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { signOutEverywhere, getAccount, oidcSettings, returnAddress } from "./account-api";
+import {
+  addressFromState,
+  signOutEverywhere,
+  getAccount,
+  oidcSettings,
+  returnAddress,
+  returnState,
+} from "./account-api";
 
 describe("OIDC settings (US-ACC-01)", () => {
   it("have defaults for local development (make auth-up)", () => {
@@ -43,6 +50,48 @@ describe("US-BES-17 the return address after the sign-in (#1619)", () => {
 
   it("US-BES-17 the query and the hash are not kept, the callback adds its own", () => {
     expect(returnAddress(origin, "/label/abc?code=x&state=y#top")).toBe(`${origin}/label/abc`);
+  });
+});
+
+describe("US-BES-17 the sign-in state keeps the query of the address (#1639)", () => {
+  const origin = "http://localhost:5173";
+
+  it("US-BES-17 the state is the path with its query, relative to the origin", () => {
+    expect(returnState(origin, "/collection", "?view=plants")).toBe("/collection?view=plants");
+    expect(returnState(origin, "/", "")).toBe("/");
+  });
+
+  it("US-BES-17 a state for a path that leads to another origin is the start page", () => {
+    expect(returnState(origin, "//evil.example/x", "?y=1")).toBe("/");
+  });
+
+  it("US-BES-17 the address from the state keeps the query of a layer", () => {
+    expect(addressFromState(origin, "/today?sheet=hints&x=1")).toBe("/today?sheet=hints&x=1");
+    expect(addressFromState(origin, "/")).toBe("/");
+  });
+
+  it("US-BES-17 the address from the state drops the parameters of the sign-in", () => {
+    expect(
+      addressFromState(
+        origin,
+        "/collection?view=plants&code=c&state=s&session_state=x&iss=i&error=e&error_description=d",
+      ),
+    ).toBe("/collection?view=plants");
+  });
+
+  it.each<[string, string]>([
+    ["a host after two slashes", "//evil.example/x"],
+    ["a host after a slash and a backslash", "/\\evil.example/x"],
+    ["an absolute address", "https://evil.example/x"],
+    ["a script address", "javascript:alert(1)"],
+    ["a path without a leading slash", "collection?view=plants"],
+  ])("US-BES-17 a state with %s is ignored", (_label, state) => {
+    expect(addressFromState(origin, state)).toBeUndefined();
+  });
+
+  it("US-BES-17 a state that is not text is ignored", () => {
+    expect(addressFromState(origin, undefined)).toBeUndefined();
+    expect(addressFromState(origin, { path: "/collection" })).toBeUndefined();
   });
 });
 

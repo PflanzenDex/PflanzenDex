@@ -1,12 +1,23 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
+import { useExitValue } from "./use-layer";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -14,6 +25,7 @@ beforeAll(() => {
 });
 
 afterEach(cleanup);
+afterEach(releaseSheetExits);
 
 function Back() {
   const navigate = useNavigate();
@@ -31,6 +43,17 @@ function Example({ at = "/" }: { at?: string }) {
       </LayerHost>
       <Back />
     </MemoryRouter>
+  );
+}
+
+/** A layer that is mounted only while the address names it, as the care profile of a plant is (US-QS-15, issue 1661). */
+function MountedOnlyLayer() {
+  const [params] = useSearchParams();
+  if (params.get("sheet") !== "karte") return null;
+  return (
+    <LayerSheet id="karte" title="Karte">
+      <p>Inhalt</p>
+    </LayerSheet>
   );
 }
 
@@ -80,6 +103,44 @@ describe("LayerSheet (US-QS-15)", () => {
     expect(screen.queryByText("Inhalt")).toBeNull();
   });
 
+  it("US-QS-15 · F7 a sheet leaves as it came: its body stays while it slides out, then it is removed", async () => {
+    setViewportWidth(360);
+    holdSheetExit();
+    render(<Example at="/?sheet=licht" />);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    await userEvent.keyboard("{Escape}");
+    // The sheet collapses to its title only when its body leaves at once (F7); the body goes with the exit.
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
+    expect(document.querySelector("[data-layer-body]")).toBeNull();
+  });
+
+  it("US-QS-15 · F7 a sheet that closes by Back keeps its body for the exit too", async () => {
+    setViewportWidth(360);
+    holdSheetExit();
+    render(<Example at="/?sheet=licht" />);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    fireEvent.click(screen.getByRole("button", { name: "Browser zurück", hidden: true }));
+    await waitFor(() => expect(screen.getByText("Inhalt")).toBeTruthy());
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
+  });
+
+  it("US-QS-15 the last value of a layer stays while the address no longer names it, so its exit has content", () => {
+    const { result, rerender } = renderHook(
+      ({ value }: { value: string | null }) => useExitValue(value),
+      { initialProps: { value: null as string | null } },
+    );
+    expect(result.current).toBeUndefined();
+    rerender({ value: "plant-e1" });
+    expect(result.current).toBe("plant-e1");
+    rerender({ value: null });
+    expect(result.current).toBe("plant-e1");
+    rerender({ value: "plant-e2" });
+    expect(result.current).toBe("plant-e2");
+  });
+
   it("US-QS-15 an address with ?sheet= opens the layer after reload or copied link", async () => {
     setViewportWidth(360);
     render(<Example at="/?sheet=licht" />);
@@ -97,6 +158,35 @@ describe("LayerSheet (US-QS-15)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Browser zurück", hidden: true }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  // The app runs under StrictMode, which mounts and unmounts each effect once more: the layer keeps the focus while open.
+  const mountedOnlyEscape = async (width: number, role: "dialog" | "complementary") => {
+    setViewportWidth(width);
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={["/start", "/"]} initialIndex={1}>
+          <LayerOpener id="karte">Karte</LayerOpener>
+          <MountedOnlyLayer />
+          <Back />
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    const opener = screen.getByRole("button", { name: "Karte" });
+    await userEvent.click(opener);
+    const layer = await screen.findByRole(role, { name: "Karte" });
+    await waitFor(() => expect(layer.contains(document.activeElement)).toBe(true));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(layer.isConnected).toBe(false));
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  };
+
+  it("US-QS-15 a layer mounted only while its address names it returns the focus to its opener, as a sheet (issue 1661)", async () => {
+    await mountedOnlyEscape(360, "dialog");
+  });
+
+  it("US-QS-15 a layer mounted only while its address names it returns the focus to its opener, as a pane (issue 1661)", async () => {
+    await mountedOnlyEscape(1100, "complementary");
   });
 
   it("US-QS-15 Escape closes the layer", async () => {

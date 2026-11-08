@@ -1,6 +1,10 @@
 import { useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import {
+  LayerSheet,
+  useExitValue,
+  useLayer,
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -61,10 +65,7 @@ function ArchiveLayer(props: LayerProps) {
           closeLayer();
           props.onRestore(e);
         }}
-        onCatchDate={(e) => {
-          closeLayer();
-          props.onArchivedCatchDate(e);
-        }}
+        onCatchDate={(e) => props.onArchivedCatchDate(e)}
       />
     </LayerSheet>
   );
@@ -88,6 +89,8 @@ export function PlantLayers(props: LayerProps) {
   const profile = plantOpenAt(card, careProfileLayerId, sheet);
   const notes = plantOpenAt(card, notesLayerId, sheet);
   const signs = plantOpenAt(card, signsLayerId, sheet);
+  // The plant layer keeps its last plant while it slides out: the address has lost it at once (US-QS-15, F12).
+  const shownPlant = useExitValue(plant);
   // A plant that is being read, or could not be read, has its layer with that state (P-10), never a silent nothing.
   const unread = plantIdOf(sheet) !== undefined && card === undefined;
   return (
@@ -112,9 +115,9 @@ export function PlantLayers(props: LayerProps) {
           </RequestState>
         </LayerSheet>
       ) : null}
-      {plant ? (
+      {shownPlant ? (
         <PlantLayer
-          card={plant}
+          card={shownPlant}
           photoAccess={props.photoAccess}
           slots={props.slots}
           locations={props.locations}

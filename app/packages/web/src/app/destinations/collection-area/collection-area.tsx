@@ -1,16 +1,9 @@
 import { Suspense, useMemo, useState, type ReactNode } from "react";
-import type { Species, Specimen } from "@pflanzendex/core";
-import { CollectionPage, DifficultyPage, PlantsViewLayer, ViewLayer } from "@/collection";
-import { LightPage } from "@/light";
-import { CarePhasesPage, MeasurePage } from "@/care";
-import { PokedexPage } from "@/pokedex";
-import { WishlistPage, type WishToPlant } from "@/wishlist";
-import { EquipmentPage } from "@/equipment";
+import { PlantsViewLayer, UnsavedInputDialog, ViewLayer, usePlantForm } from "@/collection";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
-import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import {
   PLANT_GROUPS,
   SPECIES_SORTS,
@@ -20,8 +13,10 @@ import {
   useSpeciesSort,
   type PlantGroup,
 } from "../../sammlung-view";
-
-type Token = () => Promise<string | undefined>;
+import { ModeBody, type AreaProps } from "./wiring/area-modes/area-modes";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./collection-area.de.json";
+import type { FormAddress } from "@/collection";
 
 /** What the shown mode reports to the area: its caption and whether it is a full view with its own heading. */
 function useHostState() {
@@ -35,56 +30,50 @@ function useHostState() {
  * The destination "Sammlung" (US-QS-14): a switch between the plants (`collection`, with measuring from `care`), the
  * species (`pokedex`, or the comparison by difficulty from `collection`) and the wishlist (`wishlist`). The plants can be
  * grouped by care phase (`care`) or by location, and "Standorte verwalten" opens the locations and light zones (`light`)
- * as a view of its own with a way back. The app wires
- * the modules (they do not know each other); every mode is a lazy part that loads only when it is chosen. The specimen
- * currently being measured is remembered by this area (US-WAC-01). A form of the collection or the measure view
- * replaces the title area, because it has its own heading and a way back.
+ * as a view of its own with a way back. The app wires the modules (they do not know each other); every mode is a lazy
+ * part that loads only when it is chosen. The measure view and the forms of a plant are full views with an address
+ * (US-QS-15): Back closes them, a reload opens them again, and typed input is asked about before Back leaves it. A form
+ * of the collection or the measure view replaces the title area, because it has its own heading and a way back. Every
+ * mode is one screen (US-QS-19, issue 1029, US-QS-15): its content takes the free height and scrolls inside the frame.
  */
-export function CollectionArea(props: {
-  api: string;
-  token: Token;
-  newSpecies: Species | null;
-  onSpeciesChoose: () => void;
-  onAdd?: () => void;
-  onCompleted: (specimen: Specimen) => void;
-  onOpenSpecies?: (id: string) => void;
-  /** Starts the way from a bought wish to its specimen (US-WUN-05); the app wires it. */
-  onCreateSpecimen?: (wish: WishToPlant) => void;
-  /** The calm hint at the list of plants (US-ONB-07); the app wires it, because the shell is not imported here. */
-  renderHint?: (applicable: readonly string[]) => ReactNode;
-}) {
+export function CollectionArea(props: AreaProps) {
   const { view: chosen, choose } = useSammlungView();
   const { sort, choose: chooseSort } = useSpeciesSort();
   const { group, choose: chooseGroup } = usePlantGroup();
   const manage = useManage();
   // A species handed over from the catalog is created in the plants, whatever mode was remembered (US-BES-02).
   const view = props.newSpecies ? "plants" : chosen;
-  const [measure, setMeasure] = useState<{ id: string; name: string } | null>(null);
+  const plantForm = usePlantForm(props.api, props.token, view === "plants");
+  const { form, measureOpen } = plantForm;
   const { caption, fullView, host } = useHostState();
   const managing = view === "plants" && manage.open && !props.newSpecies;
-  const own = view === "plants" && (measure !== null || fullView || managing);
+  const own = view === "plants" && (form.kind !== null || fullView || managing);
   const plantsOnScreen = view === "plants" && !own;
-  // One screen (US-QS-19, issue 1029, US-QS-15): every mode of the area is one frame, the list, a form and the
-  // measure page alike. Their content takes the free height below the header and scrolls inside the frame at a
-  // large text size.
   return (
     <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {own ? null : <AreaHeader view={view} caption={caption} onChoose={choose} />}
-        <Suspense fallback={<PageSkeleton />}>
-          <ModeBody
-            {...props}
-            view={view}
-            sort={sort}
-            group={group}
-            managing={managing}
-            onCloseManage={() => manage.setOpen(false)}
-            onOpenManage={() => manage.setOpen(true)}
-            host={host}
-            measure={measure}
-            setMeasure={setMeasure}
-          />
-        </Suspense>
+        <FormFrame form={form}>
+          <Suspense fallback={<PageSkeleton />}>
+            <ModeBody
+              {...props}
+              view={view}
+              sort={sort}
+              group={group}
+              managing={managing}
+              onCloseManage={() => manage.setOpen(false)}
+              onOpenManage={() => manage.setOpen(true)}
+              host={host}
+              measure={plantForm.measure}
+              measureOpen={measureOpen}
+              openMeasure={plantForm.openMeasure}
+              leaveMeasure={plantForm.leaveMeasure}
+              measureSaved={plantForm.measureSaved}
+              form={form}
+              formPlant={plantForm.formPlant}
+            />
+          </Suspense>
+        </FormFrame>
       </div>
       {plantsOnScreen ? (
         <GroupLayer group={group} onGroup={chooseGroup} onManage={() => manage.setOpen(true)} />
@@ -94,14 +83,41 @@ export function CollectionArea(props: {
           group={sort}
           options={SPECIES_SORTS}
           onGroup={chooseSort}
-          label="Anordnung der Arten"
+          label={t("species.order")}
         />
       ) : null}
+      <UnsavedInputDialog open={form.asking} onKeep={form.keepEditing} onDiscard={form.discard} />
     </LayerHost>
   );
 }
 
+/**
+ * The notice of the last close of a form, and the frame in which input is noted for Back: typed text or a picked file
+ * asks before Back leaves the form (US-QS-15).
+ */
+function FormFrame(p: { form: FormAddress; children: ReactNode }) {
+  const { form } = p;
+  return (
+    <>
+      {form.notice ? (
+        <Banner variant="warning" className="mb-3">
+          {form.notice}
+        </Banner>
+      ) : null}
+      <div
+        className="flex min-h-0 min-w-0 flex-1 flex-col"
+        onInput={form.typed}
+        onChange={form.typed}
+      >
+        {p.children}
+      </div>
+    </>
+  );
+}
+
 /** The layer "Ansicht" of the plants, loaded with the plants (US-QS-19). */
+const t = texts(table);
+
 function GroupLayer(props: {
   group: PlantGroup;
   onGroup: (g: PlantGroup) => void;
@@ -109,83 +125,7 @@ function GroupLayer(props: {
 }) {
   return (
     <Suspense fallback={null}>
-      <PlantsViewLayer options={PLANT_GROUPS} label="Gruppierung der Pflanzen" {...props} />
+      <PlantsViewLayer options={PLANT_GROUPS} label={t("plants.groups")} {...props} />
     </Suspense>
-  );
-}
-
-type ModeProps = Parameters<typeof CollectionArea>[0] & {
-  view: "plants" | "species" | "wishlist" | "equipment";
-  sort: "pokedex" | "difficulty";
-  group: PlantGroup;
-  managing: boolean;
-  onCloseManage: () => void;
-  onOpenManage: () => void;
-  host: { onCaption: (t: string | null) => void; onFullView: (open: boolean) => void };
-  measure: { id: string; name: string } | null;
-  setMeasure: (m: { id: string; name: string } | null) => void;
-};
-
-function ModeBody(p: ModeProps) {
-  const { api, token, host } = p;
-  if (p.view === "equipment") return <EquipmentPage api={api} token={token} host={host} />;
-  if (p.view === "wishlist")
-    return (
-      <WishlistPage
-        api={api}
-        token={token}
-        host={host}
-        {...(p.onCreateSpecimen ? { onCreateSpecimen: p.onCreateSpecimen } : {})}
-      />
-    );
-  if (p.view === "species")
-    return p.sort === "difficulty" ? (
-      <DifficultyPage api={api} token={token} host={host} />
-    ) : (
-      <PokedexPage
-        api={api}
-        token={token}
-        host={host}
-        {...(p.onOpenSpecies ? { onOpenSpecies: p.onOpenSpecies } : {})}
-      />
-    );
-  if (p.managing)
-    return (
-      <FullView
-        headingId="light-title"
-        title="Standorte und Lichtzonen"
-        back={{ label: "Zurück zur Sammlung", onBack: p.onCloseManage }}
-      >
-        <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} hosted />
-      </FullView>
-    );
-  if (p.measure)
-    return (
-      <MeasurePage api={api} token={token} specimen={p.measure} onBack={() => p.setMeasure(null)} />
-    );
-  if (p.group === "phase" && !p.newSpecies)
-    return <CarePhasesPage api={api} token={token} host={host} />;
-  return <PlantsMode {...p} />;
-}
-
-/** The plants themselves, with the parts of other modules wired into the plant layer (US-QS-23). */
-function PlantsMode(p: ModeProps) {
-  const { api, token, host } = p;
-  const slots = plantSlots(api, token);
-  return (
-    <CollectionPage
-      api={api}
-      token={token}
-      newSpecies={p.newSpecies}
-      onSpeciesChoose={p.onSpeciesChoose}
-      {...(p.onAdd ? { onAdd: p.onAdd } : {})}
-      onCompleted={p.onCompleted}
-      host={host}
-      {...(p.renderHint ? { renderHint: p.renderHint } : {})}
-      {...(p.group === "location" ? { groupBy: "location" as const } : {})}
-      onMeasure={p.setMeasure}
-      onManage={p.onOpenManage}
-      plantSlots={slots}
-    />
   );
 }
