@@ -15,6 +15,10 @@
   },
   "crap": { "max": 450 },
   "bundle": { "initialJsGzipBytes": 140000 },
+  "layoutShift": {
+    "_comment": "US-QS-14, DS-52 (issue 1697): the cumulative layout shift of a cold load (one-screen project, judge.shift.ts) per route and layer at 360x640, 390x844 and 1280x800. A starting value (assumption), not measured: the baseline layout-shift-baseline.json lists the screens above it, and a listed one may get worse by at most 0.02. Only tightened; a loosening needs a reason in its PR (US-QG-07).",
+    "maxCls": 0.1
+  },
   "lighthouse": {
     "_comment": "QG-U1 / FR-QG-09 (issue 1136): medians of 3 mobile Lighthouse runs on the start page must stay within these limits, read by tools/check/release/check-lighthouse-summary.mjs. Starting values (assumption) with slack over the CI measurement of 2026-11-02 (docs/records/test-logs/issue-1136-lighthouse-baseline.md: performance 93, accessibility 100, best practices 96, SEO 82, LCP 2.74-2.79 s, TBT 0-4 ms, CLS 0.000); TBT 200 ms and CLS 0.1 are the 'good' limits of web.dev. Only tightened; a loosening needs a reason in its PR (US-QG-07).",
     "minScores": { "performance": 88, "accessibility": 95, "best-practices": 90, "seo": 80 },

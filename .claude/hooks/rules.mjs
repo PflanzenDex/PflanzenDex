@@ -37,6 +37,8 @@ const GATE_FILES = [
   // Loosening any of them turns a red run green.
   /^app\/packages\/e2e\/support\/display\/one-screen\/baseline\.ts$/,
   /^app\/packages\/e2e\/support\/display\/one-screen\/judge\.ts$/,
+  // The layout-shift judgement (US-QS-14, DS-52, issue 1697): the cumulative shift, its limit and the baseline comparison.
+  /^app\/packages\/e2e\/support\/display\/one-screen\/judge\.shift\.ts$/,
   /^app\/packages\/e2e\/support\/display\/a11y\/findings\.ts$/,
   /^app\/packages\/e2e\/support\/display\/a11y\/axe-findings\.ts$/,
   // check-changelog.mjs imports its logic from this file (US-QG-07).

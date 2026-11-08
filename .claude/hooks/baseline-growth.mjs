@@ -42,6 +42,14 @@ export const BASELINE_FORMATS = {
       judged: ["page", "inner", "pageX", "innerX", "cap"],
     },
   },
+  "layout-shift-baseline.json": {
+    limits: ["maxEntries"],
+    entries: {
+      key: ["screen", "size"],
+      fields: { screen: TEXT, size: TEXT, cls: NUMBER },
+      judged: ["cls"],
+    },
+  },
   "page-snapshots-baseline.json": {
     limits: ["maxEntries"],
     entries: { key: ["file"], fields: { file: TEXT }, judged: [] },

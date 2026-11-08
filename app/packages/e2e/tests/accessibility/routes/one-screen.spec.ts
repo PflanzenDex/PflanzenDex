@@ -12,6 +12,7 @@ import {
   type Result,
 } from "../../../support/display/one-screen/judge";
 import { sidewaysSelfTests } from "./one-screen-sideways";
+import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
 import {
   buildBaseline,
   judgeBaseline,
@@ -187,3 +188,7 @@ test("QG-U8 self-test: a screen that lands on Heute instead of its path is named
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
   expect(lostScreen("http://x/today?sheet=plan", "http://x/today")).toBeNull();
 });
+
+shiftSelfTests();
+shiftJudgeSelfTests();
+shiftTests(SELECTED, API, WRITE);

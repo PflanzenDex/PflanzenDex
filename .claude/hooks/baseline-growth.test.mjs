@@ -99,6 +99,59 @@ const CASES = {
       "a lowered maxEntries": { maxEntries: 1, entries: [ONE_P, ONE_Q] },
     },
   },
+  "layout-shift-baseline.json": {
+    base: {
+      maxEntries: 2,
+      entries: [
+        { screen: "today", size: "360x640", cls: 0.12 },
+        { screen: "discover", size: "1280x800", cls: 0.2 },
+      ],
+    },
+    grow: {
+      "a new entry": {
+        maxEntries: 3,
+        entries: [
+          { screen: "today", size: "360x640", cls: 0.12 },
+          { screen: "discover", size: "1280x800", cls: 0.2 },
+          { screen: "welcome", size: "390x844", cls: 0.11 },
+        ],
+      },
+      "a higher cls": {
+        maxEntries: 2,
+        entries: [
+          { screen: "today", size: "360x640", cls: 0.13 },
+          { screen: "discover", size: "1280x800", cls: 0.2 },
+        ],
+      },
+      "a raised maxEntries": {
+        maxEntries: 3,
+        entries: [
+          { screen: "today", size: "360x640", cls: 0.12 },
+          { screen: "discover", size: "1280x800", cls: 0.2 },
+        ],
+      },
+    },
+    shrink: {
+      "a removed entry": {
+        maxEntries: 1,
+        entries: [{ screen: "today", size: "360x640", cls: 0.12 }],
+      },
+      "a lower cls": {
+        maxEntries: 2,
+        entries: [
+          { screen: "today", size: "360x640", cls: 0.11 },
+          { screen: "discover", size: "1280x800", cls: 0.2 },
+        ],
+      },
+      "a lowered maxEntries": {
+        maxEntries: 1,
+        entries: [
+          { screen: "today", size: "360x640", cls: 0.12 },
+          { screen: "discover", size: "1280x800", cls: 0.2 },
+        ],
+      },
+    },
+  },
   "page-snapshots-baseline.json": {
     base: {
       maxEntries: 2,
@@ -229,9 +282,9 @@ const CASES = {
   },
 };
 
-test("US-QG-07: the nine baseline files each have a growth format, and the formats name exactly those files", () => {
+test("US-QG-07: the ten baseline files each have a growth format, and the formats name exactly those files", () => {
   assert.deepEqual(Object.keys(BASELINE_FORMATS).sort(), Object.keys(CASES).sort());
-  assert.equal(Object.keys(BASELINE_FORMATS).length, 9);
+  assert.equal(Object.keys(BASELINE_FORMATS).length, 10);
 });
 
 test("US-QG-07: isBaselineFile covers the whole baseline folder and nothing else", () => {
