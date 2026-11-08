@@ -232,3 +232,46 @@ describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions wi
     expect(screen.queryByRole("button", { name: "Vorschläge" })).toBeNull();
   });
 });
+
+/** Holds the answer of one path until the returned function is called (US-QS-14 issue 1697). */
+function holdPath(path: string): () => void {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((done) => {
+    release = done;
+  });
+  const fetchFn = vi.mocked(fetch);
+  const base = fetchFn.getMockImplementation() as typeof fetch;
+  fetchFn.mockImplementation(async (url, init) => {
+    if (new URL(String(url)).pathname === path) await gate;
+    return base(url, init);
+  });
+  return release;
+}
+
+/** The loading statuses of the page: the status texts that say a part is loading (DS-56), not the messages. */
+const loadingStatuses = () =>
+  screen.queryAllByRole("status").filter((s) => /geladen/.test(s.textContent ?? ""));
+
+describe("US-QS-14 issue 1697 · Entdecken shows its shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow suggestions load shows one card skeleton with its loading text, then the card once", async () => {
+    const release = holdPath("/discover/suggestions");
+    renderAt("/discover");
+    await waitFor(() => expect(loadingStatuses()).toHaveLength(1));
+    expect(loadingStatuses()[0]?.textContent).toContain("Vorschläge werden geladen …");
+    release();
+    await suggestionsShown();
+    expect(loadingStatuses()).toHaveLength(0);
+  });
+
+  it("US-QS-14 issue 1697 · a fast suggestions load shows no loading status at all", async () => {
+    renderAt("/discover");
+    await suggestionsShown();
+    expect(loadingStatuses()).toHaveLength(0);
+  });
+
+  it("US-QS-14 issue 1697 · the catalog mode of a fast load shows no loading status at all", async () => {
+    renderAt("/discover?view=catalog");
+    await catalogShown();
+    expect(loadingStatuses()).toHaveLength(0);
+  });
+});

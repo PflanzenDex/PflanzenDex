@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ExchangeOffer, OfferType } from "@pflanzendex/core";
+import type { ExchangeOffer } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
@@ -19,40 +17,14 @@ import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { RequestForm } from "./request-form/request-form";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
+import { FriendOffersSkeleton } from "./friend-offers.skeleton";
+import { Filters } from "./filters/filters";
 
 const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
 const title = (o: ExchangeOffer): string => o.speciesGerman ?? o.speciesLatin ?? "Art unbekannt";
-
-function Filters(props: { value: ExchangeFilters; onChange: (v: ExchangeFilters) => void }) {
-  const { value } = props;
-  return (
-    <div className="flex flex-wrap items-center gap-x-3">
-      <label className="grid gap-1 text-sm font-medium">
-        <span className="sr-only">{t("friends.typeLabel")}</span>
-        <Select
-          value={value.type}
-          onChange={(e) => props.onChange({ ...value, type: e.target.value as OfferType | "" })}
-        >
-          <option value="">{t("friends.allTypes")}</option>
-          {(Object.keys(TYPE_TEXT) as OfferType[]).map((t) => (
-            <option key={t} value={t}>
-              {TYPE_TEXT[t]}
-            </option>
-          ))}
-        </Select>
-      </label>
-      <Checkbox
-        checked={value.lack}
-        onChange={(e) => props.onChange({ ...value, lack: e.target.checked })}
-      >
-        {t("friends.lackFilter")}
-      </Checkbox>
-    </div>
-  );
-}
 
 function Card(props: {
   o: ExchangeOffer;
@@ -186,7 +158,13 @@ export function FriendOffers(props: { api: string; token: Token }) {
         {t("friends.title")}
       </h2>
       <Filters value={filters} onChange={setFilters} />
-      <LoadFrame queryKey={key} token={token} load={load} loadingText={t("friends.loading")}>
+      <LoadFrame
+        queryKey={key}
+        token={token}
+        load={load}
+        loadingText={t("friends.loading")}
+        loadingFallback={<FriendOffersSkeleton label={t("friends.loading")} />}
+      >
         {(data: FriendOffersData) => (
           <Offers data={data} api={api} token={token} onRequested={reload} />
         )}

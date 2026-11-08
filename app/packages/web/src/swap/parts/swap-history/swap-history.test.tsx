@@ -4,6 +4,9 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapHistory } from "./swap-history";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../swap.de.json";
+import { SwapHistorySkeleton } from "./swap-history.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -108,4 +111,12 @@ describe("US-SOZ-13 swap history", () => {
     expect(await screen.findByText("Übergeben")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Tauschverlauf" })).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the swap history show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <SwapHistorySkeleton label={table["history.loading"]} />,
+      table["history.loading"],
+    ));
 });

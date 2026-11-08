@@ -10,6 +10,7 @@ import {
 import { useSession, type State } from "../account";
 import { ImportPage, PotLabelPage, PrintLabelsPage } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
+import { anniversaryTile } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
 import {
   FunctionOverview,
@@ -20,7 +21,8 @@ import {
   useUnlocks,
 } from "./flows";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
-import { TodaySkeleton } from "@/today";
+import { routeFallbackOf } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
+import { useSuggestionsOn } from "./destinations/discover-area/discover-view";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 import type { DrawTile, TodayTile } from "@/app/destinations/today-area/today-area";
 import {
@@ -85,6 +87,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
   const social = useFeature("social");
   const { api, token } = props;
   const tiles: TodayTile[] = [
+    anniversaryTile({ api, token, onOpen: () => props.onOpen("collection") }),
     ...(social
       ? [
           {
@@ -145,14 +148,14 @@ export function AppRoutes(props: {
   const roles = rolesOf(account, account.features?.social !== false && keeperSocial);
   const social = roles.friends !== false;
   const achievements = useFeature("achievement_views");
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const locks = useLockPages(api, s.token);
+  const suggestionsOn = useSuggestionsOn();
   return (
     <RouteBoundary
       resetKey={pathname}
       heading={destinationHeading(pathname)}
-      /* "Heute" has the shape of its page, so the route's skeleton and the page's parts show one shape (issue 1697). */
-      fallback={pathname === PATHS.today ? <TodaySkeleton /> : undefined}
+      fallback={routeFallbackOf(pathname, search, suggestionsOn)}
     >
       {achievements ? <AchievementNewsBanner api={api} token={s.token} /> : null}
       <Routes>

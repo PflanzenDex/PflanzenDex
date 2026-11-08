@@ -3,6 +3,11 @@ import { useCallback } from "react";
 import { call, currentTimeZone, LoadFrame, type Response } from "@/shared/data";
 import { CollectorCard } from "../collector-card/collector-card";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./collector-cards.de.json";
+import { CollectorCardsSkeleton } from "./collector-cards.skeleton";
+
+const ui = texts(table);
 
 /** Loads the collector cards (US-POK-01): the taxonomy tree with the derived ownership, in the zone of the profile. */
 async function loadCards(api: string, token: string): Promise<Response<Card[]>> {
@@ -32,7 +37,8 @@ export function CollectorCards(props: { api: string; token: () => Promise<string
         queryKey={["pokedex", "cards"]}
         token={token}
         load={load}
-        loadingText="Sammlerkarten werden geladen …"
+        loadingText={ui("loading")}
+        loadingFallback={<CollectorCardsSkeleton label={ui("loading")} />}
         empty={{
           isEmpty: (cards: Card[]) => cards.length === 0,
           title: "Noch keine Sammlerkarten.",

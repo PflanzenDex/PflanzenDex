@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
-import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./unlock-page.de.json";
+import { UnlockSkeleton } from "./unlock-page.skeleton";
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useInvalidate, useWriteAction } from "../../../../shared/data";
 import {
@@ -20,6 +22,8 @@ import {
 } from "../model/unlock-texts";
 import { UNLOCKS_KEY, useUnlocks } from "../model/unlocks/unlocks";
 
+const ui = texts(table);
+
 type Token = () => Promise<string | undefined>;
 type Entry = NonNullable<ReturnType<typeof useUnlocks>["entries"][number]>;
 
@@ -31,8 +35,7 @@ const ALERT =
 /** Why the page cannot show the function yet: still loading, failed (with retry, P-10) or unknown (leads on, P-09). */
 function Unavailable(props: { name: string; status: "pending" | "error" | "unknown" }) {
   const { retry, errorCode } = useUnlocks();
-  if (props.status === "pending")
-    return <PlantLoader label="Funktion wird geladen …" size="lg" className="mx-auto my-8 flex" />;
+  if (props.status === "pending") return <UnlockSkeleton label={ui("loading")} />;
   if (props.status === "error")
     return (
       <section aria-labelledby="unlock-title" data-fit-screen="" className={CARD}>

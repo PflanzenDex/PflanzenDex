@@ -9,6 +9,9 @@ import { LockedRows } from "../locked-rows/locked-rows";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LockedLayer, LockedTile } from "../locked-rows/collapsed-rows/collapsed-rows";
 import { UnlockPage } from "./unlock-page";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./unlock-page.de.json";
+import { UnlockSkeleton } from "./unlock-page.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -365,4 +368,9 @@ describe("US-QS-15 the unlock pages are one screen (DS-61, NFR-13)", () => {
     const failed = screen.getByRole("heading", { level: 1 });
     expect(failed.closest("section")?.hasAttribute("data-fit-screen")).toBe(true);
   });
+});
+
+describe("US-QS-14 issue 1697 · a locked function show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<UnlockSkeleton label={table["loading"]} />, table["loading"]));
 });

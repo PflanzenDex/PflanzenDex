@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
 import { Button } from "@/shared/ui/button/button";
-import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
@@ -14,6 +13,7 @@ import { functionEmpty, functionName } from "../../unlock/model/unlock-texts";
 import { UNLOCKS_KEY, useUnlocks } from "../../unlock/model/unlocks/unlocks";
 import table from "./function-overview.de.json";
 import { FunctionLayer, overviewState, STATE_WORD } from "./function-layer/function-layer";
+import { FunctionOverviewSkeleton } from "./function-overview.skeleton";
 
 const t = texts(table);
 type Token = () => Promise<string | undefined>;
@@ -81,8 +81,7 @@ function Overview(props: { api: string; token: Token }) {
   const size = useOverviewPageSize();
   const unlocks = useUnlocks();
   const { write, unlock, keeper } = useOverviewWrites(props.api, props.token);
-  if (unlocks.status === "pending")
-    return <PlantLoader label={t("loading")} size="lg" className="mx-auto my-8 flex" />;
+  if (unlocks.status === "pending") return <FunctionOverviewSkeleton label={t("loading")} />;
   if (unlocks.status === "error")
     return <FailedOverview code={unlocks.errorCode} retry={unlocks.retry} />;
   const entries = overviewEntries(unlocks.entries);

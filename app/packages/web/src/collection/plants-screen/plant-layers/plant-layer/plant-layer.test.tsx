@@ -9,6 +9,9 @@ import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers"
 import { PlantsScreen } from "../../plants-screen";
 import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
 import type { PlantSlots } from "../layer-ids";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../plant-layers.de.json";
+import { PlantLayerSkeleton } from "./plant-layer.skeleton";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -433,4 +436,12 @@ describe("US-QS-23 wide screen", () => {
     expect(screen.getByRole("button", { name: /^Aloe / })).toBeTruthy();
     expect(within(pane).getAllByRole("tab")).toHaveLength(4);
   });
+});
+
+describe("US-QS-14 issue 1697 · the plant layer show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <PlantLayerSkeleton label={table["layer.loading"]} />,
+      table["layer.loading"],
+    ));
 });

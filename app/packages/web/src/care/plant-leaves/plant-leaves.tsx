@@ -24,6 +24,7 @@ import { loadLeafLog, recordLeaf, removeLeaf, type LeafInput } from "./leaves-ap
 import { LeafForm } from "./leaf-form/leaf-form";
 import { LeafRow } from "./leaf-row/leaf-row";
 import table from "./plant-leaves.de.json";
+import { LeafLogSkeleton } from "./plant-leaves.skeleton";
 
 const t = texts(table);
 /**
@@ -144,7 +145,13 @@ function LeafLog({ api, token, specimenId }: Props) {
         </Button>
       </div>
       {refusal && <RefusalAlert error={refusal} />}
-      <LoadFrame queryKey={key} token={token} load={load} loadingText={t("loading")}>
+      <LoadFrame
+        queryKey={key}
+        token={token}
+        load={load}
+        loadingText={t("loading")}
+        loadingFallback={<LeafLogSkeleton label={t("loading")} />}
+      >
         {(view) => <LeafList view={view} busy={writes.busy} onRemove={(row) => void remove(row)} />}
       </LoadFrame>
       <ResponsiveModal

@@ -12,12 +12,12 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { Button } from "@/shared/ui/button/button";
 import { plantLayerId } from "../../plants-screen/rows/plant-tile/plant-tile";
 import table from "./pot-label-page.de.json";
 import { LastFertilized } from "./last-fertilized/last-fertilized";
+import { PotLabelSkeleton } from "./pot-label-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 const ui = texts(table);
@@ -57,7 +57,7 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
       status={plant.status}
       {...(plant.error ? { errorText: errorText(plant.error.code) } : {})}
       onRetry={plant.retry}
-      skeleton={<PlantLoader label={ui("loading")} size="lg" className="mx-auto my-8 flex" />}
+      skeleton={<PotLabelSkeleton label={ui("loading")} />}
       heading={ui("heading")}
       offline={plant.offline}
     >

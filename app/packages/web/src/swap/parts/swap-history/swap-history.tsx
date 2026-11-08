@@ -9,6 +9,7 @@ import { MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { CAUSE_TEXT, STATUS_TEXT } from "../swap-requests/swap-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
+import { SwapHistorySkeleton } from "./swap-history.skeleton";
 
 const t = texts(table);
 
@@ -65,7 +66,13 @@ export function SwapHistory(props: { api: string; token: Token }) {
       <h2 id="swap-history-title" className="sr-only">
         {t("history.title")}
       </h2>
-      <LoadFrame queryKey={KEY} token={token} load={load} loadingText={t("history.loading")}>
+      <LoadFrame
+        queryKey={KEY}
+        token={token}
+        load={load}
+        loadingText={t("history.loading")}
+        loadingFallback={<SwapHistorySkeleton label={t("history.loading")} />}
+      >
         {(data: { entries: readonly HistoryEntry[] }) =>
           data.entries.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border p-3">{t("history.none")}</p>

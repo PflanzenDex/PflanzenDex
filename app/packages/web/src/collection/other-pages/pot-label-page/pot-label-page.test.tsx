@@ -6,6 +6,9 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { PotLabelPage } from "./pot-label-page";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./pot-label-page.de.json";
+import { PotLabelSkeleton } from "./pot-label-page.skeleton";
 
 const json = (status: number, body: unknown) => Response.json(body, { status });
 const TOKEN = async () => "tok";
@@ -287,4 +290,9 @@ describe("US-MON-09 Gedüngt on a scanned pot label", () => {
     expect(screen.queryByRole("button", { name: "Gedüngt" })).toBeNull();
     expect(calls.filter((c) => c.path.endsWith("/fertilizing"))).toHaveLength(0);
   });
+});
+
+describe("US-QS-14 issue 1697 · the pot label show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<PotLabelSkeleton label={table["loading"]} />, table["loading"]));
 });

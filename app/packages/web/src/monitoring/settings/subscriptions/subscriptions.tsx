@@ -2,6 +2,11 @@ import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../monitoring.de.json";
+import { SubscriptionsSkeleton } from "./subscriptions.skeleton";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["monitoring", "subscriptions"] as const;
@@ -74,7 +79,8 @@ export function Subscriptions(props: { api: string; token: Token }) {
       queryKey={KEY}
       token={props.token}
       load={load}
-      loadingText="Push-Geräte werden geladen …"
+      loadingText={ui("subscriptions.loading")}
+      loadingFallback={<SubscriptionsSkeleton label={ui("subscriptions.loading")} />}
     >
       {(endpoints) => <List api={props.api} token={props.token} endpoints={endpoints} />}
     </LoadFrame>

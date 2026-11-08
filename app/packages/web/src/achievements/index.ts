@@ -6,7 +6,10 @@ export { AchievementNewsBanner } from "./news-banner/news-banner";
 export { growthNoteText } from "./growth/growth-moment-note/growth-moment-note";
 export { useGrowthMoments } from "./growth/use-growth-moments";
 export type { GrowthMoments } from "./growth/use-growth-moments";
-export { Anniversaries } from "./anniversaries/anniversaries";
+export {
+  AnniversaryLayer,
+  AnniversaryTile,
+} from "./anniversaries/anniversary-tile/anniversary-tile";
 export { CareRhythmSection } from "./care-rhythm/care-rhythm";
 export { YearInReviewSection } from "./year-in-review/year-in-review";
 export { loadAchievementSettings, loadAchievements } from "./achievements-api";

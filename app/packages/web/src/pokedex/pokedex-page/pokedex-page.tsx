@@ -12,7 +12,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { LoadFrame, SCREEN_STALE_TIME } from "../../shared/data";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
-import { PokedexPageSkeleton } from "./pokedex-page.skeleton";
+import { MilestonesSkeleton, PokedexPageSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
 import { CARD } from "../pokedex-cards/pokedex-cards";
 import { PROGRESS_LAYER, ProgressDetail, ProgressLine } from "../collector-rank/collector-rank";
 import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
@@ -112,6 +112,7 @@ function Layers(props: {
             load={load}
             staleTime={SCREEN_STALE_TIME}
             loadingText={ui("progressLoading")}
+            loadingFallback={<ProgressSkeleton label={ui("progressLoading")} />}
           >
             {(tree: PokedexTree | null) => <ProgressDetail caught={ownership.caught} tree={tree} />}
           </LoadFrame>
@@ -130,6 +131,7 @@ function Layers(props: {
           load={load}
           staleTime={SCREEN_STALE_TIME}
           loadingText={ui("progressLoading")}
+          loadingFallback={<MilestonesSkeleton label={ui("progressLoading")} />}
         >
           {(tree: PokedexTree | null) => (
             <Milestones

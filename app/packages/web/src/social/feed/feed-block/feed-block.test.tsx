@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedBlock } from "./feed-block";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../social.de.json";
+import { FeedSkeleton } from "./feed-block.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -129,4 +132,9 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     expect(await screen.findByText("Lade jemanden mit einem Code ein.")).toBeTruthy();
     expect(screen.queryByRole("list", { name: "Neuigkeiten" })).toBeNull();
   });
+});
+
+describe("US-QS-14 issue 1697 · the feed show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<FeedSkeleton label={table["feed.loading"]} />, table["feed.loading"]));
 });

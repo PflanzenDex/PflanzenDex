@@ -656,6 +656,13 @@
     "title": "Neu bei Freunden"
   },
   {
+    "id": "today-sheet-anniversaries",
+    "account": "test2",
+    "path": "/today?sheet=anniversaries",
+    "layerFile": "achievements/anniversaries/anniversary-tile/anniversary-tile.tsx",
+    "title": "Jubiläen"
+  },
+  {
     "id": "friends-sheet-requests",
     "account": "test",
     "path": "/friends?sheet=requests",

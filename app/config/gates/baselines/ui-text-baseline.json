@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1156,
+  "maxTotal": 1146,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -66,6 +66,10 @@
       "count": 7
     },
     {
+      "file": "packages/web/src/achievements/growth/growth-moment-note/growth-moment-note.tsx",
+      "count": 1
+    },
+    {
       "file": "packages/web/src/achievements/news-banner/news-banner.tsx",
       "count": 4
     },
@@ -79,7 +83,7 @@
     },
     {
       "file": "packages/web/src/ai/clients-section/clients-section.tsx",
-      "count": 18
+      "count": 17
     },
     {
       "file": "packages/web/src/ai/clients-section/how-to/how-to.tsx",
@@ -87,11 +91,11 @@
     },
     {
       "file": "packages/web/src/ai/drafts-section/drafts-section.tsx",
-      "count": 10
+      "count": 9
     },
     {
       "file": "packages/web/src/ai/log-section/log-section.tsx",
-      "count": 3
+      "count": 2
     },
     {
       "file": "packages/web/src/ai/tasks-section/new-task/new-task.tsx",
@@ -99,7 +103,7 @@
     },
     {
       "file": "packages/web/src/ai/tasks-section/tasks-section.tsx",
-      "count": 12
+      "count": 10
     },
     {
       "file": "packages/web/src/app/destinations/account-area/account-area.tsx",
@@ -114,15 +118,7 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/app/destinations/collection-area/hand-over-routes/hand-over-routes.tsx",
-      "count": 1
-    },
-    {
       "file": "packages/web/src/app/destinations/collection-area/sammlung-header/sammlung-header.tsx",
-      "count": 2
-    },
-    {
-      "file": "packages/web/src/app/destinations/discover-area/discover-area.tsx",
       "count": 2
     },
     {
@@ -143,7 +139,11 @@
     },
     {
       "file": "packages/web/src/app/flows/unlock/unlock-page/unlock-page.tsx",
-      "count": 11
+      "count": 10
+    },
+    {
+      "file": "packages/web/src/app/frame/app-shell/app-shell.tsx",
+      "count": 3
     },
     {
       "file": "packages/web/src/app/frame/mobile-nav-bar/mobile-nav-bar.tsx",
@@ -159,7 +159,7 @@
     },
     {
       "file": "packages/web/src/care/measure/measure-page/measure-page.tsx",
-      "count": 2
+      "count": 3
     },
     {
       "file": "packages/web/src/care/measure/measurement-header/growth-chart/growth-chart.tsx",
@@ -334,6 +334,10 @@
       "count": 1
     },
     {
+      "file": "packages/web/src/collection/collection-page/created/created.tsx",
+      "count": 5
+    },
+    {
       "file": "packages/web/src/collection/insights/distribution-view/distribution-view.tsx",
       "count": 4
     },
@@ -475,7 +479,7 @@
     },
     {
       "file": "packages/web/src/monitoring/inbox/inbox.tsx",
-      "count": 5
+      "count": 4
     },
     {
       "file": "packages/web/src/monitoring/reminders-section/reminders-section.tsx",
@@ -495,11 +499,11 @@
     },
     {
       "file": "packages/web/src/monitoring/settings/subscriptions/subscriptions.tsx",
-      "count": 7
+      "count": 6
     },
     {
-      "file": "packages/web/src/monitoring/watering/watering-list/watering-list.tsx",
-      "count": 9
+      "file": "packages/web/src/monitoring/watering/water-action/water-action.tsx",
+      "count": 2
     },
     {
       "file": "packages/web/src/pokedex/caught/newly-caught/newly-caught.tsx",
@@ -519,7 +523,7 @@
     },
     {
       "file": "packages/web/src/pokedex/pokedex-cards/collector-cards/collector-cards.tsx",
-      "count": 3
+      "count": 2
     },
     {
       "file": "packages/web/src/pokedex/pokedex-cards/pokedex-cards.tsx",
@@ -607,7 +611,7 @@
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",
-      "count": 9
+      "count": 8
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friend-layers/add-friend-layer/add-friend-layer.tsx",

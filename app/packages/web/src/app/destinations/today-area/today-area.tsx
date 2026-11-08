@@ -5,12 +5,15 @@ import {
   LayerSheet,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
-import { LazyAnniversaries } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
-import { TodaySkeleton, type TodayDestination } from "@/today";
+import { TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
+import {
+  HintsLayerSkeleton,
+  TreatmentsLayerSkeleton,
+  WateringLayerSkeleton,
+} from "./today-area.skeleton";
 import {
   todayAddress,
   type LinkTarget,
@@ -63,6 +66,7 @@ export function TodayArea(props: {
   tiles?: readonly TodayTile[];
 }) {
   useFormerAnchors();
+  usePreloadParts();
   const treatments = useLayer("treatments");
   const hints = useLayer("hints");
   // The layer `plan` is the planning layer of the treatments (`PlanLayer`, its address value is `plan`).
@@ -84,6 +88,22 @@ export function TodayArea(props: {
       </Suspense>
     </LayerHost>
   );
+}
+
+/**
+ * Requests the chunks of the parts of "Heute" together (US-QS-14, issue 1697). Their lazy pages otherwise load one after
+ * another, and each count starts only when its chunk is there, so the counts would arrive one after another too. A failed
+ * chunk is requested again by the render, which shows its error (P-10), so the preload itself stays quiet.
+ */
+function usePreloadParts() {
+  useEffect(() => {
+    void Promise.all([
+      TreatmentsPage.load(),
+      WateringList.load(),
+      HintsPage.load(),
+      TodayPage.load(),
+    ]).catch(() => undefined);
+  }, []);
 }
 
 /**
@@ -133,19 +153,18 @@ function Tasks(props: {
           {...(props.tiles ? { tiles: props.tiles } : {})}
         />
       </Suspense>
-      <LazyAnniversaries api={api} token={token} onOpen={() => props.onOpen("collection")} />
       <LayerSheet id="treatments" title="Behandlungen">
-        <InLayer loading="Behandlungen werden geladen …">
+        <InLayer skeleton={<TreatmentsLayerSkeleton />}>
           <TreatmentsPage api={api} token={token} host onPlan={props.plan} />
         </InLayer>
       </LayerSheet>
       <LayerSheet id="watering" title="Gießen">
-        <InLayer loading="Gießliste wird geladen …">
+        <InLayer skeleton={<WateringLayerSkeleton />}>
           <WateringList api={api} token={token} />
         </InLayer>
       </LayerSheet>
       <LayerSheet id="hints" title="Fehlt noch">
-        <InLayer loading="Hinweise werden geladen …">
+        <InLayer skeleton={<HintsLayerSkeleton />}>
           <HintsPage api={api} token={token} onOpen={props.onOpen} host />
         </InLayer>
       </LayerSheet>
@@ -159,18 +178,10 @@ function Tasks(props: {
   );
 }
 
-/** The content of a layer loads on its own, with a skeleton and one loading status meanwhile (DS-52). */
-function InLayer(props: { loading: string; children: ReactNode }) {
-  return (
-    <Suspense
-      fallback={
-        <SkeletonGroup label={props.loading} className="flex min-w-0 flex-col gap-3">
-          <Skeleton className="h-24 w-full rounded-card" />
-          <Skeleton className="h-24 w-full rounded-card" />
-        </SkeletonGroup>
-      }
-    >
-      {props.children}
-    </Suspense>
-  );
+/**
+ * The content of a layer loads on its own: while its part is on its way the layer shows its skeleton, in the shape of
+ * the layer's content (US-QS-14, DS-52).
+ */
+function InLayer(props: { skeleton: ReactNode; children: ReactNode }) {
+  return <Suspense fallback={props.skeleton}>{props.children}</Suspense>;
 }

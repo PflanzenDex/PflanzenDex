@@ -11,6 +11,9 @@ import { UnlocksProvider } from "../../unlock/model/unlocks/unlocks";
 import { FUNCTION_EMPTY, FUNCTION_NAMES, functionAddress } from "../../unlock/model/unlock-texts";
 import FunctionOverview from "./function-overview";
 import { FUNCTION_PURPOSES } from "./function-layer/function-purposes";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./function-overview.de.json";
+import { FunctionOverviewSkeleton } from "./function-overview.skeleton";
 
 // A phone (US-QS-15): the list is in pages of four and each function opens as a layer.
 beforeAll(() => setViewportWidth(390));
@@ -354,4 +357,12 @@ describe("US-ONB-09 keeper switches in Was die App kann", () => {
     ).toBeTruthy();
     expect(within(dialog).queryByRole("checkbox")).toBeNull();
   });
+});
+
+describe("US-QS-14 issue 1697 · the functions show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <FunctionOverviewSkeleton label={table["loading"]} />,
+      table["loading"],
+    ));
 });
