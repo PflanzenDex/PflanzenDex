@@ -46,6 +46,8 @@ function serve(extra: Handler = () => json(404, {})) {
           medianSecondsToFirstPlant: { known: false, reason: "too_few_accounts" },
           withoutPlantPercent: { known: false, reason: "too_few_accounts" },
         });
+      if (path === "/operator/deletions")
+        return json(200, { warningDays: 7, near: [], past: [], identityRemovals: [] });
       return extra(path, init);
     }),
   );

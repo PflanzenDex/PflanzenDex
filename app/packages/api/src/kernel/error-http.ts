@@ -11,6 +11,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "import.column_repeated": 400,
   "import.too_large": 413,
   "operator_cost.month_in_future": 400,
+  "privacy.entry_not_found": 404,
   "access.not_signed_in": 401,
   "access.denied": 403,
   "account.email_unconfirmed": 403,

@@ -64,7 +64,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 
 | Epic                             | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
 | -------------------------------- | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
-| ACC Accounts                     | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
+| ACC Accounts                     | 6       | 2      | 3       | 1      | 2 · 0 · 4                 | 0                      | 6       |
 | BES Collection                   | 19      | 2      | 17      | 0      | 2 · 8 · 15                | 8                      | 11      |
 | LIC Light and locations          | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
 | PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **218** | **43** | **138** | **37** |                           | **50**                 | **168** |
+| **Total**                        | **218** | **42** | **139** | **37** |                           | **50**                 | **168** |
 
 <!-- spec-status:end -->
 
