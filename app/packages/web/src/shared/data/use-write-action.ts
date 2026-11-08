@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
-import { refusalText } from "@/shared/lib/error-text";
 import { WRITE_SUCCEEDED, type ApiError, type Response } from "./api";
 
 export { WRITE_SUCCEEDED };
@@ -10,6 +9,14 @@ export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte me
 
 /** Says the result of a write as a toast: the German text and its kind (`useSay` of the toast provider, US-QS-07). */
 export type WriteSay = (message: string, kind?: "success" | "error") => void;
+
+/**
+ * The German text of a refusal. The error-text module (the error code table) is loaded when a refusal is said, not
+ * with the first load: this module sits in the shell (`shared/data` is imported by `main.tsx`), and the initial JS
+ * budget (QG-U6, DS-08) would otherwise carry the whole table (US-QS-15).
+ */
+const refusalTextLazily = (error: ApiError) =>
+  import("@/shared/lib/error-text").then(({ refusalText }) => refusalText(error));
 
 /**
  * One tap that writes: only one request runs at a time (a double tap sends one), afterwards `after` reloads the page
@@ -47,7 +54,7 @@ export function useWriteAction(
       setError(r.ok ? null : r.error);
       if (say) {
         if (r.ok) say(success);
-        else say(refusalText(r.error), "error");
+        else void refusalTextLazily(r.error).then((text) => say(text, "error"));
       } else setMessage(r.ok ? success : null);
       // Also after a refusal: the page may have been stale (e.g. archived elsewhere), the error stays on screen.
       after();
