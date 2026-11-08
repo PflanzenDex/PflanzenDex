@@ -20,6 +20,7 @@ import {
   useUnlocks,
 } from "./flows";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
+import { TodaySkeleton } from "@/today";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 import type { DrawTile, TodayTile } from "@/app/destinations/today-area/today-area";
 import {
@@ -147,7 +148,12 @@ export function AppRoutes(props: {
   const { pathname } = useLocation();
   const locks = useLockPages(api, s.token);
   return (
-    <RouteBoundary resetKey={pathname} heading={destinationHeading(pathname)}>
+    <RouteBoundary
+      resetKey={pathname}
+      heading={destinationHeading(pathname)}
+      /* "Heute" has the shape of its page, so the route's skeleton and the page's parts show one shape (issue 1697). */
+      fallback={pathname === PATHS.today ? <TodaySkeleton /> : undefined}
+    >
       {achievements ? <AchievementNewsBanner api={api} token={s.token} /> : null}
       <Routes>
         <Route

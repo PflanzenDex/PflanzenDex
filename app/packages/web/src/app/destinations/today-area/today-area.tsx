@@ -10,7 +10,7 @@ import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
 import { LazyAnniversaries } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
-import { type TodayDestination } from "@/today";
+import { TodaySkeleton, type TodayDestination } from "@/today";
 import {
   todayAddress,
   type LinkTarget,
@@ -156,16 +156,6 @@ function Tasks(props: {
         </Suspense>
       ))}
     </>
-  );
-}
-
-/** Keeps the place of the title and the first list while the part of "Jetzt dran" loads. */
-function TodaySkeleton() {
-  return (
-    <SkeletonGroup label="Heute wird geladen …" className="flex min-w-0 flex-col gap-3">
-      <Skeleton className="h-8 w-1/3" />
-      <Skeleton className="h-24 w-full rounded-card" />
-    </SkeletonGroup>
   );
 }
 

@@ -60,17 +60,21 @@ export class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> 
 /**
  * The one boundary around the routes (DS-08, DS-55): the shell renders at once, the page's skeleton shows while its
  * chunk loads, a failed chunk shows an error with retry. `resetKey` is the address; changing it clears an error.
- * `heading` names a destination while it loads, so a cold load shows where you are (issue 1097).
+ * `heading` names a destination while it loads, so a cold load shows where you are (issue 1097). `fallback` is the
+ * skeleton of a destination that has its own shape (issue 1697); without it the generic `PageSkeleton` shows.
  */
 export function RouteBoundary({
   resetKey,
   heading,
+  fallback,
   children,
-}: BoundaryProps & { heading?: string | null }) {
+}: BoundaryProps & { heading?: string | null; fallback?: ReactNode }) {
   return (
     <ChunkErrorBoundary resetKey={resetKey}>
       {/* PageSkeleton delays its blocks (US-QS-14, DS-57), the heading stands at once; a page that arrives sooner shows no status. */}
-      <Suspense fallback={<PageSkeleton {...(heading ? { heading } : {})} />}>{children}</Suspense>
+      <Suspense fallback={fallback ?? <PageSkeleton {...(heading ? { heading } : {})} />}>
+        {children}
+      </Suspense>
     </ChunkErrorBoundary>
   );
 }

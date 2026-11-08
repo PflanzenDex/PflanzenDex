@@ -6,3 +6,5 @@ export const TodayPage = lazyPage(() =>
 );
 // The texts of the tiles of "Heute", drawn by the area of the app (FR-QG-26, issue 1156).
 export { default as todayTexts } from "./today.de.json";
+// The skeleton of "Heute" in the shape of its page, the route's fallback and the area's parts (US-QS-14, issue 1697).
+export { TodaySkeleton } from "./today-page/today-skeleton/today-skeleton";
