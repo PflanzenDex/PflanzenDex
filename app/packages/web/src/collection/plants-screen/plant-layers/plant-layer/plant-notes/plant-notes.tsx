@@ -4,7 +4,7 @@ import { useRequest, type ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { restoreFocus } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { layerOpenerId } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { Button } from "@/shared/ui/button/button";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
@@ -19,14 +19,14 @@ const t = texts(table);
 export const notesLayerId = (specimenId: string): string => `notes-${specimenId}`;
 
 /**
- * The button "Notizen" of the overview. It has an id, so the focus finds it again when the layer above it closes and the
- * plant layer mounts on Back (US-QS-15, issue 1363).
+ * The button "Notizen" of the overview. It has the opener id of its layer, so the focus finds it again when the layer above
+ * it closes and the plant layer mounts on Back (US-QS-15, issue 1363, issue 1661).
  */
 export function NotesButton(props: { card: SpecimenCard }) {
   const { openLayer, open } = useLayer(notesLayerId(props.card.id));
   return (
     <Button
-      id={`${notesLayerId(props.card.id)}-opener`}
+      id={layerOpenerId(notesLayerId(props.card.id))}
       type="button"
       variant="outline"
       aria-haspopup="dialog"
@@ -90,9 +90,6 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
     load: (token) => loadSpecimenNotes(access.api, token, card.id),
     fresh: true,
   });
-  // The page drops this layer with the address, before the sheet sees itself close: the opener is kept here, so the plant
-  // layer that mounts on Back gives the focus back to "Notizen" (US-QS-15, issue 1363).
-  useEffect(() => restoreFocus, []);
   const ready = request.status === "ready";
   const notes = ready ? (request.value?.notes ?? null) : null;
   const action =
