@@ -3,6 +3,11 @@ import { Button } from "@/shared/ui/button/button";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/connections-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../ai.de.json";
+import { DraftsSkeleton } from "./drafts-section.skeleton";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["ai", "drafts"] as const;
@@ -130,7 +135,8 @@ export function DraftsSection(props: { api: string; token: Token }) {
       queryKey={KEY}
       token={props.token}
       load={load}
-      loadingText="Entwürfe werden geladen …"
+      loadingText={ui("drafts.loading")}
+      loadingFallback={<DraftsSkeleton label={ui("drafts.loading")} />}
     >
       {(rows) => <List api={props.api} token={props.token} rows={rows} />}
     </LoadFrame>

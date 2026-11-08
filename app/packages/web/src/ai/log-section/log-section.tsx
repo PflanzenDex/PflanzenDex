@@ -2,6 +2,11 @@ import { useCallback } from "react";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame } from "../../shared/data";
 import { loadLog, type AiLogEntry } from "../api/connections-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../ai.de.json";
+import { LogSkeleton } from "./log-section.skeleton";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -35,7 +40,8 @@ export function LogSection(props: { api: string; token: Token }) {
       queryKey={["ai", "log"]}
       token={props.token}
       load={load}
-      loadingText="Protokoll wird geladen …"
+      loadingText={ui("log.loading")}
+      loadingFallback={<LogSkeleton label={ui("log.loading")} />}
     >
       {(rows) => <Entries rows={rows} />}
     </LoadFrame>

@@ -6,6 +6,11 @@ import { Select } from "@/shared/ui/fields/select/select";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../ai.de.json";
+import { ClientsSkeleton } from "./clients-section.skeleton";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["ai", "connections"] as const;
@@ -176,7 +181,8 @@ export function AiClientsSection(props: { api: string; token: Token }) {
       queryKey={KEY}
       token={props.token}
       load={load}
-      loadingText="Verbundene KI-Clients werden geladen …"
+      loadingText={ui("clients.loading")}
+      loadingFallback={<ClientsSkeleton label={ui("clients.loading")} />}
     >
       {(rows) => <List api={props.api} token={props.token} rows={rows} />}
     </LoadFrame>

@@ -12,6 +12,7 @@ import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
 import table from "../../social.de.json";
+import { FeedSkeleton } from "./feed-block.skeleton";
 
 const t = texts(table);
 
@@ -155,6 +156,7 @@ export function FeedBlock(props: {
         token={props.token}
         load={load}
         loadingText={t("feed.loading")}
+        loadingFallback={<FeedSkeleton label={t("feed.loading")} />}
       >
         {(feed: Feed) => (
           <>

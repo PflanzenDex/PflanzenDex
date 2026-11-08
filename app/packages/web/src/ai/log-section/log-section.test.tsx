@@ -5,6 +5,9 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { LogSection } from "./log-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../ai.de.json";
+import { LogSkeleton } from "./log-section.skeleton";
 
 const show = (log: unknown[]) => {
   vi.stubGlobal(
@@ -45,4 +48,9 @@ describe("US-KI-10 log of AI actions", () => {
     expect(list.textContent).toContain("draft: wish");
     expect(list.textContent).toContain("Claude");
   });
+});
+
+describe("US-QS-14 issue 1697 · the log show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<LogSkeleton label={table["log.loading"]} />, table["log.loading"]));
 });

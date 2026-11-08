@@ -3,8 +3,13 @@ import type { SharedDevice } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame } from "../../../../shared/data";
 import { loadFriendEquipment } from "../../../api/friends-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../social.de.json";
+import { FriendEquipmentSkeleton } from "./friend-equipment.skeleton";
 
 /** The German names of the equipment types (the codes stay English; the same names as under "Equipment"). */
+const t = texts(table);
+
 const TYPE_LABELS: Record<string, string> = {
   Lamp: "Lampe",
   Timer: "Zeitschaltuhr",
@@ -68,7 +73,8 @@ export function FriendEquipment(props: {
         queryKey={["social", "friend-equipment", friendId]}
         token={props.token}
         load={load}
-        loadingText="Geräte werden geladen …"
+        loadingText={t("equipment.loading")}
+        loadingFallback={<FriendEquipmentSkeleton label={t("equipment.loading")} />}
       >
         {(data) =>
           data.devices.length === 0 ? (

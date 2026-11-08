@@ -9,6 +9,7 @@ import { SwapCard } from "./swap-card/swap-card";
 import { swapTitle } from "./swap-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
+import { SwapRequestsSkeleton } from "./swap-requests.skeleton";
 
 const t = texts(table);
 
@@ -138,7 +139,13 @@ export function SwapRequests(props: { api: string; token: Token }) {
       <h2 id="swap-requests-title" className="sr-only">
         {t("requests.title")}
       </h2>
-      <LoadFrame queryKey={KEY} token={token} load={load} loadingText={t("requests.loading")}>
+      <LoadFrame
+        queryKey={KEY}
+        token={token}
+        load={load}
+        loadingText={t("requests.loading")}
+        loadingFallback={<SwapRequestsSkeleton label={t("requests.loading")} />}
+      >
         {(data: SwapOverview) => <Body data={data} api={api} token={token} onWritten={reload} />}
       </LoadFrame>
     </section>

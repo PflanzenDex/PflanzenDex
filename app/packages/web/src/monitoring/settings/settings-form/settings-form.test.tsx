@@ -6,6 +6,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../shared/data";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RemindersSection } from "../../reminders-section/reminders-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../monitoring.de.json";
+import { SettingsFormSkeleton } from "./settings-form.skeleton";
 
 beforeAll(() => {
   // jsdom has no matchMedia; a wide screen shows the layers as panes (US-QS-15), so the footers are in the page.
@@ -156,4 +159,12 @@ describe("US-MON-08 reminder settings in layers", () => {
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     expect(screen.queryByLabelText("Uhrzeit der täglichen Prüfung")).toBeNull();
   });
+});
+
+describe("US-QS-14 issue 1697 · the reminder form show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <SettingsFormSkeleton label={table["times.loading"]} />,
+      table["times.loading"],
+    ));
 });

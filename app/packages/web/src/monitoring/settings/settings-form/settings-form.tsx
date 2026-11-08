@@ -5,6 +5,11 @@ import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
 import { TimeFields } from "./time-fields/time-fields";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../monitoring.de.json";
+import { SettingsFormSkeleton } from "./settings-form.skeleton";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -121,7 +126,14 @@ function WithSettings(props: {
 }) {
   const load = useCallback((t: string) => loadReminderSettings(props.api, t), [props.api]);
   return (
-    <LoadFrame queryKey={KEY} fresh token={props.token} load={load} loadingText={props.loading}>
+    <LoadFrame
+      queryKey={KEY}
+      fresh
+      token={props.token}
+      load={load}
+      loadingText={props.loading}
+      loadingFallback={<SettingsFormSkeleton label={props.loading} />}
+    >
       {(saved) => props.children(saved)}
     </LoadFrame>
   );
@@ -130,7 +142,7 @@ function WithSettings(props: {
 /** "Wann erinnern?" (US-MON-08): the time of the daily check, the quiet hours and the days of an overdue measurement. */
 export function ReminderTimesForm(props: { api: string; token: Token }) {
   return (
-    <WithSettings {...props} loading="Erinnerungseinstellungen werden geladen …">
+    <WithSettings {...props} loading={ui("times.loading")}>
       {(saved) => <TimesForm api={props.api} token={props.token} saved={saved} />}
     </WithSettings>
   );
@@ -139,7 +151,7 @@ export function ReminderTimesForm(props: { api: string; token: Token }) {
 /** "Pausen je Anlass" (US-MON-08): a pause per occasion, in pages inside its layer. */
 export function ReminderPausesForm(props: { api: string; token: Token }) {
   return (
-    <WithSettings {...props} loading="Pausen werden geladen …">
+    <WithSettings {...props} loading={ui("pauses.loading")}>
       {(saved) => <PausesForm api={props.api} token={props.token} saved={saved} />}
     </WithSettings>
   );

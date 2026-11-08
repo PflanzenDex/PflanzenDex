@@ -7,6 +7,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { PlantLeaves } from "./plant-leaves";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./plant-leaves.de.json";
+import { LeafLogSkeleton } from "./plant-leaves.skeleton";
 
 const json = (status: number, body: unknown) => Response.json(body, { status });
 const TOKEN = async () => "tok";
@@ -237,4 +240,9 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toMatchObject({ lengthMm: 42, widthMm: 11, note: "Fenster" });
   });
+});
+
+describe("US-QS-14 issue 1697 · the leaf log show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<LeafLogSkeleton label={table["loading"]} />, table["loading"]));
 });

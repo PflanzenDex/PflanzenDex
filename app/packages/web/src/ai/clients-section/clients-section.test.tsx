@@ -7,6 +7,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { AiClientsSection } from "./clients-section";
 import { AiSection } from "../ai-section/ai-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../ai.de.json";
+import { ClientsSkeleton } from "./clients-section.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -117,4 +120,12 @@ describe("US-KI-07 connected AI clients", () => {
     await user.click(screen.getByRole("button", { name: "Claude wieder zulassen" }));
     expect(calls[0]).toMatchObject({ method: "POST", path: "/ai/connections/c1/allow-again" });
   });
+});
+
+describe("US-QS-14 issue 1697 · the clients show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <ClientsSkeleton label={table["clients.loading"]} />,
+      table["clients.loading"],
+    ));
 });

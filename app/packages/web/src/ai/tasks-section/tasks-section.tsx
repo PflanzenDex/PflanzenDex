@@ -6,6 +6,11 @@ import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { cancelTask, loadTasks, type AiTaskRow } from "../api/connections-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../ai.de.json";
+import { NewTaskSkeleton, TasksSkeleton } from "./tasks-section.skeleton";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["ai", "tasks"] as const;
@@ -133,7 +138,8 @@ export function TasksSection(props: { api: string; token: Token }) {
       queryKey={KEY}
       token={props.token}
       load={load}
-      loadingText="Aufträge werden geladen …"
+      loadingText={ui("tasks.loading")}
+      loadingFallback={<TasksSkeleton label={ui("tasks.loading")} />}
     >
       {(data) => <List api={props.api} token={props.token} rows={data.tasks} />}
     </LoadFrame>
@@ -149,7 +155,8 @@ export function NewTaskPart(props: { api: string; token: Token }) {
       queryKey={KEY}
       token={props.token}
       load={load}
-      loadingText="Aufträge werden geladen …"
+      loadingText={ui("tasks.loading")}
+      loadingFallback={<NewTaskSkeleton label={ui("tasks.loading")} />}
     >
       {(data) => (
         <NewTask
