@@ -20,7 +20,8 @@ import {
   useUnlocks,
 } from "./flows";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
-import { TodaySkeleton } from "@/today";
+import { routeFallbackOf } from "./frame/app-shell/route-fallback/route-fallback";
+import { useSuggestionsOn } from "./destinations/discover-area/discover-view";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 import type { DrawTile, TodayTile } from "@/app/destinations/today-area/today-area";
 import {
@@ -145,14 +146,14 @@ export function AppRoutes(props: {
   const roles = rolesOf(account, account.features?.social !== false && keeperSocial);
   const social = roles.friends !== false;
   const achievements = useFeature("achievement_views");
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const locks = useLockPages(api, s.token);
+  const suggestionsOn = useSuggestionsOn();
   return (
     <RouteBoundary
       resetKey={pathname}
       heading={destinationHeading(pathname)}
-      /* "Heute" has the shape of its page, so the route's skeleton and the page's parts show one shape (issue 1697). */
-      fallback={pathname === PATHS.today ? <TodaySkeleton /> : undefined}
+      fallback={routeFallbackOf(pathname, search, suggestionsOn)}
     >
       {achievements ? <AchievementNewsBanner api={api} token={s.token} /> : null}
       <Routes>

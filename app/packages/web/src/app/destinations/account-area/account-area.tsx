@@ -11,6 +11,7 @@ import { headingId } from "@/app/destinations/area-parts/area-section/use-sectio
 import { SETTINGS_LAYER_IDS, type Account } from "@/account";
 import { PATHS, type AccountSection } from "@/shared/patterns/navigation/navigation/navigation";
 import { AccountIndex } from "./account-index/account-index";
+import { AccountSectionSkeleton } from "./account-area.skeleton";
 import {
   ACCOUNT_SECTIONS,
   LEGACY_ACCOUNT_ANCHORS,
@@ -59,7 +60,7 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
       <AreaSection
         anchor={ACCOUNT_SECTIONS[rest.section]}
         title={info.title}
-        loading={info.loading}
+        skeleton={<AccountSectionSkeleton section={rest.section} label={info.loading} />}
         heading={
           // The section's name is the one h1; the way back "Zurück zu Konto" is the page header's (issue 1031). From
           // 1280 px the index stands beside the section, so the way back is hidden there.
