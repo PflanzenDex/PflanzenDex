@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
-import { setViewportWidth } from "../../shared/testing/viewport-mock";
 import { Anniversaries, anniversaryText } from "./anniversaries";
 
 afterEach(() => {
@@ -57,7 +56,6 @@ describe("US-ACH-06 anniversaries on the Today list", () => {
   });
 
   it("US-ACH-06 shows '<Specimen> is 1 year with you' with the first and the latest photo and a next step (P-09)", async () => {
-    setViewportWidth(768);
     const paths = server({ status: 200, body: { calmMode: false, items: [item()] } });
     const onOpen = vi.fn();
     show(onOpen);
@@ -78,20 +76,6 @@ describe("US-ACH-06 anniversaries on the Today list", () => {
     show();
     expect(await screen.findByText("„Aloe“ ist 1 Jahr bei dir.")).toBeTruthy();
     expect(screen.queryByRole("img")).toBeNull();
-  });
-
-  it("US-ACH-06 below md the entry is one text row without the photos, with the same text and next step (issue 1662)", async () => {
-    setViewportWidth(360);
-    const paths = server({ status: 200, body: { calmMode: false, items: [item()] } });
-    const onOpen = vi.fn();
-    show(onOpen);
-    expect(await screen.findByText("„Aloe“ ist 1 Jahr bei dir.")).toBeTruthy();
-    expect(screen.getByText(/Seit dem 10\.04\.2025/)).toBeTruthy();
-    expect(screen.queryByText("Fotos")).toBeNull();
-    expect(screen.queryByRole("img")).toBeNull();
-    expect(paths.some((p) => p.endsWith("/photo"))).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: /Aloe/ }));
-    expect(onOpen).toHaveBeenCalled();
   });
 
   it("US-ACH-08 calm mode, no anniversary or a read error show nothing and no error", async () => {

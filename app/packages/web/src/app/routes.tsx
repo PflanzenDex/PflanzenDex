@@ -10,6 +10,7 @@ import {
 import { useSession, type State } from "../account";
 import { ImportPage, PotLabelPage, PrintLabelsPage } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
+import { anniversaryTile } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
 import {
   FunctionOverview,
@@ -85,6 +86,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
   const social = useFeature("social");
   const { api, token } = props;
   const tiles: TodayTile[] = [
+    anniversaryTile({ api, token, onOpen: () => props.onOpen("collection") }),
     ...(social
       ? [
           {

@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { dateText } from "@/shared/lib/format";
-import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { useRequest } from "../../shared/data";
 import {
@@ -38,14 +37,7 @@ function Photo(props: { api: string; token: Token; photo: AnniversaryPhoto; labe
   );
 }
 
-function Entry(props: {
-  api: string;
-  token: Token;
-  item: AnniversaryItem;
-  onOpen: () => void;
-  /** The photos are part of the entry from the `md` breakpoint (issue 1662); below it the entry is one text row. */
-  photos: boolean;
-}) {
+function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen: () => void }) {
   const { item } = props;
   return (
     <li className="flex min-w-0 flex-col gap-1 rounded-card bg-card p-2 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]">
@@ -67,7 +59,7 @@ function Entry(props: {
           Zur Sammlung
         </Button>
       </div>
-      {props.photos && (item.first || item.latest) && (
+      {(item.first || item.latest) && (
         <details>
           <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">Fotos</summary>
           <div className="flex flex-wrap gap-3">
@@ -94,15 +86,16 @@ function Entry(props: {
  * latest photo, if there are any. Derived on the server from the catch date; the entry stays until the end of the
  * week of the anniversary. Calm mode, no anniversary or a read error show nothing (US-ACH-08): a side feature never
  * breaks the page. No push and no pressure (FR-ACH-06); the text says what happened, the button what to do next (P-09).
- * Below the `md` breakpoint the entry is one compact text row without the photos, so "Heute" fits 360×640 with it
- * (issue 1662, decision of the owner); the text and the button stay the same.
  */
+/** The anniversaries of today; the tile and the layer on "Heute" read the same key, so one request serves both (issue 1662). */
+export function useAnniversaries(api: string, token: Token) {
+  const load = useCallback((t: string) => loadAnniversaries(api, t), [api]);
+  return useRequest({ queryKey: ["achievements", "anniversaries"], token, load });
+}
+
 export function Anniversaries(props: { api: string; token: Token; onOpen: () => void }) {
   const { api, token } = props;
-  const photos = useIsMd();
-  const load = useCallback((t: string) => loadAnniversaries(api, t), [api]);
-  const r = useRequest({ queryKey: ["achievements", "anniversaries"], token, load });
-  const v = r.value;
+  const v = useAnniversaries(api, token).value;
   if (!v || v.calmMode || !Array.isArray(v.items) || v.items.length === 0) return null;
   return (
     <section aria-label="Jubiläen" className="flex min-w-0 flex-col gap-3">
@@ -114,7 +107,6 @@ export function Anniversaries(props: { api: string; token: Token; onOpen: () => 
             token={token}
             item={item}
             onOpen={props.onOpen}
-            photos={photos}
           />
         ))}
       </ul>

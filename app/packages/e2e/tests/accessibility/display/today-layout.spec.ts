@@ -3,7 +3,7 @@ import { signInToApp } from "../../../support/display/display";
 import { expect, test } from "../../../support/fixtures";
 import { answerOverview } from "./today-overview";
 
-// US-QS-18 (issue 1662): on a phone the settled "Heute" never lets one element cover another. The anniversary card comes
+// US-QS-18 (issue 1662): on a phone the settled "Heute" never lets one element cover another. The anniversaries are a tile
 // after the overview, so without room for the further tasks it lands on their rows, their pager and the line below them.
 // The overview's reads come from the fixture of support/today-overview.ts.
 
@@ -30,9 +30,9 @@ async function hitsItself(target: Locator): Promise<boolean> {
   });
 }
 
-/** On the settled "Heute", the card covers neither the further tasks, their pager nor the later line, and they are hit. */
+/** On the settled "Heute", the anniversaries tile covers neither the further tasks, their pager nor the later line, and they are hit. */
 async function expectNoCover(page: Page, size: string): Promise<void> {
-  const card = await boxOf(page.getByRole("region", { name: "Jubiläen" }));
+  const tile = await boxOf(page.getByRole("button", { name: /Jubiläen$/ }));
   const later = page.getByText("3 Termine später", { exact: true });
   const weiter = page.getByRole("button", { name: "Weiter", exact: true });
   const parts: Record<string, Locator> = {
@@ -43,8 +43,8 @@ async function expectNoCover(page: Page, size: string): Promise<void> {
   };
   for (const [name, part] of Object.entries(parts)) {
     expect(
-      sharePoint(await boxOf(part), card),
-      `${size}: the anniversary card covers ${name}`,
+      sharePoint(await boxOf(part), tile),
+      `${size}: the anniversaries tile covers ${name}`,
     ).toBe(false);
   }
   expect(await hitsItself(later), `${size}: another element is hit at the later line`).toBe(true);
@@ -52,7 +52,7 @@ async function expectNoCover(page: Page, size: string): Promise<void> {
 }
 
 test.describe("US-QS-18 Heute at 360 px", () => {
-  test("US-QS-18: Heute at 360 px: the anniversary card covers neither the pager nor the later line (issue 1662)", async ({
+  test("US-QS-18: Heute at 360 px: the anniversaries tile covers neither the pager nor the later line (issue 1662)", async ({
     page,
     account,
   }, info) => {
@@ -72,7 +72,7 @@ test.describe("US-QS-18 Heute at 360 px", () => {
     }
   });
 
-  test("US-QS-18: Heute at 360 px and 200 % text: the card lies below the further tasks and the page scrolls to them (issue 1662)", async ({
+  test("US-QS-18: Heute at 360 px and 200 % text: the tile stays clear of the further tasks and the page scrolls to them (issue 1662)", async ({
     page,
     account,
   }, info) => {
@@ -85,7 +85,7 @@ test.describe("US-QS-18 Heute at 360 px", () => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await expectNoCover(page, "360x640 at 200 %");
-    // The content is taller than the window and scrolls inside the frame; it does not collapse under the card.
+    // The content is taller than the window and scrolls inside the frame; it does not collapse under the tile.
     expect(
       await page.locator("[data-fit-fill]").evaluate((el) => el.scrollHeight > el.clientHeight),
     ).toBe(true);
