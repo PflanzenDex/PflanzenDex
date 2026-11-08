@@ -1,8 +1,8 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { LoadFrame, type Response } from "../../shared/data";
 import { DeckView } from "../deck-view/deck-view";
+import { DiscoverPageSkeleton } from "./discover-page.skeleton";
 import { decideSuggestion, loadSuggestions, undoSuggestionDecision } from "./discover-api";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -21,18 +21,6 @@ async function signedIn<T>(
 ): Promise<Response<T>> {
   const t = await token();
   return t ? write(t) : SIGN_IN_NEEDED;
-}
-
-/** Placeholder with the layout of a card on a phone: image, name, text, three buttons (DS-52). */
-function DeckSkeleton({ label }: { label: string }) {
-  return (
-    <SkeletonGroup label={label} className="mx-auto flex w-full max-w-md flex-col gap-3">
-      <Skeleton className="h-56 w-full rounded-xl" />
-      <Skeleton className="h-6 w-2/3" />
-      <Skeleton className="h-16 w-full" />
-      <Skeleton className="h-12 w-full" />
-    </SkeletonGroup>
-  );
 }
 
 /**
@@ -75,7 +63,7 @@ export function DiscoverPage(props: {
         load={load}
         loadingText={t("page.loading")}
         {...(embedded ? {} : { heading: t("page.title") })}
-        loadingFallback={<DeckSkeleton label={t("page.loading")} />}
+        loadingFallback={<DiscoverPageSkeleton label={t("page.loading")} />}
         fresh
       >
         {(value: SuggestionDeck) => (

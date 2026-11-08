@@ -6,6 +6,9 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { DraftsSection } from "./drafts-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../ai.de.json";
+import { DraftsSkeleton } from "./drafts-section.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -85,4 +88,12 @@ describe("US-KI-09 inbox of AI drafts", () => {
     const list = await screen.findByRole("list", { name: "KI-Entwürfe" });
     expect(list.textContent).toContain("Entscheidung bei Entdecken: Ficus carica (Ja)");
   });
+});
+
+describe("US-QS-14 issue 1697 · the drafts show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <DraftsSkeleton label={table["drafts.loading"]} />,
+      table["drafts.loading"],
+    ));
 });

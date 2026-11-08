@@ -7,6 +7,9 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { PrintLabelsPage } from "./print-labels-page";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./print-labels-page.de.json";
+import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
 
 // The QR code is encoded by uqr. The tests read the text that goes into the code, not the picture (US-BES-17, FR-BES-25).
 vi.mock("uqr", async (importOriginal) => {
@@ -222,4 +225,9 @@ describe("US-BES-17 printing QR pot labels", () => {
     expect((await screen.findByTestId("address")).textContent).toBe("/collection");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+});
+
+describe("US-QS-14 issue 1697 · the plants to print show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<PrintLabelsSkeleton label={table["loading"]} />, table["loading"]));
 });

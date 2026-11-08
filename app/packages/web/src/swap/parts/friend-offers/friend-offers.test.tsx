@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FriendOffers } from "./friend-offers";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../swap.de.json";
+import { FriendOffersSkeleton } from "./friend-offers.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -176,4 +179,12 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     expect(await screen.findByText("Angefragt")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Anfragen:/ })).toBeNull();
   });
+});
+
+describe("US-QS-14 issue 1697 · the offers of friends show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <FriendOffersSkeleton label={table["friends.loading"]} />,
+      table["friends.loading"],
+    ));
 });

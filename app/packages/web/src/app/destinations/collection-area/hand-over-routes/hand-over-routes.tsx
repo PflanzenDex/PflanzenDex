@@ -1,11 +1,16 @@
 import { Route, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CareProfileSection } from "@/collection";
+import { CareProfileSection, CareProfileSectionSkeleton } from "@/collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "@/catalog";
 import type { WishToPlant } from "@/wishlist";
 import { AddPlant, ContextHint } from "@/app/flows";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AreaSection } from "../../area-parts/area-section/area-section";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import table from "./hand-over-routes.de.json";
+
+const t = texts(table);
 import { CollectionArea, DiscoverArea } from "../../area-parts/lazy-areas";
 import {
   ADD_PLANT_PATH,
@@ -23,8 +28,12 @@ const careProfile = (api: string, token: Token) =>
     return (
       <AreaSection
         anchor="pflegeprofil"
-        title="Mein Pflegeprofil"
-        loading="Pflegeprofil wird geladen …"
+        title={t("careProfile.title")}
+        skeleton={
+          <DelayedSkeleton>
+            <CareProfileSectionSkeleton label={t("careProfile.loading")} />
+          </DelayedSkeleton>
+        }
       >
         <CareProfileSection api={api} token={token} speciesId={species.id} />
       </AreaSection>

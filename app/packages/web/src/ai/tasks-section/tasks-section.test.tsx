@@ -6,6 +6,9 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { NewTaskPart, TasksSection } from "./tasks-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../ai.de.json";
+import { TasksSkeleton } from "./tasks-section.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -115,4 +118,12 @@ describe("US-KI-08 tasks to the AI client", () => {
     );
     expect(calls).toEqual(["POST /ai/tasks", "POST /ai/tasks/t1/cancel"]);
   });
+});
+
+describe("US-QS-14 issue 1697 · the tasks show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <TasksSkeleton label={table["tasks.loading"]} />,
+      table["tasks.loading"],
+    ));
 });

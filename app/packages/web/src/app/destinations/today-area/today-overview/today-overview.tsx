@@ -112,6 +112,8 @@ export function TodayOverview(props: {
                   api={api}
                   token={token}
                   onOpen={props.open}
+                  // One region: the page waits for the three counts (and its list) and shows one skeleton (issue 1697).
+                  countsPending={[treatments, watering, hints].some((c) => c.status === "pending")}
                   treatmentsEntry={<TreatmentsEntry treatments={treatments} />}
                   summary={(treatmentFirst) => (
                     <TodaySummary

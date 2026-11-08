@@ -6,6 +6,9 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectorCards } from "./collector-cards";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./collector-cards.de.json";
+import { CollectorCardsSkeleton } from "./collector-cards.skeleton";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -98,4 +101,9 @@ describe("US-POK-01 collector cards section", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the collector cards show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(<CollectorCardsSkeleton label={table["loading"]} />, table["loading"]));
 });

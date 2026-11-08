@@ -25,6 +25,7 @@ import { plantLayerId } from "../rows/plant-tile/plant-tile";
 import { ZONES_LAYER } from "../rows/zone-insight/zone-insight";
 import { ARCHIVE_LAYER, type LayerProps } from "./layer-ids";
 import table from "./plant-layers.de.json";
+import { PlantLayerSkeleton } from "./plant-layer/plant-layer.skeleton";
 
 const t = texts(table);
 
@@ -110,6 +111,7 @@ export function PlantLayers(props: LayerProps) {
             status={direct.status}
             {...(direct.error ? { errorText: direct.error.text } : {})}
             onRetry={direct.retry}
+            skeleton={<PlantLayerSkeleton label={t("layer.loading")} />}
           >
             {null}
           </RequestState>

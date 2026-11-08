@@ -6,6 +6,9 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { PokedexPage } from "./pokedex-page";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./pokedex-page.de.json";
+import { MilestonesSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -423,4 +426,20 @@ describe("US-QS-22 neutral species entries", () => {
     expect(entry?.className).not.toMatch(/border-primary|text-primary/);
     expect(entry?.querySelector("[data-chevron]")).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the progress show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <ProgressSkeleton label={table["progressLoading"]} />,
+      table["progressLoading"],
+    ));
+});
+
+describe("US-QS-14 issue 1697 · the milestones show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <MilestonesSkeleton label={table["progressLoading"]} />,
+      table["progressLoading"],
+    ));
 });

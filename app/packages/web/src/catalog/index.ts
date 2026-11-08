@@ -13,3 +13,5 @@ export const searchSpecies = async (
 export const loadSpecies = async (
   ...args: Parameters<typeof import("./species-api").loadSpecies>
 ) => (await import("./species-api")).loadSpecies(...args);
+// The skeleton of the species catalog, the mode's skeleton on "Entdecken" (US-QS-14, issue 1697).
+export { SpeciesPageSkeleton } from "./species-page/species-page.skeleton";

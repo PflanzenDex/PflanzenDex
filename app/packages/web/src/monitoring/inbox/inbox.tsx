@@ -4,6 +4,11 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame } from "../../shared/data";
 import { loadInbox } from "../api/reminders-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../monitoring.de.json";
+import { InboxSkeleton } from "./inbox.skeleton";
+
+const ui = texts(table);
 
 const STATUS_TEXT: Record<ReminderStatus, string> = {
   none: "Nichts zu tun",
@@ -59,7 +64,8 @@ export function Inbox(props: { api: string; token: () => Promise<string | undefi
       queryKey={["monitoring", "inbox"]}
       token={props.token}
       load={load}
-      loadingText="Erinnerungen werden geladen …"
+      loadingText={ui("inbox.loading")}
+      loadingFallback={<InboxSkeleton label={ui("inbox.loading")} />}
     >
       {(rows) =>
         rows.length === 0 ? (

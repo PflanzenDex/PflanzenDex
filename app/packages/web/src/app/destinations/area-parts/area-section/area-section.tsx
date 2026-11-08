@@ -1,17 +1,16 @@
 import { Suspense, type ReactNode } from "react";
 import { SectionLabel } from "@/shared/patterns/elements/section-label/section-label";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { headingId } from "./use-section-anchor";
 
 /**
- * A section of a destination (US-QS-14): its name is a heading (level 2) the address can point at; the content loads
- * on its own, with a skeleton and one loading status meanwhile (DS-52).
+ * A section of a destination (US-QS-14): its name is a heading (level 2) the address can point at. Its content loads on
+ * its own; while it does, the section shows its skeleton, in the shape of that content (DS-52, issue 1697).
  */
 export function AreaSection(props: {
   anchor: string;
   title: string;
-  loading: string;
+  /** The skeleton of the section's content while it loads: its shape, one loading status, after the delay (DS-57). */
+  skeleton: ReactNode;
   /** The heading in place of the section label, e.g. the main heading (level 1) of a view of its own (US-QS-17). */
   heading?: ReactNode;
   children: ReactNode;
@@ -23,18 +22,7 @@ export function AreaSection(props: {
       className="flex min-w-0 scroll-mt-4 flex-col gap-3"
     >
       {props.heading ?? <SectionLabel id={headingId(props.anchor)}>{props.title}</SectionLabel>}
-      <Suspense
-        fallback={
-          <DelayedSkeleton>
-            <SkeletonGroup label={props.loading} className="flex min-w-0 flex-col gap-3">
-              <Skeleton className="h-24 w-full rounded-card" />
-              <Skeleton className="h-24 w-full rounded-card" />
-            </SkeletonGroup>
-          </DelayedSkeleton>
-        }
-      >
-        {props.children}
-      </Suspense>
+      <Suspense fallback={props.skeleton}>{props.children}</Suspense>
     </section>
   );
 }

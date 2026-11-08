@@ -5,6 +5,11 @@ import { useSiblings } from "../../specimens/cards/use-card-pages";
 import type { Token } from "../../specimens/hooks/use-collection";
 import type { useCreate } from "../../specimens/create/use-create";
 import type { Loaded } from "../../specimens/hooks/use-collection";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./create-with-siblings.de.json";
+import { CreateFormSkeleton } from "./create-with-siblings.skeleton";
+
+const ui = texts(table);
 
 /**
  * The create form of a chosen species. The other plants of the species (US-BES-03) are read to the end first, because the
@@ -24,6 +29,7 @@ export function CreateWithSiblings(p: {
       status={siblings.status}
       {...(siblings.error ? { errorText: siblings.error.text } : {})}
       onRetry={siblings.retry}
+      skeleton={<CreateFormSkeleton label={ui("loading")} />}
     >
       {siblings.value && (
         <CreateForm

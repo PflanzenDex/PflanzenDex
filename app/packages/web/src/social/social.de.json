@@ -39,5 +39,6 @@
   "friends.ended": "Freundschaft mit {name} beendet. Ihr seht nichts mehr voneinander; deine eigenen Daten bleiben.",
   "help.code": "Freunde findest du nur über einen Code, den ihr außerhalb der App austauscht. Wer ihn eingibt, schickt dir eine Anfrage; erst wenn du sie annimmst, seid ihr befreundet.",
   "help.sharing": "Was Freunde von dir sehen, bestimmst du; ohne deine Freigabe sieht niemand etwas. Von einer freigegebenen Pflanze sehen Freunde nur die Art, den Namen, das Fangdatum und ob es ein Steckling ist, nie Standort, Messwerte, Behandlungen, Kennzeichen oder Preise.",
-  "help.withdraw": "Ein Zurückziehen gilt ab dem nächsten Abruf; was schon angezeigt wurde, lässt sich nicht zurückholen. „Alles privat“ in den Einstellungen setzt alle Freigaben aus, ohne sie zu löschen."
+  "help.withdraw": "Ein Zurückziehen gilt ab dem nächsten Abruf; was schon angezeigt wurde, lässt sich nicht zurückholen. „Alles privat“ in den Einstellungen setzt alle Freigaben aus, ohne sie zu löschen.",
+  "equipment.loading": "Geräte werden geladen …"
 }

@@ -31,17 +31,33 @@ export function useSuggestionsOn(): boolean {
 }
 
 /**
- * The mode of the destination "Entdecken" (US-QS-14): from the address, else the one remembered on this device, else
- * the suggestions; an unknown value falls back like a missing one. Switching adds a history entry (back works),
+ * The mode the address, the device and the switches give (US-QS-14), as a plain function: the route's fallback draws the
+ * same shape before the area is there (issue 1697). From the address, else the one remembered on this device, else the
+ * suggestions; an unknown value falls back like a missing one, and without the suggestions only the catalog is left.
+ */
+export function discoverViewOf(
+  search: string,
+  stored: string | null,
+  suggestionsOn: boolean,
+): DiscoverView {
+  const asked =
+    parse(new URLSearchParams(search).get(DISCOVER_VIEW_PARAM)) ?? parse(stored) ?? "suggestions";
+  return asked === "suggestions" && !suggestionsOn ? "catalog" : asked;
+}
+
+/**
+ * The mode of the destination "Entdecken" (US-QS-14), see `discoverViewOf`. Switching adds a history entry (back works),
  * remembers the choice and tells screen readers; the state `keepFocus` leaves the focus on the control (RouteFocus).
  */
 export function useDiscoverView(): { view: DiscoverView; choose: (v: DiscoverView) => void } {
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
   const suggestions = useSuggestionsOn();
-  const asked =
-    parse(params.get(DISCOVER_VIEW_PARAM)) ?? parse(readStored(DISCOVER_VIEW_KEY)) ?? "suggestions";
-  const view: DiscoverView = asked === "suggestions" && !suggestions ? "catalog" : asked;
+  const view = discoverViewOf(
+    params.toString(),
+    readStored(DISCOVER_VIEW_KEY) ?? null,
+    suggestions,
+  );
   const choose = (next: DiscoverView) => {
     if (next === view) return;
     writeStored(DISCOVER_VIEW_KEY, next);

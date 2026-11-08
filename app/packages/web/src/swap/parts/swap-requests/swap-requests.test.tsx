@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapRequests } from "./swap-requests";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../swap.de.json";
+import { SwapRequestsSkeleton } from "./swap-requests.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -252,4 +255,12 @@ describe("US-SOZ-11 confirming the handover", () => {
       screen.queryByRole("button", { name: /Übergabe bestätigen|Erhalt bestätigen/ }),
     ).toBeNull();
   });
+});
+
+describe("US-QS-14 issue 1697 · the swap requests show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <SwapRequestsSkeleton label={table["requests.loading"]} />,
+      table["requests.loading"],
+    ));
 });

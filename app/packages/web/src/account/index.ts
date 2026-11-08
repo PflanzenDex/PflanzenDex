@@ -42,3 +42,5 @@ export const InvitationPage = lazyPage(() =>
   import("./invitation-page/invitation-page").then((m) => ({ default: m.InvitationPage })),
 );
 export { loadProfile } from "./api/account-api";
+// The skeleton of the settings in the shape of their six rows, the section's skeleton of "Konto" (US-QS-14, issue 1697).
+export { SettingsPageSkeleton } from "./settings-page/settings-page.skeleton";

@@ -11,3 +11,5 @@ export const WaterAction = lazyPage(() =>
 );
 /** "Gegossen" and "Gedüngt" of one plant from the outside, e.g. the scanned pot label (US-BES-17, US-MON-09); "Gegossen" is the same write as the list on "Heute". */
 export { loadLastFertilized, markFertilized, markWatered } from "./api/reminders-api";
+// The skeleton of the watering list in the shape of its rows, the layer's skeleton on "Heute" (US-QS-14, issue 1697).
+export { WateringListSkeleton } from "./watering/watering-list/watering-list.skeleton";

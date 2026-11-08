@@ -28,5 +28,6 @@
   "layer.plant": "Pflanze",
   "layer.profile": "Pflegeprofil",
   "layer.notes": "Notizen",
-  "layer.signs": "Beobachtungen"
+  "layer.signs": "Beobachtungen",
+  "layer.loading": "Pflanze wird geladen …"
 }

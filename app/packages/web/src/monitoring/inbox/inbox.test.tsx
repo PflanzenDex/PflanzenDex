@@ -5,6 +5,9 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { Inbox } from "./inbox";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../monitoring.de.json";
+import { InboxSkeleton } from "./inbox.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -61,4 +64,12 @@ describe("US-MON-01 reminder inbox", () => {
     show([]);
     expect(await screen.findByText("Keine Erinnerungen")).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the inbox show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <InboxSkeleton label={table["inbox.loading"]} />,
+      table["inbox.loading"],
+    ));
 });

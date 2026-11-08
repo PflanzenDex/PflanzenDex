@@ -1,4 +1,7 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+
+/** True inside a skeleton that is already due: a skeleton nested in it shows at once, so a composed one waits one delay only (issue 1697). */
+const DueContext = createContext(false);
 
 /**
  * How long a loading part may wait before its skeleton shows (US-QS-14, DS-57). Starting value, assumption (issue 1697):
@@ -18,11 +21,12 @@ export function DelayedSkeleton({
   delayMs?: number;
   children: ReactNode;
 }) {
-  const [due, setDue] = useState(delayMs <= 0);
+  const outerDue = useContext(DueContext);
+  const [due, setDue] = useState(delayMs <= 0 || outerDue);
   useEffect(() => {
     if (due) return;
     const id = window.setTimeout(() => setDue(true), delayMs);
     return () => window.clearTimeout(id);
   }, [delayMs, due]);
-  return due ? <>{children}</> : null;
+  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : null;
 }
