@@ -6,9 +6,9 @@ import {
   openView,
   signInToApp,
   tooltips,
-} from "../../support/display/display";
-import { addLocation, expect, test } from "../../support/fixtures";
-import { specimenByKeyboard } from "../../support/keyboard";
+} from "../../../support/display/display";
+import { addLocation, expect, test } from "../../../support/fixtures";
+import { specimenByKeyboard } from "../../../support/keyboard";
 
 // US-QS-12: enlarge and adapt the display without losing content. Every view of a fresh account is measured in the
 // real browser; the standing criteria hold for every view added to VIEWS later (FR-QG-10 item 11).

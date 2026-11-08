@@ -9,7 +9,6 @@ import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
-import { LazyAnniversaries } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { TodaySkeleton, type TodayDestination } from "@/today";
 import {
   todayAddress,
@@ -133,7 +132,6 @@ function Tasks(props: {
           {...(props.tiles ? { tiles: props.tiles } : {})}
         />
       </Suspense>
-      <LazyAnniversaries api={api} token={token} onOpen={() => props.onOpen("collection")} />
       <LayerSheet id="treatments" title="Behandlungen">
         <InLayer loading="Behandlungen werden geladen …">
           <TreatmentsPage api={api} token={token} host onPlan={props.plan} />

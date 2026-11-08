@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { AnniversaryLayer, AnniversaryTile } from "@/achievements";
 import { TodayArea } from "./today-area";
 
 const response = (status: number, body: unknown) =>
@@ -356,13 +357,38 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
     };
   };
 
-  it("US-QS-18 the anniversary card is a row of the content column, never a column beside it (#1027)", async () => {
+  it("US-ACH-06 the anniversaries are a tile in the content column, never a column beside it (#1027, issue 1662)", async () => {
     fakeServer({ anniversaries: ANNIVERSARY });
-    const { container } = show();
-    const card = await screen.findByRole("region", { name: "Jubiläen" });
+    const { container } = render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/today"]}>
+          <TodayArea
+            api="http://api"
+            token={async () => "tok"}
+            onOpen={(() => undefined) as never}
+            tiles={[
+              {
+                id: "anniversaries",
+                tile: (draw) => (
+                  <AnniversaryTile api="http://api" token={async () => "tok"} tile={draw} />
+                ),
+                layer: (
+                  <AnniversaryLayer
+                    api="http://api"
+                    token={async () => "tok"}
+                    onOpen={() => undefined}
+                  />
+                ),
+              },
+            ]}
+          />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+    const tile = await screen.findByRole("button", { name: "1Jubiläen" });
     const { content, pane } = columns(container);
-    expect(content.contains(card)).toBe(true);
-    expect(pane.contains(card)).toBe(false);
+    expect(content.contains(tile)).toBe(true);
+    expect(pane.contains(tile)).toBe(false);
     expect(pane.childElementCount).toBe(0);
   });
 
