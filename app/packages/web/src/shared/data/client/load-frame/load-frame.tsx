@@ -22,6 +22,8 @@ export function LoadFrame<T>(props: {
   loadingText: string;
   /** The data fills a form: it is not kept after the view closes (see `useRequest`). */
   fresh?: boolean;
+  /** One key read by several parts of a screen: a fresh copy is shown without a second request (see `useRequest`). */
+  staleTime?: number;
   /** Skeleton that mirrors the page while it loads (DS-52); it must carry the single `role="status"` with `loadingText`. */
   loadingFallback?: ReactNode;
   /** Optional empty state for a view that has nothing to show without rows. */
@@ -35,8 +37,14 @@ export function LoadFrame<T>(props: {
   heading?: string;
   children: (value: T) => ReactNode;
 }) {
-  const { queryKey, token, load, empty, fresh } = props;
-  const r = useRequest({ queryKey, token, load, ...(fresh ? { fresh } : {}) });
+  const { queryKey, token, load, empty, fresh, staleTime } = props;
+  const r = useRequest({
+    queryKey,
+    token,
+    load,
+    ...(fresh ? { fresh } : {}),
+    ...(staleTime === undefined ? {} : { staleTime }),
+  });
   const isEmpty = r.status === "ready" && r.value !== undefined && empty?.isEmpty(r.value);
   return (
     <RequestState

@@ -92,14 +92,15 @@ Acceptance criteria:
 
 Status 🟨: the detail view of caught species is implemented (German name, genus, family, status, specimen count, cultivar chips, catch date, the catalog's source field as link, link to the species profile). Missing: the larger image and the full short text (taxonomy build, US-POK-03; shown as "no image" and "unknown"), the Missing cards and their two actions (no species list of the tree, no wishlist US-WUN, no friends US-SOZ).
 
-### US-POK-10 · Collector rank and progress · ⬜ (prototype ✅)
+### US-POK-10 · Collector rank and progress · ✅ (prototype ✅)
 
 Acceptance criteria:
 
 - Rank by number of caught species: Seedling 0–4, Sapling from 5 <!-- const: COLLECTOR_RANKS.1.from -->, Young plant from 15 <!-- const: COLLECTOR_RANKS.2.from -->, Bloomer from 30 <!-- const: COLLECTOR_RANKS.3.from -->, Treetop from 60 <!-- const: COLLECTOR_RANKS.4.from -->, Botanist from 100 <!-- const: COLLECTOR_RANKS.5.from -->.
 - Display: rank, "N / M species caught (P %)", progress bar, "N more until "<next rank>"", "k of K orders discovered" (K from the tree, not hard-coded), state of the tree.
+- Given caught species that are not in the tree (own proposals not yet approved), when the progress is shown, then N, the percentage and the rank count only the caught species of the tree, so P never exceeds 100 %; the progress names the caught species that do not count yet ("k gefangene Arten zählen noch nicht …"), and without a tree everything stays unknown as before (P-08). Owner decision 2026-11-07.
 
-### US-POK-11 · Milestones with an instruction for action · 🟨 (prototype ✅)
+### US-POK-11 · Milestones with an instruction for action · ✅ (prototype ✅)
 
 Acceptance criteria:
 
@@ -108,9 +109,7 @@ Acceptance criteria:
 - _Explorer_: orders with ≥ 1 caught species; `missing` = orders with the fewest species first.
 - Groups "Without family/genus/order" have no milestones.
 - Each milestone has `current`, `target`, `remaining` and up to 3 `missing` (German + Latin).
-- Display: up to 4 open milestones with the smallest remainder > 0 (tie: higher ratio first, then title), "N more: …" with bar; collapsed "N milestones reached" with date (catch date of the nth species), if known.
-
-Status 🟨: the logic and the view work over a taxonomy tree. Missing: the tree (taxonomy build, US-POK-03); until then the view says milestones need the tree and shows none (nothing is invented, P-08).
+- Display: up to 4 open milestones with the smallest remainder > 0 (tie: higher ratio first, then title), "N more: …" with bar; collapsed "N milestones reached" with date (catch date of the nth species), if known. They open as their own layer "Meilensteine" (`?sheet=milestones`) from the progress layer, which holds only the opener; the open milestones come two per page (starting value, assumption; DS-58). Without any milestone the progress layer says so instead of an opener (P-09); when all are reached the opener stays, so the reached ones remain reachable (P-10).
 
 ### US-POK-12 · "Newly caught" on the next visit · 🟨 (prototype ✅)
 

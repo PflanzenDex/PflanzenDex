@@ -69,6 +69,13 @@
     "title": "Fortschritt"
   },
   {
+    "id": "collection-view-species-sheet-milestones",
+    "account": "test2",
+    "path": "/collection?view=species&sheet=milestones",
+    "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
+    "title": "Meilensteine"
+  },
+  {
     "id": "collection-view-species-sheet-filters",
     "account": "test2",
     "path": "/collection?view=species&sheet=filters",

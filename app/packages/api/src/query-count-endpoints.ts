@@ -62,6 +62,7 @@ export const MEASURED: Record<string, Query> = {
   "/pokedex/cards": zone,
   "/pokedex/ownership": zone,
   "/pokedex/seen": none,
+  "/pokedex/tree": none,
   "/reminders": none,
   "/reminders/settings": none,
   "/reminders/subscriptions": none,
