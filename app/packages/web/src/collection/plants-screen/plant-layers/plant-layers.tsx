@@ -65,10 +65,7 @@ function ArchiveLayer(props: LayerProps) {
           closeLayer();
           props.onRestore(e);
         }}
-        onCatchDate={(e) => {
-          closeLayer();
-          props.onArchivedCatchDate(e);
-        }}
+        onCatchDate={(e) => props.onArchivedCatchDate(e)}
       />
     </LayerSheet>
   );
