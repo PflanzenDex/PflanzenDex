@@ -8,6 +8,7 @@ import {
   SHIFT_SIZES,
   buildShiftBaseline,
   judgeShiftBaseline,
+  shiftMarkdown,
   type ShiftBaseline,
   type ShiftResult,
 } from "./one-screen/judge.shift";
@@ -130,6 +131,10 @@ function shiftVerdict(status: FullResult["status"]): { status: FullResult["statu
     new Set(SHIFT_SIZES.map((s) => s.name)),
   );
   for (const p of problems) console.error(`layout shift: ${p} (${SHIFT_BASELINE_FILE.pathname})`);
+  writeFileSync(
+    new URL("shift/report.md", REPORT_DIR),
+    shiftMarkdown(results, readShiftBaseline()),
+  );
   return problems.length > 0 && status === "passed" ? { status: "failed" } : undefined;
 }
 
@@ -173,7 +178,9 @@ export default class OneScreenReporter implements Reporter {
       );
     }
     const baseline = readBaseline();
-    writeFileSync(new URL("report.md", REPORT_DIR), reportMarkdown(results, baseline));
+    const shiftReport = new URL("shift/report.md", REPORT_DIR);
+    const shiftPart = existsSync(shiftReport) ? readFileSync(shiftReport, "utf8") : "";
+    writeFileSync(new URL("report.md", REPORT_DIR), reportMarkdown(results, baseline) + shiftPart);
     writeFileSync(new URL("results.json", REPORT_DIR), JSON.stringify(results));
     const problems = judgeBaseline(
       baseline,

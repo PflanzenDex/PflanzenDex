@@ -10,6 +10,8 @@ import {
   highestOf,
   judgeShift,
   judgeShiftBaseline,
+  gateFindings,
+  SHIFT_BLOCKING,
   type Shift,
   type ShiftBaseline,
   type ShiftResult,
@@ -37,10 +39,18 @@ export function shiftTests(screens: readonly Screen[], api: string, write: boole
           const load = await coldLoad(browser, { storageState, size, base: WEB, api, screen });
           results.push(evaluateShift(screen.id, size, load.shifts, load.skeleton));
         }
-        saveShiftResults(screen.id, results);
+        const judged = results.map((r) => ({
+          ...r,
+          findings: judgeShift(r, readShiftBaseline(), Boolean(screen.unstable)),
+        }));
+        saveShiftResults(screen.id, judged);
+        // Reported with the findings in the step summary; it fails only while SHIFT_BLOCKING is on (#1729).
         if (!write)
           expect(
-            results.flatMap((r) => judgeShift(r, readShiftBaseline(), Boolean(screen.unstable))),
+            gateFindings(
+              judged.flatMap((r) => r.findings ?? []),
+              SHIFT_BLOCKING,
+            ),
             screen.id,
           ).toEqual([]);
       });
@@ -110,6 +120,14 @@ export function shiftSelfTests(): void {
 }
 
 export function shiftJudgeSelfTests(): void {
+  test("DS-52 the switch: a load above the limit fails the run while blocking, and is only reported without it (#1729)", () => {
+    const findings = judgeShift(loadAt(0.2), none);
+    expect(findings).toHaveLength(1);
+    expect(gateFindings(findings, true)).toEqual(findings);
+    expect(gateFindings(findings, false)).toEqual([]);
+    expect(typeof SHIFT_BLOCKING).toBe("boolean");
+  });
+
   test("DS-52 a cold load above the limit fails and names its worst element", () => {
     const [violation] = judgeShift(loadAt(0.2), none);
     expect(violation).toContain("layout shift 0.200 > 0.1");

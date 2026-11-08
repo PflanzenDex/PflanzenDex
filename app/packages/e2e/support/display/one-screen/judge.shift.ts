@@ -16,8 +16,10 @@ export const SHIFT_SIZES: readonly Size[] = [
 const LIMITS = JSON.parse(
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed file next to the code limits, not from input
   readFileSync(new URL("../../../../../config/gates/quality-limits.json", import.meta.url), "utf8"),
-) as { layoutShift: { maxCls: number } };
+) as { layoutShift: { maxCls: number; blocking: boolean } };
 export const SHIFT_MAX_CLS = LIMITS.layoutShift.maxCls;
+/** Whether a load above the limit fails the run (quality-limits.json layoutShift.blocking). False until the R1 ticket "deterministic shift check". */
+export const SHIFT_BLOCKING = LIMITS.layoutShift.blocking;
 
 /** A listed load may get this much worse (in CLS) before it fails (FR-QG-17). */
 export const WORSE_SHIFT = 0.02;
@@ -37,6 +39,8 @@ export interface ShiftResult {
   screen: string;
   size: string;
   cls: number;
+  /** The violations of this load (judgeShift), written with the result for the step summary. */
+  findings?: string[];
   raw: number;
   skeleton: boolean;
   worst: string;
@@ -105,6 +109,41 @@ export function judgeShift(r: ShiftResult, baseline: ShiftBaseline, unstable = f
   return r.cls > entry.cls + WORSE_SHIFT
     ? [`${over} (worse than the baseline, listed at ${entry.cls})`]
     : [];
+}
+
+/** The findings that fail the run: all of them while blocking, none while only reported (SHIFT_BLOCKING, #1729). Pure. */
+export function gateFindings(findings: readonly string[], blocking: boolean): string[] {
+  return blocking ? [...findings] : [];
+}
+
+/** The step summary of the layout-shift check (#1729): every load, its CLS (over the limit marked, listed in the baseline
+ * marked) and the findings. Reported, not blocking, while SHIFT_BLOCKING is false. */
+export function shiftMarkdown(results: readonly ShiftResult[], baseline: ShiftBaseline): string {
+  const names = SHIFT_SIZES.map((s) => s.name);
+  const mode = SHIFT_BLOCKING
+    ? "Blocking: a load above the limit fails the run."
+    : 'Reported, not yet blocking (spread up to 0.244 between identical CI runs; R1 ticket #1729 "deterministic shift check").';
+  const lines = [
+    "## Layout shift on a cold load (US-QS-14, DS-52, issue 1697)",
+    "",
+    `Cumulative layout shift of each cold load; the limit is ${SHIFT_MAX_CLS}. ${mode}`,
+    "",
+    `| screen | ${names.join(" | ")} |`,
+    `| --- | ${names.map(() => "---").join(" | ")} |`,
+  ];
+  for (const id of [...new Set(results.map((r) => r.screen))].sort()) {
+    const cells = names.map((n) => {
+      const r = results.find((x) => x.screen === id && x.size === n);
+      if (!r) return "-";
+      const listed = baseline.entries.some((e) => e.screen === id && e.size === n);
+      return `${r.cls.toFixed(3)}${r.cls > SHIFT_MAX_CLS ? " **over**" : ""}${listed ? " (listed)" : ""}`;
+    });
+    lines.push(`| ${id} | ${cells.join(" | ")} |`);
+  }
+  const findings = results.flatMap((r) => r.findings ?? []);
+  lines.push("", `Findings: ${findings.length}`, "");
+  for (const f of findings) lines.push(`- ${f}`);
+  return lines.join("\n") + "\n";
 }
 
 /** The baseline itself only shrinks: more entries than maxEntries, or entries of screens or sizes that do not exist. */
