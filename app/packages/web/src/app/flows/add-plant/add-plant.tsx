@@ -102,7 +102,7 @@ function Flow(props: Props & { onAnother: () => void }) {
           zoneId={f.zoneId}
           onZone={f.setZoneId}
           error={f.error}
-          marker={f.marker.fields}
+          marker={f.marker}
         >
           <PlaceField places={places} value={f.locationId} onChange={f.setLocationId} />
         </SaveStep>

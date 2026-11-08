@@ -39,23 +39,23 @@ export const DifficultyPage = lazyPage(() =>
 export { loadCardSummary, loadSpecimenCount } from "./specimens/cards/cards-api";
 export { createSpecimen, setSpecimenLocation } from "./specimens/model/specimens-api";
 /**
- * The marker fields of a further plant, in the short form and the first-plant flow (US-BES-03, US-QS-15). Lazy like
- * the pages: its chunk is requested when the step shows the field, so the entry stays as it was (issue 1638).
+ * The marker step of a further plant (US-BES-03, US-QS-15): its own chunk, loaded with step 2 of the first plant. It
+ * reads the rule of the chosen species and reports it to the flow, so neither the sibling read nor the field reach the
+ * barrel's static graph (issue 1638). Lazy like the pages.
  */
-export const MarkerFields = lazyPage(() =>
-  import("./markers/marker/marker-fields/marker-fields").then((m) => ({
-    default: m.MarkerFields,
+export const MarkerSection = lazyPage(() =>
+  import("./markers/marker/marker-section/marker-section").then((m) => ({
+    default: m.MarkerSection,
   })),
 );
+export type { MarkerSectionProps } from "./markers/marker/marker-section/marker-section";
 export {
   markerFormStart,
   markerInputOf,
   markerRefusalFields,
   refusesMarker,
-  useFurtherMarker,
-  type FurtherMarker,
-} from "./markers/marker/use-further-marker";
-export { useToday } from "./markers/catch-date/use-today";
+  type MarkerRule,
+} from "./markers/marker/marker-rule";
 export type { CreateFields } from "./specimens/model/schemas";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";

@@ -111,6 +111,8 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     const place = (await screen.findByLabelText("Standort")) as HTMLSelectElement;
     expect(await screen.findByRole("option", { name: "Balkon (Zone 4)" })).toBeTruthy();
     expect(place.value).toBe("l2");
+    // The save waits for the rule of the species, which its section reports after its chunk loads (issue 1638).
+    await untilSaveEnabled();
     await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     const body = writes.find((w) => w.path === "/specimens")?.body;

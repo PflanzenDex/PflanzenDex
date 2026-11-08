@@ -6,11 +6,10 @@ import {
   type Species,
   zoneLabel,
 } from "@pflanzendex/core";
-import { Form } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Label } from "@/shared/ui/display/label/label";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
-import { MarkerFields, type FurtherMarker } from "@/collection";
+import { MarkerSection, type MarkerSectionProps } from "@/collection";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
 import { refreshLight, sharedZones } from "../../../../../light";
 import { ensureHome } from "../where-question/where-question";
@@ -82,8 +81,11 @@ export function SaveStep(props: {
   zoneId: string;
   onZone: (id: string) => void;
   error: string | null;
-  /** The marker of a further plant: shown for an owned species or after a refused marker (US-BES-03, US-QS-15). */
-  marker?: FurtherMarker["fields"];
+  /**
+   * The marker of a further plant (US-BES-03, US-QS-15): its section reads the rule of the species and reports it to
+   * the flow, which enables the save with it (issue 1638).
+   */
+  marker?: Omit<MarkerSectionProps, "speciesId" | "speciesName">;
   /** More fields of the step, e.g. the suggested place of a further plant. */
   children?: ReactNode;
 }) {
@@ -99,17 +101,19 @@ export function SaveStep(props: {
         {species.germanName ? ` (${species.germanName})` : ""}
       </p>
       {props.marker && (
-        <Form {...props.marker.form}>
-          {/* The fields arrive with their own chunk (issue 1638): a block of the field's size meanwhile. */}
-          <Suspense fallback={<Skeleton className="h-20 w-full" />}>
-            <MarkerFields
-              control={props.marker.form.control}
-              speciesName={speciesDisplayName(species)}
-              required={props.marker.required}
-              missing={props.marker.missing}
-            />
-          </Suspense>
-        </Form>
+        // The section arrives with its own chunk (issue 1638): a block of the field's size meanwhile.
+        <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+          <MarkerSection
+            key={species.id}
+            form={props.marker.form}
+            api={props.marker.api}
+            token={props.marker.token}
+            refusal={props.marker.refusal}
+            report={props.marker.report}
+            speciesId={species.id}
+            speciesName={speciesDisplayName(species)}
+          />
+        </Suspense>
       )}
       <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
       <Select

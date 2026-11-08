@@ -117,7 +117,7 @@ function Step(props: {
         zoneId={f.zoneId}
         onZone={f.setZoneId}
         error={f.error}
-        marker={f.marker.fields}
+        marker={f.marker}
       />
     );
   return (
