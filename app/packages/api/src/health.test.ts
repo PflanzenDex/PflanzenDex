@@ -6,11 +6,14 @@ import { createApp } from "./app";
 const fakePool = (answer: (sql: string) => unknown) =>
   ({
     query: async (sql: string) => {
+      if (sql.includes("deletion_deadline_rows")) return { rows: deadlineRows.value };
       const r = answer(sql);
       if (r instanceof Error) throw r;
       return r;
     },
   }) as unknown as Pool;
+// The open deletions the deadline check reads (US-ACC-04); empty unless a test sets them.
+const deadlineRows: { value: unknown[] } = { value: [] };
 const statusRows = (rows: { status: string; n: number }[]) => ({ rows });
 const health = async (pool?: Pool, path = "/health/details") => {
   const res = await createApp(pool ? { pool } : {}).request(path);
@@ -68,6 +71,61 @@ describe("US-DEV-09 health endpoint with checks", () => {
         checks: { database: "not_configured", jobs: { status: "not_configured" } },
       },
     });
+  });
+
+  it("US-ACC-04 a deletion whose deadline has passed makes the state degraded, as the distinct entry deadline_passed", async () => {
+    const pool = fakePool((sql) =>
+      sql.includes("from job") ? statusRows([]) : { rows: [{ ok: 1 }] },
+    );
+    deadlineRows.value = [
+      {
+        kind: "request",
+        entryId: null,
+        requestedAt: new Date("2026-08-01T00:00:00Z"),
+        subject: null,
+        completedAt: null,
+      },
+    ];
+    try {
+      expect(await health(pool)).toMatchObject({
+        status: 200,
+        body: {
+          status: "degraded",
+          checks: {
+            deletionDeadlines: { status: "deadline_passed", past: 1, near: 0, identityOpen: 0 },
+          },
+        },
+      });
+    } finally {
+      deadlineRows.value = [];
+    }
+  });
+
+  it("US-ACC-04 a deletion near its deadline is degraded too, and an open identity removal is counted", async () => {
+    const pool = fakePool((sql) =>
+      sql.includes("from job") ? statusRows([]) : { rows: [{ ok: 1 }] },
+    );
+    const near = new Date(Date.now() - 25 * 24 * 60 * 60 * 1000); // deadline in about five days
+    deadlineRows.value = [
+      {
+        kind: "identity",
+        entryId: "22222222-2222-4222-8222-222222222222",
+        requestedAt: near,
+        subject: "sub",
+        completedAt: near,
+      },
+    ];
+    try {
+      expect(await health(pool)).toMatchObject({
+        status: 200,
+        body: {
+          status: "degraded",
+          checks: { deletionDeadlines: { status: "near", near: 1, past: 0, identityOpen: 1 } },
+        },
+      });
+    } finally {
+      deadlineRows.value = [];
+    }
   });
 
   it("TE-03 the public /health answers the status keyword only: no version, commit or counters (#759)", async () => {

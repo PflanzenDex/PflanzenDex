@@ -129,6 +129,8 @@ jobs:
           SECRET_KEYCLOAK_SETUP_PASSWORD: ${{ secrets.KEYCLOAK_SETUP_PASSWORD }}
           SECRET_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SECRET_MAIL_UI_HASH: ${{ secrets.MAIL_UI_HASH }}
+          SECRET_IDENTITY_TOKEN_URL: ${{ secrets.IDENTITY_TOKEN_URL }}
+          SECRET_IDENTITY_ADMIN_CLIENT_SECRET: ${{ secrets.IDENTITY_ADMIN_CLIENT_SECRET }}
           # 1 only for the one deploy after the rotation steps of the runbook ("Rotating a password"), then delete it.
           ALLOW_PASSWORD_ROTATION: ${{ vars.ALLOW_PASSWORD_ROTATION }}
         run: |

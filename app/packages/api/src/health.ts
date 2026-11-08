@@ -2,6 +2,7 @@ import { productTitle } from "@pflanzendex/core";
 import { JobsPostgres } from "@pflanzendex/db";
 import type { Hono } from "hono";
 import type { Pool } from "pg";
+import { deletionDeadlineCheck, type DeletionDeadlineCheck } from "./privacy";
 
 /** How long the database may take to answer the health check before it counts as down (starting value, assumption). */
 const DATABASE_TIMEOUT_MS = 2000;
@@ -10,6 +11,9 @@ type Database = "ok" | "error" | "not_configured";
 type Jobs =
   | { status: "ok" | "dead_jobs"; queued: number; running: number; dead: number }
   | { status: "error" | "not_configured" };
+// The deletion deadlines (US-ACC-04, issue 1673): `near` and `deadline_passed` make the state degraded; an unreadable
+// state is degraded too, because it is not known to be fine (P-10).
+type Deadlines = DeletionDeadlineCheck | { status: "error" | "not_configured" };
 
 const withTimeout = <T>(p: Promise<T>): Promise<T> =>
   Promise.race([
@@ -40,6 +44,18 @@ async function jobs(pool: Pool | undefined): Promise<Jobs> {
   }
 }
 
+async function deadlines(pool: Pool | undefined): Promise<Deadlines> {
+  if (!pool) return { status: "not_configured" };
+  try {
+    return await withTimeout(deletionDeadlineCheck(pool, new Date()));
+  } catch {
+    return { status: "error" };
+  }
+}
+
+const unhealthyDeadlines = (d: Deadlines) =>
+  d.status === "near" || d.status === "deadline_passed" || d.status === "error";
+
 /**
  * Health of the API (TE-01, TE-03, US-DEV-09), without sign-in and without secrets. `GET /health` is public and answers
  * only the status keyword: version, commit and queue counts would help an attacker match the deployment to known issues
@@ -54,21 +70,23 @@ export function bindHealth(
   opt: { pool?: Pool | undefined; version: string; commit: string; storage: boolean },
 ) {
   const check = async () => {
-    const [db, queue] = await Promise.all([database(opt.pool), jobs(opt.pool)]);
-    const status =
-      db === "error"
-        ? "error"
-        : queue.status === "ok" || queue.status === "not_configured"
-          ? "ok"
-          : "degraded";
-    return { status, db, queue } as const;
+    const [db, queue, deletions] = await Promise.all([
+      database(opt.pool),
+      jobs(opt.pool),
+      deadlines(opt.pool),
+    ]);
+    const healthy =
+      (queue.status === "ok" || queue.status === "not_configured") &&
+      !unhealthyDeadlines(deletions);
+    const status = db === "error" ? "error" : healthy ? "ok" : "degraded";
+    return { status, db, queue, deletions } as const;
   };
   app.get("/health", async (c) => {
     const { status } = await check();
     return c.json({ status }, status === "error" ? 503 : 200);
   });
   app.get("/health/details", async (c) => {
-    const { status, db, queue } = await check();
+    const { status, db, queue, deletions } = await check();
     const body = {
       status,
       product: productTitle(),
@@ -78,6 +96,7 @@ export function bindHealth(
         database: db,
         jobs: queue,
         storage: opt.storage ? "configured" : "not_configured",
+        deletionDeadlines: deletions,
       },
     };
     return c.json(body, status === "error" ? 503 : 200);

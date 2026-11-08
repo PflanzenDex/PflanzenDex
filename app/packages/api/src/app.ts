@@ -51,7 +51,7 @@ import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { achievementsRoutes } from "./achievements";
 import { discoverRoutes, discoverSourceFor } from "./discover";
 import { monitoringRoutes } from "./monitoring";
-import { deletionRoutes, exportRoutes } from "./privacy";
+import { deletionRoutes, exportRoutes, operatorDeletionRoutes } from "./privacy";
 import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
 import {
@@ -92,6 +92,7 @@ function bindAccount(
   app.route("/account", deletionRoutes(pool, opt.clock));
   for (const path of OPERATOR_PATHS) app.use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
+  app.route("/", operatorDeletionRoutes(pool, opt.clock));
   return auth;
 }
 
