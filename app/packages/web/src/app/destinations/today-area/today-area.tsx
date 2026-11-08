@@ -8,7 +8,6 @@ import {
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
-import { LazyAnniversaries } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
 import {
   HintsLayerSkeleton,
@@ -154,7 +153,6 @@ function Tasks(props: {
           {...(props.tiles ? { tiles: props.tiles } : {})}
         />
       </Suspense>
-      <LazyAnniversaries api={api} token={token} onOpen={() => props.onOpen("collection")} />
       <LayerSheet id="treatments" title="Behandlungen">
         <InLayer skeleton={<TreatmentsLayerSkeleton />}>
           <TreatmentsPage api={api} token={token} host onPlan={props.plan} />

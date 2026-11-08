@@ -52,6 +52,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "light/zones/zone-layer/zone-layer.tsx": [COLLECTION],
   "app/flows/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx": [TODAY],
   "social/feed/friends-news/friends-news.tsx": [TODAY],
+  "achievements/anniversaries/anniversary-tile/anniversary-tile.tsx": [TODAY],
   "social/pages/friends-page/friend-layers/layer/layer.tsx": [
     "social/pages/friends-page/friends-page.tsx",
   ],

@@ -87,11 +87,15 @@ function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen
  * week of the anniversary. Calm mode, no anniversary or a read error show nothing (US-ACH-08): a side feature never
  * breaks the page. No push and no pressure (FR-ACH-06); the text says what happened, the button what to do next (P-09).
  */
+/** The anniversaries of today; the tile and the layer on "Heute" read the same key, so one request serves both (issue 1662). */
+export function useAnniversaries(api: string, token: Token) {
+  const load = useCallback((t: string) => loadAnniversaries(api, t), [api]);
+  return useRequest({ queryKey: ["achievements", "anniversaries"], token, load });
+}
+
 export function Anniversaries(props: { api: string; token: Token; onOpen: () => void }) {
   const { api, token } = props;
-  const load = useCallback((t: string) => loadAnniversaries(api, t), [api]);
-  const r = useRequest({ queryKey: ["achievements", "anniversaries"], token, load });
-  const v = r.value;
+  const v = useAnniversaries(api, token).value;
   if (!v || v.calmMode || !Array.isArray(v.items) || v.items.length === 0) return null;
   return (
     <section aria-label="Jubiläen" className="flex min-w-0 flex-col gap-3">
