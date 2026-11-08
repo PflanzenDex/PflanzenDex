@@ -6,7 +6,7 @@ APP := app
 # is unexported here, before the first $(shell) below: SCREEN (`make one-screen`), FILES (`make gate-plan`) and the values
 # of the recipes. A recipe reads the raw copy of a value from the environment ("$$REST_TITLE", "$$RAW_TYPE", set below with
 # $(value)), never the $(TITLE) text; a guard tests $(value X). FRESH keeps its name for the tools, see below.
-unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS
+unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUN RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS
 unexport WRITE APPLY DRY_RUN DEMO_SEED_PROFILE PERF_RUNS ONE_SCREEN_WRITE
 ifneq ($(origin FRESH),undefined)
 FRESH_GIVEN := yes
@@ -29,7 +29,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status run-jobs conflicts test-files format-check board-item
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -37,6 +37,7 @@ AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR
 # written into a recipe: a backtick, $(...) or a quote in a title, number or path is data, never a shell command (US-DEV-13).
 export REST_PR := $(value PR)
 export REST_ISSUE := $(value ISSUE)
+export REST_RUN := $(value RUN)
 export REST_TITLE := $(value TITLE)
 export REST_BODY := $(value BODY)
 # The other caller values of the recipes, raw the same way (issue 1636); the tools get them as arguments, as before. The
@@ -49,6 +50,7 @@ export RAW_DIR := $(value DIR)
 export RAW_ARGS := $(value ARGS)
 export RAW_EPIC := $(value EPIC)
 export RAW_EVENT := $(value EVENT)
+export RAW_FILES := $(value FILES)
 export RAW_JOBS := $(value JOBS)
 export RAW_MSG := $(value MSG)
 export RAW_NAME := $(value NAME)
@@ -83,6 +85,25 @@ pr-text: ## Set the title (TITLE="…", optional) and the body (BODY=<file>) of 
 
 issue-comment: ## Add a comment to an issue over REST (ISSUE=<n> BODY=<file>); refuses a missing or empty body file (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs issue-comment
+
+# Five read-only targets for agents (US-DEV-13, issue 1716), fixed so that .claude/settings.json can allow each one. Code:
+# app/tools/dev/agent/read-only/read-only-cli.mjs. Each value reaches the script only as its raw environment variable (REST_RUN,
+# REST_PR, REST_ISSUE, RAW_FILES), and the script checks it before any call: a `;`, `$(...)`, a backtick, a quote, a space
+# where none is allowed or a leading dash is refused with exit 2, never run.
+run-jobs: ## Name, status, conclusion and URL of each job of one workflow run (RUN=<id>, REST, read-only; US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs run-jobs
+
+conflicts: ## Whether the PR head (PR=<n>) merges into origin/dev, else the conflicting files; exit 1 on a conflict; writes no branch or commit (US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs conflicts
+
+test-files: ## vitest on the test files FILES="<paths under app/>" in the package each belongs to, node --test for tool tests (US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs test-files
+
+format-check: ## Prettier --check with the repo config on FILES="<paths under app/, docs/, tools/ or .claude/>"; writes nothing (US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs format-check
+
+board-item: ## Status, Typ, Epic, Priority and Release of one issue on the project board (ISSUE=<n>, one read-only GraphQL query; US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs board-item
 
 help: ## List all targets with a one-line description
 	@grep -hE '^[a-z0-9][a-z0-9-]*:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-20s %s\n", $$1, $$2}'
