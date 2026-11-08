@@ -15,7 +15,8 @@ export function zoneInsightText(distribution: Distribution): string {
 
 /**
  * The insight row of the plants (US-QS-19): one line, a target of at least 44 px, opens the layer "zones". At a larger
- * text size it wraps at whole words only and never gets narrower than its longest word (issue 1113).
+ * text size it wraps at whole words only and never gets narrower than its longest word (issue 1113). Its basis is zero,
+ * so it gives way first in the row: "Archiv (n)" and "+" keep their place when the count gains a digit (issue 1644, F19).
  */
 export function ZoneInsightRow({ distribution }: { distribution: Distribution }) {
   const { openLayer, open } = useLayer(ZONES_LAYER);

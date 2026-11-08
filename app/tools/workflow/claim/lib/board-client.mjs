@@ -75,6 +75,7 @@ export function itemOf(node, number) {
     status: node.status?.name ?? null,
     priority: node.priority?.name ?? null,
     epic: typ === "Epic",
+    epicName: node.epic?.name ?? null, // the Epic field (its code, e.g. DEV), read by make board-item (issue 1716)
     typ,
     release: node.release?.name ?? null,
   };

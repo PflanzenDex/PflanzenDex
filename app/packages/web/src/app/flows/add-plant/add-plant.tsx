@@ -12,6 +12,10 @@ import {
 } from "../onboarding/onboarding-wizard/species-step/species-step";
 import { useFirstPlant } from "../onboarding/onboarding-wizard/use-first-plant";
 import { PlaceField, usePlaces } from "./place-field/place-field";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./add-plant.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
@@ -31,14 +35,14 @@ function Done(props: { name: string; onAnother: () => void }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold" ref={(e) => e?.focus()}>
-        {props.name} ist angelegt
+        {ui("created", { name: props.name })}
       </h2>
       <div className={ACTIONS}>
         <Button type="button" onClick={() => void navigate(PATHS.collection)}>
-          Zur Sammlung
+          {ui("toCollection")}
         </Button>
         <Button type="button" variant="outline" onClick={props.onAnother}>
-          Noch eine Pflanze
+          {ui("another")}
         </Button>
       </div>
     </section>
@@ -59,14 +63,18 @@ function Buttons(props: { f: Plant; species: Species | null; onMore: (s: Species
     );
   return (
     <div className={ACTIONS}>
-      <Button type="button" disabled={f.saving || f.zones === null} onClick={() => void f.save()}>
+      <Button
+        type="button"
+        disabled={f.saving || f.zones === null || f.marker.rule === null}
+        onClick={() => void f.save()}
+      >
         {FIRST_PLANT_STEPS[1]?.actionLabel}
       </Button>
       <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
-        Zurück
+        {ui("back")}
       </Button>
       <Button type="button" variant="ghost" onClick={() => props.onMore(species)}>
-        Mehr Angaben
+        {ui("more")}
       </Button>
     </div>
   );
@@ -80,10 +88,13 @@ function Flow(props: Props & { onAnother: () => void }) {
   const species = f.index === 1 ? f.species : null;
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <p
-        className="m-0 text-sm font-semibold"
-        role="status"
-      >{`Schritt ${f.index + 1} von ${FIRST_PLANT_STEPS.length}: ${FIRST_PLANT_STEPS[f.index]?.title ?? ""}`}</p>
+      <p className="m-0 text-sm font-semibold" role="status">
+        {ui("step", {
+          n: f.index + 1,
+          total: FIRST_PLANT_STEPS.length,
+          title: FIRST_PLANT_STEPS[f.index]?.title ?? "",
+        })}
+      </p>
       {species ? (
         <SaveStep
           species={species}
@@ -91,12 +102,13 @@ function Flow(props: Props & { onAnother: () => void }) {
           zoneId={f.zoneId}
           onZone={f.setZoneId}
           error={f.error}
+          marker={f.marker}
         >
           <PlaceField places={places} value={f.locationId} onChange={f.setLocationId} />
         </SaveStep>
       ) : (
         <SpeciesStep
-          title="Welche Pflanze?"
+          title={ui("chooseTitle")}
           lookup={props.lookup}
           api={api}
           token={token}
@@ -125,8 +137,8 @@ export function AddPlant(props: Props) {
     <div data-fit-screen="" className="flex min-w-0 flex-col">
       <FullView
         headingId="add-plant-title"
-        title="Pflanze anlegen"
-        back={{ label: "Zurück zur Sammlung", to: PATHS.collection }}
+        title={ui("title")}
+        back={{ label: ui("backLabel"), to: PATHS.collection }}
       >
         <Flow key={round} {...props} onAnother={() => setRound((r) => r + 1)} />
       </FullView>

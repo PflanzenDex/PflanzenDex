@@ -30,6 +30,7 @@ const EXCLUDED: Record<string, string> = {
   "/health/details": "public health check with the build details: no sign-in and no account data",
   "/operator/introduction": "operator role: keepers have none; the operator area has its own tests",
   "/operator/overview": "operator role: keepers have none; the operator area has its own tests",
+  "/operator/deletions": "operator role: keepers have none; the operator area has its own tests",
   "/review":
     "reviewer role; the open list is installation-wide, so its rows depend on parallel test files",
   "/catalog/corrections":

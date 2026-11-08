@@ -4,7 +4,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { markSpecimen } from "../../specimens/model/specimens-api";
 import { SIGN_IN, type Token } from "../../specimens/hooks/use-collection";
-import table from "./marker.de.json";
+import table from "./marker-form/marker-form.de.json";
 
 const t = texts(table);
 

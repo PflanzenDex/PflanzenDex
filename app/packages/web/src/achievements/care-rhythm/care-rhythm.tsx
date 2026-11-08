@@ -53,12 +53,15 @@ function RhythmText(props: {
   );
 }
 
-/** The last 12 weeks, six per row on a phone (US-ACH-04); each week says its state in words too. */
+/**
+ * The last 12 weeks, six per row (US-ACH-04), twelve once the layer is 28 rem wide: a pane beside the list keeps six
+ * (a container query, issue 1640). Each week says its state in words too.
+ */
 function RhythmWeeks(props: { weeks: readonly { start: string; state: RhythmWeekState }[] }) {
   return (
     <ol
       aria-label="Die letzten 12 Wochen"
-      className="m-0 grid list-none grid-cols-6 gap-1 p-0 sm:grid-cols-12"
+      className="m-0 grid list-none grid-cols-6 gap-1 p-0 @md:grid-cols-12"
     >
       {props.weeks.map((w) => (
         <li
@@ -95,7 +98,7 @@ export function CareRhythmSection(props: { api: string; token: Token }) {
           !v.hasTasks ? "Noch kein Pflegetermin fällig" : `Aktuell ${weeks(v.currentRun)} pünktlich`
         }
       >
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="@container flex min-w-0 flex-col gap-3">
           <RhythmText
             hasTasks={v.hasTasks}
             currentRun={v.currentRun}

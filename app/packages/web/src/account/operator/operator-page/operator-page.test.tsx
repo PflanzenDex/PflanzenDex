@@ -24,6 +24,7 @@ const overview = (over: Partial<OperatorOverview> = {}): OperatorOverview => ({
 
 type Handler = (url: string, init: RequestInit) => Promise<Response>;
 let current: OperatorOverview;
+let deletions: unknown;
 let calls: { method: string; path: string; body: unknown; headers: Record<string, string> }[];
 
 function serve(extra: Handler = () => json(404, {})) {
@@ -46,6 +47,7 @@ function serve(extra: Handler = () => json(404, {})) {
           medianSecondsToFirstPlant: { known: false, reason: "too_few_accounts" },
           withoutPlantPercent: { known: false, reason: "too_few_accounts" },
         });
+      if (path === "/operator/deletions") return json(200, deletions);
       return extra(path, init);
     }),
   );
@@ -53,6 +55,7 @@ function serve(extra: Handler = () => json(404, {})) {
 
 beforeEach(() => {
   current = overview();
+  deletions = { warningDays: 7, near: [], past: [], identityRemovals: [] };
   serve();
 });
 afterEach(() => {
@@ -460,6 +463,14 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
     const heading = await screen.findByRole("heading", { name: "Betreiber" });
     expect(heading.closest("[data-fit-screen]")).not.toBeNull();
   });
+
+  it("US-QS-15 the figures of Zahlen take their columns from the width of their layer, not the window (issue 1640)", async () => {
+    const region = await numbers();
+    const list = region.querySelector("dl") as HTMLElement;
+    expect(region.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toContain("@lg:grid-cols-[auto_1fr]");
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
 });
 
 describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
@@ -553,4 +564,34 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
       expect(document.activeElement).not.toBe(document.body);
       expect(document.activeElement?.textContent).toBe(button.textContent);
     });
+});
+
+describe("US-ACC-04 operator page: the card Fristen", () => {
+  it("US-ACC-04 marking an identity removal posts once and confirms it in words (issue 1673)", async () => {
+    const identity = {
+      kind: "identity",
+      entryId: "e-1",
+      requestedAt: "2026-09-01T08:00:00.000Z",
+      deadline: "2026-10-01T08:00:00.000Z",
+      subject: "sub-1",
+      completedAt: "2026-09-02T08:00:00.000Z",
+    };
+    serve((path, init) =>
+      path === "/operator/deletion-log/e-1/identity-removed" && init.method === "POST"
+        ? json(200, { entryId: "e-1", outcome: "marked" })
+        : json(404, {}),
+    );
+    deletions = { warningDays: 7, near: [], past: [], identityRemovals: [identity] };
+    await open();
+    // The row is a new button once its counts arrive; open the loaded one.
+    await screen.findByRole("button", { name: /1 offen beim Anmeldedienst/ });
+    await topic(/^Fristen/);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Als entfernt markieren, Kennung sub-1" }),
+    );
+    expect(await screen.findByText("Eintrag als entfernt markiert.")).toBeTruthy();
+    expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual([
+      "/operator/deletion-log/e-1/identity-removed",
+    ]);
+  });
 });

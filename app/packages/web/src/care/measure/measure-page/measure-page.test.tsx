@@ -246,13 +246,19 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(back).toHaveBeenCalledOnce();
   });
 
-  it("US-QS-15 · the growth note has a reserved slot above the form, so the form does not move when the note appears", async () => {
+  it("US-QS-15 · the growth note keeps its reserved slot with and without the note, so the form does not move when it appears (issue 1644, F8)", async () => {
     fakeServer();
     show();
     await screen.findByLabelText(/Messwert/);
     const slot = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
-    expect(slot?.className).toContain("min-h-16");
+    // Reserved for the longest note at a phone width (see GrowthSlot), and empty while there is no note.
+    expect(slot?.className).toContain("min-h-22");
     expect(slot?.querySelector('[role="status"]')).toBeNull();
+    await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.");
+    // The same slot after the save: a note would take its place inside it, nothing is inserted above the form.
+    expect(document.querySelector('[data-slot="growth-note"]')).toBe(slot);
   });
 
   it("US-WAC-01 · DS-52 while loading, a skeleton with the one loading status mirrors the page", () => {

@@ -81,6 +81,39 @@ export function returnAddress(origin: string, pathname: string): string {
   return url.origin === origin ? `${origin}${url.pathname}` : `${origin}/`;
 }
 
+// The parameters the sign-in adds to an address; they never go back into it (US-BES-17, #1639).
+const SIGN_IN_PARAMS = ["code", "state", "session_state", "iss", "error", "error_description"];
+
+// Only a path with one leading slash stays on this origin: `//host` and `/\host` lead to another host.
+function sameOriginAddress(origin: string, address: string): string | undefined {
+  if (!address.startsWith("/") || address.startsWith("//") || address.startsWith("/\\"))
+    return undefined;
+  const url = new URL(address, origin);
+  return url.origin === origin ? `${url.pathname}${url.search}` : undefined;
+}
+
+/**
+ * The address a sign-in is started for, with its query (US-BES-17, #1639). It travels as the sign-in's state and comes back
+ * with the callback, because the redirect URI must stay the bare path. An address that leads elsewhere gives the start page.
+ */
+export function returnState(origin: string, pathname: string, search: string): string {
+  return sameOriginAddress(origin, `${pathname}${search}`) ?? "/";
+}
+
+/**
+ * The address a sign-in returns to, read from the state it came back with (US-BES-17, #1639): the path and the query of this
+ * origin, without the sign-in's own parameters. `undefined` when the state is not such an address (another origin, `//host`,
+ * an absolute URL, `javascript:`, anything that is not text), so the caller falls back to the path.
+ */
+export function addressFromState(origin: string, state: unknown): string | undefined {
+  if (typeof state !== "string") return undefined;
+  const address = sameOriginAddress(origin, state);
+  if (address === undefined) return undefined;
+  const url = new URL(address, origin);
+  for (const param of SIGN_IN_PARAMS) url.searchParams.delete(param);
+  return `${url.pathname}${url.search}`;
+}
+
 export const apiUrl = (env: Environment): string => env["VITE_API_URL"] ?? "http://localhost:3000";
 
 /** Whether the 403 means "registration needs an invitation code" (US-ACC-05), judged by the code, never by the text. */

@@ -23,17 +23,22 @@ const toTarget = (value: string): { specimenId: string | null; locationId: strin
 
 /**
  * The sensors and where each one sits (US-EQU-06): at a specimen, at a location or nowhere. The assignment is optional.
- * No sensor values are shown here; they are not part of equipment (FR-MON-07).
+ * No sensor values are shown here; they are not part of equipment (FR-MON-07). The cards take their columns from the
+ * width of the section, not the window: beside a 384 px pane the section is narrow and keeps one column
+ * (US-QS-15, issue 1640).
  */
 export function SensorsView(props: { view: SensorView; actions: SensorActions }) {
   const { view, actions } = props;
   if (view.sensors.length === 0) return null;
   return (
-    <section aria-labelledby="equipment-sensors-title" className="flex min-w-0 flex-col gap-3">
+    <section
+      aria-labelledby="equipment-sensors-title"
+      className="@container flex min-w-0 flex-col gap-3"
+    >
       <h2 id="equipment-sensors-title" className="text-xl font-semibold">
         Sensoren
       </h2>
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 @lg:grid-cols-2 @3xl:grid-cols-3">
         {view.sensors.map((s) => (
           <li
             key={s.id}

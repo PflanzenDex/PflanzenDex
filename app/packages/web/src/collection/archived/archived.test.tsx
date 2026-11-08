@@ -141,7 +141,7 @@ describe("US-BES-07 archive on the collection page", () => {
     expect(posts).toHaveLength(0);
   });
 
-  it("archives with the chosen reason, takes the card out of the list and says where it is now (P-09, P-10)", async () => {
+  it("archives with the chosen reason, takes the card out of the list and says where it is now as a toast (P-09, P-10, issue 1644, F8)", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
@@ -153,10 +153,10 @@ describe("US-BES-07 archive on the collection page", () => {
       body: { reason: "verkauft" },
     });
     expect(posts[0]?.key).toBeTruthy();
-    // The result is a toast, and nothing is inserted above the list (US-QS-07, DS-54).
-    const toast = await screen.findByText(/„Bogenhanf“ ist archiviert/);
+    // The result is a toast with role=status, and nothing is inserted above the list (US-QS-07, DS-54, issue 1644).
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("„Bogenhanf“ ist archiviert");
     expect(toast.textContent).toContain("Archiv");
-    expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Bogenhanf (?!–)/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^Bogenhanf – rot / })).toBeTruthy();
   });

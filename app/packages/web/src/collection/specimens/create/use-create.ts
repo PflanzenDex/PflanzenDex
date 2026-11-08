@@ -8,7 +8,7 @@ import { createSpecimen } from "../model/specimens-api";
 import { SIGN_IN, type Token } from "../hooks/use-collection";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import table from "./create.de.json";
+import table from "./create-form/create-form.de.json";
 
 const tx = texts(table);
 const CUTTING_STATUS = "cutting" as const;

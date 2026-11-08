@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { DifficultyPage } from "./difficulty-page";
+
+afterEach(releaseSheetExits);
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -311,6 +314,18 @@ describe("US-QS-22 the comparison fits one screen", () => {
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(await screen.findByText("Art 5")).toBeTruthy();
+  });
+
+  it("US-QS-15 · F12 the layer of a species keeps its values while it slides out, then removes them", async () => {
+    holdSheetExit();
+    setViewportWidth(360);
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    await screen.findByRole("dialog", { name: "Bogenhanf" });
+    await userEvent.keyboard("{Escape}");
+    expect(document.querySelector("[data-vaul-drawer]")?.textContent).toContain("Zone 2");
+    endSheetExit();
+    await waitFor(() => expect(document.querySelector("[data-vaul-drawer]")).toBeNull());
   });
 
   it("US-QS-22 there is no table and no sideways scroll: the values of a species are in its layer", async () => {

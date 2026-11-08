@@ -39,6 +39,17 @@ describe("Toast (US-QS-07, P-10)", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("US-QS-07 · a confirmation is a toast with role=status in the polite region, an error is no status (issue 1644, F8)", () => {
+    setup();
+    show({ message: "Gespeichert." });
+    const confirmation = screen.getByRole("status");
+    expect(confirmation.textContent).toContain("Gespeichert.");
+    expect(confirmation.closest('[aria-live="polite"]')).not.toBeNull();
+    show({ kind: "error", message: "Speichern fehlgeschlagen." });
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(within(region("assertive")).getByText("Speichern fehlgeschlagen.")).toBeTruthy();
+  });
+
   it("US-QS-07 · an error goes into the assertive region", () => {
     setup();
     show({ kind: "error", message: "Speichern fehlgeschlagen." });

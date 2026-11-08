@@ -11,7 +11,7 @@ import {
 import { SHORTCUT_MODE } from "@/shared/platform/device/keyboard/keys";
 import { SHORTCUT_TARGETS } from "./shortcut-targets";
 import { ShortcutOverview } from "@/shared/platform/device/keyboard/shortcut-overview/shortcut-overview";
-import { OverlayNotice } from "../../../shared/patterns/states/overlay-notice/overlay-notice";
+import { OverlayNotice } from "../../../shared/ui/overlays/overlay-notice/overlay-notice";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./app-shell.de.json";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";

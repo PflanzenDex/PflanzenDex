@@ -5,7 +5,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { archiveSpecimen, restoreSpecimen } from "../../archived/archived-api";
 import { SIGN_IN, type Token } from "./use-collection";
-import table from "./hooks.de.json";
+import table from "../../archived/archived.de.json";
 
 const t = texts(table);
 

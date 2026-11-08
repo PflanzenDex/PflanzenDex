@@ -14,12 +14,13 @@ import { useMeasureSend } from "../measurement-header/measurement-photo";
 type Token = () => Promise<string | undefined>;
 
 /**
- * The reserved slot of the growth note (DS-54): the note fills it, so the form below never moves when it appears. The
- * slot keeps two lines of room even while there is no note.
+ * The reserved slot of the growth note (DS-54, issue 1644): the note fills it, so the form below never moves when it
+ * appears. The slot keeps the height of the longest note at a phone width (three lines with the padding of the record
+ * variant, a starting value), also while there is no note.
  */
 function GrowthSlot(props: { moments: ReturnType<typeof useGrowthMoments>; justSaved: boolean }) {
   return (
-    <div className="min-h-16" data-slot="growth-note">
+    <div className="min-h-22" data-slot="growth-note">
       <GrowthMomentNote moments={props.moments} justSaved={props.justSaved} />
     </div>
   );
@@ -33,12 +34,16 @@ const LOADING = "Messungen werden geladen …";
  * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Verlauf"
  * (US-QS-15). Every view says what to do next (P-09).
  */
-export function MeasurePage(props: {
+/** `onSaved` is called after a measurement was written; the page stays open (US-QS-15). */
+type MeasurePageProps = {
   api: string;
   token: Token;
   specimen: { id: string; name: string };
   onBack: () => void;
-}) {
+  onSaved?: () => void;
+};
+
+export function MeasurePage(props: MeasurePageProps) {
   const { api, token, specimen } = props;
   const key = useMemo(() => ["care", "measurements", specimen.id], [specimen.id]);
   const invalidate = useInvalidate(key);
@@ -55,6 +60,7 @@ export function MeasurePage(props: {
     specimenId: specimen.id,
     invalidate,
     say,
+    ...(props.onSaved ? { onSaved: props.onSaved } : {}),
   });
   const moments = useGrowthMoments(api, token, specimen.id);
   return (

@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { OverlayNotice } from "@/shared/patterns/states/overlay-notice/overlay-notice";
+import { OverlayNotice } from "@/shared/ui/overlays/overlay-notice/overlay-notice";
 import { Context, type Api, type Channel } from "./context";
 
 const NO_BREAK_SPACE = "\u00a0";

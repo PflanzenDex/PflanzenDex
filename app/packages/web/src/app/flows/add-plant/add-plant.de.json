@@ -1,0 +1,11 @@
+{
+  "created": "{name} ist angelegt",
+  "toCollection": "Zur Sammlung",
+  "another": "Noch eine Pflanze",
+  "back": "Zurück",
+  "more": "Mehr Angaben",
+  "step": "Schritt {n} von {total}: {title}",
+  "chooseTitle": "Welche Pflanze?",
+  "title": "Pflanze anlegen",
+  "backLabel": "Zurück zur Sammlung"
+}

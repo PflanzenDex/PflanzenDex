@@ -4,20 +4,18 @@ import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { LoadFrame } from "../../../shared/data";
 import { loadOverview } from "../../api/access-api";
+import { DeadlineRow, DeletionSection } from "../deletion-section/deletion-section";
 import { IntroductionSection } from "../introduction-section/introduction-section";
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
 import { InvitationsArea, ModeSection, OperatorRow } from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
-import { refusalText } from "@/shared/lib/error-text";
+import { LayerNotice } from "./layer-notice/layer-notice";
+import { texts } from "@/shared/lib/text-rules/texts";
+import deletionTable from "../deletion-section/deletion-section.de.json";
 import { keepTogether } from "@/shared/lib/format";
-import {
-  OPERATOR_KEY,
-  useOperatorActions,
-  type Actions,
-  type Notice,
-  type Scope,
-  type Token,
-} from "./operator-actions";
+import { OPERATOR_KEY, useOperatorActions, type Actions, type Token } from "./operator-actions";
+
+const deletionText = texts(deletionTable);
 
 /** The monthly cost as the operator entered it, or "nicht eingetragen" (P-08). */
 const costText = (cost: OperatorOverview["cost"]): string =>
@@ -25,38 +23,19 @@ const costText = (cost: OperatorOverview["cost"]): string =>
     ? `${moneyText(cost.amountCents, cost.currency)} (${monthText(cost.month)})`
     : "nicht eingetragen";
 
-/** The outcome of the last write, when it belongs to this layer. */
-function LayerNotice({ notice, scope }: { notice: Notice | null; scope: Scope }) {
-  if (notice?.scope !== scope) return null;
-  return (
-    <>
-      {notice.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {notice.message}
-        </p>
-      )}
-      {notice.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-          {refusalText(notice.error)}
-        </p>
-      )}
-    </>
-  );
-}
-
 function Numbers(props: { overview: OperatorOverview }) {
   const o = props.overview;
   return (
-    <section aria-label="Zahlen">
-      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+    <section aria-label="Zahlen" className="@container">
+      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 @lg:grid-cols-[auto_1fr]">
         <dt className="text-sm text-muted-foreground sm:text-base">Konten</dt>
-        <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.accounts}</dd>
+        <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.accounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">
           {keepTogether(`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`)}
         </dt>
-        <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.activeAccounts}</dd>
+        <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.activeAccounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">Monatliche Kosten</dt>
-        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] sm:mb-0">
+        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] @lg:mb-0">
           {costText(o.cost)}
         </dd>
         <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro Nutzer</dt>
@@ -88,7 +67,7 @@ function CostLayer(props: { overview: OperatorOverview; actions: Actions }) {
 }
 
 /** The current value of each topic, shown on the overview row (P-09): the next step is in its layer. */
-function Rows(props: { overview: OperatorOverview }) {
+function Rows(props: { overview: OperatorOverview; api: string; token: Token }) {
   const o = props.overview;
   const open = o.invitations.filter((i) => i.status === "open").length;
   return (
@@ -104,6 +83,7 @@ function Rows(props: { overview: OperatorOverview }) {
         value="Dauer und Schritte beim Einstieg neuer Konten"
       />
       <OperatorRow id="kosten" title="Monatliche Kosten" value={costText(o.cost)} />
+      <DeadlineRow api={props.api} token={props.token} />
       <OperatorRow
         id="registrierung"
         title="Registrierung"
@@ -140,6 +120,17 @@ function Layers(props: {
       </LayerSheet>
       <LayerSheet id="kosten" title="Monatliche Kosten">
         <CostLayer overview={overview} actions={actions} />
+      </LayerSheet>
+      <LayerSheet id="fristen" title={deletionText("layer.title")}>
+        <div className="flex flex-col gap-3">
+          <LayerNotice notice={actions.notice} scope="deletion" />
+          <DeletionSection
+            api={api}
+            token={token}
+            running={actions.running}
+            onMark={(entryId) => void actions.markIdentity(entryId)}
+          />
+        </div>
       </LayerSheet>
       <LayerSheet id="registrierung" title="Registrierung">
         <div className="flex flex-col gap-3">
@@ -187,7 +178,7 @@ export function OperatorPage(props: { api: string; token: Token }) {
       >
         {(overview: OperatorOverview) => (
           <LayerHost>
-            <Rows overview={overview} />
+            <Rows overview={overview} api={api} token={token} />
             <Layers api={api} token={token} overview={overview} actions={actions} />
           </LayerHost>
         )}

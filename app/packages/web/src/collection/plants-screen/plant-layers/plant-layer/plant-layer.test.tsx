@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
@@ -243,7 +243,6 @@ describe("US-QS-23 Überblick", () => {
     ).toHaveLength(1);
     await userEvent.click(measure);
     expect(onMeasure).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
   });
 
   it("US-QS-23 Behandeln leads to the tab Pflege", async () => {
@@ -297,6 +296,44 @@ describe("US-QS-23 the other tabs", () => {
     act(() => screen.getByText("Browser zurück").click());
     const back = await screen.findByRole("dialog", { name: "Aloe" });
     expect(within(back).getByRole("button", { name: "Pflegeprofil", pressed: true })).toBeTruthy();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-15 closing the care profile with Escape returns the focus to Pflegeprofil bearbeiten (issue 1661)", async () => {
+    setViewportWidth(360);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: [], locations: [], zones: [] })),
+    );
+    show([card()]);
+    const plant = await open();
+    await userEvent.click(within(plant).getByRole("tab", { name: "Pflege" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
+    await screen.findByRole("dialog", { name: "Pflegeprofil" });
+    await userEvent.keyboard("{Escape}");
+    const back = await screen.findByRole("dialog", { name: "Aloe" });
+    const opener = within(back).getByRole("button", { name: "Pflegeprofil bearbeiten" });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-15 Back from the care profile returns the focus to Pflegeprofil bearbeiten (issue 1661)", async () => {
+    setViewportWidth(360);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: [], locations: [], zones: [] })),
+    );
+    show([card()]);
+    const plant = await open();
+    await userEvent.click(within(plant).getByRole("tab", { name: "Pflege" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
+    await screen.findByRole("dialog", { name: "Pflegeprofil" });
+    act(() => screen.getByText("Browser zurück").click());
+    const back = await screen.findByRole("dialog", { name: "Aloe" });
+    const opener = within(back).getByRole("button", { name: "Pflegeprofil bearbeiten" });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
     vi.unstubAllGlobals();
   });
 
@@ -355,7 +392,7 @@ describe("US-QS-23 the other tabs", () => {
 });
 
 describe("US-QS-23 Mehr", () => {
-  it("US-QS-23 the rarer actions sit in the menu Mehr and each opens its flow after the layer closes", async () => {
+  it("US-QS-23 the rarer actions sit in the menu Mehr and each opens its flow", async () => {
     setViewportWidth(360);
     const handlers = { onMark: vi.fn(), onCatchDate: vi.fn(), onArchive: vi.fn() };
     show([card()], handlers);
@@ -369,7 +406,6 @@ describe("US-QS-23 Mehr", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
-    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
   });
 
   it("US-QS-23 Eingetopft is offered for a cutting only", async () => {

@@ -40,7 +40,7 @@ function Offline() {
 }
 
 describe("US-QS-07 · a note on screen is an overlay that never moves the page (DS-54)", () => {
-  it("US-QS-07 · the note lies in an overlay outside the page's flow and is announced once", async () => {
+  it("US-QS-07 · the note lies in an overlay outside the page's flow and is announced once (issue 1644, F8)", async () => {
     render(
       <AnnouncerProvider>
         <p>Inhalt</p>

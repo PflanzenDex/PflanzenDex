@@ -1,0 +1,8 @@
+{
+  "notFound": "Diese Pflanze gibt es in deiner Sammlung nicht (mehr). Die Ansicht ist geschlossen.",
+  "loading": "Pflanze wird geladen …",
+  "asking.title": "Eingabe verwerfen?",
+  "asking.text": "Was du eingetragen hast, ist noch nicht gespeichert. Verwirfst du es, ist es weg.",
+  "asking.discard": "Verwerfen",
+  "asking.keep": "Weiter bearbeiten"
+}
