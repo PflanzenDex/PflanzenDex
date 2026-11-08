@@ -20,5 +20,6 @@
   "ready": "Drucken öffnet das Druckfenster.",
   "print": "Drucken",
   "printRegion": "Etiketten zum Drucken",
-  "unreadable": "Die Sorte konnte nicht für alle Etiketten geladen werden. Diese Etiketten zeigen nur den Namen."
+  "unreadable": "Die Sorte konnte nicht für alle Etiketten geladen werden. Diese Etiketten zeigen nur den Namen.",
+  "loading": "Pflanzen werden geladen …"
 }

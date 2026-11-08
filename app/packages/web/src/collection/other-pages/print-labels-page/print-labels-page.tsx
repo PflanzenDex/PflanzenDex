@@ -20,6 +20,7 @@ import { useCardPages, type CardPages } from "../../specimens/cards/use-card-pag
 import { PrintRegion, type LabelFormat, type LabelPlant } from "./label-sheet/label-sheet";
 import { useLabelCultivars, type LabelCultivars } from "./use-label-cultivars";
 import table from "./print-labels-page.de.json";
+import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 const ui = texts(table);
@@ -87,6 +88,7 @@ function LabelsView(props: { api: string; token: Token }) {
           status={status}
           {...(list.error ? { errorText: errorText(list.error.code) } : {})}
           onRetry={list.retry}
+          skeleton={<PrintLabelsSkeleton label={ui("loading")} />}
           empty={
             <EmptyState
               title={ui("emptyTitle")}
