@@ -19,6 +19,12 @@ export type Request<T> = {
   error: ApiError | undefined;
   /** The network is down and `value` is the last loaded copy. */
   offline: boolean;
+  /**
+   * `value` is the copy of a previous key (`keepPrevious`) while the new key is still loading: it stays on screen, and a
+   * view that shows it must also say that a new answer is on its way (US-QS-07). A background refetch of the same key
+   * does not set it (react-query's `isPlaceholderData`, not `isFetching`).
+   */
+  placeholder: boolean;
   retry: () => void;
 };
 
@@ -60,7 +66,14 @@ export function useRequest<T>(props: {
   const retry = useCallback(() => void q.refetch(), [q]);
   const status =
     q.data !== undefined && (!q.isError || offline) ? "ready" : q.isError ? "error" : "pending";
-  return { status, value: q.data, error: failure, offline, retry };
+  return {
+    status,
+    value: q.data,
+    error: failure,
+    offline,
+    placeholder: q.isPlaceholderData,
+    retry,
+  };
 }
 
 /** Drops every cached copy while nobody is signed in, so the next account never sees data of the last one (P-04). */
