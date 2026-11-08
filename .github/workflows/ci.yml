@@ -142,6 +142,17 @@ jobs:
           fetch-depth: 0 # secret scan over the full history (QG-S1)
           persist-credentials: false
       - uses: ./.github/actions/setup-app
+      # Issue 1721: the pinned gitleaks of the secret scan comes from the cache (keyed by tool.sh, which holds version and
+      # checksum), else from an authenticated download. Only this step sees the read-only token; tool.sh verifies the
+      # checksum either way, and `make ci-gates` then finds the binary in .cache/tools.
+      - uses: actions/cache@v6
+        with:
+          path: .cache/tools
+          key: check-tools-${{ runner.os }}-${{ hashFiles('tools/lint/tool.sh') }}
+      - name: Pinned gitleaks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/lint/tool.sh gitleaks
       - run: make ci-gates
       # US-QG-08: the five most complex functions in the job summary. Report only: it runs after a failure too, and a
       # failing report never fails the job; the summary then gets one line instead of nothing (P-10).
