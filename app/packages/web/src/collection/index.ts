@@ -38,14 +38,25 @@ export const DifficultyPage = lazyPage(() =>
 );
 export { loadCardSummary, loadSpecimenCount } from "./specimens/cards/cards-api";
 export { createSpecimen, setSpecimenLocation } from "./specimens/model/specimens-api";
-/** The marker of a further plant, in the short form and the first-plant flow (US-BES-03, US-QS-15). */
-export { MarkerFields } from "./markers/marker/marker-fields/marker-fields";
+/**
+ * The marker fields of a further plant, in the short form and the first-plant flow (US-BES-03, US-QS-15). Lazy like
+ * the pages: its chunk is requested when the step shows the field, so the entry stays as it was (issue 1638).
+ */
+export const MarkerFields = lazyPage(() =>
+  import("./markers/marker/marker-fields/marker-fields").then((m) => ({
+    default: m.MarkerFields,
+  })),
+);
 export {
+  markerFormStart,
   markerInputOf,
+  markerRefusalFields,
   refusesMarker,
   useFurtherMarker,
   type FurtherMarker,
 } from "./markers/marker/use-further-marker";
+export { useToday } from "./markers/catch-date/use-today";
+export type { CreateFields } from "./specimens/model/schemas";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";
 export {

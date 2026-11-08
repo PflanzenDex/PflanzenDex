@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Sibling } from "../../markers/marker/marker-fields/marker-fields";
+import type { Sibling } from "../../markers/marker/marker-rule";
 
 /** Fast client feedback in German (DS-47, DS-49); the server operation validates again (P-03). */
 export const MARKER_MISSING =
@@ -30,22 +30,6 @@ export const createSchema = (rule: { required: boolean; missing: readonly Siblin
           ctx.addIssue({ code: "custom", path: ["answers", s.id], message: MARKERS_MISSING });
     });
 export type CreateFields = z.infer<ReturnType<typeof createSchema>>;
-
-/**
- * The create fields as they start (US-BES-03): the marker preset when the rule requires one, the answers empty, everything
- * else unknown or empty (P-08). The long and the short form start from the same values.
- */
-export const createStart = (
-  rule: { required: boolean; missing: readonly Sibling[]; preset: string },
-  today: string,
-): CreateFields => ({
-  marker: rule.required ? rule.preset : "",
-  answers: Object.fromEntries(rule.missing.map((s) => [s.id, ""])),
-  cutting: false,
-  locationId: "",
-  lightZoneId: "",
-  catchDate: today,
-});
 
 /** The form to give a specimen a marker or change it (US-BES-03). */
 export const markerSchema = z.object({

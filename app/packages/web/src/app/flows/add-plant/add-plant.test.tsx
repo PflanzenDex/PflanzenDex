@@ -301,7 +301,7 @@ const REFUSED_MARKER_TEXT =
   "Du hast schon eine Pflanze dieser Art. Gib der neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.";
 
 describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form (issue 1638)", () => {
-  it("US-BES-03 · US-ONB-01 an owned species shows the marker field preset as in the long form and saves with it", async () => {
+  it("US-BES-03 · US-ONB-01 an owned species waits for the lazily loaded marker field, preset as in the long form, and saves with it (issue 1638)", async () => {
     server(OWNED);
     view();
     await toSave();

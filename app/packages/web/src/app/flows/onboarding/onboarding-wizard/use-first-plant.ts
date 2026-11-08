@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
 import { errorText } from "@/shared/lib/error-text";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import {
   createSpecimen,
+  markerFormStart,
   markerInputOf,
+  markerRefusalFields,
   refusesMarker,
   useFurtherMarker,
+  useToday,
+  type CreateFields,
   type FurtherMarker,
 } from "../../../../collection";
 import { SIGN_IN, type ApiError } from "../../../../shared/data";
@@ -51,7 +57,12 @@ export function useFirstPlant(api: string, token: Token) {
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<{ name: string; id: string } | null>(null);
   const zones = useOwnZones(api, token, species !== null);
-  const marker = useFurtherMarker(api, token, species?.id ?? null, refusal);
+  // The marker form belongs to this flow, so a typed marker survives going back (US-ONB-01); the refused marker takes its
+  // field and the focus there (US-QS-15). Both live here, not in the marker hook, which the flow reaches through the
+  // barrel: the barrel stays free of the form and refusal modules (issue 1638).
+  const form = useForm<CreateFields>({ defaultValues: markerFormStart(useToday()) });
+  const marker = useFurtherMarker({ form, api, token, speciesId: species?.id ?? null, refusal });
+  useServerRefusal(refusal, form.setError, markerRefusalFields);
   // A button that unmounts takes the focus with it: move it to the heading of the new step. Comparing the step, not
   // counting runs: StrictMode runs the effect twice on mount, and the flow must not take the focus by appearing (issue 1362).
   const box = useRef<HTMLDivElement>(null);

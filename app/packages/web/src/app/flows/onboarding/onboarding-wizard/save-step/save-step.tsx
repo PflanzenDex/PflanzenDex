@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import {
   speciesDisplayName,
   zoneDerive,
@@ -9,6 +9,7 @@ import {
 import { Form } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Label } from "@/shared/ui/display/label/label";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { MarkerFields, type FurtherMarker } from "@/collection";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
 import { refreshLight, sharedZones } from "../../../../../light";
@@ -99,12 +100,15 @@ export function SaveStep(props: {
       </p>
       {props.marker && (
         <Form {...props.marker.form}>
-          <MarkerFields
-            control={props.marker.form.control}
-            speciesName={speciesDisplayName(species)}
-            required={props.marker.required}
-            missing={props.marker.missing}
-          />
+          {/* The fields arrive with their own chunk (issue 1638): a block of the field's size meanwhile. */}
+          <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+            <MarkerFields
+              control={props.marker.form.control}
+              speciesName={speciesDisplayName(species)}
+              required={props.marker.required}
+              missing={props.marker.missing}
+            />
+          </Suspense>
         </Form>
       )}
       <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
