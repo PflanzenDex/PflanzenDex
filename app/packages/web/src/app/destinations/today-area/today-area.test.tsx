@@ -253,7 +253,8 @@ describe("US-QS-18 Heute fits one screen", () => {
       .getAllByRole("button")
       .map((b) => b.textContent);
     expect(names.at(-1)).toBe("2Neu bei Freunden");
-    expect(names).toHaveLength(4);
+    // The most urgent item is a treatment: its entry stands on the row, so the tiles are the two categories and the news.
+    expect(names).toHaveLength(3);
     await user.click(within(tiles).getByRole("button", { name: /Neu bei Freunden$/ }));
     expect(await dialog("Neu bei Freunden")).toBeTruthy();
     expect(address()).toBe("/today?sheet=news");
@@ -557,5 +558,46 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     await user.click(tiles.getByRole("button", { name: /Fehlt noch$/ }));
     const alert = await within(await dialog("Fehlt noch")).findByRole("alert");
     expect(within(alert).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+});
+
+/** Holds the answer of one path until the returned function is called (US-QS-14 issue 1697). */
+function holdPath(path: string): () => void {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((done) => {
+    release = done;
+  });
+  const fetchFn = vi.mocked(fetch);
+  const base = fetchFn.getMockImplementation() as typeof fetch;
+  fetchFn.mockImplementation(async (url, init) => {
+    if (new URL(String(url)).pathname === path) await gate;
+    return base(url, init);
+  });
+  return release;
+}
+
+/** The loading statuses of the page: the status texts that say a part is loading (DS-56), not the messages. */
+const loadingStatuses = () =>
+  screen.queryAllByRole("status").filter((s) => /geladen|lädt/.test(s.textContent ?? ""));
+
+describe("US-QS-14 issue 1697 · Heute loads its counts behind one skeleton", () => {
+  it("US-QS-14 issue 1697 · a slow count shows one skeleton for the region, then its tiles and summary once, never a tile of its own", async () => {
+    fakeServer({ items: [todayItem] });
+    const release = holdPath("/watering/due");
+    show();
+    await waitFor(() => expect(loadingStatuses()).toHaveLength(1));
+    expect(screen.queryByRole("list", { name: "Themen" })).toBeNull();
+    expect(screen.queryByText("lädt …")).toBeNull();
+    release();
+    const tiles = within(await screen.findByRole("list", { name: "Themen" }));
+    expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
+    expect(loadingStatuses()).toHaveLength(0);
+  });
+
+  it("US-QS-14 issue 1697 · a fast load of the counts shows no loading status at all", async () => {
+    fakeServer({ items: [todayItem] });
+    show();
+    expect(await screen.findByRole("list", { name: "Themen" })).toBeTruthy();
+    expect(loadingStatuses()).toHaveLength(0);
   });
 });

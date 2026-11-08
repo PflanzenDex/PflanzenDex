@@ -27,3 +27,5 @@ export const PlantCourse = lazyPage(() =>
 export const PlantCare = lazyPage(() =>
   import("./plant-detail/plant-care/plant-care").then((m) => ({ default: m.PlantCare })),
 );
+// The skeleton of the open treatments in the shape of two entries, the layer's skeleton on "Heute" (US-QS-14, issue 1697).
+export { OpenTreatmentsSkeleton } from "./treatments/open-treatments/open-treatments.skeleton";
