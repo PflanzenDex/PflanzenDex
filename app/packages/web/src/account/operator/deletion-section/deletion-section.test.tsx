@@ -3,9 +3,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { ReactElement } from "react";
-import { DeadlineRow, DeletionBody, deadlineSummary } from "./deletion-section";
+import { DeadlineRow, DeletionBody, DeletionSection, deadlineSummary } from "./deletion-section";
 import { utcText } from "./deletion-parts/deletion-parts";
-import type { DeletionsView } from "../../api/access-api";
+import { markIdentityRemoved, type DeletionsView } from "../../api/access-api";
 
 // The layers and the pager keep their place in the address, so every render needs a router (US-QS-15).
 const inRouter = (ui: ReactElement) => <MemoryRouter>{ui}</MemoryRouter>;
@@ -121,5 +121,55 @@ describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open ide
     expect(
       await screen.findByText("1 nahe · 0 überschritten · 1 offen beim Anmeldedienst"),
     ).toBeTruthy();
+  });
+});
+
+describe("US-ACC-04 the card Fristen loads the open deletions and marks an identity removal", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-ACC-04 the card loads the deletions of the operator and passes a mark on (issue 1673)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => json(200, view({ identityRemovals: [identity] }))),
+    );
+    const onMark = vi.fn();
+    render(
+      inRouter(
+        <DeletionSection
+          api="http://api"
+          token={async () => "tok"}
+          running={false}
+          onMark={onMark}
+        />,
+      ),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: markName }));
+    expect(onMark).toHaveBeenCalledWith(identity.entryId);
+  });
+});
+
+describe("US-ACC-04 markIdentityRemoved", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("US-ACC-04 posts to the deletion log entry and answers the outcome (issue 1673)", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json(200, { entryId: "e-1", outcome: "already" }),
+    );
+    const r = await markIdentityRemoved("http://api", "tok", "e-1", fetchFn);
+    expect(r).toEqual({ ok: true, value: { entryId: "e-1", outcome: "already" } });
+    const [url, init] = fetchFn.mock.calls[0] ?? [];
+    expect(String(url)).toBe("http://api/operator/deletion-log/e-1/identity-removed");
+    expect(init?.method).toBe("POST");
+  });
+
+  it("US-ACC-04 a refusal is passed on with its code (issue 1673)", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json(403, { error: { code: "access.denied", message: "no" } }),
+    );
+    const r = await markIdentityRemoved("http://api", "tok", "e-1", fetchFn);
+    expect(r.ok).toBe(false);
   });
 });
