@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
-import { localToday } from "@pflanzendex/core";
 import {
   Form,
   FormControl,
@@ -13,7 +12,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { currentTimeZone, type ApiError } from "../../../../shared/data";
+import type { ApiError } from "../../../../shared/data";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {
@@ -24,13 +23,11 @@ import {
 import { correctCatchDate } from "../../../specimens/model/specimens-api";
 import { UNKNOWN, dateText } from "../../../specimens/model/text";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
+import { useToday } from "../use-today";
 
 /** True when the server refused the catch date itself (field `catchDate`). */
 export const refusesCatchDate = (error: ApiError | null): boolean =>
   error?.details?.some((d) => d.field === "catchDate") ?? false;
-
-/** The keeper's local today (profile time zone, NFR-08), the preset and upper limit of the field. */
-export const useToday = (): string => localToday(new Date(), currentTimeZone());
 
 /**
  * The catch date of the new specimen (FR-BES-04): preset to the keeper's local today, never later than today. An

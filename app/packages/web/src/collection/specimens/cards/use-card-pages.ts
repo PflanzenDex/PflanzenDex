@@ -51,11 +51,15 @@ export function useCardPages(
   };
 }
 
-/** Every active plant of one species (US-BES-03): the marker rule of the create form needs all of them, not one page. */
-export function useSiblings(api: string, token: Token, speciesId: string) {
+/**
+ * Every active plant of one species (US-BES-03): the marker rule of the create forms needs all of them, not one page.
+ * `enabled` false reads nothing until a species is chosen.
+ */
+export function useSiblings(api: string, token: Token, speciesId: string, enabled = true) {
   return useRequest({
     queryKey: [...COLLECTION_KEY, "siblings", speciesId],
     token,
     load: (t) => loadAllCardsOf(api, t, speciesId),
+    enabled,
   });
 }

@@ -20,7 +20,7 @@ import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/par
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import { repotSchema, type RepotFields } from "../../../specimens/model/schemas";
 import type { RepotTarget, useRepot } from "../../../specimens/hooks/use-repot";
-import { useToday } from "../../catch-date/catch-date-field/catch-date-field";
+import { useToday } from "../../catch-date/use-today";
 import { loadRepotPlan, REPOT_PLAN_KEY, type RepotPlanView } from "../repot-api";
 import table from "../repot.de.json";
 import { PotField } from "./pot-field/pot-field";
