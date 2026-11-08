@@ -59,6 +59,11 @@
       "Bash(make issue-read ISSUE=*)",
       "Bash(make pr-text PR=*)",
       "Bash(make issue-comment ISSUE=*)",
+      "Bash(make run-jobs RUN=*)",
+      "Bash(make conflicts PR=*)",
+      "Bash(make test-files FILES=*)",
+      "Bash(make format-check FILES=*)",
+      "Bash(make board-item ISSUE=*)",
       "Bash(make gate-plan FILES=*)"
     ],
     "deny": [
