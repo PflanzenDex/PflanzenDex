@@ -1,9 +1,13 @@
 import { useCallback, useRef, useState } from "react";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
-import { WRITE_SUCCEEDED, type ApiError, type Response } from "./api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { WRITE_SUCCEEDED, type ApiError, type Response } from "../api";
+import table from "./write-action.de.json";
 
 export { WRITE_SUCCEEDED };
+
+const t = texts(table);
 
 export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
 
@@ -13,10 +17,14 @@ export type WriteSay = (message: string, kind?: "success" | "error") => void;
 /**
  * The German text of a refusal. The error-text module (the error code table) is loaded when a refusal is said, not
  * with the first load: this module sits in the shell (`shared/data` is imported by `main.tsx`), and the initial JS
- * budget (QG-U6, DS-08) would otherwise carry the whole table (US-QS-15).
+ * budget (QG-U6, DS-08) would otherwise carry the whole table (US-QS-15). When that module cannot load, the refusal
+ * still gets a toast with the generic text of this module's table, never silence (P-10).
  */
 const refusalTextLazily = (error: ApiError) =>
-  import("@/shared/lib/error-text").then(({ refusalText }) => refusalText(error));
+  import("@/shared/lib/error-text").then(
+    ({ refusalText }) => refusalText(error),
+    () => t("refusal"),
+  );
 
 /**
  * One tap that writes: only one request runs at a time (a double tap sends one), afterwards `after` reloads the page
