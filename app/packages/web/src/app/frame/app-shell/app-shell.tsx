@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { KeyboardShortcutMode } from "@pflanzendex/core";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useOnline } from "@/shared/platform/browser/network";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
 import {
@@ -10,7 +11,9 @@ import {
 import { SHORTCUT_MODE } from "@/shared/platform/device/keyboard/keys";
 import { SHORTCUT_TARGETS } from "./shortcut-targets";
 import { ShortcutOverview } from "@/shared/platform/device/keyboard/shortcut-overview/shortcut-overview";
-import { Banner } from "../../../shared/patterns/states/banner/banner";
+import { OverlayNotice } from "../../../shared/patterns/states/overlay-notice/overlay-notice";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./app-shell.de.json";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { GlobalHeader } from "../global-header/global-header";
 import { SideNav } from "../side-nav/side-nav";
@@ -18,6 +21,7 @@ import { MobileNavBar } from "../mobile-nav-bar/mobile-nav-bar";
 import type { NavItem } from "../../../shared/patterns/navigation/nav-item";
 
 const MAIN_ID = "inhalt";
+const t = texts(table);
 
 /** Room kept beyond a bar for the focus ring (2 px ring plus 2 px offset, doubled for sub-pixel rounding), US-QS-14. */
 const FOCUS_RING_ROOM = 8;
@@ -71,14 +75,24 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
   }, [shell]);
 }
 
-/** Says that the device is offline and what that means, as long as it lasts (US-QS-14, P-09, P-10). */
+/**
+ * Says that the device is offline and what that means, as long as it lasts (US-QS-14, P-09, P-10). It is an overlay
+ * above the bottom bar (DS-54): it covers the page and never moves it. The state is announced once when it begins
+ * (DS-69). While a note of the announcer is on screen, the note takes this place: a buffered write already says that
+ * the device is offline.
+ */
 function OfflineBanner() {
-  if (useOnline()) return null;
+  const online = useOnline();
+  const announcer = useAnnounce();
+  const announce = announcer?.announce;
+  useEffect(() => {
+    if (!online) announce?.(t("offline.announce"));
+  }, [online, announce]);
+  if (online || announcer?.note) return null;
   return (
-    <Banner variant="warning" title="Du bist offline" className="mb-4">
-      Angezeigte Daten können veraltet sein. Änderungen werden gesendet, sobald du wieder online
-      bist.
-    </Banner>
+    <OverlayNotice variant="warning" title={t("offline.title")}>
+      {t("offline.body")}
+    </OverlayNotice>
   );
 }
 
@@ -141,7 +155,7 @@ export function AppShell({
               onClick={skipToContent}
               className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Zum Inhalt springen
+              {t("skip")}
             </a>
             <SideNav items={items} />
             <div className="flex min-w-0 flex-1 flex-col">
@@ -152,10 +166,10 @@ export function AppShell({
                 className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[var(--bar-reserve,calc(4rem+env(safe-area-inset-bottom)))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10"
               >
                 {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
-                <OfflineBanner />
                 {children}
               </main>
             </div>
+            <OfflineBanner />
             <MobileNavBar items={items} />
             <ShortcutOverviewLayer />
           </div>

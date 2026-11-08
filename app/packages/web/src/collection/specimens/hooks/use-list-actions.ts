@@ -1,4 +1,5 @@
 import { useInvalidate, useWriteAction } from "../../../shared/data";
+import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import type {
   CatchDateTarget,
   useCatchDate,
@@ -16,59 +17,31 @@ export type ListActions = {
   marked: ReturnType<typeof useMarker>;
   caught: ReturnType<typeof useCatchDate>;
   zoned: ReturnType<typeof useLightZone>;
-  clearMessages: () => void;
+  /** Shows the result of a write as a toast (US-QS-07). */
+  say: Say;
 };
 
 type Named = { id: string; name: string };
 
 /**
  * What the plants screen calls when a plant's layer asks for an action (US-BES-03, US-BES-04, US-BES-07, US-BES-11,
- * US-LIC-02, US-PHA-03): each clears the old message first, then opens its flow or writes through its operation (P-03).
- * The latest message and error of any of them are returned for the page to show (P-09, P-10).
+ * US-LIC-02, US-PHA-03): each opens its flow or writes through its operation (P-03). The result of a write is a toast,
+ * so the list keeps its place (DS-54).
  */
 export function useListActions(api: string, token: Token, a: ListActions) {
-  const { archived, potted, marked, caught, zoned, clearMessages } = a;
-  const place = useWriteAction(token, useInvalidate(COLLECTION_KEY));
-  const openCatchDate = (e: CatchDateTarget) => {
-    clearMessages();
-    caught.setOpen(e);
-  };
+  const { archived, potted, marked, caught, zoned } = a;
+  const place = useWriteAction(token, useInvalidate(COLLECTION_KEY), a.say);
   return {
-    message:
-      place.message ??
-      zoned.message ??
-      caught.message ??
-      marked.message ??
-      archived.message ??
-      potted.message,
-    error: archived.error ?? place.error,
     handlers: {
-      onLocate: (specimenId: string, locationId: string, success: string) => {
-        clearMessages();
-        void place.run((t) => setSpecimenLocation(api, t, { id: specimenId, locationId }), success);
-      },
-      onArchive: (e: Named) => {
-        clearMessages();
-        archived.setOpen(e);
-      },
-      onRepot: (e: RepotTarget) => {
-        clearMessages();
-        potted.setOpen(e);
-      },
-      onMark: (e: Parameters<typeof marked.setOpen>[0] & object) => {
-        clearMessages();
-        marked.setOpen(e);
-      },
-      onCatchDate: openCatchDate,
-      onLightZone: (e: Parameters<typeof zoned.setOpen>[0] & object) => {
-        clearMessages();
-        zoned.setOpen(e);
-      },
-      onRestore: (e: Named) => {
-        clearMessages();
-        void archived.restore(e);
-      },
-      onArchivedCatchDate: openCatchDate,
+      onLocate: (specimenId: string, locationId: string, success: string) =>
+        void place.run((t) => setSpecimenLocation(api, t, { id: specimenId, locationId }), success),
+      onArchive: (e: Named) => archived.setOpen(e),
+      onRepot: (e: RepotTarget) => potted.setOpen(e),
+      onMark: (e: Parameters<typeof marked.setOpen>[0] & object) => marked.setOpen(e),
+      onCatchDate: (e: CatchDateTarget) => caught.setOpen(e),
+      onLightZone: (e: Parameters<typeof zoned.setOpen>[0] & object) => zoned.setOpen(e),
+      onRestore: (e: Named) => void archived.restore(e),
+      onArchivedCatchDate: (e: CatchDateTarget) => caught.setOpen(e),
     },
   };
 }

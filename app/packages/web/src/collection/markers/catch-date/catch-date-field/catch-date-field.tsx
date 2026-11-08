@@ -24,6 +24,11 @@ import {
 import { correctCatchDate } from "../../../specimens/model/specimens-api";
 import { UNKNOWN, dateText } from "../../../specimens/model/text";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
+import { texts } from "@/shared/lib/text-rules/texts";
+import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import table from "./catch-date-field.de.json";
+
+const tx = texts(table);
 
 /** True when the server refused the catch date itself (field `catchDate`). */
 export const refusesCatchDate = (error: ApiError | null): boolean =>
@@ -65,9 +70,8 @@ export type CatchDateTarget = { id: string; name: string; caughtAt: string | nul
  * State and action for correcting the catch date (US-BES-11). After success the page reloads (`after`) and the message
  * names the specimen and the new date (P-09); a refusal stays in the form (P-10).
  */
-export function useCatchDate(api: string, token: Token, after: () => void) {
+export function useCatchDate(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<CatchDateTarget | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const send = useCallback(
     async (catchDate: string): Promise<ApiError | null> => {
@@ -76,17 +80,15 @@ export function useCatchDate(api: string, token: Token, after: () => void) {
       const r = await correctCatchDate(api, t, { id: open.id, catchDate });
       if (!r.ok) return r.error;
       const date = r.value.caughtAt ? dateText(r.value.caughtAt) : UNKNOWN;
-      setMessage(
-        `Das Fangdatum von „${open.name}“ ist jetzt der ${date}. Der Pokédex rechnet damit.`,
-      );
+      say(tx("corrected", { name: open.name, date }));
       setOpen(null);
       after();
       return null;
     },
-    [api, token, open, after],
+    [api, token, open, after, say],
   );
 
-  return { open, message, send, setOpen, setMessage };
+  return { open, send, setOpen };
 }
 
 const catchDateFields = (error: ApiError): "catchDate"[] =>

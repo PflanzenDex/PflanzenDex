@@ -1,4 +1,12 @@
-import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   ToastItem,
   type ToastAction,
@@ -29,6 +37,23 @@ export function useToast(): ToastApi {
   const api = useContext(Context);
   if (!api) throw new Error("useToast needs a ToastProvider");
   return api;
+}
+
+/** Says a result as a toast: `success` (default) is read politely, `error` at once. */
+export type Say = (message: string, kind?: ToastKind) => void;
+
+/**
+ * The result of a write as a toast (US-QS-07, DS-54): a confirmation appears over the page and inserts nothing above the
+ * content. The function is stable, so it can be passed to a write hook.
+ */
+export function useSay(): Say {
+  const toast = useToast();
+  return useCallback(
+    (message, kind) => {
+      toast.show(kind ? { message, kind } : { message });
+    },
+    [toast],
+  );
 }
 
 /**
