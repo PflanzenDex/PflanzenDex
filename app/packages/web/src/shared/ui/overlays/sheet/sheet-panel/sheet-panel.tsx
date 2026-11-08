@@ -14,6 +14,9 @@ export type SheetPanelProps = Omit<
   onOpenChange: (open: boolean) => void;
 };
 
+/** The title takes the focus by script, so it draws no browser outline, as the layer heading does (US-QS-15, F15). */
+const TITLE = "px-4 pt-3 text-lg font-semibold focus-visible:outline-none";
+
 /**
  * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): drag handle, safe-area padding, max height 90dvh.
  * `autoFocus` is required: Vaul 1.1 cancels Radix's focus-on-open by default, which left the focus on the trigger
@@ -65,7 +68,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
               aria-hidden="true"
               className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted"
             />
-            <Drawer.Title tabIndex={-1} className="px-4 pt-3 text-lg font-semibold">
+            <Drawer.Title tabIndex={-1} className={TITLE}>
               {title}
             </Drawer.Title>
             {description ? (

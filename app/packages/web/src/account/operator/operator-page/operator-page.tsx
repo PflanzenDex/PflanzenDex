@@ -47,16 +47,16 @@ function LayerNotice({ notice, scope }: { notice: Notice | null; scope: Scope })
 function Numbers(props: { overview: OperatorOverview }) {
   const o = props.overview;
   return (
-    <section aria-label="Zahlen">
-      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+    <section aria-label="Zahlen" className="@container">
+      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 @lg:grid-cols-[auto_1fr]">
         <dt className="text-sm text-muted-foreground sm:text-base">Konten</dt>
-        <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.accounts}</dd>
+        <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.accounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">
           {keepTogether(`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`)}
         </dt>
-        <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.activeAccounts}</dd>
+        <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.activeAccounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">Monatliche Kosten</dt>
-        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] sm:mb-0">
+        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] @lg:mb-0">
           {costText(o.cost)}
         </dd>
         <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro Nutzer</dt>

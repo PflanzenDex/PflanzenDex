@@ -54,6 +54,7 @@ async function freshUseSession() {
 
 beforeEach(() => {
   mgr.getUser.mockReset();
+  mgr.signinCallback.mockReset();
   mgr.removeUser.mockClear();
   mgr.signinRedirect.mockClear();
   mgr.signoutRedirect.mockClear();
@@ -223,6 +224,7 @@ describe("US-ACC-01 session", () => {
     await waitFor(() =>
       expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
         redirect_uri: `${window.location.origin}/`,
+        state: "/",
       }),
     );
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
@@ -406,6 +408,7 @@ describe("US-ACC-01 session", () => {
       expect(mgr.signinRedirect).toHaveBeenCalledWith({
         prompt: "none",
         redirect_uri: `${window.location.origin}/`,
+        state: "/",
       }),
     );
     expect(result.current.state).toEqual({ kind: "loading" });
@@ -718,6 +721,7 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     expect(mgr.signinRedirect).toHaveBeenCalledWith({
       prompt: "none",
       redirect_uri: `${window.location.origin}/`,
+      state: "/",
     });
     expect(window.sessionStorage.getItem(SILENT_TRIED)).toBe("1");
   });
@@ -746,6 +750,7 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     await waitFor(() =>
       expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
         redirect_uri: `${window.location.origin}/`,
+        state: "/",
       }),
     );
     await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
@@ -845,6 +850,7 @@ describe("US-BES-17 the sign-in returns to the address that asked for it (#1619)
       expect(mgr.signinRedirect).toHaveBeenCalledWith({
         prompt: "none",
         redirect_uri: `${window.location.origin}/label/abc`,
+        state: "/label/abc",
       }),
     );
   });
@@ -868,6 +874,7 @@ describe("US-BES-17 the sign-in returns to the address that asked for it (#1619)
     await waitFor(() =>
       expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
         redirect_uri: `${window.location.origin}/label/abc`,
+        state: "/label/abc",
       }),
     );
   });
@@ -894,5 +901,110 @@ describe("US-BES-17 the sign-in returns to the address that asked for it (#1619)
     expect(mgr.signinCallback).toHaveBeenCalledOnce();
     expect(window.location.pathname).toBe("/label/abc");
     expect(window.location.search).toBe("");
+  });
+});
+
+describe("US-BES-17 the sign-in returns with the query of the address (#1639)", () => {
+  const origin = window.location.origin;
+  const refused = () =>
+    Object.assign(new Error("login_required"), { state: "/collection?view=plants" });
+
+  it("US-BES-17 an expired sign-in at a deep link: the silent check carries the address with its query as state, the path stays the redirect URI", async () => {
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    window.history.replaceState({}, "", "/collection?view=plants");
+    mgr.getUser.mockResolvedValue({ ...user, expired: true });
+    renderHook(() => useSession());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenCalledWith({
+        prompt: "none",
+        redirect_uri: `${origin}/collection`,
+        state: "/collection?view=plants",
+      }),
+    );
+  });
+
+  it("US-BES-17 the silent check keeps every parameter of a layer address", async () => {
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    window.history.replaceState({}, "", "/today?sheet=hints&x=1");
+    mgr.getUser.mockResolvedValue({ ...user, expired: true });
+    renderHook(() => useSession());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenCalledWith({
+        prompt: "none",
+        redirect_uri: `${origin}/today`,
+        state: "/today?sheet=hints&x=1",
+      }),
+    );
+  });
+
+  it("US-BES-17 the return of the silent check restores the address with its query and without the sign-in's own parameters", async () => {
+    const session = await freshUseSession();
+    window.history.replaceState({}, "", "/collection?code=abc&state=xyz&session_state=s&iss=i");
+    mgr.signinCallback.mockResolvedValue({ ...user, state: "/collection?view=plants" });
+    const { result } = renderHook(() => session());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    expect(window.location.pathname + window.location.search).toBe("/collection?view=plants");
+  });
+
+  it.each<[string, unknown]>([
+    ["a host after two slashes", "//evil.example/x"],
+    ["a host after a slash and a backslash", "/\\evil.example/x"],
+    ["an absolute address", "https://evil.example/x"],
+    ["a script address", "javascript:alert(1)"],
+    ["an object", { path: "/collection" }],
+  ])(
+    "US-BES-17 a return whose state is %s goes back to the start path, not to the foreign address",
+    async (_label, state) => {
+      const session = await freshUseSession();
+      window.history.replaceState({}, "", "/collection?code=abc&state=xyz");
+      mgr.signinCallback.mockResolvedValue({ ...user, state });
+      const { result } = renderHook(() => session());
+      await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+      expect(window.location.origin).toBe(origin);
+      expect(window.location.pathname + window.location.search).toBe("/collection");
+    },
+  );
+
+  it("US-BES-17 the interactive sign-in keeps the query of the address", async () => {
+    window.history.replaceState({}, "", "/collection?view=plants");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    act(() => result.current.signIn());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
+        redirect_uri: `${origin}/collection`,
+        state: "/collection?view=plants",
+      }),
+    );
+  });
+
+  it("US-BES-17 a refused silent check on a deep link keeps the query, so the next press keeps it too", async () => {
+    const session = await freshUseSession();
+    window.history.replaceState({}, "", "/collection?view=plants&error=login_required&state=abc");
+    mgr.signinCallback.mockRejectedValueOnce(refused());
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => session());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(window.location.pathname + window.location.search).toBe("/collection?view=plants");
+    act(() => result.current.signIn());
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenLastCalledWith({
+        redirect_uri: `${origin}/collection`,
+        state: "/collection?view=plants",
+      }),
+    );
+  });
+
+  it("US-BES-17 a refused silent check under Strict Mode asks the sign-in service once and keeps the query", async () => {
+    const { StrictMode } = await import("react");
+    const session = await freshUseSession();
+    window.history.replaceState({}, "", "/collection?view=plants&error=login_required&state=abc");
+    mgr.signinCallback.mockRejectedValueOnce(refused());
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => session(), { wrapper: StrictMode });
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(mgr.signinCallback).toHaveBeenCalledOnce();
+    expect(window.location.pathname + window.location.search).toBe("/collection?view=plants");
   });
 });

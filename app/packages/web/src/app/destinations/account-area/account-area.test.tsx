@@ -558,3 +558,18 @@ describe("US-ONB-09 the keeper's switch achievement_views hides the section Erfo
     expect(await within(await index()).findByRole("link", { name: /^Erfolge/ })).toBeTruthy();
   });
 });
+
+describe("US-QS-15 Erfolge beside a pane (issue 1640)", () => {
+  beforeEach(() => setViewportWidth(1024));
+  afterEach(() => setViewportWidth(390));
+
+  it("US-QS-15 with a pane open at 1024 px the rows of Erfolge follow the width of their column, not the window", async () => {
+    fakeServer();
+    show("/account/achievements?sheet=earned");
+    const row = await screen.findByRole("button", { name: /^Erfolge/ });
+    const grid = row.closest(".grid") as HTMLElement;
+    expect(grid.parentElement?.className.split(" ")).toContain("@container");
+    expect(grid.className.split(" ")).toContain("@lg:grid-cols-2");
+    expect(grid.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
+});
