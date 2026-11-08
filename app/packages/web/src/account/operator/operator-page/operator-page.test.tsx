@@ -460,6 +460,14 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
     const heading = await screen.findByRole("heading", { name: "Betreiber" });
     expect(heading.closest("[data-fit-screen]")).not.toBeNull();
   });
+
+  it("US-QS-15 the figures of Zahlen take their columns from the width of their layer, not the window (issue 1640)", async () => {
+    const region = await numbers();
+    const list = region.querySelector("dl") as HTMLElement;
+    expect(region.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toContain("@lg:grid-cols-[auto_1fr]");
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
 });
 
 describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {

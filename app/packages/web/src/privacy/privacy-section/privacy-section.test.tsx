@@ -99,6 +99,15 @@ describe("US-QS-17 Meine Daten as two rows", () => {
     expect(screen.queryByRole("button", { name: "Daten herunterladen" })).toBeNull();
     expect(screen.queryByText("Das wird gelöscht:")).toBeNull();
   });
+
+  it("US-QS-15 the two rows take their columns from the width of their container, not the window: a pane beside them keeps one column (issue 1640)", async () => {
+    fakeServer();
+    show();
+    const grid = (await exportRow()).closest(".grid") as HTMLElement;
+    expect(grid.parentElement?.className.split(" ")).toContain("@container");
+    expect(grid.className.split(" ")).toContain("@lg:grid-cols-2");
+    expect(grid.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
 });
 
 describe("US-ACC-04 download of all own data", () => {
