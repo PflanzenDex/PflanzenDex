@@ -3,7 +3,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { useRequest } from "../../../../../shared/data";
 import { loadCard } from "../../../../specimens/cards/cards-api";
 import { COLLECTION_KEY, type Token } from "../../../../specimens/hooks/use-collection";
-import table from "./form-address.de.json";
+import table from "./address.de.json";
 
 const t = texts(table);
 /** The German texts of the form addresses, for the views that show them. */

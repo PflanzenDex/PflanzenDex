@@ -1,7 +1,7 @@
 import { Button } from "@/shared/ui/button/button";
 import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
 import { texts } from "@/shared/lib/text-rules/texts";
-import table from "../address/form-address.de.json";
+import table from "../address/address.de.json";
 
 const t = texts(table);
 
