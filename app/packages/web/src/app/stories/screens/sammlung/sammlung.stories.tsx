@@ -1,4 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
+import type { MeasurementView } from "@pflanzendex/core";
 import { CollectionArea } from "@/app/destinations/area-parts/lazy-areas";
 import { collectionEmpty, collectionMany, collectionRoutes } from "../../data/collection-data";
 import { API, token } from "../../harness/fake-api.fixtures";
@@ -45,5 +46,43 @@ export const PlantsManyDesktop = plantsMany.desktop;
 export const PlantsEmpty = screenStory({
   path: "/collection?view=plants",
   routes: collectionEmpty,
+  screen,
+});
+/** The measurements of "Aloe" for its plant layer (US-WAC-01): one measurement, rated healthy. */
+const aloeMeasurements: MeasurementView = {
+  specimenId: "a",
+  status: "plant",
+  growthMeasure: "rosette_diameter",
+  etiolationSigns: null,
+  measurements: [
+    {
+      id: "m-a-1",
+      specimenId: "a",
+      date: "2026-10-01",
+      value: 24,
+      quality: "healthy",
+      note: null,
+      ratedBy: "keeper",
+      photo: null,
+    },
+  ],
+  last: {
+    id: "m-a-1",
+    specimenId: "a",
+    date: "2026-10-01",
+    value: 24,
+    quality: "healthy",
+    note: null,
+    ratedBy: "keeper",
+    photo: null,
+  },
+  lastRating: "healthy",
+  growth: { count: 1, ratePerYear: null, trend: null, signal: null },
+};
+
+// A plant opened as its layer beside the tiles (US-QS-23): the screenshot of the installed app's install sheet (US-QS-26).
+export const PlantLayerPhone = screenStory({
+  path: "/collection?view=plants&sheet=plant-a",
+  routes: { ...collectionRoutes, "/specimens/a/measurements": aloeMeasurements },
   screen,
 });

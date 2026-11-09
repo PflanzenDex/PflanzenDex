@@ -7,7 +7,8 @@ import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/stor
 import * as stories from "./sammlung.stories";
 
 prepareStories();
-const { PlantsPhone, SpeciesDesktopDark, WishlistPhone, PlantsEmpty } = composeStories(stories);
+const { PlantsPhone, SpeciesDesktopDark, WishlistPhone, PlantsEmpty, PlantLayerPhone } =
+  composeStories(stories);
 
 describe("US-QS-14 · page story Sammlung", () => {
   afterEach(unmountStoryRuns);
@@ -43,5 +44,11 @@ describe("US-QS-14 · page story Sammlung", () => {
     await PlantsEmpty.run();
     expect(await screen.findByRole("button", { name: "Pflanzen" })).toBeTruthy();
     expect(screen.queryByText("Aloe")).toBeNull();
+  });
+
+  it("US-QS-26 · the plant layer story opens the plant as its layer beside the tiles, with its data and no loading state", async () => {
+    await PlantLayerPhone.run();
+    expect(await screen.findByRole("dialog", { name: "Aloe" })).toBeTruthy();
+    expect(screen.queryByText(/wird geladen|Lädt/)).toBeNull();
   });
 });

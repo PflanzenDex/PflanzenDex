@@ -1,8 +1,14 @@
 // US-QS-07 · Usable on mobile: the installable web app and its icon. Checked without a browser: the manifest, every icon
 // file it names, the links of index.html, the favicon SVG and the favicon of the login theme (the same artwork). The look
 // of the icons is checked by eye (docs/records) and the installability in Lighthouse and on a phone.
+// US-QS-26 · the install sheet (description, screenshots) and the shortcuts of the manifest.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { ADD_PLANT_PATH, PATHS } from "../../shared/patterns/navigation/navigation/navigation";
+import {
+  taskFilterOf,
+  WATERING_TASKS_ADDRESS,
+} from "../../today/today-page/today-filter/task-filter";
 
 const here = (path: string) => new URL(path, import.meta.url);
 const publicFile = (path: string) => readFileSync(here(`./public${path}`));
@@ -14,9 +20,20 @@ interface ManifestIcon {
   type: string;
   purpose?: string;
 }
+interface ManifestScreenshot extends ManifestIcon {
+  form_factor?: string;
+  label?: string;
+}
+interface ManifestShortcut {
+  name: string;
+  short_name: string;
+  url: string;
+  icons: ManifestIcon[];
+}
 interface Manifest {
   name: string;
   short_name: string;
+  description: string;
   start_url: string;
   scope: string;
   display: string;
@@ -24,7 +41,16 @@ interface Manifest {
   theme_color: string;
   background_color: string;
   icons: ManifestIcon[];
+  screenshots: ManifestScreenshot[];
+  shortcuts: ManifestShortcut[];
 }
+interface ScreenshotModule {
+  SCREENSHOTS: { file: string; story: string }[];
+  SIZE: { width: number; height: number };
+}
+// The screenshot script is a Node script without types, so it is not a static import (as build-icons below).
+const screenshotsScript = "./capture-screenshots.mjs";
+const screenshotScript = (await import(/* @vite-ignore */ screenshotsScript)) as ScreenshotModule;
 
 const manifest = JSON.parse(publicFile("/manifest.webmanifest").toString("utf8")) as Manifest;
 
@@ -172,5 +198,68 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(innerOf('<svg viewBox="0 0 1 1"><!<!-- a -->-- b --><path d="M0 0"/></svg>')).toBe(
       '<path d="M0 0"/>',
     );
+  });
+});
+
+describe("US-QS-26 · install sheet and shortcuts of the installed app", () => {
+  it("US-QS-26 the manifest describes the app in one German sentence", () => {
+    const sentences = manifest.description.split(/[.!?]/u).filter((part) => part.trim() !== "");
+    expect(sentences).toHaveLength(1);
+    expect(manifest.description).toMatch(/\.$/u);
+    expect(manifest.description).toMatch(/\b(und|die|deine)\b/u);
+  });
+
+  it("US-QS-26 the manifest names three phone screenshots, in the order and with the files of the screenshot script", () => {
+    expect(manifest.screenshots.map((shot) => shot.src)).toEqual(
+      screenshotScript.SCREENSHOTS.map((shot) => `/screenshots/${shot.file}`),
+    );
+    expect(manifest.screenshots).toHaveLength(3);
+  });
+
+  it("US-QS-26 every screenshot is a portrait phone picture of 390 x 844 px that exists, with a German label", () => {
+    expect(screenshotScript.SIZE).toEqual({ width: 390, height: 844 });
+    const labels = manifest.screenshots.map((shot) => shot.label ?? "");
+    expect(labels[0]).toMatch(/^Heute: /u);
+    expect(labels[1]).toMatch(/^Sammlung: /u);
+    expect(labels[2]).toMatch(/^Eine Pflanze: /u);
+    for (const shot of manifest.screenshots) {
+      expect(shot).toMatchObject({ form_factor: "narrow", sizes: "390x844", type: "image/png" });
+      expect(pngInfo(publicFile(shot.src))).toMatchObject({ width: 390, height: 844 });
+    }
+  });
+
+  it("US-QS-26 the shortcuts are Heute, Gießen and Neue Pflanze, named in German, and the 192 px icon stands for each", () => {
+    expect(manifest.shortcuts.map((shot) => shot.name)).toEqual([
+      "Heute",
+      "Gießen",
+      "Neue Pflanze",
+    ]);
+    expect(manifest.shortcuts.map((shot) => shot.short_name)).toEqual([
+      "Heute",
+      "Gießen",
+      "Neue Pflanze",
+    ]);
+    for (const shortcut of manifest.shortcuts) {
+      expect(shortcut.icons).toHaveLength(1);
+      expect(shortcut.icons[0]).toMatchObject({ src: "/icons/icon-192.png", sizes: "192x192" });
+      expect(pngInfo(publicFile(shortcut.icons[0]?.src ?? ""))).toMatchObject({ width: 192 });
+    }
+  });
+
+  it("US-QS-26 every shortcut opens a route the app knows: Heute, Heute with the watering filter and the new-plant flow", () => {
+    expect(manifest.shortcuts.map((shortcut) => shortcut.url)).toEqual([
+      PATHS.today,
+      WATERING_TASKS_ADDRESS,
+      ADD_PLANT_PATH,
+    ]);
+    const known = [PATHS.today, ADD_PLANT_PATH];
+    for (const shortcut of manifest.shortcuts) {
+      expect(known).toContain(new URL(shortcut.url, "https://app.invalid").pathname);
+    }
+  });
+
+  it("US-QS-26 the Gießen shortcut names the watering filter that Heute reads", () => {
+    const watering = new URL(manifest.shortcuts[1]?.url ?? "", "https://app.invalid");
+    expect(taskFilterOf(watering.searchParams)).toBe("watering");
   });
 });

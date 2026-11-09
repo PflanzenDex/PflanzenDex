@@ -8,3 +8,6 @@ export const TodayPage = lazyPage(() =>
 export { default as todayTexts } from "./today.de.json";
 // The skeleton of "Heute" in the shape of its page, the route's fallback and the area's parts (US-QS-14, issue 1697).
 export { TodaySkeleton } from "./today-page/today-skeleton/today-skeleton";
+// "Heute" narrowed to the watering tasks by its address `?tasks=watering` (US-QS-26): the page and the address rule.
+export { TodayFilter } from "./today-page/today-filter/today-filter";
+export { taskFilterOf, WATERING_TASKS } from "./today-page/today-filter/task-filter";

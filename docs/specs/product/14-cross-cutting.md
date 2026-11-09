@@ -526,6 +526,24 @@ Acceptance criteria:
 
 State of implementation (issue 1691): `index.html` names the page background of each scheme in its two `theme-color` metas, which the browser matches to the system scheme. The manifest's `theme_color` is the light page background (`#fafafa`) and its `background_color`, the splash colour, is the brand green. `StatusBarDim` (`shared/platform/device/status-bar/status-bar.tsx`, the colours in `theme-colour.ts`) sits inside the backdrop of `Sheet` and `Dialog`; the backdrop mounts only while its window is open, including its exit, and while it is mounted both metas take the dimmed colour. The app has no colour-scheme switch of its own (dark follows the system, ADR 0007); a switch added later must set both metas as well. The colour of the navigation area in the installed app is verified on a phone only (assumption: the page's meta wins at runtime, the manifest value is the fallback).
 
+### US-QS-26 · The installed app shows what it offers and opens its main places from the icon · 🟨 new
+
+As a **plant keeper** I want the install sheet to show what the app offers, and the icon to open today's watering or a new plant, so that I reach the next action in one tap after installing (US-QS-07, US-QS-25).
+
+Acceptance criteria:
+
+- Given Chromium on Android offers the install, when its install sheet shows, then the sheet shows a German description of the app and three phone screenshots (portrait, 390 × 844 px, each with a German label): "Heute", "Sammlung" and one plant layer.
+- Given the installed app, when I long-press its icon, then the shortcuts "Heute", "Gießen" and "Neue Pflanze" appear in German, and each opens its address: `/today`, `/today?tasks=watering` and `/collection/new`.
+- Given I open a shortcut while signed out, when I sign in, then I return to that address with its query, not to the start page (US-BES-17). This already holds (issue 1639): `account-api.test.ts`, "US-BES-17 the sign-in state keeps the query of the address (#1639)", and `session.test.tsx`, "US-BES-17 the sign-in returns with the query of the address (#1639)".
+- Given "Heute" opened with `?tasks=watering`, when the page shows, then it shows only today's watering tasks (US-MON-05), a notice says that the filter is on and which tasks are hidden, and "Alle Aufgaben zeigen" clears the filter and shows the whole day again (P-09, P-10).
+- Given the screenshots of the install sheet, when the screenshot script runs, then it renders the three screen stories "Heute", "Sammlung" and a plant layer with fixture data only (no real user data) and writes the PNG files named by the manifest; a rerun replaces them.
+
+Note (not a criterion): "Pot scannen" is the fourth shortcut of the issue. It follows with the in-app scanner (#1694, R2) and is not part of this story.
+
+Note (assumption, not checked against a source): iOS ignores the shortcuts and the screenshots of the manifest; the iOS install shows only the icon and the name.
+
+State of implementation (issue 1689): the manifest has a `description`, three `screenshots` and three `shortcuts` (each with the 192 px icon); the watering filter is the address parameter `tasks=watering` of "Heute" (`WATERING_TASKS_ADDRESS` in `today/today-page/today-filter/task-filter.ts`); the screenshots are rendered by `npm run pwa-screenshots -w @pflanzendex/web` from the Storybook screen stories. Checked by tests: `pwa.test.ts` and `today-area.test.tsx` (names carry US-QS-26). Status stays 🟨 until a real Android phone check of the install sheet, the long press and the return after sign-in.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |
