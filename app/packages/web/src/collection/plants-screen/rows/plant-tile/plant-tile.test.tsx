@@ -85,6 +85,19 @@ describe("US-QS-19 the marker of a plant tile on its own line (issue 1651)", () 
     expect(tile.hasAttribute("aria-label")).toBe(false);
   });
 
+  it("US-QS-19 the marker line is a positioned box, so the hidden dash of its name cannot leave the scroll region of the list at 200 % text (issue 1651, one-screen QG-U8)", () => {
+    const marked = { ...card, name: "Efeutute – Ableger", marker: "Ableger" } as SpecimenCard;
+    const { container } = render(
+      <MemoryRouter>
+        <PlantTile card={marked} access={{} as never} />
+      </MemoryRouter>,
+    );
+    const marker = container.querySelector("[data-marker]");
+    if (!marker) throw new Error("the tile has no marker line");
+    expect(marker.className.split(/\s+/)).toContain("relative");
+    expect(marker.querySelector(".sr-only")?.textContent).toBe("–");
+  });
+
   it("US-QS-19 a tile without a marker shows no empty marker line, so it keeps its height (issue 1651)", () => {
     const { container } = render(
       <MemoryRouter>

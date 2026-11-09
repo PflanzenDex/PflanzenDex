@@ -93,7 +93,9 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
           <span className="truncate font-semibold">{species}</span>{" "}
           {marker === null ? null : (
             <>
-              <span data-marker className="truncate text-xs">
+              {/* `relative` keeps the dash for assistive technology inside this box: unpositioned, it escapes the scroll
+                  region of the list and the page grows at 200 % text (one-screen gate, issue 1651). */}
+              <span data-marker className="relative truncate text-xs">
                 <span className="sr-only">–</span> {marker}
               </span>{" "}
             </>
