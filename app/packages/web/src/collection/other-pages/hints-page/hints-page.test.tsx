@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HintsPage } from "./hints-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -53,8 +54,9 @@ afterEach(() => {
 describe("US-BES-08 page of the hints about incomplete specimens", () => {
   it("US-BES-08 shows every hint with its text and next action", async () => {
     fakeServer(() => response(200, { hints: [noLocation, noZone, noSpecies] }));
+    delayLoads();
     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     expect(await screen.findByText(noLocation.text)).toBeTruthy();
     expect(screen.getByText(noZone.text)).toBeTruthy();
     expect(screen.getByText(noSpecies.text)).toBeTruthy();

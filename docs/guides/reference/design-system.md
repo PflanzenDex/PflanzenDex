@@ -181,12 +181,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/overlays/dialog/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/shared/ui/overlays/sheet/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/overlays/sheet/sheet";
 
 type Props = {
   open: boolean;
@@ -195,12 +190,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-export function ResponsiveModal({
-  open,
-  onOpenChange,
-  title,
-  children,
-}: Props) {
+export function ResponsiveModal({ open, onOpenChange, title, children }: Props) {
   const isDesktop = useMediaQuery("(min-width: 768px)"); // md, upward-only
   if (isDesktop) {
     return (
@@ -216,10 +206,7 @@ export function ResponsiveModal({
   }
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="max-h-[90dvh] pb-[env(safe-area-inset-bottom)]"
-      >
+      <SheetContent side="bottom" className="max-h-[90dvh] pb-[env(safe-area-inset-bottom)]">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
@@ -348,13 +335,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        outline:
-          "border border-border bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        outline: "border border-border bg-background hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -370,9 +354,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
@@ -380,11 +362,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        {...props}
-      />
+      <Comp ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
     );
   },
 );
@@ -456,22 +434,14 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { wishSchema, type WishInput } from "../schemas";
 
-export function WishForm({
-  onSubmit,
-}: {
-  onSubmit: (v: WishInput) => Promise<void>;
-}) {
+export function WishForm({ onSubmit }: { onSubmit: (v: WishInput) => Promise<void> }) {
   const form = useForm<WishInput>({
     resolver: zodResolver(wishSchema),
     defaultValues: { name: "" },
   });
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-4"
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
         <FormField
           control={form.control}
           name="name"
@@ -485,11 +455,7 @@ export function WishForm({
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          size="touch"
-          disabled={form.formState.isSubmitting}
-        >
+        <Button type="submit" size="touch" disabled={form.formState.isSubmitting}>
           Speichern
         </Button>
       </form>
@@ -500,30 +466,24 @@ export function WishForm({
 
 ### 4.3 Skeleton loaders (no layout shift)
 
-| ID    | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| DS-52 | Every async view has a skeleton that has the **same structure and box sizes** as the loaded mobile layout: same container, same number of rows (or a fixed plausible count), same heights. Cumulative Layout Shift of a cold load stays < 0.1 (assumption, starting value; `quality-limits.json` `layoutShift.maxCls`) at 360x640, 390x844 and 1280x800; the one-screen project measures it per screen (`judge.shift.ts`, `fit.shift.ts`, US-QS-14, issue 1697). The `lighthouse` script measures only the start page (QG-U1). Reported, not yet blocking (spread up to 0.244 between identical CI runs): the check writes its findings to the step summary until the R1 ticket #1729 "deterministic shift check" makes it deterministic and blocking. |
-| DS-53 | Skeletons are built from `shared/ui/display/skeleton/skeleton.tsx` and live next to the component they mirror (`specimen-card.skeleton.tsx`). When the real component changes size, the skeleton changes in the same PR.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| DS-54 | Images and media reserve space with `aspect-*` or explicit `width`/`height`. No element is inserted above already visible content after load (banners, error bars use reserved space or an overlay). The growth note of the measure page is an overlay below the row of the focused field, never reserved space: it never covers the focused field, the sticky save button paints over it, and at 200 % text it scrolls within 40 % of the window height (issue 1644).                                                                                                                                                                                                                                                                                 |
-| DS-55 | Route-level pages load behind one `Suspense` boundary whose fallback is the page skeleton (DS-08); inside a page, wrap the **smallest** lazy or async part in its own `Suspense`/pending state, so the shell and header render at once.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| DS-56 | Skeletons are `aria-hidden` with a single `role="status"` + visually hidden "Lädt…" text on the container. Animation respects `motion-reduce`. A loading state never shows an invented number (P-08).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| DS-57 | A loading part shows its skeleton (or its status) only after a delay of 200 ms (starting value, assumption, issue 1697): a part that arrives sooner shows nothing, so a fast load does not flash. The skeleton is never held once shown. One loader per region: a region shows its skeleton once, then its content; a nested fallback of the same region repeats the skeleton, never a second text. A spinner (`PlantLoader`) stays only on a control while its write runs and where there is no shape to sketch; the status texts sit centred (D2, D13). The delay is `DelayedSkeleton` (`shared/ui/display/skeleton/`); `PageSkeleton` applies it to its blocks, its heading stands at once (US-QS-14).                                              |
+| ID    | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-52 | Every async view has a skeleton that has the **same structure and box sizes** as the loaded mobile layout: same container, same number of rows (or a fixed plausible count), same heights. Cumulative Layout Shift of a cold load stays < 0.1 (assumption, starting value; `quality-limits.json` `layoutShift.maxCls`) at 360x640, 390x844 and 1280x800; the one-screen project measures it per screen (`judge.shift.ts`, `fit.shift.ts`, US-QS-14, issue 1697). The `lighthouse` script measures only the start page (QG-U1). Reported, not yet blocking (spread up to 0.244 between identical CI runs): the check writes its findings to the step summary until the R1 ticket #1729 "deterministic shift check" makes it deterministic and blocking.                                                                                                                                                         |
+| DS-53 | Skeletons are built from `shared/ui/display/skeleton/skeleton.tsx` and live next to the component they mirror (`specimen-card.skeleton.tsx`). When the real component changes size, the skeleton changes in the same PR.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| DS-54 | Images and media reserve space with `aspect-*` or explicit `width`/`height`. No element is inserted above already visible content after load (banners, error bars use reserved space or an overlay). The growth note of the measure page is an overlay below the row of the focused field, never reserved space: it never covers the focused field, the sticky save button paints over it, and at 200 % text it scrolls within 40 % of the window height (issue 1644).                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| DS-55 | Route-level pages load behind one `Suspense` boundary whose fallback is the page skeleton (DS-08); inside a page, wrap the **smallest** lazy or async part in its own `Suspense`/pending state, so the shell and header render at once.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| DS-56 | Skeletons are `aria-hidden` with a single `role="status"` + visually hidden "Lädt…" text on the container. Animation respects `motion-reduce`. A loading state never shows an invented number (P-08).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| DS-57 | A loading part shows its skeleton (or its status) only after a delay of 200 ms (starting value, assumption, issue 1697): a part that arrives sooner shows nothing, so a fast load does not flash. The skeleton is never held once shown. One loader per region: a region shows its skeleton once, then its content; a nested fallback of the same region repeats the skeleton, never a second text. A spinner (`PlantLoader`) stays only on a control while its write runs and where there is no shape to sketch; the status texts sit centred (D2, D13). The delay is `DelayedSkeleton` (`shared/ui/display/skeleton/`): `RequestState` applies it to every `LoadFrame` and `RequestState` skeleton and status (issue 1726), `PageSkeleton` to its blocks (its heading stands at once, US-QS-14), and the other loaders of the app wrap their skeletons and statuses in it (the inventory of 4.3 names them). |
 
 ```tsx
 // shared/ui/display/skeleton/skeleton.tsx
 import { cn } from "@/shared/lib/utils";
 
-export function Skeleton({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       aria-hidden
-      className={cn(
-        "animate-pulse rounded-md bg-muted motion-reduce:animate-none",
-        className,
-      )}
+      className={cn("animate-pulse rounded-md bg-muted motion-reduce:animate-none", className)}
       {...props}
     />
   );
@@ -534,10 +494,7 @@ export function Skeleton({
 // collection/specimen-card.skeleton.tsx   (mirrors specimen-card.tsx: p-4, 3 lines, 48px button)
 export function SpecimenCardSkeleton() {
   return (
-    <div
-      role="status"
-      className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
-    >
+    <div role="status" className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
       <span className="sr-only">Lädt…</span>
       <Skeleton className="h-6 w-2/3" /> {/* h2 */}
       <Skeleton className="h-5 w-1/2" /> {/* next step */}
@@ -549,7 +506,7 @@ export function SpecimenCardSkeleton() {
 
 #### Inventory of the loading states (issue 1697, state after part 2, 2026-11-08)
 
-Kinds: **own** = a skeleton of the page or part in its shape, **generic** = `PageSkeleton` or a two-card block, **spinner** = `PlantLoader` without a shape, **status** = a centred text without a skeleton, **none** = no loader of its own. The shape of a skeleton that is new in part 2 or part 1 waits for the delay (DS-57). The older own skeletons (`LoadFrame` fallbacks of part 1 and before, such as `HintsPageSkeleton` on a page or `SettingsPageSkeleton`) show at once: their delay is a follow-up, because it changes the status assertions of about 60 test files. Measured layout shift (the gate of issue 1697) is a separate step and is not yet measured.
+Kinds: **own** = a skeleton of the page or part in its shape, **generic** = `PageSkeleton` or a two-card block, **spinner** = `PlantLoader` without a shape, **status** = a centred text without a skeleton, **none** = no loader of its own. Every shaped skeleton waits for the delay (DS-57, issue 1726): the own skeletons of the newer parts through their own `DelayedSkeleton`, the `LoadFrame` and `RequestState` fallbacks of all parts through `RequestState` (one place), and the direct renders of the older parts through a `DelayedSkeleton` of their own. The first app start stays undelayed: the app start spinner (`app/frame/app/app.tsx`) and the session check of the entry (`Loading` in `account/views`). Measured layout shift (the gate of issue 1697) is a separate step and is not yet measured.
 
 | Region            | Address or layer                                                  | Loading state now                                                                                                                                                                                                                                                                           | Left open (reason)                                                                             |
 | ----------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -588,7 +545,9 @@ Layers. Each layer loads with the page it belongs to, unless its chunk is still 
 | Konto          | `earned`, `rhythm`, `year`, `pause`                                           | achievements own (`overview`, `calm-mode`); the layers static                                                                                                                                                                                 |
 | Betreiber      | `zahlen`, `einstieg`, `kosten`, `fristen`, `registrierung`, `einladungscodes` | operator page own (`OperatorPageSkeleton`); the layers static                                                                                                                                                                                 |
 
-Chains and what is left. `/today` had a chain of loaders: each count waited for its lazy chunk and its request started only then, and each count showed its own face; now the chunks are preloaded together, the counts start together, and the region shows one skeleton until the counts and the list are there (issue 1697, part 2). The 21 spinners of the reading are shaped (`LoadFrame` and `RequestState` fallbacks); the spinner left is the one of the control "Mehr laden" (`load-more`, a control while its page loads, DS-57, D2). Generic blocks remain in the route fallbacks of "Sammlung", "Freunde", "Freunde Tausch", "Freunde Matching", "Freundes Sammlung" and "Artenprofil", and in the area fallback of "Sammlung" (each listed above with its reason); the `AreaSection` of a section and the layers no longer use the generic blocks. Issue 1645 (DS-72): the destinations and the new-plant form are requested ahead of their first visit, so a first visit renders without a fallback; the one-frame statuses still shown on a first visit in "Sammlung" and "Freunde" come from page data loads that show before their delay, and they belong to issue 1726.
+Chains and what is left. `/today` had a chain of loaders: each count waited for its lazy chunk and its request started only then, and each count showed its own face; now the chunks are preloaded together, the counts start together, and the region shows one skeleton until the counts and the list are there (issue 1697, part 2). The 21 spinners of the reading are shaped (`LoadFrame` and `RequestState` fallbacks); the spinner left is the one of the control "Mehr laden" (`load-more`, a control while its page loads, DS-57, D2). Generic blocks remain in the route fallbacks of "Sammlung", "Freunde", "Freunde Tausch", "Freunde Matching", "Freundes Sammlung" and "Artenprofil", and in the area fallback of "Sammlung" (each listed above with its reason); the `AreaSection` of a section and the layers no longer use the generic blocks. Issue 1645 (DS-72): the destinations and the new-plant form are requested ahead of their first visit, so a first visit renders without a fallback; the one-frame statuses that a first visit of "Sammlung" and "Freunde" showed came from page data loads that appeared before their delay; issue 1726 routes them through the delay (DS-57).
+
+Issue 1726 routed the loaders outside `RequestState` through the delay too: the skeletons `ProfileSkeleton` (species profile) and `SearchResultsSkeleton` (catalog search), the block of the save step (onboarding), and the statuses of the year in review, the area modes, the collection views, the plant notes, the plant care and repot parts, the plant layer slot, the repot form and plan, the photo of a measurement, the wishlist picture and its large view, the paging note, the deletion step and value, the settings style value, the friend count "lädt …" and the specimen card photo text. Undelayed on purpose: the app start spinner, the session check of the entry, the "Mehr laden" control and the write spinners (DS-57, D2, D6), the window status of a dialog or sheet (its own delay of 300 ms, issue 1575), the offline note and every error (at once, P-10), and the notices that are not loads.
 
 ### 4.4 Component inventory
 
@@ -669,7 +628,7 @@ Every component in `shared/ui`, in the shared patterns (responsive, states, empt
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | DS-68 | A view change moves the focus through `RouteFocus` (`shared/platform/routing/route-focus/`) and nothing else: once the new view has loaded, the focus goes to its main heading, never on the first load, so the skip link comes first (US-QS-08); Back returns it to the control that opened the view (US-QS-09). A layer or a form opened on the same view moves no focus, but `RouteFocus` remembers the control it was opened from, so Back to that view finds it (US-QS-15, issue 1637). `?sheet`, every address part of a pager (`PAGER_PARTS` and the old page numbers of `OLD_PARTS`, such as `?from=6` or `?vfrom=3`, issue 1550) and a navigation with the state `keepFocus` only set the title; the layer and the pager keep their own focus (DS-59, DS-60). New code does not call `focus()` on a heading or on `main` for a view change. A heading focused by script shows no frame after a pointer input (DS-37, US-QS-15). |
 | DS-69 | Results and offline states are announced through `useAnnounce()` (`shared/platform/announcer/`), the app's shared polite live region, and the announcement never moves the focus (US-QS-10). A toast has its own polite region for confirmations and an assertive one for errors (`shared/patterns/states/toast/toast-provider/`), and a confirmation toast is a `role="status"` (issue 1644); an error that blocks an action is also shown in its field (DS-38). A component adds its own `aria-live` only for a text that changes in place, such as a counter or a page label (DS-56, DS-60), never for a result.                                                                                                                                                                                                                                                                                                                      |
-| DS-72 | A destination's pages load ahead of its first visit (issue 1645): the pages each bottom-bar destination renders on a first visit, and the new-plant form, are requested when the shell is idle and when their link is pressed or focused (`destinationPages()` in `app/destinations/area-parts/lazy-areas.ts`, `usePreloadOnIntent` and `preloadWhenIdle` in `shared/platform/routing/lazy-page/preload.ts`). A mounted page whose chunk is in hand renders at once: no fallback commits, so React's hold of about 300 ms on the reveal does not apply. A page that is not preloaded (a tap before the shell is idle) keeps its fallback under DS-57. Owner decision D5 (2026-11-07), for `LoadFrame` and `RequestState` (issue 1726): a status that is shown stays at least 300 ms, so it never flashes. |
+| DS-72 | A destination's pages load ahead of its first visit (issue 1645): the pages each bottom-bar destination renders on a first visit, and the new-plant form, are requested when the shell is idle and when their link is pressed or focused (`destinationPages()` in `app/destinations/area-parts/lazy-areas.ts`, `usePreloadOnIntent` and `preloadWhenIdle` in `shared/platform/routing/lazy-page/preload.ts`). A mounted page whose chunk is in hand renders at once: no fallback commits, so React's hold of about 300 ms on the reveal does not apply. A page that is not preloaded (a tap before the shell is idle) keeps its fallback under DS-57. Owner decision D5 (2026-11-07): a status that is shown stays at least 300 ms, so it never flashes; issue 1726 does not implement it (open follow-up).                                                                                                                              |
 | DS-70 | Keyboard shortcuts come from one central register (US-QS-11). Until the register exists, no shortcut is added. Every shortcut action has a visible control that shows the shortcut. A single-character shortcut can be switched off or changed to one with a modifier and never fires while the focus is in a text field (2.1.4). The register rejects keys that browsers, the operating system and screen readers use, such as Tab, Shift+Tab, Ctrl+L and Alt+arrow; the register test of US-QS-11 checks this, and until it exists review does. Keys a widget handles itself (arrow keys in a menu or tabs, Esc in an overlay, DS-40) stay in the widget and are not in the register.                                                                                                                                                                                                                                                  |
 
 ---

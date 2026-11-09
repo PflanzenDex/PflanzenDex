@@ -1,10 +1,12 @@
+// @vitest-environment jsdom
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
+import { cleanup, render as mount, screen } from "@testing-library/react";
 import { createQueryClient } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
 import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
 import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
@@ -66,6 +68,8 @@ const fields = (extra: Record<string, string> = {}) => ({
 });
 
 const PHOTO = { api: "http://api", token: async () => "tok", specimenId: "e1" };
+
+afterEach(cleanup);
 
 describe("US-WAC-01 client of the measure API", () => {
   it("records with bearer token, time zone of the device and a fresh Idempotency-Key", async () => {
@@ -231,8 +235,13 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     }
   });
 
-  it('the page shows "wird geladen" first and offers the way back', () => {
-    const html = renderToString(
+  it('the page shows "wird geladen" first and offers the way back', async () => {
+    // The loading status waits for the delay of DS-57 (issue 1726): the request never answers, so the status stays.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(() => new Promise<Response>(() => undefined)),
+    );
+    const { container } = mount(
       <QueryClientProvider client={createQueryClient()}>
         <MemoryRouter>
           <MeasurePage
@@ -244,6 +253,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
+    expect(await screen.findByRole("status")).toBeTruthy();
+    const html = container.innerHTML;
     expect(html).toContain("Messen: Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
     expect(html).toContain("Zurück zur Sammlung");

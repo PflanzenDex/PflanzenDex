@@ -1,4 +1,5 @@
 import { Button } from "@/shared/ui/button/button";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -42,9 +43,11 @@ export function LargePicture(props: {
           {errorText(state.code)}
         </p>
       ) : (
-        <p role="status" className="text-muted-foreground">
-          {t("picture.loading")}
-        </p>
+        <DelayedSkeleton>
+          <p role="status" className="text-muted-foreground">
+            {t("picture.loading")}
+          </p>
+        </DelayedSkeleton>
       )}
       <p className="text-sm text-muted-foreground">{sourceLine}</p>
       {!isMd && (

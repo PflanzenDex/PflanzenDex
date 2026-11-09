@@ -6,6 +6,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { layerOpenerId } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { Button } from "@/shared/ui/button/button";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
 import { notesKey, useNotes } from "../../../../specimens/hooks/use-notes";
@@ -112,9 +113,11 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
       <div className="grid gap-3 text-sm">
         <Quiet>{t("layer.hint", { name: card.name })}</Quiet>
         {request.status === "pending" ? (
-          <p role="status" className="text-muted-foreground">
-            {t("layer.loading")}
-          </p>
+          <DelayedSkeleton>
+            <p role="status" className="text-muted-foreground">
+              {t("layer.loading")}
+            </p>
+          </DelayedSkeleton>
         ) : null}
         {request.status === "error" && request.error ? (
           <NotesFailed error={request.error} onRetry={request.retry} />

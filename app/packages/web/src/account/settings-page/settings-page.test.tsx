@@ -10,6 +10,7 @@ import {
   useShortcuts,
 } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { SettingsPage } from "./settings-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -79,8 +80,9 @@ afterEach(() => {
 describe("US-ACC-02 settings page: display name", () => {
   it("US-ACC-02 shows the saved profile and keeps Save disabled until something changes", async () => {
     fakeServer();
+    delayLoads();
     show("profile");
-    expect(screen.getByRole("status").textContent).toContain("werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect((await screen.findByLabelText<HTMLInputElement>("Anzeigename")).value).toBe("Anna");
     expect(screen.getByRole("button", { name: "Speichern" }).hasAttribute("disabled")).toBe(true);
   });
@@ -365,13 +367,16 @@ describe("US-ACC-02 settings page: errors", () => {
 });
 
 describe("US-ACC-02 · DS-48 states and primitives", () => {
-  it("US-ACC-02 · DS-52 while loading, a skeleton of the form stands in with one status and hidden blocks", () => {
+  it("US-ACC-02 · DS-52 while loading, a skeleton of the form stands in with one status and hidden blocks", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
+    delayLoads();
     const { container } = show("profile");
-    expect(screen.getByRole("status").textContent).toContain("Einstellungen werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain(
+      "Einstellungen werden geladen",
+    );
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
     expect(screen.queryByRole("form")).toBeNull();
   });

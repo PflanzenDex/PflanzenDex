@@ -29,6 +29,12 @@ vi.mock("@/app/destinations/account-area/account-area", () => {
   loaded.pages.push("account-area");
   return { AccountArea: () => null };
 });
+// The collection chunk arrives when its test releases it (issue 1726): a chunk that arrives sooner shows no status.
+const chunk = vi.hoisted(() => ({ ready: Promise.resolve() as Promise<void> }));
+vi.mock("@/app/destinations/collection-area/collection-area", async (importOriginal) => {
+  await chunk.ready;
+  return importOriginal<typeof import("@/app/destinations/collection-area/collection-area")>();
+});
 vi.mock("../pokedex/pokedex-page/pokedex-page", () => {
   loaded.pages.push("pokedex");
   throw new Error("Failed to fetch dynamically imported module");
@@ -76,10 +82,23 @@ afterEach(() => {
 
 describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   it("US-QS-07 · DS-08 a route shows one loading status while its page chunk loads, after the delay (issue 1697)", async () => {
+    let release: () => void = () => undefined;
+    chunk.ready = new Promise<void>((resolve) => {
+      release = () => resolve();
+    });
     renderAt("/collection?view=wishlist");
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("Lädt…")).toBeTruthy();
+    release();
+    await screen.findByRole("heading", { name: /Wunschliste/ });
+  });
+
+  it("US-QS-07 · DS-08 a route whose chunk arrives within the delay shows no loading status (issue 1726)", async () => {
+    renderAt("/collection?view=wishlist");
+    expect(screen.queryByRole("status")).toBeNull();
+    await screen.findByRole("heading", { name: /Wunschliste/ });
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("US-QS-07 · DS-08 a first load of the wishlist mode does not load the chunks of the other modes (issue 1645)", async () => {

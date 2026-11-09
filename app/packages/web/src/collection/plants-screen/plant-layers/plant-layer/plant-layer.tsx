@@ -6,6 +6,7 @@ import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
 import { plantLayerId } from "../../rows/plant-tile/plant-tile";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
@@ -65,9 +66,11 @@ function Slot(props: { render?: SlotRender | undefined; card: SpecimenCard; meas
   return (
     <Suspense
       fallback={
-        <p role="status" className="text-sm text-muted-foreground">
-          {t("slot.loading")}
-        </p>
+        <DelayedSkeleton>
+          <p role="status" className="text-sm text-muted-foreground">
+            {t("slot.loading")}
+          </p>
+        </DelayedSkeleton>
       }
     >
       {props.render(props.card, { measure: props.measure })}

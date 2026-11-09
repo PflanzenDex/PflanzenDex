@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useLocation, useSearchParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { OLD_PARTS } from "./address";
 
 /**
@@ -26,9 +27,11 @@ export type PagerPaging = {
 export function PagingNote({ paging }: { paging: PagerPaging }) {
   if (paging.failure === undefined)
     return (
-      <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
-        {paging.loadingText}
-      </p>
+      <DelayedSkeleton>
+        <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+          {paging.loadingText}
+        </p>
+      </DelayedSkeleton>
     );
   return (
     <div className="flex flex-col items-start gap-2">

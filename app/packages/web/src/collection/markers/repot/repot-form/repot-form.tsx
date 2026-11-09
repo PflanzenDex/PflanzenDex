@@ -17,6 +17,7 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { LoadingNote } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import { repotSchema, type RepotFields } from "../../../specimens/model/schemas";
 import type { RepotTarget, useRepot } from "../../../specimens/hooks/use-repot";
@@ -162,9 +163,7 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
   if (plan.status === "pending")
     return (
       <RepotFrame open={open}>
-        <p role="status" className="text-sm text-muted-foreground">
-          {t("form.loadingPots")}
-        </p>
+        <LoadingNote>{t("form.loadingPots")}</LoadingNote>
       </RepotFrame>
     );
   if (plan.status === "error" || plan.value === undefined)

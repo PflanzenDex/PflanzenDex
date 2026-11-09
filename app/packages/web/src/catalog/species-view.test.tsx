@@ -3,7 +3,7 @@ import { cleanup, render as mount, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString as render } from "react-dom/server";
 import type { Species } from "@pflanzendex/core";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SpeciesProfile } from "./profile-view/profile-view";
 import { ProposalForm } from "./proposal/proposal-form/proposal-form";
 import { duplicate } from "./proposal/form";
@@ -255,12 +255,19 @@ describe("US-BES-01 · DS-48 proposal schema", () => {
   });
 });
 
+afterEach(cleanup);
+
+// The skeletons show after the delay of DS-57 (issue 1726): they are mounted and their one status awaited, not read as markup.
 describe("US-BES-01 · DS-48 skeletons", () => {
-  it("each carries one loading status and no content", () => {
-    const search = renderToString(<SearchResultsSkeleton />);
-    const profile = renderToString(<ProfileSkeleton />);
-    for (const h of [search, profile]) expect(h.match(/role="status"/g)).toHaveLength(1);
-    expect(search).toContain("Suche läuft");
-    expect(profile).toContain("Art wird geladen");
+  it("US-BES-01 · DS-48 each carries one loading status and no content (issue 1726)", async () => {
+    mount(<SearchResultsSkeleton />);
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+    cleanup();
+    mount(<ProfileSkeleton />);
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toContain("Art wird geladen");
   });
 });

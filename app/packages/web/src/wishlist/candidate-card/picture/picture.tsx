@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -41,9 +42,16 @@ export function StoredPicture(props: { c: Candidate; access: PhotoAccess; source
     }
   }, [large]);
   if (typeof state !== "string")
-    return (
+    return state ? (
       <span role="status" className={cn(PICTURE_BOX, placeholder, "p-2 text-center text-sm")}>
-        {state ? errorText(state.code) : t("picture.loading")}
+        {errorText(state.code)}
+      </span>
+    ) : (
+      // The box keeps its size at once; the loading status inside it shows after the delay (DS-57, issue 1726).
+      <span className={cn(PICTURE_BOX, placeholder, "p-2 text-center text-sm")}>
+        <DelayedSkeleton>
+          <span role="status">{t("picture.loading")}</span>
+        </DelayedSkeleton>
       </span>
     );
   return (

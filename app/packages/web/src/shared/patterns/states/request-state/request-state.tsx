@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { EmptyState } from "../../elements/empty-state/empty-state";
 
 export type RequestStatus = "pending" | "error" | "empty" | "ready";
@@ -23,14 +24,19 @@ export type RequestStateProps = {
 export const OFFLINE_NOTE = "Offline - zuletzt geladene Daten";
 
 /**
- * The one pattern for the four states of a request (DS-09, DS-26): pending shows the skeleton (or the PlantLoader), error the text with
- * "Erneut versuchen" (P-10), empty the empty state with its next action (P-09), ready the content, with a note when
+ * The one pattern for the four states of a request (DS-09, DS-26): pending shows the skeleton (or the PlantLoader) after the
+ * delay of DS-57 (issue 1726), so a request that ends sooner shows no skeleton and no status; error the text with
+ * "Erneut versuchen" (P-10) at once, empty the empty state with its next action (P-09), ready the content, with a note when
  * it is the cached copy. Takes data and callbacks only (DS-44).
  */
 export function RequestState(props: RequestStateProps) {
   const { status, errorText, onRetry, skeleton, empty, offline, heading, children } = props;
   if (status === "pending")
-    return <>{skeleton ?? <PlantLoader className="mx-auto my-8 flex" size="lg" />}</>;
+    return (
+      <DelayedSkeleton>
+        {skeleton ?? <PlantLoader className="mx-auto my-8 flex" size="lg" />}
+      </DelayedSkeleton>
+    );
   if (status === "error")
     return (
       <>

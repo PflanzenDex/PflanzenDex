@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { DifficultyPage } from "./difficulty-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 afterEach(releaseSheetExits);
 
@@ -67,8 +68,9 @@ describe("US-BES-05 page of the difficulty overview", () => {
         rows: [row(), row({ speciesId: "sp2", speciesName: "Gummibaum", difficulty: 3 })],
       }),
     );
+    delayLoads();
     view(<DifficultyPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     const list = await screen.findByRole("list", { name: "Artenvergleich" });
     const entries = within(list).getAllByRole("listitem");
     expect(entries).toHaveLength(2);

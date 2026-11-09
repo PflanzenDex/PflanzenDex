@@ -1,4 +1,5 @@
 import { measurementPhotoPath } from "@pflanzendex/core";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { dateText } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
@@ -36,11 +37,16 @@ export function MeasurementPhoto(
     path,
     props.compact ? { size: "thumb", enabled: inView } : {},
   );
+  // The outer box keeps the in-view ref at once; the skeleton inside shows only after the delay (DS-57, issue 1726).
   if (state === null)
     return (
-      <div role="status" ref={ref}>
-        <Skeleton className={props.compact ? "h-20 w-full max-w-xs" : "h-40 w-full max-w-xs"} />
-        <span className="sr-only">{t("loading")}</span>
+      <div ref={ref}>
+        <DelayedSkeleton>
+          <div role="status">
+            <Skeleton className={props.compact ? "h-20 w-full max-w-xs" : "h-40 w-full max-w-xs"} />
+            <span className="sr-only">{t("loading")}</span>
+          </div>
+        </DelayedSkeleton>
       </div>
     );
   if (typeof state === "object")

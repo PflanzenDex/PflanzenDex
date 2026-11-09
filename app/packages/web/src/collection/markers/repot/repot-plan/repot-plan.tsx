@@ -15,7 +15,7 @@ import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { Quiet, Warning } from "../../../specimens/cards/parts/parts";
+import { LoadingNote, Quiet, Warning } from "../../../specimens/cards/parts/parts";
 import { loadRepotPlan, REPOT_PLAN_KEY, type RepotPlanView } from "../repot-api";
 import { signLabel } from "./observations/observations";
 import { potItemText, potSizeText } from "./pot-text";
@@ -61,12 +61,7 @@ export function RepotPlanSection(props: {
   onRepot: () => void;
 }) {
   const { card, plan } = props;
-  if (plan.status === "pending")
-    return (
-      <p role="status" className="text-sm text-muted-foreground">
-        {t("plan.loading")}
-      </p>
-    );
+  if (plan.status === "pending") return <LoadingNote>{t("plan.loading")}</LoadingNote>;
   if (plan.status === "error")
     return (
       <section aria-label={t("plan.title")} className="grid gap-2">

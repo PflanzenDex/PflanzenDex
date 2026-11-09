@@ -7,6 +7,7 @@ import { createQueryClient } from "@/shared/data";
 import { AppShell } from "@/app/frame/app-shell/app-shell";
 import { navItems, viewTitle } from "@/shared/patterns/navigation/navigation/navigation";
 import { fakeFetch, type Routes } from "../fake-api.fixtures";
+import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 // The page stories render the real screen inside the real page frame (US-QS-14). Server state lives in a query client
 // that a loader fills before the story renders, so the story starts with its data and never shows a skeleton.
@@ -22,8 +23,12 @@ export const POLL_MS = 10;
  * page-story tests raise their test timeout above it (`prepareStories`), so this budget decides when a wait ends.
  */
 export const SETTLE_BUDGET_MS = 10_000;
-/** The screen counts as loaded when it stayed quiet for this many polls: a finished request starts the next lazy part. */
-const QUIET_POLLS = 3;
+/**
+ * The screen counts as loaded when it stayed quiet for this long: a finished request starts the next lazy part. A loading
+ * part shows its status only after the delay of DS-57 (issue 1726), so the quiet time is twice that delay: every part that
+ * is still loading shows its status first, and a part that arrives sooner is in the capture.
+ */
+const QUIET_MS = SKELETON_DELAY_MS * 2;
 
 function frame(client: QueryClient, path: string, screen: ReactElement) {
   return (
@@ -55,13 +60,15 @@ export async function warm(client: QueryClient, path: string, screen: ReactEleme
   root.render(frame(client, path, screen));
   const started = performance.now();
   let polls = 0;
-  let quiet = 0;
+  let quietSince: number | undefined;
   while (performance.now() - started < SETTLE_BUDGET_MS) {
     await new Promise((resolve) => setTimeout(resolve, POLL_MS));
     polls++;
     const settled = host.childElementCount > 0 && client.isFetching() === 0 && !loading(host);
-    quiet = settled ? quiet + 1 : 0;
-    if (quiet >= QUIET_POLLS) return () => root.unmount();
+    if (!settled) quietSince = undefined;
+    else quietSince ??= performance.now();
+    if (quietSince !== undefined && performance.now() - quietSince >= QUIET_MS)
+      return () => root.unmount();
   }
   const elapsed = Math.round(performance.now() - started);
   root.unmount();
