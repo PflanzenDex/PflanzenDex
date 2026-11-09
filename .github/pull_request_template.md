@@ -38,6 +38,9 @@ while it is missing, empty or malformed (US-DEV-05); this comment alone counts a
 
 ## AI involvement
 
-<!-- Did an agent write code or text? Which one, and what did a human verify? Were gates or thresholds changed? Then justify it here (US-QG-07). -->
+<!--
+Did an agent write code or text? Which one, and what did a human verify? Were gates or thresholds changed? Then justify it here (US-QG-07).
+Name the `/code-review` level run before `make pr` and the findings fixed and answered, for example "`/code-review low`: 3 findings, 2 fixed, 1 answered" (skill `add-epic-feature`, step 12).
+-->
 
 - [ ] No gate, threshold or exception list was loosened, or the justification is above
