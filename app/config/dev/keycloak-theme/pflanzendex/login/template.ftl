@@ -47,6 +47,7 @@
         <@themeResourceTags.renderFavicons themeResources.favicons url.resourcesPath />
     <#else>
         <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
+        <link rel="icon" type="image/svg+xml" href="${url.resourcesPath}/img/favicon.svg" />
     </#if>
     <#if themeResources?? && themeResources.stylesCommon?has_content>
         <@themeResourceTags.renderStyles themeResources.stylesCommon url.resourcesCommonPath />

@@ -152,6 +152,18 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(png.equals(publicFile("/favicon-32.png"))).toBe(true);
   });
 
+  it("US-QS-07 the login theme ships the app's SVG favicon and links it after the ICO, so a browser that reads SVG icons shows the same artwork", () => {
+    const loginTheme = here("../../../../../config/dev/keycloak-theme/pflanzendex/login/");
+    expect(
+      readFileSync(new URL("resources/img/favicon.svg", loginTheme)).equals(
+        publicFile("/favicon.svg"),
+      ),
+    ).toBe(true);
+    expect(readFileSync(new URL("template.ftl", loginTheme), "utf8")).toContain(
+      '<link rel="icon" type="image/svg+xml" href="${url.resourcesPath}/img/favicon.svg" />',
+    );
+  });
+
   it("US-QS-07 a motif loses every comment, also one that forms when an inner one goes", async () => {
     const generator = "./build-icons.mjs"; // a Node script without types, so not a static import
     const { innerOf } = (await import(/* @vite-ignore */ generator)) as {
