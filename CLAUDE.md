@@ -62,6 +62,8 @@ Every open story or enabler on the project board "PflanzenDex Roadmap" needs the
 | P2       | R2 and R3; tickets without a release (process, chores, epics)                      |
 | P3       | R4, R5, R6 and stage 2                                                             |
 
+Process budget until R1 (E-30, owner 2026-11-09): a new gate needs an incident, defect or review finding named in its issue; speed or determinism work on existing gates stays allowed.
+
 The status needs no manual care: the workflow `project-status.yml` sets it from the PRs (`Closes #n` in the PR body is the link; merged into `dev` = On dev, released = Done).
 
 ## Principles that shape every requirement
