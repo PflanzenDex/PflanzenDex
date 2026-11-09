@@ -38,16 +38,25 @@ function pngInfo(bytes: Buffer) {
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), colourType: bytes[25] };
 }
 
-/** The `<link>` tags of index.html as attribute maps. */
-function htmlLinks(html: string): Record<string, string>[] {
-  return [...html.matchAll(/<link\s([^>]*?)\/?>/g)].map(([, attributes = ""]) =>
+/** The tags of index.html (`LINK` or `META`) as attribute maps. */
+const LINK = /<link\s([^>]*?)\/?>/g;
+const META = /<meta\s([^>]*?)\/?>/g;
+function htmlTags(html: string, pattern: RegExp): Record<string, string>[] {
+  return [...html.matchAll(pattern)].map(([, attributes = ""]) =>
     Object.fromEntries([...attributes.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, k, v]) => [k, v])),
   );
 }
 
-const links = htmlLinks(readFileSync(here("../../../index.html"), "utf8"));
+const indexHtml = readFileSync(here("../../../index.html"), "utf8");
+const links = htmlTags(indexHtml, LINK);
 const linkWith = (rel: string, type?: string) =>
   links.find((link) => link.rel === rel && (type === undefined || link.type === type));
+
+/** The page background of each scheme in tokens.css: `--background` on `:root` (light) and in the dark media block. */
+const darkAt = tokens.search(/^@media \(prefers-color-scheme: dark\) \{/m);
+const BACKGROUND = /--background:\s*(#[0-9a-fA-F]{6});/;
+const PAGE_LIGHT = tokens.slice(0, darkAt).match(BACKGROUND)?.[1]?.toLowerCase();
+const PAGE_DARK = tokens.slice(darkAt).match(BACKGROUND)?.[1]?.toLowerCase();
 
 describe("US-QS-07 · installable web app and its icon", () => {
   it("US-QS-07 the manifest names the app PflanzenDéx, opens it standalone at the start page and speaks German", () => {
@@ -59,10 +68,24 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(manifest.lang).toBe("de");
   });
 
-  it("US-QS-07 theme and background colour are the brand green of the icon, taken from the tokens", () => {
+  it("US-QS-25 the manifest's theme colour is the light page background, not the brand green", () => {
+    expect(PAGE_LIGHT).toMatch(/^#[0-9a-f]{6}$/);
+    expect(manifest.theme_color).toBe(PAGE_LIGHT);
+    expect(manifest.theme_color).not.toBe(BRAND);
+  });
+
+  it("US-QS-25 the splash colour (background_color) stays the brand green of the icon", () => {
     expect(BRAND).toMatch(/^#[0-9a-f]{6}$/);
-    expect(manifest.theme_color).toBe(BRAND);
     expect(manifest.background_color).toBe(BRAND);
+  });
+
+  it("US-QS-25 index.html names the page background of each scheme in its theme-color meta, so the status bar follows the page", () => {
+    const metas = htmlTags(indexHtml, META).filter((meta) => meta.name === "theme-color");
+    const contentFor = (scheme: "light" | "dark") =>
+      metas.find((meta) => meta.media === `(prefers-color-scheme: ${scheme})`)?.content;
+    expect(metas).toHaveLength(2);
+    expect(contentFor("light")).toBe(PAGE_LIGHT);
+    expect(contentFor("dark")).toBe(PAGE_DARK);
   });
 
   it("US-QS-07 the manifest lists 192 and 512 px PNG icons for any, a maskable 512 px icon and a monochrome one", () => {
