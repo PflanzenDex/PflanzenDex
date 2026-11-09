@@ -1,5 +1,5 @@
 {
-  "maxTotal": 301,
+  "maxTotal": 300,
   "entries": [
     {
       "file": "packages/api/src/achievements/history/year.ts",
@@ -454,10 +454,6 @@
     {
       "file": "packages/web/src/app/flows/onboarding/today-intro/use-hints.ts",
       "enums": 2
-    },
-    {
-      "file": "packages/web/src/app/frame/app/app.tsx",
-      "enums": 1
     },
     {
       "file": "packages/web/src/app/sammlung-view.ts",
