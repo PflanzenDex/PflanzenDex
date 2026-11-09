@@ -4,6 +4,7 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
 import { zoneLabel } from "@pflanzendex/core";
+import { LightNeedAction } from "@/light";
 
 /** The bar of the thinnest zone takes the warning token; the words "am leersten" carry the meaning too (DS-38). */
 const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
@@ -31,6 +32,8 @@ export function DistributionView({ distribution }: { distribution: Distribution 
   const thin = new Set(distribution.thinnest.map((z) => z.id));
   const highest = Math.max(1, ...distribution.zones.map((z) => z.count));
   const rest = notCounted(distribution.notCounted);
+  // The next step is shown once, for the first species without lux need, at the end of the not-counted line (US-LIC-01, P-09).
+  const first = distribution.lightNeedUnknown[0];
   return (
     <section
       aria-labelledby="distribution-title"
@@ -66,7 +69,17 @@ export function DistributionView({ distribution }: { distribution: Distribution 
       <Quiet>
         Stecklingslicht zählt nicht; es zählt die Zone der Pflanze, des Standorts, der Art.
       </Quiet>
-      {rest && <Quiet>{rest}</Quiet>}
+      {(rest || first) && (
+        <Quiet>
+          {rest}
+          {first && (
+            <>
+              {" "}
+              <LightNeedAction speciesId={first.speciesId} speciesName={first.speciesName} inline />
+            </>
+          )}
+        </Quiet>
+      )}
     </section>
   );
 }

@@ -115,6 +115,32 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(screen.queryByText(/unbekannt/)).toBeNull();
   });
 
+  it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen instead of the profile link", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({
+            difficulty: 2,
+            zone: null,
+            zoneSource: null,
+            lightNeedUnknown: true,
+            wateringHint: null,
+            substrate: null,
+            pruning: null,
+          }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    expect(
+      within(layer)
+        .getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" })
+        .getAttribute("href"),
+    ).toBe("/discover/species/sp1?sheet=care");
+    expect(within(layer).queryByRole("link", { name: "Artprofil öffnen" })).toBeNull();
+  });
+
   it("US-BES-05 keeps the order delivered by the server", async () => {
     fakeServer(() =>
       response(200, {

@@ -10,8 +10,17 @@ const SP_MEDIUM = "22222222-2222-4222-8222-222222222222";
 const SP_HARD = "33333333-3333-4333-8333-333333333333";
 const SP_HARD_A = "44444444-4444-4444-8444-444444444444";
 const SP_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben
+const SP_NO_NEED = "55555555-5555-4555-8555-555555555555"; // no lux need, no default level (US-LIC-01)
 
 const species = new SpeciesStub([
+  {
+    species: testSpecies(SP_NO_NEED, {
+      latinName: "Ignotus need",
+      germanName: null,
+      lightDemandLux: null,
+      standardLevel: null,
+    }),
+  },
   {
     species: testSpecies(SP_EASY, {
       latinName: "Easy plant",
@@ -207,5 +216,31 @@ describe("US-BES-05 · US-BES-09 my care profile flows into the comparison (#306
     await profiles.update("ben", SP_EASY, { wateringGrowthDays: 3 });
     const [row] = (await difficultyOverview({ ...deps(), profiles }, "anna")).rows;
     expect(row).toMatchObject({ zoneSource: "species", ownWatering: null });
+  });
+});
+
+describe("US-LIC-01 comparison: the next step when the light need is unknown (P-08, P-09)", () => {
+  it("US-LIC-01: Given a species without lux need and no zone of my own, when the comparison is read, then the row names the next step", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2"]);
+    await plant("anna", SP_NO_NEED);
+    const [row] = await rows("anna");
+    expect(row).toMatchObject({ zone: null, zoneSource: null, lightNeedUnknown: true });
+  });
+
+  it("US-LIC-01: Given my own zone for such a species, when the comparison is read, then the row names no next step", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2"]);
+    await plant("anna", SP_NO_NEED);
+    const ids = (await light.zoneAdapter().list("anna")).map((z) => z.id);
+    const profiles = new InMemoryCareProfiles({ anna: { zones: ids } });
+    await profiles.update("anna", SP_NO_NEED, { lightZoneId: ids[1] ?? null });
+    const [row] = (await difficultyOverview({ ...deps(), profiles }, "anna")).rows;
+    expect(row).toMatchObject({ zoneSource: "profile", lightNeedUnknown: false });
+  });
+
+  it("US-LIC-01: Given a species with a lux need, when the comparison is read, then its zone is named and no next step is", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2"]);
+    await plant("anna", SP_EASY);
+    const [row] = await rows("anna");
+    expect(row).toMatchObject({ zoneSource: "species", lightNeedUnknown: false });
   });
 });

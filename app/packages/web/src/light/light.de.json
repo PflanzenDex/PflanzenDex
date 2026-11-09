@@ -35,10 +35,11 @@
   "overview.none.description": "Lege eine Pflanze an, dann erscheint ihre Art hier.",
   "overview.none.action": "Zur Sammlung",
   "overview.intro": "Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe. Arten mit unbekanntem Lux-Bedarf stehen am Ende.",
-  "overview.unknownNext": "Bei unbekanntem Lux-Bedarf: Lichtbedarf eintragen, also die Lichtzone im Pflegeprofil der Art festlegen.",
   "overview.list": "Lichthunger der Arten",
   "overview.facts": "{zone} · Lux-Bedarf {lux}",
   "overview.unknown": "unbekannt",
+  "need.action": "Lichtbedarf eintragen",
+  "need.labelFor": "Lichtbedarf eintragen für „{name}“",
   "overview.zoneUnknown": "Lichtzone unbekannt",
   "form.cancel": "Abbrechen"
 }

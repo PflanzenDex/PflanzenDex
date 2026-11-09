@@ -1,7 +1,7 @@
 // The care profile view (US-BES-09): per species with an active specimen, or with a deviation, the catalog value and
 // my deviation side by side. Derived on every request, never stored (P-01).
 import type { Species } from "../../catalog";
-import { zoneDerive, type LightZone, type ZoneStore } from "../../light";
+import { lightNeedUnknown, zoneDerive, type LightZone, type ZoneStore } from "../../light";
 import type { CareProfile, CareProfileReader } from "../care-profile/care-profile-types";
 import { effectiveProfile, type EffectiveProfile } from "../care-profile/effective-profile";
 import { speciesDisplayName } from "../shared/name";
@@ -19,6 +19,8 @@ export interface CareProfileEntry {
   /** The catalog's watering hint as text, shown next to the interval; `null` = unknown (P-08). */
   readonly wateringHint: string | null;
   readonly profile: EffectiveProfile;
+  /** No zone of my own and the lux need or default level is unknown: the card names "Lichtbedarf eintragen" (US-LIC-01). */
+  readonly lightNeedUnknown: boolean;
   /** At least one field deviates from the catalog. */
   readonly deviates: boolean;
   /**
@@ -45,6 +47,23 @@ export interface CareProfileViewDependencies {
   readonly zones: Pick<ZoneStore, "list">;
   /** Without it a profile of an invisible species is skipped; with it one of a merged proposal is shown. */
   readonly merged?: MergedSpeciesSource;
+}
+
+/** The profile as the card shows it, and whether the zone needs the next step (US-LIC-01, P-08, P-09). */
+function profileOf(
+  species: Species,
+  profile: CareProfile | null,
+  zones: readonly LightZone[],
+): Pick<CareProfileEntry, "profile" | "lightNeedUnknown"> {
+  const effective = effectiveProfile({
+    species,
+    profile,
+    catalogZoneId: catalogZone(species, zones),
+  });
+  return {
+    profile: effective,
+    lightNeedUnknown: effective.lightZone.own === null && lightNeedUnknown(species),
+  };
 }
 
 /** The zone the catalog implies (FR-BES-10); "soft leaf" is not in the catalog, it is never assumed. */
@@ -83,7 +102,7 @@ async function mergedEntry(
       speciesName: name,
       activeSpecimens: 0,
       wateringHint: null,
-      profile: effectiveProfile({ species, profile, catalogZoneId: catalogZone(species, zones) }),
+      ...profileOf(species, profile, zones),
       deviates: deviation(profile),
       mergedInto: { speciesId: target.id, speciesName: name },
       notice: { code: "proposal_merged" },
@@ -116,11 +135,7 @@ export async function careProfileView(
             speciesName: speciesDisplayName(species),
             activeSpecimens: active.filter((z) => z.speciesId === id).length,
             wateringHint: species.wateringHint,
-            profile: effectiveProfile({
-              species,
-              profile,
-              catalogZoneId: catalogZone(species, zones),
-            }),
+            ...profileOf(species, profile, zones),
             deviates: deviation(profile ?? undefined),
             mergedInto: null,
             notice: null,

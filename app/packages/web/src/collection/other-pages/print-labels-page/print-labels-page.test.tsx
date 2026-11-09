@@ -31,6 +31,7 @@ const card = (over: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Fensterbank",
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: null,
   provenance: null,
   photo: null,

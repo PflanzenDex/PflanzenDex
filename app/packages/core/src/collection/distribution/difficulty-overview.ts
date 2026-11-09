@@ -1,6 +1,6 @@
 // Species compared by difficulty (US-BES-05): one row per species with at least one active specimen, easiest first.
 // Pure derivation, never stored (P-01). A value the catalog does not know stays `null` ("unbekannt", P-08).
-import { zoneDerive, type LightZone } from "../../light";
+import { lightNeedUnknown, zoneDerive, type LightZone } from "../../light";
 import { speciesDisplayName } from "../shared/name";
 import { isActive, type SpeciesSource, type SpecimenRow } from "../shared/types";
 import type { CareProfile, CareProfileReader } from "../care-profile/care-profile-types";
@@ -13,6 +13,8 @@ export interface DifficultyRow {
   readonly zone: LightZone | null;
   /** Where the zone comes from (US-BES-09); `null` when the zone is unknown. */
   readonly zoneSource: "profile" | "species" | null;
+  /** No zone of my own and the lux need or default level is unknown: the next step is "Lichtbedarf eintragen" (US-LIC-01). */
+  readonly lightNeedUnknown: boolean;
   readonly wateringHint: string | null;
   /** My watering intervals in days from the care profile (US-BES-09); `null` without any. */
   readonly ownWatering: {
@@ -73,7 +75,7 @@ export async function difficultyOverview(
       unreadable += 1;
       continue;
     }
-    // The catalog has no field for soft-leaved C3 plants yet (US-LIC-01), so it is never assumed.
+    // The soft-leaf flag comes from the catalog; unknown (`null`) does not apply the rule, it is never assumed (US-LIC-01).
     const derived = zoneDerive(
       {
         lightDemandLux: species.lightDemandLux,
@@ -91,6 +93,7 @@ export async function difficultyOverview(
       botanicalName: species.latinName,
       zone,
       zoneSource: own ? "profile" : zone ? "species" : null,
+      lightNeedUnknown: zone === null && lightNeedUnknown(species),
       wateringHint: species.wateringHint,
       ownWatering: ownWatering(profile),
       substrate: species.substrate,

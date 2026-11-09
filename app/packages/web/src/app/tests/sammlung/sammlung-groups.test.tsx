@@ -24,6 +24,7 @@ const card = (id: string, location: string | null, lightZone: string | null): Sp
   location,
   lightZone,
   lightZoneSource: lightZone === null ? null : ("location" as const),
+  lightNeedUnknown: false,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,

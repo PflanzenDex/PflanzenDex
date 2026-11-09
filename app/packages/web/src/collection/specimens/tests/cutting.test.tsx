@@ -30,6 +30,7 @@ const card = (id: string, name: string, status: SpecimenCard["status"]): Specime
   location: null,
   lightZone: status === "cutting" ? "Lampe 1" : null,
   lightZoneSource: status === "cutting" ? "cutting" : null,
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -60,6 +61,7 @@ function fakeServer(opts: { repotError?: Response } = {}) {
             status: "plant",
             lightZone: null,
             lightZoneSource: null,
+            lightNeedUnknown: false,
           };
       }
       return response(201, { id: "new", name: "Bogenhanf", locationId: null, status: "cutting" });

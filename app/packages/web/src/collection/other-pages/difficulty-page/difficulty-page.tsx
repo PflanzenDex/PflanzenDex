@@ -16,6 +16,7 @@ import {
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/shared/ui/button/button";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
@@ -105,15 +106,22 @@ function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] 
   );
 }
 
-/** All values of one species; the unknown ones fold into one line with the next step (US-QS-24). */
+/**
+ * All values of one species; the unknown ones fold into one line with the next step (US-QS-24). An unknown light need
+ * names "Lichtbedarf eintragen" instead of the profile (US-LIC-01, P-09).
+ */
 function Values({ row }: { row: DifficultyRow }) {
   return (
     <FactGrid
       facts={factsOf(row)}
       next={
-        <Button asChild variant="outline" size="sm">
-          <Link to={profileAddress(row.speciesId)}>Artprofil öffnen</Link>
-        </Button>
+        row.lightNeedUnknown ? (
+          <LightNeedAction speciesId={row.speciesId} speciesName={row.speciesName} />
+        ) : (
+          <Button asChild variant="outline" size="sm">
+            <Link to={profileAddress(row.speciesId)}>Artprofil öffnen</Link>
+          </Button>
+        )
       }
     />
   );

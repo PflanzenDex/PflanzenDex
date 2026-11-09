@@ -31,6 +31,7 @@ const card = (
   location: null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,

@@ -42,6 +42,7 @@ const cardFrom = (e: Specimen): SpecimenCard => ({
   location: e.locationId === "s1" ? "Regal Süd" : null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: e.caughtAt,
   photo: null,
   lastMeasurement: null,
@@ -245,6 +246,7 @@ describe("US-BES-06 cards on the collection page", () => {
       ...cardFrom(specimen({ locationId: "s1" })),
       lightZone: "Zone 3",
       lightZoneSource: "location",
+      lightNeedUnknown: false,
       photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" },
       lastMeasurement: {
         date: "2026-10-01",

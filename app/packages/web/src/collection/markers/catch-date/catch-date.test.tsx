@@ -166,6 +166,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
