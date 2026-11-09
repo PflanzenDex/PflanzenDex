@@ -1,10 +1,29 @@
 // `make retro` (US-DEV-11): the issue flow retro. Prints the report; with --write it rewrites the body of the pinned
 // report issue (creates, locks and pins it when missing). Run by .github/workflows/retro.yml with GH_TOKEN.
-// Usage: node retro.mjs [--write]
+// The process share (E-30) comes with every run. The implementer rework is computed only by the scheduled and manual runs
+// (RETRO_EVENT is `schedule` or `workflow_dispatch`, or the flag --rework); other runs keep it from the report body.
+// Usage: node retro.mjs [--write] [--rework]
 import { fileURLToPath } from "node:url";
 import { json, realClient } from "../../claim/lib/claim-client.mjs";
-import { dayOf, REPORT_LABEL, REPORT_TITLE } from "./retro-lib.mjs";
+import {
+  dayOf,
+  inFullDays,
+  kindOf,
+  LONG_DAYS,
+  REPORT_LABEL,
+  REPORT_TITLE,
+  reworkByKind,
+  reworkOf,
+  reworkRequested,
+  windowStart,
+} from "./retro-lib.mjs";
 import { renderReport } from "./retro-render.mjs";
+import { keptRework, reworkSection, TRAILER_SINCE } from "./retro-sections.mjs";
+
+const PAGE = 100;
+// Parallel commit and file reads of the rework (starting value, assumption): a nightly run of about 500 reads stays well
+// inside the five-minute job limit and under the REST secondary limits.
+const REWORK_CONCURRENCY = 6;
 
 /** Every issue and pull request of the repository, one JSON object per line (the REST list returns both). */
 export async function fetchIssues(client) {
@@ -19,6 +38,66 @@ export async function fetchIssues(client) {
     .split("\n")
     .filter(Boolean)
     .map((line) => JSON.parse(line));
+}
+
+/**
+ * Merged pull requests into dev, from one REST list read page by page, most recently updated first. Reading stops at the
+ * first page whose last pull request was updated before the long window: a merged pull request is never updated before
+ * its merge, so nothing older can be inside the window.
+ */
+export async function fetchMergedPulls(client, today) {
+  const since = windowStart(today, LONG_DAYS);
+  const merged = [];
+  for (let page = 1; ; page += 1) {
+    const batch = await json(client, [
+      "api",
+      `repos/{owner}/{repo}/pulls?state=closed&base=dev&sort=updated&direction=desc&per_page=${PAGE}&page=${page}`,
+    ]);
+    merged.push(...batch.filter((p) => p.merged_at));
+    if (batch.length < PAGE || dayOf(batch.at(-1).updated_at) < since) return merged;
+  }
+}
+
+/** `fn` over `items` with at most `limit` calls in flight; the results keep the order of `items`. */
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next;
+      next += 1;
+      out[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+/**
+ * Implementer rework of the merged pull requests of the long window (US-DEV-11): one commit list per pull request, and the
+ * changed files only for those with an implementer commit. Lists are read up to 100 items (commits and files).
+ */
+// A PR merged before the trailer existed has no attributed commit, so its commits are not read (one call per PR saved).
+export async function fetchRework(client, pulls, today) {
+  const recent = pulls.filter(
+    (p) => inFullDays(dayOf(p.merged_at), today, LONG_DAYS) && dayOf(p.merged_at) >= TRAILER_SINCE,
+  );
+  const counted = await mapLimit(recent, REWORK_CONCURRENCY, async (p) => {
+    const commits = await json(client, [
+      "api",
+      `repos/{owner}/{repo}/pulls/${p.number}/commits?per_page=${PAGE}`,
+    ]);
+    const rework = reworkOf(
+      commits.map((c) => ({ message: c.commit.message, parents: c.parents.length })),
+    );
+    if (!rework) return null;
+    const files = await json(client, [
+      "api",
+      `repos/{owner}/{repo}/pulls/${p.number}/files?per_page=${PAGE}`,
+    ]);
+    return { kind: kindOf(files.map((f) => f.filename)), rework: rework.rework };
+  });
+  return reworkByKind(counted.filter(Boolean));
 }
 
 async function findReport(client) {
@@ -67,13 +146,23 @@ async function createReport(client, body, out) {
   out.log(`Created report issue #${number}`);
 }
 
-export async function main(argv, client = realClient(), out = console, today = dayOf(Date.now())) {
-  const body = renderReport(await fetchIssues(client), today);
+export async function main(
+  argv,
+  client = realClient(),
+  out = console,
+  { today = dayOf(Date.now()), env = process.env } = {},
+) {
+  const issues = await fetchIssues(client);
+  const pulls = await fetchMergedPulls(client, today);
+  const report = await findReport(client);
+  const rework = reworkRequested(argv, env)
+    ? reworkSection(await fetchRework(client, pulls, today))
+    : keptRework(report?.body);
+  const body = renderReport(issues, today, { pulls, rework });
   if (!argv.includes("--write")) {
     out.log(body);
     return 0;
   }
-  const report = await findReport(client);
   if (!report) await createReport(client, body, out);
   else if (report.body.trim() === body.trim()) out.log(`Report issue #${report.number} unchanged`);
   else {
