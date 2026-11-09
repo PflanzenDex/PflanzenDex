@@ -4,6 +4,11 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
 import { zoneLabel } from "@pflanzendex/core";
+import { LightNeedAction } from "@/light";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./distribution-view.de.json";
+
+const t = texts(table);
 
 /** The bar of the thinnest zone takes the warning token; the words "am leersten" carry the meaning too (DS-38). */
 const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
@@ -67,6 +72,22 @@ export function DistributionView({ distribution }: { distribution: Distribution 
         Stecklingslicht zählt nicht; es zählt die Zone der Pflanze, des Standorts, der Art.
       </Quiet>
       {rest && <Quiet>{rest}</Quiet>}
+      {distribution.lightNeedUnknown.length > 0 && (
+        <div className="grid gap-2">
+          <Quiet>{t("need.text")}</Quiet>
+          <ul aria-label={t("need.list")} className="m-0 grid list-none gap-2 p-0">
+            {distribution.lightNeedUnknown.map((gap) => (
+              <li
+                key={gap.speciesId}
+                className="flex min-w-0 flex-wrap items-center justify-between gap-2"
+              >
+                <span className="min-w-0 break-words">{gap.speciesName}</span>
+                <LightNeedAction speciesId={gap.speciesId} speciesName={gap.speciesName} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

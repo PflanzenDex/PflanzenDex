@@ -39,12 +39,12 @@ function LightFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="softLeaf"
         label="Weichblättrige C3-Pflanze (sonnenliebend)"
-        emptyLabel="Nein (Standard)"
+        emptyLabel="Unbekannt"
         options={[
           ["no", "Nein"],
           ["yes", "Ja"],
         ]}
-        help="Bei „Ja“ steigt die Art nie automatisch in die stärkere Zone auf; leer gilt „Nein“."
+        help="Bei „Ja“ steigt die Art nie automatisch in die stärkere Zone auf; leer bleibt der Wert unbekannt."
       />
     </>
   );

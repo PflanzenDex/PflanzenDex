@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +20,7 @@ const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
   lightDemandLux: 15000,
   position: { category: "very_close", description: "sehr nah (~10 cm)" },
   zone: zone2,
+  lightNeedUnknown: false,
   ...extra,
 });
 const noop = () => undefined;
@@ -53,16 +54,26 @@ describe("US-LIC-03: light overview view", () => {
     expect(item.textContent).toContain("sehr nah (~10 cm)");
   });
 
-  it('US-LIC-01 P-08: an unknown lux need shows "unbekannt" and the next step once, never 0 or a position (#1003, issue 1155)', () => {
+  it('US-LIC-01 P-08 P-09: an unknown lux need shows "unbekannt" and the next step on its own row, never 0 or a position (#1003, issue 1155)', () => {
     show([
-      row({ lightDemandLux: null, position: null, zone: null }),
-      row({ speciesId: "sp2", speciesName: "Pilea", lightDemandLux: null, position: null }),
+      row({ lightDemandLux: null, position: null, zone: null, lightNeedUnknown: true }),
+      row({
+        speciesId: "sp2",
+        speciesName: "Pilea",
+        lightDemandLux: null,
+        position: null,
+        zone: null,
+        lightNeedUnknown: false,
+      }),
     ]);
     const items = screen.getAllByRole("listitem");
     expect(items[0]?.textContent).toContain("Lichtzone unbekannt · Lux-Bedarf unbekannt");
     expect(items[0]?.textContent).not.toMatch(/\b0\b/);
-    expect(screen.getAllByText(/Lichtbedarf eintragen/)).toHaveLength(1);
-    for (const item of items) expect(item.textContent).not.toContain("Lichtbedarf eintragen");
+    const link = within(items[0] as HTMLElement).getByRole("link", {
+      name: "Lichtbedarf eintragen für „Monstera deliciosa“",
+    });
+    expect(link.getAttribute("href")).toBe("/discover/species/sp1?sheet=care");
+    expect(items[1]?.textContent).not.toContain("Lichtbedarf eintragen");
   });
 
   it("formats five-digit demands with the German thousands separator", () => {

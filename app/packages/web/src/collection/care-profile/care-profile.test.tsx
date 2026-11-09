@@ -35,6 +35,7 @@ const entry = (
   activeSpecimens: 2,
   wateringHint: "Alle zwei Wochen gießen",
   deviates,
+  lightNeedUnknown: false,
   mergedInto: null,
   notice: null,
   profile: {
@@ -129,6 +130,18 @@ describe("US-BES-09 client of the care profile API", () => {
 });
 
 describe("US-BES-09 the care profile page shows the catalog value and my deviation side by side", () => {
+  it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen, which moves the focus to the zone choice", async () => {
+    fakeServer({ entries: [{ ...entry({ lightZone: none() }), lightNeedUnknown: true }] });
+    open();
+    await screen.findByRole("heading", { name: "Bogenhanf" });
+    // The zone choice is on the second page of the card (US-BES-09).
+    await next();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lichtbedarf eintragen für „Bogenhanf“" }),
+    );
+    expect(document.activeElement).toBe(screen.getByLabelText("Lichtzone für „Bogenhanf“"));
+  });
+
   it("US-BES-09 shows per species the catalog values and what I can deviate in, and says it is private", async () => {
     fakeServer({ entries: [entry()] });
     open();

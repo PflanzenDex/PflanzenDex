@@ -4,6 +4,8 @@ export const LightPage = lazyPage(() =>
   import("./light-page/light-page").then((m) => ({ default: m.LightPage })),
 );
 export { loadZones } from "./shared/light-api/light-api";
+// The next step of an unknown light need, shared by every view that derives a zone (US-LIC-01, P-09).
+export { LightNeedAction } from "./shared/ui/light-need-action/light-need-action";
 export {
   ZONES_KEY,
   refreshLight,

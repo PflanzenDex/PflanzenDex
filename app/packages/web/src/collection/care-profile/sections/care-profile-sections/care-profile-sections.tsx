@@ -1,4 +1,3 @@
-import { zoneLabel } from "@pflanzendex/core";
 import type { Control } from "react-hook-form";
 import type {
   CareProfileChanges,
@@ -16,6 +15,7 @@ import {
   dayText,
 } from "../care-profile-fields/care-profile-fields";
 import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
+import { ZoneField } from "./zone-field";
 
 export const NAME = {
   growth: "Soll-Standort Wachstumsphase",
@@ -108,8 +108,6 @@ export function Places(props: Shared & { lists: Lists; fields?: readonly PlaceFi
   const shown = (field: PlaceField) => !props.fields || props.fields.includes(field);
   const name = entry.speciesName;
   const p = entry.profile;
-  const zoneRaw = lists.zones.find((z) => z.id === p.lightZone.catalog)?.name;
-  const zone = zoneRaw === undefined ? "unbekannt" : zoneLabel(zoneRaw);
   return (
     <>
       {lists.locations.length > 0 &&
@@ -139,21 +137,14 @@ export function Places(props: Shared & { lists: Lists; fields?: readonly PlaceFi
             </Row>
           ))}
       {shown("zone") && (
-        <Row
-          label={NAME.zone}
-          species={name}
-          catalog={zone}
-          hasOwn={p.lightZone.own !== null}
+        <ZoneField
+          entry={entry}
+          control={control}
           busy={busy}
-          onReset={() => props.reset({ lightZoneId: null }, NAME.zone)}
-        >
-          <Choice
-            control={control}
-            name="lightZoneId"
-            label={`${NAME.zone} für „${name}“`}
-            items={lists.zones}
-          />
-        </Row>
+          reset={props.reset}
+          zones={lists.zones}
+          label={NAME.zone}
+        />
       )}
     </>
   );

@@ -18,6 +18,7 @@ const zone = (n: number): LightZone => ({
   sortOrder: n,
 });
 const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
+  lightNeedUnknown: [],
   zones: [
     { zone: zone(2), count: 3 },
     { zone: zone(3), count: 1 },
@@ -35,6 +36,28 @@ const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("US-LIC-01 the distribution names the species without lux need (P-08, P-09)", () => {
+  it("names each species whose lux need is unknown, with the next step to its care profile", () => {
+    render(
+      <MemoryRouter>
+        <DistributionView
+          distribution={distribution({
+            lightNeedUnknown: [{ speciesId: "s9", speciesName: "Bogenhanf" }],
+            notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 1 },
+          })}
+        />
+      </MemoryRouter>,
+    );
+    const list = screen.getByRole("list", { name: "Arten ohne Lichtbedarf" });
+    expect(list.textContent).toContain("Bogenhanf");
+    expect(
+      within(list)
+        .getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" })
+        .getAttribute("href"),
+    ).toBe("/discover/species/s9?sheet=care");
+  });
 });
 
 describe("US-QS-14 the distribution inside the page card", () => {
