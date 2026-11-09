@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { composeStories } from "@storybook/react-vite";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { prepareStories } from "../../harness/story-test-helpers";
 import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
@@ -43,5 +44,13 @@ describe("US-QS-14 · page story Sammlung", () => {
     await PlantsEmpty.run();
     expect(await screen.findByRole("button", { name: "Pflanzen" })).toBeTruthy();
     expect(screen.queryByText("Aloe")).toBeNull();
+  });
+
+  it("US-QS-26 · a tile of the plants opens its plant as a layer with the plant's data, the way the install sheet's screenshot opens it", async () => {
+    await PlantsPhone.run();
+    await userEvent.click(await screen.findByRole("button", { name: /^Aloe\b/ }));
+    expect(await screen.findByRole("dialog", { name: "Aloe" })).toBeTruthy();
+    expect(await screen.findByText(/Letzte Messung: 24 cm/)).toBeTruthy();
+    expect(screen.queryByText(/Nicht vorhanden/)).toBeNull();
   });
 });
