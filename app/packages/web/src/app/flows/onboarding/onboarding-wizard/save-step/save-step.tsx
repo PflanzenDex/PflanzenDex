@@ -98,12 +98,16 @@ export function SaveStep(props: {
   marker?: Omit<MarkerSectionProps, "speciesId" | "speciesName">;
   /** More fields of the step, e.g. the suggested place of a further plant. */
   children?: ReactNode;
+  /** "Schritt n von m": said once, by the focused heading (US-ACC-03, issue 1612). */
+  stepLabel?: string;
 }) {
   const { species, zones } = props;
   const derived = zones ? derivedZone(species, zones) : null;
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
+        {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
+        {props.stepLabel && " "}
         {ui("title")}
       </h2>
       <p className="m-0">

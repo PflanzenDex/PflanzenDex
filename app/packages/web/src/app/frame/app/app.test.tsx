@@ -339,7 +339,9 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: "Schritt 1 von 2: Deine erste Pflanze" }),
+    ).toBeTruthy();
     expectHeute();
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
     expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();

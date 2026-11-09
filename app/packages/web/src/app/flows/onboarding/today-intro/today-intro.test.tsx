@@ -20,6 +20,13 @@ const ZONES = [
 const HIT = { id: "sp1", latinName: "Monstera deliciosa", germanName: "Fensterblatt" };
 const SPECIES = { ...HIT, lightDemandLux: 12000, standardLevel: 2, softLeaf: false };
 
+/** The live regions of the page (polite, assertive, status or alert) whose text contains the word (issue 1612). */
+function liveRegionsSaying(word: string) {
+  return Array.from(
+    document.querySelectorAll("[aria-live], [role='status'], [role='alert']"),
+  ).filter((el) => el.textContent?.includes(word));
+}
+
 interface World {
   zones: unknown[];
   cards: unknown[];
@@ -170,7 +177,9 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
   it("US-QS-18 · US-ONB-01 the introduction still shows on Heute: a new account starts with the first plant; no location and no light zone is asked or loaded", async () => {
     fakeServer(world());
     view();
-    expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: "Schritt 1 von 2: Deine erste Pflanze" }),
+    ).toBeTruthy();
     expect(screen.getByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
     expect(screen.queryByText(/Standort|Lichtzone/)).toBeNull();
     expect(paths()).not.toContain("/locations");
@@ -180,7 +189,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
   it("US-ONB-01 · NFR-13 the hits are announced politely and the disabled Weiter says why", async () => {
     fakeServer(world());
     view();
-    await screen.findByRole("heading", { name: "Deine erste Pflanze" });
+    await screen.findByRole("heading", { name: "Schritt 1 von 2: Deine erste Pflanze" });
     expect(screen.getByRole("button", { name: "Weiter" }).getAttribute("aria-describedby")).toBe(
       "first-plant-next-hint",
     );
@@ -269,15 +278,17 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     expect(open).toHaveBeenCalledWith("species");
   });
 
-  it("US-ONB-01 every step is announced as Schritt n von m, focus moves to the new heading, one h1", async () => {
+  it("US-ONB-01 · US-ACC-03 every step is named once: the focused heading says Schritt n von m, no live region repeats it, one h1", async () => {
     fakeServer(world());
     view();
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    const heading = await screen.findByRole("heading", { name: "Pflanze speichern" });
+    const heading = await screen.findByRole("heading", {
+      name: "Schritt 2 von 2: Pflanze speichern",
+    });
     expect(document.activeElement).toBe(heading);
+    expect(liveRegionsSaying("Schritt")).toEqual([]);
     const marker = screen.getByText("Schritt 2 von 2: Pflanze speichern");
-    expect(marker.getAttribute("role")).toBe("status");
     expect(marker.className).toMatch(/rounded-full.*border/);
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Heute",

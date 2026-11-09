@@ -5,6 +5,7 @@
   "back": "Zurück",
   "more": "Mehr Angaben",
   "step": "Schritt {n} von {total}: {title}",
+  "stepOf": "Schritt {n} von {total}",
   "chooseTitle": "Welche Pflanze?",
   "title": "Pflanze anlegen",
   "backLabel": "Zurück zur Sammlung"

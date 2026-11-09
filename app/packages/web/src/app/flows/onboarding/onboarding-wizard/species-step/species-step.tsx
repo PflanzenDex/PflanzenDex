@@ -94,6 +94,8 @@ export function SpeciesStep(props: {
   onPick: (species: Species) => void;
   onCatalog: () => void;
   title?: string;
+  /** "Schritt n von m": said once, by the focused heading (US-ACC-03, issue 1612). */
+  stepLabel?: string;
 }) {
   const { api, token, text, species } = props;
   const { hits, failed } = useHits(props.lookup, api, token, text);
@@ -110,6 +112,8 @@ export function SpeciesStep(props: {
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
+        {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
+        {props.stepLabel && " "}
         {props.title ?? "Deine erste Pflanze"}
       </h2>
       <Label htmlFor="first-plant-search">Name der Pflanze</Label>
