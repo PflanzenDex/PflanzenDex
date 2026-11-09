@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { checkBranch, run } from "./claim-check.mjs";
-import { lessonsProblems } from "../../check/docs/agents/pr-lessons.mjs";
+import { lessonsProblems } from "../../check/docs/agents/pr/pr-lessons.mjs";
 import { handoffBody } from "./lib/writes/claim-steps.mjs";
 
 // Fake gh: the repository name, the user and the open issues (REST shape, FR-DEV-10 #1412) are answered by route.

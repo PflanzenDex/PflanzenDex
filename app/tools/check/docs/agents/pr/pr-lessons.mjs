@@ -3,7 +3,7 @@
 //   - <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)
 // `make pr` runs this check before anything is pushed (tools/repo/pr-ready.sh). The section is written with the skill
 // recap-and-learnings. HTML comments (the placeholder of a fresh draft) count as nothing.
-//   PR_BODY="<body>" node app/tools/check/docs/agents/pr-lessons.mjs   exit 1 with the problems, exit 0 when the section passes
+//   PR_BODY="<body>" node app/tools/check/docs/agents/pr/pr-lessons.mjs   exit 1 with the problems, exit 0 when the section passes
 import { pathToFileURL } from "node:url";
 
 const LESSON_FORMAT = "- <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)";
