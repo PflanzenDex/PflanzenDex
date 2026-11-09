@@ -94,7 +94,7 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     await screen.findByRole("heading", { name: /Wunschliste/ });
   });
 
-  it("US-QS-07 · DS-08 a route whose chunk arrives within the delay shows no loading status (issue 1726)", async () => {
+  it("US-QS-14 · DS-08 a route whose chunk arrives within the delay shows no loading status (issue 1726)", async () => {
     renderAt("/collection?view=wishlist");
     expect(screen.queryByRole("status")).toBeNull();
     await screen.findByRole("heading", { name: /Wunschliste/ });
