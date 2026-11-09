@@ -12,14 +12,9 @@ import { ImportPage, PotLabelPage, PrintLabelsPage } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
 import { anniversaryTile } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
-import {
-  FunctionOverview,
-  TodayIntro,
-  UnlockPage,
-  isShownLocked,
-  lockMark,
-  useUnlocks,
-} from "./flows";
+import { FunctionOverview, TodayIntro, UnlockPage } from "./flows";
+// The lock states come from the unlock module itself: the flows barrel does not re-export them, so the entry skips them (NFR-12).
+import { isShownLocked, lockMark, useUnlocks } from "./flows/unlock";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { routeFallbackOf } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
 import { useSuggestionsOn } from "./destinations/discover-area/discover-view";
