@@ -8,6 +8,7 @@ import { deliverBuffered } from "@/shared/platform/announcer/outbox";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -51,10 +52,11 @@ afterEach(async () => {
 });
 
 describe("US-BEH-01 Seite Behandlung planen", () => {
-  it("US-BEH-01 · DS-52 while loading, skeletons mirror the page and one status says what loads", () => {
+  it("US-BEH-01 · DS-52 while loading, skeletons mirror the page and one status says what loads", async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
+    delayLoads();
     const { container } = show();
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
       1,
     );
@@ -90,8 +92,9 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
 
   it("US-BEH-01 lists all active specimens, also cuttings, and says what to do without any (P-09, FR-BEH-04)", async () => {
     fakeServer([specimen("e1", "Bogenhanf"), specimen("e2", "Aloe", "cutting")]);
+    delayLoads();
     show();
-    expect(screen.getByRole("status").textContent).toContain("werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect(await screen.findByRole("checkbox", { name: "Bogenhanf" })).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "Aloe" })).toBeTruthy();
     cleanup();

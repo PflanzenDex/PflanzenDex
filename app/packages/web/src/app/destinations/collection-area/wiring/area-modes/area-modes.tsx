@@ -13,6 +13,7 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { plantSlots } from "../plant-slots/plant-slots";
 import type { PlantGroup } from "../../../../sammlung-view";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -112,9 +113,11 @@ export function ModeBody(p: ModeProps) {
     );
   if (p.measureOpen)
     return (
-      <p role="status" className="text-sm text-muted-foreground">
-        {formText("loading")}
-      </p>
+      <DelayedSkeleton>
+        <p role="status" className="text-sm text-muted-foreground">
+          {formText("loading")}
+        </p>
+      </DelayedSkeleton>
     );
   if (p.group === GROUP.phase && !p.newSpecies)
     return <CarePhasesPage api={api} token={token} host={host} />;

@@ -7,6 +7,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ReviewPage } from "./review-page";
 import { ageText, flagsOf, issueText, movedText, summaryText } from "../review-text";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const NOW = Date.parse("2026-10-10T12:00:00Z");
 const token = async () => "tok";
@@ -184,8 +185,9 @@ describe("US-BES-10 review list shows the open cases", () => {
 
   it("US-BES-10 · DS-48 the loading state is one skeleton status", async () => {
     server(list([entry()]));
+    delayLoads();
     show();
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     await screen.findByRole("button", { name: /Echeveria elegans/ });
   });
 

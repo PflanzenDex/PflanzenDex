@@ -6,6 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { FeaturesProvider, type FeatureStates } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AccountArea } from "./account-area";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -239,11 +240,12 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await vi.waitFor(() => expect(document.activeElement?.textContent).toContain("Profil"));
   });
 
-  it("US-QS-17 · P-09 the section Einstellungen shows a skeleton with one status while loading", () => {
+  it("US-QS-17 · P-09 the section Einstellungen shows a skeleton with one status while loading", async () => {
     fakeServer();
+    delayLoads();
     show("/account/settings");
     const section = screen.getByRole("region", { name: "Einstellungen" });
-    expect(within(section).getByRole("status").textContent).toContain(
+    expect((await within(section).findByRole("status")).textContent).toContain(
       "Einstellungen werden geladen",
     );
   });

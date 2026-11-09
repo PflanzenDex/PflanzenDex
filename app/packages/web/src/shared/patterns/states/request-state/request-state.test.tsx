@@ -1,11 +1,19 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { RequestState } from "./request-state";
 
 afterEach(cleanup);
 
 const props = { onRetry: () => undefined, skeleton: <p role="status">Lädt</p> };
+/** A shaped skeleton of a list: one status with its loading text, decorative blocks (DS-52, DS-56). */
+const shaped = (
+  <SkeletonGroup label="Liste wird geladen …">
+    <Skeleton className="h-8 w-full" />
+  </SkeletonGroup>
+);
 
 describe("US-QS-09 · RequestState page heading (1.3.1, 2.4.6)", () => {
   it("US-QS-09 a failed page keeps its main heading above the error and the retry", () => {
@@ -24,9 +32,68 @@ describe("US-QS-09 · RequestState page heading (1.3.1, 2.4.6)", () => {
 });
 
 describe("US-QS-07 · RequestState loading without a skeleton (DS-56)", () => {
-  it("US-QS-07 pending without a skeleton shows the PlantLoader as the one loading status", () => {
+  it("US-QS-07 pending without a skeleton shows the PlantLoader as the one loading status", async () => {
     render(<RequestState onRetry={() => undefined} status="pending" />);
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toBe("Lädt…");
+  });
+});
+
+describe("US-QS-14 · RequestState waits the delay before its skeleton (DS-57, issue 1726)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("US-QS-14 a load that finishes within the delay shows no skeleton and no status (issue 1726)", () => {
+    const { rerender, container } = render(
+      <RequestState {...props} status="pending" skeleton={shaped} />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS - 1);
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+    rerender(
+      <RequestState {...props} status="ready">
+        <p>Inhalt</p>
+      </RequestState>,
+    );
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS * 2);
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(container.querySelector(".animate-pulse")).toBeNull();
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+  });
+
+  it("US-QS-14 a slow load shows one shaped skeleton with one status after the delay (issue 1726)", () => {
+    const { container } = render(<RequestState {...props} status="pending" skeleton={shaped} />);
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS - 1);
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toContain("Liste wird geladen …");
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
+  it("US-QS-14 an error or an offline note shows at once, without the delay (issue 1726)", () => {
+    const { unmount } = render(
+      <RequestState {...props} status="error" errorText="Nicht erreichbar." />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain("Nicht erreichbar.");
+    unmount();
+    render(
+      <RequestState {...props} status="ready" offline>
+        <p>Inhalt</p>
+      </RequestState>,
+    );
+    expect(screen.getByRole("status").textContent).toBe("Offline - zuletzt geladene Daten");
+    expect(screen.getByText("Inhalt")).toBeTruthy();
   });
 });

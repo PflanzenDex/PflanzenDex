@@ -577,18 +577,18 @@ describe("FR-BES-23 Pager of a server list", () => {
     expect(screen.getByRole("status").textContent).toBe("Seite 1 von 3");
   });
 
-  it("FR-BES-23 a page beyond the loaded entries asks for the next server page once and shows a loading note, never an empty page", () => {
+  it("FR-BES-23 a page beyond the loaded entries asks for the next server page once and shows a loading note, never an empty page", async () => {
     const onMore = vi.fn();
     render(<Paged loaded={items.slice(0, 3)} at="/?from=3" onMore={onMore} />);
     expect(onMore).toHaveBeenCalledTimes(1);
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
-    expect(screen.getByText("Pflanzen werden geladen …")).toBeTruthy();
+    expect(await screen.findByText("Pflanzen werden geladen …")).toBeTruthy();
   });
 
-  it("FR-BES-23 a page partly loaded shows what is loaded and the note for the rest", () => {
+  it("FR-BES-23 a page partly loaded shows what is loaded and the note for the rest", async () => {
     render(<Paged loaded={items.slice(0, 4)} at="/?from=3" />);
     expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Pflanze 4"]);
-    expect(screen.getByText("Pflanzen werden geladen …")).toBeTruthy();
+    expect(await screen.findByText("Pflanzen werden geladen …")).toBeTruthy();
   });
 
   it("FR-BES-23 while a page is on its way it is not asked for again", () => {

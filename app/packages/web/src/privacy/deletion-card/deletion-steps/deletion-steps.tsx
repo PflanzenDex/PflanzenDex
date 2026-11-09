@@ -5,6 +5,7 @@ import { keepTogether } from "@/shared/lib/format";
 import type { ApiError } from "../../../shared/data";
 import { cancelDeletion, requestDeletion, type DeletionState } from "../../privacy-api";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { CONFIRM_WORD, WhatHappens } from "../what-happens/what-happens";
 import type { useDeletionAction } from "../use-deletion-action/use-deletion-action";
 
@@ -49,9 +50,11 @@ function StepContent(props: {
         {failure(props.loadError)}
       </p>
     ) : (
-      <p role="status" className="m-0">
-        Löschung wird geladen …
-      </p>
+      <DelayedSkeleton>
+        <p role="status" className="m-0">
+          Löschung wird geladen …
+        </p>
+      </DelayedSkeleton>
     );
   if (state.requested)
     return (

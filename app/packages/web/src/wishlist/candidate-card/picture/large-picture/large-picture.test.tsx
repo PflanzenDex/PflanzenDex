@@ -30,7 +30,8 @@ describe("US-WUN-06 the large view of a stored picture", () => {
     );
     render(view());
     await screen.findByRole("dialog", { name: `Bild von ${TITLE}` });
-    expect(screen.getByRole("status").textContent).toBe("Bild wird geladen …");
+    // The status shows after the delay of DS-57 (issue 1726); the request never answers, so it stays.
+    expect((await screen.findByRole("status")).textContent).toBe("Bild wird geladen …");
   });
 
   it("names the failure with the German text of its code (P-10)", async () => {

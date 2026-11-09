@@ -7,6 +7,7 @@ import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { WishlistPage } from "./wishlist-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 afterEach(releaseSheetExits);
 
@@ -115,8 +116,9 @@ afterEach(() => {
 describe("US-WUN-01 page of the candidate list", () => {
   it("US-WUN-01 · US-QS-22 shows per candidate the rank, title, zone with stock and difficulty word on a compact row", async () => {
     fakeServer(list([candidate()]));
+    delayLoads();
     view(<WishlistPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
     expect(item.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
     expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
@@ -275,13 +277,14 @@ describe("US-WUN-01 page of the candidate list", () => {
 });
 
 describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
-  it("US-QS-07 · DS-09 pending shows the skeleton with the one loading status", () => {
+  it("US-QS-07 · DS-09 pending shows the skeleton with the one loading status", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => undefined)),
     );
+    delayLoads();
     view(<WishlistPage api="http://api" token={token} />);
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toContain("Wunschliste wird geladen");
   });
 
@@ -570,13 +573,14 @@ describe("US-WUN-01 recording a wish", () => {
 });
 
 describe("US-WUN-01 · DS-48 states and primitives", () => {
-  it("US-WUN-01 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
+  it("US-WUN-01 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
+    delayLoads();
     const { container } = view(<WishlistPage api="http://api" token={token} />);
-    const status = screen.getByRole("status");
+    const status = await screen.findByRole("status");
     expect(status.textContent).toContain("Wunschliste wird geladen");
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
     expect(screen.queryByRole("form")).toBeNull();

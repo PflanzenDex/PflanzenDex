@@ -10,6 +10,7 @@ import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-shee
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { Button } from "@/shared/ui/button/button";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
 import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
 import {
@@ -90,9 +91,11 @@ export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAcces
     <LayerSheet id={careProfileLayerId(props.card.id)} title={t("profile.layerTitle")}>
       <Suspense
         fallback={
-          <p role="status" className="text-sm text-muted-foreground">
-            {t("profile.loading")}
-          </p>
+          <DelayedSkeleton>
+            <p role="status" className="text-sm text-muted-foreground">
+              {t("profile.loading")}
+            </p>
+          </DelayedSkeleton>
         }
       >
         <CareProfile
@@ -114,9 +117,11 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
   return (
     <LayerSheet id={signsLayerId(props.card.id)} title={t("signs.layerTitle")}>
       {plan.status === "pending" ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          {t("signs.loading")}
-        </p>
+        <DelayedSkeleton>
+          <p role="status" className="text-sm text-muted-foreground">
+            {t("signs.loading")}
+          </p>
+        </DelayedSkeleton>
       ) : null}
       {plan.status === "error" ? (
         <Warning>

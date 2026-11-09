@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "./collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { answerCardRead } from "../specimens/tests/cards-fake";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -121,8 +122,9 @@ afterEach(() => {
 describe("US-BES-02 Seite Sammlung", () => {
   it("shows a loading state first, then the specimens with location names", async () => {
     fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    delayLoads();
     render(page());
-    expect(screen.getByRole("status").textContent).toContain("Sammlung wird geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("Sammlung wird geladen");
     await openPlant("Bogenhanf");
     await openTab("Standort");
     expect(await screen.findByText("Standort: Regal Süd")).toBeTruthy();

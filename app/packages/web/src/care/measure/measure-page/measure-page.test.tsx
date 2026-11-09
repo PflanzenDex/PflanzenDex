@@ -8,6 +8,7 @@ import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import type { GrowthMoments } from "@/achievements";
 import { MeasurePage } from "./measure-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 /** The growth moments the page reads; a test sets them before it saves (US-ACH-05, issue 1644). */
 const growth = vi.hoisted(() => ({ moments: null as GrowthMoments | null }));
@@ -138,8 +139,9 @@ const openEntries = async () => {
 describe("US-WAC-01 Seite Messen", () => {
   it('US-WAC-01 shows "Was messen?" after loading and the empty course with next step (P-09)', async () => {
     fakeServer();
+    delayLoads();
     show();
-    expect(screen.getByRole("status").textContent).toContain("werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect((await screen.findAllByText("noch keine Messung")).length).toBeGreaterThan(0);
     await openCourse();
     expect(await screen.findByText("Noch keine Messung")).toBeTruthy();
@@ -396,10 +398,11 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(document.activeElement).toBe(field);
   });
 
-  it("US-WAC-01 · DS-52 while loading, a skeleton with the one loading status mirrors the page", () => {
+  it("US-WAC-01 · DS-52 while loading, a skeleton with the one loading status mirrors the page", async () => {
     fakeServer();
+    delayLoads();
     const { container } = show();
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
       0,
     );

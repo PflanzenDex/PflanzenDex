@@ -16,6 +16,7 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";
@@ -156,9 +157,11 @@ export function SpeciesSearch(props: {
         <FilterChips filters={filters} onChange={change} />
         {props.loading && !hasHits && <SearchResultsSkeleton />}
         {props.loading && hasHits && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Suche läuft …
-          </p>
+          <DelayedSkeleton>
+            <p role="status" className="text-sm text-muted-foreground">
+              Suche läuft …
+            </p>
+          </DelayedSkeleton>
         )}
         {props.more && hasHits && <p className="text-sm text-muted-foreground">{t("more")}</p>}
         {!hasHits ? (

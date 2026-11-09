@@ -23,12 +23,16 @@ import {
 } from "./groups/switch-groups/switch-groups";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 
+/** The value of the row while it loads; it shows after the delay (DS-57, issue 1726). */
+const STYLE_LOADING = "wird geladen …";
+
 /** The value of the row "Wie nutzt du die App?": loaded on its own, so a failure shows here and nowhere else (P-10). */
-function useStyleValue(api: string, token: Token): string {
+function useStyleValue(api: string, token: Token): ReactNode {
   const style = useRequest({
     queryKey: ["onboarding", "style"],
     fresh: true,
@@ -41,7 +45,7 @@ function useStyleValue(api: string, token: Token): string {
     token,
     load: useCallback((t: string) => loadAchievementSettings(api, t), [api]),
   });
-  if (style.status === "pending") return "wird geladen …";
+  if (style.status === "pending") return <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton>;
   if (style.value === undefined) return UNKNOWN;
   return styleValue(style.value.style, calm.value?.calmMode);
 }
@@ -52,7 +56,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
   const styleText = useStyleValue(props.api, props.token);
   const p = saver.saved;
   const ids = SETTINGS_LAYER;
-  const layers: readonly { id: string; title: string; value: string; body: ReactNode }[] = [
+  const layers: readonly { id: string; title: string; value: ReactNode; body: ReactNode }[] = [
     {
       id: ids.profile,
       title: "Profil",
@@ -96,7 +100,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
 
 /** The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. */
 function SettingsLayers(props: {
-  layers: readonly { id: string; title: string; value: string; body: ReactNode }[];
+  layers: readonly { id: string; title: string; value: ReactNode; body: ReactNode }[];
 }) {
   return (
     <>

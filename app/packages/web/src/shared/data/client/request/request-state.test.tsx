@@ -2,12 +2,21 @@
 import { cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { LoadFrame, useClearOnSignOut, useWriteAction, useInvalidate, type Response } from "../..";
+import { SLOW_LOAD_MS } from "@/shared/ui/display/skeleton/loading-contract";
 
 const token = async () => "tok";
+/** A load that answers after the delay of DS-57 (issue 1726): its skeleton shows before the rows. */
+const slow =
+  <T,>(value: Response<T>) =>
+  async (): Promise<Response<T>> => {
+    await new Promise((resolve) => setTimeout(resolve, SLOW_LOAD_MS));
+    return value;
+  };
 const fail = (code: string, text: string): Response<string[]> => ({
   ok: false,
   error: { code, text },
@@ -19,12 +28,14 @@ afterEach(cleanup);
 function Frame(props: {
   load: () => Promise<Response<string[]>>;
   token?: () => Promise<string | undefined>;
+  loadingFallback?: ReactNode;
 }) {
   return (
     <LoadFrame
       queryKey={["test", "list"]}
       token={props.token ?? token}
       load={props.load}
+      {...(props.loadingFallback ? { loadingFallback: props.loadingFallback } : {})}
       loadingText="Liste wird geladen …"
       empty={{
         title: "Noch nichts da",
@@ -44,13 +55,13 @@ function Frame(props: {
 }
 
 describe("US-QS-07 · DS-09 RequestState", () => {
-  it("US-QS-07 · DS-09 pending shows the skeleton and nothing else", () => {
+  it("US-QS-07 · DS-09 pending shows the skeleton and nothing else", async () => {
     render(
       <RequestState status="pending" skeleton={<p role="status">lädt</p>} onRetry={() => undefined}>
         <p>Inhalt</p>
       </RequestState>,
     );
-    expect(screen.getByRole("status").textContent).toBe("lädt");
+    expect((await screen.findByRole("status")).textContent).toBe("lädt");
     expect(screen.queryByText("Inhalt")).toBeNull();
   });
 
@@ -94,8 +105,8 @@ describe("US-QS-07 · DS-09 RequestState", () => {
 
 describe("US-QS-07 · DS-09 LoadFrame on the data layer", () => {
   it("US-QS-07 · DS-09 pending shows the loading text, then the rows", async () => {
-    render(<Frame load={async () => ok(["Efeu"])} />);
-    expect(screen.getByRole("status").textContent).toContain("Liste wird geladen");
+    render(<Frame load={slow(ok(["Efeu"]))} />);
+    expect((await screen.findByRole("status")).textContent).toContain("Liste wird geladen");
     expect(await screen.findByText("Efeu")).toBeTruthy();
   });
 
@@ -219,6 +230,32 @@ describe("US-QS-07 · DS-09 mutation invalidates the list", () => {
     render(<Page />);
     await userEvent.click(screen.getByRole("button", { name: "Senden" }));
     expect((await screen.findByRole("alert")).textContent).toContain("nicht erreichbar");
+  });
+});
+
+describe("US-QS-14 · LoadFrame waits the delay before its skeleton (DS-57, issue 1726)", () => {
+  const shaped = (
+    <SkeletonGroup label="Liste wird geladen …">
+      <Skeleton className="h-8 w-full" />
+    </SkeletonGroup>
+  );
+
+  it("US-QS-14 LoadFrame: a load within the delay shows no skeleton and no status (issue 1726)", async () => {
+    const { container } = render(
+      <Frame load={async () => ok(["Efeu"])} loadingFallback={shaped} />,
+    );
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(await screen.findByText("Efeu")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(container.querySelector(".animate-pulse")).toBeNull();
+  });
+
+  it("US-QS-14 LoadFrame: a slow load shows one shaped skeleton with one status after the delay (issue 1726)", async () => {
+    const { container } = render(<Frame load={slow(ok(["Efeu"]))} loadingFallback={shaped} />);
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+    expect(await screen.findByText("Efeu")).toBeTruthy();
   });
 });
 
