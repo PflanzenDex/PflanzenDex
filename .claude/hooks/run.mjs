@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Entry point for all Claude Code hooks of this repo (US-QG-07, US-DEV-02).
-// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|after-edit|after-bash|stop>
+// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|after-edit|after-bash|stop|subagent-stop>
 // A hook must never hang or break a session: every step has a time limit and unexpected errors end with exit 0.
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -29,6 +29,15 @@ import {
   ranGates,
   recordWriteRefusal,
 } from "./rules.mjs";
+import {
+  LOCK_BUSY_EXIT,
+  LOCK_NAME,
+  LOCK_WAIT_SECONDS,
+  RUN_LIMIT_SECONDS,
+  STAMP_NAME,
+  hasGitFile,
+  subagentStop,
+} from "./subagent-gates.mjs";
 
 const event = process.argv[2];
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
@@ -70,7 +79,10 @@ function repoAt(folder) {
 // the path from `root`, which starts with ".." and so matches no pattern.
 function locate(file) {
   const abs = path.resolve(root, file ?? "");
-  const fromRoot = { root, file: path.relative(root, abs).split(path.sep).join("/") };
+  const fromRoot = {
+    root,
+    file: path.relative(root, abs).split(path.sep).join("/"),
+  };
   // A new file may sit in a folder that does not exist yet: git answers for the nearest folder that does.
   let folder = path.dirname(abs);
   while (!fs.existsSync(folder) && path.dirname(folder) !== folder) folder = path.dirname(folder);
@@ -270,19 +282,56 @@ const preToolUse = (permissionDecision, permissionDecisionReason) =>
     },
   });
 
-// Fingerprint of all code changes relative to origin/dev (committed, staged, unstaged, untracked).
-function codeFingerprint() {
-  const base = run("git", ["merge-base", "HEAD", "origin/dev"]).trim();
-  const changed = run("git", ["diff", "--name-only", base]).split("\n");
-  const untracked = run("git", ["ls-files", "--others", "--exclude-standard"]).split("\n");
+// Fingerprint of all code changes relative to origin/dev (committed, staged, unstaged, untracked) in the worktree at `dir`:
+// the session's root by default, the worktree of an implementer for the SubagentStop gate (US-QG-07).
+function codeFingerprint(dir = root) {
+  const git = (args) => run("git", args, { cwd: dir });
+  const base = git(["merge-base", "HEAD", "origin/dev"]).trim();
+  const changed = git(["diff", "--name-only", base]).split("\n");
+  const untracked = git(["ls-files", "--others", "--exclude-standard"]).split("\n");
   const files = [...new Set([...changed, ...untracked])].filter((f) => f && isCodePath(f)).sort();
   if (files.length === 0) return null;
   const hash = createHash("sha256");
   for (const f of files)
     hash
       .update(f)
-      .update(fs.existsSync(path.join(root, f)) ? fs.readFileSync(path.join(root, f)) : "deleted");
+      .update(fs.existsSync(path.join(dir, f)) ? fs.readFileSync(path.join(dir, f)) : "deleted");
   return hash.digest("hex");
+}
+
+// `make gates` in a worktree (US-QG-07), one run at a time across the worktrees of this repository: flock on the lock in
+// the common git directory. The lock path and the wait reach the shell as arguments, never as text of the script.
+function runGates(worktree) {
+  const started = Date.now();
+  const common = path.resolve(
+    worktree,
+    run("git", ["rev-parse", "--git-common-dir"], {
+      cwd: worktree,
+      timeout: 3000,
+    }).trim(),
+  );
+  const result = spawnSync(
+    "bash",
+    [
+      "-c",
+      'flock -E "$3" -w "$2" "$1" make gates 2>&1',
+      "gates",
+      path.join(common, LOCK_NAME),
+      String(LOCK_WAIT_SECONDS),
+      String(LOCK_BUSY_EXIT),
+    ],
+    {
+      cwd: worktree,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      timeout: (LOCK_WAIT_SECONDS + RUN_LIMIT_SECONDS) * 1000,
+    },
+  );
+  return {
+    exit: result.status ?? 1,
+    output: `${result.stdout ?? ""}${result.error?.message ?? ""}`,
+    durationMs: Date.now() - started,
+  };
 }
 const stateFile = () =>
   path.join(run("git", ["rev-parse", "--absolute-git-dir"]).trim(), "claude-gates-fingerprint");
@@ -361,7 +410,9 @@ const handlers = {
       });
     if (isSpecPath(file)) {
       try {
-        run("node", ["app/tools/check/docs/specs/check-specs.mjs"], { cwd: fileRoot });
+        run("node", ["app/tools/check/docs/specs/check-specs.mjs"], {
+          cwd: fileRoot,
+        });
       } catch (e) {
         print({
           hookSpecificOutput: {
@@ -386,6 +437,33 @@ const handlers = {
           "Heads-up: code changed since `make ci` or `make gates` last ran in this worktree. Run it before calling the work done (US-QG-07).",
       });
     }
+  },
+  // The SubagentStop gate of an implementer (US-QG-07): the worktree comes from the transcript, the git and process calls are here.
+  "subagent-stop"() {
+    const repo = repoAt(root);
+    const out = subagentStop(input, {
+      worktreesDir: repo && path.join(path.dirname(repo.common), ".worktrees"),
+      isWorktree: hasGitFile,
+      readFile: readRecord,
+      writeFile: (file, text) => fs.writeFileSync(file, text),
+      stampFile: (worktree) =>
+        path.resolve(
+          worktree,
+          run("git", ["rev-parse", "--git-path", STAMP_NAME], {
+            cwd: worktree,
+            timeout: 3000,
+          }).trim(),
+        ),
+      head: (worktree) =>
+        run("git", ["rev-parse", "HEAD"], {
+          cwd: worktree,
+          timeout: 3000,
+        }).trim(),
+      fingerprint: (worktree) => codeFingerprint(worktree),
+      runGates,
+      now: () => new Date().toISOString(),
+    });
+    if (out) print(out);
   },
 };
 
