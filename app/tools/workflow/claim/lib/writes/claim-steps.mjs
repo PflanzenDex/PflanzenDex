@@ -72,7 +72,11 @@ export async function openDraftPr(client, issue, branch, body) {
   }
 }
 
-/** Draft PR text; the "## Handoff" section is what the next person (or agent) reads first. */
+/**
+ * Draft PR text; the "## Handoff" section is what the next person (or agent) reads first. Its lines are the ones the next
+ * session needs (US-DEV-05, issue 1747): state, open decisions, owner decisions and the worktree. The "## Lessons" placeholder
+ * is a comment only, so `make pr` refuses the draft until the section is filled in (app/tools/check/docs/agents/pr-lessons.mjs).
+ */
 export function handoffBody(issue, branch, login, migrationNumber) {
   return [
     `Closes #${issue.number}`,
@@ -86,8 +90,11 @@ export function handoffBody(issue, branch, login, migrationNumber) {
     "Keep this section current; whoever takes over reads it first.",
     "",
     `- **Task:** ${issue.url} (branch \`${branch}\`)`,
+    "- **State:** claimed, nothing built yet",
     "- **Done:** nothing yet, only the claim",
     "- **Missing:** everything in the acceptance criteria of the issue",
+    "- **Open decisions:** none yet",
+    "- **Owner decisions:** none yet",
     "- **Verification:** not run yet (`make ci`)",
     ...(migrationNumber === undefined
       ? []
@@ -95,10 +102,15 @@ export function handoffBody(issue, branch, login, migrationNumber) {
           `- **Migration number:** ${migrationNumber} (reserved by \`make claim\`; \`make migration\` uses it)`,
         ]),
     "- **Next steps:** `make worktree BRANCH=" + branch + "`, then `spec-to-tests`",
+    `- **Worktree:** \`.worktrees/${branch.replaceAll("/", "-")}\` (ports and test database in its \`.env.worktree\`)`,
     "",
     "## Test evidence",
     "",
     "Not yet.",
+    "",
+    "## Lessons",
+    "",
+    "<!-- Filled in before make pr: one line per lesson, `- <lesson> → gate <name> | skill <name> | PF-nnn | none (<why>)`, or `none`. Written with the skill recap-and-learnings. -->",
     "",
     "## AI involvement",
     "",

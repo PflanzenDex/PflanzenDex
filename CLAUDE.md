@@ -49,6 +49,7 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 
 - The orchestrating session (claims, briefs, reviews every diff, checks CI, writes the PR) runs on **Opus at effort medium**.
 - Two agent types live in `.claude/agents/`: `implementer` (model `haiku`, effort `xhigh`, owner decision 2026-11-03; edits, commits and pushes) and `scout` (read-only search and measurement). Start them with `subagent_type: "implementer"` or `"scout"`. Their definitions hold the fixed rules (worktree `cd`, no `.env`, commit scope, gate plan, commit and push only), so a brief holds only what is specific to the ticket: worktree, scope, files, done criteria, measurements, story ID, and the gate files it may touch. The orchestrator reviews the diff and checks CI on the head itself before handing over.
+- An orchestrating session works a batch of tickets through subagents. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions (owner decision 2026-11-09, issue 1747). Every PR fills its "Lessons" section; `make pr` refuses it when it is missing, empty or malformed.
 
 ## Priority of tickets
 

@@ -1,6 +1,7 @@
 // FR-DEV-10 (issue 1412): `make pr` retries a rate-limited `gh pr ready` a bounded number of times, reads the reset from the
-// failing response and says what is left. US-DEV-13 (issue 1608): the order is the preflight (commitlint and the changelog
-// check, before anything is pushed), the push, a wait until GitHub shows the pushed head, and only then the mark, so the one
+// failing response and says what is left. US-DEV-13 (issue 1608): the order is the preflight (commitlint, the changelog
+// check and the Lessons section of US-DEV-05, before anything is pushed), the push, a wait until GitHub shows the pushed
+// head, and only then the mark, so the one
 // CI run of the PR starts on that head. The script runs for real in a throwaway repository with a local bare remote; `gh`
 // and `make` are fakes on PATH, so nothing reaches GitHub and the checks of the Makefile do not run.
 import test, { after } from "node:test";
@@ -8,6 +9,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -20,6 +22,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "pr-ready.sh");
+const repoRoot = path.resolve(path.dirname(script), "..", "..");
 const madeDirs = [];
 after(() => {
   for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
@@ -114,7 +117,7 @@ function setup({
   unpushed = 0,
   rejectPush = false,
   title = "feat(x): add a thing",
-  body = "Story: US-DEV-13",
+  body = "Story: US-DEV-13\n\n## Lessons\n\nnone\n",
 } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "pr-ready-test-"));
   madeDirs.push(dir);
@@ -131,7 +134,12 @@ function setup({
   const origin = path.join(dir, "origin.git");
   git(dir, ["init", "--bare", "-q", origin]);
   git(dir, ["init", "-q", "-b", branch, repo]);
-  git(repo, ["commit", "-q", "--allow-empty", "-m", "init"]);
+  // The Lessons check (US-DEV-05) runs from the repository root, so the throwaway checkout carries its module.
+  const lessonsCheck = "app/tools/check/docs/agents/pr-lessons.mjs";
+  mkdirSync(path.dirname(path.join(repo, lessonsCheck)), { recursive: true });
+  copyFileSync(path.join(repoRoot, lessonsCheck), path.join(repo, lessonsCheck));
+  git(repo, ["add", "-A"]);
+  git(repo, ["commit", "-q", "-m", "init"]);
   const baseSha = git(repo, ["rev-parse", "HEAD"]).trim();
   git(repo, ["remote", "add", "origin", origin]);
   git(repo, ["push", "-q", "-u", "origin", branch]);
@@ -327,9 +335,54 @@ test("US-DEV-13 (issue 1608): a failing changelog check pushes nothing, marks no
   assert.deepEqual(readyCalls(out), [], "gh did not mark the PR");
 });
 
+test("US-DEV-05 (issue 1747): a PR body without a Lessons section pushes nothing, marks nothing and points to the fill-in command and recap-and-learnings", () => {
+  const ctx = setup({ unpushed: 1, body: "Story: US-DEV-13" });
+  const oldRemote = remoteHead(ctx);
+  const out = runScript(ctx);
+  assert.equal(out.status, 1, out.stderr);
+  assert.match(out.stderr, /no "## Lessons" section/);
+  assert.match(
+    out.stderr,
+    /the Lessons section of the PR body fails; nothing was pushed or marked/,
+  );
+  assert.match(out.stderr, /Fill it with make pr-text BODY=/);
+  assert.match(out.stderr, /recap-and-learnings/);
+  assert.equal(remoteHead(ctx), oldRemote, "the remote head is unchanged");
+  assert.deepEqual(readyCalls(out), [], "gh did not mark the PR");
+  assert.equal(out.makeCalls.length, 2, "the commitlint and changelog checks ran before it");
+});
+
+for (const [label, lessons] of [
+  ["an empty", "## Lessons\n\n<!-- one line per lesson, or none -->\n"],
+  ["a malformed", "## Lessons\n\n- did a thing\n"],
+]) {
+  test(`US-DEV-05 (issue 1747): ${label} Lessons section refuses before anything is pushed`, () => {
+    const ctx = setup({ unpushed: 1, body: `Story: US-DEV-13\n\n${lessons}` });
+    const oldRemote = remoteHead(ctx);
+    const out = runScript(ctx);
+    assert.equal(out.status, 1, out.stderr);
+    assert.match(
+      out.stderr,
+      /the Lessons section of the PR body fails; nothing was pushed or marked/,
+    );
+    assert.equal(remoteHead(ctx), oldRemote, "the remote head is unchanged");
+    assert.deepEqual(readyCalls(out), [], "gh did not mark the PR");
+  });
+}
+
+test("US-DEV-05 (issue 1747): a Lessons section with well-formed lines passes, and the PR is pushed and marked", () => {
+  const body =
+    "Story: US-DEV-05\n\n## Lessons\n\n- Gate hid it → gate ui-gates\n- Pitfall → PF-012\n";
+  const ctx = setup({ unpushed: 1, body });
+  const out = runScript(ctx);
+  assert.equal(out.status, 0, out.stderr);
+  assert.deepEqual(readyCalls(out), ["pr ready 7"]);
+  assert.equal(remoteHead(ctx), localHead(ctx), "the push went through");
+});
+
 test("US-DEV-13 (issue 1608): the title and body reach the checks only as environment variables, never in a command line", () => {
   const title = 'feat(x): $(touch PWNED) "quoted" ; echo injected';
-  const body = "Story: US-DEV-13\n$(touch PWNED)";
+  const body = "Story: US-DEV-13\n\n## Lessons\n\n- $(touch PWNED) → skill recap-and-learnings";
   const ctx = setup({ unpushed: 1, title, body });
   const out = runScript(ctx);
   assert.equal(out.status, 0, out.stderr);

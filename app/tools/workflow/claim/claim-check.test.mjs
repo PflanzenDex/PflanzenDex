@@ -1,7 +1,8 @@
-// US-DEV-08: branch-based claim checks (make worktree) and the handoff text
+// US-DEV-08: branch-based claim checks (make worktree) and the handoff text; US-DEV-05 (issue 1747): the handoff skeleton
 import test from "node:test";
 import assert from "node:assert/strict";
 import { checkBranch, run } from "./claim-check.mjs";
+import { lessonsProblems } from "../../check/docs/agents/pr-lessons.mjs";
 import { handoffBody } from "./lib/writes/claim-steps.mjs";
 
 // Fake gh: the repository name, the user and the open issues (REST shape, FR-DEV-10 #1412) are answered by route.
@@ -83,4 +84,34 @@ test("US-DEV-08: the handoff carries a reserved migration number only when one i
     handoffBody(issue, "feat/bes-06-x", "max", "0067"),
     /\*\*Migration number:\*\* 0067/,
   );
+});
+
+test("US-DEV-05: the handoff skeleton carries State, Open and Owner decisions and the Worktree, before the test evidence", () => {
+  const body = handoffBody(
+    { number: 62, title: "US-BES-06 · Delete specimen", url: "https://x/62" },
+    "feat/bes-06-x",
+    "max",
+  );
+  const handoff = body.slice(body.indexOf("## Handoff"), body.indexOf("## Test evidence"));
+  for (const part of ["**State:**", "**Open decisions:**", "**Owner decisions:**"]) {
+    assert.ok(handoff.includes(part), part);
+  }
+  assert.ok(
+    handoff.includes(
+      "- **Worktree:** `.worktrees/feat-bes-06-x` (ports and test database in its `.env.worktree`)",
+    ),
+    "the worktree is the branch with / replaced by -",
+  );
+});
+
+test("US-DEV-05: the fresh draft has a Lessons placeholder that the Lessons check refuses until it is filled", () => {
+  const body = handoffBody(
+    { number: 62, title: "US-BES-06 · Delete specimen", url: "https://x/62" },
+    "feat/bes-06-x",
+    "max",
+  );
+  assert.ok(body.indexOf("## Lessons") > body.indexOf("## Test evidence"));
+  assert.ok(body.indexOf("## Lessons") < body.indexOf("## AI involvement"));
+  assert.equal(lessonsProblems(body).length, 1);
+  assert.match(lessonsProblems(body)[0], /"## Lessons" section is empty/);
 });
