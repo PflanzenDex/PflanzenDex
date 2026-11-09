@@ -67,7 +67,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | ACC Accounts                     | 6       | 2      | 3       | 1      | 2 · 0 · 4                 | 0                      | 6       |
 | BES Collection                   | 19      | 2      | 17      | 0      | 2 · 8 · 15                | 8                      | 11      |
 | LIC Light and locations          | 5       | 5      | 0       | 0      | 1 · 5 · 0                 | 4                      | 1       |
-| PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
+| PHA Care phases                  | 4       | 3      | 1       | 0      | 1 · 0 · 5                 | 4                      | 0       |
 | WAC Growth/photos                | 7       | 4      | 3       | 0      | 5 · 0 · 1                 | 6                      | 1       |
 | BEH Treatments                   | 4       | 4      | 0       | 0      | 4 · 0 · 2                 | 4                      | 0       |
 | WUN Wishlist                     | 6       | 1      | 5       | 0      | 2 · 0 · 5                 | 5                      | 1       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **219** | **45** | **139** | **35** |                           | **50**                 | **169** |
+| **Total**                        | **219** | **46** | **138** | **35** |                           | **50**                 | **169** |
 
 <!-- spec-status:end -->
 

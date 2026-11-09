@@ -1,6 +1,6 @@
 ---
 name: accessibility-check
-description: Use when a story adds or changes a view, flow or control in app/packages/web (FR-QG-10 item 11). Walks the keyboard path, a screen reader smoke test, 400 % zoom, 200 % text, reduced motion and forced colors by hand, and names which automated gate already covers what.
+description: Use when you build or change anything a keeper sees or operates in app/packages/web: a view, dialog, list, form, button, toggle, gesture or flow (FR-QG-10 item 11). Load it before you write the UI code, also when add-epic-feature or another skill applies. Walks the keyboard path, a screen reader smoke test, 400 % zoom, 200 % text, reduced motion and forced colors by hand, and names which automated gate already covers what.
 ---
 
 # Accessibility check

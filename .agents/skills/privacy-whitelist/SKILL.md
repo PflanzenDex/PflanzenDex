@@ -1,6 +1,6 @@
 ---
 name: privacy-whitelist
-description: Use when an output leaves an account for another person (friend views, feed and banner, swap and match cards, shared equipment, partner outputs): adds or changes its field whitelist and the contract test that proves only whitelisted fields appear (QG-D2, P-05, US-QG-05).
+description: Use when an output leaves an account for another person (friend views and the profile friends see, feed and banner, swap and match cards, shared equipment, partner outputs): adds or changes its field whitelist and the contract test that proves only whitelisted fields appear (QG-D2, P-05, US-QG-05).
 ---
 
 # Privacy whitelist

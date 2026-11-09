@@ -157,6 +157,7 @@ Acceptance criteria:
   | `recap-and-learnings`   | after a task, extract lessons and transfer them to the principles register or skills                                                 |
 
 - Promotion: if a skill step becomes a gate (e.g. "check that field X is not output"), the step in the skill is replaced by a reference to the gate (D-03).
+- **Trigger evals:** every skill has three task prompts that must load it and one near miss that must not. Given a changed skill description, When the trigger evals run with `claude plugin eval` (method, prompts and the last results in `docs/records/analysis/2026-11-09-skill-trigger-evals.md`), Then each prompt loads its skill in at least one of three runs and no near miss loads it. A manual check, not a gate (E-30).
 
 ### US-DEV-05 · Story lifecycle and review process · 🟨
 

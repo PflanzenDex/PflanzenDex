@@ -1,6 +1,6 @@
 ---
 name: add-epic-feature
-description: Use when a feature or change for an existing product epic (ACC to ONB in docs/specs/product/) starts: from its story to the claim, the failing tests, the code, the gates and the spec status, in one PR (FR-QG-03, US-DEV-05).
+description: Use when you implement a whole story, issue or feature of an existing product epic (ACC to ONB, e.g. US-SOZ-04 or "the next WUN story") end to end: from the story to the claim, the failing tests, the code, the gates and the spec status, in one PR (FR-QG-03, US-DEV-05). It calls spec-to-tests and the other skills on the way.
 ---
 
 # Add a feature for an epic

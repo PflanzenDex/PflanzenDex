@@ -8,17 +8,19 @@ Note (US-QS-14): care phases (US-PHA-01, US-PHA-03) are shown as the grouping "N
 
 ## User stories
 
-### US-PHA-01 · See which phase every plant should be in · 🟨 (prototype ✅)
+### US-PHA-01 · See which phase every plant should be in · ✅ (prototype ✅)
 
 As a **plant keeper** I want to see the expected phase and the target location per specimen, so that I do not forget winter and summer moves.
 
 Acceptance criteria:
 
-- Every active specimen (not cutting, not archived) whose species (or specimen) has a dormancy period is listed.
+- Every active specimen (not cutting, not archived) whose species (care profile) has a dormancy period is listed.
 - Phase = dormancy phase if today's date **in the user's time zone** lies in the interval `From…Until`, otherwise growth phase. The interval may cross the new year (e.g. 11-01 to 03-15).
-- Target location = the location assigned to the specimen (or the species) for this phase.
+- Target location = the location assigned to the species (care profile) for this phase.
 
-State of implementation: list, dormancy period of the species, the user's time zone (the one of the profile, US-ACC-02; the device's zone only as fallback while none is chosen) and the turn of the year are implemented. The target location per phase comes from the keeper's care profile (US-BES-09; without an entry "unbekannt", never invented, P-08) and the dormancy period of the care profile replaces the one of the species. Missing is a dormancy period on the specimen itself. The flow with a specimen in the browser test (E2E) is missing until the species catalog can be filled (US-BES-01); the API test against the database covers the phase derivation.
+Note (2026-11-09, owner decision): the criteria name the species' care profile, not the specimen. A dormancy period on the specimen itself (a per-plant override) is not part of this story; it is the R2 story in issue #1786. Until it exists, the period and the target location come from the keeper's care profile of the species, or the period from the catalog.
+
+State of implementation: complete for the criteria above. The list, the dormancy period of the species (the care profile's replaces the catalog's, US-BES-09), the user's time zone (the one of the profile, US-ACC-02; the device's zone only as fallback while none is chosen) and the turn of the year are implemented. The target location per phase comes from the keeper's care profile (without an entry "unbekannt", never invented, P-08). The browser flow (E2E) runs through the UI: a species with a dormancy period from the catalog proposal, one from the care profile, a cutting and an archived plant that are not listed, and the expected phase and target location in the grouping "Nach Pflegephase". The API test against the database covers the phase derivation.
 
 ### US-PHA-02 · See deviations first · ✅ (prototype ✅)
 
