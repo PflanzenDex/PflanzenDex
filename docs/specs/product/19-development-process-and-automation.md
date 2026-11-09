@@ -156,7 +156,7 @@ Acceptance criteria:
 
 - Promotion: if a skill step becomes a gate (e.g. "check that field X is not output"), the step in the skill is replaced by a reference to the gate (D-03).
 
-### US-DEV-05 · Story lifecycle and review process · ⬜
+### US-DEV-05 · Story lifecycle and review process · 🟨
 
 As a **team** I want a fixed path from idea to merge that fits the spec.
 
@@ -164,6 +164,8 @@ Acceptance criteria:
 
 - **Lifecycle of a story:** ⬜ planned → 🟨 in progress (branch exists) → ✅ implemented (merged into `dev`, test with story ID present and green). The spec status and the counters in `README.md` are changed **in the same PR** (FR-QG-03, QG-U2 checks that).
 - **Project status follows the PRs (automated):** Given a PR whose body says `Closes #n`, When it is merged into `dev`, Then the project status of #n is `On dev`; When it is closed without a merge and no other open PR names #n, Then `In Progress` goes back to `Todo`; When the release PR `dev` → `main` is merged, Then every `On dev` item becomes `Done`. A closed issue stays `On dev` until the release. `make status-check` lists items whose status contradicts the PRs, open items without a priority and open items without a Status.
+- **Lessons before review:** Given a PR whose "Lessons" section is missing, empty or malformed (it is neither `none` nor one line per lesson in the form `- <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)`), When `make pr` runs, Then it refuses before anything is pushed and points to the skill `recap-and-learnings`; Given a section with `none` or well-formed lines, When `make pr` runs, Then the check passes and the push goes on (check: `app/tools/check/docs/agents/pr-lessons.mjs`).
+- **Handoff from the claim:** Given `make claim` on an issue, When it writes the draft PR, Then its "Handoff" carries State, Open decisions, Owner decisions and Worktree, and the draft has a "Lessons" placeholder that `make pr` refuses until it is filled in.
 - **Flow:** read story → derive tests from the criteria (skill `spec-to-tests`) → implement → `make ci` green → PR with description (story IDs, deviations from the spec) → review → merge.
 - **Definition of Ready:** a story may be started when criteria are formulated verifiably (Given/When/Then), dependencies in `16-…` are clarified and open decisions (E-nn) are decided.
 - **Definition of Done:** FR-QG-10.

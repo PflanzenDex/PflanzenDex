@@ -16,7 +16,8 @@ Goal: the same mistake does not happen twice, without growing prose nobody reads
 3. Write each entry as: symptom, cause, prevention, how to detect. Keep to five lines, in English.
 4. If the lesson changes a principle, requirement or decision, change the spec in `docs/specs/product/` in the same PR (IDs are never renumbered) instead of only noting it elsewhere.
 5. If a skill was followed and still led to the mistake, fix the skill, do not add a second one.
-6. Report back: findings, where each was recorded (gate, skill, pitfall, none) and why. Propose changes to the maintainer; do not weaken a gate to make a task pass.
+6. Put the result into the PR's "Lessons" section, one line per finding in the form `- <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)`, or the single word `none` when nothing was learnt. `make pr` checks the section (`app/tools/check/docs/agents/pr-lessons.mjs`) and refuses it when it is missing, empty or malformed.
+7. Report back: findings, where each was recorded (gate, skill, pitfall, none) and why. Propose changes to the maintainer; do not weaken a gate to make a task pass.
 
 ## Check
 
