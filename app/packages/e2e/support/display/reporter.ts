@@ -4,6 +4,14 @@ import type { FullConfig, FullResult, Reporter, Suite } from "@playwright/test/r
 import { SIZES, type Baseline, type Result } from "./one-screen/judge";
 import { buildBaseline, entryOf, judgeBaseline } from "./one-screen/baseline";
 import { SCREENS } from "./one-screen/register";
+import {
+  SHIFT_SIZES,
+  buildShiftBaseline,
+  judgeShiftBaseline,
+  shiftMarkdown,
+  type ShiftBaseline,
+  type ShiftResult,
+} from "./one-screen/judge.shift";
 
 // Playwright reporter of the one-screen gate (issue 1137, QG-U8): after the run it merges the results of all workers,
 // writes the table for the job summary, checks the baseline itself and, with ONE_SCREEN_WRITE=1, rewrites the baseline.
@@ -71,6 +79,65 @@ export function saveResults(id: string, results: readonly Result[]): void {
   writeFileSync(new URL(`${id}.json`, dir), JSON.stringify(results));
 }
 
+// Layout shift (US-QS-14, DS-52, issue 1697): its own folder of the report, so the one-screen counts stay as they are.
+const SHIFT_RESULTS = new URL("shift/results/", REPORT_DIR);
+export const SHIFT_BASELINE_FILE = new URL(
+  "../../../../config/gates/baselines/layout-shift-baseline.json",
+  import.meta.url,
+);
+
+/** A missing baseline is an empty one: every load above the limit then fails by name (fail closed, P-10). */
+export function readShiftBaseline(): ShiftBaseline {
+  if (!existsSync(SHIFT_BASELINE_FILE)) return { maxEntries: 0, entries: [] };
+  return JSON.parse(readFileSync(SHIFT_BASELINE_FILE, "utf8")) as ShiftBaseline;
+}
+
+export function writeShiftBaseline(baseline: ShiftBaseline): void {
+  writeFileSync(SHIFT_BASELINE_FILE, JSON.stringify(baseline, null, 2) + "\n");
+}
+
+export function saveShiftResults(id: string, results: readonly ShiftResult[]): void {
+  mkdirSync(SHIFT_RESULTS, { recursive: true });
+  writeFileSync(new URL(`${id}.json`, SHIFT_RESULTS), JSON.stringify(results));
+}
+
+function readShiftResults(): ShiftResult[] {
+  if (!existsSync(SHIFT_RESULTS)) return [];
+  return readdirSync(SHIFT_RESULTS)
+    .filter((f) => f.endsWith(".json"))
+    .flatMap((f) => JSON.parse(readFileSync(new URL(f, SHIFT_RESULTS), "utf8")) as ShiftResult[]);
+}
+
+/** The layout-shift part of the run: a complete run writes the baseline with ONE_SCREEN_WRITE=1 (a partial one fails it);
+ * otherwise the baseline's own shape is judged here (the loads are judged per test). */
+function shiftVerdict(status: FullResult["status"]): { status: FullResult["status"] } | undefined {
+  const results = readShiftResults();
+  if (results.length === 0) return undefined;
+  const complete = results.length === SCREENS.length * SHIFT_SIZES.length;
+  if (process.env["ONE_SCREEN_WRITE"] === "1") {
+    if (!complete) {
+      console.error(
+        `layout shift: ${results.length} cold loads, not a full run: baseline not written`,
+      );
+      return { status: "failed" };
+    }
+    const baseline = buildShiftBaseline(results);
+    writeShiftBaseline(baseline);
+    console.log(`layout shift: baseline written (${baseline.entries.length} entries)`);
+  }
+  const problems = judgeShiftBaseline(
+    readShiftBaseline(),
+    new Set(SCREENS.map((s) => s.id)),
+    new Set(SHIFT_SIZES.map((s) => s.name)),
+  );
+  for (const p of problems) console.error(`layout shift: ${p} (${SHIFT_BASELINE_FILE.pathname})`);
+  writeFileSync(
+    new URL("shift/report.md", REPORT_DIR),
+    shiftMarkdown(results, readShiftBaseline()),
+  );
+  return problems.length > 0 && status === "passed" ? { status: "failed" } : undefined;
+}
+
 const PROJECT = "one-screen";
 
 function readResults(): Result[] {
@@ -88,13 +155,15 @@ export default class OneScreenReporter implements Reporter {
     this.active = suite.suites.some((s) => s.project()?.name === PROJECT);
     if (!this.active) return;
     rmSync(new URL("results/", REPORT_DIR), { recursive: true, force: true });
+    rmSync(new URL("shift/", REPORT_DIR), { recursive: true, force: true });
   }
 
   async onEnd(result: FullResult): Promise<{ status: FullResult["status"] } | undefined> {
     if (!this.active) return undefined;
     mkdirSync(REPORT_DIR, { recursive: true });
+    const shift = shiftVerdict(result.status);
     const results = readResults();
-    if (results.length === 0) return undefined; // only the self-test ran
+    if (results.length === 0) return shift; // only the self-test ran, or the layout-shift tests alone
     const complete = results.length === SCREENS.length * SIZES.length;
     if (process.env["ONE_SCREEN_WRITE"] === "1") {
       if (!complete) {
@@ -109,7 +178,9 @@ export default class OneScreenReporter implements Reporter {
       );
     }
     const baseline = readBaseline();
-    writeFileSync(new URL("report.md", REPORT_DIR), reportMarkdown(results, baseline));
+    const shiftReport = new URL("shift/report.md", REPORT_DIR);
+    const shiftPart = existsSync(shiftReport) ? readFileSync(shiftReport, "utf8") : "";
+    writeFileSync(new URL("report.md", REPORT_DIR), reportMarkdown(results, baseline) + shiftPart);
     writeFileSync(new URL("results.json", REPORT_DIR), JSON.stringify(results));
     const problems = judgeBaseline(
       baseline,
@@ -117,6 +188,7 @@ export default class OneScreenReporter implements Reporter {
       new Set(SIZES.map((s) => s.name)),
     );
     for (const p of problems) console.error(`one-screen: ${p} (${BASELINE_FILE.pathname})`);
-    return problems.length > 0 && result.status === "passed" ? { status: "failed" } : undefined;
+    if (problems.length > 0 && result.status === "passed") return { status: "failed" };
+    return shift;
   }
 }

@@ -14,7 +14,7 @@ export async function settle(page: Page, pause = 900): Promise<void> {
   await page.waitForTimeout(pause);
 }
 
-function locatorOf(page: Page, step: Step) {
+export function locatorOf(page: Page, step: Step) {
   const nth = step.nth ?? 0;
   if (step.css) return page.locator(step.css).nth(nth);
   // eslint-disable-next-line security/detect-non-literal-regexp -- the pattern comes from the checked-in register
@@ -24,7 +24,7 @@ function locatorOf(page: Page, step: Step) {
 }
 
 // One step: a key press on the page, the choice of an option in a select (`select`), or a click (issue 1378).
-async function act(page: Page, step: Step): Promise<void> {
+export async function act(page: Page, step: Step): Promise<void> {
   if (step.key !== undefined) return page.keyboard.press(step.key);
   const target = locatorOf(page, step);
   if (step.select !== undefined) await target.selectOption(step.select, { timeout: 8000 });
