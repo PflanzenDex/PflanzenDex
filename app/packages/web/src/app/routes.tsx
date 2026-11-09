@@ -101,7 +101,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
       intro={(sections, fallback) => (
         <>
           <Suspense fallback={null}>
-            <WhatsNewHint />
+            <WhatsNewHint api={api} token={token} />
           </Suspense>
           <TodayIntro
             lookup={SPECIES_LOOKUP}

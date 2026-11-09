@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { newsEntries } from "../news-lines.mjs";
-import { markNewsSeen, NEWS_COUNT, NEWS_ENTRIES, unseenNow } from "../whats-new";
+import { NEWS_ENTRIES, unseenEntries } from "../whats-new";
 import { WhatsNewList, WhatsNewPage } from "./whats-new-page";
 
 beforeEach(() => window.localStorage.clear());
@@ -152,12 +152,13 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
   });
 
   it("US-DEV-06 opening the page marks every line as seen on this device", () => {
-    markNewsSeen(0);
+    window.localStorage.setItem("pflanzendex.news-seen-lines", "[]");
+    expect(unseenEntries()).toHaveLength(NEWS_ENTRIES.length);
     render(
       <MemoryRouter>
         <WhatsNewPage />
       </MemoryRouter>,
     );
-    expect(unseenNow(NEWS_COUNT)).toBe(0);
+    expect(unseenEntries()).toEqual([]);
   });
 });

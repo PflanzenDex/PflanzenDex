@@ -18,3 +18,32 @@ export function writeStored(key: string, value: string): boolean {
     return false;
   }
 }
+
+/** Removes a stored value (US-QS-27, the count of the old news rule after its migration). `false` when storage is unavailable. */
+export function removeStored(key: string): boolean {
+  try {
+    window.localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The value stored for this browser tab's session, or `undefined` when missing or unavailable (US-QS-27). */
+export function readSessionStored(key: string): string | undefined {
+  try {
+    return window.sessionStorage.getItem(key) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Stores a value for this browser tab's session (it ends with the tab). `false` when storage is unavailable (US-QS-27). */
+export function writeSessionStored(key: string, value: string): boolean {
+  try {
+    window.sessionStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}

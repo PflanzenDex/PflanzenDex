@@ -11,8 +11,9 @@
   "line.less": "Weniger anzeigen",
   "heading.unreleased": "Noch nicht veröffentlicht",
   "heading.version": "Version {version} vom {date}",
-  "hint.one": "Neu in Version {version}: 1 Neuerung",
-  "hint.many": "Neu in Version {version}: {count} Neuerungen",
-  "hint.link": "Neuerungen ansehen",
-  "hint.dismiss": "Hinweis ausblenden"
+  "hint.one": "Version {version}: 1 Neuerung",
+  "hint.many": "Version {version}: {count} Neuerungen",
+  "hint.open": "Neuerungen ansehen",
+  "hint.dismiss": "Hinweis ausblenden",
+  "dialog.all": "Alle Neuigkeiten"
 }
