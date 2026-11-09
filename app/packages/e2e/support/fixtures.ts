@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { expect, test as base, type Page } from "@playwright/test";
 import { createTestAccount, type TestAccount } from "./account";
 
@@ -59,4 +60,97 @@ export async function openLocations(page: Page): Promise<void> {
 export async function openFirstPlant(page: Page): Promise<void> {
   await page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first().click();
   await expect(page.getByRole("tab", { name: "Überblick", selected: true })).toBeVisible();
+}
+
+/** Adds a location in "Standorte und Lichtzonen verwalten" (US-LIC-05), without a light zone. */
+export async function createLocation(page: Page, name: string): Promise<void> {
+  await openLocations(page);
+  await addLocation(page);
+  const form = page.getByRole("form", { name: "Standort anlegen" });
+  await form.getByLabel("Name").fill(name);
+  await form.getByRole("button", { name: "Standort anlegen" }).click();
+  await expect(page.getByRole("heading", { level: 3, name })).toBeVisible();
+}
+
+/** The plant whose name contains `name` (a species, or a species with its marker) as its layer with tabs (US-QS-23). */
+export async function openPlant(page: Page, name: string): Promise<void> {
+  await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+  await page.getByRole("list", { name: "Pflanzen" }).getByRole("button", { name }).click();
+  await expect(page.getByRole("tab", { name: "Überblick", selected: true })).toBeVisible();
+}
+
+/**
+ * Proposes a species in the catalog and chooses it, as measure.spec does. The dormancy period is optional and given as
+ * month-day, both or none (US-QS-24).
+ */
+export async function proposeSpecies(
+  page: Page,
+  latinName: string,
+  dormancy?: { from: string; until: string },
+): Promise<void> {
+  // The catalog is the mode "Katalog" of Entdecken (US-QS-14).
+  await page.getByRole("link", { name: "Entdecken", exact: true }).click();
+  await page.getByRole("button", { name: "Katalog" }).click();
+  await page.getByRole("button", { name: "Art vorschlagen" }).first().click();
+  const proposal = page.getByRole("form", { name: "Art vorschlagen" });
+  await proposal.getByLabel("Lateinischer Name").fill(latinName);
+  await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
+  await proposal.getByRole("button", { name: "Weiter" }).click();
+  await proposal.getByLabel("Vergeilung-Anzeichen").fill("Die Rosette streckt sich.");
+  await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");
+  if (dormancy) {
+    await proposal.getByText("Mehr Angaben", { exact: true }).click();
+    await proposal.getByLabel("Ruhephase von (Monat-Tag)").fill(dormancy.from);
+    await proposal.getByLabel("Ruhephase bis (Monat-Tag)").fill(dormancy.until);
+  }
+  await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
+  await page.getByRole("button", { name: "Diese Art wählen" }).click();
+}
+
+/** Chooses a species the catalog already holds, found by its Latin name in the search (the species profile). */
+export async function chooseSpecies(page: Page, latinName: string): Promise<void> {
+  await page.getByRole("link", { name: "Entdecken", exact: true }).click();
+  await page.getByRole("button", { name: "Katalog" }).click();
+  await page.getByLabel("Lateinischer oder deutscher Name").fill(latinName);
+  await page.getByRole("button", { name: latinName }).click();
+  await page.getByRole("button", { name: "Diese Art wählen" }).click();
+}
+
+/** Creates the plant of the chosen species ("Pflanze anlegen"); the marker and the cutting are optional. */
+export async function createPlant(
+  page: Page,
+  options: { location: string; marker?: string; cutting?: boolean },
+): Promise<void> {
+  const form = page.getByRole("form", { name: "Pflanze anlegen" });
+  await form.getByLabel("Standort", { exact: true }).selectOption({ label: options.location });
+  if (options.marker) await form.getByLabel(/^Kennzeichen/).fill(options.marker);
+  if (options.cutting) await form.getByLabel("Das ist ein Steckling").check();
+  await form.getByRole("button", { name: "Pflanze anlegen" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
+}
+
+/** The local calendar date `YYYY-MM-DD` of a zone now, as a UTC midnight date: the day the server computes as "today" (NFR-08). */
+export function localToday(zone: string): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: zone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const part = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return new Date(Date.UTC(part("year"), part("month") - 1, part("day")));
+}
+
+/** `MM-DD` of the calendar day `offset` days from `base` (UTC arithmetic on a calendar date, no time zone shift). */
+export function monthDay(base: Date, offset: number): string {
+  const day = new Date(base.getTime() + offset * 86_400_000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(day.getUTCMonth() + 1)}-${pad(day.getUTCDate())}`;
+}
+
+/** A Latin name no run has used: the catalog is shared, and a name is two words of letters (DM-BES-01). */
+export function uniqueLatin(genus: string): string {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const epithet = [...randomBytes(10)].map((b) => letters[b % letters.length]).join("");
+  return `${genus} ${epithet}`;
 }
