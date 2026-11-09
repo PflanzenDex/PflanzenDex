@@ -125,6 +125,18 @@
         ]
       }
     ],
+    "SubagentStop": [
+      {
+        "matcher": "implementer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" subagent-stop",
+            "timeout": 900
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
