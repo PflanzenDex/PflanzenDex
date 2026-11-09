@@ -111,7 +111,7 @@ Every worktree starts its own test database, so the local containers are capped 
 
 ## One heavy job at a time (US-DEV-08, issue 1745)
 
-The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so much that two of them at once, from two worktrees, got the IDE killed by systemd-oomd. `make heavy-lock` (`tools/lint/heavy-lock.sh`) therefore runs first in `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse`, `lighthouse-signed` and `ci`. It is one lock for the whole machine: the first job runs, and a second job from any worktree of the checkout prints what it waits for and starts when the first one ends.
+The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so much that two of them at once, from two worktrees, got the IDE killed by systemd-oomd. `make heavy-lock` (`tools/lint/heavy-lock.sh`) therefore runs first in `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse` and `lighthouse-signed`; `make ci` takes the same lock in its parts runner (`app/tools/dev/agent/ci-parts.mjs`) before the first part, so it keeps no make prerequisite that could stop it (US-QG-02). It is one lock for the whole machine: the first job runs, and a second job from any worktree of the checkout prints what it waits for and starts when the first one ends.
 
 - **Where the lock lives:** in the git common dir, so every worktree of the checkout shares it. `heavy-job.lock` is the lock itself (an empty file that stays). `heavy-job.owner` is one line while the lock is held: owner pid, directory, target and time (UTC).
 - **See the holder:** `cat "$(git rev-parse --git-common-dir)/heavy-job.owner"`. A waiting job prints the same holder.

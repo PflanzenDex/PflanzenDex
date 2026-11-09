@@ -387,7 +387,7 @@ gate-plan: ## Declares the gate files this branch will change (FILES="a b", path
 
 # The local run of every part, one at a time, and every part also after a failure (US-QG-02, issue 1636). The parts, their
 # order and their dependencies are CI_PARTS in app/tools/check/quality/gates/gate-steps.mjs; the runner is app/tools/dev/agent/ci-parts.mjs.
-ci: heavy-lock ## All parts of the local CI in order (secrets, workflows, database, gates, tests, coverage, UI build); every part runs, every failure is listed at the end, exit 1 when one failed (US-QG-02)
+ci: ## All parts of the local CI in order (secrets, workflows, database, gates, tests, coverage, UI build); every part runs, every failure is listed at the end, exit 1 when one failed (US-QG-02)
 	cd $(APP) && npm run ci
 
 # The parts of `make ci`; CI runs them as parallel jobs (US-QG-02, #1118), locally `make ci` runs them one at a time.
