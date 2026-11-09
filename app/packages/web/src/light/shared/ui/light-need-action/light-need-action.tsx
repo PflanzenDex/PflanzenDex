@@ -11,15 +11,27 @@ const CARE_SHEET = "care";
 /**
  * The one next step for an unknown light need (US-LIC-01, P-09): "Lichtbedarf eintragen" opens the care profile of the
  * species at the zone choice. Every view that derives a zone shows this one control. Inside that profile `onChoose`
- * moves the focus to the zone choice instead of opening the address again.
+ * moves the focus to the zone choice instead of opening the address again. `inline` is a text link inside a line of
+ * text that already names the species; its accessible name keeps the species (no button height, the distribution has no room for one).
  */
 export function LightNeedAction(props: {
   speciesId: string;
   speciesName: string;
   onChoose?: () => void;
+  inline?: boolean;
 }) {
   const label = t("need.labelFor", { name: props.speciesName });
   const onChoose = props.onChoose;
+  if (props.inline)
+    return (
+      <Link
+        to={`${profileAddress(props.speciesId)}?sheet=${CARE_SHEET}`}
+        aria-label={label}
+        className="font-semibold text-foreground underline underline-offset-2"
+      >
+        {t("need.action")}
+      </Link>
+    );
   if (onChoose !== undefined)
     return (
       <Button type="button" variant="outline" size="sm" aria-label={label} onClick={onChoose}>

@@ -37,6 +37,17 @@ describe("US-LIC-01 the next step of an unknown light need (P-09)", () => {
     expect(link.getAttribute("href")).toBe("/discover/species/sp7?sheet=care");
   });
 
+  it("US-LIC-01: Given the inline variant in a line of text, when it is shown, then it is a text link with the species name", () => {
+    render(
+      <MemoryRouter>
+        <LightNeedAction speciesId="sp7" speciesName="Monstera" inline />
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole("link", { name: "Lichtbedarf eintragen für „Monstera“" });
+    expect(link.textContent).toBe("Lichtbedarf eintragen");
+    expect(link.getAttribute("href")).toBe("/discover/species/sp7?sheet=care");
+  });
+
   it("US-LIC-01: Given the zone choice on the same page, when the next step is used, then the focus moves to the zone choice", async () => {
     render(<ZoneChoiceNextStep />);
     await userEvent.click(

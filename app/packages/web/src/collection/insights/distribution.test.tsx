@@ -39,7 +39,7 @@ afterEach(() => {
 });
 
 describe("US-LIC-01 the distribution names the species without lux need (P-08, P-09)", () => {
-  it("names each species whose lux need is unknown, with the next step to its care profile", () => {
+  it("names the species whose lux need is unknown on the not-counted line, with the next step to its care profile", () => {
     render(
       <MemoryRouter>
         <DistributionView
@@ -50,13 +50,11 @@ describe("US-LIC-01 the distribution names the species without lux need (P-08, P
         />
       </MemoryRouter>,
     );
-    const list = screen.getByRole("list", { name: "Arten ohne Lichtbedarf" });
-    expect(list.textContent).toContain("Bogenhanf");
-    expect(
-      within(list)
-        .getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" })
-        .getAttribute("href"),
-    ).toBe("/discover/species/s9?sheet=care");
+    const link = screen.getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" });
+    expect(link.getAttribute("href")).toBe("/discover/species/s9?sheet=care");
+    expect(screen.getByText(/Nicht mitgezählt: 1 mit unbekannter Zone/).textContent).toContain(
+      "Lichtbedarf eintragen",
+    );
   });
 });
 
