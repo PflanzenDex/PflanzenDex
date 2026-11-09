@@ -14,6 +14,7 @@ import { PlantsScreen } from "../../../plants-screen";
 import { useListActions, type ListActions } from "../../../../specimens/hooks/use-list-actions";
 import type { CardPages } from "../../../../specimens/cards/use-card-pages";
 import { formText, type FormAddress, type FormPlant } from "../address/form-address";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
  * A close of a form by its own control goes through the address: with unsaved input it asks first (US-QS-15). The state
@@ -113,9 +114,11 @@ export function Views(p: {
   // An addressed form whose plant is still read: the list waits for it (a reload); once read, the form or the list shows.
   if (form.kind !== null && formPlant.card === undefined && !formPlant.failed) {
     return (
-      <p role="status" className="text-sm text-muted-foreground">
-        {formText("loading")}
-      </p>
+      <DelayedSkeleton>
+        <p role="status" className="text-sm text-muted-foreground">
+          {formText("loading")}
+        </p>
+      </DelayedSkeleton>
     );
   }
   return (

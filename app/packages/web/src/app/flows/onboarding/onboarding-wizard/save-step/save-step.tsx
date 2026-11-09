@@ -8,6 +8,7 @@ import {
 } from "@pflanzendex/core";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Label } from "@/shared/ui/display/label/label";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { MarkerSection, type MarkerSectionProps } from "@/collection";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
@@ -18,6 +19,15 @@ import table from "./save-step.de.json";
 
 const ui = texts(table);
 type Token = () => Promise<string | undefined>;
+
+/** A block of the field's size while the section's chunk arrives; it shows after the delay (DS-57, issue 1726). */
+function FieldSkeleton() {
+  return (
+    <DelayedSkeleton>
+      <Skeleton className="h-20 w-full" />
+    </DelayedSkeleton>
+  );
+}
 
 /** The own zones; a new account has none yet, so the standard lamps are laid out silently first (US-ONB-02 gives them from the start). */
 async function ownZones(
@@ -102,7 +112,7 @@ export function SaveStep(props: {
       </p>
       {props.marker && (
         // The section arrives with its own chunk (issue 1638): a block of the field's size meanwhile.
-        <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+        <Suspense fallback={<FieldSkeleton />}>
           <MarkerSection
             key={species.id}
             form={props.marker.form}

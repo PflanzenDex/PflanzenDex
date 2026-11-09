@@ -5,6 +5,7 @@
 // ones that the head's own workflow defines and that its path filter and base branch require (ci.yml, `changes`).
 import { evidenceOf, isActionsCheck, scanRowsOf } from "../ci-reuse.mjs";
 import { jobOf, resultOf, shardsOf } from "./ci-shards.mjs";
+import { heldBy, unknownProblems } from "./quarantine.mjs";
 
 export const MAX_FILES = 3000; // the REST list of changed files stops at 3000 entries
 
@@ -94,19 +95,23 @@ function problemOf(job, result, required) {
   return QUIET.has(result) ? null : `${job}: ${result}`;
 }
 
-/** One row per judged job: its result, the run that gave it and the problem it causes (null when none). */
-export function rowsOf(checkRuns, required, defined) {
+/**
+ * One row per judged job: its result, its run, the problem (null when none); `excused`: the list entry that quarantines it.
+ */
+export function rowsOf(checkRuns, required, defined, quarantine = []) {
   return JOBS.map((job) => {
     const isRequired = required.has(job);
     const fallback = isRequired ? "never ran" : defined.has(job) ? "skipped" : NOT_IN_WORKFLOW;
     const { result, ev } = resultOf(shardsOf(checkRuns, job), fallback);
+    const excused = heldBy(quarantine, job, result);
     return {
       job,
       required: isRequired,
       result,
       run: ev?.run ?? null,
       at: ev?.at ?? null,
-      problem: problemOf(job, result, isRequired),
+      excused,
+      problem: excused ? null : problemOf(job, result, isRequired),
     };
   });
 }
@@ -117,10 +122,10 @@ export function rowsOf(checkRuns, required, defined) {
  * `settled` with the problems (empty when every required job succeeded and no code-scanning check failed).
  */
 export function assess(snap) {
-  const { pr, head, checkRuns, workflowRuns, files } = snap;
+  const { pr, head, checkRuns, workflowRuns, files, quarantine = [] } = snap;
   const defined = snap.defined ?? new Set(JOBS);
   const required = requiredJobs({ files, base: pr.base, draft: pr.draft, defined });
-  const rows = [...rowsOf(checkRuns, required, defined), ...scanRowsOf(checkRuns)];
+  const rows = [...rowsOf(checkRuns, required, defined, quarantine), ...scanRowsOf(checkRuns)];
   const aggregate = evidenceOf(
     checkRuns.filter((c) => c.name === "ci-status" && isActionsCheck(c)),
   );
@@ -142,7 +147,7 @@ export function assess(snap) {
   // A matrix shard counts as its job (issue 1682): `app-tests-web (1)` is a CI check of the job `app-tests-web`.
   const ciRan = checkRuns.some((c) => isActionsCheck(c) && CI_NAMES.has(jobOf(c.name)));
   const problems = ciRan
-    ? rows.map((r) => r.problem).filter(Boolean)
+    ? [...unknownProblems(quarantine, defined), ...rows.map((r) => r.problem).filter(Boolean)]
     : ["no CI run on the head commit"];
   return { ...base, status: "settled", problems };
 }

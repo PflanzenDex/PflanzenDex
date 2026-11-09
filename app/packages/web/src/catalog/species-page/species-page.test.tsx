@@ -10,6 +10,7 @@ import { createQueryClient } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SEARCH_KEY } from "../species-hooks";
 import { SpeciesPage } from "./species-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -154,8 +155,9 @@ describe("US-BES-01 Seite Arten", () => {
 
   it("US-BES-01 · DS-48 the search shows a skeleton with one status while it loads", async () => {
     fakeServer({ species: [hit] });
+    delayLoads();
     render(page());
-    expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+    expect((await screen.findByRole("status")).textContent).toContain("Suche läuft");
     expect(await screen.findByRole("button", { name: /Dracaena trifasciata/ })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
   });
@@ -327,11 +329,12 @@ describe("NFR-13 the action bar of the profile at a larger text size (issue 1217
 });
 
 describe("US-BES-01 the page starts with the search", () => {
-  it("the page starts with the search and loads, without inventing anything", () => {
+  it("the page starts with the search and loads, without inventing anything", async () => {
     fakeServer();
+    delayLoads();
     render(page());
     expect(screen.getByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+    expect((await screen.findByRole("status")).textContent).toContain("Suche läuft");
   });
 });
 

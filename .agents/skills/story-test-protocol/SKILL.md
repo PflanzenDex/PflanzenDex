@@ -16,6 +16,7 @@ Automated tests come first (skill `spec-to-tests`). The protocol covers what the
 7. Mark assumptions (limits, start values) as ⚠️ with "assumption" (P-08). Mark everything you did not do as ⏭️; never write ✅ for something only a test shows without saying so.
 8. End with "Open points": follow-up work, known limits, and anything environment-specific. Link the protocol from the PR description under "Test evidence".
 9. A ❌ or an unexpected ⚠️ becomes a failing automated test first where possible, then a fix, then the protocol is updated.
+10. Sign-in per browser context: Playwright contexts built from one storageState share the refresh token. The second renewal fails (Keycloak answers 400 and the app signs out), and access tokens live 300 s. Sign in once per context, or keep a stored state younger than 2 minutes.
 
 ## Check
 

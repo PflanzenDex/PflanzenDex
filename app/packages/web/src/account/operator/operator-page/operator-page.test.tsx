@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>
@@ -474,17 +475,18 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
 });
 
 describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
-  it("US-ACC-05 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
+  it("US-ACC-05 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
+    delayLoads();
     const { container } = render(
       <MemoryRouter>
         <OperatorPage api="http://api" token={token} />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("status").textContent).toContain("Zahlen werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("Zahlen werden geladen");
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
   });
 

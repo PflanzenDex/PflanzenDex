@@ -4,6 +4,7 @@ import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/l
 import { dateText, valueText } from "@/shared/lib/format";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { useRequest } from "../../shared/data";
 import { loadYear, type YearAnswer, type YearPhoto } from "./year-api";
 import table from "./year-in-review.de.json";
@@ -113,9 +114,11 @@ function YearBody(props: { api: string; token: Token }) {
   const v = r.value;
   if (!v) {
     return r.status === "pending" ? (
-      <p role="status" className="m-0 text-sm">
-        {t("loading")}
-      </p>
+      <DelayedSkeleton>
+        <p role="status" className="m-0 text-sm">
+          {t("loading")}
+        </p>
+      </DelayedSkeleton>
     ) : null;
   }
   if (v.calmMode || !v.counts) return null;
@@ -126,9 +129,11 @@ function YearBody(props: { api: string; token: Token }) {
       <p className="m-0 flex flex-wrap items-baseline gap-x-2 font-semibold">
         {t("heading", { year: v.year })}
         {r.placeholder && (
-          <span role="status" className="text-sm font-normal text-muted-foreground">
-            {t("refreshing")}
-          </span>
+          <DelayedSkeleton>
+            <span role="status" className="text-sm font-normal text-muted-foreground">
+              {t("refreshing")}
+            </span>
+          </DelayedSkeleton>
         )}
       </p>
       <div className="flex flex-wrap gap-2">

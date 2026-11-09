@@ -9,6 +9,7 @@ import { PokedexPage } from "./pokedex-page";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./pokedex-page.de.json";
 import { MilestonesSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -72,8 +73,9 @@ afterEach(() => {
 describe("US-POK-06 page of the caught species", () => {
   it("US-POK-06 · US-QS-22 shows every caught species as a compact entry with its catch date", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    delayLoads();
     view(<PokedexPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     expect(await screen.findByRole("heading", { level: 1, name: "Pokédex" })).toBeTruthy();
     const entries = within(screen.getByRole("list", { name: "Gefangene Arten" })).getAllByRole(
       "listitem",

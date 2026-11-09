@@ -15,6 +15,7 @@ Migrations are forward-only SQL files applied by `migrate()` in `app/packages/db
 6. Test: `app/packages/db/src/kernel/migrate.test.ts` covers the mechanism; add a test next to the adapter that uses the new schema against real data. For data-moving migrations seed realistic rows first, migrate, then assert.
 7. Apply locally with `make migrate` (uses `DATABASE_URL`, otherwise the test database from `make db-up`). Run it twice: the second run must apply nothing.
 8. Before a migration runs in production: `make backup` (script `app/config/deploy/scripts/backup.sh`) and confirm it wrote a readable dump. Restore procedure: `docs/guides/operations/staging-deploy-and-backup.md`. `make restore-test` proves a dump restores.
+9. A new table: update `app/packages/db/src/kernel/module-schema.test.ts` in the same PR. Its table owners and foreign keys across module boundaries (FR-QG-19) are listed by hand. Run the db suite locally before the push, not first in CI.
 
 ## Check
 

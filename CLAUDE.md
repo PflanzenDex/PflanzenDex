@@ -43,12 +43,15 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 - Every change lives on a dedicated short-lived branch (one task, one worktree) and enters `dev` through a pull request. `dev` collects changes until a release; then `dev` goes into `main` through a pull request.
 - Commit messages follow Conventional Commits (type and scope from the epics, e.g. `feat(soz)`), `docs:` for documentation. Allowed types and scopes live in `app/config/project/commitlint.config.js`; the PR title is checked the same way because the squash merge turns it into the commit message. Spec status and counters in `docs/specs/product/readme.md` change in the same PR as the code.
 - `make setup` activates the Git hooks in `.githooks/`: `commit-msg` (commitlint), `pre-commit` (Prettier and ESLint on staged files), `pre-push` (`make gates`). Never bypass them with `--no-verify`. CI repeats every check anyway.
+- `Closes #n` closes the issue only when its PR reaches `main`, the default branch; the board status follows the PR (`project-status.yml`). A PR for a partial step uses `Refs #n` instead.
 - The product epic MIG (import from the vault) was dropped; its IDs stay reserved.
 
 ## Agent sessions and models
 
 - The orchestrating session (claims, briefs, reviews every diff, checks CI, writes the PR) runs on **Opus at effort medium**.
 - Two agent types live in `.claude/agents/`: `implementer` (model `haiku`, effort `xhigh`, owner decision 2026-11-03; edits, commits and pushes) and `scout` (read-only search and measurement). Start them with `subagent_type: "implementer"` or `"scout"`. Their definitions hold the fixed rules (worktree `cd`, no `.env`, commit scope, gate plan, commit and push only), so a brief holds only what is specific to the ticket: worktree, scope, files, done criteria, measurements, story ID, and the gate files it may touch. The orchestrator reviews the diff and checks CI on the head itself before handing over.
+- An orchestrating session works a batch of tickets through subagents. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions (owner decision 2026-11-09, issue 1747). Every PR fills its "Lessons" section; `make pr` refuses it when it is missing, empty or malformed.
+- Start an implementer in the worktree that `make worktree` made: name that path in the brief, and never pass `isolation: "worktree"` when the claimed worktree exists (the agent then works outside its claim). A subagent's report can be wrong ("done" with the work unpushed, "every page checked" without the loop): check `git log origin/<branch>`, the diff and the head's check runs yourself.
 - Every commit an implementer makes ends with the trailer `Implementer: <model>`; the orchestrator sets none. The issue flow retro (US-DEV-11) reads that trailer to count implementer rework.
 
 ## Priority of tickets

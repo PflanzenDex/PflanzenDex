@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
 import { NavNote } from "@/shared/patterns/navigation/nav-note/nav-note";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /** A count that is still loading, failed to load, or is known (P-10); calm mode passes `hidden` (US-ACH-08). */
 export type TileCount = number | "loading" | "error" | "hidden";
@@ -12,7 +13,12 @@ const TILE =
 
 function CountText({ count }: { count: TileCount }) {
   if (count === "hidden") return null;
-  if (count === "loading") return <span className="text-sm text-muted-foreground">lädt …</span>;
+  if (count === "loading")
+    return (
+      <DelayedSkeleton>
+        <span className="text-sm text-muted-foreground">lädt …</span>
+      </DelayedSkeleton>
+    );
   if (count === "error")
     return <span className="text-sm text-muted-foreground">nicht geladen</span>;
   // Zero reads as "nothing to do", not as a number to work through (issue 1045).

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # `make pr [PR=<n>]` (US-DEV-13, issue 1608): the step before a pull request goes to review. Order: the refusals, the pull
-# request read over REST, a preflight (commitlint on the title and `make changelog-check`, the checks of CI's `metadata`
-# job), the push, a wait until GitHub shows the pushed head, and only then the PR is marked ready. A draft runs no CI
+# request read over REST, a preflight (commitlint on the title, `make changelog-check`, the Lessons section of the body
+# (US-DEV-05), the checks of CI's `metadata` job), the push, a wait until GitHub shows the pushed head, and only then the PR is marked ready. A draft runs no CI
 # (ci.yml), so the `ready_for_review` run is the one CI run of the PR, and it tests the head that was pushed.
 # It does not touch README.md: the statistics block changes with every merge into dev, so regenerating it per PR made
 # parallel PRs conflict (owner decision 2026-10-05). The block is regenerated once per release PR (skill release-checklist)
@@ -72,6 +72,12 @@ if ! MSG="$title" make -s commitlint; then
 fi
 if ! PR_TITLE="$title" PR_BODY="$body" PR_BASE_SHA="$base_sha" PR_BASE_REF="$base_ref" make -s changelog-check; then
   echo "pr-ready: the changelog check fails; nothing was pushed or marked. Add the news entry (app/packages/web/src/news/unreleased/<issue>-<slug>.json) or [skip-changelog] to the PR body (make pr-text BODY=<file>), then run make pr again." >&2
+  exit 1
+fi
+# The Lessons section (US-DEV-05, issue 1747): one line per lesson or `none`. The check prints the problems and the pointer to
+# the skill recap-and-learnings; the PR body is passed in the environment only.
+if ! PR_BODY="$body" node app/tools/check/docs/agents/pr-lessons.mjs; then
+  echo "pr-ready: the Lessons section of the PR body fails; nothing was pushed or marked. Fill it with make pr-text BODY=<file> (the lessons come from the skill recap-and-learnings), then run make pr again." >&2
   exit 1
 fi
 

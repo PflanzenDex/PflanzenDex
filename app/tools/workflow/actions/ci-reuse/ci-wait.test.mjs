@@ -25,6 +25,13 @@ const fixtures = JSON.parse(
 const CI_YML = new URL("../../../../../.github/workflows/ci.yml", import.meta.url);
 const REPO = "PflanzenDex/PflanzenDex";
 const HEAD_1476 = "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe";
+// US-QG-06: an entry of the quarantine list as the tests need it (the list of the merge commit, none in the fixtures).
+const QUARANTINED_LIGHTHOUSE = {
+  job: "lighthouse",
+  since: "2026-11-09",
+  issue: 1748,
+  reason: "red on dev",
+};
 
 /** The snapshot of a fixture PR, as readSnapshot builds it. */
 function snapOf(key) {
@@ -586,6 +593,7 @@ test("US-DEV-13: readSnapshot reads every page of the check runs over REST and t
   }));
   const ciText =
     "on:\n  push:\njobs:\n  changes:\n    runs-on: x\n  ci-status:\n    needs: [changes]\n";
+  const listText = JSON.stringify({ maxEntries: 1, entries: [QUARANTINED_LIGHTHOUSE] });
   const calls = [];
   const client = {
     async run(cmd, args) {
@@ -607,6 +615,9 @@ test("US-DEV-13: readSnapshot reads every page of the check runs over REST and t
       if (path.includes("/contents/.github/workflows/ci.yml?ref=")) {
         return JSON.stringify({ content: Buffer.from(ciText).toString("base64") });
       }
+      if (path.includes("/contents/app/config/gates/baselines/quarantine-baseline.json?ref=")) {
+        return JSON.stringify({ content: Buffer.from(listText).toString("base64") });
+      }
       throw new Error(`unexpected call: ${path}`);
     },
   };
@@ -617,6 +628,7 @@ test("US-DEV-13: readSnapshot reads every page of the check runs over REST and t
   assert.equal(snap.files.length, 3);
   assert.deepEqual([...snap.defined].sort(), ["changes", "ci-status"]);
   assert.ok(calls.some((p) => /check-runs\?filter=all&per_page=100&page=2$/.test(p)));
+  assert.deepEqual(snap.quarantine, [QUARANTINED_LIGHTHOUSE], "US-QG-06: the list is read too");
 });
 
 test("US-DEV-13: a head without a ci.yml defines no job, so nothing is required from it", async () => {
@@ -783,6 +795,7 @@ test("US-DEV-13 (issue 1608): the jobs come from the ci.yml of the merge commit,
   const pull = { ...fixtures.pr1476.pull, merge_commit_sha: merge };
   const s = snapOf("pr1476");
   const refs = [];
+  const listRefs = [];
   const client = {
     async run(cmd, args) {
       const path = args[1];
@@ -801,12 +814,25 @@ test("US-DEV-13 (issue 1608): the jobs come from the ci.yml of the merge commit,
             : "jobs:\n  ci-status:\n    needs: []\n";
         return JSON.stringify({ content: Buffer.from(yml).toString("base64") });
       }
+      // US-QG-06: the quarantine list is read at the same commit (none here: the file of the merge commit has no entries).
+      const list =
+        /\/contents\/app\/config\/gates\/baselines\/quarantine-baseline\.json\?ref=(\w+)$/.exec(
+          path,
+        );
+      if (list) {
+        listRefs.push(list[1]);
+        return JSON.stringify({
+          content: Buffer.from('{ "maxEntries": 0, "entries": [] }').toString("base64"),
+        });
+      }
       throw new Error(`unexpected call: ${path}`);
     },
   };
   const snap = await readSnapshot(client, 1476);
   assert.deepEqual([...snap.defined], ["changes"]);
   assert.deepEqual(refs, [merge]);
+  assert.deepEqual(listRefs, [merge], "US-QG-06: the list is read at the same commit as the jobs");
+  assert.deepEqual(snap.quarantine, []);
 });
 
 // US-QG-02 (issue 1608): the job `results` fails for each part that failed, and for nothing else. Its last step is run here
@@ -1014,4 +1040,65 @@ test("US-QG-02 (issue 1682): a plain app-tests-web check of an older head still 
   const a = assess(red);
   assert.equal(rowOf(a, "app-tests-web").result, "failure");
   assert.deepEqual(a.problems, ["app-tests-web: failure"]);
+});
+
+// US-QG-06: a quarantined job reports its red result and blocks nothing, as ci-status reads it (the same list).
+const quarantineOf = (...entries) =>
+  entries.map((job) => ({ job, since: "2026-11-09", issue: 1748, reason: "red on dev" }));
+const redTests = (s) => ({
+  ...s,
+  checkRuns: s.checkRuns.map((c) =>
+    c.name === "app-tests-web" ? { ...c, conclusion: "failure" } : c,
+  ),
+});
+
+test("US-QG-06: a red required job of the list is no problem, and the verdict names it as quarantined", () => {
+  const s = open(snapOf("pr1476"));
+  const a = assess({ ...redTests(s), quarantine: quarantineOf("app-tests-web") });
+  assert.deepEqual(a.problems, []);
+  assert.equal(a.status, "settled");
+  assert.equal(exitCodeOf(a), 0);
+  assert.equal(rowOf(a, "app-tests-web").excused.issue, 1748, "the entry that excuses the row");
+  assert.match(report(a), /app-tests-web .* quarantined since 2026-11-09, #1748 \(report only\)/);
+  assert.match(
+    report(a),
+    /green on .* except the quarantined jobs \(report only\): app-tests-web\./,
+    "a green verdict never hides a quarantined job (P-10)",
+  );
+  assert.equal(
+    stateLine(a),
+    "green on 3f89472c, except the quarantined jobs (report only): app-tests-web (ci-status: success, not judged)",
+    "the gate review names the quarantined job, it never reads as all green",
+  );
+});
+
+test("US-QG-06: without the list the same red job is a problem; the list names only the job it lists", () => {
+  const s = open(snapOf("pr1476"));
+  assert.deepEqual(assess(redTests(s)).problems, ["app-tests-web: failure"]);
+  const other = assess({ ...redTests(s), quarantine: quarantineOf("lighthouse") });
+  assert.deepEqual(other.problems, ["app-tests-web: failure"]);
+  assert.equal(rowOf(other, "app-tests-web").excused, null);
+});
+
+test("US-QG-06: a required job that never ran stays a problem, even when the list names it", () => {
+  const s = open(snapOf("pr1476"));
+  const none = { ...s, checkRuns: s.checkRuns.filter((c) => c.name !== "app-ui") };
+  const a = assess({ ...none, quarantine: quarantineOf("app-ui") });
+  assert.deepEqual(a.problems, ["app-ui: never ran, but ci.yml requires it for this PR"]);
+});
+
+test("US-QG-06: a list entry that names no job of the head's workflow is a problem (fail closed)", () => {
+  const s = open(snapOf("pr1476"));
+  const a = assess({ ...s, quarantine: quarantineOf("no-such-job") });
+  assert.deepEqual(a.problems, ["quarantine list names no-such-job, which ci.yml does not define"]);
+  assert.equal(exitCodeOf(a), 1);
+});
+
+test("US-QG-06: make merge is refused by a red job only when the list does not quarantine it", () => {
+  const s = open(snapOf("pr1476"));
+  assert.deepEqual(
+    problemsNow(assess({ ...redTests(s), quarantine: quarantineOf("app-tests-web") })),
+    [],
+  );
+  assert.deepEqual(problemsNow(assess(redTests(s))), ["CI: app-tests-web: failure"]);
 });

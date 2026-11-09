@@ -8,6 +8,7 @@ import { PlantLocation } from "../../plants-screen/plant-layers/plant-layer/plan
 import { PlantOverview } from "../../plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
 import { loadAllCardsOf, loadCard, loadCardPage, loadCardSummary } from "./cards-api";
 import { answerCardRead } from "../tests/cards-fake";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -231,8 +232,9 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
         response(404, { error: { code: "measurement.photo_not_found", text: "raw" } }),
       ),
     );
+    delayLoads();
     show();
-    expect(screen.getByText("Lädt …")).toBeTruthy();
+    expect(await screen.findByText("Lädt …")).toBeTruthy();
     expect(await screen.findByText("Zu dieser Messung gibt es kein Foto.")).toBeTruthy();
   });
 });

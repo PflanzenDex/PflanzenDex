@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CarePhasesPage } from "./care-phases-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -40,20 +41,22 @@ describe("US-PHA-01 page of the care phases", () => {
       "/care-phases": () => response(200, { phases: [phase] }),
       "/locations": () => response(200, { locations: [location] }),
     });
+    delayLoads();
     render(<CarePhasesPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     expect(await screen.findByText("Bogenhanf")).toBeTruthy();
     expect(screen.getByText("Soll-Phase heute: Ruhephase")).toBeTruthy();
     expect(screen.getByText("Standort: Regal Süd")).toBeTruthy();
   });
 
-  it("US-PHA-01 · DS-52 while loading, a skeleton carries the one loading status", () => {
+  it("US-PHA-01 · DS-52 while loading, a skeleton carries the one loading status", async () => {
     fakeServer({
       "/care-phases": () => new Promise<Response>(() => undefined),
       "/locations": () => response(200, { locations: [] }),
     });
+    delayLoads();
     const { container } = render(<CarePhasesPage api="http://api" token={token} />);
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
       0,
     );

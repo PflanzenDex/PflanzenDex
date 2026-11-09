@@ -149,6 +149,15 @@ function prFixture(t) {
     rmSync(origin, { recursive: true, force: true });
     rmSync(bin, { recursive: true, force: true });
   });
+  // The Lessons check of pr-ready.sh (US-DEV-05) runs from the repository root, so the throwaway checkout carries its module.
+  const lessonsCheck = "app/tools/check/docs/agents/pr-lessons.mjs";
+  write(
+    dir,
+    lessonsCheck,
+    readFileSync(fileURLToPath(new URL(`../../../${lessonsCheck}`, import.meta.url)), "utf8"),
+  );
+  git(dir, "add", "-A");
+  git(dir, "commit", "-q", "-m", "lessons check");
   git(origin, "init", "-q", "--bare");
   git(dir, "remote", "add", "origin", origin);
   git(dir, "push", "-q", "-u", "origin", "feat/abc-02-growth");
@@ -159,7 +168,7 @@ function prFixture(t) {
     JSON.stringify({
       number: 42,
       title: "feat(abc): measure growth (US-ABC-02)",
-      body: "Story: US-ABC-02",
+      body: "Story: US-ABC-02\n\n## Lessons\n\nnone\n",
       state: "open",
       draft: true,
       base: { ref: "dev", sha: base },

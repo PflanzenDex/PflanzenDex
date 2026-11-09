@@ -18,7 +18,10 @@ function rowLine(r, width) {
           ? "the workflow of this head commit does not define it"
           : "no run finished it";
   const need = r.scanning ? "scanning" : r.required ? "required" : "optional";
-  return `  ${r.job.padEnd(width)} ${r.result.padEnd(RESULT_WIDTH)} ${need.padEnd(8)} ${detail}`;
+  const held = r.excused
+    ? `, quarantined since ${r.excused.since}, #${r.excused.issue} (report only)`
+    : "";
+  return `  ${r.job.padEnd(width)} ${r.result.padEnd(RESULT_WIDTH)} ${need.padEnd(8)} ${detail}${held}`;
 }
 
 function verdictOf(a) {
@@ -37,10 +40,14 @@ function verdictOf(a) {
       const open = a.unfinished?.join(", ") ?? "GitHub has not computed mergeability yet";
       return `ci-wait: timed out after ${minutes} min; still open: ${open}. Look at the checks of PR #${n} on GitHub.`;
     }
-    default:
-      return a.problems.length
-        ? `ci-wait: not green: ${a.problems.join("; ")}`
-        : `ci-wait: green, every required job succeeded on ${shortSha(a.head)}.`;
+    default: {
+      if (a.problems.length) return `ci-wait: not green: ${a.problems.join("; ")}`;
+      // A quarantined red job is named, so a green verdict never hides it (US-QG-06, P-10).
+      const held = a.rows.filter((r) => r.excused).map((r) => r.job);
+      if (held.length)
+        return `ci-wait: green on ${shortSha(a.head)}, except the quarantined jobs (report only): ${held.join(", ")}.`;
+      return `ci-wait: green, every required job succeeded on ${shortSha(a.head)}.`;
+    }
   }
 }
 
@@ -75,10 +82,13 @@ export function stateLine(a) {
       return "not run: the PR is a draft, make pr marks it ready and starts its CI";
     case "running":
       return `running, not waited for: ${shortList(a.unfinished)} (${aggregate})`;
-    case "settled":
-      return a.problems.length
-        ? `not green: ${a.problems.join("; ")} (${aggregate})`
-        : `green, every required job succeeded on ${shortSha(a.head)} (${aggregate})`;
+    case "settled": {
+      if (a.problems.length) return `not green: ${a.problems.join("; ")} (${aggregate})`;
+      const held = (a.rows ?? []).filter((r) => r.excused).map((r) => r.job);
+      if (held.length)
+        return `green on ${shortSha(a.head)}, except the quarantined jobs (report only): ${held.join(", ")} (${aggregate})`;
+      return `green, every required job succeeded on ${shortSha(a.head)} (${aggregate})`;
+    }
     default:
       return `the PR is ${a.status}`;
   }

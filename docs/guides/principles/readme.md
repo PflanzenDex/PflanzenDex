@@ -56,6 +56,16 @@ A new gate starts as a report: an entry at maturity `checked`, whose failure doe
 
 An entry without the field has no date. Dates are set by the owner, never guessed.
 
+## Quarantine
+
+A blocking job that is red on `dev` itself blocks every pull request until someone decides ad hoc. The quarantine is the rule for that case (US-QG-06): the job is listed in `app/config/gates/baselines/quarantine-baseline.json`, one entry per job of `ci.yml`, with `job`, `since` (the day it was listed), `issue` and `reason`.
+
+- A quarantined job still runs and reports. Its red result is named in `make ci-wait`, in the job summary and in the nightly issue as "quarantined since <date>, #<issue>", but it blocks neither `ci-status` nor `make merge`.
+- An entry is added with `make quarantine JOB=<job> ISSUE=<n> REASON="…"` on a branch of its own. The list grows, so the owner merges that pull request (the baseline growth rule, US-QG-07). When `dev` is red, the nightly issue names the job and this command.
+- An entry is removed by deleting it and lowering `maxEntries` by one. That is a shrink and needs no owner.
+- An entry that names a job which `ci.yml` does not define fails `ci-status`, so a typo cannot hide a red job.
+- Maturity states what blocks on `dev` today. While a gate is quarantined it blocks nothing, so its principle entry is set to `checked` in the same pull request, with the Evidence line `Quarantined: since YYYY-MM-DD, #<issue>`. The entry returns to `gated` when the job is off the list.
+
 ## Caught lines (criterion 4)
 
 A gate earns its place by what it catches. When a gate or check caught a real failure, the PR that fixes it writes one line into the Evidence section of the principle it guards:

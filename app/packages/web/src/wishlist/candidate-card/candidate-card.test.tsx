@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CandidateCard } from "./candidate-card";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const mockCandidate = (overrides: Partial<Candidate> = {}): Candidate => ({
   id: "w1",
@@ -194,12 +195,13 @@ describe("US-WUN-06 a stored picture opens large from the card", () => {
 
   it("the large view shows the loading text while the full copy is on its way", async () => {
     routeFetch(() => new Promise<Response>(() => undefined));
+    delayLoads();
     render(
       <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
     );
     await userEvent.click(await screen.findByRole("button", { name: PICTURE }));
     const dialog = await screen.findByRole("dialog", { name: DIALOG });
-    expect(within(dialog).getByRole("status").textContent).toBe("Bild wird geladen …");
+    expect((await within(dialog).findByRole("status")).textContent).toBe("Bild wird geladen …");
   });
 
   it.each([360, 1024])(

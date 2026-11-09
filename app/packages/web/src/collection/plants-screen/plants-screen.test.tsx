@@ -10,6 +10,7 @@ import { openPlant, pagesOf, summaryOf } from "../specimens/tests/plants-test-he
 import { answerCardRead } from "../specimens/tests/cards-fake";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { PlantsScreen } from "./plants-screen";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const card = (id: number, extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   id: `e${id}`,
@@ -285,8 +286,9 @@ describe("US-QS-19 loading and error states of the plants", () => {
 
   it("US-QS-19 · P-10 while loading a skeleton says so, and an error offers Erneut versuchen", async () => {
     fail();
+    delayLoads();
     render(page());
-    expect(screen.getByRole("status").textContent).toContain("Sammlung wird geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("Sammlung wird geladen");
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     vi.unstubAllGlobals();

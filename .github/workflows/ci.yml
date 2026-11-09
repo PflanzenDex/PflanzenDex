@@ -491,8 +491,24 @@ jobs:
         env:
           COVERAGE_UNMEASURED: ${{ needs.changes.outputs.ui == 'false' && 'web' || '' }}
         run: make ci-coverage
+      # US-QG-06: a red ui-shard that the quarantine list names is report only. This step answers for that one job: `quarantined`
+      # exits 0 only for a listed job with a red result. Any other answer, also an unreadable list, keeps the job blocking (fail
+      # closed). Each UI part below then has `continue-on-error` set when quarantined, so a failure reports and does not fail the
+      # job; the verdict step names the quarantine.
+      - name: Quarantine of the UI shards (US-QG-06)
+        id: quarantine
+        if: always() && needs.ui-shard.result != 'skipped' && needs.ui-shard.result != 'success'
+        env:
+          UI_SHARD: ${{ needs.ui-shard.result }}
+        run: |
+          if make ci-quarantine-ui; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ui=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: One-screen shard reports
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         uses: actions/download-artifact@v7
         with:
           pattern: one-screen-shard-*
@@ -500,12 +516,15 @@ jobs:
       - name: Merge the one-screen shards (every screen and size measured once)
         id: merge-one-screen
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         run: make one-screen-merge
       - name: One-screen ratio table per screen and size
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         run: make one-screen-report >> "$GITHUB_STEP_SUMMARY"
       - name: One-screen report
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: one-screen-report
@@ -514,6 +533,7 @@ jobs:
           retention-days: 14
       - name: A11y-routes shard reports
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         uses: actions/download-artifact@v7
         with:
           pattern: a11y-routes-shard-*
@@ -521,12 +541,15 @@ jobs:
       - name: Merge the a11y-routes shards (every screen and size measured once)
         id: merge-a11y-routes
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         run: make a11y-routes-merge
       - name: Findings per rule and screen
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         run: make a11y-routes-report >> "$GITHUB_STEP_SUMMARY"
       - name: A11y-routes report
         if: always() && needs.ui-shard.result != 'skipped'
+        continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: a11y-routes-report
@@ -542,6 +565,7 @@ jobs:
           COVERAGE: ${{ steps.coverage.outcome }}
           WEB_MERGE: ${{ steps.web-merge.outcome }}
           UI_SHARDS: ${{ needs.ui-shard.result }}
+          UI_QUARANTINED: ${{ steps.quarantine.outputs.ui }}
           ONE_SCREEN_MERGE: ${{ steps.merge-one-screen.outcome }}
           A11Y_ROUTES_MERGE: ${{ steps.merge-a11y-routes.outcome }}
         run: |
@@ -557,11 +581,16 @@ jobs:
             bad="$bad coverage=$COVERAGE"
           fi
           if [ "$APP_TESTS_WEB" = "success" ] && [ "$APP_TESTS" = "success" ] && [ "$WEB_MERGE" != "success" ]; then bad="$bad web-merge=$WEB_MERGE"; fi
-          # The UI gates: the shard jobs (one job per shard, both gates) and the merge of the shard reports of each gate.
-          if [ "$UI_SHARDS" != "skipped" ]; then
+          # The UI gates: the shard jobs (one job per shard, both gates) and the merge of the shard reports of each gate. A red
+          # ui-shard that the list quarantines (UI_QUARANTINED, step `quarantine`) reports only (US-QG-06): its parts are named
+          # below and fail nothing.
+          if [ "$UI_SHARDS" != "skipped" ] && [ "$UI_QUARANTINED" != "true" ]; then
             if [ "$UI_SHARDS" != "success" ]; then bad="$bad ui-shards=$UI_SHARDS"; fi
             if [ "$ONE_SCREEN_MERGE" != "success" ]; then bad="$bad one-screen-merge=$ONE_SCREEN_MERGE"; fi
             if [ "$A11Y_ROUTES_MERGE" != "success" ]; then bad="$bad a11y-routes-merge=$A11Y_ROUTES_MERGE"; fi
+          fi
+          if [ "$UI_QUARANTINED" = "true" ]; then
+            echo "results: ui-shard is quarantined, its parts report only (US-QG-06): ui-shards=$UI_SHARDS one-screen-merge=$ONE_SCREEN_MERGE a11y-routes-merge=$A11Y_ROUTES_MERGE"
           fi
           if [ -n "$bad" ]; then
             echo "results: the gate fails (US-QG-01, US-QG-02):$bad" >&2
@@ -687,30 +716,17 @@ jobs:
       ]
     if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
+      # US-QG-06: a red job that the quarantine list names reports and blocks nothing. The list is read from this commit (the
+      # merge commit of the PR, the commit the run tests), so the reader and the list come from a checkout. NEEDS_JSON carries
+      # the results of the needed jobs, through `env:` only. A list entry that names no job of ci.yml fails the step.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
       - env:
-          CHANGES: ${{ needs.changes.result }}
-          REUSE: ${{ needs.reuse.result }}
-          APP_GATES: ${{ needs.app-gates.result }}
-          APP_TESTS: ${{ needs.app-tests.result }}
-          APP_TESTS_WEB: ${{ needs.app-tests-web.result }}
-          APP_UI: ${{ needs.app-ui.result }}
-          LAYOUT: ${{ needs.layout.result }}
-          DOCS_GATES: ${{ needs.docs-gates.result }}
-          DS_SNAPSHOTS: ${{ needs.ds-snapshots.result }}
-          METADATA: ${{ needs.metadata.result }}
-          DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
-          AUDIT: ${{ needs.audit.result }}
-          LIGHTHOUSE: ${{ needs.lighthouse.result }}
-          E2E: ${{ needs.e2e.result }}
-          UI_SHARD: ${{ needs.ui-shard.result }}
-          RESULTS: ${{ needs.results.result }}
-        run: |
-          for r in "$CHANGES" "$REUSE" "$APP_GATES" "$APP_TESTS" "$APP_TESTS_WEB" "$APP_UI" "$LAYOUT" "$DOCS_GATES" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E" "$UI_SHARD" "$RESULTS"; do
-            case "$r" in
-              success | skipped) ;;
-              *) echo "failed: $r"; exit 1 ;;
-            esac
-          done
-          echo "ci-status: green"
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: make ci-quarantine

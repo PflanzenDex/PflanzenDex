@@ -13,6 +13,15 @@ Closes #
 
 <!-- Which tests come from which acceptance criteria (story ID in the test name, P-06)? Report the result of `make ci` honestly: pass or fail, never "should work" (D-05). -->
 
+## Lessons
+
+<!--
+What did this change teach, and where did each lesson go? One line per lesson, in the form
+`- <lesson> → gate <name> | skill <name> | PF-nnn | none (<why>)`, or the single word `none`.
+Write it with the skill recap-and-learnings (.agents/skills/recap-and-learnings/SKILL.md). `make pr` refuses the section
+while it is missing, empty or malformed (US-DEV-05); this comment alone counts as empty.
+-->
+
 ## Definition of Done (FR-QG-10)
 
 - [ ] Story and acceptance criteria exist; the code traces back to a criterion

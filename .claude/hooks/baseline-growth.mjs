@@ -85,6 +85,16 @@ export const BASELINE_FORMATS = {
   },
   "reference-baseline.json": { lists: ["routes", "operations", "components"] },
   "layout-baseline.json": { nested: true },
+  // US-QG-06: the quarantine list (`make quarantine`). An entry or a raised maxEntries is growth, a removal a shrink; `since`,
+  // `issue` and `reason` are metadata. The reader (app/tools/workflow/actions/ci-reuse/verdict/quarantine.mjs) checks the jobs.
+  "quarantine-baseline.json": {
+    limits: ["maxEntries"],
+    entries: {
+      key: ["job"],
+      fields: { job: TEXT, since: TEXT, issue: NUMBER, reason: TEXT },
+      judged: [],
+    },
+  },
 };
 
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);

@@ -1,9 +1,10 @@
+import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 
 /** One group of the settings (US-QS-17): its name, its current value and the layer it opens (`?sheet=<id>`). */
-export function SettingsRow(props: { id: string; title: string; value: string }) {
+export function SettingsRow(props: { id: string; title: string; value: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
   return (
     <Button

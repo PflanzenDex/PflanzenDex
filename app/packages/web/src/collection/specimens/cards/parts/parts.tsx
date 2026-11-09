@@ -5,6 +5,7 @@ import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-
 import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
 import { cn } from "@/shared/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
  * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
@@ -52,6 +53,17 @@ export function Quiet(props: { children: ReactNode; className?: string; live?: b
     >
       {props.children}
     </p>
+  );
+}
+
+/** The one loading status of a part (DS-56): its text shows only after the delay (DS-57, issue 1726). */
+export function LoadingNote({ children }: { children: ReactNode }) {
+  return (
+    <DelayedSkeleton>
+      <p role="status" className="text-sm text-muted-foreground">
+        {children}
+      </p>
+    </DelayedSkeleton>
   );
 }
 
@@ -129,7 +141,10 @@ export function Photo({
       </div>
     );
   }
-  if (typeof state !== "string") return <Quiet>{state ? refusalText(state) : "Lädt …"}</Quiet>;
+  if (typeof state !== "string")
+    return (
+      <Quiet>{state ? refusalText(state) : <DelayedSkeleton>{"Lädt …"}</DelayedSkeleton>}</Quiet>
+    );
   return (
     <a
       className={cn(

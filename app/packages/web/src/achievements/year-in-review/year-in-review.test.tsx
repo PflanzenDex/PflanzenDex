@@ -120,7 +120,7 @@ describe("US-ACH-07 year in review", () => {
     await waitFor(() => expect(asked).toHaveLength(2));
     expect(asked[1]?.year).toBe(String(thisYear - 1));
     // The old year stays on screen, and the status says that the new one is on its way.
-    expect(screen.getByRole("status").textContent).toBe("Wird geladen …");
+    expect((await screen.findByRole("status")).textContent).toBe("Wird geladen …");
     expect(screen.getByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
     asked[1]?.answer(answer({ year: thisYear - 1 }));
     expect(await screen.findByText(`Jahresrückblick ${thisYear - 1}`)).toBeTruthy();

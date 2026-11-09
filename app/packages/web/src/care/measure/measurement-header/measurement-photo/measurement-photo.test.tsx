@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MeasurementPhoto } from "./measurement-photo";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const calls: { url: string; auth: string | undefined }[] = [];
 const stub = (status: number, body: BodyInit | null = new Uint8Array([1, 2, 3])) =>
@@ -63,10 +64,11 @@ describe("US-WAC-05 the photo of a measurement in the view", () => {
     expect(screen.queryByRole("img")).toBeNull();
   });
 
-  it("says that it is loading", () => {
+  it("says that it is loading", async () => {
     stub(200);
+    delayLoads();
     show();
-    expect(screen.getByRole("status").textContent).toContain("Foto wird geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("Foto wird geladen");
   });
 });
 

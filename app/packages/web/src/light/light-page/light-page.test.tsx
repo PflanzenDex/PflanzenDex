@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LightPage } from "./light-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 /** The page lives inside the app shell, which owns the toast provider (US-QS-14). */
 const render = (ui: React.ReactElement) =>
@@ -130,10 +131,11 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("shows a status while loading and then zone and location from the API", async () => {
     fakeServer({ zones: [zone], locations: [location] });
+    delayLoads();
     render(
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
-    expect(screen.getByRole("status").textContent).toContain("werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect(await screen.findByRole("heading", { name: "Zone 2" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Balkon" })).toBeTruthy();
   });
