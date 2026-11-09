@@ -57,7 +57,7 @@ const REASON: Record<string, string> = {
     "Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft. Sie bleibt bei der Standard-Stufe.",
   top_zone: "Das ist die höchste Zone deines Kontos.",
   no_need:
-    "Für diese Art ist kein Lux-Bedarf bekannt. Trage ihn im Katalog ein, dann wird die Zone abgeleitet.",
+    "Lichtbedarf eintragen: Für diese Art ist kein Lux-Bedarf bekannt, deshalb bleibt die Zone unbekannt. Trage ihn im Katalog ein, dann wird die Zone abgeleitet.",
   no_adult_zone:
     "Du hast keine Zone für erwachsene Pflanzen. Lege eine zweite Lichtzone an (die erste ist Stecklingslicht).",
 };

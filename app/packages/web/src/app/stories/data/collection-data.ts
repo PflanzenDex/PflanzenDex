@@ -20,6 +20,7 @@ const card = (id: string, name: string, species: string, where: [string, string]
     location: where[1],
     lightZone: where[0],
     lightZoneSource: "location",
+    lightNeedUnknown: false,
     caughtAt: "2026-03-12",
     photo: null,
     lastMeasurement: { date: "2026-10-01", value: 24, quality: "healthy", note: null },
@@ -86,6 +87,7 @@ const distribution: Distribution = {
   ],
   thinnest: [zones[2] as LightZone],
   notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
+  lightNeedUnknown: [],
   hint: { text: "Zone 3 ist am dünnsten besetzt.", nextAction: "Prüfe, ob dort noch Platz ist." },
 };
 

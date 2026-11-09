@@ -22,6 +22,7 @@ const card = (id: number, extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -39,6 +40,7 @@ const distribution: Distribution = {
   ],
   thinnest: [zone(3)],
   notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
+  lightNeedUnknown: [],
   hint: {
     text: "Zone 3 ist am dünnsten besetzt.",
     nextAction: "Setze eine Art auf die Wunschliste.",

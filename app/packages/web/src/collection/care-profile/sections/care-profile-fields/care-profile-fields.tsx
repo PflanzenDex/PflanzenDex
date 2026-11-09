@@ -47,11 +47,19 @@ export function Choice(props: {
   name: Key;
   label: string;
   items: readonly (LightLocation | LightZone)[];
+  /** Keeps the element, so the next step of an unknown light need can move the focus to it (US-LIC-01). */
+  selectRef?: { current: HTMLSelectElement | null };
 }) {
   return (
     <Field control={props.control} name={props.name} label={props.label}>
       {(field) => (
-        <Select {...field}>
+        <Select
+          {...field}
+          ref={(element) => {
+            field.ref(element);
+            if (props.selectRef) props.selectRef.current = element;
+          }}
+        >
           <option value="">Katalog gilt</option>
           {props.items.map((i) => (
             <option key={i.id} value={i.id}>

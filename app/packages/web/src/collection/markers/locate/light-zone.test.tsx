@@ -27,6 +27,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal",
   lightZone: "Zone 2",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,
@@ -175,6 +176,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
           status: "cutting",
           lightZone: "Zone 1 · Stecklingslicht",
           lightZoneSource: "cutting",
+          lightNeedUnknown: false,
         }),
       ],
     });

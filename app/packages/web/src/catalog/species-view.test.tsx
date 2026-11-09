@@ -184,7 +184,7 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
 });
 
 describe("form to input and duplicate", () => {
-  it("empty optional fields are dropped, numbers become numbers, synonyms one per line", () => {
+  it("empty optional fields are dropped, numbers become numbers, synonyms one per line; an empty soft leaf is unknown (null)", () => {
     expect(
       toProposalInput({
         ...EMPTY_PROPOSAL,
@@ -198,6 +198,7 @@ describe("form to input and duplicate", () => {
       latinName: "Aloe vera",
       difficulty: 2,
       lightDemandLux: 40000,
+      softLeaf: null,
       synonyms: ["Aloe barbadensis", "Aloe vulgaris"],
     });
   });

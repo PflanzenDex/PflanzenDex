@@ -7,6 +7,7 @@ const SPECIES_LOW = "11111111-1111-4111-8111-111111111111"; // 15.000 Lux, Stufe
 const SPECIES_HIGH = "22222222-2222-4222-8222-222222222222"; // 40.000 Lux, Stufe 3: Lampe 3
 const SPECIES_SOFT = "33333333-3333-4333-8333-333333333333"; // 100.000 Lux, soft leaf: stays in Lampe 2
 const SPECIES_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben
+const SPECIES_NEED_UNKNOWN = "44444444-4444-4444-8444-444444444444"; // no lux need, no default level (US-LIC-01)
 
 const light = new InMemoryLight();
 const species = new SpeciesStub([
@@ -18,6 +19,14 @@ const species = new SpeciesStub([
       lightDemandLux: 100_000,
       standardLevel: 2,
       softLeaf: true,
+    }),
+  },
+  {
+    species: testSpecies(SPECIES_NEED_UNKNOWN, {
+      latinName: "Ignotus need",
+      germanName: null,
+      lightDemandLux: null,
+      standardLevel: null,
     }),
   },
 ]);
@@ -290,5 +299,24 @@ describe("US-LIC-02 / US-BES-04 own light zone of the specimen", () => {
       ["Lampe 3", 0],
       ["Lampe 4", 0],
     ]);
+  });
+});
+
+describe("US-LIC-01 the species whose light need is unknown are named with their next step (P-08, P-09)", () => {
+  it("US-LIC-01: Given specimens whose species has no lux need, when the distribution is read, then they are not counted and the species is named", async () => {
+    await create("anna", null, { speciesId: SPECIES_NEED_UNKNOWN });
+    await create("anna", null, { speciesId: SPECIES_NEED_UNKNOWN });
+    const v = await zoneDistribution(deps(), "anna");
+    expect(v.notCounted.zoneUnknown).toBe(2);
+    expect(v.lightNeedUnknown).toEqual([
+      { speciesId: SPECIES_NEED_UNKNOWN, speciesName: "Ignotus need" },
+    ]);
+  });
+
+  it("US-LIC-01: Given a specimen with a location zone although its species has no lux need, when the distribution is read, then nothing is named", async () => {
+    await create("anna", "Fensterbank", { speciesId: SPECIES_NEED_UNKNOWN });
+    const v = await zoneDistribution(deps(), "anna");
+    expect(v.lightNeedUnknown).toEqual([]);
+    expect(v.notCounted.zoneUnknown).toBe(0);
   });
 });
