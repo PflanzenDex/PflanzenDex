@@ -107,11 +107,6 @@ test("US-QG-07: a backticked repo path that does not exist is reported", () => {
   );
 });
 
-test("US-QG-07: a named .env secret is not required to exist in the repo", () => {
-  const secret = agent.replace("app/README.md", "app/config/dev/.env");
-  assert.deepEqual(checkAgents({ agents: { demo: secret }, ...agentEnv }), []);
-});
-
 test("US-QG-07: an agent must not get the Agent tool", () => {
   const spawner = agent.replace("tools: Bash, Read, Glob", "tools: Bash, Agent, Read");
   assert.match(

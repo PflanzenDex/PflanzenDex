@@ -8,8 +8,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_PATH = /`((?:app|docs|scripts|\.github|\.agents|\.claude)\/[^`\s*<>]+)`/g;
-// Secret files (.env) are gitignored, so a backticked name of one is not required to exist in the repo.
-const SECRET_FILE = /(^|\/)\.env(\.|$)/;
 
 function frontmatter(text) {
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
@@ -68,7 +66,7 @@ export function checkAgents({ agents, exists }) {
     if (tools.includes("Agent"))
       problems.push(`agent ${name}: tools must not include Agent (agents do not spawn agents)`);
     for (const [, p] of text.matchAll(REPO_PATH))
-      if (!SECRET_FILE.test(p) && !exists(p.replace(/[.,;:)]+$/, "")))
+      if (!exists(p.replace(/[.,;:)]+$/, "")))
         problems.push(`agent ${name}: path ${p} does not exist`);
     return problems;
   });

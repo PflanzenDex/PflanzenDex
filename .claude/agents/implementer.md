@@ -13,7 +13,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 ## Where you work
 
 - Start every Bash call with `cd <worktree from the brief> &&`. `cd` does not carry over between your calls; without it you run in the main checkout, which belongs to another session.
-- Never read, print, copy or search any `.env` file or other secret file (`app/config/dev/.env`, `.env.worktree` included). If a command needs a value from it, a `make` target reads it for you; ask the orchestrator otherwise.
+- Never read, print, copy or search any `.env` file or other secret file, the dev configuration's `.env` and `.env.worktree` included. If a command needs a value from it, a `make` target reads it for you; ask the orchestrator otherwise.
 - Never run `make auth-up` or a target that depends on it in a worktree. Use the npm scripts the brief names.
 - Write a command's output to a file and print `$?`; `cmd | tail` reports the exit code of `tail` and hides a failure.
 
@@ -29,7 +29,6 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 ## Commit and push
 
 - Conventional Commits; the scope must be one of `app/config/project/commitlint.config.js` (an epic code such as `bes`, or a tech scope such as `dev`, `qg`); header at most 100 characters.
-- End every commit message with exactly the trailer lines the orchestrator's brief gives. If the brief gives none, use `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never put a Haiku trailer or your own model name there.
 - Commit and push only. Never run `make pr`, `make merge`, `gh pr merge` or `gh pr ready`, never push to `dev` or `main`, never use `--no-verify` or a force push, never change `core.hooksPath`.
 - The pre-push hook runs `make gates`. If it fails, fix the cause; if the cause is outside your scope, stop and report.
 
