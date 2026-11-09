@@ -121,7 +121,7 @@ IDs are never renumbered.
 ## PF-014 No GitHub GraphQL in Claude Code cloud sessions
 
 - **Symptom:** In a cloud routine or remote session, `gh pr list`, `gh issue list`, `gh issue comment` and `gh auth status` fail with 403 "GitHub GraphQL is not available from Claude Code sessions"; a write over the GitHub app can fail with `403 Resource not accessible by integration`.
-- **Cause:** Cloud sessions reach GitHub only over REST through the Claude GitHub app; the `gh` subcommands above use GraphQL. A write needs the matching permission of the app on the repository (for comments: Issues, read and write).
-- **Fix:** Use `gh api repos/<owner>/<repo>/…` (REST) for every read and write in a routine (`.agents/routines/*.md`); grant the app the permission a routine writes with.
+- **Cause:** Cloud sessions reach GitHub only over REST through the Claude GitHub app; the `gh` subcommands above use GraphQL. A write needs the Claude GitHub app installed on the account that owns the repository, here the organization PflanzenDex, with the matching permission (for comments: Issues, read and write); installed only on the personal account, writes to an organization repository fail with 403.
+- **Fix:** Use `gh api repos/<owner>/<repo>/…` (REST) for every read and write in a routine (`.agents/routines/*.md`); install the app on the organization (github.com/apps/claude → Configure → PflanzenDex) with the permission a routine writes with.
 - **Can it become a gate?** Partly: a check could refuse `gh pr list`, `gh issue list` and `gh issue comment` in `.agents/routines/`; not built (E-30, no incident yet).
 - **Source:** First runs of the routines of issue 1753 (2026-11-09).
