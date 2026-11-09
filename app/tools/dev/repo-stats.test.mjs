@@ -150,7 +150,7 @@ function prFixture(t) {
     rmSync(bin, { recursive: true, force: true });
   });
   // The Lessons check of pr-ready.sh (US-DEV-05) runs from the repository root, so the throwaway checkout carries its module.
-  const lessonsCheck = "app/tools/check/docs/agents/pr-lessons.mjs";
+  const lessonsCheck = "app/tools/check/docs/agents/pr/pr-lessons.mjs";
   write(
     dir,
     lessonsCheck,

@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock quarantine ci-quarantine ci-quarantine-ui
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -97,6 +97,9 @@ issue-read: ## Read an issue over REST (ISSUE=<n>): title, state, labels, assign
 
 pr-text: ## Set the title (TITLE="…", optional) and the body (BODY=<file>) of a PR over REST (PR=<n>); refuses a missing or empty body file (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs pr-text
+
+owner-merge-label: ## Set or remove the label owner-merge of a PR (PR=<n>): set when it changes a gate file (make merge refuses it), removed otherwise (CI: owner-merge-label.yml, US-DEV-13, issue 1774)
+	node $(APP)/tools/check/docs/agents/pr/owner-merge-label.mjs
 
 issue-comment: ## Add a comment to an issue over REST (ISSUE=<n> BODY=<file>); refuses a missing or empty body file (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs issue-comment

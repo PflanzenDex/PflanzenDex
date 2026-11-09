@@ -135,7 +135,7 @@ function setup({
   git(dir, ["init", "--bare", "-q", origin]);
   git(dir, ["init", "-q", "-b", branch, repo]);
   // The Lessons check (US-DEV-05) runs from the repository root, so the throwaway checkout carries its module.
-  const lessonsCheck = "app/tools/check/docs/agents/pr-lessons.mjs";
+  const lessonsCheck = "app/tools/check/docs/agents/pr/pr-lessons.mjs";
   mkdirSync(path.dirname(path.join(repo, lessonsCheck)), { recursive: true });
   copyFileSync(path.join(repoRoot, lessonsCheck), path.join(repo, lessonsCheck));
   git(repo, ["add", "-A"]);

@@ -76,7 +76,7 @@ if ! PR_TITLE="$title" PR_BODY="$body" PR_BASE_SHA="$base_sha" PR_BASE_REF="$bas
 fi
 # The Lessons section (US-DEV-05, issue 1747): one line per lesson or `none`. The check prints the problems and the pointer to
 # the skill recap-and-learnings; the PR body is passed in the environment only.
-if ! PR_BODY="$body" node app/tools/check/docs/agents/pr-lessons.mjs; then
+if ! PR_BODY="$body" node app/tools/check/docs/agents/pr/pr-lessons.mjs; then
   echo "pr-ready: the Lessons section of the PR body fails; nothing was pushed or marked. Fill it with make pr-text BODY=<file> (the lessons come from the skill recap-and-learnings), then run make pr again." >&2
   exit 1
 fi
