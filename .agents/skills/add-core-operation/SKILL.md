@@ -17,6 +17,7 @@ Writes never bypass the operations layer (P-03): the API, the UI and later the A
 8. Database adapter in `app/packages/db` with tenant isolation (`account_id`, `tenant_protection()`, entry in `fixtures.ts`) so the generic tenant test covers the new table.
 9. API route in `app/packages/api` that calls `execute(op, deps, { context, input, idempotencyKey })` with the `Idempotency-Key` header (see `api/src/light/light-routes.ts`).
 10. Name the operation (`domain.verb`) and the route (`METHOD /path`) in the section of the story in `docs/guides/reference/app.md`; `make reference-check` fails otherwise (US-QG-10).
+11. A new GET route is measured only once it is listed in `app/packages/api/src/query-count-endpoints.ts`, which the query-count test reads. A new screen needs `make one-screen SCREEN=<id>`. The route list is kept by hand, and CI repeats the screen check: update the list and run both locally before the push.
 
 ## Check
 

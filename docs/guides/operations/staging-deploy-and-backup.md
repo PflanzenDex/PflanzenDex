@@ -539,6 +539,8 @@ SMOKE_DETAILS_CMD="docker compose --env-file .env exec -T api wget -qO- http://1
 
 (The command runs in `app/config/deploy`, hence `.env`.) After that the host runs the new script and the workflow works as is. The workflow shows only the last 60 lines, which are mostly the rollback; to see the first error, run `deploy.sh` once on the host with the output in a file and look at the lines before `ERROR: deploy of`.
 
+The repo is public: homelab hostnames, IP addresses and secrets stay out of this runbook and out of the repo; host-specific values live on the host. Update the host's checkout to the target version before the deploy, not after it: `deploy.sh` is the script of the commit that is checked out, so an old checkout runs the old script against the new helpers. The bridge above only fixes a missed update.
+
 ### Deploy by hand
 
 Actions, "Deploy", "Run workflow": choose the workflow's branch (`main` for prod), the environment and optionally a `ref`. This also rolls back: choose an earlier commit (test) or an earlier release tag (prod).
