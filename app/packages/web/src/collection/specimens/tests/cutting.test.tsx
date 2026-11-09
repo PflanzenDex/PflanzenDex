@@ -92,14 +92,14 @@ afterEach(() => {
 describe("US-BES-04 client of the specimen API", () => {
   it("US-BES-04: creates a cutting with a status", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, { id: "e1" }));
-    await createSpecimen("http://api", "tok", { speciesId: "a1", status: "cutting" }, fetchFn);
+    await createSpecimen("http://api", "tok", { speciesId: "a1", status: "cutting" }, { fetchFn });
     const [, init] = fetchFn.mock.calls[0] ?? [];
     expect(JSON.parse(String(init?.body))).toMatchObject({ speciesId: "a1", status: "cutting" });
   });
 
   it("US-BES-04: repots with a bearer token and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e1", status: "plant" }));
-    const r = await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn);
+    const r = await repotSpecimen("http://api", "tok", { id: "e1" }, { fetchFn });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/repot");
     expect(init?.method).toBe("POST");
@@ -111,19 +111,19 @@ describe("US-BES-04 client of the specimen API", () => {
   it("US-BES-04: a server error stays an error with a code (P-10)", async () => {
     const error = { code: "specimen.not_a_cutting", text: "Kein Steckling." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn)).toMatchObject({
+    expect(await repotSpecimen("http://api", "tok", { id: "e1" }, { fetchFn })).toMatchObject({
       ok: false,
       error: { code: "specimen.not_a_cutting" },
     });
   });
   it("US-BES-04: a chosen date goes with the time zone; without one the date stays out (older clients)", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e1", status: "plant" }));
-    await repotSpecimen("http://api", "tok", { id: "e1", date: "2026-10-01" }, fetchFn);
+    await repotSpecimen("http://api", "tok", { id: "e1", date: "2026-10-01" }, { fetchFn });
     const [, init] = fetchFn.mock.calls[0] ?? [];
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
     expect(body["date"]).toBe("2026-10-01");
     expect(body["timeZone"]).toBeTruthy();
-    await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn);
+    await repotSpecimen("http://api", "tok", { id: "e1" }, { fetchFn });
     const [, plain] = fetchFn.mock.calls[1] ?? [];
     expect(JSON.parse(String(plain?.body))).not.toHaveProperty("date");
   });

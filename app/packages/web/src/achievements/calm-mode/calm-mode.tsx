@@ -4,7 +4,7 @@ import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { refusalText } from "@/shared/lib/error-text";
 import { cn } from "@/shared/lib/utils";
-import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../shared/data";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError, useRepeatKey } from "../../shared/data";
 import {
   loadAchievementSettings,
   setCalmMode,
@@ -22,13 +22,18 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const busy = useRef(false);
+  const keys = useRepeatKey();
   const refresh = useInvalidate(["achievements"]);
 
   const change = async (next: boolean) => {
     if (busy.current) return;
     busy.current = true;
     const t = await props.token();
-    const r = t ? await setCalmMode(props.api, t, next) : { ok: false as const, error: SIGN_IN };
+    const key = keys.take();
+    const r = t
+      ? await setCalmMode(props.api, t, next, { key })
+      : { ok: false as const, error: SIGN_IN };
+    keys.settle(key, r);
     busy.current = false;
     setError(r.ok ? null : r.error);
     if (!r.ok) return setMessage(null);

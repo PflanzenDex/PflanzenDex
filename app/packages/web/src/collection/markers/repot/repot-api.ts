@@ -1,5 +1,11 @@
 import type { RepotPlan, RepotSign } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+  writeFor,
+} from "../../../shared/data";
 import { COLLECTION_KEY } from "../../specimens/hooks/use-collection";
 
 type FetchFn = typeof fetch;
@@ -33,16 +39,20 @@ export async function loadRepotPlan(
   );
 }
 
-/** Ticks or clears one observation of a plant (US-BES-19); the repeat-guard key is created per call. */
+/** Ticks or clears one observation of a plant (US-BES-19); the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function setRepotSign(
   api: string,
   token: string,
   input: { id: string; sign: RepotSign; ticked: boolean },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<unknown>> {
-  return createWrite(api, token, fetchFn)(
+  return writeFor(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/repot-signs`,
-    { sign: input.sign, ticked: input.ticked, timeZone: currentTimeZone() },
+    {
+      sign: input.sign,
+      ticked: input.ticked,
+      timeZone: currentTimeZone(),
+    },
   );
 }

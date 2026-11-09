@@ -2,7 +2,12 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWrite, useWriteAction, type Response as ApiResponse } from "@/shared/data";
+import {
+  createWrite,
+  newRepeatKey,
+  useWriteAction,
+  type Response as ApiResponse,
+} from "@/shared/data";
 import { AnnouncerProvider } from "./announcer";
 import { deliverBuffered } from "./outbox";
 
@@ -25,7 +30,7 @@ const region = () => document.querySelector<HTMLElement>("[aria-live=polite]");
 
 /** One tap that writes, shown the way a page does: a button that runs the action. */
 function Page(props: {
-  send: (token: string) => Promise<ApiResponse<unknown>>;
+  send: (token: string, key: string) => Promise<ApiResponse<unknown>>;
   after: () => void;
 }) {
   const write = useWriteAction(async () => "token", props.after);
@@ -39,7 +44,10 @@ function Page(props: {
   );
 }
 
-const shell = (send: (token: string) => Promise<ApiResponse<unknown>>, after = vi.fn()) =>
+const shell = (
+  send: (token: string, key: string) => Promise<ApiResponse<unknown>>,
+  after = vi.fn(),
+) =>
   render(
     <AnnouncerProvider>
       <Page send={send} after={after} />
@@ -185,20 +193,28 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
 });
 
 /**
- * A server that keeps one record per Idempotency-Key, as the API does (its replay test in `care/measurements.test.ts`).
- * The first `lost` answers are lost on the way back: the record exists, the client sees a network error.
+ * A server that keeps one record per Idempotency-Key, as the API does (its replay test in `care/measurements.test.ts`):
+ * the same key with another request is refused as `idempotency.key_conflict` and nothing is written. The first `lost`
+ * answers are lost on the way back: the record exists, the client sees a network error.
  */
 function serverLosing(lost: number) {
-  const records = new Map<string, unknown>();
+  const records = new Map<string, { url: string; body: unknown }>();
   const keys: string[] = [];
   let left = lost;
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
     keys.push(key);
-    if (!records.has(key)) {
-      const body = init?.body === undefined ? null : JSON.parse(String(init.body));
-      records.set(key, { url: String(url), body });
-    }
+    const request = {
+      url: String(url),
+      body: init?.body === undefined ? null : JSON.parse(String(init.body)),
+    };
+    const seen = records.get(key);
+    if (seen && JSON.stringify(seen) !== JSON.stringify(request))
+      return new Response(
+        JSON.stringify({ error: { code: "idempotency.key_conflict", text: "x" } }),
+        { status: 409 },
+      );
+    records.set(key, request);
     if (left > 0) {
       left -= 1;
       throw new TypeError("Failed to fetch");
@@ -208,14 +224,19 @@ function serverLosing(lost: number) {
   return { fetchFn, records, keys };
 }
 
-const measurement = (value: number) => (t: string, fetchFn: typeof fetch) =>
-  createWrite("http://api", t, fetchFn)("POST", "/measurements", { value });
+/** A measurement write, sent with the key of its action (without one, the write gets a key of its own). */
+const measurement = (value: number) => (t: string, fetchFn: typeof fetch, key?: string) =>
+  createWrite("http://api", t, fetchFn, key)("POST", "/measurements", { value });
+
+/** The send a page hands to `useWriteAction`: the hook's key of the action goes to the write. */
+const sendMeasurement = (value: number, fetchFn: typeof fetch) => (t: string, key: string) =>
+  measurement(value)(t, fetchFn, key);
 
 describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idempotency-Key", () => {
   it("US-QS-03 a buffered write whose answer was lost is sent again with the same key: one record", async () => {
     online(false);
     const server = serverLosing(1);
-    shell((t) => measurement(9)(t, server.fetchFn));
+    shell(sendMeasurement(9, server.fetchFn));
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
     await buffered();
     online(true);
@@ -231,7 +252,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
   it("US-QS-03 a retry by the user after a lost answer sends the same key: one record", async () => {
     online(true);
     const server = serverLosing(1);
-    const save = (t: string) => measurement(9)(t, server.fetchFn);
+    const save = sendMeasurement(9, server.fetchFn);
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
@@ -250,7 +271,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
   it("US-QS-03 a second tap after a confirmed write is a new write with a key of its own", async () => {
     online(true);
     const server = serverLosing(0);
-    const save = (t: string) => measurement(9)(t, server.fetchFn);
+    const save = sendMeasurement(9, server.fetchFn);
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
@@ -263,7 +284,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     expect(server.records.size).toBe(2);
   });
 
-  it("US-QS-03 a different write after a lost answer gets a key of its own", async () => {
+  it("US-QS-03 a changed form after a lost answer reuses the key: the server refuses it as a key conflict, the next tap is a new write", async () => {
     online(true);
     const server = serverLosing(1);
     const { result } = renderHook(() =>
@@ -272,9 +293,14 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run((t) => measurement(9)(t, server.fetchFn), "a"));
-    await act(async () => result.current.run((t) => measurement(10)(t, server.fetchFn), "b"));
-    expect(server.keys[1]).not.toBe(server.keys[0]);
+    await act(async () => result.current.run(sendMeasurement(9, server.fetchFn), "a"));
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await act(async () => result.current.run(sendMeasurement(10, server.fetchFn), "b"));
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await act(async () => result.current.run(sendMeasurement(10, server.fetchFn), "b"));
+    expect(result.current.error).toBeNull();
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(server.keys[2]).not.toBe(server.keys[0]);
     expect(server.records.size).toBe(2);
   });
 
@@ -288,7 +314,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         }),
       )
       .mockResolvedValueOnce(new Response("{}", { status: 201 }));
-    const save = (t: string) => measurement(9)(t, fetchFn);
+    const save = sendMeasurement(9, fetchFn);
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
@@ -301,6 +327,73 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
     expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 a queued write whose answer was lost keeps its key when a newer write succeeds: its redelivery sends the same key", async () => {
+    online(false);
+    const server = serverLosing(1);
+    shell(sendMeasurement(9, server.fetchFn));
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await buffered();
+    online(true);
+    await deliverBuffered(); // applied, the answer is lost: the write stays queued with its key
+    expect(server.keys).toHaveLength(1);
+    await measurement(10)("token", server.fetchFn); // a newer write succeeds
+    await deliverBuffered(); // the redelivery of the queued write
+    await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
+    expect(server.keys).toHaveLength(3);
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.records.size).toBe(2);
+  });
+
+  it("US-QS-03 an older write still in flight keeps its key when a newer write succeeds: its tap after the lost answer sends the same key", async () => {
+    online(true);
+    let release = () => {};
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    const keys: string[] = [];
+    const fetchFn = vi.fn<typeof fetch>(async (_url, init) => {
+      const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
+      keys.push(key);
+      if (keys.length === 1) {
+        // The older write reaches the server; its answer comes back late and is lost.
+        await gate;
+        throw new TypeError("Failed to fetch");
+      }
+      return new Response(JSON.stringify({ id: key }), { status: 201 });
+    });
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "token",
+        () => undefined,
+      ),
+    );
+    let older: Promise<void> = Promise.resolve();
+    act(() => {
+      older = result.current.run(sendMeasurement(9, fetchFn), "a");
+    });
+    await vi.waitFor(() => expect(keys).toHaveLength(1));
+    await measurement(10)("token", fetchFn); // the newer write succeeds while the older one is in flight
+    expect(keys).toHaveLength(2);
+    await act(async () => {
+      release();
+      await older;
+    });
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await act(async () => result.current.run(sendMeasurement(9, fetchFn), "a"));
+    expect(result.current.error).toBeNull();
+    expect(keys[2]).toBe(keys[0]);
+    expect(new Set(keys).size).toBe(2);
+  });
+
+  it("US-QS-03 an identical write without an action key is a new write: createWrite compares no content", async () => {
+    const server = serverLosing(1);
+    const write = createWrite("http://api", "tok", server.fetchFn);
+    await write("POST", "/measurements", { value: 1 }); // lost
+    await write("POST", "/measurements", { value: 1 }); // the same content, but no action: a new write
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(server.records.size).toBe(2);
   });
 
   it("US-QS-03 a write whose answer was lost does not swallow a later write: on, off, on again is applied", async () => {
@@ -325,15 +418,17 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     });
   });
 
-  it("US-QS-03 two writes whose answers were lost: delivering the older one leaves the newer one's key in place", async () => {
+  it("US-QS-03 two writes whose answers were lost: delivering the older one with its key leaves the newer one's key in place", async () => {
     const server = serverLosing(2);
-    const write = createWrite("http://api", "tok", server.fetchFn);
-    await write("POST", "/measurements", { value: 1 }); // older, lost
-    await write("POST", "/measurements", { value: 2 }); // newer, lost
-    await write("POST", "/measurements", { value: 1 }); // older delivered: succeeds
-    await write("POST", "/measurements", { value: 2 }); // newer delivered again
-    expect(server.keys[2]).toBe(server.keys[0]);
-    expect(server.keys[3]).toBe(server.keys[1]);
+    const older = newRepeatKey();
+    const newer = newRepeatKey();
+    const write = (value: number, key: string) =>
+      createWrite("http://api", "tok", server.fetchFn, key)("POST", "/measurements", { value });
+    await write(1, older); // lost
+    await write(2, newer); // lost
+    await write(1, older); // older delivered: succeeds
+    await write(2, newer); // newer delivered again
+    expect(server.keys).toEqual([older, newer, older, newer]);
     expect(server.records.size).toBe(2);
   });
 });

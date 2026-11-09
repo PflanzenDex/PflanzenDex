@@ -37,12 +37,12 @@ export function useCandidateWrite(
   const [done, setDone] = useState<Outcome | null>(null);
   const run = (
     c: Candidate,
-    send: (t: string) => Promise<Response<{ hint: Hint }>>,
+    send: (t: string, key: string) => Promise<Response<{ hint: Hint }>>,
     toPlant: boolean,
   ) => {
     onRun();
-    void write.run(async (t) => {
-      const r = await send(t);
+    void write.run(async (t, key) => {
+      const r = await send(t, key);
       setDone(
         r.ok
           ? {
@@ -55,12 +55,12 @@ export function useCandidateWrite(
     }, "");
   };
   return {
-    buy: (c: Candidate) => run(c, (t) => buyWish(api, t, c.id), true),
-    discard: (c: Candidate) => run(c, (t) => discardWish(api, t, c.id), false),
+    buy: (c: Candidate) => run(c, (t, key) => buyWish(api, t, c.id, { key }), true),
+    discard: (c: Candidate) => run(c, (t, key) => discardWish(api, t, c.id, { key }), false),
     storeImage: (c: Candidate) => {
       onRun();
-      void write.run(async (t) => {
-        const r = await storeWishImage(api, t, c.id);
+      void write.run(async (t, key) => {
+        const r = await storeWishImage(api, t, c.id, { key });
         setDone(
           r.ok
             ? {

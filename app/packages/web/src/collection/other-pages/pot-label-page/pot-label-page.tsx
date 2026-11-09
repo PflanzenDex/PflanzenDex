@@ -82,6 +82,8 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
   const { api, token, specimen, onMeasure } = props;
   const write = useWriteAction(token, useInvalidate(["monitoring"]));
+  const water = (t: string, key: string) => markWatered(api, t, [specimen.id], { key });
+  const fertilize = (t: string, key: string) => markFertilized(api, t, specimen.id, { key });
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
@@ -99,9 +101,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
               type="button"
               size="touch"
               disabled={write.running}
-              onClick={() =>
-                void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))
-              }
+              onClick={() => void write.run(water, ui("watered"))}
             >
               {ui("water")}
             </Button>
@@ -110,9 +110,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
               size="touch"
               variant="outline"
               disabled={write.running}
-              onClick={() =>
-                void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
-              }
+              onClick={() => void write.run(fertilize, ui("fertilized"))}
             >
               {ui("fertilize")}
             </Button>

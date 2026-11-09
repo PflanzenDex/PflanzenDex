@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { SIGN_IN, type ApiError } from "../../../../shared/data";
+import { useCallback, useRef, useState } from "react";
+import { SIGN_IN, isUnanswered, newRepeatKey, type ApiError } from "../../../../shared/data";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { refusalText } from "@/shared/lib/error-text";
@@ -17,6 +17,10 @@ const t = texts(table);
  * not, with the text of its code (P-10, DS-54); the form resets either way, because the measurement is stored.
  * `saved` is the saved measurement's text, `null` before the first save of this view; `saves` counts the saves of this
  * view, so the growth note of a save closes again at the next save (issue 1644).
+ *
+ * The repeat-guard key (US-QS-03) of the measurement is made when the keeper saves: after a lost answer the next save
+ * repeats the write with that key, and a stored answer or a refusal drops it. The photo is sent after the measurement
+ * with a key of its own: the form resets after the measurement, so a lost photo answer is never repeated by this form.
  */
 export function useMeasureSend(props: {
   api: string;
@@ -31,11 +35,15 @@ export function useMeasureSend(props: {
   const [saved, setSaved] = useState<string | null>(null);
   const [saves, setSaves] = useState(0);
   const [photoPending, setPhotoPending] = useState(false);
+  /** The key of the measurement whose answer was lost: the next save repeats that write (US-QS-03). */
+  const held = useRef<string | null>(null);
   const send = useCallback(
     async (input: MeasurementInput, photo?: File): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok) return SIGN_IN;
-      const r = await recordMeasurement({ api, token: tok }, specimenId, input);
+      const key = held.current ?? newRepeatKey();
+      const r = await recordMeasurement({ api, token: tok }, specimenId, input, { key });
+      held.current = !r.ok && isUnanswered(r.error) ? key : null;
       if (!r.ok) return r.error;
       const text = measurementText(r.value);
       setSaved(text);

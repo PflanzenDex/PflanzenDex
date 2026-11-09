@@ -46,7 +46,7 @@ function List(props: { api: string; token: Token; endpoints: readonly string[] }
                 aria-label={`Browser über ${host(endpoint)} abmelden`}
                 onClick={() =>
                   void write.run(
-                    (t) => removeSubscription(props.api, t, endpoint),
+                    (t, key) => removeSubscription(props.api, t, endpoint, { key }),
                     "Browser abgemeldet.",
                   )
                 }

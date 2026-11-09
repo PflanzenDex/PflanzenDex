@@ -107,7 +107,7 @@ describe("US-BES-09 client of the care profile API", () => {
       "http://api",
       "tok",
       { speciesId: "s 1", changes: { growthLocationId: null, wateringGrowthDays: 7 } },
-      fetchFn,
+      { fetchFn },
     );
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/care-profiles/s%201");
@@ -123,7 +123,7 @@ describe("US-BES-09 client of the care profile API", () => {
     const error = { code: "location.not_found", text: "Diesen Standort gibt es nicht." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(404, { error }));
     expect(
-      await saveCareProfile("http://api", "tok", { speciesId: "s1", changes: {} }, fetchFn),
+      await saveCareProfile("http://api", "tok", { speciesId: "s1", changes: {} }, { fetchFn }),
     ).toMatchObject({ ok: false, error: { code: "location.not_found" } });
   });
 });

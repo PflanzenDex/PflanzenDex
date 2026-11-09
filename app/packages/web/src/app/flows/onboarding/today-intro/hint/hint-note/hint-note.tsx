@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRepeatKey } from "@/shared/data";
 import { Button } from "@/shared/ui/button/button";
 import { saveHint } from "../hint-api";
 import { HINT_TEXTS } from "../hint-texts";
@@ -18,15 +19,18 @@ export function HintNote(props: {
 }) {
   const { api, token, occasion } = props;
   const [failed, setFailed] = useState(false);
+  const keys = useRepeatKey();
   useEffect(() => {
     void (async () => {
       const t = await token();
-      if (t) await saveHint(api, t, occasion, "shown");
+      if (t) await saveHint(api, t, { occasion, state: "shown" });
     })();
   }, [api, token, occasion]);
   const dismiss = async () => {
     const t = await token();
-    const r = t ? await saveHint(api, t, occasion, "dismissed") : null;
+    const r = t
+      ? await keys.run((key) => saveHint(api, t, { occasion, state: "dismissed" }, { key }))
+      : null;
     if (r?.ok) props.onGone();
     else setFailed(true);
   };

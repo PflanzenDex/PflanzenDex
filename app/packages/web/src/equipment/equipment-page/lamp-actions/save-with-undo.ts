@@ -2,7 +2,8 @@ import type { ToastApi } from "@/shared/patterns/states/toast/toast-provider/toa
 import type { Response, useWriteAction } from "../../../shared/data";
 
 type Write = ReturnType<typeof useWriteAction>;
-type Send = (token: string) => Promise<Response<unknown>>;
+/** A write of one value: sends with the token and the repeat-guard key of the action (US-QS-03). */
+type Send = (token: string, key: string) => Promise<Response<unknown>>;
 
 /**
  * Saves a change and, once the server has saved it, offers "Rückgängig" in a toast that writes `before` back (US-QS-07,
@@ -24,8 +25,8 @@ export async function saveWithUndo<T>(
   },
 ): Promise<void> {
   let saved = false;
-  await write.run(async (t) => {
-    const r = await change.send(change.after)(t);
+  await write.run(async (t, key) => {
+    const r = await change.send(change.after)(t, key);
     saved = r.ok;
     return r;
   }, change.saved);

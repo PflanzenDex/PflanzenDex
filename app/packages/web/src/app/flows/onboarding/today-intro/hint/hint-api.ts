@@ -1,4 +1,10 @@
-import { call, createWrite, currentTimeZone, type Response } from "../../../../../shared/data";
+import {
+  call,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+  writeFor,
+} from "../../../../../shared/data";
 
 /** The one hint that may show now (or none) and the stored end of the first-plant guide (US-ONB-07, DM-ONB-03). */
 export type HintState = { hint: string | null; guideEnded: boolean };
@@ -22,10 +28,10 @@ export function loadHints(
 export function saveHint(
   api: string,
   token: string,
-  occasion: string,
-  state: "shown" | "dismissed",
+  { occasion, state }: { occasion: string; state: "shown" | "dismissed" },
+  options: WriteOptions = {},
 ): Promise<Response<unknown>> {
-  return createWrite(api, token)("PUT", `/onboarding/hints/${encodeURIComponent(occasion)}`, {
+  return writeFor(api, token, options)("PUT", `/onboarding/hints/${encodeURIComponent(occasion)}`, {
     state,
     timeZone: currentTimeZone(),
   });

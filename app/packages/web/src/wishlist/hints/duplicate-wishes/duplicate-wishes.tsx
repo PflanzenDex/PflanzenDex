@@ -20,11 +20,17 @@ export function useRepair(api: string, token: Token, onWritten: () => void, onRu
   return {
     rename: (w: DuplicateWish, name: string) => {
       onRun();
-      void write.run(async (t) => finish(await renameWish(api, t, { wishId: w.id, name })), "");
+      void write.run(
+        async (t, key) => finish(await renameWish(api, t, { wishId: w.id, name }, { key })),
+        "",
+      );
     },
     remove: (w: DuplicateWish) => {
       onRun();
-      void write.run(async (t) => finish(await removeDuplicateWish(api, t, w.id)), "");
+      void write.run(
+        async (t, key) => finish(await removeDuplicateWish(api, t, w.id, { key })),
+        "",
+      );
     },
     done,
     running: write.running,

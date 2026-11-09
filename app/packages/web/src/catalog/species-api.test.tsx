@@ -35,7 +35,7 @@ describe("US-BES-01 client of the species API", () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>
       response(409, { error: { code: "species.duplicate", text: "Gibt es schon." } }),
     );
-    const r = await propose("http://api", "tok", { latinName: "Aloe" }, fetchFn);
+    const r = await propose("http://api", "tok", { latinName: "Aloe" }, { fetchFn });
     expect(r).toMatchObject({ ok: false, error: { code: "species.duplicate" } });
     const init = fetchFn.mock.calls[0]?.[1];
     expect(init?.method).toBe("POST");

@@ -174,7 +174,7 @@ describe("US-ACC-04 markIdentityRemoved", () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>
       json(200, { entryId: "e-1", outcome: "already" }),
     );
-    const r = await markIdentityRemoved("http://api", "tok", "e-1", fetchFn);
+    const r = await markIdentityRemoved("http://api", "tok", "e-1", { fetchFn });
     expect(r).toEqual({ ok: true, value: { entryId: "e-1", outcome: "already" } });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/operator/deletion-log/e-1/identity-removed");
@@ -185,7 +185,7 @@ describe("US-ACC-04 markIdentityRemoved", () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>
       json(403, { error: { code: "access.denied", message: "no" } }),
     );
-    const r = await markIdentityRemoved("http://api", "tok", "e-1", fetchFn);
+    const r = await markIdentityRemoved("http://api", "tok", "e-1", { fetchFn });
     expect(r.ok).toBe(false);
   });
 });

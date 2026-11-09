@@ -1,4 +1,10 @@
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+  writeFor,
+} from "../../../shared/data";
 
 export type KeeperStyle = "few" | "many";
 
@@ -18,9 +24,9 @@ export async function saveKeeperStyle(
   api: string,
   token: string,
   style: KeeperStyle,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<KeeperStyleState>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/onboarding/style", {
+  const r = await writeFor(api, token, options)("PUT", "/onboarding/style", {
     style,
     timeZone: currentTimeZone(),
   });

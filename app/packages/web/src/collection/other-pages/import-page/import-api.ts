@@ -7,7 +7,7 @@ import {
   type ImportPreview,
   type PreviewRow,
 } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "@/shared/data";
+import { call, currentTimeZone, type Response, type WriteOptions, writeFor } from "@/shared/data";
 
 /** The one line of the template: the column names, nothing else (an example row would be imported as a real plant). */
 export const TEMPLATE_HEADER = "Art;Spitzname;Standort;Kaufdatum;Notizen";
@@ -72,8 +72,9 @@ export async function sendImport(
     rows: readonly ConfirmRow[];
     markers: readonly { specimenId: string; marker: string }[];
   },
+  options: WriteOptions = {},
 ): Promise<Response<ConfirmResult>> {
-  const r = await createWrite(api, token)("POST", "/specimens/import", {
+  const r = await writeFor(api, token, options)("POST", "/specimens/import", {
     ...input,
     timeZone: currentTimeZone(),
   });

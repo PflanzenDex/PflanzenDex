@@ -5,7 +5,7 @@ import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
 import { setSpecimenLocation } from "../../../../../collection";
-import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
+import { SIGN_IN, createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
 import { refreshLight, sharedLocations, sharedZones } from "../../../../../light";
 import { zoneLabel } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -97,7 +97,7 @@ async function placeSpecimen(
   zoneId: string,
 ) {
   const t = await p.token();
-  if (!t) return { ok: false as const, error: { code: "access.not_signed_in" } };
+  if (!t) return { ok: false as const, error: SIGN_IN };
   const set = await setSpecimenLocation(p.api, t, { id: p.specimenId, locationId: chosen.id });
   if (!set.ok || chosen.lightZoneId !== null || !zoneId) return set;
   const named = await createWrite(p.api, t)("PUT", `/locations/${chosen.id}`, {

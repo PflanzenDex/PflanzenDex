@@ -36,7 +36,10 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
   const refresh = useInvalidate(["achievements"]);
   const write = useWriteAction(token, refresh);
   const submit = () => {
-    void write.run((t) => addRhythmPause(api, t, { from, until }), "Pause eingetragen.");
+    void write.run(
+      (t, key) => addRhythmPause(api, t, { from, until }, { key }),
+      "Pause eingetragen.",
+    );
   };
   return (
     <div className="flex min-w-0 flex-col gap-3 text-sm">
@@ -59,7 +62,9 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
       </div>
       <PauseList
         pauses={pauses}
-        remove={(id) => void write.run((t) => removeRhythmPause(api, t, id), "Pause entfernt.")}
+        remove={(id) =>
+          void write.run((t, key) => removeRhythmPause(api, t, id, { key }), "Pause entfernt.")
+        }
       />
       {write.error && (
         <p role="alert" className="mt-2 text-destructive">

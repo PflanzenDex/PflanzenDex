@@ -27,7 +27,7 @@ export function WaterAction(props: {
       aria-label={t("label", { name: specimen.name })}
       onClick={() =>
         void write.run(
-          (tok) => markWatered(api, tok, [specimen.id]),
+          (tok, key) => markWatered(api, tok, [specimen.id], { key }),
           t("watered", { name: specimen.name }),
         )
       }

@@ -2,10 +2,14 @@ import { errorText } from "@/shared/lib/error-text";
 import type { Api } from "./context";
 
 type Reply = { ok: true } | { ok: false; error: { code: string } };
-/** One write that waits: how to get the token and send it, what it says on success, and what to do after delivery. */
+/**
+ * One write that waits: how to get the token and send it, the repeat-guard key of its action (made when it was queued;
+ * every delivery sends that same key, US-QS-03), what it says on success, and what to do after delivery.
+ */
 export type Write = {
   token: () => Promise<string | undefined>;
-  send: (token: string) => Promise<Reply>;
+  send: (token: string, key: string) => Promise<Reply>;
+  key: string;
   success: string;
   after: () => void;
 };
@@ -51,7 +55,7 @@ export async function deliverBuffered(): Promise<void> {
   for (let entry = entries[0]; entry; entry = entries[0]) {
     const t = await entry.token();
     const r: Reply = t
-      ? await entry.send(t)
+      ? await entry.send(t, entry.key)
       : { ok: false, error: { code: "access.not_signed_in" } };
     if (!r.ok && r.error.code === "network.not_reachable") break;
     entries.shift();

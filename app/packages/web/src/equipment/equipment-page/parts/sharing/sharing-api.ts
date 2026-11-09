@@ -1,5 +1,5 @@
 import type { EquipmentSharingRow } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../../../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../../../../shared/data";
 
 export type { EquipmentSharingRow };
 
@@ -17,9 +17,9 @@ export async function setEquipmentSharing(
   api: string,
   token: string,
   target: { id: string; share: "private" | "friends"; note: string | null },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<unknown>> {
-  return createWrite(api, token, fetchFn)(
+  return writeFor(api, token, options)(
     "PUT",
     `/equipment/${encodeURIComponent(target.id)}/sharing`,
     {

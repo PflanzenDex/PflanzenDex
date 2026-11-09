@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { RepotHint, RepotSign } from "@pflanzendex/core";
-import { SIGN_IN, type ApiError } from "@/shared/data";
+import { SIGN_IN, type ApiError, useRepeatKey } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
@@ -37,13 +37,16 @@ export function Observations(props: {
   const { access, id, hints, reload } = props;
   const [busy, setBusy] = useState<RepotSign | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+  const keys = useRepeatKey();
   const change = async (sign: RepotSign, ticked: boolean) => {
     setBusy(sign);
     setError(null);
     const token = await access.token();
+    const key = keys.take();
     const r = token
-      ? await setRepotSign(access.api, token, { id, sign, ticked })
+      ? await setRepotSign(access.api, token, { id, sign, ticked }, { key })
       : { ok: false as const, error: SIGN_IN };
+    keys.settle(key, r);
     setBusy(null);
     if (r.ok) reload();
     else setError(r.error);

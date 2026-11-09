@@ -9,7 +9,7 @@ import type {
   SupplyLevel,
   ZoneEquipmentView,
 } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../shared/data";
 import {
   loadEquipmentSharing,
   type EquipmentSharingRow,
@@ -112,9 +112,9 @@ export async function recordEquipment(
   api: string,
   token: string,
   input: EquipmentInput,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentRow>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/equipment", input);
+  const r = await writeFor(api, token, options)("POST", "/equipment", input);
   return r.ok ? { ok: true, value: (r.value as { equipment: EquipmentRow }).equipment } : r;
 }
 
@@ -123,9 +123,9 @@ export async function setLampZone(
   api: string,
   token: string,
   target: { id: string; lightZoneId: string },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/zone`,
     { lightZoneId: target.lightZoneId },
@@ -138,9 +138,9 @@ export async function setEquipmentStatus(
   api: string,
   token: string,
   target: { id: string; status: EquipmentStatus },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/status`,
     { status: target.status },
@@ -161,9 +161,9 @@ export async function measureLamp(
   api: string,
   token: string,
   target: { id: string; input: MeasurementInput },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<LampMeasurement>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/measurements`,
     target.input,
@@ -176,10 +176,10 @@ export async function describeLamp(
   api: string,
   token: string,
   target: { id: string; powerW: number | null; luxStatement: number | null },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentRow>> {
   const { id, ...data } = target;
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/equipment/${encodeURIComponent(id)}/lamp-data`,
     data,
@@ -192,8 +192,8 @@ export async function setDeviationLimit(
   api: string,
   token: string,
   percent: number | null,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<{ percent: number | null }>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/equipment/lamps/limit", { percent });
+  const r = await writeFor(api, token, options)("POST", "/equipment/lamps/limit", { percent });
   return r.ok ? { ok: true, value: r.value as { percent: number | null } } : r;
 }

@@ -1,5 +1,5 @@
 import type { CareProfile, CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -15,15 +15,15 @@ export async function loadCareProfiles(
 
 /**
  * Changes fields of my care profile of one species (US-BES-09): a value sets, `null` resets to the catalog, a field
- * that is not named stays. The repeat-guard key is created per call.
+ * that is not named stays. The repeat-guard key is the action's (`options.key`), else made per call.
  */
 export async function saveCareProfile(
   api: string,
   token: string,
   input: { speciesId: string; changes: CareProfileChanges },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<CareProfile>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "PUT",
     `/care-profiles/${encodeURIComponent(input.speciesId)}`,
     input.changes,

@@ -108,7 +108,7 @@ function List(props: { api: string; token: Token; rows: readonly AiTaskRow[] }) 
               onCopy={(t) => void copy(t)}
               onCancel={() =>
                 void write.run(
-                  (t) => cancelTask(props.api, t, row.id),
+                  (t, key) => cancelTask(props.api, t, row.id, { key }),
                   "Der Auftrag ist zurückgezogen.",
                 )
               }

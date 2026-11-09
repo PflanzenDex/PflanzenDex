@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { SIGN_IN, setProfileTimeZone, type ApiError } from "../../../shared/data";
+import { SIGN_IN, setProfileTimeZone, type ApiError, useRepeatKey } from "../../../shared/data";
 import { saveProfile, type AccountProfile } from "../../api/account-api";
 
 type Token = () => Promise<string | undefined>;
@@ -18,13 +18,18 @@ export function useProfileSaver(api: string, token: Token, initial: AccountProfi
   const [saved, setSaved] = useState(initial);
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
+  const keys = useRepeatKey();
   const save = useCallback(
     async (next: AccountProfile): Promise<SaveResult | null> => {
       if (busy.current) return null;
       busy.current = true;
       setSaving(true);
       const t = await token();
-      const r = t ? await saveProfile(api, t, next) : { ok: false as const, error: SIGN_IN };
+      const key = keys.take();
+      const r = t
+        ? await saveProfile(api, t, next, { key })
+        : { ok: false as const, error: SIGN_IN };
+      keys.settle(key, r);
       busy.current = false;
       setSaving(false);
       if (r.ok) {
@@ -33,7 +38,7 @@ export function useProfileSaver(api: string, token: Token, initial: AccountProfi
       }
       return r;
     },
-    [api, token],
+    [api, token, keys],
   );
   return { saved, saving, save };
 }

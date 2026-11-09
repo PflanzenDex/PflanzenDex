@@ -51,7 +51,7 @@ export function useGuideEnd(api: string, token: Token, hints: HintState | "faile
     setEndedHere(true);
     void (async () => {
       const t = await token();
-      if (t) await saveHint(api, t, FIRST_PLANT_GUIDE, "dismissed");
+      if (t) await saveHint(api, t, { occasion: FIRST_PLANT_GUIDE, state: "dismissed" });
     })();
   };
   return [

@@ -12,7 +12,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import type { ApiError } from "../../../../shared/data";
+import { useRepeatKey, type ApiError } from "../../../../shared/data";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {
@@ -69,12 +69,15 @@ export type CatchDateTarget = { id: string; name: string; caughtAt: string | nul
  */
 export function useCatchDate(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<CatchDateTarget | null>(null);
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (catchDate: string): Promise<ApiError | null> => {
       const t = await token();
       if (!t || !open) return SIGN_IN;
-      const r = await correctCatchDate(api, t, { id: open.id, catchDate });
+      const key = keys.take();
+      const r = await correctCatchDate(api, t, { id: open.id, catchDate }, { key });
+      keys.settle(key, r);
       if (!r.ok) return r.error;
       const date = r.value.caughtAt ? dateText(r.value.caughtAt) : UNKNOWN;
       say(tx("corrected", { name: open.name, date }));
@@ -82,7 +85,7 @@ export function useCatchDate(api: string, token: Token, after: () => void, say: 
       after();
       return null;
     },
-    [api, token, open, after, say],
+    [api, token, open, after, say, keys],
   );
 
   return { open, send, setOpen };

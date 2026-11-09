@@ -68,7 +68,10 @@ function Draft(props: {
             disabled={busy}
             aria-label={`${title(row)} übernehmen`}
             onClick={() =>
-              void run((t) => adoptDraft(api, t, row.id), "Der Entwurf ist übernommen.")
+              void run(
+                (t, key) => adoptDraft(api, t, row.id, { key }),
+                "Der Entwurf ist übernommen.",
+              )
             }
           >
             Übernehmen
@@ -79,7 +82,10 @@ function Draft(props: {
             disabled={busy}
             aria-label={`${title(row)} verwerfen`}
             onClick={() =>
-              void run((t) => discardDraft(api, t, row.id), "Der Entwurf ist verworfen.")
+              void run(
+                (t, key) => discardDraft(api, t, row.id, { key }),
+                "Der Entwurf ist verworfen.",
+              )
             }
           >
             Verwerfen

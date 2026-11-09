@@ -1,5 +1,5 @@
 import type { MergeOutcome, ReviewCase, ReviewList } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -16,14 +16,14 @@ export type Decision = { caseId: string } & (
   { status: "reviewed" } | { status: "rejected"; reason: string }
 );
 
-/** Approve or reject (with the reason the creator will see); the repeat-guard key is created per call. */
+/** Approve or reject (with the reason the creator will see); the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function decideProposal(
   api: string,
   token: string,
   { caseId, ...decision }: Decision,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<ReviewCase>> {
-  const r = await createWrite(api, token, fetchFn)("POST", `/review/${caseId}/decide`, decision);
+  const r = await writeFor(api, token, options)("POST", `/review/${caseId}/decide`, decision);
   return r.ok ? { ok: true, value: r.value as ReviewCase } : r;
 }
 
@@ -32,9 +32,9 @@ export async function mergeProposal(
   api: string,
   token: string,
   { caseId, targetSpeciesId }: { caseId: string; targetSpeciesId: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<MergeOutcome>> {
-  const r = await createWrite(api, token, fetchFn)("POST", `/review/${caseId}/merge`, {
+  const r = await writeFor(api, token, options)("POST", `/review/${caseId}/merge`, {
     targetSpeciesId,
   });
   return r.ok ? { ok: true, value: r.value as MergeOutcome } : r;

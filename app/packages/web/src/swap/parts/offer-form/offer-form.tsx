@@ -16,6 +16,17 @@ const EMPTY: OfferFieldValues = {
 };
 
 /** The state of the dialog: the fields, the preview of the chosen specimen and the writes (create, share). */
+/** The offer as the server takes it: the filled-in fields without the empty optional ones (US-SOZ-09). */
+function offerInput(fields: OfferFieldValues, confirm: boolean) {
+  const { wish, note, ...rest } = fields;
+  return {
+    ...rest,
+    ...(wish.trim() ? { wish: wish.trim() } : {}),
+    ...(note.trim() ? { note: note.trim() } : {}),
+    ...(confirm ? { confirmTreatment: true } : {}),
+  };
+}
+
 function useOfferForm(api: string, token: Token, onChanged: () => void) {
   const [fields, setFields] = useState<OfferFieldValues>(EMPTY);
   const [confirm, setConfirm] = useState(false);
@@ -38,22 +49,15 @@ function useOfferForm(api: string, token: Token, onChanged: () => void) {
   const p = preview.value;
   const ready = p !== undefined && p.shared && !p.offered && (!p.health.treatmentOpen || confirm);
   const submit = async () => {
-    const { wish, note, ...rest } = fields;
     await write.run(
-      (t) =>
-        createOffer(api, t, {
-          ...rest,
-          ...(wish.trim() ? { wish: wish.trim() } : {}),
-          ...(note.trim() ? { note: note.trim() } : {}),
-          ...(confirm ? { confirmTreatment: true } : {}),
-        }),
+      (t, key) => createOffer(api, t, offerInput(fields, confirm), { key }),
       "Das Angebot ist erstellt. Deine Freunde sehen es in der Tauschbörse.",
     );
     setConfirm(false);
   };
   const share = () =>
     void write.run(
-      (t) => shareSpecimen(api, t, fields.specimenId),
+      (t, key) => shareSpecimen(api, t, fields.specimenId, { key }),
       "Freigegeben: Freunde sehen diese Pflanze ab jetzt.",
     );
   return {
