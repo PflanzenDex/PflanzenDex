@@ -244,7 +244,7 @@ ds-snapshots-check: ## Visual regression in the pinned Playwright container: com
 ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07, FR-QG-27)
 	cd $(APP) && npm run ds-snapshots:update
 
-e2e-origin: ## Allow the e2e web port of this worktree as redirect origin at the shared Keycloak; no-op without one (US-DEV-08, issue 1745)
+e2e-origin: $(if $(PFLANZENDEX_E2E_WEB_PORT),auth-up) ## Allow the e2e web port of this worktree as redirect origin at the shared Keycloak, after auth-up also under -j; no-op without one (US-DEV-08, issue 1745)
 ifdef PFLANZENDEX_E2E_WEB_PORT
 	cd $(APP) && node tools/keycloak/web-port.mjs $(E2E_WEB_PORT)
 endif
