@@ -6,7 +6,7 @@ APP := app
 # is unexported here, before the first $(shell) below: SCREEN (`make one-screen`), FILES (`make gate-plan`) and the values
 # of the recipes. A recipe reads the raw copy of a value from the environment ("$$REST_TITLE", "$$RAW_TYPE", set below with
 # $(value)), never the $(TITLE) text; a guard tests $(value X). FRESH keeps its name for the tools, see below.
-unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUN RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS
+unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUN RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS JOB REASON
 unexport WRITE APPLY DRY_RUN DEMO_SEED_PROFILE PERF_RUNS ONE_SCREEN_WRITE
 ifneq ($(origin FRESH),undefined)
 FRESH_GIVEN := yes
@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -58,11 +58,13 @@ export RAW_EPIC := $(value EPIC)
 export RAW_EVENT := $(value EVENT)
 export RAW_FILES := $(value FILES)
 export RAW_JOBS := $(value JOBS)
+export RAW_JOB := $(value JOB)
 export RAW_MSG := $(value MSG)
 export RAW_NAME := $(value NAME)
 export RAW_PERF_RUNS := $(value PERF_RUNS)
 export RAW_PRIORITY := $(value PRIORITY)
 export RAW_RELEASE := $(value RELEASE)
+export RAW_REASON := $(value REASON)
 export RAW_SHARD := $(value SHARD)
 export RAW_RUNS := $(value RUNS)
 export RAW_TYPE := $(value TYPE)
@@ -98,6 +100,22 @@ pr-text: ## Set the title (TITLE="…", optional) and the body (BODY=<file>) of 
 
 issue-comment: ## Add a comment to an issue over REST (ISSUE=<n> BODY=<file>); refuses a missing or empty body file (US-DEV-13)
 	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs issue-comment
+
+# The quarantine of a red CI job (US-QG-06): one entry in app/config/gates/baselines/quarantine-baseline.json, read by ci-status and by
+# `make ci-wait` through app/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs. The inputs reach the script raw
+# (RAW_JOB, REST_ISSUE, RAW_REASON); the script refuses a job that ci.yml does not define, an issue that is not a number and
+# an empty reason, and writes nothing then. The growth of the list is merged by the owner.
+quarantine: ## Quarantines one red CI job (JOB=<job> ISSUE=<n> REASON="…"): it reports and blocks no PR; the owner merges the list (US-QG-06)
+	node $(APP)/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs add
+
+# The two CI calls of the list (US-QG-06), so that ci.yml calls make as every other job does (FR-QG-01). ci-quarantine reads the
+# needs of ci-status from NEEDS_JSON and fails on a red job the list does not name; ci-quarantine-ui answers the job `results`
+# for the job ui-shard, from UI_SHARD: exit 0 only for a listed job with a red result. Both are CI only.
+ci-quarantine: ## CI only (US-QG-06): ci-status judges the needs in NEEDS_JSON; a red job the quarantine list names is report only
+	node $(APP)/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs status
+
+ci-quarantine-ui: ## CI only (US-QG-06): exit 0 when the job ui-shard is quarantined with the red result UI_SHARD, else 1 (the results job)
+	node $(APP)/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs quarantined ui-shard "$$UI_SHARD"
 
 # Five read-only targets for agents (US-DEV-13, issue 1716), fixed so that .claude/settings.json can allow each one. Code:
 # app/tools/dev/agent/read-only/read-only-cli.mjs. Each value reaches the script only as its raw environment variable (REST_RUN,

@@ -197,8 +197,11 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # US-QG-06 (owner decision 2026-11-09): this job opens no pull request. It names each red job of the run, the CI job that a
+  # quarantine would take and the ready command; an agent runs `make quarantine` on a branch, and the owner merges that pull
+  # request, because the list grows. The issue is R1 and P1: making the gate deterministic is what ends the quarantine.
   report:
-    needs: [suite, e2e, lighthouse-signed]
+    needs: [suite, e2e, lighthouse-signed, lighthouse]
     if: failure()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -209,11 +212,47 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NEEDS_SUITE: ${{ needs.suite.result }}
+          NEEDS_E2E: ${{ needs.e2e.result }}
+          NEEDS_LIGHTHOUSE: ${{ needs.lighthouse.result }}
+          NEEDS_LIGHTHOUSE_SIGNED: ${{ needs.lighthouse-signed.result }}
         run: |
+          RUN_DAY="$(date -u +%F)"
+          # The ready command names this issue (NUM): a new issue has its number only once it exists, see below.
+          ready() { echo "make quarantine JOB=$1 ISSUE=$NUM REASON=\"red on dev's head $RUN_DAY, $RUN_URL\""; }
+          # One line per red job: its result, then the ready command of its CI job, or the text when no CI job is one.
+          item() {
+            case "$2" in success | skipped) return 0 ;; esac
+            if [ -n "$3" ]; then
+              echo "- \`$1\` ended \`$2\`. Ready command: \`$(ready "$3")\`"
+            else
+              echo "- \`$1\` ended \`$2\`. $4"
+            fi
+          }
+          body() {
+            echo "The nightly run on \`dev\` ended red: $RUN_URL ($RUN_DAY)."
+            echo
+            echo "Red jobs of this run (US-QG-06):"
+            item suite "$NEEDS_SUITE" "" "The CI job that runs the failing part is app-gates, app-tests or app-ui: see the run, then use \`$(ready '<that job>')\`."
+            item e2e "$NEEDS_E2E" e2e ""
+            item lighthouse "$NEEDS_LIGHTHOUSE" lighthouse ""
+            item lighthouse-signed "$NEEDS_LIGHTHOUSE_SIGNED" "" "It is not a CI job, so no quarantine applies: fix the measurement (it turns red only when a run cannot measure)."
+            echo
+            echo "A quarantined CI job still runs and reports, but a red result blocks no pull request (ci-status and make merge)."
+            echo "\`make quarantine\` adds the entry on a branch; the owner merges that pull request, because the list grows."
+            echo "The entry comes off (delete it and lower maxEntries) once the job is green on dev again."
+            echo "This issue is R1 and P1: making the gate deterministic is what ends the quarantine."
+          }
           nr="$(gh issue list --label nightly --state open --json number --jq '.[0].number')"
           if [ -n "$nr" ]; then
-            gh issue comment "$nr" --body "Failed again: $RUN_URL"
+            NUM="$nr"
           else
-            gh issue create --label nightly --title "Nightly suite on dev is failing" \
-              --body "The nightly full suite (make ci, make audit, make e2e) on \`dev\` failed: $RUN_URL"
+            url="$(gh issue create --label nightly --title "Nightly suite on dev is failing" --body "The nightly suite on \`dev\` failed. The report follows.")"
+            NUM="${url##*/}"
+          fi
+          body > "$RUNNER_TEMP/nightly-report.md"
+          if [ -n "$nr" ]; then
+            gh issue comment "$NUM" --body-file "$RUNNER_TEMP/nightly-report.md"
+          else
+            gh issue edit "$NUM" --body-file "$RUNNER_TEMP/nightly-report.md"
           fi
