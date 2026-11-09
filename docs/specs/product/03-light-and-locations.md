@@ -19,7 +19,7 @@ These four are the default for new accounts. The keeper can adjust names and val
 
 ## User stories
 
-### US-LIC-01 · Assign a species to the right light zone · 🟨 (prototype ✅)
+### US-LIC-01 · Assign a species to the right light zone · ✅ (prototype ✅)
 
 As a **plant keeper** I want every species to be assigned to a zone based on its biological demand, so that it grows and does not merely survive.
 
@@ -28,10 +28,11 @@ Acceptance criteria:
 - The catalog carries the lux demand for maximum growth as an integer and a default level 2–4 of the default. The account's zone is derived from it (FR-BES-10) and can be overridden in the care profile (US-BES-09).
 - The assignment follows the saturation point of photosynthesis.
 - Cutting light is **never** the target zone for adults.
-- Move up only if the demand reaches at least 80 % of the lux ceiling of the current level. If the demand is more than 30 % below the ceiling, the species stays there (more light brings stress).
+- Move up only if the demand reaches at least 80 % of the lux ceiling of the current level. If the demand is more than 30 % below the ceiling of the next zone, the species stays there (more light brings stress). The 30 % are an assumption (starting value, decided by the PO), measured against the lux ceiling of the next zone, as the code does.
 - C3 plants with soft leaves ("sun-loving") are not automatically classified into the strong zone.
 - Given a species whose lux demand or default level is unknown (P-08, DM-BES-01), when its zone is derived (card, distribution, light overview, comparison, care profile), then the zone reads "unbekannt", never a guessed zone, and the view names the next step "Lichtbedarf eintragen" (P-09); the keeper's own zone in the care profile still applies (US-BES-09).
 
+State of implementation (2026-11-09, issue #65, owner decisions of 2026-11-07 and 2026-11-09): complete for the criteria above, and tested. (1) The soft-leaf flag may be unknown: migration 0116 makes it nullable and sets every stored "no" to unknown; an empty answer in the proposal form stores unknown, "Nein" stores no, and an unknown flag does not apply the soft-leaf rule (DM-BES-01). An unknown soft leaf is a gap of the catalog (US-BES-13) with the next step research. (2) The light overview uses my care-profile zone first, then the derived zone, else unknown (the same order as the card and the distribution, which also read the location and the specimen). (3) "Lichtbedarf eintragen" is the one next step for an unknown lux need or default level, on the card, in the distribution (per species), in the light overview (per row), in the comparison, and in the care profile. It opens the species' care profile at the zone choice; inside the profile it moves the focus to the zone choice. The derivation form "Zone ermitteln" has no species and requires the lux need, so its result is never unknown; its reason text names the same step. (4) A species without lux need stays in the light overview (US-LIC-03). (5) The 30 % rule is an assumption, measured against the next zone's ceiling.
 ### US-LIC-02 · Know where there is still room · ✅ (prototype ✅)
 
 As a **plant keeper** I want to see the distribution of my specimens across the zones.
@@ -50,7 +51,7 @@ As a **plant keeper** I want an overview by light hunger with a position recomme
 
 Acceptance criteria:
 
-- One row per species with at least one active specimen and a set lux demand, sorted descending by demand.
+- One row per species with at least one active specimen, sorted descending by demand. A species with an unknown lux demand stays in the overview, listed last, with "unbekannt" and the next step "Lichtbedarf eintragen" (US-LIC-01, P-08, P-09, P-10; owner decision 2026-11-09, replacing the earlier rule that such species leave the list).
 - Position mapping by lux demand:
 
   | Demand                                                 | Position                 |
@@ -92,7 +93,7 @@ Acceptance criteria:
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FR-LIC-01 | Light zones are data of the account with a default, not hard-coded; counting, wishlist and recommendations read them centrally (solves B-07).                                      | 🟨 Data and default (LIC-05); reading by counting, wishlist and recommendations follows                                                                                                                                                                                                                                   |
 | FR-LIC-02 | A specimen's light zone overrides that of the species (cutting → cutting light).                                                                                                   | 🟨 In the distribution (LIC-02) and on the card (BES-06), one shared rule: status cutting, the own zone field of the specimen (`specimen.set_light_zone`, or chosen on creation in the form field "Eigene Lichtzone"), zone of the location, else the species zone; changing it on an existing specimen follows in the UI |
-| FR-LIC-03 | If the lux demand is missing, the species drops out of the light overview and appears in "Hints".                                                                                  | ⬜                                                                                                                                                                                                                                                                                                                        |
+| FR-LIC-03 | If the lux demand is missing, the species stays in the light overview, listed last with "unbekannt" and the next step "Lichtbedarf eintragen" (owner decision 2026-11-09, P-10: nothing disappears silently); it does not drop out into "Hints". | ✅ Light overview (`GET /specimens/light-overview`, per row the next step, US-LIC-01) |
 | FR-LIC-04 | Distribution and wishlist prioritization use the same counting (specimen level, only zones 2–4).                                                                                   | 🟨 Counting as a reusable function (LIC-02); the wishlist (WUN) does not use it yet                                                                                                                                                                                                                                       |
 | FR-LIC-05 | The light overview (species view) uses the species' lux demand also for cuttings; the distribution (specimen view) respects the override. Intended and explained in the interface. | 🟨 Thresholds are an account setting (LIC-03); the cutting rule and its explanation in the interface are open                                                                                                                                                                                                             |
 | FR-LIC-06 | A measured light intensity per lamp (phone app) can be stored per device (US-EQU-03). If it is missing, the zone's value applies, marked as "not measured".                        | 🟨                                                                                                                                                                                                                                                                                                                        |

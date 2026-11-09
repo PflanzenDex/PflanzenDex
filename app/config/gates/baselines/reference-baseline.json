@@ -49,7 +49,6 @@
     "GET /review",
     "GET /specimens/count",
     "GET /specimens/difficulty",
-    "GET /specimens/light-overview",
     "GET /watering/due",
     "GET /wishes/visible-to-friends",
     "POST /account/deletion",
