@@ -2,10 +2,10 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { cleanup, render as mount, screen } from "@testing-library/react";
-import { createQueryClient } from "../../shared/data";
+import { createQueryClient, deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
 import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
-import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
+import { localToday, type MeasurementView, type MeasurementRow } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
 import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
@@ -90,6 +90,21 @@ describe("US-WAC-01 client of the measure API", () => {
     expect(body["timeZone"]).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
   });
 
+  it("US-WAC-01 the request names the profile's time zone once one is chosen, not the device's (US-ACC-02)", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
+    setProfileTimeZone("Pacific/Kiritimati");
+    try {
+      await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
+        value: 12.5,
+        quality: "healthy",
+      });
+    } finally {
+      setProfileTimeZone(null);
+    }
+    const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+    expect(body["timeZone"]).toBe("Pacific/Kiritimati");
+  });
+
   it("an error of the API stays an error with code and text", async () => {
     const error = { code: "specimen.not_found", text: "Die Pflanze gibt es nicht." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(404, { error }));
@@ -133,6 +148,47 @@ describe("US-WAC-01 checking the input before sending", () => {
 
   it("rejects an unknown quality", () => {
     expect(checkInput(fields({ quality: "super" })).ok).toBe(false);
+  });
+
+  it("US-WAC-01 an emptied date is refused with a text and is never sent as a missing date (P-10)", () => {
+    const r = checkInput(fields({ date: "" }));
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.text).toMatch(/Datum/);
+  });
+});
+
+describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)", () => {
+  // 9 November 2026, 23:30 UTC: a different calendar day in UTC-11 (Samoa) and UTC+14 (Kiribati) than at the instant.
+  const NOW = new Date("2026-11-09T23:30:00Z");
+  const formDate = (iso: string) => {
+    const [y, m, d] = iso.split("-");
+    return `${d}.${m}.${y}`;
+  };
+  afterEach(() => {
+    setProfileTimeZone(null);
+    vi.useRealTimers();
+  });
+
+  it("US-WAC-01 the form's date is today in the profile's zone, even when the device's zone has another day", () => {
+    const device = deviceTimeZone();
+    // A zone whose day differs from the device's exists at every instant: one of the two is a day ahead or behind.
+    const profile = ["Pacific/Pago_Pago", "Pacific/Kiritimati"].find(
+      (zone) => localToday(NOW, zone) !== localToday(NOW, device),
+    );
+    expect(profile).toBeDefined();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    setProfileTimeZone(profile ?? null);
+    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    expect(html).toContain(`value="${formDate(localToday(NOW, profile ?? ""))}"`);
+    expect(html).not.toContain(`value="${formDate(localToday(NOW, device))}"`);
+  });
+
+  it("US-WAC-01 without a chosen zone the form's date is today in the device's zone", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    expect(html).toContain(`value="${formDate(localToday(NOW, deviceTimeZone()))}"`);
   });
 });
 
