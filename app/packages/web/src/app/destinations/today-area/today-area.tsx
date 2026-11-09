@@ -20,6 +20,7 @@ import {
   type TodaySection,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { TodayOverview } from "./today-overview/today-overview";
+import { WateringView, useWateringFilter } from "./watering-view/watering-view";
 
 type Token = () => Promise<string | undefined>;
 
@@ -129,7 +130,10 @@ function useFormerAnchors() {
   }, [hash, navigate]);
 }
 
-/** The overview of the day with the layers of its categories. */
+/**
+ * The overview of the day with the layers of its categories. With the address `?tasks=watering` the day is narrowed to the
+ * watering tasks: the page shows them with a notice and a way back to the whole day (US-QS-26).
+ */
 function Tasks(props: {
   api: string;
   token: Token;
@@ -140,19 +144,24 @@ function Tasks(props: {
   tiles?: readonly TodayTile[] | undefined;
 }) {
   const { api, token } = props;
+  const watering = useWateringFilter();
   // The counts come from the same requests and keys as the lists in the layers: both share one copy and a write
   // updates both. Each module hands its count over (`count`); the app nests them, the modules do not know each other.
   return (
     <>
-      <Suspense fallback={<TodaySkeleton />}>
-        <TodayOverview
-          api={api}
-          token={token}
-          onOpen={props.onOpen}
-          open={props.open}
-          {...(props.tiles ? { tiles: props.tiles } : {})}
-        />
-      </Suspense>
+      {watering ? (
+        <WateringView api={api} token={token} />
+      ) : (
+        <Suspense fallback={<TodaySkeleton />}>
+          <TodayOverview
+            api={api}
+            token={token}
+            onOpen={props.onOpen}
+            open={props.open}
+            {...(props.tiles ? { tiles: props.tiles } : {})}
+          />
+        </Suspense>
+      )}
       <LayerSheet id="treatments" title="Behandlungen">
         <InLayer skeleton={<TreatmentsLayerSkeleton />}>
           <TreatmentsPage api={api} token={token} host onPlan={props.plan} />

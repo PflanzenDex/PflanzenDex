@@ -2,6 +2,7 @@
   "id": "/",
   "name": "PflanzenDéx",
   "short_name": "PflanzenDéx",
+  "description": "PflanzenDéx hält deine Pflanzen im Blick: was heute zu gießen oder zu behandeln ist, wie sich jede Pflanze entwickelt und welche Angaben noch fehlen.",
   "lang": "de",
   "start_url": "/",
   "scope": "/",
@@ -32,6 +33,49 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "monochrome"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/heute.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Heute: was an diesem Tag ansteht"
+    },
+    {
+      "src": "/screenshots/sammlung.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Sammlung: alle Pflanzen auf einen Blick"
+    },
+    {
+      "src": "/screenshots/pflanze.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Eine Pflanze: messen, gießen und ihren Verlauf sehen"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Heute",
+      "short_name": "Heute",
+      "url": "/today",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Gießen",
+      "short_name": "Gießen",
+      "url": "/today?tasks=watering",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Neue Pflanze",
+      "short_name": "Neue Pflanze",
+      "url": "/collection/new",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

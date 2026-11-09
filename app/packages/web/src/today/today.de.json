@@ -14,5 +14,9 @@
   "later.one": "Ein weiterer Behandlungstermin steht später an.",
   "later.other": "{count} weitere Behandlungstermine stehen später an.",
   "later.short": "{count} Termine später",
-  "tasks.title": "Weitere Aufgaben"
+  "tasks.title": "Weitere Aufgaben",
+  "filter.shown": "Nur Gießen ist angezeigt.",
+  "filter.hidden": "Behandlungen und fehlende Angaben sind ausgeblendet.",
+  "filter.clear": "Alle Aufgaben zeigen",
+  "filter.title": "Gießen"
 }

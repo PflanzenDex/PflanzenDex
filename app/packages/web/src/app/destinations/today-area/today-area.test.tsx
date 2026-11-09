@@ -48,6 +48,8 @@ type Setup = {
   items?: unknown[];
   /** The anniversaries of US-ACH-06 due today; without it the endpoint is not there (no card). */
   anniversaries?: unknown;
+  /** The plants due to be watered today (US-MON-05, US-QS-26). */
+  due?: unknown[];
 };
 
 const SPECIMENS = [{ id: "s-a", name: "Aloe", status: "plant" }];
@@ -94,7 +96,7 @@ function fakeServer(setup: Setup = {}) {
           response(200, { date: "2026-10-03", upcoming: 0, items: setup.items ?? [] }),
         "/treatments": () =>
           post ? response(201, { treatments: [{}] }) : response(200, { treatments: open }),
-        "/watering/due": () => response(200, { due: [] }),
+        "/watering/due": () => response(200, { due: setup.due ?? [] }),
         "/specimens/count": () => response(200, { count: 1, archived: 0 }),
         "/onboarding/hints": () => response(200, { hint: null, guideEnded: false }),
         "/specimens": () => response(200, { specimens: setup.specimens ?? SPECIMENS }),
@@ -331,6 +333,65 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
     expect(await screen.findByRole("button", { name: /^0Behandlungen$/ })).toBeTruthy();
+  });
+});
+
+/** Two plants due to be watered today (US-MON-05). */
+const DUE = [
+  { specimenId: "w1", name: "Ficus", intervalDays: 7, lastWateredOn: "2026-10-03", daysSince: 7 },
+  { specimenId: "w2", name: "Basilikum", intervalDays: 3, lastWateredOn: null, daysSince: 3 },
+];
+const FILTER_NOTICE = "Nur Gießen ist angezeigt.";
+const HIDDEN_NOTICE = "Behandlungen und fehlende Angaben sind ausgeblendet.";
+
+describe("US-QS-26 Heute narrowed to the watering tasks by its address", () => {
+  it("US-QS-26 /today?tasks=watering shows only the watering tasks: a notice names the filter and what stays hidden, and no category or treatment shows", async () => {
+    fakeServer({ due: DUE, items: [todayItem] });
+    show("/today?tasks=watering");
+    expect(await screen.findByRole("heading", { level: 1, name: "Heute" })).toBeTruthy();
+    expect(screen.getByText(FILTER_NOTICE)).toBeTruthy();
+    expect(screen.getByText(HIDDEN_NOTICE)).toBeTruthy();
+    expect(await screen.findByText("Ficus")).toBeTruthy();
+    expect(screen.getByText("Basilikum")).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Themen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Behandlungen/ })).toBeNull();
+    expect(screen.queryByText(/überfällig seit 2 Tagen/)).toBeNull();
+    expect(address()).toBe("/today?tasks=watering");
+  });
+
+  it('US-QS-26 each watering row keeps its action: "Gegossen" stays on the row of the filtered list', async () => {
+    fakeServer({ due: DUE });
+    show("/today?tasks=watering");
+    expect(
+      await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }),
+    ).toBeTruthy();
+  });
+
+  it('US-QS-26 the button "Alle Aufgaben zeigen" clears the filter: the address loses it and the whole day with its tiles shows again', async () => {
+    fakeServer({ due: DUE, items: [todayItem] });
+    const user = userEvent.setup();
+    show("/today?tasks=watering");
+    await user.click(await screen.findByRole("button", { name: "Alle Aufgaben zeigen" }));
+    expect(address()).toBe("/today");
+    const tiles = within(await screen.findByRole("list", { name: "Themen" }));
+    expect(tiles.getByRole("button", { name: /^2Gießen$/ })).toBeTruthy();
+    expect(screen.queryByText(FILTER_NOTICE)).toBeNull();
+  });
+
+  it("US-QS-26 with nothing due the filtered page still says what it shows and why the list is empty (P-09, P-10)", async () => {
+    fakeServer({ due: [] });
+    show("/today?tasks=watering");
+    expect(await screen.findByText("Heute nichts zu gießen")).toBeTruthy();
+    expect(screen.getByText(FILTER_NOTICE)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Alle Aufgaben zeigen" })).toBeTruthy();
+  });
+
+  it("US-QS-26 an unknown tasks value shows the whole day without a notice", async () => {
+    fakeServer({ due: DUE, items: [todayItem] });
+    show("/today?tasks=treatments");
+    expect(await screen.findByRole("list", { name: "Themen" })).toBeTruthy();
+    expect(screen.queryByText(FILTER_NOTICE)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Alle Aufgaben zeigen" })).toBeNull();
   });
 });
 
