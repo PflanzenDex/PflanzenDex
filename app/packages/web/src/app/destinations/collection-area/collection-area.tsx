@@ -1,6 +1,5 @@
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { PlantsViewLayer, UnsavedInputDialog, ViewLayer, usePlantForm } from "@/collection";
-import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AreaHeader } from "./area-header/area-header";
@@ -14,6 +13,7 @@ import {
   type PlantGroup,
 } from "../../sammlung-view";
 import { ModeBody, type AreaProps } from "./wiring/area-modes/area-modes";
+import { CollectionModeSkeleton } from "./collection-area.skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./collection-area.de.json";
 import type { FormAddress } from "@/collection";
@@ -54,7 +54,7 @@ export function CollectionArea(props: AreaProps) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {own ? null : <AreaHeader view={view} caption={caption} onChoose={choose} />}
         <FormFrame form={form}>
-          <Suspense fallback={<PageSkeleton />}>
+          <Suspense fallback={<CollectionModeSkeleton shape={{ view, sort, group, managing }} />}>
             <ModeBody
               {...props}
               view={view}

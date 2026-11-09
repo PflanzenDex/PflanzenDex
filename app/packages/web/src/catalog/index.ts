@@ -15,3 +15,5 @@ export const loadSpecies = async (
 ) => (await import("./species-api")).loadSpecies(...args);
 // The skeleton of the species catalog, the mode's skeleton on "Entdecken" (US-QS-14, issue 1697).
 export { SpeciesPageSkeleton } from "./species-page/species-page.skeleton";
+// The route fallback of the species profile (US-QS-14, issue 1727): the card of the profile with its skeleton.
+export { ProfileRouteSkeleton } from "./profile-view/profile-view.skeleton";

@@ -10,3 +10,5 @@ export {
   sharedLocations,
   sharedZones,
 } from "./shared/light-api/light-shared";
+// The skeleton of the locations and light zones, shown while they are managed in "Sammlung" (US-QS-14, issue 1727).
+export { LightPageSkeleton } from "./light-page/light-page.skeleton";

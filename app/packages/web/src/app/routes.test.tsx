@@ -89,7 +89,8 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     renderAt("/collection?view=wishlist");
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByText("Lädt…")).toBeTruthy();
+    // The route shows the shape of the mode the address names (issue 1727), so its status names the wishlist.
+    expect(screen.getByRole("status").textContent).toContain("Wunschliste wird geladen …");
     release();
     await screen.findByRole("heading", { name: /Wunschliste/ });
   });
