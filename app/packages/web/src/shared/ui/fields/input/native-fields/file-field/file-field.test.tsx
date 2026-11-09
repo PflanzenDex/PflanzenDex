@@ -37,4 +37,24 @@ describe("FileField (US-QS-24)", () => {
     const file = render(<FileField id="file" accept=".csv,text/csv" />);
     expectOnlyTheInput(file.container, "Datei wählen");
   });
+
+  it("US-QS-12 the file picker input has a boundary and its label carries the focus in forced colors (issue 1730)", () => {
+    const { container } = render(<FileField id="photo" accept="image/jpeg,image/png" />);
+    // The input lies over the label: it has the label's border, so a control without a border is never reported.
+    const input = container.querySelector("input");
+    expect(input?.classList).toContain("border");
+    expect(input?.classList).toContain("border-input");
+    expect(input?.classList).toContain("rounded-control");
+    // Forced colors drop the ring (a box shadow), so the visible label draws a system-coloured outline on keyboard focus.
+    const label = within(container).getByText("Foto wählen");
+    for (const cls of [
+      "forced-colors:peer-focus-visible:outline-2",
+      "forced-colors:peer-focus-visible:outline-offset-2",
+      "forced-colors:peer-focus-visible:outline-[color:Highlight]",
+      "forced-colors:peer-focus-visible:outline-solid",
+      "peer-focus-visible:ring-2",
+    ]) {
+      expect(label.classList).toContain(cls);
+    }
+  });
 });
