@@ -1,7 +1,10 @@
 import * as React from "react";
 import { useLocation, useSearchParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { OLD_PARTS } from "./address";
 
 /**
@@ -23,9 +26,13 @@ export type PagerPaging = {
   retryText: string;
 };
 
-/** The note of the entries that are not loaded yet: the loading text, or the failure with its retry button (P-10). */
-export function PagingNote({ paging }: { paging: PagerPaging }) {
-  if (paging.failure === undefined)
+/**
+ * The note of the entries that are not loaded yet: the loading text, or the failure with its retry button (P-10). The
+ * loading text holds once shown (US-QS-14, D5, issue 1772), so the note stays mounted while the page is missing.
+ */
+export function PagingNote({ paging, missing }: { paging: PagerPaging; missing: boolean }) {
+  const loading = useHeldLoader(missing && paging.failure === undefined);
+  if (loading)
     return (
       <DelayedSkeleton>
         <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
@@ -33,6 +40,7 @@ export function PagingNote({ paging }: { paging: PagerPaging }) {
         </p>
       </DelayedSkeleton>
     );
+  if (!missing) return null;
   return (
     <div className="flex flex-col items-start gap-2">
       <p role="alert" className="text-sm">

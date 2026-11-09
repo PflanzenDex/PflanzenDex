@@ -2,7 +2,12 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { Suspense, lazy } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DelayedSkeleton, SKELETON_DELAY_MS } from "./delayed-skeleton";
+import {
+  DelayedSkeleton,
+  SKELETON_DELAY_MS,
+  STATUS_HOLD_MS,
+  useHeldLoader,
+} from "./delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "../skeleton";
 
 afterEach(() => {
@@ -150,5 +155,92 @@ describe("DelayedSkeleton nested in a due one (US-QS-14, DS-57, issue 1697)", ()
     });
     expect(screen.getByTestId("inner")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+});
+
+/** A part that holds its shapeless loader: the loader is a status text in a DelayedSkeleton, the content replaces it. */
+function HeldPart({ pending }: { pending: boolean }) {
+  const held = useHeldLoader(pending);
+  return held ? (
+    <DelayedSkeleton>
+      <span role="status">Wird geladen …</span>
+    </DelayedSkeleton>
+  ) : (
+    <p>Inhalt</p>
+  );
+}
+
+describe("useHeldLoader (US-QS-14, D5, issue 1772)", () => {
+  it("US-QS-14 issue 1772 · the hold is 300 ms (assumption, owner decision D5)", () => {
+    expect(STATUS_HOLD_MS).toBe(300);
+  });
+
+  it("US-QS-14 issue 1772 · a load that ends at 250 ms keeps its status until 500 ms, then the content shows", () => {
+    const { rerender } = render(<HeldPart pending />);
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS);
+    });
+    expect(screen.getByRole("status").textContent).toBe("Wird geladen …");
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    rerender(<HeldPart pending={false} />);
+    act(() => {
+      vi.advanceTimersByTime(STATUS_HOLD_MS - 51);
+    });
+    expect(screen.getByRole("status")).toBeTruthy();
+    expect(screen.queryByText("Inhalt")).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+  });
+
+  it("US-QS-14 issue 1772 · a load that ends within the delay shows nothing and holds nothing", () => {
+    const { rerender } = render(<HeldPart pending />);
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS - 1);
+    });
+    rerender(<HeldPart pending={false} />);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(STATUS_HOLD_MS * 2);
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-14 issue 1772 · a load that runs longer than the hold shows its status for the whole load, and its end replaces it at once", () => {
+    const { rerender } = render(<HeldPart pending />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole("status")).toBeTruthy();
+    rerender(<HeldPart pending={false} />);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+  });
+
+  it("US-QS-14 issue 1772 · a new load after a hold waits its delay again before its status shows", () => {
+    const { rerender } = render(<HeldPart pending />);
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS + 50);
+    });
+    rerender(<HeldPart pending={false} />);
+    act(() => {
+      vi.advanceTimersByTime(STATUS_HOLD_MS);
+    });
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+    rerender(<HeldPart pending />);
+    expect(screen.queryByRole("status")).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(SKELETON_DELAY_MS - 1);
+    });
+    expect(screen.queryByRole("status")).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole("status")).toBeTruthy();
   });
 });

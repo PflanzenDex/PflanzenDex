@@ -185,7 +185,7 @@ export function Pager<T>({
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}
       </ul>
-      {missing && note ? <PagingNote paging={note} /> : null}
+      {note ? <PagingNote paging={note} missing={missing} /> : null}
       {pages > 1 ? <PagerBar page={page} pages={pages} turn={turn} /> : null}
     </div>
   );

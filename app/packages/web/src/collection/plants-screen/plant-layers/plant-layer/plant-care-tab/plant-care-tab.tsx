@@ -10,7 +10,10 @@ import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-shee
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { Button } from "@/shared/ui/button/button";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
 import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
 import {
@@ -114,16 +117,19 @@ export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAcces
  */
 export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
   const plan = useRepotPlan(props.card, props.access);
+  // The first read holds its status once shown (D5); what it replaces waits for the hold. A refetch keeps the data
+  // on screen and has no status of its own (useRequest is pending only without data).
+  const loading = useHeldLoader(plan.status === "pending");
   return (
     <LayerSheet id={signsLayerId(props.card.id)} title={t("signs.layerTitle")}>
-      {plan.status === "pending" ? (
+      {loading ? (
         <DelayedSkeleton>
           <p role="status" className="text-sm text-muted-foreground">
             {t("signs.loading")}
           </p>
         </DelayedSkeleton>
       ) : null}
-      {plan.status === "error" ? (
+      {!loading && plan.status === "error" ? (
         <Warning>
           <p>{t("signs.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
@@ -132,7 +138,7 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
           </Button>
         </Warning>
       ) : null}
-      {plan.value !== undefined && !plan.value.hidden ? (
+      {!loading && plan.value !== undefined && !plan.value.hidden ? (
         <Observations
           access={props.access}
           id={props.card.id}

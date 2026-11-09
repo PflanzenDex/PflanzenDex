@@ -14,7 +14,10 @@ import { PlantsScreen } from "../../../plants-screen";
 import { useListActions, type ListActions } from "../../../../specimens/hooks/use-list-actions";
 import type { CardPages } from "../../../../specimens/cards/use-card-pages";
 import { formText, type FormAddress, type FormPlant } from "../address/form-address";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
  * A close of a form by its own control goes through the address: with unsaved input it asks first (US-QS-15). The state
@@ -98,6 +101,10 @@ export function Views(p: {
   props: Props;
 }) {
   const { data, create, props, form, formPlant } = p;
+  // An addressed form whose plant is still read: the list waits for it (a reload), and then holds the loader (D5).
+  const reading = useHeldLoader(
+    form.kind !== null && formPlant.card === undefined && !formPlant.failed,
+  );
   if (props.newSpecies) {
     return (
       <CreateWithSiblings
@@ -112,7 +119,7 @@ export function Views(p: {
   }
   if (hasOpenForm(p.actions)) return <OpenForm actions={p.actions} form={form} />;
   // An addressed form whose plant is still read: the list waits for it (a reload); once read, the form or the list shows.
-  if (form.kind !== null && formPlant.card === undefined && !formPlant.failed) {
+  if (reading) {
     return (
       <DelayedSkeleton>
         <p role="status" className="text-sm text-muted-foreground">

@@ -44,7 +44,7 @@ function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Spe
         token={token}
         load={load}
         loadingText="Offene Behandlungen werden geladen …"
-        loadingFallback={<Loading text="Offene Behandlungen werden geladen …" />}
+        loadingStatus={<Loading text="Offene Behandlungen werden geladen …" />}
       >
         {(all: readonly TreatmentListRow[]) => {
           const rows = all.filter((r) => r.specimenId === specimen.id);
@@ -90,7 +90,7 @@ function DoneTreatments(props: { api: string; token: Token; specimenId: string }
       token={token}
       load={load}
       loadingText="Erledigte Behandlungen werden geladen …"
-      loadingFallback={<Loading text="Erledigte Behandlungen werden geladen …" />}
+      loadingStatus={<Loading text="Erledigte Behandlungen werden geladen …" />}
     >
       {(rows: readonly TreatmentRow[]) =>
         rows.length === 0 ? (

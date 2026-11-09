@@ -46,7 +46,7 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
         token={token}
         load={load}
         loadingText={ui("loading")}
-        loadingFallback={<Loading text={ui("loading")} />}
+        loadingStatus={<Loading text={ui("loading")} />}
       >
         {(data: Phase) =>
           data.row ? (
