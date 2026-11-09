@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { useRequest, type ApiError } from "@/shared/data";
+import { useRequest, type ApiError, type Request } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { layerOpenerId } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { Button } from "@/shared/ui/button/button";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
 import { notesKey, useNotes } from "../../../../specimens/hooks/use-notes";
@@ -76,6 +79,22 @@ function NotesFailed(props: { error: ApiError; onRetry: () => void }) {
   );
 }
 
+/** The first read of the notes: its loading status, which holds once shown (US-QS-14, D5, issue 1772), and its failure. */
+function NotesRead(props: { loading: boolean; request: Request<SpecimenNotes> }) {
+  const { loading, request } = props;
+  if (loading)
+    return (
+      <DelayedSkeleton>
+        <p role="status" className="text-muted-foreground">
+          {t("layer.loading")}
+        </p>
+      </DelayedSkeleton>
+    );
+  if (request.status === "error" && request.error)
+    return <NotesFailed error={request.error} onRetry={request.retry} />;
+  return null;
+}
+
 /**
  * The private notes of a plant as their own layer (US-BES-18): the overview stays on one screen (US-QS-15, US-QS-23) and
  * the notes are read only while this layer is open. Writing happens here too, so saving leaves the keeper in the layer
@@ -91,7 +110,9 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
     load: (token) => loadSpecimenNotes(access.api, token, card.id),
     fresh: true,
   });
-  const ready = request.status === "ready";
+  // The first read holds its status once shown (D5): the notes and the actions it replaces wait for the hold too.
+  const loading = useHeldLoader(request.status === "pending");
+  const ready = request.status === "ready" && !loading;
   const notes = ready ? (request.value?.notes ?? null) : null;
   const action =
     mode === "edit" ? (
@@ -112,16 +133,7 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
     <LayerSheet id={notesLayerId(card.id)} title={t("layer.title")} primaryAction={action}>
       <div className="grid gap-3 text-sm">
         <Quiet>{t("layer.hint", { name: card.name })}</Quiet>
-        {request.status === "pending" ? (
-          <DelayedSkeleton>
-            <p role="status" className="text-muted-foreground">
-              {t("layer.loading")}
-            </p>
-          </DelayedSkeleton>
-        ) : null}
-        {request.status === "error" && request.error ? (
-          <NotesFailed error={request.error} onRetry={request.retry} />
-        ) : null}
+        <NotesRead loading={loading} request={request} />
         {ready && mode === "edit" ? (
           <NotesForm
             notes={notes}

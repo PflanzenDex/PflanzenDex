@@ -5,6 +5,7 @@ import { useRequest, type ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
+import { useHeldLoader } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import {
   Form,
   FormControl,
@@ -160,7 +161,8 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
     load: (token) => loadRepotPlan(access.api, token, open.id),
     fresh: true,
   });
-  if (plan.status === "pending")
+  const loading = useHeldLoader(plan.status === "pending");
+  if (loading)
     return (
       <RepotFrame open={open}>
         <LoadingNote>{t("form.loadingPots")}</LoadingNote>

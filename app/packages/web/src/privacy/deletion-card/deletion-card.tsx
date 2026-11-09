@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { useRequest } from "../../shared/data";
 import { loadDeletion, type DeletionState } from "../privacy-api";
 import { DELETION_KEY, useDeletionAction } from "./use-deletion-action/use-deletion-action";
@@ -12,9 +15,10 @@ type Token = () => Promise<string | undefined>;
 const UNKNOWN = "unbekannt";
 const LOADING = "wird geladen …";
 
-/** The value of the row: the state as text, "unbekannt" when it cannot be read (P-08). */
-function deletionValue(state: DeletionState | undefined, failed: boolean): ReactNode {
-  if (state === undefined) return failed ? UNKNOWN : <DelayedSkeleton>{LOADING}</DelayedSkeleton>;
+/** The value of the row: the state as text, "unbekannt" when it cannot be read (P-08); while it waits, the loader (DS-57, D5). */
+function deletionValue(state: DeletionState | undefined, waiting: boolean): ReactNode {
+  if (waiting) return <DelayedSkeleton>{LOADING}</DelayedSkeleton>;
+  if (state === undefined) return UNKNOWN;
   return state.requested ? `Löschung vorgemerkt für ${day(state.dueAt)}` : "Noch nichts vorgemerkt";
 }
 
@@ -31,6 +35,11 @@ export function DeletionCard(props: { api: string; token: Token }) {
   const act = useDeletionAction({ api: props.api, token: props.token, loaded: r.value });
   const [step, setStep] = useState<Step>(1);
   const [typed, setTyped] = useState("");
+  // The state waits for its loader: a shown loader holds once it has shown (D5), and the value, the footer and the body
+  // follow the same held state. A failed read shows "unbekannt" (P-08), after any hold.
+  const waiting = useHeldLoader(act.state === undefined && r.status !== "error");
+  const state = waiting ? undefined : act.state;
+  const loadError = waiting ? undefined : r.error;
 
   useEffect(() => {
     if (!open) {
@@ -43,10 +52,10 @@ export function DeletionCard(props: { api: string; token: Token }) {
     <LayerPart
       id="delete"
       title="Konto löschen?"
-      value={deletionValue(act.state, r.status === "error")}
+      value={deletionValue(state, waiting)}
       primaryAction={
         <DeletionFooter
-          state={act.state}
+          state={state}
           step={step}
           typed={typed}
           act={act}
@@ -56,8 +65,8 @@ export function DeletionCard(props: { api: string; token: Token }) {
       }
     >
       <DeletionBody
-        state={act.state}
-        loadError={r.error}
+        state={state}
+        loadError={loadError}
         step={step}
         typed={typed}
         onType={setTyped}

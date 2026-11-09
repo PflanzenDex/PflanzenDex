@@ -1,5 +1,8 @@
 import { Button } from "@/shared/ui/button/button";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -24,6 +27,8 @@ export function LargePicture(props: {
 }) {
   const { access, path, title, sourceLine, onClose } = props;
   const state = useStoredPhoto(access, path);
+  // The picture's loading status holds once shown (US-QS-14, D5, issue 1772); the picture waits for the hold.
+  const loading = useHeldLoader(!state);
   const isMd = useIsMd();
   return (
     <ResponsiveModal
@@ -32,7 +37,13 @@ export function LargePicture(props: {
       open
       onOpenChange={(open) => !open && onClose()}
     >
-      {typeof state === "string" ? (
+      {loading ? (
+        <DelayedSkeleton>
+          <p role="status" className="text-muted-foreground">
+            {t("picture.loading")}
+          </p>
+        </DelayedSkeleton>
+      ) : typeof state === "string" ? (
         <img
           src={state}
           alt={t("picture.alt", { title })}
@@ -42,13 +53,7 @@ export function LargePicture(props: {
         <p role="alert" className="text-destructive">
           {errorText(state.code)}
         </p>
-      ) : (
-        <DelayedSkeleton>
-          <p role="status" className="text-muted-foreground">
-            {t("picture.loading")}
-          </p>
-        </DelayedSkeleton>
-      )}
+      ) : null}
       <p className="text-sm text-muted-foreground">{sourceLine}</p>
       {!isMd && (
         <Button type="button" variant="outline" size="touch" onClick={onClose}>

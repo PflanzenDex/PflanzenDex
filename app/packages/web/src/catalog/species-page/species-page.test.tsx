@@ -375,7 +375,8 @@ describe("US-QS-07 the catalog search keeps its status until the new hits are th
     expect(screen.getByRole("button", { name: /Dracaena trifasciata/ })).toBeTruthy();
     asked.find((a) => a.term === "Zylinder")?.answer([other]);
     expect(await screen.findByRole("button", { name: /Sansevieria cylindrica/ })).toBeTruthy();
-    expect(screen.queryByRole("status")).toBeNull();
+    // The search status holds for the hold after the new hits arrived (US-QS-14, D5, issue 1772).
+    await vi.waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 
   it("US-QS-07 a background refetch of the term on screen shows no status", async () => {

@@ -23,7 +23,10 @@ import {
 } from "./groups/switch-groups/switch-groups";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
@@ -45,7 +48,8 @@ function useStyleValue(api: string, token: Token): ReactNode {
     token,
     load: useCallback((t: string) => loadAchievementSettings(api, t), [api]),
   });
-  if (style.status === "pending") return <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton>;
+  const loading = useHeldLoader(style.status === "pending");
+  if (loading) return <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton>;
   if (style.value === undefined) return UNKNOWN;
   return styleValue(style.value.style, calm.value?.calmMode);
 }

@@ -107,6 +107,8 @@ function Step(props: {
   api: string;
   token: Token;
   onCatalog: () => void;
+  /** "Schritt n von m", read once by the focused heading of the step (US-ACC-03). */
+  stepLabel: string;
 }) {
   const { f } = props;
   if (f.index === 1 && f.species)
@@ -118,6 +120,7 @@ function Step(props: {
         onZone={f.setZoneId}
         error={f.error}
         marker={f.marker}
+        stepLabel={props.stepLabel}
       />
     );
   return (
@@ -130,6 +133,7 @@ function Step(props: {
       species={f.species}
       onPick={f.pick}
       onCatalog={props.onCatalog}
+      stepLabel={props.stepLabel}
     />
   );
 }
@@ -154,6 +158,7 @@ export function OnboardingWizard(props: {
 }) {
   const f = useFirstPlant(props.api, props.token);
   const step = FIRST_PLANT_STEPS[f.index];
+  const stepLabel = ui("stepOf", { n: f.index + 1, total: FIRST_PLANT_STEPS.length });
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
       <h1 className="text-2xl font-semibold">{ui("today")}</h1>
@@ -167,10 +172,8 @@ export function OnboardingWizard(props: {
         />
       ) : (
         <>
-          <p
-            className="m-0 self-start rounded-full border border-current px-2.5 py-0.5 text-sm font-semibold"
-            role="status"
-          >
+          {/* Not a live region: the focused heading of the step says "Schritt n von m" once (US-ACC-03, issue 1612). */}
+          <p className="m-0 self-start rounded-full border border-current px-2.5 py-0.5 text-sm font-semibold">
             {ui("step", {
               n: f.index + 1,
               total: FIRST_PLANT_STEPS.length,
@@ -183,6 +186,7 @@ export function OnboardingWizard(props: {
             api={props.api}
             token={props.token}
             onCatalog={props.onChoosePlant}
+            stepLabel={stepLabel}
           />
           <Buttons f={f} onSkip={props.onSkip} />
           {f.index === 0 ? props.entry : null}

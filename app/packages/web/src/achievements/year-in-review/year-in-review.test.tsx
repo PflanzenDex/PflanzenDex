@@ -57,7 +57,7 @@ describe("US-ACH-07 year in review", () => {
   it("US-ACH-07 shows counted facts with their basis and the largest healthy growth, no rating", async () => {
     show(answer());
     expect(await screen.findByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
-    expect(screen.getByText(/Arten gefangen/)).toBeTruthy();
+    expect(await screen.findByText(/Arten gefangen/)).toBeTruthy();
     expect(screen.getByText(/Fangdatum im Jahr/)).toBeTruthy();
     expect(screen.getByText(/Messungen erfasst/)).toBeTruthy();
     expect(screen.getByText(/Größtes gesundes Wachstum: „Alma“, 8 cm/)).toBeTruthy();
@@ -124,7 +124,8 @@ describe("US-ACH-07 year in review", () => {
     expect(screen.getByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
     asked[1]?.answer(answer({ year: thisYear - 1 }));
     expect(await screen.findByText(`Jahresrückblick ${thisYear - 1}`)).toBeTruthy();
-    expect(screen.queryByRole("status")).toBeNull();
+    // The refreshing status holds for the hold after the new year arrived (US-QS-14, D5, issue 1772).
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 
   it("US-ACH-08 calm mode or a failed read shows nothing", async () => {

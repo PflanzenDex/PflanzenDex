@@ -98,7 +98,7 @@ export function DeletionSection(props: {
       token={token}
       load={load}
       loadingText={t("row.loading")}
-      loadingFallback={<p role="status">{t("row.loading")}</p>}
+      loadingStatus={<p role="status">{t("row.loading")}</p>}
     >
       {(view: DeletionsView) => (
         <DeletionBody view={view} running={props.running} onMark={props.onMark} />

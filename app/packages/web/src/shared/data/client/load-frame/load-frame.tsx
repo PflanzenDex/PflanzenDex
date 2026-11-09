@@ -26,6 +26,11 @@ export function LoadFrame<T>(props: {
   staleTime?: number;
   /** Skeleton that mirrors the page while it loads (DS-52); it must carry the single `role="status"` with `loadingText`. */
   loadingFallback?: ReactNode;
+  /**
+   * A shapeless status instead of a skeleton: a centred text without a shape (US-QS-14, D5, issue 1772), held once it has
+   * shown. It carries the single `role="status"` itself. Without it and without `loadingFallback` a `PlantLoader` shows.
+   */
+  loadingStatus?: ReactNode;
   /** Optional empty state for a view that has nothing to show without rows. */
   empty?: {
     isEmpty: (value: T) => boolean;
@@ -51,8 +56,9 @@ export function LoadFrame<T>(props: {
       status={isEmpty ? "empty" : r.status}
       {...(r.error ? { errorText: r.error.text } : {})}
       onRetry={r.retry}
-      skeleton={
-        props.loadingFallback ?? (
+      skeleton={props.loadingFallback}
+      loader={
+        props.loadingStatus ?? (
           <PlantLoader label={props.loadingText} size="lg" className="mx-auto my-8 flex" />
         )
       }

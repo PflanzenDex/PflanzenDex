@@ -219,7 +219,9 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
     const img = await screen.findByRole("img", { name: "Foto von Bogenhanf vom 28.09.2026" });
     expect(img.getAttribute("src")).toBe("blob:card");
     expect(img.closest("a")?.getAttribute("href")).toBe("blob:card");
-    expect(screen.getByRole("link", { name: "Foto von Bogenhanf groß öffnen" })).toBeTruthy();
+    expect(
+      await screen.findByRole("link", { name: "Foto von Bogenhanf groß öffnen" }),
+    ).toBeTruthy();
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/measurements/m1/photo");
     expect((init?.headers as Record<string, string>)["Authorization"]).toBe("Bearer tok");

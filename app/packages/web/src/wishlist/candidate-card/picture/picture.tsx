@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -21,6 +24,17 @@ const placeholder =
  */
 const PICTURE_BOX = "aspect-square w-32 shrink-0 rounded-lg";
 
+/** The loading status in the box: the box keeps its size at once; the status inside shows after the delay (DS-57, issue 1726). */
+function PictureLoading() {
+  return (
+    <span className={cn(PICTURE_BOX, placeholder, "p-2 text-center text-sm")}>
+      <DelayedSkeleton>
+        <span role="status">{t("picture.loading")}</span>
+      </DelayedSkeleton>
+    </span>
+  );
+}
+
 /**
  * The local copy (US-WUN-04): fetched with the token, so a viewer's browser never contacts a third-party host (P-05). The
  * card asks for the small thumbnail, not the full stored copy (NFR-12). A tap on the thumbnail opens the large view,
@@ -34,6 +48,8 @@ export function StoredPicture(props: { c: Candidate; access: PhotoAccess; source
   const pictureRef = useRef<HTMLButtonElement>(null);
   const wasLarge = useRef(false);
   const state = useStoredPhoto(access, path, { size: "thumb" });
+  // The loading status holds once shown (US-QS-14, D5, issue 1772); the picture waits for the hold.
+  const loading = useHeldLoader(!state);
   useEffect(() => {
     if (large) wasLarge.current = true;
     else if (wasLarge.current) {
@@ -41,18 +57,14 @@ export function StoredPicture(props: { c: Candidate; access: PhotoAccess; source
       pictureRef.current?.focus();
     }
   }, [large]);
+  if (loading) return <PictureLoading />;
   if (typeof state !== "string")
     return state ? (
       <span role="status" className={cn(PICTURE_BOX, placeholder, "p-2 text-center text-sm")}>
         {errorText(state.code)}
       </span>
     ) : (
-      // The box keeps its size at once; the loading status inside it shows after the delay (DS-57, issue 1726).
-      <span className={cn(PICTURE_BOX, placeholder, "p-2 text-center text-sm")}>
-        <DelayedSkeleton>
-          <span role="status">{t("picture.loading")}</span>
-        </DelayedSkeleton>
-      </span>
+      <PictureLoading />
     );
   return (
     <>
