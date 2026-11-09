@@ -6,5 +6,6 @@
   "back": "Zurück",
   "skip": "Überspringen",
   "today": "Heute",
-  "step": "Schritt {n} von {total}: {title}"
+  "step": "Schritt {n} von {total}: {title}",
+  "stepOf": "Schritt {n} von {total}"
 }

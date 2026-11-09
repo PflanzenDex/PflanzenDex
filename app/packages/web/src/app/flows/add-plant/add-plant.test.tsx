@@ -503,3 +503,36 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     expect(writes.find((w) => w.path === "/specimens")).toBeUndefined();
   });
 });
+
+/** The live regions of the page (polite, assertive, status or alert) whose text contains the word (issue 1612). */
+function liveRegionsSaying(word: string) {
+  return Array.from(
+    document.querySelectorAll("[aria-live], [role='status'], [role='alert']"),
+  ).filter((el) => el.textContent?.includes(word));
+}
+
+describe("US-ACC-03 · each step of a further plant is announced once (issue 1612)", () => {
+  it("US-ACC-03 a step change names the step only in the focused heading, no live region repeats it", async () => {
+    server();
+    view();
+    await toSave();
+    const heading = await screen.findByRole("heading", {
+      name: "Schritt 2 von 2: Pflanze speichern",
+    });
+    expect(document.activeElement).toBe(heading);
+    expect(liveRegionsSaying("Schritt")).toEqual([]);
+  });
+
+  it("US-ACC-03 going back names the first step the same way, once, and the visible marker stays", async () => {
+    server();
+    view();
+    await toSave();
+    await userEvent.click(await screen.findByRole("button", { name: "Zurück" }));
+    const heading = await screen.findByRole("heading", {
+      name: "Schritt 1 von 2: Welche Pflanze?",
+    });
+    expect(document.activeElement).toBe(heading);
+    expect(liveRegionsSaying("Schritt")).toEqual([]);
+    expect(screen.getByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
+  });
+});

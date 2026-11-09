@@ -86,9 +86,11 @@ function Flow(props: Props & { onAnother: () => void }) {
   const places = usePlaces(api, token, f.setLocationId);
   if (f.created) return <Done name={f.created.name} onAnother={props.onAnother} />;
   const species = f.index === 1 ? f.species : null;
+  const stepLabel = ui("stepOf", { n: f.index + 1, total: FIRST_PLANT_STEPS.length });
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <p className="m-0 text-sm font-semibold" role="status">
+      {/* Not a live region: the focused heading of the step says "Schritt n von m" once (US-ACC-03, issue 1612). */}
+      <p className="m-0 text-sm font-semibold">
         {ui("step", {
           n: f.index + 1,
           total: FIRST_PLANT_STEPS.length,
@@ -103,6 +105,7 @@ function Flow(props: Props & { onAnother: () => void }) {
           onZone={f.setZoneId}
           error={f.error}
           marker={f.marker}
+          stepLabel={stepLabel}
         >
           <PlaceField places={places} value={f.locationId} onChange={f.setLocationId} />
         </SaveStep>
@@ -117,6 +120,7 @@ function Flow(props: Props & { onAnother: () => void }) {
           species={f.species}
           onPick={f.pick}
           onCatalog={props.onCatalog}
+          stepLabel={stepLabel}
         />
       )}
       <Buttons f={f} species={species} onMore={props.onMore} />
