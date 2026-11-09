@@ -2,6 +2,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -22,7 +23,9 @@ export type DialogContentProps = Omit<
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
   ({ className, title, description, closeLabel = "Schließen", children, ...props }, ref) => (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-foreground/50" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-foreground/50">
+        <StatusBarDim />
+      </DialogPrimitive.Overlay>
       <DialogPrimitive.Content
         ref={ref}
         className={cn(

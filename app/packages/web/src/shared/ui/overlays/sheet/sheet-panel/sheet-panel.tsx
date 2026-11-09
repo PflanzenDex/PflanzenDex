@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Drawer } from "vaul";
 import { cn } from "@/shared/lib/utils";
+import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
 
 export type SheetPanelProps = Omit<
   React.ComponentPropsWithoutRef<typeof Drawer.Content>,
@@ -43,7 +44,9 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-50 bg-foreground/50" />
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-foreground/50">
+            <StatusBarDim />
+          </Drawer.Overlay>
           <Drawer.Content
             ref={ref}
             className={cn(

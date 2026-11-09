@@ -510,6 +510,22 @@ Acceptance criteria:
 
 State of implementation: the term table is applied across `web`, the German texts of `core` (`ERROR_TEXTS`, hints) and the e2e specs; error codes are unchanged. `shared/lib/text-rules/term-table.ts` holds the retired words and the exception list, `retired-words.test.ts` and `number-unit.test.ts` check them; `MoreHelp` (`shared/ui/display/more-help`) is the "Mehr erfahren" block for the layers of light zones. `tabular-nums` stays a per-view class on counts, measurements and dates (a global rule would also change digits in running text and headings). Forms (issue 1032): the optional fields of the forms named in US-QS-15 sit behind "Mehr Angaben" (`MoreFields`, `ui/fields/form/more-fields/`, DS-66). Not yet: the remaining paragraphs in forms. Status 🟨 until then. Issue 1045 (2026-10-31): the wish row is one line with "Schwierigkeit: unbekannt" and the zone set off by " · " (`zoneText` in `core`), the replenishment hint is neutral instead of alarm red, and the disabled page buttons and the caption of the pager keep to one line.
 
+### US-QS-25 · The installed app matches the page colours · 🟨 new
+
+As a **plant keeper** I want the installed app to look like one piece with the page: the status bar and the system navigation area below the bottom bar take the page colour, the splash screen stays brand green, and the colour changes with a sheet or dialog, so that no green strip sits under the bottom bar and the app does not jump between colours.
+
+Decision (owner, 2026-11-07, issue 1691, option C): the splash screen stays brand green with the icon and the name, in both schemes (one colour; the installed app has no dark variant). The status bar and the navigation area follow the page background in both schemes, and the green strip under the bottom bar goes away. Decision (owner, 2026-11-09, issue 1691): while a sheet or dialog dims the page, the status bar follows the dimmed page colour.
+
+Acceptance criteria:
+
+- Given the installed app on Android in light or dark mode, when any view shows, then the status bar and the navigation area below the bottom bar take the page background of the active scheme (light `#fafafa`, dark `#0b0b0c`, the page tokens), and no brand-green strip shows under the bottom bar (US-QS-07).
+- Given the installed app starts, when the splash screen shows, then it is brand green (`#1b6b4a`) with the icon and the name, in light and in dark.
+- Given a sheet or a dialog opens, when its backdrop dims the page, then the status bar takes the dimmed page colour (the foreground at the backdrop opacity of 50 %, composited over the page background: `#89898b` in light, `#808081` in dark), and when the window has left the screen it takes the page background again.
+- Given two backdrops are on screen at once, when one of them leaves, then the status bar stays dimmed until the last one leaves.
+- Given the system switches between light and dark while the app is open, when a backdrop is on screen, then the status bar shows the dimmed colour of the new scheme.
+
+State of implementation (issue 1691): `index.html` names the page background of each scheme in its two `theme-color` metas, which the browser matches to the system scheme. The manifest's `theme_color` is the light page background (`#fafafa`) and its `background_color`, the splash colour, is the brand green. `StatusBarDim` (`shared/platform/device/status-bar/status-bar.tsx`, the colours in `theme-colour.ts`) sits inside the backdrop of `Sheet` and `Dialog`; the backdrop mounts only while its window is open, including its exit, and while it is mounted both metas take the dimmed colour. The app has no colour-scheme switch of its own (dark follows the system, ADR 0007); a switch added later must set both metas as well. The colour of the navigation area in the installed app is verified on a phone only (assumption: the page's meta wins at runtime, the manifest value is the fallback).
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |
