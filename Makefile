@@ -15,6 +15,12 @@ unexport FRESH
 # Test database (E-01: PostgreSQL in Docker). In CI the workflow provides it as a service.
 # In a worktree (US-DEV-08) .env.worktree supplies its own port; otherwise the fixed port 54329 is used.
 -include .env.worktree
+# The e2e ports of this worktree (US-DEV-08, issue 1745): the Playwright targets and the Lighthouse runs read E2E_WEB_PORT and
+# E2E_API_PORT. A value already in the environment wins. Without .env.worktree (main checkout, CI) nothing is set here.
+ifdef PFLANZENDEX_E2E_WEB_PORT
+export E2E_WEB_PORT ?= $(PFLANZENDEX_E2E_WEB_PORT)
+export E2E_API_PORT ?= $(PFLANZENDEX_E2E_API_PORT)
+endif
 DB_PORT := $(or $(PFLANZENDEX_TEST_DB_PORT),54329)
 DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
@@ -29,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status run-jobs conflicts test-files format-check board-item
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment gate-plan project-status run-jobs conflicts test-files format-check board-item
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -209,7 +215,7 @@ auth-down: ## Remove the auth server and mail catcher
 
 start: auth-up db-up ## Start everything for local work: auth server, database, API and web; prints URLs and test accounts
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test || { echo "Keycloak or the database is not responding"; exit 1; }
-	@echo "Web: http://localhost:5173  API: http://localhost:3000  Keycloak: http://localhost:18081  Mail: http://localhost:18025"
+	@echo "Web: http://localhost:$(or $(PFLANZENDEX_DEV_WEB_PORT),5173)  API: http://localhost:$(or $(PFLANZENDEX_DEV_API_PORT),3000)  Keycloak: http://localhost:18081  Mail: http://localhost:18025"
 	@echo "Test accounts (dev realm): test, test2, test3 - password testtest12 (see docs/guides/reference/app.md)"
 	$(MAKE) dev
 
@@ -238,10 +244,15 @@ ds-snapshots-check: ## Visual regression in the pinned Playwright container: com
 ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07, FR-QG-27)
 	cd $(APP) && npm run ds-snapshots:update
 
-e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
+e2e-origin: ## Allow the e2e web port of this worktree as redirect origin at the shared Keycloak; no-op without one (US-DEV-08, issue 1745)
+ifdef PFLANZENDEX_E2E_WEB_PORT
+	cd $(APP) && node tools/keycloak/web-port.mjs $(E2E_WEB_PORT)
+endif
+
+e2e: $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
-one-screen: $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
+one-screen: $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen
 
@@ -251,14 +262,14 @@ one-screen-report: ## The page/inner table of the last `make one-screen` run as 
 one-screen-merge: ## CI only: merges the shard reports of one-screen (app/packages/e2e/one-screen-shards) into the report of the whole run; fails unless every screen and size was measured exactly once (US-QG-01)
 	cd $(APP) && npm run --silent merge-shards -w @pflanzendex/e2e -- one-screen one-screen-shards
 
-a11y-routes: $(if $(CI),,db-up) auth-up migrate browsers ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; A11Y_ROUTES_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; needs Docker
+a11y-routes: $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; A11Y_ROUTES_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes
 
 ui-gates-seed: $(if $(CI),,db-up) auth-up migrate ## CI only (US-QG-02, issue 1698): seeds the demo for make ui-gates (DEMO_SEED_PROFILE=states); a prerequisite of ui-gates, so with -j it runs while the browsers install; needs Keycloak and a migrated database
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 
-ui-gates: $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up migrate browsers ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browsers install; every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
+ui-gates: $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browsers install; every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
 
 a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
@@ -297,7 +308,7 @@ lighthouse: ## Lighthouse on the built web app, mobile, median of 3 runs against
 	tools/lighthouse/lighthouse-run.sh
 	@summary=$(APP)/packages/web/.lighthouseci/summary.md; tools/lighthouse/lighthouse-summary.sh --check > $$summary; status=$$?; cat $$summary; exit $$status
 
-lighthouse-signed: $(if $(CI),,db-up) auth-up migrate browsers ## Lighthouse on the signed-in /today and /collection, mobile, median of 3 runs; report only: scores never fail it, a run that cannot measure does (FR-QG-09, issue 1251); seeds the demo
+lighthouse-signed: $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## Lighthouse on the signed-in /today and /collection, mobile, median of 3 runs; report only: scores never fail it, a run that cannot measure does (FR-QG-09, issue 1251); seeds the demo
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	tools/lighthouse/lighthouse-signed.sh
 

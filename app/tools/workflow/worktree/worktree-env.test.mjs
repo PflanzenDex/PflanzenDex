@@ -17,11 +17,15 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
+  PORT_BASE,
+  PORT_SLOTS,
   copyTree,
   installFolders,
   reuseDeps,
+  slotOf,
   slug,
   sourcesFor,
+  takenSlots,
   worktreeEnv,
 } from "./worktree-env.mjs";
 
@@ -58,6 +62,75 @@ test("US-DEV-08: the database name is a valid identifier", () => {
 
 test("US-DEV-08: an empty branch name aborts", () => {
   assert.throws(() => worktreeEnv(""));
+});
+
+const SERVICE_KEYS = [
+  "PFLANZENDEX_TEST_DB_PORT",
+  "PFLANZENDEX_DEV_API_PORT",
+  "PFLANZENDEX_DEV_WEB_PORT",
+  "PFLANZENDEX_E2E_API_PORT",
+  "PFLANZENDEX_E2E_WEB_PORT",
+];
+
+test("US-DEV-08: the e2e ports have blocks of their own, apart from the dev ports (issue 1745)", () => {
+  const e = worktreeEnv("feat/dev-08-parallel");
+  SERVICE_KEYS.forEach((key, block) => {
+    const port = Number(e[key]);
+    assert.ok(
+      port >= PORT_BASE + block * PORT_SLOTS && port < PORT_BASE + (block + 1) * PORT_SLOTS,
+      `${key} is outside its block`,
+    );
+  });
+  assert.equal(new Set(SERVICE_KEYS.map((key) => e[key])).size, SERVICE_KEYS.length);
+  assert.equal(
+    Number(e.PFLANZENDEX_E2E_WEB_PORT) - Number(e.PFLANZENDEX_E2E_API_PORT),
+    PORT_SLOTS,
+    "the e2e web port has the slot of the e2e API port",
+  );
+});
+
+test("US-DEV-08: a slot that another worktree holds is skipped, and all five ports move with it (issue 1745)", () => {
+  const own = worktreeEnv("feat/a");
+  const slot = Number(own.PFLANZENDEX_TEST_DB_PORT) - PORT_BASE;
+  const moved = worktreeEnv("feat/a", new Set([slot]));
+  assert.equal(Number(moved.PFLANZENDEX_TEST_DB_PORT) - PORT_BASE, slot + 1);
+  for (const key of Object.keys(own)) {
+    if (key === "PFLANZENDEX_TEST_DB_NAME") {
+      assert.equal(moved[key], own[key], "the database name depends on the branch only");
+    } else {
+      assert.equal(Number(moved[key]) - Number(own[key]), 1, key);
+    }
+  }
+});
+
+test("US-DEV-08: the slot search wraps around past the last slot and skips the taken ones there (issue 1745)", () => {
+  const slotIn = (env) => Number(env.PFLANZENDEX_TEST_DB_PORT) - PORT_BASE;
+  const start = slotIn(worktreeEnv("feat/a")); // hash slot 342
+  assert.ok(start > 0, "the test branch must not start at slot 0");
+  const tail = new Set(Array.from({ length: PORT_SLOTS - start }, (_, i) => start + i));
+  assert.equal(
+    slotIn(worktreeEnv("feat/a", tail)),
+    0,
+    "after the last slot the search starts at 0",
+  );
+  assert.equal(slotIn(worktreeEnv("feat/a", new Set([...tail, 0]))), 1, "slot 0 taken too: 1");
+});
+
+test("US-DEV-08: a branch is refused when every slot is held, instead of sharing a port (issue 1745)", () => {
+  const all = new Set(Array.from({ length: PORT_SLOTS }, (_, i) => i));
+  assert.throws(() => worktreeEnv("feat/a", all), /all 500 port slots are held/);
+});
+
+test("US-DEV-08: a slot is read from the test database port of a .env.worktree and from nothing else (issue 1745)", () => {
+  assert.equal(
+    slotOf(
+      `PFLANZENDEX_DEV_API_PORT=${PORT_BASE + PORT_SLOTS + 4}\nPFLANZENDEX_TEST_DB_PORT=${PORT_BASE + 7}\n`,
+    ),
+    7,
+  );
+  assert.equal(slotOf(`PFLANZENDEX_TEST_DB_PORT=${PORT_BASE + PORT_SLOTS}\n`), undefined);
+  assert.equal(slotOf("PFLANZENDEX_DEV_WEB_PORT=55400\n"), undefined);
+  assert.equal(slotOf(""), undefined);
 });
 
 const made = [];
@@ -225,4 +298,30 @@ test("US-DEV-08: reuseDeps copies from the preferred worktree when its install m
   assert.equal(result.copied, true);
   assert.equal(result.from, src);
   assert.ok(statSync(path.join(dst, "node_modules", "left-pad")).isDirectory());
+});
+
+test("US-DEV-08: the slots of the other worktrees come from their .env.worktree; the own one and a worktree without the file are left out (issue 1745)", async () => {
+  const r = scratch();
+  const repo = path.join(r, "repo");
+  mkdirSync(repo);
+  git(repo, "init", "-q", "-b", "main");
+  git(
+    repo,
+    "-c",
+    "user.name=test",
+    "-c",
+    "user.email=test@example.test",
+    "commit",
+    "-q",
+    "--allow-empty",
+    "-m",
+    "init",
+  );
+  const other = path.join(r, "other");
+  const idle = path.join(r, "idle");
+  git(repo, "worktree", "add", "-q", "-b", "feat-other", other);
+  git(repo, "worktree", "add", "-q", "-b", "feat-idle", idle);
+  writeFileSync(path.join(repo, ".env.worktree"), `PFLANZENDEX_TEST_DB_PORT=${PORT_BASE + 9}\n`);
+  writeFileSync(path.join(other, ".env.worktree"), `PFLANZENDEX_TEST_DB_PORT=${PORT_BASE + 7}\n`);
+  assert.deepEqual([...(await takenSlots(repo))], [7]);
 });

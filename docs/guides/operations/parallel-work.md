@@ -63,15 +63,20 @@ Dependencies (#1487): if an installed `node_modules` with the same `package-lock
 
 ## Own ports and database per worktree
 
-`app/tools/workflow/worktree/worktree-env.mjs` derives these deterministically from the branch name:
+`app/tools/workflow/worktree/worktree-env.mjs` derives these from the branch name. The slot starts at the hash of the branch; when another worktree already holds that slot (its `.env.worktree` gives the test database port), the next free slot is taken, so two worktrees never share a port (issue 1745). The slots held by the other worktrees are read from `git worktree list`; the worktree itself is left out.
 
-| Variable                                                | Meaning                                            |
-| ------------------------------------------------------- | -------------------------------------------------- |
-| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899) |
-| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`        |
-| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899)                |
+| Variable                                                | Meaning                                                                      |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899)                           |
+| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`                                  |
+| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55399 and 55400 to 55899)                       |
+| `PFLANZENDEX_E2E_API_PORT` / `PFLANZENDEX_E2E_WEB_PORT` | e2e gates and the Lighthouse runs (ranges 55900 to 56399 and 56400 to 56899) |
 
-The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+The ranges are an assumption (starting values). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+
+**Gates never reuse a dev server.** In a worktree the e2e ports are apart from the dev ports, so `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse-signed` and `lighthouse` never attach to a `make dev` server: Playwright would reuse any server that already listens on its port. The main checkout keeps 5173 and 3000 for its gates, as before. In a worktree make exports `E2E_WEB_PORT` and `E2E_API_PORT` from `.env.worktree`; a value already in the environment wins. `make e2e-origin` allows the e2e web port at the shared Keycloak (`web-port.mjs`, see below). The e2e targets run it after `auth-up`, and it does nothing without a worktree port. `tools/lighthouse/lighthouse-run.sh` refuses to start when its port is in use, names the port, and stops its preview with the exit.
+
+**Older worktrees** written before the e2e keys lack them. Re-run the writer from the worktree (or from any checkout of the repository): `node app/tools/workflow/worktree/worktree-env.mjs <branch> > .env.worktree`. A re-run can move the worktree to the first free slot from its hash, so stop running servers and the test database first.
 
 ### `make dev` in a worktree (#904)
 
