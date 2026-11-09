@@ -4,18 +4,15 @@ import { OperatorPage } from "@/account";
 import { ReviewPage } from "@/catalog";
 import { FriendCollectionPage, FriendsPage } from "@/social";
 import { ExchangePage, MatchPage } from "@/swap";
-import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import {
   EXCHANGE_PATH,
   MATCH_PATH,
   PATHS,
   type View,
 } from "@/shared/patterns/navigation/navigation/navigation";
+import { CalmGate } from "../lazy-areas";
 
 type Token = () => Promise<string | undefined>;
-
-/** Calm mode comes from the settings, which load only with this part (US-TAU-07, US-QS-20, DS-08). */
-const CalmGate = lazyPage(() => import("./calm-gate/calm-gate"));
 
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {

@@ -1,4 +1,4 @@
-import { createElement, lazy, type ComponentProps, type ComponentType } from "react";
+import { createElement, lazy, useState, type ComponentProps, type ComponentType } from "react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any component; the props come from `C`
 export type AnyComponent = ComponentType<any>;
@@ -58,6 +58,12 @@ export function lazyPage<C extends AnyComponent>(load: Loader<C>): LazyPage<C> {
     return lazy(wrapped);
   };
   let current = create();
-  const Page = (props: ComponentProps<C>) => createElement(current, props);
+  // A page that mounts with its chunk in hand renders the component at once: React.lazy would suspend even for a
+  // resolved chunk, and the Suspense fallback it commits starts React's hold of about 300 ms on the reveal (issue 1645).
+  // The choice is made once per mounted page, so its element type never changes while it is shown.
+  const Page = (props: ComponentProps<C>) => {
+    const [ready] = useState<C | null>(() => component);
+    return createElement(ready ?? current, props);
+  };
   return Object.assign(Page as C, { load: fetchChunk, loaded: () => component });
 }

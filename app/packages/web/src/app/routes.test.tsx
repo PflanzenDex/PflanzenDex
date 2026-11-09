@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -21,12 +21,22 @@ vi.mock("@/app/destinations/today-area/today-area", () => {
   loaded.pages.push("today-area");
   return { TodayArea: () => <h1>Heute</h1> };
 });
+vi.mock("@/app/flows/add-plant/add-plant", () => {
+  loaded.pages.push("add-plant");
+  return { AddPlant: () => <h2 id="add-plant-title">Pflanze anlegen</h2> };
+});
+vi.mock("@/app/destinations/account-area/account-area", () => {
+  loaded.pages.push("account-area");
+  return { AccountArea: () => null };
+});
 vi.mock("../pokedex/pokedex-page/pokedex-page", () => {
   loaded.pages.push("pokedex");
   throw new Error("Failed to fetch dynamically imported module");
 });
 
 import { AppRoutes } from "./routes";
+import { AddPlant } from "@/app/flows";
+import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -72,10 +82,13 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     expect(screen.getByText("Lädt…")).toBeTruthy();
   });
 
-  it("US-QS-07 · DS-08 a first load of the wishlist mode does not load the chunks of other modules", async () => {
+  it("US-QS-07 · DS-08 a first load of the wishlist mode does not load the chunks of the other modes (issue 1645)", async () => {
     renderAt("/collection?view=wishlist");
     await screen.findByRole("heading", { name: /Wunschliste/ });
-    expect(loaded.pages).toEqual([]);
+    expect(loaded.pages).not.toContain("pokedex");
+    expect(loaded.pages).not.toContain("catalog");
+    expect(loaded.pages).not.toContain("light");
+    expect(loaded.pages).not.toContain("care");
   });
 
   it("US-QS-07 · DS-08 a failed page chunk shows an error with retry instead of a blank page", async () => {
@@ -100,14 +113,31 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     );
   });
 
-  it("US-QS-16 · DS-08 the root address leads to Heute, which loads its chunk on demand", async () => {
+  it("US-QS-16 · DS-08 the root address leads to Heute, whose chunk is in hand once it shows", async () => {
     renderAt("/");
     expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
-    expect(loaded.pages).toContain("today-area");
+    expect(TodayArea.loaded()).not.toBeNull();
   });
 
   it("US-QS-16 an unknown address leads to Heute", async () => {
     renderAt("/gibt-es-nicht");
     expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
+  });
+
+  it("US-QS-07 the new-plant form chunk is requested before the form opens, so the form shows at once (issue 1645)", async () => {
+    renderAt("/collection?view=plants");
+    await screen.findByRole("heading", { name: "Sammlung" });
+    // The shell is idle a moment later: the form's chunk is in hand before any tap on "+".
+    await waitFor(() => expect(AddPlant.loaded()).not.toBeNull());
+    cleanup();
+    renderAt("/collection/new");
+    expect(screen.getByRole("heading", { name: "Pflanze anlegen" })).toBeTruthy();
+  });
+
+  it("US-QS-07 the destination chunks are in hand once the shell is idle, without a visit (issue 1645)", async () => {
+    renderAt("/collection?view=plants");
+    await screen.findByRole("heading", { name: "Sammlung" });
+    // Konto is not on this screen: its chunk comes from the idle preload of the shell (issue 1645).
+    await waitFor(() => expect(AccountArea.loaded()).not.toBeNull());
   });
 });

@@ -11,6 +11,14 @@ const mgr = vi.hoisted(() => ({
   signinRedirect: vi.fn(async () => undefined),
   signoutRedirect: vi.fn(async () => undefined),
 }));
+// The destination pages preload when the browser is idle (issue 1645), and jsdom has no idle moment: its fallback timer
+// would import the pages of every destination inside whichever test runs past it. This file observes navigation, not
+// preloading, so the idle schedule is switched off here, as focus-preload.test.tsx does for ResponsiveModal. The preload
+// itself is covered by routes.test.tsx and preload.test.ts; a link still preloads its page when it is pressed.
+vi.mock("@/shared/platform/routing/lazy-page/preload", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/shared/platform/routing/lazy-page/preload")>()),
+  preloadWhenIdle: () => () => undefined,
+}));
 vi.mock("oidc-client-ts", () => ({
   WebStorageStateStore: vi.fn(),
   UserManager: class {

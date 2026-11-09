@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
+import { preloadPages } from "@/shared/platform/routing/lazy-page/preload";
 import { RouteBoundary } from "./route-boundary";
 
 afterEach(cleanup);
@@ -123,5 +124,42 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     expect(screen.getByText("Andere Seite")).toBeTruthy();
+  });
+
+  it("US-QS-07 a destination whose chunk is in hand renders its content without a fallback (issue 1645)", async () => {
+    const Page = lazyPage<(p: { title: string }) => React.ReactElement>(async () => ({
+      default: (p) => <h1>{p.title}</h1>,
+    }));
+    await Page.load();
+    render(
+      <RouteBoundary resetKey="a">
+        <Page title="Meine Sammlung" />
+      </RouteBoundary>,
+    );
+    // The first commit already holds the page: a fallback would start React's hold of about 300 ms on the reveal.
+    expect(screen.getByRole("heading", { name: "Meine Sammlung" })).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-07 · DS-08 a chunk that fails to preload still shows the error with retry when its route opens (issue 1645)", async () => {
+    let attempts = 0;
+    const Page = lazyPage(async () => {
+      attempts += 1;
+      if (attempts <= 2) throw new Error("Failed to fetch dynamically imported module");
+      return { default: () => <h1>Geladen</h1> };
+    });
+    // The preload stays quiet (its request is shared, not lost); the route that opens shows the error (P-10).
+    preloadPages([Page]);
+    await vi.waitFor(() => expect(attempts).toBe(1));
+    render(
+      <RouteBoundary resetKey="a">
+        <Page />
+      </RouteBoundary>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden.");
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("heading", { name: "Geladen" })).toBeTruthy();
+    expect(attempts).toBe(3);
   });
 });
