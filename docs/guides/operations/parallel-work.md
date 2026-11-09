@@ -109,6 +109,17 @@ All checkouts share one Keycloak container (`pflanzendex-keycloak`, port 18081) 
 
 Every worktree starts its own test database, so the local containers are capped (#1084, starting values, assumption): the test database 512 MB (`make db-up`, override with `DB_MEMORY=1g`), Keycloak 768 MB with a 384 MB JVM heap and Mailpit 128 MB (`app/config/dev/compose.yaml`, override with `KC_MEMORY`, `KC_JAVA_HEAP`, `MAILPIT_MEMORY` in `app/config/dev/.env`). An existing container keeps its old settings: run `make db-down` or `make auth-down` once to recreate it. The caps are local only. CI brings its own database service, and production has its own limits in `app/config/deploy/docker-compose.yml`. `app/tools/dev/tests/dev-memory-caps.test.mjs` fails if a deploy file or deploy workflow loads a dev compose file or uses one of these variables.
 
+## One heavy job at a time (US-DEV-08, issue 1745)
+
+The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so much that two of them at once, from two worktrees, got the IDE killed by systemd-oomd. `make heavy-lock` (`tools/lint/heavy-lock.sh`) therefore runs first in `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse`, `lighthouse-signed` and `ci`. It is one lock for the whole machine: the first job runs, and a second job from any worktree of the checkout prints what it waits for and starts when the first one ends.
+
+- **Where the lock lives:** in the git common dir, so every worktree of the checkout shares it. `heavy-job.lock` is the lock itself (an empty file that stays). `heavy-job.owner` is one line while the lock is held: owner pid, directory, target and time (UTC).
+- **See the holder:** `cat "$(git rev-parse --git-common-dir)/heavy-job.owner"`. A waiting job prints the same holder.
+- **Released with its owner:** the lock belongs to the make process that took it and is released when that process ends, also on a failure or a kill. A note whose pid is dead does not count. A heavy target inside another one (`make e2e` run by `make ci`) sees the lock as its own and runs at once.
+- **Waiting:** a free lock is taken silently. A wait prints its line after one second, naming the job and the holder, and again every 30 seconds. `HEAVY_LOCK_WAIT=<seconds>` bounds the wait (default 3600, a starting value, assumption); then the job exits with 1 and names the holder. Example: `HEAVY_LOCK_WAIT=600 make e2e`.
+- **CI does not use it:** with `CI` set the target does nothing, because each CI job is its own machine. `make gates`, the pre-push hook and the other targets stay outside the lock; they are light.
+- The script needs `setsid` and `flock` (util-linux).
+
 ## Owners and number assignment
 
 - `.github/CODEOWNERS` names an owner per folder; changes to it require review.
