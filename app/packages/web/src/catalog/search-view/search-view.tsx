@@ -16,7 +16,10 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";
@@ -139,6 +142,9 @@ export function SpeciesSearch(props: {
   const { filters, change, clear, key, active } = useFilters();
   const shown = applyFilters(props.hit, filters);
   const hasHits = props.hit.length > 0;
+  // The search runs beside the hits it already has: its status holds once shown (D5). The hits stay on screen, so they
+  // are not held: the status is an annotation, not what the hits replace.
+  const running = useHeldLoader(props.loading === true && hasHits);
   return (
     <div className="flex min-h-0 min-w-0 flex-1 gap-4">
       <section
@@ -156,7 +162,7 @@ export function SpeciesSearch(props: {
         </div>
         <FilterChips filters={filters} onChange={change} />
         {props.loading && !hasHits && <SearchResultsSkeleton />}
-        {props.loading && hasHits && (
+        {running && (
           <DelayedSkeleton>
             <p role="status" className="text-sm text-muted-foreground">
               Suche läuft …

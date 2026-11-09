@@ -3,7 +3,10 @@ import { Link } from "react-router";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
 import { NavNote } from "@/shared/patterns/navigation/nav-note/nav-note";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /** A count that is still loading, failed to load, or is known (P-10); calm mode passes `hidden` (US-ACH-08). */
 export type TileCount = number | "loading" | "error" | "hidden";
@@ -12,8 +15,10 @@ const TILE =
   "h-auto min-h-16 w-full flex-col items-start justify-center gap-0.5 rounded-card p-3 text-left";
 
 function CountText({ count }: { count: TileCount }) {
+  // The count's status holds once shown (US-QS-14, D5, issue 1772); the number waits for the hold.
+  const loading = useHeldLoader(count === "loading");
   if (count === "hidden") return null;
-  if (count === "loading")
+  if (loading)
     return (
       <DelayedSkeleton>
         <span className="text-sm text-muted-foreground">lädt …</span>

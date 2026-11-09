@@ -37,7 +37,7 @@ export function PlantGrowth(props: { api: string; token: Token; specimenId: stri
       token={token}
       load={load}
       loadingText={loading}
-      loadingFallback={
+      loadingStatus={
         <p role="status" className="text-sm text-muted-foreground">
           {loading}
         </p>

@@ -69,7 +69,7 @@ export function IntroductionSection(props: { api: string; token: Token }) {
         token={token}
         load={load}
         loadingText="Einstiegszahlen werden geladen …"
-        loadingFallback={<p role="status">Einstiegszahlen werden geladen …</p>}
+        loadingStatus={<p role="status">Einstiegszahlen werden geladen …</p>}
       >
         {(figures: IntroductionFigures) => <Figures figures={figures} />}
       </LoadFrame>

@@ -5,7 +5,10 @@ import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-
 import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
 import { cn } from "@/shared/lib/utils";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
  * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
@@ -129,6 +132,8 @@ export function Photo({
   compact?: boolean;
 }) {
   const state = useStoredPhoto(access, card.photo?.url);
+  // The picture is not there yet: its text holds once shown (D5), and the picture waits for the hold.
+  const loading = useHeldLoader(card.photo !== undefined && !state);
   if (!card.photo) {
     return (
       <div
@@ -141,10 +146,9 @@ export function Photo({
       </div>
     );
   }
-  if (typeof state !== "string")
-    return (
-      <Quiet>{state ? refusalText(state) : <DelayedSkeleton>{"Lädt …"}</DelayedSkeleton>}</Quiet>
-    );
+  const waiting = <DelayedSkeleton>{"Lädt …"}</DelayedSkeleton>;
+  if (loading) return <Quiet>{waiting}</Quiet>;
+  if (typeof state !== "string") return <Quiet>{state ? refusalText(state) : waiting}</Quiet>;
   return (
     <a
       className={cn(

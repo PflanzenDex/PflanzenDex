@@ -13,7 +13,10 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { plantSlots } from "../plant-slots/plant-slots";
 import type { PlantGroup } from "../../../../sammlung-view";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -70,6 +73,8 @@ export type ModeProps = AreaProps & {
 /** The shown mode of the area: its view, or the list of the plants with its forms (US-QS-14, US-QS-15). */
 export function ModeBody(p: ModeProps) {
   const { api, token, host } = p;
+  // The measure view waits for its plant (US-QS-14, D5): a shown loader holds until the plant has been there for the hold.
+  const measuring = useHeldLoader(p.measureOpen && p.measure === null);
   if (p.view === MODE.equipment) return <EquipmentPage api={api} token={token} host={host} />;
   if (p.view === MODE.wishlist)
     return (
@@ -101,6 +106,14 @@ export function ModeBody(p: ModeProps) {
         <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} hosted />
       </FullView>
     );
+  if (measuring)
+    return (
+      <DelayedSkeleton>
+        <p role="status" className="text-sm text-muted-foreground">
+          {formText("loading")}
+        </p>
+      </DelayedSkeleton>
+    );
   if (p.measure)
     return (
       <MeasurePage
@@ -110,14 +123,6 @@ export function ModeBody(p: ModeProps) {
         onBack={p.leaveMeasure}
         onSaved={p.measureSaved}
       />
-    );
-  if (p.measureOpen)
-    return (
-      <DelayedSkeleton>
-        <p role="status" className="text-sm text-muted-foreground">
-          {formText("loading")}
-        </p>
-      </DelayedSkeleton>
     );
   if (p.group === GROUP.phase && !p.newSpecies)
     return <CarePhasesPage api={api} token={token} host={host} />;
