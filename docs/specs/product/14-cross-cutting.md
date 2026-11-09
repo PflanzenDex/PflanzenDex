@@ -542,7 +542,7 @@ Note (not a criterion): "Pot scannen" is the fourth shortcut of the issue. It fo
 
 Note (assumption, not checked against a source): iOS ignores the shortcuts and the screenshots of the manifest; the iOS install shows only the icon and the name.
 
-State of implementation (issue 1689): the manifest has a `description`, three `screenshots` and three `shortcuts` (each with the 192 px icon); the watering filter is the address parameter `tasks=watering` of "Heute" (`WATERING_TASKS_ADDRESS` in `today/today-page/today-filter/task-filter.ts`); the screenshots are rendered by `npm run pwa-screenshots -w @pflanzendex/web` from the Storybook screen stories. Checked by tests: `pwa.test.ts` and `today-area.test.tsx` (names carry US-QS-26). Status stays 🟨 until a real Android phone check of the install sheet, the long press and the return after sign-in.
+State of implementation (issue 1689): the manifest has a `description`, three `screenshots` and three `shortcuts` (each with the 192 px icon); the watering filter is the address parameter `tasks=watering` of "Heute" (`WATERING_TASKS_ADDRESS` in `today/today-page/today-filter/task-filter.ts`); the screenshots are rendered by `npm run pwa-screenshots -w @pflanzendex/web` from the Storybook screen stories of "Heute" and "Sammlung"; the third one is the plant "Aloe" with its layer open, reached by a click on its tile in the Sammlung story (no story of its own: the QG-U5 overlay probe cannot start from a layer that is open on load). Checked by tests: `pwa.test.ts` and `today-area.test.tsx` (names carry US-QS-26). Status stays 🟨 until a real Android phone check of the install sheet, the long press and the return after sign-in.
 
 ## Non-functional requirements
 

@@ -18,11 +18,14 @@ const appRoot = path.resolve(here, "../../../..");
 export const SIZE = { width: 390, height: 844 };
 /** Where the manifest's `screenshots` point: `/screenshots/<file>` in the public folder of the web app. */
 const SCREENSHOT_DIR = path.join(here, "public", "screenshots");
-/** The stories and their files, in the order of the manifest (US-QS-26). Story ids are Storybook's ids of the exports. */
+/**
+ * The stories and their files, in the order of the manifest (US-QS-26). Story ids are Storybook's ids of the exports.
+ * `open` names a plant tile of the story: the picture is taken with that plant's layer open (a click on the tile).
+ */
 export const SCREENSHOTS = [
   { file: "heute.png", story: "seiten-heute--phone" },
   { file: "sammlung.png", story: "seiten-sammlung--plants-phone" },
-  { file: "pflanze.png", story: "seiten-sammlung--plant-layer-phone" },
+  { file: "pflanze.png", story: "seiten-sammlung--plants-phone", open: "Aloe" },
 ];
 
 /** Builds the catalog of the Storybook into `outDir` (the same build as `make build-storybook`). */
@@ -87,7 +90,7 @@ async function settle(page) {
 }
 
 /** Renders one story at the phone size and returns its PNG. */
-async function shoot(browser, base, story) {
+async function shoot(browser, base, { story, open }) {
   const context = await browser.newContext({
     viewport: SIZE,
     deviceScaleFactor: 1,
@@ -111,6 +114,12 @@ async function shoot(browser, base, story) {
       { timeout: 30_000 },
     );
     await settle(page);
+    if (open !== undefined) {
+      // The tile opens the plant's layer like a keeper's tap does; the picture waits until the layer is visible and quiet.
+      await page.getByRole("button", { name: open }).first().click();
+      await page.getByRole("dialog", { name: open }).waitFor({ state: "visible", timeout: 15_000 });
+      await settle(page);
+    }
     return await page.screenshot({ type: "png", animations: "disabled", caret: "hide" });
   } finally {
     await context.close();
@@ -122,8 +131,9 @@ async function capture(base) {
   const browser = await chromium.launch();
   try {
     mkdirSync(SCREENSHOT_DIR, { recursive: true });
-    for (const { file, story } of SCREENSHOTS) {
-      const png = await shoot(browser, base, story);
+    for (const shot of SCREENSHOTS) {
+      const { file, story } = shot;
+      const png = await shoot(browser, base, shot);
       // Sharp writes the file as an optimised palette PNG, so the files stay small (the same library as build-icons).
       const { size } = await sharp(png)
         .png({ palette: true, quality: 90, effort: 10 })
