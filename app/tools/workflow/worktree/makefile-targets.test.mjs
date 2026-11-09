@@ -265,17 +265,74 @@ test("US-QG-01 the UI gates run once per shard: one seed, then one-screen and a1
 
 test("US-QG-01 ui-gates refuses SCREEN, with or without SHARD: one screen is make one-screen", (t) => {
   const prerequisites = ["-o", "db-up", "-o", "auth-up", "-o", "migrate", "-o", "browsers"];
-  // SCREEN alone is refused by ui-gates; SCREEN with SHARD by the guard of the one-screen rule, which make reads with every target.
+  // The guards of a rule are read only when that rule is the goal (issue 1713): SCREEN is refused by the ui-gates guard with or
+  // without SHARD, and SCREEN with SHARD by the guard of the one-screen rule, when one-screen is the goal.
   const refusals = [
-    [["SCREEN=today"], /ui-gates: SCREEN measures one screen/],
-    [["SCREEN=today", "SHARD=1/4"], /one-screen: SCREEN cannot be combined with SHARD/],
+    ["ui-gates", ["SCREEN=today"], /ui-gates: SCREEN measures one screen/],
+    ["ui-gates", ["SCREEN=today", "SHARD=1/4"], /ui-gates: SCREEN measures one screen/],
+    [
+      "one-screen",
+      ["SCREEN=today", "SHARD=1/4"],
+      /one-screen: SCREEN cannot be combined with SHARD/,
+    ],
   ];
-  for (const [extra, message] of refusals) {
-    const run = makeRun(t, [...prerequisites, "ui-gates", ...extra], { env: { CI: "1" } });
-    assert.notEqual(run.status, 0, extra.join(" "));
+  for (const [target, extra, message] of refusals) {
+    const run = makeRun(t, [...prerequisites, target, ...extra], { env: { CI: "1" } });
+    assert.notEqual(run.status, 0, `${target} ${extra.join(" ")}`);
     assert.match(run.out, message);
     assert.equal(calls(run).length, 0, "nothing ran");
   }
+});
+
+// `make -n` from the top of the repo: it prints the recipes and runs none. CI=1 leaves out the database start (issue 1713).
+function dryRun(args) {
+  const outer = ["MAKEFLAGS", "MAKELEVEL", "MFLAGS", "CI", "FRESH"];
+  const base = Object.fromEntries(
+    Object.entries(process.env).filter(([name]) => !outer.includes(name)),
+  );
+  const result = spawnSync("make", ["--no-print-directory", "-n", "-C", ROOT, ...args], {
+    encoding: "utf8",
+    input: "",
+    env: { ...base, CI: "1" },
+  });
+  return { status: result.status, out: result.stdout, err: result.stderr };
+}
+
+test("US-QG-02 make one-screen SCREEN=<id> passes the ui-gates guard (issue 1713)", () => {
+  const run = dryRun(["one-screen", "SCREEN=x"]);
+  assert.equal(run.status, 0, run.err);
+  assert.doesNotMatch(`${run.out}${run.err}`, /ui-gates: SCREEN/);
+});
+
+test("US-QG-02 make ui-gates SCREEN=<id> is still refused before anything starts, with or without SHARD (issue 1713)", () => {
+  for (const args of [
+    ["ui-gates", "SCREEN=x"],
+    ["ui-gates", "SHARD=1/5", "SCREEN=x"],
+  ]) {
+    const run = dryRun(args);
+    assert.notEqual(run.status, 0, args.join(" "));
+    assert.match(run.err, /ui-gates: SCREEN measures one screen/);
+    assert.equal(run.out, "", "no recipe is printed: the refusal comes at parse time");
+  }
+});
+
+test("US-QG-02 make one-screen SCREEN=<id> keeps its own guards against SHARD and ONE_SCREEN_WRITE=1 (issue 1713)", () => {
+  for (const [args, message] of [
+    [["one-screen", "SCREEN=x", "SHARD=1/2"], /one-screen: SCREEN cannot be combined with SHARD/],
+    [
+      ["one-screen", "SCREEN=x", "ONE_SCREEN_WRITE=1"],
+      /one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1/,
+    ],
+  ]) {
+    const run = dryRun(args);
+    assert.notEqual(run.status, 0, args.join(" "));
+    assert.match(run.err, message);
+  }
+});
+
+test("US-QG-02 make help with SCREEN and SHARD does not stop on the one-screen guards (issue 1713)", () => {
+  const run = dryRun(["help", "SCREEN=x", "SHARD=1/2"]);
+  assert.equal(run.status, 0, run.err);
 });
 
 test("US-DEV-13 the CI forms still run the same commands: one-screen and a11y-routes take the shard, ci-reuse the job list", (t) => {
