@@ -117,3 +117,11 @@ IDs are never renumbered.
 - **Fix:** Make a new commit, or merge `origin/dev` into the branch: both bring the CI run back. Read `.merged` before you act on `mergeable_state: unknown`. For `make merge` exit 2: merge `origin/dev`, keep both news fragments, push.
 - **Can it become a gate?** No: the event behavior belongs to GitHub, and the repo cannot test it.
 - **Source:** PR 1757; `make merge` runs (lessons review of issue 1746).
+
+## PF-014 No GitHub GraphQL in Claude Code cloud sessions
+
+- **Symptom:** In a cloud routine or remote session, `gh pr list`, `gh issue list`, `gh issue comment` and `gh auth status` fail with 403 "GitHub GraphQL is not available from Claude Code sessions"; a write over the GitHub app can fail with `403 Resource not accessible by integration`.
+- **Cause:** Cloud sessions reach GitHub only over REST through the Claude GitHub app; the `gh` subcommands above use GraphQL. A write needs the matching permission of the app on the repository (for comments: Issues, read and write).
+- **Fix:** Use `gh api repos/<owner>/<repo>/…` (REST) for every read and write in a routine (`.agents/routines/*.md`); grant the app the permission a routine writes with.
+- **Can it become a gate?** Partly: a check could refuse `gh pr list`, `gh issue list` and `gh issue comment` in `.agents/routines/`; not built (E-30, no incident yet).
+- **Source:** First runs of the routines of issue 1753 (2026-11-09).
