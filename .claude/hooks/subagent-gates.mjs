@@ -10,8 +10,12 @@ import path from "node:path";
 export const STAMP_NAME = "gates-stamp.json";
 // The lock that keeps two runs of `make gates` from overlapping across all worktrees: it lives in the common git directory.
 export const LOCK_NAME = "gates-run.lock";
-// How long a run waits for the lock (`flock -w`), within the 900 s timeout of the SubagentStop hook (settings.json).
-export const LOCK_WAIT_SECONDS = 900;
+// How long a run waits for the lock (`flock -w`) and how long `make gates` may take, together within the 900 s timeout of the
+// SubagentStop hook (settings.json), so the hook always answers (starting values, assumption: `make gates` takes 1 to 4 min).
+export const LOCK_WAIT_SECONDS = 300;
+export const RUN_LIMIT_SECONDS = 540;
+// The exit code of `flock -E` when the lock was not free in time: no run happened, so nothing is judged.
+export const LOCK_BUSY_EXIT = 75;
 const TAIL_LINES = 40;
 
 // A `cd <folder> &&` at the start of a command or after `;`, `&`, `|`, `(` or a newline. The folder may be quoted.
@@ -113,7 +117,18 @@ export function subagentStop(input, deps) {
   const stampFile = deps.stampFile(worktree);
   if (!needsRun(parseStamp(deps.readFile(stampFile)), { head, fingerprint })) return null;
   const { exit, output, durationMs } = deps.runGates(worktree);
-  const stamp = { command: "make gates", exit, durationMs, head, fingerprint, at: deps.now() };
+  if (exit === LOCK_BUSY_EXIT)
+    return {
+      systemMessage: `make gates did not run in ${worktree}: another run held the lock for ${LOCK_WAIT_SECONDS} s. Run it before trusting the report (US-QG-07).`,
+    };
+  const stamp = {
+    command: "make gates",
+    exit,
+    durationMs,
+    head,
+    fingerprint,
+    at: deps.now(),
+  };
   deps.writeFile(stampFile, `${JSON.stringify(stamp, null, 2)}\n`);
   if (exit === 0) return null;
   const steps = failedSteps(output);

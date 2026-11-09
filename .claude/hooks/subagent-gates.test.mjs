@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  LOCK_BUSY_EXIT,
   STAMP_NAME,
   failedSteps,
   hasGitFile,
@@ -41,7 +42,9 @@ function checkoutWithWorktrees(t, names) {
 const bashLine = (command) =>
   JSON.stringify({
     type: "assistant",
-    message: { content: [{ type: "tool_use", name: "Bash", input: { command } }] },
+    message: {
+      content: [{ type: "tool_use", name: "Bash", input: { command } }],
+    },
   });
 const transcriptOf = (...commands) => `${commands.map(bashLine).join("\n")}\n`;
 
@@ -89,7 +92,13 @@ test("US-QG-07: a quoted cd and a cd after a semicolon are read; other tool call
   const editCall = JSON.stringify({
     type: "assistant",
     message: {
-      content: [{ type: "tool_use", name: "Edit", input: { file_path: join(workDir, "a", "x") } }],
+      content: [
+        {
+          type: "tool_use",
+          name: "Edit",
+          input: { file_path: join(workDir, "a", "x") },
+        },
+      ],
     },
   });
   const text = `${[bashLine(`cd "${b}" && ls`), "not json", editCall].join("\n")}\n`;
@@ -172,7 +181,11 @@ const GREEN = () => ({ exit: 0, output: "gates: 9 steps\n", durationMs: 1500 });
 test("US-QG-07: a red make gates blocks the end once, naming the failing step and its output", (t) => {
   const { main, worktree, input } = implementerEnded(t);
   const output = "step output\nerror: unused variable\n  FAILED lint: re-run: npm run lint\n";
-  const { deps, runs } = stopDeps(main, () => ({ exit: 2, output, durationMs: 1234 }));
+  const { deps, runs } = stopDeps(main, () => ({
+    exit: 2,
+    output,
+    durationMs: 1234,
+  }));
   const hook = subagentStop(input, deps);
   assert.equal(hook.decision, "block");
   assert.ok(hook.reason.includes(`make gates failed in ${worktree} (exit 2)`), hook.reason);
@@ -198,6 +211,19 @@ test("US-QG-07: a green make gates ends silently and writes the stamp", (t) => {
   assert.equal(stamp.exit, 0);
   assert.equal(stamp.head, "h1");
   assert.equal(stamp.fingerprint, "f1");
+});
+
+test("US-QG-07: a lock held past the wait neither blocks nor writes a stamp, and tells the orchestrator", (t) => {
+  const { main, worktree, input } = implementerEnded(t);
+  const { deps } = stopDeps(main, () => ({
+    exit: LOCK_BUSY_EXIT,
+    output: "",
+    durationMs: 1,
+  }));
+  const hook = subagentStop(input, deps);
+  assert.equal(hook.decision, undefined);
+  assert.match(hook.systemMessage, /make gates did not run/);
+  assert.equal(existsSync(join(worktree, STAMP_NAME)), false);
 });
 
 test("US-QG-07: a red make gates after a block is reported to the orchestrator, not blocked again", (t) => {

@@ -30,8 +30,10 @@ import {
   recordWriteRefusal,
 } from "./rules.mjs";
 import {
+  LOCK_BUSY_EXIT,
   LOCK_NAME,
   LOCK_WAIT_SECONDS,
+  RUN_LIMIT_SECONDS,
   STAMP_NAME,
   hasGitFile,
   subagentStop,
@@ -77,7 +79,10 @@ function repoAt(folder) {
 // the path from `root`, which starts with ".." and so matches no pattern.
 function locate(file) {
   const abs = path.resolve(root, file ?? "");
-  const fromRoot = { root, file: path.relative(root, abs).split(path.sep).join("/") };
+  const fromRoot = {
+    root,
+    file: path.relative(root, abs).split(path.sep).join("/"),
+  };
   // A new file may sit in a folder that does not exist yet: git answers for the nearest folder that does.
   let folder = path.dirname(abs);
   while (!fs.existsSync(folder) && path.dirname(folder) !== folder) folder = path.dirname(folder);
@@ -300,18 +305,27 @@ function runGates(worktree) {
   const started = Date.now();
   const common = path.resolve(
     worktree,
-    run("git", ["rev-parse", "--git-common-dir"], { cwd: worktree, timeout: 3000 }).trim(),
+    run("git", ["rev-parse", "--git-common-dir"], {
+      cwd: worktree,
+      timeout: 3000,
+    }).trim(),
   );
   const result = spawnSync(
     "bash",
     [
       "-c",
-      'flock -w "$2" "$1" make gates 2>&1',
+      'flock -E "$3" -w "$2" "$1" make gates 2>&1',
       "gates",
       path.join(common, LOCK_NAME),
       String(LOCK_WAIT_SECONDS),
+      String(LOCK_BUSY_EXIT),
     ],
-    { cwd: worktree, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+    {
+      cwd: worktree,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      timeout: (LOCK_WAIT_SECONDS + RUN_LIMIT_SECONDS) * 1000,
+    },
   );
   return {
     exit: result.status ?? 1,
@@ -396,7 +410,9 @@ const handlers = {
       });
     if (isSpecPath(file)) {
       try {
-        run("node", ["app/tools/check/docs/specs/check-specs.mjs"], { cwd: fileRoot });
+        run("node", ["app/tools/check/docs/specs/check-specs.mjs"], {
+          cwd: fileRoot,
+        });
       } catch (e) {
         print({
           hookSpecificOutput: {
@@ -439,7 +455,10 @@ const handlers = {
           }).trim(),
         ),
       head: (worktree) =>
-        run("git", ["rev-parse", "HEAD"], { cwd: worktree, timeout: 3000 }).trim(),
+        run("git", ["rev-parse", "HEAD"], {
+          cwd: worktree,
+          timeout: 3000,
+        }).trim(),
       fingerprint: (worktree) => codeFingerprint(worktree),
       runGates,
       now: () => new Date().toISOString(),
