@@ -1,6 +1,7 @@
 {
   "row.title": "Fristen",
   "row.loading": "Fristen werden geladen …",
+  "row.failed": "Fristen konnten nicht geladen werden. Tippe, um es erneut zu versuchen.",
   "row.summary": "{near} nahe · {past} überschritten · {identity} offen beim Anmeldedienst",
   "layer.title": "Fristen",
   "help": "Die Frist ist ein Monat ab dem Antrag (DSGVO Art. 12 Abs. 3). Sie wird in UTC gerechnet. Nahe heißt: die Frist liegt in den nächsten {days} Tagen. Eine überschrittene Frist ist ein Vorfall: Das Vorgehen steht im Runbook „Konto löschen“.",
