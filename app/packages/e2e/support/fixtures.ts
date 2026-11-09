@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { expect, test as base, type Page } from "@playwright/test";
 import { createTestAccount, type TestAccount } from "./account";
 
@@ -151,6 +151,6 @@ export function monthDay(base: Date, offset: number): string {
 /** A Latin name no run has used: the catalog is shared, and a name is two words of letters (DM-BES-01). */
 export function uniqueLatin(genus: string): string {
   const letters = "abcdefghijklmnopqrstuvwxyz";
-  const epithet = [...randomBytes(10)].map((b) => letters[b % letters.length]).join("");
+  const epithet = Array.from({ length: 10 }, () => letters[randomInt(letters.length)]).join("");
   return `${genus} ${epithet}`;
 }
