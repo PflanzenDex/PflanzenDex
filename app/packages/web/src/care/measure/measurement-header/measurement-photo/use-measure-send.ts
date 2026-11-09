@@ -11,8 +11,10 @@ import table from "./measurement-photo.de.json";
 const t = texts(table);
 
 /**
- * Saves a measurement and then its optional photo (US-WAC-01, US-WAC-05). The measurement is saved either way and says
- * so as a toast; a refused photo is a toast too, with the text of its code (P-10, DS-54), while the form resets.
+ * Saves a measurement and then its optional photo (US-WAC-01, US-WAC-05, US-WAC-06). The measurement is written first and
+ * the fact line shows it at once. The confirmation "Gespeichert" comes only when the photo is stored as well: while it
+ * uploads, `photoStatus` says so. A refused photo is an error toast that names the measurement as kept and the photo as
+ * not, with the text of its code (P-10, DS-54); the form resets either way, because the measurement is stored.
  * `saved` is the saved measurement's text, `null` before the first save of this view; `saves` counts the saves of this
  * view, so the growth note of a save closes again at the next save (issue 1644).
  */
@@ -28,6 +30,7 @@ export function useMeasureSend(props: {
   const { api, token, specimenId, invalidate, say, onSaved } = props;
   const [saved, setSaved] = useState<string | null>(null);
   const [saves, setSaves] = useState(0);
+  const [photoPending, setPhotoPending] = useState(false);
   const send = useCallback(
     async (input: MeasurementInput, photo?: File): Promise<ApiError | null> => {
       const tok = await token();
@@ -38,18 +41,24 @@ export function useMeasureSend(props: {
       setSaved(text);
       setSaves((n) => n + 1);
       onSaved?.();
-      say(t("saved", { measurement: text }));
-      if (photo) {
-        const p = await uploadPhoto({ api, token: tok }, specimenId, {
-          file: photo,
-          date: r.value.date,
-        });
-        if (!p.ok) say(refusalText(p.error), "error");
+      // The measurement is stored: the fact line shows it now, not only after a photo (US-WAC-06).
+      invalidate();
+      if (!photo) {
+        say(t("saved", { measurement: text }));
+        return null;
       }
+      setPhotoPending(true);
+      const p = await uploadPhoto({ api, token: tok }, specimenId, {
+        file: photo,
+        date: r.value.date,
+      });
+      setPhotoPending(false);
+      if (p.ok) say(t("saved", { measurement: text }));
+      else say(t("savedPhotoFailed", { reason: refusalText(p.error) }), "error");
       invalidate();
       return null;
     },
     [api, token, specimenId, invalidate, say, onSaved],
   );
-  return { send, saved, saves };
+  return { send, saved, saves, photoStatus: photoPending ? t("photoSaving") : null };
 }

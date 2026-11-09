@@ -42,13 +42,26 @@ type MeasuredProps = {
   justSaved: boolean;
   saves: number;
   send: ReturnType<typeof useMeasureSend>["send"];
+  photoStatus: string | null;
   valueRef: NonNullable<ComponentProps<typeof MeasureForm>["focusRef"]>;
   invalidate: () => void;
 };
 
 /** The loaded page: the fact line, the form under the growth note and the course layer (issue 1644, US-ACH-05). */
 function MeasuredView(props: MeasuredProps) {
-  const { view, api, token, specimen, course, moments, justSaved, saves, send, valueRef } = props;
+  const {
+    view,
+    api,
+    token,
+    specimen,
+    course,
+    moments,
+    justSaved,
+    saves,
+    send,
+    valueRef,
+    photoStatus,
+  } = props;
   return (
     <>
       <MeasurementHeader
@@ -56,7 +69,13 @@ function MeasuredView(props: MeasuredProps) {
         action={<LayerOpener id={course}>Verlauf ({view.measurements.length})</LayerOpener>}
       />
       <GrowthNoteLayer note={growthNoteText({ moments, justSaved })} saves={saves}>
-        <MeasureForm unit="cm" signs={view.etiolationSigns} onSend={send} focusRef={valueRef} />
+        <MeasureForm
+          unit="cm"
+          signs={view.etiolationSigns}
+          onSend={send}
+          focusRef={valueRef}
+          photoStatus={photoStatus}
+        />
       </GrowthNoteLayer>
       <CourseLayer
         id={course}
@@ -81,7 +100,7 @@ export function MeasurePage(props: MeasurePageProps) {
     [api, specimen.id],
   );
   const say = useSay();
-  const { send, saved, saves } = useMeasureSend({
+  const { send, saved, saves, photoStatus } = useMeasureSend({
     api,
     token,
     specimenId: specimen.id,
@@ -115,6 +134,7 @@ export function MeasurePage(props: MeasurePageProps) {
             justSaved={Boolean(saved)}
             saves={saves}
             send={send}
+            photoStatus={photoStatus}
             valueRef={valueRef}
             invalidate={invalidate}
           />

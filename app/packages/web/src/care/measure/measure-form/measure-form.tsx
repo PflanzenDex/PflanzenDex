@@ -2,7 +2,6 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
 import { localToday, MEASUREMENT_LIMITS, MEDIA_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
@@ -15,6 +14,7 @@ import { Field } from "@/shared/ui/fields/form/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { RefusalAlert } from "../../shared/notices/notices";
+import { SaveFooter } from "./save-footer/save-footer";
 import type { MeasurementInput } from "../../shared/api/measurements-api";
 import {
   measurementDefaults,
@@ -141,6 +141,8 @@ export function MeasureForm(props: {
   onSend: (input: MeasurementInput, photo?: File) => Promise<ApiError | null>;
   /** Receives the value field, so the empty course can move the focus to it. */
   focusRef?: React.MutableRefObject<HTMLInputElement | null>;
+  /** The status while the photo is stored (US-WAC-06); `null` shows nothing. */
+  photoStatus?: string | null;
 }) {
   const today = localToday(new Date(), currentTimeZone());
   const form = useForm<MeasurementFields>({
@@ -181,18 +183,13 @@ export function MeasureForm(props: {
         />
         {refusal && <RefusalAlert error={refusal} />}
       </FormRoot>
-      {/* The sticky footer keeps the one filled action in view while the page is longer than the screen (US-QS-15). */}
-      <div className="sticky bottom-0 z-10 bg-background py-1">
-        <Button
-          type="submit"
-          form={FORM_ID}
-          size="touch"
-          className="w-full"
-          disabled={form.formState.isSubmitting}
-        >
-          Messung speichern
-        </Button>
-      </div>
+      <SaveFooter
+        formId={FORM_ID}
+        pending={form.formState.isSubmitting}
+        photoStatus={props.photoStatus ?? null}
+      >
+        Messung speichern
+      </SaveFooter>
     </Form>
   );
 }

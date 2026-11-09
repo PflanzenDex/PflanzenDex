@@ -434,6 +434,14 @@ describe("US-WAC-01 Seite Messen", () => {
 const IMAGE = new File([new Uint8Array([1, 2, 3])], "pflanze.jpg", { type: "image/jpeg" });
 const fillValue = async (v: string) => userEvent.type(await screen.findByLabelText(/Messwert/), v);
 const save = () => userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+/** A photo request that stays open until the test answers it: the photo is still on its way (US-WAC-06). */
+function heldPhoto() {
+  let release: (answer: Promise<Response>) => void = () => undefined;
+  const answer = new Promise<Response>((resolve) => {
+    release = (later) => resolve(later);
+  });
+  return { answer, release };
+}
 
 describe("US-WAC-05 photo in the form and in the course", () => {
   it("a measurement with a photo shows the photo with alternative text in the course", async () => {
@@ -511,7 +519,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     expect(photoPosts).toHaveLength(0);
   });
 
-  it("if the photo is refused the measurement stays saved and the German text of the code is shown (P-10)", async () => {
+  it("US-WAC-06 if the photo is refused the measurement stays saved, says so, and the German text of the code is shown (P-10)", async () => {
     fakeServer({
       photoSave: () =>
         response(415, { error: { code: "media.type_unsupported", text: "raw server text" } }),
@@ -520,9 +528,62 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await fillValue("12,5");
     await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
     await save();
-    expect(await screen.findByText(/Gespeichert:/)).toBeTruthy();
     const alert = await refusalToast();
+    expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
     expect(alert.textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
+    expect(alert.textContent).not.toContain("raw server text");
+    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(0);
+  });
+
+  it("US-WAC-06 while the photo is stored the page says so, the fact line shows the measurement, and nothing is confirmed yet (P-10)", async () => {
+    const held = heldPhoto();
+    const { photoPosts } = fakeServer({ photoSave: () => held.answer });
+    show();
+    await fillValue("12,5");
+    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await save();
+    await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
+    const status = await screen.findByText("Foto wird gespeichert …");
+    expect(status.closest('[role="status"]')).not.toBeNull();
+    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(0);
+    // The measurement is stored, so the fact line shows it while the photo is still on its way.
+    await vi.waitFor(() =>
+      expect(screen.getByText("Letzte Messung").nextElementSibling?.textContent).toContain("12,5"),
+    );
+    expect(screen.getByRole("button", { name: "Messung speichern" }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    held.release(response(201, { photo: "p.webp" }));
+  });
+
+  it("US-WAC-06 after the photo is stored the confirmation appears once, with the measurement text, and the status is gone", async () => {
+    const held = heldPhoto();
+    fakeServer({ photoSave: () => held.answer });
+    show();
+    await fillValue("12,5");
+    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await save();
+    await screen.findByText("Foto wird gespeichert …");
+    held.release(response(201, { photo: "p.webp" }));
+    expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    expect(screen.queryByText("Foto wird gespeichert …")).toBeNull();
+    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(1);
+  });
+
+  it("US-WAC-06 a store that refuses the photo: no success text comes before the error, and the error says the measurement is kept (P-10)", async () => {
+    fakeServer({
+      photoSave: () =>
+        response(502, { error: { code: "media.storage_unavailable", text: "raw server text" } }),
+    });
+    show();
+    await fillValue("12,5");
+    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await save();
+    const alert = await refusalToast();
+    // Nothing says "Gespeichert" before or beside the error: the success text would be a lie about the photo (P-10).
+    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(0);
+    expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
+    expect(alert.textContent).toContain(ERROR_TEXTS["media.storage_unavailable"]);
     expect(alert.textContent).not.toContain("raw server text");
   });
 });
