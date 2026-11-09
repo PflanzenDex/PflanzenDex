@@ -44,6 +44,8 @@ async function closeCareProfile(page: Page, species: string): Promise<void> {
   await expect(page.getByRole("button", { name: `Speichern: ${species}` })).toBeHidden();
   if (await page.getByRole("tab", { name: "Überblick" }).isVisible()) {
     await page.keyboard.press("Escape");
+    // The close commits late (the address changes in a transition): the next step waits until the layer is gone (issue 1791).
+    await expect(page.getByRole("tab", { name: "Überblick" })).toBeHidden();
   }
 }
 

@@ -26,6 +26,18 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
     .getByRole("button", { name: "Pflanze anlegen" })
     .click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
+  await dismissToast(page, "ist angelegt");
+}
+
+/**
+ * A confirmation toast lies over the bottom of a phone, where "Messung speichern" stands, and stays about 6 s. The keeper
+ * closes it with its button (US-QS-07) instead of the test waiting for it to leave by itself.
+ */
+async function dismissToast(page: Page, text: string): Promise<void> {
+  const toast = page.getByRole("status").filter({ hasText: text });
+  await expect(toast).toBeVisible();
+  await toast.getByRole("button", { name: "Meldung schließen" }).click();
+  await expect(toast).toBeHidden();
 }
 
 /** From any view: the Sammlung, then the measuring view of the first plant. */
@@ -37,11 +49,26 @@ async function measureFromCollection(page: Page): Promise<void> {
 
 /**
  * The facts and the course of a specimen live in the layer "Verlauf" of the measure page (US-QS-15); the page keeps the
- * last measurement, the form and "Messung speichern". Escape closes the layer again.
+ * last measurement, the form and "Messung speichern". Escape closes the layer again (`closeCourse`).
  */
 async function openCourse(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^Verlauf \(\d+\)$/ }).click();
-  await expect(page.getByRole("heading", { name: /^Verlauf: / })).toBeVisible();
+  const heading = page.getByRole("heading", { name: /^Verlauf: / });
+  await expect(heading).toBeVisible();
+  // Escape closes a layer only while the focus is inside it, and the layer takes the focus on mount (its title, US-QS-15).
+  await expect(heading).toBeFocused();
+}
+
+/**
+ * Escape closes the layer "Verlauf" and the page is back. The close commits late: the address changes in a transition.
+ * Until it commits, a value typed right after Escape lands in a layer that is about to close, and the focus trap of the
+ * still-open layer pulls the focus back. So the test waits until the layer is gone and the focus is back on its opener
+ * (US-WAC-01, issue 1791).
+ */
+async function closeCourse(page: Page): Promise<void> {
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("heading", { name: /^Verlauf: / })).toBeHidden();
+  await expect(page.getByRole("button", { name: /^Verlauf \(\d+\)$/ })).toBeFocused();
 }
 
 /** The layer opens on "Überblick"; the rows of the measurements are its part "Messungen" (US-QS-15). */
@@ -70,7 +97,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await expect(page.getByText("Rosettendurchmesser.")).toBeVisible();
     await expect(page.getByText("Trage oben den ersten Messwert ein.")).toBeVisible();
     await axeReport(page, info, "measure-empty");
-    await page.keyboard.press("Escape");
+    await closeCourse(page);
 
     const form = page.getByRole("form", { name: "Messung erfassen" });
     await form.getByLabel(/^Messwert/).fill("12,5");
@@ -81,11 +108,12 @@ test.describe("US-WAC-01 Messung erfassen", () => {
 
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
     await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    await dismissToast(page, "Gespeichert: 12,5");
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
     await axeReport(page, info, "measure-erfasst");
-    await page.keyboard.press("Escape");
+    await closeCourse(page);
 
     // Back-filling: an earlier date and the quality "Etiolated/thin".
     await form.getByLabel(/^Messwert/).fill("10");
@@ -94,7 +122,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await page.getByRole("button", { name: "Messung speichern" }).click();
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: "10 cm · 02.01.2026" })).toBeVisible();
-    await page.keyboard.press("Escape");
+    await closeCourse(page);
     // The last measurement is the one with the newer date, not the one entered last.
     await expect(
       page.getByText(/Letzte Messung/).locator("xpath=following-sibling::dd"),
