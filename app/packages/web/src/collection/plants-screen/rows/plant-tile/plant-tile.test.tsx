@@ -49,6 +49,77 @@ describe("US-QS-19 a plant tile in two columns at 360 px (issue 1108)", () => {
   });
 });
 
+describe("US-QS-19 the marker of a plant tile on its own line (issue 1651)", () => {
+  it("US-QS-19 a tile with a marker shows the species and the marker as two one-line elements, the marker below the species", () => {
+    const marked = { ...card, name: "Efeutute – Ableger", marker: "Ableger" } as SpecimenCard;
+    const { container } = render(
+      <MemoryRouter>
+        <PlantTile card={marked} access={{} as never} />
+      </MemoryRouter>,
+    );
+    const species = screen.getByText("Efeutute");
+    const marker = container.querySelector("[data-marker]");
+    if (!marker) throw new Error("the tile has no marker line");
+    expect(marker.textContent).toContain("Ableger");
+    expect(marker).not.toBe(species);
+    expect(species.compareDocumentPosition(marker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    for (const line of [species, marker]) {
+      expect(line.className).toContain("truncate");
+      expect(line.className).not.toMatch(/overflow-wrap|break-/);
+    }
+  });
+
+  it("US-QS-19 the accessible name of a tile with a marker is its visible text and holds the full name (WCAG 2.5.3, issue 1651)", () => {
+    const marked = {
+      ...card,
+      name: "Efeutute – Ableger",
+      marker: "Ableger",
+      lastMeasurement: { quality: "healthy", date: "2026-10-01", value: 24, note: null },
+    } as unknown as SpecimenCard;
+    render(
+      <MemoryRouter>
+        <PlantTile card={marked} access={{} as never} />
+      </MemoryRouter>,
+    );
+    const tile = screen.getByRole("button", { name: "Efeutute – Ableger unbekannt Gesund" });
+    expect(tile.hasAttribute("aria-label")).toBe(false);
+  });
+
+  it("US-QS-19 the marker line is a positioned box, so the hidden dash of its name cannot leave the scroll region of the list at 200 % text (issue 1651, one-screen QG-U8)", () => {
+    const marked = { ...card, name: "Efeutute – Ableger", marker: "Ableger" } as SpecimenCard;
+    const { container } = render(
+      <MemoryRouter>
+        <PlantTile card={marked} access={{} as never} />
+      </MemoryRouter>,
+    );
+    const marker = container.querySelector("[data-marker]");
+    if (!marker) throw new Error("the tile has no marker line");
+    expect(marker.className.split(/\s+/)).toContain("relative");
+    expect(marker.querySelector(".sr-only")?.textContent).toBe("–");
+  });
+
+  it("US-QS-19 a tile without a marker shows no empty marker line, so it keeps its height (issue 1651)", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <PlantTile card={card} access={{} as never} />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector("[data-marker]")).toBeNull();
+    expect(screen.getByRole("button", { name: "Aloe unbekannt unbekannt" })).toBeTruthy();
+  });
+
+  it("US-QS-19 a marker that the name does not carry still gets its own line, so nothing disappears (P-10)", () => {
+    const odd = { ...card, name: "Efeutute", marker: "Ableger" } as SpecimenCard;
+    const { container } = render(
+      <MemoryRouter>
+        <PlantTile card={odd} access={{} as never} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Efeutute")).toBeTruthy();
+    expect(container.querySelector("[data-marker]")?.textContent).toContain("Ableger");
+  });
+});
+
 describe("NFR-12 a plant tile asks the thumbnail of its photo", () => {
   it("NFR-12 the tile requests size=thumb and shows the picture it gets back", async () => {
     const requested: string[] = [];
