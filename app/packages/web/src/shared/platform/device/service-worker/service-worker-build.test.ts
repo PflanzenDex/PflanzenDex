@@ -11,6 +11,7 @@ import { MANIFEST_TOKEN, parseManifest } from "./worker-logic";
 import {
   injectServiceWorkerManifest,
   SERVICE_WORKER_FILE,
+  SERVICE_WORKER_PLUGIN,
   SERVICE_WORKER_TOKEN,
   serviceWorkerBuild,
   serviceWorkerManifest,
@@ -248,5 +249,16 @@ describe("US-QS-27 the real build of a small app", () => {
     const code = readFileSync(join(outDir, SERVICE_WORKER_FILE), "utf8");
     expect(() => new Script(code)).not.toThrow();
     expect(code).not.toMatch(/^\s*(import|export)\b/m);
+  });
+});
+
+describe("US-QS-27 the component catalog has no worker", () => {
+  it("US-QS-27 Storybook drops the worker plugin by the name the plugin carries", () => {
+    expect(serviceWorkerBuild().name).toBe(SERVICE_WORKER_PLUGIN);
+    const storybookMain = readFileSync(
+      join(import.meta.dirname, "../../../../../.storybook/main.ts"),
+      "utf8",
+    );
+    expect(storybookMain).toContain(`const SERVICE_WORKER_PLUGIN = "${SERVICE_WORKER_PLUGIN}";`);
   });
 });

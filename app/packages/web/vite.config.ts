@@ -95,6 +95,9 @@ function assertClassicScript(
   }
 }
 
+/** The name of the worker plugin; the Storybook catalog drops it (`.storybook/main.ts`), since it has no worker. */
+export const SERVICE_WORKER_PLUGIN = "pflanzendex-service-worker";
+
 /**
  * The worker as a plugin: it emits `sw.js` from the worker entry and fills in the list of the build's files (US-QS-27).
  * The list is taken after every other plugin has finished the bundle (`order: "post"`): a pure CSS chunk loses its empty
@@ -104,7 +107,7 @@ function assertClassicScript(
 export function serviceWorkerBuild(): Plugin {
   let listed: readonly string[] = [];
   return {
-    name: "pflanzendex-service-worker",
+    name: SERVICE_WORKER_PLUGIN,
     apply: "build",
     enforce: "post",
     buildStart() {
