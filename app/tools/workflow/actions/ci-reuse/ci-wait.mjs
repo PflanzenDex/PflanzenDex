@@ -15,6 +15,7 @@ import {
   pullOf,
   shortSha,
 } from "./verdict/ci-verdict.mjs";
+import { parseQuarantine, QUARANTINE_PATH } from "./verdict/quarantine.mjs";
 
 // Starting values (assumption): a full run ends within about 30 minutes, and a queued run starts within about a minute.
 const POLL_MS = 30_000;
@@ -54,8 +55,24 @@ export async function definedAt(client, repo, sha) {
 }
 
 /**
- * One snapshot of the PR: the PR, its head commit, the files, the jobs of the workflow that its runs use, every check run
- * and workflow run of the head. The files are read once per head commit and the jobs once per workflow commit (`cache`).
+ * The quarantine list at a commit (US-QG-06), the same commit as the jobs: the list that ci-status reads in that run. A
+ * commit without the file has no list (none quarantined); a file that does not fit the format throws (fail closed).
+ */
+export async function quarantineAt(client, repo, sha) {
+  try {
+    const path = `repos/${repo}/contents/${QUARANTINE_PATH}?ref=${sha}`;
+    const body = await json(client, ["api", path]);
+    return parseQuarantine(Buffer.from(body.content, "base64").toString("utf8")).entries;
+  } catch (err) {
+    if (/HTTP 404/.test(err.message)) return [];
+    throw err;
+  }
+}
+
+/**
+ * One snapshot of the PR: the PR, its head commit, the files, the jobs and the quarantine list of the workflow that its runs
+ * use, every check run and workflow run of the head. The files are read once per head commit and the jobs and the list once
+ * per workflow commit (`cache`).
  */
 export async function readSnapshot(client, number, cache = new Map()) {
   const repo = await repoName(client);
@@ -72,6 +89,9 @@ export async function readSnapshot(client, number, cache = new Map()) {
   if (!cache.has(`defined:${workflowSha}`)) {
     cache.set(`defined:${workflowSha}`, await definedAt(client, repo, workflowSha));
   }
+  if (!cache.has(`quarantine:${workflowSha}`)) {
+    cache.set(`quarantine:${workflowSha}`, await quarantineAt(client, repo, workflowSha));
+  }
   const checks = `repos/${repo}/commits/${head}/check-runs?filter=all`;
   const runs = `repos/${repo}/actions/runs?head_sha=${head}`;
   const checkRuns = await pagedKey(client, checks, "check_runs");
@@ -81,6 +101,7 @@ export async function readSnapshot(client, number, cache = new Map()) {
     head,
     files: cache.get(`files:${head}`),
     defined: cache.get(`defined:${workflowSha}`),
+    quarantine: cache.get(`quarantine:${workflowSha}`),
     checkRuns,
     workflowRuns,
   };

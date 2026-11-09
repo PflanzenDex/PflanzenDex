@@ -29,14 +29,24 @@ const A11Y_C = {
   rule: "label-content-name-mismatch",
   count: 2,
 };
-const ONE_P = { screen: "collection-view-plants-page-2", size: "360x640", page: 1, inner: 1.23 };
+const ONE_P = {
+  screen: "collection-view-plants-page-2",
+  size: "360x640",
+  page: 1,
+  inner: 1.23,
+};
 const ONE_Q = {
   screen: "collection-view-plants-last-page",
   size: "1024x768",
   page: 1,
   inner: 1.01,
 };
-const ONE_R = { screen: "equipment-items", size: "390x844", page: 1, inner: 1.02 };
+const ONE_R = {
+  screen: "equipment-items",
+  size: "390x844",
+  page: 1,
+  inner: 1.02,
+};
 const QUAL_A = {
   rule: "complexity",
   file: "app/packages/core/src/a.ts",
@@ -67,6 +77,19 @@ const CON_C = { file: "app/packages/web/src/c.ts", enums: 1 };
 const UI_A = { file: "app/packages/web/src/a.tsx", count: 6 };
 const UI_B = { file: "app/packages/web/src/b.tsx", count: 4 };
 const UI_C = { file: "app/packages/web/src/c.tsx", count: 1 };
+// US-QG-06: the quarantine list, one entry per quarantined job of ci.yml.
+const Q_A = {
+  job: "lighthouse",
+  since: "2026-11-09",
+  issue: 1748,
+  reason: "red on dev",
+};
+const Q_B = {
+  job: "e2e",
+  since: "2026-11-09",
+  issue: 1749,
+  reason: "red on dev",
+};
 
 // One sample per format: the base file, variants that grow it and variants that only shrink it.
 const CASES = {
@@ -74,13 +97,19 @@ const CASES = {
     base: { maxEntries: 2, entries: [A11Y_A, A11Y_B] },
     grow: {
       "a new entry": { maxEntries: 3, entries: [A11Y_A, A11Y_B, A11Y_C] },
-      "a higher count": { maxEntries: 2, entries: [{ ...A11Y_A, count: 3 }, A11Y_B] },
+      "a higher count": {
+        maxEntries: 2,
+        entries: [{ ...A11Y_A, count: 3 }, A11Y_B],
+      },
       "a raised maxEntries": { maxEntries: 3, entries: [A11Y_A, A11Y_B] },
       "a removed maxEntries": { entries: [A11Y_A, A11Y_B] },
     },
     shrink: {
       "a removed entry": { maxEntries: 1, entries: [A11Y_A] },
-      "a lower count": { maxEntries: 2, entries: [{ ...A11Y_A, count: 1 }, A11Y_B] },
+      "a lower count": {
+        maxEntries: 2,
+        entries: [{ ...A11Y_A, count: 1 }, A11Y_B],
+      },
       "a lowered maxEntries": { maxEntries: 1, entries: [A11Y_A, A11Y_B] },
     },
   },
@@ -88,14 +117,26 @@ const CASES = {
     base: { maxEntries: 2, entries: [ONE_P, ONE_Q] },
     grow: {
       "a new entry": { maxEntries: 3, entries: [ONE_P, ONE_Q, ONE_R] },
-      "a higher inner value": { maxEntries: 2, entries: [{ ...ONE_P, inner: 1.3 }, ONE_Q] },
-      "a higher page value": { maxEntries: 2, entries: [{ ...ONE_P, page: 1.1 }, ONE_Q] },
-      "a higher width cap": { maxEntries: 2, entries: [{ ...ONE_P, cap: 4 }, ONE_Q] },
+      "a higher inner value": {
+        maxEntries: 2,
+        entries: [{ ...ONE_P, inner: 1.3 }, ONE_Q],
+      },
+      "a higher page value": {
+        maxEntries: 2,
+        entries: [{ ...ONE_P, page: 1.1 }, ONE_Q],
+      },
+      "a higher width cap": {
+        maxEntries: 2,
+        entries: [{ ...ONE_P, cap: 4 }, ONE_Q],
+      },
       "a raised maxEntries": { maxEntries: 3, entries: [ONE_P, ONE_Q] },
     },
     shrink: {
       "a removed entry": { maxEntries: 1, entries: [ONE_P] },
-      "a lower inner value": { maxEntries: 2, entries: [{ ...ONE_P, inner: 1.1 }, ONE_Q] },
+      "a lower inner value": {
+        maxEntries: 2,
+        entries: [{ ...ONE_P, inner: 1.1 }, ONE_Q],
+      },
       "a lowered maxEntries": { maxEntries: 1, entries: [ONE_P, ONE_Q] },
     },
   },
@@ -172,7 +213,10 @@ const CASES = {
       },
     },
     shrink: {
-      "a removed entry": { maxEntries: 1, entries: [{ file: "collection--light.png" }] },
+      "a removed entry": {
+        maxEntries: 1,
+        entries: [{ file: "collection--light.png" }],
+      },
       "a lowered maxEntries": {
         maxEntries: 1,
         entries: [{ file: "collection--light.png" }, { file: "plants--dark.png" }],
@@ -183,12 +227,18 @@ const CASES = {
     base: { maxEntries: 2, entries: [QUAL_A, QUAL_B] },
     grow: {
       "a new entry": { maxEntries: 3, entries: [QUAL_A, QUAL_B, QUAL_C] },
-      "a higher value": { maxEntries: 2, entries: [{ ...QUAL_A, value: 13 }, QUAL_B] },
+      "a higher value": {
+        maxEntries: 2,
+        entries: [{ ...QUAL_A, value: 13 }, QUAL_B],
+      },
       "a raised maxEntries": { maxEntries: 3, entries: [QUAL_A, QUAL_B] },
     },
     shrink: {
       "a removed entry": { maxEntries: 1, entries: [QUAL_A] },
-      "a lower value": { maxEntries: 2, entries: [{ ...QUAL_A, value: 11 }, QUAL_B] },
+      "a lower value": {
+        maxEntries: 2,
+        entries: [{ ...QUAL_A, value: 11 }, QUAL_B],
+      },
       "a lowered maxEntries": { maxEntries: 1, entries: [QUAL_A, QUAL_B] },
     },
   },
@@ -197,23 +247,47 @@ const CASES = {
     grow: {
       "a new entry": { entries: [DS_A, DS_B, DS_C] },
       "a higher count": { entries: [{ ...DS_A, count: 3 }, DS_B] },
-      "a limit that the format does not know": { entries: [DS_A, DS_B], maxEntries: 5 },
+      "a limit that the format does not know": {
+        entries: [DS_A, DS_B],
+        maxEntries: 5,
+      },
     },
     shrink: {
       "a removed entry": { entries: [DS_A] },
       "a lower count": { entries: [{ ...DS_A, count: 1 }, DS_B] },
     },
   },
+  "quarantine-baseline.json": {
+    base: { maxEntries: 2, entries: [Q_A] },
+    grow: {
+      "a new entry": { maxEntries: 2, entries: [Q_A, Q_B] },
+      "a raised maxEntries": { maxEntries: 3, entries: [Q_A] },
+    },
+    shrink: {
+      "a removed entry": { maxEntries: 2, entries: [] },
+      "a lowered maxEntries": { maxEntries: 1, entries: [Q_A] },
+      "a changed reason of an entry (metadata)": {
+        maxEntries: 2,
+        entries: [{ ...Q_A, reason: "x" }],
+      },
+    },
+  },
   "constants-baseline.json": {
     base: { maxTotal: 4, entries: [CON_A, CON_B] },
     grow: {
       "a new entry": { maxTotal: 5, entries: [CON_A, CON_B, CON_C] },
-      "a higher numbers count": { maxTotal: 5, entries: [{ ...CON_A, numbers: 3 }, CON_B] },
+      "a higher numbers count": {
+        maxTotal: 5,
+        entries: [{ ...CON_A, numbers: 3 }, CON_B],
+      },
       "a raised maxTotal": { maxTotal: 5, entries: [CON_A, CON_B] },
     },
     shrink: {
       "a removed entry": { maxTotal: 2, entries: [CON_A] },
-      "a lower numbers count": { maxTotal: 3, entries: [{ ...CON_A, numbers: 1 }, CON_B] },
+      "a lower numbers count": {
+        maxTotal: 3,
+        entries: [{ ...CON_A, numbers: 1 }, CON_B],
+      },
       "a lowered maxTotal": { maxTotal: 3, entries: [CON_A, CON_B] },
     },
   },
@@ -221,7 +295,10 @@ const CASES = {
     base: { maxTotal: 10, entries: [UI_A, UI_B] },
     grow: {
       "a new entry": { maxTotal: 11, entries: [UI_A, UI_B, UI_C] },
-      "a higher count": { maxTotal: 11, entries: [{ ...UI_A, count: 7 }, UI_B] },
+      "a higher count": {
+        maxTotal: 11,
+        entries: [{ ...UI_A, count: 7 }, UI_B],
+      },
       "a raised maxTotal": { maxTotal: 11, entries: [UI_A, UI_B] },
     },
     shrink: {
@@ -231,7 +308,11 @@ const CASES = {
     },
   },
   "reference-baseline.json": {
-    base: { routes: ["DELETE /a", "GET /a"], operations: ["account.delete"], components: [] },
+    base: {
+      routes: ["DELETE /a", "GET /a"],
+      operations: ["account.delete"],
+      components: [],
+    },
     grow: {
       "a new route": {
         routes: ["DELETE /a", "GET /a", "GET /b"],
@@ -256,8 +337,15 @@ const CASES = {
       },
     },
     shrink: {
-      "a removed route": { routes: ["GET /a"], operations: ["account.delete"], components: [] },
-      "a missing empty list": { routes: ["DELETE /a", "GET /a"], operations: ["account.delete"] },
+      "a removed route": {
+        routes: ["GET /a"],
+        operations: ["account.delete"],
+        components: [],
+      },
+      "a missing empty list": {
+        routes: ["DELETE /a", "GET /a"],
+        operations: ["account.delete"],
+      },
     },
   },
   "layout-baseline.json": {
@@ -267,7 +355,10 @@ const CASES = {
         "LY-1": { "app/packages/web/src/x": 2, "app/y": 1 },
         "LY-3": { "app/z": 1 },
       },
-      "a higher value": { "LY-1": { "app/packages/web/src/x": 3 }, "LY-3": { "app/z": 1 } },
+      "a higher value": {
+        "LY-1": { "app/packages/web/src/x": 3 },
+        "LY-3": { "app/z": 1 },
+      },
       "a new rule": {
         "LY-1": { "app/packages/web/src/x": 2 },
         "LY-3": { "app/z": 1 },
@@ -275,16 +366,40 @@ const CASES = {
       },
     },
     shrink: {
-      "a lower value": { "LY-1": { "app/packages/web/src/x": 1 }, "LY-3": { "app/z": 1 } },
+      "a lower value": {
+        "LY-1": { "app/packages/web/src/x": 1 },
+        "LY-3": { "app/z": 1 },
+      },
       "a removed rule": { "LY-1": { "app/packages/web/src/x": 2 } },
       "a removed directory": { "LY-1": {}, "LY-3": { "app/z": 1 } },
     },
   },
 };
 
-test("US-QG-07: the ten baseline files each have a growth format, and the formats name exactly those files", () => {
+test("US-QG-07: the eleven baseline files each have a growth format, and the formats name exactly those files", () => {
   assert.deepEqual(Object.keys(BASELINE_FORMATS).sort(), Object.keys(CASES).sort());
-  assert.equal(Object.keys(BASELINE_FORMATS).length, 10);
+  assert.equal(Object.keys(BASELINE_FORMATS).length, 11);
+});
+
+test("US-QG-06: the quarantine list grows on a new entry or a raised maxEntries, and shrinks when an entry is removed", () => {
+  const before = text({ maxEntries: 1, entries: [Q_A] });
+  assert.equal(
+    grows("quarantine-baseline.json", before, text({ maxEntries: 2, entries: [Q_A, Q_B] })).grows,
+    true,
+  );
+  assert.deepEqual(
+    grows("quarantine-baseline.json", before, text({ maxEntries: 0, entries: [] })),
+    {
+      grows: false,
+      reasons: [],
+    },
+  );
+  const result = grows(
+    "quarantine-baseline.json",
+    before,
+    text({ maxEntries: 1, entries: [Q_A, Q_B] }),
+  );
+  assert.deepEqual(result.reasons, ["new entry e2e"], "the reason names the new job");
 });
 
 test("US-QG-07: isBaselineFile covers the whole baseline folder and nothing else", () => {
@@ -384,7 +499,10 @@ test("US-QG-07: the reason names the entry, the value and the old and new number
 test("US-QG-07: a missing optional number counts as its default, as the checkers read it", () => {
   // one-screen: a missing pageX is 1, and so is an explicit 1; 1.5 is worse than the default.
   const withoutPageX = { maxEntries: 1, entries: [ONE_P] };
-  const withPageX = (value) => ({ maxEntries: 1, entries: [{ ...ONE_P, pageX: value }] });
+  const withPageX = (value) => ({
+    maxEntries: 1,
+    entries: [{ ...ONE_P, pageX: value }],
+  });
   assert.equal(
     grows("one-screen-baseline.json", text(withoutPageX), text(withPageX(1))).grows,
     false,
@@ -399,7 +517,10 @@ test("US-QG-07: a missing optional number counts as its default, as the checkers
   );
   // constants: a missing count is 0.
   const withoutNumbers = { maxTotal: 1, entries: [{ file: "a.ts", enums: 1 }] };
-  const withNumbers = { maxTotal: 2, entries: [{ file: "a.ts", enums: 1, numbers: 1 }] };
+  const withNumbers = {
+    maxTotal: 2,
+    entries: [{ file: "a.ts", enums: 1, numbers: 1 }],
+  };
   assert.equal(
     grows("constants-baseline.json", text(withoutNumbers), text(withNumbers)).grows,
     true,
