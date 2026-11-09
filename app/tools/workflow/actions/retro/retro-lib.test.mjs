@@ -194,8 +194,9 @@ test("US-DEV-11: a kind is the kind with the most changed files; ties go to the 
   assert.equal(kindOf(["tools/x.sh", ".github/workflows/retro.yml"]), "tooling/gates");
   assert.equal(kindOf(["Makefile", "docs/a.md"]), "tooling/gates");
   assert.equal(kindOf(["docs/specs/product/19.md", "README.md"]), "docs");
-  assert.equal(kindOf(["docs/a.md", "app/config/project/x.js"]), "docs");
-  assert.equal(kindOf(["app/config/project/x.js"]), "other");
+  assert.equal(kindOf(["docs/a.md", "app/config/project/x.js"]), "tooling/gates");
+  assert.equal(kindOf(["app/config/project/x.js", ".githooks/pre-push"]), "tooling/gates");
+  assert.equal(kindOf(["LICENSE"]), "other");
 });
 
 test("US-DEV-11: the rework table gives per kind the share and the median, and the total last", () => {
