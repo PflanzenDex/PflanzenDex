@@ -102,11 +102,29 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
     },
   );
 
-  it("US-LIC-01: Given the soft-leaf flag, when proposing, then it is kept; missing means false; a non-boolean is rejected", async () => {
+  it("US-LIC-01: Given the soft-leaf flag, when proposing, then it is kept; missing or null means unknown (P-08); a non-boolean is rejected", async () => {
     const soft = await propose({ ...profile, softLeaf: true });
     expect(soft.ok && soft.value.softLeaf).toBe(true);
-    const plain = await propose({ ...profile, latinName: "Aloe vera" });
-    expect(plain.ok && plain.value.softLeaf).toBe(false);
+    // Own names, no synonym of the first proposal: a duplicate would be refused and prove nothing about the flag.
+    const plain = await propose({ ...profile, latinName: "Aloe vera", synonyms: [] });
+    expect(plain.ok).toBe(true);
+    expect(plain.ok && plain.value.softLeaf).toBeNull();
+    const answered = await propose({
+      ...profile,
+      latinName: "Aloe arborescens",
+      synonyms: [],
+      softLeaf: false,
+    });
+    expect(answered.ok).toBe(true);
+    expect(answered.ok && answered.value.softLeaf).toBe(false);
+    const empty = await propose({
+      ...profile,
+      latinName: "Aloe mitriformis",
+      synonyms: [],
+      softLeaf: null,
+    });
+    expect(empty.ok).toBe(true);
+    expect(empty.ok && empty.value.softLeaf).toBeNull();
     const bad = await propose({ ...profile, latinName: "Aloe ferox", softLeaf: "yes" });
     expect(!bad.ok && bad.error.details?.map((d) => d.field)).toEqual(["softLeaf"]);
   });

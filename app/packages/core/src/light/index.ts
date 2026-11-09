@@ -29,7 +29,7 @@ export type {
   ZoneStore,
   ZoneValues,
 } from "./types";
-export { GAP_MAX, PROMOTE_FROM, zoneDerive, zoneDeriveReviewed } from "./derive";
+export { GAP_MAX, PROMOTE_FROM, lightNeedUnknown, zoneDerive, zoneDeriveReviewed } from "./derive";
 export type { Derivation, DerivationInput, DerivationReason } from "./derive";
 export {
   recommendPosition,

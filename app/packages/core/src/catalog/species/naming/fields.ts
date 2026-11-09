@@ -70,12 +70,15 @@ export const monthTag = (field: string) =>
     { type: ["string", "null"], pattern: "^\\d\\d-\\d\\d$" },
   );
 
-/** A flag that may be missing: missing means false, anything but a boolean is invalid. */
+/**
+ * A flag that may be missing: missing or null is unknown (`null`, DM-BES-01, P-08), never a guessed false; anything but
+ * a boolean is invalid.
+ */
 const flag = (field: string) =>
   described(
-    (value: unknown): boolean | ErrorDetail =>
+    (value: unknown): boolean | null | ErrorDetail =>
       value === undefined || value === null
-        ? false
+        ? null
         : typeof value === "boolean"
           ? value
           : invalid(field),

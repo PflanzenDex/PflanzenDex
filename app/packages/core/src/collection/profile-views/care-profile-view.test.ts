@@ -205,3 +205,44 @@ describe("US-BES-10 a care profile kept on a merged proposal does not vanish (FR
     expect(entries).toEqual([]);
   });
 });
+
+describe("US-LIC-01 care profile: the next step when the light need is unknown (P-08, P-09)", () => {
+  const NO_NEED = "55555555-5555-4555-8555-555555555555";
+  const local = new SpeciesStub([
+    {
+      species: testSpecies(NO_NEED, {
+        germanName: "Ohne Bedarf",
+        lightDemandLux: null,
+        standardLevel: null,
+      }),
+    },
+  ]);
+  const viewOfNoNeed = (userId = "anna") =>
+    careProfileView(
+      { specimens, species: local, profiles, zones: zoneStore({ anna: ZONES, ben: ZONES }) },
+      userId,
+    );
+
+  it("US-LIC-01: Given a species without lux need and no zone of my own, when the care profile is read, then the next step is named", async () => {
+    await create("anna", NO_NEED, "Pflanze ohne Bedarf");
+    const [entry] = await viewOfNoNeed();
+    expect(entry).toMatchObject({ speciesId: NO_NEED, lightNeedUnknown: true });
+    expect(entry?.profile.lightZone).toMatchObject({
+      catalog: null,
+      effective: null,
+      source: "unknown",
+    });
+  });
+
+  it("US-LIC-01: Given my own zone for such a species, when the care profile is read, then my zone applies and no next step is named", async () => {
+    await create("anna", NO_NEED, "Pflanze mit eigener Zone");
+    await profiles.update("anna", NO_NEED, { lightZoneId: "z2" });
+    const [entry] = await viewOfNoNeed();
+    expect(entry).toMatchObject({ lightNeedUnknown: false });
+    expect(entry?.profile.lightZone).toMatchObject({
+      own: "z2",
+      effective: "z2",
+      source: "profile",
+    });
+  });
+});

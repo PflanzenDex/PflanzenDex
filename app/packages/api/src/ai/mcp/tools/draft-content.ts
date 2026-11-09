@@ -46,7 +46,8 @@ const SPECIES: DraftContent = {
       "cutting light and not allowed here.",
     lightDemandLux: "Light demand in lux (integer), e.g. 10000.",
     softLeaf:
-      "True for soft, thin leaves that burn easily under strong light; omitted means false.",
+      "True for soft, thin leaves that burn easily under strong light, false when the leaf is not soft; " +
+      "omitted or null means unknown (never guess, P-08).",
     dormancyFrom:
       "Start of the dormancy (rest phase) as MM-DD without a year, e.g. '11-01'. Needs dormancyUntil.",
     dormancyUntil:

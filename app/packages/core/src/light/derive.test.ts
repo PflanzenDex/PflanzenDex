@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { zoneDerive, zoneDeriveReviewed } from "./derive";
+import { lightNeedUnknown, zoneDerive, zoneDeriveReviewed } from "./derive";
 import { ZONE_DEFAULT } from "./zones";
 import type { LightZone } from "./types";
 
@@ -77,5 +77,27 @@ describe("US-LIC-01 assign a species to the right light zone", () => {
     ]);
     const g = zoneDeriveReviewed({ lightDemandLux: 15_000, standardLevel: 2 }, zones);
     expect(g.ok && g.value.kind).toBe("zone");
+  });
+});
+
+describe("US-LIC-01 soft leaf unknown and the unknown light need (DM-BES-01, P-08)", () => {
+  it("US-LIC-01: Given soft leaf unknown (null), when deriving, then the soft-leaf rule does not apply, as for false", () => {
+    for (const need of [10_000, 80_000]) {
+      const unknown = zoneDerive({ lightDemandLux: need, standardLevel: 2, softLeaf: null }, zones);
+      expect(unknown).toEqual(
+        zoneDerive({ lightDemandLux: need, standardLevel: 2, softLeaf: false }, zones),
+      );
+    }
+  });
+
+  it("US-LIC-01: Given soft leaf true, when deriving, then the soft-leaf rule still keeps the species in its zone", () => {
+    const a = derive(80_000, 2, true);
+    expect(a).toMatchObject({ kind: "zone", reason: "soft_leaf" });
+  });
+
+  it("US-LIC-01: lightNeedUnknown is true without lux need or default level, false with both", () => {
+    expect(lightNeedUnknown({ lightDemandLux: null, standardLevel: 2 })).toBe(true);
+    expect(lightNeedUnknown({ lightDemandLux: 15_000, standardLevel: null })).toBe(true);
+    expect(lightNeedUnknown({ lightDemandLux: 15_000, standardLevel: 2 })).toBe(false);
   });
 });
