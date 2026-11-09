@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import type { ApiError, Response } from "../../api";
 import { NETWORK_DOWN, RequestFailure } from "./query-client";
-import { SIGN_IN } from "../../use-write-action";
+import { SIGN_IN } from "../../write-action/use-write-action";
 import type { RequestStatus } from "@/shared/patterns/states/request-state/request-state";
 
 type Token = () => Promise<string | undefined>;

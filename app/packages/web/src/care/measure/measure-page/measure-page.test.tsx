@@ -1,11 +1,43 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import type { GrowthMoments } from "@/achievements";
 import { MeasurePage } from "./measure-page";
+
+/** The growth moments the page reads; a test sets them before it saves (US-ACH-05, issue 1644). */
+const growth = vi.hoisted(() => ({ moments: null as GrowthMoments | null }));
+vi.mock("@/achievements", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/achievements")>()),
+  useGrowthMoments: () => growth.moments,
+}));
+const UNKNOWN_GROWTH: GrowthMoments = { latest: { kind: "unknown" }, records: new Set() };
+const UNKNOWN_NOTE = /Dein Wachstum ist noch unbekannt/;
+
+/** A box for a mocked `getBoundingClientRect`: jsdom lays nothing out, so the placement tests give the rects a place (issue 1644). */
+const rectAt = (top: number, bottom: number): DOMRect =>
+  ({
+    top,
+    bottom,
+    left: 0,
+    right: 0,
+    width: 0,
+    height: bottom - top,
+    x: 0,
+    y: top,
+    toJSON: () => ({}),
+  }) as DOMRect;
+
+/** A refused photo is an assertive toast, and the list or form keeps its place (US-QS-07, DS-54). */
+async function refusalToast(): Promise<HTMLElement> {
+  const region = () => document.querySelector<HTMLElement>('[aria-live="assertive"]');
+  await vi.waitFor(() => expect(region()?.textContent).not.toBe(""));
+  return region() as HTMLElement;
+}
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -90,6 +122,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  growth.moments = null;
 });
 
 /** The course lives in its own layer "Verlauf", opened from the fact line (US-WAC-01, US-QS-15). */
@@ -239,6 +272,130 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(back).toHaveBeenCalledOnce();
   });
 
+  it("US-QS-15 · the growth note is an overlay that takes no place: the form keeps its node and place with and without it, and the save button is never under it (issue 1644, F8)", async () => {
+    fakeServer();
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    const form = screen.getByRole("form", { name: "Messung erfassen" });
+    expect(document.querySelector('[data-slot="growth-note"]')).toBeNull();
+    growth.moments = UNKNOWN_GROWTH;
+    await userEvent.type(field, "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await screen.findByText(UNKNOWN_NOTE);
+    const overlay = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
+    // Absolute, in the wrapper of the form: the form is the same node in the same place in the flow.
+    expect(overlay?.className).toContain("absolute");
+    expect(overlay?.parentElement).toBe(form.parentElement);
+    expect(screen.getByRole("form", { name: "Messung erfassen" })).toBe(form);
+    expect(overlay?.contains(screen.getByRole("button", { name: "Messung speichern" }))).toBe(
+      false,
+    );
+  });
+
+  it("US-QS-15 · the growth note is announced once per save, through the one polite region (issue 1644, F8)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    render(
+      <AnnouncerProvider>
+        <MemoryRouter>
+          <MeasurePage
+            api="http://api"
+            token={async () => "tok"}
+            specimen={specimen}
+            onBack={vi.fn()}
+          />
+        </MemoryRouter>
+      </AnnouncerProvider>,
+    );
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    const region = document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]');
+    await vi.waitFor(() =>
+      expect(region?.textContent).toContain("Dein Wachstum ist noch unbekannt"),
+    );
+    expect(region?.textContent?.match(/Dein Wachstum ist noch unbekannt/g)).toHaveLength(1);
+  });
+
+  it("US-QS-15 · the growth note closes with Schließen and when the keeper types in the form, and shows again at the next save (issue 1644, F8)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    const save = screen.getByRole("button", { name: "Messung speichern" });
+    await userEvent.type(field, "12,5");
+    await userEvent.click(save);
+    await screen.findByText(UNKNOWN_NOTE);
+    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
+    await userEvent.type(field, "3");
+    await userEvent.click(save);
+    await screen.findByText(UNKNOWN_NOTE);
+    await userEvent.type(field, "4");
+    expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
+  });
+
+  it("US-QS-15 · a save with Enter keeps the focus in Messwert, and the note sits below that field, not over it (issue 1644)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    const wrapper = screen.getByRole("form", { name: "Messung erfassen" })
+      .parentElement as HTMLElement;
+    // The form starts at 100 px, the value field ends at 180 px: the note goes to 80 px below the form's top.
+    vi.spyOn(wrapper, "getBoundingClientRect").mockReturnValue(rectAt(100, 400));
+    vi.spyOn(field, "getBoundingClientRect").mockReturnValue(rectAt(150, 180));
+    await userEvent.type(field, "12,5");
+    // jsdom does not submit on Enter through the footer button (it sits outside the form); a browser sends the click of
+    // the default button for that Enter, and that click moves no focus, so the test sends it the same way.
+    fireEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await screen.findByText(UNKNOWN_NOTE);
+    expect(document.activeElement).toBe(field);
+    const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
+    expect(card?.style.top).toBe("80px");
+  });
+
+  it("US-QS-15 · the note paints under the sticky save button and scrolls within 40 % of the window, also at 200 % text (issue 1644)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    await userEvent.type(field, "12,5");
+    const save = screen.getByRole("button", { name: "Messung speichern" });
+    fireEvent.click(save);
+    await screen.findByText(UNKNOWN_NOTE);
+    const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
+    expect(save.parentElement?.className).toContain("sticky bottom-0 z-10");
+    expect(card?.className).toContain("z-[5]");
+    expect(card?.className).toContain("max-h-[40vh]");
+    expect(card?.className).toContain("overflow-y-auto");
+  });
+
+  it("US-QS-15 · the focus moving into the form outside the note (Tab into Datum) closes it (issue 1644)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    await userEvent.type(field, "12,5");
+    fireEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await screen.findByText(UNKNOWN_NOTE);
+    await userEvent.tab();
+    expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
+    expect(document.activeElement).toBe(screen.getByLabelText("Datum"));
+  });
+
+  it("US-QS-15 · Schließen gives the focus back to the field the note came from (issue 1644)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    await userEvent.type(field, "12,5");
+    fireEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await screen.findByText(UNKNOWN_NOTE);
+    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
+    expect(document.activeElement).toBe(field);
+  });
+
   it("US-WAC-01 · DS-52 while loading, a skeleton with the one loading status mirrors the page", () => {
     fakeServer();
     const { container } = show();
@@ -361,7 +518,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
     await save();
     expect(await screen.findByText(/Gespeichert:/)).toBeTruthy();
-    const alert = await screen.findByRole("alert");
+    const alert = await refusalToast();
     expect(alert.textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
     expect(alert.textContent).not.toContain("raw server text");
   });
@@ -429,9 +586,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     show();
     await openEntries();
     await pick(/Foto hinzufügen/);
-    expect((await screen.findByRole("alert")).textContent).toContain(
-      ERROR_TEXTS["media.type_unsupported"],
-    );
+    expect((await refusalToast()).textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
   });
 
   it("only the latest measurement of a day offers the photo, because the server attaches it to that one (FR-WAC-07)", async () => {
@@ -471,7 +626,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     show();
     await openEntries();
     await pick(/Foto hinzufügen/);
-    expect(await screen.findByRole("alert")).toBeTruthy();
+    await refusalToast();
     const reloadsBefore = loads();
     await pick(/Foto hinzufügen/);
     await vi.waitFor(() => expect(photoPosts).toHaveLength(2));

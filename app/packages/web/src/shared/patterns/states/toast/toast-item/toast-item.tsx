@@ -74,9 +74,11 @@ function useAutoDismiss(duration: number, onExpire: () => void) {
 export function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }) {
   const handlers = useAutoDismiss(toast.duration ?? toastDuration(toast), onDismiss);
   const Icon = toast.kind === "error" ? CircleAlert : CircleCheck;
+  // A confirmation is a status (US-QS-07, issue 1644); an error is read by the assertive region it lies in.
   return (
     <div
       {...handlers}
+      role={toast.kind === "success" ? "status" : undefined}
       onKeyDown={(event) => event.key === "Escape" && onDismiss()}
       className={cn(
         "pointer-events-auto flex min-w-0 items-center gap-3 rounded-card border bg-card p-3 pl-4 text-sm text-card-foreground shadow-elevation-2",

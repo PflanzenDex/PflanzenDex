@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { createQueryClient } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
+import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
@@ -12,7 +13,9 @@ import { MeasurementList } from "./measurement-list/measurement-list";
 import { recordMeasurement, loadMeasurementView } from "../shared/api/measurements-api";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
-const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
+// The toast provider is mounted as the app shell mounts it for every page (the results of the writes are toasts).
+const renderToString = (e: Parameters<typeof render>[0]) =>
+  render(<ToastProvider>{e}</ToastProvider>).replaceAll("<!-- -->", "");
 /** The fact line and the facts together, as the measure view and its course layer show them. */
 function Both({ view }: { view: MeasurementView }) {
   return (

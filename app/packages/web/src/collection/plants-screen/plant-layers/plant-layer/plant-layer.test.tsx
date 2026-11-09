@@ -155,7 +155,7 @@ describe("US-QS-23 a plant opens as a layer with tabs", () => {
     const layer = await open();
     await userEvent.click(within(layer).getByRole("tab", { name: "Standort" }));
     expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e1&tab=standort");
-    act(() => screen.getByRole("button", { name: "Browser zurück", hidden: true }).click());
+    act(() => screen.getByText("Browser zurück").click());
     expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
     expect(screen.getByTestId("address").textContent).toBe("");
   });
@@ -296,7 +296,7 @@ describe("US-QS-23 the other tabs", () => {
     );
     expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art.")).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
-    act(() => screen.getByRole("button", { name: "Browser zurück", hidden: true }).click());
+    act(() => screen.getByText("Browser zurück").click());
     const back = await screen.findByRole("dialog", { name: "Aloe" });
     expect(within(back).getByRole("button", { name: "Pflegeprofil", pressed: true })).toBeTruthy();
     vi.unstubAllGlobals();
@@ -333,7 +333,7 @@ describe("US-QS-23 the other tabs", () => {
     await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil" }));
     await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
     await screen.findByRole("dialog", { name: "Pflegeprofil" });
-    act(() => screen.getByRole("button", { name: "Browser zurück", hidden: true }).click());
+    act(() => screen.getByText("Browser zurück").click());
     const back = await screen.findByRole("dialog", { name: "Aloe" });
     const opener = within(back).getByRole("button", { name: "Pflegeprofil bearbeiten" });
     await waitFor(() => expect(document.activeElement).toBe(opener));

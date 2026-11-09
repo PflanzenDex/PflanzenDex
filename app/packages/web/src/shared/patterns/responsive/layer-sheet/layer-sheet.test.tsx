@@ -121,7 +121,7 @@ describe("LayerSheet (US-QS-15)", () => {
     holdSheetExit();
     render(<Example at="/?sheet=licht" />);
     await screen.findByRole("dialog", { name: "Lichtzonen" });
-    fireEvent.click(screen.getByRole("button", { name: "Browser zurück", hidden: true }));
+    fireEvent.click(screen.getByText("Browser zurück"));
     await waitFor(() => expect(screen.getByText("Inhalt")).toBeTruthy());
     endSheetExit();
     await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
@@ -155,7 +155,7 @@ describe("LayerSheet (US-QS-15)", () => {
     await userEvent.click(opener);
     await screen.findByRole("dialog", { name: "Lichtzonen" });
     // The modal hides the page from assistive technology, so the browser Back is reached with `hidden`.
-    fireEvent.click(screen.getByRole("button", { name: "Browser zurück", hidden: true }));
+    fireEvent.click(screen.getByText("Browser zurück"));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
   });

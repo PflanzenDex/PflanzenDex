@@ -1,6 +1,6 @@
-import { useCallback } from "react";
 import { useInvalidate } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
 import { PageFrame } from "../specimens/cards/parts/parts";
 import type { Props } from "./collection-props";
@@ -34,15 +34,14 @@ export function CollectionPage(props: Props) {
   // The plants are read page by page; the first page is part of the view, a failure of it fails the whole view (P-10).
   const plants = useCardPages(api, token);
   const afterAction = useInvalidate(COLLECTION_KEY);
-  const archived = useArchive(api, token, afterAction);
-  const potted = useRepot(api, token, afterAction);
-  const marked = useMarker(api, token, afterAction);
-  const caught = useCatchDate(api, token, afterAction);
-  const zoned = useLightZone(api, token, afterAction);
+  // Results of the writes are toasts, so the list keeps its place (DS-54, US-QS-07).
+  const say = useSay();
+  const archived = useArchive(api, token, afterAction, say);
+  const potted = useRepot(api, token, afterAction, say);
+  const marked = useMarker(api, token, afterAction, say);
+  const caught = useCatchDate(api, token, afterAction, say);
+  const zoned = useLightZone(api, token, afterAction, say);
   const hooks = { archived, potted, marked, caught, zoned };
-  const clearMessages = useCallback(() => {
-    for (const a of [archived, potted, marked, caught, zoned]) a.setMessage(null);
-  }, [archived, potted, marked, caught, zoned]);
   const opened = [archived.open, potted.open, marked.open, caught.open, zoned.open];
   const formOpen = !!newSpecies || opened.some(Boolean);
   useHostReport(props.host, request.value?.summary.total, formOpen);
@@ -54,8 +53,8 @@ export function CollectionPage(props: Props) {
   });
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
-    clearMessages,
     completed: props.onCompleted,
+    say,
   });
   // The view waits for the summary and the first page; either failing fails the whole view with its text (P-10).
   const requestFailed = request.status === "error" ? request.error : plants.error;
@@ -80,7 +79,7 @@ export function CollectionPage(props: Props) {
             data={request.value}
             plants={plants}
             create={create}
-            actions={{ ...hooks, clearMessages, open: form.open }}
+            actions={{ ...hooks, say, open: form.open }}
             form={form}
             formPlant={formPlant}
             props={props}

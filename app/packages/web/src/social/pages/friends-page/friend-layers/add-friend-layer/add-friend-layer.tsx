@@ -1,18 +1,23 @@
 import { useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { useSay, type Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useWriteAction, type ApiError } from "../../../../../shared/data";
 import { createFriendCode, sendFriendRequest } from "../../../../api/friends-api";
 import { CodeForm } from "../../../../parts/code-form/code-form";
 import { InviteCard } from "../../../../parts/invite-card/invite-card";
 import { Layer } from "../layer/layer";
-import { Outcome } from "../outcome/outcome";
 
 type Token = () => Promise<string | undefined>;
 
-/** Sends the code form's request and hands a refusal back to the field; one request at a time (a double tap sends one). */
-function useSendRequest(api: string, token: Token, reload: () => void) {
-  const write = useWriteAction(token, reload);
+/**
+ * Sends the code form's request and hands a refusal back to the field; one request at a time (a double tap sends one).
+ * The confirmation is a toast; a refused code is not, it stays at its field (P-10).
+ */
+function useSendRequest(api: string, token: Token, reload: () => void, say: Say) {
+  const write = useWriteAction(token, reload, (message, kind) => {
+    if (kind !== "error") say(message);
+  });
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const send = async (code: string): Promise<boolean> => {
     let ok = false;
@@ -38,8 +43,9 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
   const { api, token } = props;
   const [tab, setTab] = useState<Tab>("invite");
   const [created, setCreated] = useState<CreatedFriendCode | null>(null);
-  const invite = useWriteAction(token, props.onWritten);
-  const request = useSendRequest(api, token, props.onWritten);
+  const say = useSay();
+  const invite = useWriteAction(token, props.onWritten, say);
+  const request = useSendRequest(api, token, props.onWritten, say);
   const tabs: { id: Tab; label: string }[] = [
     { id: "invite", label: "Einladen" },
     { id: "code", label: "Code eingeben" },
@@ -64,7 +70,6 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
             </Button>
           ))}
         </div>
-        <Outcome message={request.write.message ?? invite.message} error={invite.error} />
         <div role="tabpanel" id={`add-panel-${tab}`} aria-labelledby={`add-tab-${tab}`}>
           {tab === "invite" ? (
             <InviteCard
