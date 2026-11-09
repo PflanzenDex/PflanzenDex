@@ -1,5 +1,15 @@
-// Markdown of the pinned report issue (US-DEV-11): verdict, averages, Mermaid charts and the day table.
-import { averages, countable, dailyFlow, dayOf, REPORT_LABEL, TZ } from "./retro-lib.mjs";
+// Markdown of the pinned report issue (US-DEV-11): verdict, averages, process share and implementer rework (retro-sections.mjs),
+// Mermaid charts and the day table.
+import {
+  averages,
+  countable,
+  dailyFlow,
+  dayOf,
+  processShare,
+  REPORT_LABEL,
+  TZ,
+} from "./retro-lib.mjs";
+import { keptRework, processSection } from "./retro-sections.mjs";
 
 // Starting values (assumption): six weeks fit a Mermaid x-axis, two weeks fit a table.
 const CHART_DAYS = 42;
@@ -96,8 +106,11 @@ function dayTable(days) {
   ];
 }
 
-/** Body of the report issue; the same issues on the same day always give the same text (no clock time). */
-export function renderReport(allIssues, today) {
+/**
+ * Body of the report issue; the same issues on the same day always give the same text (no clock time).
+ * `pulls` are the merged pull requests of the process share; `rework` is the implementer rework block (reworkSection or keptRework).
+ */
+export function renderReport(allIssues, today, { pulls = [], rework = keptRework(null) } = {}) {
   const issues = allIssues.filter(countable);
   const days = dailyFlow(issues, today);
   const head = [
@@ -108,7 +121,9 @@ export function renderReport(allIssues, today) {
     "> **Not a work item. Do not claim, assign, edit or close it.** Spec: US-DEV-11.",
     "",
   ];
-  if (!days.length) return [...head, "No issues yet."].join("\n") + "\n";
+  const processBlock = processSection(processShare(pulls, today));
+  if (!days.length)
+    return [...head, "No issues yet.", "", processBlock, "", rework].join("\n") + "\n";
   const avg = averages(days);
   const open = days.at(-1).open;
   const latest = issues
@@ -124,6 +139,10 @@ export function renderReport(allIssues, today) {
       ...averagesTable(avg),
       "",
       `Open now: **${open}** of ${issues.length} created (${Math.round((100 * open) / issues.length)} %).`,
+      "",
+      processBlock,
+      "",
+      rework,
       "",
       ...charts(days),
       "",
