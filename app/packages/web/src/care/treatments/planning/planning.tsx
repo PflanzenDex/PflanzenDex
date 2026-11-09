@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { SIGN_IN, type ApiError, type Request } from "../../../shared/data";
+import { SIGN_IN, type ApiError, type Request, useRepeatKey } from "../../../shared/data";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 import { TreatmentForm } from "../treatment-form/treatment-form";
 import { TreatmentFormSkeleton } from "../treatments-page/treatments-page.skeleton";
@@ -22,13 +22,18 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+  const keys = useRepeatKey();
   const send = useCallback(
     async (input: TreatmentInput): Promise<boolean> => {
       if (busy.current) return false;
       busy.current = true;
       setRunning(true);
       const t = await token();
-      const r = t ? await planTreatments(api, t, input) : { ok: false as const, error: SIGN_IN };
+      const key = keys.take();
+      const r = t
+        ? await planTreatments(api, t, input, { key })
+        : { ok: false as const, error: SIGN_IN };
+      keys.settle(key, r);
       busy.current = false;
       setRunning(false);
       setError(r.ok ? null : r.error);
@@ -37,7 +42,7 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
       if (text !== null) onPlanned(text);
       return r.ok;
     },
-    [api, token, onPlanned],
+    [api, token, onPlanned, keys],
   );
   /** Forgets the last attempt (a closed layer must not show an old refusal when it opens again). */
   const reset = useCallback(() => {

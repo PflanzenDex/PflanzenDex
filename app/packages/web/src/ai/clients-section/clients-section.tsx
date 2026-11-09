@@ -10,6 +10,10 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { ClientsSkeleton } from "./clients-section.skeleton";
 
+/** The write of one right of a connection, sent with the key of its action (US-QS-03). */
+const sendRights = (api: string, id: string, rights: AiRights) => (t: string, key: string) =>
+  setRights(api, t, { id, rights }, { key });
+
 const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
@@ -52,7 +56,7 @@ function Request({ api, row, busy, run }: RowProps) {
         size="sm"
         disabled={busy}
         aria-label={`Recht „${SHORT[wanted]}“ für ${row.clientName} erlauben`}
-        onClick={() => void run((t) => setRights(api, t, row.id, wanted), "Das Recht ist erlaubt.")}
+        onClick={() => void run(sendRights(api, row.id, wanted), "Das Recht ist erlaubt.")}
       >
         Erlauben
       </Button>
@@ -72,7 +76,7 @@ function Controls({ api, row, busy, run }: RowProps) {
           aria-label={`Recht für ${name}`}
           onChange={(e) => {
             const rights = e.target.value as AiRights;
-            void run((t) => setRights(api, t, row.id, rights), "Das Recht ist geändert.");
+            void run(sendRights(api, row.id, rights), "Das Recht ist geändert.");
           }}
         >
           <option value="read">{RIGHTS_TEXT.read}</option>
@@ -86,7 +90,10 @@ function Controls({ api, row, busy, run }: RowProps) {
         disabled={busy}
         aria-label={`${name} trennen`}
         onClick={() =>
-          void run((t) => revokeConnection(api, t, row.id), "Der KI-Client ist getrennt.")
+          void run(
+            (t, key) => revokeConnection(api, t, row.id, { key }),
+            "Der KI-Client ist getrennt.",
+          )
         }
       >
         Trennen
@@ -118,7 +125,10 @@ function Connection(props: RowProps) {
           disabled={busy}
           aria-label={`${name} wieder zulassen`}
           onClick={() =>
-            void run((t) => allowAgain(api, t, row.id), "Der KI-Client ist wieder zugelassen.")
+            void run(
+              (t, key) => allowAgain(api, t, row.id, { key }),
+              "Der KI-Client ist wieder zugelassen.",
+            )
           }
         >
           Wieder zulassen

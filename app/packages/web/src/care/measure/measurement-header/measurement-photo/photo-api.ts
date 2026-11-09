@@ -2,7 +2,7 @@ import { MEDIA_LIMITS } from "@pflanzendex/core";
 import {
   announceWrite,
   currentTimeZone,
-  withRepeatKey,
+  newRepeatKey,
   type ApiError,
   type Response,
 } from "../../../../shared/data";
@@ -29,55 +29,39 @@ async function failure(res: globalThis.Response): Promise<{ ok: false; error: Ap
 }
 
 /**
- * SHA-256 of the file content as hex: the identity of a photo for the repeat guard (US-QS-03). It is the same hash the
- * server fingerprints the upload with, so a different photo never shares a key. `null` when the file cannot be read.
- */
-async function contentDigest(file: File): Promise<string | null> {
-  try {
-    const hash = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-    return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Sends the raw image file for the measurement of `date` (US-WAC-06). The repeat guard (US-QS-03) takes the write's
- * identity from the path (measurement date, time zone, `replace`) and the file's content: the same file sent again after
- * a lost answer carries the same key and the server answers it with the stored answer, not a second photo; another
- * photo gets its own key. A deliberate replace is another path (`replace=true`), so it is another write.
+ * Sends the raw image file for the measurement of `date` (US-WAC-06). `key` is the repeat-guard key of the action (US-QS-03):
+ * a repeat of the same action after a lost answer carries it, and the server answers with the stored answer, not a second
+ * photo. The server refuses the same key with another file (`idempotency.key_conflict`). A deliberate replace is another
+ * path (`replace=true`), so it is another write.
  */
 export async function uploadPhoto(
   access: UploadAccess,
   specimenId: string,
   photo: { file: File; date?: string; replace?: boolean },
+  key: string = newRepeatKey(),
 ): Promise<Response<unknown>> {
   const query = new URLSearchParams({ timeZone: currentTimeZone() });
   if (photo.date) query.set("date", photo.date);
   if (photo.replace) query.set("replace", "true");
   const path = `/specimens/${encodeURIComponent(specimenId)}/measurements/photo?${query}`;
-  const digest = await contentDigest(photo.file);
-  if (digest === null) return { ok: false, error: NETWORK };
-  return withRepeatKey<unknown>(JSON.stringify([access.api, "POST", path, digest]), async (key) => {
-    try {
-      const res = await (access.fetchFn ?? fetch)(`${access.api}${path}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${access.token}`,
-          "Content-Type": photo.file.type,
-          "Idempotency-Key": key,
-        },
-        body: photo.file,
-      });
-      if (!res.ok) return await failure(res);
-      // The replaced picture leaves the picture cache at once; the next view asks its new address (NFR-12).
-      forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
-      announceWrite();
-      return { ok: true, value: await res.json().catch(() => ({})) };
-    } catch {
-      return { ok: false, error: NETWORK };
-    }
-  });
+  try {
+    const res = await (access.fetchFn ?? fetch)(`${access.api}${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access.token}`,
+        "Content-Type": photo.file.type,
+        "Idempotency-Key": key,
+      },
+      body: photo.file,
+    });
+    if (!res.ok) return await failure(res);
+    // The replaced picture leaves the picture cache at once; the next view asks its new address (NFR-12).
+    forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
+    announceWrite();
+    return { ok: true, value: await res.json().catch(() => ({})) };
+  } catch {
+    return { ok: false, error: NETWORK };
+  }
 }
 
 /** Quick check before sending (the server checks again, P-03): type and size. `null` means fine. */

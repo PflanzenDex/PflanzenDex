@@ -1,5 +1,11 @@
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+  writeFor,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -53,10 +59,10 @@ export async function planTreatments(
   api: string,
   token: string,
   input: TreatmentInput,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<readonly TreatmentRow[]>> {
   const { course, ...rest } = input;
-  const r = await createWrite(api, token, fetchFn)("POST", "/treatments", {
+  const r = await writeFor(api, token, options)("POST", "/treatments", {
     ...rest,
     ...(course ? { count: course.count, intervalDays: course.intervalDays } : {}),
   });
@@ -65,16 +71,16 @@ export async function planTreatments(
 
 /**
  * Ticks a treatment off (US-BEH-03). The treatment is addressed by its ID, the done date is the device's local date
- * (NFR-08). The repeat-guard key is created per call; a second tap on another device changes nothing.
+ * (NFR-08). The repeat-guard key is the action's (`options.key`), else made per call; a second tap on another device changes nothing.
  */
 export async function completeTreatment(
   api: string,
   token: string,
   id: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<TreatmentRow>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/treatments/${encodeURIComponent(id)}/complete`,
     {

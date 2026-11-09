@@ -13,7 +13,13 @@ import {
   type CreateFields,
   type MarkerRule,
 } from "../../../../collection";
-import { currentTimeZone, SIGN_IN, type ApiError } from "../../../../shared/data";
+import {
+  currentTimeZone,
+  SIGN_IN,
+  type ApiError,
+  useRepeatKey,
+  type WriteOptions,
+} from "../../../../shared/data";
 import { useOwnZones } from "./save-step/save-step";
 
 type Token = () => Promise<string | undefined>;
@@ -22,24 +28,32 @@ type Token = () => Promise<string | undefined>;
  * What the first plant sends (US-ONB-01): the marker as it is typed (the server refuses a missing one and names its field,
  * US-BES-03), and a zone or a place only when the keeper changed it, so the derived zone is never stored (P-01).
  */
-async function createPlant(args: {
-  api: string;
-  token: Token;
-  species: Species;
-  marker: { form: UseFormReturn<CreateFields>; rule: MarkerRule | null };
-  zoneId: string;
-  locationId: string;
-}) {
+async function createPlant(
+  args: {
+    api: string;
+    token: Token;
+    species: Species;
+    marker: { form: UseFormReturn<CreateFields>; rule: MarkerRule | null };
+    zoneId: string;
+    locationId: string;
+  },
+  options: WriteOptions = {},
+) {
   const { api, token, species, marker, zoneId, locationId } = args;
   const t = await token();
   const rule = marker.rule;
   if (!t || !rule) return null;
-  return createSpecimen(api, t, {
-    speciesId: species.id,
-    ...markerInputOf(marker.form.getValues(), rule.missing),
-    ...(zoneId ? { lightZoneId: zoneId } : {}),
-    ...(locationId ? { locationId } : {}),
-  });
+  return createSpecimen(
+    api,
+    t,
+    {
+      speciesId: species.id,
+      ...markerInputOf(marker.form.getValues(), rule.missing),
+      ...(zoneId ? { lightZoneId: zoneId } : {}),
+      ...(locationId ? { locationId } : {}),
+    },
+    { key: options.key },
+  );
 }
 
 /**
@@ -83,6 +97,8 @@ export function useFirstPlant(api: string, token: Token) {
   // Only the flow for further plants offers a place; a shown and changeable value, never stored unseen (US-ONB-01).
   const [locationId, setLocationId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // The first plant is one action: a repeat after a lost answer repeats the same creation (US-QS-03, no second plant).
+  const keys = useRepeatKey();
   // A refused marker goes to its field (US-BES-03, US-QS-15); every other refusal is shown as text.
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const [saving, setSaving] = useState(false);
@@ -107,7 +123,10 @@ export function useFirstPlant(api: string, token: Token) {
   const save = async () => {
     if (!species || !marker.rule) return;
     setSaving(true);
-    const r = await createPlant({ api, token, species, marker, zoneId, locationId });
+    const key = keys.take();
+    const r = await createPlant({ api, token, species, marker, zoneId, locationId }, { key });
+    if (r) keys.settle(key, r);
+    else keys.drop();
     setSaving(false);
     if (!r) return setError(errorText(SIGN_IN.code));
     if (!r.ok)

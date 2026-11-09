@@ -1,6 +1,12 @@
 import type { CreatedInvitation, OperatorCostFigure } from "@pflanzendex/core";
 import { useRef, useState } from "react";
-import { SIGN_IN, useInvalidate, type ApiError, type Response } from "../../../shared/data";
+import {
+  SIGN_IN,
+  useInvalidate,
+  useRepeatKey,
+  type ApiError,
+  type Response,
+} from "../../../shared/data";
 import {
   createInvitation,
   markIdentityRemoved,
@@ -29,17 +35,20 @@ export function useOperatorActions(api: string, token: Token) {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [created, setCreated] = useState<CreatedInvitation | null>(null);
   const busy = useRef(false);
+  const keys = useRepeatKey();
 
   const run = async <T>(
     scope: Scope,
-    send: (t: string) => Promise<Response<T>>,
+    send: (t: string, key: string) => Promise<Response<T>>,
     done: (value: T) => string,
   ) => {
     if (busy.current) return;
     busy.current = true;
     setRunning(true);
     const t = await token();
-    const r = t ? await send(t) : { ok: false as const, error: SIGN_IN };
+    const key = keys.take();
+    const r = t ? await send(t, key) : { ok: false as const, error: SIGN_IN };
+    keys.settle(key, r);
     busy.current = false;
     setRunning(false);
     setNotice(
@@ -57,7 +66,7 @@ export function useOperatorActions(api: string, token: Token) {
     setMode: (on: boolean) =>
       run(
         "mode",
-        (t) => setRegistrationMode(api, t, on),
+        (t, key) => setRegistrationMode(api, t, on, { key }),
         (v) =>
           v.invitationOnly
             ? "Registrierung: ab jetzt nur mit Einladungscode."
@@ -66,16 +75,16 @@ export function useOperatorActions(api: string, token: Token) {
     setCost: (figure: OperatorCostFigure) =>
       run(
         "cost",
-        (t) => setOperatorCost(api, t, figure),
+        (t, key) => setOperatorCost(api, t, figure, { key }),
         () => "Monatliche Kosten gespeichert.",
       ),
     /** Closes an identity removal done by hand (US-ACC-04); the card and its row reload afterwards. */
     markIdentity: (entryId: string) =>
-      run("deletion", (t) => markIdentityRemoved(api, t, entryId), markDone),
+      run("deletion", (t, key) => markIdentityRemoved(api, t, entryId, { key }), markDone),
     create: (days: number) =>
       run(
         "codes",
-        (t) => createInvitation(api, t, days),
+        (t, key) => createInvitation(api, t, days, { key }),
         (v) => {
           setCreated(v);
           return "Einladungscode erstellt.";

@@ -1,5 +1,11 @@
 import type { ExchangeOffer, OfferType } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 import type { OwnSpecimenRow } from "./offers-api";
 
 type FetchFn = typeof fetch;
@@ -51,16 +57,18 @@ export interface RequestInput {
   counterText?: string;
 }
 
-/** Requests an offer of a friend (US-SOZ-09); the repeat-guard key is created per call. */
+/** Requests an offer of a friend (US-SOZ-09); the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function requestOffer(
   access: { api: string; token: string; fetchFn?: FetchFn },
   offerId: string,
   input: RequestInput,
+  options: WriteOptions = {},
 ): Promise<Response<{ swapId: string }>> {
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
-    "POST",
-    `/offers/${encodeURIComponent(offerId)}/request`,
-    input,
-  );
+  const r = await createWrite(
+    access.api,
+    access.token,
+    access.fetchFn ?? fetch,
+    options.key,
+  )("POST", `/offers/${encodeURIComponent(offerId)}/request`, input);
   return r.ok ? { ok: true, value: r.value as { swapId: string } } : r;
 }

@@ -1,5 +1,11 @@
 import type { HistoryEntry, SwapAction, SwapOverview } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -18,17 +24,19 @@ export interface AnswerInput {
   proposal?: string;
 }
 
-/** Answers or changes a swap (US-SOZ-10); the repeat-guard key is created per call. */
+/** Answers or changes a swap (US-SOZ-10); the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function answerSwap(
   access: { api: string; token: string; fetchFn?: FetchFn },
   swapId: string,
   input: AnswerInput,
+  options: WriteOptions = {},
 ): Promise<Response<{ status: string }>> {
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
-    "POST",
-    `/swaps/${encodeURIComponent(swapId)}/answer`,
-    input,
-  );
+  const r = await createWrite(
+    access.api,
+    access.token,
+    access.fetchFn ?? fetch,
+    options.key,
+  )("POST", `/swaps/${encodeURIComponent(swapId)}/answer`, input);
   return r.ok ? { ok: true, value: r.value as { status: string } } : r;
 }
 
@@ -37,12 +45,17 @@ export async function confirmHandover(
   access: { api: string; token: string; fetchFn?: FetchFn },
   swapId: string,
   marker: string | null,
+  options: WriteOptions = {},
 ): Promise<Response<{ status: "waiting" | "handed_over" }>> {
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
-    "POST",
-    `/swaps/${encodeURIComponent(swapId)}/handover`,
-    { timeZone: currentTimeZone(), ...(marker ? { marker } : {}) },
-  );
+  const r = await createWrite(
+    access.api,
+    access.token,
+    access.fetchFn ?? fetch,
+    options.key,
+  )("POST", `/swaps/${encodeURIComponent(swapId)}/handover`, {
+    timeZone: currentTimeZone(),
+    ...(marker ? { marker } : {}),
+  });
   return r.ok ? { ok: true, value: r.value as { status: "waiting" | "handed_over" } } : r;
 }
 

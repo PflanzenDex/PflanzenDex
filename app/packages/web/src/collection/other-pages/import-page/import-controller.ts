@@ -2,7 +2,7 @@
 // the server's answer into the page's state. A failed request keeps what the page showed and offers a retry (P-10). The
 // server judges every row; the page never decides that a row is ready (P-01).
 import type { ConfirmResult, ImportPreview } from "@pflanzendex/core";
-import { SIGN_IN, type Response } from "@/shared/data";
+import { SIGN_IN, isUnanswered, newRepeatKey, type Response } from "@/shared/data";
 import { GENERIC_ERROR_TEXT, errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Api } from "@/shared/platform/announcer/context";
@@ -142,7 +142,10 @@ function answerMarker(ctx: Ctx, answer: MarkerAnswer): void {
 }
 
 /** "n Pflanzen importieren": only the ready rows of the last preview go out, with the answers their species needs. */
-async function confirmImport(ctx: Ctx): Promise<void> {
+async function confirmImport(
+  ctx: Ctx,
+  { key = newRepeatKey() }: { key?: string | undefined } = {},
+): Promise<void> {
   const preview = ctx.flow.preview;
   if (!preview) return;
   const rows = preview.rows.filter(isReady).map(confirmRow);
@@ -150,13 +153,16 @@ async function confirmImport(ctx: Ctx): Promise<void> {
   const markers = ctx.refs.answers.current
     .filter((a) => ready.has(a.speciesId))
     .map(withoutSpecies);
-  ctx.refs.retry.current = () => void confirmImport(ctx);
   ctx.patch({ busy: true, failure: null });
   const credential = await ctx.token();
   const r: Response<ConfirmResult> = credential
-    ? await sendImport(ctx.api, credential, { rows, markers })
+    ? await sendImport(ctx.api, credential, { rows, markers }, { key })
     : { ok: false, error: SIGN_IN };
-  if (!r.ok) return ctx.patch({ busy: false, failure: r.error });
+  if (!r.ok) {
+    ctx.refs.retry.current = () =>
+      void confirmImport(ctx, { key: isUnanswered(r.error) ? key : undefined });
+    return ctx.patch({ busy: false, failure: r.error });
+  }
   ctx.announce?.announce(
     ui("announceResult", {
       created: r.value.created.length,

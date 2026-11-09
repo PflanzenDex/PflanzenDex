@@ -58,7 +58,7 @@ describe("US-PHA-03 client of the confirm API", () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>
       response(200, { specimens: [{ specimenId: "e1", locationId: "s2", changed: true }] }),
     );
-    const r = await confirmPhaseSwitch("http://api", "tok", ["e1", "e2"], fetchFn);
+    const r = await confirmPhaseSwitch("http://api", "tok", ["e1", "e2"], { fetchFn });
     expect(r).toMatchObject({ ok: true, value: [{ specimenId: "e1", changed: true }] });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/care-phases/confirm");
@@ -75,7 +75,7 @@ describe("US-PHA-03 client of the confirm API", () => {
   it("US-PHA-03 an error of the API stays an error with code", async () => {
     const error = { code: "care.target_unknown", text: "Kein Soll-Standort." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await confirmPhaseSwitch("http://api", "tok", ["e1"], fetchFn)).toMatchObject({
+    expect(await confirmPhaseSwitch("http://api", "tok", ["e1"], { fetchFn })).toMatchObject({
       ok: false,
       error: { code: "care.target_unknown" },
     });

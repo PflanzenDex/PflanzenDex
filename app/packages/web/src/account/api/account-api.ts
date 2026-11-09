@@ -1,5 +1,5 @@
 import type { UserManagerSettings } from "oidc-client-ts";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../../shared/data";
 
 export type Account = {
   id: string;
@@ -157,13 +157,13 @@ export const loadProfile = (
   fetchFn: FetchFn = fetch,
 ): Promise<Response<AccountProfile>> => call(fetchFn, `${api}/account/profile`, token);
 
-/** Saves the profile as a whole; the repeat-guard key is created per call. */
+/** Saves the profile as a whole; the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function saveProfile(
   api: string,
   token: string,
   profile: AccountProfile,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<AccountProfile>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/account/profile", profile);
+  const r = await writeFor(api, token, options)("PUT", "/account/profile", profile);
   return r.ok ? { ok: true, value: r.value as AccountProfile } : r;
 }

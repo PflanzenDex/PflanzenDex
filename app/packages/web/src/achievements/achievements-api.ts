@@ -1,4 +1,4 @@
-import { call, createWrite, currentTimeZone, type Response } from "../shared/data";
+import { call, currentTimeZone, type Response, type WriteOptions, writeFor } from "../shared/data";
 
 /** The settings of the achievements of the account (DM-ACH-03); the same shape the API returns. */
 export type AchievementSettings = { calmMode: boolean };
@@ -16,9 +16,9 @@ export async function setCalmMode(
   api: string,
   token: string,
   calmMode: boolean,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<AchievementSettings>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/achievements/settings/calm-mode", {
+  const r = await writeFor(api, token, options)("PUT", "/achievements/settings/calm-mode", {
     calmMode,
   });
   return r.ok ? { ok: true, value: r.value as AchievementSettings } : r;
@@ -90,9 +90,9 @@ export async function markSeen(
   api: string,
   token: string,
   achievements: readonly string[],
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<{ seen: string[] }>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/achievements/seen", {
+  const r = await writeFor(api, token, options)("POST", "/achievements/seen", {
     achievements,
     timeZone: currentTimeZone(),
   });

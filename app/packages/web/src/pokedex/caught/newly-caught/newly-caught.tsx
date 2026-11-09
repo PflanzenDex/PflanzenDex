@@ -32,11 +32,12 @@ export function NewlyCaught(props: {
     created.current = true;
     // Silent creation (US-POK-12): no message, no banner; a failure is retried at the next visit.
     void write.run(
-      (t) =>
+      (t, key) =>
         markSeen(
           api,
           t,
           caught.map((c) => c.species),
+          { key },
         ),
       "",
     );
@@ -62,7 +63,7 @@ export function NewlyCaught(props: {
         variant="outline"
         pending={write.running}
         pendingLabel="Wird gespeichert …"
-        onClick={() => void write.run((t) => markSeen(api, t, names), "")}
+        onClick={() => void write.run((t, key) => markSeen(api, t, names, { key }), "")}
       >
         Okay
       </Button>

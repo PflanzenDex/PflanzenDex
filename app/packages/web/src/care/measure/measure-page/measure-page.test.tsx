@@ -189,6 +189,36 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(posts[1]?.key).toBe(posts[0]?.key);
   });
 
+  it("US-QS-03 a changed value after a lost answer keeps the key of the save: the server refuses it as a key conflict, then a new save is a new write", async () => {
+    // The server keeps the first save of a key; a second request with the same key and another body is refused.
+    const { posts } = fakeServer({
+      save: async () => {
+        const sent = posts.at(-1);
+        const earlier = posts.slice(0, -1).find((p) => p.key === sent?.key);
+        if (earlier && JSON.stringify(earlier.body) !== JSON.stringify(sent?.body))
+          return response(409, { error: { code: "idempotency.key_conflict", text: "x" } });
+        if (posts.length === 1) throw new TypeError("Failed to fetch");
+        return response(201, measurement);
+      },
+    });
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    await userEvent.clear(screen.getByLabelText(/Messwert/));
+    await userEvent.type(screen.getByLabelText(/Messwert/), "13");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(2));
+    expect(posts[1]?.key).toBe(posts[0]?.key);
+    expect(posts[1]?.body).toMatchObject({ value: 13 });
+    expect(await screen.findByText(/Schlüssel/)).toBeTruthy();
+    expect(screen.queryByText(/Gespeichert:/)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(3));
+    expect(posts[2]?.key).not.toBe(posts[0]?.key);
+    expect(await screen.findByText(/Gespeichert:/)).toBeTruthy();
+  });
+
   it('US-WAC-02 "Wie erkennen?" opens the etiolation signs of the species; etiolated/thin is sent', async () => {
     const { posts } = fakeServer({ signs: "Rosette streckt sich, Blätter werden blass." });
     show();
@@ -700,6 +730,29 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     );
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
+    expect(photoPosts[1]?.key).toBe(photoPosts[0]?.key);
+  });
+
+  it("US-QS-03 another photo picked after a lost upload repeats its key: the server refuses a different file with it (key conflict)", async () => {
+    setViewportWidth(1024);
+    const other = new File([new Uint8Array([9, 9])], "other.jpg", { type: "image/jpeg" });
+    let answerLost = false;
+    const { photoPosts } = fakeServer({
+      existing: [measurement],
+      photoSave: async () => {
+        if (!answerLost) {
+          answerLost = true;
+          throw new TypeError("Failed to fetch");
+        }
+        return response(201, { photo: "p.webp" });
+      },
+    });
+    show();
+    await openEntries();
+    await pick(/Foto hinzufügen/);
+    await refusalToast();
+    await userEvent.upload(await screen.findByLabelText(/Foto hinzufügen/), other);
+    await vi.waitFor(() => expect(photoPosts).toHaveLength(2));
     expect(photoPosts[1]?.key).toBe(photoPosts[0]?.key);
   });
 });

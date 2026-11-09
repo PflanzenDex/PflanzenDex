@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
 import { Label } from "@/shared/ui/display/label/label";
@@ -6,6 +6,7 @@ import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/r
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useSay, type Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { isUnanswered, newRepeatKey } from "@/shared/data";
 import { photoProblem, uploadPhoto } from "../measurement-photo";
 import { MEDIA_LIMITS } from "@pflanzendex/core";
 
@@ -23,10 +24,19 @@ function usePhotoUpload(props: {
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState<File | null>(null);
   const [inputKey, setInputKey] = useState(0);
+  /** The key of the upload whose answer was lost: the next pick of the photo repeats that write (US-QS-03). */
+  const held = useRef<string | null>(null);
   const send = async (file: File, replace: boolean) => {
     const token = await access.token();
     if (!token) return;
-    const r = await uploadPhoto({ api: access.api, token }, specimenId, { file, date, replace });
+    const key = held.current ?? newRepeatKey();
+    const r = await uploadPhoto(
+      { api: access.api, token },
+      specimenId,
+      { file, date, replace },
+      key,
+    );
+    held.current = !r.ok && isUnanswered(r.error) ? key : null;
     setInputKey((k) => k + 1);
     if (r.ok) {
       setPending(null);

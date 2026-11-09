@@ -1,5 +1,5 @@
 import type { Species, SpeciesHit, SpeciesSearch } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -34,13 +34,13 @@ export const loadSpecies = (
 ): Promise<Response<Species>> =>
   call<Species>(fetchFn, `${api}/species/${encodeURIComponent(id)}`, token);
 
-/** Creates the proposal; the repeat-guard key is created per call. */
+/** Creates the proposal; the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function propose(
   api: string,
   token: string,
   input: Record<string, unknown>,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<Species>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/species", input);
+  const r = await writeFor(api, token, options)("POST", "/species", input);
   return r.ok ? { ok: true, value: r.value as Species } : r;
 }

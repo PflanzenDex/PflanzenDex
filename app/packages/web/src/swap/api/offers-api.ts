@@ -6,7 +6,13 @@ import type {
   OfferView,
   SpecimenRow,
 } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+  writeFor,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -58,14 +64,14 @@ export interface OfferInput {
   confirmTreatment?: boolean;
 }
 
-/** Creates an offer (US-SOZ-08); the repeat-guard key is created per call. */
+/** Creates an offer (US-SOZ-08); the repeat-guard key is the action's (`options.key`), else made per call. */
 export async function createOffer(
   api: string,
   token: string,
   input: OfferInput,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<OfferRow>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/offers", input);
+  const r = await writeFor(api, token, options)("POST", "/offers", input);
   return r.ok ? { ok: true, value: r.value as OfferRow } : r;
 }
 
@@ -74,9 +80,9 @@ export async function withdrawOffer(
   api: string,
   token: string,
   offerId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<OfferRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/offers/${encodeURIComponent(offerId)}/withdraw`,
     {},
@@ -89,9 +95,9 @@ export async function shareSpecimen(
   api: string,
   token: string,
   specimenId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<unknown>> {
-  return createWrite(api, token, fetchFn)(
+  return writeFor(api, token, options)(
     "PUT",
     `/sharing/specimens/${encodeURIComponent(specimenId)}`,
     {

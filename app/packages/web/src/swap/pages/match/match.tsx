@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import { LoadFrame, type Response } from "../../../shared/data";
+import { LoadFrame, type Response, useRepeatKey } from "../../../shared/data";
 import {
   answerYes,
   loadMatchDeck,
@@ -21,26 +21,33 @@ const SIGN_IN_NEEDED = {
 
 /** The writes of the deck, each with a fresh token; without a token they answer "sign in" (P-10). */
 function useWrites(api: string, token: Token) {
+  const keys = useRepeatKey();
   const yes = useCallback(
     async (offerId: string, counter: string | null): ReturnType<typeof answerYes> => {
       const t = await token();
-      return t ? answerYes(api, t, offerId, counter) : (SIGN_IN_NEEDED as Response<never>);
+      return t
+        ? keys.run((key) => answerYes(api, t, { offerId, counterSpecimenId: counter }, { key }))
+        : (SIGN_IN_NEEDED as Response<never>);
     },
-    [api, token],
+    [api, token, keys],
   );
   const answer = useCallback(
     async (offerId: string, a: "no" | "later") => {
       const t = await token();
-      return t ? saveAnswer(api, t, offerId, a) : (SIGN_IN_NEEDED as Response<never>);
+      return t
+        ? keys.run((key) => saveAnswer(api, t, { offerId, answer: a }, { key }))
+        : (SIGN_IN_NEEDED as Response<never>);
     },
-    [api, token],
+    [api, token, keys],
   );
   const undo = useCallback(
     async (offerId: string) => {
       const t = await token();
-      return t ? undoAnswer(api, t, offerId) : (SIGN_IN_NEEDED as Response<never>);
+      return t
+        ? keys.run((key) => undoAnswer(api, t, offerId, { key }))
+        : (SIGN_IN_NEEDED as Response<never>);
     },
-    [api, token],
+    [api, token, keys],
   );
   return { yes, answer, undo };
 }

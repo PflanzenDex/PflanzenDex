@@ -22,7 +22,7 @@ export function SharingSection(props: {
   const [partial, setPartial] = useState<string | null>(null);
   const set = (specimenId: string, share: boolean) =>
     void sharing.run(
-      (t) => setSpecimenSharing(api, t, { specimenId, share }),
+      (t, key) => setSpecimenSharing(api, t, { specimenId, share }, { key }),
       share
         ? "Freigegeben: Freunde sehen diese Pflanze ab jetzt."
         : "Zurückgezogen: Freunde sehen diese Pflanze ab dem nächsten Abruf nicht mehr.",
@@ -34,11 +34,11 @@ export function SharingSection(props: {
     ];
     setPartial(null);
     void sharing.run(
-      async (t) => {
+      async (t, key) => {
         let last: Awaited<ReturnType<typeof setSpeciesSharing>> | undefined;
         let done = 0;
         for (const speciesId of ids) {
-          last = await setSpeciesSharing(api, t, { speciesId, share });
+          last = await setSpeciesSharing(api, t, { speciesId, share }, { key });
           if (!last.ok) {
             setPartial(partialText(done, ids.length));
             return last;

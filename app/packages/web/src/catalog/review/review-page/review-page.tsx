@@ -48,7 +48,7 @@ function useShow(): [Show, (show: Show) => void] {
 function useReviewActions(api: string, token: Token, refresh: () => void) {
   const [outcome, setOutcome] = useState<string | null>(null);
   const action = useWriteAction(token, refresh);
-  const run = (send: (t: string) => Promise<Response<unknown>>, ok: string) => {
+  const run = (send: (t: string, key: string) => Promise<Response<unknown>>, ok: string) => {
     setOutcome(null);
     void action.run(send, ok);
   };
@@ -56,17 +56,17 @@ function useReviewActions(api: string, token: Token, refresh: () => void) {
     running: action.running,
     onApprove: (caseId) =>
       run(
-        (t) => decideProposal(api, t, { caseId, status: "reviewed" }),
+        (t, key) => decideProposal(api, t, { caseId, status: "reviewed" }, { key }),
         "Vorschlag freigegeben. Die Art ist jetzt für alle sichtbar.",
       ),
     onReject: (caseId, reason) =>
       run(
-        (t) => decideProposal(api, t, { caseId, status: "rejected", reason }),
+        (t, key) => decideProposal(api, t, { caseId, status: "rejected", reason }, { key }),
         "Vorschlag zurückgewiesen. Der Ersteller sieht deinen Grund.",
       ),
     onMerge: (caseId, targetSpeciesId) =>
-      run(async (t) => {
-        const r = await mergeProposal(api, t, { caseId, targetSpeciesId });
+      run(async (t, key) => {
+        const r = await mergeProposal(api, t, { caseId, targetSpeciesId }, { key });
         if (r.ok) setOutcome(movedText(r.value as MergeOutcome));
         return r;
       }, "Vorschlag zusammengeführt."),

@@ -124,7 +124,7 @@ describe("US-BES-02 FR-BES-04 client of the specimen API", () => {
       "http://api",
       "tok",
       { speciesId: "a1", catchDate: "2022-02-03" },
-      fetchFn,
+      { fetchFn },
     );
     const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
     expect(body).toMatchObject({ catchDate: "2022-02-03", timeZone: "Europe/Berlin" });
@@ -140,7 +140,7 @@ describe("US-BES-11 client: correct the catch date", () => {
       "http://api",
       "tok",
       { id: "e 1", catchDate: "2021-04-12" },
-      fetchFn,
+      { fetchFn },
     );
     expect(r.ok).toBe(true);
     const [url, init] = fetchFn.mock.calls[0] ?? [];

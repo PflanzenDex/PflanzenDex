@@ -11,7 +11,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
-import type { ApiError } from "../../../../shared/data";
+import { useRepeatKey, type ApiError } from "../../../../shared/data";
 import { loadCard } from "../../../specimens/cards/cards-api";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";
@@ -54,12 +54,15 @@ const setText = (card: SpecimenCard, zone: LightZone): string =>
 export function useLightZone(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<SpecimenCard | null>(null);
   const zones = useZones(api, token, !!open);
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (lightZoneId: string | null): Promise<ApiError | null> => {
       const t = await token();
       if (!t || !open) return SIGN_IN;
-      const r = await setLightZone(api, t, { id: open.id, lightZoneId });
+      const key = keys.take();
+      const r = await setLightZone(api, t, { id: open.id, lightZoneId }, { key });
+      keys.settle(key, r);
       if (!r.ok) return r.error;
       const zone = zones.items.find((z) => z.id === lightZoneId);
       say(zone ? setText(open, zone) : await derivedText(api, t, open.id, open.name));
@@ -67,7 +70,7 @@ export function useLightZone(api: string, token: Token, after: () => void, say: 
       after();
       return null;
     },
-    [api, token, open, zones.items, after, say],
+    [api, token, open, zones.items, after, say, keys],
   );
 
   return { open, send, setOpen, zones };

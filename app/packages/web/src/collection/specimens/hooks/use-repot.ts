@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
-import type { ApiError } from "../../../shared/data";
+import { useRepeatKey, type ApiError } from "../../../shared/data";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { repotSpecimen } from "../model/specimens-api";
 import { SIGN_IN, type Token } from "./use-collection";
@@ -22,23 +22,27 @@ export type RepotTarget = { id: string; name: string; status: SpecimenCard["stat
  */
 export function useRepot(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<RepotTarget | null>(null);
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (date: string, potId?: string): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok || !open) return SIGN_IN;
-      const r = await repotSpecimen(api, tok, {
-        id: open.id,
-        date,
-        ...(potId === undefined ? {} : { potId }),
-      });
+      const key = keys.take();
+      const r = await repotSpecimen(
+        api,
+        tok,
+        { id: open.id, date, ...(potId === undefined ? {} : { potId }) },
+        { key },
+      );
+      keys.settle(key, r);
       if (!r.ok) return r.error;
       say(t(open.status === PLANT_STATUS ? "done.plant" : "done.cutting", { name: open.name }));
       setOpen(null);
       after();
       return null;
     },
-    [api, token, open, after, say],
+    [api, token, open, after, say, keys],
   );
 
   return { open, send, setOpen, access: { api, token } };

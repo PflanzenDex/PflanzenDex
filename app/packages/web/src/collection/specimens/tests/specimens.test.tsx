@@ -38,7 +38,7 @@ const specimen = (extra: Partial<Specimen> = {}): Specimen => ({
 describe("US-BES-02 client of the specimen API", () => {
   it("creates with bearer token, the device's time zone and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, specimen()));
-    const r = await createSpecimen("http://api", "tok", { speciesId: "a1" }, fetchFn);
+    const r = await createSpecimen("http://api", "tok", { speciesId: "a1" }, { fetchFn });
     expect(r).toMatchObject({ ok: true, value: { name: "Bogenhanf" } });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens");
@@ -53,7 +53,7 @@ describe("US-BES-02 client of the specimen API", () => {
 
   it("US-LIC-02: the own light zone goes into the request body only when chosen", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, specimen()));
-    await createSpecimen("http://api", "tok", { speciesId: "a1", lightZoneId: "z3" }, fetchFn);
+    await createSpecimen("http://api", "tok", { speciesId: "a1", lightZoneId: "z3" }, { fetchFn });
     const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
     expect(body["lightZoneId"]).toBe("z3");
   });
@@ -65,7 +65,7 @@ describe("US-BES-02 client of the specimen API", () => {
       data: { name: "Bogenhanf", existing: [{ id: "e1", name: "Bogenhanf" }] },
     };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    const r = await createSpecimen("http://api", "tok", { speciesId: "a1" }, fetchFn);
+    const r = await createSpecimen("http://api", "tok", { speciesId: "a1" }, { fetchFn });
     expect(r).toMatchObject({ ok: false, error: { code: "specimen.name_taken" } });
     expect(!r.ok && nameConflict(r.error)?.existing).toEqual([{ id: "e1", name: "Bogenhanf" }]);
   });

@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Species, SpeciesSearch } from "@pflanzendex/core";
-import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../shared/data";
+import {
+  SIGN_IN,
+  useInvalidate,
+  useRequest,
+  type ApiError,
+  type Request,
+  useRepeatKey,
+} from "../shared/data";
 import { loadSpecies, propose, searchSpeciesPage } from "./species-api";
 
 type Token = () => Promise<string | undefined>;
@@ -51,9 +58,12 @@ export function useProfile(api: string, token: Token, id: string | null): Reques
 /** Sends the proposal of a species; the search forgets its cached hits and `onSaved` gets the new id (US-BES-01). */
 export function useSend(api: string, token: Token, onSaved: (id: string) => void) {
   const searchChanged = useInvalidate(SEARCH_KEY);
+  const keys = useRepeatKey();
   return async (input: Record<string, unknown>): Promise<ApiError | null> => {
     const t = await token();
-    const r = t ? await propose(api, t, input) : { ok: false as const, error: SIGN_IN };
+    const key = keys.take();
+    const r = t ? await propose(api, t, input, { key }) : { ok: false as const, error: SIGN_IN };
+    keys.settle(key, r);
     if (!r.ok) return r.error;
     searchChanged();
     onSaved(r.value.id);

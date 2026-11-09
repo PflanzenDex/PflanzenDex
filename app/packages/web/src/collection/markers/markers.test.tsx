@@ -88,7 +88,7 @@ afterEach(() => {
 describe("US-BES-03 client of the API", () => {
   it("marks a specimen with bearer token, marker and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e 1", name: "x" }));
-    const r = await markSpecimen("http://api", "tok", { id: "e 1", marker: "rot" }, fetchFn);
+    const r = await markSpecimen("http://api", "tok", { id: "e 1", marker: "rot" }, { fetchFn });
     expect(r.ok).toBe(true);
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e%201/marker");
@@ -105,7 +105,7 @@ describe("US-BES-03 client of the API", () => {
       "http://api",
       "tok",
       { speciesId: "a1", marker: "rot", markers: [{ specimenId: "e1", marker: "blau" }] },
-      fetchFn,
+      { fetchFn },
     );
     const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
     expect(body).toMatchObject({ marker: "rot", markers: [{ specimenId: "e1", marker: "blau" }] });

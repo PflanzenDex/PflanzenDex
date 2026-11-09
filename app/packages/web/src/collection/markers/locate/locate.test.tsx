@@ -61,7 +61,7 @@ describe("US-PHA-03 client of the location API", () => {
       "http://api",
       "tok",
       { id: "e 1", locationId: "s1" },
-      fetchFn,
+      { fetchFn },
     );
     expect(r).toMatchObject({ ok: true, value: { locationId: "s1" } });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
@@ -74,7 +74,7 @@ describe("US-PHA-03 client of the location API", () => {
     const error = { code: "location.not_found", text: "Diesen Standort gibt es nicht." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(404, { error }));
     expect(
-      await setSpecimenLocation("http://api", "tok", { id: "e1", locationId: "x" }, fetchFn),
+      await setSpecimenLocation("http://api", "tok", { id: "e1", locationId: "x" }, { fetchFn }),
     ).toMatchObject({ ok: false, error: { code: "location.not_found" } });
   });
 });

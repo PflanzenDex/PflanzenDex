@@ -68,7 +68,7 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
     });
   const water = (ids: readonly string[]) => {
     setChosen(new Set());
-    void write.run((t) => markWatered(props.api, t, ids), ui("done"));
+    void write.run((t, key) => markWatered(props.api, t, ids, { key }), ui("done"));
   };
   const picked = props.rows.filter((r) => chosen.has(r.specimenId)).map((r) => r.specimenId);
   return (

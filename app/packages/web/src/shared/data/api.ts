@@ -69,47 +69,48 @@ export async function call<T, D = unknown>(
 const UNANSWERED = new Set(["network.not_reachable", "idempotency.in_progress"]);
 
 /**
- * The repeat-guard key (`Idempotency-Key`) of each write whose answer is still open, by its logical write (method, URL
- * and body; a photo upload uses its URL and the hash of the file), oldest first. A repeat of that write carries the same key, so the server writes it once (US-QS-03). A
- * refusal frees its own key. A success frees its own key and every older one: the user moved on, and replaying an
- * older write would swallow the newer one (archive, restore, archive). The token is not part of the key: the server
- * scopes keys per account.
+ * Whether an answer leaves the write open: the server may have applied it, so the key of the action is kept for the
+ * repeat. A refusal or any other answer ends the action (US-QS-03).
  */
-const openKeys = new Map<string, string>();
+export const isUnanswered = (error: ApiError): boolean => UNANSWERED.has(error.code);
 
-/** A success: frees the write's own key and every older open key; newer open keys stay (see `openKeys`). */
-function settle(logical: string): void {
-  if (!openKeys.has(logical)) return;
-  for (const k of openKeys.keys()) {
-    openKeys.delete(k);
-    if (k === logical) return;
-  }
+/**
+ * The repeat-guard key (`Idempotency-Key`) of one user action (US-QS-03). It is made once, when the user acts, and every
+ * send of that action carries it, so a repeat after a lost answer reaches the server as the same write and the server
+ * answers it with the stored answer. The server scopes a key per account and operation and refuses the same key with
+ * another body (`idempotency.key_conflict`). The client compares no content.
+ */
+export const newRepeatKey = (): string => crypto.randomUUID();
+
+/**
+ * The optional parts of a write API call: the transport (tests inject one) and the repeat-guard key of the user action the
+ * write belongs to (US-QS-03, see `newRepeatKey`). Without a key the write gets a key of its own.
+ */
+export interface WriteOptions {
+  readonly fetchFn?: FetchFn | undefined;
+  readonly key?: string | undefined;
 }
 
 /**
- * Sends one logical write under its repeat-guard key (see `openKeys`). `logical` names the write (its identity, e.g. the
- * method, URL and body); `send` sends it with the key it is given. A repeat of an open write gets the same key, so the
- * server answers it with the stored answer (US-QS-03).
+ * The write of one API call: its transport and repeat-guard key come from the call's options (see `WriteOptions`).
  */
-export async function withRepeatKey<T, D = unknown>(
-  logical: string,
-  send: (key: string) => Promise<Response<T, D>>,
-): Promise<Response<T, D>> {
-  const key = openKeys.get(logical) ?? crypto.randomUUID();
-  openKeys.set(logical, key);
-  const r = await send(key);
-  if (r.ok) settle(logical);
-  else if (!UNANSWERED.has(r.error.code)) openKeys.delete(logical);
-  return r;
-}
+export const writeFor = <D = unknown>(
+  api: string,
+  token: string,
+  options: WriteOptions = {},
+): Write<D> => createWrite<D>(api, token, options.fetchFn, options.key);
 
 /**
- * Writes carry the repeat-guard key of their logical write (see `withRepeatKey`). A write that succeeded tells quiet
- * observers (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
+ * Writes carry the repeat-guard key of their action (see `newRepeatKey`); without one, the write gets a key of its own.
+ * A write that succeeded tells quiet observers (lock states, achievement banner) to look again: `call` announces it,
+ * whichever screen sent it (US-ONB-05).
  */
 export const createWrite =
-  <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
+  <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch, key?: string): Write<D> =>
   (method, path, body) =>
-    withRepeatKey<unknown, D>(JSON.stringify([api, method, path, body ?? null]), (key) =>
-      call<unknown, D>(fetchFn, `${api}${path}`, token, { method, body, key }),
-    );
+    call<unknown, D>(fetchFn, `${api}${path}`, token, {
+      method,
+      body,
+      // Without the key of an action, every write gets a key of its own (a new one per send).
+      key: key ?? newRepeatKey(),
+    });

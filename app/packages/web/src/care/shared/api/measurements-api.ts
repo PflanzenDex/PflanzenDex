@@ -1,5 +1,11 @@
 import type { MeasurementView, MeasurementRow, Quality } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -33,18 +39,21 @@ export interface Access {
 }
 
 /**
- * Records a measurement. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The repeat-guard key stays with the write until it is answered (`createWrite`); sending the same call again after a lost answer does not write twice.
+ * Records a measurement. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). `key` is
+ * the repeat-guard key of the action (US-QS-03, see `newRepeatKey`): the caller repeats a lost save with the same key.
  */
 export async function recordMeasurement(
   access: Access,
   specimenId: string,
   input: MeasurementInput,
+  options: WriteOptions = {},
 ): Promise<Response<MeasurementRow>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
-    "POST",
-    `/specimens/${encodeURIComponent(specimenId)}/measurements`,
-    { ...input, timeZone },
-  );
+  const r = await createWrite(
+    access.api,
+    access.token,
+    access.fetchFn ?? fetch,
+    options.key,
+  )("POST", `/specimens/${encodeURIComponent(specimenId)}/measurements`, { ...input, timeZone });
   return r.ok ? { ok: true, value: r.value as MeasurementRow } : r;
 }

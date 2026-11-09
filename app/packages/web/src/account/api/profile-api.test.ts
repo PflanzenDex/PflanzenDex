@@ -39,8 +39,8 @@ describe("US-ACC-02 profile API client", () => {
     const f = vi
       .fn<typeof fetch>()
       .mockImplementation(async () => new Response(JSON.stringify(PROFILE)));
-    await saveProfile("http://api", "tok", PROFILE, f);
-    await saveProfile("http://api", "tok", PROFILE, f);
+    await saveProfile("http://api", "tok", PROFILE, { fetchFn: f });
+    await saveProfile("http://api", "tok", PROFILE, { fetchFn: f });
     const keys = f.mock.calls.map(
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
@@ -57,7 +57,10 @@ describe("US-ACC-02 profile API client", () => {
     const f = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response(JSON.stringify({ error }), { status: 400 }));
-    expect(await saveProfile("http://api", "tok", PROFILE, f)).toEqual({ ok: false, error });
+    expect(await saveProfile("http://api", "tok", PROFILE, { fetchFn: f })).toEqual({
+      ok: false,
+      error,
+    });
   });
 });
 

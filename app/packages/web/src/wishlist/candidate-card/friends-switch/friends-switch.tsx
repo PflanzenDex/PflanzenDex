@@ -42,7 +42,7 @@ export default function FriendsSwitch(props: {
           // Read now: a controlled box is reset to its old value before the write has started.
           const visible = e.target.checked;
           void write.run(
-            (t) => setWishVisibleToFriends(api, t, { wishId, visible }),
+            (t, key) => setWishVisibleToFriends(api, t, { wishId, visible }, { key }),
             visible
               ? `„${title}“ ist jetzt für bestätigte Freunde als gesucht sichtbar.`
               : `„${title}“ ist wieder privat.`,

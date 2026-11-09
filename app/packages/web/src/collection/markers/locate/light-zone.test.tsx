@@ -94,7 +94,7 @@ afterEach(() => {
 describe("US-LIC-02 US-BES-04 client of the light zone API", () => {
   it("posts the zone ID, or null to clear, with a fresh repeat-guard key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e 1" }));
-    await setLightZone("http://api", "tok", { id: "e 1", lightZoneId: null }, fetchFn);
+    await setLightZone("http://api", "tok", { id: "e 1", lightZoneId: null }, { fetchFn });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e%201/light-zone");
     expect(JSON.parse(String(init?.body))).toEqual({ lightZoneId: null });

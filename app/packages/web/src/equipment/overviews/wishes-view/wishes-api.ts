@@ -4,7 +4,7 @@ import type {
   EquipmentWishList,
   EquipmentWishRow,
 } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../../shared/data";
+import { call, type Response, type WriteOptions, writeFor } from "../../../shared/data";
 
 export type { EquipmentPrefill, EquipmentWishBuyResult, EquipmentWishList, EquipmentWishRow };
 
@@ -30,9 +30,9 @@ export async function createEquipmentWish(
   api: string,
   token: string,
   input: EquipmentWishInput,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentWishRow>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/equipment/wishes", input);
+  const r = await writeFor(api, token, options)("POST", "/equipment/wishes", input);
   return r.ok ? { ok: true, value: (r.value as { wish: EquipmentWishRow }).wish } : r;
 }
 
@@ -41,9 +41,9 @@ export async function buyEquipmentWish(
   api: string,
   token: string,
   wishId: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentWishBuyResult>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/equipment/wishes/${encodeURIComponent(wishId)}/buy`,
     {},
@@ -56,9 +56,9 @@ export async function discardEquipmentWish(
   api: string,
   token: string,
   wishId: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions = {},
 ): Promise<Response<EquipmentWishRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await writeFor(api, token, options)(
     "POST",
     `/equipment/wishes/${encodeURIComponent(wishId)}/discard`,
     {},
