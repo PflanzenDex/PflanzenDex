@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router";
 import { useFeature } from "../shared/data";
 import { FriendsNewsLayer, FriendsNewsTile } from "../social";
@@ -18,7 +18,12 @@ import { isShownLocked, lockMark, useUnlocks } from "./flows/unlock";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { routeFallbackOf } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
 import { useSuggestionsOn } from "./destinations/discover-area/discover-view";
-import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
+import {
+  AccountArea,
+  TodayArea,
+  WhatsNewHint,
+  useDestinationPreload,
+} from "@/app/destinations/area-parts/lazy-areas";
 import type { DrawTile, TodayTile } from "@/app/destinations/today-area/today-area";
 import {
   simpleRoutes,
@@ -33,12 +38,6 @@ import {
   type LinkTarget,
   type View,
 } from "../shared/patterns/navigation/navigation/navigation";
-/** The one-time hint of "Heute" after an update (US-DEV-06): a lazy part, so its lines load beside "Heute", not with the shell. */
-const WhatsNewHint = lazy(() =>
-  import("@/app/destinations/account-area/whats-new/whats-new-hint/whats-new-hint").then((m) => ({
-    default: m.WhatsNewHint,
-  })),
-);
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
@@ -138,6 +137,8 @@ export function AppRoutes(props: {
   handOver: HandOver;
 }) {
   const { api, session: s, account, handOver: h } = props;
+  // The pages of the destinations load while the shell is idle, so their first visit renders without a fallback (issue 1645).
+  useDestinationPreload();
   // "Freunde" follows the operator's switch of the account and the keeper's switch (US-ONB-09, via the features).
   const keeperSocial = useFeature("social");
   const roles = rolesOf(account, account.features?.social !== false && keeperSocial);
