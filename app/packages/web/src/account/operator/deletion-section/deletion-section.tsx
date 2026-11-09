@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame, useRequest, type Request } from "../../../shared/data";
 import { loadDeletions, type DeletionEntry, type DeletionsView } from "../../api/access-api";
 import { OperatorRow } from "../operator-parts/operator-parts";
 import { OPERATOR_KEY, type Token } from "../operator-page/operator-actions";
@@ -106,21 +107,24 @@ export function DeletionSection(props: {
   );
 }
 
-/** The row "Fristen" on the overview, loaded with the same query as the card. */
+/**
+ * The value of the row "Fristen": the counts once they are there. While they load it shows the loading text after the
+ * short delay of a skeleton (DS-57), so a fast load shows nothing; a failure is named in one line, and the layer offers
+ * the retry (P-09, P-10).
+ */
+function deadlineValue(r: Request<DeletionsView>): ReactNode {
+  if (r.value !== undefined) return deadlineSummary(r.value);
+  if (r.status === "error") return t("row.failed");
+  return <DelayedSkeleton>{t("row.loading")}</DelayedSkeleton>;
+}
+
+/**
+ * The row "Fristen" on the overview, loaded with the same query as the card. It is one button in every state: only its
+ * value waits for the counts, so a press that starts on the row while they load ends on that same row (issue 1722).
+ */
 export function DeadlineRow(props: { api: string; token: Token }) {
   const { api, token } = props;
   const load = useCallback((sessionToken: string) => loadDeletions(api, sessionToken), [api]);
-  return (
-    <LoadFrame
-      queryKey={[...OPERATOR_KEY, "deletions"]}
-      token={token}
-      load={load}
-      loadingText={t("row.loading")}
-      loadingFallback={<OperatorRow id="fristen" title={t("row.title")} value={t("row.loading")} />}
-    >
-      {(view: DeletionsView) => (
-        <OperatorRow id="fristen" title={t("row.title")} value={deadlineSummary(view)} />
-      )}
-    </LoadFrame>
-  );
+  const r = useRequest({ queryKey: [...OPERATOR_KEY, "deletions"], token, load });
+  return <OperatorRow id="fristen" title={t("row.title")} value={deadlineValue(r)} />;
 }

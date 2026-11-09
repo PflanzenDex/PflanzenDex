@@ -122,6 +122,22 @@ describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open ide
       await screen.findByText("1 nahe · 0 überschritten · 1 offen beim Anmeldedienst"),
     ).toBeTruthy();
   });
+
+  it("US-ACC-04 a failed load is named in the row, which still opens the layer with the reason (P-10)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        json(403, { error: { code: "access.denied", text: "RAW SERVER TEXT" } }),
+      ),
+    );
+    render(inRouter(<DeadlineRow api="http://api" token={async () => "tok"} />));
+    expect(
+      await screen.findByText(
+        "Fristen konnten nicht geladen werden. Tippe, um es erneut zu versuchen.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText("RAW SERVER TEXT")).toBeNull();
+  });
 });
 
 describe("US-ACC-04 the card Fristen loads the open deletions and marks an identity removal", () => {
