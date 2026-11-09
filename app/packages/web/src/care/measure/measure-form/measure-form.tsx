@@ -129,10 +129,10 @@ function Fields(props: {
 
 /**
  * Input of a measurement (US-WAC-01): number in steps of 0.5 cm, quality (preset healthy, US-WAC-02) with the
- * etiolation signs of the species behind "Wie erkennen?", optional note. The date is
- * today according to the local date of the device and can be changed (back-filling); the future is blocked. The optional
- * photo (US-WAC-05) is sent after the measurement is saved. An invalid input focuses the first invalid field; a
- * refusal of the server stays visible with the text of its code and keeps the input (P-10).
+ * etiolation signs of the species behind "Wie erkennen?", optional note. The date is today in the profile's time zone
+ * (the device's as fallback) and can be changed (back-filling); the future is blocked, an emptied date is refused by
+ * the schema. The optional photo (US-WAC-05) is sent after the measurement is saved. An invalid input focuses the
+ * first invalid field; a refusal of the server stays visible with the text of its code and keeps the input (P-10).
  */
 export function MeasureForm(props: {
   unit: string;

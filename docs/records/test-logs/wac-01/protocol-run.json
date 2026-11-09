@@ -1,0 +1,523 @@
+{
+  "story": "US-WAC-01",
+  "issue": 74,
+  "date": "2026-11-09",
+  "note": "Raw data of the manual protocol (docs/records/test-logs/wac-01.md, section US-WAC-01). Scripts were scratch files outside the repo.",
+  "deviceTimeZone": "Pacific/Kiritimati",
+  "profileTimeZone": "Pacific/Pago_Pago",
+  "mainRun": {
+    "steps": [
+      {
+        "vp": "mobile",
+        "step": "sign in as test (dev account) on the real app",
+        "ok": true,
+        "detail": "url http://localhost:55565/today"
+      },
+      {
+        "vp": "mobile",
+        "step": "profile time zone set to Pacific/Pago_Pago (device zone Pacific/Kiritimati)",
+        "ok": true,
+        "detail": "profile zone now Pacific/Pago_Pago"
+      },
+      {
+        "vp": "mobile",
+        "step": "a plant exists (onboarding or Sammlung)",
+        "ok": true,
+        "detail": "created through the first-plant onboarding"
+      },
+      {
+        "vp": "mobile",
+        "step": "open Messen of the first plant",
+        "ok": true,
+        "detail": "http://localhost:55565/collection?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0"
+      },
+      {
+        "vp": "mobile",
+        "step": "default date is today in the profile zone",
+        "ok": true,
+        "detail": "shows 09.11.2026; profile zone 09.11.2026, device zone 10.11.2026 (differ: true)"
+      },
+      {
+        "vp": "mobile",
+        "step": "layout of the measure view (overflow, tap targets)",
+        "ok": true,
+        "detail": "{\"overflowPx\":0,\"interactive\":16,\"under44\":1,\"under48\":9,\"smallest\":[{\"h\":1,\"w\":1,\"name\":\"Zum Inhalt springen\"}]}"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 05-measure-default-date",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "record 12,5 with a photo (photo upload)",
+        "ok": true,
+        "detail": "no answer :: toast Die Messung ist gespeichert, das Foto nicht. Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut."
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 06-photo-storage-refused",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "back-fill 10 cm of 02.01.2026, quality Vergeilt/dünn",
+        "ok": true,
+        "detail": "saved: Gespeichert: 10 cm am 02.01.2026."
+      },
+      {
+        "vp": "mobile",
+        "step": "more measurements for the course (6 dates in 2026)",
+        "ok": true,
+        "detail": "saved: Gespeichert: 3 cm am 03.03.2026. | saved: Gespeichert: 4,5 cm am 01.04.2026 | saved: Gespeichert: 6 cm am 01.05.2026. | saved: Gespeichert: 7,5 cm am 01.06.2026 | saved: Gespeichert: 9 cm am 01.07.2026. | saved: Gespeichert: 10,5 cm am 01.08.202"
+      },
+      {
+        "vp": "mobile",
+        "step": "invalid number 'abc' is refused, nothing written",
+        "ok": true,
+        "detail": "refused: Bitte gib eine Zahl ab 0 an, zum Beispiel 12,5.; count unchanged Verlauf (8)"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 08-invalid-number",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "step 12,3 (not on the grid) is refused",
+        "ok": true,
+        "detail": "refused: Miss in Schritten von 0,5 cm, zum Beispiel 12 oder 12,5."
+      },
+      {
+        "vp": "mobile",
+        "step": "emptied date is refused, nothing written (P-10)",
+        "ok": true,
+        "detail": "refused: Bitte gib ein Datum an, das es gibt, zum Beispiel 09.11.2026.; aria-invalid=true; count unchanged Verlauf (8)"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 09-invalid-date-emptied",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "typed 31.02.2026 (no real day) is refused the same way",
+        "ok": true,
+        "detail": "refused: Bitte gib ein Datum an, das es gibt, zum Beispiel 09.11.2026.; count unchanged Verlauf (8)"
+      },
+      {
+        "vp": "mobile",
+        "step": "Verlauf opens on Überblick (fact line, Was messen?)",
+        "ok": true,
+        "detail": "no Verlauf button; url has teil: false"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 10-verlauf-ueberblick",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "Kurve shows the course chart",
+        "ok": true,
+        "detail": "url teil=kurve; layout {\"overflowPx\":0,\"interactive\":19,\"under44\":1,\"under48\":12,\"smallest\":[{\"h\":1,\"w\":1,\"name\":\"Zum Inhalt springen\"}]}"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 11-verlauf-kurve",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "Messungen lists the entries, paged",
+        "ok": true,
+        "detail": "url teil=messungen; Seite 1 von 4"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 12-verlauf-messungen-page1",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "next page of the measurements",
+        "ok": true,
+        "detail": "Seite 2 von 4"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 13-verlauf-messungen-page2",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "reload keeps the part Messungen (&teil=)",
+        "ok": true,
+        "detail": "teil=messungen; layer open after reload: true"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 14-reload-keeps-messungen",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "Back with a typed value asks Eingabe verwerfen?",
+        "ok": false,
+        "detail": "locator.waitFor: Timeout 8000ms exceeded. / Call log: / \u001b[2m  - waiting for getByRole('dialog', { name: 'Eingabe verwerfen?' }) to be visible\u001b[22m"
+      },
+      {
+        "vp": "mobile",
+        "step": "save confirmation after a valid measurement",
+        "ok": true,
+        "detail": "saved: Gespeichert: 11 cm am 09.11.2026.; boxes {\"toast\":{\"top\":0,\"bottom\":0},\"save\":{\"top\":484,\"bottom\":532}}"
+      },
+      {
+        "vp": "mobile",
+        "step": "screenshot 16-saved-confirmation",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "mobile",
+        "step": "axe (wcag2a, wcag2aa) on the measure view",
+        "ok": true,
+        "detail": "no violations"
+      },
+      {
+        "vp": "mobile",
+        "step": "layout of the measure view after the saves",
+        "ok": true,
+        "detail": "{\"overflowPx\":0,\"interactive\":17,\"under44\":1,\"under48\":10,\"smallest\":[{\"h\":1,\"w\":1,\"name\":\"Zum Inhalt springen\"}]}"
+      },
+      {
+        "vp": "desktop",
+        "step": "sign in as test (dev account) on the real app",
+        "ok": true,
+        "detail": "url http://localhost:55565/today"
+      },
+      {
+        "vp": "desktop",
+        "step": "profile time zone set to Pacific/Pago_Pago (device zone Pacific/Kiritimati)",
+        "ok": true,
+        "detail": "profile zone now Pacific/Pago_Pago"
+      },
+      {
+        "vp": "desktop",
+        "step": "a plant exists (onboarding or Sammlung)",
+        "ok": false,
+        "detail": "locator.fill: Timeout 30000ms exceeded. / Call log: / \u001b[2m  - waiting for getByLabel('Name der Pflanze')\u001b[22m"
+      },
+      {
+        "vp": "desktop",
+        "step": "open Messen of the first plant",
+        "ok": true,
+        "detail": "http://localhost:55565/collection?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0"
+      },
+      {
+        "vp": "desktop",
+        "step": "default date is today in the profile zone",
+        "ok": true,
+        "detail": "shows 09.11.2026; profile zone 09.11.2026, device zone 10.11.2026 (differ: true)"
+      },
+      {
+        "vp": "desktop",
+        "step": "layout of the measure view (overflow, tap targets)",
+        "ok": true,
+        "detail": "{\"overflowPx\":0,\"interactive\":16,\"under44\":1,\"under48\":13,\"smallest\":[{\"h\":1,\"w\":1,\"name\":\"Zum Inhalt springen\"}]}"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 05-measure-default-date",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "record 12,5 with a photo (photo upload)",
+        "ok": true,
+        "detail": "no answer :: toast Die Messung ist gespeichert, das Foto nicht. Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut."
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 06-photo-storage-refused",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "back-fill 10 cm of 02.01.2026, quality Vergeilt/dünn",
+        "ok": true,
+        "detail": "saved: Gespeichert: 10 cm am 02.01.2026."
+      },
+      {
+        "vp": "desktop",
+        "step": "more measurements for the course (6 dates in 2026)",
+        "ok": true,
+        "detail": "saved: Gespeichert: 3 cm am 03.03.2026. | saved: Gespeichert: 4,5 cm am 01.04.2026 | saved: Gespeichert: 6 cm am 01.05.2026. | saved: Gespeichert: 7,5 cm am 01.06.2026 | saved: Gespeichert: 9 cm am 01.07.2026. | saved: Gespeichert: 10,5 cm am 01.08.202"
+      },
+      {
+        "vp": "desktop",
+        "step": "invalid number 'abc' is refused, nothing written",
+        "ok": true,
+        "detail": "refused: Bitte gib eine Zahl ab 0 an, zum Beispiel 12,5.; count unchanged Verlauf (17)"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 08-invalid-number",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "step 12,3 (not on the grid) is refused",
+        "ok": true,
+        "detail": "refused: Miss in Schritten von 0,5 cm, zum Beispiel 12 oder 12,5."
+      },
+      {
+        "vp": "desktop",
+        "step": "emptied date is refused, nothing written (P-10)",
+        "ok": true,
+        "detail": "refused: Bitte gib ein Datum an, das es gibt, zum Beispiel 09.11.2026.; aria-invalid=true; count unchanged Verlauf (17)"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 09-invalid-date-emptied",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "typed 31.02.2026 (no real day) is refused the same way",
+        "ok": true,
+        "detail": "refused: Bitte gib ein Datum an, das es gibt, zum Beispiel 09.11.2026.; count unchanged Verlauf (17)"
+      },
+      {
+        "vp": "desktop",
+        "step": "Verlauf opens on Überblick (fact line, Was messen?)",
+        "ok": true,
+        "detail": "Verlauf (17); url has teil: false"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 10-verlauf-ueberblick",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "Kurve shows the course chart",
+        "ok": true,
+        "detail": "url teil=kurve; layout {\"overflowPx\":0,\"interactive\":20,\"under44\":1,\"under48\":17,\"smallest\":[{\"h\":1,\"w\":1,\"name\":\"Zum Inhalt springen\"}]}"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 11-verlauf-kurve",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "Messungen lists the entries, paged",
+        "ok": true,
+        "detail": "url teil=messungen; Seite 1 von 6"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 12-verlauf-messungen-page1",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "next page of the measurements",
+        "ok": true,
+        "detail": "Seite 2 von 6"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 13-verlauf-messungen-page2",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "reload keeps the part Messungen (&teil=)",
+        "ok": true,
+        "detail": "teil=messungen; layer open after reload: true"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 14-reload-keeps-messungen",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "Back with a typed value asks Eingabe verwerfen?",
+        "ok": false,
+        "detail": "locator.waitFor: Timeout 8000ms exceeded. / Call log: / \u001b[2m  - waiting for getByRole('dialog', { name: 'Eingabe verwerfen?' }) to be visible\u001b[22m"
+      },
+      {
+        "vp": "desktop",
+        "step": "save confirmation after a valid measurement",
+        "ok": true,
+        "detail": "saved: Gespeichert: 11 cm am 09.11.2026.; boxes {\"toast\":{\"top\":0,\"bottom\":0},\"save\":{\"top\":420,\"bottom\":468}}"
+      },
+      {
+        "vp": "desktop",
+        "step": "screenshot 16-saved-confirmation",
+        "ok": true,
+        "detail": "saved"
+      },
+      {
+        "vp": "desktop",
+        "step": "axe (wcag2a, wcag2aa) on the measure view",
+        "ok": true,
+        "detail": "no violations"
+      },
+      {
+        "vp": "desktop",
+        "step": "layout of the measure view after the saves",
+        "ok": true,
+        "detail": "{\"overflowPx\":0,\"interactive\":17,\"under44\":1,\"under48\":14,\"smallest\":[{\"h\":1,\"w\":1,\"name\":\"Zum Inhalt springen\"}]}"
+      }
+    ],
+    "measurements": {
+      "measureUrl": "http://localhost:55565/collection?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0",
+      "defaultDate": {
+        "shown": "09.11.2026",
+        "profileToday": "09.11.2026",
+        "deviceToday": "10.11.2026"
+      },
+      "layoutFirst": {
+        "overflowPx": 0,
+        "interactive": 16,
+        "under44": 1,
+        "under48": 13,
+        "smallest": [
+          {
+            "h": 1,
+            "w": 1,
+            "name": "Zum Inhalt springen"
+          }
+        ]
+      },
+      "photo": {
+        "answer": "no answer",
+        "toast": "Die Messung ist gespeichert, das Foto nicht. Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut."
+      },
+      "countAfterSaves": "Verlauf (17)",
+      "pagerFirst": "Seite 1 von 6",
+      "toastBoxes": {
+        "toast": {
+          "top": 0,
+          "bottom": 0
+        },
+        "save": {
+          "top": 420,
+          "bottom": 468
+        }
+      },
+      "axe": [],
+      "layoutLast": {
+        "overflowPx": 0,
+        "interactive": 17,
+        "under44": 1,
+        "under48": 14,
+        "smallest": [
+          {
+            "h": 1,
+            "w": 1,
+            "name": "Zum Inhalt springen"
+          }
+        ]
+      }
+    }
+  },
+  "backAndSaveConfirmation": {
+    "mobile": {
+      "measureUrl": "http://localhost:55565/collection?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0",
+      "stateAfterTyping": "{\"formGuard\":true,\"keepFocus\":true,\"formFromApp\":true}",
+      "back1": {
+        "url": "?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0",
+        "asked": true
+      },
+      "asked": true,
+      "dialogText": "Eingabe verwerfen?Was du eingetragen hast, ist noch nicht gespeichert. Verwirfst du es, ist es weg.Weiter bearbeitenVerwerfen",
+      "keptValue": "15",
+      "stillForm": true,
+      "askedAgain": true,
+      "leftForm": true,
+      "urlAfterDiscard": "/collection",
+      "confirmation": "Gespeichert: 11 cm am 09.11.2026.",
+      "geometry": {
+        "confirmationBox": {
+          "top": 694,
+          "bottom": 714,
+          "left": 65,
+          "right": 290
+        },
+        "saveBox": {
+          "top": 484,
+          "bottom": 532,
+          "left": 16,
+          "right": 359
+        },
+        "overlapPx": 0,
+        "viewportHeight": 812,
+        "overflowPx": 0
+      }
+    },
+    "desktop": {
+      "measureUrl": "http://localhost:55565/collection?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0",
+      "stateAfterTyping": "{\"formGuard\":true,\"keepFocus\":true,\"formFromApp\":true}",
+      "back1": {
+        "url": "?form=measure&plant=d5cc677c-3282-47a4-8a44-24b5e17a72c0",
+        "asked": true
+      },
+      "asked": true,
+      "dialogText": "Eingabe verwerfen?Was du eingetragen hast, ist noch nicht gespeichert. Verwirfst du es, ist es weg.Weiter bearbeitenVerwerfen",
+      "keptValue": "15",
+      "stillForm": true,
+      "askedAgain": true,
+      "leftForm": true,
+      "urlAfterDiscard": "/collection",
+      "confirmation": "Gespeichert: 11 cm am 09.11.2026.",
+      "geometry": {
+        "confirmationBox": {
+          "top": 835,
+          "bottom": 855,
+          "left": 1081,
+          "right": 1347
+        },
+        "saveBox": {
+          "top": 420,
+          "bottom": 468,
+          "left": 484,
+          "right": 641
+        },
+        "overlapPx": 0,
+        "viewportHeight": 900,
+        "overflowPx": 0
+      }
+    }
+  },
+  "plainBackAndReload": [
+    "mobile plain Back -> /collection form gone: true | address opens again: Messen: Bogenhanf",
+    "desktop plain Back -> /collection form gone: true | address opens again: Messen: Bogenhanf"
+  ],
+  "tapTargetsOnMeasureView": [
+    "mobile {\"count\":16,\"minHeight\":1,\"minWidth\":1,\"under48\":9,\"sample\":[{\"w\":1,\"h\":1,\"name\":\"Zum Inhalt springen\"},{\"w\":104,\"h\":44,\"name\":\"PflanzenDéx\"},{\"w\":44,\"h\":44,\"name\":\"Zurück zur Sammlung\"},{\"w\":117,\"h\":44,\"name\":\"Verlauf (20)\"},{\"w\":343,\"h\":44,\"name\":\"value\"},{\"w\":343,\"h\":44,\"name\":\"date\"}]}",
+    "desktop {\"count\":16,\"minHeight\":1,\"minWidth\":1,\"under48\":13,\"sample\":[{\"w\":1,\"h\":1,\"name\":\"Zum Inhalt springen\"},{\"w\":223,\"h\":44,\"name\":\"PflanzenDéx\"},{\"w\":223,\"h\":44,\"name\":\"Heuteh\"},{\"w\":223,\"h\":44,\"name\":\"Sammlungs\"},{\"w\":223,\"h\":44,\"name\":\"Entdecken\"},{\"w\":223,\"h\":44,\"name\":\"Konto\"}]}"
+  ]
+}

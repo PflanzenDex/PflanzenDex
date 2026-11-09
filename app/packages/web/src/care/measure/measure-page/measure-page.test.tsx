@@ -221,6 +221,35 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(posts).toHaveLength(0);
   });
 
+  it("US-WAC-01 an emptied date is refused in the form: no call, the date field has the focus, the text names the date (P-10)", async () => {
+    const { posts } = fakeServer();
+    show();
+    const date = await screen.findByLabelText("Datum");
+    await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
+    await userEvent.clear(date);
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Bitte gib ein Datum an, das es gibt",
+    );
+    expect(date.getAttribute("aria-invalid")).toBe("true");
+    expect(document.activeElement).toBe(date);
+    expect(posts).toHaveLength(0);
+  });
+
+  it("US-WAC-01 a typed date that is no real day (31.02.2026) is refused the same way and writes nothing", async () => {
+    const { posts } = fakeServer();
+    show();
+    const date = await screen.findByLabelText("Datum");
+    await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
+    await userEvent.clear(date);
+    await userEvent.type(date, "31.02.2026");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Bitte gib ein Datum an, das es gibt",
+    );
+    expect(posts).toHaveLength(0);
+  });
+
   it("US-WAC-01 · DS-49 if the server rejects, the German text of its code is there and the input stays", async () => {
     fakeServer({
       save: () =>
