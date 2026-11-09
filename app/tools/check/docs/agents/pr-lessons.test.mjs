@@ -106,3 +106,8 @@ test("US-DEV-05: the command line exits 1 with the pointer to recap-and-learning
   const passed = run("## Lessons\n\nnone\n");
   assert.equal(passed.status, 0, passed.stderr);
 });
+
+test("US-DEV-05: a nested comment is removed completely, so no comment text counts as a lesson", () => {
+  assert.deepEqual(lessonsProblems("## Lessons\n\n<!<!-- -->-- - x → gate layout -->\nnone\n"), []);
+  assert.match(lessonsProblems("## Lessons\n\n<!-- unclosed\n").join(), /not a lesson line/);
+});

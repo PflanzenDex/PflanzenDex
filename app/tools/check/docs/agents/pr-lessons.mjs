@@ -11,7 +11,16 @@ const NONE = /^(?:- )?none$/i;
 const LESSON =
   /^- .+ (?:→|->) (?:gate [a-z0-9][a-z0-9-]*|skill [a-z0-9][a-z0-9-]*|PF-\d{3}|none \([^()]*\S[^()]*\))$/;
 
-const normalize = (body) => body.replace(/<!--[\s\S]*?-->/g, "").replace(/\r\n?/g, "\n");
+// Comments are removed until none is left, so a nested one such as `<!<!-- -->-- x -->` leaves no `<!--` behind (CodeQL
+// js/incomplete-multi-character-sanitization). An unclosed `<!--` stays and fails the check as a malformed line.
+function normalize(body) {
+  let text = body.replace(/\r\n?/g, "\n");
+  for (let previous; previous !== text;) {
+    previous = text;
+    text = text.replace(/<!--[\s\S]*?-->/g, "");
+  }
+  return text;
+}
 
 // The lines under "## Lessons" up to the next "## " heading, or undefined when the heading is missing.
 function sectionLines(body) {
