@@ -2,5 +2,13 @@
   "manage.title": "Standorte und Lichtzonen",
   "manage.back": "Zurück zur Sammlung",
   "species.order": "Anordnung der Arten",
-  "plants.groups": "Gruppierung der Pflanzen"
+  "plants.groups": "Gruppierung der Pflanzen",
+  "title": "Sammlung",
+  "loading.plants": "Sammlung wird geladen …",
+  "loading.species": "Pokédex wird geladen …",
+  "loading.difficulty": "Artenvergleich wird geladen …",
+  "loading.wishlist": "Wunschliste wird geladen …",
+  "loading.equipment": "Equipment wird geladen …",
+  "loading.phases": "Pflegephasen werden geladen …",
+  "loading.light": "Standorte und Lichtzonen werden geladen …"
 }

@@ -16,8 +16,7 @@ import { FunctionOverview, TodayIntro, UnlockPage } from "./flows";
 // The lock states come from the unlock module itself: the flows barrel does not re-export them, so the entry skips them (NFR-12).
 import { isShownLocked, lockMark, useUnlocks } from "./flows/unlock";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
-import { routeFallbackOf } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
-import { useSuggestionsOn } from "./destinations/discover-area/discover-view";
+import { useRouteFallback } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
 import {
   AccountArea,
   TodayArea,
@@ -146,13 +145,9 @@ export function AppRoutes(props: {
   const achievements = useFeature("achievement_views");
   const { pathname, search } = useLocation();
   const locks = useLockPages(api, s.token);
-  const suggestionsOn = useSuggestionsOn();
+  const fallback = useRouteFallback(pathname, search);
   return (
-    <RouteBoundary
-      resetKey={pathname}
-      heading={destinationHeading(pathname)}
-      fallback={routeFallbackOf(pathname, search, suggestionsOn)}
-    >
+    <RouteBoundary resetKey={pathname} heading={destinationHeading(pathname)} fallback={fallback}>
       {achievements ? <AchievementNewsBanner api={api} token={s.token} /> : null}
       <Routes>
         <Route

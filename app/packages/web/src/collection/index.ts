@@ -71,3 +71,6 @@ export { UnsavedInputDialog } from "./plants-screen/plant-layers/plant-forms/uns
 export { HintsPageSkeleton } from "./other-pages/hints-page/hints-page.skeleton";
 // The skeleton of the care profile in the shape of its card, the section's skeleton on a species profile (US-QS-14, issue 1697).
 export { CareProfileSectionSkeleton } from "./care-profile-page/care-profile-page.skeleton";
+// The skeletons of the plants and of the species comparison, the mode's skeletons on "Sammlung" (US-QS-14, issue 1727).
+export { CollectionPageSkeleton } from "./collection-page/collection-page.skeleton";
+export { DifficultyPageSkeleton } from "./other-pages/difficulty-page/difficulty-page.skeleton";

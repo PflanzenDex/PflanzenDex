@@ -6,3 +6,6 @@ export const ExchangePage = lazyPage(() =>
 export const MatchPage = lazyPage(() =>
   import("./pages/match/match").then((m) => ({ default: m.MatchPage })),
 );
+// The route fallbacks of the exchange and the match deck (US-QS-14, issue 1727): the heading and the page's skeleton.
+export { ExchangeRouteSkeleton } from "./pages/exchange/exchange.skeleton";
+export { MatchRouteSkeleton } from "./pages/match/match.skeleton";

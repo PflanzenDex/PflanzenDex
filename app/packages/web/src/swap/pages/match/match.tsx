@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { LoadFrame, type Response } from "../../../shared/data";
@@ -11,6 +10,7 @@ import {
   type DeckData,
 } from "../../api/match-api";
 import { MatchDeck } from "./match-deck/match-deck";
+import { DeckSkeleton } from "./match.skeleton";
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["swap", "match"] as const;
@@ -18,16 +18,6 @@ const SIGN_IN_NEEDED = {
   ok: false as const,
   error: { code: "access.not_signed_in", text: "Bitte melde dich an." },
 };
-
-function DeckSkeleton({ label }: { label: string }) {
-  return (
-    <SkeletonGroup label={label} className="mx-auto flex w-full max-w-md flex-col gap-3">
-      <Skeleton className="h-8 w-2/3" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-12 w-full" />
-    </SkeletonGroup>
-  );
-}
 
 /** The writes of the deck, each with a fresh token; without a token they answer "sign in" (P-10). */
 function useWrites(api: string, token: Token) {
