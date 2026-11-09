@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkSkills } from "./check-skills.mjs";
+import { checkAgents, checkSkills } from "./check-skills.mjs";
 
 const good = `---
 name: demo
@@ -62,4 +62,64 @@ test("US-DEV-04: the frontmatter name must match the folder", () => {
     }).join(),
     /does not match the folder/,
   );
+});
+
+const agent = `---
+name: demo
+description: Use when demonstrating agents.
+model: haiku
+tools: Bash, Read, Glob
+---
+
+Read \`app/README.md\` first.
+`;
+const agentEnv = { exists: (p) => p === "app/README.md" };
+
+test("US-QG-07: a complete agent definition passes", () => {
+  assert.deepEqual(checkAgents({ agents: { demo: agent }, ...agentEnv }), []);
+});
+
+test("US-QG-07: the frontmatter name must match the file name", () => {
+  assert.match(
+    checkAgents({ agents: { other: agent }, ...agentEnv }).join(),
+    /does not match the file name/,
+  );
+});
+
+test("US-QG-07: an agent without a model is reported", () => {
+  const noModel = agent.replace("model: haiku\n", "");
+  assert.match(checkAgents({ agents: { demo: noModel }, ...agentEnv }).join(), /model is missing/);
+});
+
+test("US-QG-07: an agent without a description is reported", () => {
+  const noDescription = agent.replace("description: Use when demonstrating agents.\n", "");
+  assert.match(
+    checkAgents({ agents: { demo: noDescription }, ...agentEnv }).join(),
+    /description is empty/,
+  );
+});
+
+test("US-QG-07: a backticked repo path that does not exist is reported", () => {
+  const missing = agent.replace("app/README.md", "app/missing.md");
+  assert.match(
+    checkAgents({ agents: { demo: missing }, ...agentEnv }).join(),
+    /app\/missing\.md does not exist/,
+  );
+});
+
+test("US-QG-07: a named .env secret is not required to exist in the repo", () => {
+  const secret = agent.replace("app/README.md", "app/config/dev/.env");
+  assert.deepEqual(checkAgents({ agents: { demo: secret }, ...agentEnv }), []);
+});
+
+test("US-QG-07: an agent must not get the Agent tool", () => {
+  const spawner = agent.replace("tools: Bash, Read, Glob", "tools: Bash, Agent, Read");
+  assert.match(
+    checkAgents({ agents: { demo: spawner }, ...agentEnv }).join(),
+    /tools must not include Agent/,
+  );
+});
+
+test("US-QG-07: an agent file without frontmatter is reported", () => {
+  assert.match(checkAgents({ agents: { demo: "# Demo\n" }, ...agentEnv }).join(), /no frontmatter/);
 });
