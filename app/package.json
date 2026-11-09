@@ -40,7 +40,7 @@
     "principles": "node tools/check/docs/check-principles.mjs",
     "principles-review": "node tools/check/docs/check-principles-review.mjs",
     "test": "npm run test --workspaces --if-present && npm run test:tools",
-    "test:tools": "node --test \"tools/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\" \"../tools/lighthouse/*.test.mjs\" \"../tools/measure/*.test.mjs\" \"../tools/repo/*.test.mjs\" \"../tools/release/*.test.mjs\"",
+    "test:tools": "node --test \"tools/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\" \"../tools/lighthouse/*.test.mjs\" \"../tools/lint/*.test.mjs\" \"../tools/measure/*.test.mjs\" \"../tools/repo/*.test.mjs\" \"../tools/release/*.test.mjs\"",
     "coverage": "npm run test --workspaces --if-present -- --coverage && npm run test:tools && node tools/check/quality/coverage/check-coverage-ratchet.mjs",
     "build": "npm run build --workspaces --if-present",
     "gates": "node tools/check/quality/gates/run-gates.mjs",

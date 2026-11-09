@@ -1,6 +1,6 @@
 // Per-worktree setup (US-DEV-08). `tools/repo/worktree-new.sh` runs both jobs for a new worktree.
-// 1. Unique resources: port and database name are derived deterministically from the branch name, so parallel runs never
-//    share a test database or a port. Usage: node worktree-env.mjs <branch>   -> prints KEY=VALUE lines (for .env.worktree).
+// 1. Unique resources: port and database name are derived from the branch name (the slot is its hash, or the next free slot
+//    when another worktree holds it, issue 1745). Usage: node worktree-env.mjs <branch> -> KEY=VALUE lines (for .env.worktree);
 //    `make dev` reads the file back (dev-servers.mjs, same folder).
 // 2. Dependencies (#1487): a node_modules tree that was installed from the same package-lock.json is copied into the new worktree,
 //    so the worktree is ready to commit in without a fresh install. A tree is a source only when its stamp matches its lock file
@@ -9,13 +9,16 @@
 //    Without a source nothing is copied, and `make setup` installs.
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { depsFindings } from "../../check/supply/check-deps.mjs";
 
-export const PORT_BASE = 54400; // assumption: range 54400-55899 is free; the fixed port 54329 stays with the main checkout
+// Port blocks (US-DEV-08): one block of PORT_SLOTS per service, and all ports of a worktree share its slot. The e2e ports
+// have blocks of their own, apart from the dev servers, so a gate never reuses a running `make dev` server (issue 1745).
+// Test database 54400-54899, dev API 54900-55399, dev web 55400-55899, e2e API 55900-56399, e2e web 56400-56899.
+export const PORT_BASE = 54400; // assumption: range 54400-56899 is free; the fixed port 54329 stays with the main checkout
 export const PORT_SLOTS = 500;
 
 export function slug(branch) {
@@ -26,16 +29,48 @@ export function slug(branch) {
     .slice(0, 40);
 }
 
-export function worktreeEnv(branch) {
+/**
+ * The ports and the database name of a branch. `usedSlots` holds the slots of the other worktrees (takenSlots reads them):
+ * the slot is the first one from the hash on that is not held, wrapping past the last one (issue 1745).
+ */
+export function worktreeEnv(branch, usedSlots = new Set()) {
   if (!branch || !branch.trim()) throw new Error("branch name missing");
   const hash = createHash("sha256").update(branch).digest();
-  const slot = hash.readUInt32BE(0) % PORT_SLOTS;
+  const slot = [...Array(PORT_SLOTS).keys()]
+    .map((i) => (hash.readUInt32BE(0) + i) % PORT_SLOTS)
+    .find((s) => !usedSlots.has(s));
+  if (slot === undefined) throw new Error(`all ${PORT_SLOTS} port slots are held by worktrees`);
   return {
     PFLANZENDEX_TEST_DB_PORT: String(PORT_BASE + slot),
     PFLANZENDEX_TEST_DB_NAME: `pflanzendex_${slug(branch)}_${hash.toString("hex").slice(0, 6)}`,
     PFLANZENDEX_DEV_API_PORT: String(PORT_BASE + PORT_SLOTS + slot),
     PFLANZENDEX_DEV_WEB_PORT: String(PORT_BASE + 2 * PORT_SLOTS + slot),
+    PFLANZENDEX_E2E_API_PORT: String(PORT_BASE + 3 * PORT_SLOTS + slot),
+    PFLANZENDEX_E2E_WEB_PORT: String(PORT_BASE + 4 * PORT_SLOTS + slot),
   };
+}
+
+/** The slot a `.env.worktree` text holds, read from its test database port; undefined when it has none in the range. */
+export function slotOf(envText) {
+  const match = /^PFLANZENDEX_TEST_DB_PORT=(\d+)[ \t]*$/m.exec(envText);
+  if (!match) return undefined;
+  const slot = Number(match[1]) - PORT_BASE;
+  return slot >= 0 && slot < PORT_SLOTS ? slot : undefined;
+}
+
+/** The slots of the other worktrees of the repository of `root`, from their `.env.worktree`; `root` itself is left out. */
+export async function takenSlots(root) {
+  const { stdout } = await exec("git", ["-C", root, "worktree", "list", "--porcelain"]);
+  const self = realpathSync(root);
+  const slots = new Set();
+  for (const line of stdout.split("\n").filter((l) => l.startsWith("worktree "))) {
+    const dir = line.slice("worktree ".length);
+    const file = path.join(dir, ".env.worktree");
+    if (!existsSync(file) || realpathSync(dir) === self) continue;
+    const slot = slotOf(readFileSync(file, "utf8"));
+    if (slot !== undefined) slots.add(slot);
+  }
+  return slots;
 }
 
 const exec = promisify(execFile);
@@ -152,7 +187,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     await depsMain(process.argv.slice(3));
   } else {
     try {
-      for (const [k, v] of Object.entries(worktreeEnv(process.argv[2]))) console.log(`${k}=${v}`);
+      // The worktrees of this checkout hold the slots that this branch must not take (issue 1745).
+      const taken = await takenSlots(fileURLToPath(new URL("../../../../", import.meta.url)));
+      for (const [k, v] of Object.entries(worktreeEnv(process.argv[2], taken)))
+        console.log(`${k}=${v}`);
     } catch (e) {
       console.error(`worktree-env: ${e.message}`);
       process.exit(1);

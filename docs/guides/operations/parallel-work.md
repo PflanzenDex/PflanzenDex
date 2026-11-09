@@ -63,15 +63,20 @@ Dependencies (#1487): if an installed `node_modules` with the same `package-lock
 
 ## Own ports and database per worktree
 
-`app/tools/workflow/worktree/worktree-env.mjs` derives these deterministically from the branch name:
+`app/tools/workflow/worktree/worktree-env.mjs` derives these from the branch name. The slot starts at the hash of the branch; when another worktree already holds that slot (its `.env.worktree` gives the test database port), the next free slot is taken, so two worktrees never share a port (issue 1745). The slots held by the other worktrees are read from `git worktree list`; the worktree itself is left out.
 
-| Variable                                                | Meaning                                            |
-| ------------------------------------------------------- | -------------------------------------------------- |
-| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899) |
-| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`        |
-| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899)                |
+| Variable                                                | Meaning                                                                      |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899)                           |
+| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`                                  |
+| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55399 and 55400 to 55899)                       |
+| `PFLANZENDEX_E2E_API_PORT` / `PFLANZENDEX_E2E_WEB_PORT` | e2e gates and the Lighthouse runs (ranges 55900 to 56399 and 56400 to 56899) |
 
-The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+The ranges are an assumption (starting values). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+
+**Gates never reuse a dev server.** In a worktree the e2e ports are apart from the dev ports, so `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse-signed` and `lighthouse` never attach to a `make dev` server: Playwright would reuse any server that already listens on its port. The main checkout keeps 5173 and 3000 for its gates, as before. In a worktree make exports `E2E_WEB_PORT` and `E2E_API_PORT` from `.env.worktree`; a value already in the environment wins. `make e2e-origin` allows the e2e web port at the shared Keycloak (`web-port.mjs`, see below). The e2e targets run it after `auth-up`, and it does nothing without a worktree port. `tools/lighthouse/lighthouse-run.sh` refuses to start when its port is in use, names the port, and stops its preview with the exit.
+
+**Older worktrees** written before the e2e keys lack them. Re-run the writer from the worktree (or from any checkout of the repository): `node app/tools/workflow/worktree/worktree-env.mjs <branch> > .env.worktree`. A re-run can move the worktree to the first free slot from its hash, so stop running servers and the test database first.
 
 ### `make dev` in a worktree (#904)
 
@@ -103,6 +108,17 @@ All checkouts share one Keycloak container (`pflanzendex-keycloak`, port 18081) 
 ### Memory caps of the local containers
 
 Every worktree starts its own test database, so the local containers are capped (#1084, starting values, assumption): the test database 512 MB (`make db-up`, override with `DB_MEMORY=1g`), Keycloak 768 MB with a 384 MB JVM heap and Mailpit 128 MB (`app/config/dev/compose.yaml`, override with `KC_MEMORY`, `KC_JAVA_HEAP`, `MAILPIT_MEMORY` in `app/config/dev/.env`). An existing container keeps its old settings: run `make db-down` or `make auth-down` once to recreate it. The caps are local only. CI brings its own database service, and production has its own limits in `app/config/deploy/docker-compose.yml`. `app/tools/dev/tests/dev-memory-caps.test.mjs` fails if a deploy file or deploy workflow loads a dev compose file or uses one of these variables.
+
+## One heavy job at a time (US-DEV-08, issue 1745)
+
+The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so much that two of them at once, from two worktrees, got the IDE killed by systemd-oomd. `make heavy-lock` (`tools/lint/heavy-lock.sh`) therefore runs first in `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse` and `lighthouse-signed`; `make ci` takes the same lock in its parts runner (`app/tools/dev/agent/ci-parts.mjs`) before the first part, so it keeps no make prerequisite that could stop it (US-QG-02). It is one lock for the whole machine: the first job runs, and a second job from any worktree of the checkout prints what it waits for and starts when the first one ends.
+
+- **Where the lock lives:** in the git common dir, so every worktree of the checkout shares it. `heavy-job.lock` is the lock itself (an empty file that stays). `heavy-job.owner` is one line while the lock is held: owner pid, directory, target and time (UTC).
+- **See the holder:** `cat "$(git rev-parse --git-common-dir)/heavy-job.owner"`. A waiting job prints the same holder.
+- **Released with its owner:** the lock belongs to the make process that took it and is released when that process ends, also on a failure or a kill. A note whose pid is dead does not count. A heavy target inside another one (`make e2e` run by `make ci`) sees the lock as its own and runs at once.
+- **Waiting:** a free lock is taken silently. A wait prints its line after one second, naming the job and the holder, and again every 30 seconds. `HEAVY_LOCK_WAIT=<seconds>` bounds the wait (default 3600, a starting value, assumption); then the job exits with 1 and names the holder. Example: `HEAVY_LOCK_WAIT=600 make e2e`.
+- **CI does not use it:** with `CI` set the target does nothing, because each CI job is its own machine. `make gates`, the pre-push hook and the other targets stay outside the lock; they are light.
+- The script needs `setsid` and `flock` (util-linux).
 
 ## Owners and number assignment
 

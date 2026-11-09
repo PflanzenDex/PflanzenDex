@@ -1,5 +1,5 @@
-// Allows the dev web port of a worktree as redirect origin of the Keycloak web client (#202, US-DEV-08).
-// The realm export only knows 5173; worktrees get deterministic ports (54400-55899, worktree-env.mjs), and Keycloak
+// Allows the dev or e2e web port of a worktree as redirect origin of the Keycloak web client (#202, US-DEV-08, issue 1745).
+// The realm export only knows 5173; worktrees get deterministic ports (54400-56899, worktree-env.mjs), and Keycloak
 // accepts no wildcard in the host part, so the port is added through the admin API. Idempotent.
 // Usage: node tools/keycloak/web-port.mjs [port ...]   (default: PFLANZENDEX_DEV_WEB_PORT from the environment or .env.worktree)
 // Env:   KC_ADMIN_PASSWORD (default: app/config/dev/.env of the main checkout, dev-env.mjs), E2E_KEYCLOAK_URL.
