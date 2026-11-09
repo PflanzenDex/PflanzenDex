@@ -532,10 +532,6 @@
       "enums": 5
     },
     {
-      "file": "packages/web/src/app/frame/app/app.tsx",
-      "enums": 1
-    },
-    {
       "file": "packages/web/src/app/flows/onboarding/today-intro/use-hints.ts",
       "enums": 2
     },
