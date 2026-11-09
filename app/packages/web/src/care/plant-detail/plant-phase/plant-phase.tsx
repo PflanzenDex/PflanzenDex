@@ -41,8 +41,10 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
     <>
       {move.message ? <StatusNote>{move.message}</StatusNote> : null}
       {move.error ? <RefusalAlert error={move.error} /> : null}
+      {/* Its own key below the prefix of the grouping's key: the grouping reads the list of rows under ["care", "phases"],
+          this part one row; a shared key handed the grouping the wrong shape (US-PHA-01). The prefix still refreshes both. */}
       <LoadFrame
-        queryKey={["care", "phases"]}
+        queryKey={["care", "phases", "plant", specimenId]}
         token={token}
         load={load}
         loadingText={ui("loading")}

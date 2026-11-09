@@ -442,6 +442,8 @@ Account-specific deviations from the catalog values of a species. Private, never
 | Watering interval growth / dormancy | Days (US-MON-05); starting value from the catalog's watering hint                      |
 | Own hints                           | Free text, private (substrate, pruning, watering)                                      |
 
+The dormancy override is the only one on this profile so far. A dormancy period on the specimen itself is not a field of this entry: it is planned for R2 in issue #1786 (see US-PHA-01).
+
 ### DM-BES-05 Source snapshot (species × source)
 
 The raw answer of one data source for one species, kept so that conversions can be corrected later without asking the source again (US-BES-12). Shared like the catalog, never per account.
