@@ -1,17 +1,14 @@
 // US-QS-27 · The build of the app's worker (issue 1688): the plugin in vite.config.ts writes the list of the build's hashed
 // files into `sw.js`. Tested as plain functions: no build runs here (the build itself is checked by `npm run build`).
 import { describe, expect, it } from "vitest";
-import {
-  MANIFEST_TOKEN,
-  parseManifest,
-} from "../../shared/platform/device/service-worker/worker-logic";
+import { MANIFEST_TOKEN, parseManifest } from "./worker-logic";
 import {
   injectServiceWorkerManifest,
   SERVICE_WORKER_FILE,
   SERVICE_WORKER_TOKEN,
   serviceWorkerBuild,
   serviceWorkerManifest,
-} from "../../../vite.config";
+} from "../../../../../vite.config";
 
 /** The manifest the worker reads back: the JSON inside its string literal `manifest = "…"`. */
 function manifestIn(code: string) {
