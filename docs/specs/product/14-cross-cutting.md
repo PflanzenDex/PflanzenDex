@@ -526,6 +526,35 @@ Acceptance criteria:
 
 State of implementation (issue 1691): `index.html` names the page background of each scheme in its two `theme-color` metas, which the browser matches to the system scheme. The manifest's `theme_color` is the light page background (`#fafafa`) and its `background_color`, the splash colour, is the brand green. `StatusBarDim` (`shared/platform/device/status-bar/status-bar.tsx`, the colours in `theme-colour.ts`) sits inside the backdrop of `Sheet` and `Dialog`; the backdrop mounts only while its window is open, including its exit, and while it is mounted both metas take the dimmed colour. The app has no colour-scheme switch of its own (dark follows the system, ADR 0007); a switch added later must set both metas as well. The colour of the navigation area in the installed app is verified on a phone only (assumption: the page's meta wins at runtime, the manifest value is the fallback).
 
+### US-QS-27 · The installed app takes a new version on its next start · 🟨 new
+
+As a **plant keeper** I want the installed app to switch to a new version only when I start it again, so that no page reloads under my hands and no entry is lost, and I want to see what is new once after that start, so that I know what changed without reading a changelog.
+
+Decision (owner, issue 1688, 2026-11-07 and 2026-11-09): a minimal worker that only takes a new version over on the next start, with no offline mode (offline stays US-QS-07 and #1687, R2). The "Neu in PflanzenDéx" banner follows the calm mode rule of US-ONB-07 and US-ACH-08; the lines themselves are the changelog of US-DEV-06.
+
+Acceptance criteria:
+
+- Given a new version was deployed while the app is open, when I keep using the open app, then nothing reloads by itself and no entry, form or layer is lost (US-QS-03, US-QS-07).
+- Given the new version is waiting, when a view loads lazily while I keep using the open app, then it loads from the files of the version I am running, which the app keeps on the device for that purpose, so the view does not fail after a deploy.
+- Given the installed app is closed and started again, when it starts, then the new version runs: a waiting version takes over only when no window of the app is open any more, and it never takes over open windows (no skip-waiting, no claim of open pages).
+- Given a version takes over, when it activates, then the stored files of older versions are deleted from the device.
+- Given a request is a GET of a file under `/assets/` of the app's own origin, when the device keeps that file for the running version, then the stored copy answers it; when the copy is not there, then the network answers.
+- Given a request is a navigation (a route or `index.html`), an API call, the worker script `/sw.js`, a request of another origin or a request that is not a GET, then the network answers it untouched.
+- Given the files of a new version cannot all be stored while it installs, then the new version does not take over; the running version keeps running and the install is tried again at the next start (P-10, no half-stored version).
+- Given the app is opened for the first time on a device, when the first page shows, then the app works at once; the stored files may arrive after it.
+- Given a development build, then no worker is registered; given a browser without service workers or a page that is not in a secure context, then the app runs as before.
+- Given the registration of the worker fails, then the app works, the failure is written to the console and nothing is shown to the keeper as an error (P-10).
+- Given a version was installed and "Heute" shows for the first time after that, when the device has lines it has not seen (US-DEV-06), then a banner "Neu in PflanzenDéx" shows once with the version and the number of new lines ("Version 1.2.3: 3 Neuerungen"), without a modal and without blocking anything.
+- Given the banner shows, when I choose "Neuerungen ansehen", then a dialog "Neu in PflanzenDéx" opens with the new lines, newest first, in the same texts as the page, and with the link "Alle Neuigkeiten" to the page (`/account/news`); closing the dialog keeps the banner, and its focus returns to the button that opened the dialog.
+- Given the banner has shown once, then its lines count as seen on this device, so it does not return on a later start or visit, whether or not I closed it (shown once, US-DEV-06).
+- Given the banner shows, when I close it ("Hinweis ausblenden"), then it is hidden for the rest of this session; the lines stay on the page "Neu in PflanzenDéx" (P-10, nothing disappears silently).
+- Given calm mode is on (US-ACH-08), then no banner shows: calm mode switches the hints off, not the information (US-ONB-07 and the principle stated in the introduction epic, `22-introduction-and-unlocking.md`). The lines stay on the page "Neu in PflanzenDéx" and count as seen, so switching calm mode off later shows no catch-up banner, as US-ACH-08 gives achievements that were earned in calm mode (assumption).
+- Given the calm mode setting is not known yet (it is loading or cannot be read), then no banner shows and nothing is marked as seen; the next visit decides (no game element for a keeper in calm mode, US-ACH-08).
+- Given the keeper style (US-ONB-03) is `many`, then the banner still shows: the style hides onboarding hints (US-ONB-07), not the news about a new version (assumption).
+- Given the device cannot read or write its storage, then no banner shows and nothing breaks (US-DEV-06).
+
+State of implementation (issue 1688): the worker is a small script built into `/sw.js` (`shared/platform/device/service-worker/`, the logic in `worker-logic.ts` as plain functions, the entry `sw.ts`). The Vite plugin `serviceWorkerBuild` in `vite.config.ts` writes the list of the build's `/assets/` files into the worker at build time (every hashed file of the build, one list per build) and names the stored copy by a version that is a hash of that list; `main.tsx` registers the worker in production builds only (`register.ts`). The banner is the existing hint on "Heute" (`whats-new-hint`, US-DEV-06) with the dialog as a lazy part and the calm mode rule above; the page "Neu in PflanzenDéx" is unchanged. Not verified yet: a real deploy and a start of the installed app on a phone (the new version takes over on the next start; the banner shows once), and the installable check in Lighthouse on the built app. Status 🟨 until that check.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |
