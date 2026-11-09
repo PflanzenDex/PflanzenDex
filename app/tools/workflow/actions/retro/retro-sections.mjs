@@ -6,7 +6,7 @@ const REWORK_START = "<!-- retro:rework:start -->";
 const REWORK_END = "<!-- retro:rework:end -->";
 const REWORK_PENDING = "Implementer rework: computed by the nightly run.";
 // The day the Implementer trailer was introduced (US-DEV-11): earlier pull requests carry none and are not counted.
-const TRAILER_SINCE = "2026-11-09";
+export const TRAILER_SINCE = "2026-11-09";
 
 const percent = (share) => (share === null ? "unknown" : `${Math.round(100 * share)} %`);
 

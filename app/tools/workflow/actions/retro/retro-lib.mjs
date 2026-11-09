@@ -15,7 +15,15 @@ const PROCESS_SCOPES = new Set(["dev", "qg", "ci"]);
 const PROCESS_SCOPE = /^\w+\(([^)]+)\)!?:/;
 /** Kinds of a pull request in the rework table; the order is the tie order (US-DEV-11). */
 export const KINDS = ["UI/layout", "core/API", "tooling/gates", "docs", "other"];
-const TOOLING = ["app/tools/", "tools/", ".github/", ".claude/"];
+const TOOLING = [
+  "app/tools/",
+  "app/config/",
+  "tools/",
+  ".github/",
+  ".githooks/",
+  ".claude/",
+  "scripts/",
+];
 /** The attribution trailer of the implementer agent (.claude/agents/implementer.md). */
 const TRAILER = /^Implementer: \S+/m;
 /** Scheduled and manual runs compute the implementer rework; the others keep it from the report body (US-DEV-11). */

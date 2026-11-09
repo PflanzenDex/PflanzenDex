@@ -18,7 +18,7 @@ import {
   windowStart,
 } from "./retro-lib.mjs";
 import { renderReport } from "./retro-render.mjs";
-import { keptRework, reworkSection } from "./retro-sections.mjs";
+import { keptRework, reworkSection, TRAILER_SINCE } from "./retro-sections.mjs";
 
 const PAGE = 100;
 // Parallel commit and file reads of the rework (starting value, assumption): a nightly run of about 500 reads stays well
@@ -77,8 +77,11 @@ async function mapLimit(items, limit, fn) {
  * Implementer rework of the merged pull requests of the long window (US-DEV-11): one commit list per pull request, and the
  * changed files only for those with an implementer commit. Lists are read up to 100 items (commits and files).
  */
+// A PR merged before the trailer existed has no attributed commit, so its commits are not read (one call per PR saved).
 export async function fetchRework(client, pulls, today) {
-  const recent = pulls.filter((p) => inFullDays(dayOf(p.merged_at), today, LONG_DAYS));
+  const recent = pulls.filter(
+    (p) => inFullDays(dayOf(p.merged_at), today, LONG_DAYS) && dayOf(p.merged_at) >= TRAILER_SINCE,
+  );
   const counted = await mapLimit(recent, REWORK_CONCURRENCY, async (p) => {
     const commits = await json(client, [
       "api",

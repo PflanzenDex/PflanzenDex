@@ -134,9 +134,10 @@ test("US-DEV-11: a scheduled run computes the implementer rework from the commit
   const client = fakeClient({
     pullPages: [
       [
-        PULL(7, "2026-11-05T10:00:00Z"),
-        PULL(8, "2026-11-06T10:00:00Z"),
+        PULL(7, "2026-11-12T10:00:00Z"),
+        PULL(8, "2026-11-13T10:00:00Z"),
         PULL(9, "2026-10-01T10:00:00Z"),
+        PULL(10, "2026-11-05T10:00:00Z"),
       ],
     ],
     commits: {
@@ -157,7 +158,7 @@ test("US-DEV-11: a scheduled run computes the implementer rework from the commit
     client,
     { log: (m) => out.push(m), warn() {} },
     {
-      today: TODAY,
+      today: "2026-11-20",
       env: { RETRO_EVENT: "schedule" },
     },
   );
@@ -170,6 +171,10 @@ test("US-DEV-11: a scheduled run computes the implementer rework from the commit
     "no implementer commit, no files",
   );
   assert.ok(!client.calls.some((c) => c.includes("pulls/9/")), "outside the 28 days, not read");
+  assert.ok(
+    !client.calls.some((c) => c.includes("pulls/10/")),
+    "merged before the trailer existed, not read",
+  );
 });
 
 test("US-DEV-11: a run that does not compute the rework keeps the section of the report body and reads no commits", async () => {
