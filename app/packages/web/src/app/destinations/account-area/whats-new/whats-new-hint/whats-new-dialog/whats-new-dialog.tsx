@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
+import { returnFocus } from "@/shared/platform/routing/route-focus/view-start";
 import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
 import { germanDate, type NewsEntry } from "../../news-lines.mjs";
 import table from "../../whats-new.de.json";
@@ -15,16 +16,16 @@ function headingText(heading: NonNullable<NewsEntry["heading"]>): string {
 }
 
 /**
- * The lines this device has not seen, opened from the banner of "Heute" (US-QS-27): the same texts as the page, newest
- * first, and the link to the full page "Neu in PflanzenDéx" inside the dialog. Closing it returns the focus to the button
- * that opened it (`onCloseFocus`). Its own lazy part: the dialog code loads on the first open (DS-08).
+ * The lines the banner of "Heute" opened (US-QS-27): the same texts as the page, newest first, and the link to the full page
+ * "Neu in PflanzenDéx" inside the dialog. Closing it returns the focus to the opener when that is still on the page, else to
+ * the start of the view (`returnFocus`). Its own lazy part: the dialog code loads on the first open (DS-08).
  */
 export function WhatsNewDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lines: readonly NewsEntry[];
   version: string;
-  onCloseFocus: () => void;
+  opener: { readonly current: HTMLElement | null };
 }) {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -33,7 +34,7 @@ export function WhatsNewDialog(props: {
         description={t("version", { version: props.version })}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
-          props.onCloseFocus();
+          returnFocus(props.opener.current);
         }}
       >
         <ul className="m-0 flex list-none flex-col gap-3 p-0">

@@ -9,7 +9,7 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
 import { Button } from "@/shared/ui/button/button";
 import table from "../whats-new.de.json";
-import { NEWS_COUNT, NEWS_ENTRIES, appVersion, markNewsSeen } from "../whats-new";
+import { markAllNewsSeen, NEWS_ENTRIES, appVersion } from "../whats-new";
 
 const t = texts(table);
 
@@ -110,7 +110,7 @@ export function WhatsNewList(props: {
  */
 export function WhatsNewPage() {
   useEffect(() => {
-    markNewsSeen(NEWS_COUNT);
+    markAllNewsSeen();
   }, []);
   return <WhatsNewList entries={NEWS_ENTRIES} version={appVersion()} />;
 }

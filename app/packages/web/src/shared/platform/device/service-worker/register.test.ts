@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { APP_WORKER_URL, registerAppWorker } from "./register";
+import { APP_WORKER_URL, registerAppWorker, scheduleAppWorker, type PageWindow } from "./register";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -42,5 +42,60 @@ describe("US-QS-27 the registration of the app's worker", () => {
     );
     expect(result).toBeUndefined();
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+});
+
+/** A page for the scheduling: its load state, the load listeners and idle callbacks it got, and optionally the idle callback. */
+function pageIn(readyState: DocumentReadyState, idle: boolean) {
+  const loads: (() => void)[] = [];
+  const idleCallbacks: (() => void)[] = [];
+  const page: PageWindow = {
+    document: { readyState },
+    addEventListener: (_type, listener) => {
+      loads.push(listener);
+    },
+    ...(idle
+      ? {
+          requestIdleCallback: (callback: () => void) => {
+            idleCallbacks.push(callback);
+            return 1;
+          },
+        }
+      : {}),
+  };
+  return { page, loads, idleCallbacks };
+}
+
+describe("US-QS-27 the worker is registered after the page has loaded", () => {
+  it("US-QS-27 a page that is still loading registers the worker only after the load, in an idle callback", () => {
+    const { page, loads, idleCallbacks } = pageIn("loading", true);
+    const register = vi.fn(() => undefined);
+    scheduleAppWorker(page, register);
+    expect(register).not.toHaveBeenCalled();
+    expect(loads).toHaveLength(1);
+    loads[0]?.();
+    expect(register).not.toHaveBeenCalled();
+    expect(idleCallbacks).toHaveLength(1);
+    idleCallbacks[0]?.();
+    expect(register).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-27 a loaded page schedules the registration at once, in an idle callback", () => {
+    const { page, loads, idleCallbacks } = pageIn("complete", true);
+    const register = vi.fn(() => undefined);
+    scheduleAppWorker(page, register);
+    expect(loads).toHaveLength(0);
+    expect(idleCallbacks).toHaveLength(1);
+    idleCallbacks[0]?.();
+    expect(register).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-27 without an idle callback the registration waits one timer tick after the load", async () => {
+    const { page } = pageIn("complete", false);
+    const register = vi.fn(() => undefined);
+    scheduleAppWorker(page, register);
+    expect(register).not.toHaveBeenCalled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(register).toHaveBeenCalledTimes(1);
   });
 });

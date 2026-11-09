@@ -155,7 +155,7 @@ describe("US-QS-27 the worker's events", () => {
     expect(skipWaiting).not.toHaveBeenCalled();
   });
 
-  it("US-QS-27 the activation deletes the copies of older versions and claims no open window", async () => {
+  it("US-QS-27 an update deletes the copies of older versions and never claims open windows or skips waiting", async () => {
     const { scope, fire, skipWaiting, claim } = fakeScope();
     const { store, present } = fakeStore([`${CACHE_PREFIX}old`, CURRENT, "some-other-cache"]);
     installWorker(scope, MANIFEST, store);
@@ -165,6 +165,33 @@ describe("US-QS-27 the worker's events", () => {
     expect([...present].sort()).toEqual([CURRENT, "some-other-cache"].sort());
     expect(skipWaiting).not.toHaveBeenCalled();
     expect(claim).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-27 a first install (no earlier copy of the app) claims the open windows when it activates", async () => {
+    const { scope, fire, skipWaiting, claim } = fakeScope();
+    const { store } = fakeStore([CURRENT, "some-other-cache"]);
+    installWorker(scope, MANIFEST, store);
+    const { event, tasks } = waitingEvent();
+    fire("activate", event);
+    await Promise.all(tasks);
+    expect(claim).toHaveBeenCalledTimes(1);
+    expect(skipWaiting).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-27 a first install with empty storage claims as well, while an update with an older copy does not", async () => {
+    const first = fakeScope();
+    installWorker(first.scope, MANIFEST, fakeStore([]).store);
+    const firstEvent = waitingEvent();
+    first.fire("activate", firstEvent.event);
+    await Promise.all(firstEvent.tasks);
+    expect(first.claim).toHaveBeenCalledTimes(1);
+
+    const update = fakeScope();
+    installWorker(update.scope, MANIFEST, fakeStore([`${CACHE_PREFIX}old`]).store);
+    const updateEvent = waitingEvent();
+    update.fire("activate", updateEvent.event);
+    await Promise.all(updateEvent.tasks);
+    expect(update.claim).not.toHaveBeenCalled();
   });
 
   it("US-QS-27 an asset is answered from the copy of this version when the copy has it", async () => {

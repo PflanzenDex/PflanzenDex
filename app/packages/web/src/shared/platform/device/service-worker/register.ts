@@ -26,3 +26,27 @@ export function registerAppWorker(
       return undefined;
     });
 }
+
+/** The part of the window that the scheduling uses: its load state, its load event and, where it exists, the idle callback. */
+export type PageWindow = {
+  readonly document: { readonly readyState: DocumentReadyState };
+  addEventListener(type: "load", listener: () => void, options?: { once: boolean }): void;
+  requestIdleCallback?: (callback: () => void) => unknown;
+};
+
+/**
+ * Registers the worker once the page has loaded and the browser is idle (US-QS-27, issue 1688), so the install never
+ * competes with the first load: the app works at once. Without `requestIdleCallback` (Safari) it waits one timer tick after
+ * the load instead.
+ */
+export function scheduleAppWorker(
+  page: PageWindow = window,
+  register: () => unknown = () => registerAppWorker(),
+): void {
+  const start = () => {
+    if (typeof page.requestIdleCallback === "function") page.requestIdleCallback(register);
+    else setTimeout(register, 0);
+  };
+  if (page.document.readyState === "complete") start();
+  else page.addEventListener("load", start, { once: true });
+}

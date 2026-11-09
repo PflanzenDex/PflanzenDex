@@ -72,6 +72,7 @@ export type WorkerEvents = {
 /** The worker's global scope as far as the worker uses it. */
 export type WorkerScope = {
   location: { origin: string };
+  clients: { claim(): Promise<void> };
   addEventListener<K extends keyof WorkerEvents>(
     type: K,
     listener: (event: WorkerEvents[K]) => void,
@@ -81,9 +82,10 @@ export type WorkerScope = {
 /**
  * Listens to the three events of the worker (US-QS-27). The install stores every file of the build, all or nothing: one file
  * that cannot be stored fails the install, so the running version keeps running and the install is tried again at the next
- * start (P-10). The worker never calls `skipWaiting` and never claims open windows: a new version waits until no window runs
- * the old one, so it takes over on the next start. The activation deletes the stored copies of older versions. A request
- * under `ASSET_PATH` is answered from the copy of this version, and from the network when the copy lacks the file.
+ * start (P-10). The worker never calls `skipWaiting`, and an update never claims open windows: a new version waits until no
+ * window runs the old one, so it takes over on the next start. Only a first install (no earlier copy) claims the open windows
+ * when it activates. The activation deletes the stored copies of older versions. A request under `ASSET_PATH` is answered
+ * from the copy of this version, and from the network when the copy lacks the file.
  */
 export function installWorker(scope: WorkerScope, manifest: WorkerManifest, store: Store): void {
   const current = cacheNameOf(manifest.version);
@@ -92,12 +94,13 @@ export function installWorker(scope: WorkerScope, manifest: WorkerManifest, stor
   });
   scope.addEventListener("activate", (event) => {
     event.waitUntil(
-      store
-        .keys()
-        .then((names) =>
-          Promise.all(staleCacheNames(names, current).map((name) => store.delete(name))),
-        )
-        .then(() => undefined),
+      store.keys().then(async (names) => {
+        const stale = staleCacheNames(names, current);
+        await Promise.all(stale.map((name) => store.delete(name)));
+        // A first install (no earlier copy of the app, so no version switch) claims the open windows, so the first session's
+        // lazy views are served by the worker too. An update never claims them (US-QS-27).
+        if (stale.length === 0) await scope.clients.claim();
+      }),
     );
   });
   scope.addEventListener("fetch", (event) => {
