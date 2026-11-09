@@ -20,3 +20,6 @@ export const FriendsNewsTile = lazyPage(() =>
 export const FriendsNewsLayer = lazyPage(() =>
   import("./feed/friends-news/friends-news").then((m) => ({ default: m.FriendsNewsLayer })),
 );
+// The route fallbacks of "Freunde" and a friend's collection (US-QS-14, issue 1727): the heading and the page's skeleton.
+export { FriendsRouteSkeleton } from "./pages/friends-page/friends-page.skeleton";
+export { FriendCollectionRouteSkeleton } from "./pages/friend-collection/friend-collection.skeleton";

@@ -1,7 +1,7 @@
 import type { CreatedInvitation, InvitationRecord, InvitationStatus } from "@pflanzendex/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronRight } from "lucide-react";
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
@@ -25,9 +25,10 @@ export const INVITATIONS_PAGE_SIZE = 5;
 
 /**
  * One topic of the operator area on the overview (US-QS-15): its name, its current value and the layer it opens
- * (`?sheet=<id>`). The value wraps instead of being cut off, so it stays readable at 200 % text.
+ * (`?sheet=<id>`). The value wraps instead of being cut off, so it stays readable at 200 % text. A value that loads (the
+ * counts of "Fristen") is a node, so the row stays the same button while it waits.
  */
-export function OperatorRow(props: { id: string; title: string; value: string }) {
+export function OperatorRow(props: { id: string; title: string; value: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
   return (
     <Button

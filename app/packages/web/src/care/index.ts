@@ -29,3 +29,5 @@ export const PlantCare = lazyPage(() =>
 );
 // The skeleton of the open treatments in the shape of two entries, the layer's skeleton on "Heute" (US-QS-14, issue 1697).
 export { OpenTreatmentsSkeleton } from "./treatments/open-treatments/open-treatments.skeleton";
+// The skeleton of the care phases, the mode's skeleton of "Sammlung" grouped by phase (US-QS-14, issue 1727).
+export { CarePhasesSkeleton } from "./phases/care-phases-page/care-phases-page.skeleton";

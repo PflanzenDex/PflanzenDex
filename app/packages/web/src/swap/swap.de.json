@@ -49,5 +49,8 @@
   "offers.withdrawButton": "Zurückziehen",
   "stamp.no": "Nein",
   "stamp.yes": "Ja",
-  "stamp.later": "Später"
+  "stamp.later": "Später",
+  "match.title": "Passende Angebote",
+  "match.intro": "Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.",
+  "match.loading": "Angebote werden geladen …"
 }

@@ -48,6 +48,55 @@ export function useOfferedView(): (v: SammlungView) => boolean {
 }
 
 /**
+ * The mode the address, the device and the switches give (US-QS-14), as a plain function: the route's fallback draws the
+ * same shape before the area is there (issue 1727, as "Entdecken" in issue 1697). From the address, else the one
+ * remembered on this device, else the plants; a mode that is not offered (US-ONB-09) falls back to the plants.
+ */
+export function sammlungViewOf(
+  search: string,
+  stored: string | null,
+  offered: (v: SammlungView) => boolean,
+): SammlungView {
+  const asked = parse(new URLSearchParams(search).get(VIEW_PARAM)) ?? parse(stored) ?? "plants";
+  return offered(asked) ? asked : "plants";
+}
+
+/** The arrangement of the species from the address: `sort=difficulty` or the Pokédex (US-BES-05). */
+const speciesSortOf = (params: URLSearchParams): SpeciesSort =>
+  params.get(SORT_PARAM) === "difficulty" ? "difficulty" : "pokedex";
+
+/** The grouping of the plants from the address: `group=phase` or `group=location`, anything else shows all (US-QS-14). */
+const plantGroupOf = (params: URLSearchParams): PlantGroup => {
+  const raw = params.get(GROUP_PARAM);
+  return raw === "phase" || raw === "location" ? raw : "all";
+};
+
+/** What "Sammlung" shows for an address (US-QS-14, issue 1727): the mode, the arrangement, the grouping and the open locations. */
+export type SammlungShape = {
+  view: SammlungView;
+  sort: SpeciesSort;
+  group: PlantGroup;
+  /** The locations and light zones are open over the plants (`manage=locations`, US-LIC). */
+  managing: boolean;
+};
+
+/** The shape of "Sammlung" the address, the device and the switches give, as a plain function (see `sammlungViewOf`). */
+export function sammlungShapeOf(
+  search: string,
+  stored: string | null,
+  offered: (v: SammlungView) => boolean,
+): SammlungShape {
+  const params = new URLSearchParams(search);
+  const view = sammlungViewOf(search, stored, offered);
+  return {
+    view,
+    sort: speciesSortOf(params),
+    group: plantGroupOf(params),
+    managing: view === "plants" && params.get(MANAGE_PARAM) === "locations",
+  };
+}
+
+/**
  * The mode of the destination "Sammlung" (US-QS-14): from the address, else the one remembered on this device, else
  * the plants. A mode that is not offered (US-ONB-09) falls back to the plants. Switching adds a history entry (back
  * works), remembers the choice and tells screen readers; the state `keepFocus` leaves the focus on the control (RouteFocus).
@@ -56,8 +105,7 @@ export function useSammlungView(): { view: SammlungView; choose: (v: SammlungVie
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
   const offered = useOfferedView();
-  const asked = parse(params.get(VIEW_PARAM)) ?? parse(readStored(VIEW_KEY)) ?? "plants";
-  const view: SammlungView = offered(asked) ? asked : "plants";
+  const view = sammlungViewOf(params.toString(), readStored(VIEW_KEY) ?? null, offered);
   const choose = (next: SammlungView) => {
     if (next === view) return;
     writeStored(VIEW_KEY, next);
@@ -74,7 +122,7 @@ export function useSammlungView(): { view: SammlungView; choose: (v: SammlungVie
 export function useSpeciesSort(): { sort: SpeciesSort; choose: (s: SpeciesSort) => void } {
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
-  const sort: SpeciesSort = params.get(SORT_PARAM) === "difficulty" ? "difficulty" : "pokedex";
+  const sort = speciesSortOf(params);
   const choose = (next: SpeciesSort) => {
     if (next === sort) return;
     const query: Record<string, string> = { [VIEW_PARAM]: "species" };
@@ -100,8 +148,7 @@ export const PLANT_GROUPS: readonly { value: PlantGroup; label: string }[] = [
 export function usePlantGroup(): { group: PlantGroup; choose: (g: PlantGroup) => void } {
   const [params, setParams] = useSearchParams();
   const announce = useAnnounce();
-  const raw = params.get(GROUP_PARAM);
-  const group: PlantGroup = raw === "phase" || raw === "location" ? raw : "all";
+  const group = plantGroupOf(params);
   const choose = (next: PlantGroup) => {
     if (next === group) return;
     const query: Record<string, string> = { [VIEW_PARAM]: "plants" };

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { OperatorOverview } from "@pflanzendex/core";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,6 +26,8 @@ const overview = (over: Partial<OperatorOverview> = {}): OperatorOverview => ({
 type Handler = (url: string, init: RequestInit) => Promise<Response>;
 let current: OperatorOverview;
 let deletions: unknown;
+/** Holds the answer of `/operator/deletions` until the test releases it (issue 1722). */
+let deletionsGate: Promise<void> | undefined;
 let calls: { method: string; path: string; body: unknown; headers: Record<string, string> }[];
 
 function serve(extra: Handler = () => json(404, {})) {
@@ -48,7 +50,10 @@ function serve(extra: Handler = () => json(404, {})) {
           medianSecondsToFirstPlant: { known: false, reason: "too_few_accounts" },
           withoutPlantPercent: { known: false, reason: "too_few_accounts" },
         });
-      if (path === "/operator/deletions") return json(200, deletions);
+      if (path === "/operator/deletions") {
+        if (deletionsGate) await deletionsGate;
+        return json(200, deletions);
+      }
       return extra(path, init);
     }),
   );
@@ -57,6 +62,7 @@ function serve(extra: Handler = () => json(404, {})) {
 beforeEach(() => {
   current = overview();
   deletions = { warningDays: 7, near: [], past: [], identityRemovals: [] };
+  deletionsGate = undefined;
   serve();
 });
 afterEach(() => {
@@ -585,8 +591,6 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     );
     deletions = { warningDays: 7, near: [], past: [], identityRemovals: [identity] };
     await open();
-    // The row is a new button once its counts arrive; open the loaded one.
-    await screen.findByRole("button", { name: /1 offen beim Anmeldedienst/ });
     await topic(/^Fristen/);
     await userEvent.click(
       await screen.findByRole("button", { name: "Als entfernt markieren, Kennung sub-1" }),
@@ -595,5 +599,37 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual([
       "/operator/deletion-log/e-1/identity-removed",
     ]);
+  });
+
+  it("US-ACC-04 a tap on the row Fristen while its counts still load opens the layer, which shows them once they arrive (issue 1722)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    // The row shows its loading text while the counts are on their way (DS-57: after the short delay).
+    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    await userEvent.click(row);
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Fristen" })).toBeTruthy();
+    answer();
+    expect(await within(dialog).findByText("Keine offenen Löschungen")).toBeTruthy();
+    expect(screen.getByRole("dialog")).toBe(dialog);
+  });
+
+  it("US-ACC-04 a press on the row Fristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    fireEvent.pointerDown(row);
+    answer();
+    // The counts arrive while the press is still on the row; the row must stay the one the press started on.
+    expect(await screen.findByRole("button", { name: /0 nahe/ })).toBe(row);
+    fireEvent.pointerUp(row);
+    fireEvent.click(row);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
   });
 });

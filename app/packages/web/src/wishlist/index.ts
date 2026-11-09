@@ -12,3 +12,5 @@ export const linkWishSpecimen = async (
   ...args: Parameters<typeof import("./wishlist-api").linkWishSpecimen>
 ) => (await import("./wishlist-api")).linkWishSpecimen(...args);
 export type { PathNotice, WishToPlant } from "./actions/actions";
+// The skeleton of the wishlist mode, the mode's skeleton on "Sammlung" (US-QS-14, issue 1727).
+export { WishlistPageSkeleton } from "./wishlist-page/wishlist-page.skeleton";

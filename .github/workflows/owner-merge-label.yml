@@ -1,0 +1,44 @@
+# Sets or removes the label owner-merge on a pull request (US-DEV-13, issue 1774). The label marks a PR that changes a gate
+# file: `make merge` refuses it, so only the owner merges it, and the owner finds such PRs with `label:owner-merge`. The job runs
+# on every push to a PR into dev or main (opened, synchronize, reopened, ready_for_review), so the label follows the files of the
+# head. The script comes from the BASE branch (dev or main), never from the PR's own code, so a PR cannot change the rule that
+# labels it. The label, its colour and its description come from app/config/project/issue-taxonomy.json (pullRequestLabels).
+# On failure the job is red and the label keeps its last state: run the job again from the PR's checks. A PR from a fork gets a
+# read-only token, so its job fails at the write and says so; the owner then sets the label by hand (make owner-merge-label PR=<n>
+# with a token that may write labels).
+name: Owner merge label
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owner-merge-label-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out the base branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.base_ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Set or remove the owner-merge label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: make owner-merge-label PR="$PR_NUMBER"
