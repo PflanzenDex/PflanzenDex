@@ -26,6 +26,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
         with:
@@ -34,7 +35,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       # Only the script runs (no dependencies needed). Edits by GITHUB_TOKEN trigger no workflow, so no loop.
+      # The implementer rework (US-DEV-11) is computed only by the scheduled and manual runs; the script decides from this.
       - run: make retro WRITE=1
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          RETRO_EVENT: ${{ github.event_name }}

@@ -29,6 +29,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 ## Commit and push
 
 - Conventional Commits; the scope must be one of `app/config/project/commitlint.config.js` (an epic code such as `bes`, or a tech scope such as `dev`, `qg`); header at most 100 characters.
+- Every commit ends with the trailer line `Implementer: <model>` (here `haiku`), after any other trailers. The orchestrator never sets it. The issue flow retro (US-DEV-11) counts the implementer rework from this trailer; a commit without it counts as orchestrator work.
 - Commit and push only. Never run `make pr`, `make merge`, `gh pr merge` or `gh pr ready`, never push to `dev` or `main`, never use `--no-verify` or a force push, never change `core.hooksPath`.
 - The pre-push hook runs `make gates`. If it fails, fix the cause; if the cause is outside your scope, stop and report.
 
