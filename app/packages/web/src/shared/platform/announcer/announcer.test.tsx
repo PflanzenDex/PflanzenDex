@@ -22,7 +22,38 @@ function Save() {
   );
 }
 
-const region = () => document.querySelector<HTMLElement>("[aria-live=polite]");
+// The announcer's own region (`sr-only`); the toast viewport of the test wrapper has its regions of its own.
+const region = () => document.querySelector<HTMLElement>(".sr-only[aria-live=polite]");
+
+function Offline() {
+  const announcer = useAnnounce();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        announcer?.announce("Du bist offline.", "Die Änderung wartet, bis du wieder online bist.")
+      }
+    >
+      Offline melden
+    </button>
+  );
+}
+
+describe("US-QS-07 · a note on screen is an overlay that never moves the page (DS-54)", () => {
+  it("US-QS-07 · the note lies in an overlay outside the page's flow and is announced once (issue 1644, F8)", async () => {
+    render(
+      <AnnouncerProvider>
+        <p>Inhalt</p>
+        <Offline />
+      </AnnouncerProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Offline melden" }));
+    const note = screen.getByText("Die Änderung wartet, bis du wieder online bist.");
+    expect(note.closest(".fixed")).not.toBeNull();
+    expect(note.closest(".pointer-events-none")).not.toBeNull();
+    expect(region()?.textContent).toBe("Du bist offline.");
+  });
+});
 
 describe("US-QS-10 · one polite live region for every announcement (4.1.3)", () => {
   it("US-QS-10 announces a result in the live region without moving the focus", async () => {
@@ -48,7 +79,7 @@ describe("US-QS-10 · one polite live region for every announcement (4.1.3)", ()
     );
     expect(region()).not.toBeNull();
     expect(region()?.textContent).toBe("");
-    expect(document.querySelectorAll("[aria-live]")).toHaveLength(1);
+    expect(document.querySelectorAll(".sr-only[aria-live]")).toHaveLength(1);
   });
 
   it("US-QS-10 the same message twice in a row is announced twice", async () => {

@@ -42,6 +42,40 @@ const headerLinks = (path: string, who: { reviewer?: boolean; operator?: boolean
   return within(screen.getByRole("navigation", { name: "Hauptnavigation" }));
 };
 
+describe("US-QS-07 · the offline bar", () => {
+  afterEach(() => {
+    delete (navigator as { onLine?: boolean }).onLine;
+  });
+
+  it("US-QS-07 · the offline bar is an overlay outside the page and the state is announced (issue 1644, F8)", () => {
+    const shell = () => (
+      <MemoryRouter initialEntries={["/"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>
+    );
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
+    const online = render(shell());
+    const mainOnline = document.querySelector("main")?.className;
+    online.unmount();
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+    render(shell());
+    const main = document.querySelector("main");
+    const title = screen.getByText("Du bist offline");
+    // The bar lies over the page: it is outside `main`, fixed, and takes no pointer input.
+    expect(main?.contains(title)).toBe(false);
+    const overlay = title.closest<HTMLElement>(".fixed");
+    expect(overlay).not.toBeNull();
+    expect(overlay?.className).toContain("pointer-events-none");
+    // `main` keeps its classes, so no padding or margin comes with the bar (DS-54).
+    expect(main?.className).toBe(mainOnline);
+    expect(document.querySelector('.sr-only[aria-live="polite"]')?.textContent).toContain(
+      "Du bist offline.",
+    );
+  });
+});
+
 describe("US-BES-10 navigation", () => {
   it("US-BES-10 the review list tab is shown to operators and reviewers only", () => {
     expect(labels({})).not.toContain("Prüfliste");

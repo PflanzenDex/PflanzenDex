@@ -219,7 +219,7 @@ describe("US-BES-02 Seite Sammlung", () => {
     expect(onSpeciesChoose).not.toHaveBeenCalled();
   });
 
-  it("after creating with an unknown location the list says why it is unknown", async () => {
+  it("US-BES-02 after creating with an unknown location the toast says why it is unknown (issue 1644, F8)", async () => {
     fakeServer();
     const { rerender } = render(page({ newSpecies: species }));
     await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
@@ -230,8 +230,10 @@ describe("US-BES-02 Seite Sammlung", () => {
       ),
     );
     rerender(page({ newSpecies: null }));
-    expect((await screen.findByRole("status")).textContent).toContain("ist angelegt");
-    expect(screen.getByRole("status").textContent).toContain("Der Standort ist unbekannt");
+    // The result is a toast with role=status above the page, not a note inserted above the list (US-QS-07, DS-54, issue 1644).
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("ist angelegt");
+    expect(toast.textContent).toContain("Der Standort ist unbekannt");
   });
 });
 

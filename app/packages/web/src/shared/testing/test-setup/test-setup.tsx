@@ -1,11 +1,13 @@
-// Vitest setup: every `render` of a page gets the data layer (one fresh query client per render, no retries), so
-// pages are tested the way app/main.tsx runs them without each test repeating the provider.
+// Vitest setup: every `render` of a page gets the data layer (one fresh query client per render, no retries) and the
+// toast provider that the app shell mounts for every page, so pages are tested the way app/main.tsx runs them without
+// each test repeating the providers.
 import { QueryClientProvider } from "@tanstack/react-query";
 import { configure } from "@testing-library/dom";
 import type { ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 import { createQueryClient } from "../../data";
 import { clearPhotoCache } from "../../platform/browser/use-stored-photo";
+import { ToastProvider } from "../../patterns/states/toast/toast-provider/toast-provider";
 import { setViewportWidth } from "../viewport-mock";
 
 // Loaded photos are cached by their request address (NFR-12): a test must not get the picture of an earlier test.
@@ -17,7 +19,8 @@ vi.mock("@testing-library/react", async (importOriginal) => {
   const wrap = (Outer?: (p: { children: ReactNode }) => ReactNode) => {
     const client = createQueryClient();
     return ({ children }: { children: ReactNode }) => {
-      const inner = Outer ? <Outer>{children}</Outer> : children;
+      const toasts = <ToastProvider>{children}</ToastProvider>;
+      const inner = Outer ? <Outer>{toasts}</Outer> : toasts;
       return <QueryClientProvider client={client}>{inner}</QueryClientProvider>;
     };
   };

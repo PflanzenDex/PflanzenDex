@@ -1,0 +1,10 @@
+{
+  "unknownNext": "Welche Zone gilt, ist unbekannt. Weise dem Standort eine Lichtzone zu oder setze die Zone der Pflanze selbst.",
+  "removedHead": "Die eigene Lichtzone von „{name}“ ist entfernt.",
+  "removedReload": "{head} Welche Zone jetzt gilt, zeigt die Karte nach dem Neuladen.",
+  "removedUnknown": "{head} {next}",
+  "removedDerived": "{head} Es gilt wieder die abgeleitete Zone: {zone}.",
+  "set": "Die Lichtzone von „{name}“ ist jetzt „{zone}“ (von dir gesetzt). {effect}",
+  "setCutting": "Als Steckling steht es weiter unter Stecklingslicht; die Zone gilt, sobald du es eintopfst.",
+  "setPlant": "Die Verteilung unter „Lichtzonen“ zählt die Pflanze dort mit."
+}

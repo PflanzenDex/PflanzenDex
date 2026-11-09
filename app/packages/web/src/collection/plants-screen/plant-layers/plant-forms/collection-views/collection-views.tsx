@@ -1,7 +1,5 @@
 import { type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { Specimen } from "@pflanzendex/core";
-import { Status, Warning } from "../../../../specimens/cards/parts/parts";
-import { refusalText } from "@/shared/lib/error-text";
 import { CreateWithSiblings } from "../../../../collection-page/create-with-siblings/create-with-siblings";
 import type { Props } from "../../../../collection-page/collection-props";
 import { ArchiveForm } from "../../../../archived/archived-form/archived-form";
@@ -11,7 +9,6 @@ import type { useCreate } from "../../../../specimens/create/use-create";
 import { MarkerForm } from "../../../../markers/marker/marker-form/marker-form";
 import { CatchDateForm } from "../../../../markers/catch-date/catch-date-field/catch-date-field";
 import { LightZoneForm } from "../../../../markers/locate/light-zone-form/light-zone-form";
-import { Created } from "../../../../collection-page/created/created";
 import { ListHint } from "../../../../collection-page/hint-occasions/hint-occasions";
 import { PlantsScreen } from "../../../plants-screen";
 import { useListActions, type ListActions } from "../../../../specimens/hooks/use-list-actions";
@@ -144,11 +141,9 @@ function List(p: {
 }) {
   const { data, plants } = p;
   const { api, token } = p.props;
-  const { message, error, handlers } = useListActions(api, token, p.actions);
+  const { handlers } = useListActions(api, token, p.actions);
   return (
     <>
-      {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
-      {error && <Warning>{refusalText(error)}</Warning>}
       {p.created === null && <ListHint summary={data.summary} render={p.props.renderHint} />}
       <PlantsScreen
         cards={plants.cards}

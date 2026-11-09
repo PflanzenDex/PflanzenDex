@@ -3,10 +3,9 @@ import { Button } from "@/shared/ui/button/button";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
 import { Label } from "@/shared/ui/display/label/label";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
-import { errorText } from "@/shared/lib/error-text";
-import type { ApiError } from "../../../../shared/data";
+import { errorText, refusalText } from "@/shared/lib/error-text";
+import { useSay, type Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { RefusalAlert } from "../../../shared/notices/notices";
 import { photoProblem, uploadPhoto } from "../measurement-photo";
 import { MEDIA_LIMITS } from "@pflanzendex/core";
 
@@ -18,10 +17,10 @@ function usePhotoUpload(props: {
   specimenId: string;
   date: string;
   onSaved: () => void;
+  say: Say;
 }) {
-  const { access, specimenId, date, onSaved } = props;
+  const { access, specimenId, date, onSaved, say } = props;
   const [problem, setProblem] = useState<string | null>(null);
-  const [refusal, setRefusal] = useState<ApiError | null>(null);
   const [pending, setPending] = useState<File | null>(null);
   const [inputKey, setInputKey] = useState(0);
   const send = async (file: File, replace: boolean) => {
@@ -31,20 +30,19 @@ function usePhotoUpload(props: {
     setInputKey((k) => k + 1);
     if (r.ok) {
       setPending(null);
-      setRefusal(null);
       return onSaved();
     }
     if (r.error.code === "measurement.photo_exists" && !replace) return setPending(file);
     setPending(null);
-    setRefusal(r.error);
+    // A refused upload is a toast (P-10, DS-54): the list keeps its place.
+    say(refusalText(r.error), "error");
   };
   const pick = (file: File | undefined) => {
-    setRefusal(null);
     const found = file ? photoProblem(file) : null;
     setProblem(found);
     if (file && !found) void send(file, false);
   };
-  return { problem, refusal, pending, setPending, inputKey, send, pick };
+  return { problem, pending, setPending, inputKey, send, pick };
 }
 
 function ConfirmReplace({ up }: { up: Upload }) {
@@ -82,7 +80,8 @@ export function PhotoAction(props: {
   hasPhoto: boolean;
   onSaved: () => void;
 }) {
-  const up = usePhotoUpload(props);
+  const say = useSay();
+  const up = usePhotoUpload({ ...props, say });
   const id = `photo-action-${props.date}`;
   return (
     <div className="flex flex-col gap-1.5">
@@ -98,7 +97,6 @@ export function PhotoAction(props: {
           {up.problem}
         </p>
       )}
-      {up.refusal && <RefusalAlert error={up.refusal} />}
       <ConfirmReplace up={up} />
     </div>
   );

@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { ApiError } from "../../../shared/data";
+import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { repotSpecimen } from "../model/specimens-api";
 import { SIGN_IN, type Token } from "./use-collection";
 import table from "../../markers/repot/repot.de.json";
@@ -19,9 +20,8 @@ export type RepotTarget = { id: string; name: string; status: SpecimenCard["stat
  * nothing is written before "Speichern" (issue 1028). After success the page reloads (`after`) and the message says what
  * changed (P-09); a refusal stays in the form (P-10). `access` is what the form reads the plant's plan with.
  */
-export function useRepot(api: string, token: Token, after: () => void) {
+export function useRepot(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<RepotTarget | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const send = useCallback(
     async (date: string, potId?: string): Promise<ApiError | null> => {
@@ -33,15 +33,13 @@ export function useRepot(api: string, token: Token, after: () => void) {
         ...(potId === undefined ? {} : { potId }),
       });
       if (!r.ok) return r.error;
-      setMessage(
-        t(open.status === PLANT_STATUS ? "done.plant" : "done.cutting", { name: open.name }),
-      );
+      say(t(open.status === PLANT_STATUS ? "done.plant" : "done.cutting", { name: open.name }));
       setOpen(null);
       after();
       return null;
     },
-    [api, token, open, after],
+    [api, token, open, after, say],
   );
 
-  return { open, message, send, setOpen, setMessage, access: { api, token } };
+  return { open, send, setOpen, access: { api, token } };
 }

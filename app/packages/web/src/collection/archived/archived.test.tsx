@@ -141,7 +141,7 @@ describe("US-BES-07 archive on the collection page", () => {
     expect(posts).toHaveLength(0);
   });
 
-  it("archives with the chosen reason, takes the card out of the list and says where it is now (P-09, P-10)", async () => {
+  it("archives with the chosen reason, takes the card out of the list and says where it is now as a toast (P-09, P-10, issue 1644, F8)", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
@@ -153,9 +153,10 @@ describe("US-BES-07 archive on the collection page", () => {
       body: { reason: "verkauft" },
     });
     expect(posts[0]?.key).toBeTruthy();
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("„Bogenhanf“ ist archiviert");
-    expect(status.textContent).toContain("Archiv");
+    // The result is a toast with role=status, and nothing is inserted above the list (US-QS-07, DS-54, issue 1644).
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("„Bogenhanf“ ist archiviert");
+    expect(toast.textContent).toContain("Archiv");
     expect(screen.queryByRole("button", { name: /^Bogenhanf (?!–)/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^Bogenhanf – rot / })).toBeTruthy();
   });
@@ -225,7 +226,7 @@ describe("US-BES-07 archive and restore", () => {
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.path).toBe("/specimens/e9/catch-date");
     expect(posts[0]?.body["catchDate"]).toBe("2025-12-24");
-    expect((await screen.findByRole("status")).textContent).toContain("Alter Ficus");
+    expect(await screen.findByText(/Das Fangdatum von „Alter Ficus“ ist jetzt/)).toBeTruthy();
     await openArchive();
     expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
   });
@@ -263,7 +264,7 @@ describe("US-BES-07 archive and restore", () => {
     );
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.path).toBe("/specimens/e1/restore");
-    expect((await screen.findByRole("status")).textContent).toContain("wiederhergestellt");
+    expect(await screen.findByText(/ist wiederhergestellt/)).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Archiv" })).toBeNull();
   });
 
@@ -282,7 +283,9 @@ describe("US-BES-07 archive and restore", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Wiederherstellen: Alter Ficus" }),
     );
-    expect((await screen.findByRole("alert")).textContent).toContain("ist nicht archiviert");
+    // A refusal is an assertive toast (US-QS-07), the specimen stays in the archive.
+    const refusal = await screen.findByText(/ist nicht archiviert/);
+    expect(refusal.closest('[aria-live="assertive"]')).not.toBeNull();
     await openArchive();
     expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
   });

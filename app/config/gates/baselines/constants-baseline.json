@@ -1,5 +1,5 @@
 {
-  "maxTotal": 315,
+  "maxTotal": 300,
   "entries": [
     {
       "file": "packages/api/src/achievements/history/year.ts",
@@ -448,6 +448,18 @@
       "enums": 2
     },
     {
+      "file": "packages/web/src/app/destinations/today-area/today-area.tsx",
+      "enums": 1
+    },
+    {
+      "file": "packages/web/src/app/flows/onboarding/today-intro/use-hints.ts",
+      "enums": 2
+    },
+    {
+      "file": "packages/web/src/app/sammlung-view.ts",
+      "enums": 5
+    },
+    {
       "file": "packages/web/src/care/measure/measurement-header/growth-chart/growth-chart.tsx",
       "enums": 2
     },
@@ -472,10 +484,6 @@
       "enums": 2
     },
     {
-      "file": "packages/web/src/collection/collection-page/created/created.tsx",
-      "enums": 2
-    },
-    {
       "file": "packages/web/src/collection/markers/locate/light-zone-form/light-zone-form.tsx",
       "enums": 2
     },
@@ -485,18 +493,6 @@
     },
     {
       "file": "packages/web/src/collection/specimens/cards/specimen-card/specimen-card.tsx",
-      "enums": 1
-    },
-    {
-      "file": "packages/web/src/app/destinations/today-area/today-area.tsx",
-      "enums": 1
-    },
-    {
-      "file": "packages/web/src/shared/patterns/navigation/navigation/navigation.tsx",
-      "enums": 2
-    },
-    {
-      "file": "packages/web/src/shared/patterns/states/request-state/request-state.tsx",
       "enums": 1
     },
     {
@@ -528,12 +524,12 @@
       "enums": 1
     },
     {
-      "file": "packages/web/src/app/sammlung-view.ts",
-      "enums": 5
+      "file": "packages/web/src/shared/patterns/navigation/navigation/navigation.tsx",
+      "enums": 2
     },
     {
-      "file": "packages/web/src/app/flows/onboarding/today-intro/use-hints.ts",
-      "enums": 2
+      "file": "packages/web/src/shared/patterns/states/request-state/request-state.tsx",
+      "enums": 1
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",

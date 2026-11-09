@@ -245,9 +245,9 @@ describe("US-BES-11 correct the catch date on the card", () => {
       path: "/specimens/e1/catch-date",
       body: { catchDate: "2021-04-12", timeZone: "Europe/Berlin" },
     });
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "Das Fangdatum von „Bogenhanf“ ist jetzt der 12.04.2021.",
-    );
+    expect(
+      await screen.findByText(/Das Fangdatum von „Bogenhanf“ ist jetzt der 12\.04\.2021\./),
+    ).toBeTruthy();
   });
 
   it("US-BES-11 an empty field is not sent; the form says why", async () => {
