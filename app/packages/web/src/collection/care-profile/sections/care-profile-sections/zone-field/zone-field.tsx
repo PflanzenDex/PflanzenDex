@@ -3,8 +3,8 @@ import { zoneLabel } from "@pflanzendex/core";
 import type { Control } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry, LightZone } from "@pflanzendex/core";
 import { LightNeedAction } from "@/light";
-import { Choice, Row } from "../care-profile-fields/care-profile-fields";
-import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
+import { Choice, Row } from "../../care-profile-fields/care-profile-fields";
+import type { CareProfileFields as Fields } from "../../../../specimens/model/schemas";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./zone-field.de.json";
 

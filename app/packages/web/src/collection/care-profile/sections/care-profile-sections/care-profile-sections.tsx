@@ -15,7 +15,7 @@ import {
   dayText,
 } from "../care-profile-fields/care-profile-fields";
 import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
-import { ZoneField } from "./zone-field";
+import { ZoneField } from "./zone-field/zone-field";
 
 export const NAME = {
   growth: "Soll-Standort Wachstumsphase",
