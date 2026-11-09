@@ -1,6 +1,6 @@
 ---
 name: recap-and-learnings
-description: Use when a task, review or incident is finished and something went wrong, surprised you or took a detour. Extracts the lesson and puts it where it prevents the next occurrence: a gate if it can be checked, a skill if it needs judgment, otherwise the pitfalls register (D-03).
+description: Use when a task, review or incident is finished (merged, resolved, wrapped up) and something went wrong, surprised you or took a detour, such as red CI runs, rework or a repeated mistake. Extracts the lesson and puts it where it prevents the next occurrence: a gate if it can be checked, a skill if it needs judgment, otherwise the pitfalls register (D-03).
 ---
 
 # Recap and learnings

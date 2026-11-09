@@ -1,6 +1,6 @@
 ---
 name: date-and-timezone
-description: Use when code stores, compares, derives or shows a calendar date (Gefangen_Am, due dates, care phases, reminders, "today"). Keeps dates as local calendar dates in the user's timezone and never derives them from UTC (NFR-08, QG-D4, prototype bug B-01).
+description: Use when code stores, compares, derives or shows a calendar date: the caught date (Gefangen_Am), due dates, reminders, care phases, "today" or "yesterday" labels. Keeps dates as local calendar dates in the user's timezone and never derives them from UTC (NFR-08, QG-D4, prototype bug B-01).
 ---
 
 # Dates and timezones

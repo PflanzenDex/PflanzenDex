@@ -1,6 +1,6 @@
 ---
 name: db-migration
-description: Use when a story changes the database schema (new table, column, index, constraint). Adds a forward-only numbered SQL migration that keeps the previous app version working, with tests and a fresh backup before production (US-DEV-07, NFR-15).
+description: Use when the database schema changes: a new table, column, index or constraint, also when tenant-isolation-test applies to the same table. Adds a forward-only numbered SQL migration that keeps the previous app version working, with tests and a fresh backup before production (US-DEV-07, NFR-15).
 ---
 
 # Database migration
