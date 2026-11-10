@@ -37,6 +37,8 @@ interface World {
   /** The hint state of the account (US-ONB-07, DM-ONB-03): the due hint and the stored end of the guide. */
   hint?: string | null;
   guideEnded?: boolean;
+  /** How many ends of the guide fail before one gets through (US-ONB-01, #1803): the connection drops while they are sent. */
+  failedDismissals?: number;
   hits?: unknown[];
   locations?: { id: string; name: string; lightZoneId: string | null; kind: string }[];
   writes: { method: string; path: string; body: Record<string, unknown> }[];
@@ -57,8 +59,13 @@ function hintAnswer(w: World, path: string, method: string): Promise<Response> |
     return response(200, { hint: w.hint ?? null, guideEnded: !!w.guideEnded });
   if (!path.startsWith("/onboarding/hints/") || method === "GET") return null;
   const last = w.writes.at(-1);
-  if (path.endsWith("/first_plant_guide") && last?.body["state"] === "dismissed")
+  if (path.endsWith("/first_plant_guide") && last?.body["state"] === "dismissed") {
+    if ((w.failedDismissals ?? 0) > 0) {
+      w.failedDismissals = (w.failedDismissals ?? 0) - 1;
+      return Promise.reject(new TypeError("Failed to fetch"));
+    }
     w.guideEnded = true;
+  }
   return response(200, { occasion: path.split("/").at(-1) });
 }
 
@@ -332,6 +339,30 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
 
   it("US-ONB-07 a guide that ended on another device does not come back here", async () => {
     fakeServer(world({ guideEnded: true }));
+    view();
+    expect(await tasksShown()).toBeTruthy();
+    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+  });
+
+  it("US-ONB-01 · P-10 an end of the guide that is not stored is shown with a retry, and the retry stores it: the guide does not come back unannounced (#1803)", async () => {
+    const w = world({ failedDismissals: 1 });
+    fakeServer(w);
+    view();
+    await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
+    // the guide is left in this visit, the tasks show, and the keeper is told that the end is not stored
+    expect(await tasksShown()).toBeTruthy();
+    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    const notice = await screen.findByRole("alert");
+    expect(notice.textContent).toContain("nicht gespeichert");
+    expect(notice.textContent).toContain("nicht erreichbar");
+    // the retry sends the end again; once it is stored the notice goes away
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await vi.waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(w.writes.filter((x) => x.path === "/onboarding/hints/first_plant_guide")).toHaveLength(
+      2,
+    );
+    expect(w.guideEnded).toBe(true);
+    cleanup();
     view();
     expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();

@@ -6,6 +6,7 @@ import { FriendsBanner } from "../../../../social";
 import { HintNote } from "./hint";
 import type { HintState } from "./hint/hint-api";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
+import { GuideEndNote } from "./first-plant-guide/guide-end-note/guide-end-note";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import type { LinkTarget } from "../../../../shared/patterns/navigation/navigation/navigation";
 import { useGuideEnd, useHints } from "./use-hints";
@@ -144,8 +145,8 @@ export function TodayIntro(props: {
   const r = useCounts(api, token);
   const answered = useAnswered(r);
   const [hints, setHints] = useHints(api, token, r.value);
-  const [ended, leave] = useGuideEnd(api, token, hints);
-  const stage = stageOf(r, answered, hints, ended);
+  const guide = useGuideEnd(api, token, hints);
+  const stage = stageOf(r, answered, hints, guide.ended);
   return (
     <>
       {stage.undecided && props.fallback}
@@ -156,10 +157,11 @@ export function TodayIntro(props: {
           token={token}
           counts={COUNTS_KEY}
           onOpen={props.onOpen}
-          onLeave={leave}
+          onLeave={guide.leave}
         />
       )}
       <Shown shown={stage.intro}>
+        {guide.failed && <GuideEndNote error={guide.failed} onRetry={guide.retry} />}
         <Notes
           api={api}
           token={token}
