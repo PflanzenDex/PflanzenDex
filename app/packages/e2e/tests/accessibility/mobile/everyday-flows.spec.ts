@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import {
+  dismissToast,
   expect,
   openFirstPlant,
   proposeSpecies,
@@ -19,17 +20,6 @@ const PHOTO = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
   "base64",
 );
-
-/**
- * A confirmation toast lies over the bottom of the phone, where the main actions and the bottom bar stand, and stays about
- * 6 s. The keeper closes it with its button (US-QS-07) instead of the test waiting for it to leave by itself.
- */
-async function dismissToast(page: Page, text: string): Promise<void> {
-  const toast = page.getByRole("status").filter({ hasText: text });
-  await expect(toast).toBeVisible();
-  await toast.getByRole("button", { name: "Meldung schließen" }).click();
-  await expect(toast).toBeHidden();
-}
 
 /** The view fits the width: the page and its main area do not scroll sideways (US-QS-07, WCAG 1.4.10). */
 async function expectFitsWidth(page: Page, view: string): Promise<void> {

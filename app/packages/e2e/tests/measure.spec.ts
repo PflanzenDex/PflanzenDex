@@ -1,5 +1,5 @@
 import { axeReport } from "../support/axe";
-import { openFirstPlant, signIn, expect, test } from "../support/fixtures";
+import { dismissToast, openFirstPlant, signIn, expect, test } from "../support/fixtures";
 import type { Page } from "@playwright/test";
 
 // Core flow R1: record a measurement (US-WAC-01), signed in, against the real API and database.
@@ -27,17 +27,6 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
     .click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
   await dismissToast(page, "ist angelegt");
-}
-
-/**
- * A confirmation toast lies over the bottom of a phone, where "Messung speichern" stands, and stays about 6 s. The keeper
- * closes it with its button (US-QS-07) instead of the test waiting for it to leave by itself.
- */
-async function dismissToast(page: Page, text: string): Promise<void> {
-  const toast = page.getByRole("status").filter({ hasText: text });
-  await expect(toast).toBeVisible();
-  await toast.getByRole("button", { name: "Meldung schließen" }).click();
-  await expect(toast).toBeHidden();
 }
 
 /** From any view: the Sammlung, then the measuring view of the first plant. */

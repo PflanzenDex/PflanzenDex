@@ -44,6 +44,18 @@ export async function showLocations(page: Page): Promise<void> {
   if (await segment.isVisible()) await segment.click();
 }
 
+/**
+ * A confirmation toast lies over the bottom of a phone, where the main actions of a view and the bottom bar stand, and
+ * stays about 6 s; under the pointer it stays for good. The keeper closes it with its button (US-QS-07) instead of the
+ * test waiting for it to leave by itself.
+ */
+export async function dismissToast(page: Page, text: string): Promise<void> {
+  const toast = page.getByRole("status").filter({ hasText: text });
+  await expect(toast).toBeVisible();
+  await toast.getByRole("button", { name: "Meldung schließen" }).click();
+  await expect(toast).toBeHidden();
+}
+
 /** The "+" of the locations: opens the create layer of a location (US-QS-19). */
 export async function addLocation(page: Page): Promise<void> {
   await showLocations(page);

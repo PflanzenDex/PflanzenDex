@@ -1,6 +1,7 @@
 import { axeReport } from "../support/axe";
 import {
   addLocation,
+  dismissToast,
   openLocations,
   showLocations,
   signInAtLight,
@@ -58,6 +59,8 @@ test.describe("US-LIC-05 locations and light zones", () => {
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await form.getByLabel("Name").fill("Regal");
     await form.getByRole("button", { name: "Standort anlegen" }).click();
+    // On a phone the toast lies over "Hinweise (1)" (issue 1836).
+    await dismissToast(page, "Standort angelegt");
     await page.getByRole("button", { name: "Hinweise (1)" }).click();
     await expect(page.getByRole("heading", { level: 2, name: "Hinweise" })).toBeVisible();
     await expect(page.getByText("Weise dem Standort eine Lichtzone zu.")).toBeVisible();
