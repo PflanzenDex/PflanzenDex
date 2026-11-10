@@ -92,10 +92,9 @@ async function settleMeasurementSave(page: Page): Promise<void> {
   const partial = page.getByText(PHOTO_NOT_STORED);
   await expect(saved.or(partial)).toBeVisible();
   if (await partial.isVisible()) {
-    const notice = partial.locator(
-      "xpath=ancestor::*[.//button[normalize-space()='Meldung schließen']][1]",
-    );
-    await notice.getByRole("button", { name: "Meldung schließen" }).click();
+    // The error toast has no role: it sits in the assertive region, its close button is named by aria-label.
+    const notice = page.locator('[aria-live="assertive"]').filter({ has: partial });
+    await notice.getByRole("button", { name: "Meldung schließen" }).click({ timeout: 10_000 });
     await expect(partial).toBeHidden();
     return;
   }
