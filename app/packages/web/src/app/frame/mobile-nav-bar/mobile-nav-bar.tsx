@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ellipsis } from "lucide-react";
+import { Clock, Ellipsis, Lock } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { Button } from "@/shared/ui/button/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
@@ -24,6 +24,26 @@ const BAR_SLOTS = 5;
  * screen (from about 110 % text at 360 px); at 100 % text the bar keeps its one line of labels.
  */
 const barText = "flex max-w-full flex-col items-center gap-1 @max-[21.75rem]:sr-only";
+
+/**
+ * The mark of a destination that is not open yet, in the bar (US-ONB-05, issue 1830): a small lock ("Noch gesperrt")
+ * or clock ("Bald") on the icon, and the words for assistive technology only. Written out below the label the words
+ * wrapped, the bar grew to three lines (93 px instead of 59 px) and "Heute" lost that room on a phone. Plain, no colour
+ * alarm and no motion (FR-ONB-08); the side navigation has the room and keeps the words.
+ */
+function LockMark({ note }: { note: string | undefined }) {
+  if (!note) return null;
+  const Icon = note === "Bald" ? Clock : Lock;
+  return (
+    <span
+      aria-hidden="true"
+      data-lock-mark={note === "Bald" ? "soon" : "locked"}
+      className="absolute right-1.5 -top-1 flex size-4 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
+    >
+      <Icon className="size-2.5" strokeWidth={2.5} />
+    </span>
+  );
+}
 
 /**
  * The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). Choosing a
@@ -109,11 +129,14 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
         >
           {({ isActive: active }) => (
             <>
-              <span className={stackedPill(active)}>{item.icon}</span>
+              <span className="relative flex max-w-full justify-center">
+                <span className={stackedPill(active)}>{item.icon}</span>
+                <LockMark note={item.note} />
+              </span>
               <span className={barText}>
                 <span className="whitespace-nowrap">{item.label}</span>
-                <NavNote text={item.note} />
               </span>
+              {item.note ? <span className="sr-only">, {item.note}</span> : null}
             </>
           )}
         </NavLink>
