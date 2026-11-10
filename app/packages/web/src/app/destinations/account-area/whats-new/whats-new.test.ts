@@ -41,15 +41,26 @@ function unseenAt(unseen: readonly number[]) {
 const textsOf = (entries: readonly { text: string }[]) => entries.map((entry) => entry.text);
 
 describe("US-DEV-06 the changelog lines", () => {
-  it("US-DEV-06 the unreleased lines of news.de.json come last, in the file's order (newest first)", () => {
-    const legacy = NEWS_ENTRIES.slice(NEWS_ENTRIES.length - news.unreleased.length);
+  // The lines no version holds yet (fragments and the unreleased lines of the file); none right after a news release.
+  // Only the first line of a group carries its heading, so the open lines end where the first version begins.
+  const firstReleased = NEWS_ENTRIES.findIndex((entry) => entry.heading?.version != null);
+  const open = NEWS_ENTRIES.slice(0, firstReleased === -1 ? NEWS_ENTRIES.length : firstReleased);
+
+  it("US-DEV-06 the unreleased lines of news.de.json come last of the open lines, in the file's order (newest first)", () => {
+    const legacy = open.slice(open.length - news.unreleased.length);
     expect(legacy.map((entry) => entry.text)).toEqual(news.unreleased);
-    expect(NEWS_ENTRIES[0]?.heading).toEqual({ version: null, date: null });
+    // The open lines lead the list under the heading without a version; right after a news release there are none
+    // and the newest version leads.
+    expect(NEWS_ENTRIES[0]?.heading).toEqual(
+      open.length > 0
+        ? { version: null, date: null }
+        : { version: news.versions[0]?.version, date: news.versions[0]?.date },
+    );
   });
 
   it("US-DEV-06 every fragment file of news/unreleased is a line of the list", () => {
     const files = Object.keys(import.meta.glob("../../../../news/unreleased/*.json"));
-    expect(NEWS_ENTRIES.length - news.unreleased.length).toBe(files.length);
+    expect(open.length - news.unreleased.length).toBe(files.length);
   });
 });
 
