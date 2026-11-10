@@ -107,6 +107,36 @@ describe("US-DEV-06 navigation", () => {
     expect(link.textContent).toContain("Noch gesperrt");
   });
 
+  it("US-ONB-05 US-QS-14 in the bottom bar a locked destination carries a lock, not a second line of words (issue 1830)", () => {
+    const show = (mark: "Noch gesperrt" | "Bald") =>
+      render(
+        <MemoryRouter>
+          <AppShell items={navItems({ locks: { friends: mark } })}>
+            <p>Inhalt</p>
+          </AppShell>
+        </MemoryRouter>,
+      );
+    const locked = show("Noch gesperrt");
+    const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
+    // The name still says it; the words are for assistive technology only, so the bar keeps one line of labels.
+    const link = bar.getByRole("link", { name: /^Freunde\s*, Noch gesperrt$/ });
+    const words = within(link).getByText(/Noch gesperrt/);
+    expect(words.classList).toContain("sr-only");
+    const mark = link.querySelector("[data-lock-mark]");
+    expect(mark?.getAttribute("data-lock-mark")).toBe("locked");
+    expect(mark?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.querySelector("svg")).toBeTruthy();
+    // An open destination has no mark.
+    expect(bar.getByRole("link", { name: "Heute" }).querySelector("[data-lock-mark]")).toBeNull();
+    locked.unmount();
+    show("Bald");
+    const soon = within(screen.getByRole("navigation", { name: "Navigation unten" })).getByRole(
+      "link",
+      { name: /^Freunde\s*, Bald$/ },
+    );
+    expect(soon.querySelector("[data-lock-mark]")?.getAttribute("data-lock-mark")).toBe("soon");
+  });
+
   it("US-QS-14 Prüfliste and Betreiber belong to the group Verwaltung, no other destination has a group (issue 1093)", () => {
     const items = navItems({ reviewer: true, operator: true });
     expect(items.filter((i) => i.group).map((i) => [i.label, i.group])).toEqual([
