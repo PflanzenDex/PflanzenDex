@@ -46,6 +46,31 @@ function Example({ at = "/" }: { at?: string }) {
   );
 }
 
+/** The page as the app marks it: RouteFocus sets `data-input` on every click and key press (US-QS-15, issue 1714). */
+function TitleSheet() {
+  return (
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={["/"]}>
+        <main id="inhalt" tabIndex={-1}>
+          <RouteFocus titleOf={() => "Start"} />
+          <h1>Start</h1>
+          <LayerOpener id="licht">Licht</LayerOpener>
+          <LayerSheet id="licht" title="Lichtzonen">
+            <p>Inhalt</p>
+          </LayerSheet>
+        </main>
+      </MemoryRouter>
+    </AnnouncerProvider>
+  );
+}
+
+/** The focus ring classes that do not wait for keyboard input: a pointer user must get none (US-QS-15, issue 1714). */
+function ungatedRing(className: string): string[] {
+  return className
+    .split(/\s+/)
+    .filter((name) => name.includes("ring") && !name.startsWith("keyboard-input:"));
+}
+
 /** A layer that is mounted only while the address names it, as the care profile of a plant is (US-QS-15, issue 1661). */
 function MountedOnlyLayer() {
   const [params] = useSearchParams();
@@ -335,6 +360,29 @@ describe("LayerSheet (US-QS-15)", () => {
       );
       unmount();
     }
+  });
+
+  it("US-QS-15 · DS-37 issue 1714 a sheet title that takes the focus by script shows the focus ring after keyboard input", async () => {
+    setViewportWidth(360);
+    render(<TitleSheet />);
+    screen.getByRole("button", { name: "Licht" }).focus();
+    await userEvent.keyboard("{Enter}");
+    const title = await screen.findByRole("heading", { name: "Lichtzonen" });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(document.documentElement.getAttribute("data-input")).toBe("keyboard");
+    expect(title.className).toContain("keyboard-input:focus-visible:ring-2");
+    expect(title.className).toContain("keyboard-input:focus-visible:ring-ring");
+    expect(title.className).toContain("focus-visible:outline-none");
+  });
+
+  it("US-QS-15 · DS-37 issue 1714 a sheet title that takes the focus after a click draws no ring: every ring class waits for keyboard input", async () => {
+    setViewportWidth(360);
+    render(<TitleSheet />);
+    await userEvent.click(screen.getByRole("button", { name: "Licht" }));
+    const title = await screen.findByRole("heading", { name: "Lichtzonen" });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(document.documentElement.getAttribute("data-input")).toBe("pointer");
+    expect(ungatedRing(title.className)).toEqual([]);
   });
 
   it("US-QS-15: a layer that starts with a text field keeps the focus in it, also in the desktop pane", async () => {

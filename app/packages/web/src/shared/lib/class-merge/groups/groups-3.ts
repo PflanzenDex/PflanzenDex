@@ -21,6 +21,7 @@ import {
 export const GROUPS_3: Config<string, string>["classGroups"] = {
   "shadow-color": [{ shadow: scaleColor() }],
   "ring-w": [{ ring: scaleBorderWidth() }],
+  "ring-w-inset": ["ring-inset"],
   "ring-color": [{ ring: scaleColor() }],
   "ring-offset-w": [{ "ring-offset": [isNumber, isArbitraryLength] }],
   "ring-offset-color": [{ "ring-offset": scaleColor() }],

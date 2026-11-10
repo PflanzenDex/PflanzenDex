@@ -15,8 +15,14 @@ export type SheetPanelProps = Omit<
   onOpenChange: (open: boolean) => void;
 };
 
-/** The title takes the focus by script, so it draws no browser outline, as the layer heading does (US-QS-15, F15). */
-const TITLE = "px-4 pt-3 text-lg font-semibold focus-visible:outline-none";
+/**
+ * The title takes the focus by script, so it draws no browser outline, as the layer heading does (US-QS-15, F15). Its
+ * focus ring shows only after keyboard input (DS-37, issue 1714): a pointer user gets no frame, a keyboard user the ring.
+ * The ring sits inside the title's box, because the sheet spans the full width of the window and an outer ring would be
+ * cut off at its edges.
+ */
+const TITLE =
+  "px-4 pt-3 text-lg font-semibold focus-visible:outline-none keyboard-input:focus-visible:ring-2 keyboard-input:focus-visible:ring-inset keyboard-input:focus-visible:ring-ring";
 
 /**
  * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): drag handle, safe-area padding, max height 90dvh.
