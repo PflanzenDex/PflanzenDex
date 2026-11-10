@@ -37,6 +37,7 @@ export function DiscoverPage(props: {
 }) {
   const { api, token, embedded, zone } = props;
   const [deck, setDeck] = useState(1);
+  // Not `fresh`: a return to the view shows the last deck at once and the new one replaces it (US-ENT-01, issue 1652).
   const load = useCallback(
     (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
     [api, deck, zone],
@@ -64,7 +65,6 @@ export function DiscoverPage(props: {
         loadingText={t("page.loading")}
         {...(embedded ? {} : { heading: t("page.title") })}
         loadingFallback={<DiscoverPageSkeleton label={t("page.loading")} />}
-        fresh
       >
         {(value: SuggestionDeck) => (
           <>

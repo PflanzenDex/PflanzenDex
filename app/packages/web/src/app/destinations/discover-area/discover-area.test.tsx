@@ -275,3 +275,65 @@ describe("US-QS-14 issue 1697 · Entdecken shows its shaped skeleton once", () =
     expect(loadingStatuses()).toHaveLength(0);
   });
 });
+
+/** A deck with one card of the species, to tell two decks apart on screen (US-ENT-01). */
+function deckOfOne(species: string, germanName: string) {
+  return {
+    deck: 1,
+    suggestions: [
+      {
+        species,
+        germanName,
+        summary: "Eine robuste Zimmerpflanze.",
+        family: "Asparagaceae",
+        lightZone: 3,
+        difficulty: 2,
+        imageUrl: "https://upload.example/card.jpg",
+        sourceUrl: "https://de.wikipedia.org/wiki/Aspidistra",
+        attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+        reasons: ["Diese Art hast du noch nicht gefangen."],
+      },
+    ],
+    empty: null,
+    zoneFilter: null,
+  };
+}
+
+describe("US-ENT-01 issue 1652 · Vorschläge keep the last deck while they refetch", () => {
+  it("US-ENT-01 issue 1652 · back from Katalog the last deck is on screen at once while the refetch runs, then the new deck replaces it", async () => {
+    let decks = 0;
+    let answerSecond: () => void = () => undefined;
+    const second = new Promise<void>((done) => {
+      answerSecond = done;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/discover/suggestions") {
+          decks += 1;
+          if (decks === 1) return response(200, deckOfOne("Aspidistra elatior", "Schusterpalme"));
+          // The refetch answers only when the test lets it: the old deck must be on screen meanwhile.
+          await second;
+          return response(200, deckOfOne("Ficus lyrata", "Geigenfeige"));
+        }
+        if (path === "/species") return response(200, { species: [] });
+        return response(200, {});
+      }),
+    );
+    renderAt("/discover");
+    expect(await screen.findByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
+    await userEvent.click(radio("Katalog"));
+    await catalogShown();
+    await userEvent.click(radio("Vorschläge"));
+    // Back on Vorschläge: the last deck is there at once, with no loading status (DS-09, DS-11, DS-57).
+    expect(screen.getByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
+    expect(loadingStatuses()).toHaveLength(0);
+    await waitFor(() => expect(decks).toBe(2));
+    expect(screen.getByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
+    expect(loadingStatuses()).toHaveLength(0);
+    answerSecond();
+    expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Aspidistra elatior" })).toBeNull();
+  });
+});
