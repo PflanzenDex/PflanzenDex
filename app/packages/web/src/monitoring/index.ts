@@ -13,3 +13,5 @@ export const WaterAction = lazyPage(() =>
 export { loadLastFertilized, markFertilized, markWatered } from "./api/reminders-api";
 // The skeleton of the watering list in the shape of its rows, the layer's skeleton on "Heute" (US-QS-14, issue 1697).
 export { WateringListSkeleton } from "./watering/watering-list/watering-list.skeleton";
+// The plants due for watering as a count, the same request and key as the list: the app icon's number (US-QS-29).
+export { useDueCount } from "./api/due-count/due-count";

@@ -373,7 +373,8 @@ describe("US-ACC-01 App", () => {
 
     await userEvent.click(tab("Konto"));
     expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
-    expect(await screen.findByRole("link", { name: /Lena/ })).toBeTruthy();
+    // The profile row names the account by name and e-mail; the settings row also names it (once the profile is loaded).
+    expect(await screen.findByRole("link", { name: /lena@example\.test/ })).toBeTruthy();
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
 
