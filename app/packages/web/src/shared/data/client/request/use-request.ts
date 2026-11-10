@@ -25,6 +25,11 @@ export type Request<T> = {
    * does not set it (react-query's `isPlaceholderData`, not `isFetching`).
    */
   placeholder: boolean;
+  /**
+   * `value` is on screen while a newer answer of the same key is on its way (a refetch, react-query's `isFetching`).
+   * A view that decides on a copy of an earlier visit waits for the answer before it trusts the copy (issue 1795).
+   */
+  refreshing: boolean;
   retry: () => void;
 };
 
@@ -72,6 +77,7 @@ export function useRequest<T>(props: {
     error: failure,
     offline,
     placeholder: q.isPlaceholderData,
+    refreshing: q.isFetching && q.data !== undefined,
     retry,
   };
 }

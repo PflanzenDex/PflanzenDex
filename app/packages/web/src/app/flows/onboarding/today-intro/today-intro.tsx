@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useLayoutEffect, useState, type ReactNode } from "react";
 import { isNewAccount, type OnboardingCounts } from "@pflanzendex/core";
 import { loadSpecimenCount } from "../../../../collection";
 import { useFeature, useRequest, type Request } from "../../../../shared/data";
@@ -33,16 +33,37 @@ function useCounts(api: string, token: Token): Request<OnboardingCounts> {
   });
 }
 
-/** Which part of the introduction shows now (issue 1244): nothing before the count, the guide in place of the tasks. */
+/**
+ * Whether this visit has an answer of the count (issue 1795). The count of an earlier visit is served from the cache at
+ * once, but it may predate a plant saved since, and a refresh that failed leaves it behind; neither is an answer. The
+ * answer stays once it came, so a later refresh does not take the guide away while it is open.
+ */
+function useAnswered(count: Request<OnboardingCounts>): boolean {
+  const fresh = count.status === "ready" && !count.offline && !count.refreshing;
+  const [seen, setSeen] = useState(false);
+  useLayoutEffect(() => {
+    if (fresh) setSeen(true);
+  }, [fresh]);
+  return seen || fresh;
+}
+
+/**
+ * Which part of the introduction shows now (issue 1244): nothing before the count, the guide in place of the tasks. A new
+ * account is judged by the count only once this visit has it (`answered`, issue 1795): until then a copy that says "new"
+ * waits while its refresh is on its way, and a copy that a failed refresh left behind shows the tasks.
+ */
 function stageOf(
-  pending: boolean,
-  counts: OnboardingCounts | undefined,
+  count: Request<OnboardingCounts>,
+  answered: boolean,
   hints: HintState | "failed" | null,
   ended: boolean,
 ) {
-  const newAccount = counts !== undefined && isNewAccount(counts);
+  const counts = count.value;
+  const copyNew = counts !== undefined && isNewAccount(counts);
+  const waiting = copyNew && !answered && count.refreshing;
+  const newAccount = copyNew && answered;
   // Undecided: the count, or the hints a new account is judged by, are still loading.
-  const undecided = pending || (newAccount && hints === null);
+  const undecided = count.status === "pending" || waiting || (newAccount && hints === null);
   const guide = newAccount && hints !== null && !ended;
   return {
     undecided,
@@ -121,9 +142,10 @@ export function TodayIntro(props: {
   const { api, token } = props;
   const social = useFeature("social");
   const r = useCounts(api, token);
+  const answered = useAnswered(r);
   const [hints, setHints] = useHints(api, token, r.value);
   const [ended, leave] = useGuideEnd(api, token, hints);
-  const stage = stageOf(r.status === "pending", r.value, hints, ended);
+  const stage = stageOf(r, answered, hints, ended);
   return (
     <>
       {stage.undecided && props.fallback}
