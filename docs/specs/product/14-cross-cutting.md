@@ -647,6 +647,24 @@ Related: FR-SOZ-03 (the friends' last loaded copy with its "Stand" date), US-ACC
 
 State of implementation (issue 1644): the offline state is an overlay bar above the bottom navigation (`OverlayNotice`, DS-54) that does not change the classes or the layout of `main`; the buffered and delivered notes of the announcer are overlays too. The request state (DS-09) keeps the cached rows with a note when the device is offline after an earlier load (tests named US-QS-30 in `request-state.test.tsx`). Not built yet: a start of the shell without a network and the queue of writes (issue 1687). The worker of US-QS-27 takes new versions only and has no offline mode.
 
+### US-QS-31 · Empty states carry an illustration that fits the place · ⬜ new
+
+As a **plant keeper** I want an empty view to show a drawing of what belongs there, so that I see at a glance what the place is for and the app does not look unfinished (P-09, US-QS-07).
+
+Decision (owner, issue 1833, 2026-11-10, after the phone test of release 0.3.0): empty states get proper illustrations. Until now every empty state shows the same mark, the sprout emoji in a tile; the device draws an emoji, so it differs from phone to phone, and it says nothing about the place. Release R2 (`16-releases-and-decisions.md`). Open for the owner before building: the drawing style (proposal: the line drawing of the sign-in page, ADR 0011), who draws the set, and the final list of motifs.
+
+Acceptance criteria:
+
+- Given a view or a list that is empty (no plants, no wishes, no equipment, no measurements, no friends, nothing due, no hits), when its empty state shows, then it carries a drawing from one family: one style, one line weight, the colours of the theme. The drawing is part of the app, not a character of the device, so it looks the same on every device.
+- Given the kinds of places, then each kind has its own motif (starting list, assumption): plants and collection, species and Pokédex, wishes, equipment, measurements and course, treatments and watering, friends and swapping, suggestions, a search without hits, "nothing due" on "Heute", and one neutral motif for every other place. No empty state shows a motif of another kind.
+- Given an empty state, then title, text and next action stay as they are (P-09, DS-26); the drawing adds nothing that the text does not say and is hidden from assistive technology (US-QS-09).
+- Given light or dark mode, then the drawing follows the theme; in forced colors it uses the system colours and stays visible (US-QS-12). It has no motion (FR-ONB-08, US-QS-10), no numbers and no invented facts (P-08).
+- Given a phone of 360 x 640 px (starting value, assumption), when an empty state shows on a page, then drawing, title, text and action fit the window without page scroll and the action stays in the lower half (US-QS-07); the drawing is at most 96 px high there (starting value, assumption). In a layer, and in the compact form below a notice, the state shows no drawing.
+- Given an error state, then it does not carry a drawing of the family: it keeps its own mark, so a failure never looks like an empty place (P-10).
+- Given the loading budget (NFR-12), then the drawings are loaded with their view, not with the first screen, and all of them together stay below 30 kB compressed (starting value, assumption).
+
+Not part of this story: the placeholder of a card without an image (collector card, suggestion card) and the loading sprout (US-QS-07); they keep their marks until a story of their own.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |
