@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PrivacySection } from "./privacy-section";
 
 beforeAll(() => {
@@ -81,10 +82,13 @@ afterEach(() => {
   saved.mockClear();
 });
 
+// The section sits in the frame of the account area (US-QS-15), so a layer opens in its pane.
 const show = () =>
   render(
     <MemoryRouter>
-      <PrivacySection api="http://api" token={token} />
+      <LayerHost>
+        <PrivacySection api="http://api" token={token} />
+      </LayerHost>
     </MemoryRouter>,
   );
 const exportRow = () => screen.findByRole("button", { name: /^Meine Daten herunterladen/ });

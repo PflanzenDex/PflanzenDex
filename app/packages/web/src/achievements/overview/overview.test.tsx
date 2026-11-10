@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AchievementsOverviewSection } from "./overview";
 
 beforeAll(() => {
@@ -44,9 +45,12 @@ function serve(body: unknown, at = "/?sheet=earned") {
     "fetch",
     vi.fn<typeof fetch>(async () => response(200, body)),
   );
+  // The section sits in the frame of the account area (US-QS-15), so the layer opens in its pane.
   render(
     <MemoryRouter initialEntries={[at]}>
-      <AchievementsOverviewSection api="http://api" token={token} />
+      <LayerHost>
+        <AchievementsOverviewSection api="http://api" token={token} />
+      </LayerHost>
     </MemoryRouter>,
   );
 }

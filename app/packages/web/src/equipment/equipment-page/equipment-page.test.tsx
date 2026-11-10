@@ -7,14 +7,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EquipmentPage } from "./equipment-page";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
-// The toast of an undo needs the provider of the app shell above the page (US-QS-07).
+// The toast of an undo needs the provider of the app shell above the page (US-QS-07). The page sits in the frame of
+// the collection area (US-QS-15), so a layer opens in its pane.
 const view = (ui: ReactElement, url = "/") =>
   render(
     <ToastProvider>
-      <MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[url]}>
+        <LayerHost>{ui}</LayerHost>
+      </MemoryRouter>
     </ToastProvider>,
   );
 

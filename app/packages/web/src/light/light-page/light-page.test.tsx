@@ -5,14 +5,17 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LightPage } from "./light-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
-/** The page lives inside the app shell, which owns the toast provider (US-QS-14). */
+/** The page lives inside the app shell, which owns the toast provider (US-QS-14), and inside the frame of its destination (US-QS-15). */
 const render = (ui: React.ReactElement) =>
   plainRender(
     <MemoryRouter>
-      <ToastProvider>{ui}</ToastProvider>
+      <ToastProvider>
+        <LayerHost>{ui}</LayerHost>
+      </ToastProvider>
     </MemoryRouter>,
   );
 
