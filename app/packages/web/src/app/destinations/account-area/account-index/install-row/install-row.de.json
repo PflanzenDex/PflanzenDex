@@ -1,0 +1,6 @@
+{
+  "install": "App installieren",
+  "iosTitle": "App auf den Home-Bildschirm legen",
+  "iosSteps": "In Safari: Teilen → Zum Home-Bildschirm",
+  "failed": "Der Browser hat die Installation nicht geöffnet. Du findest sie auch im Menü des Browsers."
+}

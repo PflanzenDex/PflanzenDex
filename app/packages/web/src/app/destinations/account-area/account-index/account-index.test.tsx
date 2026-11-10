@@ -7,6 +7,13 @@ import { FeaturesProvider } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AccountIndex } from "./account-index";
 
+// The install offer of the browser is set per test (US-QS-28); the store itself is tested in install-prompt.test.ts.
+const install = vi.hoisted(() => ({ offer: "none" as "promptable" | "ios-guide" | "none" }));
+vi.mock("@/shared/platform/device/service-worker/install-prompt", () => ({
+  useInstallOffer: () => install.offer,
+  promptInstall: async () => "accepted",
+}));
+
 const account = {
   id: "1",
   email: "lena@example.test",
@@ -205,5 +212,33 @@ describe("US-ONB-09 the keeper's switch achievement_views in the index", () => {
     show({ achievements: true });
     const row = await screen.findByRole("link", { name: /^Erfolge/ });
     await waitFor(() => expect(row.textContent).toContain("3"));
+  });
+});
+
+describe("US-QS-28 the install row of the index", () => {
+  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden…", async () => {
+    install.offer = "promptable";
+    fakeServer();
+    show();
+    const entry = await screen.findByRole("button", { name: "App installieren" });
+    const signOut = screen.getByRole("button", { name: "Abmelden…" });
+    expect(entry.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("US-QS-28 on Safari on an iPhone or iPad the index shows the guide row in place of the install row", async () => {
+    install.offer = "ios-guide";
+    fakeServer();
+    show();
+    expect(await screen.findByText("App auf den Home-Bildschirm legen")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "App installieren" })).toBeNull();
+  });
+
+  it("US-QS-28 with no offer the index has no install row and its list keeps its rows", async () => {
+    install.offer = "none";
+    fakeServer();
+    show();
+    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(within(list).queryByRole("button", { name: "App installieren" })).toBeNull();
+    expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();
   });
 });

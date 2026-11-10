@@ -5,7 +5,11 @@ import { App } from "./flows";
 import { createQueryClient } from "../shared/data";
 import { TransitionRouter } from "../shared/platform/routing/route-transition/transition-router/transition-router";
 import { scheduleAppWorker } from "../shared/platform/device/service-worker/register";
+import { startInstallPrompt } from "../shared/platform/device/service-worker/install-prompt";
 import "../styles/tokens.css";
+
+// The browser's install event can come before Konto mounts, so the app keeps it from its start (US-QS-28, issue 1690).
+startInstallPrompt();
 
 const queryClient = createQueryClient();
 const root = document.getElementById("root");
