@@ -21,6 +21,7 @@ import {
   signsLayerId,
   useRepotPlan,
 } from "../../../../markers/repot/repot-plan/repot-plan";
+import { CareProfileSectionSkeleton } from "../../../../care-profile-page/care-profile-page.skeleton";
 import table from "./plant-care-tab.de.json";
 
 const t = texts(table);
@@ -92,12 +93,11 @@ function ProfilePart({ card }: { card: SpecimenCard }) {
 export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
   return (
     <LayerSheet id={careProfileLayerId(props.card.id)} title={t("profile.layerTitle")}>
+      {/* The profile's own shape while its chunk loads (US-QS-14): the layer does not move when the profile arrives. */}
       <Suspense
         fallback={
           <DelayedSkeleton>
-            <p role="status" className="text-sm text-muted-foreground">
-              {t("profile.loading")}
-            </p>
+            <CareProfileSectionSkeleton label={t("profile.loading")} />
           </DelayedSkeleton>
         }
       >

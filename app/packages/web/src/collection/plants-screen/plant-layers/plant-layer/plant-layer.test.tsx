@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -445,4 +446,46 @@ describe("US-QS-14 issue 1697 · the plant layer show their shaped skeleton once
       <PlantLayerSkeleton label={table["layer.loading"]} />,
       table["layer.loading"],
     ));
+});
+
+/** A slot part that is still loading until `release` runs: it suspends with its promise, as a lazy part does (US-QS-14). */
+function pendingPart(content: ReactNode) {
+  let done = false;
+  let release: () => void = () => undefined;
+  const ready = new Promise<void>((resolve) => {
+    release = () => {
+      done = true;
+      resolve();
+    };
+  });
+  const Part = () => {
+    if (!done) throw ready;
+    return content;
+  };
+  return { Part, release };
+}
+
+describe("US-QS-14 issue 1784 · the plant layer slot shows the shape of its part while it loads", () => {
+  it("US-QS-14 issue 1784 · the growth slot shows its one-line shape after the delay, not a bare status text", async () => {
+    setViewportWidth(360);
+    const { Part, release } = pendingPart(<p>Trend: stabil</p>);
+    show([card()], { slots: { ...SLOTS, growth: () => <Part /> } }, "/?sheet=plant-e1");
+    expect(screen.queryByRole("status")).toBeNull();
+    const status = await screen.findByRole("status");
+    expect(status.querySelectorAll(".animate-pulse")).toHaveLength(1);
+    await act(async () => release());
+    expect(await screen.findByText("Trend: stabil")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-14 issue 1784 · the care slot shows the shape of its treatments after the delay, not a bare status text", async () => {
+    setViewportWidth(360);
+    const { Part, release } = pendingPart(<p>Behandlungen der Pflanze</p>);
+    show([card()], { slots: { ...SLOTS, care: () => <Part /> } }, "/?sheet=plant-e1&tab=pflege");
+    expect(screen.queryByRole("status")).toBeNull();
+    const status = await screen.findByRole("status");
+    expect(status.querySelectorAll(".animate-pulse").length).toBeGreaterThan(1);
+    await act(async () => release());
+    expect(await screen.findByText("Behandlungen der Pflanze")).toBeTruthy();
+  });
 });
