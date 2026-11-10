@@ -31,3 +31,5 @@ export const PlantCare = lazyPage(() =>
 export { OpenTreatmentsSkeleton } from "./treatments/open-treatments/open-treatments.skeleton";
 // The skeleton of the care phases, the mode's skeleton of "Sammlung" grouped by phase (US-QS-14, issue 1727).
 export { CarePhasesSkeleton } from "./phases/care-phases-page/care-phases-page.skeleton";
+// The open treatments as a count, the same request and key as the layer: the app icon's number (US-QS-29).
+export { useOpenCount } from "./shared/api/open-count/open-count";

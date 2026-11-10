@@ -3,7 +3,10 @@ import { useLocation, useNavigate } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import { apiUrl, type State, type useSession } from "@/account";
 import { useFeature } from "@/shared/data";
-import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
+import {
+  ChunkErrorBoundary,
+  RouteBoundary,
+} from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { AppShell } from "@/app/frame/app-shell/app-shell";
 import {
@@ -20,6 +23,11 @@ import { SignedInFeatures } from "@/app/flows/unlock/model/keeper-switches/keepe
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const AppRoutes = lazyPage(() => import("@/app/routes").then((m) => ({ default: m.AppRoutes })));
+
+/** The number of the app icon (US-QS-29): its own chunk, mounted once for the signed-in shell; it draws nothing. */
+const AppBadge = lazyPage(() =>
+  import("./app-badge/app-badge").then((m) => ({ default: m.AppBadge })),
+);
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
@@ -98,6 +106,12 @@ export function SignedInFrame({
   return (
     <UnlocksProvider api={api} token={s.token}>
       <SignedInFeatures features={account.features}>
+        {/* The icon is not essential: a failure of its chunk or its render shows nothing and is logged (P-10), it never ends the shell. */}
+        <ChunkErrorBoundary resetKey="app-badge" errorView={() => null}>
+          <Suspense fallback={null}>
+            <AppBadge api={api} token={s.token} />
+          </Suspense>
+        </ChunkErrorBoundary>
         <SignedInShell account={account}>
           {/* The width cap of the page is lifted for a destination with layers: its frame takes the main column and caps only its content, so a pane fits beside it (US-QS-15, #1027). */}
           <div className="mx-auto w-full max-w-180 has-[[data-layer-host]]:max-w-none">

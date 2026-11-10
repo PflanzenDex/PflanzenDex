@@ -74,3 +74,5 @@ export { CareProfileSectionSkeleton } from "./care-profile-page/care-profile-pag
 // The skeletons of the plants and of the species comparison, the mode's skeletons on "Sammlung" (US-QS-14, issue 1727).
 export { CollectionPageSkeleton } from "./collection-page/collection-page.skeleton";
 export { DifficultyPageSkeleton } from "./other-pages/difficulty-page/difficulty-page.skeleton";
+// The hints about incomplete specimens as a count, the same request and key as the layer: the app icon's number (US-QS-29).
+export { useHintCount } from "./insights/api/hint-count/hint-count";
