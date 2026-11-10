@@ -163,8 +163,8 @@ async function tickOffTreatment(page: Page): Promise<void> {
   await expect(page.getByText(/„Wollläuse“ als erledigt eingetragen am/)).toBeVisible();
   await page.getByRole("button", { name: "Behandlung planen" }).first().focus();
   await page.keyboard.press("Escape");
+  // The tick-off confirms in the layer's own text (asserted above), not with a toast.
   await expect(page.getByRole("button", { name: "Behandlung planen" }).first()).toBeHidden();
-  await dismissToast(page, "als erledigt eingetragen");
 }
 
 /** 4. Open Heute from another view: its entry in the bottom bar is the action that opens the list. */
