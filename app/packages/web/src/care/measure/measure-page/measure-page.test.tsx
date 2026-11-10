@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import type { GrowthMoments } from "@/achievements";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { MeasurePage } from "./measure-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
@@ -109,10 +110,13 @@ function fakeServer(
   return { posts, photoPosts, loads: () => loadAttempts };
 }
 
+// The page sits in the frame of the collection area (US-QS-15), so the course layer opens in its pane.
 const show = (token: () => Promise<string | undefined> = async () => "tok", onBack = vi.fn()) =>
   render(
     <MemoryRouter>
-      <MeasurePage api="http://api" token={token} specimen={specimen} onBack={onBack} />
+      <LayerHost>
+        <MeasurePage api="http://api" token={token} specimen={specimen} onBack={onBack} />
+      </LayerHost>
     </MemoryRouter>,
   );
 
@@ -329,12 +333,14 @@ describe("US-WAC-01 Seite Messen", () => {
     render(
       <AnnouncerProvider>
         <MemoryRouter>
-          <MeasurePage
-            api="http://api"
-            token={async () => "tok"}
-            specimen={specimen}
-            onBack={vi.fn()}
-          />
+          <LayerHost>
+            <MeasurePage
+              api="http://api"
+              token={async () => "tok"}
+              specimen={specimen}
+              onBack={vi.fn()}
+            />
+          </LayerHost>
         </MemoryRouter>
       </AnnouncerProvider>,
     );

@@ -6,6 +6,7 @@ import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
 import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
@@ -68,21 +69,24 @@ type Extra = Partial<Parameters<typeof PlantsScreen>[0]>;
 function show(cards: SpecimenCard[], extra: Extra = {}, at = "/") {
   return render(
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
-      <PlantsScreen
-        cards={cards}
-        plants={pagesOf(cards)}
-        summary={summaryOf(cards)}
-        distribution={EMPTY_DISTRIBUTION.distribution}
-        archived={[]}
-        photoAccess={{ api: "http://api", token: async () => "tok" }}
-        onSpeciesChoose={vi.fn()}
-        onManage={vi.fn()}
-        onRestore={vi.fn()}
-        onArchivedCatchDate={vi.fn()}
-        embedded
-        slots={SLOTS}
-        {...extra}
-      />
+      {/* The screen sits in the frame of the collection area (US-QS-15), so a layer opens in its pane. */}
+      <LayerHost>
+        <PlantsScreen
+          cards={cards}
+          plants={pagesOf(cards)}
+          summary={summaryOf(cards)}
+          distribution={EMPTY_DISTRIBUTION.distribution}
+          archived={[]}
+          photoAccess={{ api: "http://api", token: async () => "tok" }}
+          onSpeciesChoose={vi.fn()}
+          onManage={vi.fn()}
+          onRestore={vi.fn()}
+          onArchivedCatchDate={vi.fn()}
+          embedded
+          slots={SLOTS}
+          {...extra}
+        />
+      </LayerHost>
       <Where />
     </MemoryRouter>,
   );
