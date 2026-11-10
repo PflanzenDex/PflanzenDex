@@ -65,9 +65,11 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- An operation delivers the cleaned photo of the measurement to the client (only photos of the own account). The client suggests `quality` and a short note as a draft (US-WAC-06, US-KI-09).
-- Only what is visible is assessed; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty.
+- An operation delivers the cleaned photo of the measurement to the client (only photos of the own account). The client suggests `quality` and a short note as a draft (US-WAC-06, US-KI-09). The keeper accepts or discards the draft; there is no step to change it (owner decision 2026-11-10). Accepting stores `Assessed_By: AI suggestion accepted`.
+- Only what is visible is assessed; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty. This is an instruction to the client in the descriptions of the tool and of the draft, not a check of the code.
 - A client with image understanding is a precondition. Without it the keeper assesses themselves (US-WAC-02).
+
+State of implementation: built ahead of its release R4 (`16`). The tool `get_measurement_photo` (`research-tools.ts`, route `/mcp/measurements/:id/photo`, `aiMeasurementPhoto` in core `ai/results/photo.ts`) hands the cleaned photo of a measurement of the own account to a client with the read right and logs the call without content; a foreign or unknown measurement looks like a missing one (P-04). The client delivers a draft of type `photo_assessment` (measurement id, `quality`, note; `draft-content.ts`). "Übernehmen" in the inbox "Entwürfe" runs `measurement.assess` with the AI flag (`draft-types.ts`, `assess.ts`): quality and note are set, the value stays, `Assessed_By` becomes `AI suggestion accepted` (`ai_adopted` in the code); a measurement without a photo, a foreign one or an archived specimen is refused and nothing is written. "Verwerfen" writes nothing. The task type `photo_assessment` ("Foto beurteilen", reference: measurement id) asks the client for it (US-KI-08). The visible-only rule stands in the descriptions of the tool and of the draft ("Judge only what is visible."); nothing enforces or tests it. Tests: `assess.test.ts`, `measurements.test.ts` (db), `access.test.ts`, `mcp-routes.test.ts`. The status stays 🟨. **Missing:** a run with a real client with image understanding (E-04; the tests use a fake client) and the entry point in the measure view (US-WAC-06).
 
 ### US-KI-05 · Research via the AI client (wishlist, equipment, catalog) · 🟨 (prototype ✅)
 
@@ -122,7 +124,7 @@ As a **plant keeper** I want to review every AI result before it counts (KI-R3).
 Acceptance criteria:
 
 - Inbox "Drafts" in the app (and in "Hints", P-10): per draft type, reference, source, connection, time and, where there is a previous value, the change compared to the current state.
-- Per draft: adopt, change and adopt, discard. Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
+- Per draft: adopt or discard; there is no step to change a draft (owner decision 2026-11-10: after adopting, the keeper edits the result as usual). Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
 - A draft is never adopted automatically. Unprocessed drafts expire and remain viewable as discarded.
 
 ### US-KI-10 · Log of AI actions and undo · 🟨 new
