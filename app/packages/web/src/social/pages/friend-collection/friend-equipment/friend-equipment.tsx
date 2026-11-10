@@ -79,7 +79,7 @@ export function FriendEquipment(props: {
         {(data) =>
           data.devices.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border p-3">
-              {name} hat noch kein Gerät freigegeben. Gib selbst unter „Equipment“ ein Gerät für
+              {name} hat noch kein Gerät freigegeben. Gib selbst unter „Geräte“ ein Gerät für
               Freunde frei, wenn du deine Erfahrung teilen möchtest.
             </p>
           ) : (

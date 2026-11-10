@@ -30,8 +30,8 @@ describe("US-EQU-09 cost view", () => {
       ...Array.from({ length: 4 }, () => item("Pump", null)),
     ];
     const view = equipmentCosts(items);
-    expect(view.coverage).toBe("Summe über 7 von 11 Teilen Equipment");
-    expect(view.nextAction).toContain("Bei 4 Teilen fehlt der Preis");
+    expect(view.coverage).toBe("Summe über 7 von 11 Geräten");
+    expect(view.nextAction).toContain("Bei 4 Geräten fehlt der Preis");
   });
 
   it("US-EQU-09 no price known means unknown, never 0 (P-08)", () => {
@@ -48,7 +48,7 @@ describe("US-EQU-09 cost view", () => {
   it("US-EQU-09 all priced: no gap to fix; nothing recorded: says so", () => {
     expect(equipmentCosts([item("Lamp", 5)]).nextAction).toBeNull();
     const empty = equipmentCosts([]);
-    expect(empty.coverage).toBe("Noch kein Equipment erfasst.");
+    expect(empty.coverage).toBe("Noch kein Gerät erfasst.");
     expect(empty.total).toMatchObject({ count: 0, sumEur: null });
     expect(empty.nextAction).toBeNull();
   });

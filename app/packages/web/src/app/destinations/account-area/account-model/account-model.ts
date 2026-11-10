@@ -36,7 +36,7 @@ export const SECTIONS: readonly { key: AccountSection; title: string; loading: s
   { key: "achievements", title: "Erfolge", loading: "Erfolge werden geladen …" },
   { key: "reminders", title: "Erinnerungen", loading: "Erinnerungen werden geladen …" },
   { key: "aiClients", title: "KI-Clients", loading: "KI-Clients werden geladen …" },
-  { key: "measured", title: "Was wird gemessen?", loading: "Wird geladen …" },
+  { key: "measured", title: "Welche Nutzungsdaten wir erheben", loading: "Wird geladen …" },
   { key: "functions", title: "Was die App kann", loading: "Funktionen werden geladen …" },
   { key: "news", title: t("section.title"), loading: t("section.loading") },
   { key: "data", title: "Meine Daten", loading: "Meine Daten werden geladen …" },

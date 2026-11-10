@@ -41,11 +41,11 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
       ) : null}
       {layered ? null : outcome}
       <Button type="button" aria-haspopup="dialog" onClick={(e) => openLayer(e.currentTarget)}>
-        Equipment erfassen
+        Gerät erfassen
       </Button>
       {props.data.items.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Noch kein Equipment erfasst. Nur Art und Name sind nötig.
+          Noch kein Gerät erfasst. Nur Art und Name sind nötig.
         </p>
       ) : null}
       <EquipmentTiles data={props.data} />
@@ -67,7 +67,7 @@ type Host = { onCaption: (text: string | null) => void };
 
 function ReportCaption({ host, count }: { host: Host | undefined; count: number }) {
   useEffect(() => {
-    host?.onCaption(count === 1 ? "1 Teil Equipment" : `${count} Teile Equipment`);
+    host?.onCaption(count === 1 ? "1 Gerät" : `${count} Geräte`);
     return () => host?.onCaption(null);
   }, [host, count]);
   return null;
@@ -91,11 +91,11 @@ export function EquipmentPage(props: { api: string; token: Token; host?: Host })
       <section aria-labelledby="equipment-title" className="flex min-w-0 flex-col gap-3">
         {host ? (
           <h2 id="equipment-title" className="sr-only">
-            Equipment
+            Geräte
           </h2>
         ) : (
           <h1 id="equipment-title" className="text-2xl font-semibold">
-            Equipment
+            Geräte
           </h1>
         )}
         <p className="text-sm text-muted-foreground">
@@ -105,8 +105,8 @@ export function EquipmentPage(props: { api: string; token: Token; host?: Host })
           queryKey={KEY}
           token={token}
           load={load}
-          loadingText="Equipment wird geladen …"
-          loadingFallback={<EquipmentPageSkeleton label="Equipment wird geladen …" />}
+          loadingText="Geräte werden geladen …"
+          loadingFallback={<EquipmentPageSkeleton label="Geräte werden geladen …" />}
         >
           {(data: EquipmentData) => (
             <>

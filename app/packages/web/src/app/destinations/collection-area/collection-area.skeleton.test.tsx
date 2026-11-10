@@ -26,7 +26,7 @@ const MODES: [string, SammlungShape, string][] = [
     "Artenvergleich wird geladen …",
   ],
   ["the wishlist", shape({ view: "wishlist" }), "Wunschliste wird geladen …"],
-  ["the equipment", shape({ view: "equipment" }), "Equipment wird geladen …"],
+  ["the equipment", shape({ view: "equipment" }), "Geräte werden geladen …"],
   ["the locations", shape({ managing: true }), "Standorte und Lichtzonen werden geladen …"],
 ];
 
@@ -70,6 +70,6 @@ describe("CollectionModeSkeleton (US-QS-14, DS-57, issue 1727)", () => {
     expect(screen.queryByRole("status")).toBeNull();
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByRole("status").textContent).toContain("Equipment wird geladen");
+    expect(screen.getByRole("status").textContent).toContain("Geräte werden geladen");
   });
 });

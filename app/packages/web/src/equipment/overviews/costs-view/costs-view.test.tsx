@@ -19,8 +19,8 @@ describe("US-EQU-09 cost view", () => {
     render(<CostsView items={[item("Lamp", 49.9), item("Lamp", null), item("Timer", 12.5)]} />);
     const section = screen.getByRole("region", { name: "Kosten" });
     expect(section.textContent).toContain("62,40 €");
-    expect(section.textContent).toContain("Summe über 2 von 3 Teilen Equipment");
-    expect(section.textContent).toContain("Bei 1 Teil fehlt der Preis");
+    expect(section.textContent).toContain("Summe über 2 von 3 Geräten");
+    expect(section.textContent).toContain("Bei 1 Gerät fehlt der Preis");
     const lamp = within(screen.getByRole("list", { name: "Kosten je Art" })).getAllByRole(
       "listitem",
     )[0] as HTMLElement;

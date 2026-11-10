@@ -35,7 +35,7 @@ function Block(props: { recommendations: readonly Recommendation[]; needCount: n
       {recommendations.length === 0 ? (
         <p className="m-0 text-muted-foreground">
           {needCount === 0
-            ? "Es gibt nichts zu empfehlen, weil nach deinen Angaben nichts fehlt. Trage Vorräte und Lampen unter Equipment ein, dann erkennt die App, was du brauchst."
+            ? "Es gibt nichts zu empfehlen, weil nach deinen Angaben nichts fehlt. Trage Vorräte und Lampen unter Geräte ein, dann erkennt die App, was du brauchst."
             : "Zu deinem Bedarf liegt noch keine Produktempfehlung vor. Nächster Schritt: Such selbst nach einem passenden Produkt und kaufe dort, wo du magst."}
         </p>
       ) : (

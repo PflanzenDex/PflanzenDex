@@ -91,6 +91,6 @@ describe("US-ONB-05 routes of locked functions", () => {
     await pageHeading();
     expect(screen.queryByRole("link", { name: /Wunschliste: lege noch 3 Pflanzen an/ })).toBeNull();
     expect(screen.queryByText(/Noch gesperrt/)).toBeNull();
-    expect(screen.queryByRole("link", { name: /Ausrüstung:/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Geräte:/ })).toBeNull();
   });
 });

@@ -265,10 +265,12 @@ describe("US-QS-17 Konto with its sections as views", () => {
     expect(link.getAttribute("href")).toBe("/collection?view=plants&manage=locations");
   });
 
-  it("US-QS-17 · US-QS-05 the section Was wird gemessen? names what is recorded about the use", async () => {
+  it("US-QS-17 · US-QS-05 the section Welche Nutzungsdaten wir erheben names what is recorded about the use", async () => {
     fakeServer();
     show("/account/measured");
-    const section = within(screen.getByRole("region", { name: "Was wird gemessen?" }));
+    const section = within(
+      screen.getByRole("region", { name: "Welche Nutzungsdaten wir erheben" }),
+    );
     expect(await section.findByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
     expect(section.getByText(/wann du zuletzt aktiv warst/)).toBeTruthy();
     expect(section.getByText(/nur die Zahl der aktiven Konten/)).toBeTruthy();

@@ -1,5 +1,6 @@
 {
   "clients.loading": "Verbundene KI-Clients werden geladen …",
+  "howTo.add": "Füge in deinem KI-Client eine eigene Anbindung (MCP) mit dieser Adresse hinzu:",
   "drafts.loading": "Entwürfe werden geladen …",
   "log.loading": "Protokoll wird geladen …",
   "tasks.loading": "Aufträge werden geladen …"

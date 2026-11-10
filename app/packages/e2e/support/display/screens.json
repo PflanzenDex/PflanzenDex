@@ -168,7 +168,7 @@
     "id": "account-measured",
     "account": "test2",
     "path": "/account/measured",
-    "title": "Was wird gemessen?"
+    "title": "Welche Nutzungsdaten wir erheben"
   },
   {
     "id": "account-functions",
@@ -325,7 +325,7 @@
     "account": "test2",
     "path": "/collection?view=equipment&sheet=new",
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Neues Equipment"
+    "title": "Neues Gerät"
   },
   {
     "id": "collection-view-species-sheet-cards",
@@ -695,7 +695,7 @@
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
-    "title": "Equipment"
+    "title": "Geräte"
   },
   {
     "id": "collection-view-equipment-sheet-costs",
@@ -730,7 +730,7 @@
     "account": "test2",
     "path": "/collection?view=equipment&sheet=wishes",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
-    "title": "Equipment-Wünsche"
+    "title": "Geräte-Wünsche"
   },
   {
     "id": "friends-sheet-friends",
@@ -1205,7 +1205,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-substrate-aroid-mix",
@@ -1218,7 +1218,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-sensor-bodenfeuchte",
@@ -1231,7 +1231,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-fertilizer-fluessigduenger",
@@ -1244,7 +1244,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-lamp-growbox",
@@ -1257,7 +1257,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-substrate-kakteenerde",
@@ -1270,7 +1270,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-plant-agent-neemoel",
@@ -1283,7 +1283,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-lamp-pflanzenlampe-led",
@@ -1296,7 +1296,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-lamp-regallampe",
@@ -1309,7 +1309,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-lamp-stecklingslampe",
@@ -1322,7 +1322,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-timer-zeitschaltuhr",
@@ -1335,7 +1335,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "review-case",

@@ -72,7 +72,7 @@ export function WishForm(props: {
       <FormRoot
         onSubmit={submit}
         className="flex max-w-xl flex-col gap-3"
-        aria-label="Equipment-Wunsch erfassen"
+        aria-label="Geräte-Wunsch erfassen"
       >
         <TypeField control={form.control} />
         {TEXTS.map((t) => (

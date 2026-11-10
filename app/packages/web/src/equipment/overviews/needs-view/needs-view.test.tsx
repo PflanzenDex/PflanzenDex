@@ -15,7 +15,7 @@ describe("US-EQU-07 what is missing", () => {
       id,
       kind: "supply_low" as const,
       reason: `${id} wird knapp.`,
-      source: "Vorrat unter Equipment",
+      source: "Vorrat unter Geräte",
       nextAction: "Kaufe Nachschub.",
     });
     render(<NeedsView needs={[need("a"), need("b"), need("c")]} />);
@@ -31,14 +31,14 @@ describe("US-EQU-07 what is missing", () => {
             id: "supply:1",
             kind: "supply_low",
             reason: "„Erde“ wird knapp.",
-            source: "Vorrat unter Equipment",
+            source: "Vorrat unter Geräte",
             nextAction: "Kaufe Nachschub.",
           },
         ]}
       />,
     );
     expect(screen.getByText("„Erde“ wird knapp.")).toBeTruthy();
-    expect(screen.getByText("Quelle: Vorrat unter Equipment")).toBeTruthy();
+    expect(screen.getByText("Quelle: Vorrat unter Geräte")).toBeTruthy();
     expect(screen.getByText("Kaufe Nachschub.")).toBeTruthy();
   });
 
