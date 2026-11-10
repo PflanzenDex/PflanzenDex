@@ -77,7 +77,11 @@ export function useRequest<T>(props: {
     error: failure,
     offline,
     placeholder: q.isPlaceholderData,
-    refreshing: q.isFetching && q.data !== undefined,
+    // A getter: react-query tracks `isFetching` only for a view that reads `refreshing`, so the other views are not
+    // re-rendered when a refetch starts or ends (NFR-12). Copying the object (`{ ...request }`) would read it.
+    get refreshing() {
+      return q.isFetching && q.data !== undefined;
+    },
     retry,
   };
 }
