@@ -64,7 +64,9 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
       main?.style.setProperty("--bar-reserve", barReserve(bar));
     };
     const observer = new ResizeObserver(update);
-    for (const el of [header, bar]) if (el) observer.observe(el);
+    // The border box: a safe-area inset that changes (a phone browser going edge to edge) grows the bar by its padding
+    // alone, which an observer of the content box never reports (issue 1818).
+    for (const el of [header, bar]) if (el) observer.observe(el, { box: "border-box" });
     update();
     return () => {
       observer.disconnect();
