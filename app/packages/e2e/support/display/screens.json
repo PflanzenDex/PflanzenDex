@@ -168,7 +168,7 @@
     "id": "account-measured",
     "account": "test2",
     "path": "/account/measured",
-    "title": "Welche Nutzungsdaten wir erheben"
+    "title": "Nutzungsdaten"
   },
   {
     "id": "account-functions",
