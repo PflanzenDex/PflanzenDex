@@ -2,24 +2,56 @@ import type {
   Species,
   SpeciesCreation,
   SpeciesName,
+  SpeciesSearch,
   SpeciesStore,
   SpeciesHit,
   SpeciesValues,
 } from "./types";
 
+import type { ApprovedDuplicate, ApprovedTwin } from "../types";
+
 const RANK = { latin: 0, german: 1, english: 2, synonym: 3 } as const;
 
 type Row = Species & { creator: string; names: readonly SpeciesName[] };
 
+const isApproved = (z: Row) => z.reviewStatus === "curated" || z.reviewStatus === "reviewed";
+const latinKeyOf = (z: Row) => z.names.find((n) => n.field === "latin")?.norm ?? "";
+
 /** In-memory adapter for tests only; the real adapter lives in `db`. Visibility as in FR-BES-11. */
 export class InMemorySpecies implements SpeciesStore {
   readonly rows: Row[] = [];
+  /** `cap` simulates the visible cap of the search (FR-BES-24); without it the fake shows every match. */
+  constructor(private readonly cap = Number.POSITIVE_INFINITY) {}
 
   /** Simulates approval by a reviewer (BES-10): the species is then visible to everyone. */
   approve(id: string): void {
     const i = this.rows.findIndex((z) => z.id === id);
     const z = this.rows[i];
     if (z) this.rows[i] = { ...z, reviewStatus: "reviewed" };
+  }
+
+  /** The approved species that holds this Latin name key, other than `exceptId` (the approval check, US-BES-10). */
+  approvedTwin(key: string, exceptId: string): ApprovedTwin | null {
+    const z = this.rows.find((x) => x.id !== exceptId && isApproved(x) && latinKeyOf(x) === key);
+    return z ? { id: z.id, latinName: z.latinName } : null;
+  }
+
+  /** The Latin names that two or more approved species hold, each with its species (the duplicates, US-BES-10). */
+  approvedDuplicates(): ApprovedDuplicate[] {
+    const groups = new Map<string, Row[]>();
+    for (const z of this.rows.filter(isApproved)) {
+      const key = latinKeyOf(z);
+      groups.set(key, [...(groups.get(key) ?? []), z]);
+    }
+    return [...groups.values()]
+      .filter((g) => g.length > 1)
+      .map((g) => {
+        const species = g
+          .map((z) => ({ id: z.id, latinName: z.latinName }))
+          .sort((a, b) => a.latinName.localeCompare(b.latinName) || a.id.localeCompare(b.id));
+        return { latinName: species[0]?.latinName ?? "", species };
+      })
+      .sort((a, b) => a.latinName.localeCompare(b.latinName));
   }
 
   private visible(userId: string): Row[] {
@@ -36,7 +68,7 @@ export class InMemorySpecies implements SpeciesStore {
     return { ...species, own: creator === userId };
   }
 
-  async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {
+  async search(userId: string, norm: string | null): Promise<SpeciesSearch> {
     const hit: SpeciesHit[] = [];
     for (const z of this.visible(userId)) {
       const matching = z.names
@@ -46,6 +78,23 @@ export class InMemorySpecies implements SpeciesStore {
         hit.push({
           ...this.asValue(userId, z),
           hit: matching ? { field: matching.field, display: matching.display } : null,
+        });
+    }
+    const all = hit.sort((a, b) => a.latinName.localeCompare(b.latinName));
+    return { species: all.slice(0, this.cap), more: all.length > this.cap };
+  }
+
+  /** Like the adapter: a name equal to `norm` as a whole, no cap (FR-BES-24). */
+  async exact(userId: string, norm: string): Promise<SpeciesHit[]> {
+    const hit: SpeciesHit[] = [];
+    for (const z of this.visible(userId)) {
+      const matching = z.names
+        .filter((n) => n.norm === norm)
+        .sort((a, b) => RANK[a.field] - RANK[b.field])[0];
+      if (matching)
+        hit.push({
+          ...this.asValue(userId, z),
+          hit: { field: matching.field, display: matching.display },
         });
     }
     return hit.sort((a, b) => a.latinName.localeCompare(b.latinName));

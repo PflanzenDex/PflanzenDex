@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFileSync, mkdtempSync, readdirSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pg from "pg";
@@ -11,6 +11,14 @@ import {
   openPool,
   testDatabaseUrl,
 } from "../../kernel/index.ts";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // US-BES-12, US-LIC-01 (#1003): migration 0095 makes difficulty, default level and lux need nullable and clears the
 // starting values the operator batch and the dev seed wrote (P-08). A scratch database is migrated up to 0094, filled
@@ -102,7 +110,7 @@ beforeAll(async () => {
   url.pathname = `/${DB}`;
   scratch = openPool(url.toString());
   scratch.on("error", () => undefined);
-  const before = mkdtempSync(join(tmpdir(), "light-need-"));
+  const before = tempDir("light-need-");
   for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter((n) => n < MIGRATION))
     copyFileSync(join(MIGRATIONS_DIRECTORY, f), join(before, f));
   await migrate(scratch, { directory: before });
@@ -110,6 +118,7 @@ beforeAll(async () => {
   await migrate(scratch);
 }, 120_000);
 afterAll(async () => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
   await scratch.end();
   await admin.query(`drop database if exists ${DB} with (force)`);
   await admin.end();
@@ -123,15 +132,16 @@ describe("US-BES-12 migration 0095: starting values become unknown (P-08, #1003)
     expect(await values(ROWS.start.id)).toEqual({
       ...UNKNOWN,
       source:
-        "Curated start catalog (operator): names and family are taxonomic facts, entered by the operator; difficulty and light need unknown until a source is given",
+        "Kuratierter Startkatalog (Betreiber): Namen und Familie sind taxonomische Fakten, vom Betreiber eingetragen; Schwierigkeit und Lichtbedarf unbekannt, bis eine Quelle genannt wird",
     });
   });
 
   it("US-BES-12: Given a species of the dev seed with starting values, when migrated, then its values are unknown", async () => {
     expect(await values(ROWS.seed.id)).toEqual({
       ...UNKNOWN,
+      // 0095 writes the English marker; the test migrates to the end, so 0098 (US-QS-24) has renamed it to German.
       source:
-        "Dev seed: names and family from common botanical knowledge; difficulty and light need unknown",
+        "Dev-Seed: Namen und Familie aus allgemeinem botanischem Wissen; Schwierigkeit und Lichtbedarf unbekannt",
     });
   });
 

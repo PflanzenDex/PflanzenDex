@@ -4,8 +4,12 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { deviceTimeZone, setProfileTimeZone } from "../../kernel";
+import { deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { PokedexPage } from "./pokedex-page";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "./pokedex-page.de.json";
+import { MilestonesSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -45,10 +49,14 @@ const riddle = {
 };
 const unidentified = [riddle];
 
-function fakeServer(answer: () => Promise<Response>) {
+/** The taxonomy tree of the server (US-POK-11); by default not built yet, so the progress says so (P-08). */
+const notBuilt = () => response(200, { tree: null });
+
+function fakeServer(answer: () => Promise<Response>, tree: () => Promise<Response> = notBuilt) {
   const fetchFn = vi.fn<typeof fetch>(async (url) => {
     const path = new URL(String(url)).pathname;
     if (path === "/pokedex/cards") return response(200, { cards: [] });
+    if (path === "/pokedex/tree") return tree();
     return path === "/pokedex/ownership" ? answer() : response(404, {});
   });
   vi.stubGlobal("fetch", fetchFn);
@@ -65,8 +73,9 @@ afterEach(() => {
 describe("US-POK-06 page of the caught species", () => {
   it("US-POK-06 · US-QS-22 shows every caught species as a compact entry with its catch date", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    delayLoads();
     view(<PokedexPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     expect(await screen.findByRole("heading", { level: 1, name: "Pokédex" })).toBeTruthy();
     const entries = within(screen.getByRole("list", { name: "Gefangene Arten" })).getAllByRole(
       "listitem",
@@ -155,6 +164,139 @@ describe("US-POK-06 page of the caught species", () => {
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByText("Citrus limon")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+/** A built tree of five species: 2 of them caught (Citrus limon, Opuntia microdasys), 3 orders, 2 families. */
+const tree = [
+  {
+    latin: "Citrus limon",
+    german: "Zitrone",
+    family: "Rutaceae",
+    genus: "Citrus",
+    order: "Sapindales",
+  },
+  {
+    latin: "Citrus aurantium",
+    german: "Bitterorange",
+    family: "Rutaceae",
+    genus: "Citrus",
+    order: "Sapindales",
+  },
+  {
+    latin: "Opuntia microdasys",
+    german: "Hasenohr-Kaktus",
+    family: "Cactaceae",
+    genus: "Opuntia",
+    order: "Caryophyllales",
+  },
+  {
+    latin: "Opuntia ficus-indica",
+    german: "Feigenkaktus",
+    family: "Cactaceae",
+    genus: "Opuntia",
+    order: "Caryophyllales",
+  },
+  {
+    latin: "Aloe vera",
+    german: null,
+    family: "Xanthorrhoeaceae",
+    genus: "Aloe",
+    order: "Asparagales",
+  },
+];
+const treeCalls = (fetchFn: { mock: { calls: Parameters<typeof fetch>[] } }) =>
+  fetchFn.mock.calls.filter(([url]) => new URL(String(url)).pathname === "/pokedex/tree").length;
+
+describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () => {
+  it("US-POK-10 · US-POK-11 the row shows the total, the layer the percent and the orders, the milestones open as their own layer", async () => {
+    fakeServer(
+      () => response(200, { ownership: { caught, unidentified: [] } }),
+      () => response(200, { tree: { species: tree } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    const row = await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ });
+    await userEvent.click(row);
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(within(layer).getByText("2 von 3 Ordnungen entdeckt")).toBeTruthy();
+    expect(within(layer).getByText("Noch 3 bis „Setzling“")).toBeTruthy();
+    expect(within(layer).queryByText(/noch nicht aufgebaut/)).toBeNull();
+    expect(within(layer).queryByText(/Ordnungen: unbekannt/)).toBeNull();
+    expect(within(layer).queryByText(/weil sie nicht im Baum/)).toBeNull();
+    // The progress layer holds only the opener; the milestones are their own layer (DS-58, US-QS-22).
+    expect(within(layer).queryByText("Citrus: Vollständig")).toBeNull();
+    await userEvent.click(within(layer).getByRole("button", { name: "Meilensteine ansehen" }));
+    const milestones = await screen.findByRole("dialog", { name: "Meilensteine" });
+    expect(within(milestones).getByText("4 Meilensteine erreicht")).toBeTruthy();
+    expect(within(milestones).getByText("Entdecker der Ordnungen")).toBeTruthy();
+    expect(within(milestones).getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(milestones).getByText("Cactaceae: Vollständig")).toBeTruthy();
+    await userEvent.click(within(milestones).getByRole("button", { name: "Weiter" }));
+    expect(await within(milestones).findByText("Citrus: Vollständig")).toBeTruthy();
+    expect(within(milestones).getByText("Noch 1: Bitterorange (Citrus aurantium)")).toBeTruthy();
+  });
+
+  it("US-POK-10 the rank and N count the caught species of the tree; a caught species outside it is named as not counted yet (owner decision 2026-11-07)", async () => {
+    const outside = { ...lemon, species: "Ficus elastica", genus: "Ficus" };
+    fakeServer(
+      () => response(200, { ownership: { caught: [...caught, outside], unidentified: [] } }),
+      () => response(200, { tree: { species: tree } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ }));
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(
+      within(layer).getByText(
+        "1 gefangene Art zählt noch nicht, weil sie nicht im Baum der Arten steht.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-POK-11 without open or reached milestones the progress layer says so instead of an opener (P-09)", async () => {
+    fakeServer(
+      () => response(200, { ownership: { caught: [], unidentified: [] } }),
+      () => response(200, { tree: { species: [] } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=progress");
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(await within(layer).findByText("Keine offenen Meilensteine.")).toBeTruthy();
+    expect(within(layer).queryByRole("button", { name: "Meilensteine ansehen" })).toBeNull();
+  });
+
+  it("US-POK-11 while the tree is missing the progress layer names the reason and offers no milestones (P-08)", async () => {
+    fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=progress");
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect(await within(layer).findByText(/Meilensteine brauchen den Baum der Arten/)).toBeTruthy();
+    expect(within(layer).queryByRole("button", { name: "Meilensteine ansehen" })).toBeNull();
+  });
+
+  it("US-POK-10 · P-10 if the tree cannot be read the layer says so and offers a retry, the row keeps the caught count", async () => {
+    fakeServer(
+      () => response(200, { ownership: { caught, unidentified: [] } }),
+      () => response(500, serverError),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    const row = await screen.findByRole("button", { name: /· 2 gefangen/ });
+    await userEvent.click(row);
+    const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
+    expect((await within(layer).findByRole("alert")).textContent).toContain(
+      "Der Server antwortet nicht.",
+    );
+    expect(within(layer).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+
+  it("US-POK-10 the tree is requested once for the row and the layer together (NFR-12)", async () => {
+    const fetchFn = fakeServer(
+      () => response(200, { ownership: { caught, unidentified: [] } }),
+      () => response(200, { tree: { species: tree } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ }));
+    expect(await screen.findByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(treeCalls(fetchFn)).toBe(1);
   });
 });
 
@@ -249,7 +391,8 @@ describe("US-QS-22 the species fit one screen", () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=progress");
     const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
-    expect(within(layer).getByText("Ordnungen: unbekannt")).toBeTruthy();
+    // The rank waits for the tree of the server; until it is there the layer shows its loader (US-POK-10).
+    expect(await within(layer).findByText("Ordnungen: unbekannt")).toBeTruthy();
     expect(within(layer).getByRole("button", { name: "Sammlerkarten ansehen" })).toBeTruthy();
   });
 
@@ -285,4 +428,20 @@ describe("US-QS-22 neutral species entries", () => {
     expect(entry?.className).not.toMatch(/border-primary|text-primary/);
     expect(entry?.querySelector("[data-chevron]")).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the progress show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <ProgressSkeleton label={table["progressLoading"]} />,
+      table["progressLoading"],
+    ));
+});
+
+describe("US-QS-14 issue 1697 · the milestones show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <MilestonesSkeleton label={table["progressLoading"]} />,
+      table["progressLoading"],
+    ));
 });

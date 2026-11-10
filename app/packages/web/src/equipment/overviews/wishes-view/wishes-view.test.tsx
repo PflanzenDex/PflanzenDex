@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "../../equipment-page/equipment-page";
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
@@ -12,9 +13,11 @@ Element.prototype.releasePointerCapture ??= () => undefined;
 /** The wishes are a layer of the equipment (US-QS-22), so the page renders in a router that opens it. */
 const view = (url = "/?sheet=wishes") =>
   render(
-    <MemoryRouter initialEntries={[url]}>
-      <EquipmentPage api="http://api" token={token} />
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[url]}>
+        <EquipmentPage api="http://api" token={token} />
+      </MemoryRouter>
+    </ToastProvider>,
   );
 
 const response = (status: number, body: unknown) =>
@@ -68,8 +71,8 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
   it("US-EQU-08 shows open wishes with unknown price as unknown and counts them apart from plants", async () => {
     fakeServer({ open: [wish({ priceEur: null, productId: null })], bought: [], discarded: [] });
     view();
-    expect(await screen.findByText(/1 offener Equipment-Wunsch, getrennt/)).toBeTruthy();
-    const list = screen.getByRole("list", { name: "Offene Equipment-Wünsche" });
+    expect(await screen.findByText(/1 offener Geräte-Wunsch, getrennt/)).toBeTruthy();
+    const list = screen.getByRole("list", { name: "Offene Geräte-Wünsche" });
     expect(list.textContent).toContain("Produkt-ID unbekannt");
     expect(list.textContent).toContain("Preis unbekannt");
   });
@@ -79,7 +82,7 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     view();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Gekauft: Growlight X" }));
-    const form = await screen.findByRole("region", { name: "Equipment erfassen" });
+    const form = await screen.findByRole("region", { name: "Gerät erfassen" });
     await waitFor(() =>
       expect((within(form).getByLabelText("Art") as HTMLSelectElement).value).toBe("Lamp"),
     );
@@ -93,25 +96,65 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
   it("US-EQU-08 an empty list says what to do next", async () => {
     fakeServer({ open: [], bought: [], discarded: [] });
     view();
-    expect(await screen.findByText(/Kein offener Equipment-Wunsch/)).toBeTruthy();
+    expect(await screen.findByText(/Kein offener Geräte-Wunsch/)).toBeTruthy();
   });
 
   it("US-EQU-08 sends only the given fields of a new wish and refuses a missing name before sending", async () => {
     const fetchFn = fakeServer({ open: [], bought: [], discarded: [] });
     view();
-    const form = await screen.findByRole("form", { name: "Equipment-Wunsch erfassen" });
     const user = userEvent.setup();
+    // The form is a layer of its own (issue 1154): the button in the wishes opens it.
+    await user.click(await screen.findByRole("button", { name: "Geräte-Wunsch erfassen" }));
+    const form = await screen.findByRole("form", { name: "Geräte-Wunsch erfassen" });
     await user.selectOptions(within(form).getByLabelText("Art des Wunsches"), "Timer");
     await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
     expect(await within(form).findByText("Bitte gib einen Namen an.")).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.type(within(form).getByLabelText("Name des Wunsches"), "Zeitschaltuhr");
     await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
-    await screen.findByText("Equipment-Wunsch „Zeitschaltuhr“ gespeichert.");
+    await screen.findByText("Geräte-Wunsch „Zeitschaltuhr“ gespeichert.");
+    // Saving closes the form layer, so the keeper is back at the wishes (issue 1154).
+    await waitFor(() =>
+      expect(screen.queryByRole("form", { name: "Geräte-Wunsch erfassen" })).toBeNull(),
+    );
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       equipmentType: "Timer",
       name: "Zeitschaltuhr",
     });
+  });
+
+  it("US-EQU-08 · US-QS-15 · issue 1154 a segment shows one group with its count, paged by the free height of the layer", async () => {
+    fakeServer({
+      open: [wish()],
+      bought: [wish({ id: "w2", name: "Heizmatte", status: "bought" })],
+      discarded: [],
+    });
+    view();
+    const user = userEvent.setup();
+    const open = await screen.findByRole("list", { name: "Offene Geräte-Wünsche" });
+    expect(open.hasAttribute("data-page-fit")).toBe(true);
+    const segment = screen.getByRole("group", { name: "Geräte-Wünsche nach Stand" });
+    expect(
+      within(segment)
+        .getByRole("button", { name: /Offen \(1\)/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    await user.click(within(segment).getByRole("button", { name: /Gekauft \(1\)/ }));
+    const bought = screen.getByRole("list", { name: "Gekaufte Geräte-Wünsche" });
+    expect(within(bought).getByText("Heizmatte")).toBeTruthy();
+    // A bought wish offers no buy or discard again.
+    expect(within(bought).queryByRole("button")).toBeNull();
+    await user.click(within(segment).getByRole("button", { name: /Verworfen \(0\)/ }));
+    expect(screen.getByText("Noch kein Geräte-Wunsch verworfen.")).toBeTruthy();
+  });
+
+  it("US-EQU-08 · issue 1154 the layer does not repeat its title as a visible heading", async () => {
+    fakeServer({ open: [wish()], bought: [], discarded: [] });
+    view();
+    await screen.findByRole("list", { name: "Offene Geräte-Wünsche" });
+    // The layer's own title is the visible one; the section heading is for screen readers only.
+    const heading = document.getElementById("equipment-wishes-title") as HTMLElement;
+    expect(heading.className).toContain("sr-only");
   });
 });

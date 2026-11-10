@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the page on a phone: heading, zone cards, a form and the reference sections below (DS-52, DS-53). */
 export function LightPageSkeleton({ label }: { label: string }) {

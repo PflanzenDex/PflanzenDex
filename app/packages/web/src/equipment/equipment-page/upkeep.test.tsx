@@ -4,11 +4,16 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { EquipmentPage } from "./equipment-page";
 
-/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. The toast provider is the app shell's (US-QS-07). */
 const view = (ui: ReactElement, url = "/") =>
-  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+  render(
+    <ToastProvider>
+      <MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>
+    </ToastProvider>,
+  );
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
 Element.prototype.setPointerCapture ??= () => undefined;
@@ -37,6 +42,10 @@ const base = {
   agentLink: null,
   assignedSpecimenId: null,
   assignedLocationId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 const ITEMS = [
   { ...base, id: "t1", type: "Timer", name: "Timer A", status: "active" },
@@ -81,7 +90,7 @@ afterEach(() => {
 describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", () => {
   it("US-EQU-04 'Jetzt geprüft' and the operation data are sent to the device", async () => {
     const fetchFn = fakeServer();
-    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-t1");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Jetzt geprüft: Timer A" }));
     expect((await lastPost(fetchFn)).path).toBe("/equipment/t1/checked");
@@ -96,7 +105,7 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
 
   it("US-EQU-05 a tap sets the supply, the link text is saved and removable", async () => {
     const fetchFn = fakeServer();
-    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-a1");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Wird knapp" }));
     expect(await lastPost(fetchFn)).toMatchObject({

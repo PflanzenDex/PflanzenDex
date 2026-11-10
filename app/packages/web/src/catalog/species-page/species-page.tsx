@@ -1,22 +1,34 @@
 import { useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
-import type { ApiError, Request } from "../../kernel";
+import {
+  LayerOpener,
+  LayerSheet,
+  useLayer,
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { OFFLINE_NOTE } from "@/shared/patterns/states/request-state/request-state";
+import type { ApiError, Request } from "../../shared/data";
 import { useOpenId, useProfile, useSearch, useSend } from "../species-hooks";
 import { SpeciesProfile } from "../profile-view/profile-view";
 import { SpeciesSearch } from "../search-view/search-view";
 import { ProposalForm } from "../proposal/proposal-form/proposal-form";
 import { ProfileSkeleton } from "../profile-view/profile-view.skeleton";
-import { refusalText } from "../shared/refusal";
+import { PROFILE_CARD } from "../profile-view/profile-card";
+import { refusalText } from "@/shared/lib/error-text";
 
 type View = { kind: "search" } | { kind: "profile" };
 
 /** The layer with the proposal form (`?sheet=propose`, US-QS-21). */
 const PROPOSE_LAYER = "propose";
-
+/** The layer with my care profile of the species (`?sheet=care`, US-BES-09, US-QS-21). */
+const CARE_LAYER = "care";
+/**
+ * The opener of the care profile in the action bar: 48 px at normal text like before, but it grows with its label at a
+ * larger text size. The side padding is 20 px at any text size (the value of `px-5` at normal text), so "Pflegeprofil"
+ * fits the button at 200 % text (issue 1217).
+ */
+const CARE_OPENER = "h-auto min-h-12 px-[20px] py-0";
 function ProfilePage(props: {
   profile: Request<Species>;
   fresh: boolean;
@@ -27,7 +39,7 @@ function ProfilePage(props: {
 }) {
   const { profile } = props;
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       {props.fresh && (
         <p
           role="status"
@@ -57,8 +69,19 @@ function ProfilePage(props: {
             onChoose={() => props.onChoose(profile.value as Species)}
             onBack={props.onBack}
             embedded={props.embedded}
+            extra={
+              props.section && (
+                <LayerOpener id={CARE_LAYER} className={CARE_OPENER}>
+                  Mein Pflegeprofil
+                </LayerOpener>
+              )
+            }
           />
-          {props.section?.(profile.value)}
+          {props.section && (
+            <LayerSheet id={CARE_LAYER} title="Mein Pflegeprofil">
+              {props.section(profile.value)}
+            </LayerSheet>
+          )}
         </>
       )}
     </div>
@@ -93,6 +116,13 @@ type SpeciesPageProps = {
   embedded?: boolean;
 };
 
+/** The address without its layer (`sheet`): the page of the list stays. */
+function withoutSheet(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+  next.delete("sheet");
+  return next;
+}
+
 /**
  * Search, view, choose or propose a species in the catalog (US-BES-01). "Choose" reports the species outward; the
  * specimen for it is created by `collection` (US-BES-02), the app wires both (`catalog` does not know `collection`).
@@ -110,9 +140,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
   const open = (id: string) => {
     // The profile is no place for a layer: it leaves the address (replace, no new entry); the page of the list stays.
     if (params.has("sheet")) {
-      const next = new URLSearchParams(params);
-      next.delete("sheet");
-      setParams(next, { replace: true });
+      setParams(withoutSheet(params), { replace: true });
     }
     setView({ kind: "profile" });
     setProfileId(id);
@@ -127,12 +155,13 @@ export function SpeciesPage(props: SpeciesPageProps) {
   };
   const searchError = view.kind === "search" ? search.error : null;
   return (
-    <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div className={PROFILE_CARD}>
       {searchError && <SearchFailure error={searchError} onRetry={search.retry} />}
       {view.kind === "search" && (
         <SpeciesSearch
           searchText={searchText}
           hit={search.hit}
+          more={search.more}
           loading={search.loading}
           failed={searchError !== null}
           onSearch={setSearchText}

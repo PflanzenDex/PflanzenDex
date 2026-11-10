@@ -4,10 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { deliverBuffered } from "@/platform/announcer/outbox";
-import { AnnouncerProvider } from "@/platform/announcer/announcer";
+import { deliverBuffered } from "@/shared/platform/announcer/outbox";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -27,7 +28,7 @@ function fakeServer(
     const path = new URL(String(url)).pathname;
     const other = more(path, init);
     if (other) return other;
-    if (path === "/specimens") return response(200, { specimens });
+    if (path === "/specimens/treatable") return response(200, { specimens });
     if (path === "/treatments" && (init?.method ?? "GET") === "GET") return open();
     if (path === "/treatments" && init?.method === "POST") {
       posts.push({
@@ -51,10 +52,11 @@ afterEach(async () => {
 });
 
 describe("US-BEH-01 Seite Behandlung planen", () => {
-  it("US-BEH-01 · DS-52 while loading, skeletons mirror the page and one status says what loads", () => {
+  it("US-BEH-01 · DS-52 while loading, skeletons mirror the page and one status says what loads", async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
+    delayLoads();
     const { container } = show();
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
       1,
     );
@@ -90,8 +92,9 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
 
   it("US-BEH-01 lists all active specimens, also cuttings, and says what to do without any (P-09, FR-BEH-04)", async () => {
     fakeServer([specimen("e1", "Bogenhanf"), specimen("e2", "Aloe", "cutting")]);
+    delayLoads();
     show();
-    expect(screen.getByRole("status").textContent).toContain("werden geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect(await screen.findByRole("checkbox", { name: "Bogenhanf" })).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "Aloe" })).toBeTruthy();
     cleanup();
@@ -525,22 +528,25 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
       onchange: null,
     })) as unknown as typeof window.matchMedia;
   });
-  const showHost = () =>
+  const showHost = (onPlan = vi.fn()) =>
     render(
       <MemoryRouter>
-        <TreatmentsPage api="http://api" token={token} host />
+        <TreatmentsPage api="http://api" token={token} host onPlan={onPlan} />
       </MemoryRouter>,
     );
 
   it("US-QS-14 has no h1 and no title of its own; its headings are level 3", async () => {
     doneServer();
+    const user = userEvent.setup();
     showHost();
     await screen.findByRole("list", { name: "Offene Behandlungen" });
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
     expect(screen.getByRole("heading", { level: 3, name: "Offene Behandlungen" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 3, name: "Erledigte Behandlungen" })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+    // The history is the other part of the segment "Offen | Erledigt" (US-QS-18, A-05).
+    await user.click(screen.getByRole("button", { name: "Erledigt" }));
+    expect(screen.getByRole("heading", { level: 3, name: "Erledigte Behandlungen" })).toBeTruthy();
   });
 
   it("US-QS-14 · US-BEH-02 an overdue row shows its status text from the data as a chip", async () => {
@@ -550,13 +556,15 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
   });
 
-  it("US-QS-14 · US-BEH-01 the form is not on the page until Behandlung planen is chosen", async () => {
+  it("US-QS-14 · US-BEH-01 · A-04 the host has no form: Behandlung planen hands over to the planning layer", async () => {
     doneServer();
-    showHost();
+    const onPlan = vi.fn();
+    showHost(onPlan);
     await screen.findByRole("list", { name: "Offene Behandlungen" });
     expect(screen.queryByRole("button", { name: "Behandlung speichern" })).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
-    expect(await screen.findByRole("button", { name: "Behandlung speichern" })).toBeTruthy();
+    expect(onPlan).toHaveBeenCalledTimes(1);
   });
 });
 

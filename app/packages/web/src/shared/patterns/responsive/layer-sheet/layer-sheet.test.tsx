@@ -1,0 +1,430 @@
+// @vitest-environment jsdom
+import { StrictMode } from "react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
+import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
+import { useExitValue } from "./use-layer";
+
+beforeAll(() => {
+  Element.prototype.setPointerCapture ??= () => undefined;
+  Element.prototype.releasePointerCapture ??= () => undefined;
+});
+
+afterEach(cleanup);
+afterEach(releaseSheetExits);
+
+function Back() {
+  const navigate = useNavigate();
+  return <button onClick={() => void navigate(-1)}>Browser zurück</button>;
+}
+
+function Example({ at = "/" }: { at?: string }) {
+  return (
+    <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
+      <LayerHost>
+        <LayerOpener id="licht">Licht</LayerOpener>
+        <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Speichern</button>}>
+          <p>Inhalt</p>
+        </LayerSheet>
+      </LayerHost>
+      <Back />
+    </MemoryRouter>
+  );
+}
+
+/** The page as the app marks it: RouteFocus sets `data-input` on every click and key press (US-QS-15, issue 1714). */
+function TitleSheet() {
+  return (
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={["/"]}>
+        <main id="inhalt" tabIndex={-1}>
+          <RouteFocus titleOf={() => "Start"} />
+          <h1>Start</h1>
+          <LayerOpener id="licht">Licht</LayerOpener>
+          <LayerSheet id="licht" title="Lichtzonen">
+            <p>Inhalt</p>
+          </LayerSheet>
+        </main>
+      </MemoryRouter>
+    </AnnouncerProvider>
+  );
+}
+
+/** The focus ring classes that do not wait for keyboard input: a pointer user must get none (US-QS-15, issue 1714). */
+function ungatedRing(className: string): string[] {
+  return className
+    .split(/\s+/)
+    .filter((name) => name.includes("ring") && !name.startsWith("keyboard-input:"));
+}
+
+/** A layer that is mounted only while the address names it, as the care profile of a plant is (US-QS-15, issue 1661). */
+function MountedOnlyLayer() {
+  const [params] = useSearchParams();
+  if (params.get("sheet") !== "karte") return null;
+  return (
+    <LayerSheet id="karte" title="Karte">
+      <p>Inhalt</p>
+    </LayerSheet>
+  );
+}
+
+function Pager() {
+  const [, setParams] = useSearchParams();
+  return (
+    <button type="button" onClick={() => setParams({ page: "2" })}>
+      Seite 2
+    </button>
+  );
+}
+
+describe("LayerSheet (US-QS-15)", () => {
+  it("US-QS-15 with RouteFocus mounted, Escape returns the focus to the opener and a page change does not move it to the heading", async () => {
+    setViewportWidth(360);
+    render(
+      <AnnouncerProvider>
+        <MemoryRouter initialEntries={["/"]}>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={() => "Start"} />
+            <h1>Start</h1>
+            <LayerOpener id="licht">Licht</LayerOpener>
+            <Pager />
+            <LayerSheet id="licht" title="Lichtzonen">
+              <p>Inhalt</p>
+            </LayerSheet>
+          </main>
+        </MemoryRouter>
+      </AnnouncerProvider>,
+    );
+    const opener = screen.getByRole("button", { name: "Licht" });
+    await userEvent.click(opener);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(opener);
+    const pager = screen.getByRole("button", { name: "Seite 2" });
+    await userEvent.click(pager);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(pager);
+  });
+
+  it("US-QS-22 a closed layer mounts no content, so it loads nothing and holds no pager", () => {
+    setViewportWidth(360);
+    render(<Example />);
+    expect(screen.queryByText("Inhalt")).toBeNull();
+  });
+
+  it("US-QS-15 · F7 a sheet leaves as it came: its body stays while it slides out, then it is removed", async () => {
+    setViewportWidth(360);
+    holdSheetExit();
+    render(<Example at="/?sheet=licht" />);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    await userEvent.keyboard("{Escape}");
+    // The sheet collapses to its title only when its body leaves at once (F7); the body goes with the exit.
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
+    expect(document.querySelector("[data-layer-body]")).toBeNull();
+  });
+
+  it("US-QS-15 · F7 a sheet that closes by Back keeps its body for the exit too", async () => {
+    setViewportWidth(360);
+    holdSheetExit();
+    render(<Example at="/?sheet=licht" />);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.getByText("Inhalt")).toBeTruthy());
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Inhalt")).toBeNull());
+  });
+
+  it("US-QS-15 the last value of a layer stays while the address no longer names it, so its exit has content", () => {
+    const { result, rerender } = renderHook(
+      ({ value }: { value: string | null }) => useExitValue(value),
+      { initialProps: { value: null as string | null } },
+    );
+    expect(result.current).toBeUndefined();
+    rerender({ value: "plant-e1" });
+    expect(result.current).toBe("plant-e1");
+    rerender({ value: null });
+    expect(result.current).toBe("plant-e1");
+    rerender({ value: "plant-e2" });
+    expect(result.current).toBe("plant-e2");
+  });
+
+  it("US-QS-15 an address with ?sheet= opens the layer after reload or copied link", async () => {
+    setViewportWidth(360);
+    render(<Example at="/?sheet=licht" />);
+    expect(await screen.findByRole("dialog", { name: "Lichtzonen" })).toBeTruthy();
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+  });
+
+  it("US-QS-15 the opener opens it, Back closes it and focus returns to the opener", async () => {
+    setViewportWidth(360);
+    render(<Example />);
+    const opener = screen.getByRole("button", { name: "Licht" });
+    await userEvent.click(opener);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    // The modal hides the page from assistive technology, so the browser Back is reached with `hidden`.
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  // The app runs under StrictMode, which mounts and unmounts each effect once more: the layer keeps the focus while open.
+  const mountedOnlyEscape = async (width: number, role: "dialog" | "complementary") => {
+    setViewportWidth(width);
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={["/start", "/"]} initialIndex={1}>
+          <LayerOpener id="karte">Karte</LayerOpener>
+          <MountedOnlyLayer />
+          <Back />
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    const opener = screen.getByRole("button", { name: "Karte" });
+    await userEvent.click(opener);
+    const layer = await screen.findByRole(role, { name: "Karte" });
+    await waitFor(() => expect(layer.contains(document.activeElement)).toBe(true));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(layer.isConnected).toBe(false));
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  };
+
+  it("US-QS-15 a layer mounted only while its address names it returns the focus to its opener, as a sheet (issue 1661)", async () => {
+    await mountedOnlyEscape(360, "dialog");
+  });
+
+  it("US-QS-15 a layer mounted only while its address names it returns the focus to its opener, as a pane (issue 1661)", async () => {
+    await mountedOnlyEscape(1100, "complementary");
+  });
+
+  it("US-QS-15 Escape closes the layer", async () => {
+    setViewportWidth(768);
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Licht" }));
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("US-QS-15 from 1024 px it is a pane with a heading that takes the focus, Escape closes it", async () => {
+    setViewportWidth(1024);
+    render(<Example />);
+    const opener = screen.getByRole("button", { name: "Licht" });
+    await userEvent.click(opener);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    expect(pane).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Lichtzonen" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("US-QS-15 the pane has a close button and shows the one primary action", async () => {
+    setViewportWidth(1280);
+    render(<Example at="/?sheet=licht" />);
+    expect(screen.getByRole("button", { name: "Speichern" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByRole("complementary")).toBeNull();
+  });
+
+  it("US-QS-15 below 768 px it is a sheet, from 768 px a dialog", async () => {
+    setViewportWidth(360);
+    render(<Example at="/?sheet=licht" />);
+    const sheet = await screen.findByRole("dialog", { name: "Lichtzonen" });
+    expect(sheet.className).toContain("inset-x-0");
+    act(() => setViewportWidth(800));
+    expect(screen.getByRole("dialog", { name: "Lichtzonen" }).className).toContain(
+      "-translate-x-1/2",
+    );
+  });
+
+  it("US-QS-15 · issue 1156 a layer that holds a list paging by free height takes its full height as sheet, dialog and pane", async () => {
+    setViewportWidth(360);
+    render(<Example at="/?sheet=licht" />);
+    const fill = "has-[[data-page-fit]]:";
+    const sheet = await screen.findByRole("dialog", { name: "Lichtzonen" });
+    expect(sheet.className).toContain(`${fill}h-[90dvh]`);
+    // The regions down to the list pass the height on as a flex column; other layers keep their flow.
+    const body = sheet.querySelector("[data-layer-body]") as HTMLElement;
+    expect((body.firstElementChild as HTMLElement).className).toContain(`${fill}flex-col`);
+    expect((body.parentElement?.parentElement?.parentElement as HTMLElement).className).toContain(
+      `${fill}flex-col`,
+    );
+    act(() => setViewportWidth(800));
+    expect(screen.getByRole("dialog", { name: "Lichtzonen" }).className).toContain(
+      `${fill}h-[90dvh]`,
+    );
+    act(() => setViewportWidth(1280));
+    expect(screen.getByRole("complementary", { name: "Lichtzonen" }).className).toContain(
+      `${fill}h-[calc(100dvh-3rem)]`,
+    );
+  });
+
+  it("US-QS-15 from 1024 px the pane takes the frame's second column, beside the content and top-aligned with it", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn");
+    render(<Example at="/?sheet=licht" />);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    expect(pane.hasAttribute("data-layer-pane")).toBe(true);
+    // A layer inside a frame never triggers the dev warning, so a regression fails here (US-QS-15).
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+    const slot = pane.parentElement;
+    const frame = slot?.parentElement;
+    expect(frame).toBeTruthy();
+    // The frame's first child is the content column (the opener sits in it), the slot is the second one.
+    expect(frame?.firstElementChild?.contains(screen.getByRole("button", { name: "Licht" }))).toBe(
+      true,
+    );
+    expect(slot?.previousElementSibling).toBe(frame?.firstElementChild);
+  });
+
+  it("US-QS-15 · US-QS-18 the content column is at most 720 px and centred, so the pane beside it takes the rest of the frame", () => {
+    setViewportWidth(1440);
+    render(<Example at="/?sheet=licht" />);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const content = pane.parentElement?.previousElementSibling as HTMLElement;
+    expect(content.contains(screen.getByRole("button", { name: "Licht" }))).toBe(true);
+    // The cap is the content's own (DS-59): a pane never shrinks the frame below the content (US-QS-15, #1027).
+    expect(content.className).toContain("max-w-180");
+    expect(content.className).toContain("mx-auto");
+    // The column takes the frame's width: a centred box without it shrinks to its widest content (issue 1019).
+    expect(content.className).toContain("w-full");
+  });
+
+  it("US-QS-15 a layer in a component deep inside the frame still opens in the frame's pane, not in its own place", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn");
+    function Deep() {
+      return (
+        <section>
+          <div>
+            <p>Tiefe Liste</p>
+            <LayerSheet id="licht" title="Lichtzonen">
+              <p>Inhalt</p>
+            </LayerSheet>
+          </div>
+        </section>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/?sheet=licht"]}>
+        <LayerHost>
+          <Deep />
+        </LayerHost>
+      </MemoryRouter>,
+    );
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const frame = pane.parentElement?.parentElement;
+    expect(frame?.firstElementChild?.contains(screen.getByText("Tiefe Liste"))).toBe(true);
+    expect(frame?.lastElementChild).toBe(pane.parentElement);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("US-QS-15: a layer opens with focus on its title, not on a destructive control", async () => {
+    // The first control of the layer is destructive, as "Freundschaft beenden" is in "Meine Freunde" (issue 1028).
+    for (const width of [360, 800, 1440]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/?sheet=friends"]}>
+          <LayerHost>
+            <LayerSheet id="friends" title="Meine Freunde">
+              <button type="button">Freundschaft beenden</button>
+            </LayerSheet>
+          </LayerHost>
+        </MemoryRouter>,
+      );
+      const title = await screen.findByRole("heading", { name: "Meine Freunde" });
+      await waitFor(() => expect(document.activeElement).toBe(title));
+      expect(document.activeElement).not.toBe(
+        screen.getByRole("button", { name: "Freundschaft beenden" }),
+      );
+      unmount();
+    }
+  });
+
+  it("US-QS-15 · DS-37 issue 1714 a sheet title that takes the focus by script shows the focus ring after keyboard input", async () => {
+    setViewportWidth(360);
+    render(<TitleSheet />);
+    screen.getByRole("button", { name: "Licht" }).focus();
+    await userEvent.keyboard("{Enter}");
+    const title = await screen.findByRole("heading", { name: "Lichtzonen" });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(document.documentElement.getAttribute("data-input")).toBe("keyboard");
+    expect(title.className).toContain("keyboard-input:focus-visible:ring-2");
+    expect(title.className).toContain("keyboard-input:focus-visible:ring-ring");
+    expect(title.className).toContain("focus-visible:outline-none");
+  });
+
+  it("US-QS-15 · DS-37 issue 1714 a sheet title that takes the focus after a click draws no ring: every ring class waits for keyboard input", async () => {
+    setViewportWidth(360);
+    render(<TitleSheet />);
+    await userEvent.click(screen.getByRole("button", { name: "Licht" }));
+    const title = await screen.findByRole("heading", { name: "Lichtzonen" });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(document.documentElement.getAttribute("data-input")).toBe("pointer");
+    expect(ungatedRing(title.className)).toEqual([]);
+  });
+
+  it("US-QS-15: a layer that starts with a text field keeps the focus in it, also in the desktop pane", async () => {
+    // Owner decision of 31.10. (issue 1104): the wish form starts in its species search on every width.
+    for (const width of [360, 800, 1440]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <MemoryRouter initialEntries={["/?sheet=new-wish"]}>
+          <LayerHost>
+            <LayerSheet id="new-wish" title="Neuer Wunsch">
+              <label>
+                Art suchen
+                <input type="search" />
+              </label>
+              <button type="button">Wunsch speichern</button>
+            </LayerSheet>
+          </LayerHost>
+        </MemoryRouter>,
+      );
+      const field = await screen.findByLabelText("Art suchen");
+      await waitFor(() => expect(document.activeElement).toBe(field));
+      unmount();
+    }
+  });
+
+  it("US-QS-15 a LayerSheet outside a LayerHost warns in dev when it opens beside the content", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      render(
+        <MemoryRouter initialEntries={["/?sheet=licht"]}>
+          <LayerSheet id="licht" title="Lichtzonen">
+            <p>Inhalt</p>
+          </LayerSheet>
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("complementary", { name: "Lichtzonen" })).toBeTruthy();
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('"licht" renders outside a LayerHost'),
+      );
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});

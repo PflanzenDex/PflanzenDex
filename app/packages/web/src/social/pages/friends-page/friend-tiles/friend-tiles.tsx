@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
-import { NavNote } from "@/components/shared/navigation/nav-model/nav-note/nav-note";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { NavNote } from "@/shared/patterns/navigation/nav-note/nav-note";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /** A count that is still loading, failed to load, or is known (P-10); calm mode passes `hidden` (US-ACH-08). */
 export type TileCount = number | "loading" | "error" | "hidden";
@@ -11,10 +15,19 @@ const TILE =
   "h-auto min-h-16 w-full flex-col items-start justify-center gap-0.5 rounded-card p-3 text-left";
 
 function CountText({ count }: { count: TileCount }) {
+  // The count's status holds once shown (US-QS-14, D5, issue 1772); the number waits for the hold.
+  const loading = useHeldLoader(count === "loading");
   if (count === "hidden") return null;
-  if (count === "loading") return <span className="text-sm text-muted-foreground">lädt …</span>;
+  if (loading)
+    return (
+      <DelayedSkeleton>
+        <span className="text-sm text-muted-foreground">lädt …</span>
+      </DelayedSkeleton>
+    );
   if (count === "error")
     return <span className="text-sm text-muted-foreground">nicht geladen</span>;
+  // Zero reads as "nothing to do", not as a number to work through (issue 1045).
+  if (count === 0) return <span className="text-sm text-muted-foreground">keine</span>;
   return <span className="text-sm tabular-nums text-muted-foreground">{count}</span>;
 }
 
@@ -66,15 +79,14 @@ export function LayerRow(props: { id: string; name: string; state: ReactNode }) 
     <Button
       type="button"
       variant="outline"
-      className="h-auto min-h-12 w-full justify-between gap-3 rounded-card px-3 text-left"
+      className="h-auto min-h-12 w-full flex-wrap justify-between gap-x-3 gap-y-1 rounded-card px-3 py-2 text-left"
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="font-semibold">{props.name}</span>
-      <span className="min-w-0 truncate text-sm tabular-nums text-muted-foreground">
-        {props.state}
-      </span>
+      {/* No truncation: at a larger text size the state wraps below the name instead of being cut (issue 1019). */}
+      <span className="min-w-0 text-sm tabular-nums text-muted-foreground">{props.state}</span>
     </Button>
   );
 }

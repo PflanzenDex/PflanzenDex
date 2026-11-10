@@ -17,7 +17,8 @@ export interface CreateWishDependencies {
   readonly wishes: WishStore;
 }
 
-const schema = shape({
+/** The input of `wish.create` (also the content of a `wish` draft of the AI interface, US-KI-05). */
+export const wishCreateSchema = shape({
   name: textField("name", WISH_LIMITS.name),
   german: orNull(textField("german", WISH_LIMITS.german)),
   targetZoneId: orNull(idField("targetZoneId")),
@@ -38,7 +39,7 @@ const schema = shape({
 export const wishCreate = (deps: CreateWishDependencies) =>
   defineOperation({
     name: "wish.create",
-    schema,
+    schema: wishCreateSchema,
     run: async ({ userId }, input) => {
       if ((input.imageUrl === null) !== (input.imageSource === null))
         return failed(

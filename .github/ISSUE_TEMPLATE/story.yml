@@ -1,11 +1,12 @@
 name: Story or enabler
 description: Work item from the spec. The spec is authoritative; the issue only points to it.
-labels: [story]
+projects: ["PflanzenDex/2"] # type, release and epic are set on the board (fields Typ, Release, Epic)
 body:
   - type: markdown
     attributes:
       value: |
         New features start in `docs/specs/product/` (a story with Given/When/Then criteria); the issue comes second.
+        Type and epic labels are required (FR-DEV-10): `story` or `enabler`, and `epic:XX` of the spec's epic. Without them the issue gets the label `needs-triage` and a comment naming what is missing.
   - type: input
     id: id
     attributes:
@@ -17,7 +18,16 @@ body:
     id: release
     attributes:
       label: Release
-      options: [R0 Foundation, R1 Parity, R2 Social, R3 Swapping and reminders, R4 AI access, R5 Equipment, R6 Sensors]
+      options:
+        [
+          R0 Foundation,
+          R1 Parity,
+          R2 Social,
+          R3 Swapping and reminders,
+          R4 AI access,
+          R5 Equipment,
+          R6 Sensors,
+        ]
     validations:
       required: true
   - type: textarea
@@ -27,6 +37,17 @@ body:
       description: copied unchanged from the spec; if they differ, the spec wins
     validations:
       required: true
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility
+      description: Standing criteria of US-QS-08 to US-QS-12 (FR-QG-10 item 11, NFR-13). Tick what the story touches; the playbook is `.agents/skills/accessibility-check`.
+      value: |
+        - [ ] US-QS-08 Keyboard alone: every function reachable with Tab, Shift+Tab, Enter, Space, Esc and the arrow keys; no keyboard trap; a swipe or drag has a button alternative
+        - [ ] US-QS-09 Oriented: unique page title, one main heading, "Schritt n von m" in flows, help in the same place; focus moves to the new heading
+        - [ ] US-QS-10 Announced: results are announced without moving the focus; errors name the field; status is text, not colour alone
+        - [ ] US-QS-11 Shortcuts: every shortcut has a visible control, can be switched off, never takes a key that browsers or screen readers use
+        - [ ] US-QS-12 Adaptable: 320 px width and 400 % zoom without horizontal scrolling, text spacing, reduced motion, forced colours
   - type: textarea
     id: dependencies
     attributes:

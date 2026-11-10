@@ -16,8 +16,11 @@ async function profileOf(profiles: CareProfileReader, userId: string, speciesId:
  */
 export function careProfileLocations(profiles: CareProfileReader): PhaseLocationSource {
   return {
-    phaseLocation: async (userId, speciesId, phase) => {
-      const p = await profileOf(profiles, userId, speciesId);
+    phaseLocation: async (userId, speciesId, phase, loaded) => {
+      // A loaded map holds every profile of the account: a species missing from it has none (P-08).
+      const p = loaded
+        ? (loaded.get(speciesId) ?? null)
+        : await profileOf(profiles, userId, speciesId);
       return (phase === "growth" ? p?.growthLocationId : p?.dormancyLocationId) ?? null;
     },
   };

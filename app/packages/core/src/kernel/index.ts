@@ -17,11 +17,15 @@ export {
   numberField,
   timeZoneField,
   calendarDateField,
+  described,
+  jsonSchemaOf,
+  nullable,
+  photoSize,
 } from "./input";
-export type { Schema } from "./input";
+export type { JsonSchema, PhotoSize, Schema } from "./input";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
-export { canonical } from "./input";
+export { canonical, normalizeName } from "./input";
 export type {
   SignedInContext,
   Begin,
@@ -29,7 +33,14 @@ export type {
   IdempotencyStore,
   Context,
 } from "./ports/ports";
-export { localToday, isTimeZone, isCalendarDate, localInstant, daysBetween } from "./input/date";
+export {
+  localToday,
+  isTimeZone,
+  isCalendarDate,
+  localInstant,
+  daysBetween,
+  MS_PER_DAY,
+} from "./input/date";
 export * from "./sources";
 export {
   ALL_FEATURES,

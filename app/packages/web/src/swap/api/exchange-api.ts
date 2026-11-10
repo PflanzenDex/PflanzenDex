@@ -1,5 +1,5 @@
 import type { ExchangeOffer, OfferType } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 import type { OwnSpecimenRow } from "./offers-api";
 
 type FetchFn = typeof fetch;

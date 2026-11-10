@@ -1,9 +1,9 @@
 import { useId, useState } from "react";
 import { WISH_LIMITS, type CandidateList, type DuplicateWish } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
-import { Label } from "@/components/ui/display/label/label";
-import { useWriteAction, type Response } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Input } from "@/shared/ui/fields/input/input";
+import { Label } from "@/shared/ui/display/label/label";
+import { useWriteAction, type Response } from "../../../shared/data";
 import { removeDuplicateWish, renameWish } from "../../wishlist-api";
 
 type Token = () => Promise<string | undefined>;

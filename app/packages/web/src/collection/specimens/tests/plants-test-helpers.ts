@@ -1,9 +1,36 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { SpecimenCard, SpecimenSummary } from "@pflanzendex/core";
+import type { CardPages } from "../cards/use-card-pages";
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
 Element.prototype.setPointerCapture ??= () => undefined;
 Element.prototype.releasePointerCapture ??= () => undefined;
+
+/** The plants as the page holds them in a test: all of them loaded, so the server total is their count (FR-BES-23). */
+export function pagesOf(cards: readonly SpecimenCard[]): CardPages {
+  return {
+    status: "ready",
+    error: undefined,
+    cards,
+    total: cards.length,
+    hasMore: false,
+    loadingMore: false,
+    loadMore: () => undefined,
+    retry: () => undefined,
+  };
+}
+
+/** The summary of the same plants (FR-BES-23): the counts only; the tests of the groups build their own. */
+export function summaryOf(cards: readonly SpecimenCard[]): SpecimenSummary {
+  return {
+    total: cards.length,
+    unplaced: cards.filter((c) => c.location === null).length,
+    groups: [],
+    lastLocation: null,
+    anyMeasured: false,
+  };
+}
 
 /** Opens the layer of a plant by choosing its tile (US-QS-19); the card with its actions is inside the layer. */
 export async function openPlant(name: string): Promise<void> {

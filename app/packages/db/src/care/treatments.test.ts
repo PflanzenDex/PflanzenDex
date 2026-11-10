@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
 import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
@@ -219,5 +219,120 @@ describe("US-BEH-03 ticking off in the database", () => {
     await treatments.complete(anna, await open(anna, e), "2026-10-03");
     expect(await treatments.done(ben, e)).toEqual([]);
     expect(await treatments.done(anna, e)).toHaveLength(1);
+  });
+});
+
+describe("NFR-12 open and the latest done treatment per specimen", () => {
+  it("NFR-12 openAndLastDone is what open and done give per specimen; foreign and unknown IDs are missing", async () => {
+    const a = await specimen(anna, "Zuletzt A");
+    const b = await specimen(anna, "Zuletzt B");
+    const none = await specimen(anna, "Zuletzt ohne");
+    const made = await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-01", reason: "alt" }),
+      values({ specimenId: a, dueAt: "2026-10-02", reason: "neu" }),
+      values({ specimenId: b, dueAt: "2026-10-03", reason: "einzig" }),
+      values({ specimenId: b, dueAt: "2026-10-04", reason: "offen" }),
+    ]);
+    if (made === "specimen_unknown") throw new Error("seed");
+    const [alt, neu, einzig] = made;
+    await treatments.complete(anna, alt?.id ?? "", "2026-10-04");
+    await treatments.complete(anna, neu?.id ?? "", "2026-10-09");
+    await treatments.complete(anna, einzig?.id ?? "", "2026-10-05");
+    await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-30", reason: "offen A" }),
+    ]);
+    const { open, lastDone } = await treatments.openAndLastDone(anna, [a, b, none]);
+    expect(lastDone.get(a)?.reason).toBe("neu");
+    expect(lastDone.get(b)?.reason).toBe("einzig");
+    expect(lastDone.has(none)).toBe(false);
+    for (const id of [a, b]) expect(lastDone.get(id)).toEqual((await treatments.done(anna, id))[0]);
+    expect(open.get(a)).toEqual(await treatments.open(anna, [a]).then((m) => m.get(a)));
+    expect(open.get(a)?.map((t) => t.reason)).toEqual(["offen A"]);
+    expect(open.get(b)?.map((t) => t.reason)).toEqual(["offen"]);
+    const foreign = await treatments.openAndLastDone(ben, [a, b]);
+    expect(foreign.open.size + foreign.lastDone.size).toBe(0);
+    expect(await treatments.openAndLastDone(anna, [])).toEqual({
+      open: new Map(),
+      lastDone: new Map(),
+    });
+  });
+
+  it("NFR-12 openAndLastDone needs one statement for any number of specimens", async () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const id = await specimen(anna, `Zaehl T ${i} ${randomUUID()}`);
+      const made = await treatments.createMany(anna, [values({ specimenId: id })]);
+      if (made === "specimen_unknown") throw new Error("seed");
+      await treatments.complete(anna, made[0]?.id ?? "", "2026-10-06");
+      ids.push(id);
+    }
+    let statements = 0;
+    const counted = new Proxy(pool, {
+      get(target, prop) {
+        if (prop === "connect")
+          return async () => {
+            const c = await target.connect();
+            return new Proxy(c, {
+              get(client, p) {
+                const v = Reflect.get(client, p, client) as unknown;
+                if (p !== "query") return typeof v === "function" ? v.bind(client) : v;
+                return (...a: unknown[]) => (
+                  statements++,
+                  (v as (...x: unknown[]) => unknown).apply(client, a)
+                );
+              },
+            });
+          };
+        const v = Reflect.get(target, prop, target) as unknown;
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    });
+    const few = await new TreatmentsPostgres(counted).openAndLastDone(anna, ids.slice(0, 2));
+    const afterFew = statements;
+    statements = 0;
+    const many = await new TreatmentsPostgres(counted).openAndLastDone(anna, ids);
+    expect(few.lastDone.size).toBe(2);
+    expect(many.lastDone.size).toBe(6);
+    expect(statements).toBe(afterFew);
+  });
+});
+
+describe("NFR-12 done treatments of many specimens in one read", () => {
+  async function ticked(account: string, specimenId: string, dueAt: string, doneAt: string) {
+    const r = await treatments.createMany(account, [values({ specimenId, dueAt })]);
+    if (typeof r === "string") throw new Error(r);
+    const id = (r[0] as { id: string }).id;
+    await treatments.complete(account, id, doneAt);
+    return id;
+  }
+
+  it("NFR-12 returns per specimen what done returns, in the same order; open treatments and specimens without done ones are missing", async () => {
+    const a = await specimen(anna, "Erledigt viele A");
+    const b = await specimen(anna, "Erledigt viele B");
+    const none = await specimen(anna, "Erledigt viele ohne");
+    await ticked(anna, a, "2026-10-01", "2026-10-02");
+    await ticked(anna, a, "2026-10-08", "2026-10-09");
+    await treatments.createMany(anna, [values({ specimenId: a, dueAt: "2026-10-15" })]);
+    await ticked(anna, b, "2026-10-03", "2026-10-04");
+    const many = await treatments.doneMany(anna, [a, b, none]);
+    expect([...many.keys()].sort()).toEqual([a, b].sort());
+    expect(many.get(a)).toEqual(await treatments.done(anna, a));
+    expect(many.get(b)).toEqual(await treatments.done(anna, b));
+    expect(many.get(a)?.map((t) => t.dueAt)).toEqual(["2026-10-08", "2026-10-01"]);
+    expect(many.get(a)?.every((t) => t.done)).toBe(true);
+  });
+
+  it("NFR-12 P-04 another account gets nothing for these specimens; without IDs no query is sent", async () => {
+    const e = await specimen(anna, "Erledigt viele fremd");
+    await ticked(anna, e, "2026-10-01", "2026-10-02");
+    expect(await treatments.doneMany(ben, [e])).toEqual(new Map());
+    expect((await treatments.doneMany(anna, [e])).get(e)).toHaveLength(1);
+    const connect = vi.spyOn(pool, "connect");
+    try {
+      expect((await treatments.doneMany(anna, [])).size).toBe(0);
+      expect(connect).not.toHaveBeenCalled();
+    } finally {
+      connect.mockRestore();
+    }
   });
 });

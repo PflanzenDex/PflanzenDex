@@ -9,30 +9,19 @@ import {
   createSpecimenOn,
   pgError,
   setCaughtAt,
+  takenBy,
   type SpecimenRow,
+  type SpecimenValues,
 } from "./specimen-shared.ts";
-import { setLightZone, setLocations, zoneUsers } from "./specimen-locations.ts";
+import { setLightZone, setLocations, zoneUsers } from "./specimen/specimen-locations.ts";
+import { repotSpecimen } from "./specimen/specimen-repot.ts";
 
-export type { SpecimenRow };
-export type SpecimenValues = Pick<
-  SpecimenRow,
-  "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
-> & { readonly status?: "plant" | "cutting"; readonly lightZoneId?: string | null };
+export type { SpecimenRow, SpecimenValues };
 
 export interface MarkerAssignment {
   readonly specimenId: string;
   readonly name: string;
   readonly marker: string;
-}
-
-const UNIQUE = "23505";
-
-/** Which unique rule a failed write violated: the name per account or the marker per species (US-BES-03). */
-function takenBy(e: unknown): "name_taken" | "marker_taken" | null {
-  if (pgError(e).code !== UNIQUE) return null;
-  const constraint = pgError(e).constraint;
-  if (constraint === "specimen_name_per_account") return "name_taken";
-  return constraint === "specimen_marker_per_species" ? "marker_taken" : null;
 }
 
 /**
@@ -69,6 +58,16 @@ export class SpecimenPostgres {
       c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = $1`, [id]),
     );
     return r.rows[0] ?? null;
+  }
+
+  /** `find` for many IDs in ONE statement (NFR-12): same row rules, `null` for foreign or unknown IDs, same order as the IDs. */
+  async findMany(userId: string, ids: readonly string[]): Promise<readonly (SpecimenRow | null)[]> {
+    if (ids.length === 0) return [];
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = any($1)`, [ids]),
+    );
+    const byId = new Map(r.rows.map((s) => [s.id, s] as const));
+    return ids.map((id) => byId.get(id.toLowerCase()) ?? null);
   }
 
   /**
@@ -127,16 +126,16 @@ export class SpecimenPostgres {
   }
 
   /**
-   * One statement: only a cutting becomes a plant (US-BES-04). Plants and archived specimens stay unchanged and report
-   * `not_a_cutting`; foreign specimens are invisible to the row rule.
+   * The repot of a specimen (US-BES-04, US-BES-19): a cutting becomes a plant, a plant stays one; the repot day is
+   * recorded and the open repot observations are cleared, all in one transaction (see `repotSpecimen`).
    */
   async repot(
     userId: string,
     id: string,
     date: string | null,
-  ): Promise<SpecimenRow | "not_found" | "not_a_cutting"> {
-    const sql = `update specimen set status = 'plant', repotted_at = $2::date where id = $1 and status = 'cutting' returning ${COLUMNS}`;
-    return this.change(userId, { sql, parameter: [id, date] }, "not_a_cutting");
+    chosenDate: string | null,
+  ): Promise<SpecimenRow | "not_found" | "archived" | "before_caught" | "day_unknown"> {
+    return repotSpecimen(this.pool, userId, id, { date, chosenDate });
   }
 
   /**

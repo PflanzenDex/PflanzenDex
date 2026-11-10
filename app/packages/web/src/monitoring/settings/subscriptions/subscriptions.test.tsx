@@ -3,8 +3,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../../kernel";
+import { createQueryClient } from "../../../shared/data";
 import { Subscriptions } from "./subscriptions";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../monitoring.de.json";
+import { SubscriptionsSkeleton } from "./subscriptions.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -57,4 +60,12 @@ describe("US-MON-08 push subscription management", () => {
     expect(screen.queryByText("Browser über push.example")).toBeNull();
     expect(screen.getByText("Browser über other.example")).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the push devices show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <SubscriptionsSkeleton label={table["subscriptions.loading"]} />,
+      table["subscriptions.loading"],
+    ));
 });

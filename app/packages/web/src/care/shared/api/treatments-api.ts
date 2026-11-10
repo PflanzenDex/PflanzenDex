@@ -1,22 +1,39 @@
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
-/** What the form needs of a specimen: archived ones are not listed by the API (FR-BEH-04). */
+/**
+ * What the form needs of a specimen: its name and where it stands, for the location filter (US-BEH-01). Archived ones
+ * are not listed by the API (FR-BEH-04). `location` is `null` when the place is unknown (P-08).
+ */
 export interface TreatableSpecimen {
   id: string;
   name: string;
+  location?: string | null;
 }
 
-/** The active specimens of the account, also cuttings (FR-BEH-04). */
+/** The active specimens of the account, also cuttings, with their location name (FR-BEH-04, US-BEH-01). */
 export async function loadTreatableSpecimens(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly TreatableSpecimen[]>> {
-  const r = await call<{ specimens: TreatableSpecimen[] }>(fetchFn, `${api}/specimens`, token);
-  return r.ok ? { ok: true, value: r.value.specimens.map(({ id, name }) => ({ id, name })) } : r;
+  const r = await call<{ specimens: TreatableSpecimen[] }>(
+    fetchFn,
+    `${api}/specimens/treatable`,
+    token,
+  );
+  return r.ok
+    ? {
+        ok: true,
+        value: r.value.specimens.map(({ id, name, location }) => ({
+          id,
+          name,
+          location: location ?? null,
+        })),
+      }
+    : r;
 }
 
 export interface TreatmentInput {
@@ -30,7 +47,7 @@ export interface TreatmentInput {
 }
 
 /**
- * Plans treatments (US-BEH-01). The repeat-guard key is created per call, so a double tap or a retry writes once.
+ * Plans treatments (US-BEH-01). The repeat-guard key stays with the write until it is answered (`createWrite`), so a double tap or a retry writes once.
  */
 export async function planTreatments(
   api: string,

@@ -8,6 +8,13 @@ export const FIXTURES_CARE: Fixtures = {
     date: "2026-10-03",
     value: 12.5,
   }),
+  leaf: async (k) => ({
+    specimen_id: await createFixtureSpecimenAt(k),
+    date: "2026-10-03",
+    length_mm: 40,
+    width_mm: 12,
+    note: null,
+  }),
   treatment: async (k) => ({
     specimen_id: await createFixtureSpecimenAt(k),
     reason: "Wollläuse",

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { useWriteAction } from "../../../../kernel";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useWriteAction } from "../../../../shared/data";
 import { recordEquipment, type EquipmentInput } from "../../../equipment-api";
 import type { EquipmentPrefill } from "../../../overviews/wishes-view/wishes-api";
 import { NEW_LAYER } from "../tiles/equipment-tiles/equipment-tiles";
@@ -23,7 +23,7 @@ export function useRecord(
       const r = await recordEquipment(api, t, input);
       saved = r.ok;
       return r;
-    }, `Equipment „${input.name}“ gespeichert.`);
+    }, `Gerät „${input.name}“ gespeichert.`);
     if (saved) {
       setPrefill(null);
       layer.closeLayer();

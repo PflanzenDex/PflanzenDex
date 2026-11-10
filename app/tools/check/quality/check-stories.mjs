@@ -1,4 +1,4 @@
-// Gate QG-U5 (US-QS-07): every component in components/ui and components/shared has a story that covers
+// Gate QG-U5 (US-QS-07): every component in shared/ui, shared/patterns and app/frame has a story that covers
 // its variants and states. The script checks mechanically that the required exports exist; whether a story
 // is meaningful stays a review question. There is no baseline and no exception list.
 //   <name>.tsx            needs <name>.stories.tsx next to it
@@ -13,7 +13,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const COMPONENT_DIRS = ["ui", "shared"];
+// Folders below src/ (FR-QG-23 steps 2 and 3): shared/ui, shared/patterns, and the app-shell components of app/frame (formerly
+// components/shared; the scope is the same: only the files directly in a folder are checked, as before).
+export const COMPONENT_DIRS = ["shared/ui", "shared/patterns", "app/frame"];
 
 const stripComments = (s) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
@@ -121,14 +123,14 @@ function variantProblems(source, story, storyRel, exported) {
 export function check(webRoot) {
   const problems = [];
   for (const dir of COMPONENT_DIRS) {
-    const full = path.join(webRoot, "src/components", dir);
+    const full = path.join(webRoot, "src", dir);
     if (!fs.existsSync(full)) continue;
     const files = fs.readdirSync(full, { withFileTypes: true }).filter((e) => e.isFile());
     for (const entry of files) {
       const m = entry.name.match(/^([^.]+)\.tsx$/);
       if (!m) continue; // tests, stories, .ts helpers
       const name = m[1];
-      const rel = `components/${dir}/${entry.name}`;
+      const rel = `${dir}/${entry.name}`;
       const storyName = `${name}.stories.tsx`;
       const storyPath = path.join(full, storyName);
       if (!fs.existsSync(storyPath)) {
@@ -137,7 +139,7 @@ export function check(webRoot) {
       }
       const source = fs.readFileSync(path.join(full, entry.name), "utf8");
       const story = fs.readFileSync(storyPath, "utf8");
-      const storyRel = `components/${dir}/${storyName}`;
+      const storyRel = `${dir}/${storyName}`;
       const exported = storyExports(story);
       const need = (names, why) => {
         if (!names.some((n) => exported.has(n)))

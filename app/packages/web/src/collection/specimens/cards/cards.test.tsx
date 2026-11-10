@@ -2,10 +2,13 @@
 import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlantLocation } from "../../plants-screen/plant-layers/plant-layer/plant-location/plant-location";
 import { PlantOverview } from "../../plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
-import { loadCards } from "./cards-api";
+import { loadAllCardsOf, loadCard, loadCardPage, loadCardSummary } from "./cards-api";
+import { answerCardRead } from "../tests/cards-fake";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -22,6 +25,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -34,33 +38,104 @@ const ACCESS = { api: "http://api", token: async () => "tok" };
 /** The facts of a card as the plant layer shows them: the tabs "Überblick" and "Standort" (US-QS-23). */
 function CardList({ cards }: { cards: SpecimenCard[] }) {
   return (
-    <ul>
-      {cards.map((c) => (
-        <li key={c.id}>
-          <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
-          <PlantLocation card={c} />
-        </li>
-      ))}
-    </ul>
+    <MemoryRouter>
+      <ul>
+        {cards.map((c) => (
+          <li key={c.id}>
+            <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
+            <PlantLocation card={c} />
+          </li>
+        ))}
+      </ul>
+    </MemoryRouter>
   );
 }
 const html = (cards: SpecimenCard[]) => renderToString(<CardList cards={cards} />);
 
+// The card reads answered from `cards` as the API answers them (pages, summary, one card), the calls kept for the checks.
+const fakeCardsFetch = (cards: SpecimenCard[]) =>
+  vi.fn<typeof fetch>(
+    async (url) => answerCardRead(new URL(String(url)), cards) ?? response(404, {}),
+  );
+
 describe("US-BES-06 client of the cards API", () => {
-  it("loads the cards with bearer token and the time zone of the device", async () => {
-    const fetchFn = vi.fn<typeof fetch>(async () => response(200, { cards: [card()] }));
-    const r = await loadCards("http://api", "tok", fetchFn);
-    expect(r).toMatchObject({ ok: true, value: [{ id: "e1" }] });
+  it("FR-BES-23 a page of cards loads with the bearer token, the time zone of the device and the filter", async () => {
+    const fetchFn = fakeCardsFetch([card()]);
+    const r = await loadCardPage(
+      "http://api",
+      "tok",
+      { location: "Regal Süd", limit: 50 },
+      fetchFn,
+    );
+    expect(r).toMatchObject({ ok: true, value: { cards: [{ id: "e1" }], total: 1, next: null } });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    expect(String(url)).toBe(`http://api/specimens/cards?timeZone=${encodeURIComponent(timeZone)}`);
+    const sent = new URL(String(url));
+    expect(sent.origin + sent.pathname).toBe("http://api/specimens/cards");
+    expect(sent.searchParams.get("timeZone")).toBe(timeZone);
+    expect(sent.searchParams.get("limit")).toBe("50");
+    expect(sent.searchParams.get("location")).toBe("Regal Süd");
     expect((init?.headers as Record<string, string>)["Authorization"]).toBe("Bearer tok");
+  });
+
+  it("FR-BES-23 the cursor of a page is the after of the next one: every card once, in order", async () => {
+    const cards = ["Pflanze 0", "Pflanze 1", "Pflanze 2"].map((name, i) =>
+      card({ id: `e${i}`, name }),
+    );
+    const fetchFn = fakeCardsFetch(cards);
+    const first = await loadCardPage("http://api", "tok", { limit: 2 }, fetchFn);
+    expect(first).toMatchObject({ ok: true, value: { total: 3 } });
+    const next = first.ok ? first.value.next : null;
+    expect(next).toEqual(expect.any(String));
+    const second = await loadCardPage(
+      "http://api",
+      "tok",
+      { limit: 2, after: next ?? "" },
+      fetchFn,
+    );
+    expect(second).toMatchObject({ ok: true, value: { cards: [{ id: "e2" }], next: null } });
+  });
+
+  it("US-BES-06 · FR-BES-23 the summary and one card come from their own endpoints; an unknown card is an error", async () => {
+    const fetchFn = fakeCardsFetch([card({ id: "e1" })]);
+    expect(await loadCardSummary("http://api", "tok", fetchFn)).toMatchObject({
+      ok: true,
+      value: { total: 1, unplaced: 0, groups: [{ locationId: "Regal Süd", count: 1 }] },
+    });
+    expect(await loadCard("http://api", "tok", "e1", fetchFn)).toMatchObject({
+      ok: true,
+      value: { id: "e1" },
+    });
+    expect(await loadCard("http://api", "tok", "gone", fetchFn)).toMatchObject({
+      ok: false,
+      error: { code: "specimen.not_found" },
+    });
+  });
+
+  it("US-QS-19 the card of the address is read by its encoded id: a plant id with a slash or a question mark stays one path segment", async () => {
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(card({ id: "x" })), { status: 200 }),
+    );
+    await loadCard("http://api", "tok", "a/b?c", fetchFn);
+    expect(String(fetchFn.mock.calls[0]?.[0])).toMatch(/\/specimens\/a%2Fb%3Fc\/card\?/);
+  });
+
+  it("FR-BES-23 every active plant of a species is read to the end, not only its first page (the marker rule needs all)", async () => {
+    const cards = Array.from({ length: 205 }, (_, i) =>
+      card({ id: `e${i}`, name: `Shop ${String(i).padStart(3, "0")}` }),
+    );
+    const fetchFn = fakeCardsFetch(cards);
+    const all = await loadAllCardsOf("http://api", "tok", "a1", fetchFn);
+    expect(all).toMatchObject({ ok: true });
+    expect(all.ok && all.value).toHaveLength(205);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(new URL(String(fetchFn.mock.calls[0]?.[0])).searchParams.get("species")).toBe("a1");
   });
 
   it("a server error stays an error with code, no empty list (P-10)", async () => {
     const error = { code: "input.invalid", text: "Ungültig." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(400, { error }));
-    expect(await loadCards("http://api", "tok", fetchFn)).toMatchObject({
+    expect(await loadCardPage("http://api", "tok", {}, fetchFn)).toMatchObject({
       ok: false,
       error: { code: "input.invalid" },
     });
@@ -145,7 +220,9 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
     const img = await screen.findByRole("img", { name: "Foto von Bogenhanf vom 28.09.2026" });
     expect(img.getAttribute("src")).toBe("blob:card");
     expect(img.closest("a")?.getAttribute("href")).toBe("blob:card");
-    expect(screen.getByRole("link", { name: "Foto von Bogenhanf groß öffnen" })).toBeTruthy();
+    expect(
+      await screen.findByRole("link", { name: "Foto von Bogenhanf groß öffnen" }),
+    ).toBeTruthy();
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/measurements/m1/photo");
     expect((init?.headers as Record<string, string>)["Authorization"]).toBe("Bearer tok");
@@ -158,8 +235,9 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
         response(404, { error: { code: "measurement.photo_not_found", text: "raw" } }),
       ),
     );
+    delayLoads();
     show();
-    expect(screen.getByText("Lädt …")).toBeTruthy();
+    expect(await screen.findByText("Lädt …")).toBeTruthy();
     expect(await screen.findByText("Zu dieser Messung gibt es kein Foto.")).toBeTruthy();
   });
 });

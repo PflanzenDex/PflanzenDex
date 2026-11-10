@@ -80,6 +80,14 @@ afterAll(async () => {
 });
 
 describe("US-SOZ-09 the open offers of friends", () => {
+  it("NFR-12 hasAny says whether the account has a swap request, and only its own (P-04)", async () => {
+    const o = await offer(anna, "Fuer hasAny");
+    const r = await swaps.request(ben, o.offerId, null, "Gern");
+    expect(r).toBeTruthy();
+    expect(await swaps.hasAny(ben)).toBe(true);
+    expect(await swaps.hasAny(randomUUID())).toBe(false);
+  });
+
   it("a friend sees the open, shared offers of the other side with the name it stored, newest first, never the own ones", async () => {
     const first = await offer(anna, "Freundesangebot 1");
     const second = await offer(anna, "Freundesangebot 2", "give_away");

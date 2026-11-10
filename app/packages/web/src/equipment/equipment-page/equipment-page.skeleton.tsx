@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the page on a phone: two cards, form fields and the save button (DS-52, DS-53). */
 export function EquipmentPageSkeleton({ label }: { label: string }) {

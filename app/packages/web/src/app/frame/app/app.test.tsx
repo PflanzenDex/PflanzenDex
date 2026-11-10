@@ -1,0 +1,770 @@
+// @vitest-environment jsdom
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import "../../../collection/specimens/tests/plants-test-helpers";
+
+// The sign-in service is a foreign system: UserManager is replaced, app and modules run for real.
+const mgr = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  removeUser: vi.fn(async () => undefined),
+  signinRedirect: vi.fn(async () => undefined),
+  signoutRedirect: vi.fn(async () => undefined),
+}));
+// The destination pages preload when the browser is idle (issue 1645), and jsdom has no idle moment: its fallback timer
+// would import the pages of every destination inside whichever test runs past it. This file observes navigation, not
+// preloading, so the idle schedule is switched off here, as focus-preload.test.tsx does for ResponsiveModal. The preload
+// itself is covered by routes.test.tsx and preload.test.ts; a link still preloads its page when it is pressed.
+vi.mock("@/shared/platform/routing/lazy-page/preload", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/shared/platform/routing/lazy-page/preload")>()),
+  preloadWhenIdle: () => () => undefined,
+}));
+vi.mock("oidc-client-ts", () => ({
+  WebStorageStateStore: vi.fn(),
+  UserManager: class {
+    settings = { authority: "http://auth/realm" };
+    events = {
+      addUserSignedOut: () => undefined,
+      removeUserSignedOut: () => undefined,
+      addSilentRenewError: () => undefined,
+      removeSilentRenewError: () => undefined,
+    };
+    getUser = mgr.getUser;
+    removeUser = mgr.removeUser;
+    signinRedirect = mgr.signinRedirect;
+    signoutRedirect = mgr.signoutRedirect;
+  },
+}));
+
+import { BrowserRouter, MemoryRouter } from "react-router";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { App } from "./app";
+import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
+import {
+  answerCardRead,
+  NO_CARDS_PAGE,
+  NO_CARDS_SUMMARY,
+} from "../../../collection/specimens/tests/cards-fake";
+import { pokedexReadAnswer } from "../../../pokedex/pokedex-page/pokedex-reads-fake";
+
+/** The app runs inside a router; a memory router stands for the address bar. */
+const renderApp = (path = "/") =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <App />
+    </MemoryRouter>,
+  );
+
+/** The main navigation of the shared shell: the header row lists every destination as a link (DS-25). */
+const header = () => within(screen.getByRole("navigation", { name: "Hauptnavigation" }));
+const tab = (name: string) => header().getByRole("link", { name });
+/** "Heute" is the home screen (US-QS-16): the brand link leads there and its entry is the current one. */
+const expectHeute = () => {
+  expect(header().getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeTruthy();
+  expect(tab("Heute").getAttribute("aria-current")).toBe("page");
+};
+const queryTab = (name: string) => header().queryByRole("link", { name });
+const findTab = async (name: string) => {
+  await screen.findByRole("navigation", { name: "Hauptnavigation" });
+  return tab(name);
+};
+
+const account = {
+  id: "1",
+  email: "lena@example.test",
+  displayName: "Lena",
+  emailConfirmed: true,
+  mayShareWithFriends: true,
+};
+const response = (status: number, body: unknown = {}) =>
+  Promise.resolve(new Response(JSON.stringify(body), { status }));
+
+const SPECIMEN_HINTS = [
+  {
+    kind: "location_without_zone",
+    specimenId: "e1",
+    specimenName: "Aloe",
+    locationId: "s1",
+    text: "„Aloe“ steht am Standort „Kiste“, der noch keine Lichtzone hat.",
+    nextAction: "Weise dem Standort „Kiste“ eine Lichtzone zu.",
+  },
+];
+
+/** The wishlist page loads the candidates and the bought wishes together (US-WUN-01, US-WUN-03). */
+const WISHLIST: Record<string, unknown> = {
+  "/wishes/candidates": {
+    candidates: [],
+    zones: [],
+    duplicates: [],
+    unfit: [],
+    hint: {
+      text: "Keine offenen Kandidaten in der Wunschliste.",
+      nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
+    },
+    replenishment: {
+      buffer: 2,
+      zones: [],
+      actions: { discover: false, suggestions: false },
+      nextAction: null,
+    },
+  },
+  "/wishes/bought": {
+    bought: [],
+    hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Gekauft" },
+  },
+  "/wishes/discarded": {
+    discarded: [],
+    hint: { text: "Kein Wunsch ist verworfen.", nextAction: "Verwerfen" },
+  },
+};
+
+/** A species as the catalog delivers it, for the profile page at `/species/a1`. */
+const PROFILE_SPECIES = {
+  id: "a1",
+  latinName: "Dracaena trifasciata",
+  genus: "Dracaena",
+  epithet: "trifasciata",
+  cultivar: null,
+  germanName: "Bogenhanf",
+  englishName: null,
+  synonyms: [],
+  familyGerman: null,
+  familyLatin: null,
+  difficulty: 1,
+  standardLevel: 2,
+  lightDemandLux: 15000,
+  dormancyFrom: null,
+  dormancyUntil: null,
+  locationHint: null,
+  growthMeasure: "height",
+  etiolationSigns: "Blätter kippen.",
+  wateringHint: null,
+  substrate: null,
+  pruning: null,
+  growthHacks: null,
+  successCriteria: "Aufrecht.",
+  botanicalStory: null,
+  source: null,
+  reviewStatus: "reviewed",
+  createdBy: "user",
+  own: false,
+  version: 1,
+};
+
+/**
+ * The reads the signed-in frame makes on every page (issue 1625), each answered without data: the list of "Heute", the
+ * account profile (no reminder switched on), the watering reminders, the treatments and the hints. The Pokédex reads and
+ * the lock states come from `pokedexReadAnswer`.
+ */
+const FRAME_READS: Record<string, unknown> = {
+  "/today": { date: "2026-10-03", upcoming: 0, items: [] },
+  "/account/profile": {
+    displayName: "Lena",
+    timeZone: "Europe/Berlin",
+    everythingPrivate: false,
+    noRecommendations: false,
+    notifications: {},
+    replenishBuffer: 2,
+    rarityConsent: false,
+    positionThresholds: null,
+  },
+  "/watering/due": { due: [] },
+  "/treatments": { treatments: [] },
+  "/specimens/hints": { hints: [] },
+};
+/** The body of a read every page of the frame makes, or `undefined`; `caught` are the species the Pokédex reads use. */
+const frameRead = (path: string, caught: readonly { species: string }[] = []): unknown =>
+  pokedexReadAnswer(path, caught) ?? FRAME_READS[path];
+
+/** The answers of the simple routes; the rest (account, wishlist) is decided in `fakeServer`. */
+const ANSWERS: Record<string, unknown> = {
+  "/species": { species: [] },
+  "/species/a1": PROFILE_SPECIES,
+  "/specimens/count": { count: 0, archived: 0 },
+  "/specimens/cards": NO_CARDS_PAGE,
+  "/specimens/cards/summary": NO_CARDS_SUMMARY,
+  "/specimens/archived": { archived: [] },
+  "/specimens/distribution": EMPTY_DISTRIBUTION,
+  "/locations": { locations: [] },
+  "/light-zones": { zones: [] },
+  "/specimens": { specimens: [] },
+  "/care-profiles": { entries: [] },
+  "/care-phases": { phases: [] },
+  "/hints": { hints: [] },
+  "/specimens/hints": { hints: SPECIMEN_HINTS },
+  "/pokedex/ownership": { ownership: { caught: [], unidentified: [] } },
+  "/friends": { friends: [] },
+  "/friends/requests": { incoming: [], outgoing: [] },
+  "/sharing": { shared: [] },
+  "/equipment": { equipment: [] },
+  "/equipment/zones": { zones: [], unassigned: [] },
+  "/equipment/lamps": { limit: null, lamps: [] },
+  "/equipment/sensors": { sensors: [], specimens: [], locations: [] },
+  "/equipment/needs": { needs: [] },
+  "/equipment/wishes": { open: [], bought: [], discarded: [] },
+  "/equipment/sharing": { shared: [] },
+  "/equipment/recommendations": { recommendations: [] },
+  "/specimens/light-overview": { rows: [] },
+  "/specimens/difficulty": { rows: [] },
+};
+
+function fakeServer(accountStatus = 200, plants = 0) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/account") return response(accountStatus, account);
+      if (path === "/specimens/count") return response(200, { count: plants, archived: 0 });
+      if (path in ANSWERS) return response(200, ANSWERS[path]);
+      if (path in WISHLIST) return response(200, WISHLIST[path]);
+      const read = frameRead(path);
+      if (read !== undefined) return response(200, read);
+      return response(404);
+    }),
+  );
+}
+
+// Heute and its sections are lazy parts: loading them first keeps the waits on the data, not on a cold import (#444).
+beforeAll(async () => {
+  Element.prototype.setPointerCapture ??= () => undefined;
+  // jsdom has no matchMedia: the planning form of the treatments section reads it.
+  window.matchMedia ??= ((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+    onchange: null,
+  })) as unknown as typeof window.matchMedia;
+  await Promise.all([
+    import("@/app/destinations/today-area/today-area"),
+    import("../../../today/today-page/today-page"),
+    import("../../../care/treatments/treatments-page/treatments-page"),
+    import("../../../collection/other-pages/hints-page/hints-page"),
+    import("../../flows/onboarding/today-intro/today-intro"),
+  ]);
+}, 30_000);
+
+beforeEach(() => {
+  mgr.getUser.mockReset();
+  mgr.signinRedirect.mockClear();
+  mgr.signoutRedirect.mockClear();
+  window.sessionStorage.clear();
+  window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
+  window.localStorage.removeItem("pflanzendex.collection-view");
+  window.history.replaceState({}, "", "/");
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe("US-ACC-01 App", () => {
+  it("signed out: welcome page with create account and sign in, no navigation", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    expect(screen.getByRole("status").textContent).toContain("Anmeldung wird geprüft");
+    await userEvent.click(await screen.findByRole("button", { name: "Konto anlegen" }));
+    // US-ACC-01: the silent check of a live session comes first; the registration opens on its return.
+    expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "none" });
+    expect(screen.queryByRole("navigation")).toBeNull();
+  });
+
+  it("US-ACC-01 signed out, the welcome page offers 'Anderes Konto', which ends the session at the sign-in service", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await userEvent.click(await screen.findByRole("button", { name: "Anderes Konto" }));
+    expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
+  it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {
+    fakeServer(500);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    expect((await screen.findByRole("alert")).textContent).toContain("nicht geladen werden");
+    fakeServer();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
+  });
+
+  it("US-ACC-05 a new person without account is asked for the invitation code, then lands in the app", async () => {
+    let registered = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/registration/invitation" && init?.method === "POST") {
+          registered = true;
+          return response(200, { registered: true });
+        }
+        if (path === "/account")
+          return registered
+            ? response(200, account)
+            : response(403, {
+                error: { code: "invitation.required", text: "Nur mit Einladungscode." },
+              });
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
+        return response(404);
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    expect(await screen.findByRole("heading", { name: "Einladungscode" })).toBeTruthy();
+    expect(screen.queryByRole("navigation")).toBeNull();
+    await userEvent.type(screen.getByRole("textbox", { name: "Einladungscode" }), "ABCD-EFGH");
+    await userEvent.click(screen.getByRole("button", { name: "Registrieren" }));
+    expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
+    expect(queryTab("Betreiber")).toBeNull();
+  });
+
+  it("US-ACC-05 the operator sees the tab Betreiber and its numbers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/account") return response(200, { ...account, operator: true });
+        if (path === "/operator/overview")
+          return response(200, {
+            accounts: 3,
+            activeAccounts: 2,
+            activeWindowDays: 30,
+            cost: null,
+            costPerUser: { known: false, reason: "no_figure" },
+            invitationOnly: false,
+            invitations: [],
+          });
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
+        return response(404);
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    await userEvent.click(await findTab("Betreiber"));
+    expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
+    // The numbers are the layer of their row on the overview (US-QS-15).
+    await userEvent.click(await screen.findByRole("button", { name: /^Zahlen/ }));
+    expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
+      /^unbekannt/,
+    );
+  });
+
+  it("US-QS-16 · US-ONB-01 signed in: starts on Heute with the first plant for a new account", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    expect(
+      await screen.findByRole("heading", { name: "Schritt 1 von 2: Deine erste Pflanze" }),
+    ).toBeTruthy();
+    expectHeute();
+    await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
+    expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
+    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+  });
+
+  it("signed in: the navigation switches between all views", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    await userEvent.click(await findTab("Entdecken"));
+    await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
+    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+    const species = tab("Entdecken");
+    expect(species.getAttribute("aria-current")).toBe("page");
+
+    await userEvent.click(tab("Sammlung"));
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(species.getAttribute("aria-current")).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Standorte und Lichtzonen verwalten" }),
+    );
+    expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
+
+    await userEvent.click(tab("Konto"));
+    expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
+    // The profile row names the account by name and e-mail; the settings row also names it (once the profile is loaded).
+    expect(await screen.findByRole("link", { name: /lena@example\.test/ })).toBeTruthy();
+    expect(screen.getByText("lena@example.test")).toBeTruthy();
+  });
+
+  it("US-QS-14 · US-BES-09 the old address /care-profile opens the species mode, where a species is chosen; there is no tab Pflegeprofil", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/care-profile");
+    expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-pressed")).toBe("true");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(queryTab("Pflegeprofil")).toBeNull();
+  });
+
+  it("US-QS-14 · US-BES-09 the profile of a species has the section Mein Pflegeprofil, which says what to do without a specimen", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/species/a1");
+    // US-QS-21: the section is one layer away from the profile, so the profile fits one screen.
+    await userEvent.click(await screen.findByRole("button", { name: "Mein Pflegeprofil" }));
+    expect(
+      (await screen.findAllByRole("heading", { level: 2, name: "Mein Pflegeprofil" })).length,
+    ).toBeGreaterThan(0);
+    expect(await screen.findByText(/Du hast noch keine Pflanze dieser Art/)).toBeTruthy();
+  });
+
+  it("US-QS-21 the profile at its own address is one screen: the frame is marked to fit, and the header holds the primary action", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/discover/species/a1");
+    expect(await screen.findByRole("button", { name: "Diese Art wählen" })).toBeTruthy();
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+
+  it("US-QS-14 · US-PHA-01 the old address /care-phases opens the plants grouped by care phase", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/care-phases");
+    expect(await screen.findByText("Noch keine Pflanze hat eine Phase.")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
+    expect(
+      (await screen.findByRole("button", { name: /Nach Pflegephase/ })).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("true");
+    await userEvent.keyboard("{Escape}");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(queryTab("Pflegephasen")).toBeNull();
+  });
+
+  it("US-QS-14 · US-LIC-01 the old address /light opens the management of the locations in the Sammlung, with a way back", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/light");
+    expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(queryTab("Standorte und Licht")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ansicht" })).toBeTruthy();
+  });
+
+  it("US-QS-14 · US-BES-05 the old address /difficulty opens the comparison in the species mode of the Sammlung and says what to do without a species", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/difficulty");
+    expect(await screen.findByRole("heading", { name: "Artenvergleich" })).toBeTruthy();
+    expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(header().queryByRole("link", { name: "Artenvergleich" })).toBeNull();
+  });
+
+  it("US-QS-14 · US-WUN-01 the old address /wishlist opens the Wunschliste mode and says what to do without a wish", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/wishlist");
+    expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
+    expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wünsche" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(header().queryByRole("link", { name: "Wunschliste" })).toBeNull();
+  });
+
+  it("US-QS-14 · US-QS-18 · US-BES-08 the old address /hints lands on the layer Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
+    fakeServer(200, 1);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/hints");
+    expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Fehlt noch" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
+    expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+  });
+
+  it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/light");
+    // The overview is a layer of the management (US-QS-19): it opens from its button first.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lichthunger und Einstufung" }),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(screen.queryByRole("heading", { name: "Standorte" })).toBeNull();
+  });
+
+  it('choosing a species in the catalog leads to the form "Pflanze anlegen"; back leads to the catalog (US-BES-02)', async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/account") return response(200, account);
+        if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/light-zones") return response(200, { zones: [] });
+        if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
+        if (path.startsWith("/specimens/cards"))
+          return answerCardRead(new URL(String(url)), []) ?? response(404, {});
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        const species = {
+          id: "a1",
+          latinName: "Dracaena trifasciata",
+          germanName: null,
+          synonyms: [],
+          difficulty: 1,
+          standardLevel: 2,
+          lightDemandLux: 15000,
+          growthMeasure: "height",
+          etiolationSigns: "x",
+          successCriteria: "y",
+          reviewStatus: "reviewed",
+        };
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
+        return response(
+          200,
+          path === "/species" ? { species: [{ ...species, hit: null }] } : species,
+        );
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    await userEvent.click(await findTab("Entdecken"));
+    await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
+    await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
+    expect(await screen.findByRole("heading", { name: "Pflanze anlegen" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Art" }));
+    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+  });
+
+  it("US-POK-09 after the way Sammlung species mode, species profile, collection, back the catalog search opens, not the old profile", async () => {
+    const species = {
+      id: "a1",
+      latinName: "Dracaena trifasciata",
+      germanName: null,
+      synonyms: [],
+      difficulty: 1,
+      standardLevel: 2,
+      lightDemandLux: 15000,
+      growthMeasure: "height",
+      etiolationSigns: "x",
+      successCriteria: "y",
+      reviewStatus: "reviewed",
+    };
+    const caught = {
+      species: "Dracaena trifasciata",
+      speciesId: "a1",
+      genus: "Dracaena",
+      chips: [],
+      specimenCount: 1,
+      caughtDate: { date: "2026-01-01", source: "caught_at" },
+      germanName: null,
+      familyLatin: null,
+      familyGerman: null,
+      genusSpeciesCount: null,
+      source: null,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/account") return response(200, account);
+        if (path === "/pokedex/ownership")
+          return response(200, { ownership: { caught: [caught], unidentified: [] } });
+        if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/light-zones") return response(200, { zones: [] });
+        if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
+        if (path.startsWith("/specimens/cards"))
+          return answerCardRead(new URL(String(url)), []) ?? response(404, {});
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        const read = frameRead(path, [caught]);
+        if (read !== undefined) return response(200, read);
+        return response(
+          200,
+          path === "/species" ? { species: [{ ...species, hit: null }] } : species,
+        );
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    await userEvent.click(await findTab("Sammlung"));
+    await userEvent.click(screen.getByRole("button", { name: "Arten" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Dracaena trifasciata/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Zum Artprofil" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Zurück zur Art" }));
+    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+  });
+
+  it("US-QS-17 no page shows a version footer", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await screen.findByRole("button", { name: "Anmelden" });
+    expect(screen.queryByText(/^Version /)).toBeNull();
+  });
+
+  it("US-QS-07 · a deep link opens the page of its address", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/collection");
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+  });
+
+  it("US-QS-07 · an unknown address lands on Heute", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/gibt-es-nicht");
+    await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    await waitFor(() => expectHeute());
+  });
+
+  it("US-QS-07 · the address shows the page and a species profile has its own address", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/species/a1");
+    await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    await waitFor(() => expect(tab("Entdecken").getAttribute("aria-current")).toBe("page"));
+    await waitFor(() =>
+      expect(vi.mocked(fetch).mock.calls.map((c) => new URL(String(c[0])).pathname)).toContain(
+        "/species/a1",
+      ),
+    );
+  });
+
+  it("US-BES-10 · without the reviewer role /review lands on Heute with a German hint", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/review");
+    expect((await screen.findByRole("alert")).textContent).toContain("Prüfliste");
+    expectHeute();
+  });
+
+  it("US-ACC-05 · without the operator role /operator lands on Heute with a German hint", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/operator");
+    expect((await screen.findByRole("alert")).textContent).toContain("Betreiber");
+    expectHeute();
+  });
+});
+
+describe("US-QS-07 browser history", () => {
+  it("US-QS-07 · back button returns to the previous page", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    window.localStorage.clear();
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>,
+    );
+    await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    await userEvent.click(tab("Sammlung"));
+    await userEvent.click(tab("Konto"));
+    expect(window.location.pathname).toBe("/account");
+    await act(async () => {
+      window.history.back();
+      await waitFor(() => expect(window.location.pathname).toBe("/collection"));
+    });
+    expect((await findTab("Sammlung")).getAttribute("aria-current")).toBe("page");
+    await act(async () => {
+      window.history.back();
+      await waitFor(() => expect(window.location.pathname).toBe("/today"));
+    });
+    await waitFor(() => expectHeute());
+  });
+});
+
+/**
+ * A layer of each destination, opened by its address at 1440 px, with the heading of the destination's own content
+ * (or, in the settings list, the title of its first group, because the section heading sits above the frame).
+ */
+const LAYER_ADDRESSES: readonly (readonly [string, string, string])[] = [
+  ["Heute: Behandlungen", "/today?sheet=treatments", "Heute"],
+  ["Heute: Fehlt noch", "/today?sheet=hints", "Heute"],
+  ["Sammlung: Ansicht", "/collection?view=plants&sheet=view", "Sammlung"],
+  ["Sammlung: Lichtzonen", "/collection?view=plants&sheet=zones", "Sammlung"],
+  ["Sammlung: Arten, Sammlerkarten", "/collection?view=species&sheet=cards", "Sammlung"],
+  ["Sammlung: Wunschliste, Gekauft", "/collection?view=wishlist&sheet=bought", "Sammlung"],
+  ["Sammlung: Geräte", "/collection?view=equipment&sheet=items", "Sammlung"],
+  ["Entdecken: Filter", "/discover?view=catalog&sheet=filters", "Entdecken"],
+  ["Entdecken: Art vorschlagen", "/discover?view=catalog&sheet=propose", "Entdecken"],
+  ["Freunde: Neu bei Freunden", "/friends?sheet=news", "Freunde"],
+  ["Einstellungen: Profil", "/account/settings?sheet=profile", "Benachrichtigungen"],
+];
+
+/** The content column holds the destination's own content: its heading, or else the text of its list. */
+function expectOwnContent(content: HTMLElement, expected: string) {
+  const heading = content.querySelector("h1");
+  if (heading) expect(heading.textContent).toBe(expected);
+  else expect(content.textContent).toContain(expected);
+}
+
+describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
+  beforeEach(() => setViewportWidth(1440));
+  afterEach(() => setViewportWidth(360));
+
+  it("US-QS-15 · US-QS-18 the shell does not cap a destination with layers: its frame takes the main column, so a pane fits beside the content (#1027)", async () => {
+    fakeServer(200, 1);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/today?sheet=treatments");
+    await waitFor(() => expect(document.querySelector("[data-layer-pane]")).not.toBeNull(), {
+      timeout: 15000,
+    });
+    const frame = document.querySelector("[data-layer-host]") as HTMLElement;
+    // The shell's wrapper is the direct child of `main` that holds the frame; the cap is lifted only by the frame's `:has`.
+    const wrapper = frame.closest("main > div") as HTMLElement;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper.className).toContain("max-w-180");
+    expect(wrapper.className).toContain("has-[[data-layer-host]]:max-w-none");
+  }, 20000);
+
+  it.each(LAYER_ADDRESSES)(
+    "US-QS-15 %s: the pane is the second column of its destination's frame, the content is the first",
+    async (_name, address, expected) => {
+      fakeServer(200, 1);
+      mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+      const warn = vi.spyOn(console, "warn");
+      try {
+        renderApp(address);
+        // The destinations are lazy parts: the first open of one may take a while on a cold import.
+        await waitFor(() => expect(document.querySelector("[data-layer-pane]")).not.toBeNull(), {
+          timeout: 15000,
+        });
+        const pane = document.querySelector("[data-layer-pane]") as HTMLElement;
+        const slot = pane.parentElement as HTMLElement;
+        const frame = slot.parentElement as HTMLElement;
+        expect(pane.closest("main")).not.toBeNull();
+        expect(frame.hasAttribute("data-layer-host")).toBe(true);
+        expect(frame.lastElementChild).toBe(slot);
+        expect(slot.previousElementSibling).toBe(frame.firstElementChild);
+        expectOwnContent(frame.firstElementChild as HTMLElement, expected);
+        // A layer outside a frame would stack below the list: the dev warning must not fire (US-QS-15).
+        expect(warn).not.toHaveBeenCalledWith(
+          expect.stringContaining("renders outside a LayerHost"),
+        );
+      } finally {
+        warn.mockRestore();
+      }
+    },
+    20000,
+  );
+});

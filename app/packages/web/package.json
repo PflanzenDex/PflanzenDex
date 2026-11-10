@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit -p .",
+    "icons": "node src/styles/pwa/build-icons.mjs",
+    "pwa-screenshots": "node src/styles/pwa/capture-screenshots.mjs",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/web.tsbuildinfo",
     "test": "vitest run",
     "lighthouse": "lighthouse",
     "storybook": "storybook dev -p 6006",
@@ -27,6 +29,7 @@
     "react-hook-form": "7.91.0",
     "react-router": "8.5.0",
     "tailwind-merge": "3.7.0",
+    "uqr": "0.1.3",
     "vaul": "1.1.2",
     "zod": "4.6.7"
   },
@@ -43,6 +46,7 @@
     "@vitejs/plugin-react": "6.1.2",
     "jsdom": "30.1.3",
     "lighthouse": "13.5.0",
+    "sharp": "0.35.5",
     "storybook": "10.6.3",
     "tailwindcss": "4.3.3",
     "vite": "8.3.5"

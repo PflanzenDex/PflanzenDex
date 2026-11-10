@@ -16,9 +16,9 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 | `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                                                                                  |
 | `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                                                                                  |
 
-The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below) and keeps at most 3 log files of 10 MB (`json-file` driver, anchor `x-logging`; the overlays repeat it; starting values, assumption), so a noisy client cannot fill the disk. The API limits writes per client (120 per minute, 429 `request.rate_limited`; `docs/guides/reference/app.md`). The limit applies when a container is created: `docker compose up -d` recreates the services with the new setting; `docker inspect --format '{{.HostConfig.LogConfig}}' <container>` shows it.
+The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below) and keeps at most 3 log files of 10 MB (`json-file` driver, anchor `x-logging`; the overlays repeat it; starting values, assumption), so a noisy client cannot fill the disk. The API limits writes per client (120 per minute, 429 `request.rate_limited`; `docs/guides/reference/app.md`) and redeeming an invitation code per subject and address (5 and 20 per minute, starting values; the address is the forwarded client address, so it is only as good as the proxy in front of the API). The limit applies when a container is created: `docker compose up -d` recreates the services with the new setting; `docker inspect --format '{{.HostConfig.LogConfig}}' <container>` shows it.
 
-**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/docker/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
+**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/docker/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/shared/testing/test-setup/`.
 
 ## One-time setup (host)
 
@@ -40,7 +40,7 @@ Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_
 
 ### Container privileges (#761)
 
-Every service runs with `no-new-privileges` and without any Linux capability (`cap_drop: [ALL]`), and none runs as root: `db`, `keycloak-db` and `db-roles` as `postgres` (uid 70), `migrate` and `api` as `node`, `keycloak` as uid 1000, `web` and `proxy` as `caddy` (uid 10001, the `caddy` stage of `web.Dockerfile`), `mailpit` as `nobody`. The Tailscale nodes stay uid 0, but without any capability (userspace networking needs none; their registered state belongs to root). `app/packages/web/src/lib/test-setup/deploy-config.test.ts` checks all of it. Check a running stack with `docker compose ... exec <service> grep Cap /proc/1/status` (all zero).
+Every service runs with `no-new-privileges` and without any Linux capability (`cap_drop: [ALL]`), and none runs as root: `db`, `keycloak-db` and `db-roles` as `postgres` (uid 70), `migrate` and `api` as `node`, `keycloak` as uid 1000, `web` and `proxy` as `caddy` (uid 10001, the `caddy` stage of `web.Dockerfile`), `mailpit` as `nobody`. The Tailscale nodes stay uid 0, but without any capability (userspace networking needs none; their registered state belongs to root). `app/packages/web/src/shared/testing/test-setup/deploy-config.test.ts` checks all of it. Check a running stack with `docker compose ... exec <service> grep Cap /proc/1/status` (all zero).
 
 **One-time step on a host that ran the stack before #761:** the volume `caddydata` still belongs to root, and Caddy as `caddy` cannot write it (the proxy keeps serving, but logs `permission denied` for `/data/caddy`; with `CADDY_SCHEME=` empty it could not store certificates). New volumes get the right owner from the image. Before the first deploy with #761, in `app/config/deploy`:
 
@@ -115,6 +115,34 @@ Test log:
 | ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 2026-10-03 | development machine (Docker) | `make restore-test` passed (500 rows, same checksum); backup and restore run against the Compose stack |
 
+## Database pool and time limits (NFR-12, #1242)
+
+The api keeps one pool of connections to the database (the schema owner, `DATABASE_URL`). Requests, the background jobs, the reminders and the taxonomy check share it. Starting values (assumptions) and their environment variables; an empty variable keeps the value, `0` switches a time limit off, a value that is not a whole number stops the api at start and the message names the variable. Set them in `.env` and restart the api (`docker compose --env-file app/config/deploy/.env up -d api`, as in the other sections of this runbook):
+
+| Variable                                     | Default | What it bounds                                                                                       |
+| -------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `PFLANZENDEX_DB_POOL_MAX`                    | 12      | connections of the pool                                                                              |
+| `PFLANZENDEX_DB_CONNECT_TIMEOUT_MS`          | 5000    | wait for a free connection (or for a new one) before the request answers 503                         |
+| `PFLANZENDEX_DB_STATEMENT_TIMEOUT_MS`        | 5000    | one statement of a request transaction (`statement_timeout`)                                         |
+| `PFLANZENDEX_DB_LOCK_TIMEOUT_MS`             | 3000    | wait for a lock inside a request transaction (`lock_timeout`)                                        |
+| `PFLANZENDEX_DB_IDLE_TRANSACTION_TIMEOUT_MS` | 30000   | pause inside a request transaction before PostgreSQL ends it (`idle_in_transaction_session_timeout`) |
+
+**Pool size (measured 2026-11-04 on a development machine, AMD Ryzen 5 3600 with 12 threads, PostgreSQL 18.6 in Docker, 32 accounts with 100 specimens, the Heute screen = `/today` and `/specimens/hints`, `npm run perf:concurrency`):** at 32 users the throughput was 59 screens/s with 4 connections, 94 with 8, 106 with 12 and 110 with 16; the median per screen fell from 534 ms (4 connections) to 301 ms (12). 12 is the smallest pool that reaches at least 90 % of the best throughput. The numbers and the method are in `docs/records/test-logs/nfr-12.md`, section 2. On a host with fewer cores (assumption) measure with the same script before raising the size above 8.
+
+**Where the limits apply:**
+
+- Requests: every transaction of the application role `pflanzendex_app` (`withAccount`, sign-in, access check, handover) sets the three limits at its start, in one statement; they end with the transaction, so the next user of the pooled connection gets the server default.
+- Long operations keep a bounded budget instead of none: the account export, the account deletion and the catalog load (`LONG_LIMITS`: 10 minutes per statement, 30 s lock wait, 10 minutes idle). These are constants in `packages/db/src/kernel/connection/limits.ts`, not environment variables.
+- The background jobs, the reminders and the taxonomy check run as the schema owner. They have no statement limit, as before, but they take connections from the same pool, so a long job can make requests wait for a connection (the wait is then bounded by `PFLANZENDEX_DB_CONNECT_TIMEOUT_MS`).
+
+**Why the limits are not role settings (checked on PostgreSQL 18.6):** `ALTER ROLE pflanzendex_app SET statement_timeout` would be the natural place, but it does not work here. The requests switch to the role with `SET ROLE`, and PostgreSQL applies role settings only at login, so the request transactions would not see them. And no session starts as that role: it is `NOLOGIN`. And the migrations run as the schema owner `pflanzendex_owner`, which is `NOCREATEROLE`: `alter role pflanzendex_app set ...` fails with "permission denied to alter role". The limits are therefore set per transaction in the code, and the environment variables above are the override for a deployment.
+
+**Overriding for one session** (a manual repair on `psql` as the owner): `set statement_timeout = 0;` and the other two settings the same way apply to that session only. A single request is changed in code: use `withLongAccount` for the operation, or change the constants in `limits.ts`.
+
+**What a failure looks like:** a request that hits a limit answers `503` with the code `system.database_unavailable` and the text "Die Datenbank antwortet gerade nicht rechtzeitig …" (no cause in the answer). The api log shows `Database unavailable <message>` (for example `canceling statement due to statement timeout`, `timeout exceeded when trying to connect`, `Client has encountered a connection error`) and no user data. A server that drops an idle connection logs `database connection lost <message>`. Any other unexpected failure answers `500` with the code `system.unexpected`, and its cause is logged as `Request failed (version <tag>)`; a write that fails this way logs `Operation failed (version <tag>)`. The version is the running build (`APP_VERSION`, the same as `/health/details`; `unknown` when none is set).
+
+**Runbook "requests answer 503 database_unavailable":** first `docker compose ps db` and `docker compose logs --tail 100 db` (restarts, out of memory, disk). Then look for long or blocked statements: `select pid, state, now() - query_start as age, wait_event_type, left(query, 80) from pg_stat_activity where datname = current_database() order by age desc;` run as the cluster user. If the pool is exhausted with many `active` connections of a job, understand the job before raising `PFLANZENDEX_DB_POOL_MAX`. Keep the pool below the server's `max_connections` (100 by default): above it, new connections fail with `too many clients already`.
+
 ## Test environment behind a reverse proxy
 
 Goal: a self-contained test environment with sign-in on one x86_64 Linux host (for example an LXC container with Docker, 2 cores, 3 GB RAM). TLS ends at a reverse proxy in front of the host; it forwards plain HTTP to the host's port 80 and sets `X-Forwarded-Proto`, `X-Forwarded-For` and `X-Forwarded-Host`. Two public hostnames point at the proxy (placeholders below, use your own): `app.example.test` (web, `/api`, `/health`) and `auth.example.test` (sign-in service, and the mail catcher under `/mail/`).
@@ -130,7 +158,7 @@ How it fits together:
 
 - **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
 - **Keycloak** (`quay.io/keycloak/keycloak:26.8.1`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 is published only on the host's loopback (`127.0.0.1:${KEYCLOAK_ADMIN_PORT}`, default 8180) for the admin console over an SSH tunnel (see "Admin console over an SSH tunnel"); the management port 9000 is not published.
-- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), login theme `pflanzendex`, email verification, self-registration) and differs in four ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`), and stronger security defaults (see "Realm security defaults" below). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
+- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), login theme `pflanzendex`, email verification, self-registration) and differs in four ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`), and stronger security defaults (see "Realm security defaults" below). The import of a first start ends about 20 s after the keycloak healthcheck turns healthy, and until then every realm URL answers 503: `deploy.sh` waits for the realm before it uses it (`release-and-rollback.md`, "The realm wait", TE-03 #1002). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
 - **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
 - **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
 - **Mail.** The realm requires email confirmation. `docker-compose.test.yml` adds Mailpit (no ports published) and a Caddy route to its UI at `https://auth.example.test/mail/` behind basic auth (`MAIL_UI_USER`, `MAIL_UI_HASH`, see "Public test environment through Tailscale Funnel"); the realm sends to it by default. It shows every email, so it must exist only in the test environment. Production sets `SMTP_*` in `.env` and does not load the overlay.
@@ -150,14 +178,14 @@ How it fits together:
    | `TRUSTED_PROXIES`                                                                           | the upstream proxy's address(es) as CIDR, space separated, e.g. `192.0.2.10/32`                                |
    | `COMPOSE_FILE`                                                                              | `docker-compose.yml:docker-compose.test.yml` (adds Mailpit; `deploy.sh`, `backup.sh` and `restore.sh` read it) |
 
-   `POSTGRES_USER`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER` have defaults in the template; `SMTP_*`, `KEYCLOAK_DB_NAME`, `KEYCLOAK_DB_USER`, `KEYCLOAK_JAVA_HEAP`, `HTTP_PORT`, `BACKUP_*` are optional (all listed in `.env.example`). The file is in `.gitignore`; no secret goes into the repo (QG-S1). Never write real hostnames or addresses into the repo either: it is public.
+   `POSTGRES_USER`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER` have defaults in the template; `SMTP_*`, `KEYCLOAK_DB_NAME`, `KEYCLOAK_DB_USER`, `KEYCLOAK_JAVA_HEAP`, `HTTP_PORT`, `BACKUP_*` are optional (all listed in `.env.example`). `SMOKE_USER` and `SMOKE_PASSWORD` (the deploy's sign-in check, `release-and-rollback.md`, "Smoke test") are optional too and are written on the host only, by `keycloak/smoke-user.sh`. The file is in `.gitignore`; no secret goes into the repo (QG-S1). Never write real hostnames or addresses into the repo either: it is public.
 
 4. Schedule backups, e.g. `0 3 * * * cd /path/to/repo && make backup`.
 
 ### First start
 
 ```bash
-app/config/deploy/scripts/deploy.sh origin/dev      # fetches, backs up (if db runs), builds, starts, waits for api and keycloak, smoke test
+app/config/deploy/scripts/deploy.sh origin/dev      # fetches, backs up (if db runs), builds, starts, waits for api, keycloak and the realm, smoke test
 ```
 
 The first start takes a few minutes on 2 cores (image builds, then Keycloak builds its optimized runtime and imports the realm, about 30 to 60 seconds). Check from the host (replace the hostnames; the `Host` header and `X-Forwarded-Proto` imitate the upstream proxy):
@@ -182,7 +210,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Deploy and update
 
-`app/config/deploy/scripts/deploy.sh origin/dev` (backup first, migrations through the one-shot `migrate`, rollback to the previous ref if the api or Keycloak does not become healthy or the smoke test fails). With `CADDY_SCHEME=http://` the smoke test calls `http://127.0.0.1:$HTTP_PORT` with the `Host` header of `APP_HOST`; set `SMOKE_URL` to test through the public address instead. A Keycloak image update is a change of the tag in `docker-compose.yml` (keep it equal to `app/config/dev/compose.yaml`).
+`app/config/deploy/scripts/deploy.sh origin/dev` (backup first, migrations through the one-shot `migrate`, rollback to the previous ref if the api or Keycloak does not become healthy or the smoke test fails). With `CADDY_SCHEME=http://` the smoke test calls `http://127.0.0.1:$HTTP_PORT` with the `Host` header of `APP_HOST`; set `SMOKE_URL` to test through the public address instead. With `SMOKE_USER` and `SMOKE_PASSWORD` set, the smoke test also signs in as the tester and opens Heute (#1404; without them the output says the sign-in check is skipped). A Keycloak image update is a change of the tag in `docker-compose.yml` (keep it equal to `app/config/dev/compose.yaml`).
 
 ### Backup and restore
 
@@ -190,7 +218,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Memory
 
-Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions): `db` 256 MB, `keycloak` 900 MB (JVM heap `-Xms128m -Xmx512m`), `api` 512 MB, `migrate` 512 MB (only while it runs), `web` 96 MB, `proxy` 64 MB, `mailpit` 64 MB, `keycloak-db` 64 MB (only while it runs). Measured on 2026-10-11 on a development machine (not the target host) after the first requests, one registered account (`docker stats --no-stream`):
+Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions): `db` 384 MB (256 MB before #1242, see below), `keycloak` 900 MB (JVM heap `-Xms128m -Xmx512m`), `api` 512 MB, `migrate` 512 MB (only while it runs), `web` 96 MB, `proxy` 64 MB, `mailpit` 64 MB, `keycloak-db` 64 MB (only while it runs). Measured on 2026-10-11 on a development machine (not the target host) after the first requests, one registered account (`docker stats --no-stream`):
 
 | Container  | Memory used   | Limit  |
 | ---------- | ------------- | ------ |
@@ -200,15 +228,46 @@ Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions)
 | `web`      | 43 MiB        | 96 MB  |
 | `mailpit`  | 41 MiB        | 64 MB  |
 | `proxy`    | 16 MiB        | 64 MB  |
-| total      | about 815 MiB | 1.9 GB |
+| total      | about 815 MiB | 2.0 GB |
 
 That leaves room on a 3 GB host for the OS, Docker and image builds (`vite build` and `npm ci` need a few hundred MB while they run; build on the host only when nothing else peaks, or add swap). Keycloak's first start peaks higher than its idle figure; the 900 MB limit was not hit in the local run. Recheck on the real host.
+
+Object store (US-WAC-06, `docker-compose.store.yml`, only with it in `COMPOSE_FILE`; see "Object store of the test environment"): `object-store` 256 MB, the one-shot `object-store-bucket` 512 MB while it runs (starting values, assumptions). On 2026-11-06, on a development machine (not the target host), the store used about 50 MiB after the bucket runs and the S3 adapter test (`docker stats --no-stream`).
+
+On 2026-11-04 (#1242, the same machine, `docker stats` once per second during `perf:measure` and `perf:concurrency`), `db` peaked at 77 MiB with the old settings and 4 connections, at 59 MiB with the new settings (`perf:measure`), and at 94 MiB during the concurrency runs with up to 16 connections on a 27 MB dataset. The limit rose to 384 MB and the compose file sets `shared_buffers` 128 MB, `work_mem` 4 MB and `effective_cache_size` 256 MB: a buffer pool that fills up on a larger database and 12 connections each with its own memory need more than the old 256 MB (assumption, not measured on a large database). The planner hint of the default (4 GB) would assume a cache this container does not have, so it is set to 256 MB.
 
 Test log (test environment):
 
 | Date       | Where                                | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-10-11 | development machine (Docker Compose) | Stack with Keycloak and Mailpit started. Through port 80 with `Host` and `X-Forwarded-Proto: https`: `/health` ok, web served (zstd, `no-cache`), discovery document with the public https issuer, Mailpit UI at `/mail/`, verification email link on the public address, password-grant token accepted by `GET /api/account` (issuer public, keys fetched inside), foreign redirect address refused (400). Backup wrote both dumps; restore into check databases and over the live sign-in database worked, sign-in still worked afterwards. `make restore-test` passed for both databases. Not covered: the real upstream proxy, the browser flow, the target host. The development machine's bridge networking was broken (veth module missing), so the run used host networking with a local override outside the repo. |
+
+## Object store of the test environment (US-WAC-06)
+
+Photos need an S3-compatible store. The test environment gets one from the overlay `app/config/deploy/docker-compose.store.yml`: MinIO in the image of the development storage (same digest, `app/config/dev/storage.compose.yaml`). It publishes no port: the API reaches it over the Docker network, and the photos stream through the API (no signed URLs, no public bucket). The overlay is opt-in: nothing changes until its file is listed in `COMPOSE_FILE`. Production does not load it (see "Open" below).
+
+**Check the disk first.** The store's volume (`pflanzendex_objectdata` in the project `pflanzendex`) lives on the Docker disk of the host, the same disk as the images and the database. Run `df -h` and `docker system df` before enabling it. The volume grows with every photo: one stored copy of at most 5 MB and its 256 px thumbnail (starting values, assumption).
+
+**Enable (once, on the host):**
+
+1. **First deploy a version that contains the overlay, with `COMPOSE_FILE` unchanged.** The host checkout must have the file before `.env` names it. `deploy.sh` asks Compose whether the database runs before it checks out the new ref; with the file missing, that check fails and the deploy stops before any change with an `ERROR:` line (US-DEV-07). A rollback to a ref without the file fails too (`ROLLBACK FAILED`). For the same reason, never roll back or deploy to a ref older than the overlay while `COMPOSE_FILE` lists it.
+2. In `app/config/deploy/.env` set `MINIO_ROOT_PASSWORD` (at least 8 characters, for example `openssl rand -hex 24`). Set it by hand on the host: the Deploy workflow does not send it (the exclusion list of `app/tools/dev/tests/deploy/apply-env.test.mjs`).
+3. Add the overlay to `COMPOSE_FILE`: `docker-compose.yml:docker-compose.test.yml:docker-compose.store.yml` (keep the funnel file in the list if the host uses it).
+4. If the GitHub environment of the deploy sets the variable `COMPOSE_FILE`, the workflow writes that value into `.env` on every deploy. Put the overlay there too, or delete the variable there; otherwise the next deploy drops the overlay again.
+5. Deploy (`deploy.sh`), or `docker compose --env-file app/config/deploy/.env up -d`.
+
+**What the one-shot does.** `object-store-bucket` runs `src/media/ensure-bucket-cli.ts` in the API image and creates the bucket `pflanzendex-photos` when it is missing. An existing bucket is fine (idempotent). While the store does not answer, it tries again: 30 tries, 2 s apart (starting values, assumption). An authorization error fails at once. A failure fails `up`, as with `migrate`: the API starts only after the one-shot succeeded, and `deploy.sh` rolls back. Its output: `docker compose --env-file app/config/deploy/.env logs object-store-bucket` shows `ensure-bucket: bucket pflanzendex-photos is ready`, or an `ERROR: ensure-bucket:` line that names the cause (never the secret).
+
+**Check that it works:**
+
+- `docker compose --env-file app/config/deploy/.env ps object-store` shows `healthy`. The healthcheck is `mc ready local` (the MinIO client inside the container).
+- `docker compose --env-file app/config/deploy/.env exec -T api wget -qO- http://127.0.0.1:3000/health/details`: `checks.storage` is `configured` when the `S3_*` variables are set. That does not prove that the store answers, because the storage is not called on every check. Prove it with a photo upload in the app.
+
+**Memory.** The store has a limit of 256 MB and the one-shot 512 MB while it runs (starting values, assumptions). The figure in the "Memory" section above is from a development machine, not from this host.
+
+**Backup.** `make backup` dumps only the databases (`pflanzendex-*.dump`, `keycloak-*.dump`); the photos in the store are not in them. The store is covered only by a backup of the whole host or of the Docker volume `pflanzendex_objectdata`, and such a copy is crash-consistent: MinIO writes while it runs. For a consistent copy, stop `object-store` for the copy (`docker compose --env-file app/config/deploy/.env stop object-store`, then start it again). Take the database dump and the store copy at the same time: measurements keep the object name of their photo, so a database from one point in time with a store from another points to photos that are gone.
+
+**Credentials.** The API uses the store's root credentials: the user `pflanzendex` and `MINIO_ROOT_PASSWORD` as `S3_SECRET_ACCESS_KEY`. That is acceptable only on a test host without real data. Production needs its own decision: its own store, an access key limited to its bucket, and its own backup.
 
 ## Public test environment through Tailscale Funnel
 
@@ -342,7 +401,7 @@ Everything the console does also works on the command line inside the container,
 
 The master realm controls every realm. It is blocked on the public name, but every container on the stack network reaches Keycloak directly, so it needs a lockout of its own.
 
-**Brute-force protection.** `deploy.sh` runs `app/config/deploy/keycloak/master-realm.sh` after Keycloak is healthy. It signs in as the bootstrap admin with the credentials the container already has (`KC_BOOTSTRAP_ADMIN_*`, no password on the host's command line) and sets `bruteForceProtected=true` and `failureFactor=5` (as in the app realm; starting value, assumption) in the master realm, every time, idempotently. So a fresh installation ends with the protection on. After the handover below the bootstrap admin no longer exists: the script prints `master realm: the bootstrap admin cannot sign in ...` and the deploy goes on; from then on the named admin owns the setting (check it in step 4).
+**Brute-force protection.** `deploy.sh` runs `app/config/deploy/keycloak/master-realm.sh` after Keycloak is healthy and the realm `pflanzendex` answers (the realm wait of `release-and-rollback.md`, TE-03 #1002, which the first start after an empty volume needs: its import ends about 20 s after the healthcheck). It signs in as the bootstrap admin with the credentials the container already has (`KC_BOOTSTRAP_ADMIN_*`, no password on the host's command line) and sets `bruteForceProtected=true` and `failureFactor=5` (as in the app realm; starting value, assumption) in the master realm, every time, idempotently. So a fresh installation ends with the protection on. After the handover below the bootstrap admin no longer exists: Keycloak rejects its sign-in with `Invalid user credentials [invalid_grant]`, the script prints `master realm: the bootstrap admin cannot sign in ...` and the deploy goes on; from then on the named admin owns the setting (check it in step 4). Any other failure of the sign-in fails the deploy and rolls it back, with the cause printed (US-DEV-06, #1461; measured with Keycloak 26.8.1): a stopped keycloak container (`service "keycloak" is not running`), Keycloak not listening yet (`Failed to send request ... Connection refused`), or the realm still importing (`503 Service Unavailable`). The script never reports the setting as handed over without that rejection. The same rejection comes for a mistyped or rotated bootstrap password and for a brute-force lockout of the bootstrap admin, which kcadm cannot tell from the handover: when the message appears while the admin still exists, check step 4 by hand.
 
 **Hand over the bootstrap admin.** The bootstrap admin (`KEYCLOAK_ADMIN_USER`, default `admin`) is a permanent user with a password only. Replace it with a named admin who needs a one-time code (TOTP), once per installation:
 
@@ -360,9 +419,9 @@ The master realm controls every realm. It is blocked on the public name, but eve
 2. Open the admin console over the SSH tunnel (above) and sign in as `<name>`. Keycloak asks to set up the authenticator app right away (`CONFIGURE_TOTP`). Sign out and in again to check that the code is asked for.
 3. As `<name>`, in the console: realm `master` > Users > `admin` > Delete. (With kcadm: `$c get users -r master -q username=admin -q exact=true --fields id`, then `$c delete users/<id> -r master`.)
 4. Still as `<name>`: realm `master` > Realm settings > Security defenses > Brute force detection is on ("Lockout temporarily", 5 failures).
-5. Replace `KEYCLOAK_ADMIN_PASSWORD` in `.env` with a new random value (`openssl rand -hex 24`) and keep it nowhere else. The compose file still requires the variable, because Keycloak creates a bootstrap admin from it whenever its database is empty (a restore into a new volume, the re-import above); on an existing database it is not used, so the old password no longer opens anything.
+5. Replace `KEYCLOAK_ADMIN_PASSWORD` in `.env` with a new random value (`openssl rand -hex 24`) and keep it nowhere else. The compose file still requires the variable, because Keycloak creates a bootstrap admin from it whenever its database is empty (a restore into a new volume, the re-import above); on an existing database it is not used, so the old password no longer opens anything. Before the next deploy, give the one-shot `keycloak-mcp` its own user (`KEYCLOAK_SETUP_*`, see "AI access: the MCP endpoint"), or the deploy fails at that step.
 
-Checked on 2026-10-20 with Keycloak 26.8.0 in a local container: the script turned the protection on (it was off with `failureFactor` 30), a second run changed nothing, steps 1 and 3 worked with kcadm, and after deleting `admin` the script printed the handover message and exited 0. Step 2 (TOTP in the browser) and the run on the test environment are still to do. If every admin is locked out, Keycloak can create a temporary admin with `kc.sh bootstrap-admin user` against the same database (Keycloak documentation "Recovering the admin account"; not tried here).
+Checked on 2026-10-20 with Keycloak 26.8.0 in a local container: the script turned the protection on (it was off with `failureFactor` 30), a second run changed nothing, steps 1 and 3 worked with kcadm, and after deleting `admin` the script printed the handover message and exited 0. Step 2 (TOTP in the browser) and the run on the test environment are still to do. Checked again on 2026-11-06 with Keycloak 26.8.1 in a throwaway compose project (#1461): the rejection after the handover, a stopped container, a refused connection and a 503 during the first import gave the outputs named above; the script exits 0 on the rejection and 1 on the other three. If every admin is locked out, Keycloak can create a temporary admin with `kc.sh bootstrap-admin user` against the same database (Keycloak documentation "Recovering the admin account"; not tried here).
 
 ### Limits and when to leave this setup
 
@@ -447,12 +506,27 @@ Nothing below goes into the repo: hostnames, tailnet name and secrets stay with 
 Before `deploy.sh`, the step `apply_env` writes settings from the GitHub environment (`test` or `prod`) into the host's `app/config/deploy/.env`, so nobody edits that file by hand over SSH. Order in the job: guard, `apply_env`, `deploy`. A failing `apply_env` fails the run and the deploy does not start.
 
 - **What is sent:** only the names in `.github/deploy-env-allowlist.txt` (`<KEY> var|secret`), and only when the value is set and not empty. A **variable** (kind `var`) is read from the environment's variables, a **secret** (kind `secret`) from its secrets. Names that are not listed are never sent, whatever the environment holds. An empty value never overwrites anything on the host; to remove a setting, edit the host file.
-- **Allowlist and template stay in step:** `app/tools/dev/tests/deploy/apply-env.test.mjs` checks that every allowlisted key exists in `.env.example` and that every key of the template is either allowlisted or in the test's exclusion list with a reason (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`: fixed when the cluster is created; `TS_AUTHKEY`: one-time key). Adding a key to `.env.example` fails the test until you add it to one of the two. Credentials must have the kind `secret`.
-- **Values never leak:** they travel through the SSH standard input only, never in a command line or log. Secrets get `::add-mask::` before anything else happens in the step. The step output and the run summary list key names and `changed`, `added` or `unchanged` only. A value with a control character (newline, tab, ...) or a single quote is refused, naming the key and not the value. Only the allowlisted secrets reach the step, each mapped by name (`SECRET_<KEY>: ${{ secrets.<KEY> }}`); the workflow never uses `toJSON(secrets)`, so other secrets (for example the Tailscale OAuth client) stay out of it. A new `secret` entry in the allowlist needs its line in the `apply_env` step too; a test enforces this (#1049).
+- **Allowlist and template stay in step:** `app/tools/dev/tests/deploy/apply-env.test.mjs` checks that every allowlisted key exists in `.env.example` and that every key of the template is either allowlisted or in the test's exclusion list with a reason (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`: fixed when the cluster is created; `TS_AUTHKEY`: one-time key; `BACKUP_DIR`, `BACKUP_REMOTE`: where the dumps go stays a host decision, so a writer of the GitHub environment cannot redirect them; `MINIO_ROOT_PASSWORD`: set by hand on the test host, because an allowlisted secret needs its line in the Deploy workflow). Adding a key to `.env.example` fails the test until you add it to one of the two. Credentials must have the kind `secret`.
+- **Values never leak:** they travel through the SSH standard input only, never in a command line or log. Secrets get `::add-mask::` (one command per line of the value) before anything else happens in the step. The step output and the run summary list key names and `changed`, `added` or `unchanged` only. A value with a NUL byte, a control character (newline, tab, ...), a single quote or a trailing backslash (Compose would read it as an escaped closing quote and fail on the whole file) is refused, naming the key and not the value. Only the allowlisted secrets reach the step, each mapped by name (`SECRET_<KEY>: ${{ secrets.<KEY> }}`); the workflow never uses `toJSON(secrets)`, so other secrets (for example the Tailscale OAuth client) stay out of it. A new `secret` entry in the allowlist needs its line in the `apply_env` step too; a test enforces this (#1049).
 - **The host script** `app/config/deploy/scripts/apply-env.sh` comes from the workflow's checkout and is passed to the host as base64 text in the command (public code, not a secret), so it works on a host whose checkout is still older than the script. It checks key names (`[A-Z][A-Z0-9_]*`) and values completely before writing, replaces only the given keys (a commented `#KEY=` line stays), appends missing ones, and writes `KEY=value` as it is for plain values (letters, digits and `_@%+=:,./~-`) or `KEY='value'` for anything else (spaces, `$`, `#`), which the shell (`deploy.sh` sources the file) and Compose both read literally. If nothing changes, no file is written. Otherwise it copies the old file to `.env.bak.<UTC time>` (mode 0600, the newest 5 are kept), writes a temporary file next to it (0600) and moves it into place in one step.
 - **By hand on the host** (same checks): `printf 'FEATURES=social\n' | app/config/deploy/scripts/apply-env.sh` (optional argument: the path of the `.env`).
 - **Restore a previous `.env`:** `cp -p app/config/deploy/.env.bak.<time> app/config/deploy/.env`. The backups hold secrets like the `.env` itself and are ignored by Git (`.env.*`).
-- **Limits (assumptions):** the host script validates syntax only; the allowlist is enforced on the runner. Whoever can change the workflow on an accepted branch can change the allowlist (see "Security notes"). Values are limited to 4096 characters. Setting `DB_OWNER_PASSWORD` for an existing database does not change the role's password in PostgreSQL; use it for the first start, or change both.
+- **Limits (assumptions):** the host script validates syntax only; the allowlist is enforced on the runner. Whoever can change the workflow on an accepted branch can change the allowlist (see "Security notes"). Values are limited to 4096 characters.
+
+**Existing hosts:** set each GitHub secret to the value that is in the host's `.env` today (`gh secret set NAME --env test`, paste the value when asked, so it stays out of the shell history). The next run reports `unchanged` for it. Variables: `gh variable set FEATURES --env test --body "social,ai"`. A GitHub value overrides the host line when it is set; to keep a host line on purpose, delete the GitHub value (`gh secret delete NAME --env test`).
+
+### Rotating a password
+
+Some keys take effect only when the database volume or the realm is created: `KEYCLOAK_ADMIN_USER`, `KEYCLOAK_ADMIN_PASSWORD` (bootstrap admin), `SMTP_PASSWORD` (the realm import skips an existing realm), and `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` (not allowlisted anyway). A new value in `.env` alone would split it from what the database or Keycloak holds. So `apply-env.sh` stops the run when the host has a real value for one of them (not empty, not a `PUT_A_` placeholder) and GitHub sends a different one: `KEYCLOAK_ADMIN_PASSWORD differs from the host value; ... set ALLOW_PASSWORD_ROTATION=1 to override`. Nothing is written then.
+
+`DB_OWNER_PASSWORD` and `KEYCLOAK_DB_PASSWORD` are not guarded: the one-shots `db-roles` and `keycloak-db` set the role password (`alter role ... password`) on every `up`, so a new value takes effect with the deploy. There is no app-role password (`pflanzendex_app` cannot log in).
+
+To rotate a guarded value on purpose:
+
+1. Change it where it lives (Keycloak admin console over the SSH tunnel for the admin user and SMTP; `\password` in `psql` for the cluster user).
+2. `gh secret set <NAME> --env test` with the new value, and `gh variable set ALLOW_PASSWORD_ROTATION --env test --body 1`.
+3. Run "Deploy" (the run shows a warning while the switch is on).
+4. `gh variable delete ALLOW_PASSWORD_ROTATION --env test`.
 
 ### First deploy of a host on an old version
 
@@ -464,6 +538,8 @@ SMOKE_DETAILS_CMD="docker compose --env-file .env exec -T api wget -qO- http://1
 ```
 
 (The command runs in `app/config/deploy`, hence `.env`.) After that the host runs the new script and the workflow works as is. The workflow shows only the last 60 lines, which are mostly the rollback; to see the first error, run `deploy.sh` once on the host with the output in a file and look at the lines before `ERROR: deploy of`.
+
+The repo is public: homelab hostnames, IP addresses and secrets stay out of this runbook and out of the repo; host-specific values live on the host. Update the host's checkout to the target version before the deploy, not after it: `deploy.sh` is the script of the commit that is checked out, so an old checkout runs the old script against the new helpers. The bridge above only fixes a missed update.
 
 ### Deploy by hand
 
@@ -564,7 +640,70 @@ Each runbook: what you see, what to check, what to do. Restoring a backup and th
 - **You see:** a leaked secret (GitHub secret scanning, QG-S1), unusual sign-ins, or a report through `SECURITY.md`.
 - **Do, in this order:** rotate the affected secret (database password in `.env` on the host, S3 keys) and restart the stack; if tokens may be affected, end all sessions at the sign-in service; take `make backup` and keep the logs; follow `SECURITY.md` for disclosure. Personal data affected: the operator has to decide about the notification duty (GDPR Art. 33, 72 hours).
 
-**Open:** runbooks for the AI interface, reminders and the GDPR deletion follow with their features (KI, MON, US-ACC-04); operator messages for errors and dead jobs (NFR-18) and operating metrics (NFR-16) do not exist yet.
+**Open:** runbooks for reminders and the GDPR deletion follow (the AI interface: see "AI access: the MCP endpoint") with their features (KI, MON, US-ACC-04); operator messages for errors and dead jobs (NFR-18) and operating metrics (NFR-16) do not exist yet.
+
+## AI access: the MCP endpoint (E-04, ADR 0013)
+
+The keeper's AI client (Claude, ChatGPT, ...) connects to `https://<APP_HOST>/api/mcp` (`docs/guides/reference/app.md`, "AI access: the MCP endpoint"). What the operator sets up, as a checklist:
+
+1. **Switch on `ai`.** In production an empty `FEATURES` switches everything off; the endpoint then answers 404 to every signed-in client. Set `FEATURES=ai` (or `social,ai`) in `.env`, or switch it on per account (US-DEV-06).
+2. **`AI_RESOURCE_URL` needs nothing.** `docker-compose.yml` derives it from `APP_URL` (`${APP_URL}/api/mcp`); it is the audience the endpoint expects and the `resource` of its metadata. A GitHub environment variable `AI_RESOURCE_URL` has no effect on the stack. Only browser-based clients that send an `Origin` other than `APP_URL` need `AI_ALLOWED_ORIGINS` (comma-separated, not in the compose file yet); server-side clients send no `Origin`.
+3. **Proxy.** `proxy.Caddyfile` forwards `/api/*` (also `/api/.well-known/oauth-protected-resource`, the address the 401 names) and `/.well-known/oauth-protected-resource*` (root and path-inserted, RFC 9728) on the app host to the API. Every other `/.well-known/*` path on the app host answers 404: MCP clients probe `/.well-known/oauth-authorization-server` there, and the SPA's index page would make them fail with "JSON Parse error: Unrecognized token '<'" instead of falling back to the authorization server the metadata names (the sign-in host; seen with Claude Code on 2026-11-02, TE-16). The proxy reads its Caddyfile only at start; `deploy.sh` recreates it when the file changed (before, a deploy could leave it on old routes). Check after a deploy:
+
+   ```bash
+   for p in /.well-known/oauth-protected-resource /.well-known/oauth-protected-resource/api/mcp /api/.well-known/oauth-protected-resource; do
+     curl -s -o /dev/null -w "$p %{http_code} %{content_type}\n" "https://<APP_HOST>$p"
+   done   # each: 200 application/json; the body has "resource":"https://<APP_HOST>/api/mcp"
+   for p in /.well-known/oauth-authorization-server /.well-known/openid-configuration; do
+     curl -s -o /dev/null -w "$p %{http_code} %{content_type}\n" "https://<APP_HOST>$p"
+   done   # each: 404, never text/html
+   curl -si -X POST https://<APP_HOST>/api/mcp -H 'content-type: application/json' -d '{}' | grep -i '^www-authenticate'
+   ```
+
+   The last line shows `Bearer resource_metadata="https://<APP_HOST>/api/.well-known/oauth-protected-resource"` (HTTP 401). If a well-known path still returns `text/html` right after a deploy, the proxy runs an old Caddyfile: `docker compose --env-file .env up -d --no-deps --force-recreate proxy` in `app/config/deploy`.
+
+4. **Keycloak (realm `pflanzendex`): the one-shot `keycloak-mcp` does it.** `app/config/deploy/keycloak/mcp/` (US-KI-07, spike TE-15 findings 1 to 6) runs inside the compose network and sets, idempotently (it reads first and writes only what differs; a second run prints `mcp realm: ready (no change)`):
+   - the optional realm scopes `pflanzen:read`, `pflanzen:draft`, `pflanzen:write` ("Include in token scope" on), each with the audience mapper `aud-mcp` that puts the resource URL `${APP_URL}/api/mcp` itself into `aud` (custom audience; the API accepts only that audience). Checked on 2026-11-02 against Keycloak 26.8.1 with a DCR client and the authorization code flow: `aud` is the URL with or without the `resource` parameter (Claude Code sends none), a wrong `resource` gets `invalid_target`, a token without a `pflanzen:*` scope has no `aud`. The first version of the job used the client audience `pflanzendex-mcp`, which ends up in `aud` whenever `resource` is missing, and the API refused those tokens (`invalid_token`); the job replaces that mapper config;
+   - the resource client `pflanzendex-mcp` (no flows) with `resource_url` = `${APP_URL}/api/mcp`;
+   - the anonymous registration policies: "Allowed Client Scopes" (default scopes allowed, plus `pflanzen:read|draft|write` and `offline_access`) and "Trusted Hosts" (`client-uris-must-match`, hosts `claude.ai`, `chatgpt.com`, `localhost`, `127.0.0.1`, no sender IP check);
+   - the client profile `pkce-s256` (executor `pkce-enforcer`) and the policy `pkce-s256-all-clients` (condition `any-client`): every authorization request needs PKCE with S256.
+
+   `docker-compose.yml` turns on the feature `resource-indicators` only (`KC_FEATURES`; experimental in Keycloak 26.8, an update risk). **`cimd` stays off** until a CIMD client policy is built and verified (open item of TE-16, #181): with `cimd` on, discovery announces `client_id_metadata_document_supported: true`, Claude Code then sends `client_id=https://claude.ai/oauth/claude-code-client-metadata` and Keycloak answers "Client not found" (seen on the test environment on 2026-11-02); with it off, clients register by DCR. At the end the job reads the realm's discovery inside the network and fails if `client_id_metadata_document_supported` is `true` or a `pflanzen:*` scope is missing from `scopes_supported`.
+
+   **When it runs.** `deploy.sh` runs it after Keycloak is healthy (after `master-realm.sh`); a failure fails the deploy and rolls it back. It prints names and counts only, never a password or token. **By hand**, e.g. after a change in the admin console: Actions, "Deploy", "Run workflow", task `keycloak-mcp` (deploys nothing; runs the job of the version the host runs now), or on the host, as `deploy`, in the checkout:
+
+   ```bash
+   cd app/config/deploy && docker compose --env-file .env run --rm keycloak-mcp
+   ```
+
+   **Sign-in of the job.** It signs in to the master realm with `KEYCLOAK_SETUP_USER`/`KEYCLOAK_SETUP_PASSWORD` if set, else with the bootstrap admin (`KEYCLOAK_ADMIN_*`). After the admin handover (above) the bootstrap admin is gone and the job fails with `cannot sign in`; then give it a user of its own that can change only the app realm (password only, it signs in without a person), as the named admin:
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh"
+   $c config credentials --server http://localhost:8080 --realm master --user <name>
+   $c create users -r master -s username=pflanzendex-setup -s enabled=true
+   $c set-password -r master --username pflanzendex-setup
+   $c add-roles -r master --uusername pflanzendex-setup --cclientid pflanzendex-realm \
+     --rolename manage-realm --rolename manage-clients --rolename view-realm --rolename view-clients
+   ```
+
+   Then set `KEYCLOAK_SETUP_USER=pflanzendex-setup` (GitHub variable) and `KEYCLOAK_SETUP_PASSWORD` (GitHub secret, or the host `.env`). Checked on 2026-11-02 against Keycloak 26.8.1 in a local container: a fresh import of the realm file got 14 changes, a second run none, the restricted user above was enough for every step, anonymous registration with `pflanzen:read pflanzen:write offline_access` and a `localhost` redirect answered 201, a redirect to another host 403, and an authorization request with `code_challenge_method=plain` or without PKCE was refused (`invalid_request`).
+
+   **Acceptance check after a deploy** (public, no host access needed):
+
+   ```bash
+   curl -s https://<AUTH_HOST>/realms/pflanzendex/.well-known/openid-configuration \
+     | jq '{scopes: [.scopes_supported[] | select(startswith("pflanzen:"))], pkce: .code_challenge_methods_supported, cimd: .client_id_metadata_document_supported}'
+   ```
+
+   Expected: `scopes` lists `pflanzen:read`, `pflanzen:draft`, `pflanzen:write`; `cimd` is `false` or `null` (CIMD off, clients use DCR). `pkce` still reads `["plain","S256"]`: Keycloak 26.8 announces both whatever the client policy says, so check the refusal instead: `curl -s -o /dev/null -w '%{redirect_url}\n' 'https://<AUTH_HOST>/realms/pflanzendex/protocol/openid-connect/auth?response_type=code&client_id=pflanzendex-web&redirect_uri=https://<APP_HOST>/&scope=openid&code_challenge=abcdefghijklmnopqrstuvwxyzabcdefghijklmnopq&code_challenge_method=plain'` ends in `error=invalid_request` and `code+challenge+method+is+not+matching`.
+
+   Still by hand:
+   - [ ] Optional: a mapper that puts the client's name into the claim `client_name` (else the list "KI-Clients" shows the client id).
+   - [ ] Consent page: names client, requested rights and that the AI provider receives what the client retrieves (US-KI-06; theme text).
+   - [ ] CIMD (open item of TE-16, #181): build and verify a CIMD client policy (`client-id-metadata-document` executor, condition `client-id-uri`; spike finding 6) against Claude's real metadata document, which the spike saw refused; only then add `cimd` to `KC_FEATURES` and flip the job's discovery check.
+
+5. **Connect a real client** (Claude: Settings, Connectors, "Add custom connector", URL `https://<APP_HOST>/api/mcp`) and record the result in TE-16 (#181): the spike saw Claude's CIMD document rejected by Keycloak 26.8.0.
 
 ## Open (needs hardware, a domain or a decision)
 
@@ -573,7 +712,7 @@ None of this is done or made up:
 - **Host:** the hardware for staging/production is not named yet; scripts and Compose were only checked locally.
 - **Domain and DNS:** the test environment needs two hostnames at the upstream proxy; there is no public address yet for staging/production. Needed: a domain, an A/AAAA record (dynamic DNS if the IP changes) or a tunnel, ports 80/443 forwarded to the host. Without these Caddy cannot get a public certificate. Reachability from outside over HTTPS (criterion from #40) is therefore **not** proven (R-11, spike TE-15).
 - **Security updates:** set up automatic updates on the host (e.g. `unattended-upgrades`, reboot policy) and document them here.
-- **Backup to a second location:** decide the target for `BACKUP_REMOTE` (second machine, external storage) and how the copy is encrypted. Photos/object storage are not backed up yet because they do not exist yet (TE-05).
+- **Backup to a second location:** decide the target for `BACKUP_REMOTE` (second machine, external storage) and how the copy is encrypted. Photos are not in `make backup`, which dumps only the databases. The test environment's store (`docker-compose.store.yml`) is covered only by a backup of the whole host or of its Docker volume, crash-consistent (see "Object store of the test environment"). The backup of the photos on the target host is open (TE-05, US-WAC-06).
 - **Monitoring and alerts:** `/health` now reports database and job queue (see "Health check"); an external monitor that polls it and alerts, and a check of the backup age, are not set up yet (DEV-09, #172).
 - **Image pins:** base images are pinned to major versions, not digests; Renovate (FR-QG-15) pins digests once it is active.
 - **Migrations:** applied by the deploy itself (see above, #201). `deploy.sh` backs up before every deploy while the DB is running (DEV-07, #170); on the very first deploy there is no database to back up.

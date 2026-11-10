@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { SIGN_IN, type ApiError } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { SIGN_IN, type ApiError } from "../../shared/data";
 import { redeemInvitation } from "../api/access-api";
-import { useServerRefusal } from "../refusal";
-import { TextField } from "@/components/ui/fields/input/input";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { TextField } from "@/shared/ui/fields/input/input";
 import { invitationCodeSchema, type InvitationCodeFields } from "../schemas";
 
 type Token = () => Promise<string | undefined>;
@@ -25,7 +25,7 @@ function useRedeem(api: string, token: Token, onRegistered: () => void) {
   });
   const [error, setError] = useState<ApiError | null>(null);
   const busy = useRef(false);
-  useServerRefusal<InvitationCodeFields>(error, form.setError, codeField);
+  useServerRefusal(error, form.setError, codeField);
   const submit = form.handleSubmit(async ({ code }) => {
     if (busy.current) return;
     busy.current = true;
@@ -47,6 +47,8 @@ export function InvitationPage(props: {
   token: Token;
   onRegistered: () => void;
   onSignOut: () => void;
+  /** The error of a failed "Abmelden" (US-ACC-01): the page stays, so the button can be pressed again. */
+  error?: string;
 }) {
   const { form, submit, pending } = useRedeem(props.api, props.token, props.onRegistered);
   return (
@@ -88,6 +90,14 @@ export function InvitationPage(props: {
               Abmelden
             </Button>
           </div>
+          {props.error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+            >
+              {props.error}
+            </p>
+          )}
         </FormRoot>
       </Form>
     </section>

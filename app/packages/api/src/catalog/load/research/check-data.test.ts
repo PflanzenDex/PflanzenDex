@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
 import { START_SPECIES } from "../start-species.ts";
 import { runCheckData } from "./check-cli.ts";
 import { ALLOWED_HOSTS, NOTE_MAX, checkResearchData, issueLine } from "./check-data.ts";
@@ -193,6 +193,7 @@ describe("US-ENT-09 catalog:check-data, the check of the researched data", () =>
 
   it("US-ENT-09: Given a data folder, when the command runs, then it reads every file and exits 1 on a problem", () => {
     const dir = mkdtempSync(join(tmpdir(), "research-"));
+    onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
     mkdirSync(join(dir, "batch-01"));
     writeFileSync(
       join(dir, "batch-01", "part-1.json"),

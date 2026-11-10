@@ -1,21 +1,153 @@
 # One entry point for every task (US-DEV-01). Local runs and CI use the same targets (FR-QG-01).
 # The Makefile holds no domain logic, only calls; an error stops the run and is never hidden (D-05).
 APP := app
+# Make exports command-line variables to every recipe and to every $(shell) call, and expands their values there, so a value
+# with $(...) or a backtick would run as a command (issue 1608, measured with GNU make 4.4.1; issue 1636). Every caller value
+# is unexported here, before the first $(shell) below: SCREEN (`make one-screen`), FILES (`make gate-plan`) and the values
+# of the recipes. A recipe reads the raw copy of a value from the environment ("$$REST_TITLE", "$$RAW_TYPE", set below with
+# $(value)), never the $(TITLE) text; a guard tests $(value X). FRESH keeps its name for the tools, see below.
+unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUN RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS JOB REASON
+unexport WRITE APPLY DRY_RUN DEMO_SEED_PROFILE PERF_RUNS ONE_SCREEN_WRITE
+ifneq ($(origin FRESH),undefined)
+FRESH_GIVEN := yes
+endif
+unexport FRESH
 # Test database (E-01: PostgreSQL in Docker). In CI the workflow provides it as a service.
 # In a worktree (US-DEV-08) .env.worktree supplies its own port; otherwise the fixed port 54329 is used.
 -include .env.worktree
+# The e2e ports of this worktree (US-DEV-08, issue 1745): the Playwright targets and the Lighthouse runs read E2E_WEB_PORT and
+# E2E_API_PORT. A value already in the environment wins. Without .env.worktree (main checkout, CI) nothing is set here.
+ifdef PFLANZENDEX_E2E_WEB_PORT
+export E2E_WEB_PORT ?= $(PFLANZENDEX_E2E_WEB_PORT)
+export E2E_API_PORT ?= $(PFLANZENDEX_E2E_API_PORT)
+endif
 DB_PORT := $(or $(PFLANZENDEX_TEST_DB_PORT),54329)
 DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
+# Memory cap of the local test database: one per worktree on a small dev box (#1084, starting value, assumption).
+# Local only: CI provides its own database service, production uses config/deploy. Override with DB_MEMORY=1g. The recipe
+# reads the value from RAW_DB_MEMORY (issue 1636), so the unexport below keeps make from expanding a command-line value.
+DB_MEMORY ?= 512m
+unexport DB_MEMORY
+# The local auth server (Keycloak, mail catcher) is one container set shared by every checkout, so it always runs with
+# the main checkout's compose file and app/config/dev/.env, also from a worktree (issue 1187, tools/keycloak/dev-env.mjs).
+AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/config/dev
+AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock quarantine ci-quarantine ci-quarantine-ui
+
+# Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
+# `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
+# The inputs travel in the environment as the raw command-line values ($(value) skips make's expansion), and no user text is
+# written into a recipe: a backtick, $(...) or a quote in a title, number or path is data, never a shell command (US-DEV-13).
+export REST_PR := $(value PR)
+export REST_ISSUE := $(value ISSUE)
+export REST_RUN := $(value RUN)
+export REST_TITLE := $(value TITLE)
+export REST_BODY := $(value BODY)
+# The other caller values of the recipes, raw the same way (issue 1636); the tools get them as arguments, as before. The
+# body file is made absolute here, before the recipe changes into app/, from the directory of make.
+export RAW_BODY_FILE := $(abspath $(value BODY))
+export RAW_BRANCH := $(value BRANCH)
+export RAW_DB_MEMORY := $(value DB_MEMORY)
+export RAW_DEMO_SEED_PROFILE := $(value DEMO_SEED_PROFILE)
+export RAW_DIR := $(value DIR)
+export RAW_ARGS := $(value ARGS)
+export RAW_EPIC := $(value EPIC)
+export RAW_EVENT := $(value EVENT)
+export RAW_FILES := $(value FILES)
+export RAW_JOBS := $(value JOBS)
+export RAW_JOB := $(value JOB)
+export RAW_MSG := $(value MSG)
+export RAW_NAME := $(value NAME)
+export RAW_PERF_RUNS := $(value PERF_RUNS)
+export RAW_PRIORITY := $(value PRIORITY)
+export RAW_RELEASE := $(value RELEASE)
+export RAW_REASON := $(value REASON)
+export RAW_SHARD := $(value SHARD)
+export RAW_RUNS := $(value RUNS)
+export RAW_TYPE := $(value TYPE)
+export RAW_VERSION := $(value VERSION)
+# SCREEN=<id> of `make one-screen` reaches the e2e spec as ONE_SCREEN_ONLY, raw like the REST_ values (issue 1608).
+export ONE_SCREEN_ONLY := $(value SCREEN)
+# FRESH=1 reaches `npm run gates` as an environment variable (issue 1608). Unset, it stays unset: an exported empty FRESH
+# would count as set and never let a green result skip a run. Given (FRESH= too), it reaches the environment as typed, which
+# counts as set and runs every step: the safe side. `override export` exports the raw value (issue 1636): a plain assignment
+# is ignored for a command-line variable, and the export would then expand it.
+ifdef FRESH_GIVEN
+override export FRESH := $(value FRESH)
+endif
+# FILES of `make gate-plan` reach the command raw, like the REST_ values; the unexport of FILES above keeps make from expanding
+# them (issue 1608, US-QG-07).
+export GATE_PLAN_FILES := $(value FILES)
+# One heavy job at a time (US-DEV-08, issue 1745; `make heavy-lock`, tools/lint/heavy-lock.sh). The owner is the make process
+# that runs the goal: the parent of the shell that make starts here. A sub-make inherits the owner of the outer make, so a heavy
+# target nested in `make ci` finds the lock as its own and does not wait for itself. The goals travel raw, as the values above.
+ifndef PFLANZENDEX_HEAVY_OWNER
+export PFLANZENDEX_HEAVY_OWNER := $(shell echo $$PPID)
+endif
+export PFLANZENDEX_HEAVY_TARGET := $(MAKECMDGOALS)
+
+pr-state: ## Read a PR over REST (PR=<n>): title, state, draft, merged, head, base, auto-merge and the latest check runs of the head (US-DEV-13)
+	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs pr-state
+
+issue-read: ## Read an issue over REST (ISSUE=<n>): title, state, labels, assignees and body (US-DEV-13)
+	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs issue-read
+
+pr-text: ## Set the title (TITLE="…", optional) and the body (BODY=<file>) of a PR over REST (PR=<n>); refuses a missing or empty body file (US-DEV-13)
+	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs pr-text
+
+owner-merge-label: ## Set or remove the label owner-merge of a PR (PR=<n>): set when it changes a gate file (make merge refuses it), removed otherwise (CI: owner-merge-label.yml, US-DEV-13, issue 1774)
+	node $(APP)/tools/check/docs/agents/pr/owner-merge-label.mjs
+
+issue-comment: ## Add a comment to an issue over REST (ISSUE=<n> BODY=<file>); refuses a missing or empty body file (US-DEV-13)
+	node $(APP)/tools/workflow/actions/issue/rest-cli.mjs issue-comment
+
+# The quarantine of a red CI job (US-QG-06): one entry in app/config/gates/baselines/quarantine-baseline.json, read by ci-status and by
+# `make ci-wait` through app/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs. The inputs reach the script raw
+# (RAW_JOB, REST_ISSUE, RAW_REASON); the script refuses a job that ci.yml does not define, an issue that is not a number and
+# an empty reason, and writes nothing then. The growth of the list is merged by the owner.
+quarantine: ## Quarantines one red CI job (JOB=<job> ISSUE=<n> REASON="…"): it reports and blocks no PR; the owner merges the list (US-QG-06)
+	node $(APP)/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs add
+
+# The two CI calls of the list (US-QG-06), so that ci.yml calls make as every other job does (FR-QG-01). ci-quarantine reads the
+# needs of ci-status from NEEDS_JSON and fails on a red job the list does not name; ci-quarantine-ui answers the job `results`
+# for the job ui-shard, from UI_SHARD: exit 0 only for a listed job with a red result. Both are CI only.
+ci-quarantine: ## CI only (US-QG-06): ci-status judges the needs in NEEDS_JSON; a red job the quarantine list names is report only
+	node $(APP)/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs status
+
+ci-quarantine-ui: ## CI only (US-QG-06): exit 0 when the job ui-shard is quarantined with the red result UI_SHARD, else 1 (the results job)
+	node $(APP)/tools/workflow/actions/ci-reuse/verdict/quarantine-cli.mjs quarantined ui-shard "$$UI_SHARD"
+
+# Five read-only targets for agents (US-DEV-13, issue 1716), fixed so that .claude/settings.json can allow each one. Code:
+# app/tools/dev/agent/read-only/read-only-cli.mjs. Each value reaches the script only as its raw environment variable (REST_RUN,
+# REST_PR, REST_ISSUE, RAW_FILES), and the script checks it before any call: a `;`, `$(...)`, a backtick, a quote, a space
+# where none is allowed or a leading dash is refused with exit 2, never run.
+run-jobs: ## Name, status, conclusion and URL of each job of one workflow run (RUN=<id>, REST, read-only; US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs run-jobs
+
+conflicts: ## Whether the PR head (PR=<n>) merges into origin/dev, else the conflicting files; exit 1 on a conflict; writes no branch or commit (US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs conflicts
+
+test-files: ## vitest on the test files FILES="<paths under app/>" in the package each belongs to, node --test for tool tests (US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs test-files
+
+format-check: ## Prettier --check with the repo config on FILES="<paths under app/, docs/, tools/ or .claude/>"; writes nothing (US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs format-check
+
+board-item: ## Status, Typ, Epic, Priority and Release of one issue on the project board (ISSUE=<n>, one read-only GraphQL query; US-DEV-13, issue 1716)
+	node $(APP)/tools/dev/agent/read-only/read-only-cli.mjs board-item
 
 help: ## List all targets with a one-line description
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
+	@grep -hE '^[a-z0-9][a-z0-9-]*:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-20s %s\n", $$1, $$2}'
 
-setup: ## Install dependencies (npm ci, or npm install without a lock file)
-	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# node_modules that already match package-lock.json (the check-deps stamp) are kept: in CI they come from the
+# node_modules cache (issue 1123, measured saving 30-50 s per job). FRESH=1 always reinstalls.
+setup: ## Install dependencies (npm ci, or npm install without a lock file); skipped when node_modules matches the lock file (FRESH=1 forces)
+	cd $(APP) && if [ -z "$$FRESH" ] && [ -f package-lock.json ] && node tools/check/supply/check-deps.mjs 2>/dev/null; then \
+	  echo "setup: node_modules matches package-lock.json, npm ci skipped (FRESH=1 reinstalls)"; \
+	elif [ -f package-lock.json ]; then npm ci; else npm install; fi
 	cd $(APP) && node tools/check/supply/check-deps.mjs --stamp
 	$(if $(CI),,$(MAKE) hooks)
 
@@ -23,9 +155,9 @@ hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, 
 	git config core.hooksPath .githooks
 
 commitlint: ## Check a commit message or PR title (MSG="feat(pha): …"), QG-C1
-	@# MSG reaches the shell as an environment variable, never through $$(MSG) expansion: PR titles are untrusted input.
-	@test -n "$$MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
-	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint --config config/project/commitlint.config.js
+	@# MSG reaches the shell as the raw environment variable RAW_MSG, never through a make expansion of MSG: PR titles are untrusted input.
+	@test -n "$$RAW_MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
+	@cd $(APP) && printf '%s\n' "$$RAW_MSG" | npx --no-install commitlint --config config/project/commitlint.config.js
 
 changelog-check: ## PR changelog gate (QG-U3); env PR_TITLE, PR_BODY, PR_BASE_SHA, PR_BASE_REF
 	@cd $(APP) && npm run --silent changelog
@@ -45,37 +177,78 @@ typecheck: ## Strict TypeScript in all packages
 docs-check: ## Lint markdown and check relative links (QG-U2)
 	cd $(APP) && npm run docs
 
-db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running
-	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
-		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 >/dev/null
-	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
+# The test database is throwaway: db-reset rebuilds it, so durability does not matter. Every start runs it with fsync,
+# synchronous_commit and full_page_writes off (issue 1636, owner decision 2026-11-07). Measured on the btrfs volume of the
+# Docker host: DROP DATABASE forced a checkpoint that took 18-19 s, up to 12 s of it the disk sync, past the 10 s limit of the
+# afterAll hook of the API suite. With the three settings off a checkpoint takes 0.1 s and the API suite 31 s instead of 46-65 s.
+# The settings are applied after every start, so a container that `docker start` reuses gets them too: ALTER SYSTEM writes
+# postgresql.auto.conf, and all three are reloadable (no restart). CI does not call this target; its jobs with a Postgres
+# service call `ci-db-tune` right after checkout, which sets the same three on the service container (issue 1698).
+db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running; fsync, synchronous_commit and full_page_writes off on every start (issue 1636)
+	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory "$$RAW_DB_MEMORY" \
+		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395 >/dev/null
+	@until docker exec $(DB_CONTAINER) pg_isready -q -h 127.0.0.1 -d pflanzendex_test; do sleep 1; done
+	@docker exec $(DB_CONTAINER) psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null
 
-db-down: ## Remove the test database
-	-docker rm -f $(DB_CONTAINER)
+# CI only (issue 1698). The service container is found by its published port: the runner may have no psql, and right after
+# checkout there is no node_modules, so the recipe uses docker alone. It fails unless exactly one container publishes the port.
+ci-db-tune: ## CI only (US-QG-02, issue 1698): the Postgres service of a CI job runs with fsync, synchronous_commit and full_page_writes off, as db-up does locally (issue 1636); the database is throwaway; fails when the database refuses
+	@set -- $$(docker ps -q --filter publish=$(DB_PORT)); [ $$# -eq 1 ] || { echo "ci-db-tune: expected one container that publishes port $(DB_PORT), found $$#" >&2; exit 1; }; id=$$1; \
+	docker exec "$$id" psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null && n=0 && \
+	while [ "$$(docker exec "$$id" psql -U postgres -tAc "show fsync")" != off ]; do n=$$((n + 1)); [ $$n -lt 10 ] || { echo "ci-db-tune: the database does not report fsync off after $$n checks" >&2; exit 1; }; sleep 0.2; done && \
+	echo "ci-db-tune: fsync, synchronous_commit and full_page_writes off"
+
+db-down: ## Remove the test database with its data (the volume too), so the next db-up starts empty
+	-docker rm -f -v $(DB_CONTAINER)
+
+# The local-only targets below change the test database of this worktree and nothing else: each runs
+# tools/workflow/worktree/local-database.mjs first, which refuses a DATABASE_URL that is not this database (US-DEV-01).
+db-reset: ## Remove the test database of this worktree with its data and migrate a fresh one (local only, refuses any other DATABASE_URL; US-DEV-01)
+	cd $(APP) && node tools/workflow/worktree/local-database.mjs $(PFLANZENDEX_TEST_DATABASE_URL)
+	$(MAKE) db-down
+	$(MAKE) db-up
+	$(MAKE) migrate
+
+db-seed: ## Seed the demo accounts test, test2 and test3 into the test database of this worktree (DEMO_SEED_PROFILE=base or states; local only, starts the sign-in service and the database; US-DEV-01)
+	cd $(APP) && node tools/workflow/worktree/local-database.mjs $(PFLANZENDEX_TEST_DATABASE_URL)
+	$(if $(CI),,$(MAKE) db-up)
+	$(MAKE) auth-up
+	$(MAKE) migrate
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE="$${RAW_DEMO_SEED_PROFILE:-base}" npm run seed:demo -w @pflanzendex/api
+
+pokedex-build: ## Run the taxonomy build once on the test database of this worktree (US-POK-03); DRY_RUN=1 compares with the stored tree and sends no request, otherwise it asks OpenTree, Wikidata, Wikipedia and GBIF (needs network)
+	cd $(APP) && node tools/workflow/worktree/local-database.mjs $(PFLANZENDEX_TEST_DATABASE_URL)
+	$(if $(CI),,$(MAKE) db-up)
+	$(MAKE) migrate
+	cd $(APP) && npm run taxonomy:build -w @pflanzendex/api $(if $(value DRY_RUN),-- --dry-run)
 
 migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 	cd $(APP) && npm run migrate -w @pflanzendex/db
 
 migration: ## New migration with the next free number, seen from origin/dev and all open PRs (NAME=<module>_<short_name>, issue #831)
-	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$(NAME)"
+	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$$RAW_NAME"
 
-auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/config/dev/.env (not in the repo)
-	@test -f $(APP)/config/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/config/dev/.env
-	docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env up -d
-	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
+auth-up: ## Start the shared auth server (Keycloak) and mail catcher; admin password in the main checkout's app/config/dev/.env (not in the repo, only the main checkout creates it; refuses on a password mismatch)
+	cd $(APP) && $(if $(CI),flock "$${RUNNER_TEMP:-/tmp}/pflanzendex-auth-up.lock" ,)node tools/keycloak/auth-up.mjs
+	@for i in $$(seq 120); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 1; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
 	@echo "Keycloak: http://localhost:18081 (realm pflanzendex), mail: http://localhost:18025"
 
+# US-QG-01 (issue 1667): in CI, `auth-up` runs under one lock, so the background start below and the `auth-up` of a later
+# target never run `docker compose up` at the same time; whichever comes second waits, then finds the stack running.
+auth-up-background: ## CI only (US-QG-01, issue 1667): starts `make auth-up` in the background and returns at once, so the pull and the boot of Keycloak overlap the setup of the job; a later `make auth-up` waits for it on its lock; the output goes to $$RUNNER_TEMP/pflanzendex-auth-up-background.log
+	@log="$${RUNNER_TEMP:-/tmp}/pflanzendex-auth-up-background.log"; nohup sh -c 'date -u +"start %T"; $(MAKE) --no-print-directory auth-up; echo "exit $$? at $$(date -u +%T)"' > "$$log" 2>&1 < /dev/null & echo "auth-up runs in the background, log: $$log"
+
 auth-down: ## Remove the auth server and mail catcher
-	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env down -v
+	-$(AUTH_COMPOSE) down -v
 
 start: auth-up db-up ## Start everything for local work: auth server, database, API and web; prints URLs and test accounts
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test || { echo "Keycloak or the database is not responding"; exit 1; }
-	@echo "Web: http://localhost:5173  API: http://localhost:3000  Keycloak: http://localhost:18081  Mail: http://localhost:18025"
+	@echo "Web: http://localhost:$(or $(PFLANZENDEX_DEV_WEB_PORT),5173)  API: http://localhost:$(or $(PFLANZENDEX_DEV_API_PORT),3000)  Keycloak: http://localhost:18081  Mail: http://localhost:18025"
 	@echo "Test accounts (dev realm): test, test2, test3 - password testtest12 (see docs/guides/reference/app.md)"
 	$(MAKE) dev
 
 stop: ## Stop the local auth server, mail catcher and database containers (data is kept)
-	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env stop
+	-$(AUTH_COMPOSE) stop
 	-docker stop $(DB_CONTAINER)
 
 test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check scripts
@@ -84,23 +257,66 @@ test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check sc
 coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/config/gates/coverage-thresholds.json)
 	cd $(APP) && npm run coverage
 
-browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
-	cd $(APP) && npx --no-install playwright install $(if $(CI),--with-deps) chromium
+browsers: ## Install the Chromium that Playwright uses (e2e, conformance run); CI: the system packages and the download are time-limited and retried once (US-QG-01)
+	cd $(APP) && $(if $(CI),sh ../tools/lighthouse/install-browsers.sh,npx --no-install playwright install chromium)
 
-conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
+playwright-version: ## Print the installed version of Playwright (the key of the CI cache of the browser's system packages, US-QG-01)
+	@cd $(APP) && node -p "require('./node_modules/@playwright/test/package.json').version"
+
+conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px; 8 pages at once, CONFORMANCE_PAGES=<n> overrides (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
 
-ds-snapshots-check: ## Visual regression of the components/ui stories against the baselines in app/packages/web/.storybook/snapshots, 360 px, light and dark, in the pinned Playwright container; also runs its self-test (QG-U5, US-QS-07; needs Docker)
+ds-snapshots-check: ## Visual regression in the pinned Playwright container: components/ui stories (360 px, .storybook/snapshots) and page stories (5 sizes, .storybook/page-snapshots), light and dark; also runs its self-test (QG-U5, US-QS-07, FR-QG-27; needs Docker)
 	cd $(APP) && npm run ds-snapshots
 
-ds-snapshots: ## Rewrite the baselines in app/ds-snapshots (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07)
+ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07, FR-QG-27)
 	cd $(APP) && npm run ds-snapshots:update
 
-e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
+# One heavy job at a time (US-DEV-08, issue 1745): the first prerequisite of every heavy target, so the lock is taken before
+# anything heavy starts. The recipe reads its values from the environment (exported at the top), so no value reaches the shell
+# through make. CI is skipped: each CI job is its own machine.
+heavy-lock: ## Take the machine-wide lock for one heavy job (UI gates, Lighthouse, e2e, make ci) or wait for the job that holds it; released when the owning make ends (US-DEV-08, issue 1745; HEAVY_LOCK_WAIT=<s>)
+	$(if $(CI),,@tools/lint/heavy-lock.sh "$$PFLANZENDEX_HEAVY_OWNER" "$$PFLANZENDEX_HEAVY_TARGET")
+
+e2e-origin: $(if $(PFLANZENDEX_E2E_WEB_PORT),auth-up) ## Allow the e2e web port of this worktree as redirect origin at the shared Keycloak, after auth-up also under -j; no-op without one (US-DEV-08, issue 1745)
+ifdef PFLANZENDEX_E2E_WEB_PORT
+	cd $(APP) && node tools/keycloak/web-port.mjs $(E2E_WEB_PORT)
+endif
+
+e2e: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
+one-screen: heavy-lock $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen
+
+one-screen-report: ## The page/inner table of the last `make one-screen` run as Markdown (job summary); report only, never fails (QG-U8)
+	@cat $(APP)/packages/e2e/one-screen-report/report.md 2>/dev/null || echo "No one-screen report: run make one-screen first."
+
+one-screen-merge: ## CI only: merges the shard reports of one-screen (app/packages/e2e/one-screen-shards) into the report of the whole run; fails unless every screen and size was measured exactly once (US-QG-01)
+	cd $(APP) && npm run --silent merge-shards -w @pflanzendex/e2e -- one-screen one-screen-shards
+
+a11y-routes: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; A11Y_ROUTES_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes
+
+ui-gates-seed: $(if $(CI),,db-up) auth-up migrate ## CI only (US-QG-02, issue 1698): seeds the demo for make ui-gates (DEMO_SEED_PROFILE=states); a prerequisite of ui-gates, so with -j it runs while the browsers install; needs Keycloak and a migrated database
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+
+ui-gates: heavy-lock $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browsers install; every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
+	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
+
+a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
+	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."
+
+a11y-routes-merge: ## CI only: merges the shard reports of a11y-routes (app/packages/e2e/a11y-routes-shards) into the report of the whole run; fails unless every screen and size was measured exactly once (US-QG-01)
+	cd $(APP) && npm run --silent merge-shards -w @pflanzendex/e2e -- a11y-routes a11y-routes-shards
+
+ui-weights: ## Rewrites the shard weights of the UI gates (register.weights.json) as the median seconds per screen and gate of the CI runs RUNS="<id> <id> <id>" (at least 3), read from the logs of their shard jobs; needs gh (US-QG-01, issue 1667)
+	node tools/measure/ui-weights.mjs $$RAW_RUNS
+
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
-	cd $(APP) && node tools/check/quality/check-crap.mjs $(ARGS)
+	cd $(APP) && node tools/check/quality/check-crap.mjs $$RAW_ARGS
 
 spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
 	cd $(APP) && npm run specs
@@ -111,20 +327,39 @@ skills-check: ## Check agent skills in .agents/skills (trigger, paths, check com
 reference-check: ## API routes and core operations named in app.md, shared components in design-system.md; baseline only shrinks (QG-T5, US-QG-10)
 	cd $(APP) && npm run reference
 
+principles-review: ## Quarterly review of the principles register: gated and checked entries without a Caught line of the last three months; report only, exit 0 (US-QG-06)
+	cd $(APP) && npm run principles-review
+
 storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark toolbar, 360 px viewport (TE-18)
 	cd $(APP) && npm run storybook
 
 build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
 	cd $(APP) && npm run build-storybook
 
-lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
+lighthouse: heavy-lock ## Lighthouse on the built web app, mobile, median of 3 runs against the limits in app/config/gates/quality-limits.json; fails past a limit (QG-U1, FR-QG-09), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web
 	cd $(APP) && npm run bundle-budget -- --report
 	tools/lighthouse/lighthouse-run.sh
-	tools/lighthouse/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+	@summary=$(APP)/packages/web/.lighthouseci/summary.md; tools/lighthouse/lighthouse-summary.sh --check > $$summary; status=$$?; cat $$summary; exit $$status
+
+lighthouse-signed: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## Lighthouse on the signed-in /today and /collection, mobile, median of 3 runs; report only: scores never fail it, a run that cannot measure does (FR-QG-09, issue 1251); seeds the demo
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
+	tools/lighthouse/lighthouse-signed.sh
+
+perf-nightly: $(if $(CI),,db-up) ## Load measurement of every GET route at 1,000 specimens against the budgets in app/config/gates/quality-limits.json (`perf`), plus the concurrency probe (1/4/8/16 Heute screens); report only: a budget never fails it, a broken measurement does (NFR-12, issue 1250); output in app/.cache/perf
+	@mkdir -p $(APP)/.cache/perf
+	cd $(APP) && PERF_SIZES=1000 PERF_SPECIES=100 PERF_RUNS="$${RAW_PERF_RUNS:-20}" npm run --silent perf:measure -w @pflanzendex/api > .cache/perf/measure.json
+	cd $(APP) && PERF_USERS=1,4,8,16 npm run --silent perf:concurrency -w @pflanzendex/api > .cache/perf/concurrency.txt
+	@cd $(APP)/packages/api && npx --no-install tsx perf/load/budget-report.ts ../../.cache/perf/measure.json > ../../.cache/perf/summary.md; status=$$?; \
+	  printf '\n### Concurrency, Heute screen (/today + /specimens/hints)\n\n```text\n' >> ../../.cache/perf/summary.md; \
+	  cat ../../.cache/perf/concurrency.txt >> ../../.cache/perf/summary.md; printf '```\n' >> ../../.cache/perf/summary.md; \
+	  cat ../../.cache/perf/summary.md; exit $$status
 
 bundle-report: ## Initial JS per chunk and package as Markdown against the 125 kB goal; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report
+
+health-report: ## The five most complex functions (cognitive complexity) as Markdown for the CI job summary; report only (US-QG-08)
+	@cd $(APP) && npm run --silent health
 
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
 	cd $(APP) && npm run release-tags
@@ -153,18 +388,86 @@ dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
 	cd $(APP) && npm run layout
 
+layout-fix: ## Fix the layout of DIR=<dir> or move files: ARGS="--move <from>=<to>"; dry run, APPLY=1 applies (FR-QG-23)
+	cd $(APP) && node tools/layout-fix/layout-fix.mjs $$RAW_DIR $(if $(value APPLY),--apply) $$RAW_ARGS
+
 layout-baseline: ## Create or lower app/config/gates/baselines/layout-baseline.json, never enlarge it (FR-QG-22)
 	cd $(APP) && npm run layout -- --write-baseline
 
 db-indexes: ## Every foreign key and tenant column (account_id) of the migrations has an index, baseline ratchet (US-QG-07)
 	cd $(APP) && npm run db-indexes
 
-gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
+gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format; a green result of this exact content is skipped (FRESH=1 runs all, issue 1608)
 	cd $(APP) && node tools/check/supply/check-deps.mjs
 	cd $(APP) && npm run gates
 
-ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
+# Declares the gate files that a branch will change, before the first edit of them (US-QG-07). The Claude Code hook then asks
+# one question that lists the whole plan. The paths are relative to the top of the worktree. It confirms nothing.
+gate-plan: ## Declares the gate files this branch will change (FILES="a b", paths from the top of the worktree; US-QG-07): one question then covers the list, and nothing is confirmed
+	node .claude/hooks/gate-plan.mjs
+
+# The local run of every part, one at a time, and every part also after a failure (US-QG-02, issue 1636). The parts, their
+# order and their dependencies are CI_PARTS in app/tools/check/quality/gates/gate-steps.mjs; the runner is app/tools/dev/agent/ci-parts.mjs.
+ci: ## All parts of the local CI in order (secrets, workflows, database, gates, tests, coverage, UI build); every part runs, every failure is listed at the end, exit 1 when one failed (US-QG-02)
 	cd $(APP) && npm run ci
+
+# The parts of `make ci`; CI runs them as parallel jobs (US-QG-02, #1118), locally `make ci` runs them one at a time.
+ci-gates: secrets workflows ## Part 1 of `make ci`: secrets, workflows and the fast gates
+	cd $(APP) && npm run ci:gates
+
+# The docs and spec part of `make gates` on its own: CI job `docs-gates` runs it for a change to documentation (US-QG-02, #1389).
+ci-docs: ## Docs and spec gates (markdown lint and links, spec checks, spec numbers, principles, skills, reference); CI job docs-gates
+	cd $(APP) && npm run ci:docs
+
+ci-tests: $(if $(CI),,db-up) ## Part 2 of `make ci`: all tests with coverage and the ratchet, then the CRAP check
+	cd $(APP) && npm run ci:tests
+
+# Part 2 in CI as jobs (issue 1125): the web suite runs as two shard jobs whose blob reports the job `results` merges (issue 1682);
+# the ratchet and CRAP check read the coverage outputs afterwards. Together they are exactly `make ci-tests`.
+# Measured in run 42421391215 (issue 1698): the api suite 60-92 s at 85 % CPU, the db suite 40-59 s at about 30 % CPU (its files
+# run one after another, fileParallelism: false), the core suite 13-19 s and the tool tests 22-26 s. api and db share the test
+# database (db creates tables), so db starts only after api has ended; core and the tool tests need no database and run beside db.
+ci-tests-base: $(if $(CI),,db-up) ## Part 2a: api, core and db tests with coverage, plus the tool tests; the api suite first, then the db suite (its files one after another), the core suite and the tool tests at once, since api and db share the test database (US-QG-02, issue 1698); every suite runs even when another failed
+	cd $(APP) && rc=0; npm run ci:tests:api || rc=1; cd .. && $(MAKE) --no-print-directory -k -j3 -Otarget ci-tests-db ci-tests-core ci-tests-tools || rc=1; exit $$rc
+
+ci-tests-db: ## Part of ci-tests-base (US-QG-02, issue 1698): the db suite with coverage, its files one after another
+	cd $(APP) && npm run ci:tests:db
+
+ci-tests-core: ## Part of ci-tests-base (US-QG-02, issue 1698): the core suite with coverage
+	cd $(APP) && npm run ci:tests:core
+
+ci-tests-tools: ## Part of ci-tests-base (US-QG-02, issue 1698): the tool tests
+	cd $(APP) && npm run ci:tests:tools
+
+ci-tests-web: ## Part 2b: web tests with coverage; SHARD=<i>/<n> runs one part and writes its blob report (CI, US-QG-02)
+	cd $(APP) && if [ -n "$$RAW_SHARD" ]; then npm run ci:tests:web:shard -- --shard="$$RAW_SHARD"; else npm run ci:tests:web; fi
+
+# CI only (issue 1682): the blob reports of the two web shards become the coverage of the whole suite. The shell check runs
+# first and fails on a missing, stray or mismatched report, because Vitest merges whatever it finds and does not notice a gap.
+ci-tests-web-merge: ## CI only: merges the blob reports of the web shards (app/packages/web/.vitest/blob) into the coverage of the whole suite; fails unless every shard i of n is there exactly once (US-QG-02)
+	@( cd $(APP)/packages/web || exit 1; dir=.vitest/blob; \
+	  [ -d "$$dir" ] || { echo "ci-tests-web-merge: no folder $$dir: every web shard writes its blob report there first" >&2; exit 1; }; \
+	  n=""; have=""; \
+	  for f in $$(ls -1A "$$dir"); do \
+	    case "$$f" in blob-[1-9]*-[1-9]*.json) ;; *) echo "ci-tests-web-merge: $$dir/$$f is no blob report (blob-<i>-<n>.json)" >&2; exit 1 ;; esac; \
+	    i=$${f#blob-}; i=$${i%%-*}; m=$${f#blob-$$i-}; m=$${m%.json}; \
+	    case "$$i$$m" in *[!0-9]*) echo "ci-tests-web-merge: $$dir/$$f is no blob report (blob-<i>-<n>.json)" >&2; exit 1 ;; esac; \
+	    if [ -n "$$n" ] && [ "$$m" != "$$n" ]; then echo "ci-tests-web-merge: the blob reports name $$n and $$m shards, all of them must come from one run with the same n" >&2; exit 1; fi; \
+	    if [ "$$i" -lt 1 ] || [ "$$i" -gt "$$m" ]; then echo "ci-tests-web-merge: $$dir/$$f names shard $$i of $$m, which does not exist" >&2; exit 1; fi; \
+	    n=$$m; have="$$have $$i"; \
+	  done; \
+	  [ -n "$$n" ] || { echo "ci-tests-web-merge: $$dir holds no blob report" >&2; exit 1; }; \
+	  k=1; while [ $$k -le $$n ]; do \
+	    case " $$have " in *" $$k "*) ;; *) echo "ci-tests-web-merge: shard $$k of $$n has no blob report in $$dir" >&2; exit 1 ;; esac; \
+	    k=$$((k + 1)); \
+	  done \
+	) && cd $(APP) && npm run ci:tests:web:merge
+
+ci-coverage: ## Part 2c: coverage ratchet and CRAP check over the coverage of all packages (run 2a and 2b first)
+	cd $(APP) && npm run ci:coverage
+
+ci-ui: ## Part 3 of `make ci`: build, initial JS budget and the blocking conformance run (needs `make browsers`)
+	cd $(APP) && npm run ci:ui
 
 release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
 	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }
@@ -172,37 +475,65 @@ release: ## Version, tag and GitHub release from the commits (CI on main only, U
 
 release-dry-run: ## Show the next version and notes without publishing (BRANCH=dev)
 	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
-		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
+		--dry-run --no-ci --branches "$${RAW_BRANCH:-$$(git branch --show-current)}"
+
+news-release: ## Cut the unreleased news lines into version VERSION=<x.y.z> of news.de.json and delete their fragments; commit both in one commit (US-DEV-06)
+	@test -n "$$RAW_VERSION" || { echo "news-release: set VERSION=<x.y.z>, the version release-dry-run prints" >&2; exit 2; }
+	node tools/repo/news-release.mjs "$$RAW_VERSION"
 
 worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim check first (opt-out SKIP_CLAIM_CHECK=1, US-DEV-08)
-	tools/repo/worktree-new.sh "$(BRANCH)"
+	tools/repo/worktree-new.sh "$$RAW_BRANCH"
 
 ci-reuse: ## CI only: reuse a green job (JOBS="app ds-snapshots") of the same PR head commit after a title/body edit (US-QG-02, #404)
-	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-reuse.mjs $(JOBS)
+	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-reuse.mjs $$RAW_JOBS
+
+ci-wait: ## Wait until every check of a PR head has finished, then print the real result per job (PR=<n>; exit 1 on a failure, a conflict or a required job that never ran; US-DEV-13)
+	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-wait.mjs "$$REST_PR"
 
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
-	cd $(APP) && node tools/workflow/merge-pr.mjs "$(PR)"
+	cd $(APP) && node tools/workflow/merge-pr.mjs "$$REST_PR"
+
+auto-merge: ## Wait for the CI of a PR (PR=<n>), then merge it with every make merge check; a gate PR is refused at the end, after CI; red CI merges nothing; never arms GitHub auto-merge; it runs in the session's background, so it ends with that session and the PR then stays open, nothing half done (US-DEV-13)
+	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-wait.mjs "$$REST_PR" && node tools/workflow/merge-pr.mjs "$$REST_PR"
+
+gate-review: ## Open PRs into dev that change a gate file: CI as it stands, conflicts, age, whether a limit, baseline or allowlist moved looser (read-only, US-QG-07)
+	cd $(APP) && node tools/workflow/actions/ci-reuse/gate-review/gate-review.mjs
 
 repo-stats: ## Regenerate the statistics block in README.md (once per release PR, see release-checklist; US-DEV-10)
 	tools/repo/repo-stats.sh
 
-pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
-	tools/repo/pr-ready.sh "$(PR)"
+pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-13)
+	tools/repo/pr-ready.sh "$$REST_PR"
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
-	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
+	cd $(APP) && node tools/workflow/claim/claim.mjs "$$REST_ISSUE"
 
-board: ## Who works on which open story of the milestone; flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
-	cd $(APP) && node tools/workflow/board.mjs $(MILESTONE)
+issue: ## New issue with type and epic labels and the board fields Typ, Epic, Priority, Release and Status Todo (TYPE=story EPIC=ACC PRIORITY=P1 TITLE="…" BODY=<file.md> [RELEASE=R3]); Release by rule (bug by priority P0/P1 R1, P2 R2, P3 R4; epic none; other types R2) unless RELEASE overrides it; refuses unknown values before creating anything (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs create --type "$$RAW_TYPE" --epic "$$RAW_EPIC" --priority "$$RAW_PRIORITY" --title "$$REST_TITLE" --body-file "$$RAW_BODY_FILE" $(if $(value RELEASE),--release "$$RAW_RELEASE")
 
-status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
+issue-check: ## Check the type and epic labels of an issue (ISSUE=<n> [EVENT=opened|edited|labeled|unlabeled]): comment and needs-triage when invalid, needs-triage removed when valid (CI: issue-check.yml, FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs check --issue "$$REST_ISSUE" --event "$$RAW_EVENT"
+
+issue-sync: ## Set the board fields Typ and Epic of an issue, and Status Todo when it has none (ISSUE=<n> TYPE=<label> EPIC=<code>); CI runs it with the project token (FR-DEV-10)
+	cd $(APP) && node tools/workflow/actions/issue/issue-cli.mjs sync --issue "$$REST_ISSUE" --type "$$RAW_TYPE" --epic "$$RAW_EPIC"
+
+project-status: ## Move the project status of the PR that was merged or closed (CI: project-status.yml, US-DEV-05); the GitHub App token comes in GH_TOKEN
+	node $(APP)/tools/workflow/actions/project-status/project-status.mjs event "$$GITHUB_EVENT_PATH"
+
+board: ## Who works on which open story of a release (board field Release, RELEASE="R1 Parität"); flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
+	cd $(APP) && node tools/workflow/board.mjs "$$RAW_RELEASE"
+
+status-check: ## Project status vs. pull requests, open items without a status, missing priorities (US-DEV-05); exit 1 on drift
 	cd $(APP) && node tools/workflow/actions/project-status/project-status.mjs check
 
 retro: ## Issue flow retro: created vs. closed per day, burndown (US-DEV-11); prints it, WRITE=1 rewrites the pinned report issue
-	cd $(APP) && node tools/workflow/actions/retro/retro.mjs $(if $(WRITE),--write)
+	cd $(APP) && node tools/workflow/actions/retro/retro.mjs $(if $(value WRITE),--write)
 
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
+
+clean-ports: ## Stop the processes that listen on the dev ports of this worktree (API and web; only your own processes, each one named; 3000 and 5173 in the main checkout; US-DEV-01)
+	cd $(APP) && node tools/workflow/worktree/clean-ports.mjs
 
 deploy: ## Build and start staging from origin/main (on the host, needs app/config/deploy/.env)
 	$(APP)/config/deploy/scripts/deploy.sh

@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { closedIssues, drift, transitions } from "./project-status-lib.mjs";
-import { missingPriority } from "./project-status.mjs";
+import { main, missingPriority } from "./project-status.mjs";
 
 const items = [
   { issue: 1, status: "In Progress" },
@@ -78,14 +78,85 @@ test("US-DEV-05: drift names status contradicting the PRs and missing priority",
   );
 });
 
+/** The board as the paged GraphQL query answers it (board-client.mjs), from items in the { content, status, ... } shape. */
+function graphqlBoard(items) {
+  const field = (name) => (name ? { name } : null);
+  const nodes = items.map((i) => ({
+    id: i.id,
+    content: { __typename: i.content.type, number: i.content.number },
+    status: field(i.status),
+    priority: field(i.priority),
+    typ: field(i.typ),
+    release: field(i.release),
+  }));
+  return JSON.stringify({
+    data: {
+      organization: {
+        projectV2: { items: { pageInfo: { hasNextPage: false, endCursor: null }, nodes } },
+      },
+    },
+  });
+}
+
 test("US-DEV-05: missingPriority names open items without a priority, epics and unknown issues excluded", async () => {
-  const list = {
-    items: [
-      { id: "a", content: { type: "Issue", number: 1 }, status: "Todo", priority: "P1 high" },
-      { id: "b", content: { type: "Issue", number: 2 }, status: "Todo" },
-      { id: "c", content: { type: "Issue", number: 3 }, status: "Todo", typ: "Epic" },
-    ],
-  };
-  const client = { run: async () => JSON.stringify(list) };
+  const list = [
+    { id: "a", content: { type: "Issue", number: 1 }, status: "Todo", priority: "P1 high" },
+    { id: "b", content: { type: "Issue", number: 2 }, status: "Todo" },
+    { id: "c", content: { type: "Issue", number: 3 }, status: "Todo", typ: "Epic" },
+  ];
+  const client = { run: async () => graphqlBoard(list) };
   assert.deepEqual(await missingPriority(client, [1, 2, 3, 99]), [2]);
+});
+
+test("FR-DEV-10 (#1412): missingPriority with the items already read lists the board again for nothing", async () => {
+  const client = {
+    run: async () => {
+      throw new Error("the board must not be listed a second time");
+    },
+  };
+  const read = [{ id: "b", issue: 2, status: "Todo", priority: null, epic: false }];
+  assert.deepEqual(await missingPriority(client, [2], read), [2]);
+});
+
+test("FR-DEV-10 (e): drift reports no status for an open item of any type, not for a closed one", () => {
+  const sItems = [
+    { issue: 7, priority: "P1 high", open: true },
+    { issue: 8, epic: true, open: true },
+    { issue: 9, priority: "P2 normal", open: false },
+    { issue: 10, status: "Todo", priority: "P1 high", open: true },
+  ];
+  assert.deepEqual(drift(sItems, []), [
+    { issue: 7, problem: "no status" },
+    { issue: 8, problem: "no status" },
+  ]);
+});
+
+test("FR-DEV-10 (e): status-check exits 1 and lists the open board item without a Status", async () => {
+  const client = {
+    async run(cmd, args) {
+      const line = args.join(" ");
+      if (line.includes("items(first"))
+        return graphqlBoard([
+          { id: "a", content: { type: "Issue", number: 7 }, priority: "P1 high" },
+          { id: "b", content: { type: "Issue", number: 8 }, status: "Done" },
+          { id: "c", content: { type: "Issue", number: 9 }, priority: "P2 normal" },
+        ]);
+      if (line.startsWith("issue list --state open"))
+        return JSON.stringify([{ number: 7 }, { number: 8 }]);
+      if (line.startsWith("pr list")) return "[]";
+      throw new Error(`unexpected gh call: ${line}`);
+    },
+  };
+  const lines = [];
+  const log = console.log;
+  console.log = (...args) => lines.push(args.join(" "));
+  let code;
+  try {
+    code = await main(["check"], client);
+  } finally {
+    console.log = log;
+  }
+  assert.equal(code, 1);
+  assert.ok(lines.includes("#7: no status"));
+  assert.ok(!lines.some((l) => /^#9:/.test(l)), "a closed item without a Status is not reported");
 });

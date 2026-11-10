@@ -3,6 +3,8 @@ import {
   execute,
   failed,
   measurementAssess,
+  ok,
+  speciesExisting,
   speciesPropose,
   wishCreate,
   type DiscoverSource,
@@ -22,7 +24,8 @@ import type { Pool } from "pg";
  * the content when it is delivered and runs again when the keeper adopts it (KI-R1, P-03). Later stories add the species
  * profile (US-KI-03) and the photo assessment (US-KI-04).
  * - `species`: a species profile with all required fields of DM-BES-01 and a mandatory source (US-KI-03), adopted through
- *   `species.propose` like the form, so it starts as a proposal that only a reviewer approves (FR-BES-06, FR-KI-09).
+ *   `species.propose` like the form, so it starts as a proposal that only a reviewer approves (FR-BES-06, FR-KI-09). A
+ *   species that is already visible is refused with `species.duplicate` and its id before a draft is stored (US-KI-11).
  * - `photo_assessment`: quality and note for the photo of a measurement (US-KI-04), adopted through `measurement.assess`
  *   with `Assessed_By: AI suggestion accepted`; the code writes only after the keeper adopts it.
  * - `wish`: a wish candidate (US-KI-05, US-WUN-04), adopted through `wish.create` like the wishlist form.
@@ -31,7 +34,8 @@ export function draftTypes(pool: Pool, discover: DiscoverSource): DraftTypes {
   const wishes = new WishesPostgres(pool);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const create = wishCreate({ wishes });
-  const propose = speciesPropose(new SpeciesPostgres(pool));
+  const species = new SpeciesPostgres(pool);
+  const propose = speciesPropose(species);
   const assess = measurementAssess({
     measurements: new MeasurementsPostgres(pool),
     specimens: new SpecimenPostgres(pool),
@@ -51,6 +55,11 @@ export function draftTypes(pool: Pool, discover: DiscoverSource): DraftTypes {
       },
       adopt: (userId, content, key) =>
         execute(propose, writes, { context: { userId }, input: content, idempotencyKey: key }),
+      // US-KI-11: a species that already exists is named with its id at once, the same refusal adopting would give.
+      check: async (userId, content) => {
+        const existing = await speciesExisting(species, userId, content);
+        return existing ? failed(appError("species.duplicate", { data: { existing } })) : ok(null);
+      },
     },
     photo_assessment: {
       schema: (input) => assess.schema(asSuggestion(input)),

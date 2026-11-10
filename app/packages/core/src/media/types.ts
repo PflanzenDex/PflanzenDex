@@ -4,20 +4,25 @@ import type { Result } from "../kernel";
 // the S3 adapter and the image library live in the API (AB-1). Numbers marked "assumption" are starting values.
 
 export const MEDIA_LIMITS = {
-  /** Long side of a stored image in px, JPEG quality: set by US-WAC-06. */
+  /** Long side of a stored image in px: set by US-WAC-06. */
   maxEdgePx: 1600,
-  jpegQuality: 82,
+  /** WebP quality of the stored copy (issue 1289, owner decision 2026-11-05): a starting value (assumption), measured on 20 plant photos. */
+  webpQuality: 82,
+  /** Long side of the thumbnail in px (tiles and cards show 56 to 96 px, NFR-12). */
+  thumbEdgePx: 256,
+  /** WebP quality of the thumbnail (issue 1289): a starting value (assumption). */
+  thumbWebpQuality: 72,
   /** Largest accepted upload in bytes (assumption: a current phone photo is 2 to 8 MB). */
   uploadMaxBytes: 15 * 1024 * 1024,
-  /** Largest processed object the store accepts (assumption: 1600 px at quality 82 stays well below 1 MB). */
+  /** Largest processed object the store accepts (assumption: 1600 px as WebP stays well below 1 MB). */
   storedMaxBytes: 5 * 1024 * 1024,
   /** Decoder guard against decompression bombs, in pixels (assumption: above any phone camera of today). */
   inputMaxPixels: 50_000_000,
-  /** Upload types the processor reads; everything stored is JPEG. */
+  /** Upload types the processor reads; everything stored is WebP (issue 1289). */
   uploadTypes: ["image/jpeg", "image/png", "image/webp"],
-  storedType: "image/jpeg",
-  /** Object name below the account prefix: no slash, no dots except the extension. */
-  namePattern: /^[a-z0-9][a-z0-9-]{0,63}\.jpg$/,
+  storedType: "image/webp",
+  /** Object name below the account prefix: no slash, no dots except the extension, always `.webp`. */
+  namePattern: /^[a-z0-9][a-z0-9-]{0,63}\.webp$/,
 } as const;
 
 export interface StoredObject {
@@ -47,13 +52,21 @@ export interface ObjectStore {
   deleteAll(accountId: string): Promise<Result<number>>;
 }
 
-/** An image after processing: JPEG, rotated upright, shrunk, free of EXIF/GPS and all other metadata. */
-export interface ProcessedImage {
+/** One WebP of an image: rotated upright, shrunk, free of EXIF/GPS and all other metadata. */
+export interface ImageVariant {
   readonly bytes: Uint8Array;
   readonly contentType: typeof MEDIA_LIMITS.storedType;
   readonly width: number;
   readonly height: number;
 }
+
+/** An image after processing: the stored copy and its thumbnail, made in the same step (NFR-12). */
+export interface ProcessedImage extends ImageVariant {
+  readonly thumbnail: ImageVariant;
+}
+
+/** The size an image is read in (NFR-12): the stored copy, or the thumbnail that tiles and cards ask for. */
+export type ImageSize = "full" | "thumb";
 
 /** Port of the processing stage. Unreadable input is `media.not_an_image`. */
 export interface ImageProcessor {

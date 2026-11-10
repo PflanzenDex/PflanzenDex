@@ -10,6 +10,7 @@ import { CollectionPage } from "../../collection-page/collection-page";
 import { DifficultyPage } from "../../other-pages/difficulty-page/difficulty-page";
 import { HintsPage } from "../../other-pages/hints-page/hints-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
+import { answerCardRead } from "../tests/cards-fake";
 
 // DS-48 migration of the module (issue 318): invalid submissions focus the first invalid field and link the German
 // message by aria-describedby, every page has a skeleton while loading, every empty view offers a next action.
@@ -26,6 +27,7 @@ const card = (id: string, marker: string | null): SpecimenCard => ({
   location: null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,
@@ -47,7 +49,7 @@ function fakeServer(cards: SpecimenCard[]) {
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      return response(200, { cards });
+      return answerCardRead(new URL(String(url)), cards) ?? response(404, {});
     }),
   );
   return posts;

@@ -18,7 +18,7 @@ export const TASK_INSTRUCTIONS: Readonly<Record<TaskType, string>> = {
 };
 
 export const PROMPT_LABELS = {
-  heading: "Auftrag aus PflanzenDex",
+  heading: "Auftrag aus PflanzenDéx",
   id: "Auftrags-Kennung",
   type: "Typ",
   reference: "Bezug",

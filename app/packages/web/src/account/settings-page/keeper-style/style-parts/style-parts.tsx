@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Select } from "@/components/ui/fields/select/select";
-import { errorText } from "@/lib/error-text";
-import { SIGN_IN, type ApiError } from "../../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Select } from "@/shared/ui/fields/select/select";
+import { refusalText } from "@/shared/lib/error-text";
+import { cn } from "@/shared/lib/utils";
+import { SIGN_IN, type ApiError } from "../../../../shared/data";
 import { saveKeeperStyle, type KeeperStyle, type KeeperStyleState } from "../keeper-style-api";
 
 type Token = () => Promise<string | undefined>;
@@ -56,10 +57,8 @@ export function useSaveStyle(
 export function Refusal(props: { error: ApiError | null }) {
   if (!props.error) return null;
   return (
-    <p role="alert" className={`${ALERT} mt-2`}>
-      {props.error.code === "network.not_reachable"
-        ? props.error.text
-        : errorText(props.error.code)}
+    <p role="alert" className={cn(ALERT, "mt-2")}>
+      {refusalText(props.error)}
     </p>
   );
 }

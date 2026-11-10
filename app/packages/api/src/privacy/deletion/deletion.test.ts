@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { InMemoryObjectStore, runNext } from "@pflanzendex/core";
+import { DELETE_ACCOUNT_JOB, InMemoryObjectStore, runNext } from "@pflanzendex/core";
 import { JobsPostgres, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
 import { deleteAccountHandlers } from "./deletion-routes";
@@ -74,12 +74,13 @@ describe("US-ACC-04 deleting the account through the API", () => {
 
   it("US-ACC-04 the job removes the account, its photos and its data once the grace period is over, and only then", async () => {
     const id = (await idOf(subA)) as string;
-    await store.put(id, "photo-1.jpg", new Uint8Array([1]), "image/jpeg");
-    await store.put(randomUUID(), "foreign.jpg", new Uint8Array([2]), "image/jpeg");
+    await store.put(id, "photo-1.webp", new Uint8Array([1]), "image/webp");
+    await store.put(randomUUID(), "foreign.webp", new Uint8Array([2]), "image/webp");
     await call(subA, "POST", "/account/deletion", { confirm: true });
     const run = (now: Date) =>
       runNext({
-        queue: new JobsPostgres(pool),
+        // Only this file's job type: other test files share the database and its queue (issue 1259).
+        queue: new JobsPostgres(pool, { onlyTypes: [DELETE_ACCOUNT_JOB] }),
         handlers: deleteAccountHandlers(pool, store),
         now: () => now,
         workerId: "test",

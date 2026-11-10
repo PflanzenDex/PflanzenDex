@@ -1,0 +1,300 @@
+{
+  "maxEntries": 59,
+  "entries": [
+    {
+      "screen": "account-achievements-year",
+      "size": "360x640",
+      "cls": 0.529
+    },
+    {
+      "screen": "account-achievements-year",
+      "size": "390x844",
+      "cls": 0.297
+    },
+    {
+      "screen": "account-settings-sheet-light",
+      "size": "1280x800",
+      "cls": 0.084
+    },
+    {
+      "screen": "account-settings-sheet-style",
+      "size": "360x640",
+      "cls": 0.115
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "360x640",
+      "cls": 0.2
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "390x844",
+      "cls": 0.112
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "390x844",
+      "cls": 0.092
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "390x844",
+      "cls": 0.092
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "390x844",
+      "cls": 0.092
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "360x640",
+      "cls": 0.158
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "360x640",
+      "cls": 0.2
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "390x844",
+      "cls": 0.107
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "360x640",
+      "cls": 0.2
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "390x844",
+      "cls": 0.112
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "360x640",
+      "cls": 0.2
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "390x844",
+      "cls": 0.245
+    },
+    {
+      "screen": "collection-plants-course",
+      "size": "390x844",
+      "cls": 0.092
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "1280x800",
+      "cls": 0.14
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "1280x800",
+      "cls": 0.14
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "360x640",
+      "cls": 0.424
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "390x844",
+      "cls": 0.339
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "360x640",
+      "cls": 0.145
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "390x844",
+      "cls": 0.085
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "360x640",
+      "cls": 0.103
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "1280x800",
+      "cls": 0.139
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "360x640",
+      "cls": 0.387
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "390x844",
+      "cls": 0.405
+    },
+    {
+      "screen": "operator-sheet-einstieg",
+      "size": "360x640",
+      "cls": 0.296
+    },
+    {
+      "screen": "operator-sheet-einstieg",
+      "size": "390x844",
+      "cls": 0.17
+    },
+    {
+      "screen": "operator-sheet-fristen",
+      "size": "360x640",
+      "cls": 0.243
+    },
+    {
+      "screen": "operator-sheet-fristen",
+      "size": "390x844",
+      "cls": 0.158
+    },
+    {
+      "screen": "plant-dialog-archive",
+      "size": "390x844",
+      "cls": 0.092
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "390x844",
+      "cls": 0.091
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "390x844",
+      "cls": 0.235
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "species-profile",
+      "size": "1280x800",
+      "cls": 0.136
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "360x640",
+      "cls": 0.144
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "1280x800",
+      "cls": 0.096
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "360x640",
+      "cls": 0.233
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "390x844",
+      "cls": 0.378
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "1280x800",
+      "cls": 0.098
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "360x640",
+      "cls": 0.091
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "1280x800",
+      "cls": 0.096
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "360x640",
+      "cls": 0.144
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "390x844",
+      "cls": 0.089
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "1280x800",
+      "cls": 0.096
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "360x640",
+      "cls": 0.17
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "390x844",
+      "cls": 0.098
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "360x640",
+      "cls": 0.269
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "390x844",
+      "cls": 0.155
+    },
+    {
+      "screen": "today-tasks",
+      "size": "1280x800",
+      "cls": 0.098
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "360x640",
+      "cls": 0.208
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "390x844",
+      "cls": 0.12
+    }
+  ]
+}

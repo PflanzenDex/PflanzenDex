@@ -1,5 +1,5 @@
 // Public interface of the `catalog` module (ADR 0003): pages for the species catalog and its review.
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const SpeciesPage = lazyPage(() =>
   import("./species-page/species-page").then((m) => ({ default: m.SpeciesPage })),
 );
@@ -13,3 +13,7 @@ export const searchSpecies = async (
 export const loadSpecies = async (
   ...args: Parameters<typeof import("./species-api").loadSpecies>
 ) => (await import("./species-api")).loadSpecies(...args);
+// The skeleton of the species catalog, the mode's skeleton on "Entdecken" (US-QS-14, issue 1697).
+export { SpeciesPageSkeleton } from "./species-page/species-page.skeleton";
+// The route fallback of the species profile (US-QS-14, issue 1727): the card of the profile with its skeleton.
+export { ProfileRouteSkeleton } from "./profile-view/profile-view.skeleton";

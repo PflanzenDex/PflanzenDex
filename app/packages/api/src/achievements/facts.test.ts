@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { achievementsView } from "./view";
 import { readAchievementFacts, type FactSources } from "./facts";
 
@@ -36,19 +36,41 @@ function sources(over: Partial<Record<keyof FactSources, unknown>> = {}): FactSo
     profiles: { list: async () => [] },
     treatments: {
       open: async () => new Map([["a", [treatment("t3", "c1", null)]]]),
-      done: async (_u: string, id: string) =>
-        id === "a"
-          ? [treatment("t1", "c1", "2026-02-01"), treatment("t0", null, "2026-01-01")]
-          : [],
+      doneMany: async (_u: string, ids: readonly string[]) =>
+        new Map(
+          ids
+            .filter((id) => id === "a")
+            .map(
+              (id) =>
+                [
+                  id,
+                  [treatment("t1", "c1", "2026-02-01"), treatment("t0", null, "2026-01-01")],
+                ] as const,
+            ),
+        ),
     },
     measurements: {
-      list: async (_u: string, id: string) =>
-        id === "a"
-          ? [
-              { date: "2026-03-02", quality: "healthy", photo: "p.jpg" },
-              { date: "2026-03-09", quality: "etiolated", photo: null },
-            ]
-          : [],
+      listMany: async (_u: string, ids: readonly string[]) =>
+        new Map(
+          ids
+            .filter((id) => id === "a")
+            .map(
+              (id) =>
+                [
+                  id,
+                  [
+                    {
+                      id: "m1",
+                      date: "2026-03-02",
+                      value: 10,
+                      quality: "healthy",
+                      photo: "p.webp",
+                    },
+                    { id: "m2", date: "2026-03-09", value: 12, quality: "etiolated", photo: null },
+                  ],
+                ] as const,
+            ),
+        ),
     },
     swaps: {
       list: async () => [
@@ -100,6 +122,50 @@ describe("US-ACH-01 facts from the own data", () => {
     });
     const { facts } = await readAchievementFacts(s, "anna", "Europe/Berlin");
     expect(facts.specimens.every((x) => x.dormancy === null)).toBe(true);
+  });
+});
+
+describe("NFR-12 one read per kind for all specimens", () => {
+  it("NFR-12 reads treatments and measurements once for all specimens, archived ones included, and returns the measurement rows", async () => {
+    const s = sources();
+    const open = vi.spyOn(s.treatments, "open");
+    const doneMany = vi.spyOn(s.treatments, "doneMany");
+    const listMany = vi.spyOn(s.measurements, "listMany");
+    const { measurements } = await readAchievementFacts(s, "anna", "Europe/Berlin");
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith("anna", ["a", "b"]);
+    expect(doneMany).toHaveBeenCalledTimes(1);
+    expect(doneMany).toHaveBeenCalledWith("anna", ["a", "b"]);
+    expect(listMany).toHaveBeenCalledTimes(1);
+    expect(listMany).toHaveBeenCalledWith("anna", ["a", "b"]);
+    // The rows behind the facts carry id and value, so the year in review needs no second read (NFR-12).
+    expect(measurements).toEqual([
+      {
+        id: "m1",
+        specimenId: "a",
+        date: "2026-03-02",
+        value: 10,
+        quality: "healthy",
+        photo: "p.webp",
+      },
+      {
+        id: "m2",
+        specimenId: "a",
+        date: "2026-03-09",
+        value: 12,
+        quality: "etiolated",
+        photo: null,
+      },
+    ]);
+  });
+
+  it("NFR-12 without specimens nothing is read per specimen and the answer is empty", async () => {
+    const s = sources({ specimens: { list: async () => [] }, swaps: { list: async () => [] } });
+    const { facts, measurements } = await readAchievementFacts(s, "anna", "Europe/Berlin");
+    expect(facts.specimens).toEqual([]);
+    expect(facts.measurements).toEqual([]);
+    expect(facts.treatmentCourses).toEqual([]);
+    expect(measurements).toEqual([]);
   });
 });
 

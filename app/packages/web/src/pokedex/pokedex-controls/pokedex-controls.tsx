@@ -1,11 +1,12 @@
 import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { cn } from "@/lib/utils";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { cn } from "@/shared/lib/utils";
+import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 
 export const FILTER_LAYER = "filters";
 
@@ -31,19 +32,21 @@ export function Controls(props: {
   onQuery: (query: string) => void;
 }) {
   const searchId = useId();
+  const { hint } = useShortcuts();
   return (
     <div className="flex items-end gap-2">
       <div className="min-w-0 flex-1">
         <Label htmlFor={searchId} className="sr-only">
           Suche (Art, deutscher Name, Gattung, Familie)
         </Label>
-        <Input
+        <SearchInput
           id={searchId}
           ref={props.searchRef}
-          type="search"
           placeholder="Suche"
+          keyHint={hint("search")}
           value={props.query}
           onChange={(e) => props.onQuery(e.target.value)}
+          onClear={() => props.onQuery("")}
         />
       </div>
       <LayerOpener id={FILTER_LAYER}>Filter</LayerOpener>

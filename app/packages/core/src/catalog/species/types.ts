@@ -39,8 +39,11 @@ export interface SpeciesValues {
   readonly difficulty: number | null;
   readonly standardLevel: number | null;
   readonly lightDemandLux: number | null;
-  /** C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01). */
-  readonly softLeaf: boolean;
+  /**
+   * C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01).
+   * `null` = unknown (DM-BES-01, P-08); the soft-leaf rule does not apply then.
+   */
+  readonly softLeaf: boolean | null;
   /** Month-day `MM-DD`; both or none. */
   readonly dormancyFrom: string | null;
   readonly dormancyUntil: string | null;
@@ -79,12 +82,26 @@ export interface SpeciesHit extends Species {
 export type SpeciesCreation = { readonly kind: "fresh" | "duplicate"; readonly value: Species };
 
 /**
+ * The answer of a species search: the shown hits (at most the cap of the search, FR-BES-24) and whether more species
+ * match. `more` counts only what the account may see (P-05).
+ */
+export interface SpeciesSearch {
+  readonly species: readonly SpeciesHit[];
+  readonly more: boolean;
+}
+
+/**
  * Persistence port. All calls apply to the account `userId` and return only what it may see
  * (own proposals and approved species, FR-BES-11); the adapter additionally enforces this via row rule.
  */
 export interface SpeciesStore {
-  /** `norm`: normalized search text, `null` lists all visible species. */
-  search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]>;
+  /** `norm`: normalized search text, `null` lists all visible species. Shows at most the cap; `more` says if others match. */
+  search(userId: string, norm: string | null): Promise<SpeciesSearch>;
+  /**
+   * The visible species with a name (Latin, German, English or synonym) that equals `norm` as a whole, with no cap:
+   * an exact match beyond the cap of `search` is found too (FR-BES-24). Same visibility, same hit as `search`.
+   */
+  exact(userId: string, norm: string): Promise<readonly SpeciesHit[]>;
   find(userId: string, id: string): Promise<Species | null>;
   /** `find` for many IDs in one step (NFR-12): one result per ID in the same order, `null` where `find` gives `null`. */
   findMany(userId: string, ids: readonly string[]): Promise<readonly (Species | null)[]>;

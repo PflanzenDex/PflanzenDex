@@ -6,7 +6,7 @@ import {
   type LightZone,
   zoneLabel,
 } from "@pflanzendex/core";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -14,8 +14,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/fields/form/form";
-import { Select } from "@/components/ui/fields/select/select";
+} from "@/shared/ui/fields/form/form";
+import { Select } from "@/shared/ui/fields/select/select";
 import { CatchDateField } from "../../../markers/catch-date/catch-date-field/catch-date-field";
 import { TITLE } from "../../cards/parts/parts";
 import type { CreateFields } from "../../model/schemas";

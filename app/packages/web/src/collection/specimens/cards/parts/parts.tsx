@@ -1,32 +1,49 @@
 import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
-import { refusalText } from "../../model/refusal";
+import { Button } from "@/shared/ui/button/button";
+import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
-/** The card of a page of the module: the former `.light` frame, on tokens (DS-27). */
-export function PageFrame({ children }: { children: ReactNode }) {
+/**
+ * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
+ * pass its height down to the list (issue 1029).
+ */
+export function PageFrame({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div
+      className={cn(
+        "min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7",
+        className,
+      )}
+    >
       {children}
     </div>
   );
 }
 
 /** A page shown inside another destination is not framed in a card of its own (US-QS-14). */
-export function Plain({ children }: { children: ReactNode }) {
-  return <div className="min-w-0">{children}</div>;
+export function Plain({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn("min-w-0", className)}>{children}</div>;
 }
 
-export const TITLE = "mb-2 text-2xl font-semibold";
+/** A form's heading: a long word breaks instead of running past the edge at a large text size (US-QS-15, DS-61). */
+export const TITLE = "mb-2 break-words text-2xl font-semibold";
 export const SUBTITLE = "mb-1 text-xl font-semibold";
 
 /** Layout of the card grids (upward only, DS-12): one column on a phone, more as there is room. */
 export const GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3";
 /** The care profile cards are wider (a row of controls each): two columns at most. */
-export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 lg:grid-cols-2";
+/**
+ * The care profiles: two columns once their container is 42 rem wide, so the page shows two and the 384 px pane of the
+ * species profile one (a container query, not the window width: issue 1182). The parent carries `@container`.
+ */
+export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 @2xl:grid-cols-2";
 export const CARD =
   "grid min-w-0 content-start gap-1 break-words rounded-card bg-secondary p-3 text-secondary-foreground";
 
@@ -39,6 +56,17 @@ export function Quiet(props: { children: ReactNode; className?: string; live?: b
     >
       {props.children}
     </p>
+  );
+}
+
+/** The one loading status of a part (DS-56): its text shows only after the delay (DS-57, issue 1726). */
+export function LoadingNote({ children }: { children: ReactNode }) {
+  return (
+    <DelayedSkeleton>
+      <p role="status" className="text-sm text-muted-foreground">
+        {children}
+      </p>
+    </DelayedSkeleton>
   );
 }
 
@@ -104,6 +132,8 @@ export function Photo({
   compact?: boolean;
 }) {
   const state = useStoredPhoto(access, card.photo?.url);
+  // The picture is not there yet: its text holds once shown (D5), and the picture waits for the hold.
+  const loading = useHeldLoader(card.photo !== undefined && !state);
   if (!card.photo) {
     return (
       <div
@@ -116,7 +146,9 @@ export function Photo({
       </div>
     );
   }
-  if (typeof state !== "string") return <Quiet>{state ? refusalText(state) : "Lädt …"}</Quiet>;
+  const waiting = <DelayedSkeleton>{"Lädt …"}</DelayedSkeleton>;
+  if (loading) return <Quiet>{waiting}</Quiet>;
+  if (typeof state !== "string") return <Quiet>{state ? refusalText(state) : waiting}</Quiet>;
   return (
     <a
       className={cn(

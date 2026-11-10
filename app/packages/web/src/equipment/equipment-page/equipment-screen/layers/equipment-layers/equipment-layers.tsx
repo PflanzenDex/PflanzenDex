@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import type { ApiError } from "../../../../../kernel";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import type { ApiError } from "../../../../../shared/data";
 import { EquipmentForm } from "../../../../equipment-form/equipment-form";
 import type { EquipmentData, EquipmentInput } from "../../../../equipment-api";
 import { LampLightView } from "../../../../lamp-light/lamp-light";
@@ -10,12 +10,13 @@ import { CostsView } from "../../../../overviews/costs-view/costs-view";
 import { NeedsView } from "../../../../overviews/needs-view/needs-view";
 import { RecommendationsView } from "../../../../overviews/needs-view/recommendations-view/recommendations-view";
 import { SensorsView } from "../../../../overviews/sensors-view/sensors-view";
-import { WishesView } from "../../../../overviews/wishes-view/wishes-view";
+import { NEW_WISH_LAYER, WishesView } from "../../../../overviews/wishes-view/wishes-view";
+import { WishForm } from "../../../../overviews/wishes-view/wish-form/wish-form";
 import type { EquipmentPrefill } from "../../../../overviews/wishes-view/wishes-api";
 import { ZonesView } from "../../../../overviews/zones-view/zones-view";
 import type { useLampActions } from "../../../lamp-actions/lamp-actions";
 import type { useWishActions } from "../../../../overviews/wishes-view/use-wish-actions";
-import { ItemCard } from "../../item-card/item-card";
+import { ItemLayer, ItemRow } from "../../item-layer/item-layer";
 import {
   COSTS_LAYER,
   ITEMS_LAYER,
@@ -26,6 +27,13 @@ import {
   WISHES_LAYER,
 } from "../../tiles/equipment-tiles/equipment-tiles";
 import { zoneLabel } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../../equipment.de.json";
+
+const t = texts(table);
+
+/** Rows per page of the list of what I own (starting value, assumption; the page size from the free height is #1029). */
+const ITEMS_PER_PAGE = 6;
 
 type Lamps = ReturnType<typeof useLampActions>;
 type Wishes = ReturnType<typeof useWishActions>;
@@ -36,43 +44,25 @@ function Nothing(props: { title: string; description: string }) {
 }
 
 function Items(props: { data: EquipmentData; lamps: Lamps }) {
-  const { data, lamps } = props;
+  const { data } = props;
   const zoneNames = new Map(data.zones.zones.map((z) => [z.zoneId, zoneLabel(z.name)]));
   if (data.items.length === 0)
-    return (
-      <Nothing
-        title="Noch kein Equipment erfasst"
-        description="Erfasse Lampen, Zeitschaltuhren, Substrat und mehr mit „Equipment erfassen“. Nur Art und Name sind nötig."
-      />
-    );
+    return <Nothing title={t("items.none.title")} description={t("items.none.description")} />;
   return (
     <Pager
       items={data.items}
-      pageSize={2}
-      label="Dein Equipment"
+      pageSize={ITEMS_PER_PAGE}
+      label={t("items.label")}
       param={LAYER_PARAM}
       getKey={(item) => item.id}
-      renderItem={(item) => (
-        <ItemCard
-          item={item}
-          zone={zoneNames.get(item.lightZoneId ?? "")}
-          maintenance={lamps.maintenance}
-          supply={lamps.supply}
-          sharing={lamps.sharing}
-        />
-      )}
+      renderItem={(item) => <ItemRow item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />}
     />
   );
 }
 
 function CostsPart({ data }: { data: EquipmentData }) {
   if (data.items.length > 0) return <CostsView items={data.items} />;
-  return (
-    <Nothing
-      title="Noch keine Kosten"
-      description="Sie erscheinen, sobald du Equipment mit Preis erfasst."
-    />
-  );
+  return <Nothing title={t("costs.none.title")} description={t("costs.none.description")} />;
 }
 
 function LampsPart({ data, lamps }: { data: EquipmentData; lamps: Lamps }) {
@@ -85,10 +75,7 @@ function LampsPart({ data, lamps }: { data: EquipmentData; lamps: Lamps }) {
       <ZonesView view={data.zones} actions={lamps.actions} />
       <LampLightView view={data.light} actions={lamps.light} />
       {none ? (
-        <Nothing
-          title="Noch keine Lampe erfasst"
-          description="Erfasse eine Lampe mit „Equipment erfassen“; sie bekommt eine Lichtzone."
-        />
+        <Nothing title={t("lamps.none.title")} description={t("lamps.none.description")} />
       ) : null}
     </>
   );
@@ -97,11 +84,46 @@ function LampsPart({ data, lamps }: { data: EquipmentData; lamps: Lamps }) {
 function SensorsPart({ data, lamps }: { data: EquipmentData; lamps: Lamps }) {
   if (data.sensors.sensors.length > 0)
     return <SensorsView view={data.sensors} actions={lamps.sensors} />;
+  return <Nothing title={t("sensors.none.title")} description={t("sensors.none.description")} />;
+}
+
+/**
+ * The form of a new equipment wish as a layer of its own (US-EQU-08, issue 1154): saving closes it, so the keeper is back
+ * at the wishes, where the new one is listed.
+ */
+function NewWishLayer(props: { actions: Wishes["actions"] }) {
+  const { closeLayer } = useLayer(NEW_WISH_LAYER);
+  const { actions } = props;
   return (
-    <Nothing
-      title="Noch kein Sensor erfasst"
-      description="Erfasse einen Sensor mit „Equipment erfassen“ und ordne ihn dann einer Pflanze oder einem Standort zu."
-    />
+    <LayerSheet id={NEW_WISH_LAYER} title={t("layers.newWish")}>
+      <WishForm
+        busy={actions.busy}
+        onCreate={async (input) => {
+          const saved = await actions.onCreate(input);
+          if (saved) closeLayer();
+          return saved;
+        }}
+      />
+    </LayerSheet>
+  );
+}
+
+/** The wishes and, above them, the form of a new one (US-EQU-08, issue 1154). */
+function WishLayers(props: {
+  data: EquipmentData;
+  actions: Wishes["actions"];
+  outcome: ReactNode;
+}) {
+  return (
+    <>
+      <LayerSheet id={WISHES_LAYER} title={t("layers.wishes")}>
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          {props.outcome}
+          <WishesView wishes={props.data.wishes} actions={props.actions} />
+        </div>
+      </LayerSheet>
+      <NewWishLayer actions={props.actions} />
+    </>
   );
 }
 
@@ -123,40 +145,37 @@ export function EquipmentLayers(props: {
   const { data, lamps } = props;
   return (
     <>
-      <LayerSheet id={ITEMS_LAYER} title="Equipment">
+      <LayerSheet id={ITEMS_LAYER} title={t("layers.items")}>
         <div className="flex flex-col gap-3">
           {props.outcome}
           <Items data={data} lamps={lamps} />
         </div>
       </LayerSheet>
-      <LayerSheet id={COSTS_LAYER} title="Kosten">
+      <ItemLayer data={data} lamps={lamps} />
+      <LayerSheet id={COSTS_LAYER} title={t("layers.costs")}>
         <CostsPart data={data} />
       </LayerSheet>
-      <LayerSheet id={NEEDS_LAYER} title="Bedarf">
-        <div className="flex flex-col gap-4">
+      <LayerSheet id={NEEDS_LAYER} title={t("layers.needs")}>
+        {/* The needs page by the free height of the layer; the recommendations stay below them (issue 1154). */}
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
           <NeedsView needs={data.needs} />
           <RecommendationsView data={data} />
         </div>
       </LayerSheet>
-      <LayerSheet id={LAMPS_LAYER} title="Lampen und Zonen">
+      <LayerSheet id={LAMPS_LAYER} title={t("layers.lamps")}>
         <div className="flex flex-col gap-4">
           {props.outcome}
           <LampsPart data={data} lamps={lamps} />
         </div>
       </LayerSheet>
-      <LayerSheet id={SENSORS_LAYER} title="Sensoren">
+      <LayerSheet id={SENSORS_LAYER} title={t("layers.sensors")}>
         <div className="flex flex-col gap-3">
           {props.outcome}
           <SensorsPart data={data} lamps={lamps} />
         </div>
       </LayerSheet>
-      <LayerSheet id={WISHES_LAYER} title="Equipment-Wünsche">
-        <div className="flex flex-col gap-3">
-          {props.outcome}
-          <WishesView wishes={data.wishes} actions={props.wishes.actions} />
-        </div>
-      </LayerSheet>
-      <LayerSheet id={NEW_LAYER} title="Neues Equipment">
+      <WishLayers data={data} actions={props.wishes.actions} outcome={props.outcome} />
+      <LayerSheet id={NEW_LAYER} title={t("layers.new")}>
         <EquipmentForm
           prefill={props.prefill}
           zones={data.zones.zones}

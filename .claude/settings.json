@@ -23,9 +23,52 @@
       "Bash(gh pr diff:*)",
       "Bash(gh issue view:*)",
       "Bash(gh run view:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(git fetch origin)",
+      "Bash(git fetch -q origin)",
+      "Bash(git fetch origin *)",
+      "Bash(git fetch -q origin *)",
+      "Bash(npm view *)",
+      "Bash(npm ls *)",
+      "Bash(npm audit)",
+      "Bash(make commitlint MSG=*)",
+      "Bash(git ls-tree *)",
+      "Bash(gh project field-list *)",
+      "Bash(gh project item-list *)",
+      "Bash(gh project view *)",
+      "Bash(make ci-wait PR=*)",
+      "Bash(make auto-merge PR=*)",
+      "Bash(make board)",
+      "Bash(make status-check)",
+      "Bash(make layout)",
+      "Bash(make docs-check)",
+      "Bash(make reference-check)",
+      "Bash(make setup)",
+      "Bash(make db-up)",
+      "Bash(make migrate)",
+      "Bash(make worktree BRANCH=*)",
+      "Bash(docker rm -f -v pflanzendex-test-db-*)",
+      "Bash(make claim ISSUE=*)",
+      "Bash(make pr PR=*)",
+      "Bash(git push origin HEAD)",
+      "Bash(git push -q origin HEAD)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(sed -n:*)",
+      "Bash(make pr-state PR=*)",
+      "Bash(make issue-read ISSUE=*)",
+      "Bash(make pr-text PR=*)",
+      "Bash(make issue-comment ISSUE=*)",
+      "Bash(make run-jobs RUN=*)",
+      "Bash(make conflicts PR=*)",
+      "Bash(make test-files FILES=*)",
+      "Bash(make format-check FILES=*)",
+      "Bash(make board-item ISSUE=*)",
+      "Bash(make gate-plan FILES=*)"
     ],
     "deny": [
+      "Bash(sed -n -i:*)",
+      "Bash(rg --pre:*)",
       "Bash(gh pr merge:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
@@ -41,26 +84,68 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-edit", "timeout": 10 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-edit",
+            "timeout": 10
+          }
+        ]
       },
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-bash", "timeout": 10 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-bash",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-edit", "timeout": 30 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-edit",
+            "timeout": 30
+          }
+        ]
       },
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-bash", "timeout": 15 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-bash",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "implementer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" subagent-stop",
+            "timeout": 900
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" stop", "timeout": 15 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" stop",
+            "timeout": 15
+          }
+        ]
       }
     ]
   }

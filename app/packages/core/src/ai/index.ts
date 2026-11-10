@@ -53,7 +53,70 @@ export type { AiTask, TaskStatus, TaskStore, TaskTransition, TaskType } from "./
 export { taskPrompt } from "./tasks/prompt/prompt";
 export type { PromptTask } from "./tasks/prompt/prompt";
 export { TASK_INSTRUCTIONS, TASK_TITLES } from "./tasks/prompt/texts";
-export { aiDiscoverDecide, aiDiscoverSuggestions } from "./discover";
-export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./discover";
+export { aiDiscoverDecide, aiDiscoverSuggestions } from "./results/discover";
+export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./results/discover";
 export { aiCheckImageSource } from "./results/image-source";
+// Rule discovery (US-KI-13, FR-KI-17).
+export {
+  RULES_VERSION,
+  aiCheckSpeciesName,
+  aiDescribeRules,
+  checkSpeciesNameSchema,
+  describeRules,
+  describeRulesSchema,
+} from "./results/rules";
+export type {
+  NameVerdict,
+  RuleArea,
+  RuleOperation,
+  RulesDependencies,
+  RulesDescription,
+  RulesSource,
+} from "./results/rules";
 export type { ImageSourceCall, ImageSourceChecker } from "./results/image-source";
+// The catalog and the collection by name (US-KI-11, FR-KI-15, FR-KI-16).
+export {
+  aiGetSpecies,
+  aiSearchSpecies,
+  getSpeciesSchema,
+  resolveSpecies,
+  searchSpeciesSchema,
+} from "./reads/collection/catalog-reads";
+export type { ReadDependencies } from "./reads/collection/catalog-reads";
+export {
+  aiGetSpecimen,
+  aiListLightZones,
+  aiListLocations,
+  aiListMeasurements,
+  aiListSpecimens,
+  getSpecimenSchema,
+  listMeasurementsSchema,
+  listPlacesSchema,
+  listSpecimensSchema,
+  resolveSpecimen,
+} from "./reads/collection/collection-reads";
+// Every other area (US-KI-12) and the calls that are never released (FR-KI-10, FR-KI-22).
+export { aiAreaRead, aiNotReleased, areaSchema } from "./reads/areas/area-reads";
+export type { AreaReadDependencies } from "./reads/areas/area-reads";
+export { AREA_NAMES, AREA_READS, NOT_RELEASED_CALLS } from "./reads/areas/area-source";
+export type {
+  AreaName,
+  AreaQuery,
+  AreaRead,
+  AreaReadSource,
+  AppAreaReadSource,
+  NotReleasedCall,
+} from "./reads/areas/area-source";
+export { NAMING_LIMITS, normalizeName, resolveName } from "./reads/naming";
+export type { Named, Resolution } from "./reads/naming";
+export { PAGE_SIZE } from "./reads/types";
+export type {
+  CollectionReadSource,
+  LocationRow,
+  MeasurementsRead,
+  Page,
+  ReadCall,
+  SpeciesItem,
+  SpecimenItem,
+  ZoneRow,
+} from "./reads/types";

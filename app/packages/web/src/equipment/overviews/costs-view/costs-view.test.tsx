@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render as plainRender, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { EquipmentRow } from "@pflanzendex/core";
 import { CostsView } from "./costs-view";
@@ -10,18 +12,27 @@ const item = (type: string, priceEur: number | null) =>
 
 afterEach(cleanup);
 
+const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
+
 describe("US-EQU-09 cost view", () => {
   it("US-EQU-09 shows the sum per type and in total and for how many records the price is missing", () => {
     render(<CostsView items={[item("Lamp", 49.9), item("Lamp", null), item("Timer", 12.5)]} />);
     const section = screen.getByRole("region", { name: "Kosten" });
     expect(section.textContent).toContain("62,40 €");
-    expect(section.textContent).toContain("Summe über 2 von 3 Teilen Equipment");
+    expect(section.textContent).toContain("Summe über 2 von 3 Teilen");
     expect(section.textContent).toContain("Bei 1 Teil fehlt der Preis");
     const lamp = within(screen.getByRole("list", { name: "Kosten je Art" })).getAllByRole(
       "listitem",
     )[0] as HTMLElement;
     expect(lamp.textContent).toContain("49,90 €");
     expect(lamp.textContent).toContain("Preis bekannt bei 1 von 2");
+  });
+
+  it("US-EQU-09 · US-QS-15 · issue 1182 the types page by the free height of the layer", () => {
+    render(<CostsView items={[item("Lamp", 49.9), item("Timer", 12.5)]} />);
+    expect(screen.getByRole("list", { name: "Kosten je Art" }).hasAttribute("data-page-fit")).toBe(
+      true,
+    );
   });
 
   it("US-EQU-09 reads unknown instead of 0 when no price is known and names what is not estimated", () => {

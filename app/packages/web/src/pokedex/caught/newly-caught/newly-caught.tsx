@@ -1,9 +1,9 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { newlyCaught } from "@pflanzendex/core";
 import { useCallback, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button/button";
-import { errorText } from "@/lib/error-text";
-import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { errorText } from "@/shared/lib/error-text";
+import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { loadSeen, markSeen } from "../seen-api";
 
 const SEEN_KEY = ["pokedex", "seen"] as const;

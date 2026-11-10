@@ -1,6 +1,9 @@
-import type { ApprovalIssue, MergeOutcome, ReviewList } from "@pflanzendex/core";
+import type { ApprovalIssue, MergeOutcome, ReviewEntry, ReviewList } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { FIELDS } from "../shared/text";
+import table from "./review-page/review-page.de.json";
 
+const t = texts(table);
 const DAY = 86_400_000;
 
 /** Age of a proposal in whole days since its creation (derived, never stored). */
@@ -10,16 +13,36 @@ export function ageText(createdAt: string, now: number): string {
   return days === 1 ? "vor 1 Tag" : `vor ${days} Tagen`;
 }
 
-/** What the operator sees at the top: number and age of the open proposals (US-BES-10, weekly routine). */
+/** A case is an approved operator batch (`curated`), the other entries are open proposals (US-BES-10). */
+export function isBatch(entry: ReviewEntry): boolean {
+  return entry.reviewCase.status === "curated";
+}
+
+/**
+ * The short facts of a row that need attention: AI marking, missing fields, a name that is approved already, a possible
+ * duplicate (P-09, P-10). The name has its own flag; it is not a missing field.
+ */
+export function flagsOf(entry: ReviewEntry): string[] {
+  const missing = entry.issues.some((i) => i.reason !== "name_approved");
+  const name = entry.issues.some((i) => i.reason === "name_approved");
+  return [
+    ...(entry.aiCreated ? ["KI-erstellt"] : []),
+    ...(missing ? ["Angaben fehlen"] : []),
+    ...(name ? [t("flag.nameApproved")] : []),
+    ...(entry.similar.length > 0 ? ["Mögliche Dublette"] : []),
+  ];
+}
+
+/** What the operator sees above the open proposals: number and age (US-BES-10, weekly routine). Empty when none is open; the empty state says so instead. */
 export function summaryText(list: ReviewList, now: number): string {
-  if (list.open === 0 || !list.oldestOpenAt)
-    return "Keine offenen Vorschläge. Es ist nichts zu prüfen.";
+  if (list.open === 0 || !list.oldestOpenAt) return "";
   const count = list.open === 1 ? "1 offener Vorschlag" : `${list.open} offene Vorschläge`;
-  return `${count}, der älteste ${ageText(list.oldestOpenAt, now)}. Arbeite die Liste von oben nach unten ab.`;
+  return `${count}, der älteste ${ageText(list.oldestOpenAt, now)}. Tippe eine Art an, um sie zu prüfen.`;
 }
 
 /** Why the profile cannot be approved yet, in words a reviewer can act on. */
 export function issueText(issue: ApprovalIssue): string {
+  if (issue.reason === "name_approved") return t("issue.nameApproved");
   const name = FIELDS[issue.field] ?? issue.field;
   return issue.reason === "source_missing"
     ? "Quelle fehlt (Pflicht für Lichtbedarf und Ruhephase)"

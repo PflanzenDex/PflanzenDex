@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
-import { localToday } from "@pflanzendex/core";
 import {
   Form,
   FormControl,
@@ -11,9 +10,9 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { currentTimeZone, type ApiError } from "../../../../kernel";
+} from "@/shared/ui/fields/form/form";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import type { ApiError } from "../../../../shared/data";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {
@@ -24,13 +23,16 @@ import {
 import { correctCatchDate } from "../../../specimens/model/specimens-api";
 import { UNKNOWN, dateText } from "../../../specimens/model/text";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
+import { texts } from "@/shared/lib/text-rules/texts";
+import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useToday } from "../use-today";
+import table from "./catch-date-field.de.json";
+
+const tx = texts(table);
 
 /** True when the server refused the catch date itself (field `catchDate`). */
 export const refusesCatchDate = (error: ApiError | null): boolean =>
   error?.details?.some((d) => d.field === "catchDate") ?? false;
-
-/** The keeper's local today (profile time zone, NFR-08), the preset and upper limit of the field. */
-export const useToday = (): string => localToday(new Date(), currentTimeZone());
 
 /**
  * The catch date of the new specimen (FR-BES-04): preset to the keeper's local today, never later than today. An
@@ -46,11 +48,10 @@ export function CatchDateField(props: { control: Control<CreateFields>; today: s
         <FormItem>
           <FormLabel>Fangdatum</FormLabel>
           <FormControl>
-            <Input {...field} type="date" max={props.today} />
+            <DateField {...field} max={props.today} />
           </FormControl>
           <FormDescription>
-            Voreingestellt ist heute. Hast du die Pflanze schon länger, trage hier ein früheres
-            Datum ein; ein Datum in der Zukunft geht nicht.
+            Ist sie schon länger bei dir, trage ein früheres Datum ein; die Zukunft geht nicht.
           </FormDescription>
           <FormMessage />
         </FormItem>
@@ -66,9 +67,8 @@ export type CatchDateTarget = { id: string; name: string; caughtAt: string | nul
  * State and action for correcting the catch date (US-BES-11). After success the page reloads (`after`) and the message
  * names the specimen and the new date (P-09); a refusal stays in the form (P-10).
  */
-export function useCatchDate(api: string, token: Token, after: () => void) {
+export function useCatchDate(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<CatchDateTarget | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const send = useCallback(
     async (catchDate: string): Promise<ApiError | null> => {
@@ -77,17 +77,15 @@ export function useCatchDate(api: string, token: Token, after: () => void) {
       const r = await correctCatchDate(api, t, { id: open.id, catchDate });
       if (!r.ok) return r.error;
       const date = r.value.caughtAt ? dateText(r.value.caughtAt) : UNKNOWN;
-      setMessage(
-        `Das Fangdatum von „${open.name}“ ist jetzt der ${date}. Der Pokédex rechnet damit.`,
-      );
+      say(tx("corrected", { name: open.name, date }));
       setOpen(null);
       after();
       return null;
     },
-    [api, token, open, after],
+    [api, token, open, after, say],
   );
 
-  return { open, message, send, setOpen, setMessage };
+  return { open, send, setOpen };
 }
 
 const catchDateFields = (error: ApiError): "catchDate"[] =>
@@ -103,7 +101,7 @@ function CorrectedDateField(props: { control: Control<CatchDateFields>; today: s
         <FormItem>
           <FormLabel>Fangdatum</FormLabel>
           <FormControl>
-            <Input {...field} type="date" max={props.today} />
+            <DateField {...field} max={props.today} />
           </FormControl>
           <FormDescription>Heute oder ein früheres Datum; die Zukunft geht nicht.</FormDescription>
           <FormMessage />

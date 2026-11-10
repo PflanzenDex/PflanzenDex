@@ -27,6 +27,22 @@
 /* Dark mode follows the system, as today (ADR 0007 decision 6). */
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
+/*
+ * The tall window (US-QS-14, owner decision 2026-11-06): from about 30 rem of window height (starting value, assumption;
+ * `min-height` includes 30 rem itself) the app bar is sticky and the bottom bar fixed, and the one-screen frames keep the
+ * viewport height. Below it both bars are in the flow and scroll with the content: that is the base style of this file and
+ * of the classes. This is the one definition of the threshold: the sticky decision row (DS-25, #648) and the rules of this
+ * file use the variant.
+ */
+@custom-variant tall-window (@media (min-height: 30rem));
+
+/*
+ * Keyboard input (US-QS-15, DS-37, issue 1714): the page carries `data-input="keyboard"` after a key press and
+ * `"pointer"` after a click or tap (`RouteFocus`). A focus ring that only keyboard users need uses this variant, so a
+ * heading focused by script after a click shows no ring even where the browser would draw one.
+ */
+@custom-variant keyboard-input (:root[data-input="keyboard"] &);
+
 :root {
   --background: #fafafa;
   --foreground: #18181b;
@@ -45,7 +61,7 @@
   --destructive: #b3261e; /* invalid field border and error text */
   --destructive-foreground: #ffffff;
   --border: #e4e4e7; /* decorative lines of cards and dividers */
-  --input: #71717a; /* field boundary: 4.6:1 on background, 4.8:1 on card (WCAG 1.4.11); --border stays decorative */
+  --input: #71717a; /* field boundary and boundary of secondary buttons (US-QS-14): 4.6:1 on background, 4.8:1 on card (WCAG 1.4.11); --border stays decorative */
   --ring: #1b6b4a;
 
   /* Elevation (ADR 0011 decision 4) and motion (decision 5); radius, type scale and easing are in @theme below. */
@@ -223,6 +239,10 @@
   h3 {
     line-height: 1.25;
   }
+  /* A word wider than the window at 200 % text breaks at a syllable, not between random letters (issue 1315). */
+  h1 {
+    hyphens: auto;
+  }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -237,23 +257,90 @@
     -webkit-tap-highlight-color: color-mix(in oklab, var(--color-primary) 15%, transparent);
   }
   /*
+   * Focus after navigation (US-QS-15, NFR-13, owner decision 2026-10-30, #1034): a heading or the main region that the
+   * app focuses after a navigation draws no frame while the last input was not the keyboard (`data-input`, set by
+   * RouteFocus). Chromium draws its ring on such a focus after an earlier key press, even when the navigation was a
+   * click. The DS-37 gate allows this one selector to set outline: none, and no other (#1066).
+   */
+  :root:not([data-input="keyboard"]) :is(h1, main)[tabindex="-1"]:focus {
+    outline: none;
+  }
+  /*
    * One screen (US-QS-15, DS-61, US-QS-19): a view that holds an element with `data-fit-screen` makes the frame exactly
    * the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Done in CSS with
    * `:has` (never nested: a `:has` inside `:has` is invalid and drops the whole rule), so the app shell needs no code and no route list for it and the initial JavaScript stays within its budget (QG-U6).
    */
-  div:has(> div > main [data-fit-screen]) {
-    height: 100dvh;
-  }
+  /* In a window shorter than the tall window the frame grows with its content: the page scrolls (see the variant below). */
   div:has(> main [data-fit-screen]) {
     min-height: 0;
   }
-  /* A view that fills the height (`data-fit-fill`, e.g. the suggestion card) gets it through the wrapper of the route. */
   main > div:has(> [data-fit-fill]) {
-    height: 100%;
+    height: auto;
+  }
+  /*
+   * The filling view itself (issue 1113): its height is the free height, and at a larger text size whatever no longer
+   * fits scrolls inside it. An overflow past a fixed height never gets the bottom padding of `main`, so the last line
+   * ended under the bottom bar; scrolling inside the view keeps it above. The view reaches into the padding of `main`
+   * on every side by as much as it pads itself, so its content stays where it was and no shadow or focus ring at its
+   * edge is cut off (main pads 1 rem, 1.5 rem from `md`, 2.5 rem from `xl`).
+   */
+  main > div > [data-fit-fill] {
+    margin: -0.5rem -1rem;
+    padding: 0.5rem 1rem;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+  @media (width >= 48rem) {
+    main > div > [data-fit-fill] {
+      margin-inline: -1.5rem;
+      padding-inline: 1.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    main > div > [data-fit-fill] {
+      margin-inline: -2.5rem;
+      padding-inline: 2.5rem;
+    }
   }
   main:has([data-fit-screen]) {
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+  /*
+   * The bars and the room they reserve (US-QS-08, US-QS-14): AppShell writes the real heights of the sticky app bar and
+   * of the fixed bottom bar as variables, so a focused element stays clear of them (WCAG 2.4.11). The base style keeps
+   * no scroll padding for them, because the bars scroll with the content; the tall window applies the variables.
+   */
+  html {
+    scroll-padding-top: 0;
+    scroll-padding-bottom: 0;
+  }
+  /*
+   * The tall window (US-QS-14, from 30 rem of height): the bars are sticky and fixed as before, the scroll padding follows
+   * their real heights, and a one-screen view keeps the frame exactly the viewport, with `main` and the filling view
+   * scrolling inside themselves when their content cannot fit (400 % zoom and large text, DS-61). Below it nothing is
+   * pinned to the window height: the page scrolls and the bars follow the content in the flow.
+   */
+  @variant tall-window {
+    html {
+      scroll-padding-top: var(--header-clearance, 0px);
+      scroll-padding-bottom: var(--bar-clearance, 0px);
+    }
+    div:has(> div > main [data-fit-screen]) {
+      height: 100dvh;
+    }
+    main > div:has(> [data-fit-fill]) {
+      height: 100%;
+    }
+    main > div > [data-fit-fill] {
+      height: calc(100% + 1rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    main:has([data-fit-screen]) {
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
   }
 }
 
@@ -285,6 +372,17 @@
 }
 
 /*
+ * Sheet motion (US-QS-14, F13): Vaul injects its own stylesheet, which runs a sheet and its overlay for 500 ms. These
+ * selectors are more specific than Vaul's and unlayered, so the slow token wins without `!important`; reduced motion
+ * still ends them at once (the `*` rule above, and `--motion-slow` is 0 ms there).
+ */
+[data-vaul-drawer][data-state],
+[data-vaul-overlay][data-vaul-snap-points][data-state] {
+  animation-duration: var(--motion-slow);
+  transition-duration: var(--motion-slow);
+}
+
+/*
  * Route transition (US-QS-14, ADR 0011 decision 5): while a view change runs (the marker is set by the router for its
  * duration only), the main content cross-fades over `--motion-slow`; the app bar and navigation stay still. The page
  * snapshot does not animate, and the main group does not morph, so the content never stretches. Under reduced
@@ -298,10 +396,15 @@
 ::view-transition-group(page) {
   animation: none;
 }
+/*
+ * `animation: none` on the group also resets the fill mode that old and new inherit, so without `both` they snap back to
+ * their start for one frame before the transition ends: the old page flashed at full opacity (issue 1641).
+ */
 ::view-transition-old(page),
 ::view-transition-new(page) {
   animation-duration: var(--motion-slow);
   animation-timing-function: var(--ease-enter);
+  animation-fill-mode: both;
 }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
@@ -320,4 +423,23 @@
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
+}
+
+/*
+ * Print (US-BES-17): the pot labels are A4 sheets of 70 x 37 mm labels, three in a row, so the sheet has no margin of its
+ * own; each label sizes itself in mm. The sheet is the section marked `data-print-labels` (PrintRegion, portalled into
+ * body) and uses the named page `labels`, so only a label sheet is resized: printing any other page keeps its margins.
+ * While a sheet is on the page, the rest of the body is hidden in print, so only the labels reach the paper.
+ */
+@media print {
+  body:has(> [data-print-labels]) > :not([data-print-labels]) {
+    display: none;
+  }
+  [data-print-labels] {
+    page: labels;
+  }
+}
+@page labels {
+  size: A4;
+  margin: 0;
 }

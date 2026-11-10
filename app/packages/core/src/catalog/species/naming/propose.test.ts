@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { execute } from "../../../kernel";
 import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
-import { speciesHints, speciesLoad, speciesSearch, speciesPropose } from "../index";
+import {
+  speciesExisting,
+  speciesHints,
+  speciesLoad,
+  speciesSearch,
+  speciesPropose,
+} from "../index";
 import { InMemorySpecies } from "../test-helpers";
 
 let store: InMemorySpecies;
@@ -48,9 +54,23 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
       dormancyFrom: null,
       wateringHint: null,
     });
-    expect((await speciesSearch(store, "anna", "bogenhanf")).length).toBe(1);
-    expect(await speciesSearch(store, "ben", "bogenhanf")).toEqual([]);
+    expect((await speciesSearch(store, "anna", "bogenhanf")).species.length).toBe(1);
+    expect((await speciesSearch(store, "ben", "bogenhanf")).species).toEqual([]);
     expect(await speciesLoad(store, "ben", first())).toBeNull();
+  });
+
+  it("US-KI-11 the existing visible species is named before anything is proposed, by Latin name or synonym", async () => {
+    await propose(profile);
+    const id = first();
+    expect((await speciesExisting(store, "anna", profile))?.id).toBe(id);
+    const bySynonym = { ...profile, latinName: "Sansevieria trifasciata", synonyms: [] };
+    expect((await speciesExisting(store, "anna", bySynonym))?.id).toBe(id);
+    // Another account does not see the proposal, so for it nothing exists yet (P-04).
+    expect(await speciesExisting(store, "ben", profile)).toBeNull();
+    expect(
+      await speciesExisting(store, "anna", { ...profile, latinName: "Ficus carica", synonyms: [] }),
+    ).toBeNull();
+    expect(await speciesExisting(store, "anna", {})).toBeNull();
   });
 
   it("US-BES-01 P-08: Given no difficulty, level or lux need, when proposing, then they stay unknown (null), never a default (#1003)", async () => {
@@ -82,11 +102,29 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
     },
   );
 
-  it("US-LIC-01: Given the soft-leaf flag, when proposing, then it is kept; missing means false; a non-boolean is rejected", async () => {
+  it("US-LIC-01: Given the soft-leaf flag, when proposing, then it is kept; missing or null means unknown (P-08); a non-boolean is rejected", async () => {
     const soft = await propose({ ...profile, softLeaf: true });
     expect(soft.ok && soft.value.softLeaf).toBe(true);
-    const plain = await propose({ ...profile, latinName: "Aloe vera" });
-    expect(plain.ok && plain.value.softLeaf).toBe(false);
+    // Own names, no synonym of the first proposal: a duplicate would be refused and prove nothing about the flag.
+    const plain = await propose({ ...profile, latinName: "Aloe vera", synonyms: [] });
+    expect(plain.ok).toBe(true);
+    expect(plain.ok && plain.value.softLeaf).toBeNull();
+    const answered = await propose({
+      ...profile,
+      latinName: "Aloe arborescens",
+      synonyms: [],
+      softLeaf: false,
+    });
+    expect(answered.ok).toBe(true);
+    expect(answered.ok && answered.value.softLeaf).toBe(false);
+    const empty = await propose({
+      ...profile,
+      latinName: "Aloe mitriformis",
+      synonyms: [],
+      softLeaf: null,
+    });
+    expect(empty.ok).toBe(true);
+    expect(empty.ok && empty.value.softLeaf).toBeNull();
     const bad = await propose({ ...profile, latinName: "Aloe ferox", softLeaf: "yes" });
     expect(!bad.ok && bad.error.details?.map((d) => d.field)).toEqual(["softLeaf"]);
   });
@@ -179,9 +217,9 @@ describe("US-BES-01 search by Latin or German name and synonyms", () => {
   });
 
   it("finds the species via Latin name, German name and synonym and says which (Sansevieria -> Dracaena)", async () => {
-    const latin = await speciesSearch(store, "ben", "DRACAENA triFasciata");
-    const german = await speciesSearch(store, "ben", "Bogenhanf");
-    const synonym = await speciesSearch(store, "ben", "Sansevieria");
+    const latin = (await speciesSearch(store, "ben", "DRACAENA triFasciata")).species;
+    const german = (await speciesSearch(store, "ben", "Bogenhanf")).species;
+    const synonym = (await speciesSearch(store, "ben", "Sansevieria")).species;
     expect(latin[0]?.hit).toMatchObject({ field: "latin" });
     expect(german[0]?.hit).toMatchObject({ field: "german" });
     expect(synonym[0]).toMatchObject({
@@ -201,8 +239,8 @@ describe("US-BES-01 search by Latin or German name and synonyms", () => {
   });
 
   it("without hits: empty list; empty search lists all visible", async () => {
-    expect(await speciesSearch(store, "ben", "Zzyzx")).toEqual([]);
-    expect(await speciesSearch(store, "ben", "  ")).toHaveLength(1);
+    expect((await speciesSearch(store, "ben", "Zzyzx")).species).toEqual([]);
+    expect((await speciesSearch(store, "ben", "  ")).species).toHaveLength(1);
   });
 });
 
@@ -351,5 +389,35 @@ describe("US-POK-02 hybrid signs and additions do not belong in the catalog (US-
   it("does not mistake a species epithet starting with x for a hybrid sign", async () => {
     const r = await proposeEntry({ latinName: "Aloe xanthacantha" });
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("FR-BES-24 duplicate hint past the cap of the search (P-10)", () => {
+  // The target is genus only ("Zzcap"); fifty other names contain its name and sort before it in name order, so the
+  // capped search shows only those and the exact match is the 51st row.
+  const letters = (i: number) => String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26));
+  const plain = (latinName: string) => ({ ...profile, latinName, germanName: null, synonyms: [] });
+
+  it("FR-BES-24 an exact name beyond the 50th row is still named as the existing species", async () => {
+    store = new InMemorySpecies(50);
+    for (let i = 0; i < 50; i++) {
+      const r = await propose(plain(`Ca${letters(i)} zzcap`));
+      if (!r.ok) throw new Error(r.error.code);
+    }
+    const target = await propose(plain("Zzcap"));
+    if (!target.ok) throw new Error(target.error.code);
+    expect((await store.search("anna", "zzcap")).more).toBe(true);
+    expect((await speciesExisting(store, "anna", plain("Zzcap")))?.id).toBe(target.value.id);
+  });
+
+  it("FR-BES-24 an exact name beyond the cap is not named to another account (P-04)", async () => {
+    store = new InMemorySpecies(50);
+    for (let i = 0; i < 50; i++) {
+      const r = await propose(plain(`Ca${letters(i)} zzcap`));
+      if (!r.ok) throw new Error(r.error.code);
+    }
+    const target = await propose(plain("Zzcap"));
+    if (!target.ok) throw new Error(target.error.code);
+    expect(await speciesExisting(store, "ben", plain("Zzcap"))).toBeNull();
   });
 });

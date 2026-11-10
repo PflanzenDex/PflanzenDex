@@ -6,13 +6,14 @@
 // Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
 import {
   GLOBAL_REFERENCE_TABLES,
+  KERNEL_FOLDERS,
   KERNEL_GLOSSARY_WORDS,
   LEGACY_MIGRATIONS,
   LEGACY_TABLE_NAMES,
   PORTS_WITHOUT_CONTRACT_TEST,
 } from "./module-rules.config.mjs";
 
-const MODULE_RULES = { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
+const MODULE_RULES = { KERNEL_FOLDERS, KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
 const MODULES = [
   {
     name: "kernel",
@@ -50,6 +51,7 @@ const MODULES = [
       "account_unlock",
       "account_style",
       "account_hint",
+      "account_keeper_switch",
     ],
     dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
@@ -73,7 +75,7 @@ const MODULES = [
   {
     name: "collection",
     epics: ["BES"],
-    tables: ["specimen", "care_profile", "specimen_provenance"],
+    tables: ["specimen", "care_profile", "specimen_provenance", "repot", "repot_sign"],
     dependsOn: ["kernel", "catalog", "light"],
     ports: ["TargetLocationSource", "MeasurementSource", "TreatmentSource"],
   },
@@ -84,6 +86,7 @@ const MODULES = [
       "reminder",
       "reminder_setting",
       "watering_log",
+      "fertilizing_log",
       "sensor",
       "measurements",
       "delivery_channel",
@@ -94,7 +97,7 @@ const MODULES = [
   {
     name: "care",
     epics: ["PHA", "BEH", "WAC"],
-    tables: ["treatment", "measurement"],
+    tables: ["treatment", "measurement", "leaf"],
     dependsOn: ["kernel", "catalog", "light", "collection", "monitoring", "achievements"],
     ports: [],
   },
@@ -115,7 +118,8 @@ const MODULES = [
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting"],
+    // prettier-ignore
+    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting", "pot_placement"],
     dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },
@@ -162,13 +166,6 @@ const MODULES = [
     epics: [],
     tables: [],
     dependsOn: ["kernel", "light", "collection", "care", "wishlist", "monitoring", "equipment"],
-    ports: [],
-  },
-  {
-    name: "shell", // web app root, start page, onboarding (US-QG-07); nothing imports it except main and routes
-    epics: [],
-    tables: [],
-    dependsOn: ["kernel", "account", "collection", "light", "social", "wishlist", "care", "today"],
     ports: [],
   },
   {

@@ -1,6 +1,6 @@
 ---
 name: recap-and-learnings
-description: Use when a task, review or incident is finished and something went wrong, surprised you or took a detour. Extracts the lesson and puts it where it prevents the next occurrence: a gate if it can be checked, a skill if it needs judgment, otherwise the pitfalls register (D-03).
+description: Use when a task, review or incident is finished (merged, resolved, wrapped up) and something went wrong, surprised you or took a detour, such as red CI runs, rework or a repeated mistake. Extracts the lesson and puts it where it prevents the next occurrence: a gate if it can be checked, a skill if it needs judgment, otherwise the pitfalls register (D-03).
 ---
 
 # Recap and learnings
@@ -11,12 +11,13 @@ Goal: the same mistake does not happen twice, without growing prose nobody reads
 2. For each finding ask: what would have prevented it, and can a machine check that? Apply the promotion rule (D-03, `docs/specs/product/19-development-process-and-automation.md`):
    - Checkable -> build or extend a gate (lint rule, test, check script in `app/tools/check/`, CI step). Then the prose rule is deleted or replaced by a pointer to the gate.
    - Needs judgment, recurs in one kind of task -> add a step to the matching skill in `.agents/skills/`, or write a new skill (keep it short; the check script in `app/tools/check/docs/agents/check-skills.mjs` validates it).
-   - Recurring trap with a short explanation -> an entry in the pitfalls register (the spec names it Stolperfallen-Register; its folder is created by a separate change, so look in `Docs/` for it first and add the entry there; if it still does not exist, say so in the PR instead of creating a parallel place).
+   - Recurring trap with a short explanation -> an entry in the pitfalls register, `docs/guides/pitfalls/README.md` (format and examples there; the IDs `PF-<nnn>` are never renumbered).
    - One-off -> no entry. Not every incident is a rule.
 3. Write each entry as: symptom, cause, prevention, how to detect. Keep to five lines, in English.
 4. If the lesson changes a principle, requirement or decision, change the spec in `docs/specs/product/` in the same PR (IDs are never renumbered) instead of only noting it elsewhere.
 5. If a skill was followed and still led to the mistake, fix the skill, do not add a second one.
-6. Report back: findings, where each was recorded (gate, skill, pitfall, none) and why. Propose changes to the maintainer; do not weaken a gate to make a task pass.
+6. Put the result into the PR's "Lessons" section, one line per finding in the form `- <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)`, or the single word `none` when nothing was learnt. `make pr` checks the section (`app/tools/check/docs/agents/pr/pr-lessons.mjs`) and refuses it when it is missing, empty or malformed.
+7. Report back: findings, where each was recorded (gate, skill, pitfall, none) and why. Propose changes to the maintainer; do not weaken a gate to make a task pass.
 
 ## Check
 

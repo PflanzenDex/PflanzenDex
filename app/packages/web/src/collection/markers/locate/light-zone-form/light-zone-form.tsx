@@ -9,47 +9,50 @@ import {
   FormItem,
   FormLabel,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Select } from "@/components/ui/fields/select/select";
-import type { ApiError } from "../../../../kernel";
-import { loadCards } from "../../../specimens/cards/cards-api";
+} from "@/shared/ui/fields/form/form";
+import { Select } from "@/shared/ui/fields/select/select";
+import type { ApiError } from "../../../../shared/data";
+import { loadCard } from "../../../specimens/cards/cards-api";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
-import { refusalText } from "../../../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
 import { setLightZone } from "../../../specimens/model/specimens-api";
 import { zoneText } from "../../../specimens/model/text";
 import { zoneLabel } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
+import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import table from "./light-zone-form.de.json";
 
 type ZoneFields = { lightZoneId: string };
 
-const NEXT_FOR_UNKNOWN =
-  "Welche Zone gilt, ist unbekannt. Weise dem Standort eine Lichtzone zu oder setze die Zone der Pflanze selbst.";
+const tx = texts(table);
 
 /** What the keeper sees after clearing: which zone applies again, from the freshly loaded card (P-09, P-08). */
 async function derivedText(api: string, token: string, id: string, name: string): Promise<string> {
-  const head = `Die eigene Lichtzone von „${name}“ ist entfernt.`;
-  const r = await loadCards(api, token);
-  const card = r.ok ? r.value.find((c) => c.id === id) : undefined;
-  if (!card) return `${head} Welche Zone jetzt gilt, zeigt die Karte nach dem Neuladen.`;
-  if (!card.lightZone) return `${head} ${NEXT_FOR_UNKNOWN}`;
-  return `${head} Es gilt wieder die abgeleitete Zone: ${zoneText(card)}.`;
+  const head = tx("removedHead", { name });
+  // The card of the one specimen, read again after the write: the zone that applies now (US-LIC-02).
+  const r = await loadCard(api, token, id);
+  const card = r.ok ? r.value : undefined;
+  if (!card) return tx("removedReload", { head });
+  if (!card.lightZone) return tx("removedUnknown", { head, next: tx("unknownNext") });
+  return tx("removedDerived", { head, zone: zoneText(card) });
 }
 
 const setText = (card: SpecimenCard, zone: LightZone): string =>
-  `Die Lichtzone von „${card.name}“ ist jetzt „${zoneLabel(zone.name)}“ (von dir gesetzt). ` +
-  (card.status === "cutting"
-    ? "Als Steckling steht es weiter unter Stecklingslicht; die Zone gilt, sobald du es eintopfst."
-    : "Die Verteilung unter „Lichtzonen“ zählt die Pflanze dort mit.");
+  tx("set", {
+    name: card.name,
+    zone: zoneLabel(zone.name),
+    effect: tx(card.status === "cutting" ? "setCutting" : "setPlant"),
+  });
 
 /**
  * State and action for the own light zone of an existing specimen (US-LIC-02, US-BES-04). A zone is set or changed
  * with its ID; `null` clears it and the message names the zone that applies again (P-09). After success the page
  * reloads (`after`); a refusal stays in the form (P-10).
  */
-export function useLightZone(api: string, token: Token, after: () => void) {
+export function useLightZone(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<SpecimenCard | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const zones = useZones(api, token, !!open);
 
   const send = useCallback(
@@ -59,15 +62,15 @@ export function useLightZone(api: string, token: Token, after: () => void) {
       const r = await setLightZone(api, t, { id: open.id, lightZoneId });
       if (!r.ok) return r.error;
       const zone = zones.items.find((z) => z.id === lightZoneId);
-      setMessage(zone ? setText(open, zone) : await derivedText(api, t, open.id, open.name));
+      say(zone ? setText(open, zone) : await derivedText(api, t, open.id, open.name));
       setOpen(null);
       after();
       return null;
     },
-    [api, token, open, zones.items, after],
+    [api, token, open, zones.items, after, say],
   );
 
-  return { open, message, send, setOpen, setMessage, zones };
+  return { open, send, setOpen, zones };
 }
 
 /** The id of the own zone of the card (empty when the zone is derived). The card names the zone, not its id. */

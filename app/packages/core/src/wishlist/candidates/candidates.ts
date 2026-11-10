@@ -81,7 +81,7 @@ function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candid
     zone: zone ? { id: zone.zoneId, name: zone.name } : null,
     stock: zone ? zone.count : null,
     zoneText: zone
-      ? `${zoneLabel(zone.name)} — ${plants(zone.count)}`
+      ? `${zoneLabel(zone.name)} · ${plants(zone.count)}`
       : w.targetZoneId
         ? "Ziel-Zone liegt außerhalb der Zonen 2 bis 4"
         : "Ziel-Zone unbekannt",

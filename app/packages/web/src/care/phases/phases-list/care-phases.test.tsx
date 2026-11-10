@@ -2,6 +2,7 @@ import { renderToString as render } from "react-dom/server";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { PhasesList } from "./phases-list";
+import { Entry } from "./entry/entry";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
 
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -94,5 +95,22 @@ describe("US-PHA-04 next phase change in the list", () => {
     const h = show(null);
     expect(h).toContain("Nächster Phasenwechsel: keiner in diesem und im nächsten Jahr.");
     expect(h).toContain("Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.");
+  });
+});
+
+describe("US-QS-19 compact entry hints (P-10)", () => {
+  it("US-QS-19 two hints show the first and a visible count, the others stay reachable", () => {
+    const h = renderToString(
+      <Entry
+        bare
+        row={row({ nextChange: null })}
+        locations={locations}
+        busy={false}
+        onConfirm={undefined}
+      />,
+    );
+    expect(h).toContain("Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.");
+    expect(h).toContain("+1 weitere");
+    expect(h).toContain("Wähle im Pflegeprofil der Art einen Soll-Standort");
   });
 });

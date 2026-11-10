@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../kernel";
+import { createQueryClient } from "../../shared/data";
 import { CareRhythmSection } from "./care-rhythm";
 
 afterEach(() => {
@@ -23,7 +24,8 @@ const answer = (over: object = {}) => ({
   ...over,
 });
 
-function show(status: number, body: unknown) {
+/** The section with one of its layers open by its address: "Pflegerhythmus" (`rhythm`) or "Pause eintragen" (`pause`). */
+function show(status: number, body: unknown, at = "/?sheet=rhythm") {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
@@ -33,7 +35,9 @@ function show(status: number, body: unknown) {
   );
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <CareRhythmSection api="http://api" token={token} />
+      <MemoryRouter initialEntries={[at]}>
+        <CareRhythmSection api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -95,7 +99,9 @@ describe("US-ACH-04 explicit pause", () => {
     );
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <CareRhythmSection api="http://api" token={token} />
+        <MemoryRouter initialEntries={["/?sheet=pause"]}>
+          <CareRhythmSection api="http://api" token={token} />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
     return calls;
@@ -119,7 +125,7 @@ describe("US-ACH-04 explicit pause", () => {
         status: 201,
       });
     });
-    await screen.findByText(/Aktueller Rhythmus/);
+    await screen.findByLabelText("Von");
     fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-07-14" },
@@ -137,12 +143,24 @@ describe("US-ACH-04 explicit pause", () => {
           status: 422,
         }),
     );
-    await screen.findByText(/Aktueller Rhythmus/);
+    await screen.findByLabelText("Von");
     fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-09-01" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
+  });
+});
+
+describe("US-QS-15 the rhythm beside a pane (issue 1640)", () => {
+  it("US-QS-15 the twelve weeks take twelve columns from the width of their layer, not the window: six beside a pane", async () => {
+    show(200, answer());
+    const list = await screen.findByRole("list", { name: "Die letzten 12 Wochen" });
+    expect(list.parentElement?.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toEqual(
+      expect.arrayContaining(["grid-cols-6", "@md:grid-cols-12"]),
+    );
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
   });
 });

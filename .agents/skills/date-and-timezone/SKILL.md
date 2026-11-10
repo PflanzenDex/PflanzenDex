@@ -1,6 +1,6 @@
 ---
 name: date-and-timezone
-description: Use when code stores, compares, derives or shows a calendar date (Gefangen_Am, due dates, care phases, reminders, "today"). Keeps dates as local calendar dates in the user's timezone and never derives them from UTC (NFR-08, QG-D4, prototype bug B-01).
+description: Use when code stores, compares, derives or shows a calendar date: the caught date (Gefangen_Am), due dates, reminders, care phases, "today" or "yesterday" labels. Keeps dates as local calendar dates in the user's timezone and never derives them from UTC (NFR-08, QG-D4, prototype bug B-01).
 ---
 
 # Dates and timezones
@@ -16,6 +16,7 @@ Current state: there is no date helper in `app/packages/core` yet, no timezone f
 5. Tests, named with the story ID: the same instant near midnight gives different local dates for `Europe/Berlin` and `Pacific/Auckland`; a day with a daylight-saving switch (2026-03-29 in Berlin) counts one calendar day; the stored date does not change when read in another timezone.
 6. Show dates in the UI in the user's locale with the same timezone; mention "unbekannt" for a missing date, never a default (P-08).
 7. Once a second place needs a date, replace this step list's "add once" with a pointer to the helper and propose the lint rule from QG-D4 (D-03 promotion).
+8. Both sides of a month or day comparison use the same zone. The operator cost check on the server takes the month in UTC, while the seed uses the keeper's zone, so the two read different months in the last hours of a month: a seed made at 00:30 on the 1st in Berlin is still the last day of the month in UTC. Compute both sides in the keeper's zone and name that rule where the comparison is.
 
 ## Check
 

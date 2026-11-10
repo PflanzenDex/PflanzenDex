@@ -1,0 +1,36 @@
+[
+  {
+    "species": "Kalanchoe blossfeldiana",
+    "attributes": {
+      "minTemperature": {
+        "value": 10,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Kalanchoe_blossfeldiana&oldid=1349588062",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation: states a minimum temperature of 10 °C for the winter months in temperate locations."
+      }
+    }
+  },
+  {
+    "species": "Echeveria elegans",
+    "attributes": {}
+  },
+  {
+    "species": "Haworthiopsis attenuata",
+    "attributes": {}
+  },
+  {
+    "species": "Nephrolepis exaltata",
+    "attributes": {
+      "humidity": {
+        "value": "high",
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Nephrolepis_exaltata&oldid=1327215451",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation and uses: as a house plant it needs humid air and misting below about 80 % relative humidity."
+      }
+    }
+  }
+]

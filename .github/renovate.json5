@@ -24,6 +24,18 @@
   // Vulnerability fixes right away, without waiting time or grouping.
   osvVulnerabilityAlerts: true,
   vulnerabilityAlerts: { schedule: ["at any time"], minimumReleaseAge: null, labels: ["dependencies", "security"] },
+  // Images pinned by tag and digest in scripts and the Makefile (actionlint, test/restore postgres, deploy alpine):
+  // no built-in manager reads them, so this one does; tag and digest change together in one PR (#1425).
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/(^|/)Makefile$/", "/\\.sh$/"],
+      matchStrings: [
+        "(?<depName>[a-z0-9][a-z0-9./-]*):(?<currentValue>[0-9][^@\\s\"']*)@(?<currentDigest>sha256:[0-9a-f]{64})",
+      ],
+      datasourceTemplate: "docker",
+    },
+  ],
   packageRules: [
     // Runtime dependencies trigger a patch release (`fix(deps)`), tooling does not (`chore(deps)`, ADR 0002).
     { matchDepTypes: ["dependencies"], semanticCommitType: "fix" },
@@ -40,7 +52,11 @@
       automerge: true,
     },
     { matchManagers: ["github-actions"], groupName: "GitHub Actions", automerge: true },
-    { matchManagers: ["dockerfile", "docker-compose"], matchUpdateTypes: ["minor", "patch", "digest"], groupName: "container images" },
+    {
+      matchManagers: ["dockerfile", "docker-compose", "custom.regex"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      groupName: "container images",
+    },
     // Major versions never automatically (FR-QG-15): one PR each, labelled.
     { matchUpdateTypes: ["major"], automerge: false, addLabels: ["major"] },
     // 0.x packages: a minor can break, so treat it like a major.

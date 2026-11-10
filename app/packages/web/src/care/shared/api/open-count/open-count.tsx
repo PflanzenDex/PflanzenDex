@@ -1,5 +1,5 @@
 import { useCallback, type ReactNode } from "react";
-import { useRequest } from "../../../../kernel";
+import { useRequest } from "../../../../shared/data";
 import { loadOpenTreatments } from "../treatments-api";
 import { OPEN_KEY } from "../query-keys";
 

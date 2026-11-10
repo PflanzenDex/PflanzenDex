@@ -209,6 +209,21 @@ describe("US-SOZ-02 answer a request in the database", () => {
     }
   });
 
+  it("NFR-12 hasFriendsOrRequests follows the lists: the sender keeps a declined request, the receiver does not", async () => {
+    const [x, y, z] = await makeAccounts(3);
+    try {
+      expect(await friends.hasFriendsOrRequests(x as string)).toBe(false);
+      const id = await pair(x as string, y as string);
+      expect(await friends.hasFriendsOrRequests(x as string)).toBe(true);
+      expect(await friends.answer(x as string, id, false)).toBe("declined");
+      expect(await friends.hasFriendsOrRequests(x as string)).toBe(false);
+      expect(await friends.hasFriendsOrRequests(y as string)).toBe(true);
+      expect(await friends.hasFriendsOrRequests(z as string)).toBe(false);
+    } finally {
+      await admin.query("delete from account where id = any($1)", [[x, y, z]]);
+    }
+  });
+
   it("US-SOZ-02 the sender and a third account cannot answer: not found, nothing changes (P-04)", async () => {
     const [x, y, z] = await makeAccounts(3);
     try {

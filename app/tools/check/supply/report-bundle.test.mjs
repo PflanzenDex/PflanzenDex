@@ -1,4 +1,4 @@
-import { test, describe } from "node:test";
+import { test, describe, after } from "node:test";
 import assert from "node:assert/strict";
 import zlib from "node:zlib";
 import fs from "node:fs";
@@ -13,6 +13,17 @@ import {
   buildReport,
   renderMarkdown,
 } from "./report-bundle.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // Base64 VLQ for the fixtures: segments are [genCol, srcIdx, srcLine, srcCol] with relative values.
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -116,7 +127,7 @@ describe("QG-U6 · report: grouping per package", () => {
 
   test("QG-U6 · FR-QG-10 own code groups by workspace package and first directory", () => {
     assert.equal(g("../../src/wishlist/history/x.ts"), "web/wishlist");
-    assert.equal(g("../../src/main.tsx"), "web/(src root)");
+    assert.equal(g("../../src/vite-env.d.ts"), "web/(src root)");
     assert.equal(g("../../../core/src/pokedex/rank/x.ts"), "core/pokedex");
   });
 
@@ -172,10 +183,7 @@ describe("QG-U6 · report: summing", () => {
 describe("QG-U6 · report: whole dist and Markdown", () => {
   const code = (s) => s.repeat(200);
   function fixture() {
-    const dist = path.join(
-      fs.mkdtempSync(path.join(os.tmpdir(), "bundle-report-")),
-      "packages/web/dist",
-    );
+    const dist = path.join(tempDir("bundle-report-"), "packages/web/dist");
     fs.mkdirSync(path.join(dist, "assets"), { recursive: true });
     fs.writeFileSync(
       path.join(dist, "index.html"),
@@ -262,5 +270,71 @@ describe("QG-U6 · report: whole dist and Markdown", () => {
       { limit: 140000 },
     );
     assert.match(md, /5\.0 kB under the goal/);
+  });
+});
+
+describe("QG-U6 · report: chunks without sourcemaps", () => {
+  // The shape of a real build: the entry chunk and the runtime chunk that index.html preloads.
+  // `maps` names the files that get a .map file next to them.
+  function buildDist(maps) {
+    const dist = path.join(tempDir("bundle-report-"), "packages/web/dist");
+    fs.mkdirSync(path.join(dist, "assets"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dist, "index.html"),
+      '<script type="module" src="/assets/index.js"></script>\n' +
+        '<link rel="modulepreload" href="/assets/rolldown-runtime.js">',
+    );
+    const texts = {
+      "index.js": `${"abcde".repeat(200)}${"fghij".repeat(200)}`,
+      "rolldown-runtime.js": "klmno".repeat(200),
+    };
+    for (const [name, text] of Object.entries(texts)) {
+      fs.writeFileSync(path.join(dist, "assets", name), text);
+      if (maps[name])
+        fs.writeFileSync(
+          path.join(dist, "assets", `${name}.map`),
+          JSON.stringify({
+            sources: ["../../node_modules/react/i.js", "../../src/kernel/k.ts"],
+            mappings: mappingsOf([
+              [0, 0],
+              [text.length / 2, 1],
+            ]),
+          }),
+        );
+    }
+    return dist;
+  }
+  const gzipOf = (file) => zlib.gzipSync(fs.readFileSync(file), { level: 9 }).length;
+  const sumOf = (rows) => rows.reduce((s, r) => s + r.gzip, 0);
+
+  test("QG-U6 · FR-QG-10 a chunk without a sourcemap is counted under '(no sourcemap)', the chunk with one still gets packages", () => {
+    const dist = buildDist({ "index.js": true });
+    const report = buildReport(dist);
+    assert.equal(report.hasMaps, true);
+    const none = report.packages.find((p) => p.group === "(no sourcemap)");
+    assert.equal(none?.gzip, gzipOf(path.join(dist, "assets", "rolldown-runtime.js")));
+    assert.ok(report.packages.some((p) => p.group === "react"));
+    assert.match(renderMarkdown(report, { limit: 152000 }), /\| \(no sourcemap\) \|/);
+  });
+
+  test("QG-U6 · FR-QG-10 the packages add up to the gzip total of all initial chunks, no chunk lost or counted twice", () => {
+    const report = buildReport(buildDist({ "index.js": true }));
+    assert.equal(sumOf(report.packages), report.total);
+  });
+
+  test("QG-U6 · FR-QG-10 without any sourcemap the report keeps its behaviour: hasMaps false, no packages, the Markdown says so", () => {
+    const report = buildReport(buildDist({}));
+    assert.equal(report.hasMaps, false);
+    assert.deepEqual(report.packages, []);
+    assert.match(renderMarkdown(report, { limit: 152000 }), /no sourcemaps/i);
+  });
+
+  test("QG-U6 · FR-QG-10 with a sourcemap for every chunk the report has no '(no sourcemap)' row", () => {
+    const report = buildReport(buildDist({ "index.js": true, "rolldown-runtime.js": true }));
+    assert.equal(report.hasMaps, true);
+    assert.equal(
+      report.packages.some((p) => p.group === "(no sourcemap)"),
+      false,
+    );
   });
 });

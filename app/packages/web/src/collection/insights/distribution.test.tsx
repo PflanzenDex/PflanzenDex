@@ -18,6 +18,7 @@ const zone = (n: number): LightZone => ({
   sortOrder: n,
 });
 const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
+  lightNeedUnknown: [],
   zones: [
     { zone: zone(2), count: 3 },
     { zone: zone(3), count: 1 },
@@ -26,7 +27,7 @@ const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
   thinnest: [zone(3), zone(4)],
   notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
   hint: {
-    text: "Zone 3 und Zone 4 sind gleich dünn besetzt (je 1).",
+    text: "Zone 3 und Zone 4 sind gleich wenig besetzt (je 1).",
     nextAction: "Setze Arten für diese Zonen auf die Wunschliste.",
   },
   ...extra,
@@ -35,6 +36,26 @@ const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("US-LIC-01 the distribution names the species without lux need (P-08, P-09)", () => {
+  it("names the species whose lux need is unknown on the not-counted line, with the next step to its care profile", () => {
+    render(
+      <MemoryRouter>
+        <DistributionView
+          distribution={distribution({
+            lightNeedUnknown: [{ speciesId: "s9", speciesName: "Bogenhanf" }],
+            notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 1 },
+          })}
+        />
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" });
+    expect(link.getAttribute("href")).toBe("/discover/species/s9?sheet=care");
+    expect(screen.getByText(/Nicht mitgezählt: 1 mit unbekannter Zone/).textContent).toContain(
+      "Lichtbedarf eintragen",
+    );
+  });
 });
 
 describe("US-QS-14 the distribution inside the page card", () => {
@@ -79,13 +100,13 @@ describe("US-LIC-02 view of the distribution", () => {
       expect.stringContaining("Zone 3: 1 Pflanze"),
       expect.stringContaining("Zone 4: 1 Pflanze"),
     ]);
-    expect(rows[1]?.textContent).toContain("dünnste Zone");
-    expect(rows[0]?.textContent).not.toContain("dünnste Zone");
+    expect(rows[1]?.textContent).toContain("am leersten");
+    expect(rows[0]?.textContent).not.toContain("am leersten");
   });
 
   it("names the thinnest zone and the next action (P-09), with a tie with a hint to the wishlist", () => {
     render(<DistributionView distribution={distribution()} />);
-    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich wenig besetzt/)).toBeTruthy();
     expect(screen.getByText(/auf die Wunschliste/)).toBeTruthy();
   });
 
@@ -215,11 +236,11 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: /Dünnste Zone: Zone 3/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Am leersten: Zone 3/ }));
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();
-    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich wenig besetzt/)).toBeTruthy();
   });
 
   it('if the distribution fails, nothing is shown half: error text and "Erneut versuchen"', async () => {

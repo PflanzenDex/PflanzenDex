@@ -1,5 +1,5 @@
 import type { Distribution } from "@pflanzendex/core";
-import { call, type Response } from "../../../kernel";
+import { call, type Response } from "../../../shared/data";
 
 /** Loads the distribution of the own specimens over the light zones (US-LIC-02); derived, never stored. */
 export async function loadDistribution(

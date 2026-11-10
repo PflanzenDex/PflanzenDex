@@ -1,3 +1,5 @@
-// Public interface of input handling: field validation and the canonical form for fingerprints.
+// Public interface of input handling: field validation, its JSON Schema and the canonical form for fingerprints.
 export * from "./validation";
-export { canonical } from "./canonical";
+export { described, jsonSchemaOf, nullable } from "./json-schema";
+export type { JsonSchema } from "./json-schema";
+export { canonical, normalizeName } from "./canonical";

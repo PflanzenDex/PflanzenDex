@@ -50,4 +50,16 @@ describe("US-EQU-06 sensors and their place", () => {
       locationId: null,
     });
   });
+
+  it("US-QS-15 the cards take their columns from the width of the layer, not the window: a 350 px pane keeps one column (issue 1640)", () => {
+    const { container } = render(<SensorsView view={view()} actions={actions()} />);
+    const section = container.querySelector("section") as HTMLElement;
+    const list = container.querySelector("ul") as HTMLElement;
+    expect(section.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toEqual(
+      expect.arrayContaining(["@lg:grid-cols-2", "@3xl:grid-cols-3"]),
+    );
+    // A viewport breakpoint would split the card of a pane at 1024 px: no sm:, md:, lg: or xl: on the grid.
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
 });

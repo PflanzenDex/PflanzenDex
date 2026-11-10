@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWriteAction } from "../../../../kernel";
+import { useWriteAction } from "../../../../shared/data";
 import { useCandidateWrite } from "../../../actions/actions";
 import { useRepair } from "../../../hints/duplicate-wishes/duplicate-wishes";
 import { createWish, type WishInput } from "../../../wishlist-api";

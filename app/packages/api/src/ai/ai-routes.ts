@@ -3,6 +3,8 @@ import {
   aiConnections,
   aiRevoke,
   aiSetRights,
+  type AppAreaReadSource,
+  type CollectionReadSource,
   type DiscoverSource,
   type PhotoSource,
   type SourceClient,
@@ -39,8 +41,23 @@ export interface AiAccessOptions {
   readonly dailyLimit?: number;
   /** Replaces the PostgreSQL adapter (tests only). */
   readonly connections?: ConnectionStore;
+  /** Further browser origins the MCP endpoint accepts besides the interface's own (`AI_ALLOWED_ORIGINS`). */
+  readonly allowedOrigins?: readonly string[];
+  /** The app version the MCP endpoint reports as its server version. */
+  readonly version?: string | undefined;
   /** The feature switch (US-DEV-06): while "ai" is off for the account every route of the interface answers 404. */
   readonly features?: FeatureAccess;
+}
+
+/** The ports of the app the client routes read through. */
+export interface AiPorts {
+  status: StatusSource;
+  photo: PhotoSource;
+  discover: DiscoverSource;
+  collection: CollectionReadSource;
+  /** Every other area (US-KI-12), over the same functions as the app's routes. */
+  areas: AppAreaReadSource;
+  sources?: SourceClient;
 }
 
 /**
@@ -51,19 +68,15 @@ export interface AiAccessOptions {
  * and `POST /ai/connections/:id/allow-again` change them. Managing connections is never released to a connection itself
  * (FR-KI-10): the AI audience has no route here.
  *
- * Client side (AI token): `GET /mcp/session` tells a connected client its name and effective rights;
- * `/.well-known/oauth-protected-resource` (RFC 9728) points the client to the authorization server.
+ * Client side (AI token): `POST /mcp` is the MCP endpoint (JSON-RPC tools over the routes below); `GET /mcp/session`
+ * tells a connected client its name and effective rights; `/.well-known/oauth-protected-resource` (RFC 9728) points the
+ * client to the authorization server.
  */
 export function aiAccessRoutes(
   pool: Pool,
   auth: MiddlewareHandler<AuthEnv>,
   opt: AiAccessOptions | undefined,
-  ports: {
-    status: StatusSource;
-    photo: PhotoSource;
-    discover: DiscoverSource;
-    sources?: SourceClient;
-  },
+  ports: AiPorts,
 ): Hono<AuthEnv> {
   if (!opt) return new Hono<AuthEnv>();
   const connections = opt.connections ?? new ConnectionsPostgres(pool);
@@ -73,10 +86,10 @@ export function aiAccessRoutes(
   const routes = new Hono<AuthEnv>();
 
   for (const path of KEEPER_PATHS) {
-    routes.use(path, auth).use(`${path}/*`, auth);
+    routes.use(`${path}/*`, auth);
     if (opt.features) {
       const gate = featureGate(opt.features, "ai");
-      routes.use(path, gate).use(`${path}/*`, gate);
+      routes.use(`${path}/*`, gate);
     }
   }
   routes.get("/ai/connections", async (c) =>

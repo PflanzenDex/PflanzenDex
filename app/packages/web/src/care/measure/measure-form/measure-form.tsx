@@ -2,16 +2,19 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
 import { localToday, MEASUREMENT_LIMITS, MEDIA_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { Textarea } from "@/components/ui/fields/textarea/textarea";
-import { currentTimeZone, type ApiError } from "../../../kernel";
-import { Field } from "../../shared/field/field";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
+import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+import { currentTimeZone, type ApiError } from "../../../shared/data";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
+import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { RefusalAlert } from "../../shared/notices/notices";
+import { SaveFooter } from "./save-footer/save-footer";
 import type { MeasurementInput } from "../../shared/api/measurements-api";
 import {
   measurementDefaults,
@@ -20,6 +23,9 @@ import {
   type MeasurementFields,
 } from "../../shared/schemas";
 import { QUALITY_NAME } from "../../shared/text";
+
+/** The id of the measure form; the sticky footer submits it through the `form` attribute (US-WAC-01). */
+const FORM_ID = "measure-form";
 
 /**
  * "Wie erkennen?" at the quality choice (US-WAC-02): the etiolation signs of the species, collapsed so the form stays
@@ -47,10 +53,9 @@ function PhotoInput(props: {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>Foto (optional)</Label>
-      <Input
+      <FileField
         key={props.inputKey}
         id={id}
-        type="file"
         accept={MEDIA_LIMITS.uploadTypes.join(",")}
         aria-describedby="measure-photo-hint"
         onChange={(e) => props.onPick(e.target.files?.[0] ?? null)}
@@ -74,6 +79,8 @@ function Fields(props: {
   etiolationSigns: string | null;
   focusRef: React.MutableRefObject<HTMLInputElement | null> | undefined;
   photo: React.ReactNode;
+  /** A chosen or refused photo lives behind "Mehr Angaben" and opens it (P-10). */
+  photoOpen: boolean;
 }) {
   return (
     <>
@@ -96,7 +103,7 @@ function Fields(props: {
         )}
       </Field>
       <Field control={props.control} name="date" label="Datum">
-        {(field) => <Input {...field} type="date" max={props.today} />}
+        {(field) => <DateField {...field} max={props.today} />}
       </Field>
       <Field control={props.control} name="quality" label="Qualität">
         {(field) => (
@@ -110,20 +117,22 @@ function Fields(props: {
         )}
       </Field>
       <EtiolationSigns signs={props.etiolationSigns} />
-      <Field control={props.control} name="note" label="Notiz (optional)">
-        {(field) => <Textarea {...field} rows={2} maxLength={MEASUREMENT_LIMITS.note.max} />}
-      </Field>
-      {props.photo}
+      <FormMoreFields control={props.control} names={["note"]} forced={props.photoOpen}>
+        <Field control={props.control} name="note" label="Notiz (optional)">
+          {(field) => <Textarea {...field} rows={2} maxLength={MEASUREMENT_LIMITS.note.max} />}
+        </Field>
+        {props.photo}
+      </FormMoreFields>
     </>
   );
 }
 
 /**
  * Input of a measurement (US-WAC-01): number in steps of 0.5 cm, quality (preset healthy, US-WAC-02) with the
- * etiolation signs of the species behind "Wie erkennen?", optional note. The date is
- * today according to the local date of the device and can be changed (back-filling); the future is blocked. The optional
- * photo (US-WAC-05) is sent after the measurement is saved. An invalid input focuses the first invalid field; a
- * refusal of the server stays visible with the text of its code and keeps the input (P-10).
+ * etiolation signs of the species behind "Wie erkennen?", optional note. The date is today in the profile's time zone
+ * (the device's as fallback) and can be changed (back-filling); the future is blocked, an emptied date is refused by
+ * the schema. The optional photo (US-WAC-05) is sent after the measurement is saved. An invalid input focuses the
+ * first invalid field; a refusal of the server stays visible with the text of its code and keeps the input (P-10).
  */
 export function MeasureForm(props: {
   unit: string;
@@ -132,6 +141,8 @@ export function MeasureForm(props: {
   onSend: (input: MeasurementInput, photo?: File) => Promise<ApiError | null>;
   /** Receives the value field, so the empty course can move the focus to it. */
   focusRef?: React.MutableRefObject<HTMLInputElement | null>;
+  /** The status while the photo is stored (US-WAC-06); `null` shows nothing. */
+  photoStatus?: string | null;
 }) {
   const today = localToday(new Date(), currentTimeZone());
   const form = useForm<MeasurementFields>({
@@ -156,9 +167,10 @@ export function MeasureForm(props: {
   return (
     <Form {...form}>
       <FormRoot
+        id={FORM_ID}
         aria-label="Messung erfassen"
         onSubmit={submit}
-        className="flex max-w-xl flex-col gap-4"
+        className="flex max-w-xl flex-col gap-3"
       >
         <Fields
           control={form.control}
@@ -167,12 +179,17 @@ export function MeasureForm(props: {
           etiolationSigns={props.signs ?? null}
           focusRef={props.focusRef}
           photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
+          photoOpen={photo !== null || problem !== null}
         />
         {refusal && <RefusalAlert error={refusal} />}
-        <Button type="submit" size="touch" disabled={form.formState.isSubmitting}>
-          Messung speichern
-        </Button>
       </FormRoot>
+      <SaveFooter
+        formId={FORM_ID}
+        pending={form.formState.isSubmitting}
+        photoStatus={props.photoStatus ?? null}
+      >
+        Messung speichern
+      </SaveFooter>
     </Form>
   );
 }

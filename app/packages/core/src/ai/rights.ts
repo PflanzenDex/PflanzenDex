@@ -35,10 +35,12 @@ export type OperationClass = "read" | "draft" | "write" | "never";
  * not released. Later stories add their operations here; a test checks that the class matches the right.
  */
 export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
-  // Released (US-KI-02 adds `status`, US-KI-01 the reversible writes).
+  // Released (US-KI-02 adds `status`, US-KI-01 the reversible writes). `session` tells the client its own rights.
+  session: "read",
   status: "read",
   // Content results are drafts (KI-R3): the keeper adopts them in the app.
   propose_draft: "draft",
+  draft_types: "read",
   measurement_photo: "read",
   // Tasks from the app (US-KI-08): the client lists them, takes one over or declines it; the result is a draft.
   // Discover (US-ENT-08): the deck is read; "Yes"/"No" needs the right to draft, and runs at once only with "write".
@@ -48,17 +50,65 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   // Research (US-KI-05): the server checks an image address for reachability and license; the client cannot claim it.
   check_image_source: "read",
   list_tasks: "read",
+  // The catalog and the collection by name (US-KI-11): the same reads as the app's own views (KI-R10, FR-KI-14).
+  search_species: "read",
+  get_species: "read",
+  list_specimens: "read",
+  get_specimen: "read",
+  list_locations: "read",
+  list_light_zones: "read",
+  list_measurements: "read",
+  // Every other area (US-KI-12): the same reads as the app's views; equipment follows in its own slice.
+  list_care_phases: "read",
+  list_open_treatments: "read",
+  list_treatment_history: "read",
+  list_watering_due: "read",
+  list_reminders: "read",
+  get_reminder_settings: "read",
+  list_wish_candidates: "read",
+  list_bought_wishes: "read",
+  list_discarded_wishes: "read",
+  get_pokedex_ownership: "read",
+  list_pokedex_cards: "read",
+  get_achievements: "read",
+  get_growth_records: "read",
+  list_care_profiles: "read",
+  get_light_distribution: "read",
+  get_difficulty_comparison: "read",
+  list_collection_hints: "read",
+  list_catalog_gaps: "read",
+  list_my_corrections: "read",
+  list_unlocks: "read",
+  get_profile: "read",
+  list_ai_log: "read",
+  list_ai_drafts: "read",
+  // Rule discovery (US-KI-13): the rules a client respects before it writes, the same for every account.
+  describe_rules: "read",
+  check_species_name: "read",
   claim_task: "draft",
   decline_task: "draft",
   // Never released via connections (FR-KI-10): friends' data, sharing, swaps, account, connections, partners.
   friends_data: "never",
   sharing_settings: "never",
+  offers_and_swaps: "never",
   accept_swap: "never",
   hand_over: "never",
   delete_account: "never",
   export_account: "never",
   manage_connections: "never",
   partner_data: "never",
+  // Human-only functions (FR-KI-22): no connection reaches them; a call answers `ai.not_released` (NOT_RELEASED_CALLS).
+  profile_settings: "never",
+  push_subscriptions: "never",
+  calm_mode: "never",
+  onboarding_settings: "never",
+  keeper_switches: "never",
+  friend_visibility: "never",
+  review_functions: "never",
+  operator_functions: "never",
+  // The private notes of a specimen (US-BES-18, P-05) and the CSV import of plants (US-BES-18, owner decision 2026-11-06).
+  private_notes: "never",
+  csv_import: "never",
 };
 
 const NEEDED: Readonly<Record<Exclude<OperationClass, "never">, AiRights>> = {

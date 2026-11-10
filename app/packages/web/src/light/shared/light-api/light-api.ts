@@ -14,7 +14,7 @@ import {
   type Response as KernelResponse,
   type ApiError as KernelApiError,
   type Write as KernelWrite,
-} from "../../../kernel";
+} from "../../../shared/data";
 
 export type {
   Derivation,
@@ -39,43 +39,40 @@ export interface LightData {
   hints: readonly Hint[];
 }
 
-/** Loads zones, locations and hints; if one fails, loading fails as a whole (show nothing half-way). */
-export async function loadLight(
+/** The hints of the account for the light page; only that page reads them, so they have no shared copy. */
+export async function loadHints(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<Response<LightData>> {
-  const [z, s, h] = await Promise.all([
-    call<{ zones: LightZone[] }, ZoneUser>(fetchFn, `${api}/light-zones`, token),
-    call<{ locations: LightLocation[] }, ZoneUser>(fetchFn, `${api}/locations`, token),
-    call<{ hints: Hint[] }, ZoneUser>(fetchFn, `${api}/hints`, token),
-  ]);
-  if (!z.ok) return z;
-  if (!s.ok) return s;
-  if (!h.ok) return h;
-  return {
-    ok: true,
-    value: { zones: z.value.zones, locations: s.value.locations, hints: h.value.hints },
-  };
+): Promise<Response<readonly Hint[]>> {
+  const r = await call<{ hints: Hint[] }, ZoneUser>(fetchFn, `${api}/hints`, token);
+  return r.ok ? { ok: true, value: r.value.hints } : r;
 }
 
-/** Only the locations of the account, e.g. for selection in other modules (create specimen). */
+/**
+ * The locations of the account. Screens read them through the shared copy (`sharedLocations`, light-shared.ts); this
+ * is the one request behind it.
+ */
 export async function loadLocations(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<KernelResponse<readonly LightLocation[]>> {
-  const r = await call<{ locations: LightLocation[] }>(fetchFn, `${api}/locations`, token);
+): Promise<Response<readonly LightLocation[]>> {
+  const r = await call<{ locations: LightLocation[] }, ZoneUser>(
+    fetchFn,
+    `${api}/locations`,
+    token,
+  );
   return r.ok ? { ok: true, value: r.value.locations } : r;
 }
 
-/** Only the zones of the account, e.g. for selection in other modules (care profile). */
+/** The zones of the account; screens read them through the shared copy (`sharedZones`, light-shared.ts). */
 export async function loadZones(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<KernelResponse<readonly LightZone[]>> {
-  const r = await call<{ zones: LightZone[] }>(fetchFn, `${api}/light-zones`, token);
+): Promise<Response<readonly LightZone[]>> {
+  const r = await call<{ zones: LightZone[] }, ZoneUser>(fetchFn, `${api}/light-zones`, token);
   return r.ok ? { ok: true, value: r.value.zones } : r;
 }
 

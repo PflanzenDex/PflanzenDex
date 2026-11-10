@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../../kernel";
+import { createQueryClient } from "../../../shared/data";
 import { WateringList } from "./watering-list";
 
 const response = (status: number, body: unknown) =>
@@ -117,5 +117,37 @@ describe("US-MON-05 watering list", () => {
     await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Diese Pflanze gibt es nicht.");
     expect(screen.getByText("Ficus")).toBeTruthy();
+  });
+});
+
+describe("US-QS-14 issue 1697 · the watering list shows its shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow list shows one skeleton with its loading text, then its rows and no status", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        await gate;
+        return response(200, { due: [ficus] });
+      }),
+    );
+    const { container } = show();
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toContain("Gießliste wird geladen …");
+    // Three rows of blocks stand in for the rows, all decorative (DS-56).
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThanOrEqual(9);
+    release();
+    expect(await screen.findByText("Ficus")).toBeTruthy();
+    expect(screen.queryByText("Gießliste wird geladen …")).toBeNull();
+  });
+
+  it("US-QS-14 issue 1697 · a fast list shows no loading status at all", async () => {
+    fakeServer([ficus]);
+    show();
+    expect(await screen.findByText("Ficus")).toBeTruthy();
+    expect(screen.queryByText("Gießliste wird geladen …")).toBeNull();
   });
 });

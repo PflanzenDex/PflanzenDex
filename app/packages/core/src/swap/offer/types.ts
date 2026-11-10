@@ -1,5 +1,6 @@
+import type { SpeciesSource } from "../../collection";
 import type { SharingStore } from "../../social";
-import type { TreatmentStore } from "../../care";
+import type { CarePhase, TreatmentStore } from "../../care";
 
 export const OFFER_TYPES = ["cutting", "plant", "offshoot"] as const;
 export type OfferType = (typeof OFFER_TYPES)[number];
@@ -45,15 +46,23 @@ export interface OwnSpecimen {
 }
 export interface OwnSpecimens {
   find(userId: string, id: string): Promise<OwnSpecimen | null>;
+  /** `find` for many IDs in one step (NFR-12): one result per ID, same order, `null` where `find` gives `null`. */
+  findMany(userId: string, ids: readonly string[]): Promise<readonly (OwnSpecimen | null)[]>;
 }
 
-/** Port: the care phase of one specimen today, `null` = no phase (cutting, species without dormancy period). */
+/**
+ * Port: the care phase of the named specimens today (the same rows as the phase list). A specimen without a phase (cutting,
+ * species without dormancy period) is missing from the map, which means `null` (P-08). One call for all IDs (NFR-12).
+ * `species` is the owner's species read of the same request, when the caller shares one (NFR-12); without it the phases
+ * read the species themselves.
+ */
 export interface PhaseHints {
-  phaseOf(
+  phasesOf(
     userId: string,
-    specimenId: string,
+    specimenIds: readonly string[],
     timeZone: string,
-  ): Promise<"growth" | "dormancy" | null>;
+    species?: SpeciesSource,
+  ): Promise<ReadonlyMap<string, CarePhase>>;
 }
 
 /** What an offer needs from the neighbouring modules (ADR 0012: `swap` depends on `social`, `collection`, `care`). */
@@ -62,7 +71,7 @@ export interface OfferDependencies {
   readonly specimens: OwnSpecimens;
   /** The keeper's own sharing settings: an offer needs `Share = friends`. */
   readonly sharing: Pick<SharingStore, "list">;
-  readonly treatments: Pick<TreatmentStore, "open" | "done">;
+  readonly treatments: Pick<TreatmentStore, "openAndLastDone">;
   readonly phases: PhaseHints;
 }
 
@@ -77,4 +86,4 @@ export interface OfferHealth {
 
 /** A static notice on plant law (FR-SOZ-09): no block, no legal review, no list of species that could be wrong. */
 export const SPECIES_PROTECTION_NOTICE =
-  "Manche Arten sind geschützt (zum Beispiel viele Kakteen und Orchideen nach CITES). Prüfe vor dem Anbieten, ob für diese Art Handelsbeschränkungen gelten. Das ist ein Hinweis, keine Rechtsberatung; ein Versand über Landesgrenzen gehört nicht zu PflanzenDex.";
+  "Manche Arten sind geschützt (zum Beispiel viele Kakteen und Orchideen nach CITES). Prüfe vor dem Anbieten, ob für diese Art Handelsbeschränkungen gelten. Das ist ein Hinweis, keine Rechtsberatung; ein Versand über Landesgrenzen gehört nicht zu PflanzenDéx.";

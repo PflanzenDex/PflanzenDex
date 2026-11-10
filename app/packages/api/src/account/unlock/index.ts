@@ -1,1 +1,1 @@
-export { unlockRoutes } from "./unlock-routes";
+export { unlockListFor, unlockRoutes } from "./unlock-routes";

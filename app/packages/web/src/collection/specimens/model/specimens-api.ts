@@ -1,5 +1,5 @@
 import type { Specimen } from "@pflanzendex/core";
-import { createWrite, currentTimeZone, type Response } from "../../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -30,17 +30,25 @@ export async function createSpecimen(
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
 
-/** Repots a cutting (US-BES-04): the cutting becomes a plant. The key is created per call. */
+/**
+ * Repots a cutting (US-BES-04) or a plant (US-BES-19): the specimen becomes or stays a plant on the chosen local day
+ * `date` (`YYYY-MM-DD`, not after today in the profile's time zone). Without a date the server records today. A `potId`
+ * places the plant into that pot on the same day; without it the plant leaves its pot. The key is created per call.
+ */
 export async function repotSpecimen(
   api: string,
   token: string,
-  id: string,
+  input: { id: string; date?: string; potId?: string },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
   const r = await createWrite(api, token, fetchFn)(
     "POST",
-    `/specimens/${encodeURIComponent(id)}/repot`,
-    { timeZone: currentTimeZone() },
+    `/specimens/${encodeURIComponent(input.id)}/repot`,
+    {
+      timeZone: currentTimeZone(),
+      ...(input.date === undefined ? {} : { date: input.date }),
+      ...(input.potId === undefined ? {} : { potId: input.potId }),
+    },
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
@@ -112,4 +120,38 @@ export async function setLightZone(
     { lightZoneId: input.lightZoneId },
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}
+
+/** The private notes of a specimen as the keeper's own detail answers them (US-BES-18). */
+export type SpecimenNotes = { id: string; notes: string | null };
+
+/**
+ * Reads the private notes of one of the keeper's specimens from its own detail (`GET /specimens/:id`, US-BES-18); a
+ * foreign or unknown specimen answers 404 (P-04).
+ */
+export async function loadSpecimenNotes(
+  api: string,
+  token: string,
+  id: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<SpecimenNotes>> {
+  return call<SpecimenNotes>(fetchFn, `${api}/specimens/${encodeURIComponent(id)}`, token);
+}
+
+/**
+ * Sets the private notes of a specimen (US-BES-18, P-03); an empty text clears them. The text is sent as typed, the
+ * server trims it and checks the length. The repeat-guard key is created per call.
+ */
+export async function setSpecimenNotes(
+  api: string,
+  token: string,
+  input: { id: string; notes: string },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<SpecimenNotes>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/notes`,
+    { notes: input.notes },
+  );
+  return r.ok ? { ok: true, value: r.value as SpecimenNotes } : r;
 }

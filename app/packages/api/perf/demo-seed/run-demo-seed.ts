@@ -5,13 +5,18 @@ import {
   s3ConfigFromEnv,
 } from "../../src/media/index.ts";
 import { subjectsFromKeycloak } from "./access/subjects.ts";
-import { assertSeedAllowed, SeedRefused } from "./guard/guard.ts";
+import { assertSeedAllowed, SeedRefused } from "./access/guard.ts";
 import { seedAll } from "./accounts/seed-all.ts";
 import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
+import { seedTaxonFixture } from "../catalog-seed/taxon-fixture.ts";
+import { PROFILES, seedStates, type Profile } from "./states/profile.ts";
+import { seedGateAccount } from "./accounts/common/gate-account.ts";
 
 // Usage: PFLANZENDEX_ENV=local npm run seed:demo -w @pflanzendex/api
 // Fills the dev accounts test, test2 and test3 (#924). Local or test setups only; idempotent. See app.md "Demo seed".
+// `DEMO_SEED_PROFILE=states` adds the feature states of states/states-map.md after the base seed (US-DEV-01, #1072): worktree or test
+// databases only, never the shared dev database.
 const databaseUrl = process.env["DATABASE_URL"] ?? testDatabaseUrl();
 try {
   assertSeedAllowed(process.env, databaseUrl);
@@ -21,6 +26,13 @@ try {
     process.exit(1);
   }
   throw error;
+}
+const profile = (process.env["DEMO_SEED_PROFILE"] ?? "base") as Profile;
+if (!PROFILES.includes(profile)) {
+  console.error(
+    `Demo seed refused: unknown DEMO_SEED_PROFILE '${profile}'. Allowed: ${PROFILES.join(", ")}.`,
+  );
+  process.exit(1);
 }
 const pool = openPool(databaseUrl);
 try {
@@ -39,7 +51,14 @@ try {
     ...(media ? { media } : {}),
     log: console.log,
   });
-  console.log("Demo seed done: test, test2 and test3 (password testtest12).");
+  if (profile === "states") {
+    await seedStates(pool, { subjects, log: console.log });
+    // The Pokédex tree without foreign servers, so the card layers show content with TAXONOMY_BUILD=off (issue 1164).
+    console.log(`Pokédex tree fixture: ${await seedTaxonFixture(pool)}`);
+    // The display gates' account with more than 100 plants (issue 1378); its own account, the three above stay as they are.
+    await seedGateAccount(pool, { log: console.log });
+  }
+  console.log(`Demo seed done (${profile}): test, test2 and test3 (password testtest12).`);
 } finally {
   await pool.end();
 }

@@ -1,0 +1,1869 @@
+{
+  "pr1465": {
+    "source": "gh api repos/PflanzenDex/PflanzenDex: pulls/1465, commits/<head>/check-runs?filter=all, actions/runs?head_sha=<head>, pulls/1465/files; read 2026-11-06; definedJobs: keys under jobs: of .github/workflows/ci.yml at ac23ecf3",
+    "pull": {
+      "number": 1465,
+      "title": "chore(qs): the web modules share their refusal and text helpers (FR-QG-10)",
+      "html_url": "https://github.com/PflanzenDex/PflanzenDex/pull/1465",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-11-06T07:09:51Z",
+      "draft": false,
+      "mergeable": null,
+      "mergeable_state": "unknown",
+      "base": {
+        "ref": "dev"
+      },
+      "head": {
+        "sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744"
+      }
+    },
+    "files": [
+      "app/packages/web/src/account/invitation-page/invitation-page.tsx",
+      "app/packages/web/src/account/operator/operator-page/operator-page.tsx",
+      "app/packages/web/src/account/refusal.ts",
+      "app/packages/web/src/account/settings-page/groups/form-groups/form-groups.tsx",
+      "app/packages/web/src/account/settings-page/groups/switch-groups/switch-groups.tsx",
+      "app/packages/web/src/account/settings-page/keeper-style/style-parts/style-parts.tsx",
+      "app/packages/web/src/achievements/calm-mode/calm-mode.tsx",
+      "app/packages/web/src/app/flows/unlock/unlock-page/unlock-page.tsx",
+      "app/packages/web/src/care/measure/measure-form/measure-form.tsx",
+      "app/packages/web/src/care/measure/measurement-header/measurement-photo/measurement-photo.tsx",
+      "app/packages/web/src/care/shared/notices/notices.tsx",
+      "app/packages/web/src/care/treatments/treatment-form/treatment-form.tsx",
+      "app/packages/web/src/catalog/proposal/proposal-form/proposal-form.tsx",
+      "app/packages/web/src/catalog/review/review-page/review-page.tsx",
+      "app/packages/web/src/catalog/shared/refusal.ts",
+      "app/packages/web/src/catalog/shared/text.ts",
+      "app/packages/web/src/catalog/species-page/species-page.tsx",
+      "app/packages/web/src/collection/archived/archived-form/archived-form.tsx",
+      "app/packages/web/src/collection/care-profile/care-profile-list/care-profile-list.tsx",
+      "app/packages/web/src/collection/care-profile/sections/care-profile-fields/care-profile-fields.tsx",
+      "app/packages/web/src/collection/collection-page/collection-page.tsx",
+      "app/packages/web/src/collection/markers/locate/light-zone-form/light-zone-form.tsx",
+      "app/packages/web/src/collection/markers/marker/marker-fields/marker-fields.tsx",
+      "app/packages/web/src/collection/markers/marker/marker-form/marker-form.tsx",
+      "app/packages/web/src/collection/other-pages/hints-page/hints-page.tsx",
+      "app/packages/web/src/collection/specimens/cards/parts/parts.tsx",
+      "app/packages/web/src/collection/specimens/model/refusal.ts",
+      "app/packages/web/src/equipment/equipment-form/equipment-form.tsx",
+      "app/packages/web/src/equipment/equipment-form/fields/fields.tsx",
+      "app/packages/web/src/light/light-page/light-page.tsx",
+      "app/packages/web/src/light/shared/texts/index.ts",
+      "app/packages/web/src/light/shared/texts/refusal.ts",
+      "app/packages/web/src/light/shared/ui/form/form.tsx",
+      "app/packages/web/src/light/shared/ui/message/message.tsx",
+      "app/packages/web/src/light/views/light-view/light-layers/light-layers.tsx",
+      "app/packages/web/src/shared/lib/error-text.test.ts",
+      "app/packages/web/src/shared/lib/error-text.ts",
+      "app/packages/web/src/shared/patterns/elements/form-notices/form-notices.tsx",
+      "app/packages/web/src/shared/ui/fields/form/field/field.tsx",
+      "app/packages/web/src/shared/ui/fields/form/server-refusal.ts",
+      "app/packages/web/src/social/parts/code-form/code-form.tsx",
+      "app/packages/web/src/wishlist/wish-form/wish-form.tsx",
+      "docs/guides/reference/design-system.md"
+    ],
+    "checkRuns": [
+      {
+        "id": 127759998604,
+        "name": "analyze (javascript-typescript)",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:46Z",
+        "completed_at": "2026-11-06T06:59:23Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736089/job/127759998604",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127759998814,
+        "name": "layout",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:45Z",
+        "completed_at": "2026-11-06T06:57:59Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127759998814",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127759998988,
+        "name": "analyze (actions)",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:46Z",
+        "completed_at": "2026-11-06T06:58:34Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736089/job/127759998988",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127759999092,
+        "name": "changes",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:46Z",
+        "completed_at": "2026-11-06T06:57:53Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127759999092",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127759999141,
+        "name": "dependency-review",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:46Z",
+        "completed_at": "2026-11-06T06:57:55Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127759999141",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760000251,
+        "name": "metadata",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:57:43Z",
+        "completed_at": "2026-11-06T06:57:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760000251",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760000412,
+        "name": "reuse",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:57:43Z",
+        "completed_at": "2026-11-06T06:57:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760000412",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760000479,
+        "name": "e2e",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:57:43Z",
+        "completed_at": "2026-11-06T06:57:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760000479",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055611,
+        "name": "app-ui",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:56Z",
+        "completed_at": "2026-11-06T07:08:33Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055611",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055616,
+        "name": "app-tests",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:56Z",
+        "completed_at": "2026-11-06T07:01:29Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055616",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055628,
+        "name": "one-screen",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:56Z",
+        "completed_at": "2026-11-06T07:06:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055628",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055637,
+        "name": "ds-snapshots",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:56Z",
+        "completed_at": "2026-11-06T07:00:13Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055637",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055650,
+        "name": "app-gates",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:56Z",
+        "completed_at": "2026-11-06T07:01:07Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055650",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055651,
+        "name": "lighthouse",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:56Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055651",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055738,
+        "name": "app-tests-web",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:58:01Z",
+        "completed_at": "2026-11-06T07:02:01Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055738",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760055862,
+        "name": "a11y-routes",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:57:57Z",
+        "completed_at": "2026-11-06T07:05:51Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760055862",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760057131,
+        "name": "audit",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:57:54Z",
+        "completed_at": "2026-11-06T06:57:53Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127760057131",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760220882,
+        "name": "CodeQL",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:58:24Z",
+        "completed_at": "2026-11-06T06:58:26Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/runs/127760220882",
+        "app": {
+          "slug": "github-advanced-security"
+        }
+      },
+      {
+        "id": 127760482086,
+        "name": "dependency-review",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:59:15Z",
+        "completed_at": "2026-11-06T06:59:22Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760482086",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760482415,
+        "name": "changes",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:59:15Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760482415",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760482472,
+        "name": "layout",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:59:16Z",
+        "completed_at": "2026-11-06T06:59:29Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760482472",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760483570,
+        "name": "metadata",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:13Z",
+        "completed_at": "2026-11-06T06:59:13Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760483570",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760483575,
+        "name": "reuse",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:13Z",
+        "completed_at": "2026-11-06T06:59:13Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760483575",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760483716,
+        "name": "e2e",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:13Z",
+        "completed_at": "2026-11-06T06:59:13Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760483716",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760528474,
+        "name": "one-screen",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:21Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760528474",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760528516,
+        "name": "app-tests-web",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:21Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760528516",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760528755,
+        "name": "ds-snapshots",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:21Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760528755",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760528928,
+        "name": "app-gates",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:21Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760528928",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760529008,
+        "name": "a11y-routes",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:21Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760529008",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760529110,
+        "name": "lighthouse",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:21Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760529110",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760529313,
+        "name": "app-coverage",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:22Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760529313",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760529506,
+        "name": "app-ui",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:22Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760529506",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760529757,
+        "name": "app-tests",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:22Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760529757",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760529823,
+        "name": "audit",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T06:59:22Z",
+        "completed_at": "2026-11-06T06:59:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760529823",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127760573407,
+        "name": "ci-status",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T06:59:32Z",
+        "completed_at": "2026-11-06T06:59:36Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177885147/job/127760573407",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761246575,
+        "name": "metadata",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:01:28Z",
+        "completed_at": "2026-11-06T07:01:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761246575",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761246745,
+        "name": "dependency-review",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:01:28Z",
+        "completed_at": "2026-11-06T07:01:37Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761246745",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761246845,
+        "name": "reuse",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:01:28Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761246845",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761246877,
+        "name": "layout",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:01:28Z",
+        "completed_at": "2026-11-06T07:01:40Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761246877",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761246935,
+        "name": "changes",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:01:28Z",
+        "completed_at": "2026-11-06T07:01:34Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761246935",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761248404,
+        "name": "e2e",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:01:26Z",
+        "completed_at": "2026-11-06T07:01:25Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761248404",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761299961,
+        "name": "audit",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:01:34Z",
+        "completed_at": "2026-11-06T07:01:34Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127761299961",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127761449577,
+        "name": "app-coverage",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:02:03Z",
+        "completed_at": "2026-11-06T07:02:24Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127761449577",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763702657,
+        "name": "ci-status",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:08:36Z",
+        "completed_at": "2026-11-06T07:08:38Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42177736005/job/127763702657",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763808599,
+        "name": "ci-status",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:08:55Z",
+        "completed_at": "2026-11-06T07:08:58Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763808599",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809006,
+        "name": "app-gates",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809006",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809078,
+        "name": "one-screen",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809078",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809165,
+        "name": "ds-snapshots",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809165",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809360,
+        "name": "app-ui",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809360",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809450,
+        "name": "a11y-routes",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809450",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809610,
+        "name": "app-tests",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809610",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809700,
+        "name": "app-tests-web",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809700",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809843,
+        "name": "app-coverage",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809843",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127763809868,
+        "name": "lighthouse",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T07:08:52Z",
+        "completed_at": "2026-11-06T07:08:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42178133674/job/127763809868",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127764173376,
+        "name": "status",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T07:09:58Z",
+        "completed_at": "2026-11-06T07:10:27Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42179060454/job/127764173376",
+        "app": {
+          "slug": "github-actions"
+        }
+      }
+    ],
+    "workflowRuns": [
+      {
+        "id": 42177736005,
+        "name": "CI",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T06:57:42Z",
+        "updated_at": "2026-11-06T07:08:39Z",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744"
+      },
+      {
+        "id": 42177736089,
+        "name": "CodeQL",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T06:57:42Z",
+        "updated_at": "2026-11-06T06:59:23Z",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744"
+      },
+      {
+        "id": 42177885147,
+        "name": "CI",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T06:59:12Z",
+        "updated_at": "2026-11-06T06:59:36Z",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744"
+      },
+      {
+        "id": 42178133674,
+        "name": "CI",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T07:01:25Z",
+        "updated_at": "2026-11-06T07:08:59Z",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744"
+      },
+      {
+        "id": 42179060454,
+        "name": "Project status",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T07:09:54Z",
+        "updated_at": "2026-11-06T07:10:27Z",
+        "head_sha": "ac23ecf3baf2118548aae2a57cd2f6936c0d5744"
+      }
+    ],
+    "definedJobs": [
+      "changes",
+      "reuse",
+      "app-gates",
+      "app-tests",
+      "app-tests-web",
+      "app-coverage",
+      "app-ui",
+      "dependency-review",
+      "audit",
+      "lighthouse",
+      "e2e",
+      "one-screen",
+      "a11y-routes",
+      "metadata",
+      "layout",
+      "ds-snapshots",
+      "ci-status"
+    ]
+  },
+  "pr1476": {
+    "source": "gh api repos/PflanzenDex/PflanzenDex: pulls/1476, commits/<head>/check-runs?filter=all, actions/runs?head_sha=<head>, pulls/1476/files; read 2026-11-06; definedJobs: keys under jobs: of .github/workflows/ci.yml at 3f89472c",
+    "pull": {
+      "number": 1476,
+      "title": "chore(qg): remove the superseded page-title scaffold (US-DEV-03)",
+      "html_url": "https://github.com/PflanzenDex/PflanzenDex/pull/1476",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-11-06T08:18:16Z",
+      "draft": false,
+      "mergeable": null,
+      "mergeable_state": "unknown",
+      "base": {
+        "ref": "dev"
+      },
+      "head": {
+        "sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe"
+      }
+    },
+    "files": [
+      "app/packages/web/src/app/title.test.ts",
+      "app/packages/web/src/app/title.ts",
+      "docs/guides/reference/design-system.md"
+    ],
+    "checkRuns": [
+      {
+        "id": 127783344024,
+        "name": "analyze (javascript-typescript)",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:24Z",
+        "completed_at": "2026-11-06T08:06:30Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065531/job/127783344024",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783344534,
+        "name": "analyze (actions)",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:24Z",
+        "completed_at": "2026-11-06T08:05:02Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065531/job/127783344534",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783344840,
+        "name": "layout",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:24Z",
+        "completed_at": "2026-11-06T08:04:38Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783344840",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783345066,
+        "name": "dependency-review",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:24Z",
+        "completed_at": "2026-11-06T08:04:31Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783345066",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783345221,
+        "name": "changes",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:24Z",
+        "completed_at": "2026-11-06T08:04:31Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783345221",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783345939,
+        "name": "e2e",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:04:22Z",
+        "completed_at": "2026-11-06T08:04:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783345939",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783346463,
+        "name": "reuse",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:04:22Z",
+        "completed_at": "2026-11-06T08:04:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783346463",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783346658,
+        "name": "metadata",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:04:22Z",
+        "completed_at": "2026-11-06T08:04:21Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783346658",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403405,
+        "name": "app-gates",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:34Z",
+        "completed_at": "2026-11-06T08:06:20Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403405",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403459,
+        "name": "one-screen",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:34Z",
+        "completed_at": "2026-11-06T08:13:44Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403459",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403480,
+        "name": "lighthouse",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:34Z",
+        "completed_at": "2026-11-06T08:05:27Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403480",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403486,
+        "name": "a11y-routes",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:34Z",
+        "completed_at": "2026-11-06T08:14:36Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403486",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403496,
+        "name": "docs-gates",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:05:04Z",
+        "completed_at": "2026-11-06T08:05:39Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403496",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403501,
+        "name": "app-tests-web",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:43Z",
+        "completed_at": "2026-11-06T08:07:10Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403501",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403524,
+        "name": "app-tests",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:58Z",
+        "completed_at": "2026-11-06T08:07:36Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403524",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403554,
+        "name": "app-ui",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:05:05Z",
+        "completed_at": "2026-11-06T08:07:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403554",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783403555,
+        "name": "ds-snapshots",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:05:12Z",
+        "completed_at": "2026-11-06T08:07:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783403555",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783405036,
+        "name": "audit",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:04:32Z",
+        "completed_at": "2026-11-06T08:04:31Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127783405036",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783535740,
+        "name": "CodeQL",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:04:53Z",
+        "completed_at": "2026-11-06T08:04:56Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/runs/127783535740",
+        "app": {
+          "slug": "github-advanced-security"
+        }
+      },
+      {
+        "id": 127783996247,
+        "name": "layout",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:06:32Z",
+        "completed_at": "2026-11-06T08:06:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127783996247",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783996397,
+        "name": "changes",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:44Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127783996397",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783996483,
+        "name": "dependency-review",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:05Z",
+        "completed_at": "2026-11-06T08:06:49Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127783996483",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783997329,
+        "name": "reuse",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:06:05Z",
+        "completed_at": "2026-11-06T08:06:05Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127783997329",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127783997858,
+        "name": "e2e",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:06:05Z",
+        "completed_at": "2026-11-06T08:06:05Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127783997858",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784039932,
+        "name": "metadata",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:06:12Z",
+        "completed_at": "2026-11-06T08:06:05Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784039932",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784294567,
+        "name": "ci-status",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-11-06T08:07:39Z",
+        "completed_at": "2026-11-06T08:07:42Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784294567",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295065,
+        "name": "app-tests",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295065",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295114,
+        "name": "one-screen",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295114",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295206,
+        "name": "a11y-routes",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295206",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295305,
+        "name": "lighthouse",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295305",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295317,
+        "name": "app-gates",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295317",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295448,
+        "name": "app-ui",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295448",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295933,
+        "name": "docs-gates",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295933",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784295995,
+        "name": "app-tests-web",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:52Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784295995",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784296244,
+        "name": "audit",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:53Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784296244",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784296261,
+        "name": "app-coverage",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:53Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784296261",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784296373,
+        "name": "ds-snapshots",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-11-06T08:06:53Z",
+        "completed_at": "2026-11-06T08:06:52Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185269012/job/127784296373",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784573739,
+        "name": "app-coverage",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:07:53Z",
+        "completed_at": "2026-11-06T08:08:18Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127784573739",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784617862,
+        "name": "changes",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:07:56Z",
+        "completed_at": "2026-11-06T08:08:03Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784617862",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784618158,
+        "name": "metadata",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:08:47Z",
+        "completed_at": "2026-11-06T08:09:06Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784618158",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784618216,
+        "name": "dependency-review",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:07:54Z",
+        "completed_at": "2026-11-06T08:08:02Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784618216",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784618234,
+        "name": "reuse",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:08:05Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784618234",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784618290,
+        "name": "layout",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:08:33Z",
+        "completed_at": "2026-11-06T08:08:45Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784618290",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784619795,
+        "name": "e2e",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:07:43Z",
+        "completed_at": "2026-11-06T08:07:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784619795",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784747115,
+        "name": "docs-gates",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:08:56Z",
+        "completed_at": "2026-11-06T08:09:26Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784747115",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127784749172,
+        "name": "audit",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:08:03Z",
+        "completed_at": "2026-11-06T08:08:03Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127784749172",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787252356,
+        "name": "ci-status",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:14:39Z",
+        "completed_at": "2026-11-06T08:14:43Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185065502/job/127787252356",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787368822,
+        "name": "ci-status",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:14:57Z",
+        "completed_at": "2026-11-06T08:15:00Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787368822",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787369520,
+        "name": "lighthouse",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:54Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787369520",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787369968,
+        "name": "ds-snapshots",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787369968",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370003,
+        "name": "app-gates",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370003",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370011,
+        "name": "app-coverage",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370011",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370629,
+        "name": "one-screen",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370629",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370644,
+        "name": "app-ui",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370644",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370664,
+        "name": "a11y-routes",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370664",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370739,
+        "name": "app-tests",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370739",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127787370790,
+        "name": "app-tests-web",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-06T08:14:55Z",
+        "completed_at": "2026-11-06T08:14:54Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42185354551/job/127787370790",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127788697860,
+        "name": "status",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T08:18:23Z",
+        "completed_at": "2026-11-06T08:18:51Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42186714533/job/127788697860",
+        "app": {
+          "slug": "github-actions"
+        }
+      }
+    ],
+    "workflowRuns": [
+      {
+        "id": 42185065502,
+        "name": "CI",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T08:04:21Z",
+        "updated_at": "2026-11-06T08:14:44Z",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe"
+      },
+      {
+        "id": 42185065531,
+        "name": "CodeQL",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T08:04:21Z",
+        "updated_at": "2026-11-06T08:06:31Z",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe"
+      },
+      {
+        "id": 42185269012,
+        "name": "CI",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "created_at": "2026-11-06T08:06:04Z",
+        "updated_at": "2026-11-06T08:07:43Z",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe"
+      },
+      {
+        "id": 42185354551,
+        "name": "CI",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T08:06:48Z",
+        "updated_at": "2026-11-06T08:15:01Z",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe"
+      },
+      {
+        "id": 42186714533,
+        "name": "Project status",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-06T08:18:19Z",
+        "updated_at": "2026-11-06T08:18:52Z",
+        "head_sha": "3f89472cfb96da8676a80d87e76f7dd0c9b6dfbe"
+      }
+    ],
+    "definedJobs": [
+      "changes",
+      "reuse",
+      "app-gates",
+      "app-tests",
+      "app-tests-web",
+      "app-coverage",
+      "app-ui",
+      "dependency-review",
+      "audit",
+      "lighthouse",
+      "e2e",
+      "one-screen",
+      "a11y-routes",
+      "metadata",
+      "layout",
+      "docs-gates",
+      "ds-snapshots",
+      "ci-status"
+    ]
+  },
+  "pr1503earlier": {
+    "source": "gh api repos/PflanzenDex/PflanzenDex: commits/4316b1d2d82363881ad4708349b1ebe385defb9f/check-runs?filter=all (the earlier head of PR 1503, read 2026-11-06), and contents/.github/workflows/ci.yml at that head for definedJobs. Trimmed: the code-scanning checks (CodeQL failed with 2 high alerts, analyze passed), the latest run of each job that ci.yml requires of a PR without app files, and the two ci-status runs; the other check runs of that head are left out. files is empty because the test is about the code-scanning checks, and with no files only the jobs every PR runs are required.",
+    "pull": {
+      "number": 1503,
+      "title": "chore(dev): make claim is quicker and undoes itself, make worktree is ready to commit (US-DEV-08)",
+      "html_url": "https://github.com/PflanzenDex/PflanzenDex/pull/1503",
+      "state": "open",
+      "merged": false,
+      "merged_at": null,
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "base": {
+        "ref": "dev"
+      },
+      "head": {
+        "sha": "4316b1d2d82363881ad4708349b1ebe385defb9f"
+      }
+    },
+    "files": [],
+    "checkRuns": [
+      {
+        "id": 127847930786,
+        "name": "CodeQL",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-11-06T10:41:31Z",
+        "completed_at": "2026-11-06T10:41:33Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/runs/127847930786",
+        "app": {
+          "slug": "github-advanced-security"
+        }
+      },
+      {
+        "id": 127847612109,
+        "name": "analyze (actions)",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:40:54Z",
+        "completed_at": "2026-11-06T10:41:40Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204494706/job/127847612109",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127847611479,
+        "name": "analyze (javascript-typescript)",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:40:52Z",
+        "completed_at": "2026-11-06T10:42:35Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204494706/job/127847611479",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467255,
+        "name": "changes",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:51Z",
+        "completed_at": "2026-11-06T10:42:58Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467255",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467491,
+        "name": "layout",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:51Z",
+        "completed_at": "2026-11-06T10:43:04Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467491",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467384,
+        "name": "dependency-review",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:51Z",
+        "completed_at": "2026-11-06T10:42:58Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467384",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127848467142,
+        "name": "metadata",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:42:50Z",
+        "completed_at": "2026-11-06T10:43:10Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127848467142",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127852051865,
+        "name": "ci-status",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-06T10:51:33Z",
+        "completed_at": "2026-11-06T10:51:36Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204715332/job/127852051865",
+        "app": {
+          "slug": "github-actions"
+        }
+      },
+      {
+        "id": 127850514043,
+        "name": "ci-status",
+        "head_sha": "4316b1d2d82363881ad4708349b1ebe385defb9f",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-11-06T10:47:42Z",
+        "completed_at": "2026-11-06T10:47:46Z",
+        "details_url": "https://github.com/PflanzenDex/PflanzenDex/actions/runs/42204494733/job/127850514043",
+        "app": {
+          "slug": "github-actions"
+        }
+      }
+    ],
+    "workflowRuns": [],
+    "definedJobs": [
+      "a11y-routes",
+      "app-coverage",
+      "app-gates",
+      "app-tests",
+      "app-tests-web",
+      "app-ui",
+      "audit",
+      "changes",
+      "ci-status",
+      "dependency-review",
+      "docs-gates",
+      "ds-snapshots",
+      "e2e",
+      "layout",
+      "lighthouse",
+      "metadata",
+      "one-screen",
+      "reuse"
+    ]
+  }
+}

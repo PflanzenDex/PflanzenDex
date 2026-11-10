@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys, type KeyShape } from "../../exact-keys-test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -233,5 +234,63 @@ describe("US-SOZ-03 end a friendship through the API", () => {
     });
     expect((await call(subF, "GET", "/friends")).body["friends"]).toEqual([]);
     expect((await call(subG, "GET", "/friends")).body["friends"]).toEqual([]);
+  });
+});
+
+// US-QG-05 QG-D2: the friend list and the requests carry the whitelisted fields only (US-SOZ-01 to US-SOZ-03).
+const REQUEST: KeyShape = { id: true, otherName: true, direction: true, status: true };
+const FRIEND: KeyShape = { id: true, name: true, since: true, sharedSpecies: true };
+describe("US-QG-05 QG-D2 the friend routes carry only the whitelisted fields", () => {
+  const [subH, subI, subJ] = [0, 1, 2].map(() => `soz2-${randomUUID()}`) as [
+    string,
+    string,
+    string,
+  ];
+  NAMES[subH] = "Hanna";
+  NAMES[subI] = "Ivo";
+  NAMES[subJ] = "Jana";
+
+  it("US-QG-05 QG-D2 open requests on both sides, the friend list and a declined request carry only the whitelisted fields", async () => {
+    for (const sub of [subH, subI, subJ]) await call(sub, "GET", "/account");
+    // Ivo asks Hanna (incoming for Hanna), and Hanna asks Jana (outgoing for Hanna): both lists are filled.
+    const toHanna = await invite(subH);
+    const sent = await redeem(subI, toHanna.code);
+    expect(sent.status).toBe(201);
+    expectExactKeys(sent.body, REQUEST, "POST /friends/requests");
+    const toJana = await invite(subJ);
+    expect((await redeem(subH, toJana.code)).status).toBe(201);
+    const open = await requests(subH);
+    expect(open.incoming).toEqual([
+      expect.objectContaining({ otherName: "Ivo", direction: "received" }),
+    ]);
+    expect(open.outgoing).toEqual([
+      expect.objectContaining({ otherName: "Jana", direction: "sent", status: "requested" }),
+    ]);
+    expectExactKeys(open, { incoming: [REQUEST], outgoing: [REQUEST] }, "GET /friends/requests");
+
+    // Hanna accepts Ivo: the friend list carries the name, the since date and the shared count, nothing else.
+    await call(subH, "POST", `/friends/requests/${open.incoming[0].id}/answer`, {
+      decision: "accept",
+    });
+    const list = (await call(subH, "GET", "/friends")).body;
+    expectExactKeys(list, { friends: [FRIEND] }, "GET /friends");
+
+    // Jana declines Hanna: Hanna sees "not accepted" without a time (US-SOZ-02); Jana's incoming list is filled first.
+    const janaSees = await requests(subJ);
+    expectExactKeys(
+      { incoming: janaSees.incoming },
+      { incoming: [REQUEST] },
+      "GET /friends/requests",
+    );
+    await call(subJ, "POST", `/friends/requests/${janaSees.incoming[0].id}/answer`, {
+      decision: "decline",
+    });
+    const declined = await requests(subH);
+    expect(declined.outgoing).toEqual([expect.objectContaining({ status: "declined" })]);
+    expectExactKeys(
+      { outgoing: declined.outgoing },
+      { outgoing: [REQUEST] },
+      "GET /friends/requests",
+    );
   });
 });

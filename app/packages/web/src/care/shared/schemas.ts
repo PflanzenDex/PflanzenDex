@@ -5,13 +5,18 @@ import {
   TREATMENT_LIMITS,
 } from "@pflanzendex/core";
 import { z } from "zod";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { MeasurementInput } from "./api/measurements-api";
 import type { TreatmentInput } from "./api/treatments-api";
+import table from "./shared.de.json";
+
+const ui = texts(table);
 
 /**
  * The form to record a measurement (US-WAC-01, DS-47): fast feedback per field in German, so a typo does not occupy
- * the server first. The server operation validates again (P-03). The date stays a `YYYY-MM-DD` string; an empty one
- * means today on the server.
+ * the server first. The server operation validates again (P-03). The date stays a `YYYY-MM-DD` string. An emptied
+ * date (or a typed one that is no real day, which the date field turns into "") is refused here (P-10): the server
+ * would otherwise take a missing date for today without a word.
  */
 const NUMBER = /^\d+[.,]?\d*$/;
 const NUMBER_ERROR = "Bitte gib eine Zahl ab 0 an, zum Beispiel 12,5.";
@@ -26,19 +31,19 @@ export const measurementSchema = z.object({
     if (value > MEASUREMENT_LIMITS.value.max) return issue(NUMBER_ERROR);
     if (!Number.isInteger(value / MEASUREMENT_LIMITS.step)) issue(STEP_ERROR);
   }),
-  date: z.string(),
+  date: z.string().min(1, ui("dateMissing")),
   quality: z.enum(QUALITIES, { error: "Bitte wähle die Qualität: gesund oder vergeilt/dünn." }),
   note: z.string(),
 });
 export type MeasurementFields = z.infer<typeof measurementSchema>;
 
-/** The input to send; the fields passed the schema, so the number is valid. */
+/** The input to send; the fields passed the schema, so the number and the date are valid. */
 export function toMeasurementInput(f: MeasurementFields): MeasurementInput {
   const note = f.note.trim();
   return {
     value: Number(f.value.trim().replace(",", ".")),
     quality: f.quality,
-    ...(f.date ? { date: f.date } : {}),
+    date: f.date,
     ...(note ? { note } : {}),
   };
 }

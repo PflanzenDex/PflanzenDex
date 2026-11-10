@@ -29,6 +29,16 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };
 
+const UNIQUE = "23505";
+
+/** Which unique rule a failed write violated: the name per account or the marker per species (US-BES-03). */
+export function takenBy(e: unknown): "name_taken" | "marker_taken" | null {
+  if (pgError(e).code !== UNIQUE) return null;
+  const constraint = pgError(e).constraint;
+  if (constraint === "specimen_name_per_account") return "name_taken";
+  return constraint === "specimen_marker_per_species" ? "marker_taken" : null;
+}
+
 export class SpeciesGone extends Error {}
 
 /**
@@ -79,7 +89,15 @@ export interface NewSpecimen {
   readonly lightZoneId?: string | null;
   readonly caughtAt: string | null;
   readonly status?: "plant" | "cutting";
+  /** Private notes (US-BES-18); the swap handover passes none, so a note never moves to the recipient. */
+  readonly notes?: string | null;
 }
+
+/** What `specimen.create` writes for a new specimen (US-BES-02, US-BES-18): the same fields as `NewSpecimen`. */
+export type SpecimenValues = Pick<
+  NewSpecimen,
+  "speciesId" | "name" | "marker" | "locationId" | "caughtAt" | "status" | "lightZoneId" | "notes"
+>;
 
 /**
  * Creates a specimen inside the open transaction of `c`, as the account the connection is set to (ADR 0012: the
@@ -102,8 +120,8 @@ export async function createSpecimenOn(
     if (!done.rowCount) throw new UnknownSpecimen();
   }
   const r = await c.query<SpecimenRow>(
-    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id)
-     values ($1, $2, $3, $4, $5, $6, $7, $8) returning ${COLUMNS}`,
+    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id, notes)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning ${COLUMNS}`,
     [
       userId,
       w.speciesId,
@@ -113,6 +131,7 @@ export async function createSpecimenOn(
       w.caughtAt,
       w.status ?? "plant",
       w.lightZoneId ?? null,
+      w.notes ?? null,
     ],
   );
   await ensureSpeciesVisible(c, w.speciesId);
@@ -147,4 +166,17 @@ export async function listSpecimensOn(c: PoolClient): Promise<readonly SpecimenR
 export async function findSpecimenOn(c: PoolClient, id: string): Promise<SpecimenRow | null> {
   const r = await c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = $1`, [id]);
   return r.rows[0] ?? null;
+}
+
+/** The status of each of the given specimens of the account the connection is set to; unknown or foreign ones are absent. */
+export async function specimenStatusesOn(
+  c: PoolClient,
+  ids: readonly string[],
+): Promise<ReadonlyMap<string, string>> {
+  if (ids.length === 0) return new Map();
+  const r = await c.query<{ id: string; status: string }>(
+    `select id, status from specimen where id = any($1::uuid[])`,
+    [ids],
+  );
+  return new Map(r.rows.map((z) => [z.id, z.status] as const));
 }

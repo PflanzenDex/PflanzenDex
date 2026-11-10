@@ -1,9 +1,10 @@
+import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 
 /** One group of the settings (US-QS-17): its name, its current value and the layer it opens (`?sheet=<id>`). */
-export function SettingsRow(props: { id: string; title: string; value: string }) {
+export function SettingsRow(props: { id: string; title: string; value: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
   return (
     <Button
@@ -12,11 +13,15 @@ export function SettingsRow(props: { id: string; title: string; value: string })
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="h-auto min-h-12 w-full justify-start gap-3 whitespace-normal px-3 py-2 text-left text-[15px] font-normal"
+      className="h-auto min-h-12 w-full justify-start gap-3 whitespace-normal px-3 py-2 text-left text-base font-normal"
     >
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold">{props.title}</span>
-        <span className="block truncate text-sm text-muted-foreground">{props.value}</span>
+        <span className="block font-semibold hyphens-auto [overflow-wrap:anywhere]">
+          {props.title}
+        </span>
+        <span className="block text-sm text-muted-foreground hyphens-auto [overflow-wrap:anywhere]">
+          {props.value}
+        </span>
       </span>
       <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
     </Button>

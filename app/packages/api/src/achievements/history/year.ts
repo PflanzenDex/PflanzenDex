@@ -1,4 +1,10 @@
-import { appError, evaluateAchievements, localToday, yearInReview } from "@pflanzendex/core";
+import {
+  appError,
+  evaluateAchievements,
+  localToday,
+  measurementPhotoPath,
+  yearInReview,
+} from "@pflanzendex/core";
 import { errorBody, type Ctx } from "../../kernel";
 import { readAchievementFacts, type FactSources } from "../facts";
 import type { Keeper } from "../news";
@@ -15,32 +21,15 @@ export function parseYear(raw: string | undefined, today: string): number | null
   return year >= YEAR_RANGE.min && year <= current ? year : null;
 }
 
-const photoUrl = (specimenId: string, measurementId: string) =>
-  `/specimens/${specimenId}/measurements/${measurementId}/photo`;
-
 /**
  * The year in review of the keeper (US-ACH-07): counted facts of one calendar year, derived on every request from the
  * own data (FR-ACH-02, P-04) and private by default (P-05). Nothing is stored and nothing is compared (FR-ACH-04).
- * One request per specimen for the measurement values (starting value, small collections).
+ * The measurement values come with the facts read (NFR-12): no second read per specimen.
  */
 export async function achievementsYear(src: FactSources, who: Keeper, year: number) {
   const { userId, timeZone, now } = who;
-  const { facts } = await readAchievementFacts(src, userId, timeZone);
+  const { facts, measurements } = await readAchievementFacts(src, userId, timeZone);
   const earned = evaluateAchievements(facts, localToday(now, timeZone));
-  const measurements = (
-    await Promise.all(
-      facts.specimens.map(async (s) =>
-        (await src.measurements.list(userId, s.id)).map((m) => ({
-          id: m.id,
-          specimenId: s.id,
-          date: m.date,
-          value: m.value,
-          quality: m.quality,
-          hasPhoto: m.photo !== null,
-        })),
-      ),
-    )
-  ).flat();
   const review = yearInReview({
     year,
     specimens: facts.specimens,
@@ -49,13 +38,22 @@ export async function achievementsYear(src: FactSources, who: Keeper, year: numb
     handoverDates: facts.handovers.map((h) => h.date),
     earned: earned.filter((s) => s.earned),
   });
+  // The addresses carry the version of each photo, so a replaced one is fetched anew (NFR-12).
   const withUrl = (p: {
     specimenId: string;
-    first: { measurementId: string };
-    last: { measurementId: string };
+    first: { measurementId: string; photo: string };
+    last: { measurementId: string; photo: string };
   }) => ({
-    first: photoUrl(p.specimenId, p.first.measurementId),
-    last: photoUrl(p.specimenId, p.last.measurementId),
+    first: measurementPhotoPath({
+      specimenId: p.specimenId,
+      measurementId: p.first.measurementId,
+      photo: p.first.photo,
+    }),
+    last: measurementPhotoPath({
+      specimenId: p.specimenId,
+      measurementId: p.last.measurementId,
+      photo: p.last.photo,
+    }),
   });
   return {
     calmMode: false as const,

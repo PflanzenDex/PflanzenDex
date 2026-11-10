@@ -1,0 +1,35 @@
+[
+  {
+    "species": "Spathiphyllum wallisii",
+    "attributes": {}
+  },
+  {
+    "species": "Zamioculcas zamiifolia",
+    "attributes": {
+      "lightDescription": {
+        "value": "bright_indirect",
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Zamioculcas&oldid=1347618850",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Article is the genus page Zamioculcas (one species). Section Light: indoors the plant prefers bright indirect light."
+      }
+    }
+  },
+  {
+    "species": "Ficus elastica",
+    "attributes": {}
+  },
+  {
+    "species": "Ficus benjamina",
+    "attributes": {}
+  },
+  {
+    "species": "Chlorophytum comosum",
+    "attributes": {}
+  },
+  {
+    "species": "Aloe vera",
+    "attributes": {}
+  }
+]

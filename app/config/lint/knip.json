@@ -1,6 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": ["make"],
   "commitlint": { "config": ["config/project/commitlint.config.js"] },
   "semantic-release": { "config": ["config/project/release.config.js"] },
   "ignoreDependencies": [

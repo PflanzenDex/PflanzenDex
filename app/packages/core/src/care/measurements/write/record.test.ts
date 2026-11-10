@@ -126,6 +126,17 @@ describe("US-WAC-01 Messung erfassen: Datum", () => {
       false,
     );
   });
+
+  it("US-WAC-01 an emptied date (empty text) is refused and writes nothing; a missing date means today", async () => {
+    const emptied = await record(input({ date: "" }));
+    expect(emptied).toMatchObject({
+      ok: false,
+      error: { code: "input.invalid", details: [{ field: "date" }] },
+    });
+    expect(measurements.writes).toBe(0);
+    // The API contract: an absent date is today in the given time zone (the web form always sends one).
+    expect(await record(input())).toMatchObject({ ok: true, value: { date: "2026-10-03" } });
+  });
 });
 
 describe("US-WAC-01 record a measurement: idempotency (US-QS-03) and tenant (P-04)", () => {

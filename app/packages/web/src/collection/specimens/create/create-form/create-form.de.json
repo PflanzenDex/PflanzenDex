@@ -1,0 +1,11 @@
+{
+  "alreadyThere": "Schon vorhanden: {name}",
+  "withMarker": "Mit einem Kennzeichen heißt die neue Pflanze dann „{name} – Kennzeichen“.",
+  "formLabel": "Pflanze anlegen",
+  "submit": "Pflanze anlegen",
+  "cancel": "Zurück zur Art",
+  "plant": "Pflanze „{name}“ ist angelegt.",
+  "cutting": "Steckling „{name}“ ist angelegt.",
+  "cuttingLight": " Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst.",
+  "unknownLocation": " Der Standort ist unbekannt, du kannst ihn später setzen."
+}

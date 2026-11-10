@@ -1,0 +1,68 @@
+# Fills the node_modules cache on `dev` (issue 1123). Caches are scoped to their branch: a PR reads its own and its base
+# branch's, never another PR's, and ci.yml does not run on pushes to `dev`. Without this workflow every PR's first run
+# would miss and reinstall. It installs once per lock file change on `dev`; the cache action saves on a miss.
+name: Dependency cache
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - app/package-lock.json
+      - .nvmrc
+      - .github/actions/setup-app/**
+      - .github/workflows/deps-cache.yml
+      - tools/lint/tool.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deps-cache-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    runs-on: ubuntu-24.04
+    # A miss of the browser's apt cache below can take about ten minutes on a throttled mirror (US-QG-01, issue 1485).
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-app
+      # Issue 1721: the pinned check tools for the `app-gates` job of every PR (a PR restores the cache of its base branch).
+      # Same key as in ci.yml; the cache action saves on a miss.
+      - uses: actions/cache@v6
+        with:
+          path: .cache/tools
+          key: check-tools-${{ runner.os }}-${{ hashFiles('tools/lint/tool.sh') }}
+      - name: Pinned gitleaks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/lint/tool.sh gitleaks
+      # US-QG-01 (issue 1485): the apt cache of the browser install, read by the CI shards of every PR (a PR restores the
+      # cache of its base branch). Filled here on a miss only; the save follows a complete install, after the browser is
+      # proved present (tools/lighthouse/install-browsers.sh).
+      - id: playwright
+        run: echo "version=$(make -s playwright-version)" >> "$GITHUB_OUTPUT"
+      - id: apt-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}
+      - name: Install the browser (fills the apt cache on a miss)
+        if: steps.apt-cache.outputs.cache-hit != 'true'
+        env:
+          PFLANZENDEX_APT_CACHE: ${{ runner.temp }}/apt-debs
+        run: make browsers
+      - id: apt-complete
+        if: always() && steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -f "$RUNNER_TEMP/apt-debs/COMPLETE" ]; then echo "complete=true" >> "$GITHUB_OUTPUT"; else echo "complete=false" >> "$GITHUB_OUTPUT"; fi
+      - if: always() && steps.apt-complete.outputs.complete == 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-debs-${{ runner.os }}-pw${{ steps.playwright.outputs.version }}

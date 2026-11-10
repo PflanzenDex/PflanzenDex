@@ -1,0 +1,15 @@
+{
+  "facts.unavailable": "Der Inhalt dieses Vorschlags ist nicht verfügbar.",
+  "label.difficulty": "Schwierigkeit",
+  "label.standardLevel": "Standard-Stufe",
+  "label.light": "Lichtbedarf",
+  "label.dormancy": "Ruhephase",
+  "label.growth": "Wachstumsmaß",
+  "label.etiolation": "Vergeilungsanzeichen",
+  "label.success": "Erfolgskriterien",
+  "label.source": "Quelle",
+  "status.batch": "Betreiber-Charge, bereits freigegeben",
+  "status.proposal": "Nutzervorschlag",
+  "status.aiCreated": "KI-erstellt, noch nicht geprüft",
+  "blocked": "Freigabe noch nicht möglich: {issues}."
+}

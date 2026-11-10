@@ -33,9 +33,9 @@ export class InMemoryObjectStore implements ObjectStore {
   }
 
   async deleteAll(a: string): Promise<Result<number>> {
-    const prefix = objectKey(a, "x.jpg");
+    const prefix = objectKey(a, "x.webp");
     if (!prefix.ok) return prefix;
-    const own = prefix.value.slice(0, prefix.value.length - "x.jpg".length);
+    const own = prefix.value.slice(0, prefix.value.length - "x.webp".length);
     const names = [...this.objects.keys()].filter((key) => key.startsWith(own));
     for (const key of names) this.objects.delete(key);
     return ok(names.length);
@@ -57,10 +57,16 @@ export class InMemoryObjectStore implements ObjectStore {
 export class FakeImageProcessor implements ImageProcessor {
   calls = 0;
   readonly output: ProcessedImage = {
-    bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 9, 9]),
-    contentType: "image/jpeg",
+    bytes: new Uint8Array([0x52, 0x49, 0x46, 0x46, 9, 9]), // "RIFF": a WebP container
+    contentType: "image/webp",
     width: 800,
     height: 600,
+    thumbnail: {
+      bytes: new Uint8Array([0x52, 0x49, 0x46, 0x46, 7, 7]),
+      contentType: "image/webp",
+      width: 256,
+      height: 192,
+    },
   };
 
   constructor(private readonly refusal: ErrorCode | null = null) {}

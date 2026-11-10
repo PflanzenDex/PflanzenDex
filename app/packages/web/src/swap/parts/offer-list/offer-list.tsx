@@ -1,7 +1,13 @@
 import type { OfferView } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../swap.de.json";
+
+const t = texts(table);
 
 const STATUS_TEXT = {
   open: "Offen",
@@ -20,52 +26,71 @@ export function OfferList(props: {
   busy: boolean;
   onWithdraw: (o: OfferView) => void;
 }) {
+  const size = useCardPageSize();
   return (
-    <section aria-labelledby="offer-list-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="offer-list-title" className="text-xl font-semibold">
-        Meine Angebote
+    <section
+      aria-labelledby="offer-list-title"
+      className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
+    >
+      <h2 id="offer-list-title" className="sr-only">
+        {t("offers.title")}
       </h2>
       {props.offers.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3">
-          Du hast noch nichts angeboten. Gib eine Pflanze für Freunde frei und biete sie unten zum
-          Tausch an.
-        </p>
+        <p className="rounded-lg border border-dashed border-border p-3">{t("offers.none")}</p>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Meine Angebote">
-          {props.offers.map((o) => {
-            const active = o.status === "open" || o.status === "reserved";
-            return (
-              <li key={o.id} className="grid break-words rounded-lg border border-border p-3">
-                <span className="font-semibold">{o.specimenName ?? "Pflanze unbekannt"}</span>
-                <span className="text-sm">
-                  {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
-                </span>
-                {o.wish && <span className="text-sm">Wunsch: {o.wish}</span>}
-                {o.note && <span className="text-sm">Hinweis: {o.note}</span>}
-                <span className="text-sm text-muted-foreground">{healthText(o.health)}</span>
-                {o.phase === "dormancy" && (
-                  <span className="text-sm text-muted-foreground">Zurzeit in der Ruhephase.</span>
-                )}
-                <span className="mt-1 flex flex-wrap items-center gap-2">
-                  <Badge variant={active ? "default" : "outline"}>{STATUS_TEXT[o.status]}</Badge>
-                  {active && (
-                    <Button
-                      type="button"
-                      size="touch"
-                      variant="outline"
-                      disabled={props.busy}
-                      aria-label={`Angebot für ${o.specimenName ?? "Pflanze"} zurückziehen`}
-                      onClick={() => props.onWithdraw(o)}
-                    >
-                      Zurückziehen
-                    </Button>
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <Pager
+          items={props.offers}
+          pageSize={size}
+          fit
+          label={t("offers.title")}
+          getKey={(o) => o.id}
+          renderItem={(o) => (
+            <OfferCard offer={o} busy={props.busy} onWithdraw={() => props.onWithdraw(o)} />
+          )}
+        />
       )}
     </section>
+  );
+}
+
+/** One of my offers with its state; an open or reserved one can be withdrawn (US-SOZ-08). */
+function OfferCard({
+  offer: o,
+  busy,
+  onWithdraw,
+}: {
+  offer: OfferView;
+  busy: boolean;
+  onWithdraw: () => void;
+}) {
+  const active = o.status === "open" || o.status === "reserved";
+  return (
+    <div className="grid break-words rounded-lg border border-border p-3">
+      <span className="font-semibold">{o.specimenName ?? t("offers.plantUnknown")}</span>
+      <span className="text-sm">
+        {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
+      </span>
+      {o.wish && <span className="text-sm">{t("card.wish", { wish: o.wish })}</span>}
+      {o.note && <span className="text-sm">{t("card.note", { note: o.note })}</span>}
+      <span className="text-sm text-muted-foreground">{healthText(o.health)}</span>
+      {o.phase === "dormancy" && (
+        <span className="text-sm text-muted-foreground">{t("card.dormancy")}</span>
+      )}
+      <span className="mt-1 flex flex-wrap items-center gap-2">
+        <Badge variant={active ? "default" : "outline"}>{STATUS_TEXT[o.status]}</Badge>
+        {active && (
+          <Button
+            type="button"
+            size="touch"
+            variant="outline"
+            disabled={busy}
+            aria-label={t("offers.withdraw", { name: o.specimenName ?? t("offers.plant") })}
+            onClick={onWithdraw}
+          >
+            {t("offers.withdrawButton")}
+          </Button>
+        )}
+      </span>
+    </div>
   );
 }

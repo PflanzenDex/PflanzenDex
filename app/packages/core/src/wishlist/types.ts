@@ -32,7 +32,7 @@ export interface WishRow {
   readonly imageSource: string | null;
   readonly license: string | null;
   /**
-   * Object name of the stored copy of the image (US-WUN-04, `<uuid>.jpg` in the object store); `null` until it is
+   * Object name of the stored copy of the image (US-WUN-04, `<uuid>.webp` in the object store); `null` until it is
    * stored. The address above is only the origin, it is never loaded by a viewer (P-05).
    */
   readonly imageObject: string | null;
@@ -56,6 +56,8 @@ export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId" |
   readonly source?: WishSource;
   readonly decidedAt?: string;
   readonly status?: "wishlist" | "discarded";
+  /** Set by a Discover Yes or No (US-ENT-04): this wish becomes the account's last decision, the one undo may take back. */
+  readonly lastDecision?: "yes" | "no";
 };
 
 /** A wish after a status change ("Bought", US-WUN-03; "Discarded", US-WUN-05). `changed` is false when nothing was written. */
@@ -65,6 +67,42 @@ export interface WishChange {
 }
 /** A wish after "Bought" (US-WUN-03). `changed` is false when it was bought already: nothing was written again. */
 export type WishPurchase = WishChange;
+
+/**
+ * A Discover decision as the undo of US-ENT-04 sees it: the wish the decision created (any status, `source` says whether
+ * it is a Discover wish) and `decision` set only for the account's last Yes or No, the one undo may take back.
+ */
+export interface DiscoverDecision {
+  readonly wish: WishRow;
+  readonly source: WishSource;
+  /** `yes` or `no` for the last Yes or No of the account; `null` for every other wish. */
+  readonly decision: "yes" | "no" | null;
+}
+
+/** The source a Discover Yes or No gives its wish; compare with this, not with the literal (FR-QG-12). */
+export const DISCOVER_SOURCE: WishSource = "discover";
+
+/**
+ * Port of undo (US-ENT-04): the Discover decisions of an account. Every call applies to the account `userId` only
+ * (P-04). The adapter lives in `db` (`DecisionsPostgres`), the test double next to the tests.
+ */
+export interface DecisionStore {
+  /**
+   * The wish of the account with the name key, of any status and source, with its decision when it is the account's last
+   * Yes or No; `null` if the account has no wish of that name. A foreign wish looks the same.
+   */
+  decisionOf(userId: string, nameKey: string): Promise<DiscoverDecision | null>;
+  /**
+   * Removes the wish of the account's last Yes or No in one step, and only while it is still that decision: the mark
+   * `decision`, the status `status` the decision gave it, and no specimen. Otherwise `not_last` (another Yes or No came
+   * after it) or `changed` (the wish was changed since); `not_found` for a wish the account does not have. Nothing else is
+   * touched.
+   */
+  takeBackDecision(
+    userId: string,
+    take: { readonly wishId: string; readonly decision: "yes" | "no"; readonly status: WishStatus },
+  ): Promise<WishRow | "not_found" | "not_last" | "changed">;
+}
 
 /** Every call applies to the account `userId` only (P-04). */
 export interface WishStore {

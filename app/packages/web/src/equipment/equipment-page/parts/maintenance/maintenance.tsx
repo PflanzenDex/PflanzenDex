@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { localToday } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { FormRoot } from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { currentTimeZone } from "../../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { FormRoot } from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { currentTimeZone } from "../../../../shared/data";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
-import { keepTogether } from "@/lib/format";
+import { keepTogether } from "@/shared/lib/format";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 const UNKNOWN = "unbekannt";
@@ -84,7 +85,7 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
       <div className="grid grid-cols-2 gap-2">
         <label className={LABEL}>
           In Betrieb seit (optional)
-          <Input type="date" value={since} onChange={(e) => setSince(e.target.value)} />
+          <DateField value={since} onChange={(e) => setSince(e.target.value)} />
         </label>
         <label className={LABEL}>
           Prüfintervall in Tagen (optional)

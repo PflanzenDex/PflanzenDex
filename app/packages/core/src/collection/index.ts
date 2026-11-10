@@ -3,7 +3,37 @@ export { specimenCreate, specimenCorrectCatchDate } from "./specimen/create";
 export type { CreateDependencies, CatchDateDependencies } from "./specimen/create";
 export { specimenMark } from "./specimen/mark";
 export type { MarkDependencies } from "./specimen/mark";
-export { specimenRepot } from "./specimen/repot";
+// The private notes of a specimen (US-BES-18): set or clear them, and the keeper's own read of them.
+export { specimenSetNotes, specimenNotes } from "./notes/notes";
+export type { NotesDependencies } from "./notes/notes";
+// The repot of a specimen and its history (US-BES-04, US-BES-19): the operation, the observations and the plan.
+export {
+  REPOT_PLANNER_KEEPER_SWITCH,
+  REPOT_SIGNS,
+  GENERAL_STARTING_VALUE,
+  REPOT_INTERVAL_STARTING_MONTHS,
+  orderFreePots,
+  repotPlan,
+  specimenRepot,
+  specimenTickRepotSign,
+  specimenUntickRepotSign,
+  wholeMonthsBetween,
+} from "./specimen/repot";
+export type {
+  IntervalHint,
+  OpenSign,
+  PlanPhase,
+  PlanPot,
+  RepotDependencies,
+  RepotHint,
+  RepotPlan,
+  RepotPlanInput,
+  RepotSign,
+  RepotStore,
+  SignDependencies,
+  SignHint,
+  SignRefusal,
+} from "./specimen/repot";
 export {
   specimenSetLocation,
   specimenSetLightZone,
@@ -11,7 +41,6 @@ export {
   LIGHT_ZONE_ERROR,
 } from "./placement/locate";
 export type { LocateDependencies } from "./placement/locate";
-export type { RepotDependencies } from "./specimen/repot";
 export { cuttingLight } from "./placement/cutting-light";
 export type { ZoneSource } from "./placement/effective-zone";
 export { careProfileUpdate } from "./care-profile/care-profile";
@@ -52,10 +81,29 @@ export {
   NO_TREATMENTS,
   NO_MEASUREMENTS,
   NO_PROVENANCE,
+  NO_MEASURED,
   specimenCards,
+  cardsOf,
   dueDate,
 } from "./cards/cards";
 export type { CardsDependencies } from "./cards/cards";
+export {
+  CARD_PAGE_MAX,
+  CARD_PAGE_SIZE,
+  decodeCardCursor,
+  encodeCardCursor,
+  parseCardPageQuery,
+  specimenCardOf,
+  specimenCardPage,
+  specimenSummary,
+  specimenTreatable,
+} from "./cards/cards-page";
+export type {
+  CardPageDependencies,
+  CardPageField,
+  CardPageParams,
+  CardPageParse,
+} from "./cards/cards-page";
 export { zoneDistribution } from "./distribution/distribution";
 export { lightOverview } from "./distribution/light-overview";
 export type { LightOverview, LightOverviewRow } from "./distribution/light-overview";
@@ -86,6 +134,17 @@ export type {
   OpenTreatment,
   SpecimenProvenance,
   ProvenanceSource,
+  MeasuredSource,
+  CardCursor,
+  CardPage,
+  CardPageQuery,
+  LocationGroup,
+  SpecimenCountRows,
+  SpecimenPage,
+  SpecimenPageSource,
+  SpecimenSummary,
+  TreatableRow,
+  TreatableSpecimen,
 } from "./cards/cards-types";
 export {
   ARCHIVED_REASONS,
@@ -107,3 +166,32 @@ export type {
   SpecimenRow,
   TargetLocationSource,
 } from "./shared/types";
+export type { NotesStore, SpecimenNotes } from "./notes/types";
+// The CSV import of plants (US-BES-18, FR-BES-26): the preview reads, the confirmation writes once.
+export {
+  CSV_IMPORT_KEEPER_SWITCH,
+  IMPORT_CANDIDATES,
+  IMPORT_LIMITS,
+  parseImportCsv,
+  specimenImport,
+  specimenImportPreview,
+} from "./bulk";
+export type {
+  ConfirmDependencies,
+  ConfirmInput,
+  ConfirmResult,
+  ConfirmRow,
+  Created,
+  ImportDate,
+  ImportOverride,
+  ImportPreview,
+  ImportSpeciesSource,
+  LocationMatch,
+  MarkerRequest,
+  ParsedRow,
+  PreviewDependencies,
+  PreviewRow,
+  Reason,
+  RowState,
+  SpeciesCandidate,
+} from "./bulk";

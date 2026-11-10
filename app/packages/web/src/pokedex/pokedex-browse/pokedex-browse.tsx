@@ -6,10 +6,10 @@ import {
 } from "@pflanzendex/core";
 import { useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { PagedGroups } from "@/components/shared/responsive/paged-groups/paged-groups";
-import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LayerSheet, useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import {
   SPECIES_LIST,
   SpeciesPager,
@@ -38,6 +38,8 @@ export function Browse(props: {
   const search = useRef<HTMLInputElement>(null);
   const [params] = useSearchParams();
   const chosen = caught.find((c) => speciesLayerId(c.species) === params.get("sheet"));
+  // The species layer keeps its species while it slides out: the address has lost it at once (US-QS-15, F12).
+  const shownChosen = useExitValue(chosen);
   if (caught.length === 0) return <NothingCaught />;
   const result = browsePokedex(caught, { query, filter, sort });
   const shown =
@@ -49,7 +51,7 @@ export function Browse(props: {
   };
   const poorKnown = caught.some((c) => c.genusSpeciesCount !== null);
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <Controls query={query} searchRef={search} onQuery={setQuery} />
       {shown !== caught.length && (
         <p className="m-0 text-sm text-muted-foreground">{`${shown} von ${plural(caught.length)}`}</p>
@@ -74,9 +76,12 @@ export function Browse(props: {
           onSort={setSort}
         />
       </LayerSheet>
-      {chosen ? (
-        <LayerSheet id={speciesLayerId(chosen.species)} title={chosen.germanName ?? chosen.species}>
-          <SpeciesDetail species={chosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
+      {shownChosen ? (
+        <LayerSheet
+          id={speciesLayerId(shownChosen.species)}
+          title={shownChosen.germanName ?? shownChosen.species}
+        >
+          <SpeciesDetail species={shownChosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
         </LayerSheet>
       ) : null}
     </div>
@@ -127,6 +132,7 @@ function Families(props: { result: ReturnType<typeof browsePokedex> }) {
       listLabel="Gefangene Arten"
       groups={groups}
       pageSize={size}
+      fit
       getKey={(c) => c.species}
       listClassName={SPECIES_LIST}
       renderItem={(c) => <SpeciesRow c={c} />}

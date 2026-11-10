@@ -1,4 +1,12 @@
-import { appError, defineOperation, failed, ok, shape, type ErrorDetail } from "../kernel";
+import {
+  appError,
+  defineOperation,
+  failed,
+  ok,
+  shape,
+  type ErrorDetail,
+  MS_PER_DAY,
+} from "../kernel";
 import { enqueueJob, JOB_LIMITS, type JobQueue } from "../jobs";
 
 // Deleting the own account with a grace period (US-ACC-04, P-04, P-10). The keeper asks and confirms; nothing is removed
@@ -35,7 +43,7 @@ export interface DeletionDependencies {
   readonly now: () => Date;
 }
 
-const addDays = (from: Date, days: number) => new Date(from.getTime() + days * 24 * 60 * 60 * 1000);
+const addDays = (from: Date, days: number) => new Date(from.getTime() + days * MS_PER_DAY);
 
 /** The job runs when the grace period ends. The key contains the due date, so a request after a withdrawal gets its own job. */
 const jobKey = (userId: string, dueAt: Date) => `${userId}:${dueAt.toISOString()}`;

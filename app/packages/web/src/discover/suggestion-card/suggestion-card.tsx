@@ -1,11 +1,14 @@
 import type { Suggestion } from "@pflanzendex/core";
-import { useRef, useState, type PointerEvent } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { cn } from "@/lib/utils";
-import { swipeDirection } from "../swipe/swipe";
+import { useId, useState, type Ref } from "react";
+import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { cn } from "@/shared/lib/utils";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
-import { DifficultyStars, WikipediaSource } from "@/components/collector-card/collector-card";
+import { DifficultyStars, WikipediaSource } from "@/pokedex";
+import table from "../discover.de.json";
+import { texts } from "@/shared/lib/text-rules/texts";
+
+const t = texts(table);
 
 /** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
 function Picture({ s }: { s: Suggestion }) {
@@ -18,7 +21,8 @@ function Picture({ s }: { s: Suggestion }) {
   return (
     <img
       src={s.imageUrl}
-      alt={`Bild von ${s.species}`}
+      alt={t("card.imageAlt", { species: s.species })}
+      loading="lazy"
       className="h-56 min-h-12 w-full shrink rounded-lg object-cover"
     />
   );
@@ -29,11 +33,11 @@ function Picture({ s }: { s: Suggestion }) {
  * voice (WCAG 3.1.2) and a visible hint names a foreign language; where it is unknown no language is claimed (P-08).
  */
 function Summary({ s, more }: { s: Suggestion; more: boolean }) {
-  if (s.summary === null) return <p className="m-0 text-sm">Keine Beschreibung vorhanden.</p>;
+  if (s.summary === null) return <p className="m-0 text-sm">{t("card.noSummary")}</p>;
   const foreign = s.summaryLanguage === "en";
   return (
     <div className="grid gap-1">
-      {foreign && <p className="m-0 text-xs text-muted-foreground">Text auf Englisch</p>}
+      {foreign && <p className="m-0 text-xs text-muted-foreground">{t("card.foreignLanguage")}</p>}
       <p
         {...(s.summaryLanguage === null ? {} : { lang: s.summaryLanguage })}
         className={cn("m-0 text-sm", !more && "line-clamp-3")}
@@ -47,14 +51,19 @@ function Summary({ s, more }: { s: Suggestion; more: boolean }) {
 function Facts({ s }: { s: Suggestion }) {
   return (
     <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-      <dt className="text-muted-foreground">Lichtzone</dt>
-      <dd className="m-0">{s.lightZone === null ? UNKNOWN : `Zone ${s.lightZone}`}</dd>
-      <dt className="text-muted-foreground">Schwierigkeit</dt>
+      <dt className="text-muted-foreground">{t("card.zone")}</dt>
+      <dd className="m-0">
+        {s.lightZone === null ? UNKNOWN : t("card.zoneValue", { zone: s.lightZone })}
+      </dd>
+      <dt className="text-muted-foreground">{t("card.difficulty")}</dt>
       <dd className="m-0">
         {s.difficulty === null ? (
           UNKNOWN
         ) : (
-          <DifficultyStars level={s.difficulty} label={`${s.difficulty} von 3`} />
+          <DifficultyStars
+            level={s.difficulty}
+            label={t("card.difficultyLabel", { level: s.difficulty })}
+          />
         )}
       </dd>
       {attributeRows(s.attributes).flatMap(([name, value]) => [
@@ -75,8 +84,8 @@ function Details({ s, more }: { s: Suggestion; more: boolean }) {
     <div className={cn("grid gap-3", !more && "hidden")}>
       <Facts s={s} />
       <AttributeSources sources={s.attributeSources ?? []} />
-      <section aria-label="Gründe">
-        <h3 className="m-0 mb-1 text-sm font-semibold">Warum diese Art?</h3>
+      <section aria-label={t("card.reasonsLabel")}>
+        <h3 className="m-0 mb-1 text-sm font-semibold">{t("card.reasonsTitle")}</h3>
         <ul className="m-0 grid list-disc gap-1 pl-5 text-sm">
           {s.reasons.map((r) => (
             <li key={r}>{r}</li>
@@ -89,31 +98,21 @@ function Details({ s, more }: { s: Suggestion; more: boolean }) {
 
 /**
  * One suggestion as a large card (US-ENT-01): image with source and license (FR-POK-07), names, text, zone, difficulty
- * and the attributes of DM-ENT-01, the reasons below. A swipe left or right decides like the buttons; the buttons stay
- * the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06).
+ * and the attributes of DM-ENT-01, the reasons below. The gesture and its stamps are the shared `SwipeCard` around it;
+ * the buttons stay the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06). Its heading id is made
+ * per card (`useId`), so the next card can be rendered underneath without a duplicate id on the page.
  */
 export function SuggestionCard(props: {
   suggestion: Suggestion;
-  onSwipe: (direction: "left" | "right") => void;
+  /** The name heading, so the view can move the focus to this card (SC 2.4.3). */
+  titleRef?: Ref<HTMLHeadingElement>;
 }) {
   const s = props.suggestion;
   const [more, setMore] = useState(false);
-  const start = useRef<{ x: number; y: number } | null>(null);
-  const down = (e: PointerEvent) => {
-    start.current = { x: e.clientX, y: e.clientY };
-  };
-  const up = (e: PointerEvent) => {
-    const from = start.current;
-    start.current = null;
-    const direction = from && swipeDirection(e.clientX - from.x, e.clientY - from.y);
-    if (direction) props.onSwipe(direction);
-  };
+  const titleId = useId();
   return (
     <article
-      aria-labelledby="suggestion-title"
-      onPointerDown={down}
-      onPointerUp={up}
-      onPointerCancel={() => (start.current = null)}
+      aria-labelledby={titleId}
       className={cn(
         "mx-auto flex min-h-48 w-full min-w-0 max-w-md flex-1 basis-0 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
         "rounded-xl border border-border bg-card p-3 text-card-foreground",
@@ -123,13 +122,18 @@ export function SuggestionCard(props: {
       <div>
         {s.exploration && (
           <Badge variant="secondary" className="mb-1">
-            Mal etwas anderes
+            {t("card.exploration")}
           </Badge>
         )}
-        <h2 id="suggestion-title" tabIndex={-1} className="m-0 scroll-mb-24 text-xl font-semibold">
+        <h2
+          id={titleId}
+          ref={props.titleRef}
+          tabIndex={-1}
+          className="m-0 scroll-mb-24 text-xl font-semibold"
+        >
           {s.species}
         </h2>
-        <p className="m-0">{s.germanName ?? "Deutscher Name unbekannt"}</p>
+        <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>
       </div>
       <Summary s={s} more={more} />
       <Button
@@ -139,11 +143,11 @@ export function SuggestionCard(props: {
         className="w-fit"
         onClick={() => setMore((m) => !m)}
       >
-        {more ? "Weniger" : "Mehr"}
+        {more ? t("card.less") : t("card.more")}
       </Button>
       <Details s={s} more={more} />
       <WikipediaSource
-        label="Bild und Text"
+        label={t("card.sourceLabel")}
         sourceUrl={s.sourceUrl}
         shown={s.summary !== null || s.imageUrl !== null}
         className="inline-flex min-h-11 items-center"

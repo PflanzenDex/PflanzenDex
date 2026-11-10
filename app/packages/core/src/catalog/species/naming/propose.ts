@@ -1,7 +1,8 @@
 import { defineOperation, appError, failed, ok } from "../../../kernel";
 import { speciesSchema, type SpeciesInput } from "./fields";
 import { normalize } from "./name";
-import type { SpeciesName, SpeciesStore, SpeciesValues, NameField } from "../types";
+import { withExactBeyondCap } from "../lookup/search";
+import type { Species, SpeciesName, SpeciesStore, SpeciesValues, NameField } from "../types";
 
 function valueFrom(e: SpeciesInput): SpeciesValues {
   const { latinName: name, ...rest } = e;
@@ -32,6 +33,34 @@ export function namesFrom(w: SpeciesValues): SpeciesName[] {
     seen.add(key);
     return fresh;
   });
+}
+
+/**
+ * The visible species a proposal would duplicate (FR-BES-03): the same rule as on creation, a Latin name or synonym of
+ * the input equals a Latin name or synonym of a visible species. `null` when the input is invalid or new. Lets a caller
+ * name the existing species before anything is stored (US-KI-11).
+ */
+export async function speciesExisting(
+  store: Pick<SpeciesStore, "search" | "exact">,
+  userId: string,
+  input: unknown,
+): Promise<Species | null> {
+  const r = speciesSchema(input);
+  if (!r.ok) return null;
+  const keys = namesFrom(valueFrom(r.value)).filter(
+    (n) => n.field === "latin" || n.field === "synonym",
+  );
+  for (const key of keys) {
+    const sameName = (h: Species) =>
+      [h.latinName, ...h.synonyms].some((n) => normalize(n) === key.norm);
+    // An exact match beyond the cap of the search counts too (FR-BES-24).
+    const hits = await withExactBeyondCap(await store.search(userId, key.norm), () =>
+      store.exact(userId, key.norm),
+    );
+    const same = hits.find(sameName);
+    if (same) return same;
+  }
+  return null;
 }
 
 /**

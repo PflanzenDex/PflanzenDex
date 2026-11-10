@@ -27,7 +27,8 @@ export interface DecideResult {
   readonly saved: boolean;
 }
 
-const schema = shape({
+/** The input of `discover.decide` (also the content of a `discover_decision` draft, US-ENT-08). */
+export const discoverDecideSchema = shape({
   species: textField("species", { min: 1, max: 200 }),
   decision: choiceField("decision", ["yes", "no", "later"] as const),
   timeZone: timeZoneField("timeZone"),
@@ -57,7 +58,7 @@ function image(s: Suggestion) {
 export const discoverDecide = (deps: DecideDependencies) =>
   defineOperation({
     name: "discover.decide",
-    schema,
+    schema: discoverDecideSchema,
     run: async ({ userId }, input) => {
       if (input.decision === "later") return ok<DecideResult>({ decision: "later", saved: false });
       const { candidates, names, stock } = await candidatesFor(deps, userId, input.timeZone);
@@ -81,6 +82,7 @@ export const discoverDecide = (deps: DecideDependencies) =>
         source: "discover",
         decidedAt: localToday(deps.clock(), input.timeZone),
         status: input.decision === "yes" ? "wishlist" : "discarded",
+        lastDecision: input.decision,
       });
       if (r === "name_taken") return ok<DecideResult>({ decision: input.decision, saved: false });
       // The zone comes from the account's own stock; if it vanished meanwhile nothing is written (P-10).

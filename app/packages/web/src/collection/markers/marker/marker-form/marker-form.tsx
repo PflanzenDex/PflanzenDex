@@ -2,11 +2,12 @@ import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import type { ApiError } from "../../../../kernel";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import type { ApiError } from "../../../../shared/data";
 import { MarkerInput } from "../marker-fields/marker-fields";
 import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
-import { refusalText, useEdited } from "../../../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
+import { useEdited } from "../../../specimens/model/refusal";
 import { markerSchema, type MarkerFields } from "../../../specimens/model/schemas";
 
 /**

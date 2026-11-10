@@ -5,11 +5,12 @@ import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setProfileTimeZone, type ApiError } from "../../../kernel";
+import { setProfileTimeZone, type ApiError } from "../../../shared/data";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { CreateForm } from "../../specimens/create/create-form/create-form";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
 import { correctCatchDate, createSpecimen } from "../../specimens/model/specimens-api";
+import { answerCardRead } from "../../specimens/tests/cards-fake";
 
 // US-BES-02 / FR-BES-04: back-dating the catch date in the create form.
 const species = { id: "a1", latinName: "Dracaena trifasciata", germanName: "Bogenhanf" } as Species;
@@ -45,8 +46,8 @@ const field = () => screen.getByLabelText("Fangdatum") as HTMLInputElement;
 describe("US-BES-02 FR-BES-04 catch date field", () => {
   it("is a labelled date input, preset to the keeper's local today and capped at it", () => {
     show();
-    expect(field().type).toBe("date");
-    expect(field().value).toBe("2026-10-03");
+    expect(field().placeholder).toBe("TT.MM.JJJJ");
+    expect(field().value).toBe("03.10.2026");
     expect(field().max).toBe("2026-10-03");
     expect(field().required).toBe(false);
   });
@@ -54,7 +55,7 @@ describe("US-BES-02 FR-BES-04 catch date field", () => {
   it("follows the profile time zone, not UTC", () => {
     setProfileTimeZone("America/New_York");
     show();
-    expect(field().value).toBe("2026-10-02");
+    expect(field().value).toBe("02.10.2026");
     expect(field().max).toBe("2026-10-02");
   });
 
@@ -165,6 +166,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -190,7 +192,7 @@ function fakeServer(cards: SpecimenCard[], answer: () => Promise<Response>) {
       if (path === "/locations") return json(200, { locations: [] });
       if (path === "/specimens/archived") return json(200, { archived: [] });
       if (path === "/specimens/distribution") return json(200, EMPTY_DISTRIBUTION);
-      return json(200, { cards });
+      return answerCardRead(new URL(String(url)), cards) ?? json(404, {});
     }),
   );
   return posts;
@@ -218,8 +220,8 @@ describe("US-BES-11 correct the catch date on the card", () => {
     render(page());
     const input = await openForm();
     expect(screen.getByRole("heading", { name: "Fangdatum korrigieren" })).toBeTruthy();
-    expect(input.type).toBe("date");
-    expect(input.value).toBe("2026-09-01");
+    expect(input.placeholder).toBe("TT.MM.JJJJ");
+    expect(input.value).toBe("01.09.2026");
     expect(input.max).toBe("2026-10-03");
     expect(document.body.textContent).toContain("Bisher: 01.09.2026");
   });
@@ -228,7 +230,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     fakeServer([card({ caughtAt: null })], () => json(200, {}));
     render(page());
     const input = await openForm();
-    expect(input.value).toBe("2026-10-03");
+    expect(input.value).toBe("03.10.2026");
     expect(document.body.textContent).toContain("Bisher: unbekannt");
   });
 
@@ -244,9 +246,9 @@ describe("US-BES-11 correct the catch date on the card", () => {
       path: "/specimens/e1/catch-date",
       body: { catchDate: "2021-04-12", timeZone: "Europe/Berlin" },
     });
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "Das Fangdatum von „Bogenhanf“ ist jetzt der 12.04.2021.",
-    );
+    expect(
+      await screen.findByText(/Das Fangdatum von „Bogenhanf“ ist jetzt der 12\.04\.2021\./),
+    ).toBeTruthy();
   });
 
   it("US-BES-11 an empty field is not sent; the form says why", async () => {

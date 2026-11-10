@@ -12,7 +12,6 @@ const request = (id: string, name: string | null) => ({
   otherName: name,
   direction: "received",
   status: "requested",
-  requestedAt: "2026-10-06T10:00:00.000Z",
 });
 
 function show(body: unknown, status = 200) {

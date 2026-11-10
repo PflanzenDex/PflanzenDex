@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../../kernel";
+import { errorText } from "@/shared/lib/error-text";
+import type { ApiError } from "../../shared/data";
 
 const LUX_MAX = 200000;
 const required = (message: string) => z.string().trim().min(1, message);
@@ -86,16 +86,16 @@ export const EMPTY_PROPOSAL: ProposalFields = {
 
 const NUMBERS = ["difficulty", "standardLevel", "lightDemandLux"];
 
-/** The API input of a checked form: empty fields stay out (unknown), numbers are numbers, synonyms one per line. */
+/**
+ * The API input of a checked form: empty fields stay out (unknown), numbers are numbers, synonyms one per line. The
+ * soft-leaf answer is always sent: "Ja" or "Nein" as a boolean, an empty answer as null, which is unknown (DM-BES-01, P-08).
+ */
 export function toProposalInput(f: ProposalFields): Record<string, unknown> {
-  const input: Record<string, unknown> = {};
-  for (const [name, raw] of Object.entries(f)) {
+  const { softLeaf, ...fields } = f;
+  const input: Record<string, unknown> = { softLeaf: softLeaf === "" ? null : softLeaf === "yes" };
+  for (const [name, raw] of Object.entries(fields)) {
     const text = raw.trim();
     if (text === "") continue;
-    if (name === "softLeaf") {
-      input[name] = text === "yes";
-      continue;
-    }
     if (name === "synonyms")
       input[name] = text
         .split(/\n/)

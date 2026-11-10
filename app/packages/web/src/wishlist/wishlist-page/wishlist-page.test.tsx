@@ -5,7 +5,11 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { WishlistPage } from "./wishlist-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+
+afterEach(releaseSheetExits);
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 let at = "/";
@@ -112,8 +116,9 @@ afterEach(() => {
 describe("US-WUN-01 page of the candidate list", () => {
   it("US-WUN-01 · US-QS-22 shows per candidate the rank, title, zone with stock and difficulty word on a compact row", async () => {
     fakeServer(list([candidate()]));
+    delayLoads();
     view(<WishlistPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
     expect(item.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
     expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
@@ -128,6 +133,20 @@ describe("US-WUN-01 page of the candidate list", () => {
     const label = btn.getAttribute("aria-label") ?? "";
     for (const text of ["1. Korbmarante (Calathea orbifolia)", "Fenster 3 — 1 Pflanze", "Mittel"])
       expect(label).toContain(text);
+  });
+
+  it("US-WUN-01 · US-QS-22 · issue 1154 the candidates page by the free height below the controls", async () => {
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} host={{ onCaption: () => undefined }} />);
+    const rows = await screen.findByRole("list", { name: "Offene Kandidaten" });
+    expect(rows.hasAttribute("data-page-fit")).toBe(true);
+    // Every region between the destination and the list passes the free height on.
+    let region = rows.parentElement;
+    while (region && region.getAttribute("aria-labelledby") !== "wishlist-title") {
+      expect(region.className).toContain("flex-1");
+      region = region.parentElement;
+    }
+    expect(region?.className).toContain("flex-1");
   });
 
   it("US-WUN-01 · US-QS-22 a row opens the full card in a layer: reasoning, picture with source and the why", async () => {
@@ -177,7 +196,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     const rows = screen.getAllByRole("listitem");
     expect(rows[0]?.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
     expect(rows[1]?.textContent).toContain("2. Ficus");
-    expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · unbekannt");
+    expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · Schwierigkeit: unbekannt");
   });
 
   it("US-WUN-01 · US-QS-22 the card of a wish without picture says 'Kein Bild' and 'Schwierigkeit: unbekannt'", async () => {
@@ -258,13 +277,14 @@ describe("US-WUN-01 page of the candidate list", () => {
 });
 
 describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
-  it("US-QS-07 · DS-09 pending shows the skeleton with the one loading status", () => {
+  it("US-QS-07 · DS-09 pending shows the skeleton with the one loading status", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => undefined)),
     );
+    delayLoads();
     view(<WishlistPage api="http://api" token={token} />);
-    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(await screen.findAllByRole("status")).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toContain("Wunschliste wird geladen");
   });
 
@@ -325,6 +345,19 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
   });
 });
 
+describe("US-QS-15 · F12 the wish layer leaves as it came", () => {
+  it("US-QS-15 · F12 a wish layer keeps its card while it slides out, then removes it", async () => {
+    holdSheetExit();
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
+    await screen.findByRole("heading", { name: "Korbmarante (Calathea orbifolia)", level: 2 });
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByText("Mag gleichmäßig feuchte Erde.")).toBeTruthy();
+    endSheetExit();
+    await waitFor(() => expect(screen.queryByText("Mag gleichmäßig feuchte Erde.")).toBeNull());
+  });
+});
+
 describe("US-WUN-01 no remote picture is loaded (P-05)", () => {
   it("US-WUN-01 an address that is not https is not linked and nothing is embedded", async () => {
     fakeServer(list([candidate({ image: { url: "javascript:alert(1)", source: "Irgendwer" } })]));
@@ -343,7 +376,7 @@ describe("US-WUN-01 recording a wish", () => {
     at = "/?sheet=new-wish";
   });
   const fill = async (name: string) => {
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.type(screen.getByLabelText("Name"), name);
   };
 
@@ -437,10 +470,21 @@ describe("US-WUN-01 recording a wish", () => {
     expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).not.toBe("true");
   });
 
+  it("US-WUN-01 · FR-QG-11 an unreachable server shows the app's network text in the alert that takes the focus, not the generic error text", async () => {
+    fakeServer(list([candidate()]), () => Promise.reject(new TypeError("Failed to fetch")));
+    view(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Der Server ist gerade nicht erreichbar");
+    expect(alert.textContent).not.toContain("Es ist ein Fehler aufgetreten");
+    await vi.waitFor(() => expect(document.activeElement).toBe(alert));
+  });
+
   it("US-WUN-01 refuses an empty name before sending: field marked, described, focused", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await save();
     const name = screen.getByLabelText("Name");
     expect(name.getAttribute("aria-invalid")).toBe("true");
@@ -485,7 +529,7 @@ describe("US-WUN-01 recording a wish", () => {
   it("US-WUN-01 a field loses its mark again when the next input is fine", async () => {
     fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await save();
     const name = screen.getByLabelText("Name");
     expect(name.getAttribute("aria-invalid")).toBe("true");
@@ -529,13 +573,14 @@ describe("US-WUN-01 recording a wish", () => {
 });
 
 describe("US-WUN-01 · DS-48 states and primitives", () => {
-  it("US-WUN-01 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
+  it("US-WUN-01 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
+    delayLoads();
     const { container } = view(<WishlistPage api="http://api" token={token} />);
-    const status = screen.getByRole("status");
+    const status = await screen.findByRole("status");
     expect(status.textContent).toContain("Wunschliste wird geladen");
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
     expect(screen.queryByRole("form")).toBeNull();
@@ -558,11 +603,13 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
   it("US-WUN-01 · #902 picking a species from the catalog fills the wish; the free fields stay below Mehr Angaben", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
     await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
     await userEvent.click(await screen.findByRole("button", { name: /Epipremnum aureum/ }));
     expect(await screen.findByText(/Gewählt: Epipremnum aureum \(Efeutute\)/)).toBeTruthy();
+    // The pick shows the names, so they do not open the group (issue 1032).
+    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText(/Wunsch „Epipremnum aureum“ gespeichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -576,10 +623,22 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
   it("US-WUN-01 · #902 saving without a species opens Mehr Angaben and names the missing name", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     expect(await screen.findByText("Bitte gib einen Namen an.")).toBeTruthy();
     expect(screen.getByLabelText("Name").closest("details")?.open).toBe(true);
+  });
+
+  it("US-QS-24 · US-WUN-01 'Neuer Wunsch' has no heading inside the form that repeats the layer title; Mehr Angaben starts closed; the save button sits in a sticky footer", async () => {
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
+    const section = screen.getByRole("button", { name: "Wunsch speichern" }).closest("section");
+    expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
+    expect(
+      screen.getByRole("button", { name: "Wunsch speichern" }).parentElement?.className,
+    ).toContain("sticky");
   });
 
   it("US-WUN-01 · DS-50 the save button is disabled while the write runs, so a double tap writes once", async () => {
@@ -589,7 +648,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
       () => new Promise<Response>((resolve) => (release = resolve)),
     );
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
-    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.type(screen.getByLabelText("Name"), "Neu");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     const busy = (await screen.findByRole("button", { name: /Speichert/ })) as HTMLButtonElement;

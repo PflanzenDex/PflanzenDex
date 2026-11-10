@@ -1,4 +1,4 @@
-# Routines (US-DEV-03, FR-DEV-03): nightly full suite on `dev` plus the dependency audit.
+# Routines (US-DEV-03, FR-DEV-03): nightly full suite on `dev` plus the dependency audit, Lighthouse, the load measurement (NFR-12), the image scan and e2e.
 # Owner: maintainers. On failure: an issue labelled `nightly` (later failures comment on it instead of opening duplicates).
 # Scheduled workflows only run from the default branch, so this starts once it has reached `main`.
 name: Nightly
@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+        image: postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: pflanzendex_test
@@ -43,7 +43,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  # QG-U1 (report only, E-15): Lighthouse on the built web app; never fails the nightly run.
+  # QG-U1 / FR-QG-09 (issue 1136): Lighthouse on the built web app against the limits in quality-limits.json; a value past
+  # its limit turns this job red, so drift on dev shows up before the next PR runs into it.
   lighthouse:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -59,7 +60,6 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: make setup
       - run: make lighthouse
-        continue-on-error: true
       - if: always()
         run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
       - if: always()
@@ -67,6 +67,78 @@ jobs:
         with:
           name: lighthouse-report
           path: app/packages/web/.lighthouseci
+          if-no-files-found: ignore
+
+  # FR-QG-09 (issue 1251, report only): Lighthouse on the signed-in Heute and Sammlung. No score fails this job; it turns
+  # red only when a run cannot measure (P-10), so it is part of `report`. Limits follow from these numbers.
+  lighthouse-signed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || 'dev' }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make lighthouse-signed
+      - if: always()
+        run: cat app/.cache/lighthouse-signed/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-signed-report
+          path: app/.cache/lighthouse-signed
+          if-no-files-found: ignore
+
+  # NFR-12 / FR-QG-09 (issue 1250, report only): every GET route at 1,000 specimens against the budgets in
+  # quality-limits.json (`perf`), plus the concurrency probe. A route past its budget never fails the run until the owner
+  # switches `perf.blocking` on; a broken measurement (a route not answering 200, no rows) turns the job red (P-10). Not
+  # part of `report`: the numbers are reviewed in the job summary and the uploaded JSON.
+  perf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || 'dev' }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make perf-nightly
+      - if: always()
+        run: cat app/.cache/perf/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: perf-report
+          path: app/.cache/perf
           if-no-files-found: ignore
 
   # #761 (NFR-10, report only): Grype over every container image of the stack; findings never fail the run, but a scan
@@ -95,7 +167,7 @@ jobs:
     timeout-minutes: 25
     services:
       postgres:
-        image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+        image: postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: pflanzendex_test
@@ -125,8 +197,11 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # US-QG-06 (owner decision 2026-11-09): this job opens no pull request. It names each red job of the run, the CI job that a
+  # quarantine would take and the ready command; an agent runs `make quarantine` on a branch, and the owner merges that pull
+  # request, because the list grows. The issue is R1 and P1: making the gate deterministic is what ends the quarantine.
   report:
-    needs: [suite, e2e]
+    needs: [suite, e2e, lighthouse-signed, lighthouse]
     if: failure()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -137,11 +212,47 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NEEDS_SUITE: ${{ needs.suite.result }}
+          NEEDS_E2E: ${{ needs.e2e.result }}
+          NEEDS_LIGHTHOUSE: ${{ needs.lighthouse.result }}
+          NEEDS_LIGHTHOUSE_SIGNED: ${{ needs.lighthouse-signed.result }}
         run: |
+          RUN_DAY="$(date -u +%F)"
+          # The ready command names this issue (NUM): a new issue has its number only once it exists, see below.
+          ready() { echo "make quarantine JOB=$1 ISSUE=$NUM REASON=\"red on dev's head $RUN_DAY, $RUN_URL\""; }
+          # One line per red job: its result, then the ready command of its CI job, or the text when no CI job is one.
+          item() {
+            case "$2" in success | skipped) return 0 ;; esac
+            if [ -n "$3" ]; then
+              echo "- \`$1\` ended \`$2\`. Ready command: \`$(ready "$3")\`"
+            else
+              echo "- \`$1\` ended \`$2\`. $4"
+            fi
+          }
+          body() {
+            echo "The nightly run on \`dev\` ended red: $RUN_URL ($RUN_DAY)."
+            echo
+            echo "Red jobs of this run (US-QG-06):"
+            item suite "$NEEDS_SUITE" "" "The CI job that runs the failing part is app-gates, app-tests or app-ui: see the run, then use \`$(ready '<that job>')\`."
+            item e2e "$NEEDS_E2E" e2e ""
+            item lighthouse "$NEEDS_LIGHTHOUSE" lighthouse ""
+            item lighthouse-signed "$NEEDS_LIGHTHOUSE_SIGNED" "" "It is not a CI job, so no quarantine applies: fix the measurement (it turns red only when a run cannot measure)."
+            echo
+            echo "A quarantined CI job still runs and reports, but a red result blocks no pull request (ci-status and make merge)."
+            echo "\`make quarantine\` adds the entry on a branch; the owner merges that pull request, because the list grows."
+            echo "The entry comes off (delete it and lower maxEntries) once the job is green on dev again."
+            echo "This issue is R1 and P1: making the gate deterministic is what ends the quarantine."
+          }
           nr="$(gh issue list --label nightly --state open --json number --jq '.[0].number')"
           if [ -n "$nr" ]; then
-            gh issue comment "$nr" --body "Failed again: $RUN_URL"
+            NUM="$nr"
           else
-            gh issue create --label nightly --title "Nightly suite on dev is failing" \
-              --body "The nightly full suite (make ci, make audit, make e2e) on \`dev\` failed: $RUN_URL"
+            url="$(gh issue create --label nightly --title "Nightly suite on dev is failing" --body "The nightly suite on \`dev\` failed. The report follows.")"
+            NUM="${url##*/}"
+          fi
+          body > "$RUNNER_TEMP/nightly-report.md"
+          if [ -n "$nr" ]; then
+            gh issue comment "$NUM" --body-file "$RUNNER_TEMP/nightly-report.md"
+          else
+            gh issue edit "$NUM" --body-file "$RUNNER_TEMP/nightly-report.md"
           fi

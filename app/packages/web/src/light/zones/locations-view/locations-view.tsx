@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError, LightLocation, LightZone } from "../../shared/light-api/light-api";
 import {
   FORM_GRID,
@@ -9,7 +7,7 @@ import {
   SelectField,
   useSaveForm,
 } from "../../shared/ui/form/form";
-import { TextField } from "@/components/ui/fields/input/input";
+import { TextField } from "@/shared/ui/fields/input/input";
 import {
   LOCATION_REFUSABLE,
   NAME_MAX,
@@ -17,8 +15,6 @@ import {
   toLocationInput,
   type LocationFields,
 } from "../../shared/schemas";
-import { ENTRY } from "../zones-view/zones-view";
-import { kindText, zoneName } from "../../shared/texts";
 import { zoneLabel } from "@pflanzendex/core";
 
 export interface LocationInput {
@@ -78,43 +74,5 @@ export function LocationForm(props: {
         />
       </FormRoot>
     </Form>
-  );
-}
-
-export function LocationCard(props: {
-  location: LightLocation;
-  zones: readonly LightZone[];
-  onUpdate: Save;
-}) {
-  const { location } = props;
-  const [update, setUpdate] = useState(false);
-  const zone = zoneName(props.zones, location.lightZoneId);
-  if (update)
-    return (
-      <li className={ENTRY}>
-        <LocationForm
-          zones={props.zones}
-          start={location}
-          onCancel={() => setUpdate(false)}
-          onSave={async (e) => {
-            const f = await props.onUpdate(e);
-            if (!f) setUpdate(false);
-            return f;
-          }}
-        />
-      </li>
-    );
-  return (
-    <li className={ENTRY}>
-      <h3 className="text-lg font-semibold">{location.name}</h3>
-      <p className="text-sm text-muted-foreground">
-        {zone ?? "Keine Lichtzone"} · {kindText(location.kind)}
-      </p>
-      <div className="mt-3 flex flex-col gap-3 md:flex-row">
-        <Button type="button" variant="secondary" onClick={() => setUpdate(true)}>
-          {zone ? "Ändern" : "Lichtzone zuweisen"}
-        </Button>
-      </div>
-    </li>
   );
 }

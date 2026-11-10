@@ -5,11 +5,14 @@
   "description": "HTTP API: calls core only through its public interface",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/api.tsbuildinfo",
     "test": "vitest run",
-    "perf:measure": "tsx perf/measure.ts",
+    "ensure-bucket": "tsx src/media/ensure-bucket-cli.ts",
+    "perf:measure": "tsx perf/load/measure.ts",
+    "perf:concurrency": "tsx perf/load/concurrency.ts",
     "catalog:check-data": "tsx src/catalog/load/research/run-check.ts",
     "catalog:load": "tsx src/catalog/load/run.ts",
+    "taxonomy:build": "tsx src/pokedex/run-taxonomy-build.ts",
     "seed:catalog": "tsx perf/catalog-seed/run-seed.ts",
     "seed:demo": "tsx perf/demo-seed/run-demo-seed.ts"
   },

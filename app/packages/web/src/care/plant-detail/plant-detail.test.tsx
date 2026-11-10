@@ -125,14 +125,14 @@ describe("US-QS-23 Verlauf", () => {
     ).toEqual(["17\u00a0cm · 07.10.2026", "16\u00a0cm · 06.10.2026", "15\u00a0cm · 05.10.2026"]);
     expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?verlauf=2");
+    expect(screen.getByTestId("address").textContent).toBe("?vfrom=3");
     expect(screen.getByText("14 cm · 04.10.2026")).toBeTruthy();
   });
 
   it("US-QS-23 the photos of the measurements are fetched privately and shown in the page", async () => {
     server({
       "GET /specimens/e1/measurements": () =>
-        json(200, view({ measurements: [row(2, { photo: "p.jpg" }), row(1)] })),
+        json(200, view({ measurements: [row(2, { photo: "p.webp" }), row(1)] })),
       "GET /specimens/e1/measurements/m2/photo": () => new Response(new Uint8Array([1])),
     });
     URL.createObjectURL = vi.fn(() => "blob:m2");
@@ -204,7 +204,11 @@ describe("US-QS-23 Pflege", () => {
       }),
   };
   const show = () =>
-    render(<PlantCare api={API} token={TOKEN} specimen={{ id: "e1", name: "Aloe" }} />);
+    render(
+      <MemoryRouter>
+        <PlantCare api={API} token={TOKEN} specimen={{ id: "e1", name: "Aloe" }} />
+      </MemoryRouter>,
+    );
 
   it("US-QS-23 lists the open treatments of this plant only, the done ones as history", async () => {
     server(base);

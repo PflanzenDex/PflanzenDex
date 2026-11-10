@@ -1,0 +1,60 @@
+[
+  {
+    "species": "Crassula ovata",
+    "attributes": {}
+  },
+  {
+    "species": "Dracaena fragrans",
+    "attributes": {}
+  },
+  {
+    "species": "Calathea makoyana",
+    "attributes": {}
+  },
+  {
+    "species": "Maranta leuconeura",
+    "attributes": {
+      "minTemperature": {
+        "value": 15,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Maranta_leuconeura&oldid=1363082704",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation: states a minimum temperature of 15 °C. The article uses the name Maranta leuconeura."
+      },
+      "humidity": {
+        "value": "high",
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Maranta_leuconeura&oldid=1363082704",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation: states a need for high air humidity."
+      },
+      "lightDescription": {
+        "value": "bright_indirect",
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Maranta_leuconeura&oldid=1363082704",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation: states a preference for bright indirect light."
+      }
+    }
+  },
+  {
+    "species": "Philodendron hederaceum",
+    "attributes": {
+      "minTemperature": {
+        "value": 15,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Philodendron_hederaceum&oldid=1364805748",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Description and cultivation: states a minimum temperature requirement of 15 °C. Toxicity section is conflicting about cats, not stored."
+      }
+    }
+  },
+  {
+    "species": "Pilea peperomioides",
+    "attributes": {}
+  }
+]

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { SpeciesStub, InMemorySpecimens, testSpecies } from "../../collection/shared/test-helpers";
-import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "../index";
+import {
+  NO_PHASE_LOCATION,
+  carePhase,
+  carePhasesList,
+  carePhasesOf,
+  careProfileLocations,
+} from "../index";
 import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
 import { PhaseLocationStub } from "../shared/test-helpers";
 
@@ -171,5 +177,118 @@ describe("US-PHA-01 Phase of a specimen", () => {
       const r = await list(e, "anna", "2026-12-01T12:00:00Z", zone);
       expect(r).toMatchObject({ ok: false, error: { code: "input.invalid" } });
     }
+  });
+});
+
+describe("NFR-12 the phase list reads the care profiles once, however many specimens it lists", () => {
+  const GROWTH_SPOT = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const DORMANT_SPOT = "99999999-9999-4999-8999-999999999999";
+
+  it("NFR-12 every specimen gets its target from one reading of the profiles (no read per row)", async () => {
+    const profiles = new InMemoryCareProfiles({
+      anna: { locations: [GROWTH_SPOT, DORMANT_SPOT] },
+    });
+    await profiles.update("anna", WINTER, {
+      growthLocationId: GROWTH_SPOT,
+      dormancyLocationId: DORMANT_SPOT,
+    });
+    let reads = 0;
+    const counted = {
+      list: async (userId: string) => {
+        reads += 1;
+        return profiles.list(userId);
+      },
+    };
+    const e = await collection("anna", [
+      { speciesId: WINTER, name: "Bogenhanf 1", location: LOCATION },
+      { speciesId: WINTER, name: "Bogenhanf 2", location: LOCATION },
+      { speciesId: WINTER, name: "Bogenhanf 3", location: LOCATION },
+      { speciesId: SUMMER, name: "Aloe", location: LOCATION },
+    ]);
+    const r = await carePhasesList(
+      {
+        specimens: e,
+        species,
+        targets: careProfileLocations(counted),
+        profiles: counted,
+        clock: () => new Date("2026-12-01T12:00:00Z"),
+      },
+      "anna",
+      "UTC",
+    );
+    expect(reads).toBe(1);
+    const byName = new Map(r.ok ? r.value.map((row) => [row.name, row] as const) : []);
+    for (const name of ["Bogenhanf 1", "Bogenhanf 2", "Bogenhanf 3"])
+      expect(byName.get(name)).toMatchObject({ phase: "dormancy", targetLocationId: DORMANT_SPOT });
+    // No profile for Aloe: its target stays unknown (P-08).
+    expect(byName.get("Aloe")).toMatchObject({ targetLocationId: null });
+  });
+});
+
+describe("US-PHA-01 NFR-12 the phase of named specimens is the one of the phase list", () => {
+  const NOW = "2026-10-31T23:30:00Z"; // 31.10. in UTC, already 1.11. in Berlin
+  const deps = (specimens: InMemorySpecimens) => ({
+    specimens,
+    species,
+    profiles: new InMemoryCareProfiles(),
+    clock: () => new Date(NOW),
+  });
+  const idsOf = (store: InMemorySpecimens, userId: string) =>
+    store.rows.filter((r) => r.userId === userId).map((r) => r.id);
+
+  it("US-PHA-01 NFR-12 each named specimen has the phase of its row; cuttings and species without a period are missing", async () => {
+    const e = await collection(
+      "anna",
+      [
+        { speciesId: WINTER, name: "Bogenhanf" },
+        { speciesId: SUMMER, name: "Aloe" },
+        { speciesId: WITHOUT, name: "Efeutute" },
+        { speciesId: WINTER, name: "Steckling Bogenhanf" },
+      ],
+      { "Steckling Bogenhanf": "cutting" },
+    );
+    const rows = await list(e, "anna", NOW, "UTC");
+    const phases = await carePhasesOf(deps(e), "anna", idsOf(e, "anna"), "UTC");
+    expect(rows.ok && rows.value.length).toBe(2);
+    for (const row of rows.ok ? rows.value : []) expect(phases.get(row.specimenId)).toBe(row.phase);
+    expect(phases.size).toBe(2);
+    expect(phases.get(idsOf(e, "anna")[2] as string)).toBeUndefined();
+    expect(phases.get(idsOf(e, "anna")[3] as string)).toBeUndefined();
+  });
+
+  it("US-PHA-01 NFR-12 the phase follows today's date in the user's time zone", async () => {
+    const e = await collection("anna", [{ speciesId: WINTER, name: "Bogenhanf" }]);
+    const ids = idsOf(e, "anna");
+    expect((await carePhasesOf(deps(e), "anna", ids, "Europe/Berlin")).get(ids[0] as string)).toBe(
+      "dormancy",
+    );
+    expect((await carePhasesOf(deps(e), "anna", ids, "UTC")).get(ids[0] as string)).toBe("growth");
+  });
+
+  it("US-PHA-01 NFR-12 P-04: another account's specimen is missing, and nothing is read for no ID", async () => {
+    const ben = await collection("ben", [{ speciesId: WINTER, name: "Ben" }]);
+    const benId = idsOf(ben, "ben");
+    expect((await carePhasesOf(deps(ben), "anna", benId, "UTC")).size).toBe(0);
+    expect((await carePhasesOf(deps(ben), "ben", benId, "UTC")).size).toBe(1);
+    expect((await carePhasesOf(deps(ben), "ben", [], "UTC")).size).toBe(0);
+  });
+
+  it("US-PHA-01 US-SOZ-09 NFR-12 carePhasesOf reads the species of the named plants only", async () => {
+    const e = await collection("anna", [
+      { speciesId: WINTER, name: "Bogenhanf" },
+      { speciesId: SUMMER, name: "Aloe" },
+    ]);
+    const [winter = ""] = idsOf(e, "anna");
+    const asked: (readonly string[])[] = [];
+    const recording = {
+      find: (userId: string, id: string) => species.find(userId, id),
+      findMany: (userId: string, ids: readonly string[]) => {
+        asked.push([...ids]);
+        return species.findMany(userId, ids);
+      },
+    };
+    const phases = await carePhasesOf({ ...deps(e), species: recording }, "anna", [winter], "UTC");
+    expect([...phases.keys()]).toEqual([winter]);
+    expect(asked).toEqual([[WINTER]]);
   });
 });

@@ -31,7 +31,7 @@ beforeAll(async () => {
   for (const id of [mine, other]) await admin.query("insert into account (id) values ($1)", [id]);
   await fillAccountWithFixtures(pool, FIXTURES, mine);
   await fillAccountWithFixtures(pool, FIXTURES, other);
-  await attachPhotos(admin, mine, ["m-photo.jpg", "w-photo.jpg"]);
+  await attachPhotos(admin, mine, ["m-photo.webp", "w-photo.webp"]);
   await createCatalogContributions(admin, mine, { shared, proposal });
 });
 afterAll(async () => {
@@ -72,11 +72,19 @@ describe("US-ACC-04 AccountDataSource: export of all own data", () => {
     const snapshot = await new AccountDataPostgres(pool).read(mine);
     expect(snapshot?.photos).toEqual(
       expect.arrayContaining([
-        { table: "measurement", column: "photo", name: "m-photo.jpg" },
-        { table: "wish", column: "image_object", name: "w-photo.jpg" },
+        { table: "measurement", column: "photo", name: "m-photo.webp" },
+        { table: "wish", column: "image_object", name: "w-photo.webp" },
       ]),
     );
     const species = (snapshot?.tables["species"] ?? []).map((r) => r["id"]);
     expect(species).toEqual(expect.arrayContaining([shared, proposal]));
+  });
+
+  it("US-MON-09 the export carries the fertilizing entries of the keeper, and none of another account", async () => {
+    const snapshot = await new AccountDataPostgres(pool).read(mine);
+    const rows = snapshot?.tables["fertilizing_log"] ?? [];
+    expect(rows.length).toBeGreaterThan(0);
+    expect(JSON.stringify(rows[0])).toContain("2026-10-10");
+    expect(JSON.stringify(rows)).not.toContain(other);
   });
 });

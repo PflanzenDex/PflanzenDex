@@ -2,19 +2,22 @@
 
 Goal: the keeper records their plant equipment (lamps, timers, sensors, substrate, fertilizer, pots, …). This ties the light zones to real devices, makes gaps and maintenance visible and is the **honest basis for labeled affiliate recommendations** (stage 2 in `13-Business-Case.md`). The recommendation is a by-product of a real need, not the purpose of the tracking.
 
+Note (US-BES-19): a pot is an equipment record of type `Pot` (DM-EQU-05). The repot planner that uses pots, with the free-pot list and the repot hints, is US-BES-19 in `02-collection.md`.
+
 Replacement: replaces `../prototype/13-equipment-and-affiliate.md`. Dropped: equipment notes in the vault, `processFrontMatter`, "equipment in the vault is the truth" (FR-EQU-02). In terms of content the stories and the rules for recommendations apply unchanged.
 
 ## Terms
 
-| Term           | Meaning                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Equipment      | Everything material for care except the plants. One record per device or per consumable type.                     |
-| Device         | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                           |
-| Consumable     | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                           |
-| Lamp device    | Device of type lamp, assigned to a light zone (US-LIC-05).                                                        |
-| Product id     | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not. |
-| Recommendation | Product suggestion shown by the system with reasoning from own data.                                              |
-| Affiliate link | Labeled product link with commission; arises only at display time.                                                |
+| Term           | Meaning                                                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Equipment      | Everything material for care except the plants. One record per device or per consumable type.                              |
+| Device         | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                                    |
+| Consumable     | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                                    |
+| Pot            | Equipment with a state and a size that holds one plant at a time (DM-EQU-05, US-BES-19); no lifetime, operation or supply. |
+| Lamp device    | Device of type lamp, assigned to a light zone (US-LIC-05).                                                                 |
+| Product id     | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not.          |
+| Recommendation | Product suggestion shown by the system with reasoning from own data.                                                       |
+| Affiliate link | Labeled product link with commission; arises only at display time.                                                         |
 
 ## User stories
 
@@ -35,6 +38,7 @@ Acceptance criteria:
 
 - A lamp device belongs to exactly one light zone (selection, no text).
 - The zone view shows per zone the assigned devices and their state (`active`, `defective`, `retired`).
+- Given a changed state of a device, when it is saved, then a toast says the new state and offers "Rückgängig", which writes the previous state back (US-QS-07, P-10, issue 1028).
 - Warning if a zone 2–4 has specimens but **no active lamp device** (P-10).
 - Hint (no error) if an active lamp device serves no occupied zone (unused capacity).
 - The distribution of the specimens (US-LIC-02) stays unchanged; equipment extends it with the device list.
@@ -60,7 +64,7 @@ Acceptance criteria:
 - If an interval is set and the last check (for lamps: last measurement) is older, "Check due: <device>" appears in "Today" and as a reminder (US-MON-01).
 - No lifetime or wear values without an entry; manufacturer values only as `Lifetime_Statement` with `Source`. Without an interval no due date.
 
-Decisions (assumption, decided by the PO): only a device (a record with a state) has operation data; a consumable has none. `In_Operation_Since` is a calendar date, `Check_Interval_Days` is 1 to 3,650 (starting values), `Lifetime_Statement` is free text up to 80 characters and is stored only together with its source (up to 80 characters), never alone (P-08). The keeper confirms a check with "Jetzt geprüft" (date of today in the keeper's time zone); for a lamp the last measurement counts as a check as well, the newer one wins. A check is due when the days since the last check reach the interval; before the first check the interval counts from `In_Operation_Since`, and with neither the device counts as never checked and is due (the keeper asked for checks, none happened). A `defective` or `retired` device is not reported (it needs repair or replacement, US-EQU-07). The reminder is its own occasion `equipment` ("Equipment-Prüfung") that can be switched off or paused like the others (US-MON-08).
+Decisions (assumption, decided by the PO): only a device (a record with a state) has operation data; a consumable has none. `In_Operation_Since` is a calendar date, `Check_Interval_Days` is 1 to 3,650 (starting values), `Lifetime_Statement` is free text up to 80 characters and is stored only together with its source (up to 80 characters), never alone (P-08). The keeper confirms a check with "Jetzt geprüft" (date of today in the keeper's time zone); for a lamp the last measurement counts as a check as well, the newer one wins. A check is due when the days since the last check reach the interval; before the first check the interval counts from `In_Operation_Since`, and with neither the device counts as never checked and is due (the keeper asked for checks, none happened). A `defective` or `retired` device is not reported (it needs repair or replacement, US-EQU-07). The reminder is its own occasion `equipment` ("Geräte-Prüfung") that can be switched off or paused like the others (US-MON-08).
 
 ### US-EQU-05 · Consumables and supply · 🟨 new
 
@@ -70,8 +74,11 @@ Acceptance criteria:
 - `low`/`empty` creates an entry in "Rebuy" (US-EQU-07).
 - A plant agent can be linked to `Treatment.Agent`; without a link the free text stays unchanged.
 - The species' `Substrate` stays free text; optional link to a consumable.
+- Given a changed supply, when it is saved, then a toast offers "Rückgängig", which writes the previous level back (US-QS-07, P-10, issue 1028).
 
 Decisions (assumption, decided by the PO): the consumable types are `Substrate`, `Fertilizer` and `Plant agent`; `Other` stays a device with a state, because a generic record cannot be both. A new consumable starts `available`; a consumable recorded before has no value and reads `available`; a device has no supply. The supply changes by tap and may jump to any level. `Agent_Link` is a text of up to 80 characters that the keeper links to a plant agent; it is matched against `Treatment.Agent` case-insensitively and never changes the free text of a treatment. The entry in "Rebuy" is derived by US-EQU-07, not stored. The link from the species' `Substrate` to a consumable is open: a species is shared, equipment is private to the account (P-05), so the link needs its own decision.
+
+The consumable type `Substrate` folds into the substrate model of epic SUB (US-SUB-01; no migration job, because no production data exists yet). Supports (US-SUB-08) are equipment items. The shop links of the epics VAR, SUB and DEAL carry no affiliate parameter; FR-EQU-03 to FR-EQU-05 apply to any later partner link.
 
 ### US-EQU-06 · Assign sensors and accessories · 🟨 new
 
@@ -103,6 +110,7 @@ Acceptance criteria:
 - The wishlist knows wishes of type equipment; "Bought" opens US-EQU-01 with prefilled fields (name, product id, type).
 - Price and purchase date go, if set, into the cost view (US-EQU-09); if they are missing, nothing is invented.
 - Plant and equipment wishes are counted separately; the buffer check (US-WUN-02) counts only plants.
+- Given the layer "Geräte-Wünsche", then it fits one screen (US-QS-15): a segment "Offen | Gekauft | Verworfen" with the count of each shows one group, paged by the free height of the layer, and "Geräte-Wunsch erfassen" opens the form as a layer of its own; saving or Back returns to the wishes (decision of the owner, 2026-11-02, issue 1154).
 
 Decisions (assumption, decided by the PO): an equipment wish lives in the same table as the plant wishes (`Type: equipment`) with the equipment `Type`, an optional product id and an optional planned price; it has no target zone and no difficulty. The name is unique among all wishes of the account (FR-WUN-06). It is created, bought and discarded through its own operations (`equipment_wish.*`); every plant query keeps filtering on `Type: plant`, so the candidate list, the buffer and the zone hints of the plant wishes are unchanged and the equipment wishes are counted apart. "Bought" sets the status `bought`, keeps the wish under "bought" (P-10) and returns the prefill (type, name, product id, price) that fills the form of US-EQU-01; the keeper confirms the form, the wish is not linked to the record. The purchase date is not prefilled (nothing invented, P-08); the price only reaches the cost view (US-EQU-09) once the equipment is recorded. The schema change is additive (expand, migration 0061); the previous app version ignores it.
 
@@ -176,6 +184,21 @@ Decisions (assumption, decided by the PO): the setting `private` (default) or `f
 ### DM-EQU-04 Recommendation configuration
 
 Per account: `Recommendations_Active` (default `true`), `Hidden`, `Click_Measurement_Consent` (date or empty). The **partner configuration** (programs, partner IDs) belongs to the operator and never to user data (FR-EQU-04).
+
+### DM-EQU-05 Pot (extension)
+
+`Diameter_cm` and `Height_cm` (centimeters, 1 to 300, starting value, assumption), `Material` (text up to 60 characters) and `Drainage` (`yes | no`) are optional; an unknown value reads "unbekannt" (P-08). A pot is an equipment record of type `Pot` with a `Status` (`active | defective | retired`, DM-EQU-01) and no operation data. It holds one plant at a time (US-BES-19). Shared under US-EQU-12, a pot shows only the whitelist (type, name or model, note); its size, material, drainage and location are never shared. Assumption, to confirm by the owner: US-EQU-04 counts every record with a state as a device, which would include pots; a pot carries no operation data and no check interval.
+
+### DM-EQU-06 Pot placement (pot × plant)
+
+| Field     | Required | Meaning                                                                                                      |
+| --------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| Pot       | yes      | Own equipment record of type `Pot` (DM-EQU-05)                                                               |
+| Plant     | yes      | Own specimen (DM-BES-02)                                                                                     |
+| Placed on | yes      | Local calendar day the plant went into the pot, usually the day of a repot (US-BES-19, NFR-08)               |
+| Left on   | no       | Local calendar day the plant left the pot; empty = the plant is in it now. Placements stay as history (P-10) |
+
+A pot has at most one open placement and a plant at most one. A pot is free when it is `active` and has no open placement of a plant that is not archived, so archiving a plant frees its pot without a write (US-BES-19).
 
 ## Requirements
 

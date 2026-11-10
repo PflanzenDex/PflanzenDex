@@ -140,6 +140,30 @@ describe("US-POK-07 catch date of a back-dated specimen (FR-BES-04)", () => {
   });
 });
 
+describe("US-POK-07 catch date at the clock changes and local midnight (NFR-08, QG-D4)", () => {
+  // Berlin switches to summer time at 2026-03-29 01:00 UTC and back at 2026-10-25 01:00 UTC. The creation instant
+  // decides the local calendar date: not the UTC date, not a 24-hour block around the switch.
+  it.each([
+    ["2026-03-28T22:59:59Z", "2026-03-28"], // 23:59:59 CET, the day before the switch
+    ["2026-03-28T23:00:00Z", "2026-03-29"], // 00:00 CET, local midnight of the switch day
+    ["2026-03-29T00:59:59Z", "2026-03-29"], // 01:59:59 CET, just before the switch
+    ["2026-03-29T01:00:00Z", "2026-03-29"], // 03:00 CEST, just after the switch
+    ["2026-03-29T21:59:59Z", "2026-03-29"], // 23:59:59 CEST, the switch day is one calendar day
+    ["2026-03-29T22:00:00Z", "2026-03-30"], // 00:00 CEST, local midnight after the switch
+    ["2026-06-14T21:59:59Z", "2026-06-14"], // 23:59:59 CEST, an ordinary day near midnight
+    ["2026-06-14T22:00:00Z", "2026-06-15"], // 00:00 CEST, the next local day
+    ["2026-10-24T21:59:59Z", "2026-10-24"], // 23:59:59 CEST, the day before the switch back
+    ["2026-10-24T22:00:00Z", "2026-10-25"], // 00:00 CEST, local midnight of the switch day
+    ["2026-10-25T00:59:59Z", "2026-10-25"], // 02:59:59 CEST, just before the switch back
+    ["2026-10-25T01:00:00Z", "2026-10-25"], // 02:00 CET, just after the switch back
+    ["2026-10-25T22:59:59Z", "2026-10-25"], // 23:59:59 CET, the switch day is one calendar day
+    ["2026-10-25T23:00:00Z", "2026-10-26"], // 00:00 CET, local midnight after the switch back
+  ])("US-POK-07 the creation instant %s is the Berlin date %s", async (instant, local) => {
+    await add("anna", { caughtAt: null, createdAt: instant });
+    expect(await dateOf("anna", "Europe/Berlin")).toEqual({ date: local, source: "created_at" });
+  });
+});
+
 describe("US-BES-11 the Pokédex follows a corrected catch date (US-POK-07)", () => {
   // Test-only port over the in-memory rows; the derived Pokédex date is never stored (P-01).
   const catchDates: CatchDateStore = {

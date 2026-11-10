@@ -1,8 +1,9 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 import type { Pool } from "pg";
-import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
-import { ALL_FEATURES } from "@pflanzendex/core";
+import { COLLECTION_REPOINTERS, isDatabaseUnavailable } from "@pflanzendex/db";
+import { ALL_FEATURES, appError } from "@pflanzendex/core";
 import {
   OPERATOR_PATHS,
   accountRoutes,
@@ -17,6 +18,7 @@ import {
   SPECIMEN_PATHS,
   careProfileRoutes,
   careProfileZoneUsageFor,
+  collectionReadSourceFor,
   specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
@@ -33,14 +35,23 @@ import {
 import { wishZoneUsageFor } from "./wishlist";
 import { equipmentLocationUsageFor, equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
-import { featureAccess, writeLimit, type FeatureAccess } from "./kernel";
+import {
+  accountEtag,
+  errorBody,
+  featureAccess,
+  redeemGate,
+  runningVersion,
+  statusFor,
+  writeLimit,
+  type FeatureAccess,
+} from "./kernel";
 import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { achievementsRoutes } from "./achievements";
 import { discoverRoutes, discoverSourceFor } from "./discover";
 import { monitoringRoutes } from "./monitoring";
-import { deletionRoutes, exportRoutes } from "./privacy";
+import { deletionRoutes, exportRoutes, operatorDeletionRoutes } from "./privacy";
 import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
 import {
@@ -54,6 +65,7 @@ import {
 } from "./app-bindings";
 import { measurementPhotoSourceFor, targetLocationFor } from "./care";
 import { todayStatusSource } from "./today";
+import { appAreaReadsFor } from "./ai-collection-reads";
 
 export type { AppOptions } from "./app-options";
 
@@ -69,22 +81,29 @@ function bindAccount(
     pool,
     opt.invitationOnly === undefined ? {} : { invitationOnly: opt.invitationOnly },
   );
-  app.route("/", registrationRoutes(pool, verifier));
-  app.use("/account", auth);
+  app.route(
+    "/",
+    registrationRoutes(pool, verifier, opt.redeemLimit ? redeemGate(opt.redeemLimit) : undefined),
+  );
+  // `/account/*` also matches `/account` itself: one registration guards both (NFR-12).
   app.use("/account/*", auth);
   app.route("/account", accountRoutes(pool, opt.access));
   app.route("/account", exportRoutes(pool, opt.media?.store));
   app.route("/account", deletionRoutes(pool, opt.clock));
-  for (const path of OPERATOR_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of OPERATOR_PATHS) app.use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
+  app.route("/", operatorDeletionRoutes(pool, opt.clock));
   return auth;
 }
 
 /** The protected routes of all modules behind the sign-in guard. */
 function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool) {
   const features = featureAccess(pool, opt.features ?? ALL_FEATURES);
+  // Every answer of the account may be asked again with its ETag (NFR-12, issue 1244); registered first, so it wraps all
+  // protected routes and not the public health routes, which answer before it.
+  app.use("*", accountEtag());
   const auth = bindAccount(app, reviewer, pool, { ...opt, access: features });
-  for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of LIGHT_PATHS) app.use(`${path}/*`, auth);
   app.route(
     "/",
     lightRoutes(
@@ -98,23 +117,23 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
       [equipmentLocationUsageFor(pool)],
     ),
   );
-  for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of SPECIES_PATHS) app.use(`${path}/*`, auth);
   app.route("/", speciesRoutes(pool));
-  for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of REVIEW_PATHS) app.use(`${path}/*`, auth);
   app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
   for (const path of GAP_PATHS) app.use(path, auth);
   app.route("/", gapRoutes(pool));
-  for (const path of CORRECTION_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of CORRECTION_PATHS) app.use(`${path}/*`, auth);
   app.route("/", correctionRoutes(pool));
-  for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of SPECIMEN_PATHS) app.use(`${path}/*`, auth);
   app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
-  for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of POKEDEX_PATHS) app.use(`${path}/*`, auth);
   app.route("/", pokedexRoutes(pool));
   app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
   app.route("/", achievementsRoutes(pool, auth, opt.clock));
   app.route("/", unlockRoutes(pool, auth, features, opt));
-  app.route("/", monitoringRoutes(pool, auth));
-  for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", monitoringRoutes(pool, auth, opt.clock));
+  for (const path of CARE_PROFILE_PATHS) app.use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));
   bindWishlist(app, pool, auth, opt);
   bindEquipment(app, pool, auth, { zoneStock: opt.zoneStock, features, products: opt.products });
@@ -130,18 +149,35 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   bindToday(app, pool, auth, today);
   app.route(
     "/",
-    aiAccessRoutes(pool, auth, opt.ai && { ...opt.ai, features }, {
+    aiAccessRoutes(pool, auth, opt.ai && { version: opt.version, ...opt.ai, features }, {
       status: todayStatusSource(pool, today),
       photo: measurementPhotoSourceFor(pool, opt.media),
       discover: discoverSourceFor(pool, opt.zoneStock),
+      collection: collectionReadSourceFor(pool, { clock: opt.clock, ...careSources(pool, opt) }),
+      areas: appAreaReadsFor(pool, { ...opt, zoneStock: today.zoneStock, features }),
       ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
     }),
   );
 }
 
+/**
+ * Failures that no route answered (NFR-12, FR-QG-11, P-10). A database that did not answer in time, or cannot be reached,
+ * gets the stable code `system.database_unavailable` (503); any other failure is a server error with the code
+ * `system.unexpected`. The cause is logged with the running version (US-DEV-06), never sent.
+ */
+function failureAnswer(error: Error | HTTPException, c: Context) {
+  if (error instanceof HTTPException) return error.getResponse();
+  const unavailable = isDatabaseUnavailable(error);
+  if (unavailable) console.error("Database unavailable", error.message);
+  else console.error(`Request failed (version ${runningVersion()})`, error);
+  const failure = appError(unavailable ? "system.database_unavailable" : "system.unexpected");
+  return c.json(errorBody(failure), statusFor(failure));
+}
+
 export function createApp(opt: AppOptions = {}): Hono {
   const { version = "unknown", commit = "unknown" } = opt;
   const app = new Hono();
+  app.onError((error, c) => failureAnswer(error, c));
   if (opt.webOrigin)
     app.use(
       "*",

@@ -1,0 +1,54 @@
+{
+  "note": "The only allowed issue labels and board options (FR-DEV-10, US-DEV-05), and the one label the workflows set on pull requests (pullRequestLabels, US-DEV-13). Every issue carries exactly one type label and one epic label from this file. A new type or epic is a pull request to this file that the owner merges. Board options: the field Typ matches its option name exactly; the field Epic, Priority and Release match the option whose name starts with the code (for example ACC matches the option \"ACC · …\", R2 matches \"R2 Soziales\"), so the option texts of the board stay out of this file. An epic whose board option does not start with its code names that option in `option` (E: decisions E-nn, TE: platform enablers TE-nn; owner decision 2026-11-04); the same holds for the release S2 (stage 2). Releases: `make issue` sets the field Release by a rule in issue-lib.mjs (FR-DEV-10); RELEASE=<code> overrides it and must be one of these codes.",
+  "types": [
+    { "label": "story", "typ": "Story" },
+    { "label": "enabler", "typ": "Enabler" },
+    { "label": "bug", "typ": "Bug" },
+    { "label": "epic", "typ": "Epic" },
+    { "label": "entscheidung", "typ": "Entscheidung" }
+  ],
+  "epics": [
+    { "code": "ACC", "label": "epic:ACC" },
+    { "code": "BES", "label": "epic:BES" },
+    { "code": "LIC", "label": "epic:LIC" },
+    { "code": "PHA", "label": "epic:PHA" },
+    { "code": "WAC", "label": "epic:WAC" },
+    { "code": "BEH", "label": "epic:BEH" },
+    { "code": "WUN", "label": "epic:WUN" },
+    { "code": "POK", "label": "epic:POK" },
+    { "code": "MON", "label": "epic:MON" },
+    { "code": "SOZ", "label": "epic:SOZ" },
+    { "code": "EQU", "label": "epic:EQU" },
+    { "code": "KI", "label": "epic:KI" },
+    { "code": "QS", "label": "epic:QS" },
+    { "code": "ENT", "label": "epic:ENT" },
+    { "code": "ACH", "label": "epic:ACH" },
+    { "code": "TAU", "label": "epic:TAU" },
+    { "code": "ONB", "label": "epic:ONB" },
+    { "code": "VAR", "label": "epic:VAR" },
+    { "code": "SUB", "label": "epic:SUB" },
+    { "code": "DEAL", "label": "epic:DEAL" },
+    { "code": "QG", "label": "epic:QG" },
+    { "code": "DEV", "label": "epic:DEV" },
+    { "code": "E", "label": "epic:E", "option": "Entscheidungen" },
+    { "code": "TE", "label": "epic:TE", "option": "Plattform-Enabler" }
+  ],
+  "priorities": ["P0", "P1", "P2", "P3"],
+  "releases": [
+    { "code": "R0" },
+    { "code": "R1" },
+    { "code": "R2" },
+    { "code": "R3" },
+    { "code": "R4" },
+    { "code": "R5" },
+    { "code": "R6" },
+    { "code": "S2", "option": "Stufe 2" }
+  ],
+  "pullRequestLabels": [
+    {
+      "label": "owner-merge",
+      "color": "D93F0B",
+      "description": "Changes a gate file: only the owner merges it (make merge refuses it)"
+    }
+  ]
+}

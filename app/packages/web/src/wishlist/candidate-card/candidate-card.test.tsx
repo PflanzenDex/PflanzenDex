@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CandidateCard } from "./candidate-card";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const mockCandidate = (overrides: Partial<Candidate> = {}): Candidate => ({
   id: "w1",
@@ -64,7 +66,7 @@ describe("US-WUN-04 the stored image of a candidate", () => {
     );
     const img = await screen.findByRole("img", { name: "Bild von Geigenfeige (Ficus lyrata)" });
     expect(img.getAttribute("src")).toBe("blob:wish");
-    expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/wishes/w1/image");
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe("http://api/wishes/w1/image?size=thumb");
     expect(screen.getByText(/Quelle: Anna Beispiel/)).toBeTruthy();
     expect(screen.getByText(/Lizenz: CC BY-SA 4.0/)).toBeTruthy();
     expect(screen.queryByText("Bild ansehen (öffnet extern)")).toBeNull();
@@ -127,5 +129,187 @@ describe("US-WUN-04 the stored image of a candidate", () => {
       <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
     );
     expect(await screen.findByText(/gibt es bei Wikimedia Commons nicht/)).toBeTruthy();
+  });
+
+  it("NFR-12 US-WUN-04 the card asks the API for the 256 px thumbnail of its stored image, not the full copy", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(new Uint8Array([1])));
+    vi.stubGlobal("fetch", fetchFn);
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await screen.findByRole("img", { name: "Bild von Geigenfeige (Ficus lyrata)" });
+    const pictureRequests = fetchFn.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.includes("/image"));
+    expect(pictureRequests).toEqual(["http://api/wishes/w1/image?size=thumb"]);
+  });
+});
+
+const THUMB = "http://api/wishes/w1/image?size=thumb";
+const FULL = "http://api/wishes/w1/image";
+const PICTURE = "Bild von Geigenfeige (Ficus lyrata) groß anzeigen";
+const DIALOG = "Bild von Geigenfeige (Ficus lyrata)";
+
+/** Answers the thumbnail at once; the full copy (no size) gets `full`, so a test can hold it back or fail it. */
+function routeFetch(
+  full: () => Response | Promise<Response> = () => new Response(new Uint8Array([2])),
+) {
+  const fetchFn = vi.fn<typeof fetch>(async (input) =>
+    String(input) === THUMB ? new Response(new Uint8Array([1])) : full(),
+  );
+  vi.stubGlobal("fetch", fetchFn);
+  return fetchFn;
+}
+const requested = (fetchFn: ReturnType<typeof routeFetch>) =>
+  fetchFn.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/image"));
+
+describe("US-WUN-06 a stored picture opens large from the card", () => {
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => "blob:wish");
+    URL.revokeObjectURL = vi.fn();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("the card asks only for the thumbnail; the full copy waits for the tap", async () => {
+    const fetchFn = routeFetch();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await screen.findByRole("button", { name: PICTURE });
+    expect(requested(fetchFn)).toEqual([THUMB]);
+  });
+
+  it("a tap loads the full copy once and shows it large under the title Bild von …", async () => {
+    const fetchFn = routeFetch();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: PICTURE }));
+    const dialog = await screen.findByRole("dialog", { name: DIALOG });
+    await within(dialog).findByRole("img", { name: DIALOG });
+    expect(requested(fetchFn).filter((url) => url === FULL)).toHaveLength(1);
+  });
+
+  it("the large view shows the loading text while the full copy is on its way", async () => {
+    routeFetch(() => new Promise<Response>(() => undefined));
+    delayLoads();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: PICTURE }));
+    const dialog = await screen.findByRole("dialog", { name: DIALOG });
+    expect((await within(dialog).findByRole("status")).textContent).toBe("Bild wird geladen …");
+  });
+
+  it.each([360, 1024])(
+    "US-WUN-06 Escape closes the large view and returns the focus to the picture (%i px)",
+    async (width) => {
+      setViewportWidth(width);
+      routeFetch();
+      render(
+        <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+      );
+      const picture = await screen.findByRole("button", { name: PICTURE });
+      await userEvent.click(picture);
+      await screen.findByRole("dialog", { name: DIALOG });
+      await userEvent.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() => expect(document.activeElement).toBe(picture));
+    },
+  );
+
+  it.each([360, 1024])(
+    "US-WUN-06 the close button closes the large view and returns the focus to the picture (%i px)",
+    async (width) => {
+      setViewportWidth(width);
+      routeFetch();
+      render(
+        <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+      );
+      const picture = await screen.findByRole("button", { name: PICTURE });
+      await userEvent.click(picture);
+      const dialog = await screen.findByRole("dialog", { name: DIALOG });
+      await userEvent.click(within(dialog).getByRole("button", { name: "Schließen" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() => expect(document.activeElement).toBe(picture));
+    },
+  );
+
+  it("the picture opens by keyboard: Tab reaches it, Enter opens it", async () => {
+    const fetchFn = routeFetch();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    const picture = await screen.findByRole("button", { name: PICTURE });
+    await userEvent.tab();
+    await waitFor(() => expect(document.activeElement).toBe(picture));
+    await userEvent.keyboard("{Enter}");
+    await screen.findByRole("dialog", { name: DIALOG });
+    expect(requested(fetchFn)).toContain(FULL);
+  });
+
+  it("the source and the license stay on the card and show again in the large view", async () => {
+    routeFetch();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await screen.findByRole("button", { name: PICTURE });
+    expect(screen.getByText(/Quelle: Anna Beispiel/)).toBeTruthy();
+    expect(screen.getByText(/Lizenz: CC BY-SA 4.0/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: PICTURE }));
+    const dialog = await screen.findByRole("dialog", { name: DIALOG });
+    expect(within(dialog).getByText(/Quelle: Anna Beispiel/)).toBeTruthy();
+    expect(within(dialog).getByText(/Lizenz: CC BY-SA 4.0/)).toBeTruthy();
+  });
+
+  it("reopening the large view does not fetch the full copy again while the cache has it", async () => {
+    const fetchFn = routeFetch();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: PICTURE }));
+    const dialog = await screen.findByRole("dialog", { name: DIALOG });
+    await within(dialog).findByRole("img", { name: DIALOG });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await userEvent.click(screen.getByRole("button", { name: PICTURE }));
+    await screen.findByRole("dialog", { name: DIALOG });
+    expect(requested(fetchFn).filter((url) => url === FULL)).toHaveLength(1);
+  });
+
+  it("the picture sits in a row next to the title and is 128 px wide (starting value, assumption)", async () => {
+    routeFetch();
+    render(
+      <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
+    );
+    const picture = await screen.findByRole("button", { name: PICTURE });
+    const title = screen.getByRole("heading", { name: "Geigenfeige (Ficus lyrata)" });
+    const row = picture.closest(".flex");
+    expect(row?.contains(title)).toBe(true);
+    expect(picture.className).toContain("w-32");
+  });
+
+  it("without a stored picture there is no picture button and nothing opens large", () => {
+    render(<CandidateCard c={mockCandidate()} rank={1} photoAccess={ACCESS} />);
+    expect(screen.getByText("Kein Bild")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /groß anzeigen/ })).toBeNull();
+    cleanup();
+    render(
+      <CandidateCard
+        c={mockCandidate({ image: image(false) })}
+        rank={1}
+        photoAccess={ACCESS}
+        onStoreImage={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Bild ansehen (öffnet extern)" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Bild speichern: Geigenfeige (Ficus lyrata)" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /groß anzeigen/ })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

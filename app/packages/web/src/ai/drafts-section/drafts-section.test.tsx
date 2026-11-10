@@ -2,9 +2,13 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../kernel";
+import { createQueryClient } from "../../shared/data";
 import { DraftsSection } from "./drafts-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../ai.de.json";
+import { DraftsSkeleton } from "./drafts-section.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -37,7 +41,9 @@ function fakeServer(rows: Record<string, unknown>[]) {
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <DraftsSection api="http://api" token={token} />
+      <MemoryRouter>
+        <DraftsSection api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 afterEach(() => {
@@ -82,4 +88,12 @@ describe("US-KI-09 inbox of AI drafts", () => {
     const list = await screen.findByRole("list", { name: "KI-Entwürfe" });
     expect(list.textContent).toContain("Entscheidung bei Entdecken: Ficus carica (Ja)");
   });
+});
+
+describe("US-QS-14 issue 1697 · the drafts show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <DraftsSkeleton label={table["drafts.loading"]} />,
+      table["drafts.loading"],
+    ));
 });

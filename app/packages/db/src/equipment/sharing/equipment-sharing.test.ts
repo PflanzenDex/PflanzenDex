@@ -20,6 +20,10 @@ const bare = {
   boughtAt: null,
   note: null,
   lightZoneId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 async function device(owner: string, name: string) {
   const r = await equipment.create(owner, { type: "Timer", name, ...bare }, "active");

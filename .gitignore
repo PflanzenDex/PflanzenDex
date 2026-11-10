@@ -1,11 +1,13 @@
 node_modules/
 dist/
 coverage/
+.vitest/
 *.log
 .env
 .env.*
 !.env.example
 .DS_Store
+.idea/
 .worktrees/
 .env.worktree
 .claude/settings.local.json
@@ -13,6 +15,10 @@ coverage/
 .lighthouseci/
 app/packages/e2e/test-results/
 app/packages/e2e/playwright-report/
+app/packages/e2e/one-screen-report/
+app/packages/e2e/a11y-routes-report/
+app/packages/e2e/one-screen-shards/
+app/packages/e2e/a11y-routes-shards/
 *.tsbuildinfo
 # Database backups hold password hashes and realm keys; the old default folder of backup.sh lay inside the repo.
 app/config/deploy/backups/

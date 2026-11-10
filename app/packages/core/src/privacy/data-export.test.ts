@@ -3,8 +3,8 @@ import { InMemoryObjectStore } from "../media";
 import { canonicalJson, exportAccountData, type AccountDataSnapshot } from "./data-export";
 
 const ACCOUNT = "11111111-1111-4111-8111-111111111111";
-const PHOTO = "aaaaaaaa-0000-4000-8000-000000000001.jpg";
-const GONE = "aaaaaaaa-0000-4000-8000-000000000002.jpg";
+const PHOTO = "aaaaaaaa-0000-4000-8000-000000000001.webp";
+const GONE = "aaaaaaaa-0000-4000-8000-000000000002.webp";
 
 const snapshot: AccountDataSnapshot = {
   tables: {
@@ -23,7 +23,7 @@ const snapshot: AccountDataSnapshot = {
 
 async function fixture(read: AccountDataSnapshot | null = snapshot) {
   const photos = new InMemoryObjectStore();
-  await photos.put(ACCOUNT, PHOTO, new Uint8Array([1, 2, 3]), "image/jpeg");
+  await photos.put(ACCOUNT, PHOTO, new Uint8Array([1, 2, 3]), "image/webp");
   return { photos, source: { read: async () => read } };
 }
 

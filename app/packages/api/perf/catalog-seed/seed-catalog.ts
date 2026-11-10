@@ -6,9 +6,9 @@ import type { SeedRow } from "./species-list.ts";
 // Writes demo species as an operator batch (`curated`, FR-BES-11) on a superuser connection, which is the only way
 // to create `created_by = 'operator'` rows outside the application. Difficulty, default level and lux need (#1003) and
 // growth measure, etiolation signs and success criteria (#1005) are never written: without a source they stay unknown
-// (P-08). Same text as migration 0095 writes into rows it cleared.
+// (P-08). The text is shown to users, so it is German (US-QS-24); migration 0098 renames the rows written before.
 export const SEED_SOURCE =
-  "Dev seed: names and family from common botanical knowledge; difficulty and light need unknown";
+  "Dev-Seed: Namen und Familie aus allgemeinem botanischem Wissen; Schwierigkeit und Lichtbedarf unbekannt";
 
 /** Inserts one species with its names and its `curated` review case (same transaction as the caller). */
 async function insertSpecies(

@@ -2,14 +2,18 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../kernel";
-import { TasksSection } from "./tasks-section";
+import { createQueryClient } from "../../shared/data";
+import { NewTaskPart, TasksSection } from "./tasks-section";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../ai.de.json";
+import { TasksSkeleton } from "./tasks-section.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
-const PROMPT = "Auftrag aus PflanzenDex\nAuftrags-Kennung: t1";
+const PROMPT = "Auftrag aus PflanzenDéx\nAuftrags-Kennung: t1";
 const row = (over: Record<string, unknown> = {}) => ({
   id: "t1",
   type: "species_profile",
@@ -40,7 +44,19 @@ function fakeServer(rows: Record<string, unknown>[], clientConnected = true) {
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <TasksSection api="http://api" token={token} />
+      <MemoryRouter>
+        <TasksSection api="http://api" token={token} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+/** The new-task layer (US-QS-17), and with `list` the task list beside it, as the keeper has them in two layers. */
+const showNew = (list = false) =>
+  render(
+    <QueryClientProvider client={createQueryClient()}>
+      <MemoryRouter>
+        <NewTaskPart api="http://api" token={token} />
+        {list && <TasksSection api="http://api" token={token} />}
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 afterEach(() => {
@@ -77,7 +93,7 @@ describe("US-KI-08 tasks to the AI client", () => {
   it("US-KI-08 without a connected client it says so, blocks the task and still offers the text", async () => {
     const calls = fakeServer([], false);
     const user = userEvent.setup();
-    show();
+    showNew();
     expect(await screen.findByText(/kein KI-Client verbunden/)).toBeTruthy();
     expect(
       (screen.getByRole("button", { name: "Auftrag anlegen" }) as HTMLButtonElement).disabled,
@@ -92,7 +108,7 @@ describe("US-KI-08 tasks to the AI client", () => {
   it("US-KI-08 creates and withdraws a task by the keeper's action", async () => {
     const calls = fakeServer([row()]);
     const user = userEvent.setup();
-    show();
+    showNew(true);
     await user.type(await screen.findByLabelText("Name der Art"), "Haworthia");
     await user.click(screen.getByRole("button", { name: "Auftrag anlegen" }));
     await user.click(
@@ -102,4 +118,12 @@ describe("US-KI-08 tasks to the AI client", () => {
     );
     expect(calls).toEqual(["POST /ai/tasks", "POST /ai/tasks/t1/cancel"]);
   });
+});
+
+describe("US-QS-14 issue 1697 · the tasks show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <TasksSkeleton label={table["tasks.loading"]} />,
+      table["tasks.loading"],
+    ));
 });

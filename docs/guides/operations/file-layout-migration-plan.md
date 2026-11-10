@@ -728,7 +728,13 @@ function devBaseline() {
     return undefined;
   }
   try {
-    return JSON.parse(git(root, "show", `${devRef}:app/config/gates/baselines/layout-baseline.json`));
+    return JSON.parse(
+      git(
+        root,
+        "show",
+        `${devRef}:app/config/gates/baselines/layout-baseline.json`,
+      ),
+    );
   } catch {
     return undefined;
   }
@@ -860,7 +866,7 @@ In the `scripts` block add the line after `"boundaries"`:
     "layout": "node scripts/check-layout.mjs",
 ```
 
-and in the `gates` script insert `npm run layout &&` directly after `npm run boundaries &&`.
+and in the `gates` script insert `npm run layout &&` directly before `npm run boundaries &&` (QG-C4 runs before QG-C5, as in `18`).
 
 - [ ] **Step 5: Add the make targets** to `Makefile`
 
@@ -920,7 +926,7 @@ A directory with few entries and a predictable name can be read at a glance, and
 
 ## Gate
 
-`make layout` (part of `make gates`, repeated in `make ci`), which the CI job `app` in `.github/workflows/ci.yml` runs and `ci-status` requires.
+`make layout` (part of `make gates`, repeated in `make ci`); in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`) and `ci-status` requires it.
 
 ## Evidence
 
@@ -983,7 +989,7 @@ Each of these gets its own short plan, written after the previous PR is merged, 
 
 ### PR 2: `layout-fix` (done)
 
-`npm run layout-fix -- <dir> [--apply] [--kebab] [--into folder=prefix,prefix]... [--no-auto]` in `app/tools/layout-fix/` (not a gate; the `make` target comes with the next human-merged PR that touches the `Makefile`). It is a dry run unless `--apply` is given.
+`npm run layout-fix -- <dir> [--apply] [--kebab] [--into folder=prefix,prefix]... [--no-auto]` in `app/tools/layout-fix/` (not a gate; `make layout-fix DIR=<dir>` since FR-QG-23 step 1, with `ARGS="--move <from>=<to>"` for explicit moves). It is a dry run unless `--apply` is given.
 
 - **What it does:** plans the moves for one directory (`fix-plan.mjs`), moves with `git mv`, rewrites every import that points at a moved file (`fix-rewrite.mjs`, `fix-resolve.mjs`: relative specifiers without extension, directory and `index` imports, exact names such as stylesheets, the `@/` alias per package, `vi.mock`, dynamic `import()`), and afterwards checks that every rewritten import still resolves to the file it pointed at; otherwise nothing is changed.
 - **The moves:** `--kebab` renames PascalCase and snake_case files (LY-3). A component `x.tsx` with its test, story and skeleton goes into a folder `x/` (LY-4, only below the component roots). `--into folder=prefix,prefix` groups the units that start with a prefix into a folder (the person decides by meaning). Unless `--no-auto` is given, the biggest groups of units that share a name prefix are folded into a folder until the directory is within the limit (LY-1), and a folder that is still too big is split again by the next name segment. A prefix that the directory name already carries is skipped (`care/phases/`, not `care/care/`).
@@ -1016,7 +1022,7 @@ app/tools/
     docs/       check-links, check-principles, check-skills, check-specs, check-traceability
     release/    check-changelog, check-ci-drift, check-release-tags, release-config
     supply/     check-audit, check-deps
-  workflow/     board, claim/, merge-pr, project-status/, worktree-env
+  workflow/     board, claim/, merge-pr, project-status/, worktree/ (worktree-env, dev-servers)
   dev/          commitlint, git-hook-hints, health-summary, repo-stats, smoke
 ```
 
@@ -1049,7 +1055,7 @@ Families that become a folder: `layout/` (check-layout, layout-baseline, layout-
 
 ### PR 5: `core` and `api`
 
-- One PR per module, in the order of the baseline size: `collection`, `care`, `account`, `catalog`, `light`, `pokedex`, `wishlist`, `kernel`. Each PR runs `make layout-fix PATH=app/packages/<pkg>/src/<module>` for `core` and `api` together, lowers `app/gates/layout-baseline.json` in the same PR and keeps `make ci` green.
+- One PR per module, in the order of the baseline size: `collection`, `care`, `account`, `catalog`, `light`, `pokedex`, `wishlist`, `kernel`. Each PR runs `make layout-fix DIR=app/packages/<pkg>/src/<module>` for `core` and `api` together, lowers `app/config/gates/baselines/layout-baseline.json` in the same PR and keeps `make ci` green.
 - Check `make board` for open claims in the module before starting; wait if there is one.
 - Merge: agent.
 

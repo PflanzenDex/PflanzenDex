@@ -1,36 +1,63 @@
 import type { CSSProperties } from "react";
-import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { collectorProgress, type CollectorRank as Rank, type TreeTotals } from "@pflanzendex/core";
+import { useCallback } from "react";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/shared/lib/text-rules/texts";
+import {
+  collectorProgress,
+  milestoneTreeOf,
+  treeTotalsOf,
+  type CaughtSpecies,
+  type CollectorRank as Rank,
+  type PokedexTree,
+  type TreeTotals,
+} from "@pflanzendex/core";
+import { SCREEN_STALE_TIME, useRequest } from "../../shared/data";
+import { MilestonesOpener } from "../milestones/milestones";
+import { loadTree, TREE_KEY } from "./tree-api";
+import table from "./collector-rank.de.json";
 
 export const PROGRESS_LAYER = "progress";
 
-const NAME: Record<Rank, string> = {
-  seedling: "Keimling",
-  sapling: "Setzling",
-  young_plant: "Jungpflanze",
-  bloomer: "Blüher",
-  treetop: "Baumkrone",
-  botanist: "Botaniker",
+const ui = texts(table);
+
+/** The text key of each rank: the keys of a message table are camelCase (FR-QG-26). */
+const RANK_KEY: Record<Rank, keyof typeof table> = {
+  seedling: "seedling",
+  sapling: "sapling",
+  young_plant: "youngPlant",
+  bloomer: "bloomer",
+  treetop: "treetop",
+  botanist: "botanist",
 };
+const rankText = (rank: Rank) => ui(RANK_KEY[rank]);
+
+/** Species caught outside the tree: named as not counted yet, so they do not vanish (US-POK-10, P-10). */
+const notInTree = (count: number) =>
+  count === 1 ? ui("notInTreeOne") : ui("notInTreeMany", { count });
 
 /**
- * Collector rank and progress (US-POK-10), derived from the number of caught species. Totals and orders come from the
- * taxonomy tree (US-POK-03); while it does not exist they show as unknown (P-08, P-10).
+ * Collector rank and progress (US-POK-10), derived from the number of caught species. With a tree the rank and "N / M"
+ * count the caught species of the tree (owner decision 2026-11-07); totals and orders come from the tree (US-POK-03).
+ * While it does not exist they show as unknown (P-08, P-10).
  */
 export function CollectorRank(props: { caught: number; tree?: TreeTotals | null }) {
   const p = collectorProgress(props.caught, props.tree ?? null);
   const { species, orders } = p;
-  const total = species.total === null ? "unbekannt" : String(species.total);
-  const percent = species.percent === null ? "" : ` (${species.percent} %)`;
+  const total = species.total === null ? ui("unknown") : String(species.total);
+  const count =
+    species.percent === null
+      ? ui("countWithoutPercent", { caught: species.caught, total })
+      : ui("countWithPercent", { caught: species.caught, total, percent: species.percent });
   return (
-    <section aria-label="Sammlerrang" className="mb-3 grid gap-1 rounded-lg border p-3">
-      <p className="text-lg font-semibold">{NAME[p.rank]}</p>
-      <p>{`${species.caught} / ${total} Arten gefangen${percent}`}</p>
+    <section aria-label={ui("sectionLabel")} className="mb-3 grid gap-1 rounded-lg border p-3">
+      <p className="text-lg font-semibold">{rankText(p.rank)}</p>
+      <p>{count}</p>
+      {p.notInTree !== null && p.notInTree > 0 ? <p>{notInTree(p.notInTree)}</p> : null}
       {p.next ? (
         <>
           <div
             role="progressbar"
-            aria-label={`Fortschritt bis ${NAME[p.next.rank]}`}
+            aria-label={ui("progressTo", { rank: rankText(p.next.rank) })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(p.fraction * 100)}
@@ -41,21 +68,17 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
               style={{ "--value": p.fraction * 100 } as CSSProperties}
             />
           </div>
-          <p>{`Noch ${p.next.remaining} bis „${NAME[p.next.rank]}“`}</p>
+          <p>{ui("remaining", { remaining: p.next.remaining, rank: rankText(p.next.rank) })}</p>
         </>
       ) : (
-        <p>Höchster Rang erreicht</p>
+        <p>{ui("topRank")}</p>
       )}
       <p>
-        {orders.total === null
-          ? "Ordnungen: unbekannt"
-          : `${orders.discovered} von ${orders.total} Ordnungen entdeckt`}
+        {orders.total === null || orders.discovered === null
+          ? ui("ordersUnknown")
+          : ui("orders", { discovered: orders.discovered, total: orders.total })}
       </p>
-      {p.treeState === "missing" && (
-        <p className="text-sm">
-          Der Baum der Arten ist noch nicht aufgebaut, darum fehlen Gesamtzahl und Ordnungen.
-        </p>
-      )}
+      {p.treeState === "missing" && <p className="text-sm">{ui("treeMissing")}</p>}
     </section>
   );
 }
@@ -63,7 +86,7 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
 /**
  * The progress as one row (US-QS-22): the rank and the caught species; the total only when the tree knows it, otherwise
  * one line says that it follows (P-08). Species that do not count yet are named here, so they do not vanish (P-10).
- * The row opens the layer "Fortschritt" with the bar, the orders and the milestones.
+ * The row opens the layer "Fortschritt" with the bar, the orders and the way to the milestones.
  */
 export function ProgressRow(props: {
   caught: number;
@@ -75,18 +98,61 @@ export function ProgressRow(props: {
   // One line (US-QS-22): the total only when the tree knows it; why it is unknown and the bar are in the layer.
   const caught =
     species.total === null
-      ? `${props.caught} gefangen`
-      : `${species.caught} von ${species.total} Arten`;
+      ? ui("rowCaught", { caught: props.caught })
+      : ui("rowOfTotal", { caught: species.caught, total: species.total });
   const uncounted =
     props.uncounted === 0
       ? ""
-      : ` · ${props.uncounted} ${props.uncounted === 1 ? "Pflanze zählt" : "Pflanzen zählen"} noch nicht`;
+      : ` · ${props.uncounted === 1 ? ui("uncountedOne") : ui("uncountedMany", { count: props.uncounted })}`;
   return (
     <LayerOpener
       id={PROGRESS_LAYER}
-      className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal border-border py-1 text-left text-foreground"
+      className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal py-1 text-left"
     >
-      <span className="font-semibold">{`${NAME[p.rank]} · ${caught}${uncounted}`}</span>
+      <span className="font-semibold">{`${rankText(p.rank)} · ${caught}${uncounted}`}</span>
     </LayerOpener>
+  );
+}
+
+/** The keys of the caught species, as the tree totals count them (US-POK-10). */
+const caughtKeys = (caught: readonly CaughtSpecies[]) => new Set(caught.map((c) => c.species));
+
+/**
+ * The progress row (US-QS-22) with the totals of the tree once it is there (US-POK-10). Until then, or when the tree
+ * cannot be read, the row names the caught count alone and the layer says why (P-08, P-10). Same copy as the layer.
+ */
+export function ProgressLine(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  caught: readonly CaughtSpecies[];
+  uncounted: number;
+}) {
+  const { api, token, caught, uncounted } = props;
+  const load = useCallback((t: string) => loadTree(api, t), [api]);
+  const tree = useRequest({ queryKey: TREE_KEY, token, load, staleTime: SCREEN_STALE_TIME });
+  const totals =
+    tree.status === "ready" && tree.value
+      ? treeTotalsOf(tree.value.species, caughtKeys(caught))
+      : null;
+  return <ProgressRow caught={caught.length} uncounted={uncounted} tree={totals} />;
+}
+
+/**
+ * The rank of the tree and the opener of the milestones (US-POK-10, US-POK-11); `null` = the tree is not built yet
+ * (P-08). The milestones themselves are their own layer.
+ */
+export function ProgressDetail(props: {
+  caught: readonly CaughtSpecies[];
+  tree: PokedexTree | null;
+}) {
+  const { caught, tree } = props;
+  return (
+    <>
+      <CollectorRank
+        caught={caught.length}
+        tree={tree ? treeTotalsOf(tree.species, caughtKeys(caught)) : null}
+      />
+      <MilestonesOpener caught={caught} tree={tree ? milestoneTreeOf(tree.species) : null} />
+    </>
   );
 }

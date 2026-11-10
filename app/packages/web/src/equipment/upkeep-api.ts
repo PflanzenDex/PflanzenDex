@@ -1,5 +1,5 @@
 import type { EquipmentRow, SupplyLevel } from "@pflanzendex/core";
-import { createWrite, type Response } from "../kernel";
+import { createWrite, type Response } from "../shared/data";
 
 /** The operation data of a device; empty ones are `null` (unknown, P-08). A lifetime comes with its source. */
 export interface MaintenanceInput {

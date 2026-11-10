@@ -1,16 +1,36 @@
-import type { DecideResult, SuggestionDeck } from "@pflanzendex/core";
-import { useEffect, useRef, useState } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
-import { Button } from "@/components/ui/button/button";
-import { errorText } from "@/lib/error-text";
-import type { Response } from "../../kernel";
-import { CATALOG_ADDRESS } from "@/components/shared/navigation/nav-model/navigation/navigation";
-import { cn } from "@/lib/utils";
+import type { SuggestionDeck } from "@pflanzendex/core";
+import { useState } from "react";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { Button } from "@/shared/ui/button/button";
+import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
+import { cn } from "@/shared/lib/utils";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
+import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
+import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
+import table from "../discover.de.json";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { useDecisions, type Decision, type OnDecide, type OnUndo } from "./use-decisions";
+import { useDeckPosition } from "./use-deck-position";
+import { DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
 
-/** What the keeper decided on a card (US-ENT-04): "Ja" and "Nein" are written at once, "Später" writes nothing. */
-type Decision = "no" | "later" | "yes";
+const t = texts(table);
+
+/** A button flies the card the way its swipe would, so a button and a gesture give the same result (US-ENT-01). */
+const FLIGHT: Record<Decision, SwipeDirection> = { no: "left", yes: "right", later: "up" };
+/** A flight decides: a vertical drag is Later in either direction. */
+const DECISION: Record<SwipeDirection, Decision> = {
+  left: "no",
+  right: "yes",
+  up: "later",
+  down: "later",
+};
+/** The stamps show the texts of the buttons. */
+const STAMPS: Record<SwipeDirection, string> = {
+  left: t("deck.no"),
+  right: t("deck.yes"),
+  up: t("deck.later"),
+  down: t("deck.later"),
+};
 
 /**
  * True when the text size is raised to 150 % or more (US-QS-21, WCAG 1.4.4). Media queries do not follow the root font
@@ -26,13 +46,15 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
   return (
     <div
       className={cn(
-        // Stays in view with the card (US-QS-14, NFR-13): above the phone bar (3.5 rem plus safe area, a little under
-        // the bar's 59 px so no content shows in between), at the window bottom from `md`. A window too low for it
-        // (400 % zoom) scrolls it like content.
-        "sticky shrink-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t border-border bg-background py-2",
-        "md:bottom-0 [@media(max-height:30rem)]:static",
-        // Static content ends under the phone bar otherwise: the area is as high as the screen, its overflow gets no padding.
-        large && "static mb-20 md:mb-0",
+        // Stays in view with the card (US-QS-14, NFR-13): from 30 rem of window height (the tall window of tokens.css) above
+        // the phone bar (3.5 rem plus safe area, a little under the bar's 59 px so no content shows in between), at the
+        // window bottom from `md`. Below it the row scrolls like the content, a window too low for a sticky row (400 % zoom).
+        "shrink-0 z-10 border-t border-border bg-background py-2",
+        !large &&
+          "tall-window:sticky tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tall-window:md:bottom-0",
+        // Large text: the row never sticks, because a sticky row would cover the card. Static content ends under the
+        // phone bar otherwise, so the reserve stays while that bar is fixed (the tall window), and goes from `md`.
+        large && "tall-window:mb-20 tall-window:md:mb-0",
       )}
     >
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
@@ -42,7 +64,7 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
           className="min-w-24 flex-1"
           onClick={() => props.onDecide("no")}
         >
-          Nein
+          {t("deck.no")}
         </Button>
         <Button
           variant="secondary"
@@ -50,45 +72,14 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
           className="min-w-24 flex-1"
           onClick={() => props.onDecide("later")}
         >
-          Später
+          {t("deck.later")}
         </Button>
         <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
-          Ja
+          {t("deck.yes")}
         </Button>
       </div>
     </div>
   );
-}
-
-type OnDecide = (species: string, decision: "yes" | "no") => Promise<Response<DecideResult>>;
-
-/**
- * Writes "Ja" and "Nein" (US-ENT-04) and moves on only after the write succeeded; a refusal stays visible and the card
- * stays (P-10). Counts the saved "Ja" of this deck, not the taps. One write at a time.
- */
-function useDecisions(onDecide: OnDecide, advance: () => void) {
-  const [saved, setSaved] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const busy = useRef(false);
-  const decide = async (species: string, d: Decision) => {
-    if (busy.current) return;
-    if (d === "later") {
-      setError(null);
-      advance();
-      return;
-    }
-    busy.current = true;
-    const r = await onDecide(species, d);
-    busy.current = false;
-    if (!r.ok) {
-      setError(errorText(r.error.code));
-      return;
-    }
-    setError(null);
-    if (d === "yes" && r.value.saved) setSaved((n) => n + 1);
-    advance();
-  };
-  return { saved, error, decide };
 }
 
 /** The zone the deck is filtered to and, if the catalog does not suffice for it, what to do next (US-ENT-07, P-09). */
@@ -101,14 +92,18 @@ function ZoneNotice(props: {
   const { shortfall } = filter;
   return (
     <div className="grid gap-2">
-      <p className="m-0 font-semibold">{`Vorschläge für ${filter.name ?? `Zone ${filter.zone}`}`}</p>
+      <p className="m-0 font-semibold">
+        {t("deck.zone.title", {
+          name: filter.name ?? t("deck.zone.fallback", { zone: filter.zone }),
+        })}
+      </p>
       {shortfall !== null && (
         <Banner variant="warning">
           <p className="m-0">{shortfall.text}</p>
           <p className="m-0">{shortfall.nextAction}</p>
           {offerProposal && (
             <Button asChild variant="outline" size="touch" className="mt-2">
-              <a href={CATALOG_ADDRESS}>Art vorschlagen</a>
+              <a href={CATALOG_ADDRESS}>{t("deck.propose")}</a>
             </Button>
           )}
         </Banner>
@@ -117,59 +112,69 @@ function ZoneNotice(props: {
   );
 }
 
-/** One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). */
+/**
+ * One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). The next card waits
+ * underneath with its content (aria-hidden, inert). A Yes or No can be taken back with "Rückgängig" (US-ENT-04).
+ */
 function Cards(props: {
   deck: SuggestionDeck;
   /** Writes "Ja" or "Nein" (US-ENT-04); the card moves on only after it is saved, so nothing is lost silently (P-10). */
   onDecide: OnDecide;
+  /** Takes the last Yes or No back (US-ENT-04); the card returns to the deck once it is taken back. */
+  onUndo: OnUndo;
   onNewDeck: () => void;
   /** True for a deck the keeper asked for ("Neuer Stapel"): the button that had the focus is gone, so the focus moves here (SC 2.4.3). */
   takeFocus?: boolean;
 }) {
   const { deck } = props;
-  const [position, setPosition] = useState(0);
-  const { saved, error, decide } = useDecisions(props.onDecide, () => setPosition((p) => p + 1));
-  const endTitle = useRef<HTMLHeadingElement>(null);
-  const takeFocus = props.takeFocus === true;
-  useEffect(() => {
-    // The next card, the end card or the empty state: the heading of the new view gets the focus, never the body.
-    if (position > 0 || takeFocus)
-      (endTitle.current ?? document.getElementById("suggestion-title"))?.focus();
-  }, [position, takeFocus]);
+  const { position, moves, endTitle, frontTitle } = useDeckPosition(props.takeFocus === true);
+  const { saved, error, taken, decide, undo, exit, setExit } = useDecisions(
+    props.onDecide,
+    props.onUndo,
+    moves,
+  );
   if (deck.empty !== null)
     return (
-      <EmptyState
-        title={deck.empty.text}
-        description={deck.empty.nextAction}
+      <DeckEmpty
+        empty={deck.empty}
+        compact={deck.zoneFilter?.shortfall != null}
         titleRef={endTitle}
-        action={{ label: "Art vorschlagen", href: CATALOG_ADDRESS }}
       />
     );
   const current = deck.suggestions[position];
   if (current === undefined)
     return (
-      <EmptyState
-        title={`Für heute durch. ${saved} neu auf der Wunschliste.`}
-        description="Weitere Vorschläge gibt es mit einem neuen Stapel."
+      <DeckEnd
+        saved={saved}
+        error={error}
+        taken={taken !== null}
         titleRef={endTitle}
-        action={{ label: "Neuer Stapel", onClick: props.onNewDeck }}
+        onUndo={undo}
+        onNewDeck={props.onNewDeck}
       />
     );
+  const next = deck.suggestions[position + 1];
   return (
     <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
-        {`Vorschlag ${position + 1} von ${deck.suggestions.length}`}
+        {t("deck.position", { position: position + 1, total: deck.suggestions.length })}
       </p>
-      <SuggestionCard
+      <SwipeCard
         key={current.species}
-        suggestion={current}
-        onSwipe={(side) => void decide(current.species, side === "right" ? "yes" : "no")}
-      />
+        exit={exit}
+        stamps={STAMPS}
+        stacked={next !== undefined}
+        under={next === undefined ? undefined : <SuggestionCard suggestion={next} />}
+        onSwipe={setExit}
+        onExited={(d) => void decide(current.species, DECISION[d])}
+        className="mx-auto flex min-h-48 w-full max-w-md flex-1 basis-0"
+      >
+        <SuggestionCard suggestion={current} titleRef={frontTitle} />
+      </SwipeCard>
       {error !== null && <Banner variant="error">{error}</Banner>}
-      <p className="sr-only">
-        „Ja“ legt die Art auf die Wunschliste, „Nein“ verwirft sie dort, „Später“ speichert nichts.
-      </p>
-      <Actions onDecide={(d) => void decide(current.species, d)} />
+      {taken !== null && <UndoButton onClick={undo} />}
+      <p className="sr-only">{t("deck.hint")}</p>
+      <Actions onDecide={(d) => exit === null && setExit(FLIGHT[d])} />
     </div>
   );
 }

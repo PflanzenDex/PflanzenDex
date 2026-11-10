@@ -10,6 +10,7 @@ import {
   ok,
   shape,
   textField,
+  MS_PER_DAY,
 } from "../../../kernel";
 import type { KeeperStyle } from "../unlock";
 
@@ -48,9 +49,8 @@ export interface HintStore {
   dismiss(userId: string, occasion: string, on: string): Promise<HintRecord>;
 }
 
-const DAY = 86_400_000;
 const days = (from: string, to: string): number =>
-  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY);
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / MS_PER_DAY);
 
 /** True when the keeper dismissed the occasion (also the first-plant guide). */
 export const isDismissed = (records: readonly HintRecord[], occasion: string): boolean =>

@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render as plainRender, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RecommendationsView } from "./recommendations-view";
 
 afterEach(cleanup);
+
+const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 const rec = {
   needId: "supply:1",

@@ -69,7 +69,13 @@ const download: ImageDownload = {
 // The processing itself is covered by the media tests (TE-05); here it only has to be called and its result stored.
 const processor: ImageProcessor = {
   process: async (input) =>
-    ok({ bytes: input, contentType: MEDIA_LIMITS.storedType, width: 40, height: 30 }),
+    ok({
+      bytes: input,
+      contentType: MEDIA_LIMITS.storedType,
+      width: 40,
+      height: 30,
+      thumbnail: { bytes: input, contentType: MEDIA_LIMITS.storedType, width: 20, height: 15 },
+    }),
 };
 let app: ReturnType<typeof createApp>;
 let bare: ReturnType<typeof createApp>;
@@ -131,7 +137,7 @@ describe("US-WUN-04 store the image of a wish", () => {
     const own = await app.request(`/wishes/${id}/image`, {
       headers: { authorization: `Bearer valid:${subA}` },
     });
-    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/webp"]);
     expect(own.headers.get("cache-control")).toContain("private");
     expect(Array.from(new Uint8Array(await own.arrayBuffer()))).toEqual([0xff, 0xd8, 1, 2]);
     const foreign = await app.request(`/wishes/${id}/image`, {

@@ -1,87 +1,171 @@
+import type { ReactNode } from "react";
+import { Leaf } from "lucide-react";
 import { speciesHints, type Species } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+import {
+  FactGrid,
+  type Fact,
+} from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import {
   STATUS,
+  UNKNOWN,
   growthText,
   lux,
-  orUnknown,
   dormancyPhase,
   difficultyText,
   levelText,
 } from "../shared/text";
 
-function rows(species: Species): [string, string][] {
-  const family = [species.familyGerman, species.familyLatin].filter(Boolean).join(" · ");
+const known = (value: string | null | undefined): string | null => value ?? null;
+const text = (value: string): string | null => (value === UNKNOWN ? null : value);
+
+/** The short facts of the Steckbrief tab; `null` is unknown and folds into one line (P-08, P-10). */
+function basics(species: Species): Fact[] {
   return [
-    ["Deutscher Name", orUnknown(species.germanName)],
-    ["Englischer Name", orUnknown(species.englishName)],
-    ["Synonyme", species.synonyms.length > 0 ? species.synonyms.join(", ") : "unbekannt"],
-    ["Familie", family || "unbekannt"],
-    ["Schwierigkeit", difficultyText(species.difficulty)],
-    ["Standard-Stufe", levelText(species.standardLevel)],
-    ["Lichtbedarf", lux(species.lightDemandLux)],
-    ["Ruhephase", dormancyPhase(species)],
-    ["Standort-Hinweis", orUnknown(species.locationHint)],
-    ["Wachstumsmaß", growthText(species.growthMeasure)],
-    ["Vergeilung-Anzeichen", orUnknown(species.etiolationSigns)],
-    ["Gießhinweis", orUnknown(species.wateringHint)],
-    ["Substrat", orUnknown(species.substrate)],
-    ["Rückschnitt", orUnknown(species.pruning)],
-    ["Wuchs-Hacks", orUnknown(species.growthHacks)],
-    ["Erfolgskriterien", orUnknown(species.successCriteria)],
-    ["Botanische Story", orUnknown(species.botanicalStory)],
-    ["Quelle", orUnknown(species.source)],
+    { label: "Deutscher Name", value: known(species.germanName) },
+    { label: "Englischer Name", value: known(species.englishName) },
+    { label: "Schwierigkeit", value: text(difficultyText(species.difficulty)) },
+    { label: "Standard-Stufe", value: text(levelText(species.standardLevel)) },
+    { label: "Lichtbedarf", value: text(lux(species.lightDemandLux)) },
+    { label: "Ruhephase", value: text(dormancyPhase(species)) },
+    { label: "Wachstumsmaß", value: text(growthText(species.growthMeasure)) },
+    { label: "Standort-Hinweis", value: known(species.locationHint) },
   ];
 }
 
-/** Profile with the fields from DM-BES-01; missing details are called "unknown" (P-08), hints name the next action (P-09). */
+function care(species: Species): Fact[] {
+  return [
+    { label: "Gießhinweis", value: known(species.wateringHint) },
+    { label: "Substrat", value: known(species.substrate) },
+    { label: "Rückschnitt", value: known(species.pruning) },
+    { label: "Wuchs-Hacks", value: known(species.growthHacks) },
+    { label: "Vergeilung-Anzeichen", value: known(species.etiolationSigns) },
+    { label: "Erfolgskriterien", value: known(species.successCriteria) },
+  ];
+}
+
+function origin(species: Species): Fact[] {
+  const family = [species.familyGerman, species.familyLatin].filter(Boolean).join(" · ");
+  return [
+    { label: "Familie", value: family || null },
+    { label: "Synonyme", value: species.synonyms.length > 0 ? species.synonyms.join(", ") : null },
+    { label: "Botanische Story", value: known(species.botanicalStory) },
+    { label: "Quelle", value: known(species.source) },
+  ];
+}
+
+/** Photo slot of fixed size; species carry no photo yet (DM-BES-01), so it shows a neutral mark, never an invented image. */
+function PhotoSlot() {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+    >
+      <Leaf className="size-6" />
+    </span>
+  );
+}
+
+/** The facts in three tabs: Steckbrief (grid), Pflege and Herkunft (one column, the texts are long). */
+function ProfileTabs({ species }: { species: Species }) {
+  return (
+    <Tabs
+      className="flex min-h-0 flex-1 flex-col"
+      panelClassName="mt-1 min-h-[40dvh] flex-1 overflow-y-auto"
+      wrap
+      label="Angaben zur Art"
+      tabs={[
+        {
+          value: "basics",
+          label: "Steckbrief",
+          content: <FactGrid facts={basics(species)} />,
+        },
+        {
+          value: "care",
+          label: "Pflege",
+          content: <FactGrid facts={care(species)} />,
+        },
+        {
+          value: "origin",
+          label: "Herkunft",
+          content: <FactGrid facts={origin(species)} />,
+        },
+      ]}
+    />
+  );
+}
+
+/**
+ * The header of the profile: it keeps its natural height up to 40 % of the profile and scrolls inside itself beyond that,
+ * so at a larger text size the action bar below it is in view when the profile opens (issue 1217). The bar does not
+ * follow a scroll of the facts. The negative margin and the padding cancel out, so the position does not change; the
+ * padding keeps the focus ring of the way back inside the region (DS-37).
+ */
+const HEADER =
+  "-m-1 flex max-h-[40%] min-h-0 min-w-0 flex-col gap-2 overflow-y-auto overscroll-contain p-1";
+
+/**
+ * Profile with the fields from DM-BES-01 (US-QS-21): a header with name, photo slot and the primary action, then the
+ * facts in three tabs (Steckbrief, Pflege, Herkunft). Missing details are called "unknown" (P-08), hints name the next
+ * action (P-09).
+ */
 export function SpeciesProfile(props: {
   species: Species;
   onChoose?: () => void;
   onBack?: () => void;
   /** Below a destination title the profile is a section: its name is then an h2 (US-QS-14). */
   embedded?: boolean | undefined;
+  /** A further action beside the primary one, e.g. the opener of "Mein Pflegeprofil" (US-BES-09), wired by the app. */
+  extra?: ReactNode;
 }) {
   const { species } = props;
-  const Heading = props.embedded ? "h2" : "h1";
   return (
-    <article aria-labelledby="species-title" className="flex min-w-0 flex-col gap-3">
-      {props.onBack && (
-        <Button type="button" variant="secondary" className="self-start" onClick={props.onBack}>
-          Zurück zur Suche
-        </Button>
+    <article aria-labelledby="species-title" className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+      {/*
+       * Three parts in a column (issue 1217, NFR-13): the header, the action bar and the facts. The bar is in the flow
+       * between the header and the facts and is not sticky, so no part of the profile can lie under it at any scroll
+       * position (a sticky bar lay over the title at 200 % text). At normal text the three keep their places.
+       */}
+      <div className={HEADER}>
+        {/* The way back "Zurück zur Suche" is the page header's chevron (issue 1031); embedded, the name is a level-2 heading. */}
+        <PageHeader
+          headingId="species-title"
+          heading={props.embedded ? "h2" : "h1"}
+          title={<i>{species.latinName}</i>}
+          {...(props.onBack ? { back: { label: "Zurück zur Suche", onBack: props.onBack } } : {})}
+        />
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <PhotoSlot />
+          <Badge variant="outline" className="self-start">
+            {STATUS[species.reviewStatus]}
+          </Badge>
+        </div>
+      </div>
+      {/* Each action takes at least the width of its longest word, so the row stacks when the words no longer fit side by side (issue 1217). */}
+      {(props.onChoose || props.extra) && (
+        <div className="flex shrink-0 flex-wrap gap-2 bg-background [&>*]:min-w-min [&>*]:flex-1">
+          {props.onChoose && (
+            <Button type="button" size="touch" onClick={props.onChoose}>
+              Diese Art wählen
+            </Button>
+          )}
+          {props.extra}
+        </div>
       )}
-      <Heading id="species-title" className="break-words text-2xl font-semibold">
-        <i>{species.latinName}</i>
-      </Heading>
-      <Badge variant="outline" className="self-start">
-        {STATUS[species.reviewStatus]}
-      </Badge>
-      {speciesHints(species).map((h) => (
-        <p
-          key={h.text}
-          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-        >
-          {h.text} {h.nextAction}
-        </p>
-      ))}
-      <dl className="m-0 grid grid-cols-1 gap-x-6 md:grid-cols-2">
-        {rows(species).map(([name, value]) => (
-          <div
-            key={name}
-            className="min-w-0 border-b border-border py-2 [&>dd]:m-0 [&>dd]:break-words [&>dd]:whitespace-pre-wrap"
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+        {speciesHints(species).map((h) => (
+          <p
+            key={h.text}
+            className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
           >
-            <dt className="text-sm text-muted-foreground">{name}</dt>
-            <dd>{value}</dd>
-          </div>
+            {h.text} {h.nextAction}
+          </p>
         ))}
-      </dl>
-      {props.onChoose && (
-        <Button type="button" size="touch" className="self-start" onClick={props.onChoose}>
-          Diese Art wählen
-        </Button>
-      )}
+        <ProfileTabs species={species} />
+      </div>
     </article>
   );
 }

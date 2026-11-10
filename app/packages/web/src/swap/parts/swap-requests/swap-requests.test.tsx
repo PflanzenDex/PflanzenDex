@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapRequests } from "./swap-requests";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../swap.de.json";
+import { SwapRequestsSkeleton } from "./swap-requests.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -10,7 +14,6 @@ const token = async () => "tok";
 const side = (extra: Record<string, unknown> = {}) => ({
   swapId: "s1",
   role: "giver",
-  otherId: "ben",
   otherName: "Ben",
   offerId: "o1",
   speciesLatin: "Aloe vera",
@@ -52,7 +55,12 @@ function server(
   );
   return posts;
 }
-const show = () => render(<SwapRequests api="http://api" token={token} />);
+const show = () =>
+  render(
+    <MemoryRouter>
+      <SwapRequests api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(() => {
   cleanup();
@@ -63,7 +71,7 @@ describe("US-SOZ-10 requests for my offers", () => {
   it("lists a request with the requester, species, counter-offer and the actions", async () => {
     server({ received: [side()] });
     show();
-    const list = await screen.findByRole("list", { name: "Anfragen an dich" });
+    const list = await screen.findByRole("list", { name: "Anfragen" });
     const text = within(list).getByRole("listitem").textContent ?? "";
     expect(text).toContain("Echte Aloe");
     expect(text).toContain("Ben");
@@ -129,10 +137,13 @@ describe("US-SOZ-10 requests for my offers", () => {
     );
     await screen.findByText(/Die Zusage ist zurückgezogen/);
     expect(posts[0]).toEqual({ path: "/swaps/a/answer", body: { action: "cancel" } });
-    const text = (await screen.findByRole("list", { name: "Anfragen an dich" })).textContent ?? "";
-    expect(text).toContain("Schon vergeben");
-    expect(text).toContain("Ihr seid nicht mehr befreundet");
-    expect(text).toContain("Grund: Zu klein");
+    const list = () => screen.findByRole("list", { name: "Anfragen" });
+    expect((await list()).textContent ?? "").toContain("Schon vergeben");
+    // The third and fourth request are on the second page (US-QS-20).
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    const second = (await list()).textContent ?? "";
+    expect(second).toContain("Ihr seid nicht mehr befreundet");
+    expect(second).toContain("Grund: Zu klein");
   });
 
   it("a refusal shows the German text of its code (P-10)", async () => {
@@ -170,7 +181,7 @@ describe("US-SOZ-10 requests I sent", () => {
       ],
     });
     show();
-    const list = await screen.findByRole("list", { name: "Deine Anfragen" });
+    const list = await screen.findByRole("list", { name: "Anfragen" });
     const text = list.textContent ?? "";
     expect(text).toContain("Vorschlag von Anna: Lieber eine Aloe");
     expect(text).toContain("Abgelehnt");
@@ -244,4 +255,12 @@ describe("US-SOZ-11 confirming the handover", () => {
       screen.queryByRole("button", { name: /Übergabe bestätigen|Erhalt bestätigen/ }),
     ).toBeNull();
   });
+});
+
+describe("US-QS-14 issue 1697 · the swap requests show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <SwapRequestsSkeleton label={table["requests.loading"]} />,
+      table["requests.loading"],
+    ));
 });

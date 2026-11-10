@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
   completeTreatment,
   loadOpenTreatments,
@@ -9,7 +9,9 @@ import {
 } from "../../shared/api/treatments-api";
 import { historyKey, OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { dateText } from "../../shared/text";
+import { OpenRow } from "./open-row/open-row";
 import { usePlanning } from "../../treatments/planning/planning";
 import { PhaseOfPlant } from "../plant-phase/plant-phase";
 import { TreatmentForm } from "../../treatments/treatment-form/treatment-form";
@@ -23,26 +25,9 @@ const Loading = ({ text }: { text: string }) => (
   </p>
 );
 
-function OpenRow(props: { row: TreatmentListRow; busy: boolean; onDone: () => void }) {
-  const { row } = props;
-  return (
-    <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
-      <span className="min-w-0 text-sm [overflow-wrap:anywhere]">
-        <strong>{row.reason}</strong> · {row.status.text}
-        <span className="block text-muted-foreground">Fällig am {dateText(row.dueAt)}</span>
-      </span>
-      <Button
-        type="button"
-        size="sm"
-        disabled={props.busy}
-        aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
-        onClick={props.onDone}
-      >
-        Erledigt
-      </Button>
-    </li>
-  );
-}
+/** The address parts of the two lists of the layer: each list keeps its own page (US-QS-23, US-QS-15). */
+const OPEN_PARAM = "ofrom";
+const DONE_PARAM = "efrom";
 
 /** The open treatments of this plant with "Erledigt" (US-BEH-02, US-BEH-03). */
 function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Specimen }) {
@@ -59,16 +44,21 @@ function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Spe
         token={token}
         load={load}
         loadingText="Offene Behandlungen werden geladen …"
-        loadingFallback={<Loading text="Offene Behandlungen werden geladen …" />}
+        loadingStatus={<Loading text="Offene Behandlungen werden geladen …" />}
       >
         {(all: readonly TreatmentListRow[]) => {
           const rows = all.filter((r) => r.specimenId === specimen.id);
           if (rows.length === 0) return <p className="text-sm">Keine offene Behandlung.</p>;
           return (
-            <ul aria-label="Offene Behandlungen" className="m-0 grid list-none gap-2 p-0">
-              {rows.map((row) => (
+            <Pager
+              items={rows}
+              pageSize={1}
+              label="Offene Behandlungen"
+              param={OPEN_PARAM}
+              replace
+              getKey={(row) => row.id}
+              renderItem={(row) => (
                 <OpenRow
-                  key={row.id}
                   row={row}
                   busy={write.running}
                   onDone={() =>
@@ -78,8 +68,8 @@ function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Spe
                     )
                   }
                 />
-              ))}
-            </ul>
+              )}
+            />
           );
         }}
       </LoadFrame>
@@ -100,19 +90,26 @@ function DoneTreatments(props: { api: string; token: Token; specimenId: string }
       token={token}
       load={load}
       loadingText="Erledigte Behandlungen werden geladen …"
-      loadingFallback={<Loading text="Erledigte Behandlungen werden geladen …" />}
+      loadingStatus={<Loading text="Erledigte Behandlungen werden geladen …" />}
     >
       {(rows: readonly TreatmentRow[]) =>
         rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Noch keine erledigte Behandlung.</p>
         ) : (
-          <ul aria-label="Erledigte Behandlungen" className="m-0 grid list-none gap-1 p-0 text-sm">
-            {rows.map((row) => (
-              <li key={row.id}>
+          <Pager
+            items={rows}
+            pageSize={3}
+            label="Erledigte Behandlungen"
+            param={DONE_PARAM}
+            replace
+            listClassName="gap-1 text-sm"
+            getKey={(row) => row.id}
+            renderItem={(row) => (
+              <>
                 {row.reason} · erledigt am {row.doneAt ? dateText(row.doneAt) : "unbekannt"}
-              </li>
-            ))}
-          </ul>
+              </>
+            )}
+          />
         )
       }
     </LoadFrame>
@@ -171,7 +168,7 @@ export function PlantCare(props: { api: string; token: Token; specimen: Specimen
   return (
     <div className="grid gap-4">
       <section aria-labelledby="care-treatments" className="grid gap-2">
-        <h3 id="care-treatments" className="font-semibold">
+        <h3 id="care-treatments" className="sr-only">
           Behandlungen
         </h3>
         <OpenTreatmentsOfPlant api={api} token={token} specimen={specimen} />
@@ -179,7 +176,7 @@ export function PlantCare(props: { api: string; token: Token; specimen: Specimen
         <DoneTreatments api={api} token={token} specimenId={specimen.id} />
       </section>
       <section aria-labelledby="care-phase" className="grid gap-2">
-        <h3 id="care-phase" className="font-semibold">
+        <h3 id="care-phase" className="sr-only">
           Pflegephase
         </h3>
         <PhaseOfPlant api={api} token={token} specimenId={specimen.id} />

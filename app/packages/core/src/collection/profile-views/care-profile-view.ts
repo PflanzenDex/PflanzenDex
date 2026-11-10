@@ -1,7 +1,7 @@
 // The care profile view (US-BES-09): per species with an active specimen, or with a deviation, the catalog value and
 // my deviation side by side. Derived on every request, never stored (P-01).
 import type { Species } from "../../catalog";
-import { zoneDerive, type LightZone, type ZoneStore } from "../../light";
+import { lightNeedUnknown, zoneDerive, type LightZone, type ZoneStore } from "../../light";
 import type { CareProfile, CareProfileReader } from "../care-profile/care-profile-types";
 import { effectiveProfile, type EffectiveProfile } from "../care-profile/effective-profile";
 import { speciesDisplayName } from "../shared/name";
@@ -9,12 +9,18 @@ import { isActive, type SpeciesSource, type SpecimenStore } from "../shared/type
 
 export interface CareProfileEntry {
   readonly speciesId: string;
+  /**
+   * The species' name. For a merged proposal (US-BES-10) it is the name of the species it was merged into, so every
+   * reader gets a name; the merged marker is `mergedInto`.
+   */
   readonly speciesName: string;
   /** Active specimens of the species (archived ones do not count, US-BES-07). */
   readonly activeSpecimens: number;
   /** The catalog's watering hint as text, shown next to the interval; `null` = unknown (P-08). */
   readonly wateringHint: string | null;
   readonly profile: EffectiveProfile;
+  /** No zone of my own and the lux need or default level is unknown: the card names "Lichtbedarf eintragen" (US-LIC-01). */
+  readonly lightNeedUnknown: boolean;
   /** At least one field deviates from the catalog. */
   readonly deviates: boolean;
   /**
@@ -22,8 +28,11 @@ export interface CareProfileEntry {
    * (US-BES-10): the profile stayed because I already had one for the target (P-10, nothing disappears silently).
    */
   readonly mergedInto: { readonly speciesId: string; readonly speciesName: string } | null;
-  /** What happened and what to do next (P-09); `null` for an ordinary entry. */
-  readonly notice: { readonly text: string; readonly nextAction: string } | null;
+  /**
+   * What happened to a merged proposal's profile (US-BES-10); the code is worded by the web from its message table, so
+   * core holds no UI text. `null` for an ordinary entry.
+   */
+  readonly notice: { readonly code: "proposal_merged" } | null;
 }
 
 /** Port: the species a merged proposal of mine went into. Implemented by the catalog adapter (ADR 0003). */
@@ -38,6 +47,23 @@ export interface CareProfileViewDependencies {
   readonly zones: Pick<ZoneStore, "list">;
   /** Without it a profile of an invisible species is skipped; with it one of a merged proposal is shown. */
   readonly merged?: MergedSpeciesSource;
+}
+
+/** The profile as the card shows it, and whether the zone needs the next step (US-LIC-01, P-08, P-09). */
+function profileOf(
+  species: Species,
+  profile: CareProfile | null,
+  zones: readonly LightZone[],
+): Pick<CareProfileEntry, "profile" | "lightNeedUnknown"> {
+  const effective = effectiveProfile({
+    species,
+    profile,
+    catalogZoneId: catalogZone(species, zones),
+  });
+  return {
+    profile: effective,
+    lightNeedUnknown: effective.lightZone.own === null && lightNeedUnknown(species),
+  };
 }
 
 /** The zone the catalog implies (FR-BES-10); "soft leaf" is not in the catalog, it is never assumed. */
@@ -73,16 +99,13 @@ async function mergedEntry(
   return [
     {
       speciesId: id,
-      speciesName: "Dein zusammengeführter Vorschlag",
+      speciesName: name,
       activeSpecimens: 0,
       wateringHint: null,
-      profile: effectiveProfile({ species, profile, catalogZoneId: catalogZone(species, zones) }),
+      ...profileOf(species, profile, zones),
       deviates: deviation(profile),
       mergedInto: { speciesId: target.id, speciesName: name },
-      notice: {
-        text: `Dein Vorschlag wurde mit „${name}“ zusammengeführt. Für diese Art hattest du schon ein Pflegeprofil, deshalb wurde dieses hier nicht übernommen und bleibt unverändert erhalten.`,
-        nextAction: `Öffne das Pflegeprofil von „${name}“ und übernimm von Hand, was du behalten willst.`,
-      },
+      notice: { code: "proposal_merged" },
     },
   ];
 }
@@ -112,11 +135,7 @@ export async function careProfileView(
             speciesName: speciesDisplayName(species),
             activeSpecimens: active.filter((z) => z.speciesId === id).length,
             wateringHint: species.wateringHint,
-            profile: effectiveProfile({
-              species,
-              profile,
-              catalogZoneId: catalogZone(species, zones),
-            }),
+            ...profileOf(species, profile, zones),
             deviates: deviation(profile ?? undefined),
             mergedInto: null,
             notice: null,

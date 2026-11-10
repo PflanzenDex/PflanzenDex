@@ -1,17 +1,17 @@
-import { PagedGroups } from "@/components/shared/responsive/paged-groups/paged-groups";
+import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
-import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
+import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { PHASE_TEXT } from "../../shared/text";
 import { Groups, type Confirm } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";
 
 const PHASES: readonly CarePhase[] = ["dormancy", "growth"];
 
-/** Entries per page (starting values, assumption): a phase entry is a tall card with its own action. */
+/** Entries per page (starting values, assumption): a phase entry is a compact card with its own action. */
 function usePageSize(): number {
   const md = useIsMd();
   const lg = useIsLg();
-  return lg ? 6 : md ? 4 : 2;
+  return lg ? 8 : md ? 4 : 2;
 }
 
 /**
@@ -38,6 +38,7 @@ export function PhasesPaged(props: {
         listLabel="Pflanzen mit Pflegephase"
         groups={groups}
         pageSize={size}
+        listClassName="lg:grid lg:grid-cols-2"
         getKey={(z) => z.specimenId}
         intro={(g) => (
           <Groups

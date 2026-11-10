@@ -1,26 +1,31 @@
-import { zoneLabel } from "@pflanzendex/core";
 import { Suspense, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Menu, type MenuItem } from "@/components/data-display/panels/menu/menu";
-import { Tabs } from "@/components/data-display/panels/tabs/tabs";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { Badge } from "@/components/ui/display/badge/badge";
-import type { PhotoAccess } from "@/lib/use-stored-photo";
+import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
+import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
 import { plantLayerId } from "../../rows/plant-tile/plant-tile";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
+import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
-import { MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
+import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
+import { PlantSlotSkeleton, type SlotPart } from "./plant-layer.skeleton";
 
+const t = texts(table);
 const TAB_PARAM = "tab";
+/** The status names of a plant and a cutting, compared as values (FR-QG-12); a cutting gets no repot plan (US-BES-04). */
+const PLANT_STATUS = "plant" as const;
+const CUTTING_STATUS = "cutting" as const;
 /** The tabs and their values in the address (`&tab=`); an absent or unknown value means the overview (US-QS-23). */
 const TABS = [
-  { value: "ueberblick", label: "Überblick" },
-  { value: "verlauf", label: "Verlauf" },
-  { value: "pflege", label: "Pflege" },
-  { value: "standort", label: "Standort" },
+  { value: "ueberblick", label: t("tabs.overview") },
+  { value: "verlauf", label: t("tabs.history") },
+  { value: "pflege", label: t("tabs.care") },
+  { value: "standort", label: t("tabs.location") },
 ] as const;
 
 /**
@@ -40,63 +45,34 @@ export function usePlantTab() {
   return { tab, choose };
 }
 
-/** An action of the layer closes the layer first, so the result or the form is not hidden behind it (P-10). */
-function closing<E>(
-  close: () => void,
-  act: ((e: E) => void) | undefined,
-): ((e: E) => void) | undefined {
-  return act
-    ? (e) => {
-        close();
-        act(e);
-      }
-    : undefined;
-}
-
-/** Light zone, location and the open treatment as text chips (P-08: unknown reads as such). */
-function Chips({ card }: { card: SpecimenCard }) {
-  return (
-    <ul aria-label="Auf einen Blick" className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-      <li>
-        <Badge variant="outline">
-          {card.lightZone ? zoneLabel(card.lightZone) : "Zone unbekannt"}
-        </Badge>
-      </li>
-      <li>
-        <Badge variant="outline">{card.location ?? "Standort unbekannt"}</Badge>
-      </li>
-      {card.treatment ? (
-        <li>
-          <Badge variant="warning">Behandeln</Badge>
-        </li>
-      ) : null}
-    </ul>
-  );
-}
-
-/** The rarer actions behind "Mehr": each opens its existing flow; archiving keeps its confirmation (P-10). */
-function moreItems(card: SpecimenCard, h: Handlers, close: () => void): MenuItem[] {
+/**
+ * The rarer actions behind "Mehr": each opens its existing flow; archiving keeps its confirmation (P-10). A form opens
+ * its own address (US-QS-15), which replaces this layer: closing the form returns to the list.
+ */
+function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
   const run = (act: ((e: SpecimenCard) => void) | undefined, label: string): MenuItem[] =>
-    act ? [{ label, onSelect: () => closing(close, act)?.(card) }] : [];
+    act ? [{ label, onSelect: () => act(card) }] : [];
   return [
-    ...run(card.status === "cutting" ? h.onRepot : undefined, "Eingetopft"),
-    ...run(h.onMark, "Kennzeichen"),
-    ...run(h.onCatchDate, "Fangdatum"),
-    ...run(h.onArchive, "Archivieren"),
+    ...run(h.onRepot, card.status === CUTTING_STATUS ? t("menu.repot") : t("menu.repotPlant")),
+    ...run(h.onMark, t("menu.mark")),
+    ...run(h.onCatchDate, t("menu.catchDate")),
+    ...run(h.onArchive, t("menu.archive")),
   ];
 }
 
-/** A part from another module, loaded when its tab opens; it says that it is loading (P-10). */
-function Slot(props: { render?: SlotRender | undefined; card: SpecimenCard; measure: () => void }) {
+/**
+ * A part from another module, loaded when its tab opens. While its chunk loads it shows the part's shape (US-QS-14), after
+ * the delay, so the layer does not move when the part arrives; a shaped skeleton is never held (DS-57).
+ */
+function Slot(props: {
+  render?: SlotRender | undefined;
+  part: SlotPart;
+  card: SpecimenCard;
+  measure: () => void;
+}) {
   if (!props.render) return null;
   return (
-    <Suspense
-      fallback={
-        <p role="status" className="text-sm text-muted-foreground">
-          Lädt …
-        </p>
-      }
-    >
+    <Suspense fallback={<PlantSlotSkeleton part={props.part} label={t("slot.loading")} />}>
       {props.render(props.card, { measure: props.measure })}
     </Suspense>
   );
@@ -110,22 +86,33 @@ type Props = Handlers &
 
 function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () => void) {
   const { card } = p;
-  const measure = () => closing(close, p.onMeasure)?.(card);
-  const slot = (render: SlotRender | undefined) => (
-    <Slot render={render} card={card} measure={measure} />
+  const lightZone = p.onLightZone;
+  const measure = () => p.onMeasure?.(card);
+  const slot = (render: SlotRender | undefined, part: SlotPart) => (
+    <Slot render={render} part={part} card={card} measure={measure} />
   );
   const content: Record<(typeof TABS)[number]["value"], ReactNode> = {
     ueberblick: (
       <PlantOverview
         card={card}
         access={p.photoAccess}
-        growth={p.slots?.growth ? slot(p.slots.growth) : undefined}
-        water={p.slots?.water ? slot(p.slots.water) : undefined}
+        growth={p.slots?.growth ? slot(p.slots.growth, "growth") : undefined}
+        water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
         onTreat={() => tab.choose("pflege")}
       />
     ),
-    verlauf: p.slots?.history ? slot(p.slots.history) : <Measurement card={card} />,
-    pflege: <PlantCareTab card={card} access={p.photoAccess} care={slot(p.slots?.care)} />,
+    verlauf: p.slots?.history ? slot(p.slots.history, "history") : <Measurement card={card} />,
+    pflege: (
+      <PlantCareTab
+        card={card}
+        care={slot(p.slots?.care, "care")}
+        repot={
+          card.status === PLANT_STATUS && p.onRepot
+            ? { access: p.photoAccess, onRepot: () => p.onRepot?.(card) }
+            : undefined
+        }
+      />
+    ),
     standort: (
       <PlantLocation
         card={card}
@@ -138,7 +125,7 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
               }
             : undefined
         }
-        onLightZone={p.onLightZone ? () => closing(close, p.onLightZone)?.(card) : undefined}
+        onLightZone={lightZone ? () => lightZone(card) : undefined}
         onManage={p.onManage}
       />
     ),
@@ -155,27 +142,26 @@ export function PlantLayer(props: Props) {
   const { card } = props;
   const { closeLayer } = useLayer(plantLayerId(card.id));
   const tab = usePlantTab();
-  const items = moreItems(card, props, closeLayer);
+  const items = moreItems(card, props);
+  const measure = props.onMeasure;
   return (
     <LayerSheet
       id={plantLayerId(card.id)}
       title={card.name}
       primaryAction={
-        tab.tab === "ueberblick" && props.onMeasure ? (
-          <MeasureButton
-            card={card}
-            onMeasure={() => closing(closeLayer, props.onMeasure)?.(card)}
-          />
+        tab.tab === "ueberblick" && measure ? (
+          <MeasureButton card={card} onMeasure={() => measure(card)} />
         ) : undefined
       }
     >
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <Chips card={card} />
-          {items.length > 0 ? <Menu label="Mehr" items={items} /> : null}
+          {items.length > 0 ? <Menu label={t("menu.label")} items={items} /> : null}
         </div>
         <Tabs
-          label="Bereiche der Pflanze"
+          label={t("tabs.label")}
+          wrap
           tabs={tabContents(props, tab, closeLayer)}
           value={tab.tab}
           onValueChange={tab.choose}

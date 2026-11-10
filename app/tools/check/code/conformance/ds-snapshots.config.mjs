@@ -6,14 +6,17 @@ import { VIEWPORT } from "./ds-snapshots.lib.mjs";
 export default defineConfig({
   testDir: ".",
   testMatch: "ds-snapshots.spec.mjs",
+  // {arg} starts with `ui/` or `pages/`: the container mounts both baseline directories under DS_SNAPSHOT_DIR.
   snapshotPathTemplate: `${process.env.DS_SNAPSHOT_DIR}/{arg}{ext}`,
   outputDir: process.env.DS_OUTPUT_DIR,
-  // No retries and no parallelism: a flaky screenshot is quarantined with an issue, never retried silently.
+  // No retries: a flaky screenshot is quarantined with an issue, never retried silently. Workers come from
+  // ds-snapshots.mjs (DS_WORKERS); every test renders its own story in its own page, so they run in parallel.
   retries: 0,
-  workers: 1,
-  fullyParallel: false,
+  workers: Number(process.env.DS_WORKERS ?? 1),
+  fullyParallel: true,
   reporter: [["list"]],
-  timeout: 30_000,
+  // A page state takes five pictures.
+  timeout: 60_000,
   expect: {
     toHaveScreenshot: {
       animations: "disabled",

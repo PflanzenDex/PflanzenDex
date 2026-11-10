@@ -87,7 +87,7 @@ export const equipmentWishBuy = (deps: EquipmentWishDependencies) =>
             ? `„${wish.name}“ ist als gekauft vermerkt und steht nicht mehr unter den offenen Wünschen.`
             : `„${wish.name}“ war schon als gekauft vermerkt; es wurde nichts geändert.`,
           nextAction:
-            "Erfasse das Equipment: Name, Produkt-ID, Art und Preis sind vorausgefüllt, das Kaufdatum trägst du selbst ein.",
+            "Erfasse das Gerät: Name, Produkt-ID, Art und Preis sind vorausgefüllt, das Kaufdatum trägst du selbst ein.",
         },
       });
     },

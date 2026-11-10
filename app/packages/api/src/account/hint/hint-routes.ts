@@ -12,7 +12,7 @@ import {
   type KeeperStyle,
 } from "@pflanzendex/core";
 import type { Hono, MiddlewareHandler } from "hono";
-import { body, errorBody, write, type AuthEnv, type Ctx } from "../../kernel";
+import { body, errorBody, keyMissing, write, type AuthEnv, type Ctx } from "../../kernel";
 
 const badZone = (c: Ctx) =>
   c.json(
@@ -42,7 +42,7 @@ export function hintRoutes(
 ) {
   const show = onboardingShowHint({ hints: w.hints });
   const dismiss = onboardingDismissHint({ hints: w.hints });
-  routes.use("/onboarding/hints", auth).use("/onboarding/hints/*", auth);
+  routes.use("/onboarding/hints/*", auth);
   routes.get("/onboarding/hints", async (c) => {
     const timeZone = c.req.query("timeZone");
     if (!isTimeZone(timeZone)) return badZone(c);
@@ -57,6 +57,7 @@ export function hintRoutes(
     });
   });
   routes.put("/onboarding/hints/:occasion", async (c) => {
+    if (!c.req.header("idempotency-key")) return keyMissing(c);
     const input = await body(c);
     if (!isTimeZone(input["timeZone"])) return badZone(c);
     const state = input["state"];

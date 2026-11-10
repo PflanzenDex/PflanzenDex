@@ -10,8 +10,6 @@ import { zoneLabel } from "@pflanzendex/core";
 const numberFormat = new Intl.NumberFormat("de-DE");
 
 export const lux = (n: number) => `${numberFormat.format(n)}\u00a0Lux`;
-export const ppfd = (n: number | null) =>
-  n === null ? "PPFD unbekannt" : `PPFD ${numberFormat.format(n)} µmol/m²/s`;
 export const kindText = (a: LightLocation["kind"]) => (a === "indoor" ? "innen" : "außen");
 
 export const zoneName = (zones: readonly LightZone[], id: string | null): string | null =>
@@ -59,7 +57,7 @@ const REASON: Record<string, string> = {
     "Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft. Sie bleibt bei der Standard-Stufe.",
   top_zone: "Das ist die höchste Zone deines Kontos.",
   no_need:
-    "Für diese Art ist kein Lux-Bedarf bekannt. Trage ihn im Katalog ein, dann wird die Zone abgeleitet.",
+    "Lichtbedarf eintragen: Für diese Art ist kein Lux-Bedarf bekannt, deshalb bleibt die Zone unbekannt. Trage ihn im Katalog ein, dann wird die Zone abgeleitet.",
   no_adult_zone:
     "Du hast keine Zone für erwachsene Pflanzen. Lege eine zweite Lichtzone an (die erste ist Stecklingslicht).",
 };

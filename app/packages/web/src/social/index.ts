@@ -1,5 +1,5 @@
 // Public interface of the `social` module (ADR 0003): the page "Freunde" (US-SOZ-01, US-SOZ-02). It loads with its route (DS-08).
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const FriendsPage = lazyPage(() =>
   import("./pages/friends-page/friends-page").then((m) => ({ default: m.FriendsPage })),
 );
@@ -13,3 +13,13 @@ export const FriendCollectionPage = lazyPage(() =>
 export const FriendsBanner = lazyPage(() =>
   import("./feed/friends-banner/friends-banner").then((m) => ({ default: m.FriendsBanner })),
 );
+// The new plants of friends as a tile and a layer on "Heute" (US-QS-18, issue 1156), in the same chunk as the banner.
+export const FriendsNewsTile = lazyPage(() =>
+  import("./feed/friends-news/friends-news").then((m) => ({ default: m.FriendsNewsTile })),
+);
+export const FriendsNewsLayer = lazyPage(() =>
+  import("./feed/friends-news/friends-news").then((m) => ({ default: m.FriendsNewsLayer })),
+);
+// The route fallbacks of "Freunde" and a friend's collection (US-QS-14, issue 1727): the heading and the page's skeleton.
+export { FriendsRouteSkeleton } from "./pages/friends-page/friends-page.skeleton";
+export { FriendCollectionRouteSkeleton } from "./pages/friend-collection/friend-collection.skeleton";

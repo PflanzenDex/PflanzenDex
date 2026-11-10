@@ -27,6 +27,7 @@ const PROFILE = {
   replenishBuffer: 2,
   rarityConsent: false,
   positionThresholds: null,
+  keyboardShortcuts: "modifier" as const,
 };
 
 async function newAccount(withData = true): Promise<string> {
@@ -67,6 +68,7 @@ describe("US-ACC-02 · profile in the database", () => {
       replenishBuffer: 2,
       rarityConsent: false,
       positionThresholds: null,
+      keyboardShortcuts: "plain",
     });
   });
 
@@ -220,5 +222,45 @@ describe("US-LIC-03 · position thresholds in the database", () => {
     });
     expect(kept).toMatchObject({ positionThresholds: own, timeZone: "UTC" });
     expect((await profiles.find(b))?.positionThresholds).toBeNull();
+  });
+});
+
+describe("US-QS-11 · the keyboard shortcut mode in the database", () => {
+  it("is plain for a new account, saved as one of the three modes, and kept by null", async () => {
+    const id = await newAccount();
+    expect((await profiles.find(id))?.keyboardShortcuts).toBe("plain");
+    expect((await profiles.update(id, PROFILE))?.keyboardShortcuts).toBe("modifier");
+    const kept = await profiles.update(id, {
+      ...PROFILE,
+      keyboardShortcuts: null,
+      timeZone: "UTC",
+    });
+    expect(kept).toMatchObject({ keyboardShortcuts: "modifier", timeZone: "UTC" });
+    expect(
+      (await profiles.update(id, { ...PROFILE, keyboardShortcuts: "disabled" }))?.keyboardShortcuts,
+    ).toBe("disabled");
+  });
+
+  it("the database refuses a mode that is none of the three (P-10)", async () => {
+    const id = await newAccount();
+    await expect(
+      withAccount(pool, id, (c) =>
+        c.query("update account_data set keyboard_shortcuts = 'single'"),
+      ),
+    ).rejects.toThrow(/keyboard_shortcuts_check/);
+  });
+
+  it("two accounts: account B neither reads nor changes the shortcut mode of account A (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, { ...PROFILE, keyboardShortcuts: "disabled" });
+    expect((await profiles.find(b))?.keyboardShortcuts).toBe("plain");
+    await profiles.update(b, { ...PROFILE, keyboardShortcuts: "modifier" });
+    expect((await profiles.find(a))?.keyboardShortcuts).toBe("disabled");
+    const touched = await withAccount(pool, b, (c) =>
+      c.query("update account_data set keyboard_shortcuts = 'plain' where account_id = $1", [a]),
+    );
+    expect(touched.rowCount).toBe(0);
+    expect((await profiles.find(a))?.keyboardShortcuts).toBe("disabled");
   });
 });

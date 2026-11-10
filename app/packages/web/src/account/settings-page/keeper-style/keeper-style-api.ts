@@ -1,4 +1,4 @@
-import { call, createWrite, currentTimeZone, type Response } from "../../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
 
 export type KeeperStyle = "few" | "many";
 

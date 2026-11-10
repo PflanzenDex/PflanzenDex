@@ -1,17 +1,26 @@
-import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
+import {
+  milestoneTreeOf,
+  type Ownership,
+  type PokedexTree,
+  type UnidentifiedSpecimen,
+} from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
-import { CollectorCards } from "@/components/collector-cards/collector-cards";
-import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame } from "../../kernel";
+import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards";
+import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { LoadFrame, SCREEN_STALE_TIME } from "../../shared/data";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
-import { PokedexPageSkeleton } from "./pokedex-page.skeleton";
+import { MilestonesSkeleton, PokedexPageSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
 import { CARD } from "../pokedex-cards/pokedex-cards";
-import { CollectorRank, PROGRESS_LAYER, ProgressRow } from "../collector-rank/collector-rank";
-import { Milestones } from "../milestones/milestones";
+import { PROGRESS_LAYER, ProgressDetail, ProgressLine } from "../collector-rank/collector-rank";
+import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
+import { Milestones, MILESTONES_LAYER } from "../milestones/milestones";
 import { NewlyCaught } from "../caught/newly-caught/newly-caught";
+import table from "./pokedex-page.de.json";
 
+const ui = texts(table);
 const CARDS_LAYER = "cards";
 const UNCOUNTED_LAYER = "uncounted";
 
@@ -30,8 +39,9 @@ function ReportCaption({ host, caught }: { host: Host | undefined; caught: numbe
 /**
  * The species the account has caught (US-POK-06) on one screen (US-QS-22): derived from the active specimens, never
  * stored (P-01). The screen holds the progress row, the search with "Filter" and a page of compact entries; the
- * progress, the filters, the details of a species, the collector cards and the specimens that do not count yet are
- * layers. Species caught since the last visit are announced above the progress until the keeper confirms (US-POK-12).
+ * progress, the milestones, the filters, the details of a species, the collector cards and the specimens that do not
+ * count yet are layers. Species caught since the last visit are announced above the progress until the keeper confirms
+ * (US-POK-12).
  */
 export function PokedexPage(props: {
   api: string;
@@ -44,30 +54,35 @@ export function PokedexPage(props: {
   const { api, token, onOpenSpecies, host } = props;
   const load = useCallback((t: string) => loadOwnership(api, t), [api]);
   return (
-    <div className="min-w-0">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <LoadFrame
         queryKey={["pokedex", "ownership"]}
         token={token}
         load={load}
-        loadingText="Pokédex wird geladen …"
-        {...(host ? {} : { heading: "Pokédex" })}
-        loadingFallback={<PokedexPageSkeleton label="Pokédex wird geladen …" />}
+        loadingText={ui("loading")}
+        {...(host ? {} : { heading: ui("heading") })}
+        loadingFallback={<PokedexPageSkeleton label={ui("loading")} />}
       >
         {(ownership: Ownership) => (
-          <section aria-labelledby="pokedex-title" className="flex min-w-0 flex-col gap-2">
+          <section
+            aria-labelledby="pokedex-title"
+            className="flex min-h-0 min-w-0 flex-1 flex-col gap-2"
+          >
             <ReportCaption host={host} caught={ownership.caught.length} />
             {host ? (
               <h2 id="pokedex-title" className="sr-only">
-                Arten
+                {ui("sectionHeading")}
               </h2>
             ) : (
               <h1 id="pokedex-title" className="text-2xl font-semibold">
-                Pokédex
+                {ui("heading")}
               </h1>
             )}
             <NewlyCaught api={api} token={token} caught={ownership.caught} />
-            <ProgressRow
-              caught={ownership.caught.length}
+            <ProgressLine
+              api={api}
+              token={token}
+              caught={ownership.caught}
               uncounted={ownership.unidentified.length}
             />
             <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
@@ -79,31 +94,57 @@ export function PokedexPage(props: {
   );
 }
 
-/** The layers of the progress, the collector cards and the specimens that do not count yet (US-QS-22). */
+/** The layers of the progress, its milestones, the collector cards and the specimens that do not count yet (US-QS-22). */
 function Layers(props: {
   api: string;
   token: () => Promise<string | undefined>;
   ownership: Ownership;
 }) {
-  const { ownership } = props;
+  const { api, token, ownership } = props;
+  const load = useCallback((t: string) => loadTree(api, t), [api]);
   return (
     <>
-      <LayerSheet id={PROGRESS_LAYER} title="Fortschritt">
+      <LayerSheet id={PROGRESS_LAYER} title={ui("progressTitle")}>
         <div className="flex flex-col gap-3">
-          <CollectorRank caught={ownership.caught.length} />
-          <Milestones caught={ownership.caught} />
-          <LayerOpener id={CARDS_LAYER}>Sammlerkarten ansehen</LayerOpener>
+          <LoadFrame
+            queryKey={TREE_KEY}
+            token={token}
+            load={load}
+            staleTime={SCREEN_STALE_TIME}
+            loadingText={ui("progressLoading")}
+            loadingFallback={<ProgressSkeleton label={ui("progressLoading")} />}
+          >
+            {(tree: PokedexTree | null) => <ProgressDetail caught={ownership.caught} tree={tree} />}
+          </LoadFrame>
+          <LayerOpener id={CARDS_LAYER}>{ui("cardsOpener")}</LayerOpener>
           {ownership.unidentified.length > 0 ? (
             <LayerOpener id={UNCOUNTED_LAYER}>
-              {`Noch nicht gezählt (${ownership.unidentified.length})`}
+              {ui("uncountedOpener", { count: ownership.unidentified.length })}
             </LayerOpener>
           ) : null}
         </div>
       </LayerSheet>
-      <LayerSheet id={CARDS_LAYER} title="Sammlerkarten">
+      <LayerSheet id={MILESTONES_LAYER} title={ui("milestonesTitle")}>
+        <LoadFrame
+          queryKey={TREE_KEY}
+          token={token}
+          load={load}
+          staleTime={SCREEN_STALE_TIME}
+          loadingText={ui("progressLoading")}
+          loadingFallback={<MilestonesSkeleton label={ui("progressLoading")} />}
+        >
+          {(tree: PokedexTree | null) => (
+            <Milestones
+              caught={ownership.caught}
+              tree={tree ? milestoneTreeOf(tree.species) : null}
+            />
+          )}
+        </LoadFrame>
+      </LayerSheet>
+      <LayerSheet id={CARDS_LAYER} title={ui("cardsTitle")}>
         <CollectorCards api={props.api} token={props.token} />
       </LayerSheet>
-      <LayerSheet id={UNCOUNTED_LAYER} title="Noch nicht gezählt">
+      <LayerSheet id={UNCOUNTED_LAYER} title={ui("uncountedTitle")}>
         <Unidentified specimens={ownership.unidentified} />
       </LayerSheet>
     </>
@@ -116,7 +157,7 @@ function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
     <Pager
       items={props.specimens}
       pageSize={4}
-      label="Noch nicht gezählt"
+      label={ui("uncountedTitle")}
       param={LAYER_PARAM}
       getKey={(s) => s.specimenId}
       renderItem={(s) => (

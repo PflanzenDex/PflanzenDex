@@ -56,8 +56,6 @@ export interface SwapRow {
   readonly decidedAt: string | null;
   readonly confirmedGiver: boolean;
   readonly confirmedRecipient: boolean;
-  /** The marker the recipient chose for the new specimen. */
-  readonly recipientMarker: string | null;
   /** The specimen the giver gave (giver's row) and the one the recipient received (recipient's row). */
   readonly givenSpecimenId: string | null;
   readonly receivedSpecimenId: string | null;
@@ -84,7 +82,7 @@ const SWAP_COLUMNS = `swap_id as "swapId", role, other_id as "otherId", other_na
   counter_text as "counterText", status,
   to_char(requested_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "requestedAt", reason, cause, proposal,
   to_char(decided_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "decidedAt",
-  confirmed_giver as "confirmedGiver", confirmed_recipient as "confirmedRecipient", recipient_marker as "recipientMarker",
+  confirmed_giver as "confirmedGiver", confirmed_recipient as "confirmedRecipient",
   given_specimen_id as "givenSpecimenId", received_specimen_id as "receivedSpecimenId",
   to_char(handed_over_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "handedOverAt"`;
 
@@ -187,5 +185,13 @@ export class SwapsPostgres {
       c.query<SwapRow>(`select ${SWAP_COLUMNS} from swap order by requested_at desc, swap_id`),
     );
     return r.rows;
+  }
+
+  /** Whether the account has any swap row, whatever its status (as `list`, NFR-12). */
+  async hasAny(userId: string): Promise<boolean> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ found: boolean }>("select exists(select 1 from swap) as found"),
+    );
+    return r.rows[0]?.found === true;
   }
 }

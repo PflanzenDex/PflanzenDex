@@ -33,6 +33,19 @@ afterAll(async () => {
 });
 
 describe("US-SOZ-08 offers in the database", () => {
+  it("NFR-12 hasAny says whether the account has an offer, a withdrawn one included, and only its own (P-04)", async () => {
+    const fresh = randomUUID();
+    await createAccountWithName(pool, fresh, "Ohne Angebot");
+    try {
+      expect(await offers.hasAny(fresh)).toBe(false);
+      const s = await createFixtureSpecimen(pool, fresh, "Eigenes Angebot");
+      await offers.create(fresh, values(s));
+      expect(await offers.hasAny(fresh)).toBe(true);
+    } finally {
+      await admin.query("delete from account where id = $1", [fresh]);
+    }
+  });
+
   it("US-SOZ-08 stores an offer as open with all fields and reads it back", async () => {
     const s = await createFixtureSpecimen(pool, anna, "Angebot 1");
     const r = await offers.create(

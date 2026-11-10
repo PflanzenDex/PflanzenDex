@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { DifficultyPage } from "./difficulty-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+
+afterEach(releaseSheetExits);
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -64,8 +68,9 @@ describe("US-BES-05 page of the difficulty overview", () => {
         rows: [row(), row({ speciesId: "sp2", speciesName: "Gummibaum", difficulty: 3 })],
       }),
     );
+    delayLoads();
     view(<DifficultyPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("geladen");
+    expect((await screen.findByRole("status")).textContent).toContain("geladen");
     const list = await screen.findByRole("list", { name: "Artenvergleich" });
     const entries = within(list).getAllByRole("listitem");
     expect(entries).toHaveLength(2);
@@ -89,7 +94,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     ]);
   });
 
-  it("US-BES-05 maps 2 to Mittel and shows unknown values as unbekannt (P-08)", async () => {
+  it("US-BES-05 · US-QS-24 maps 2 to Mittel and folds the unknown values into one line with the next step (P-08)", async () => {
     fakeServer(() =>
       response(200, {
         rows: [
@@ -99,11 +104,41 @@ describe("US-BES-05 page of the difficulty overview", () => {
     );
     view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
     const values = await valuesOf("Bogenhanf");
-    expect(values.get("Lichtzone")).toBe("unbekannt");
-    expect(values.get("Gießregel")).toBe("unbekannt");
-    expect(values.get("Substrat")).toBe("unbekannt");
-    expect(values.get("Schnitt")).toBe("unbekannt");
     expect(values.get("Schwierigkeit")).toBe("Mittel");
+    expect(values.has("Lichtzone")).toBe(false);
+    expect(values.has("Substrat")).toBe(false);
+    const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
+    expect(within(layer).getByText("4 Angaben fehlen")).toBeTruthy();
+    expect(within(layer).getByRole("link", { name: "Artprofil öffnen" }).getAttribute("href")).toBe(
+      "/discover/species/sp1",
+    );
+    expect(screen.queryByText(/unbekannt/)).toBeNull();
+  });
+
+  it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen instead of the profile link", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({
+            difficulty: 2,
+            zone: null,
+            zoneSource: null,
+            lightNeedUnknown: true,
+            wateringHint: null,
+            substrate: null,
+            pruning: null,
+          }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    expect(
+      within(layer)
+        .getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" })
+        .getAttribute("href"),
+    ).toBe("/discover/species/sp1?sheet=care");
+    expect(within(layer).queryByRole("link", { name: "Artprofil öffnen" })).toBeNull();
   });
 
   it("US-BES-05 keeps the order delivered by the server", async () => {
@@ -202,6 +237,98 @@ describe("US-BES-05 page of the difficulty overview", () => {
   });
 });
 
+describe("US-QS-24 the comparison folds unknown values", () => {
+  it("US-QS-24 an entry counts its unknown values in one line instead of printing unbekannt", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({ zone: null }),
+          row({ speciesId: "sp2", speciesName: "Gummibaum", difficulty: null }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entries = within(
+      await screen.findByRole("list", { name: "Artenvergleich" }),
+    ).getAllByRole("listitem");
+    expect(entries[0]?.textContent).toContain("Leicht · 1 Angabe fehlt");
+    expect(entries[1]?.textContent).toContain("1 Angabe fehlt");
+    expect(screen.queryByText(/unbekannt/)).toBeNull();
+  });
+
+  it("US-QS-24 a value unknown for every species is hidden from the entries", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({ zone: null }),
+          row({ speciesId: "sp2", speciesName: "Gummibaum", zone: null, difficulty: 3 }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entries = within(
+      await screen.findByRole("list", { name: "Artenvergleich" }),
+    ).getAllByRole("listitem");
+    expect(entries[0]?.textContent).toContain("Leicht");
+    expect(entries[0]?.textContent).not.toContain("fehlt");
+    expect(entries[1]?.textContent).toContain("Schwer");
+    expect(entries[1]?.textContent).not.toContain("fehlt");
+    expect(
+      screen.getByText("Bei keiner Art angegeben, deshalb nicht in der Liste: Lichtzone."),
+    ).toBeTruthy();
+  });
+
+  it("US-QS-24 a value unknown for every species is named once above the list, never as unbekannt", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({ zone: null, difficulty: null }),
+          row({ speciesId: "sp2", zone: null, difficulty: null }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("list", { name: "Artenvergleich" });
+    expect(
+      screen.getByText(
+        "Bei keiner Art angegeben, deshalb nicht in der Liste: Schwierigkeit, Lichtzone.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/unbekannt/)).toBeNull();
+  });
+
+  it("US-QS-24 a blank or empty value counts as unknown in the layer (P-08)", async () => {
+    fakeServer(() =>
+      response(200, { rows: [row({ wateringHint: "  ", substrate: "", zone: null })] }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    const values = await valuesOf("Bogenhanf");
+    expect(values.has("Gießregel")).toBe(false);
+    expect(values.has("Substrat")).toBe(false);
+    expect(values.has("Lichtzone")).toBe(false);
+    const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
+    expect(within(layer).getByText("3 Angaben fehlen")).toBeTruthy();
+  });
+
+  it("US-QS-24 the layer of a species with nothing unknown shows no fold line", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({
+            zone,
+            wateringHint: "alle 10 Tage",
+            substrate: "Humus",
+            pruning: "selten",
+          }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    await valuesOf("Bogenhanf");
+    expect(screen.queryByText(/fehlen|fehlt/)).toBeNull();
+  });
+});
+
 describe("US-QS-22 the comparison fits one screen", () => {
   const many = (n: number) =>
     Array.from({ length: n }, (_, i) => row({ speciesId: `s${i}`, speciesName: `Art ${i + 1}` }));
@@ -215,6 +342,18 @@ describe("US-QS-22 the comparison fits one screen", () => {
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(await screen.findByText("Art 5")).toBeTruthy();
+  });
+
+  it("US-QS-15 · F12 the layer of a species keeps its values while it slides out, then removes them", async () => {
+    holdSheetExit();
+    setViewportWidth(360);
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    await screen.findByRole("dialog", { name: "Bogenhanf" });
+    await userEvent.keyboard("{Escape}");
+    expect(document.querySelector("[data-vaul-drawer]")?.textContent).toContain("Zone 2");
+    endSheetExit();
+    await waitFor(() => expect(document.querySelector("[data-vaul-drawer]")).toBeNull());
   });
 
   it("US-QS-22 there is no table and no sideways scroll: the values of a species are in its layer", async () => {

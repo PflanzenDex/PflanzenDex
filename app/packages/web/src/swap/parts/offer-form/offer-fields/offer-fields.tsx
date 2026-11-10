@@ -1,7 +1,8 @@
 import type { OfferMode, OfferType } from "@pflanzendex/core";
-import { Label } from "@/components/ui/display/label/label";
-import { Select } from "@/components/ui/fields/select/select";
-import { Textarea } from "@/components/ui/fields/textarea/textarea";
+import { Label } from "@/shared/ui/display/label/label";
+import { Select } from "@/shared/ui/fields/select/select";
+import { MoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
+import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import type { OwnSpecimenRow } from "../../../api/offers-api";
 import { MODE_TEXT, TYPE_TEXT } from "../health-text";
 
@@ -18,7 +19,7 @@ type FieldProps = { value: OfferFieldValues; onChange: (v: OfferFieldValues) => 
 /** The type of the offer (cutting, plant, offshoot) and the mode (swap or give away). */
 function TypeModeFields({ value, onChange }: FieldProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid gap-3 sm:grid-cols-2">
       <div className="flex flex-col gap-1">
         <Label htmlFor="offer-type">Art des Angebots</Label>
         <Select
@@ -78,24 +79,28 @@ export function OfferFields(props: {
         </Select>
       </div>
       <TypeModeFields value={value} onChange={onChange} />
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="offer-wish">Wunsch (optional)</Label>
-        <Textarea
-          id="offer-wish"
-          maxLength={200}
-          value={value.wish}
-          onChange={(e) => onChange({ ...value, wish: e.target.value })}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="offer-note">Hinweis (optional)</Label>
-        <Textarea
-          id="offer-note"
-          maxLength={500}
-          value={value.note}
-          onChange={(e) => onChange({ ...value, note: e.target.value })}
-        />
-      </div>
+      <MoreFields forced={value.wish.trim() !== "" || value.note.trim() !== ""}>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="offer-wish">Wunsch (optional)</Label>
+          <Textarea
+            id="offer-wish"
+            rows={2}
+            maxLength={200}
+            value={value.wish}
+            onChange={(e) => onChange({ ...value, wish: e.target.value })}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="offer-note">Hinweis (optional)</Label>
+          <Textarea
+            id="offer-note"
+            rows={2}
+            maxLength={500}
+            value={value.note}
+            onChange={(e) => onChange({ ...value, note: e.target.value })}
+          />
+        </div>
+      </MoreFields>
     </>
   );
 }

@@ -1,8 +1,8 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { migrate } from "./migrate.ts";
 import { openOwnerPool } from "./connection/connection.ts";
 
@@ -19,6 +19,7 @@ afterAll(async () => {
 
 function directory(files: Record<string, string>): string {
   const dir = mkdtempSync(join(tmpdir(), "migr-"));
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
   for (const [name, content] of Object.entries(files)) writeFileSync(join(dir, name), content);
   return dir;
 }

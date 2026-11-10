@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import type { Candidate, CandidateList, ZoneStock } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
-import type { ApiError } from "../../../../kernel";
+import {
+  LayerSheet,
+  useExitValue,
+  useLayer,
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import type { ApiError } from "../../../../shared/data";
 import { CandidateCard } from "../../../candidate-card/candidate-card";
 import { BoughtList } from "../../../history/bought-list/bought-list";
 import { DiscardedList } from "../../../history/discarded-list/discarded-list";
@@ -13,6 +17,10 @@ import { WishForm } from "../../../wish-form/wish-form";
 import type { WishInput, Wishlist } from "../../../wishlist-api";
 import type { WishToPlant } from "../../../actions/actions";
 import { wishLayerId } from "../../rows/wish-row/wish-row";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../wishlist.de.json";
+
+const t = texts(table);
 
 export const NEW_WISH_LAYER = "new-wish";
 export const BOUGHT_LAYER = "bought";
@@ -35,7 +43,7 @@ function NewWishLayer(props: {
 }) {
   const { closeLayer } = useLayer(NEW_WISH_LAYER);
   return (
-    <LayerSheet id={NEW_WISH_LAYER} title="Neuer Wunsch">
+    <LayerSheet id={NEW_WISH_LAYER} title={t("layers.newWish")}>
       <WishForm
         access={props.access}
         zones={props.zones}
@@ -77,6 +85,8 @@ export function WishlistLayers(props: {
   const [params] = useSearchParams();
   const { data } = props;
   const wish = data.list.candidates.find((c) => wishLayerId(c.id) === params.get("sheet"));
+  // The wish layer keeps its wish and rank while it slides out: the address has lost it at once (US-QS-15, F12).
+  const shown = useExitValue(wish && { wish, rank: data.list.candidates.indexOf(wish) + 1 });
   const create = props.onCreateSpecimen ? { onCreateSpecimen: props.onCreateSpecimen } : {};
   return (
     <>
@@ -87,12 +97,12 @@ export function WishlistLayers(props: {
         error={props.error}
         onSend={props.onSend}
       />
-      {wish ? (
-        <LayerSheet id={wishLayerId(wish.id)} title="Wunsch">
+      {shown ? (
+        <LayerSheet id={wishLayerId(shown.wish.id)} title={t("layers.wish")}>
           <ul className="m-0 grid list-none gap-3 p-0">
             <CandidateCard
-              c={wish}
-              rank={data.list.candidates.indexOf(wish) + 1}
+              c={shown.wish}
+              rank={shown.rank}
               photoAccess={props.access}
               onStoreImage={props.card.onStoreImage}
               busy={props.card.busy}
@@ -100,14 +110,14 @@ export function WishlistLayers(props: {
           </ul>
         </LayerSheet>
       ) : null}
-      <LayerSheet id={BOUGHT_LAYER} title="Gekauft">
+      <LayerSheet id={BOUGHT_LAYER} title={t("layers.bought")}>
         <BoughtList bought={data.bought} {...create} />
       </LayerSheet>
-      <LayerSheet id={DISCARDED_LAYER} title="Verworfen">
+      <LayerSheet id={DISCARDED_LAYER} title={t("layers.discarded")}>
         <DiscardedList discarded={data.discarded} />
       </LayerSheet>
-      <LayerSheet id={HINTS_LAYER} title="Hinweise">
-        <div className="flex flex-col gap-4">
+      <LayerSheet id={HINTS_LAYER} title={t("layers.hints")}>
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
           {props.outcome}
           <ReplenishWarning replenishment={data.list.replenishment} />
           <DuplicateWishes list={data.list} repair={props.repair} />

@@ -3,6 +3,7 @@ import {
   isTimeZone,
   pokedexMarkSeen,
   pokedexOwnership,
+  pokedexTreeOf,
   readAppRarityBasis,
   readCollectorCards,
 } from "@pflanzendex/core";
@@ -18,6 +19,7 @@ import {
 import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, write, type AuthEnv } from "../kernel";
+import { sharedTreeCache } from "./cards-cache";
 
 const zoneOf = (c: Context<AuthEnv>) => {
   const zone = c.req.query("timeZone");
@@ -58,10 +60,38 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
   routes.post("/pokedex/seen", async (c) =>
     write(c, writeDeps, markSeen, { input: await body(c) }),
   );
-  // Collector cards (US-POK-01): the shared taxonomy tree against the derived ownership; caught is never stored.
+  // One kept tree per app instance, read by the cards and by the tree route alike (FR-POK-13, NFR-12).
+  const kept = keptTaxonomy(pool);
+  const cards = collectorCardsFor(pool, kept);
+  routes.get("/pokedex/cards", async (c) => {
+    const timeZone = zoneOf(c);
+    if (timeZone === null) return invalidZone(c);
+    return c.json(await cards(c.get("account").id, timeZone));
+  });
+  // The progress (US-POK-10, US-POK-11): the tree rows with the German names; `tree` is `null` before the first build.
+  routes.get("/pokedex/tree", async (c) => {
+    const { built, tree } = await kept();
+    const facts = await deps.species.approvedFacts(c.get("account").id);
+    return c.json({ tree: pokedexTreeOf(built ? tree : null, facts) });
+  });
+  return routes;
+}
+
+/** The taxonomy tree kept per build (FR-POK-13): one cache per app instance, no module-level state. */
+function keptTaxonomy(pool: Pool) {
   const taxa = new TaxonomyPostgres(pool);
+  return sharedTreeCache({ version: () => taxa.version(), tree: () => taxa.tree() });
+}
+
+/**
+ * Collector cards (US-POK-01) as `GET /pokedex/cards` answers them, for the route and the AI client (US-KI-12): the
+ * shared taxonomy tree against the derived ownership; caught is never stored (P-01). The tree is kept per taxonomy build
+ * (FR-POK-13, cards-cache.ts); the facts and the rarity are read per request.
+ */
+export function collectorCardsFor(pool: Pool, kept = keptTaxonomy(pool)) {
+  const deps = { specimens: new SpecimenPostgres(pool), species: new SpeciesPostgres(pool) };
   const tree = {
-    tree: () => taxa.tree(),
+    tree: async () => (await kept()).tree,
     facts: (userId: string) => deps.species.approvedFacts(userId),
     // Rarity in PflanzenDex (US-POK-14): only counts of the consenting accounts, never an account.
     appRarity: (userId: string) =>
@@ -74,12 +104,8 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
         userId,
       ),
   };
-  routes.get("/pokedex/cards", async (c) => {
-    const timeZone = zoneOf(c);
-    if (timeZone === null) return invalidZone(c);
-    const userId = c.get("account").id;
+  return async (userId: string, timeZone: string) => {
     const { caught } = await pokedexOwnership(deps, userId, timeZone);
-    return c.json({ cards: await readCollectorCards(tree, userId, caught) });
-  });
-  return routes;
+    return { cards: await readCollectorCards(tree, userId, caught) };
+  };
 }

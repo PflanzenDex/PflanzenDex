@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CareProfileEntry, Layered } from "@pflanzendex/core";
 import { CareProfileSection } from "../care-profile-page/care-profile-page";
@@ -33,6 +35,7 @@ const entry = (
   activeSpecimens: 2,
   wateringHint: "Alle zwei Wochen gießen",
   deviates,
+  lightNeedUnknown: false,
   mergedInto: null,
   notice: null,
   profile: {
@@ -75,7 +78,16 @@ const puts = (fetchFn: ReturnType<typeof fakeServer>) =>
   fetchFn.mock.calls.filter(([, init]) => init?.method === "PUT");
 const sent = (fetchFn: ReturnType<typeof fakeServer>) =>
   puts(fetchFn).map(([, init]) => JSON.parse(String(init?.body)) as unknown);
-const open = () => render(<CareProfileSection api="http://api" token={token} speciesId="s1" />);
+const withRouter = (ui: ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
+const open = () =>
+  render(withRouter(<CareProfileSection api="http://api" token={token} speciesId="s1" />));
+/** What a save or a reset says; the pager has a status of its own ("Seite n von m"). */
+const SAVED = /Pflegeprofil für|gilt wieder nach Katalog/;
+/** The fields sit on three pages (Standort, Ruhephase, Gießen und Hinweise); "Weiter" shows the next one (US-BES-09). */
+const next = async (times = 1) => {
+  for (let i = 0; i < times; i++)
+    await userEvent.click(await screen.findByRole("button", { name: "Weiter" }));
+};
 
 afterEach(() => {
   cleanup();
@@ -118,16 +130,41 @@ describe("US-BES-09 client of the care profile API", () => {
 });
 
 describe("US-BES-09 the care profile page shows the catalog value and my deviation side by side", () => {
+  it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen, which moves the focus to the zone choice", async () => {
+    fakeServer({ entries: [{ ...entry({ lightZone: none() }), lightNeedUnknown: true }] });
+    open();
+    await screen.findByRole("heading", { name: "Bogenhanf" });
+    // The zone choice is on the second page of the card (US-BES-09).
+    await next();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lichtbedarf eintragen für „Bogenhanf“" }),
+    );
+    expect(document.activeElement).toBe(screen.getByLabelText("Lichtzone für „Bogenhanf“"));
+  });
+
   it("US-BES-09 shows per species the catalog values and what I can deviate in, and says it is private", async () => {
     fakeServer({ entries: [entry()] });
     open();
     expect(await screen.findByRole("heading", { name: "Bogenhanf" })).toBeTruthy();
     expect(screen.getByText(/2 aktive Pflanzen/)).toBeTruthy();
-    expect(screen.getByText("Katalog: Zone 3")).toBeTruthy();
-    expect(screen.getByText("Katalog: 01.11. bis 15.03.")).toBeTruthy();
     expect(screen.getAllByText("Katalog: unbekannt").length).toBeGreaterThanOrEqual(2);
+    await next();
+    expect(screen.getByText("Katalog: Zone 3")).toBeTruthy();
+    await next();
+    expect(screen.getByText("Katalog: 01.11. bis 15.03.")).toBeTruthy();
+    await next();
     expect(screen.getByText(/Hinweis der Art: Alle zwei Wochen gießen/)).toBeTruthy();
-    expect(screen.getByText(/privat und nie Teil einer Freigabe/)).toBeTruthy();
+  });
+
+  it("US-BES-09 · US-QS-15 · issue 1182 the profiles take two columns by the width of their container, not of the window", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    const card = await screen.findByRole("heading", { name: "Bogenhanf" });
+    const list = card.closest("ul") as HTMLElement;
+    // In the 384 px pane of the species profile the container is narrow, so one column; the page keeps two.
+    expect(list.className).toContain("@2xl:grid-cols-2");
+    expect(list.className).not.toContain("lg:grid-cols-2");
+    expect(list.parentElement?.className).toContain("@container");
   });
 
   it("US-BES-09 shows my deviation where there is one and marks it as mine", async () => {
@@ -143,12 +180,13 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
       ],
     });
     open();
+    const growth = (await screen.findByLabelText(
+      "Soll-Standort Wachstumsphase für „Bogenhanf“",
+    )) as HTMLSelectElement;
+    expect(growth.value).toBe("l1");
+    await next();
     const zone = (await screen.findByLabelText("Lichtzone für „Bogenhanf“")) as HTMLSelectElement;
     expect(zone.value).toBe("z2");
-    expect(
-      (screen.getByLabelText("Soll-Standort Wachstumsphase für „Bogenhanf“") as HTMLSelectElement)
-        .value,
-    ).toBe("l1");
     expect(screen.getByText("Meine Abweichung gilt")).toBeTruthy();
   });
 
@@ -161,6 +199,7 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
         .getAllByRole("option")
         .map((o) => o.textContent),
     ).toEqual(["Katalog gilt", "Wohnzimmer", "Kühler Flur"]);
+    await next();
     const lightZone = screen.getByLabelText("Lichtzone für „Bogenhanf“");
     expect(
       within(lightZone)
@@ -189,7 +228,11 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
 
   it("US-BES-09 without sign-in nothing is requested and the user is asked to sign in", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
-    render(<CareProfileSection api="http://api" token={async () => undefined} speciesId="s1" />);
+    render(
+      withRouter(
+        <CareProfileSection api="http://api" token={async () => undefined} speciesId="s1" />,
+      ),
+    );
     expect(await screen.findByText(/melde dich neu an/)).toBeTruthy();
     expect(fetchFn).not.toHaveBeenCalled();
   });
@@ -218,7 +261,7 @@ describe("US-BES-09 change my deviation", () => {
       "l1",
     );
     await userEvent.click(save);
-    expect((await screen.findByRole("status")).textContent).toContain(
+    expect((await screen.findByText(SAVED)).textContent).toContain(
       "Pflegeprofil für „Bogenhanf“ gespeichert.",
     );
     expect(sent(fetchFn)).toEqual([{ growthLocationId: "l1" }]);
@@ -235,22 +278,25 @@ describe("US-BES-09 change my deviation", () => {
   it("US-BES-09 watering intervals and own hints are sent as numbers and text", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
     open();
+    await next(3);
     await userEvent.type(
       await screen.findByLabelText("Gießintervall Wachstumsphase (Tage) für „Bogenhanf“"),
       "7",
     );
+    await next();
     await userEvent.type(
       screen.getByLabelText("Eigene Hinweise für „Bogenhanf“"),
       "Im Winter trocken",
     );
     await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ wateringGrowthDays: 7, ownHints: "Im Winter trocken" }]);
   });
 
   it("US-BES-09 dormancy from/until is chosen as month and day and sent as a pair MM-DD", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
     open();
+    await next(2);
     await userEvent.selectOptions(
       await screen.findByLabelText("Ruhephase von (Monat) für „Bogenhanf“"),
       "10",
@@ -268,13 +314,14 @@ describe("US-BES-09 change my deviation", () => {
       "28",
     );
     await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ dormancyFrom: "10-15", dormancyUntil: "02-28" }]);
   });
 
   it("US-BES-09 half a dormancy period is not sent: the page says what is missing", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
     open();
+    await next(2);
     await userEvent.selectOptions(
       await screen.findByLabelText("Ruhephase von (Monat) für „Bogenhanf“"),
       "10",
@@ -296,11 +343,12 @@ describe("US-BES-09 change my deviation", () => {
     );
     const fetchFn = fakeServer({ entries: [own] });
     open();
+    await next();
     const reset = await screen.findByRole("button", {
       name: "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)",
     });
     await userEvent.click(reset);
-    expect((await screen.findByRole("status")).textContent).toContain(
+    expect((await screen.findByText(SAVED)).textContent).toContain(
       "„Lichtzone“ für „Bogenhanf“ gilt wieder nach Katalog.",
     );
     expect(sent(fetchFn)).toEqual([{ lightZoneId: null }]);
@@ -309,6 +357,7 @@ describe("US-BES-09 change my deviation", () => {
   it("US-BES-09 a field without deviation has nothing to reset: the button is disabled", async () => {
     fakeServer({ entries: [entry()] });
     open();
+    await next();
     const reset = await screen.findByRole("button", {
       name: "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)",
     });
@@ -329,12 +378,13 @@ describe("US-BES-09 change my deviation", () => {
     );
     const fetchFn = fakeServer({ entries: [own] });
     open();
+    await next(2);
     await userEvent.click(
       await screen.findByRole("button", {
         name: "Auf Katalog zurücksetzen: Ruhephase (Bogenhanf)",
       }),
     );
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ dormancyFrom: null, dormancyUntil: null }]);
   });
 
@@ -355,7 +405,7 @@ describe("US-BES-09 change my deviation", () => {
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Diesen Standort gibt es nicht.",
     );
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText(SAVED)).toBeNull();
   });
 
   it("US-BES-09 a double tap on save sends one request", async () => {
@@ -372,7 +422,7 @@ describe("US-BES-09 change my deviation", () => {
     const save = screen.getByRole("button", { name: "Speichern: Bogenhanf" });
     await userEvent.dblClick(save);
     finish(new Response("{}", { status: 200 }));
-    await screen.findByRole("status");
+    await screen.findByText(SAVED);
     expect(puts(fetchFn)).toHaveLength(1);
   });
 });
@@ -392,14 +442,10 @@ describe("US-BES-10 a care profile kept on a merged proposal is shown, not edita
         true,
       ),
       speciesId: "gone",
-      speciesName: "Dein zusammengeführter Vorschlag",
+      speciesName: "Bogenhanf",
       activeSpecimens: 0,
       mergedInto: { speciesId: "s1", speciesName: "Bogenhanf" },
-      notice: {
-        text: "Dein Vorschlag wurde mit „Bogenhanf“ zusammengeführt.",
-        nextAction:
-          "Öffne das Pflegeprofil von „Bogenhanf“ und übernimm von Hand, was du behalten willst.",
-      },
+      notice: { code: "proposal_merged" },
     };
     fakeServer({ entries: [entry(), kept] });
     open();
@@ -408,6 +454,7 @@ describe("US-BES-10 a care profile kept on a merged proposal is shown, not edita
     ).toBeTruthy();
     expect(screen.getByText(/zusammengeführt\./)).toBeTruthy();
     expect(screen.getByText(/übernimm von Hand/)).toBeTruthy();
+    expect(screen.getByText("Zielart: Bogenhanf")).toBeTruthy();
     expect(screen.getByText("Mein alter Hinweis")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Speichern/ })).toHaveLength(1);
   });

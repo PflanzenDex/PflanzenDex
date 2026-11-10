@@ -9,8 +9,8 @@ import {
   type TaskStore,
 } from "@pflanzendex/core";
 import { Hono } from "hono";
-import { errorBody, statusFor } from "../../kernel";
-import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../client-auth";
+import { errorBody, keyMissing, statusFor } from "../../kernel";
+import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
 
 /**
  * Task routes of the AI client (AI token, US-KI-08): `GET /mcp/tasks` lists the open tasks (read right),
@@ -23,7 +23,8 @@ export function clientTaskRoutes(
   interfaceUrl: string,
   clock: () => Date,
 ): Hono<AiEnv> {
-  const base = new URL(interfaceUrl).origin;
+  // `https://host/api/mcp` → `https://host/api`: the routes hang under the same prefix as the interface behind the proxy.
+  const base = interfaceUrl.replace(/\/mcp\/?$/, "");
   const view = (t: AiTask) => ({ ...t, title: TASK_TITLES[t.type], prompt: taskPrompt(t, base) });
   const client = new Hono<AiEnv>();
   client.get("/mcp/tasks", clientAuthentication(guard, "read"), async (c) => {
@@ -43,6 +44,7 @@ export function clientTaskRoutes(
     ["decline", aiDeclineClientTask],
   ] as const)
     client.post(`/mcp/tasks/:id/${path}`, clientAuthentication(guard, "drafts"), async (c) => {
+      if (!c.req.header("idempotency-key")) return keyMissing(c);
       const { connection, rights } = c.get("ai");
       const r = await op(stores, {
         userId: c.get("account").id,

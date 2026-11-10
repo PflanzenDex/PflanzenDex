@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { withAccount } from "../../kernel/index.ts";
+import { withAccount, withLongAccount } from "../../kernel/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface DeletionRequestRow {
@@ -37,6 +37,16 @@ export class AccountDeletionPostgres {
     return (r.rowCount ?? 0) > 0;
   }
 
+  /** The sign-in subject of the account, read as the account itself before anything is erased (US-ACC-04, issue 1673). */
+  async subjectOf(userId: string): Promise<string | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ subject: string | null }>(
+        "select subject from account where id = current_account()",
+      ),
+    );
+    return r.rows[0]?.subject ?? null;
+  }
+
   /**
    * Deletes the account with everything that hangs on it, in one transaction (function `erase_account()`). `null` when
    * nothing is due: no request (withdrawn, or the account is already gone) or the grace period has not ended. The
@@ -45,7 +55,7 @@ export class AccountDeletionPostgres {
   async erase(userId: string, now: Date): Promise<{ subject: string | null } | null> {
     const due = await this.find(userId);
     if (!due || due.dueAt.getTime() > now.getTime()) return null;
-    const r = await withAccount(this.pool, userId, (c) =>
+    const r = await withLongAccount(this.pool, userId, (c) =>
       c.query<{ subject: string | null }>("select subject from erase_account()"),
     );
     return r.rows[0] ?? null;

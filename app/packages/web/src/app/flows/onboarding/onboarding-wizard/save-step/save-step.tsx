@@ -1,0 +1,153 @@
+import { Suspense, useEffect, useState, type ReactNode } from "react";
+import {
+  speciesDisplayName,
+  zoneDerive,
+  type LightZone,
+  type Species,
+  zoneLabel,
+} from "@pflanzendex/core";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Label } from "@/shared/ui/display/label/label";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { MarkerSection, type MarkerSectionProps } from "@/collection";
+import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
+import { refreshLight, sharedZones } from "../../../../../light";
+import { ensureHome } from "../where-question/where-question";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./save-step.de.json";
+
+const ui = texts(table);
+type Token = () => Promise<string | undefined>;
+
+/** A block of the field's size while the section's chunk arrives; it shows after the delay (DS-57, issue 1726). */
+function FieldSkeleton() {
+  return (
+    <DelayedSkeleton>
+      <Skeleton className="h-20 w-full" />
+    </DelayedSkeleton>
+  );
+}
+
+/** The own zones; a new account has none yet, so the standard lamps are laid out silently first (US-ONB-02 gives them from the start). */
+async function ownZones(
+  client: QueryClient,
+  api: string,
+  token: Token,
+): Promise<readonly LightZone[]> {
+  const t = await token();
+  if (!t) return [];
+  const first = await sharedZones(client, api, t);
+  if (!first.ok) return [];
+  if (first.value.length > 0) {
+    await ensureHome(client, api, t);
+    return first.value;
+  }
+  const made = await createWrite(api, t)("POST", "/light-zones/defaults", {});
+  if (!made.ok) return [];
+  // The new zones refresh the shared light data (issue 1244); the default location "Zuhause" comes with them (US-ONB-02).
+  await refreshLight(client);
+  await ensureHome(client, api, t);
+  const again = await sharedZones(client, api, t);
+  return again.ok ? again.value : [];
+}
+
+/** The zone the species needs, derived live from its light demand (FR-BES-10); `null` = unknown (P-08). */
+export const derivedZone = (species: Species, zones: readonly LightZone[]): LightZone | null => {
+  const d = zoneDerive(
+    {
+      lightDemandLux: species.lightDemandLux,
+      standardLevel: species.standardLevel,
+      softLeaf: species.softLeaf,
+    },
+    zones,
+  );
+  return d.kind === "zone" ? d.zone : null;
+};
+
+/** Light zones of the account for the save step; `zones` is `null` while they load. */
+export function useOwnZones(api: string, token: Token, enabled: boolean) {
+  const [zones, setZones] = useState<readonly LightZone[] | null>(null);
+  const client = useQueryClient();
+  useEffect(() => {
+    if (!enabled || zones !== null) return;
+    let current = true;
+    void ownZones(client, api, token).then((z) => current && setZones(z));
+    return () => {
+      current = false;
+    };
+  }, [api, token, enabled, zones, client]);
+  return zones;
+}
+
+/**
+ * Step 2 of the first plant (US-ONB-01): the light need is prefilled from the species as a value to change, never as
+ * a question. Empty value = derived, so nothing derived is stored (P-01).
+ */
+export function SaveStep(props: {
+  species: Species;
+  zones: readonly LightZone[] | null;
+  /** Empty = the zone derived from the species. */
+  zoneId: string;
+  onZone: (id: string) => void;
+  error: string | null;
+  /**
+   * The marker of a further plant (US-BES-03, US-QS-15): its section reads the rule of the species and reports it to
+   * the flow, which enables the save with it (issue 1638).
+   */
+  marker?: Omit<MarkerSectionProps, "speciesId" | "speciesName">;
+  /** More fields of the step, e.g. the suggested place of a further plant. */
+  children?: ReactNode;
+  /** "Schritt n von m": said once, by the focused heading (US-ACC-03, issue 1612). */
+  stepLabel?: string;
+}) {
+  const { species, zones } = props;
+  const derived = zones ? derivedZone(species, zones) : null;
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 tabIndex={-1} className="text-xl font-semibold">
+        {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
+        {props.stepLabel && " "}
+        {ui("title")}
+      </h2>
+      <p className="m-0">
+        <i>{species.latinName}</i>
+        {species.germanName ? ` (${species.germanName})` : ""}
+      </p>
+      {props.marker && (
+        // The section arrives with its own chunk (issue 1638): a block of the field's size meanwhile.
+        <Suspense fallback={<FieldSkeleton />}>
+          <MarkerSection
+            key={species.id}
+            form={props.marker.form}
+            api={props.marker.api}
+            token={props.marker.token}
+            refusal={props.marker.refusal}
+            report={props.marker.report}
+            speciesId={species.id}
+            speciesName={speciesDisplayName(species)}
+          />
+        </Suspense>
+      )}
+      <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
+      <Select
+        id="first-plant-zone"
+        value={props.zoneId}
+        disabled={zones === null}
+        onChange={(e) => props.onZone(e.target.value)}
+      >
+        <option value="">
+          {derived ? ui("derived", { name: zoneLabel(derived.name) }) : ui("unknown")}
+        </option>
+        {(zones ?? []).map((z) => (
+          <option key={z.id} value={z.id}>
+            {zoneLabel(z.name)}
+          </option>
+        ))}
+      </Select>
+      <p className="m-0 text-sm text-muted-foreground">{ui("hint")}</p>
+      {props.children}
+      {props.error && <p role="alert">{props.error}</p>}
+    </section>
+  );
+}

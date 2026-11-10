@@ -18,8 +18,13 @@ export const EPIC_SCOPES = [
   "qs",
   "ent",
   "ach",
+  "tau",
+  "onb",
   "qg",
   "dev",
+  "var",
+  "sub",
+  "deal",
 ];
 // Technical areas without their own epic: packages, enablers (TE-nn), operations, docs, dependencies, release.
 export const TECH_SCOPES = [

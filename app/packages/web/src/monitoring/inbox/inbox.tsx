@@ -1,8 +1,14 @@
 import type { ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { LoadFrame } from "../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LoadFrame } from "../../shared/data";
 import { loadInbox } from "../api/reminders-api";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../monitoring.de.json";
+import { InboxSkeleton } from "./inbox.skeleton";
+
+const ui = texts(table);
 
 const STATUS_TEXT: Record<ReminderStatus, string> = {
   none: "Nichts zu tun",
@@ -12,6 +18,9 @@ const STATUS_TEXT: Record<ReminderStatus, string> = {
   failed: "Zustellung fehlgeschlagen",
 };
 
+/** Days per page inside the layer (starting value, assumption; US-QS-15). */
+const PAGE = 2;
+
 /** A local calendar date `YYYY-MM-DD` as text; read as UTC so the zone of the device never shifts the day (NFR-08). */
 const dayText = (localDate: string) =>
   new Intl.DateTimeFormat("de-DE", { dateStyle: "full", timeZone: "UTC" }).format(
@@ -20,7 +29,7 @@ const dayText = (localDate: string) =>
 
 function Reminder({ row }: { row: ReminderRow }) {
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-border p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="m-0 text-base font-semibold">{dayText(row.localDate)}</h4>
         <span className="text-sm text-muted-foreground">{STATUS_TEXT[row.status]}</span>
@@ -39,13 +48,14 @@ function Reminder({ row }: { row: ReminderRow }) {
           auch in der Heute-Liste.
         </p>
       )}
-    </li>
+    </div>
   );
 }
 
 /**
- * The inbox of reminders (US-MON-01): the bundled message of each day on which something needed action, newest first.
- * Without a push channel this is where a reminder lives; a failed delivery stays visible (P-10) and says where to go on (P-09).
+ * The inbox of reminders (US-MON-01): the bundled message of each day on which something needed action, newest first,
+ * in pages of whole days (US-QS-15). Without a push channel this is where a reminder lives; a failed delivery stays
+ * visible (P-10) and says where to go on (P-09).
  */
 export function Inbox(props: { api: string; token: () => Promise<string | undefined> }) {
   const load = useCallback((t: string) => loadInbox(props.api, t), [props.api]);
@@ -54,7 +64,8 @@ export function Inbox(props: { api: string; token: () => Promise<string | undefi
       queryKey={["monitoring", "inbox"]}
       token={props.token}
       load={load}
-      loadingText="Erinnerungen werden geladen …"
+      loadingText={ui("inbox.loading")}
+      loadingFallback={<InboxSkeleton label={ui("inbox.loading")} />}
     >
       {(rows) =>
         rows.length === 0 ? (
@@ -64,11 +75,14 @@ export function Inbox(props: { api: string; token: () => Promise<string | undefi
             description="Es gibt nichts zu erinnern. Sobald etwas fällig wird, steht es hier und in der Heute-Liste."
           />
         ) : (
-          <ul aria-label="Erinnerungen" className="m-0 flex list-none flex-col gap-3 p-0">
-            {rows.map((row) => (
-              <Reminder key={row.id} row={row} />
-            ))}
-          </ul>
+          <Pager
+            items={rows}
+            pageSize={PAGE}
+            label="Erinnerungen"
+            param={LAYER_PARAM}
+            getKey={(row) => row.id}
+            renderItem={(row) => <Reminder row={row} />}
+          />
         )
       }
     </LoadFrame>

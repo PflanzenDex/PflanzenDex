@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "../../kernel";
+import { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { loadProfile, saveProfile } from "./account-api";
 
 const PROFILE = {
@@ -10,6 +10,7 @@ const PROFILE = {
   replenishBuffer: 2,
   positionThresholds: null,
   rarityConsent: false,
+  keyboardShortcuts: "plain" as const,
   notifications: {
     phase: true,
     treatment: false,

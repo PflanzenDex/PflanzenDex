@@ -22,6 +22,10 @@ const bare = {
   boughtAt: null,
   note: null,
   lightZoneId: null,
+  diameterCm: null,
+  heightCm: null,
+  material: null,
+  drainage: null,
 };
 
 beforeAll(async () => {
@@ -40,6 +44,18 @@ afterAll(async () => {
 });
 
 describe("US-EQU-01 equipment in the database", () => {
+  it("NFR-12 hasAny says whether the account has equipment, and only its own (P-04)", async () => {
+    const fresh = randomUUID();
+    await admin.query("insert into account (id) values ($1)", [fresh]);
+    try {
+      expect(await equipment.hasAny(fresh)).toBe(false);
+      await equipment.create(fresh, bare, "active");
+      expect(await equipment.hasAny(fresh)).toBe(true);
+    } finally {
+      await admin.query("delete from account where id = $1", [fresh]);
+    }
+  });
+
   it("stores unknown values as null and returns a given price and date unchanged", async () => {
     expect(await equipment.create(anna, bare, "active")).toMatchObject({
       name: "Lampe 3",
@@ -86,6 +102,40 @@ describe("US-EQU-01 equipment in the database", () => {
         ),
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe("US-BES-19 pot fields in the database (DM-EQU-05, P-08)", () => {
+  it("US-BES-19 stores a pot's size, material and drainage, and an unknown one reads null", async () => {
+    const pot = { ...bare, type: "Pot" as const, name: "Topf 12" };
+    expect(
+      await equipment.create(
+        anna,
+        { ...pot, diameterCm: 12.5, heightCm: null, material: "Terrakotta", drainage: true },
+        "active",
+      ),
+    ).toMatchObject({ diameterCm: 12.5, heightCm: null, material: "Terrakotta", drainage: true });
+    expect(await equipment.create(anna, { ...pot, name: "Topf leer" }, "active")).toMatchObject({
+      diameterCm: null,
+      heightCm: null,
+      material: null,
+      drainage: null,
+    });
+  });
+
+  it("US-BES-19 the database refuses pot fields on any other type and sizes out of 1 to 300", async () => {
+    await expect(
+      equipment.create(anna, { ...bare, name: "Lampe mit Topfmaß", diameterCm: 10 }, "active"),
+    ).rejects.toThrow();
+    for (const diameterCm of [0.5, 301]) {
+      await expect(
+        equipment.create(
+          anna,
+          { ...bare, type: "Pot", name: `Topf ${diameterCm}`, diameterCm },
+          "active",
+        ),
+      ).rejects.toThrow();
+    }
   });
 });
 

@@ -9,6 +9,8 @@ export const SPECIMEN_LIMITS = {
   marker: { min: 1, max: 40 },
   name: { min: 1, max: 250 },
   archivedReason: { min: 1, max: 250 },
+  // The private notes (US-BES-18): characters, counted as the database counts them; starting value (assumption).
+  notes: { min: 1, max: 2000 },
 } as const;
 
 /** What gets stored. Measurements and treatment list are derived and do not belong here (P-01). */
@@ -66,6 +68,8 @@ export type SpecimenValues = Pick<
   readonly status?: CreateStatus;
   /** Own light zone from the start (US-LIC-02); missing/`null` = the zone is derived. */
   readonly lightZoneId?: string | null;
+  /** Private notes from the start (US-BES-18); missing/`null` = none. Never part of a read that leaves the account. */
+  readonly notes?: string | null;
 };
 
 /**
@@ -125,12 +129,18 @@ export interface SpecimenStore {
     reason: string,
     date: string,
   ): Promise<SpecimenRow | "not_found" | "already_archived">;
-  /** A cutting becomes a plant (US-BES-04); any other specimen stays unchanged and reports `not_a_cutting`. */
+  /**
+   * The repot (US-BES-04, US-BES-19), one transaction: a cutting becomes a plant with `date` as its repot day, a plant
+   * stays one; `date` is appended to the repot history and clears the open repot observations (`null` = unknown: only a
+   * cutting may go without it, a plant then answers `day_unknown`). `chosenDate` (`null` = none) answers `before_caught`
+   * when the catch date lies after it (issue 1103). An archived specimen answers `archived`.
+   */
   repot(
     userId: string,
     id: string,
     date: string | null,
-  ): Promise<SpecimenRow | "not_found" | "not_a_cutting">;
+    chosenDate: string | null,
+  ): Promise<SpecimenRow | "not_found" | "archived" | "before_caught" | "day_unknown">;
   /**
    * Sets the location of one or several active specimens in one transaction (US-PHA-03, BES-08). All or nothing: an
    * unknown or foreign specimen answers `specimen_unknown`, an archived one `archived`, a location of another account

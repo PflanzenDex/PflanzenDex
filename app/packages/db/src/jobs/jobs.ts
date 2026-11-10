@@ -1,4 +1,5 @@
 import type { Pool } from "pg";
+import { beginPlain, inTransaction } from "../kernel/index.ts";
 
 // Same shapes as `JobQueue` in `core` (structurally equal; `db` does not import `core`).
 export type JobStatus = "queued" | "running" | "succeeded" | "dead" | "expired";
@@ -62,7 +63,20 @@ const toJob = (r: Row): JobRow => ({
  * (type, dedupe key) makes `enqueue` merge atomically. All times come from the caller (no clock in SQL).
  */
 export class JobsPostgres {
-  constructor(private readonly pool: Pool) {}
+  /** The job types `claim` and `purge` may touch; null is every type. */
+  private readonly onlyTypes: readonly string[] | null;
+
+  /**
+   * `onlyTypes` is for code that shares a database with other workers, such as tests running side by side (issue 1259):
+   * `claim` neither hands out nor sweeps other types and `purge` leaves them. The API's worker passes none on purpose:
+   * it has to take every type, so that a job without a handler ends dead and visible instead of waiting unseen (P-10).
+   */
+  constructor(
+    private readonly pool: Pool,
+    options: { readonly onlyTypes?: readonly string[] } = {},
+  ) {
+    this.onlyTypes = options.onlyTypes ?? null;
+  }
 
   async enqueue(job: NewJob): Promise<{ job: JobRow; created: boolean }> {
     const inserted = await this.pool.query<Row>(
@@ -88,41 +102,37 @@ export class JobsPostgres {
   }
 
   async claim(workerId: string, now: Date, leaseMs: number): Promise<JobRow | null> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("begin");
+    return inTransaction(this.pool, beginPlain, async (client) => {
       await client.query(
         `update job set status = 'dead', locked_by = null, lease_until = null, finished_at = $1,
                 last_error = 'worker lost, no attempts left'
-          where status = 'running' and lease_until <= $1 and attempts >= max_attempts`,
-        [now],
+          where status = 'running' and lease_until <= $1 and attempts >= max_attempts
+            and ($2::text[] is null or type = any($2))`,
+        [now, this.onlyTypes],
       );
       await client.query(
         `update job set status = 'queued', locked_by = null, lease_until = null
-          where status = 'running' and lease_until <= $1`,
-        [now],
+          where status = 'running' and lease_until <= $1
+            and ($2::text[] is null or type = any($2))`,
+        [now, this.onlyTypes],
       );
       await client.query(
         `update job set status = 'expired', finished_at = $1
-          where status = 'queued' and expires_at is not null and expires_at <= $1`,
-        [now],
+          where status = 'queued' and expires_at is not null and expires_at <= $1
+            and ($2::text[] is null or type = any($2))`,
+        [now, this.onlyTypes],
       );
       const r = await client.query<Row>(
         `update job set status = 'running', attempts = attempts + 1, locked_by = $2,
                 lease_until = $1::timestamptz + $3 * interval '1 millisecond'
           where id = (select id from job where status = 'queued' and run_at <= $1
+                         and ($4::text[] is null or type = any($4))
                        order by run_at, created_at limit 1 for update skip locked)
           returning ${COLUMNS}`,
-        [now, workerId, leaseMs],
+        [now, workerId, leaseMs, this.onlyTypes],
       );
-      await client.query("commit");
       return r.rows[0] ? toJob(r.rows[0]) : null;
-    } catch (error) {
-      await client.query("rollback");
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   async succeed(id: string, workerId: string, now: Date): Promise<boolean> {
@@ -163,8 +173,9 @@ export class JobsPostgres {
 
   async purge(before: Date): Promise<number> {
     const r = await this.pool.query(
-      "delete from job where finished_at is not null and finished_at < $1",
-      [before],
+      `delete from job where finished_at is not null and finished_at < $1
+         and ($2::text[] is null or type = any($2))`,
+      [before, this.onlyTypes],
     );
     return r.rowCount ?? 0;
   }

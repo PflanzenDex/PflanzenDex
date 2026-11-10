@@ -1,9 +1,4 @@
-import { Button } from "@/components/ui/button/button";
 import type { Account } from "../../api/account-api";
-
-type Action = () => void;
-
-const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
@@ -27,15 +22,11 @@ function Notices(props: { account: Account; error?: string }) {
 }
 
 /**
- * The profile card of "Konto" (US-QS-14): avatar tile, name, e-mail and the ways to sign out. It has no heading of its
- * own: the destination names it "Profil" and carries the one h1.
+ * The profile card of "Konto" (US-QS-14): avatar tile, name and e-mail. It has no heading of its own: the destination
+ * names it "Profil" and carries the one h1. It offers no sign-out: the one way out is "Abmelden…" in the index of
+ * "Konto", which always asks first (issue 1098).
  */
-export function AccountView(props: {
-  account: Account;
-  onSignOut: Action;
-  onEverywhereSignOut: Action;
-  error?: string;
-}) {
+export function AccountView(props: { account: Account; error?: string }) {
   const { account } = props;
   const name = account.displayName || account.email;
   return (
@@ -59,33 +50,13 @@ export function AccountView(props: {
         </dl>
       </div>
       <Notices account={account} {...(props.error ? { error: props.error } : {})} />
-      <div className={ACTIONS}>
-        <Button
-          type="button"
-          variant="outline"
-          size="touch"
-          onClick={props.onSignOut}
-          className="sm:flex-1"
-        >
-          Abmelden
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="touch"
-          onClick={props.onEverywhereSignOut}
-          className="sm:flex-1"
-        >
-          Auf allen Geräten abmelden
-        </Button>
-      </div>
     </div>
   );
 }
 
 /** What the app records about the use and what never leaves the account (US-QS-05, #305): every point is true today. */
 const MEASURED = [
-  "Keine Klickzählung und keine Nutzungsanalyse: PflanzenDex zählt nicht, was du antippst oder wie lange du die App nutzt, und bindet keine Werbe- oder Analysedienste ein.",
+  "Keine Klickzählung und keine Nutzungsanalyse: PflanzenDéx zählt nicht, was du antippst oder wie lange du die App nutzt, und bindet keine Werbe- oder Analysedienste ein.",
   "Bei jeder Anmeldung speichern wir, wann du zuletzt aktiv warst. Der Betreiber sieht davon nur die Zahl der aktiven Konten der letzten 30 Tage, nie deinen Zeitpunkt.",
   "Fotos zu deinen Messungen speichern wir ohne Ort- und Kameradaten (EXIF/GPS) und verkleinert; nur du kannst sie sehen.",
   "Standort, Notizen, Behandlungen und Preise deiner Pflanzen sehen Freunde nie, auch nicht bei geteilten Pflanzen.",

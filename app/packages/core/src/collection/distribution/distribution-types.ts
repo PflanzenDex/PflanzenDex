@@ -15,6 +15,12 @@ export interface NotCounted {
   readonly zoneUnknown: number;
 }
 
+/** A species whose specimens stand in no zone, because its lux need or default level is unknown (US-LIC-01, P-08). */
+export interface LightNeedGap {
+  readonly speciesId: string;
+  readonly speciesName: string;
+}
+
 export interface DistributionHint {
   readonly text: string;
   readonly nextAction: string;
@@ -26,6 +32,8 @@ export interface Distribution {
   /** All zones with the smallest count (several with a tie); empty as long as nothing is counted. */
   readonly thinnest: readonly LightZone[];
   readonly notCounted: NotCounted;
+  /** The species behind `notCounted.zoneUnknown` whose lux need is unknown, by name; the next step per species (US-LIC-01). */
+  readonly lightNeedUnknown: readonly LightNeedGap[];
   readonly hint: DistributionHint;
 }
 

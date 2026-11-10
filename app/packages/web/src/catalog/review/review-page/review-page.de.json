@@ -1,0 +1,8 @@
+{
+  "duplicates.one": "Ein lateinischer Name ist bei mehreren freigegebenen Arten vergeben: {names}.",
+  "duplicates.many": "{count} lateinische Namen sind bei mehreren freigegebenen Arten vergeben: {names}.",
+  "duplicates.more": "und {count} weitere",
+  "duplicates.cannotMerge": "Diese Arten lassen sich noch nicht zusammenführen. Sie bleiben, wie sie sind.",
+  "flag.nameApproved": "Name schon freigegeben",
+  "issue.nameApproved": "Name schon freigegeben, im Reiter „Entscheiden“ mit der vorhandenen Art zusammenführen"
+}

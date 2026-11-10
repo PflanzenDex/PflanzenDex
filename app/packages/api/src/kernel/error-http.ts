@@ -1,14 +1,20 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 502 | 504;
+type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 502 | 503 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
   "input.invalid": 400,
   "idempotency.key_missing": 400,
+  "import.file_unreadable": 400,
+  "import.no_species_column": 400,
+  "import.column_repeated": 400,
+  "import.too_large": 413,
   "operator_cost.month_in_future": 400,
+  "privacy.entry_not_found": 404,
   "access.not_signed_in": 401,
   "access.denied": 403,
+  "account.email_unconfirmed": 403,
   "invitation.invalid": 403,
   "invitation.required": 403,
   "light_zone.not_found": 404,
@@ -16,11 +22,17 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "review.not_found": 404,
   "species.not_found": 404,
   "specimen.caught_in_future": 400,
+  "specimen.repotted_in_future": 400,
+  "specimen.repotted_before_caught": 400,
   "specimen.not_found": 404,
   "treatment.not_found": 404,
   "measurement.not_found": 404,
   "measurement.photo_not_found": 404,
   "measurement.photo_exists": 409,
+  "leaf.not_found": 404,
+  "leaf.date_in_future": 400,
+  "leaf.size_invalid": 400,
+  "leaf.note_invalid": 400,
   "media.not_found": 404,
   "media.too_large": 413,
   "media.type_unsupported": 415,
@@ -42,6 +54,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "review.merge_lock_failed": 409,
   "review.reason_missing": 400,
   "review.approval_incomplete": 409,
+  "review.name_approved": 409,
   "review.merge_target_invalid": 409,
   "review.merge_conflict": 409,
   "species.duplicate": 409,
@@ -52,6 +65,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "achievements.pause_not_found": 404,
   "onboarding.unknown_function": 404,
   "onboarding.locked": 409,
+  "onboarding.keeper_off": 409,
+  "onboarding.core_feature": 409,
   "onboarding.unknown_occasion": 404,
   "friend.unknown_code": 404,
   "friend.code_used": 409,
@@ -68,6 +83,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "ai.task_not_found": 404,
   "ai.task_closed": 409,
   "ai.no_client": 409,
+  "ai.reference_ambiguous": 409,
+  "ai.not_released": 403,
   "friend.own_code": 409,
   "friend.already_linked": 409,
   "friend.request_not_found": 404,
@@ -87,8 +104,14 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "swap.counter_not_shared": 409,
   "offer.not_active": 409,
   "discover.not_suggested": 409,
+  "discover.undo_not_last": 409,
+  "discover.undo_changed": 409,
+  "discover.not_a_decision": 409,
   "wish.name_taken": 409,
   "equipment.name_taken": 409,
+  "equipment.pot_not_found": 404,
+  "equipment.pot_taken": 409,
+  "equipment.not_a_plant": 409,
   "equipment.not_found": 404,
   "equipment.not_a_lamp": 409,
   "equipment.not_a_device": 409,
@@ -112,6 +135,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.markers_missing": 409,
   "specimen.already_archived": 409,
   "specimen.not_a_cutting": 409,
+  "specimen.not_a_plant": 409,
   "specimen.not_archived": 409,
   "specimen.archived": 409,
   "specimen.caught_after_archived": 409,
@@ -128,6 +152,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "source.response_invalid": 502,
   "source.request_rejected": 502,
   "source.timeout": 504,
+  // The database did not answer in time or cannot be reached (NFR-12): retry later, the request itself is fine.
+  "system.database_unavailable": 503,
 };
 
 export const statusFor = (f: AppError): Status => STATUS[f.code] ?? 500;
@@ -141,3 +167,10 @@ export const errorBody = (f: AppError) => ({
     ...(f.data !== undefined ? { data: f.data } : {}),
   },
 });
+
+/**
+ * The version of the running API: `APP_VERSION`, the tag the deploy builds from (`deploy.sh`), the same variable the
+ * health endpoint reports. `unknown` when none is set (P-08). Error logs name it, so an error report says which build
+ * failed (US-DEV-06).
+ */
+export const runningVersion = (): string => process.env["APP_VERSION"] || "unknown";

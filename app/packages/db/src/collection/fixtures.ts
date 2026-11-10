@@ -7,6 +7,16 @@ export const FIXTURE_SPECIES_ID = "00000000-0000-4000-8000-00000000fa01";
 export const FIXTURES_COLLECTION: Fixtures = {
   specimen: () => ({ species_id: FIXTURE_SPECIES_ID, name: "Bogenhanf", caught_at: "2026-10-03" }),
   care_profile: () => ({ species_id: FIXTURE_SPECIES_ID, watering_growth_days: 7 }),
+  // A repot and an observation belong to a specimen of the same account (the composite foreign key).
+  repot: async (k) => ({
+    specimen_id: await createFixtureSpecimenAt(k),
+    repotted_on: "2026-10-01",
+  }),
+  repot_sign: async (k) => ({
+    specimen_id: await createFixtureSpecimenAt(k),
+    sign: "roots_out",
+    ticked_on: "2026-10-02",
+  }),
 };
 
 /**

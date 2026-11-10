@@ -6,7 +6,7 @@ import {
 } from "@pflanzendex/core";
 import { Hono } from "hono";
 import { errorBody, statusFor } from "../../kernel";
-import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../client-auth";
+import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../guard/client-auth";
 
 /**
  * Research for the AI client (US-KI-05, AI token, read right): `GET /mcp/image-source?url=` lets the server check an

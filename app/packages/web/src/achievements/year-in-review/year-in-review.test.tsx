@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createQueryClient } from "../../kernel";
+import { createQueryClient } from "../../shared/data";
 import { YearInReviewSection } from "./year-in-review";
 
 afterEach(() => {
@@ -35,6 +36,7 @@ const answer = (over: object = {}) => ({
   ...over,
 });
 
+/** The row "Jahresrückblick" with its layer open by address (`?sheet=year`): the year loads only while it is open. */
 function show(body: unknown, status = 200) {
   const fetchFn = vi.fn<typeof fetch>(async (url) => {
     expect(new URL(String(url)).pathname).toBe("/achievements/year");
@@ -43,7 +45,9 @@ function show(body: unknown, status = 200) {
   vi.stubGlobal("fetch", fetchFn);
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <YearInReviewSection api="http://api" token={token} />
+      <MemoryRouter initialEntries={["/?sheet=year"]}>
+        <YearInReviewSection api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   return fetchFn;
@@ -53,7 +57,7 @@ describe("US-ACH-07 year in review", () => {
   it("US-ACH-07 shows counted facts with their basis and the largest healthy growth, no rating", async () => {
     show(answer());
     expect(await screen.findByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
-    expect(screen.getByText(/Arten gefangen/)).toBeTruthy();
+    expect(await screen.findByText(/Arten gefangen/)).toBeTruthy();
     expect(screen.getByText(/Fangdatum im Jahr/)).toBeTruthy();
     expect(screen.getByText(/Messungen erfasst/)).toBeTruthy();
     expect(screen.getByText(/Größtes gesundes Wachstum: „Alma“, 8 cm/)).toBeTruthy();
@@ -82,13 +86,56 @@ describe("US-ACH-07 year in review", () => {
     );
   });
 
+  it("NFR-13 the two year buttons may wrap at 200 % text instead of leaving the layer (issue 1282)", async () => {
+    show(answer());
+    const previous = await screen.findByRole("button", { name: "Vorjahr" });
+    expect(previous.parentElement?.className).toContain("flex-wrap");
+  });
+
+  it("US-QS-07 switching the year keeps the old year on screen with the status until the new year is there", async () => {
+    const asked: { year: string | null; answer: (body: unknown) => void }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        (url) =>
+          new Promise<Response>((resolve) => {
+            asked.push({
+              year: new URL(String(url)).searchParams.get("year"),
+              answer: (body) => resolve(new Response(JSON.stringify(body), { status: 200 })),
+            });
+          }),
+      ),
+    );
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter initialEntries={["/?sheet=year"]}>
+          <YearInReviewSection api="http://api" token={token} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(asked).toHaveLength(1));
+    asked[0]?.answer(answer());
+    expect(await screen.findByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Vorjahr" }));
+    await waitFor(() => expect(asked).toHaveLength(2));
+    expect(asked[1]?.year).toBe(String(thisYear - 1));
+    // The old year stays on screen, and the status says that the new one is on its way.
+    expect((await screen.findByRole("status")).textContent).toBe("Wird geladen …");
+    expect(screen.getByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
+    asked[1]?.answer(answer({ year: thisYear - 1 }));
+    expect(await screen.findByText(`Jahresrückblick ${thisYear - 1}`)).toBeTruthy();
+    // The refreshing status holds for the hold after the new year arrived (US-QS-14, D5, issue 1772).
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+  });
+
   it("US-ACH-08 calm mode or a failed read shows nothing", async () => {
     show({ calmMode: true });
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
-    expect(screen.queryByRole("region", { name: "Jahresrückblick" })).toBeNull();
+    expect(screen.queryByText(/Arten gefangen/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Vorjahr" })).toBeNull();
     cleanup();
     show({ error: { code: "x" } }, 500);
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
-    expect(screen.queryByRole("region", { name: "Jahresrückblick" })).toBeNull();
+    expect(screen.queryByText(/Arten gefangen/)).toBeNull();
   });
 });

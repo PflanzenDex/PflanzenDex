@@ -2,8 +2,9 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
+import { errorText } from "@/shared/lib/error-text";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { FriendsPage } from "./friends-page";
 
 beforeAll(() => {
@@ -21,14 +22,12 @@ type Req = {
   otherName: string | null;
   direction: string;
   status: string;
-  requestedAt: string;
 };
 const req = (extra: Partial<Req> = {}): Req => ({
   id: "r1",
   otherName: "Ben",
   direction: "received",
   status: "requested",
-  requestedAt: "2026-10-06T10:00:00.000Z",
   ...extra,
 });
 
@@ -41,12 +40,17 @@ type Initial = {
   /** Open offers of friends and cards of the match deck. */
   offers?: number;
   matching?: number;
+  /** Replaces the specimens; `failSpecies` makes the bulk write for that species refuse. */
+  specimens?: { id: string; speciesId: string; name: string; status: string }[];
+  failSpecies?: string;
 };
 type State = {
   incoming: Req[];
   outgoing: Req[];
   friends: unknown[];
   shared: { specimenId: string; photos: boolean }[];
+  specimens: { id: string; speciesId: string; name: string; status: string }[];
+  failSpecies?: string;
 };
 const SPECIMENS = [
   { id: "s1", speciesId: "sp1", name: "Zebra – M1", status: "plant" },
@@ -74,8 +78,12 @@ function write(
   }
   if (path.startsWith("/sharing/")) {
     const id = path.split("/").pop() as string;
+    if (path.includes("/species/") && id === state.failSpecies)
+      return response(500, { error: { code: "internal", text: "raw" } });
     const ids = path.includes("/species/")
-      ? SPECIMENS.filter((s) => s.status !== "archived").map((s) => s.id)
+      ? state.specimens
+          .filter((s) => s.speciesId === id && s.status !== "archived")
+          .map((s) => s.id)
       : [id];
     state.shared =
       body.share === "friends"
@@ -119,6 +127,8 @@ function fakeServer(initial: Initial = {}) {
     outgoing: initial.outgoing ?? [],
     friends: initial.friends ?? [],
     shared: [],
+    specimens: initial.specimens ?? SPECIMENS,
+    ...(initial.failSpecies ? { failSpecies: initial.failSpecies } : {}),
   };
   const calls: { path: string; body: unknown }[] = [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
@@ -147,7 +157,7 @@ function fakeServer(initial: Initial = {}) {
       });
     const exchange = exchangeResponse(path, initial);
     if (exchange) return exchange;
-    if (path === "/specimens") return response(200, { specimens: SPECIMENS });
+    if (path === "/specimens") return response(200, { specimens: state.specimens });
     if (path === "/sharing") return response(200, { shared: state.shared });
     return response(404, {});
   });
@@ -158,8 +168,8 @@ function fakeServer(initial: Initial = {}) {
 type Options = { calm?: boolean; swapMark?: string };
 
 /** Renders the page at its address; `sheet` opens that layer as a reload or a copied link would (US-QS-15). */
-function show(sheet?: string, options: Options = {}, page = "") {
-  const query = [sheet && `sheet=${sheet}`, page && `page=${page}`].filter(Boolean).join("&");
+function show(sheet?: string, options: Options = {}, from = "") {
+  const query = [sheet && `sheet=${sheet}`, from && `from=${from}`].filter(Boolean).join("&");
   return render(
     <MemoryRouter initialEntries={[`/friends${query ? `?${query}` : ""}`]}>
       <FriendsPage api="http://api" token={token} {...options} />
@@ -287,12 +297,12 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(end.getAttribute("aria-label")).toContain("Freundschaft beenden");
   });
 
-  it("US-QS-08 · WCAG 2.5.3 the sharing buttons' accessible names contain their visible text", async () => {
+  it("US-QS-08 · WCAG 2.5.3 the bulk buttons' accessible names contain their visible text", async () => {
     fakeServer();
     show("sharing");
-    for (const text of ["Alle Pflanzen dieser Art teilen", "Alle zurückziehen"]) {
-      const b = await screen.findByText(text);
-      expect((b.getAttribute("aria-label") ?? "").startsWith(text)).toBe(true);
+    for (const text of ["Alle teilen", "Alle zurückziehen"]) {
+      const b = await screen.findByRole("button", { name: text });
+      expect(b.textContent).toBe(text);
     }
   });
 
@@ -343,7 +353,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-04 everything is private by default; sharing a specimen says what friends see, withdrawing says when it takes effect", async () => {
     const { calls } = fakeServer();
     show("sharing");
-    const box = await screen.findByRole("checkbox", { name: "Zebra – M1: mit Freunden teilen" });
+    const box = await screen.findByRole("switch", { name: "Zebra – M1: mit Freunden teilen" });
     expect((box as HTMLInputElement).checked).toBe(false);
     expect(screen.getByText(/Alles ist privat, bis du es freigibst/)).toBeTruthy();
     await userEvent.click(box);
@@ -352,31 +362,53 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     ).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/specimens/s1", body: { share: "friends" } });
     expect(
-      (await screen.findByRole("checkbox", {
+      (await screen.findByRole("switch", {
         name: "Zebra – M1: mit Freunden teilen",
       })) as HTMLInputElement,
     ).toHaveProperty("checked", true);
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Zebra – M1: mit Freunden teilen" }),
-    );
+    await userEvent.click(screen.getByRole("switch", { name: "Zebra – M1: mit Freunden teilen" }));
     expect(await screen.findByText(/ab dem nächsten Abruf nicht mehr/)).toBeTruthy();
     expect(calls[1]).toEqual({ path: "/sharing/specimens/s1", body: { share: "private" } });
   });
 
-  it("US-SOZ-04 archived specimens are not offered; the bulk action shares a whole species", async () => {
+  it("US-SOZ-04 · US-QS-20 archived specimens are not offered; one bulk action asks first and never widens without 'Ja'", async () => {
     const { calls } = fakeServer();
     show("sharing");
-    await screen.findByRole("checkbox", { name: "Zebra – M2: mit Freunden teilen" });
-    expect(screen.queryByRole("checkbox", { name: /M3/ })).toBeNull();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Alle Pflanzen dieser Art teilen: Zebra" }),
-    );
-    expect(
-      await screen.findByText(/Alle Pflanzen dieser Art sind für Freunde freigegeben/),
-    ).toBeTruthy();
+    await screen.findByRole("switch", { name: "Zebra – M2: mit Freunden teilen" });
+    expect(screen.queryByRole("switch", { name: /M3/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
+    expect(screen.getByText(/Alle 2 Pflanzen für Freunde freigeben/)).toBeTruthy();
+    expect(calls).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(calls).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    expect(await screen.findByText(/Alle Pflanzen sind für Freunde freigegeben/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
-    await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen: Zebra" }));
-    expect(await screen.findByText(/Alle Pflanzen dieser Art sind zurückgezogen/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, alle zurückziehen" }));
+    expect(await screen.findByText(/Alle Pflanzen sind zurückgezogen/)).toBeTruthy();
+  });
+
+  it("US-SOZ-04 · US-QS-20 · P-10 a bulk action refused on the 2nd of 3 species says how far it got and the switches show the real state", async () => {
+    const specimens = ["sp1", "sp2", "sp3"].map((sp, n) => ({
+      id: `s${n}`,
+      speciesId: sp,
+      name: `Art${n} – M1`,
+      status: "plant",
+    }));
+    const { calls } = fakeServer({ specimens, failSpecies: "sp2" });
+    show("sharing");
+    await userEvent.click(await screen.findByRole("button", { name: "Alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    expect(await screen.findByText("1 von 3 Arten geändert, 2 nicht.")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe(errorText("internal"));
+    expect(calls.map((c) => c.path)).toEqual(["/sharing/species/sp1", "/sharing/species/sp2"]);
+    const on = async (name: string) =>
+      ((await screen.findByRole("switch", { name })) as HTMLInputElement).checked;
+    await vi.waitFor(async () => expect(await on("Art0 – M1: mit Freunden teilen")).toBe(true));
+    expect(await on("Art1 – M1: mit Freunden teilen")).toBe(false);
+    expect(await on("Art2 – M1: mit Freunden teilen")).toBe(false);
   });
 
   it("US-SOZ-03 shows the number of shared caught species of a friend, and unknown without sharing (P-08)", async () => {
@@ -461,6 +493,13 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     // Only the one action is filled: the tiles and rows are outline buttons (DS-58).
     const filled = screen.getAllByRole("button").filter((b) => b.className.includes("bg-primary "));
     expect(filled.map((b) => b.textContent)).toEqual(["Freund hinzufügen"]);
+  });
+
+  it("US-QS-20 the four tiles stand two in a row while the labels fit and stack at a larger text size (issue 1019)", async () => {
+    fakeServer({ incoming: [], friends: [friend(1)], news: 0, offers: 0, matching: 0 });
+    show();
+    const tile = await screen.findByRole("button", { name: /^Anfragen/ });
+    expect(tile.parentElement?.className).toContain("minmax(9rem,1fr)");
   });
 
   it("US-QS-20 calm mode shows the tiles with their names but no counts, and asks for no offers", async () => {
@@ -576,7 +615,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText("Freund5")).toBeTruthy();
   });
 
-  it("US-QS-20 requests are paged too, and a page address outside the range shows the nearest page", async () => {
+  it("US-QS-20 requests are paged too, and an entry past the end shows the last page", async () => {
     fakeServer({
       incoming: [1, 2, 3, 4, 5].map((n) => req({ id: `r${n}`, otherName: `Person${n}` })),
     });

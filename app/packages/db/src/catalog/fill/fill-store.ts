@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from "pg";
+import { beginPlain, inTransaction } from "../../kernel/index.ts";
 
 // Same shapes as `CatalogFillStore` in `core` (structurally equal; `db` does not import values from core).
 type Field = "familyLatin" | "germanName" | "botanicalStory";
@@ -89,20 +90,12 @@ export class CatalogFillPostgres {
     snapshots: readonly SnapshotRecord[],
     values: readonly FieldValueRecord[],
   ): Promise<void> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("begin");
+    await inTransaction(this.pool, beginPlain, async (client) => {
       await client.query("select set_config('app.catalog_fill', 'on', true)");
       for (const s of snapshots) await saveSnapshot(client, speciesId, s);
       const set = await fillEmpty(client, speciesId, values);
       if (set.length > 0) await saveProvenance(client, speciesId, set);
-      await client.query("commit");
-    } catch (error) {
-      await client.query("rollback").catch(() => undefined);
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 }
 

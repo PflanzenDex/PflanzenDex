@@ -2,6 +2,7 @@ import {
   appError,
   choiceField,
   defineOperation,
+  described,
   failed,
   idField,
   ok,
@@ -18,12 +19,19 @@ export interface AssessDependencies {
   readonly specimens: Pick<SpecimenStore, "find">;
 }
 
-const schema = shape({
+/** The input of `measurement.assess` (also the content of a `photo_assessment` draft, US-KI-04). */
+export const measurementAssessSchema = shape({
   measurementId: idField("measurementId"),
   quality: choiceField("quality", QUALITIES),
   note: orNull(textField("note", MEASUREMENT_LIMITS.note)),
-  aiSuggestion: orNull((value: unknown) =>
-    value === true || value === false ? value : { field: "aiSuggestion", code: "input.invalid" },
+  aiSuggestion: orNull(
+    described(
+      (value: unknown) =>
+        value === true || value === false
+          ? value
+          : { field: "aiSuggestion", code: "input.invalid" },
+      { type: "boolean" },
+    ),
   ),
 });
 
@@ -36,7 +44,7 @@ const schema = shape({
 export const measurementAssess = (deps: AssessDependencies) =>
   defineOperation({
     name: "measurement.assess",
-    schema,
+    schema: measurementAssessSchema,
     run: async ({ userId }, input) => {
       const m = await deps.measurements.get(userId, input.measurementId);
       if (!m) return failed(appError("measurement.not_found"));
@@ -64,6 +72,6 @@ export async function measurementPhotoById(
 ) {
   const m = await deps.measurements.get(userId, measurementId.toLowerCase());
   return m
-    ? measurementPhotoFile(deps, userId, m.specimenId, m.id)
+    ? measurementPhotoFile(deps, userId, { specimenId: m.specimenId, measurementId: m.id })
     : failed(appError("measurement.not_found"));
 }

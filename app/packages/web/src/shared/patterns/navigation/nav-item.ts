@@ -1,0 +1,45 @@
+import type { ReactNode } from "react";
+
+/** One navigation destination: data only, never a module or domain object (DS-44). */
+export type NavItem = {
+  href: string;
+  /** German label shown next to or under the icon. */
+  label: string;
+  /** Decorative icon; the label carries the meaning (DS-17). */
+  icon: ReactNode;
+  /** Text mark of a destination that is not open yet ("Bald", "Noch gesperrt"); the label itself never changes (US-ONB-05, NFR-13). */
+  note?: string;
+  /** German name of the group the item belongs to; the labelled sidebar shows it as a heading above the group (issue 1093). */
+  group?: string;
+};
+
+/** Same look for the bottom bar and the rail: a 56x30 px pill behind a 22 px icon, the label under it (ADR 0011 decision 6). */
+export const stackedItem =
+  "group flex min-h-[44px] shrink-0 min-w-[44px] flex-col items-center justify-center gap-1 px-0.5 py-1 text-center text-xs font-semibold " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+/**
+ * The pill is the selection (accent fill); the semibold foreground label and `aria-current` repeat it, so colour is never
+ * alone (DS-19). `w-14` is 3.5 rem, so it doubles with the text size; `max-w-full` keeps it inside its slot of the bar
+ * at 200 % text (issue 1019: it stuck out of the bar at the right edge).
+ */
+export const stackedPill = (active: boolean) =>
+  "flex h-[30px] w-14 max-w-full items-center justify-center rounded-full border border-transparent [&_svg]:size-[22px] " +
+  (active
+    ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
+    : "text-muted-foreground group-hover:bg-muted");
+
+export const stackedLabel = (active: boolean) =>
+  active ? "text-foreground" : "text-muted-foreground";
+
+export const isActivePath = (pathname: string, href: string) =>
+  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+
+/** How the product is shown to users (US-QS-14). Identifiers, repository and docs keep "PflanzenDex". */
+export const DISPLAY_NAME = "PflanzenDéx";
+
+/** Where every brand link leads: "Heute", the home screen (US-QS-16); equals `PATHS.today`. */
+export const BRAND_HREF = "/today";
+
+/** Accessible name of every brand link; the brand leads to "Heute", the home screen (US-QS-16). */
+export const BRAND_LINK_LABEL = `${DISPLAY_NAME}, zu Heute`;

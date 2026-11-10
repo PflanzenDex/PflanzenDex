@@ -1,6 +1,6 @@
 // Specimen cards (US-BES-06): a pure derivation from specimens, locations, zones and the ports for measurements and
 // treatments (P-01: computed, never stored). What is missing stays `null` and means "unknown" (P-08).
-import type { LightLocationStore, ZoneStore } from "../../light";
+import { lightNeedUnknown, type LightLocationStore, type ZoneStore } from "../../light";
 import type {
   TreatmentSource,
   SpecimenCard,
@@ -9,6 +9,7 @@ import type {
   MeasurementSource,
   OpenTreatment,
   ProvenanceSource,
+  MeasuredSource,
 } from "./cards-types";
 import type { CareProfileReader } from "../care-profile/care-profile-types";
 import { effectiveZone, zoneOverrides, type ZoneContext } from "../placement/effective-zone";
@@ -19,6 +20,7 @@ import {
   type SpecimenStore,
   type SpecimenRow,
 } from "../shared/types";
+import { MS_PER_DAY } from "../../kernel";
 
 export interface CardsDependencies {
   readonly specimens: SpecimenStore;
@@ -37,11 +39,11 @@ export interface CardsDependencies {
 export const NO_MEASUREMENTS: MeasurementSource = { forSpecimens: async () => new Map() };
 export const NO_TREATMENTS: TreatmentSource = { open: async () => new Map() };
 export const NO_PROVENANCE: ProvenanceSource = { forSpecimens: async () => new Map() };
+export const NO_MEASURED: MeasuredSource = { measuredSpecimenIds: async () => [] };
 
-const TAG_MS = 86_400_000;
 const dayNumber = (date: string): number => {
   const [j, m, t] = date.split("-").map(Number);
-  return Date.UTC(j ?? 0, (m ?? 1) - 1, t ?? 1) / TAG_MS;
+  return Date.UTC(j ?? 0, (m ?? 1) - 1, t ?? 1) / MS_PER_DAY;
 };
 
 /**
@@ -73,8 +75,8 @@ function measurementDisplay(measurement: CardMeasurementView | undefined) {
 }
 
 /**
- * The cards of all specimens of the account (US-BES-06). The ports for measurements and treatments are asked once for
- * all own specimens, never for foreign ones (P-04). `today` is the user's local date.
+ * The cards of all specimens of the account (US-BES-06), the AI read included. The ports for measurements and treatments
+ * are asked once for all own specimens, never for foreign ones (P-04). `today` is the user's local date.
  */
 export async function specimenCards(
   deps: CardsDependencies,
@@ -83,6 +85,34 @@ export async function specimenCards(
 ): Promise<readonly SpecimenCard[]> {
   // Archived specimens have no card, and the ports do not learn their IDs (US-BES-07).
   const rows = (await deps.specimens.list(userId)).filter(isActive);
+  return cardsOf(deps, userId, today, rows);
+}
+
+/** The species is known and its light need is unknown (US-LIC-01); an unreadable species is not asked. */
+const needUnknown = (species: Parameters<typeof lightNeedUnknown>[0] | null | undefined): boolean =>
+  species !== null && species !== undefined && lightNeedUnknown(species);
+
+/** The zone fields of a card: the effective zone, where it comes from and whether the light need is missing (US-LIC-01). */
+function zoneFields(z: SpecimenRow, context: ZoneContext) {
+  const zone = effectiveZone(z, context);
+  return {
+    lightZone: zone?.zone.name ?? null,
+    lightZoneSource: zone?.source ?? null,
+    lightNeedUnknown: zone === null && needUnknown(context.species.get(z.speciesId)),
+  };
+}
+
+/**
+ * The cards of the given specimens of the account, in the given order (US-BES-06, NFR-12). The ports are asked for these
+ * IDs only, so one page of the list never loads the rows of the other plants. The caller passes active specimens only.
+ */
+
+export async function cardsOf(
+  deps: CardsDependencies,
+  userId: string,
+  today: string,
+  rows: readonly SpecimenRow[],
+): Promise<readonly SpecimenCard[]> {
   const ids = rows.map((z) => z.id);
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
   const [locations, zones, species, measurements, treatments, profiles, provenance] =
@@ -107,7 +137,6 @@ export async function specimenCards(
   };
   const card = (z: SpecimenRow): SpecimenCard => {
     const location = locations.find((s) => s.id === z.locationId);
-    const zone = effectiveZone(z, context);
     return {
       id: z.id,
       name: z.name,
@@ -116,8 +145,7 @@ export async function specimenCards(
       speciesName: speciesNames.get(z.speciesId) ?? null,
       status: z.status,
       location: location?.name ?? null,
-      lightZone: zone?.zone.name ?? null,
-      lightZoneSource: zone?.source ?? null,
+      ...zoneFields(z, context),
       caughtAt: z.caughtAt,
       provenance: provenance.get(z.id) ?? null,
       ...measurementDisplay(measurements.get(z.id)),

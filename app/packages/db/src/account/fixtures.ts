@@ -10,4 +10,5 @@ export const FIXTURES_ACCOUNT: Fixtures = {
   }),
   account_style: () => ({ style: "many", chosen_on: "2026-07-01" }),
   account_unlock: () => ({ function_id: "wishlist", unlocked_on: "2026-07-01", source: "tap" }),
+  account_keeper_switch: () => ({ feature: "wishlist", enabled: false, changed_on: "2026-07-01" }),
 };

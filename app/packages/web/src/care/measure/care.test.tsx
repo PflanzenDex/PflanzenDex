@@ -1,17 +1,32 @@
+// @vitest-environment jsdom
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createQueryClient } from "../../kernel";
+import { MemoryRouter } from "react-router";
+import { cleanup, render as mount, screen } from "@testing-library/react";
+import { createQueryClient, deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
-import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
-import { describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
+import { localToday, type MeasurementView, type MeasurementRow } from "@pflanzendex/core";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
-import { MeasurementHeader } from "./measurement-header/measurement-header";
+import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
 import { MeasurePage } from "./measure-page/measure-page";
 import { MeasurementList } from "./measurement-list/measurement-list";
 import { recordMeasurement, loadMeasurementView } from "../shared/api/measurements-api";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
-const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
+// The toast provider is mounted as the app shell mounts it for every page (the results of the writes are toasts).
+const renderToString = (e: Parameters<typeof render>[0]) =>
+  render(<ToastProvider>{e}</ToastProvider>).replaceAll("<!-- -->", "");
+/** The fact line and the facts together, as the measure view and its course layer show them. */
+function Both({ view }: { view: MeasurementView }) {
+  return (
+    <>
+      <MeasurementHeader view={view} />
+      <MeasurementFacts view={view} />
+    </>
+  );
+}
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
@@ -54,6 +69,8 @@ const fields = (extra: Record<string, string> = {}) => ({
 
 const PHOTO = { api: "http://api", token: async () => "tok", specimenId: "e1" };
 
+afterEach(cleanup);
+
 describe("US-WAC-01 client of the measure API", () => {
   it("records with bearer token, time zone of the device and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
@@ -71,6 +88,21 @@ describe("US-WAC-01 client of the measure API", () => {
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
     expect(body).toMatchObject({ value: 12.5, quality: "healthy" });
     expect(body["timeZone"]).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  });
+
+  it("US-WAC-01 the request names the profile's time zone once one is chosen, not the device's (US-ACC-02)", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
+    setProfileTimeZone("Pacific/Kiritimati");
+    try {
+      await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
+        value: 12.5,
+        quality: "healthy",
+      });
+    } finally {
+      setProfileTimeZone(null);
+    }
+    const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+    expect(body["timeZone"]).toBe("Pacific/Kiritimati");
   });
 
   it("an error of the API stays an error with code and text", async () => {
@@ -117,13 +149,54 @@ describe("US-WAC-01 checking the input before sending", () => {
   it("rejects an unknown quality", () => {
     expect(checkInput(fields({ quality: "super" })).ok).toBe(false);
   });
+
+  it("US-WAC-01 an emptied date is refused with a text and is never sent as a missing date (P-10)", () => {
+    const r = checkInput(fields({ date: "" }));
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.text).toMatch(/Datum/);
+  });
+});
+
+describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)", () => {
+  // 9 November 2026, 23:30 UTC: a different calendar day in UTC-11 (Samoa) and UTC+14 (Kiribati) than at the instant.
+  const NOW = new Date("2026-11-09T23:30:00Z");
+  const formDate = (iso: string) => {
+    const [y, m, d] = iso.split("-");
+    return `${d}.${m}.${y}`;
+  };
+  afterEach(() => {
+    setProfileTimeZone(null);
+    vi.useRealTimers();
+  });
+
+  it("US-WAC-01 the form's date is today in the profile's zone, even when the device's zone has another day", () => {
+    const device = deviceTimeZone();
+    // A zone whose day differs from the device's exists at every instant: one of the two is a day ahead or behind.
+    const profile = ["Pacific/Pago_Pago", "Pacific/Kiritimati"].find(
+      (zone) => localToday(NOW, zone) !== localToday(NOW, device),
+    );
+    expect(profile).toBeDefined();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    setProfileTimeZone(profile ?? null);
+    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    expect(html).toContain(`value="${formDate(localToday(NOW, profile ?? ""))}"`);
+    expect(html).not.toContain(`value="${formDate(localToday(NOW, device))}"`);
+  });
+
+  it("US-WAC-01 without a chosen zone the form's date is today in the device's zone", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    expect(html).toContain(`value="${formDate(localToday(NOW, deviceTimeZone()))}"`);
+  });
 });
 
 describe("US-WAC-01 Ansicht „Messen“", () => {
   it('shows "Was messen?", last measurement and last rating', () => {
     const m = measurement({ quality: "etiolated" });
     const html = renderToString(
-      <MeasurementHeader view={view({ measurements: [m], last: m, lastRating: "etiolated" })} />,
+      <Both view={view({ measurements: [m], last: m, lastRating: "etiolated" })} />,
     );
     expect(html).toContain("Was messen?");
     expect(html).toContain("Rosettendurchmesser");
@@ -133,7 +206,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
 
   it("US-WAC-05 the last assessment shows date and note of the last measurement", () => {
     const html = renderToString(
-      <MeasurementHeader
+      <Both
         view={view({
           last: measurement({ note: "Blätter wirken blass", quality: "etiolated" }),
           lastRating: "etiolated",
@@ -145,15 +218,27 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Blätter wirken blass");
   });
 
+  it("US-WAC-01 the page shows one fact line (value and date); the facts are in the layer of the course", () => {
+    const m = measurement();
+    const v = view({ measurements: [m], last: m, lastRating: "healthy" });
+    const page = renderToString(<MeasurementHeader view={v} />);
+    expect(page).toContain("Letzte Messung");
+    expect(page).toContain("12,5\u00a0cm am 03.10.2026");
+    expect(page).not.toContain("Was messen?");
+    const facts = renderToString(<MeasurementFacts view={v} />);
+    expect(facts).toContain("Was messen?");
+    expect(facts).toContain("Letzte Bewertung");
+  });
+
   it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
-    const cutting = renderToString(<MeasurementHeader view={view({ status: "cutting" })} />);
+    const cutting = renderToString(<Both view={view({ status: "cutting" })} />);
     expect(cutting).toContain("Steckling");
-    const plant = renderToString(<MeasurementHeader view={view()} />);
+    const plant = renderToString(<Both view={view()} />);
     expect(plant).not.toContain("Steckling");
   });
 
   it('without measurement: "noch keine Messung", and without species the measure stays "unknown" (P-08)', () => {
-    const html = renderToString(<MeasurementHeader view={view({ growthMeasure: null })} />);
+    const html = renderToString(<Both view={view({ growthMeasure: null })} />);
     expect(html).toContain("noch keine Messung");
     expect(html).toContain("noch keine Bewertung");
     expect(html).toContain("unbekannt");
@@ -161,35 +246,26 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Wähle selbst Höhe, Rosettendurchmesser oder Trieblänge");
   });
 
-  it("the course names value, date, quality and note; when empty it says what to do (P-09)", () => {
+  it("the course names value, date, quality and note of a measurement (US-WAC-01)", () => {
     const list = renderToString(
-      <MeasurementList
-        measurements={[measurement({ note: "nach dem Umtopfen" })]}
-        onAdd={() => undefined}
-        photo={PHOTO}
-        onPhotoSaved={() => undefined}
-      />,
+      <MemoryRouter>
+        <MeasurementList
+          measurements={[measurement({ note: "nach dem Umtopfen" })]}
+          photo={PHOTO}
+          onPhotoSaved={() => undefined}
+        />
+      </MemoryRouter>,
     );
     expect(list).toContain("12,5\u00a0cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
-    expect(
-      renderToString(
-        <MeasurementList
-          measurements={[]}
-          onAdd={() => undefined}
-          photo={PHOTO}
-          onPhotoSaved={() => undefined}
-        />,
-      ),
-    ).toContain("Trage oben den ersten Messwert ein");
   });
 
   it("the form has number, date, quality (healthy preset), note and the optional photo (US-WAC-05)", () => {
     const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
     expect(html).toContain("Messwert (cm, in Schritten von 0,5)");
-    expect(html).toMatch(/<input[^>]*type="date"[^>]*>/);
-    expect(html).toMatch(/<input[^>]*value="\d{4}-\d{2}-\d{2}"[^>]*>/);
+    expect(html).toMatch(/<input[^>]*placeholder="TT.MM.JJJJ"[^>]*>/);
+    expect(html).toMatch(/<input[^>]*value="\d{2}\.\d{2}\.\d{4}"[^>]*>/);
     expect(html).toMatch(/<option value="healthy" selected/);
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("Notiz (optional)");
@@ -215,17 +291,26 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     }
   });
 
-  it('the page shows "wird geladen" first and offers the way back', () => {
-    const html = renderToString(
+  it('the page shows "wird geladen" first and offers the way back', async () => {
+    // The loading status waits for the delay of DS-57 (issue 1726): the request never answers, so the status stays.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(() => new Promise<Response>(() => undefined)),
+    );
+    const { container } = mount(
       <QueryClientProvider client={createQueryClient()}>
-        <MeasurePage
-          api="http://api"
-          token={async () => "tok"}
-          specimen={{ id: "e1", name: "Bogenhanf" }}
-          onBack={vi.fn()}
-        />
+        <MemoryRouter>
+          <MeasurePage
+            api="http://api"
+            token={async () => "tok"}
+            specimen={{ id: "e1", name: "Bogenhanf" }}
+            onBack={vi.fn()}
+          />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
+    expect(await screen.findByRole("status")).toBeTruthy();
+    const html = container.innerHTML;
     expect(html).toContain("Messen: Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
     expect(html).toContain("Zurück zur Sammlung");

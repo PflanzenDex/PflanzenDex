@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LightOverviewView } from "./light-overview-view";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 
@@ -19,53 +20,66 @@ const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
   lightDemandLux: 15000,
   position: { category: "very_close", description: "sehr nah (~10 cm)" },
   zone: zone2,
+  lightNeedUnknown: false,
   ...extra,
 });
 const noop = () => undefined;
 const show = (rows: LightOverviewRow[]) => {
   const data: LightOverview = { rows };
-  render(<LightOverviewView data={data} onOpenCollection={noop} />);
+  render(
+    <MemoryRouter>
+      <LightOverviewView data={data} onOpenCollection={noop} />
+    </MemoryRouter>,
+  );
 };
 
 describe("US-LIC-03: light overview view", () => {
   it("shows the next step in the empty state and the button opens the collection (P-09)", async () => {
     const open = vi.fn();
-    render(<LightOverviewView data={{ rows: [] }} onOpenCollection={open} />);
+    render(
+      <MemoryRouter>
+        <LightOverviewView data={{ rows: [] }} onOpenCollection={open} />
+      </MemoryRouter>,
+    );
     expect(screen.getByText(/noch keine arten/i)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledTimes(1);
   });
 
-  it("displays plant, zone, lux demand (de-DE) and position", () => {
+  it("US-LIC-03 · issue 1155 shows plant, zone, lux demand (de-DE) and position on one row", () => {
     show([row()]);
-    const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
-      .getAllByRole("cell")
-      .map((c) => c.textContent);
-    expect(cells).toEqual(["Monstera deliciosa", "Zone 2", "15.000", "sehr nah (~10 cm)"]);
+    const item = screen.getAllByRole("listitem")[0] as HTMLElement;
+    expect(item.textContent).toContain("Monstera deliciosa");
+    expect(item.textContent).toContain("Zone 2 · Lux-Bedarf 15.000");
+    expect(item.textContent).toContain("sehr nah (~10 cm)");
   });
 
-  it('US-LIC-01 P-08: an unknown lux need shows "unbekannt" and the next step, never 0 or a position (#1003)', () => {
-    show([row({ lightDemandLux: null, position: null, zone: null })]);
-    const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
-      .getAllByRole("cell")
-      .map((c) => c.textContent);
-    expect(cells).toEqual([
-      "Monstera deliciosa",
-      "unbekannt",
-      "unbekannt",
-      "Lichtbedarf eintragen: Lichtzone im Pflegeprofil der Art festlegen",
+  it('US-LIC-01 P-08 P-09: an unknown lux need shows "unbekannt" and the next step on its own row, never 0 or a position (#1003, issue 1155)', () => {
+    show([
+      row({ lightDemandLux: null, position: null, zone: null, lightNeedUnknown: true }),
+      row({
+        speciesId: "sp2",
+        speciesName: "Pilea",
+        lightDemandLux: null,
+        position: null,
+        zone: null,
+        lightNeedUnknown: false,
+      }),
     ]);
+    const items = screen.getAllByRole("listitem");
+    expect(items[0]?.textContent).toContain("Lichtzone unbekannt · Lux-Bedarf unbekannt");
+    expect(items[0]?.textContent).not.toMatch(/\b0\b/);
+    const link = within(items[0] as HTMLElement).getByRole("link", {
+      name: "Lichtbedarf eintragen für „Monstera deliciosa“",
+    });
+    expect(link.getAttribute("href")).toBe("/discover/species/sp1?sheet=care");
+    expect(items[1]?.textContent).not.toContain("Lichtbedarf eintragen");
   });
 
   it("formats five-digit demands with the German thousands separator", () => {
     show([row({ lightDemandLux: 50000 }), row({ speciesId: "sp2", lightDemandLux: 110000 })]);
-    expect(screen.getByText("50.000")).toBeTruthy();
-    expect(screen.getByText("110.000")).toBeTruthy();
-  });
-
-  it('shows "unbekannt" when the zone of a species is unknown (P-08)', () => {
-    show([row({ zone: null })]);
-    expect(screen.getByRole("cell", { name: "unbekannt" })).toBeTruthy();
+    expect(screen.getByText(/Lux-Bedarf 50\.000/)).toBeTruthy();
+    expect(screen.getByText(/Lux-Bedarf 110\.000/)).toBeTruthy();
   });
 
   it("renders the rows in the order delivered (sorting is done by core, US-LIC-03 core and API tests)", () => {
@@ -73,22 +87,15 @@ describe("US-LIC-03: light overview view", () => {
       row({ speciesId: "a", speciesName: "Erste", lightDemandLux: 100000, zone: zone3 }),
       row({ speciesId: "b", speciesName: "Zweite", lightDemandLux: 2000 }),
     ]);
-    const names = screen
-      .getAllByRole("row")
-      .slice(1)
-      .map((r) => r.textContent);
+    const names = screen.getAllByRole("listitem").map((r) => r.textContent);
     expect(names[0]).toContain("Erste");
     expect(names[1]).toContain("Zweite");
   });
-});
 
-describe("US-LIC-03 · DS-48 light overview on a phone", () => {
-  it("shows each species as a card with labelled values instead of a table", () => {
-    setViewportWidth(360);
+  it("US-LIC-03 · US-QS-15 · issue 1155 the species are rows paged by the free height of the layer, not a table", () => {
     show([row()]);
     expect(screen.queryByRole("table")).toBeNull();
     const list = screen.getByRole("list", { name: "Lichthunger der Arten" });
-    expect(within(list).getByText("Lux-Bedarf")).toBeTruthy();
-    expect(within(list).getByText("15.000")).toBeTruthy();
+    expect(list.hasAttribute("data-page-fit")).toBe(true);
   });
 });

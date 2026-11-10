@@ -5,6 +5,8 @@ import { InMemorySpecies } from "./species/test-helpers";
 import { catalogPropose } from "./propose";
 import {
   OPEN,
+  type ApprovedDuplicate,
+  type ApprovedTwin,
   type MergeMoved,
   type MergeOutcome,
   type ReviewStatus,
@@ -13,10 +15,16 @@ import {
   type Role,
 } from "./types";
 
-/** In-memory adapter for tests only; the real adapter lives in `db`. */
+/**
+ * In-memory adapter for tests only; the real adapter lives in `db`. `catalog` is the species fake the approval check
+ * reads for an approved twin and for the duplicates (the database does it in one transaction in `db`).
+ */
 export class InMemoryReview implements ReviewStore {
   readonly rows: ReviewCase[] = [];
-  constructor(private readonly rolePerUser: Record<string, Role[]> = {}) {}
+  constructor(
+    private readonly rolePerUser: Record<string, Role[]> = {},
+    private readonly catalog: InMemorySpecies = new InMemorySpecies(),
+  ) {}
 
   async roles(userId: string): Promise<readonly Role[]> {
     return this.rolePerUser[userId] ?? [];
@@ -70,6 +78,22 @@ export class InMemoryReview implements ReviewStore {
     return fresh;
   }
 
+  async approve(
+    userId: string,
+    id: string,
+    latinKey: string,
+  ): Promise<ReviewCase | { twin: ApprovedTwin } | null> {
+    const alt = this.rows.find((z) => z.id === id);
+    if (!alt) return null;
+    const twin = this.catalog.approvedTwin(latinKey, alt.objectId);
+    if (twin) return { twin };
+    return this.decide(userId, id, "reviewed", null);
+  }
+
+  async approvedDuplicates(): Promise<readonly ApprovedDuplicate[]> {
+    return this.catalog.approvedDuplicates();
+  }
+
   /** Re-pointing results the merge reports; tests set it to simulate the other modules' ports. */
   moved: MergeMoved[] = [{ kind: "specimen", moved: 1, kept: 0 }];
   conflict = false;
@@ -113,12 +137,18 @@ export const FULL = {
 };
 
 export class ReviewWorld {
-  readonly species = new InMemorySpecies();
-  readonly reviews = new InMemoryReview({ operator: ["operator"], reviewer: ["reviewer"] });
+  readonly species: InMemorySpecies;
+  readonly reviews: InMemoryReview;
   private readonly idem = new InMemoryIdempotencyStore();
   private counter = 0;
 
-  constructor() {
+  /** `cap`: the visible cap of the species search (FR-BES-24), for tests of the cut result. */
+  constructor(cap?: number) {
+    this.species = new InMemorySpecies(cap);
+    this.reviews = new InMemoryReview(
+      { operator: ["operator"], reviewer: ["reviewer"] },
+      this.species,
+    );
     this.species.reviewers.push("operator", "reviewer");
   }
 

@@ -1,7 +1,15 @@
 // Lock states as pure domain logic (US-ONB-04, FR-ONB-01): derived live from counts, dates and settings, never
 // stored. No I/O and no clock: today's local date comes in (NFR-08). Reasons and ways are data; the German text comes
 // from a message table (FR-QG-11).
-import { appError, daysBetween, failed, ok, type FeatureSet, type Result } from "../../../kernel";
+import {
+  appError,
+  daysBetween,
+  failed,
+  ok,
+  type FeatureSet,
+  type Result,
+  MS_PER_DAY,
+} from "../../../kernel";
 import {
   isUnlockFunctionId,
   UNLOCK_FUNCTIONS,
@@ -13,8 +21,12 @@ import {
 
 export type KeeperStyle = "few" | "many";
 
-/** `switched_off`: the operator's switch is off. `unlockable` is reserved for the keeper-may-open-now case of US-ONB-05. */
-export type LockState = "open" | "locked" | "unlockable" | "switched_off";
+/**
+ * `switched_off`: the operator's switch is off (US-DEV-06). `keeper_off`: the keeper switched the feature off (US-ONB-09),
+ * a third state beside the lock: never locked, never announced, and no unlock switches it on. `unlockable` is reserved
+ * for the keeper-may-open-now case of US-ONB-05.
+ */
+export type LockState = "open" | "locked" | "unlockable" | "switched_off" | "keeper_off";
 
 export interface UnlockInput {
   /** Account setting (DM-ONB-01); persistence belongs to US-ONB-03. */
@@ -28,6 +40,8 @@ export interface UnlockInput {
   readonly calmMode: boolean;
   /** Effective switches of the installation for this account (US-DEV-06). */
   readonly features: FeatureSet;
+  /** The keeper switches the keeper turned off (US-ONB-09); a switch that is not in here is on. */
+  readonly keeperOff: ReadonlySet<string>;
   /** Functions the keeper opened by tap (DM-ONB-02). */
   readonly manualUnlocks: ReadonlySet<string>;
   /** Functions whose data already exists, e.g. a wish, a friend, an invitation (P-10). */
@@ -62,8 +76,6 @@ export interface UnlockStatus {
   /** Only while `locked`: the keeper may open it by tap even though the rule is not met (US-ONB-05). */
   readonly mayUnlockNow: boolean;
 }
-
-const MS_PER_DAY = 86_400_000;
 
 /** Calendar date `days` after `date`, no clock and no zone. */
 export function addDays(date: string, days: number): string {
@@ -119,9 +131,20 @@ const status = (
   ...extra,
 });
 
+/**
+ * The switches come before every rule and every unlock: the operator's (US-DEV-06), then the keeper's (US-ONB-09). An unlock
+ * never switches a feature on.
+ */
+function switchedState(f: UnlockFunction, i: UnlockInput): UnlockStatus | undefined {
+  if (f.feature && !i.features.has(f.feature)) return status(f, "switched_off", false);
+  if (f.keeperSwitch && i.keeperOff.has(f.keeperSwitch)) return status(f, "keeper_off", false);
+  return undefined;
+}
+
 function derive(f: UnlockFunction, i: UnlockInput): UnlockStatus {
   const announcedByCalm = !(f.hiddenInCalmMode && i.calmMode);
-  if (f.feature && !i.features.has(f.feature)) return status(f, "switched_off", false);
+  const switched = switchedState(f, i);
+  if (switched) return switched;
   const conditions = UNLOCK_RULES[f.rule];
   if (conditions.length === 0 || i.style === "many") return status(f, "open", announcedByCalm);
   if (i.manualUnlocks.has(f.id) || i.existingData.has(f.id))

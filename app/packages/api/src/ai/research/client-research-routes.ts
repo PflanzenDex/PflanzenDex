@@ -1,7 +1,7 @@
 import type { AiLogStore, PhotoSource, SourceClient } from "@pflanzendex/core";
 import { Hono } from "hono";
 import { clientPhotoRoutes } from "./client-photo-routes";
-import type { AiEnv, ClientGuardOptions } from "../client-auth";
+import type { AiEnv, ClientGuardOptions } from "../guard/client-auth";
 import { clientImageRoutes } from "./client-image-routes";
 
 /**

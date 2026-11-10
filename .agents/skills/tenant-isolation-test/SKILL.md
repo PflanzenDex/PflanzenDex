@@ -1,6 +1,6 @@
 ---
 name: tenant-isolation-test
-description: Use when adding or changing a table that holds user-owned data, or an operation that reads or writes it. Gives the table tenant isolation (konto_id, row rule, fixture) and proves with two accounts that nobody sees or changes foreign data (QG-D1, NFR-09, FR-QG-07).
+description: Use when adding or changing a table that holds user-owned data (a keeper's notes, wishes, lamps, specimens …), or an operation that reads or writes it. Load it next to db-migration or add-core-operation, not after them. Gives the table tenant isolation (account_id, row rule, fixture) and proves with two accounts that nobody sees or changes foreign data (QG-D1, NFR-09, FR-QG-07).
 ---
 
 # Tenant isolation test
@@ -12,9 +12,10 @@ Every table with user data carries `account_id` and an enforced row rule (P-04, 
 3. Add one entry to `FIXTURES_<MODULE>` in `app/packages/db/src/<module>/fixtures.ts` of the module that owns the table (aggregated in `app/packages/db/src/fixtures.ts`): a function returning example values for the remaining columns, without `account_id` (the test sets it). Without the entry the generic test fails by design.
 4. Do not write a table-specific isolation test. The generic tests in `app/packages/db/src/kernel/tenant.test.ts` (`checkTenantIsolation`, `findSchemaViolations` from `app/packages/db/src/kernel/isolation.ts`) cover read and change across accounts and report tables without `account_id` or without a forced row rule.
 5. All application queries run through `withAccount(pool, accountId, fn)` (`app/packages/db/src/kernel/tenant.ts`), which sets the account per transaction. Never query user tables on a bare pool connection.
-6. Operation level (use the `spec-to-tests` skill): a test with two accounts where account B calls the operation on account A's object and gets `access.verweigert` or `<domain>.not_found`, and nothing changed. In the API package, assert the same through HTTP (403 or 404, see `app/packages/api/src/kernel/error-http.ts`).
+6. Operation level (use the `spec-to-tests` skill): a test with two accounts where account B calls the operation on account A's object and gets `access.denied` or `<domain>.not_found`, and nothing changed. In the API package, assert the same through HTTP (403 or 404, see `app/packages/api/src/kernel/error-http.ts`).
 7. Existence must not leak: for foreign ids answer exactly like for missing ids (`not_found`) unless the spec says otherwise.
 8. A `security definer` function never relies on row security for its scope: a superuser or BYPASSRLS owner is not bound by it (#891, #907). Name the account in every read and write (`where account_id = ...`), register the function in `app/packages/db/src/security-definer-inventory.test.ts` (the test fails for an unregistered one) and add a test that runs in `createSuperuserOwnerDatabase()` (`app/packages/db/src/fixtures.ts`) with two or three accounts: friend, stranger, no flag. See `docs/guides/reference/security-definer-audit.md`.
+9. The account data export (US-ACC-04) reads its tables from the catalog, so a new table with `account_id` is exported without a list entry, or it needs a reason in `NOT_EXPORTED` (`app/packages/db/src/privacy/export/tables.ts`). Add a test with the story ID to `app/packages/db/src/privacy/export/account-data-source.contract.test.ts` that the export carries the keeper's rows of the new table and none of another account.
 
 ## Check
 

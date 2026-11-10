@@ -163,18 +163,25 @@ describe("US-BES-10 a care profile kept on a merged proposal does not vanish (FR
       userId,
     );
 
-  it("US-BES-10 shows it with a notice naming the target species and the next action", async () => {
+  it("US-BES-10 shows it under the target species' name with the merged marker and a notice code", async () => {
     await profiles.update("anna", MERGED, { ownHints: "Mein alter Hinweis" });
     const entries = await withMerged();
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       speciesId: MERGED,
+      speciesName: "Bogenhanf",
       mergedInto: { speciesId: BOGEN, speciesName: "Bogenhanf" },
+      notice: { code: "proposal_merged" },
       deviates: true,
     });
     expect(entries[0]?.profile.ownHints.own).toBe("Mein alter Hinweis");
-    expect(entries[0]?.notice?.text).toContain("Bogenhanf");
-    expect(entries[0]?.notice?.nextAction).toContain("Pflegeprofil");
+  });
+
+  it("US-BES-10 the merged entry carries no German UI text of its own: the wording is the web's (P-09, FR-QG-26)", async () => {
+    await profiles.update("anna", MERGED, { ownHints: "x" });
+    const [entry] = await withMerged();
+    expect(entry?.speciesName).not.toMatch(/zusammengef|Vorschlag/);
+    expect(JSON.stringify(entry?.notice)).toBe('{"code":"proposal_merged"}');
   });
 
   it("US-BES-10 a profile of a species that is invisible and not merged stays hidden (P-04)", async () => {
@@ -196,5 +203,46 @@ describe("US-BES-10 a care profile kept on a merged proposal does not vanish (FR
       "anna",
     );
     expect(entries).toEqual([]);
+  });
+});
+
+describe("US-LIC-01 care profile: the next step when the light need is unknown (P-08, P-09)", () => {
+  const NO_NEED = "55555555-5555-4555-8555-555555555555";
+  const local = new SpeciesStub([
+    {
+      species: testSpecies(NO_NEED, {
+        germanName: "Ohne Bedarf",
+        lightDemandLux: null,
+        standardLevel: null,
+      }),
+    },
+  ]);
+  const viewOfNoNeed = (userId = "anna") =>
+    careProfileView(
+      { specimens, species: local, profiles, zones: zoneStore({ anna: ZONES, ben: ZONES }) },
+      userId,
+    );
+
+  it("US-LIC-01: Given a species without lux need and no zone of my own, when the care profile is read, then the next step is named", async () => {
+    await create("anna", NO_NEED, "Pflanze ohne Bedarf");
+    const [entry] = await viewOfNoNeed();
+    expect(entry).toMatchObject({ speciesId: NO_NEED, lightNeedUnknown: true });
+    expect(entry?.profile.lightZone).toMatchObject({
+      catalog: null,
+      effective: null,
+      source: "unknown",
+    });
+  });
+
+  it("US-LIC-01: Given my own zone for such a species, when the care profile is read, then my zone applies and no next step is named", async () => {
+    await create("anna", NO_NEED, "Pflanze mit eigener Zone");
+    await profiles.update("anna", NO_NEED, { lightZoneId: "z2" });
+    const [entry] = await viewOfNoNeed();
+    expect(entry).toMatchObject({ lightNeedUnknown: false });
+    expect(entry?.profile.lightZone).toMatchObject({
+      own: "z2",
+      effective: "z2",
+      source: "profile",
+    });
   });
 });

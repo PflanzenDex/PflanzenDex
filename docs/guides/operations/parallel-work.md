@@ -8,7 +8,7 @@ A second collision type is two people building the same story (LIC-01 and WAC-01
 
 ```bash
 make claim ISSUE=<n>     # claim the issue, branch and draft PR
-make board               # who works on what (optional: MILESTONE="R0 Fundament")
+make board               # who works on what (optional: RELEASE="R0 Fundament")
 ```
 
 `make claim` (`app/tools/workflow/claim/claim.mjs`) refuses with exit 1 and names the finding when
@@ -17,13 +17,31 @@ make board               # who works on what (optional: MILESTONE="R0 Fundament"
 - a PR (open or merged) closes the issue (`Closes #n` in the body), or an open PR carries the story ID in title or branch (a merged PR that only mentions the ID does not count: it may be one part of a bigger story),
 - a branch on `origin` carries the story ID.
 
-Before any write a preflight checks that `node_modules` exists and matches `package-lock.json` (`make setup` records the lock hash in `node_modules/.setup-lock-hash`; `app/tools/check/supply/check-deps.mjs`; hooks and `make gates` run the same check, so a pull that changed the lock file stops with "run make setup") and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (field and option ids are read at run time) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (branch deleted, assignee removed, status back to "Todo"); an issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
+Two details of that check. A PR counts only when its body closes the issue (`Closes #<n>`, `Fixes #<n>`, `Resolves #<n>`); a bare `#<n>` mention refuses nothing. Only `US-`, `FR-` and `TE-` IDs in a title are keys; `NFR-` IDs are not. The check does not compare the titles of other open issues, so two open issues can carry the same story ID: give a new issue a title without a story ID that an open PR or branch already uses.
 
-**Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/actions/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift and missing priorities. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is.
+Before any write a preflight checks that `node_modules` exists and matches `package-lock.json` (`make setup` records the lock hash in `node_modules/.setup-lock-hash`; `app/tools/check/supply/check-deps.mjs`; hooks and `make gates` run the same check, so a pull that changed the lock file stops with "run make setup") and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (two GraphQL writes; the field and option ids are read at run time, and the board item is added only when the issue is not on the board yet) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, state, done, missing, open decisions, owner decisions, verification, next steps, worktree) and an empty "## Lessons" placeholder that `make pr` refuses until it is filled in (US-DEV-05). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (status back to "Todo", assignee removed, branch deleted). Each undo step is tried three times. The branch is deleted only while origin still points at the claim commit, so a branch somebody else pushed under the same name is never deleted. An undo that still fails prints its command, to run by hand (P-10). An undo is registered before its write, so an answer lost on the way (a timeout) is undone too. An issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
+
+Every GitHub or git call of `make claim` has a time limit, 60 seconds by default (`CLAIM_TIMEOUT_S=<seconds>` changes it; an assumption, starting value). The git push of the claim and of its undo has a limit of its own, 300 seconds by default (`CLAIM_PUSH_TIMEOUT_S=<seconds>` changes it; an assumption, starting value), because the pre-push hook runs `make gates`. A call that does not answer ends its process group, so no gate run is left behind, and the claim ends with a message that names it; the undo runs. Each step is announced before it runs (`claim: pushing origin/…`, `claim: assigning #…`), so a slow network is visible while it happens. The reads that do not depend on each other run at once, and the branches are read from the remote-tracking refs that the fetch has just updated (no extra call; `git ls-remote` is asked only when the fetch refspec is narrow).
+
+**PR title:** the claim writes `<type>(<scope>): <subject> (<story ID>)` from the issue title. Check it against the Conventional Commit rule (at most 100 characters, an allowed scope from `app/config/project/commitlint.config.js`) and set it with `make pr-text TITLE=…` before `make pr`.
+
+## The GraphQL budget (shared account, #1412)
+
+All sessions share one account and 5,000 GraphQL points an hour; a failed call returns HTTP 200 with the error in the body. The tools keep the board calls few and survive the limit:
+
+- Repository, issue, pull request and assignee reads and writes use REST, which has its own budget and spends no points. `make claim` (except the board status), `make worktree`, `make issue` (creating the issue) and the draft PR keep working when GraphQL is used up.
+- The board is GraphQL. Measured with GitHub's `rateLimit.cost` on 2026-11-05: one issue's board item 1 point, the project's field ids 1 point, one page of 100 board items 1 point (the whole board, 704 items, about 8 points). `gh project item-list` and `gh project field-list` cost about 100 points each, so the tools do not call them (PF-005).
+- `make claim` without the board warns, keeps the claim and says that the project status must be set by hand (P-10).
+- `make issue` creates the issue even when the board cannot be reached. Its output names the board fields that are not set. CI sets Typ, Epic and an empty Status once the labels are valid (`issue-check.yml`, App token); CI does not set Priority or Release, so Priority is set by hand on the board; `make issue` sets the Release by its rule, and `RELEASE=` overrides it.
+- `make pr` reads the PR and runs the title and changelog checks over REST before anything is pushed, pushes the branch, waits until GitHub shows the head, and only then marks the PR ready with GraphQL, which has no REST route (issue 1608). On a rate limit it reads the reset from the failing response's `X-RateLimit-Reset` header, waits for it if that is within five minutes, tries at most three times, and otherwise exits 75 and says when to run `make pr` again. Once the checks passed, the branch is pushed in every case.
+
+**Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/actions/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift, missing priorities and open items without a Status. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is. A failed status write at claim time is only a warning, so the status can stay empty while the claim holds; set it by hand with `gh project item-edit`.
+
+**The board tracks, the issue describes:** release, type and epic are the project fields Release, Typ and Epic, not milestones or labels. `make board` lists the open items whose Typ is Story or Enabler for one Release (default: the first release in board order with open work). The issue templates add new issues to the board; set Typ, Release, Epic and Priority there.
 
 **Priority:** `make claim` prints a warning when the claimed issue has no project priority, and `make board` flags such items `NO-PRIO` (both only warn). The rule is in `CLAUDE.md` ("Priority of tickets").
 
-**Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for label `bug`, `chore` for label `enabler`, otherwise `feat`. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
+**Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for the board type (field Typ) Bug, `chore` for Enabler, otherwise `feat`; the labels `bug` / `enabler` count only for an issue that is not on the board. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
 
 Exceptions, all explicit:
 
@@ -43,19 +61,78 @@ make worktree BRANCH=feat/<task>
 
 `make worktree` first runs the claim check (`app/tools/workflow/claim/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
 
-This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. Then change into that directory and run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
+This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. The `.worktrees/` folder is the one of the main checkout, also when `make worktree` runs inside another worktree (it used to nest there, #1487).
+
+Dependencies (#1487): if an installed `node_modules` with the same `package-lock.json` exists in another worktree (the one you run it from first, then the main checkout and the others), `app/tools/workflow/worktree/worktree-env.mjs --deps` copies it into the new worktree. The copy is independent: a reflink on btrfs or xfs (instant, no extra disk space until files change), otherwise a plain copy. Nothing is shared between worktrees; a copy that links back into its source is refused. Then `make setup` runs in the new worktree: it skips `npm ci` when the stamp matches, and installs otherwise (a cold install is much slower). The worktree is ready to commit in, so the commit hooks pass without another step. If `make setup` fails, the worktree stays and the script says to run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
 
 ## Own ports and database per worktree
 
-`app/tools/workflow/worktree-env.mjs` derives these deterministically from the branch name:
+`app/tools/workflow/worktree/worktree-env.mjs` derives these from the branch name. The slot starts at the hash of the branch; when another worktree already holds that slot (its `.env.worktree` gives the test database port), the next free slot is taken, so two worktrees never share a port (issue 1745). The slots held by the other worktrees are read from `git worktree list`; the worktree itself is left out.
 
-| Variable                                                | Meaning                                            |
-| ------------------------------------------------------- | -------------------------------------------------- |
-| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899) |
-| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`        |
-| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899)                |
+| Variable                                                | Meaning                                                                      |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899)                           |
+| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`                                  |
+| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55399 and 55400 to 55899)                       |
+| `PFLANZENDEX_E2E_API_PORT` / `PFLANZENDEX_E2E_WEB_PORT` | e2e gates and the Lighthouse runs (ranges 55900 to 56399 and 56400 to 56899) |
 
-The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a`. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
+The ranges are an assumption (starting values). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a` (not needed for `make dev`, see below).
+
+**Gates never reuse a dev server.** In a worktree the e2e ports are apart from the dev ports, so `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse-signed` and `lighthouse` never attach to a `make dev` server: Playwright would reuse any server that already listens on its port. The main checkout keeps 5173 and 3000 for its gates, as before. In a worktree make exports `E2E_WEB_PORT` and `E2E_API_PORT` from `.env.worktree`; a value already in the environment wins. `make e2e-origin` allows the e2e web port at the shared Keycloak (`web-port.mjs`, see below). The e2e targets run it after `auth-up`, and it does nothing without a worktree port. `tools/lighthouse/lighthouse-run.sh` refuses to start when its port is in use, names the port, and stops its preview with the exit.
+
+**Older worktrees** written before the e2e keys lack them. Re-run the writer from the worktree (or from any checkout of the repository): `node app/tools/workflow/worktree/worktree-env.mjs <branch> > .env.worktree`. A re-run can move the worktree to the first free slot from its hash, so stop running servers and the test database first.
+
+### `make dev` in a worktree (#904)
+
+`make dev` runs `app/tools/workflow/worktree/dev-servers.mjs` (the `dev` script of `app/package.json`). When `.env.worktree` exists at the worktree root, it starts the two servers with that worktree's values and nothing has to be set by hand:
+
+- the API on `PFLANZENDEX_DEV_API_PORT`, with `PORT`, `WEB_ORIGIN`, `AI_RESOURCE_URL` (the API's `/mcp`) and `DATABASE_URL` of the worktree;
+- Vite on `PFLANZENDEX_DEV_WEB_PORT` with `--port` and `--strictPort`, and `VITE_API_URL` pointing at the API;
+- the test database `pflanzendex_test` on `PFLANZENDEX_TEST_DB_PORT`. This is the database that `make db-up` creates (`POSTGRES_DB`) and that `make migrate` and the tests use through `PFLANZENDEX_TEST_DATABASE_URL`. `PFLANZENDEX_TEST_DB_NAME` is written by `worktree-env.mjs`, but no target reads it: the port already makes the database unique per worktree, and a database under that name would be empty and unmigrated.
+
+Rules of the launcher:
+
+- A busy API or web port stops the start before any server runs, and the message names the port. Vite never moves to another port. If one server fails, the other is stopped too. `make clean-ports` stops the processes of your own user that listen on the API and web port of this worktree (each one is named; another user's process is reported and left alone).
+- A variable already set in the environment wins over the file, so `PORT=4000 make dev` starts the API on 4000 and `VITE_API_URL` follows it. An empty variable counts as not set.
+- Without `.env.worktree` (the main checkout) the command is the one from before: 3000 and 5173, no variables, no port flags.
+- `TAXONOMY_BUILD` is not set. It changes what the Pokédex shows (the foreign taxonomy build runs or is skipped), so a worktree should not differ from the main checkout by default. Set it per run when a worktree should skip the build: `TAXONOMY_BUILD=off make dev`.
+- Sign-in on the worktree port still needs the redirect step below (`web-port.mjs`), because the shared Keycloak only knows port 5173. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
+
+### One shared Keycloak for every checkout
+
+All checkouts share one Keycloak container (`pflanzendex-keycloak`, port 18081) and one mail catcher. Its realm lives in memory, so recreating the container drops every port added with `web-port.mjs` and signs every session out. Therefore (issue 1187):
+
+- Only the main checkout holds `app/config/dev/.env` with `KC_ADMIN_PASSWORD`. `make auth-up` in the main checkout creates it when it is missing; in a worktree it refuses ("run `make auth-up` in the main checkout first") and never writes a `.env` of its own.
+- `make auth-up`, `make auth-down` and `make stop` always run `docker compose` with the main checkout's `compose.yaml` and `.env`, also from a worktree. A worktree's own copy of the compose file would recreate the container even with the same password, because its mount paths differ. Changes to the realm or the theme take effect only after they are on the main checkout's branch and the auth server is recreated there.
+- When the running container was started with another admin password than that file, `make auth-up` refuses instead of recreating it. To restore: `make auth-down && make auth-up` in the main checkout, then `cd app && node tools/keycloak/web-port.mjs <port>` for every web port in use, and tell the other sessions.
+- `make auth-down` and `make stop` in any checkout stop the shared containers for everyone.
+- Tools that need the admin password (`web-port.mjs`, the demo seed, the e2e account helper) read the main checkout's `.env` through the git common dir (`app/tools/keycloak/dev-env.mjs`), so they work from a worktree too. `KC_ADMIN_PASSWORD` in the environment overrides it.
+- Self-test: `app/tools/keycloak/auth-up.test.mjs` (a throwaway repository with a linked worktree and a stubbed `docker`).
+
+### Memory caps of the local containers
+
+Every worktree starts its own test database, so the local containers are capped (#1084, starting values, assumption): the test database 512 MB (`make db-up`, override with `DB_MEMORY=1g`), Keycloak 768 MB with a 384 MB JVM heap and Mailpit 128 MB (`app/config/dev/compose.yaml`, override with `KC_MEMORY`, `KC_JAVA_HEAP`, `MAILPIT_MEMORY` in `app/config/dev/.env`). An existing container keeps its old settings: run `make db-down` or `make auth-down` once to recreate it. The caps are local only. CI brings its own database service, and production has its own limits in `app/config/deploy/docker-compose.yml`. `app/tools/dev/tests/dev-memory-caps.test.mjs` fails if a deploy file or deploy workflow loads a dev compose file or uses one of these variables.
+
+## One heavy job at a time (US-DEV-08, issue 1745)
+
+The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so much that two of them at once, from two worktrees, got the IDE killed by systemd-oomd. `make heavy-lock` (`tools/lint/heavy-lock.sh`) therefore runs first in `make e2e`, `one-screen`, `a11y-routes`, `ui-gates`, `lighthouse` and `lighthouse-signed`; `make ci` takes the same lock in its parts runner (`app/tools/dev/agent/ci-parts.mjs`) before the first part, so it keeps no make prerequisite that could stop it (US-QG-02). It is one lock for the whole machine: the first job runs, and a second job from any worktree of the checkout prints what it waits for and starts when the first one ends.
+
+- **Where the lock lives:** in the git common dir, so every worktree of the checkout shares it. `heavy-job.lock` is the lock itself (an empty file that stays). `heavy-job.owner` is one line while the lock is held: owner pid, directory, target and time (UTC).
+- **See the holder:** `cat "$(git rev-parse --git-common-dir)/heavy-job.owner"`. A waiting job prints the same holder.
+- **Released with its owner:** the lock belongs to the make process that took it and is released when that process ends, also on a failure or a kill. A note whose pid is dead does not count. A heavy target inside another one (`make e2e` run by `make ci`) sees the lock as its own and runs at once.
+- **Waiting:** a free lock is taken silently. A wait prints its line after one second, naming the job and the holder, and again every 30 seconds. `HEAVY_LOCK_WAIT=<seconds>` bounds the wait (default 3600, a starting value, assumption); then the job exits with 1 and names the holder. Example: `HEAVY_LOCK_WAIT=600 make e2e`.
+- **CI does not use it:** with `CI` set the target does nothing, because each CI job is its own machine. `make gates`, the pre-push hook and the other targets stay outside the lock; they are light.
+- The script needs `setsid` and `flock` (util-linux).
+- `/tmp` is a tmpfs on the workstation: bulky output there uses RAM. Check `df -h /tmp` before a long run and keep big logs in the checkout's `.cache/` (ignored by git) instead.
+
+## CI reruns and merges
+
+- Two timed-out runs on one head: rerun each one with `gh run rerun <id> --failed`.
+- Rerunning an `edited` run replays the original title.
+- `gh run view --log` shows the latest attempt for every attempt of a run: download the logs of the earlier attempts before a rerun.
+- `make merge` deletes the PR's remote branch (`gh pr merge --squash --delete-branch`); it does not remove the local worktree, so remove that by hand after the merge.
+- Never chain merges in a script while the owner may merge by hand, and agents never arm auto-merge. In a merge chain, check `make merge`'s exit code before any cleanup: `make merge … | tail -1 && cleanup` ran the cleanup after a failed merge, because `tail` decides the exit code.
+- Two PRs that shrink the same baseline conflict: take dev's file, re-apply your own removals, and set `maxEntries` to dev's value minus your removals. A change that grows a baseline needs a human; `make gate-plan` refuses baseline files, because they are not gate files.
 
 ## Owners and number assignment
 

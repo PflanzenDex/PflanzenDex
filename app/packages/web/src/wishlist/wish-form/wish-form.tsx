@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
-import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../../kernel";
+import { Button } from "@/shared/ui/button/button";
+import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
+import type { ApiError } from "../../shared/data";
 import { SpeciesPick } from "./species-pick/species-pick";
 import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
 import {
@@ -17,39 +19,26 @@ import {
 } from "../schemas";
 import type { WishInput } from "../wishlist-api";
 
-/**
- * Hands a server refusal to the form: the fields it names get the German text of its error code and the first of
- * them takes the focus (P-10). Returns the alert text when the refusal names no field. A refusal of a field goes
- * away as soon as that field is edited (react-hook-form revalidates it), without moving the focus.
- */
-function useServerRefusal(error: ApiError | null, setError: UseFormSetError<WishFields>) {
-  const alertRef = useRef<HTMLDivElement>(null);
-  const named = error ? fieldsOfRefusal(error) : [];
-  const alertText = error && named.length === 0 ? errorText(error.code) : null;
-  useEffect(() => {
-    if (!error) return;
-    const fields = fieldsOfRefusal(error);
-    fields.forEach((field, i) =>
-      setError(field, { type: "server", message: errorText(error.code) }, { shouldFocus: i === 0 }),
-    );
-    if (fields.length === 0) alertRef.current?.focus();
-  }, [error, setError]);
-  return { alertText, alertRef };
-}
+/** Every field behind "Mehr Angaben": a value or a refusal opens it (P-10). */
+const FOLDED: readonly (keyof WishFields)[] = [
+  "name",
+  "german",
+  "targetZoneId",
+  "difficulty",
+  "reasoning",
+  "imageUrl",
+];
+/** After a pick the names are shown by the pick itself, so only the other fields open the group by their value. */
+const FOLDED_AFTER_PICK = FOLDED.filter((name) => name !== "name" && name !== "german");
 
-/** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (opens by itself on a refusal). */
+/** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (US-QS-24, issue 1032). */
 function FieldGroups(props: {
   form: UseFormReturn<WishFields>;
   access: { api: string; token: () => Promise<string | undefined> };
   zones: readonly ZoneStock[];
 }) {
   const { form } = props;
-  const [more, setMore] = useState(false);
   const [chosen, setChosen] = useState<string | null>(null);
-  const refused = Object.keys(form.formState.errors).length > 0;
-  useEffect(() => {
-    if (refused) setMore(true);
-  }, [refused]);
   useEffect(() => {
     // A saved wish empties the form: the pick starts again.
     if (!form.formState.isDirty) setChosen(null);
@@ -65,14 +54,15 @@ function FieldGroups(props: {
           setChosen(h.germanName ? `${h.latinName} (${h.germanName})` : h.latinName);
         }}
       />
-      <details open={more} onToggle={(e) => setMore(e.currentTarget.open)}>
-        <summary className="flex min-h-11 cursor-pointer items-center">Mehr Angaben</summary>
-        <div className="mt-3 flex flex-col gap-4">
-          <NameFields control={form.control} />
-          <ChoiceFields control={form.control} zones={props.zones} />
-          <ImageFields control={form.control} />
-        </div>
-      </details>
+      <FormMoreFields
+        control={form.control}
+        names={chosen ? FOLDED_AFTER_PICK : FOLDED}
+        forced={Boolean(form.formState.errors.name ?? form.formState.errors.german)}
+      >
+        <NameFields control={form.control} />
+        <ChoiceFields control={form.control} zones={props.zones} />
+        <ImageFields control={form.control} />
+      </FormMoreFields>
     </>
   );
 }
@@ -91,38 +81,29 @@ export function WishForm(props: {
     resolver: zodResolver(wishSchema),
     defaultValues: EMPTY_FIELDS,
   });
-  const { alertText, alertRef } = useServerRefusal(props.error, form.setError);
+  const { alertText, alertRef } = useServerRefusal(props.error, form.setError, fieldsOfRefusal);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {
     if (await props.onSend(toWishInput(values))) form.reset(EMPTY_FIELDS);
   });
   return (
-    <section aria-labelledby="wish-form-title" className="mt-7 flex flex-col gap-3">
-      <h2 id="wish-form-title" className="text-xl font-semibold">
-        Wunsch erfassen
-      </h2>
-      {props.message && !refused && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {props.message}
-        </p>
-      )}
-      {alertText !== null && (
-        <div
-          role="alert"
-          tabIndex={-1}
-          ref={alertRef}
-          className="rounded-lg border border-destructive p-3 text-destructive"
-        >
-          <p>{alertText}</p>
-        </div>
-      )}
+    // The layer "Neuer Wunsch" already names the form, so the section has no heading of its own (US-QS-24, issue 1032).
+    <section aria-label="Wunsch erfassen" className="mt-7 flex flex-col gap-3">
+      <FormNotices
+        message={refused ? null : props.message}
+        alertText={alertText}
+        alertRef={alertRef}
+      />
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <FieldGroups form={form} access={props.access} zones={props.zones} />
-          <Button type="submit" size="touch" disabled={pending}>
-            {pending ? "Speichert …" : "Wunsch speichern"}
-          </Button>
+          {/* Sticky: the form scrolls inside the layer while the save button stays in view (US-QS-15). */}
+          <div className="sticky bottom-0 bg-card py-2">
+            <Button type="submit" size="touch" className="w-full" disabled={pending}>
+              {pending ? "Speichert …" : "Wunsch speichern"}
+            </Button>
+          </div>
         </FormRoot>
       </Form>
     </section>

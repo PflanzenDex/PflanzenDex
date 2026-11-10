@@ -1,4 +1,4 @@
-// Tests for tools/repo/repo-stats.sh and tools/repo/pr-ready.sh (US-DEV-10) against a throwaway git repository.
+// Tests for tools/repo/repo-stats.sh (US-DEV-10) and tools/repo/pr-ready.sh (US-DEV-13) against a throwaway git repository.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -149,11 +149,55 @@ function prFixture(t) {
     rmSync(origin, { recursive: true, force: true });
     rmSync(bin, { recursive: true, force: true });
   });
+  // The Lessons check of pr-ready.sh (US-DEV-05) runs from the repository root, so the throwaway checkout carries its module.
+  const lessonsCheck = "app/tools/check/docs/agents/pr/pr-lessons.mjs";
+  write(
+    dir,
+    lessonsCheck,
+    readFileSync(fileURLToPath(new URL(`../../../${lessonsCheck}`, import.meta.url)), "utf8"),
+  );
+  git(dir, "add", "-A");
+  git(dir, "commit", "-q", "-m", "lessons check");
   git(origin, "init", "-q", "--bare");
   git(dir, "remote", "add", "origin", origin);
   git(dir, "push", "-q", "-u", "origin", "feat/abc-02-growth");
-  writeFileSync(path.join(bin, "gh"), `#!/bin/sh\necho "$@" >> "${bin}/gh.log"\n`);
-  chmodSync(path.join(bin, "gh"), 0o755);
+  const base = git(dir, "rev-parse", "refs/remotes/origin/dev").trim();
+  const pull = path.join(bin, "pull.json");
+  writeFileSync(
+    pull,
+    JSON.stringify({
+      number: 42,
+      title: "feat(abc): measure growth (US-ABC-02)",
+      body: "Story: US-ABC-02\n\n## Lessons\n\nnone\n",
+      state: "open",
+      draft: true,
+      base: { ref: "dev", sha: base },
+      head: { ref: "feat/abc-02-growth", sha: "0".repeat(40) },
+    }),
+  );
+  // The fake gh answers the pull request read over REST from pull.json, with the head that origin shows now (the head wait
+  // of pr-ready.sh sees the pushed head). `pr ready` answers nothing. Every call is logged.
+  writeFileSync(
+    path.join(bin, "gh"),
+    `#!/usr/bin/env bash
+echo "$*" >> "${bin}/gh.log"
+case "$1" in
+  api)
+    head="$(git --git-dir="${origin}" rev-parse -q --verify refs/heads/feat/abc-02-growth)"
+    case "$2" in
+      *pulls\\?*) jq -c --arg h "$head" '[.head.sha = $h]' "${pull}" ;;
+      *pulls/*) jq --arg h "$head" '.head.sha = $h' "${pull}" ;;
+      *) echo "unexpected gh api call: $2" >&2; exit 2 ;;
+    esac
+    ;;
+  pr) ;;
+  *) echo "unexpected gh call: $*" >&2; exit 2 ;;
+esac
+`,
+  );
+  // The fake make answers the two preflight targets of pr-ready.sh (commitlint, changelog-check) and logs their arguments.
+  writeFileSync(path.join(bin, "make"), `#!/usr/bin/env bash\necho "$*" >> "${bin}/make.log"\n`);
+  for (const name of ["gh", "make"]) chmodSync(path.join(bin, name), 0o755);
   const run = (...args) => {
     const r = spawnSync("bash", [PR_READY, ...args], {
       cwd: dir,
@@ -162,18 +206,21 @@ function prFixture(t) {
     });
     return { code: r.status, out: r.stdout, err: r.stderr };
   };
-  const ghCalls = () => {
+  const lines = (name) => {
     try {
-      return readFileSync(path.join(bin, "gh.log"), "utf8").trim().split("\n");
+      return readFileSync(path.join(bin, name), "utf8").trim().split("\n");
     } catch {
       return [];
     }
   };
-  return { dir, origin, run, ghCalls };
+  const ghCalls = () => lines("gh.log");
+  const makeCalls = () => lines("make.log");
+  const readyCalls = () => ghCalls().filter((call) => call.startsWith("pr "));
+  return { dir, origin, run, ghCalls, makeCalls, readyCalls };
 }
 
-test("US-DEV-10: make pr leaves README.md alone, pushes and marks the PR ready", (t) => {
-  const { dir, origin, run, ghCalls } = prFixture(t);
+test("US-DEV-13: make pr leaves README.md alone, pushes and marks the PR ready", (t) => {
+  const { dir, origin, run, makeCalls, readyCalls } = prFixture(t);
   const before = readme(dir);
   const head = git(dir, "rev-parse", "HEAD");
   const r = run("42");
@@ -181,15 +228,17 @@ test("US-DEV-10: make pr leaves README.md alone, pushes and marks the PR ready",
   assert.equal(readme(dir), before, "no statistics block is written per PR");
   assert.equal(git(dir, "rev-parse", "HEAD"), head, "no commit is made");
   assert.equal(git(origin, "rev-parse", "feat/abc-02-growth"), head, "the branch is pushed");
-  assert.deepEqual(ghCalls(), ["pr ready 42"]);
+  assert.deepEqual(makeCalls(), ["-s commitlint", "-s changelog-check"], "the preflight ran");
+  assert.deepEqual(readyCalls(), ["pr ready 42"]);
 
+  // Without PR=<n> the number comes from the open pull request of the branch, and the mark names it.
   const again = run();
   assert.equal(again.code, 0, again.err);
   assert.equal(git(dir, "rev-parse", "HEAD"), head);
-  assert.deepEqual(ghCalls(), ["pr ready 42", "pr ready"]);
+  assert.deepEqual(readyCalls(), ["pr ready 42", "pr ready 42"]);
 });
 
-test("US-DEV-10: make pr refuses on dev, on main and when detached, and changes nothing", (t) => {
+test("US-DEV-13: make pr refuses on dev, on main and when detached, and changes nothing", (t) => {
   const { dir, run, ghCalls } = prFixture(t);
   for (const [setup, reason] of [
     [() => git(dir, "switch", "-q", "dev"), /branch dev/],
@@ -206,7 +255,7 @@ test("US-DEV-10: make pr refuses on dev, on main and when detached, and changes 
   assert.deepEqual(ghCalls(), []);
 });
 
-test("US-DEV-10: make pr refuses with uncommitted changes or while a merge is in progress", (t) => {
+test("US-DEV-13: make pr refuses with uncommitted changes or while a merge is in progress", (t) => {
   const { dir, run, ghCalls } = prFixture(t);
   write(dir, "notes.txt", "draft\n");
   const dirty = run();

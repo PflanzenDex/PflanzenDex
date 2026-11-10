@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { ERROR_TEXTS } from "@pflanzendex/core";
+import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp } from "../app";
 import { onlyWithConfirmedEmail, type TokenVerifier } from "./index";
 
@@ -91,12 +92,55 @@ describe("GET /account (US-ACC-01)", () => {
     expect(after).toMatchObject({ emailConfirmed: true, mayShareWithFriends: true });
   });
 
+  it("US-QS-11 the keyboard shortcut mode comes with the account: plain for a new one, the own mode for each person", async () => {
+    const app = createApp({ reviewer, pool });
+    const a = await account(app, using(`valid:${sub1}:no`));
+    expect(a.keyboardShortcuts).toBe("plain");
+    await withAccount(pool, a.id, (c) =>
+      c.query("update account_data set keyboard_shortcuts = 'modifier'"),
+    );
+    const b = await account(app, using(`valid:${sub2}:yes`));
+    expect(b.keyboardShortcuts).toBe("plain");
+    expect((await account(app, using(`valid:${sub1}:no`))).keyboardShortcuts).toBe("modifier");
+  });
+
   it("each person sees only their own account", async () => {
     const app = createApp({ reviewer, pool });
     const a = await account(app, using(`valid:${sub1}:no`));
     const b = await account(app, using(`valid:${sub2}:yes`));
     expect(a.id).not.toBe(b.id);
     expect(a.email).not.toBe(b.email);
+  });
+
+  it("NFR-12: a GET within the hour writes no account data; after an hour it refreshes last_active_at", async () => {
+    const sub = `api-${randomUUID()}`;
+    try {
+      const app = createApp({ reviewer, pool });
+      const first = await account(app, using(`valid:${sub}:no`));
+      const row = async () => {
+        const r = await admin.query<{ updated_at: Date; last_active_at: Date }>(
+          "select updated_at, last_active_at from account_data where account_id = $1",
+          [first.id],
+        );
+        if (r.rows.length !== 1) throw new Error("account_data row missing");
+        return r.rows[0] as { updated_at: Date; last_active_at: Date };
+      };
+      const written = await row();
+      await account(app, using(`valid:${sub}:no`));
+      expect(await row()).toEqual(written);
+      // last_active_at feeds the "active users" count by day (migration 0018): an hour-old stamp is refreshed.
+      await admin.query(
+        "update account_data set last_active_at = now() - interval '2 hours' where account_id = $1",
+        [first.id],
+      );
+      const stale = await row();
+      await account(app, using(`valid:${sub}:no`));
+      expect((await row()).last_active_at.getTime()).toBeGreaterThan(
+        stale.last_active_at.getTime(),
+      );
+    } finally {
+      await admin.query("delete from account where subject = $1", [sub]);
+    }
   });
 
   it("/health stays reachable without sign-in", async () => {
@@ -118,7 +162,9 @@ describe("sharing with friends only with a confirmed email address (US-ACC-01)",
       ...using(`valid:${sub1}:no`),
     });
     expect(res.status).toBe(403);
-    expect(await res.json()).toEqual({ error: { code: "email_unbestaetigt" } });
+    expect(await res.json()).toEqual({
+      error: { code: "account.email_unconfirmed", text: ERROR_TEXTS["account.email_unconfirmed"] },
+    });
   });
 
   it("confirmed: allowed", async () => {

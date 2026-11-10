@@ -1,5 +1,27 @@
 // Public interface of the `kernel` module (ADR 0003): tenant access, connection, migrations, idempotency.
-export { withAccount, asAccount } from "./tenant.ts";
+export {
+  withAccount,
+  withLongAccount,
+  asAccount,
+  beginAsApplicationRole,
+  enterApplicationRole,
+} from "./tenant.ts";
+export {
+  isDatabaseUnavailable,
+  LONG_LIMITS,
+  PRODUCTION_POOL_MAX,
+  poolConfigFromEnv,
+  poolLimits,
+  REQUEST_LIMITS,
+  type DbLimits,
+  type PoolConfig,
+} from "./connection/limits.ts";
+export {
+  beginPlain,
+  inTransaction,
+  settleTransaction,
+  type Settled,
+} from "./connection/transaction.ts";
 export { migrate, MIGRATIONS_DIRECTORY, type MigrationsOptions } from "./migrate.ts";
 export { checkSchema, tenantsTables, WITHOUT_ACCOUNT_ID } from "./schema.ts";
 export type { TenantExceptions } from "./schema.ts";
@@ -10,6 +32,7 @@ export {
   type Fixtures,
 } from "./isolation.ts";
 export {
+  createFileDatabase,
   ensureTestOwnerDatabase,
   holdTaxonLock,
   openAdminPool,
@@ -17,6 +40,7 @@ export {
   openOwnerPool,
   openPool,
   testDatabaseUrl,
+  testOwnerUrl,
 } from "./connection/connection.ts";
 export { IdempotencyPostgres } from "./idempotency.ts";
 export {

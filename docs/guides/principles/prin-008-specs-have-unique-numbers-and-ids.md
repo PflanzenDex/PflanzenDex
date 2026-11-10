@@ -15,11 +15,11 @@ The script reports every duplicate file number and every ID defined twice; the t
 
 ## Checked by
 
-`app/tools/check/docs/check-specs.mjs`, tests in `app/tools/check/docs/check-specs.test.mjs`.
+`app/tools/check/docs/specs/check-specs.mjs`, tests in `app/tools/check/docs/specs/check-specs.test.mjs`.
 
 ## Gate
 
-`make gates` (step `npm run specs`), repeated in `make ci`, which the CI job `app` in `.github/workflows/ci.yml` runs and `ci-status` requires.
+`make gates` (step `npm run specs`), repeated in `make ci`; in CI the job `app-gates` of `.github/workflows/ci.yml` runs it (`make ci-gates`); a pull request that changes only documentation runs it in the job `docs-gates` (`make ci-docs`) instead, and `ci-status` requires both.
 
 ## Evidence
 

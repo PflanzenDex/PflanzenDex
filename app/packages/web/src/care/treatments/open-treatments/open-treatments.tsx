@@ -1,10 +1,13 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
-import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state/empty-state";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { isOnline } from "@/platform/network";
-import { useAnnounce } from "@/platform/announcer/context";
-import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../kernel";
+import {
+  EmptyState,
+  type EmptyStateAction,
+} from "@/shared/patterns/elements/empty-state/empty-state";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { isOnline } from "@/shared/platform/browser/network";
+import { useAnnounce } from "@/shared/platform/announcer/context";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../shared/data";
 import { LIST_CLASSES, RefusalAlert, StatusNote } from "../../shared/notices";
 import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";

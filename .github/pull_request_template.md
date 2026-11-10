@@ -13,6 +13,15 @@ Closes #
 
 <!-- Which tests come from which acceptance criteria (story ID in the test name, P-06)? Report the result of `make ci` honestly: pass or fail, never "should work" (D-05). -->
 
+## Lessons
+
+<!--
+What did this change teach, and where did each lesson go? One line per lesson, in the form
+`- <lesson> → gate <name> | skill <name> | PF-nnn | none (<why>)`, or the single word `none`.
+Write it with the skill recap-and-learnings (.agents/skills/recap-and-learnings/SKILL.md). `make pr` refuses the section
+while it is missing, empty or malformed (US-DEV-05); this comment alone counts as empty.
+-->
+
 ## Definition of Done (FR-QG-10)
 
 - [ ] Story and acceptance criteria exist; the code traces back to a criterion
@@ -20,13 +29,18 @@ Closes #
 - [ ] Errors handled (stable `error_code`), nothing swallowed silently (P-10)
 - [ ] Input validated, no secrets in code, access and tenant isolation checked (P-04)
 - [ ] Module boundaries respected, no magic strings
-- [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/news/news.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
+- [ ] View, flow or control changed? Tested keyboard-only and with axe (FR-QG-10 item 11): say here how (Tab path, focus visible, Escape), and `make a11y-routes` shows no new finding (FR-QG-24, US-QS-08 to US-QS-12, playbook `accessibility-check`)
+- [ ] `feat:`/`fix:` PR: a new fragment `app/packages/web/src/news/unreleased/<issue>-<slug>.json` with a short German `line` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3). Never edit `news.de.json`: the release moves the lines there.
 - [ ] Spec status and counters in `docs/specs/product/readme.md` updated in this PR
 - [ ] New API routes and core operations named in `docs/guides/reference/app.md`, new shared UI components in the inventory of `docs/guides/reference/design-system.md` (`make reference-check`, US-QG-10)
+- [ ] This PR fixes a failure that a gate or check caught? Then the Evidence of the principle it guards gets a line `Caught: YYYY-MM-DD, PR #<n>, <what it caught>` in this PR (US-QG-06, `docs/guides/principles/readme.md`)
 - [ ] `make ci` green locally
 
 ## AI involvement
 
-<!-- Did an agent write code or text? Which one, and what did a human verify? Were gates or thresholds changed? Then justify it here (US-QG-07). -->
+<!--
+Did an agent write code or text? Which one, and what did a human verify? Were gates or thresholds changed? Then justify it here (US-QG-07).
+Name the `/code-review` level run before `make pr` and the findings fixed and answered, for example "`/code-review low`: 3 findings, 2 fixed, 1 answered" (skill `add-epic-feature`, step 12).
+-->
 
 - [ ] No gate, threshold or exception list was loosened, or the justification is above

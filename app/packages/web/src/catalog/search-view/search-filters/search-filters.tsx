@@ -1,9 +1,10 @@
 import type { SpeciesHit } from "@pflanzendex/core";
 import { useSearchParams } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { Select } from "@/components/ui/fields/select/select";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { DIFFICULTY } from "../../shared/text";
 
 /** The layer id of the filters: the address holds `?sheet=filters` while it is open (US-QS-21). */
@@ -31,15 +32,15 @@ export function useFilters() {
     else next.set(DIFFICULTY_PARAM, String(merged.difficulty));
     if (merged.own) next.set(OWN_PARAM, "1");
     else next.delete(OWN_PARAM);
-    // A changed filter starts the list at page 1 (US-QS-15).
-    next.delete("page");
+    // A changed filter starts the list at the first entry (US-QS-15).
+    dropPageParts(next, PAGE_PARAM);
     setParams(next, { replace: true });
   };
   return {
     filters,
     change,
     clear: () => change({ difficulty: null, own: false }),
-    /** Changes with every filter, so the pages start again at page 1. */
+    /** Changes with every filter, so the pages start again at the first entry. */
     key: `${filters.difficulty ?? "-"}|${filters.own ? "own" : "-"}`,
     active: (filters.difficulty === null ? 0 : 1) + (filters.own ? 1 : 0),
   };

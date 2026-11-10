@@ -3,6 +3,8 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
+import { expectExactKeys } from "../../exact-keys-test-helpers";
+import { EXCHANGE_OFFER } from "./exchange-shapes.test-helpers";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -152,6 +154,44 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     ).not.toContain(o.offerId);
   });
 
+  it("US-QG-05 QG-D2 the exchange list carries the offer fields and the health reason and date, and no account id", async () => {
+    const id = await specimen(subA, "Q1");
+    await share(subA, id);
+    const planned = await call(subA, "POST", "/treatments", {
+      specimenIds: [id],
+      reason: "Wollläuse",
+      date: "2026-10-01",
+    });
+    expect(planned.status).toBeLessThan(300);
+    const treatmentId = planned.body.treatments[0].id as string;
+    expect(
+      (
+        await call(subA, "POST", `/treatments/${treatmentId}/complete`, {
+          timeZone: "Europe/Berlin",
+        })
+      ).status,
+    ).toBe(200);
+    const created = await call(subA, "POST", "/offers", {
+      specimenId: id,
+      type: "cutting",
+      mode: "swap",
+      wish: "Tausch gegen Sukkulenten",
+      note: "Gut bewurzelt",
+      confirmTreatment: true,
+    });
+    expect(created.status).toBe(201);
+    const body = (await exchange(subB)).body;
+    const mine = body.offers.find((x: { offerId: string }) => x.offerId === created.body.id);
+    // The treated offer is non-null here, so the nested health keys are checked too (see expectExactKeys).
+    expect(mine.health.lastTreated).not.toBeNull();
+    expect(mine.health.lastTreated).toEqual({
+      reason: "Wollläuse",
+      doneAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
+    expectExactKeys(mine.health.lastTreated, { reason: true, doneAt: true }, "health.lastTreated");
+    expectExactKeys(body, { offers: [EXCHANGE_OFFER] }, "GET /exchange/offers");
+  });
+
   it("an offer is hidden when the specimen is not shared (P-05) and filters narrow the list", async () => {
     const id = await specimen(subA, "L2");
     const unshared = await call(subA, "POST", "/offers", {
@@ -166,6 +206,46 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     expect(await ids("&type=plant")).toEqual([plant.offerId]);
     // A species that is unknown is not "lacking" (P-08), so the filter leaves it out.
     expect(await ids("&lack=true")).toEqual([]);
+  });
+  it("US-SOZ-09 NFR-12 P-05 the phase of a friend's offer comes from the owner's own species; a stranger sees no offer", async () => {
+    // A dormancy period that spans the whole year: the phase is "dormancy" on every day (the test does not depend on today).
+    const species = await call(subA, "POST", "/species", {
+      latinName: `Dormancus${randomUUID()
+        .replace(/[0-9-]/g, "x")
+        .slice(0, 8)} novus`,
+      difficulty: 2,
+      standardLevel: 2,
+      lightDemandLux: 15000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+      source: "RHS",
+      dormancyFrom: "01-01",
+      dormancyUntil: "12-31",
+    });
+    const specimenId = (
+      await call(subA, "POST", "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId: species.body.id,
+        marker: "Dormant",
+      })
+    ).body.id as string;
+    await share(subA, specimenId);
+    const made = await call(subA, "POST", "/offers", {
+      specimenId,
+      type: "cutting",
+      mode: "swap",
+    });
+    expect(made.status).toBe(201);
+    const seen = (await exchange(subB)).body.offers.find(
+      (x: { offerId: string }) => x.offerId === made.body.id,
+    );
+    expect(seen).toMatchObject({ phase: "dormancy" });
+    expect((await exchange(subC)).body.offers).toEqual([]);
+    const own = (await call(subA, "GET", `/offers?${tz}`)).body.offers.find(
+      (x: { id: string }) => x.id === made.body.id,
+    );
+    expect(own).toMatchObject({ phase: "dormancy" });
   });
 });
 

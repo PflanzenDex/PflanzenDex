@@ -11,9 +11,16 @@ import {
 import { FriendsPostgres, IdempotencyPostgres, SharingPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../../kernel";
+import { body, withoutKey, write, type AuthEnv } from "../../kernel";
 import { friendCollectionRoute, friendSharedRoute } from "../sharing/sharing-routes";
 import { sharingPorts } from "../sharing/wiring";
+
+/**
+ * A friendship request as either side sees it: the display name, the direction and the state, never the time it was
+ * made (US-SOZ-01: only the display name; US-SOZ-02: "not accepted" without a time). P-05, US-QG-05.
+ */
+const requestView = <T extends { requestedAt: string }>(request: T) =>
+  withoutKey(request, "requestedAt");
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const FRIEND_PATHS = ["/friends"] as const;
@@ -47,8 +54,6 @@ export function friendRoutes(
   const end = friendEnd({ friends, ...(afterEnd ? { afterEnd } : {}) });
   const sharing = new SharingPostgres(pool);
   const ports = sharingPorts(pool);
-  const sharedSpecies = (viewerId: string, ownerId: string) =>
-    sharedSpeciesCount({ sharing, ...ports }, viewerId, ownerId);
   const routes = new Hono<AuthEnv>();
   routes.post("/friends/invitations", async (c) => {
     const response = await write(c, deps, invite, { input: {}, success: 201 });
@@ -56,11 +61,15 @@ export function friendRoutes(
     return response;
   });
   routes.post("/friends/requests", async (c) =>
-    write(c, deps, request, { input: await body(c), success: 201 }),
+    write(c, deps, request, { input: await body(c), success: 201, wrapper: requestView }),
   );
-  routes.get("/friends/requests", async (c) =>
-    c.json(await friendRequests({ friends }, c.get("account").id)),
-  );
+  routes.get("/friends/requests", async (c) => {
+    const open = await friendRequests({ friends }, c.get("account").id);
+    return c.json({
+      incoming: open.incoming.map(requestView),
+      outgoing: open.outgoing.map(requestView),
+    });
+  });
   routes.post("/friends/requests/:id/answer", async (c) => {
     return write(c, deps, answer, { input: { ...(await body(c)), requestId: c.req.param("id") } });
   });
@@ -69,8 +78,14 @@ export function friendRoutes(
   );
   routes.get("/friends/:id/shared", friendSharedRoute(pool));
   routes.get("/friends/:id/collection", friendCollectionRoute(pool));
-  routes.get("/friends", async (c) =>
-    c.json(await friendList({ friends, sharedSpecies }, c.get("account").id)),
-  );
+  routes.get("/friends", async (c) => {
+    const me = c.get("account").id;
+    // The viewer's own species names are read once for the whole list, not once per friend (NFR-12, #1238).
+    let names: ReturnType<typeof ports.mine.latinNamesOf> | undefined;
+    const mine = { latinNamesOf: (userId: string) => (names ??= ports.mine.latinNamesOf(userId)) };
+    const sharedSpecies = (viewerId: string, ownerId: string) =>
+      sharedSpeciesCount({ sharing, ...ports, mine }, viewerId, ownerId);
+    return c.json(await friendList({ friends, sharedSpecies }, me));
+  });
   return routes;
 }

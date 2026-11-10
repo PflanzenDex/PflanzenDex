@@ -1,5 +1,5 @@
 import {
-  isActive,
+  keeperOffOf,
   localToday,
   readAchievementSettings,
   readKeeperStyle,
@@ -10,8 +10,9 @@ import {
   AchievementSettingsPostgres,
   HintPostgres,
   KeeperStylePostgres,
+  KeeperSwitchPostgres,
   ManualUnlockPostgres,
-  SpecimenPostgres,
+  unlockSummaryOf,
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import type { FeatureAccess } from "../../../kernel";
@@ -28,10 +29,10 @@ export function unlockSources(
 ) {
   const clock = opt.clock ?? (() => new Date());
   const unlocks = new ManualUnlockPostgres(pool);
-  const specimens = new SpecimenPostgres(pool);
   const existing = existingDataOf(pool);
   const calm = new AchievementSettingsPostgres(pool);
   const styles = new KeeperStylePostgres(pool);
+  const switches = new KeeperSwitchPostgres(pool);
   const style = opt.style ?? ((userId: string) => readKeeperStyle(styles, userId));
   const featureSet = async (userId: string) =>
     new Set(
@@ -39,21 +40,34 @@ export function unlockSources(
         .filter(([, on]) => on)
         .map(([name]) => name),
     ) as UnlockInput["features"];
+  // The reads are independent and run side by side (NFR-12). Each one is one transaction on the pool (at most 4
+  // connections, the pool's size), and none of them takes a second connection while holding one, so the parallel
+  // reads cannot wait for each other. A failing read rejects the whole answer, never a partial one (P-10).
   const facts = async (userId: string, timeZone: string): Promise<UnlockInput> => {
-    const rows = await specimens.list(userId);
-    const dates = rows
-      .map((r) => (r.createdAt ? localToday(new Date(r.createdAt), timeZone) : r.caughtAt))
-      .filter((d): d is string => d !== null)
-      .sort();
+    const [summary, keeperStyle, settings, features, manual, existingData, keeperSwitches] =
+      await Promise.all([
+        unlockSummaryOf(pool, userId),
+        style(userId),
+        readAchievementSettings(calm, userId),
+        featureSet(userId),
+        unlocks.list(userId),
+        existing(userId),
+        switches.list(userId),
+      ]);
     return {
-      style: await style(userId),
-      activeSpecimens: rows.filter(isActive).length,
-      firstSpecimenDate: dates[0] ?? null,
+      style: keeperStyle,
+      activeSpecimens: summary.active,
+      // The local date of the first specimen ever created (NFR-08); archived specimens count (history stays).
+      firstSpecimenDate:
+        summary.firstCreatedAt === null
+          ? null
+          : localToday(new Date(summary.firstCreatedAt), timeZone),
       today: localToday(clock(), timeZone),
-      calmMode: (await readAchievementSettings(calm, userId)).calmMode,
-      features: await featureSet(userId),
-      manualUnlocks: new Set((await unlocks.list(userId)).map((u) => u.id)),
-      existingData: await existing(userId),
+      calmMode: settings.calmMode,
+      features,
+      manualUnlocks: new Set(manual.map((u) => u.id)),
+      existingData,
+      keeperOff: keeperOffOf(keeperSwitches),
     };
   };
   const hints = new HintPostgres(pool);
@@ -62,5 +76,7 @@ export function unlockSources(
     style: await style(userId),
     calmMode: (await readAchievementSettings(calm, userId)).calmMode,
   });
-  return { unlocks, styles, featureSet, facts, hints, hintContext };
+  // The keeper switches as the account's own rows (US-ONB-09); an unlock refuses a feature the keeper switched off.
+  const keeperOff = async (userId: string) => keeperOffOf(await switches.list(userId));
+  return { unlocks, styles, switches, featureSet, facts, keeperOff, hints, hintContext };
 }

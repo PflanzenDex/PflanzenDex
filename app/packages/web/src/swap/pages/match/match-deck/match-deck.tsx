@@ -1,13 +1,27 @@
 import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/core";
 import type { ReactNode, Ref } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
-import { EXCHANGE_PATH } from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
+import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../swap.de.json";
 import { MatchCard } from "../match-card/match-card";
 import { AnswerLists } from "./answer-lists/answer-lists";
 import { countOf, laterCards, type DeckAction, type DeckState } from "./deck-state";
 import { Actions, Confirm, Empty, UndoButton, type Answer } from "./match-actions/match-actions";
 import { useDeck, type OnAnswer, type OnUndo, type OnYes } from "./use-deck";
+
+const t = texts(table);
+
+/** The stamps show the texts of the buttons (US-TAU-02). */
+const STAMPS: Record<SwipeDirection, string> = {
+  left: t("stamp.no"),
+  right: t("stamp.yes"),
+  up: t("stamp.later"),
+  down: t("stamp.later"),
+};
 
 function End(props: {
   calm: boolean;
@@ -56,6 +70,12 @@ function Current(props: {
   c: Card;
   busy: boolean;
   answer: (a: Answer) => void;
+  /** The card's drag ended past the threshold (US-TAU-02). */
+  swipe: (d: SwipeDirection) => void;
+  /** The card has left the screen: the answer is written (US-TAU-02). */
+  finish: (d: SwipeDirection) => void;
+  /** The direction the card flies to while its answer is written. */
+  exit: SwipeDirection | null;
   ask: (counter: string | null) => void;
   undo: () => void;
   lists: ReactNode;
@@ -72,13 +92,18 @@ function Current(props: {
           {s.notice}
         </p>
       )}
-      <MatchCard
+      <SwipeCard
         key={c.offerId}
-        card={c}
-        onSwipe={(side) =>
-          side === "left" ? props.answer("no") : dispatch({ type: "confirm", on: true })
-        }
-      />
+        exit={props.exit}
+        stamps={STAMPS}
+        stacked={s.pos + 1 < s.round.length}
+        disabled={props.busy}
+        onSwipe={props.swipe}
+        onExited={props.finish}
+        className="mx-auto w-full min-w-0 max-w-md"
+      >
+        <MatchCard card={c} />
+      </SwipeCard>
       {s.confirming && (
         <Confirm
           c={c}
@@ -115,7 +140,8 @@ export function MatchDeck(props: {
   onAnswer: OnAnswer;
   onUndo: OnUndo;
 }) {
-  const { s, dispatch, busy, current, heading, answer, ask, undo, takeBack } = useDeck(props);
+  const { s, dispatch, busy, current, heading, answer, swipe, finish, exit, ask, undo, takeBack } =
+    useDeck(props);
   const lists = (
     <AnswerLists
       entries={s.entries}
@@ -144,6 +170,9 @@ export function MatchDeck(props: {
       c={current}
       busy={busy}
       answer={answer}
+      swipe={swipe}
+      finish={finish}
+      exit={exit}
       ask={ask}
       undo={undo}
       lists={lists}

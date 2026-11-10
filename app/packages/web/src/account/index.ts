@@ -1,5 +1,18 @@
 // Public interface of the `account` module (ADR 0003): sign-in, session, account view.
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
+/**
+ * The `?sheet=` ids of the settings layers, one per group (US-QS-17, US-QS-15). Defined here, a light public constant,
+ * so the Konto area reads them without loading the settings page (the page is a lazy part).
+ */
+export const SETTINGS_LAYER = {
+  profile: "profile",
+  notifications: "notifications",
+  privacy: "privacy",
+  style: "style",
+  wishlist: "wishlist",
+  light: "light",
+} as const;
+export const SETTINGS_LAYER_IDS: readonly string[] = Object.values(SETTINGS_LAYER);
 export const SettingsPage = lazyPage(() =>
   import("./settings-page/settings-page").then((m) => ({ default: m.SettingsPage })),
 );
@@ -22,10 +35,12 @@ export const KeeperStyleQuestion = lazyPage(() =>
     default: m.KeeperStyleQuestion,
   })),
 );
-export { useSession } from "./session";
-export type { State } from "./session";
+export { useSession } from "./session/session";
+export type { State } from "./session/session";
 /** Needed only while the invitation code is asked for: forms and validation stay out of the entry chunk (#451). */
 export const InvitationPage = lazyPage(() =>
   import("./invitation-page/invitation-page").then((m) => ({ default: m.InvitationPage })),
 );
 export { loadProfile } from "./api/account-api";
+// The skeleton of the settings in the shape of their six rows, the section's skeleton of "Konto" (US-QS-14, issue 1697).
+export { SettingsPageSkeleton } from "./settings-page/settings-page.skeleton";

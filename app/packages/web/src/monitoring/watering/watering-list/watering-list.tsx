@@ -1,12 +1,17 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { keepTogether } from "@/lib/format";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Button } from "@/shared/ui/button/button";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { keepTogether } from "@/shared/lib/format";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
 import { loadWateringDue, markWatered, type WateringDueRow } from "../../api/reminders-api";
+import { WateringListSkeleton } from "./watering-list.skeleton";
+import table from "./watering-list.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const KEY = WATERING_KEY;
@@ -16,8 +21,8 @@ const PAGE_SIZE = 3;
 
 const sinceText = (d: WateringDueRow) =>
   d.lastWateredOn === null
-    ? "noch nie als gegossen eingetragen"
-    : keepTogether(`zuletzt vor ${d.daysSince} Tagen gegossen`);
+    ? ui("since.never")
+    : keepTogether(ui("since.days", { days: d.daysSince }));
 
 function Row(props: {
   row: WateringDueRow;
@@ -33,7 +38,8 @@ function Row(props: {
         <span>
           <span className="font-medium">{r.name}</span>
           <span className="block text-sm tabular-nums text-muted-foreground">
-            {sinceText(r)}, Intervall alle {keepTogether(`${r.intervalDays} Tage`)}
+            {sinceText(r)},{" "}
+            {ui("interval", { days: keepTogether(ui("days", { count: r.intervalDays })) })}
           </span>
         </span>
       </Checkbox>
@@ -41,10 +47,10 @@ function Row(props: {
         variant="outline"
         size="sm"
         disabled={props.busy}
-        aria-label={`${r.name} als gegossen eintragen`}
+        aria-label={ui("waterOne", { name: r.name })}
         onClick={props.onWater}
       >
-        Gegossen
+        {ui("water")}
       </Button>
     </div>
   );
@@ -62,7 +68,7 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
     });
   const water = (ids: readonly string[]) => {
     setChosen(new Set());
-    void write.run((t) => markWatered(props.api, t, ids), "Als gegossen eingetragen.");
+    void write.run((t) => markWatered(props.api, t, ids), ui("done"));
   };
   const picked = props.rows.filter((r) => chosen.has(r.specimenId)).map((r) => r.specimenId);
   return (
@@ -70,7 +76,7 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
       <Pager
         items={props.rows}
         pageSize={PAGE_SIZE}
-        label="Zu gießen"
+        label={ui("pager")}
         getKey={(r) => r.specimenId}
         renderItem={(r) => (
           <Row
@@ -88,9 +94,7 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
         disabled={write.running || picked.length < 2}
         onClick={() => water(picked)}
       >
-        {picked.length < 2
-          ? "Mehrere markieren, dann gemeinsam eintragen"
-          : `${picked.length} als gegossen eintragen`}
+        {picked.length < 2 ? ui("pickMore") : ui("pickedCount", { count: picked.length })}
       </Button>
       {write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3">
@@ -134,15 +138,12 @@ function DueList(props: { api: string; token: Token }) {
       queryKey={KEY}
       token={props.token}
       load={load}
-      loadingText="Gießliste wird geladen …"
+      loadingText={ui("loading")}
+      loadingFallback={<WateringListSkeleton label={ui("loading")} />}
     >
       {(rows) =>
         rows.length === 0 ? (
-          <EmptyState
-            level={3}
-            title="Heute nichts zu gießen"
-            description="Fällig wird eine Pflanze nach dem Gießintervall, das du im Pflegeprofil ihrer Art einträgst. Ohne Intervall erinnert die App nicht ans Gießen."
-          />
+          <EmptyState level={3} title={ui("none.title")} description={ui("none.description")} />
         ) : (
           <Rows api={props.api} token={props.token} rows={rows} />
         )

@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapHistory } from "./swap-history";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../../swap.de.json";
+import { SwapHistorySkeleton } from "./swap-history.skeleton";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -29,7 +34,12 @@ const server = (entries: unknown[]) =>
         : response(404, {}),
     ),
   );
-const show = () => render(<SwapHistory api="http://api" token={token} />);
+const show = () =>
+  render(
+    <MemoryRouter>
+      <SwapHistory api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(() => {
   cleanup();
@@ -75,6 +85,13 @@ describe("US-SOZ-13 swap history", () => {
     expect(items[0]).toContain("Übergeben");
     expect(items[1]).toContain("Erhalten von Cleo");
     expect(items[1]).toContain("Pflanze · Verschenken");
+    // Entries three and four are on the second page (US-QS-20).
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    const rest = within(screen.getByRole("list", { name: "Tauschverlauf" }))
+      .getAllByRole("listitem")
+      .map((i) => i.textContent ?? "");
+    items[2] = rest[0] ?? "";
+    items[3] = rest[1] ?? "";
     expect(items[2]).toContain("Abgelehnt");
     expect(items[2]).toContain("Grund: Zu klein");
     expect(items[3]).toContain("Art unbekannt");
@@ -94,4 +111,12 @@ describe("US-SOZ-13 swap history", () => {
     expect(await screen.findByText("Übergeben")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Tauschverlauf" })).toBeTruthy();
   });
+});
+
+describe("US-QS-14 issue 1697 · the swap history show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <SwapHistorySkeleton label={table["history.loading"]} />,
+      table["history.loading"],
+    ));
 });

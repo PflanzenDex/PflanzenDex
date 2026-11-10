@@ -7,4 +7,5 @@ export const COLUMNS = `id, type, name, status, manufacturer, model, product_id 
   to_char(last_checked_on, 'YYYY-MM-DD') as "lastCheckedOn", lifetime_value as "lifetimeValue",
   lifetime_source as "lifetimeSource", case when status is null then coalesce(supply, 'available') end as supply,
   agent_link as "agentLink", assigned_specimen_id as "assignedSpecimenId",
-  assigned_location_id as "assignedLocationId"`;
+  assigned_location_id as "assignedLocationId", diameter_cm::float8 as "diameterCm",
+  height_cm::float8 as "heightCm", material, drainage`;

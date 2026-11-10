@@ -1,5 +1,9 @@
-import { Button } from "@/components/ui/button/button";
-import { copyText } from "@/platform/clipboard";
+import { Button } from "@/shared/ui/button/button";
+import { copyText } from "@/shared/platform/browser/clipboard";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../ai.de.json";
+
+const ui = texts(table);
 
 /** How to connect an AI client: the address of the interface and the steps (US-KI-07). */
 export function HowTo({ address }: { address: string }) {
@@ -8,8 +12,7 @@ export function HowTo({ address }: { address: string }) {
       <strong>So verbindest du einen KI-Client</strong>
       <ol className="m-0 flex list-decimal flex-col gap-1 pl-5">
         <li>
-          Füge in deinem KI-Client einen eigenen Connector (MCP) mit dieser Adresse hinzu:{" "}
-          <code className="break-all">{address}</code>
+          {ui("howTo.add")} <code className="break-all">{address}</code>
         </li>
         <li>Melde dich im Fenster des Anmeldedienstes an und bestätige die Anfrage.</li>
         <li>
@@ -18,7 +21,7 @@ export function HowTo({ address }: { address: string }) {
         </li>
       </ol>
       <p className="m-0 text-sm text-muted-foreground">
-        Wichtig: Dein KI-Anbieter erhält die Daten, die dein Client bei PflanzenDex abruft. Die App
+        Wichtig: Dein KI-Anbieter erhält die Daten, die dein Client bei PflanzenDéx abruft. Die App
         selbst sendet nichts an einen KI-Dienst. Pro Verbindung gibt es ein Tageslimit an Aufrufen;
         ist es erreicht, funktionieren alle Formulare der App weiter.
       </p>

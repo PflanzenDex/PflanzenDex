@@ -10,12 +10,13 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { Select } from "@/components/ui/fields/select/select";
-import type { ApiError } from "../../../kernel";
+} from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
+import { Select } from "@/shared/ui/fields/select/select";
+import type { ApiError } from "../../../shared/data";
 import { FormButtons, Quiet, TITLE, Warning } from "../../specimens/cards/parts/parts";
-import { refusalText, useEdited } from "../../specimens/model/refusal";
+import { refusalText } from "@/shared/lib/error-text";
+import { useEdited } from "../../specimens/model/refusal";
 import {
   archiveSchema,
   OTHER_REASON,

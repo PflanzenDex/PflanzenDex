@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SwapSide } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
 import type { AnswerInput } from "../../../api/swaps-api";
 import { MODE_TEXT, TYPE_TEXT } from "../../offer-form/health-text";
 import { HandoverBox } from "../handover-box/handover-box";
@@ -49,6 +49,7 @@ function OpenButtons(props: {
       <Button
         type="button"
         size="touch"
+        className="w-auto flex-1"
         disabled={props.busy}
         aria-label={`Annehmen: ${title}`}
         onClick={props.onAccept}
@@ -59,6 +60,7 @@ function OpenButtons(props: {
         type="button"
         size="touch"
         variant="outline"
+        className="w-auto flex-1"
         aria-label={`Ablehnen: ${title}`}
         onClick={() => props.onMode("decline")}
       >
@@ -142,7 +144,7 @@ export function SwapCard(props: {
   const { s } = props;
   const waiting = s.status === "requested" || s.status === "accepted";
   return (
-    <li className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
+    <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="font-semibold">{swapTitle(s)}</span>
       <Facts s={s} />
       <span className="mt-1 flex flex-wrap items-center gap-2">
@@ -162,6 +164,6 @@ export function SwapCard(props: {
       </span>
       <HandoverBox s={s} busy={props.busy} onConfirm={props.onHandover} />
       {s.role === "giver" && <GiverActions s={s} busy={props.busy} onAnswer={props.onAnswer} />}
-    </li>
+    </div>
   );
 }

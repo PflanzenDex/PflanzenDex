@@ -34,7 +34,7 @@ function supplyNeeds(items: readonly EquipmentRow[]): Need[] {
             id: `supply:${e.id}`,
             kind: "supply_low",
             reason: `„${e.name}“ ${SUPPLY_WORD[e.supply]}.`,
-            source: "Vorrat unter Equipment",
+            source: "Vorrat unter Geräte",
             nextAction: "Kaufe Nachschub und stelle den Vorrat danach wieder auf „Vorhanden“.",
           },
         ]
@@ -58,7 +58,7 @@ function replacementNeeds(items: readonly EquipmentRow[]): Need[] {
       id: `replace:${e.id}`,
       kind: "no_replacement" as const,
       reason: `„${e.name}“ ist ${e.status === "defective" ? "defekt" : "ausgemustert"} und kein anderes aktives Gerät übernimmt.`,
-      source: "Zustand unter Equipment",
+      source: "Zustand unter Geräte",
       nextAction: "Repariere das Gerät, erfasse ein Ersatzgerät oder wünsche dir eines.",
     }));
 }

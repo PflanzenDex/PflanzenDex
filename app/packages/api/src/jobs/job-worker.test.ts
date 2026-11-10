@@ -20,7 +20,9 @@ beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
-  queue = new JobsPostgres(pool);
+  // The clock of this file is in 2030 and other test files share the database: without the limit a tick would take
+  // their jobs and sweep or purge them (issue 1259).
+  queue = new JobsPostgres(pool, { onlyTypes: [type] });
 });
 beforeEach(async () => {
   clock = new Date("2030-01-01T10:00:00Z");
@@ -75,6 +77,26 @@ describe("US-QS-03 the job worker", () => {
     expect(calls).toBe(2);
     expect(await statusOf()).toEqual(["succeeded"]);
     expect(events).toEqual(["retry", "succeeded"]);
+  });
+
+  it("US-QS-03 a worker test leaves the jobs of other test files alone", async () => {
+    const foreign = `${type}x`;
+    await new JobsPostgres(pool).enqueue({
+      type: foreign,
+      dedupeKey: null,
+      payload: {},
+      runAt: now(),
+      expiresAt: null,
+      maxAttempts: 3,
+    });
+    await worker(async () => undefined).tick();
+    const { rows } = await admin.query<{ status: string }>(
+      "select status from job where type = $1",
+      [foreign],
+    );
+    await admin.query("delete from job where type = $1", [foreign]);
+    expect(rows.map((r) => r.status)).toEqual(["queued"]);
+    expect(events).toEqual([]);
   });
 
   it("US-QS-03 a queue error is reported and the next tick still works (the loop never dies)", async () => {

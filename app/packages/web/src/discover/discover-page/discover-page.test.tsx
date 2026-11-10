@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
+import { ERROR_TEXTS } from "@pflanzendex/core";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DiscoverPage } from "./discover-page";
 
 const response = (status: number, body: unknown) =>
@@ -44,9 +45,13 @@ function fakeServer(
   answer: (deck: number) => Promise<Response>,
   decision: (body: { species: string; decision: string }) => Promise<Response> = async (b) =>
     response(200, { decision: b.decision, saved: true }),
+  undo: (body: { species: string }) => Promise<Response> = async () =>
+    response(200, { undone: true }),
 ) {
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const u = new URL(String(url));
+    if (u.pathname === "/discover/decisions/undo")
+      return undo(JSON.parse(String(init?.body)) as { species: string });
     if (u.pathname === "/discover/decisions")
       return decision(JSON.parse(String(init?.body)) as { species: string; decision: string });
     return u.pathname === "/discover/suggestions"
@@ -59,9 +64,18 @@ function fakeServer(
 const token = async () => "tok";
 const card = () => screen.findByRole("article");
 
+/** Cards are 300 px wide in jsdom (no layout): the threshold is 120 px (starting value, assumption). */
+beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+    configurable: true,
+    get: () => 300,
+  });
+});
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
 });
 
 describe("US-ENT-01 suggestions as a card", () => {
@@ -327,5 +341,159 @@ describe("US-ENT-07 Discover for a zone", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     expect(String(fetchFn.mock.calls[0]?.[0])).not.toContain("zone=");
+  });
+});
+
+describe("US-ENT-01 the card flies off for a decision, the keyboard decides without a pointer", () => {
+  const two = () => deckOf(suggestion("Aspidistra elatior"), suggestion("Ficus lyrata"));
+  const posts = (fetchFn: ReturnType<typeof fakeServer>) =>
+    fetchFn.mock.calls
+      .filter(([u]) => new URL(String(u)).pathname === "/discover/decisions")
+      .map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
+  const drag = (el: HTMLElement, from: [number, number], to: [number, number]) => {
+    fireEvent.pointerDown(el, { clientX: from[0], clientY: from[1] });
+    fireEvent.pointerMove(el, { clientX: to[0], clientY: to[1] });
+    fireEvent.pointerUp(el, { clientX: to[0], clientY: to[1] });
+  };
+
+  it("US-ENT-01 a swipe up or down is Später: the card leaves and nothing is written", async () => {
+    const fetchFn = fakeServer(async () => response(200, two()));
+    render(<DiscoverPage api="http://api" token={token} />);
+    drag(await card(), [100, 300], [100, 120]);
+    expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    expect(posts(fetchFn)).toEqual([]);
+  });
+
+  it("US-ENT-01 the keyboard decides without a pointer: Enter on Ja writes Yes and the card leaves", async () => {
+    const fetchFn = fakeServer(async () => response(200, two()));
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    screen.getByRole("button", { name: "Ja" }).focus();
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    expect(posts(fetchFn).map((b) => b.decision)).toEqual(["yes"]);
+  });
+
+  it("NFR-13 with reduced motion a swipe still writes the decision and moves on", async () => {
+    const before = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes("reduce"),
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      const fetchFn = fakeServer(async () => response(200, two()));
+      render(<DiscoverPage api="http://api" token={token} />);
+      drag(await card(), [60, 100], [200, 100]);
+      expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+      expect(posts(fetchFn).map((b) => b.decision)).toEqual(["yes"]);
+    } finally {
+      window.matchMedia = before;
+    }
+  });
+});
+
+describe("US-ENT-04 Rückgängig takes the last decision back", () => {
+  const two = () => deckOf(suggestion("Aspidistra elatior"), suggestion("Ficus lyrata"));
+  const undoPosts = (fetchFn: ReturnType<typeof fakeServer>) =>
+    fetchFn.mock.calls
+      .filter(([u]) => new URL(String(u)).pathname === "/discover/decisions/undo")
+      .map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
+  const back = () => screen.findByRole("button", { name: "Rückgängig" });
+
+  it("US-ENT-04 Rückgängig takes the Ja back on the server and the card returns to the front", async () => {
+    const fetchFn = fakeServer(async () => response(200, two()));
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await within(await card()).findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    await user.click(await back());
+    expect(
+      await within(await card()).findByRole("heading", { name: "Aspidistra elatior" }),
+    ).toBeTruthy();
+    expect(undoPosts(fetchFn)).toEqual([
+      expect.objectContaining({ species: "Aspidistra elatior" }),
+    ]);
+    expect(screen.getByText("Vorschlag 1 von 2")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
+  });
+
+  it("US-ENT-04 on the end view Rückgängig takes the last Ja back and the count of new wishes goes down", async () => {
+    fakeServer(async () => response(200, deckOf(suggestion("Aspidistra elatior"))));
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste.")).toBeTruthy();
+    await user.click(await back());
+    expect(
+      await within(await card()).findByRole("heading", { name: "Aspidistra elatior" }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Für heute durch/)).toBeNull();
+  });
+
+  it("US-ENT-04 only the last decision can be taken back: after a Später the button is gone", async () => {
+    fakeServer(async () => response(200, two()));
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await within(await card()).findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Später" }));
+    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
+  });
+
+  it("US-ENT-04 a refused undo keeps the card where it is and shows the reason with the next step (P-10)", async () => {
+    const fetchFn = fakeServer(
+      async () => response(200, two()),
+      undefined,
+      async () =>
+        response(409, { error: { code: "discover.undo_changed", text: "ignored server text" } }),
+    );
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await within(await card()).findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    await user.click(await back());
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      ERROR_TEXTS["discover.undo_changed"],
+    );
+    expect(screen.getByText("Vorschlag 2 von 2")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
+    expect(undoPosts(fetchFn)).toHaveLength(1);
+  });
+
+  it("US-ENT-04 Rückgängig is reachable by keyboard, and the focus goes to the card it brings back (NFR-13, SC 2.4.3)", async () => {
+    fakeServer(async () => response(200, two()));
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await within(await card()).findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    const button = await back();
+    button.focus();
+    await user.keyboard("{Enter}");
+    const title = await within(await card()).findByRole("heading", { name: "Aspidistra elatior" });
+    expect(document.activeElement).toBe(title);
+  });
+
+  it("US-ENT-01 the next card is shown underneath, and no id occurs twice on the page", async () => {
+    fakeServer(async () => response(200, two()));
+    const { container } = render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    expect(container.querySelector(".inset-0[aria-hidden='true']")?.textContent).toContain(
+      "Ficus lyrata",
+    );
+    const ids = Array.from(container.querySelectorAll("[id]"), (e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

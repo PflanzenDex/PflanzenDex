@@ -1,5 +1,5 @@
 // Public interface of the `wishlist` module (ADR 0003): the page with the prioritized candidates.
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const WishlistPage = lazyPage(() =>
   import("./wishlist-page/wishlist-page").then((m) => ({ default: m.WishlistPage })),
 );
@@ -12,3 +12,5 @@ export const linkWishSpecimen = async (
   ...args: Parameters<typeof import("./wishlist-api").linkWishSpecimen>
 ) => (await import("./wishlist-api")).linkWishSpecimen(...args);
 export type { PathNotice, WishToPlant } from "./actions/actions";
+// The skeleton of the wishlist mode, the mode's skeleton on "Sammlung" (US-QS-14, issue 1727).
+export { WishlistPageSkeleton } from "./wishlist-page/wishlist-page.skeleton";

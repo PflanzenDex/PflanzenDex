@@ -1,5 +1,6 @@
 import type { LightLocation, SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/shared/ui/button/button";
+import { LightNeedAction } from "@/light";
 import { LocateControl } from "../../../../markers/locate/locate-control/locate-control";
 import { Actions, Quiet } from "../../../../specimens/cards/parts/parts";
 import { UNKNOWN, zoneText } from "../../../../specimens/model/text";
@@ -22,6 +23,11 @@ export function PlantLocation(props: {
     <div className="grid gap-2">
       <Quiet>Standort: {card.location ?? UNKNOWN}</Quiet>
       <Quiet>Lichtzone: {zoneText(card)}</Quiet>
+      {card.lightNeedUnknown ? (
+        <Actions>
+          <LightNeedAction speciesId={card.speciesId} speciesName={card.speciesName ?? card.name} />
+        </Actions>
+      ) : null}
       {props.onLightZone ? (
         <Actions>
           <Button

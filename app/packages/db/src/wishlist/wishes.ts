@@ -3,6 +3,7 @@ import { withAccount } from "../kernel/index.ts";
 import {
   COLUMNS,
   findWish,
+  insertWish,
   type WishChange,
   type WishPurchase,
   type WishRow,
@@ -25,27 +26,7 @@ export class WishesPostgres {
 
   async create(userId: string, v: WishValues): Promise<WishRow | "name_taken" | "zone_unknown"> {
     try {
-      const r = await withAccount(this.pool, userId, (c) =>
-        c.query<WishRow>(
-          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license, name_key, source, decided_at, status)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning ${COLUMNS}`,
-          [
-            userId,
-            v.name,
-            v.german,
-            v.targetZoneId,
-            v.difficulty,
-            v.reasoning,
-            v.imageUrl,
-            v.imageSource,
-            v.license,
-            v.nameKey,
-            v.source ?? "manual",
-            v.decidedAt ?? null,
-            v.status ?? "wishlist",
-          ],
-        ),
-      );
+      const r = await withAccount(this.pool, userId, (c) => insertWish(c, userId, v));
       return r.rows[0] as WishRow;
     } catch (e) {
       const f = e as { code?: string; constraint?: string };

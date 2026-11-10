@@ -4,6 +4,7 @@ import {
   checkDbRoles,
   JobsPostgres,
   openPool,
+  poolConfigFromEnv,
   roleCheckMode,
   testDatabaseUrl,
 } from "@pflanzendex/db";
@@ -16,9 +17,9 @@ import { reminderChannelFromEnv, remindersRuntime } from "./monitoring";
 import { reminderOccasionsFor } from "./today";
 import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
-import { WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
+import { REDEEM_LIMIT, WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
-import { deleteAccountHandlers, NO_STORE } from "./privacy";
+import { deleteAccountHandlers, identityRemovalFromEnv, NO_STORE } from "./privacy";
 import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
@@ -27,7 +28,12 @@ const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pfla
 // Where the keys come from, if not the issuer's public address (inside the deploy network, TE-03).
 const jwksUrl = process.env["OIDC_JWKS_URL"];
 const jwks = jwksUrl ? { jwksUrl } : {};
-const pool = openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl());
+// Pool size and time limits (NFR-12, #1242): PFLANZENDEX_DB_* variables, starting values in `poolConfigFromEnv`.
+const pool = openPool(
+  process.env["DATABASE_URL"] ?? testDatabaseUrl(),
+  false,
+  poolConfigFromEnv(process.env),
+);
 // Database roles (#907, P-04): a superuser or BYPASSRLS owner makes `security definer` functions ignore row security.
 // `DB_ROLE_CHECK=enforce` (the compose deployment) stops the start; the default only warns (local dev uses the image's superuser).
 await checkDbRoles(pool, roleCheckMode(process.env), (message) => console.warn(message));
@@ -69,12 +75,19 @@ const app = createApp({
     resource: aiResource,
     issuer,
     verifier: createTokenVerifier({ issuer, audience: aiResource, ...jwks }),
+    // Browser origins the MCP endpoint accepts besides its own (comma-separated); requests without Origin pass.
+    allowedOrigins: (process.env["AI_ALLOWED_ORIGINS"] ?? "")
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean),
   },
   version: process.env["APP_VERSION"],
   commit: process.env["GIT_SHA"],
   pool,
   // Basic per-client limit on writes (TE-03, #762).
   writeLimit: WRITE_LIMIT,
+  // Redeeming invitation codes per subject and address (US-ACC-05, issue 305).
+  redeemLimit: REDEEM_LIMIT,
   webOrigin: process.env["WEB_ORIGIN"] ?? "http://localhost:5173",
 });
 
@@ -102,7 +115,7 @@ const worker = createJobWorker({
     ...(catalogFill ? catalogFillJobHandlers({ pool, sources }) : {}),
     ...(attributeFill ? attributeFillJobHandlers({ pool }) : {}),
     ...reminders.handlers,
-    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE),
+    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE, identityRemovalFromEnv(process.env)),
   },
 });
 worker.start();

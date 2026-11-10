@@ -3,21 +3,27 @@ import { CORRECTION_ERROR_TEXTS } from "./catalog";
 
 export const EQUIPMENT_ERROR_TEXTS = {
   ...CORRECTION_ERROR_TEXTS,
-  "equipment.name_taken": "Dieses Equipment gibt es schon. Hänge „ – Regal 2“ o. Ä. an den Namen.",
-  "equipment.not_found": "Dieses Equipment gibt es nicht. Lade die Liste neu.",
+  "equipment.name_taken": "Dieses Gerät gibt es schon. Hänge „ – Regal 2“ o. Ä. an den Namen.",
+  "equipment.not_found": "Dieses Gerät gibt es nicht. Lade die Liste neu.",
   "equipment.not_a_lamp":
-    "Nur eine Lampe gehört zu einer Lichtzone. Dieses Equipment ist keine Lampe; es wurde nichts geändert.",
+    "Nur eine Lampe gehört zu einer Lichtzone. Dieses Gerät ist keine Lampe; es wurde nichts geändert.",
   "equipment.not_a_device":
     "Verbrauchsmaterial ist kein Gerät und hat keine Betriebsdaten oder Prüfungen. Es wurde nichts geändert.",
   "equipment.not_a_consumable":
-    "Nur Verbrauchsmaterial hat einen Vorrat. Dieses Equipment ist ein Gerät; es wurde nichts geändert.",
+    "Nur Verbrauchsmaterial hat einen Vorrat. Dieses Teil ist ein Gerät; es wurde nichts geändert.",
   "equipment.not_a_plant_agent":
     "Nur ein Pflanzenmittel lässt sich mit dem Mittel einer Behandlung verknüpfen. Es wurde nichts geändert.",
   "equipment.not_a_sensor":
-    "Nur ein Sensor wird einer Pflanze oder einem Standort zugeordnet. Dieses Equipment ist kein Sensor; es wurde nichts geändert.",
+    "Nur ein Sensor wird einer Pflanze oder einem Standort zugeordnet. Dieses Gerät ist kein Sensor; es wurde nichts geändert.",
   "equipment.target_unknown":
     "Diese Pflanze oder diesen Standort gibt es nicht. Lade die Auswahl neu.",
   "equipment.no_status": "Verbrauchsmaterial hat keinen Betriebszustand. Es wurde nichts geändert.",
+  "equipment.pot_not_found":
+    "Diesen Topf gibt es nicht, oder er ist nicht aktiv. Wähle einen anderen Topf oder lege einen neuen an.",
+  "equipment.pot_taken":
+    "Dieser Topf ist schon mit einer anderen Pflanze belegt. Wähle einen freien Topf; es wurde nichts geändert.",
+  "equipment.not_a_plant":
+    "Nur eine Pflanze steht in einem Topf. Topfe den Steckling zuerst ein, dann kannst du ihm einen Topf zuordnen.",
   "location.in_use":
     "Dieser Standort wird noch genutzt (Pflanzen, Pflegeprofile oder Sensoren) und kann nicht gelöscht werden. Ordne sie zuerst einem anderen Standort zu.",
   "location.not_empty":

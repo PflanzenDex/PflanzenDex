@@ -15,14 +15,16 @@ There is one source: the git tag. No version is written into versioned files.
 - `deploy.sh` computes `APP_VERSION="$(git describe --tags --always)"`, for example `v0.1.0` (exactly on the tag) or `v0.1.0-3-gabc1234` (3 commits after it), and `GIT_SHA` (short commit).
 - `docker-compose.yml` passes both as build args. The api image sets them as env vars, the web image as `VITE_APP_VERSION` at build time.
 - `GET /health/details` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>","checks":{…}}` (checks of database and job queue, see `staging-deploy-and-backup.md`). The proxy does not serve it on the public name; the public `GET /health` answers only `{"status":"ok"}` (#759). Both show `unknown` if the build did not get a value (P-08).
-- The web app shows `Version <describe>` in the footer.
+- The web app shows `Version <describe>` as the last line of "Was die App kann" (Konto, `/account/functions`).
 - Local dev (`make dev`) has no build arg, so both show `unknown`.
 
 ## Deploy
 
 On the host, in the checkout: `make deploy` (or `app/config/deploy/scripts/deploy.sh [ref]`, default `origin/main`; pass a tag such as `v0.1.0` to deploy a specific release).
 
-Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, run the smoke test.
+Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, wait for the keycloak healthcheck, then for the realm `pflanzendex` (`wait_realm`), run the master realm and MCP steps, run the smoke test.
+
+**The realm wait (TE-03, #1002).** Keycloak reports healthy about 20 s before the realm import of a first start has ended, and until then every realm URL answers 503. `wait_realm` therefore waits until the realm's discovery URL (`/realms/pflanzendex/.well-known/openid-configuration`) answers 200 inside the keycloak container, with a probe from bash's `/dev/tcp` (the image has no curl; the host does not need to reach Keycloak). It is one wait before everything that needs the realm: `master-realm.sh`, `keycloak-mcp` and the smoke sign-in. Starting value, assumption: 60 tries every 2 s. A realm that does not answer in time fails the deploy with `realm pflanzendex did not answer 200 at http://127.0.0.1:8080/realms/pflanzendex/.well-known/openid-configuration inside keycloak after 60 tries`, followed by the command for the keycloak log (a failed import of a first start shows there), and the deploy rolls back like any other failed step.
 
 ## Smoke test
 
@@ -32,22 +34,53 @@ Steps: fetch (with tags), remember the current commit as the rollback target, ba
 - `/health/details` reports the version just deployed as its `version`; `deploy.sh` reads it inside the api container (`SMOKE_DETAILS_CMD`, default: `curl <base-url>/health/details`), and
 - `GET <base-url>/` (web root, through the proxy) answers 200.
 
-It retries (`SMOKE_RETRIES`, default 15, every `SMOKE_DELAY`, default 2 s) because the proxy needs a moment. `deploy.sh` derives the base URL from `SITE_ADDRESS`/`HTTPS_PORT` in `deploy/.env`; override with `SMOKE_URL`. For `localhost` it uses `curl -k` (internal Caddy CA).
+When the tester's credentials are set (below), the core flow of US-DEV-06 must work as well (#1404):
 
-Not covered yet: the core flow named in US-DEV-06 (sign in, Heute list). That needs a smoke user and the Heute view and is still open.
+- the tester signs in at the sign-in service the way a browser does: authorization code flow with PKCE (S256) for the public client `pflanzendex-web`, with curl only (direct grants stay off); the login form is read from the page, the password is posted on stdin, and the code is taken from the redirect to `<APP_URL>/` without following it; the code is exchanged at the token endpoint with the verifier, and
+- `GET <base-url>/api/today?timeZone=Europe/Berlin` ("Heute") with the bearer token answers 200 with a `date` and an `items` list (it may be empty for a new tester).
+
+**Output.** Without the credentials the check is skipped, and the output says so in one line, then the usual result:
+
+```
+smoke: sign-in check skipped: SMOKE_USER/SMOKE_PASSWORD not set (#1404)
+smoke ok: v0.1.0 at https://localhost:8443
+```
+
+With one of the two missing, the line names it. With both set and a passing check: `smoke: sign-in ok and Heute answered for the smoke user (#1404)`. A failing sign-in or Heute check fails the smoke test (exit 1), and `deploy.sh` rolls back as for any failed smoke test (see "Automatic rollback"). A refused sign-in (wrong password, or an action pending for the tester) is not retried, because every refused sign-in counts against the tester's brute-force protection; the reason is printed without the password.
+
+**Variables** (all in `app/config/deploy/.env` on the host; the Deploy workflow does not send them, `.github/deploy-env-allowlist.txt` does not list them):
+
+| Variable               | Meaning                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `SMOKE_USER`           | The tester's sign-in name (`smoke-tester` by default, lower case letters, digits, dots, dashes and underscores).                      |
+| `SMOKE_PASSWORD`       | The tester's password (48 hex characters, generated by the script below).                                                             |
+| `SMOKE_AUTH_URL`       | Set by `deploy.sh`: the sign-in service as the host reaches it (through the proxy, `AUTH_URL` with the `Host` header of `AUTH_HOST`). |
+| `SMOKE_AUTH_CURL_OPTS` | Set by `deploy.sh`: curl options for the sign-in service (`-H Host:…` behind the proxy, `-k --resolve …` on `localhost`).             |
+| `SMOKE_APP_URL`        | The app address the sign-in service has as redirect target. Default `APP_URL`.                                                        |
+
+**One-time setup** (on the host, in the checkout; the script needs the keycloak and db containers running):
+
+1. `app/config/deploy/keycloak/smoke-user.sh` creates the user in the realm `pflanzendex` (verified email, enabled, no required actions, a generated password) and the app's account row for its subject (`insert into account … on conflict do nothing`, through the cluster user `POSTGRES_USER`, as the backup and restore scripts do). It needs the bootstrap admin of the master realm, as `master-realm.sh` does. Registration by invitation (`invitation-phase.md`) would refuse a new tester at its first sign-in (`invitation.required`); the account row written here avoids that. Without invitation-only registration the first smoke sign-in would create the row anyway.
+2. The script prints two lines, `SMOKE_USER=…` and `SMOKE_PASSWORD=…`. Add them to `app/config/deploy/.env` (replace older lines of the same name). The password is printed only when the user is created or rotated; it is not stored anywhere else.
+3. Run the script again: it reports that the tester exists and changes nothing. `smoke-user.sh --rotate-password` sets a new password and prints new lines (then update `.env`).
+4. The next deploy shows the sign-in line above. The tester holds no real data and must stay that way: nobody signs in as the tester by hand.
+
+The sign-in service after the admin handover: the bootstrap admin is gone, so the script stops with "FAILED (ERROR login)". Create the user as the named admin instead, with the same attributes: `kcadm.sh create users -r pflanzendex -s username=smoke-tester -s email=smoke-tester@example.com -s emailVerified=true -s enabled=true -s firstName=Smoke -s lastName=Tester -i`, then `kcadm.sh set-password -r pflanzendex --username smoke-tester --new-password <generated>`, then the account row as in step 1, and the two `.env` lines.
+
+It retries (`SMOKE_RETRIES`, default 15, every `SMOKE_DELAY`, default 2 s) because the proxy needs a moment. `deploy.sh` derives the base URL from `APP_HOST`, `CADDY_SCHEME`, `HTTP_PORT` and `HTTPS_PORT` in `deploy/.env`; override with `SMOKE_URL` (then the sign-in service is reached at `AUTH_URL`). For `localhost` it uses `curl -k` (internal Caddy CA).
 
 ## Automatic rollback
 
-If the api does not become healthy or the smoke test fails, `deploy.sh` redeploys the previous commit (build, start, health, smoke test again) and exits non-zero with a clear message:
+If the api does not become healthy, the realm `pflanzendex` does not answer 200 in time, or the smoke test fails, `deploy.sh` redeploys the previous commit (build, start, health, realm, smoke test again) and exits non-zero with a clear message:
 
 - `ROLLBACK ok ...`: the previous version is live again, the new one is not. Exit code is still 1, so the failed deploy is not mistaken for a success.
-- `ROLLBACK FEHLGESCHLAGEN`: intervene manually (below).
+- `ROLLBACK FAILED`: intervene manually (below).
 
-Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `scripts/restore/restore.sh`.
+Limits: database migrations are not reverted. Migrations must be expand/contract so the previous version still works (US-DEV-07). If data was damaged, restore the pre-deploy backup with `app/config/deploy/scripts/restore/restore.sh`.
 
 ## Manual rollback
 
-On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health` (status) and, on the host, `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details` (version).
+On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test; if `compose ps` fails, it stops before any change with an `ERROR:` line, and with the database stopped (a first deploy) it prints `backup skipped` and takes no backup (US-DEV-07). Check afterwards with `curl -s https://<host>/health` (status) and, on the host, `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details` (version).
 
 ## Filling the catalog (first release, #991)
 
@@ -123,7 +156,62 @@ SQL
 
 If it fails on a foreign key, species are in use: restore instead, or leave them. A wrong attribute value is corrected in the data file and loaded again (the newer value replaces it); to drop one, delete its row (`delete from taxon_attribute where latin_name = '<Latin name>' and field = '<field>';`) and remove it from the data file in the same PR, otherwise the next load writes it again. To stop a fill, set `CATALOG_FILL=off` (or empty) and `$c up -d api`; values already set stay (nothing disappears silently, P-10) and carry their provenance.
 
+**Data fix for the starting values of catalogs loaded before 0.2.0 (#1024, one-off, test host only).** Migrations `0095` and `0096` clear the invented starting values (P-08) only on rows that are still at version 1 and have `reviewed_by` null. But `review_case_guard` sets `reviewed_by` on every curated row, so the batch's rows never match that guard: on the test host all 137 species kept difficulty, default level, light need, growth measure, etiolation signs and success criteria. A catalog loaded with 0.2.0 or later holds none of these values (#1003, #1005) and needs no fix. The fix is not a migration. Two scripts in `docs/guides/operations/catalog-starting-values/` share one selection:
+
+- `dry-run.sql` reads only (`begin read only`) and prints one JSON document.
+- `fix.sql` writes, in one transaction, and only with `-v expected=<rows_to_change>` from the dry run.
+
+Per species the selection requires: created by the operator, source = the batch marker (the text of `catalog:load` before #1004 or after it), review case `curated` and reviewed by the `catalog-load` account. A curated case cannot change afterwards, so no later review can exist. A species with a user correction or with a merged proposal pointing to it is counted and left alone. A field is cleared only when it holds exactly the value the batch wrote: difficulty and default level from the start list before #1004, light need from the default level (3000, 8000 or 20000 lx), growth measure `height`, and the two generic texts. Any other value is kept and counted. A cleared row gets the current source marker and `version + 1`.
+
+1. **Back up first.** `make backup` (hosts without `make`: `app/config/deploy/scripts/backup.sh`, the same script). Check that the dump exists in `BACKUP_DIR` and keep its path for the rollback.
+2. **Dry run.** Needs the checkout at a ref that has the two files. Read the output: `batch_reviewed_at` should show one time, `candidates` the batch size, `kept_differs_or_unknown` what was not cleared and why, `rows_to_change` the count for step 3, `sample_before` three rows before the fix.
+
+   ```bash
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -tA -f -' < docs/guides/operations/catalog-starting-values/dry-run.sql
+   ```
+
+3. **Write**, only after the dry run was reviewed, with the count from step 2:
+
+   ```bash
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v expected=<rows_to_change> -tA -f -' < docs/guides/operations/catalog-starting-values/fix.sql
+   ```
+
+   It commits only if exactly `expected` rows changed; otherwise it rolls back and exits with status 3. Without `-v expected` it changes nothing. Running it again is harmless: the next dry run reports `rows_to_change` 0.
+
+4. **Check.** The next dry run reports `rows_to_change` 0. The species profile on the test host shows "unbekannt" for the six fields (open one species; the profile is the check of P-08).
+5. **Rollback.** A failed run changes nothing (one transaction). For a wrong result after the commit, restore the dump of step 1 as described in `staging-deploy-and-backup.md` ("Backup and restore").
+
+The folder is a one-off. Remove it in a later pull request once every host that loaded the batch has run it; the dry-run output belongs in the pull request's test evidence. Production has no batch rows (a catalog loaded with 0.2.0 or later), so the dry run there reports `batch_rows` 0 and there is nothing to do.
+
 **Must never run on production:** `npm run seed:catalog` and `npm run seed:demo` (dev and test only, they use a superuser connection and invented demo data; both refuse unless `PFLANZENDEX_ENV` is `local` or `test` and the database is on this machine). Do not run `catalog:load` against a database you did not name in `--confirm`.
+
+## Data state of a release (US-DEV-06, FR-DEV-07)
+
+The release notes end with a section "Data state": the approved species of the catalog with the time of the reading, and the taxonomy tree with the time of its last build, its resolved species and its errors (species the build could not resolve). The values are in the production database, which the release workflow on GitHub cannot reach. So the reading is part of the release preparation (release checklist, step 4c), and the release workflow only prints it.
+
+Read the database on the host, in the checkout (`c` as in "Filling the catalog"):
+
+```bash
+c="docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml"
+$c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atf -' <<'SQL'
+select json_build_object(
+  'readAt', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+  'catalog', json_build_object(
+    'approvedSpecies', (select count(*) from species s join review_case v on v.object_kind = 'species' and v.object_id = s.id where v.status in ('curated', 'reviewed'))),
+  'tree', (select case when count(*) = 0 then null else json_build_object(
+    'builtAt', to_char(max(built_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+    'species', count(*) filter (where status = 'resolved'),
+    'errors', count(*) filter (where status = 'unresolved')) end
+    from taxon)
+);
+SQL
+```
+
+1. Save the one line the query prints as `docs/records/data-state.json` and format it: `cd app && npx --no-install prettier --write ../docs/records/data-state.json`. `tree` is `null` while no build has stored a tree.
+2. Commit it as `docs(dev): data state <date> (US-DEV-06)` on a branch from `dev` and merge it into `dev` through a pull request (as the news release, step 7b). It must be in `dev` before the release pull request.
+3. `make release-dry-run BRANCH=dev` prints the section with the version and the notes (step 7).
+
+A reading that is missing, not valid JSON or not in this shape makes the section say "unknown" with the reason (`tools/release/data-state-notes.mjs`); the release is not stopped by it, and the step 4c answer in the pull request then says so. The reading date is printed, so an old reading shows as old. Open: the catalog's number of errors has no source yet, so it is not printed (US-DEV-06, FR-DEV-07).
 
 ## Hotfix path (E-13)
 
@@ -149,5 +237,4 @@ Three function groups can be switched: `social` (friends, feed, swap, sharing, s
 ## Open
 
 - FR-DEV-05: check that the latest `v*` tag on `main` was created by semantic-release (no manual tags). Not implemented, no simple CI check exists; options are a tag ruleset on GitHub (only the release workflow may create `v*` tags) or a scheduled check.
-- Smoke test of a core flow (sign in, Heute list).
-- The smoke test does not yet check that the web footer shows the same version (the root is only checked for 200).
+- The smoke test does not yet check that the web app shows the same version (the root is only checked for 200).

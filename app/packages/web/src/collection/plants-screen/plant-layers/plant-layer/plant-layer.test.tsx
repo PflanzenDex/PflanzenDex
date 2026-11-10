@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
+import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
 import type { PlantSlots } from "../layer-ids";
+import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import table from "../plant-layers.de.json";
+import { PlantLayerSkeleton } from "./plant-layer.skeleton";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -25,6 +31,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "healthy", note: null },
@@ -62,19 +69,24 @@ type Extra = Partial<Parameters<typeof PlantsScreen>[0]>;
 function show(cards: SpecimenCard[], extra: Extra = {}, at = "/") {
   return render(
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
-      <PlantsScreen
-        cards={cards}
-        distribution={EMPTY_DISTRIBUTION.distribution}
-        archived={[]}
-        photoAccess={{ api: "http://api", token: async () => "tok" }}
-        onSpeciesChoose={vi.fn()}
-        onManage={vi.fn()}
-        onRestore={vi.fn()}
-        onArchivedCatchDate={vi.fn()}
-        embedded
-        slots={SLOTS}
-        {...extra}
-      />
+      {/* The screen sits in the frame of the collection area (US-QS-15), so a layer opens in its pane. */}
+      <LayerHost>
+        <PlantsScreen
+          cards={cards}
+          plants={pagesOf(cards)}
+          summary={summaryOf(cards)}
+          distribution={EMPTY_DISTRIBUTION.distribution}
+          archived={[]}
+          photoAccess={{ api: "http://api", token: async () => "tok" }}
+          onSpeciesChoose={vi.fn()}
+          onManage={vi.fn()}
+          onRestore={vi.fn()}
+          onArchivedCatchDate={vi.fn()}
+          embedded
+          slots={SLOTS}
+          {...extra}
+        />
+      </LayerHost>
       <Where />
     </MemoryRouter>,
   );
@@ -102,6 +114,38 @@ describe("US-QS-23 a plant opens as a layer with tabs", () => {
     expect(tabs).toEqual(["Überblick", "Verlauf", "Pflege", "Standort"]);
   });
 
+  it("NFR-13 the four tabs of a plant wrap at 200 % text instead of scrolling sideways", async () => {
+    setViewportWidth(360);
+    show([card()]);
+    const layer = await open();
+    const strip = within(layer).getByRole("tablist", { name: "Bereiche der Pflanze" });
+    expect(strip.className.split(" ")).toContain("flex-wrap");
+    expect(strip.className.split(" ")).not.toContain("overflow-x-auto");
+    for (const tab of within(layer).getAllByRole("tab"))
+      expect(tab.className.split(" ")).toContain("min-w-fit");
+  });
+
+  it("NFR-13 a long chip wraps inside its pill, so the header keeps the Mehr button beside the chips at 200 % text", async () => {
+    setViewportWidth(360);
+    show(
+      [
+        card({
+          location: "Wohnzimmer Fenster Süd hinter dem Vorhang",
+          treatment: { reason: "Neem", dueDate: { kind: "soon", days: 2, text: "in 2 Tg." } },
+        }),
+      ],
+      { onArchive: vi.fn() },
+    );
+    const layer = await open();
+    const chips = within(layer).getByRole("list", { name: "Auf einen Blick" });
+    for (const text of ["Zone 3", "Wohnzimmer Fenster Süd hinter dem Vorhang", "Behandeln"]) {
+      const classes = within(chips).getByText(text).className.split(" ");
+      expect(classes).toContain("whitespace-normal");
+      expect(classes).not.toContain("whitespace-nowrap");
+    }
+    expect(within(layer).getByRole("button", { name: "Mehr" })).toBeTruthy();
+  });
+
   it("US-QS-23 · P-08 an unknown zone and location read unbekannt in the chips", async () => {
     setViewportWidth(360);
     show([card({ lightZone: null, lightZoneSource: null, location: null })]);
@@ -117,7 +161,7 @@ describe("US-QS-23 a plant opens as a layer with tabs", () => {
     const layer = await open();
     await userEvent.click(within(layer).getByRole("tab", { name: "Standort" }));
     expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e1&tab=standort");
-    act(() => screen.getByRole("button", { name: "Browser zurück", hidden: true }).click());
+    act(() => screen.getByText("Browser zurück").click());
     expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
     expect(screen.getByTestId("address").textContent).toBe("");
   });
@@ -208,7 +252,6 @@ describe("US-QS-23 Überblick", () => {
     ).toHaveLength(1);
     await userEvent.click(measure);
     expect(onMeasure).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
   });
 
   it("US-QS-23 Behandeln leads to the tab Pflege", async () => {
@@ -229,18 +272,86 @@ describe("US-QS-23 the other tabs", () => {
     expect(within(layer).getByText("Verlauf der Messungen")).toBeTruthy();
   });
 
-  it("US-QS-23 Pflege shows the treatments of the care module and the own care profile", async () => {
+  it("US-QS-23 Pflege shows the treatments of the care module first, the own profile is a second part", async () => {
     setViewportWidth(360);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({ profiles: [], locations: [], zones: [] })),
-    );
     show([card()]);
     const layer = await open();
     await userEvent.click(within(layer).getByRole("tab", { name: "Pflege" }));
     expect(within(layer).getByText("Behandlungen der Pflanze")).toBeTruthy();
+    expect(within(layer).queryByRole("heading", { name: "Eigenes Pflegeprofil" })).toBeNull();
+    await userEvent.click(within(layer).getByRole("button", { name: "Pflegeprofil" }));
+    expect(screen.getByTestId("address").textContent).toBe(
+      "?sheet=plant-e1&tab=pflege&teil=profil",
+    );
+    expect(within(layer).queryByText("Behandlungen der Pflanze")).toBeNull();
     expect(within(layer).getByRole("heading", { name: "Eigenes Pflegeprofil" })).toBeTruthy();
+  });
+
+  it("US-BES-09 the own care profile opens its own layer and Back returns to the plant in the same part", async () => {
+    setViewportWidth(360);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: [], locations: [], zones: [] })),
+    );
+    show([card()], {}, "/?sheet=plant-e1&tab=pflege&teil=profil");
+    const layer = await screen.findByRole("dialog", { name: "Aloe" });
+    await userEvent.click(within(layer).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
+    const profile = await screen.findByRole("dialog", { name: "Pflegeprofil" });
+    expect(screen.getByTestId("address").textContent).toBe(
+      "?sheet=profil-e1&tab=pflege&teil=profil",
+    );
+    expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art.")).toBeTruthy();
+    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
+    act(() => screen.getByText("Browser zurück").click());
+    const back = await screen.findByRole("dialog", { name: "Aloe" });
+    expect(within(back).getByRole("button", { name: "Pflegeprofil", pressed: true })).toBeTruthy();
     vi.unstubAllGlobals();
+  });
+
+  it("US-QS-15 closing the care profile with Escape returns the focus to Pflegeprofil bearbeiten (issue 1661)", async () => {
+    setViewportWidth(360);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: [], locations: [], zones: [] })),
+    );
+    show([card()]);
+    const plant = await open();
+    await userEvent.click(within(plant).getByRole("tab", { name: "Pflege" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
+    await screen.findByRole("dialog", { name: "Pflegeprofil" });
+    await userEvent.keyboard("{Escape}");
+    const back = await screen.findByRole("dialog", { name: "Aloe" });
+    const opener = within(back).getByRole("button", { name: "Pflegeprofil bearbeiten" });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-15 Back from the care profile returns the focus to Pflegeprofil bearbeiten (issue 1661)", async () => {
+    setViewportWidth(360);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: [], locations: [], zones: [] })),
+    );
+    show([card()]);
+    const plant = await open();
+    await userEvent.click(within(plant).getByRole("tab", { name: "Pflege" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil" }));
+    await userEvent.click(within(plant).getByRole("button", { name: "Pflegeprofil bearbeiten" }));
+    await screen.findByRole("dialog", { name: "Pflegeprofil" });
+    act(() => screen.getByText("Browser zurück").click());
+    const back = await screen.findByRole("dialog", { name: "Aloe" });
+    const opener = within(back).getByRole("button", { name: "Pflegeprofil bearbeiten" });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-23 a copied link restores the part of Pflege", async () => {
+    setViewportWidth(360);
+    show([card()], {}, "/?sheet=plant-e1&tab=pflege&teil=profil");
+    const layer = await screen.findByRole("dialog", { name: "Aloe" });
+    expect(within(layer).getByRole("button", { name: "Pflegeprofil", pressed: true })).toBeTruthy();
+    expect(within(layer).getByRole("heading", { name: "Eigenes Pflegeprofil" })).toBeTruthy();
   });
 
   it("US-QS-23 Standort shows location and zone with its source and the actions to change them", async () => {
@@ -290,7 +401,7 @@ describe("US-QS-23 the other tabs", () => {
 });
 
 describe("US-QS-23 Mehr", () => {
-  it("US-QS-23 the rarer actions sit in the menu Mehr and each opens its flow after the layer closes", async () => {
+  it("US-QS-23 the rarer actions sit in the menu Mehr and each opens its flow", async () => {
     setViewportWidth(360);
     const handlers = { onMark: vi.fn(), onCatchDate: vi.fn(), onArchive: vi.fn() };
     show([card()], handlers);
@@ -304,7 +415,6 @@ describe("US-QS-23 Mehr", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
-    expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
   });
 
   it("US-QS-23 Eingetopft is offered for a cutting only", async () => {
@@ -331,5 +441,55 @@ describe("US-QS-23 wide screen", () => {
     expect(pane).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Aloe / })).toBeTruthy();
     expect(within(pane).getAllByRole("tab")).toHaveLength(4);
+  });
+});
+
+describe("US-QS-14 issue 1697 · the plant layer show their shaped skeleton once", () => {
+  it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
+    expectOneLoadingStatus(
+      <PlantLayerSkeleton label={table["layer.loading"]} />,
+      table["layer.loading"],
+    ));
+});
+
+/** A slot part that is still loading until `release` runs: it suspends with its promise, as a lazy part does (US-QS-14). */
+function pendingPart(content: ReactNode) {
+  let done = false;
+  let release: () => void = () => undefined;
+  const ready = new Promise<void>((resolve) => {
+    release = () => {
+      done = true;
+      resolve();
+    };
+  });
+  const Part = () => {
+    if (!done) throw ready;
+    return content;
+  };
+  return { Part, release };
+}
+
+describe("US-QS-14 issue 1784 · the plant layer slot shows the shape of its part while it loads", () => {
+  it("US-QS-14 issue 1784 · the growth slot shows its one-line shape after the delay, not a bare status text", async () => {
+    setViewportWidth(360);
+    const { Part, release } = pendingPart(<p>Trend: stabil</p>);
+    show([card()], { slots: { ...SLOTS, growth: () => <Part /> } }, "/?sheet=plant-e1");
+    expect(screen.queryByRole("status")).toBeNull();
+    const status = await screen.findByRole("status");
+    expect(status.querySelectorAll(".animate-pulse")).toHaveLength(1);
+    await act(async () => release());
+    expect(await screen.findByText("Trend: stabil")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-QS-14 issue 1784 · the care slot shows the shape of its treatments after the delay, not a bare status text", async () => {
+    setViewportWidth(360);
+    const { Part, release } = pendingPart(<p>Behandlungen der Pflanze</p>);
+    show([card()], { slots: { ...SLOTS, care: () => <Part /> } }, "/?sheet=plant-e1&tab=pflege");
+    expect(screen.queryByRole("status")).toBeNull();
+    const status = await screen.findByRole("status");
+    expect(status.querySelectorAll(".animate-pulse").length).toBeGreaterThan(1);
+    await act(async () => release());
+    expect(await screen.findByText("Behandlungen der Pflanze")).toBeTruthy();
   });
 });

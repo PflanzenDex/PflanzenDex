@@ -1,17 +1,19 @@
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { useCallback, useMemo, useState } from "react";
-import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
-import { RequestState } from "@/components/shared/states/request-state/request-state";
-import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../../kernel";
+import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
+import {
+  SIGN_IN as KERNEL_SIGN_IN,
+  useQueryClient,
+  useReload,
+  useRequest,
+} from "../../shared/data";
 import { LightView, type LightActions } from "../views/light-view/light-view";
-import { LightOverviewView } from "../views/light-overview-view/light-overview-view";
-import { RulesView } from "../views/rules-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
-import { refusalText } from "../shared/texts";
+import { refusalText } from "@/shared/lib/error-text";
 import {
   createWrite,
   loadDerivation,
-  loadLight,
+  loadHints,
   loadLightOverview,
   type DerivationRequest,
   type ApiError,
@@ -19,9 +21,9 @@ import {
   type LightOverview,
   type Response,
 } from "../shared/light-api/light-api";
+import { LIGHT_KEY, sharedLocations, sharedZones } from "../shared/light-api/light-shared";
 
 type Loaded = { data: LightData; overview: Response<LightOverview> };
-const LIGHT_KEY = ["light"] as const;
 
 /** The refusal of a missing sign-in, typed for this module. */
 const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
@@ -70,46 +72,36 @@ function buildActions(
   };
 }
 
-function OverviewSection(props: {
-  overview: Response<LightOverview>;
-  onOpenCollection: () => void;
-  onRetry: () => void;
-}) {
-  const o = props.overview;
-  if (o.ok) return <LightOverviewView data={o.value} onOpenCollection={props.onOpenCollection} />;
-  return (
-    <section aria-labelledby="overview-error" className="flex min-w-0 flex-col gap-3">
-      <h2 id="overview-error" className="text-xl font-semibold">
-        Lichthunger
-      </h2>
-      <EmptyState
-        variant="error"
-        title="Lichthunger konnte nicht geladen werden"
-        description={refusalText(o.error)}
-        action={{ label: "Erneut versuchen", onClick: props.onRetry }}
-      />
-    </section>
-  );
-}
-
 /** Loads the data and connects the view to the API; after every write it reloads (never guesses). */
 export function LightPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onOpenCollection: () => void;
+  /** Inside the Sammlung the frame above names the page (`FullView`, issue 1031): no second h1 from here. */
+  hosted?: boolean;
 }) {
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
   const toast = useToast();
 
+  const client = useQueryClient();
   const loadAll = useCallback(
     async (t: string): Promise<Response<Loaded>> => {
-      const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
-      if (!r.ok) return r;
+      // Zones and locations come from their shared copies (issue 1244); hints and overview are this page's own.
+      const [z, s, h, o] = await Promise.all([
+        sharedZones(client, api, t),
+        sharedLocations(client, api, t),
+        loadHints(api, t),
+        loadLightOverview(api, t),
+      ]);
+      if (!z.ok) return z;
+      if (!s.ok) return s;
+      if (!h.ok) return h;
       // The overview is an addition: if only it fails, the zones and locations stay usable.
-      return { ok: true, value: { data: r.value, overview: o } };
+      const data = { zones: z.value, locations: s.value, hints: h.value };
+      return { ok: true, value: { data, overview: o } };
     },
-    [api],
+    [api, client],
   );
   const request = useRequest({ queryKey: [...LIGHT_KEY, "page"], token, load: loadAll });
   const reload = useReload(LIGHT_KEY);
@@ -126,22 +118,21 @@ export function LightPage(props: {
     <RequestState
       status={request.status}
       onRetry={request.retry}
-      heading="Standorte und Lichtzonen"
+      {...(props.hosted ? {} : { heading: "Standorte und Lichtzonen" })}
       skeleton={<LightPageSkeleton label={loading} />}
       offline={request.offline}
       {...(request.error ? { errorText: errorTitle(request.error) } : {})}
     >
       {z && (
-        // The view carries the page heading, so it comes first; the reference sections follow (US-QS-09, #591).
-        <div className="flex min-w-0 flex-col gap-6">
-          <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
-          <OverviewSection
-            overview={z.overview}
-            onOpenCollection={props.onOpenCollection}
-            onRetry={() => void load()}
-          />
-          <RulesView zones={z.data.zones} />
-        </div>
+        <LightView
+          data={z.data}
+          actions={actions}
+          overview={z.overview}
+          onOpenCollection={props.onOpenCollection}
+          onRetry={() => void load()}
+          {...(props.hosted ? { hosted: true } : {})}
+          {...(lastError ? { error: lastError } : {})}
+        />
       )}
     </RequestState>
   );

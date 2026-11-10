@@ -6,8 +6,9 @@ export const UNKNOWN = "unbekannt";
 
 const known = (text: string | null | undefined) => (text ? text : UNKNOWN);
 
-/** Row "Profil": display name and time zone. */
-export const profileValue = (p: AccountProfile) => `${known(p.displayName)} · ${known(p.timeZone)}`;
+/** Row "Profil": display name and time zone, which may break after its slash at 200 % text (issue 1315). */
+export const profileValue = (p: AccountProfile) =>
+  `${known(p.displayName)} · ${known(p.timeZone).replaceAll("/", "/\u200b")}`;
 
 /** Row "Benachrichtigungen": how many of the occasions that have a switch are on. */
 export function notificationsValue(p: AccountProfile, social: boolean): string {

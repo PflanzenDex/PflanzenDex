@@ -5,7 +5,7 @@ const m = (over: Partial<YearMeasurement> & { id: string; date: string }): YearM
   specimenId: "a",
   value: 10,
   quality: "healthy",
-  hasPhoto: false,
+  photo: null,
   ...over,
 });
 const base: YearInput = {
@@ -81,20 +81,20 @@ describe("US-ACH-07 year in review", () => {
     const r = yearInReview({
       ...base,
       measurements: [
-        m({ id: "1", date: "2025-09-01", hasPhoto: true }),
-        m({ id: "2", date: "2025-02-01", hasPhoto: true }),
-        m({ id: "3", date: "2025-05-01", hasPhoto: true }),
-        m({ id: "4", date: "2024-05-01", hasPhoto: true }),
-        m({ id: "5", date: "2025-04-01", specimenId: "b", hasPhoto: true }),
+        m({ id: "1", date: "2025-09-01", photo: "1.webp" }),
+        m({ id: "2", date: "2025-02-01", photo: "2.webp" }),
+        m({ id: "3", date: "2025-05-01", photo: "3.webp" }),
+        m({ id: "4", date: "2024-05-01", photo: "4.webp" }),
+        m({ id: "5", date: "2025-04-01", specimenId: "b", photo: "5.webp" }),
       ],
     });
     expect(r.photos).toMatchObject({
       specimenId: "a",
-      first: { measurementId: "2", date: "2025-02-01" },
-      last: { measurementId: "1", date: "2025-09-01" },
+      first: { measurementId: "2", date: "2025-02-01", photo: "2.webp" },
+      last: { measurementId: "1", date: "2025-09-01", photo: "1.webp" },
     });
     expect(
-      yearInReview({ ...base, measurements: [m({ id: "1", date: "2025-02-01", hasPhoto: true })] })
+      yearInReview({ ...base, measurements: [m({ id: "1", date: "2025-02-01", photo: "1.webp" })] })
         .photos,
     ).toBeNull();
   });

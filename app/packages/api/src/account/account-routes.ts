@@ -11,10 +11,33 @@ import { body, errorBody, statusFor, write, type AuthEnv, type FeatureAccess } f
 
 type Identity = { email: string; displayName: string | null; emailConfirmed: boolean };
 
-/** Creates or refreshes the data row of the caller (email and confirmation from the token; a chosen name is kept). */
+type Own = { display_name: string | null; time_zone: string | null };
+
+/**
+ * Creates or refreshes the data row of the caller (email and confirmation from the token; a chosen name is kept).
+ * A read writes nothing unless something is stale (NFR-12): the row is missing, the token's email or confirmation
+ * differ, the display name is still empty while the token has one, or `last_active_at` is null or older than an hour.
+ * `last_active_at` feeds the "active users" count over a window of days (migration 0018), so hour granularity keeps
+ * that count correct; the write stays rare instead of happening on every request.
+ */
 async function ensureRow(pool: Pool, id: string, data: Identity) {
   return withAccount(pool, id, async (db) => {
-    const r = await db.query<{ display_name: string | null; time_zone: string | null }>(
+    const known = await db.query<Own & { email: string; email_confirmed: boolean; stale: boolean }>(
+      `select display_name, time_zone, email, email_confirmed,
+              last_active_at is null or last_active_at < now() - interval '1 hour' as stale
+         from account_data where account_id = $1`,
+      [id],
+    );
+    const row = known.rows[0];
+    if (
+      row &&
+      !row.stale &&
+      row.email === data.email &&
+      row.email_confirmed === data.emailConfirmed &&
+      (row.display_name !== null || data.displayName === null)
+    )
+      return { display_name: row.display_name, time_zone: row.time_zone };
+    const r = await db.query<Own>(
       `insert into account_data (account_id, email, display_name, email_confirmed, last_active_at)
        values ($1, $2, $3, $4, now())
        on conflict (account_id) do update
@@ -44,9 +67,16 @@ export function accountRoutes(pool: Pool, features: FeatureAccess): Hono<AuthEnv
     const own = await ensureRow(pool, id, data);
     // Only a hint for the UI (shows the review list and the operator area); the operations check the role again
     // (US-BES-10, US-ACC-05, P-04).
+    // The keyboard shortcut mode rides along in the same statement (US-QS-11): the shell needs it on every page, and the
+    // row rule gives only the own row.
     const roles = await withAccount(pool, id, async (db) => {
-      const r = await db.query<{ reviewer: boolean; operator: boolean }>(
-        "select is_reviewer() as reviewer, is_operator() as operator",
+      const r = await db.query<{
+        reviewer: boolean;
+        operator: boolean;
+        keyboard_shortcuts: string | null;
+      }>(
+        `select is_reviewer() as reviewer, is_operator() as operator,
+                (select keyboard_shortcuts from account_data) as keyboard_shortcuts`,
       );
       return r.rows[0];
     });
@@ -59,6 +89,8 @@ export function accountRoutes(pool: Pool, features: FeatureAccess): Hono<AuthEnv
       mayShareWithFriends: mayShareWithFriends(data),
       reviewer: roles?.reviewer === true,
       operator: roles?.operator === true,
+      // How the keyboard shortcuts are taken (US-QS-11): `plain` until the keeper changes it.
+      keyboardShortcuts: roles?.keyboard_shortcuts ?? "plain",
       // Which function groups are switched on for this account (US-DEV-06): the web hides what is off.
       features: await features.states(id),
     });

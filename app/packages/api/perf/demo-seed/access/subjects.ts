@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The dev realm creates the users `test`, `test2` and `test3` with random Keycloak ids. The account row of the app is
@@ -36,26 +36,25 @@ function envFileValue(file: string, key: string): string | undefined {
 function adminPassword(): string {
   const fromEnv = process.env["KC_ADMIN_PASSWORD"];
   if (fromEnv) return fromEnv;
-  const own = envFileValue(join(appDir, "config", "dev", ".env"), "KC_ADMIN_PASSWORD");
-  if (own) return own;
-  // A worktree has no `.env` of its own: the main checkout's file (made by `make auth-up`) is the source.
+  // Only the main checkout holds the `.env` of the shared Keycloak (made by `make auth-up`, issue 1187); a worktree reads
+  // it there. The common dir is absolute inside a worktree, so it is resolved, not joined.
   const common = execFileSync("git", ["rev-parse", "--git-common-dir"], {
     cwd: appDir,
     encoding: "utf8",
   }).trim();
   const main = envFileValue(
-    join(dirname(join(appDir, common)), "app", "config", "dev", ".env"),
+    join(dirname(resolve(appDir, common)), "app", "config", "dev", ".env"),
     "KC_ADMIN_PASSWORD",
   );
-  if (!main) throw new Error("KC_ADMIN_PASSWORD missing: run `make auth-up` first");
+  if (!main)
+    throw new Error("KC_ADMIN_PASSWORD missing: run `make auth-up` in the main checkout first");
   return main;
 }
 
-/** Looks the three ids up through the Keycloak admin API (`make auth-up` must be running). */
-export async function subjectsFromKeycloak(
+/** Admin access to the dev realm (`make auth-up` must be running): the Keycloak base URL and the bearer header. */
+export async function keycloakAdmin(
   env: NodeJS.ProcessEnv = process.env,
-): Promise<Subjects> {
-  if (env["DEMO_SEED_SUBJECTS"]) return parseSubjects(env["DEMO_SEED_SUBJECTS"]);
+): Promise<{ keycloak: string; headers: Record<string, string> }> {
   const keycloak = env["E2E_KEYCLOAK_URL"] ?? "http://localhost:18081";
   const login = await fetch(`${keycloak}/realms/master/protocol/openid-connect/token`, {
     method: "POST",
@@ -71,9 +70,16 @@ export async function subjectsFromKeycloak(
     );
   });
   if (!login.ok) throw new Error(`Keycloak admin login failed: ${login.status}`);
-  const headers = {
-    Authorization: `Bearer ${((await login.json()) as { access_token: string }).access_token}`,
-  };
+  const token = ((await login.json()) as { access_token: string }).access_token;
+  return { keycloak, headers: { Authorization: `Bearer ${token}` } };
+}
+
+/** Looks the three ids up through the Keycloak admin API (`make auth-up` must be running). */
+export async function subjectsFromKeycloak(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<Subjects> {
+  if (env["DEMO_SEED_SUBJECTS"]) return parseSubjects(env["DEMO_SEED_SUBJECTS"]);
+  const { keycloak, headers } = await keycloakAdmin(env);
   const entries: [DemoUser, string][] = [];
   for (const user of DEMO_USERS) {
     const found = (await (

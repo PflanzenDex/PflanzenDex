@@ -4,7 +4,7 @@
 //   AB-6  web imports neither API nor database (NFR-ARC-01 of the earlier draft: HTTP only)
 //   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
 //   EX-1  entry in KNOWN_EXCEPTIONS (accepted legacy, with a reason, may only shrink) without a reason
-//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules*.mjs, register modules.config.mjs
+//   AB-3..AB-5 layer rules (modules/rules/), AB-7..AB-14 module boundaries (modules/, FR-QG-19), AB-15 web layers (FR-QG-23)
 //   ST-c  `core/src` and every module directory with code in `core` has an `index.ts` (feature folders below do not, ADR 0008)
 import fs from "node:fs";
 import path from "node:path";
@@ -12,7 +12,9 @@ import { builtinModules } from "node:module";
 import { fileURLToPath } from "node:url";
 import { MODULE_CONFIG } from "../../../config/lint/modules.config.mjs";
 import { checkModules } from "./modules/check-modules.mjs";
-import { checkAdapterSql, checkMigrations, kernelExports } from "./modules/check-modules-sql.mjs";
+import * as sql from "./modules/rules/check-modules-sql.mjs";
+import { checkWebLayers } from "./modules/rules/check-modules-graph.mjs";
+import { checkLayerRules } from "./modules/rules/check-layer-rules.mjs";
 
 export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core (empty on purpose; later e.g. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
@@ -172,8 +174,10 @@ export function checkProject(appDir, cfg = NO_MODULES) {
   checkMarkers(appDir, add);
   const ctx = { appDir, add, cfg, h: { walk, walkCode, importsOf, stripComments, CODE } };
   checkModules(ctx);
-  checkAdapterSql(ctx);
-  checkMigrations(ctx);
+  sql.checkAdapterSql(ctx);
+  sql.checkMigrations(ctx);
+  checkLayerRules(ctx);
+  checkWebLayers(ctx);
   for (const e of KNOWN_EXCEPTIONS)
     if (!e.reason?.trim())
       out.push(`EX-1 ${e.file} exception for ${e.rule} without a reason in KNOWN_EXCEPTIONS`);
@@ -191,6 +195,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(1);
   }
   console.log("Architecture boundaries and structure: no violations.");
-  const kernel = kernelExports({ appDir, cfg: MODULE_CONFIG, h: { stripComments } });
+  const kernel = sql.kernelExports({ appDir, cfg: MODULE_CONFIG, h: { stripComments } });
   console.log(`Kernel exports (${MODULE_CONFIG.KERNEL}, a measure, no threshold): ${kernel}`);
 }

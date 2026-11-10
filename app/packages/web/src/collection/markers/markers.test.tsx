@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { markSpecimen, createSpecimen } from "../specimens/model/specimens-api";
+import { answerCardRead } from "../specimens/tests/cards-fake";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -30,6 +31,7 @@ const card = (
   location: null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,
@@ -58,7 +60,7 @@ function fakeServer(cards: SpecimenCard[], answer?: () => Promise<Response>) {
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      return response(200, { cards });
+      return answerCardRead(new URL(String(url)), cards) ?? response(404, {});
     }),
   );
   return posts;
@@ -204,9 +206,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/marker", body: { marker: "rot" } });
     expect(posts[0]?.key).toBeTruthy();
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "„Bogenhanf“ heißt jetzt „Bogenhanf – rot“",
-    );
+    expect(await screen.findByText(/„Bogenhanf“ heißt jetzt „Bogenhanf – rot“/)).toBeTruthy();
   });
 
   it("starts with the current marker", async () => {
@@ -248,5 +248,13 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(await findCardButton("Kennzeichen ändern: Bogenhanf")).toBeTruthy();
     expect(posts).toHaveLength(0);
+  });
+
+  it("US-QS-15 the heading may break a long word, so at a large text size it does not run past the edge (DS-61)", async () => {
+    fakeServer([card("e1", null)]);
+    render(page());
+    await open();
+    const heading = await screen.findByRole("heading", { name: "Kennzeichen ändern" });
+    expect(heading.className).toContain("break-words");
   });
 });

@@ -1,4 +1,6 @@
+import { randomInt } from "node:crypto";
 import pg from "pg";
+import { REQUEST_LIMITS, setPoolLimits, type PoolConfig } from "./limits.ts";
 
 // Default for the local test database from `make db-up`; CI sets the variable (E-01: self-hosting, Docker).
 export const TEST_DB_STANDARD = "postgres://postgres:postgres@127.0.0.1:54329/pflanzendex_test";
@@ -32,8 +34,32 @@ export function testOwnerUrl(): string {
   return url.toString();
 }
 
-export function openPool(url: string = testDatabaseUrl(), allowExitOnIdle = false): pg.Pool {
-  return new pg.Pool({ connectionString: url, max: 4, allowExitOnIdle });
+/**
+ * Opens a pool. The defaults are the test pool (4 connections, no wait limit, `REQUEST_LIMITS`); the production pool gets
+ * its settings from `poolConfigFromEnv` (NFR-12, #1242).
+ */
+export function openPool(
+  url: string = testDatabaseUrl(),
+  allowExitOnIdle = false,
+  config: Partial<PoolConfig> = {},
+): pg.Pool {
+  const pool = new pg.Pool({
+    connectionString: url,
+    max: config.max ?? 4,
+    allowExitOnIdle,
+    connectionTimeoutMillis: config.connectionTimeoutMs ?? 0,
+  });
+  setPoolLimits(pool, config.limits ?? REQUEST_LIMITS);
+  // An idle connection that the server drops emits `error` on the pool; without a listener that would end the process.
+  // The next request gets a new connection; the loss is logged (NFR-18), without any user data.
+  pool.on("error", (error) => console.error("database connection lost", error.message));
+  // A connection that a request holds has no listener of the pool, and the server may end it at any time (a restart, an
+  // idle-in-transaction timeout): the query in progress then fails and the request answers 503 (NFR-12); pg-pool drops
+  // the connection on release. Without this listener the same event would end the process.
+  pool.on("connect", (client) => {
+    client.on("error", () => undefined);
+  });
+  return pool;
 }
 
 /**
@@ -59,6 +85,38 @@ export function openFixturePool(): pg.Pool {
   const url = new URL(testDatabaseUrl());
   url.pathname = `/${testOwnerDatabaseName()}`;
   return openPool(url.toString(), true);
+}
+
+/**
+ * A database of its own for one test file (#1301, #1365). A result that depends on the rows of the whole database (the
+ * rarity participants of `rarity_participants()`) changes while parallel files switch their own rows on and off in the
+ * shared test database; this one cannot be disturbed that way. The test owner role owns it, so row-level security
+ * applies as in production (QG-D1). `drop()` removes it and ends the superuser pool that created it. `prefix` holds
+ * only lowercase letters, digits and underscores (it is a SQL name).
+ */
+export async function createFileDatabase(
+  prefix: string,
+): Promise<{ ownerUrl: string; fixtureUrl: string; drop(): Promise<void> }> {
+  const letters = Array.from({ length: 10 }, () => String.fromCharCode(97 + randomInt(26)));
+  const name = `${prefix}_${letters.join("")}`;
+  const admin = openAdminPool(true);
+  await admin.query(`create database ${name} owner ${new URL(testOwnerUrl()).username}`);
+  const at = (url: string) => {
+    const parsed = new URL(url);
+    parsed.pathname = `/${name}`;
+    return parsed.toString();
+  };
+  return {
+    ownerUrl: at(testOwnerUrl()),
+    fixtureUrl: at(testDatabaseUrl()),
+    drop: async () => {
+      try {
+        await admin.query(`drop database if exists ${name} with (force)`);
+      } finally {
+        await admin.end();
+      }
+    },
+  };
 }
 
 /**

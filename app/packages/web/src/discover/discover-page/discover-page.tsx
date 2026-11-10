@@ -1,25 +1,26 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { LoadFrame } from "../../kernel";
+import { LoadFrame, type Response } from "../../shared/data";
 import { DeckView } from "../deck-view/deck-view";
-import { decideSuggestion, loadSuggestions } from "./discover-api";
+import { DiscoverPageSkeleton } from "./discover-page.skeleton";
+import { decideSuggestion, loadSuggestions, undoSuggestionDecision } from "./discover-api";
+import table from "../discover.de.json";
+import { texts } from "@/shared/lib/text-rules/texts";
+
+const t = texts(table);
 
 const SIGN_IN_NEEDED = {
   ok: false as const,
-  error: { code: "access.not_signed_in", text: "Bitte melde dich an." },
+  error: { code: "access.not_signed_in", text: t("page.signIn") },
 };
 
-/** Placeholder with the layout of a card on a phone: image, name, text, three buttons (DS-52). */
-function DeckSkeleton({ label }: { label: string }) {
-  return (
-    <SkeletonGroup label={label} className="mx-auto flex w-full max-w-md flex-col gap-3">
-      <Skeleton className="h-56 w-full rounded-xl" />
-      <Skeleton className="h-6 w-2/3" />
-      <Skeleton className="h-16 w-full" />
-      <Skeleton className="h-12 w-full" />
-    </SkeletonGroup>
-  );
+/** Runs a write with the token of the keeper; without a sign-in the answer says so (P-10). */
+async function signedIn<T>(
+  token: () => Promise<string | undefined>,
+  write: (t: string) => Promise<Response<T>>,
+): Promise<Response<T>> {
+  const t = await token();
+  return t ? write(t) : SIGN_IN_NEEDED;
 }
 
 /**
@@ -36,36 +37,40 @@ export function DiscoverPage(props: {
 }) {
   const { api, token, embedded, zone } = props;
   const [deck, setDeck] = useState(1);
+  // Not `fresh`: a return to the view shows the last deck at once and the new one replaces it (US-ENT-01, issue 1652).
   const load = useCallback(
     (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
     [api, deck, zone],
   );
   const decide = useCallback(
-    async (species: string, decision: "yes" | "no") => {
-      const t = await token();
-      return t ? decideSuggestion(api, t, { species, decision }) : SIGN_IN_NEEDED;
-    },
+    (species: string, decision: "yes" | "no") =>
+      signedIn(token, (t) => decideSuggestion(api, t, { species, decision })),
+    [api, token],
+  );
+  const undo = useCallback(
+    (species: string) => signedIn(token, (t) => undoSuggestionDecision(api, t, species)),
     [api, token],
   );
   return (
     <section
-      {...(embedded ? { "aria-label": "Vorschläge" } : { "aria-labelledby": "discover-title" })}
+      {...(embedded
+        ? { "aria-label": t("page.suggestions") }
+        : { "aria-labelledby": "discover-title" })}
       className="flex min-w-0 flex-1 flex-col"
     >
       <LoadFrame
         queryKey={["discover", deck, zone ?? null]}
         token={token}
         load={load}
-        loadingText="Vorschläge werden geladen …"
-        {...(embedded ? {} : { heading: "Entdecken" })}
-        loadingFallback={<DeckSkeleton label="Vorschläge werden geladen …" />}
-        fresh
+        loadingText={t("page.loading")}
+        {...(embedded ? {} : { heading: t("page.title") })}
+        loadingFallback={<DiscoverPageSkeleton label={t("page.loading")} />}
       >
         {(value: SuggestionDeck) => (
           <>
             {embedded ? null : (
               <h1 id="discover-title" className="mb-2 text-2xl font-semibold">
-                Entdecken
+                {t("page.title")}
               </h1>
             )}
             <DeckView
@@ -73,6 +78,7 @@ export function DiscoverPage(props: {
               takeFocus={deck > 1}
               deck={value}
               onDecide={decide}
+              onUndo={undo}
               onNewDeck={() => setDeck((d) => d + 1)}
             />
           </>

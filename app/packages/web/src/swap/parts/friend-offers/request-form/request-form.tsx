@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { ExchangeOffer } from "@pflanzendex/core";
 import { OFFER_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { FormRoot } from "@/components/ui/fields/form/form";
-import { Select } from "@/components/ui/fields/select/select";
-import { Textarea } from "@/components/ui/fields/textarea/textarea";
+import { Button } from "@/shared/ui/button/button";
+import { FormRoot } from "@/shared/ui/fields/form/form";
+import { Select } from "@/shared/ui/fields/select/select";
+import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import type { RequestInput } from "../../../api/exchange-api";
 
 function CounterFields(props: {

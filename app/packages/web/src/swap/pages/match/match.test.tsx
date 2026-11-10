@@ -2,14 +2,13 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MatchPage } from "./match";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
 const card = (n: number, extra: Record<string, unknown> = {}) => ({
-  ownerId: "ben",
   ownerName: `Ben${n}`,
   offerId: `o${n}`,
   specimenId: `s${n}`,
@@ -91,10 +90,19 @@ const open = (calm = false) =>
 const current = () => screen.findByRole("article");
 const press = (name: RegExp | string) => userEvent.click(screen.getByRole("button", { name }));
 
+/** Cards are 300 px wide in jsdom (no layout): the threshold is 120 px (starting value, assumption). */
+beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+    configurable: true,
+    get: () => 300,
+  });
+});
+
 afterEach(() => {
   emptyReason = null;
   cleanup();
   vi.unstubAllGlobals();
+  delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
 });
 
 describe("US-TAU-01 match card in the web app", () => {
@@ -200,10 +208,18 @@ describe("US-TAU-03 Yes asks for the offer", () => {
 describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
   const swipe = async (from: number, to: number) => {
     const el = await current();
-    Object.defineProperty(el, "clientWidth", { value: 300 });
     fireEvent.pointerDown(el, { clientX: from, clientY: 100 });
+    fireEvent.pointerMove(el, { clientX: to, clientY: 105 });
     fireEvent.pointerUp(el, { clientX: to, clientY: 105 });
   };
+  const swipeUp = async (from: number, to: number) => {
+    const el = await current();
+    fireEvent.pointerDown(el, { clientX: 150, clientY: from });
+    fireEvent.pointerMove(el, { clientX: 150, clientY: to });
+    fireEvent.pointerUp(el, { clientX: 150, clientY: to });
+  };
+  /** The moving layer of the card (its own transform, the parent of the article). */
+  const movingLayer = async () => (await current()).parentElement as HTMLElement;
 
   it("US-TAU-02 Nein and Später are stored for this account, send no request, and the end view counts them with a next step", async () => {
     const posts = server([card(1), card(2)]);
@@ -329,6 +345,57 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     expect(screen.getByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
     expect(posts.answers).toEqual([]);
   });
+
+  it("US-TAU-02 a swipe up is Später: stored privately, the card leaves and nothing is sent", async () => {
+    const posts = server([card(1), card(2)]);
+    open();
+    await swipeUp(300, 120);
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
+    expect(posts.answers).toEqual(["PUT o1 later"]);
+    expect([...posts]).toEqual([]);
+  });
+
+  it("FR-TAU-03 a swipe to the right keeps the card in its place while the confirmation asks", async () => {
+    server([card(1), card(2)]);
+    open();
+    await swipe(50, 250);
+    expect(await screen.findByText("Bei Ben1 anfragen: Echte Aloe 1?")).toBeTruthy();
+    expect((await movingLayer()).style.getPropertyValue("--swipe-x")).toBe("0px");
+  });
+
+  it("US-TAU-02 Rückgängig brings the card back to its place", async () => {
+    server([card(1), card(2)]);
+    open();
+    await current();
+    await press(/^Nein/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    await press("Rückgängig");
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
+    expect((await movingLayer()).style.getPropertyValue("--swipe-x")).toBe("0px");
+  });
+
+  it("NFR-13 with reduced motion a swipe to the left still answers, at once and without a fly-off", async () => {
+    const before = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes("reduce"),
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      const posts = server([card(1), card(2)]);
+      open();
+      await swipe(250, 100);
+      expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
+      expect(posts.answers).toEqual(["PUT o1 no"]);
+    } finally {
+      window.matchMedia = before;
+    }
+  });
 });
 
 const BOTH = {
@@ -419,5 +486,24 @@ describe("US-TAU-07 empty states and calm mode", () => {
     expect(
       await screen.findByText(/Für jetzt durch. 0 angefragt, 0 für später, 1 abgelehnt./),
     ).toBeTruthy();
+  });
+});
+
+describe("US-QS-14 · US-QS-15 the matching offers are a sub-page with one page header", () => {
+  it("US-QS-14 have exactly one h1 while they load, and the page header's back control leads to the exchange", () => {
+    server([card(1)]);
+    open();
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Passende Angebote",
+    ]);
+    expect(screen.getByRole("link", { name: "Zurück zur Tauschbörse" }).getAttribute("href")).toBe(
+      "/friends/exchange",
+    );
+  });
+
+  it("US-QS-15 the frame is one screen, so at a large text size only the content region scrolls (DS-61)", () => {
+    server([card(1)]);
+    open();
+    expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
   });
 });

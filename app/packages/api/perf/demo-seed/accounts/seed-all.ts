@@ -15,8 +15,11 @@ export type SeedOptions = {
   log?: (m: string) => void;
 };
 
-/** Fills the three dev accounts (see docs/guides/reference/app.md, "Demo seed"). Safe to run again. */
-export async function seedAll(pool: Pool, opt: SeedOptions): Promise<void> {
+/** The three demo accounts as seed contexts, all calling the API in process (shared by the states profile). */
+export function demoContexts(
+  pool: Pool,
+  opt: SeedOptions,
+): { api: Caller; anna: Ctx; ben: Ctx; clara: Ctx } {
   const log = opt.log ?? (() => undefined);
   const emails = new Map(
     Object.entries(opt.subjects).map(([user, sub]) => [sub, `${user}@example.test`]),
@@ -28,9 +31,13 @@ export async function seedAll(pool: Pool, opt: SeedOptions): Promise<void> {
     name,
     log,
   });
-  const anna = ctx("test", "Anna");
-  const ben = ctx("test2", "Ben");
-  const clara = ctx("test3", "Clara");
+  return { api, anna: ctx("test", "Anna"), ben: ctx("test2", "Ben"), clara: ctx("test3", "Clara") };
+}
+
+/** Fills the three dev accounts (see docs/guides/reference/app.md, "Demo seed"). Safe to run again. */
+export async function seedAll(pool: Pool, opt: SeedOptions): Promise<void> {
+  const log = opt.log ?? (() => undefined);
+  const { api, anna, ben, clara } = demoContexts(pool, opt);
 
   await seedAnna(anna);
   const benData = await seedBen(ben, opt.withPhotos ?? false);

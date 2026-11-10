@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
-import { Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame } from "../../../kernel";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { cn } from "@/shared/lib/utils";
+import { LoadFrame } from "../../../shared/data";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementPhoto } from "../../measure/measurement-header/measurement-photo";
 import { CARD_CLASSES } from "../../shared/notices/notices";
@@ -18,14 +19,20 @@ function Entry(props: {
 }) {
   const { row } = props;
   return (
-    <div className={`${CARD_CLASSES} grid gap-1`}>
+    <div className={cn(CARD_CLASSES, "grid gap-1")}>
       <p className="font-semibold">
         {valueText(row.value)} · {dateText(row.date)}
       </p>
       <p className="text-muted-foreground">{QUALITY_NAME[row.quality]}</p>
       {row.note ? <p className="text-muted-foreground">{row.note}</p> : null}
       {row.photo ? (
-        <MeasurementPhoto {...props.access} measurementId={row.id} date={row.date} compact />
+        <MeasurementPhoto
+          {...props.access}
+          measurementId={row.id}
+          photo={row.photo}
+          date={row.date}
+          compact
+        />
       ) : null}
     </div>
   );
@@ -42,6 +49,8 @@ export function PlantHistory(props: {
   specimenId: string;
   /** Leaves the layer and opens the measuring. */
   onMeasure?: () => void;
+  /** Entries per page; smaller when a switch sits above the list (US-WAC-07). */
+  pageSize?: number;
 }) {
   const { api, token, specimenId } = props;
   const key = useMemo(() => ["care", "measurements", specimenId], [specimenId]);
@@ -56,7 +65,7 @@ export function PlantHistory(props: {
       token={token}
       load={load}
       loadingText={loading}
-      loadingFallback={
+      loadingStatus={
         <p role="status" className="text-sm text-muted-foreground">
           {loading}
         </p>
@@ -71,9 +80,9 @@ export function PlantHistory(props: {
       {(view) => (
         <Pager
           items={view.measurements}
-          pageSize={PAGE_SIZE}
+          pageSize={props.pageSize ?? PAGE_SIZE}
           label="Messungen und Fotos"
-          param="verlauf"
+          param="vfrom"
           replace
           getKey={(m) => m.id}
           renderItem={(m) => <Entry row={m} access={{ api, token, specimenId }} />}

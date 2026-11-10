@@ -66,3 +66,32 @@ export async function seedTreatments(ctx: Ctx, ids: readonly Id[]): Promise<void
     `Ben: treatments written (${Object.keys(course).length + Object.keys(done).length} fields)`,
   );
 }
+
+type LeafDef = { days: number; lengthMm: number; widthMm: number; note?: string };
+
+/**
+ * The leaves of Ben's Birkenfeige (Ficus benjamina): the leaf log shows its filled view, the count, the comparison and
+ * more leaves than one page holds (US-WAC-07, one leaf per page in the web view). Demo values in whole millimetres,
+ * logged oldest first; the newest leaf carries a note, so the first page shows one (US-WAC-07).
+ */
+const BIRKENFEIGE_LEAVES: readonly LeafDef[] = [
+  { days: 45, lengthMm: 52, widthMm: 23 },
+  { days: 30, lengthMm: 61, widthMm: 27 },
+  { days: 16, lengthMm: 58, widthMm: 26 },
+  { days: 4, lengthMm: 68, widthMm: 29, note: "Frisch aufgegangen, glänzend hellgrün." },
+];
+
+/** The leaves of a plant through the leaf log route; skipped when the plant already has leaves (idempotent). */
+export async function seedLeaves(ctx: Ctx, specimenId: Id): Promise<void> {
+  const { api, sub } = ctx;
+  const view = await api.ok(sub, "GET", `/specimens/${specimenId}/leaves`);
+  if (Number(view["count"]) > 0) return;
+  for (const leaf of BIRKENFEIGE_LEAVES)
+    await api.ok(sub, "POST", `/specimens/${specimenId}/leaves`, {
+      timeZone: TZ,
+      date: daysAgo(leaf.days),
+      lengthMm: leaf.lengthMm,
+      widthMm: leaf.widthMm,
+      ...(leaf.note ? { note: leaf.note } : {}),
+    });
+}

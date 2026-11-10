@@ -9,7 +9,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { FILE_RULES, importViolations, RULES, TOKEN_FILE } from "./check-design-system-rules.mjs";
+import { FILE_RULES, RULES, TOKEN_FILE } from "./check-design-system-rules.mjs";
+import { importViolations } from "./check-design-system-imports.mjs";
 
 const WEB = "packages/web";
 export const REQUIRED_DEPENDENCIES = [
@@ -20,7 +21,7 @@ export const REQUIRED_DEPENDENCIES = [
   "react-hook-form",
   "zod",
 ];
-export const REQUIRED_FILES = ["src/components/ui", "src/lib/utils.ts"];
+export const REQUIRED_FILES = ["src/shared/ui", "src/shared/lib/utils.ts"];
 
 function* walk(dir) {
   if (!fs.existsSync(dir)) return;
@@ -79,14 +80,14 @@ export function scan(webRoot, locations = new Map()) {
     const file = path.relative(src, full).split(path.sep).join("/");
     const content = fs.readFileSync(full, "utf8");
     if (language === "css" && file !== TOKEN_FILE) add("DS-33", file);
-    if (language === "tsx") scanFileRules(file, content, add, locations);
+    scanFileRules(file, content, add, locations);
     scanLines(file, language, content, add);
   }
   scanStack(webRoot, add);
   return counts;
 }
 
-// Rules whose migration is finished: never baselined again (DS-48: raw controls outside components/ui).
+// Rules whose migration is finished: never baselined again (DS-48: raw controls outside shared/ui).
 export const NON_BASELINEABLE_RULES = new Set([
   "DS-01",
   "DS-02",

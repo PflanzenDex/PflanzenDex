@@ -8,7 +8,12 @@ import {
   type NewSpecimen,
   type SpecimenRow,
 } from "../collection/index.ts";
-import { asAccount } from "../kernel/index.ts";
+import {
+  asAccount,
+  beginAsApplicationRole,
+  poolLimits,
+  settleTransaction,
+} from "../kernel/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export type HandoverOutcome =
@@ -130,19 +135,14 @@ export async function runHandover<T>(
   userId: string,
   work: (session: HandoverSession) => Promise<{ readonly commit: boolean; readonly value: T }>,
 ): Promise<T | { readonly refused: ReceiveRefusal | "specimen_gone" }> {
-  const client = await pool.connect();
   try {
-    await client.query("begin");
-    await client.query("set local role pflanzendex_app");
-    await client.query("select set_config('app.account_id', $1, true)", [userId]);
-    const r = await work(new HandoverSession(client));
-    await client.query(r.commit ? "commit" : "rollback");
-    return r.value;
+    return await settleTransaction(
+      pool,
+      (client) => beginAsApplicationRole(client, poolLimits(pool), [["app.account_id", userId]]),
+      (client) => work(new HandoverSession(client)),
+    );
   } catch (e) {
-    await client.query("rollback");
     if (e instanceof Refused) return { refused: e.reason };
     throw e;
-  } finally {
-    client.release();
   }
 }

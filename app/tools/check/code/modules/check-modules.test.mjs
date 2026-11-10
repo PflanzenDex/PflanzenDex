@@ -2,10 +2,21 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import { checkProject } from "../check-boundaries.mjs";
-import { kernelExports } from "./check-modules-sql.mjs";
+import { kernelExports } from "./rules/check-modules-sql.mjs";
 import { MODULE_CONFIG as REAL } from "../../../../config/lint/modules.config.mjs";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs = [];
+after(() => {
+  for (const dir of madeDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+function tempDir(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // Module rules AB-7 to AB-14 (FR-QG-19): each rule has a clean case and a violating fixture.
 const CFG = {
@@ -23,7 +34,7 @@ const CFG = {
 const cfg = (patch = {}) => ({ ...CFG, ...patch });
 
 function project(files) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "modules-"));
+  const dir = tempDir("modules-");
   for (const [rel, content] of Object.entries(files)) {
     const p = path.join(dir, rel);
     fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -298,7 +309,7 @@ describe("module boundaries (FR-QG-19)", () => {
         /^AB-13 config\/lint\/modules\.config\.mjs transition entry core\/alt is stale/,
       );
     });
-    for (const f of ["components", "lib", "platform", "styles"])
+    for (const f of ["app", "shared", "styles"])
       it(`QG-U4 · AB-13 the reserved design system folder web/${f} is no module candidate`, () => {
         assert.deepEqual(run({ [`packages/web/src/${f}/x.ts`]: "export const x = 1;\n" }), []);
       });
@@ -510,6 +521,18 @@ describe("AB-11 glossary words in the kernel (FR-QG-19)", () => {
 
   it("without a word list the rule is idle", () => {
     assert.deepEqual(run(kernel("export const specimen = 1;\n")), []);
+  });
+
+  it("FR-QG-23 AB-11: a package whose kernel lives elsewhere (web: shared/data) is checked there", () => {
+    const moved = cfg({
+      KERNEL_GLOSSARY_WORDS: ["specimen"],
+      KERNEL_FOLDERS: { web: "shared/data" },
+    });
+    const v = run(
+      { "packages/web/src/shared/data/client.ts": "export const specimenUrl = 1;\n" },
+      moved,
+    );
+    assert.match(v[0] ?? "", /^AB-11 packages\/web\/src\/shared\/data\/client\.ts:1 kernel names/);
   });
 });
 

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFileSync, mkdtempSync, readdirSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pg from "pg";
@@ -12,6 +12,14 @@ import {
   testDatabaseUrl,
   withAccount,
 } from "./kernel/index.ts";
+
+// Folders this file makes are removed after it, also when a test fails (#1278).
+const madeDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  madeDirs.push(dir);
+  return dir;
+}
 
 // US-DEV-07: every migration runs on a database with realistic data. A scratch database is migrated up to 0012 (the
 // English names, ADR 0004), filled with a data set of the order of magnitude of the prototype (13 species, 17
@@ -143,7 +151,7 @@ beforeAll(async () => {
   url.pathname = `/${DB}`;
   scratch = openPool(url.toString());
   scratch.on("error", () => undefined);
-  const before = mkdtempSync(join(tmpdir(), "realistic-"));
+  const before = tempDir("realistic-");
   for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter((n) => n < BASELINE))
     copyFileSync(join(MIGRATIONS_DIRECTORY, f), join(before, f));
   await migrate(scratch, { directory: before });
@@ -151,6 +159,7 @@ beforeAll(async () => {
   applied = await migrate(scratch);
 }, 120_000);
 afterAll(async () => {
+  for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
   await scratch.end();
   await admin.query(`drop database if exists ${DB} with (force)`);
   await admin.end();

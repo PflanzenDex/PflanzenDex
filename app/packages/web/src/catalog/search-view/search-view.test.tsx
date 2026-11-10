@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { setViewportWidth } from "@/lib/viewport-mock";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { HITS_PER_PAGE } from "./hit-list/hit-list";
 import { SpeciesSearch } from "./search-view";
 
@@ -118,6 +118,20 @@ describe("US-BES-01 search", () => {
   });
 });
 
+describe("US-QS-21 the search row at a larger text size (issue 1019)", () => {
+  it("US-QS-21 the field keeps a 10 rem basis, the Filter opener and the proposal never shrink, and the rows wrap instead of squeezing the field", () => {
+    search(many(2));
+    const field = screen.getByRole("search");
+    expect(field.className).toContain("basis-40");
+    expect(field.className).toContain("min-w-0");
+    expect(field.parentElement?.className).toContain("flex-wrap");
+    expect(screen.getByRole("button", { name: /^Filter/ }).className).toContain("shrink-0");
+    const propose = screen.getByRole("button", { name: "Art vorschlagen" });
+    expect(propose.className).toContain("shrink-0");
+    expect(propose.parentElement?.className).toContain("flex-wrap");
+  });
+});
+
 describe("US-QS-21 the catalog list is paged", () => {
   it("US-QS-21 shows one page of compact results with name, scientific name and one fact", () => {
     search(many(45));
@@ -130,26 +144,46 @@ describe("US-QS-21 the catalog list is paged", () => {
     expect(screen.queryByText("Mehr laden")).toBeNull();
   });
 
+  it("US-QS-21 every result row has a thumbnail slot of one fixed size, so the names share one left edge", () => {
+    search(many(3));
+    const rows = within(screen.getByRole("list", { name: "Treffer" })).getAllByRole("button");
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      const slot = row.querySelector('[aria-hidden="true"]');
+      expect(slot?.className).toContain("size-10");
+      expect(slot?.className).toContain("shrink-0");
+    }
+  });
+
+  it("US-QS-15 · issue 1116 at a large text size a row drops its thumbnail and tightens its padding, so words stay whole", () => {
+    search(many(1));
+    const row = within(screen.getByRole("list", { name: "Treffer" })).getByRole("button");
+    // The row is a size container; below 14rem (only reached at large text) the slot hides and the padding shrinks.
+    expect(row.parentElement?.className).toContain("@container");
+    expect(row.className).toContain("@max-[14rem]:px-2");
+    expect(row.querySelector('[aria-hidden="true"]')?.className).toContain("@max-[14rem]:hidden");
+  });
+
   it("US-QS-21 a short list has no pager", () => {
     search(many(2));
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();
   });
 
-  it("US-QS-21 the page is in the address, a reload at ?page=2 shows page 2", async () => {
+  it("US-QS-21 · FR-BES-23 the first entry is in the address, a reload at ?from=3 shows the same entries", async () => {
     search(many(10));
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(address()).toBe("/discover?view=catalog&page=2");
+    expect(address()).toBe("/discover?view=catalog&from=3");
     cleanup();
-    search(many(10), "/discover?view=catalog&page=2");
+    search(many(10), "/discover?view=catalog&from=3");
     expect(screen.getByText("Species 4")).toBeTruthy();
     expect(screen.queryByText("Species 1")).toBeNull();
   });
 
-  it("US-QS-21 a new search starts at page 1", async () => {
-    const { rerender } = search(many(10), "/discover?view=catalog&page=3", "a");
-    expect(address()).toContain("page=3");
+  it("US-QS-21 a new search starts at the first entry", async () => {
+    const { rerender } = search(many(10), "/discover?view=catalog&from=6", "a");
+    expect(address()).toContain("from=6");
     rerender(
-      <MemoryRouter initialEntries={["/discover?view=catalog&page=3"]}>
+      <MemoryRouter initialEntries={["/discover?view=catalog&from=6"]}>
         <SpeciesSearch
           searchText="ab"
           hit={many(10)}
@@ -162,7 +196,7 @@ describe("US-QS-21 the catalog list is paged", () => {
       </MemoryRouter>,
     );
     // The router instance is kept by React, so the effect of the changed search text rewrites the address.
-    await vi.waitFor(() => expect(address()).not.toContain("page=3"));
+    await vi.waitFor(() => expect(address()).not.toContain("from=6"));
   });
 
   it("US-QS-21 choosing a result opens its profile", async () => {
@@ -198,13 +232,13 @@ describe("US-QS-21 filters live in a layer and show as chips", () => {
     expect(screen.getByText("Species 1")).toBeTruthy();
   });
 
-  it("US-QS-21 a filter starts the list at page 1", async () => {
-    search(many(10), "/discover?view=catalog&page=3&difficulty=1");
+  it("US-QS-21 a filter starts the list at the first entry", async () => {
+    search(many(10), "/discover?view=catalog&from=6&difficulty=1");
     await userEvent.click(screen.getByRole("button", { name: "Filter (1)" }));
     const layer = await screen.findByRole("dialog", { name: "Filter" });
     await userEvent.click(within(layer).getByRole("checkbox", { name: "Nur meine Vorschläge" }));
     expect(address()).toContain("own=1");
-    await vi.waitFor(() => expect(address()).not.toContain("page=3"));
+    await vi.waitFor(() => expect(address()).not.toContain("from=6"));
   });
 
   it("US-QS-21 filters that match nothing say so and offer to reset them (P-09)", async () => {
@@ -242,5 +276,39 @@ describe("US-QS-21 states name their next action", () => {
       </MemoryRouter>,
     );
     expect(screen.queryByText("Der gemeinsame Katalog ist noch leer.")).toBeNull();
+  });
+});
+
+describe("FR-BES-24 the search says when more species match", () => {
+  function searchWith(more: boolean | undefined, hits: readonly SpeciesHit[]) {
+    return render(
+      <MemoryRouter>
+        <SpeciesSearch
+          searchText="Dra"
+          hit={hits}
+          more={more}
+          onSearch={onSearch}
+          onOpen={onOpen}
+          onPropose={onPropose}
+          embedded
+        />
+      </MemoryRouter>,
+    );
+  }
+
+  it("FR-BES-24 shows the notice next to the shown hits when more species match", () => {
+    searchWith(true, many(3));
+    expect(screen.getByText("Mehr als 50 Treffer. Suche genauer.")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /Species/ })).toHaveLength(3);
+  });
+
+  it("FR-BES-24 no notice when every match is shown (exactly as many as the search shows)", () => {
+    searchWith(false, many(3));
+    expect(screen.queryByText("Mehr als 50 Treffer. Suche genauer.")).toBeNull();
+  });
+
+  it("FR-BES-24 no notice without hits, even when the flag is set", () => {
+    searchWith(true, []);
+    expect(screen.queryByText("Mehr als 50 Treffer. Suche genauer.")).toBeNull();
   });
 });

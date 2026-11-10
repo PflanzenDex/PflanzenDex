@@ -10,6 +10,8 @@ export type {
   Role,
   MergeMoved,
   MergeOutcome,
+  ApprovedTwin,
+  ApprovedDuplicate,
 } from "./types";
 export type { ReviewEntry, ReviewList, SimilarSpecies } from "./review/list";
 export type { ApprovalIssue } from "./review/approval";
@@ -19,9 +21,15 @@ export {
   speciesHints,
   speciesLoad,
   speciesSearch,
+  speciesExact,
+  speciesExisting,
   speciesPropose,
+  speciesSchema,
   normalize,
   parseLatin,
+  LATIN_NAME_RULE,
+  SPECIES_NAMING_RULE,
+  checkSpeciesName,
 } from "./species";
 export type {
   Species,
@@ -29,11 +37,14 @@ export type {
   SpeciesName,
   SpeciesStore,
   SpeciesHit,
+  SpeciesSearch,
   SpeciesCreation,
   SpeciesValues,
   LatinName,
   NameField,
   GrowthMeasure,
+  NameExample,
+  SpeciesNameCheck,
 } from "./species";
 export {
   CATALOG_FILL_JOB_TYPE,

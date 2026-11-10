@@ -1,4 +1,5 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the page on a phone: count, search field, filter buttons, sort field and two cards (DS-52, DS-53). */
 export function PokedexPageSkeleton({ label }: { label: string }) {
@@ -17,5 +18,32 @@ export function PokedexPageSkeleton({ label }: { label: string }) {
         <Skeleton className="h-28 w-full rounded-xl" />
       </ul>
     </SkeletonGroup>
+  );
+}
+
+/** The progress of the layer: the bar and three lines of text (US-POK, DS-52, DS-53); shows after the delay (DS-57). */
+export function ProgressSkeleton({ label }: { label: string }) {
+  return (
+    <DelayedSkeleton>
+      <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-3">
+        <Skeleton className="h-3 w-full rounded-full" />
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-5 w-2/3" />
+        ))}
+      </SkeletonGroup>
+    </DelayedSkeleton>
+  );
+}
+
+/** The milestones of the layer as three rows (US-POK, DS-52, DS-53); shows after the delay (DS-57). */
+export function MilestonesSkeleton({ label }: { label: string }) {
+  return (
+    <DelayedSkeleton>
+      <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-2">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-control" />
+        ))}
+      </SkeletonGroup>
+    </DelayedSkeleton>
   );
 }

@@ -62,9 +62,22 @@ export function componentName(file) {
   return stem.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
 }
 
-/** The components of `components/ui` and `components/shared` (LY-4 layout: one folder per component). */
-export function sharedComponents(web = path.join(APP, "packages/web/src/components")) {
-  return ["ui", "shared"].flatMap((group) =>
-    files(path.join(web, group), isSource).map(componentName).filter(Boolean),
-  );
+/**
+ * The components the inventory names: the old `components/ui` (now `shared/ui`), the old `components/shared` (its parts now
+ * in `shared/patterns`: responsive, states, empty-state, navigation) and the four app-shell components that were in
+ * `components/shared` until FR-QG-23 step 3 (now `app/frame`; `app/frame/app` is the app itself and stays out). The
+ * scope is unchanged by FR-QG-23 steps 2 and 3; data display and the elements were never in it. Paths are relative to `src/`.
+ */
+export function sharedComponents(src = path.join(APP, "packages/web/src")) {
+  return [
+    "shared/ui",
+    "shared/patterns/responsive",
+    "shared/patterns/states",
+    "shared/patterns/elements/empty-state",
+    "shared/patterns/navigation",
+    "app/frame/app-shell",
+    "app/frame/global-header",
+    "app/frame/mobile-nav-bar",
+    "app/frame/side-nav",
+  ].flatMap((group) => files(path.join(src, group), isSource).map(componentName).filter(Boolean));
 }

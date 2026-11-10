@@ -19,6 +19,14 @@ const REGISTER: Record<string, readonly [Status, string]> = {
   species_status: ["scoped", "catalog status or own case"],
   species_own: ["scoped", "own review case"],
   species_is_merged: ["scoped", "own review case"],
+  species_review_copy: [
+    "id-bound",
+    "review case of the species being inserted, by its object id (NFR-12)",
+  ],
+  review_case_species_sync: [
+    "id-bound",
+    "species row of the changed review case, by its object id (NFR-12)",
+  ],
   is_open_proposal: ["gated", "reviewers read all open proposals"],
   lock_species_for_merge: ["gated", "reviewer lock"],
   invitation_required: ["gated", "one global setting row"],
@@ -55,6 +63,15 @@ const REGISTER: Record<string, readonly [Status, string]> = {
   active_species_of: ["fixed", "0093"],
   erase_catalog_contributions: ["scoped", "own cases, specimens and profiles"],
   erase_account: ["scoped", "own account"],
+  deletion_deadline_rows: [
+    "gated",
+    "worker only (owner role): open deletions for the deadline check, no account id",
+  ],
+  operator_deletion_queue: ["gated", "operator, open deletions without account id"],
+  operator_mark_identity_removed: [
+    "gated",
+    "operator, closes one identity removal of the deletion log",
+  ],
   accept_catalog_correction: ["gated", "reviewer"],
   reject_catalog_correction: ["gated", "reviewer"],
   revert_catalog_field: ["gated", "reviewer"],

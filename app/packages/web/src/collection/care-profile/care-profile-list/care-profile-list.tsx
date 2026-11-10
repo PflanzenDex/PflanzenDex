@@ -4,18 +4,12 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import type { ApiError } from "../../../kernel";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import type { ApiError } from "../../../shared/data";
 import { CareProfileCard } from "../sections/care-profile-card/care-profile-card";
 import { KeptProfileCard } from "../sections/kept-profile-card/kept-profile-card";
-import {
-  NextAction,
-  PROFILE_GRID,
-  Quiet,
-  Status,
-  Warning,
-} from "../../specimens/cards/parts/parts";
-import { refusalText } from "../../specimens/model/refusal";
+import { NextAction, PROFILE_GRID, Status, Warning } from "../../specimens/cards/parts/parts";
+import { refusalText } from "@/shared/lib/error-text";
 
 export interface ProfileData {
   readonly entries: readonly CareProfileEntry[];
@@ -31,11 +25,7 @@ export function ProfileList(props: {
 }) {
   const { data, write } = props;
   return (
-    <div>
-      <Quiet className="mb-3">
-        Hier weichst du von den Katalogwerten ab, wo dein Standort oder dein Klima es verlangt. Der
-        Katalog bleibt unverändert. Dein Pflegeprofil ist privat und nie Teil einer Freigabe.
-      </Quiet>
+    <div className="@container">
       {write.message && <Status>{write.message}</Status>}
       {write.error && (
         <Warning>

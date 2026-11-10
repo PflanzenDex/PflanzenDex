@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
-import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { Button } from "@/shared/ui/button/button";
+import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import {
   Form,
   FormField,
@@ -10,10 +10,11 @@ import {
   FormMessage,
   useFormField,
   FormRoot,
-} from "@/components/ui/fields/form/form";
-import { Input } from "@/components/ui/fields/input/input";
-import { currentTimeZone } from "../../../kernel";
-import { Field } from "../../shared/field/field";
+} from "@/shared/ui/fields/form/form";
+import { Input } from "@/shared/ui/fields/input/input";
+import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { currentTimeZone } from "../../../shared/data";
+import { Field } from "@/shared/ui/fields/form/field/field";
 import {
   toTreatmentInput,
   treatmentDefaults,
@@ -65,6 +66,30 @@ function Choice(props: {
   );
 }
 
+/** The reason, the optional agent and the first date of a plan (US-BEH-01); the planning layer shows them as one view. */
+export function TermFields({ control }: { control: Control<TreatmentFields> }) {
+  return (
+    <>
+      <Field control={control} name="reason" label="Grund">
+        {(field) => (
+          <Input
+            {...field}
+            autoComplete="off"
+            maxLength={TREATMENT_LIMITS.reason.max}
+            placeholder="zum Beispiel Wollläuse"
+          />
+        )}
+      </Field>
+      <Field control={control} name="agent" label="Mittel (optional)">
+        {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
+      </Field>
+      <Field control={control} name="date" label="Datum">
+        {(field) => <DateField {...field} />}
+      </Field>
+    </>
+  );
+}
+
 function BasicFields(props: {
   control: Control<TreatmentFields>;
   specimens: readonly TreatableSpecimen[];
@@ -82,27 +107,13 @@ function BasicFields(props: {
           </FormItem>
         )}
       />
-      <Field control={control} name="reason" label="Grund">
-        {(field) => (
-          <Input
-            {...field}
-            autoComplete="off"
-            maxLength={TREATMENT_LIMITS.reason.max}
-            placeholder="zum Beispiel Wollläuse"
-          />
-        )}
-      </Field>
-      <Field control={control} name="agent" label="Mittel (optional)">
-        {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
-      </Field>
-      <Field control={control} name="date" label="Datum">
-        {(field) => <Input {...field} type="date" />}
-      </Field>
+      <TermFields control={control} />
     </>
   );
 }
 
-function CourseFields({ control }: { control: Control<TreatmentFields> }) {
+/** "Kur planen": the count and the interval, only while the course is on (US-BEH-01). */
+export function CourseFields({ control }: { control: Control<TreatmentFields> }) {
   const isCourse = useWatch({ control, name: "isCourse" });
   return (
     <>

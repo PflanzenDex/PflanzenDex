@@ -6,6 +6,7 @@ export const EMPTY_DISTRIBUTION: { distribution: Distribution } = {
     zones: [],
     thinnest: [],
     notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
+    lightNeedUnknown: [],
     hint: {
       text: "Es gibt keine Lichtzone für erwachsene Pflanzen.",
       nextAction: "Lege unter „Licht“ mindestens zwei Lichtzonen an.",

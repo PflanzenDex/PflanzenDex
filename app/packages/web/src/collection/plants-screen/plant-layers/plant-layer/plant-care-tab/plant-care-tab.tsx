@@ -1,7 +1,30 @@
 import { lazy, Suspense, type ReactNode } from "react";
+import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
-import type { PhotoAccess } from "@/lib/use-stored-photo";
-import { Quiet } from "../../../../specimens/cards/parts/parts";
+import { texts } from "@/shared/lib/text-rules/texts";
+import {
+  SegmentedControl,
+  type SegmentedOption,
+} from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { refusalText } from "@/shared/lib/error-text";
+import { Button } from "@/shared/ui/button/button";
+import {
+  DelayedSkeleton,
+  useHeldLoader,
+} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
+import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
+import {
+  RepotPlanSection,
+  signsLayerId,
+  useRepotPlan,
+} from "../../../../markers/repot/repot-plan/repot-plan";
+import { CareProfileSectionSkeleton } from "../../../../care-profile-page/care-profile-page.skeleton";
+import table from "./plant-care-tab.de.json";
+
+const t = texts(table);
 
 const CareProfile = lazy(() =>
   import("../../../../care-profile-page/care-profile-page").then((m) => ({
@@ -9,33 +32,148 @@ const CareProfile = lazy(() =>
   })),
 );
 
+const PART_PARAM = "teil";
+const PARTS = [
+  { value: "behandlungen", label: t("parts.treatments") },
+  { value: "profil", label: t("parts.profile") },
+] as const;
+/** The repot part: offered for a plant while the repot planner is on (US-BES-19), never for a cutting. */
+const REPOT_PART = { value: "umtopfen", label: t("parts.repot") } as const;
+type Part = "behandlungen" | "profil" | "umtopfen";
+
+/** What the repot part needs: the access to the plan and the action of "Umgetopft" (US-BES-19). */
+export type RepotPart = { access: PhotoAccess; onRepot: () => void };
+
+/** The layer of the own care profile of one plant's species (US-QS-23, US-BES-09). */
+export const careProfileLayerId = (specimenId: string): string => `profil-${specimenId}`;
+
 /**
- * "Pflege" (US-QS-23): the treatments and the care phase of the plant (a slot of `care`, with their existing actions,
- * US-BEH-01 to US-BEH-03, US-PHA-03) and the own care profile of its species (US-BES-09), loaded when the tab opens.
+ * The part of "Pflege" in the address (`&teil=behandlungen|profil|umtopfen`, absent means treatments). The repot part is
+ * chosen only while it is offered; otherwise the address falls back to the treatments. A change replaces the entry and
+ * keeps the state of the layer, so Back from the profile layer returns to the same part.
  */
-export function PlantCareTab(props: { card: SpecimenCard; access: PhotoAccess; care: ReactNode }) {
+function usePart(repotOffered: boolean): [Part, (value: Part) => void] {
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const raw = params.get(PART_PARAM);
+  const part: Part =
+    raw === "profil"
+      ? "profil"
+      : raw === REPOT_PART.value && repotOffered
+        ? "umtopfen"
+        : "behandlungen";
+  const choose = (value: Part) => {
+    const next = new URLSearchParams(params);
+    next.set(PART_PARAM, value);
+    setParams(next, { replace: true, state: location.state });
+  };
+  return [part, choose];
+}
+
+/**
+ * The own care profile of the plant's species (US-BES-09): a short line and the button that opens its own layer, where
+ * the editor loads (a layer loads its data only while it is open, US-QS-22).
+ */
+function ProfilePart({ card }: { card: SpecimenCard }) {
+  return (
+    <section aria-labelledby="own-profile" className="grid gap-2">
+      <h3 id="own-profile" className="font-semibold">
+        {t("profile.title")}
+      </h3>
+      <Quiet>{t("profile.hint")}</Quiet>
+      <LayerOpener id={careProfileLayerId(card.id)}>{t("profile.open")}</LayerOpener>
+    </section>
+  );
+}
+
+/**
+ * The layer "Pflegeprofil" of one plant (US-BES-09, US-QS-23): the own care profile of its species with the existing
+ * editor. Closing it goes back to the plant layer when the app opened it, so the plant stays where it was.
+ */
+export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
+  return (
+    <LayerSheet id={careProfileLayerId(props.card.id)} title={t("profile.layerTitle")}>
+      {/* The profile's own shape while its chunk loads (US-QS-14): the layer does not move when the profile arrives. */}
+      <Suspense
+        fallback={
+          <DelayedSkeleton>
+            <CareProfileSectionSkeleton label={t("profile.loading")} />
+          </DelayedSkeleton>
+        }
+      >
+        <CareProfile
+          api={props.access.api}
+          token={props.access.token}
+          speciesId={props.card.speciesId}
+        />
+      </Suspense>
+    </LayerSheet>
+  );
+}
+
+/**
+ * The layer "Beobachtungen" of one plant (US-BES-19): the three observations, ticked here. The plan is read while the layer
+ * is open, and a tick reloads it, so the line of the part follows at once.
+ */
+export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
+  const plan = useRepotPlan(props.card, props.access);
+  // The first read holds its status once shown (D5); what it replaces waits for the hold. A refetch keeps the data
+  // on screen and has no status of its own (useRequest is pending only without data).
+  const loading = useHeldLoader(plan.status === "pending");
+  return (
+    <LayerSheet id={signsLayerId(props.card.id)} title={t("signs.layerTitle")}>
+      {loading ? (
+        <DelayedSkeleton>
+          <p role="status" className="text-sm text-muted-foreground">
+            {t("signs.loading")}
+          </p>
+        </DelayedSkeleton>
+      ) : null}
+      {!loading && plan.status === "error" ? (
+        <Warning>
+          <p>{t("signs.failed")}</p>
+          {plan.error ? <p>{refusalText(plan.error)}</p> : null}
+          <Button type="button" variant="outline" onClick={plan.retry}>
+            {t("signs.retry")}
+          </Button>
+        </Warning>
+      ) : null}
+      {!loading && plan.value !== undefined && !plan.value.hidden ? (
+        <Observations
+          access={props.access}
+          id={props.card.id}
+          hints={plan.value.hints}
+          reload={plan.retry}
+        />
+      ) : null}
+    </LayerSheet>
+  );
+}
+
+/**
+ * "Pflege" of the plant layer (US-QS-23): the segment "Behandlungen | Pflegeprofil", and "Umtopfen" (US-BES-19) for a
+ * plant while the repot planner is on. The treatments and the care phase (`care`, a slot) are the first part; the own
+ * care profile opens its own layer; the repot plan is its own part, so the tab fits a phone (issue 1328).
+ */
+export function PlantCareTab(props: {
+  card: SpecimenCard;
+  care: ReactNode;
+  repot?: RepotPart | undefined;
+}) {
+  const plan = useRepotPlan(props.card, props.repot?.access);
+  // The part is offered once the plan is read: not while it loads, not while the keeper switched the planner off.
+  const repotOffered =
+    props.repot !== undefined && plan.status !== "pending" && plan.value?.hidden !== true;
+  const [part, choose] = usePart(repotOffered);
+  const options: readonly SegmentedOption<Part>[] = repotOffered ? [...PARTS, REPOT_PART] : PARTS;
   return (
     <div className="grid gap-4">
-      {props.care}
-      <section aria-labelledby="own-profile" className="grid gap-2">
-        <h3 id="own-profile" className="font-semibold">
-          Eigenes Pflegeprofil
-        </h3>
-        <Suspense
-          fallback={
-            <p role="status" className="text-sm text-muted-foreground">
-              Pflegeprofil wird geladen …
-            </p>
-          }
-        >
-          <CareProfile
-            api={props.access.api}
-            token={props.access.token}
-            speciesId={props.card.speciesId}
-          />
-        </Suspense>
-        <Quiet>Das Profil gilt für alle deine Pflanzen dieser Art.</Quiet>
-      </section>
+      <SegmentedControl label={t("parts.label")} options={options} value={part} onChange={choose} />
+      {part === "profil" ? <ProfilePart card={props.card} /> : null}
+      {part === "behandlungen" ? props.care : null}
+      {part === "umtopfen" && props.repot ? (
+        <RepotPlanSection card={props.card} plan={plan} onRepot={props.repot.onRepot} />
+      ) : null}
     </div>
   );
 }

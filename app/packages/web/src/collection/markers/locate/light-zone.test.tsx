@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
 import { setLightZone } from "../../specimens/model/specimens-api";
+import { answerCardRead } from "../../specimens/tests/cards-fake";
 
 // US-LIC-02 / US-BES-04: the own light zone of an EXISTING specimen is set, changed and cleared on its card.
 const response = (status: number, body: unknown) =>
@@ -26,6 +27,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal",
   lightZone: "Zone 2",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,
@@ -64,7 +66,7 @@ function fakeServer(state: {
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      return response(200, { cards: state.cards });
+      return answerCardRead(new URL(String(url)), state.cards) ?? response(404, {});
     }),
   );
   return posts;
@@ -121,8 +123,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
       body: { lightZoneId: "z3" },
     });
     expect(posts[0]?.key).toBeTruthy();
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Zone 3“");
+    expect(await screen.findByText(/„Bogenhanf“ ist jetzt „Zone 3“/)).toBeTruthy();
     await openPlant("Bogenhanf");
     await openTab("Standort");
     expect(await screen.findByText(/Zone 3 \(von dir für diese Pflanze gesetzt\)/)).toBeTruthy();
@@ -148,9 +149,9 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await save();
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toEqual({ lightZoneId: null });
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "Es gilt wieder die abgeleitete Zone: Zone 2 (vom Standort).",
-    );
+    expect(
+      await screen.findByText(/Es gilt wieder die abgeleitete Zone: Zone 2 \(vom Standort\)\./),
+    ).toBeTruthy();
   });
 
   it("US-LIC-02 clearing with nothing derivable says so and what to do next (P-08, P-09)", async () => {
@@ -164,9 +165,8 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await vi.waitFor(() => expect(field.value).toBe("z3"));
     await userEvent.selectOptions(field, "");
     await save();
-    const text = (await screen.findByRole("status")).textContent ?? "";
+    const text = (await screen.findByText(/Weise dem Standort eine Lichtzone zu/)).textContent;
     expect(text).toContain("unbekannt");
-    expect(text).toContain("Weise dem Standort eine Lichtzone zu");
   });
 
   it("US-BES-04 a cutting keeps its cutting light and the message says when the zone applies", async () => {
@@ -176,6 +176,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
           status: "cutting",
           lightZone: "Zone 1 · Stecklingslicht",
           lightZoneSource: "cutting",
+          lightNeedUnknown: false,
         }),
       ],
     });
@@ -186,9 +187,9 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await vi.waitFor(() => expect(within(field).getAllByRole("option")).toHaveLength(3));
     await userEvent.selectOptions(field, "z2");
     await save();
-    expect((await screen.findByRole("status")).textContent).toContain(
-      "Stecklingslicht; die Zone gilt, sobald du es eintopfst",
-    );
+    expect(
+      await screen.findByText(/Stecklingslicht; die Zone gilt, sobald du es eintopfst/),
+    ).toBeTruthy();
   });
 
   it("US-LIC-02 a refusal stays in the form with its German text and nothing is reported as changed (P-10)", async () => {

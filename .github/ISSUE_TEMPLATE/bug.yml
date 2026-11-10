@@ -1,7 +1,12 @@
 name: Bug
 description: Something behaves differently than the spec describes.
-labels: [bug]
+projects: ["PflanzenDex/2"] # type, release and epic are set on the board (fields Typ, Release, Epic)
+labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        The label `bug` is set by this form. An epic label (`epic:XX`) is required too (FR-DEV-10): without it the issue gets the label `needs-triage` and a comment naming what is missing.
   - type: input
     id: spec
     attributes:
@@ -26,7 +31,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: shown in the app footer and by the health endpoint
+      description: The line "Version …" at the bottom of "Was die App kann" (Konto, address /account/functions); it reads "unbekannt" when the build has no version. The public /health shows only the status, /health/details (inside the stack) also the version.
   - type: textarea
     id: context
     attributes:

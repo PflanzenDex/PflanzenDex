@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import type { OperatorOverview } from "@pflanzendex/core";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
+import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>
@@ -23,6 +25,9 @@ const overview = (over: Partial<OperatorOverview> = {}): OperatorOverview => ({
 
 type Handler = (url: string, init: RequestInit) => Promise<Response>;
 let current: OperatorOverview;
+let deletions: unknown;
+/** Holds the answer of `/operator/deletions` until the test releases it (issue 1722). */
+let deletionsGate: Promise<void> | undefined;
 let calls: { method: string; path: string; body: unknown; headers: Record<string, string> }[];
 
 function serve(extra: Handler = () => json(404, {})) {
@@ -45,6 +50,10 @@ function serve(extra: Handler = () => json(404, {})) {
           medianSecondsToFirstPlant: { known: false, reason: "too_few_accounts" },
           withoutPlantPercent: { known: false, reason: "too_few_accounts" },
         });
+      if (path === "/operator/deletions") {
+        if (deletionsGate) await deletionsGate;
+        return json(200, deletions);
+      }
       return extra(path, init);
     }),
   );
@@ -52,6 +61,8 @@ function serve(extra: Handler = () => json(404, {})) {
 
 beforeEach(() => {
   current = overview();
+  deletions = { warningDays: 7, near: [], past: [], identityRemovals: [] };
+  deletionsGate = undefined;
   serve();
 });
 afterEach(() => {
@@ -59,24 +70,42 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The page in a router, because each topic's layer lives in the address (`?sheet=`, US-QS-15). */
+const show = () =>
+  render(
+    <MemoryRouter>
+      <OperatorPage api="http://api" token={token} />
+    </MemoryRouter>,
+  );
+
 const open = async () => {
-  render(<OperatorPage api="http://api" token={token} />);
+  show();
   await screen.findByRole("heading", { name: "Betreiber" });
-  // The numbers arrive through the data layer after the heading.
-  await screen.findByRole("region", { name: "Zahlen" });
+  // The topics arrive through the data layer after the heading.
+  await screen.findByRole("button", { name: /^Zahlen/ });
 };
+
+/** Opens one topic as its layer, the way a person does: its row names the topic and shows its value (US-QS-15). */
+const topic = async (name: RegExp) => {
+  await userEvent.click(screen.getByRole("button", { name }));
+  return screen.findByRole("dialog");
+};
+
+const numbers = async () => {
+  await open();
+  await topic(/^Zahlen/);
+  return screen.getByRole("region", { name: "Zahlen" });
+};
+
+const fact = (facts: HTMLElement, label: string) =>
+  within(facts).getByText(label).nextElementSibling?.textContent ?? "";
 
 describe("US-ACC-05 operator area: counts, no content", () => {
   it("US-ACC-05 shows accounts and active users, and the cost per user as unknown (P-08)", async () => {
-    await open();
-    const facts = screen.getByRole("region", { name: "Zahlen" });
-    expect(within(facts).getByText("Konten").nextElementSibling?.textContent).toBe("12");
-    expect(
-      within(facts).getByText("Aktive Nutzer (letzte 30 Tage)").nextElementSibling?.textContent,
-    ).toBe("5");
-    expect(within(facts).getByText("Kosten pro Nutzer").nextElementSibling?.textContent).toMatch(
-      /^unbekannt/,
-    );
+    const facts = await numbers();
+    expect(fact(facts, "Konten")).toBe("12");
+    expect(fact(facts, "Aktive Nutzer (letzte 30 Tage)")).toBe("5");
+    expect(fact(facts, "Kosten pro Nutzer")).toMatch(/^unbekannt/);
     expect(facts.textContent).not.toMatch(/€|EUR|\$/);
   });
 
@@ -104,21 +133,17 @@ describe("US-ACC-05 operator area: counts, no content", () => {
         json(403, { error: { code: "access.denied", text: "Darauf hast du keinen Zugriff." } }),
       ),
     );
-    render(<OperatorPage api="http://api" token={token} />);
+    show();
     expect(await screen.findByText("Darauf hast du keinen Zugriff.")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
   });
 });
 
 describe("US-ACC-05 monthly cost and cost per user", () => {
-  const facts = () => screen.getByRole("region", { name: "Zahlen" });
-  const fact = (label: string) =>
-    within(facts()).getByText(label).nextElementSibling?.textContent ?? "";
-
   it("US-ACC-05 without a figure: cost per user unknown with what to do (P-08, P-09)", async () => {
-    await open();
-    expect(fact("Monatliche Kosten")).toBe("nicht eingetragen");
-    expect(fact("Kosten pro Nutzer")).toBe("unbekannt: trage unten die Kosten eines Monats ein");
+    const facts = await numbers();
+    expect(fact(facts, "Monatliche Kosten")).toBe("nicht eingetragen");
+    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: trage die Kosten eines Monats ein");
   });
 
   it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen'", async () => {
@@ -132,9 +157,11 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
         source: "manual",
       },
     });
-    await open();
-    expect(fact("Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
-    expect(fact("Kosten pro Nutzer")).toMatch(/^10,00\s€ \(September 2026, manuell eingetragen\)$/);
+    const facts = await numbers();
+    expect(fact(facts, "Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
+    expect(fact(facts, "Kosten pro Nutzer")).toMatch(
+      /^10,00\s€ \(September 2026, manuell eingetragen\)$/,
+    );
   });
 
   it("US-ACC-05 a figure without active users: cost per user unknown with the reason", async () => {
@@ -143,8 +170,17 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       cost: { amountCents: 4999, currency: "EUR", month: "2026-09" },
       costPerUser: { known: false, reason: "no_active_accounts" },
     });
+    const facts = await numbers();
+    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
+  });
+
+  it("US-QS-24 US-ACC-05 the cost form has no heading that repeats the layer title and its save button sits in a sticky footer", async () => {
+    serve(() => json(404, {}));
     await open();
-    expect(fact("Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
+    await topic(/^Monatliche Kosten/);
+    const save = screen.getByRole("button", { name: "Kosten speichern" });
+    expect(save.closest("form")?.querySelector("h1, h2, h3")).toBeNull();
+    expect(save.parentElement?.className).toContain("sticky");
   });
 
   it("US-ACC-05 saving sends the amount in cents with a repeat-guard key and reloads the numbers", async () => {
@@ -154,11 +190,11 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
         : json(404, {}),
     );
     await open();
+    await topic(/^Monatliche Kosten/);
     const amount = screen.getByLabelText("Betrag");
     await userEvent.type(amount, "1.234,5");
     const month = screen.getByLabelText("Monat");
-    await userEvent.clear(month);
-    await userEvent.type(month, "2026-09");
+    await userEvent.selectOptions(month, "2026-09");
     await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
     expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
     const writes = calls.filter((c) => c.method === "PUT");
@@ -173,6 +209,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
 
   it("US-ACC-05 an invalid amount or currency is refused before sending, with what to do (P-10)", async () => {
     await open();
+    await topic(/^Monatliche Kosten/);
     await userEvent.type(screen.getByLabelText("Betrag"), "12,345");
     await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/zum Beispiel 12,50/);
@@ -195,6 +232,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       }),
     );
     await open();
+    await topic(/^Monatliche Kosten/);
     await userEvent.type(screen.getByLabelText("Betrag"), "10");
     await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
@@ -220,12 +258,14 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
 describe("US-ACC-05 registration mode", () => {
   it("US-ACC-05 says in words whether registration is open", async () => {
     await open();
-    expect(screen.getByText("offen für alle")).toBeTruthy();
+    const dialog = await topic(/^Registrierung/);
+    expect(within(dialog).getByText("offen für alle")).toBeTruthy();
     cleanup();
     current = overview({ invitationOnly: true });
     serve();
     await open();
-    expect(screen.getByText("nur mit Einladungscode")).toBeTruthy();
+    const again = await topic(/^Registrierung/);
+    expect(within(again).getByText("nur mit Einladungscode")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Für alle öffnen" })).toBeTruthy();
   });
 
@@ -243,11 +283,12 @@ describe("US-ACC-05 registration mode", () => {
         }),
     );
     await open();
+    const dialog = await topic(/^Registrierung/);
     const user = userEvent.setup();
     const button = screen.getByRole("button", { name: "Nur mit Einladungscode erlauben" });
     await user.dblClick(button);
     answer();
-    await screen.findByText("nur mit Einladungscode");
+    await within(dialog).findByText("nur mit Einladungscode");
     const writes = calls.filter((c) => c.method === "PUT");
     expect(writes).toHaveLength(1);
     expect(writes[0]?.body).toEqual({ invitationOnly: true });
@@ -269,6 +310,7 @@ describe("US-ACC-05 invitation codes", () => {
       return json(404, {});
     });
     await open();
+    await topic(/^Einladungscodes/);
     const user = userEvent.setup();
     expect((screen.getByLabelText("Gültig für (Tage)") as HTMLInputElement).value).toBe("7");
     await user.click(screen.getByRole("button", { name: "Code erstellen" }));
@@ -282,6 +324,7 @@ describe("US-ACC-05 invitation codes", () => {
   it("US-ACC-05 takes the chosen validity and refuses a value outside 1 to 30 before sending", async () => {
     serve(async () => json(201, created));
     await open();
+    await topic(/^Einladungscodes/);
     const user = userEvent.setup();
     const days = screen.getByLabelText("Gültig für (Tage)") as HTMLInputElement;
     expect(days.min).toBe("1");
@@ -303,6 +346,7 @@ describe("US-ACC-05 invitation codes", () => {
       json(403, { error: { code: "access.denied", text: "Darauf hast du keinen Zugriff." } }),
     );
     await open();
+    await topic(/^Einladungscodes/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Darauf hast du keinen Zugriff.");
     expect(screen.queryByRole("region", { name: "Neuer Einladungscode" })).toBeNull();
@@ -336,6 +380,7 @@ describe("US-ACC-05 invitation codes", () => {
     });
     serve();
     await open();
+    await topic(/^Einladungscodes/);
     const items = within(screen.getByRole("list", { name: "Einladungen" })).getAllByRole(
       "listitem",
     );
@@ -348,11 +393,12 @@ describe("US-ACC-05 invitation codes", () => {
 
   it("US-ACC-05 without invitations the page says how to create one (P-09)", async () => {
     await open();
+    await topic(/^Einladungscodes/);
     expect(screen.getByText(/Noch keine Einladung/)).toBeTruthy();
   });
 
   it("US-ACC-05 shows the expiry in the time zone of the profile", async () => {
-    const { setProfileTimeZone } = await import("../../../kernel");
+    const { setProfileTimeZone } = await import("../../../shared/data");
     setProfileTimeZone("Pacific/Auckland");
     current = overview({
       invitations: [
@@ -367,6 +413,7 @@ describe("US-ACC-05 invitation codes", () => {
     });
     serve();
     await open();
+    await topic(/^Einladungscodes/);
     // 2026-10-11T12:00Z is 12 Oct 01:00 in Auckland (UTC+13 in October).
     await waitFor(() =>
       expect(
@@ -377,19 +424,81 @@ describe("US-ACC-05 invitation codes", () => {
   });
 });
 
-describe("US-ACC-05 · DS-48 states and primitives", () => {
-  it("US-ACC-05 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
+describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
+  it("US-QS-15 each row names its topic and shows its current value, and opens its layer", async () => {
+    current = overview({ cost: { amountCents: 4999, currency: "EUR", month: "2026-09" } });
+    await open();
+    const rows: [RegExp, string][] = [
+      [/^Zahlen/, "12 Konten · 5 aktiv"],
+      [/^Einstieg/, "Dauer und Schritte beim Einstieg neuer Konten"],
+      [/^Monatliche Kosten/, "49,99\u00a0€ (September 2026)"],
+      [/^Registrierung/, "offen für alle"],
+      [/^Einladungscodes/, "noch keine"],
+    ];
+    for (const [name, value] of rows) {
+      const row = screen.getByRole("button", { name });
+      expect(row.textContent).toContain(value);
+      expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    }
+    const dialog = await topic(/^Einstieg/);
+    expect(within(dialog).getByRole("heading", { name: "Einstieg" })).toBeTruthy();
+  });
+
+  it("US-QS-15 a long list of invitations is paged: five per page, 'Seite n von m' and Weiter", async () => {
+    current = overview({
+      invitations: Array.from({ length: 7 }, (_, i) => ({
+        id: `i${i}`,
+        createdAt: "2026-10-04T10:00:00.000Z",
+        expiresAt: "2026-10-11T10:00:00.000Z",
+        redeemedAt: null,
+        status: "open" as const,
+      })),
+    });
+    serve();
+    await open();
+    const dialog = await topic(/^Einladungscodes/);
+    const list = within(dialog).getByRole("list", { name: "Einladungen" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(dialog).getByText("Seite 1 von 2")).toBeTruthy();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Weiter" }));
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(dialog).getByText("Seite 2 von 2")).toBeTruthy();
+  });
+
+  it("US-QS-15 the page is one screen (DS-61): its frame marks the fit, so at a large text size only the content region scrolls", async () => {
+    show();
+    const heading = await screen.findByRole("heading", { name: "Betreiber" });
+    expect(heading.closest("[data-fit-screen]")).not.toBeNull();
+  });
+
+  it("US-QS-15 the figures of Zahlen take their columns from the width of their layer, not the window (issue 1640)", async () => {
+    const region = await numbers();
+    const list = region.querySelector("dl") as HTMLElement;
+    expect(region.className.split(" ")).toContain("@container");
+    expect(list.className.split(" ")).toContain("@lg:grid-cols-[auto_1fr]");
+    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
+});
+
+describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
+  it("US-ACC-05 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
-    const { container } = render(<OperatorPage api="http://api" token={token} />);
-    expect(screen.getByRole("status").textContent).toContain("Zahlen werden geladen");
+    delayLoads();
+    const { container } = render(
+      <MemoryRouter>
+        <OperatorPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+    expect((await screen.findByRole("status")).textContent).toContain("Zahlen werden geladen");
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
   });
 
   it("US-ACC-05 · DS-26 the empty invitation list offers the next action: it takes the operator to the validity field", async () => {
     await open();
+    await topic(/^Einladungscodes/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Gültigkeit wählen" }));
     expect(document.activeElement).toBe(screen.getByLabelText("Gültig für (Tage)"));
   });
@@ -397,6 +506,7 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
   it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
     serve(async () => json(403, { error: { code: "access.denied", text: "RAW SERVER TEXT" } }));
     await open();
+    await topic(/^Einladungscodes/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("Darauf hast du keinen Zugriff.");
@@ -404,6 +514,7 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
 
   it("US-ACC-05 · DS-48 an invalid amount marks the field and moves the focus to it", async () => {
     await open();
+    await topic(/^Monatliche Kosten/);
     const user = userEvent.setup();
     const amount = screen.getByLabelText("Betrag");
     await user.type(amount, "12,345");
@@ -418,9 +529,18 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
 describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.3)", () => {
   const created = { id: "i9", code: "ABCD-EFGH", expiresAt: "2026-10-11T10:00:00.000Z" };
   const cases = [
-    { button: "Kosten speichern", done: "Monatliche Kosten gespeichert.", prep: true },
-    { button: "Nur mit Einladungscode erlauben", done: /ab jetzt nur mit Einladungscode/ },
-    { button: "Code erstellen", done: "Einladungscode erstellt." },
+    {
+      topic: /^Monatliche Kosten/,
+      button: "Kosten speichern",
+      done: "Monatliche Kosten gespeichert.",
+      prep: true,
+    },
+    {
+      topic: /^Registrierung/,
+      button: "Nur mit Einladungscode erlauben",
+      done: /ab jetzt nur mit Einladungscode/,
+    },
+    { topic: /^Einladungscodes/, button: "Code erstellen", done: "Einladungscode erstellt." },
   ];
   for (const c of cases)
     it(`US-QS-14 after "${c.button}" the focus stays on the control, not on the body`, async () => {
@@ -439,6 +559,7 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
           }),
       );
       await open();
+      await topic(c.topic);
       const user = userEvent.setup();
       if (c.prep) await user.type(screen.getByLabelText("Betrag"), "12,50");
       const button = screen.getByRole("button", { name: c.button });
@@ -451,4 +572,64 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
       expect(document.activeElement).not.toBe(document.body);
       expect(document.activeElement?.textContent).toBe(button.textContent);
     });
+});
+
+describe("US-ACC-04 operator page: the card Fristen", () => {
+  it("US-ACC-04 marking an identity removal posts once and confirms it in words (issue 1673)", async () => {
+    const identity = {
+      kind: "identity",
+      entryId: "e-1",
+      requestedAt: "2026-09-01T08:00:00.000Z",
+      deadline: "2026-10-01T08:00:00.000Z",
+      subject: "sub-1",
+      completedAt: "2026-09-02T08:00:00.000Z",
+    };
+    serve((path, init) =>
+      path === "/operator/deletion-log/e-1/identity-removed" && init.method === "POST"
+        ? json(200, { entryId: "e-1", outcome: "marked" })
+        : json(404, {}),
+    );
+    deletions = { warningDays: 7, near: [], past: [], identityRemovals: [identity] };
+    await open();
+    await topic(/^Fristen/);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Als entfernt markieren, Kennung sub-1" }),
+    );
+    expect(await screen.findByText("Eintrag als entfernt markiert.")).toBeTruthy();
+    expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual([
+      "/operator/deletion-log/e-1/identity-removed",
+    ]);
+  });
+
+  it("US-ACC-04 a tap on the row Fristen while its counts still load opens the layer, which shows them once they arrive (issue 1722)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    // The row shows its loading text while the counts are on their way (DS-57: after the short delay).
+    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    await userEvent.click(row);
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Fristen" })).toBeTruthy();
+    answer();
+    expect(await within(dialog).findByText("Keine offenen Löschungen")).toBeTruthy();
+    expect(screen.getByRole("dialog")).toBe(dialog);
+  });
+
+  it("US-ACC-04 a press on the row Fristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    fireEvent.pointerDown(row);
+    answer();
+    // The counts arrive while the press is still on the row; the row must stay the one the press started on.
+    expect(await screen.findByRole("button", { name: /0 nahe/ })).toBe(row);
+    fireEvent.pointerUp(row);
+    fireEvent.click(row);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
 });
