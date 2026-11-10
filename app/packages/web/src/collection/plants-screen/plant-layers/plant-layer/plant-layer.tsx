@@ -6,7 +6,6 @@ import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
 import { plantLayerId } from "../../rows/plant-tile/plant-tile";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
@@ -14,6 +13,7 @@ import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
 import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
+import { PlantSlotSkeleton, type SlotPart } from "./plant-layer.skeleton";
 
 const t = texts(table);
 const TAB_PARAM = "tab";
@@ -60,19 +60,19 @@ function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
   ];
 }
 
-/** A part from another module, loaded when its tab opens; it says that it is loading (P-10). */
-function Slot(props: { render?: SlotRender | undefined; card: SpecimenCard; measure: () => void }) {
+/**
+ * A part from another module, loaded when its tab opens. While its chunk loads it shows the part's shape (US-QS-14), after
+ * the delay, so the layer does not move when the part arrives; a shaped skeleton is never held (DS-57).
+ */
+function Slot(props: {
+  render?: SlotRender | undefined;
+  part: SlotPart;
+  card: SpecimenCard;
+  measure: () => void;
+}) {
   if (!props.render) return null;
   return (
-    <Suspense
-      fallback={
-        <DelayedSkeleton>
-          <p role="status" className="text-sm text-muted-foreground">
-            {t("slot.loading")}
-          </p>
-        </DelayedSkeleton>
-      }
-    >
+    <Suspense fallback={<PlantSlotSkeleton part={props.part} label={t("slot.loading")} />}>
       {props.render(props.card, { measure: props.measure })}
     </Suspense>
   );
@@ -88,24 +88,24 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
   const { card } = p;
   const lightZone = p.onLightZone;
   const measure = () => p.onMeasure?.(card);
-  const slot = (render: SlotRender | undefined) => (
-    <Slot render={render} card={card} measure={measure} />
+  const slot = (render: SlotRender | undefined, part: SlotPart) => (
+    <Slot render={render} part={part} card={card} measure={measure} />
   );
   const content: Record<(typeof TABS)[number]["value"], ReactNode> = {
     ueberblick: (
       <PlantOverview
         card={card}
         access={p.photoAccess}
-        growth={p.slots?.growth ? slot(p.slots.growth) : undefined}
-        water={p.slots?.water ? slot(p.slots.water) : undefined}
+        growth={p.slots?.growth ? slot(p.slots.growth, "growth") : undefined}
+        water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
         onTreat={() => tab.choose("pflege")}
       />
     ),
-    verlauf: p.slots?.history ? slot(p.slots.history) : <Measurement card={card} />,
+    verlauf: p.slots?.history ? slot(p.slots.history, "history") : <Measurement card={card} />,
     pflege: (
       <PlantCareTab
         card={card}
-        care={slot(p.slots?.care)}
+        care={slot(p.slots?.care, "care")}
         repot={
           card.status === PLANT_STATUS && p.onRepot
             ? { access: p.photoAccess, onRepot: () => p.onRepot?.(card) }
