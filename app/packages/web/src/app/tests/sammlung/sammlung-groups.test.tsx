@@ -7,6 +7,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { CollectionArea } from "../../destinations/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
+import { pokedexReadAnswer } from "../../../pokedex/pokedex-page/pokedex-reads-fake";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
 import "../../../collection/specimens/tests/plants-test-helpers";
@@ -68,6 +69,9 @@ function stubServer(list: readonly ReturnType<typeof card>[] = cards, record?: (
       if (path === "/light-zones") return response(200, { zones: [] });
       if (path === "/hints") return response(200, { hints: [] });
       if (path === "/specimens/light-overview") return response(200, { rows: [] });
+      // The reads of the Pokédex (no caught species in these tests) and the lock states, nothing announced (issue 1625).
+      const pokedex = pokedexReadAnswer(path, []);
+      if (pokedex !== undefined) return response(200, pokedex);
       return response(200, {});
     }),
   );

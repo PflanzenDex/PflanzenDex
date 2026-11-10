@@ -45,6 +45,7 @@ import {
   NO_CARDS_PAGE,
   NO_CARDS_SUMMARY,
 } from "../../../collection/specimens/tests/cards-fake";
+import { pokedexReadAnswer } from "../../../pokedex/pokedex-page/pokedex-reads-fake";
 
 /** The app runs inside a router; a memory router stands for the address bar. */
 const renderApp = (path = "/") =>
@@ -150,6 +151,31 @@ const PROFILE_SPECIES = {
   version: 1,
 };
 
+/**
+ * The reads the signed-in frame makes on every page (issue 1625), each answered without data: the list of "Heute", the
+ * account profile (no reminder switched on), the watering reminders, the treatments and the hints. The Pokédex reads and
+ * the lock states come from `pokedexReadAnswer`.
+ */
+const FRAME_READS: Record<string, unknown> = {
+  "/today": { date: "2026-10-03", upcoming: 0, items: [] },
+  "/account/profile": {
+    displayName: "Lena",
+    timeZone: "Europe/Berlin",
+    everythingPrivate: false,
+    noRecommendations: false,
+    notifications: {},
+    replenishBuffer: 2,
+    rarityConsent: false,
+    positionThresholds: null,
+  },
+  "/watering/due": { due: [] },
+  "/treatments": { treatments: [] },
+  "/specimens/hints": { hints: [] },
+};
+/** The body of a read every page of the frame makes, or `undefined`; `caught` are the species the Pokédex reads use. */
+const frameRead = (path: string, caught: readonly { species: string }[] = []): unknown =>
+  pokedexReadAnswer(path, caught) ?? FRAME_READS[path];
+
 /** The answers of the simple routes; the rest (account, wishlist) is decided in `fakeServer`. */
 const ANSWERS: Record<string, unknown> = {
   "/species": { species: [] },
@@ -161,8 +187,6 @@ const ANSWERS: Record<string, unknown> = {
   "/specimens/distribution": EMPTY_DISTRIBUTION,
   "/locations": { locations: [] },
   "/light-zones": { zones: [] },
-  "/today": { date: "2026-10-03", upcoming: 0, items: [] },
-  "/treatments": { treatments: [] },
   "/specimens": { specimens: [] },
   "/care-profiles": { entries: [] },
   "/care-phases": { phases: [] },
@@ -180,16 +204,6 @@ const ANSWERS: Record<string, unknown> = {
   "/equipment/wishes": { open: [], bought: [], discarded: [] },
   "/equipment/sharing": { shared: [] },
   "/equipment/recommendations": { recommendations: [] },
-  "/account/profile": {
-    displayName: "Lena",
-    timeZone: "Europe/Berlin",
-    everythingPrivate: false,
-    noRecommendations: false,
-    notifications: {},
-    replenishBuffer: 2,
-    rarityConsent: false,
-    positionThresholds: null,
-  },
   "/specimens/light-overview": { rows: [] },
   "/specimens/difficulty": { rows: [] },
 };
@@ -203,6 +217,8 @@ function fakeServer(accountStatus = 200, plants = 0) {
       if (path === "/specimens/count") return response(200, { count: plants, archived: 0 });
       if (path in ANSWERS) return response(200, ANSWERS[path]);
       if (path in WISHLIST) return response(200, WISHLIST[path]);
+      const read = frameRead(path);
+      if (read !== undefined) return response(200, read);
       return response(404);
     }),
   );
@@ -292,6 +308,8 @@ describe("US-ACC-01 App", () => {
             : response(403, {
                 error: { code: "invitation.required", text: "Nur mit Einladungscode." },
               });
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
         return response(404);
       }),
     );
@@ -321,6 +339,8 @@ describe("US-ACC-01 App", () => {
             invitationOnly: false,
             invitations: [],
           });
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
         return response(404);
       }),
     );
@@ -513,6 +533,8 @@ describe("US-ACC-01 App", () => {
           successCriteria: "y",
           reviewStatus: "reviewed",
         };
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
         return response(
           200,
           path === "/species" ? { species: [{ ...species, hit: null }] } : species,
@@ -571,6 +593,8 @@ describe("US-ACC-01 App", () => {
           return answerCardRead(new URL(String(url)), []) ?? response(404, {});
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        const read = frameRead(path, [caught]);
+        if (read !== undefined) return response(200, read);
         return response(
           200,
           path === "/species" ? { species: [{ ...species, hit: null }] } : species,

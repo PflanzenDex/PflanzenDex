@@ -6,6 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { CollectionArea } from "../../destinations/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
+import { pokedexReadAnswer } from "../../../pokedex/pokedex-page/pokedex-reads-fake";
 import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
 import { VIEW_KEY } from "../../sammlung-view";
 
@@ -39,6 +40,9 @@ function stubServer() {
       if (path.startsWith("/specimens/cards"))
         return answerCardRead(new URL(String(url)), []) ?? response(404, {});
       if (path === "/specimens/difficulty") return response(200, { rows: [] });
+      // The reads of the Pokédex (a species mode shows them) and the lock states, nothing announced (issue 1625).
+      const pokedex = pokedexReadAnswer(path, [caught]);
+      if (pokedex !== undefined) return response(200, pokedex);
       if (path === "/wishes/candidates")
         return response(200, {
           candidates: [],

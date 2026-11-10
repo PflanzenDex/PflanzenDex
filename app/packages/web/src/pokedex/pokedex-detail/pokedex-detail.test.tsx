@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
+import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -39,17 +40,23 @@ const lyrata = species("Ficus lyrata", {
 });
 const aloe = species("Aloe vera", { caughtDate: { date: null, source: "unknown" } });
 const token = async () => "tok";
-const open = async (onOpenSpecies?: (id: string) => void) => {
+/** The fetch of the Pokédex page for these caught species (the reads are in `pokedexReadAnswer`). */
+const stubPokedex = (caught: readonly { species: string }[]) =>
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () =>
+    vi.fn<typeof fetch>(async (url) =>
       Promise.resolve(
-        new Response(JSON.stringify({ ownership: { caught: [lyrata, aloe], unidentified: [] } }), {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify(pokedexReadAnswer(new URL(String(url)).pathname, caught) ?? {}),
+          {
+            status: 200,
+          },
+        ),
       ),
     ),
   );
+const open = async (onOpenSpecies?: (id: string) => void) => {
+  stubPokedex([lyrata, aloe]);
   view(
     <PokedexPage api="http://api" token={token} {...(onOpenSpecies ? { onOpenSpecies } : {})} />,
   );
@@ -99,24 +106,7 @@ describe("US-POK-09 view details of a species", () => {
   });
 
   it("US-POK-09 a source address with credentials links without them, they never reach the page (P-05)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({
-              ownership: {
-                caught: [
-                  species("Aloe vera", { source: "https://nutzer:geheim@example.org/aloe" }),
-                ],
-                unidentified: [],
-              },
-            }),
-            { status: 200 },
-          ),
-        ),
-      ),
-    );
+    stubPokedex([species("Aloe vera", { source: "https://nutzer:geheim@example.org/aloe" })]);
     view(<PokedexPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Aloe vera/ }));
     const link = within(detail()).getByRole("link", { name: /Quelle/ });
@@ -125,22 +115,7 @@ describe("US-POK-09 view details of a species", () => {
   });
 
   it("US-POK-09 a source that is not an http(s) link is shown as plain text, never as a link", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({
-              ownership: {
-                caught: [species("Aloe vera", { source: "javascript:alert(1)" })],
-                unidentified: [],
-              },
-            }),
-            { status: 200 },
-          ),
-        ),
-      ),
-    );
+    stubPokedex([species("Aloe vera", { source: "javascript:alert(1)" })]);
     view(<PokedexPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Aloe vera/ }));
     const d = within(detail());
@@ -196,17 +171,7 @@ describe("US-POK-09 view details of a species", () => {
 
 describe("US-POK-09 · US-QS-22 the layer of a species is in the address", () => {
   it("US-POK-09 · US-QS-22 an address with the layer of a species opens its details", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({ ownership: { caught: [lyrata, aloe], unidentified: [] } }),
-            { status: 200 },
-          ),
-        ),
-      ),
-    );
+    stubPokedex([lyrata, aloe]);
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=species-Aloe vera");
     expect((await screen.findByRole("region", { name: /Details/ })).textContent).toContain(
       "Gattung: Aloe",

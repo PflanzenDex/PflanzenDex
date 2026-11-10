@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
+import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -49,9 +50,9 @@ const token = async () => "tok";
 const open = async (list = caught) => {
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () =>
+    vi.fn<typeof fetch>(async (url) =>
       Promise.resolve(
-        new Response(JSON.stringify({ ownership: { caught: list, unidentified: [] } }), {
+        new Response(JSON.stringify(pokedexReadAnswer(new URL(String(url)).pathname, list) ?? {}), {
           status: 200,
         }),
       ),
