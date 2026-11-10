@@ -472,4 +472,56 @@ describe("US-BES-17 print of the shell", () => {
     expect(root?.className).toContain("md:flex-row");
     expect(root?.className).not.toContain("print:hidden");
   });
+
+  it("US-QS-14 the reserve follows the bar when only its safe-area padding grows (issue 1818)", () => {
+    // A phone browser that goes edge to edge raises `env(safe-area-inset-bottom)` from 0 to 16 px: the bar grows by its
+    // bottom padding alone. Only an observer of the border box reports that; the content box keeps its size.
+    const observed: Array<{ target: Element; box: string | undefined }> = [];
+    let notify: () => void = () => {};
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          notify = callback;
+        }
+        observe(target: Element, options?: { box?: string }) {
+          observed.push({ target, box: options?.box });
+        }
+        disconnect() {}
+      },
+    );
+    let barHeight = 59;
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      const height = this.matches("nav[data-bottom-bar]") ? barHeight : 0;
+      return {
+        x: 0,
+        y: 0,
+        width: 360,
+        height,
+        top: 0,
+        left: 0,
+        right: 360,
+        bottom: height,
+      } as DOMRect;
+    });
+    render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const main = screen.getByRole("main");
+    expect(main.style.getPropertyValue("--bar-reserve")).toBe("59px");
+    expect(observed.length).toBeGreaterThan(0);
+    expect(observed.some((o) => o.target.matches("nav[data-bottom-bar]"))).toBe(true);
+    expect(observed.every((o) => o.box === "border-box")).toBe(true);
+
+    barHeight = 75;
+    notify();
+    expect(main.style.getPropertyValue("--bar-reserve")).toBe("75px");
+    expect(document.documentElement.style.getPropertyValue("--bar-clearance")).toBe("83px");
+  });
 });
