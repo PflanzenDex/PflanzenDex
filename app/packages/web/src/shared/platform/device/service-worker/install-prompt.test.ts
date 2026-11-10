@@ -147,7 +147,7 @@ describe("US-QS-28 the entry asks the kept event for the install", () => {
     await expect(store.prompt()).resolves.toBe("dismissed");
     expect(store.offer()).toBe("none");
 
-    await expect(store.prompt()).resolves.toBe("failed");
+    await expect(store.prompt()).resolves.toBe("unavailable");
     expect(first.prompt).toHaveBeenCalledTimes(1);
 
     fire("beforeinstallprompt", installEvent().event);
@@ -161,11 +161,56 @@ describe("US-QS-28 the entry asks the kept event for the install", () => {
     await expect(store.prompt()).resolves.toBe("failed");
     expect(warn).toHaveBeenCalledTimes(1);
     expect(store.offer()).toBe("none");
+    expect(store.refused()).toBe(true);
   });
 
-  it("US-QS-28 a prompt without a kept event reports failed and calls nothing", async () => {
+  it("US-QS-28 a prompt without a kept event reports unavailable, calls nothing and refuses nothing", async () => {
     const { store } = startedStore();
-    await expect(store.prompt()).resolves.toBe("failed");
+    await expect(store.prompt()).resolves.toBe("unavailable");
+    expect(store.refused()).toBe(false);
+  });
+
+  it("US-QS-28 a second tap while the first prompt is open is unavailable and shows no refusal", async () => {
+    const { fire, store } = startedStore();
+    const { event, prompt } = installEvent("accepted");
+    fire("beforeinstallprompt", event);
+    const first = store.prompt();
+    const second = store.prompt();
+    await expect(second).resolves.toBe("unavailable");
+    expect(store.refused()).toBe(false);
+    await expect(first).resolves.toBe("accepted");
+    expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-28 a refusal stays until a new install event arrives, and then the row is back", async () => {
+    const { fire, store } = startedStore();
+    fire("beforeinstallprompt", installEvent("throws").event);
+    await store.prompt();
+    expect(store.refused()).toBe(true);
+    fire("beforeinstallprompt", installEvent().event);
+    expect(store.refused()).toBe(false);
+    expect(store.offer()).toBe("promptable");
+  });
+
+  it("US-QS-28 a refusal ends with the installed event", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { fire, store } = startedStore();
+    fire("beforeinstallprompt", installEvent("throws").event);
+    await store.prompt();
+    fire("appinstalled", new Event("appinstalled"));
+    expect(store.refused()).toBe(false);
+    expect(store.offer()).toBe("none");
+  });
+
+  it("US-QS-28 a later accepted prompt ends a refusal", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { fire, store } = startedStore();
+    fire("beforeinstallprompt", installEvent("throws").event);
+    await store.prompt();
+    fire("beforeinstallprompt", installEvent("accepted").event);
+    await expect(store.prompt()).resolves.toBe("accepted");
+    expect(store.refused()).toBe(false);
+    expect(store.offer()).toBe("none");
   });
 });
 

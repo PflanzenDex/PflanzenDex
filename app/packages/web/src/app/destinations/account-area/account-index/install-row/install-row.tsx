@@ -2,7 +2,6 @@
 // 1690). It is one row of the list like the others, above "Abmelden…", so that the list still fits 360 × 640 px (DS-58). The
 // offer comes from the install store (shared/platform/device/service-worker/install-prompt.ts); nothing shows when the
 // browser offers no installation or the app is installed.
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
@@ -10,6 +9,7 @@ import { Button } from "@/shared/ui/button/button";
 import {
   promptInstall,
   useInstallOffer,
+  useInstallRefused,
 } from "@/shared/platform/device/service-worker/install-prompt";
 import table from "./install-row.de.json";
 
@@ -24,7 +24,7 @@ const VALUE = "text-sm font-normal text-muted-foreground";
 /** The install row, or the guide on Safari (a text row without an action), as an item of the index list. */
 export function InstallRow() {
   const offer = useInstallOffer();
-  const [failed, setFailed] = useState(false);
+  const refused = useInstallRefused();
   if (offer === "ios-guide") {
     return (
       <li className={BASE}>
@@ -35,18 +35,14 @@ export function InstallRow() {
       </li>
     );
   }
-  if (offer !== "promptable" && !failed) return null;
-  const install = async () => {
-    setFailed(false);
-    if ((await promptInstall()) === "failed") setFailed(true);
-  };
+  if (offer !== "promptable" && !refused) return null;
   return (
     <li>
       {offer === "promptable" && (
         <Button
           type="button"
           variant="ghost"
-          onClick={() => void install()}
+          onClick={() => void promptInstall()}
           className={cn(BASE, "h-auto justify-start font-normal hover:bg-muted")}
         >
           <span className={LABELLED}>
@@ -58,7 +54,7 @@ export function InstallRow() {
           />
         </Button>
       )}
-      {failed && (
+      {refused && (
         <p role="status" className="mt-1 rounded-lg border border-border p-3 text-sm">
           {t("failed")}
         </p>

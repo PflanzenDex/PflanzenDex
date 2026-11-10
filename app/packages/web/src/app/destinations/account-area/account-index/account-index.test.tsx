@@ -11,6 +11,7 @@ import { AccountIndex } from "./account-index";
 const install = vi.hoisted(() => ({ offer: "none" as "promptable" | "ios-guide" | "none" }));
 vi.mock("@/shared/platform/device/service-worker/install-prompt", () => ({
   useInstallOffer: () => install.offer,
+  useInstallRefused: () => false,
   promptInstall: async () => "accepted",
 }));
 

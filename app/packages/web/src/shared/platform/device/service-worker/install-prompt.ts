@@ -8,8 +8,12 @@ import { useSyncExternalStore } from "react";
 /** What Konto offers: the browser's install prompt, the guide for Safari on iPhone and iPad, or nothing. */
 export type InstallOffer = "promptable" | "ios-guide" | "none";
 
-/** The result of asking the browser; `failed` covers a browser that refused and a prompt without a kept event. */
-export type InstallChoice = "accepted" | "dismissed" | "failed";
+/**
+ * The result of asking the browser. `failed`: the browser refused to open the prompt (its `prompt()` threw), and the store
+ * keeps that refusal until a new install event, the installed event or a new prompt. `unavailable`: no kept event, for
+ * example a second tap while the first prompt is open; nothing is refused, so nothing is shown.
+ */
+export type InstallChoice = "accepted" | "dismissed" | "failed" | "unavailable";
 
 /** The browser's install event (Chromium's `BeforeInstallPromptEvent`): it can be prompted once, from a user gesture. */
 export type InstallPromptEvent = Event & {
@@ -52,6 +56,8 @@ export type InstallPrompt = {
   start(): void;
   /** The offer at this moment (the snapshot that `useInstallOffer` reads). */
   offer(): InstallOffer;
+  /** Whether the browser refused the last prompt (the snapshot that `useInstallRefused` reads). */
+  refused(): boolean;
   /** Calls the listener whenever the offer may have changed; returns the function that ends the subscription. */
   subscribe(listener: () => void): () => void;
   /**
@@ -65,6 +71,7 @@ export type InstallPrompt = {
 export function createInstallPrompt(env: InstallEnvironment): InstallPrompt {
   let kept: InstallPromptEvent | undefined;
   let installed = false;
+  let refusal = false;
   let started = false;
   const listeners = new Set<() => void>();
   const changed = () => {
@@ -82,20 +89,23 @@ export function createInstallPrompt(env: InstallEnvironment): InstallPrompt {
     started = true;
     // Not prevented: the browser keeps its own install bar, and Konto asks for the install with this event later.
     env.addEventListener("beforeinstallprompt", (event) => {
+      refusal = false;
       kept = event as InstallPromptEvent;
       changed();
     });
     env.addEventListener("appinstalled", () => {
       installed = true;
       kept = undefined;
+      refusal = false;
       changed();
     });
   }
 
   async function prompt(): Promise<InstallChoice> {
     const event = kept;
-    if (!event) return "failed";
+    if (!event) return "unavailable";
     kept = undefined;
+    refusal = false;
     changed();
     try {
       const { outcome } = await event.prompt();
@@ -104,6 +114,7 @@ export function createInstallPrompt(env: InstallEnvironment): InstallPrompt {
       return outcome === "accepted" ? "accepted" : "dismissed";
     } catch (cause) {
       console.warn("PflanzenDéx: the browser did not open the install prompt.", cause);
+      refusal = true;
       changed();
       return "failed";
     }
@@ -116,7 +127,7 @@ export function createInstallPrompt(env: InstallEnvironment): InstallPrompt {
     };
   }
 
-  return { start, offer, subscribe, prompt };
+  return { start, offer, refused: () => refusal, subscribe, prompt };
 }
 
 /** The browser behind the app's store: the window's events and display mode, and the navigator. */
@@ -145,6 +156,12 @@ export function startInstallPrompt(): void {
 export function useInstallOffer(): InstallOffer {
   const store = installPrompt();
   return useSyncExternalStore(store.subscribe, store.offer, () => "none");
+}
+
+/** Whether the browser refused the last prompt; the refusal ends with the next install event, the installed event or a new prompt (US-QS-28). */
+export function useInstallRefused(): boolean {
+  const store = installPrompt();
+  return useSyncExternalStore(store.subscribe, store.refused, () => false);
 }
 
 /** Asks the browser to install the app with the kept event (US-QS-28). */
