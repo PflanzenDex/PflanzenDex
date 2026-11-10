@@ -33,7 +33,7 @@ export async function equipmentCheckItems(
         ? "noch nie geprüft."
         : `zuletzt geprüft am ${germanDate(d.lastCheckedOn)}.`
     }`,
-    nextAction: "Prüfe das Gerät und bestätige es im Equipment mit „Jetzt geprüft“.",
+    nextAction: "Prüfe das Gerät und bestätige es unter Geräte mit „Jetzt geprüft“.",
     target: "equipment",
   }));
 }

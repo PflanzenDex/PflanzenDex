@@ -34,7 +34,7 @@ export function EquipmentTiles({ data }: { data: EquipmentData }) {
   const lamps = data.light.lamps.length + data.zones.unassigned.length;
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8.5rem),1fr))] gap-2 md:grid-cols-3">
-      <Tile id={ITEMS_LAYER} name="Equipment" info={count(data.items.length, "Teil", "Teile")} />
+      <Tile id={ITEMS_LAYER} name="Geräte" info={count(data.items.length, "Teil", "Teile")} />
       <Tile
         id={COSTS_LAYER}
         name="Kosten"

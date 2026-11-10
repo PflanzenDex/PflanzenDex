@@ -704,7 +704,7 @@ const LAYER_ADDRESSES: readonly (readonly [string, string, string])[] = [
   ["Sammlung: Lichtzonen", "/collection?view=plants&sheet=zones", "Sammlung"],
   ["Sammlung: Arten, Sammlerkarten", "/collection?view=species&sheet=cards", "Sammlung"],
   ["Sammlung: Wunschliste, Gekauft", "/collection?view=wishlist&sheet=bought", "Sammlung"],
-  ["Sammlung: Equipment", "/collection?view=equipment&sheet=items", "Sammlung"],
+  ["Sammlung: Geräte", "/collection?view=equipment&sheet=items", "Sammlung"],
   ["Entdecken: Filter", "/discover?view=catalog&sheet=filters", "Entdecken"],
   ["Entdecken: Art vorschlagen", "/discover?view=catalog&sheet=propose", "Entdecken"],
   ["Freunde: Neu bei Freunden", "/friends?sheet=news", "Freunde"],

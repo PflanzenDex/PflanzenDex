@@ -22,7 +22,7 @@ const GO: Record<TodayTarget, string> = {
   measurements: "Zum Messen",
   hints: "Zu Hinweisen",
   wishlist: "Zur Wunschliste",
-  equipment: "Zum Equipment",
+  equipment: "Zu den Geräten",
 };
 const CARD =
   "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";

@@ -100,7 +100,7 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
           <>
             <p>
               „Alles privat“ setzt alle Freigaben aus, ohne sie zu löschen. Ohne Empfehlungen zeigt
-              die App keine Ausrüstungsvorschläge.
+              die App keine Gerätevorschläge.
             </p>
             <p>
               Die Seltenheit in PflanzenDéx zählt nur Konten, die hier zustimmen (Vorgabe: aus); es

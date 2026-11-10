@@ -267,7 +267,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
       "Gießen",
       "Tausch",
       "Freunde",
-      "Equipment-Prüfung",
+      "Geräte-Prüfung",
     ])
       expect(await screen.findByRole("checkbox", { name })).toBeTruthy();
   });

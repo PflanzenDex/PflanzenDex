@@ -116,7 +116,7 @@ describe("US-QS-17 the index of Konto", () => {
     await value(/^Erinnerungen/, "an");
     await value(/^Erfolge/, "3");
     await value(/^KI-Clients/, "1");
-    expect(within(list).getByRole("link", { name: "Was wird gemessen?" })).toBeTruthy();
+    expect(within(list).getByRole("link", { name: "Nutzungsdaten" })).toBeTruthy();
     expect(within(list).getByRole("link", { name: "Was die App kann" })).toBeTruthy();
     expect(within(list).getByRole("link", { name: "Meine Daten" })).toBeTruthy();
     expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();

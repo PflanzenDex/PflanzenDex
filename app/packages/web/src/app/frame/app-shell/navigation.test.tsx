@@ -340,7 +340,7 @@ describe("US-QS-14 the catalog is a mode of Entdecken, not a destination", () =>
 
   it("US-QS-14 a species profile lives below Entdecken, which stays the current destination, and has its own title", () => {
     expect(profileAddress("a 1")).toBe("/discover/species/a%201");
-    expect(viewTitle(profileAddress("a1"))).toBe(pageTitle("Artenprofil"));
+    expect(viewTitle(profileAddress("a1"))).toBe(pageTitle("Artprofil"));
     const nav = headerLinks(profileAddress("a1"), {});
     expect(nav.getByRole("link", { name: "Entdecken" }).getAttribute("aria-current")).toBe("page");
   });

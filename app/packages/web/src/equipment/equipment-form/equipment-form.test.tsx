@@ -15,7 +15,7 @@ function renderForm() {
   return onSend;
 }
 
-const save = () => userEvent.click(screen.getByRole("button", { name: "Equipment speichern" }));
+const save = () => userEvent.click(screen.getByRole("button", { name: "Gerät speichern" }));
 
 describe("US-BES-19 the pot fields of the equipment form", () => {
   it("US-BES-19 the pot fields show for the type Topf only", async () => {

@@ -20,7 +20,7 @@ export const OCCASION_TEXT: Record<Occasion, string> = {
   watering: "Gießen",
   swap: "Tausch",
   friends: "Freunde",
-  equipment: "Equipment-Prüfung",
+  equipment: "Geräte-Prüfung",
 };
 
 const zones = (): string[] => {

@@ -8,7 +8,7 @@ export function WhatHappens() {
       <p className="m-0 font-semibold">Das wird gelöscht:</p>
       <ul className="m-0 list-disc pl-5">
         <li>
-          alle deine Pflanzen, Messungen, Behandlungen, Wünsche und das Equipment mit allem, was
+          alle deine Pflanzen, Messungen, Behandlungen, Wünsche und die Geräte mit allem, was
           dazugehört
         </li>
         <li>alle deine Fotos im Speicher</li>
