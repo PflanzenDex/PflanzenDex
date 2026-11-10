@@ -494,7 +494,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     const { posts, photoPosts } = fakeServer({ withPhoto: true });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
     await save();
     await screen.findByText(/Gespeichert:/);
     expect(posts).toHaveLength(1);
@@ -521,7 +521,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await screen.findAllByText("noch keine Messung");
     const more = screen.getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
     expect(more.open).toBe(false);
-    expect(more.contains(screen.getByLabelText(/Foto/))).toBe(true);
+    expect(more.contains(screen.getByLabelText("Foto (optional)"))).toBe(true);
     expect(more.contains(screen.getByLabelText("Notiz (optional)"))).toBe(true);
     expect(
       screen.getByRole("button", { name: "Messung speichern" }).parentElement?.className,
@@ -534,7 +534,10 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
     await userEvent
       .setup({ applyAccept: false })
-      .upload(screen.getByLabelText(/Foto/), new File(["x"], "x.pdf", { type: "application/pdf" }));
+      .upload(
+        screen.getByLabelText("Foto (optional)"),
+        new File(["x"], "x.pdf", { type: "application/pdf" }),
+      );
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("JPEG, PNG oder WebP");
@@ -547,7 +550,10 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await fillValue("12,5");
     await userEvent
       .setup({ applyAccept: false })
-      .upload(screen.getByLabelText(/Foto/), new File(["x"], "x.pdf", { type: "application/pdf" }));
+      .upload(
+        screen.getByLabelText("Foto (optional)"),
+        new File(["x"], "x.pdf", { type: "application/pdf" }),
+      );
     await save();
     expect((await screen.findByRole("alert")).textContent).toContain("JPEG, PNG oder WebP");
     expect(posts).toHaveLength(0);
@@ -561,7 +567,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
     await save();
     const alert = await refusalToast();
     expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
@@ -575,7 +581,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     const { photoPosts } = fakeServer({ photoSave: () => held.answer });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
     await save();
     await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
     const status = await screen.findByText("Foto wird gespeichert …");
@@ -596,7 +602,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     fakeServer({ photoSave: () => held.answer });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
     await save();
     await screen.findByText("Foto wird gespeichert …");
     held.release(response(201, { photo: "p.webp" }));
@@ -612,7 +618,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
     await save();
     const alert = await refusalToast();
     // Nothing says "Gespeichert" before or beside the error: the success text would be a lie about the photo (P-10).
@@ -633,13 +639,17 @@ describe("US-QS-07 taking a photo offers the camera", () => {
     for (const type of types) expect(type.startsWith("image/")).toBe(true);
   };
 
-  it("US-QS-07 taking a photo offers the camera: the measure form's photo field and the photo field of a measurement are image inputs without capture", async () => {
+  it("US-QS-07 taking a photo offers the camera: each photo field keeps an image picker without capture and has a camera button beside it (issue 1820)", async () => {
     setViewportWidth(1024);
     fakeServer({ existing: [measurement] });
     show();
     imageInput(await screen.findByLabelText("Foto (optional)"));
+    const cameras = () => screen.getAllByLabelText("Foto aufnehmen");
+    expect(cameras()).toHaveLength(1);
     await openEntries();
     imageInput(await screen.findByLabelText(/Foto hinzufügen/));
+    expect(cameras().length).toBeGreaterThanOrEqual(1);
+    for (const camera of cameras()) expect(camera.getAttribute("capture")).toBe("environment");
   });
 });
 
