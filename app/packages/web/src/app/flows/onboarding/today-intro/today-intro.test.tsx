@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { useEffect } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HINT_MAX_WORDS } from "@pflanzendex/core";
+import { useInvalidate } from "../../../../shared/data";
 import { HINT_TEXTS } from "./hint/hint-texts";
 import { TodayIntro } from "./today-intro";
 
@@ -605,5 +606,145 @@ describe("NFR-12 Heute does not wait for the count before its tasks load", () =>
     release();
     expect(await tasksShown()).toBeTruthy();
     expect(order.indexOf("request /today")).toBeLessThan(order.indexOf("count answered"));
+  });
+});
+
+/** Holds the answer of one endpoint until the returned `release` is called; every other request runs as before. */
+function holdPath(path: string) {
+  const serve = fetch;
+  let release!: () => void;
+  const held = new Promise<void>((done) => (release = done));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url, init) => {
+      if (new URL(String(url)).pathname === path) await held;
+      return serve(url, init);
+    }),
+  );
+  return release;
+}
+
+/** Answers one endpoint with a server error; every other request runs as before. */
+function failPath(path: string) {
+  const serve = fetch;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url, init) =>
+      new URL(String(url)).pathname === path
+        ? response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } })
+        : serve(url, init),
+    ),
+  );
+}
+
+/** Heute as the app mounts it. A visit ends when the keeper goes elsewhere (`elsewhere`), which unmounts the intro. */
+const heute = () => (
+  <MemoryRouter>
+    <TodayIntro
+      lookup={LOOKUP}
+      api="http://api"
+      token={token}
+      onOpen={open}
+      fallback={<p role="status">Heute wird geladen …</p>}
+    >
+      <p>Aufgaben des Tages</p>
+    </TodayIntro>
+  </MemoryRouter>
+);
+const elsewhere = () => <p>Einstellungen</p>;
+/** Asks the "today" queries again, as a write elsewhere does (`useInvalidate`; the counts are part of them). */
+function AskAgain() {
+  const again = useInvalidate(["today"]);
+  return (
+    <button type="button" onClick={again}>
+      Neu laden
+    </button>
+  );
+}
+const guideShown = () => screen.queryByRole("heading", { name: /Schritt 1 von 2/ }) !== null;
+/** Lets the answers that are already on their way be read and drawn. */
+const settle = () => act(() => new Promise<void>((done) => setTimeout(done, 20)));
+const FIRST_GUIDE = { name: "Schritt 1 von 2: Deine erste Pflanze" };
+
+describe("US-ONB-01 · #1795 the guide follows the plants of the account, not a copy of an earlier visit", () => {
+  it("US-ONB-01 an account with one plant shows no first-plant guide on Heute (#1795)", async () => {
+    fakeServer(world({ cards: [{ id: "e1" }] }));
+    render(heute());
+    expect(await tasksShown()).toBeTruthy();
+    await settle();
+    expect(guideShown()).toBe(false);
+    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+  });
+
+  it("US-ONB-01 an account without a plant shows the first-plant guide on Heute (#1795)", async () => {
+    fakeServer(world());
+    render(heute());
+    expect(await screen.findByRole("heading", FIRST_GUIDE)).toBeTruthy();
+  });
+
+  it("US-ONB-01 a plant saved in the guide does not bring the guide back on the next visit, while the count is checked again (#1795)", async () => {
+    const w = world();
+    fakeServer(w);
+    const visit = render(heute());
+    await screen.findByRole("heading", FIRST_GUIDE);
+    await saveFirstPlant();
+    // The plant exists on the server, but the copy of the count from the first visit still says "no plant".
+    w.cards.push({ id: "e1" });
+    visit.rerender(elsewhere());
+    const release = holdPath("/specimens/count");
+    visit.rerender(heute());
+    await settle();
+    expect(guideShown()).toBe(false);
+    release();
+    expect(await tasksShown()).toBeTruthy();
+    await settle();
+    expect(guideShown()).toBe(false);
+  });
+
+  it("US-ONB-01 a count that fails on the next visit does not show the guide for an account with a plant (#1795)", async () => {
+    const w = world();
+    fakeServer(w);
+    const visit = render(heute());
+    await screen.findByRole("heading", FIRST_GUIDE);
+    await saveFirstPlant();
+    w.cards.push({ id: "e1" });
+    visit.rerender(elsewhere());
+    failPath("/specimens/count");
+    visit.rerender(heute());
+    await settle();
+    expect(guideShown()).toBe(false);
+    expect(await tasksShown()).toBeTruthy();
+  });
+
+  it("US-ONB-01 a new account that comes back to Heute still gets the guide once its count confirms it (#1795)", async () => {
+    fakeServer(world());
+    const visit = render(heute());
+    await screen.findByRole("heading", FIRST_GUIDE);
+    visit.rerender(elsewhere());
+    visit.rerender(heute());
+    expect(await screen.findByRole("heading", FIRST_GUIDE)).toBeTruthy();
+  });
+
+  it("US-ONB-01 a refresh of the count while the guide is open keeps the guide and what was typed (#1795)", async () => {
+    const w = world();
+    fakeServer(w);
+    render(
+      <>
+        {heute()}
+        <AskAgain />
+      </>,
+    );
+    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+    const release = holdPath("/specimens/count");
+    await userEvent.click(screen.getByRole("button", { name: "Neu laden" }));
+    // The count is asked again while the guide is open (the hold records the request after the stub).
+    await vi.waitFor(() => expect(paths()).toContain("/specimens/count"));
+    await settle();
+    const typed = () => (screen.getByLabelText("Name der Pflanze") as HTMLInputElement).value;
+    expect(typed()).toBe("Monstera");
+    release();
+    await settle();
+    expect(typed()).toBe("Monstera");
+    expect(guideShown()).toBe(true);
   });
 });
