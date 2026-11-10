@@ -67,7 +67,7 @@ type Host = { onCaption: (text: string | null) => void };
 
 function ReportCaption({ host, count }: { host: Host | undefined; count: number }) {
   useEffect(() => {
-    host?.onCaption(count === 1 ? "1 Gerät" : `${count} Geräte`);
+    host?.onCaption(count === 1 ? "1 Teil" : `${count} Teile`);
     return () => host?.onCaption(null);
   }, [host, count]);
   return null;

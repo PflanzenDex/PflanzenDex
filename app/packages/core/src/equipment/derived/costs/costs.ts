@@ -54,11 +54,11 @@ export function equipmentCosts(items: readonly EquipmentRow[]): CostView {
     coverage:
       total.count === 0
         ? "Noch kein Gerät erfasst."
-        : `Summe über ${total.priced} von ${total.count} ${total.count === 1 ? "Gerät" : "Geräten"}`,
+        : `Summe über ${total.priced} von ${total.count} ${total.count === 1 ? "Teil" : "Teilen"}`,
     nextAction:
       missing === 0
         ? null
-        : `Bei ${missing} ${missing === 1 ? "Gerät fehlt" : "Geräten fehlt"} der Preis. Trage ihn bei den Geräten nach, wenn du ihn kennst; sonst bleibt er unbekannt.`,
+        : `Bei ${missing} ${missing === 1 ? "Teil fehlt" : "Teilen fehlt"} der Preis. Trage ihn unter Geräte nach, wenn du ihn kennst; sonst bleibt er unbekannt.`,
     note: NOTE,
   };
 }

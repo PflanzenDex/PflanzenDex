@@ -30,8 +30,8 @@ describe("US-EQU-09 cost view", () => {
       ...Array.from({ length: 4 }, () => item("Pump", null)),
     ];
     const view = equipmentCosts(items);
-    expect(view.coverage).toBe("Summe über 7 von 11 Geräten");
-    expect(view.nextAction).toContain("Bei 4 Geräten fehlt der Preis");
+    expect(view.coverage).toBe("Summe über 7 von 11 Teilen");
+    expect(view.nextAction).toContain("Bei 4 Teilen fehlt der Preis");
   });
 
   it("US-EQU-09 no price known means unknown, never 0 (P-08)", () => {
