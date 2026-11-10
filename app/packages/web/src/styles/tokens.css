@@ -36,6 +36,13 @@
  */
 @custom-variant tall-window (@media (min-height: 30rem));
 
+/*
+ * Keyboard input (US-QS-15, DS-37, issue 1714): the page carries `data-input="keyboard"` after a key press and
+ * `"pointer"` after a click or tap (`RouteFocus`). A focus ring that only keyboard users need uses this variant, so a
+ * heading focused by script after a click shows no ring even where the browser would draw one.
+ */
+@custom-variant keyboard-input (:root[data-input="keyboard"] &);
+
 :root {
   --background: #fafafa;
   --foreground: #18181b;
