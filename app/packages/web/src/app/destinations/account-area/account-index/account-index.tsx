@@ -12,6 +12,7 @@ import {
 import type { Account } from "@/account";
 import { SECTIONS, rowId } from "../account-model/account-model";
 import { useAccountValues, type Values } from "./account-values";
+import { InstallRow } from "./install-row/install-row";
 
 /** The rows of the index: every section that is on for the account; the profile has its own row above them. */
 function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
@@ -153,6 +154,7 @@ export function AccountIndex(props: {
             </li>
           );
         })}
+        <InstallRow />
         <li>
           <SignOutRow
             onSignOut={props.onSignOut}
