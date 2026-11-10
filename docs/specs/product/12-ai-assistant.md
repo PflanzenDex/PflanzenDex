@@ -124,7 +124,7 @@ As a **plant keeper** I want to review every AI result before it counts (KI-R3).
 Acceptance criteria:
 
 - Inbox "Drafts" in the app (and in "Hints", P-10): per draft type, reference, source, connection, time and, where there is a previous value, the change compared to the current state.
-- Per draft: adopt, change and adopt, discard. Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
+- Per draft: adopt or discard; there is no step to change a draft (owner decision 2026-11-10: after adopting, the keeper edits the result as usual). Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
 - A draft is never adopted automatically. Unprocessed drafts expire and remain viewable as discarded.
 
 ### US-KI-10 · Log of AI actions and undo · 🟨 new
