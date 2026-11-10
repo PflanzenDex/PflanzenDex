@@ -47,7 +47,7 @@ describe("US-QS-07 · the offline bar", () => {
     delete (navigator as { onLine?: boolean }).onLine;
   });
 
-  it("US-QS-07 · the offline bar is an overlay outside the page and the state is announced (issue 1644, F8)", () => {
+  it("US-QS-30 · the offline bar is an overlay outside the page and the state is announced (issue 1644, F8)", () => {
     const shell = () => (
       <MemoryRouter initialEntries={["/"]}>
         <AppShell items={navItems({})}>

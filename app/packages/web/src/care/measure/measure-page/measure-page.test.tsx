@@ -473,7 +473,7 @@ function heldPhoto() {
 }
 
 describe("US-WAC-05 photo in the form and in the course", () => {
-  it("a measurement with a photo shows the photo with alternative text in the course", async () => {
+  it("US-WAC-05 a measurement with a photo shows the photo with alternative text in the course", async () => {
     fakeServer({ withPhoto: true });
     show();
     await fillValue("12,5");
@@ -484,7 +484,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     ).toBeTruthy();
   });
 
-  it("the form sends the chosen photo after the measurement, for its date, as raw file with Idempotency-Key", async () => {
+  it("US-WAC-05 the form sends the chosen photo after the measurement, for its date, as raw file with Idempotency-Key", async () => {
     const { posts, photoPosts } = fakeServer({ withPhoto: true });
     show();
     await fillValue("12,5");
@@ -500,7 +500,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     );
   });
 
-  it("without a chosen photo nothing is uploaded", async () => {
+  it("US-WAC-05 without a chosen photo nothing is uploaded", async () => {
     const { photoPosts } = fakeServer();
     show();
     await fillValue("12,5");
@@ -614,6 +614,26 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
     expect(alert.textContent).toContain(ERROR_TEXTS["media.storage_unavailable"]);
     expect(alert.textContent).not.toContain("raw server text");
+  });
+});
+
+/** A photo field offers the phone's camera or gallery: an image input, and no `capture` attribute that would force the camera. */
+describe("US-QS-07 taking a photo offers the camera", () => {
+  const imageInput = (field: HTMLElement) => {
+    expect(field.getAttribute("type")).toBe("file");
+    expect(field.hasAttribute("capture")).toBe(false);
+    const types = (field.getAttribute("accept") ?? "").split(",");
+    expect(types.length).toBeGreaterThan(0);
+    for (const type of types) expect(type.startsWith("image/")).toBe(true);
+  };
+
+  it("US-QS-07 taking a photo offers the camera: the measure form's photo field and the photo field of a measurement are image inputs without capture", async () => {
+    setViewportWidth(1024);
+    fakeServer({ existing: [measurement] });
+    show();
+    imageInput(await screen.findByLabelText("Foto (optional)"));
+    await openEntries();
+    imageInput(await screen.findByLabelText(/Foto hinzufügen/));
   });
 });
 
