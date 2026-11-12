@@ -76,9 +76,9 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | SOZ Social                       | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                    | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
 | KI AI access                     | 17      | 3      | 9       | 5      | 1 · 4 · 18                | 3                      | 14      |
-| QS Cross-cutting                 | 32      | 0      | 28      | 4      | 0 · 0 · 0                 | 6                      | 26      |
+| QS Cross-cutting                 | 33      | 0      | 28      | 5      | 0 · 0 · 0                 | 6                      | 27      |
 | MIG Migration (dropped)          | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
-| ENT Discover                     | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
+| ENT Discover                     | 11      | 0      | 8       | 3      | 0 · 0 · 9                 | 0                      | 11      |
 | QG Quality gates                 | 10      | 2      | 8       | 0      | 15 · 10 · 2               | 0                      | 10      |
 | DEV Development process          | 13      | 3      | 10      | 0      | 1 · 3 · 6                 | 0                      | 13      |
 | ACH Achievements                 | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **226** | **48** | **140** | **38** |                           | **50**                 | **176** |
+| **Total**                        | **229** | **48** | **140** | **41** |                           | **50**                 | **179** |
 
 <!-- spec-status:end -->
 

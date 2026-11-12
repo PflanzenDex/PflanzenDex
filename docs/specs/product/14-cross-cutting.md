@@ -685,6 +685,27 @@ Acceptance criteria:
 
 Not part of this story: the screens from 768 px (a later pass; `design-system.md` holds there unchanged), the changes to the app and to the gates that still check the replaced rules (tickets from the design review), and the drawing style of the illustrations (US-QS-31).
 
+### US-QS-33 · Motion follows the device, with a switch in the app · ⬜ new
+
+As a **plant keeper** I want short animations that show me what changed, and I want them to stop when my device asks for less motion or when I turn them off in the app, so that the app feels lively without making anyone dizzy.
+
+Context: US-QS-12, US-QS-14 and the style guide (SG-MOTION-02, US-QS-32) already ask that motion stops under `prefers-reduced-motion: reduce`. No account setting for motion exists yet (checked in `01`, `14`, `20`, `22`). This story adds the in-app switch and defines **reduced motion** once (glossary in `00`): the device asks for it **or** the keeper chose "Bewegung aus" in the app. Every criterion in the specs that names `prefers-reduced-motion: reduce` or "reduced motion" applies to both. Calm mode (US-ACH-08) is a different thing: it hides achievements and celebrations and does not change the motion of the app.
+
+Acceptance criteria:
+
+- Given the purposeful motions of the app, then they include (starting list, assumption, decided by the PO): the change of view (US-QS-14), cards that enter a list (US-QS-14), a layer that opens or closes (US-QS-15), a new specimen that enters the collection after "Pflanze anlegen" (it rises into its place, and the place is where the plant now stands), and the card transitions of the suggestion deck (US-ENT-01, US-ENT-10) and of swap matching (US-TAU-02). Each follows the motion rules of the style guide (SG-MOTION-01 to SG-MOTION-08, US-QS-32): its durations, `transform` and `opacity` only, and it shows where something came from or went to. Nothing moves for decoration alone, nothing loops, and nothing blinks.
+- Given a keeper who never opened the setting, when the device asks for reduced motion, then the app runs without motion; when it does not, the app runs with motion. Nobody has to look for a switch to get the behaviour of the own device.
+- Given the account settings, layer "Wie nutzt du die App?" (US-QS-11), then a choice "Bewegung" offers "Wie auf dem Gerät" (default) and "Bewegung aus", with one line of help: "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar." (US-QS-15: at most one line).
+- Given "Bewegung aus", then the app behaves exactly as under `prefers-reduced-motion: reduce` on every device of the keeper, also when the device does not ask for it: no route transition, no list entry, no sliding layer, no flying card; every state change is still shown at once (US-QS-14).
+- Given "Wie auf dem Gerät" and a device that asks for reduced motion, then the app shows no motion; the app offers no choice that forces motion on against the device (assumption, decided by the PO: whoever set it on the device needs it).
+- Given motion is reduced, then nothing is lost: every function, every text and every decision stays the same, the buttons and keys that stand beside a gesture stay (US-QS-08, US-ENT-01), a swipe still works where it worked, only without the card following the finger, and focus and announcements are the same as with motion (US-QS-10, P-10).
+- Given I change the choice, when it is saved, then it applies at once on the open screen, without a reload, and a refused save keeps the old value and shows the error text (P-10).
+- Given the app starts, when the account setting is not loaded yet, then the last choice known on this device applies; with none known, the device setting applies; no animation runs in the first frame that the setting would forbid.
+- Given the sign-in pages before an account is known, then only the device setting applies.
+- Given the choice is saved, then it goes through the same validating operation as the other account settings (US-ACC-02, P-03); a value outside the set is refused with `input.invalid` naming `motion`.
+
+Assumptions, decided by the PO (revisable): the choice is stored per account, like the shortcut mode of US-QS-11, so it follows the keeper to every device; the value set is `system` (default) and `reduced`. The device keeps a copy of the last value only to avoid motion on the first frame; the account value wins once it is loaded.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |
