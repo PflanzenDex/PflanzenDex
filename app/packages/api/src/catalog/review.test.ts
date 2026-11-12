@@ -1,16 +1,32 @@
 import { randomUUID } from "node:crypto";
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openOwnerPool, openFixturePool, holdTaxonLock } from "@pflanzendex/db";
+import {
+  createFileDatabase,
+  migrate,
+  openAdminPool,
+  openFixturePool,
+  openOwnerPool,
+  openPool,
+} from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-BES-10 over HTTP with real PostgreSQL (`make db-up`): two plant keepers and an operator share the catalog.
+// The file runs in a database of its own (`createFileDatabase`, as query-count.test.ts, #1301). A run that was killed
+// before its teardown leaves its open proposals in the shared test database; `GET /review` lists every open proposal of
+// that database and gets slower with each one (issue 1659: 506 leftovers, the list test timed out at 5 s). In a database
+// of its own only this run's rows exist, so a leftover cannot change the result or the time. The databases of killed runs
+// are dropped at the start, while the run lock is held. A second run of this file at the same time fails with a message.
 let pool: Pool;
-let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
-// Approves species: holds the taxon lock so a parallel taxonomy build sees a stable catalog (#646).
-let releaseTaxa: (() => Promise<void>) | undefined;
+let admin: Pool; // superuser fixture pool of the file's database: setup and cross-tenant observation (QG-D1)
+let database: Awaited<ReturnType<typeof createFileDatabase>> | undefined;
+// A session lock on the test database: it ends with its connection, so a killed run does not keep it (issue 1659).
+const RUN_LOCK = "hashtext('pflanzendex-review-file-run')";
+const DATABASE_PREFIX = "pflanzendex_review";
+let lockPool: Pool | undefined;
+let runLock: PoolClient | undefined;
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -27,6 +43,10 @@ const verifier: TokenVerifier = async (token) => {
 let app: ReturnType<typeof createApp>;
 type Response = { status: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
+// A request that does not answer within this bound fails with its name, instead of letting vitest stop the test at its
+// 5 s timeout with no cause (issue 1659). Assumption: starting value, below that timeout.
+const ANSWER_LIMIT_MS = 4_000;
+
 async function call(
   sub: string | null,
   method: string,
@@ -36,12 +56,24 @@ async function call(
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (sub) headers["authorization"] = `Bearer valid:${sub}`;
   headers["idempotency-key"] = randomUUID();
-  const res = await app.request(path, {
+  const answer = app.request(path, {
     method,
     headers,
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
-  return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const unanswered = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${method} ${path} did not answer within ${ANSWER_LIMIT_MS} ms`)),
+      ANSWER_LIMIT_MS,
+    );
+  });
+  try {
+    const res = await Promise.race([answer, unanswered]);
+    return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 let counter = 0;
@@ -63,6 +95,9 @@ const propose = async (sub: string, extra: Record<string, unknown> = {}) => {
   const entry = list.body["entries"].find(
     (e: { species: { id: string } | null }) => e.species?.id === r.body["id"],
   );
+  // Named failure instead of a TypeError on `undefined` (issue 1659): the proposal must be in the reviewer's list.
+  if (!entry)
+    throw new Error(`proposal ${r.body["id"]} is not in the review list (${list.status})`);
   return { speciesId: r.body["id"] as string, caseId: entry.reviewCase.id as string };
 };
 const approve = async (sub: string) => {
@@ -73,10 +108,31 @@ const approve = async (sub: string) => {
   return p;
 };
 
+/** Drops the databases that earlier runs of this file left behind (killed before their `afterAll`). Call it under the run lock. */
+async function dropEarlierRunDatabases(superuser: Pool): Promise<void> {
+  const left = await superuser.query<{ datname: string }>(
+    "select datname from pg_database where starts_with(datname, $1)",
+    [`${DATABASE_PREFIX}_`],
+  );
+  for (const { datname } of left.rows)
+    await superuser.query(`drop database if exists "${datname}" with (force)`);
+}
+
 beforeAll(async () => {
-  pool = openOwnerPool();
-  admin = openFixturePool();
-  releaseTaxa = await holdTaxonLock(admin);
+  lockPool = openAdminPool(true);
+  const lock = await lockPool.connect();
+  runLock = lock;
+  const taken = await lock.query<{ got: boolean }>(
+    `select pg_try_advisory_lock(${RUN_LOCK}) as got`,
+  );
+  if (taken.rows[0]?.got !== true)
+    throw new Error(
+      "review.test.ts: another run of this file is active on the test database; stop it or wait for it (US-QG-02, issue 1659)",
+    );
+  await dropEarlierRunDatabases(lockPool);
+  database = await createFileDatabase(DATABASE_PREFIX);
+  pool = openPool(database.ownerUrl);
+  admin = openPool(database.fixtureUrl, true);
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });
   for (const sub of [subKeeper, subOther, subOperator]) await call(sub, "GET", "/species");
@@ -84,30 +140,22 @@ beforeAll(async () => {
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
     [subOperator],
   );
-});
+}, 60_000);
 afterAll(async () => {
-  const client = await admin.connect();
   try {
-    await client.query("begin");
-    await client.query("set local session_replication_role = replica");
-    const accounts = "(select id from account where subject = any($1))";
-    const subs = [[subKeeper, subOther, subOperator]];
-    await client.query(
-      `delete from species where id in (select object_id from review_case where account_id in ${accounts})`,
-      subs,
-    );
-    // A review case outlives its creator now (US-ACC-04); these cases go with their species.
-    await client.query(`delete from review_case where account_id in ${accounts}`, subs);
-    await client.query("set local session_replication_role = default");
-    await client.query(`delete from account where id in ${accounts}`, subs);
-    await client.query("commit");
+    if (database) {
+      await pool.end();
+      await admin.end();
+    }
   } finally {
-    client.release();
-    await pool.end();
-    await releaseTaxa?.();
-    await admin.end();
+    try {
+      await database?.drop();
+    } finally {
+      runLock?.release();
+      await lockPool?.end();
+    }
   }
-});
+}, 60_000);
 
 describe("US-BES-10 access (P-04, FR-BES-14)", () => {
   it.each([
@@ -333,5 +381,86 @@ describe("US-BES-10 merge (FR-BES-11, P-10)", () => {
     expect((await call(subKeeper, "GET", `/species/${p.speciesId}`)).body).toMatchObject({
       reviewStatus: "proposal",
     });
+  });
+});
+
+/**
+ * Writes an open proposal into the shared test database, the database that earlier runs wrote to, as a killed run leaves
+ * it: no account, the case open (issue 1659). Returns the case id. Superuser, so the write skips the guards of a real run.
+ */
+async function leaveOpenProposal(speciesId: string): Promise<string> {
+  const owner = openOwnerPool();
+  try {
+    await migrate(owner); // the shared database has its schema once any file has run; idempotent otherwise
+  } finally {
+    await owner.end();
+  }
+  const shared = openFixturePool();
+  const client = await shared.connect();
+  try {
+    await client.query("begin");
+    await client.query("set local session_replication_role = replica");
+    await client.query(
+      `insert into species (id, genus, epithet, latin_name, created_by, review_status, source,
+         difficulty, standard_level, light_demand_lux, growth_measure, etiolation_signs, success_criteria)
+       values ($1, 'Leftover', $2, $3, 'user', 'proposal', 'RHS', 2, 3, 40000, 'rosette_diameter',
+         'Rosette streckt sich.', 'Dichte.')`,
+      [speciesId, run, `Leftover ${run}`],
+    );
+    const inserted = await client.query<{ id: string }>(
+      `insert into review_case (object_kind, object_id, status) values ('species', $1, 'proposal') returning id`,
+      [speciesId],
+    );
+    await client.query("commit");
+    const caseId = inserted.rows[0]?.id;
+    if (!caseId) throw new Error(`no review case written for the leftover ${speciesId}`);
+    return caseId;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+    await shared.end();
+  }
+}
+
+/** Removes what `leaveOpenProposal` wrote, so the shared database is as it was. */
+async function removeLeftover(speciesId: string): Promise<void> {
+  const shared = openFixturePool();
+  const client = await shared.connect();
+  try {
+    await client.query("begin");
+    await client.query("set local session_replication_role = replica");
+    await client.query("delete from review_case where object_kind = 'species' and object_id = $1", [
+      speciesId,
+    ]);
+    await client.query("delete from species where id = $1", [speciesId]);
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+    await shared.end();
+  }
+}
+
+describe("US-QG-02 rows that an earlier run left (issue 1659)", () => {
+  it("US-QG-02 an open proposal that an earlier run left in the shared test database is not in this run's review list", async () => {
+    const leftover = randomUUID();
+    const leftoverCase = await leaveOpenProposal(leftover);
+    try {
+      const list = await call(subOperator, "GET", "/review");
+      expect(list.status).toBe(200);
+      expect(
+        list.body["entries"].map((e: { reviewCase: { id: string } }) => e.reviewCase.id),
+      ).not.toContain(leftoverCase);
+      const open = await admin.query<{ n: string }>(
+        "select count(*) as n from review_case where status in ('proposal', 'ai_unreviewed')",
+      );
+      expect(list.body["open"]).toBe(Number(open.rows[0]?.n));
+    } finally {
+      await removeLeftover(leftover);
+    }
   });
 });
