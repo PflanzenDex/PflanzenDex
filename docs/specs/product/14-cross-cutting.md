@@ -665,6 +665,26 @@ Acceptance criteria:
 
 Not part of this story: the placeholder of a card without an image (collector card, suggestion card) and the loading sprout (US-QS-07); they keep their marks until a story of their own.
 
+### US-QS-32 · A phone screen follows one written style guide · ⬜ new
+
+As a **plant keeper** I want every screen on my phone to look and behave the way I know from the other apps on it, so that I do not have to learn the app screen by screen (P-09, P-11).
+
+Decision (owner, issue 1844, interview of 2026-11-10 and 2026-11-12, E-31 in `16-releases-and-decisions.md`): on phones the baseline is Apple's Human Interface Guidelines together with WCAG 2.2 AA. The rules are written down once, each with a stable ID, in `docs/guides/reference/style-guide.md`; a rule there replaces an older rule where the two disagree, and the guide lists what it replaces. The app does not follow the guide yet: the mobile design review records the gap as findings, and each fix is a ticket of its own. Release R2 for the guide; the fixes are placed when the review is done.
+
+Acceptance criteria:
+
+- Given a rule on the look or behaviour of a phone screen, then it stands in the style guide with a stable ID, a reason and, where it replaces an older rule, the name of that rule; an ID is never renumbered.
+- Given the detail of an object (a plant, a species, a wish) or a topic that is read, when I open it on a phone, then it is a page with a way back, not a sheet; a sheet or dialog is only for a task with a clear end (fill in, pick, confirm).
+- Given a list longer than the window on a phone, then it scrolls under the bars that stay in place, and it is not cut into pages with buttons.
+- Given any page, then the top bar names that page, and the product name stands only on the entry page, the sign-in page, in "Konto" and on the splash of the installed app.
+- Given the actions of a view, then at most one is a filled button, a secondary one has a soft fill without a border, a tertiary one is text only, and nothing that only navigates or counts is green.
+- Given a form or a sheet on a phone, then "Abbrechen" and the confirming action sit in its bar, a date is chosen with the system date picker, and a setting that applies at once is a switch.
+- Given the result of a write, then it shows at the place of the change and is announced to assistive technology (US-QS-10); no toast shows it, and undo is offered at the place of the change.
+- Given content on a phone, then it is shown as flat grouped lists without a shadow; a shadow marks only what floats above the page.
+- Given a case in which an older rule and the baseline disagree and the guide is silent, then the owner decides and the answer becomes a rule of the guide.
+
+Not part of this story: the screens from 768 px (a later pass; `design-system.md` holds there unchanged), the changes to the app and to the gates that still check the replaced rules (tickets from the design review), and the drawing style of the illustrations (US-QS-31).
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |
