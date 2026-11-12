@@ -1,7 +1,8 @@
 // Public interface of the `collection` module (ADR 0003): specimens (US-BES-02).
 export { specimenCreate, specimenCorrectCatchDate } from "./specimen/create";
+export { specimenCreateSchema, specimenCorrectCatchDateSchema } from "./specimen/create";
 export type { CreateDependencies, CatchDateDependencies } from "./specimen/create";
-export { specimenMark } from "./specimen/mark";
+export { specimenMark, specimenMarkSchema } from "./specimen/mark";
 export type { MarkDependencies } from "./specimen/mark";
 // The private notes of a specimen (US-BES-18): set or clear them, and the keeper's own read of them.
 export { specimenSetNotes, specimenNotes } from "./notes/notes";
@@ -40,6 +41,7 @@ export {
   LOCATE_ERROR,
   LIGHT_ZONE_ERROR,
 } from "./placement/locate";
+export { specimenSetLocationSchema, specimenSetLightZoneSchema } from "./placement/locate";
 export type { LocateDependencies } from "./placement/locate";
 export { cuttingLight } from "./placement/cutting-light";
 export type { ZoneSource } from "./placement/effective-zone";
@@ -69,7 +71,7 @@ export type {
   CareProfileStore,
   OverridableField,
 } from "./care-profile/care-profile-types";
-export { specimenArchive, specimenRestore } from "./specimen/archive";
+export { specimenArchive, specimenRestore, specimenRestoreSchema } from "./specimen/archive";
 export type { ArchiveDependencies } from "./specimen/archive";
 export { specimenArchived } from "./specimen/archived";
 export type { ArchivedDependencies, ArchivedEntry } from "./specimen/archived";

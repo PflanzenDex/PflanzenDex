@@ -24,6 +24,7 @@ export {
   equipmentPlacePot,
   placePlant,
   specimenRepotWithPot,
+  specimenRepotWithPotSchema,
 } from "./record/pot";
 export type {
   PlaceDependencies,

@@ -95,6 +95,23 @@ export {
   listSpecimensSchema,
   resolveSpecimen,
 } from "./reads/collection/collection-reads";
+// Keeping the specimens through the AI client (US-KI-14, KI-R10, FR-KI-14).
+export {
+  REFERENCE_LENGTH,
+  SPECIMEN_WRITES,
+  SPECIMEN_WRITE_SPECS,
+  resolveWrite,
+  writeInputSchema,
+} from "./reads/collection/specimen-writes";
+export type { ResolvedWrite, SpecimenWrite } from "./reads/collection/specimen-writes";
+export { aiSpecimenWrite } from "./reads/collection/write-call";
+export type {
+  SpecimenWriteSource,
+  WriteCall,
+  WriteDependencies,
+  WriteOutcome,
+  WriteRunner,
+} from "./reads/collection/write-call";
 // Every other area (US-KI-12) and the calls that are never released (FR-KI-10, FR-KI-22).
 export { aiAreaRead, aiNotReleased, areaSchema } from "./reads/areas/area-reads";
 export type { AreaReadDependencies } from "./reads/areas/area-reads";

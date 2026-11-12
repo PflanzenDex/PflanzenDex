@@ -2,7 +2,7 @@
 // name. The input schemas come from the checks of the operations (FR-KI-17); only the descriptions are written here.
 import { checkSpeciesNameSchema, describeRulesSchema } from "@pflanzendex/core";
 import { query, type McpTool } from "../schema";
-import { inputOf } from "./collection-tools";
+import { inputOf } from "./collection/collection-tools";
 
 export const RULES_TOOLS: readonly McpTool[] = [
   {
