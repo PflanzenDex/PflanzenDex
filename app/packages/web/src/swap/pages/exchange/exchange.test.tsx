@@ -227,11 +227,15 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
 
   it("US-QS-07 · US-SOZ-08 a created offer closes the layer and is confirmed by a toast, without the open-offer line (issue 1696)", async () => {
     server();
-    view("/?sheet=offer");
+    view();
+    await screen.findByText(/Du hast noch nichts angeboten/);
+    const opener = screen.getByRole("button", { name: "Zum Tausch anbieten" });
+    await userEvent.click(opener);
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     await screen.findByText("Keine Behandlung bekannt");
     await userEvent.click(screen.getByRole("button", { name: "Angebot erstellen" }));
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await vi.waitFor(() => expect(document.activeElement).toBe(opener));
     expect(screen.getAllByText(/Das Angebot ist erstellt/)).toHaveLength(1);
     expect(screen.queryByText(/schon ein offenes Angebot/)).toBeNull();
   });
