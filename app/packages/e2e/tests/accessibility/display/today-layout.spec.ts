@@ -90,8 +90,10 @@ test.describe("US-QS-18 Heute at 360 px", () => {
       await page.locator("[data-fit-fill]").evaluate((el) => el.scrollHeight > el.clientHeight),
     ).toBe(true);
   });
+});
 
-  test("US-QS-14: Heute taller than the window: scrolled to the end, Weiter lies fully above the bottom bar (issue 1835)", async ({
+test.describe("US-QS-14 Heute taller than the window", () => {
+  test("US-QS-14: Heute taller than the window: scrolled to the end, the frame and Weiter end above the bottom bar (issue 1835)", async ({
     page,
     account,
   }, info) => {
@@ -106,8 +108,15 @@ test.describe("US-QS-18 Heute at 360 px", () => {
     const frame = page.locator("[data-fit-fill]");
     expect(await frame.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
     await frame.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
-    const weiter = await boxOf(page.getByRole("button", { name: "Weiter", exact: true }));
+    // The scrolling frame itself ends at the top of the bar, so its last line (its own bottom padding included) is
+    // never under the bar, whatever the content; before the fix it reached 8 px (0.5 rem) under it.
+    const box = await boxOf(frame);
     const bar = await boxOf(page.locator("nav[data-bottom-bar]"));
+    expect(
+      box.y + box.height,
+      "the bottom of the scrolling frame against the top of the bar",
+    ).toBeLessThanOrEqual(bar.y + 0.5);
+    const weiter = await boxOf(page.getByRole("button", { name: "Weiter", exact: true }));
     expect(
       weiter.y + weiter.height,
       "the bottom of Weiter against the top of the bar",
