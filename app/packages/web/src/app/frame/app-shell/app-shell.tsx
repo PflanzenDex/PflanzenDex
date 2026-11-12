@@ -4,6 +4,7 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useOnline } from "@/shared/platform/browser/network";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
+import { ScrollMemory } from "@/shared/platform/routing/scroll-memory/scroll-memory";
 import {
   ShortcutProvider,
   useShortcuts,
@@ -168,6 +169,7 @@ export function AppShell({
                 className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[var(--bar-reserve,calc(4rem+env(safe-area-inset-bottom)))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10"
               >
                 {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
+                <ScrollMemory />
                 {children}
               </main>
             </div>
