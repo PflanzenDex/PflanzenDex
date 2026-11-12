@@ -642,6 +642,7 @@ Acceptance criteria:
 - Given the app was used before and there is no network, when I open the app, then it shows the last loaded data.
 - Given a write action is made without a network, when the network returns, then it is buffered and delivered once, without a duplicate entry (`US-QS-03`).
 - Given the device is offline, when the offline state shows, then an overlay bar lies above the bottom navigation (below 768 px) or at the top edge (from 768 px), says what it means and covers the page without moving it; the page under it stays usable, because pointer input passes through the bar (US-QS-10, DS-54).
+- Given the device is offline and writes are not queued on the device yet (issue 1687), when the offline state shows, then its text promises nothing that does not happen ("Änderungen sind erst wieder online möglich."), and a write that fails for the missing network says so and that the input stays ("Keine Verbindung. Deine Eingabe bleibt hier stehen."), never that the server is down (owner answer Q-47, issue 1863, P-10).
 
 Related: FR-SOZ-03 (the friends' last loaded copy with its "Stand" date), US-ACC (switching between accounts works offline), issue 1409 (a retried write), issue 1688 (the new version on the next start) and issues 1692 and 1695, which need the worker too.
 

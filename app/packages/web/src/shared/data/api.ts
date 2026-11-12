@@ -32,14 +32,29 @@ const NETWORK_ERROR: ApiError<never> = {
   text: "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.",
 };
 
+/**
+ * A write that got no answer while the device is offline (issue 1863): the network is missing, not the server, and the
+ * form keeps what was typed. Same code as `NETWORK_ERROR`, so the repeat guard and the buffer treat both alike.
+ */
+const OFFLINE_WRITE_ERROR: ApiError<never> = {
+  code: "network.not_reachable",
+  text: "Keine Verbindung. Deine Eingabe bleibt hier stehen.",
+};
+
+/** The error of a request that got no answer: offline writes say that the connection is missing (issue 1863). */
+const unanswered = (method: string): ApiError<never> =>
+  method !== "GET" && typeof navigator !== "undefined" && navigator.onLine === false
+    ? OFFLINE_WRITE_ERROR
+    : NETWORK_ERROR;
+
 export async function call<T, D = unknown>(
   fetchFn: FetchFn,
   url: string,
   token: string,
   init: { method?: string; body?: unknown; key?: string } = {},
 ): Promise<Response<T, D>> {
+  const method = init.method ?? "GET";
   try {
-    const method = init.method ?? "GET";
     const res = await fetchFn(url, {
       method,
       headers: {
@@ -61,7 +76,7 @@ export async function call<T, D = unknown>(
       };
     return { ok: false, error: body.error ?? NETWORK_ERROR };
   } catch {
-    return { ok: false, error: NETWORK_ERROR };
+    return { ok: false, error: unanswered(method) };
   }
 }
 

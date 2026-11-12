@@ -1,6 +1,6 @@
 {
   "skip": "Zum Inhalt springen",
   "offline.title": "Du bist offline",
-  "offline.body": "Angezeigte Daten können veraltet sein. Änderungen werden gesendet, sobald du wieder online bist.",
-  "offline.announce": "Du bist offline. Angezeigte Daten können veraltet sein. Änderungen werden gesendet, sobald du wieder online bist."
+  "offline.body": "Angezeigte Daten können veraltet sein. Änderungen sind erst wieder online möglich.",
+  "offline.announce": "Du bist offline. Angezeigte Daten können veraltet sein. Änderungen sind erst wieder online möglich."
 }
