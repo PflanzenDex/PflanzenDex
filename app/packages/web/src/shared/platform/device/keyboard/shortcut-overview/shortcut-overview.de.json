@@ -3,6 +3,7 @@
   "overview.close": "Schließen",
   "overview.intro": "Ein Tastenkürzel wirkt nur, solange der Fokus nicht in einem Textfeld steht.",
   "overview.everywhere": "In der ganzen App",
+  "overview.view": "In dieser Ansicht",
   "overview.off": "Tastenkürzel sind ausgeschaltet. Unter Konto → Einstellungen → Wie nutzt du die App? schaltest du sie wieder ein.",
   "help.button": "Tastenkürzel anzeigen"
 }

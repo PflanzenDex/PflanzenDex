@@ -1,9 +1,8 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
-import { useState } from "react";
+import type { RefObject } from "react";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
-import { cn } from "@/shared/lib/utils";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
@@ -11,7 +10,8 @@ import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useDecisions, type Decision, type OnDecide, type OnUndo } from "./use-decisions";
 import { useDeckPosition } from "./use-deck-position";
-import { DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
+import { useDeckKeys } from "./use-deck-keys";
+import { Actions, DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
 
 const t = texts(table);
 
@@ -31,56 +31,6 @@ const STAMPS: Record<SwipeDirection, string> = {
   up: t("deck.later"),
   down: t("deck.later"),
 };
-
-/**
- * True when the text size is raised to 150 % or more (US-QS-21, WCAG 1.4.4). Media queries do not follow the root font
- * size, so the row reads it: a sticky row would then cover the card, so it scrolls with the content instead.
- */
-function largeText(): boolean {
-  return parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24;
-}
-
-/** "Nein · Später · Ja" as buttons; they are the way without a swipe gesture (NFR-13). */
-function Actions(props: { onDecide: (d: Decision) => void }) {
-  const [large] = useState(largeText);
-  return (
-    <div
-      className={cn(
-        // Stays in view with the card (US-QS-14, NFR-13): from 30 rem of window height (the tall window of tokens.css) above
-        // the phone bar (3.5 rem plus safe area, a little under the bar's 59 px so no content shows in between), at the
-        // window bottom from `md`. Below it the row scrolls like the content, a window too low for a sticky row (400 % zoom).
-        "shrink-0 z-10 border-t border-border bg-background py-2",
-        !large &&
-          "tall-window:sticky tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tall-window:md:bottom-0",
-        // Large text: the row never sticks, because a sticky row would cover the card. Static content ends under the
-        // phone bar otherwise, so the reserve stays while that bar is fixed (the tall window), and goes from `md`.
-        large && "tall-window:mb-20 tall-window:md:mb-0",
-      )}
-    >
-      <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="touch"
-          className="min-w-24 flex-1"
-          onClick={() => props.onDecide("no")}
-        >
-          {t("deck.no")}
-        </Button>
-        <Button
-          variant="secondary"
-          size="touch"
-          className="min-w-24 flex-1"
-          onClick={() => props.onDecide("later")}
-        >
-          {t("deck.later")}
-        </Button>
-        <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
-          {t("deck.yes")}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 /** The zone the deck is filtered to and, if the catalog does not suffice for it, what to do next (US-ENT-07, P-09). */
 function ZoneNotice(props: {
@@ -113,8 +63,48 @@ function ZoneNotice(props: {
 }
 
 /**
- * One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). The next card waits
- * underneath with its content (aria-hidden, inert). A Yes or No can be taken back with "Rückgängig" (US-ENT-04).
+ * The card stack (US-ENT-10): "Karte n von m" in text, the top card and up to two below it; the next card waits
+ * underneath with its content (aria-hidden, inert). A card taken back comes in from the side it left.
+ */
+function Stack(props: {
+  deck: SuggestionDeck;
+  position: number;
+  exit: SwipeDirection | null;
+  returned: SwipeDirection | null;
+  frontTitle: RefObject<HTMLHeadingElement | null>;
+  onSwipe: (d: SwipeDirection) => void;
+  onExited: (d: SwipeDirection) => void;
+}) {
+  const { suggestions } = props.deck;
+  const current = suggestions[props.position];
+  const next = suggestions[props.position + 1];
+  if (current === undefined) return null;
+  return (
+    <>
+      <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
+        {t("deck.position", { position: props.position + 1, total: suggestions.length })}
+      </p>
+      <SwipeCard
+        key={current.species}
+        exit={props.exit}
+        stamps={STAMPS}
+        depth={suggestions.length - props.position - 1}
+        enterFrom={props.returned}
+        under={next === undefined ? undefined : <SuggestionCard suggestion={next} />}
+        onSwipe={props.onSwipe}
+        onExited={props.onExited}
+        className="mx-auto flex min-h-48 w-full max-w-md flex-1 basis-0"
+      >
+        <SuggestionCard suggestion={current} titleRef={props.frontTitle} />
+      </SwipeCard>
+    </>
+  );
+}
+
+/**
+ * One deck as a card stack, one card at a time, with the arrow keys and Backspace while the deck has the focus
+ * (US-ENT-10); after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). A Yes or No can be taken back with
+ * "Rückgängig" (US-ENT-04).
  */
 function Cards(props: {
   deck: SuggestionDeck;
@@ -128,11 +118,17 @@ function Cards(props: {
 }) {
   const { deck } = props;
   const { position, moves, endTitle, frontTitle } = useDeckPosition(props.takeFocus === true);
-  const { saved, error, taken, decide, undo, exit, setExit } = useDecisions(
+  const { saved, error, taken, decide, undo, exit, setExit, returned } = useDecisions(
     props.onDecide,
     props.onUndo,
     moves,
   );
+  const current = deck.empty === null ? deck.suggestions[position] : undefined;
+  const fly = (d: SwipeDirection) => exit === null && setExit(d);
+  const onKeyDown = useDeckKeys({
+    onFly: current === undefined ? undefined : fly,
+    onUndo: taken === null ? undefined : () => void undo(),
+  });
   if (deck.empty !== null)
     return (
       <DeckEmpty
@@ -141,40 +137,36 @@ function Cards(props: {
         titleRef={endTitle}
       />
     );
-  const current = deck.suggestions[position];
   if (current === undefined)
     return (
-      <DeckEnd
-        saved={saved}
-        error={error}
-        taken={taken !== null}
-        titleRef={endTitle}
-        onUndo={undo}
-        onNewDeck={props.onNewDeck}
-      />
+      // The keys of the deck act where the deck has the focus: here Backspace for "Rückgängig" (US-ENT-10).
+      <div className="contents" onKeyDown={onKeyDown}>
+        <DeckEnd
+          saved={saved}
+          error={error}
+          taken={taken !== null}
+          titleRef={endTitle}
+          onUndo={undo}
+          onNewDeck={props.onNewDeck}
+        />
+      </div>
     );
-  const next = deck.suggestions[position + 1];
   return (
-    <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2">
-      <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
-        {t("deck.position", { position: position + 1, total: deck.suggestions.length })}
-      </p>
-      <SwipeCard
-        key={current.species}
+    // The card and its buttons share the keys of the deck (US-ENT-10).
+    <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2" onKeyDown={onKeyDown}>
+      <Stack
+        deck={deck}
+        position={position}
         exit={exit}
-        stamps={STAMPS}
-        stacked={next !== undefined}
-        under={next === undefined ? undefined : <SuggestionCard suggestion={next} />}
+        returned={returned}
+        frontTitle={frontTitle}
         onSwipe={setExit}
         onExited={(d) => void decide(current.species, DECISION[d])}
-        className="mx-auto flex min-h-48 w-full max-w-md flex-1 basis-0"
-      >
-        <SuggestionCard suggestion={current} titleRef={frontTitle} />
-      </SwipeCard>
+      />
       {error !== null && <Banner variant="error">{error}</Banner>}
       {taken !== null && <UndoButton onClick={undo} />}
       <p className="sr-only">{t("deck.hint")}</p>
-      <Actions onDecide={(d) => exit === null && setExit(FLIGHT[d])} />
+      <Actions onDecide={(d) => fly(FLIGHT[d])} />
     </div>
   );
 }

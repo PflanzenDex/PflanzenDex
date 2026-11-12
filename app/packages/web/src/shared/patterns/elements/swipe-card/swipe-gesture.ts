@@ -88,3 +88,42 @@ export function flyPose(
       return { x: 0, y: viewport.height, rotate: 0 };
   }
 }
+
+/** How long the stamp of a decision stays under reduced motion before the next card stands in place (US-ENT-10, assumption). */
+export const REDUCED_STAMP_MS = 300;
+/** The shortest flight in ms of a fast throw: a flick leaves quicker than a slow drag, but stays visible (assumption). */
+export const MIN_FLIGHT_MS = 120;
+
+/** A release that decided: the pointer moved `dx` and `dy` px from the press and was moving at `speed` px per ms. */
+export interface Throw {
+  readonly dx: number;
+  readonly dy: number;
+  readonly speed: number;
+}
+
+/** The decision of a throw by its dominant direction (right Yes, left No, up or down Later, US-ENT-01). */
+export function throwDirection(t: Throw): SwipeDirection {
+  if (Math.abs(t.dx) > Math.abs(t.dy)) return t.dx < 0 ? "left" : "right";
+  return t.dy < 0 ? "up" : "down";
+}
+
+/**
+ * The pose a thrown card leaves in (US-ENT-10): along the line of the release, stretched until the card is off the screen
+ * (a throw to the upper right leaves to the upper right). Tilted by its horizontal share; a throw without a line leaves
+ * straight in its direction.
+ */
+export function throwPose(t: Throw, viewport: { width: number; height: number }): Pose {
+  const reach = Math.max(Math.abs(t.dx) / viewport.width, Math.abs(t.dy) / viewport.height);
+  if (!(reach > 0)) return flyPose(throwDirection(t), viewport);
+  const x = t.dx / reach;
+  const y = t.dy / reach;
+  return { x, y, rotate: Math.round((x / viewport.width) * FLY_TILT_DEG * 100) / 100 };
+}
+
+/** The time in ms a thrown card takes to leave: a flick keeps its speed, a slow drag takes the usual `EXIT_MS`. */
+export function flightMs(t: Throw, viewport: { width: number; height: number }): number {
+  if (t.speed < FLICK_SPEED) return EXIT_MS;
+  const end = throwPose(t, viewport);
+  const rest = Math.hypot(end.x - t.dx, end.y - t.dy);
+  return Math.max(MIN_FLIGHT_MS, Math.min(EXIT_MS, Math.round(rest / t.speed)));
+}

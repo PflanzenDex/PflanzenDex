@@ -187,9 +187,9 @@ describe("US-ENT-01 the decision flies the card off and is reported once it has 
     const { container, rerender } = render(ui({ stacked: true }));
     const under = container.querySelector(".inset-0[aria-hidden='true']") as HTMLElement;
     expect(under).not.toBeNull();
-    expect(under.style.getPropertyValue("--under-scale")).toBe("0.95");
+    expect(under.style.getPropertyValue("--level-scale")).toBe("0.96");
     rerender(ui({ exit: "up", stacked: true }));
-    expect(under.style.getPropertyValue("--under-scale")).toBe("1");
+    expect(under.style.getPropertyValue("--level-scale")).toBe("1");
   });
 
   it("US-ENT-01 without a next card there is no frame underneath", () => {
@@ -211,10 +211,17 @@ describe("NFR-13 reduced motion removes the motion but not the result", () => {
     expect(onSwipe).toHaveBeenCalledWith("left");
   });
 
-  it("NFR-13 with reduced motion the decision is reported at once, without waiting for a timer", () => {
+  it("US-ENT-10 with reduced motion the card stays still, the stamp shows for a short moment, then the decision is reported", () => {
+    vi.useFakeTimers();
     setReducedMotion(true);
     const { rerender } = render(ui());
     rerender(ui({ exit: "right" }));
+    expect(poseOf(moving())).toEqual(REST_POSE);
+    expect(screen.getByText("Ja")).toBeTruthy();
+    expect(onExited).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(onExited).toHaveBeenCalledTimes(1);
     expect(onExited).toHaveBeenLastCalledWith("right");
   });
@@ -252,8 +259,84 @@ describe("US-ENT-01 the next card underneath shows its content, hidden and not f
   it("US-ENT-01 the content underneath grows to full size while the card leaves, as the blank frame does", () => {
     const { container, rerender } = render(ui({ stacked: true, under: <p>Nächste</p> }));
     const under = container.querySelector<HTMLElement>(".inset-0[aria-hidden='true']");
-    expect(under?.style.getPropertyValue("--under-scale")).toBe("0.95");
+    expect(under?.style.getPropertyValue("--level-scale")).toBe("0.96");
     rerender(ui({ exit: "up", stacked: true, under: <p>Nächste</p> }));
-    expect(under?.style.getPropertyValue("--under-scale")).toBe("1");
+    expect(under?.style.getPropertyValue("--level-scale")).toBe("1");
+  });
+});
+
+/** The levels of the stack below the top card, deepest first, read from their custom properties (DS-32). */
+const levels = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll<HTMLElement>("[data-level]")).map((el) => ({
+    level: el.dataset.level,
+    scale: el.style.getPropertyValue("--level-scale"),
+    y: el.style.getPropertyValue("--level-y"),
+    hidden: el.getAttribute("aria-hidden") === "true" && el.hasAttribute("inert"),
+  }));
+
+describe("US-ENT-10 the cards lie as a stack with visible depth", () => {
+  it("US-ENT-10 two cards below the top card show, each 4 percent smaller and 8 px lower, hidden and not focusable", () => {
+    const { container } = render(ui({ depth: 5, under: <p>Nächste</p> }));
+    expect(levels(container)).toEqual([
+      { level: "2", scale: "0.92", y: "16px", hidden: true },
+      { level: "1", scale: "0.96", y: "8px", hidden: true },
+    ]);
+  });
+
+  it("US-ENT-10 with one card left below, the stack shows only that one; with none, no level", () => {
+    const { container, rerender } = render(ui({ depth: 1 }));
+    expect(levels(container).map((l) => l.level)).toEqual(["1"]);
+    rerender(ui({ depth: 0 }));
+    expect(levels(container)).toEqual([]);
+  });
+
+  it("US-ENT-10 the card below grows with the drag and springs back with the top card below the threshold", () => {
+    const { container } = render(ui({ depth: 2 }));
+    const el = screen.getByText("Karte");
+    fireEvent.pointerDown(el, { clientX: 200, clientY: 100 });
+    fireEvent.pointerMove(el, { clientX: 140, clientY: 100 });
+    expect(levels(container)[1]).toMatchObject({ scale: "0.98", y: "4px" });
+    fireEvent.pointerUp(el, { clientX: 140, clientY: 100 });
+    expect(levels(container)[1]).toMatchObject({ scale: "0.96", y: "8px" });
+    expect(poseOf(moving())).toEqual(REST_POSE);
+  });
+
+  it("US-ENT-10 a throw leaves along the release and the card below moves up to the top in the same motion", () => {
+    const { container, rerender } = render(ui({ depth: 2 }));
+    const el = screen.getByText("Karte");
+    fireEvent.pointerDown(el, { clientX: 100, clientY: 300 });
+    fireEvent.pointerMove(el, { clientX: 250, clientY: 200 });
+    fireEvent.pointerUp(el, { clientX: 250, clientY: 200 });
+    expect(onSwipe).toHaveBeenLastCalledWith("right");
+    rerender(ui({ depth: 2, exit: "right" }));
+    const pose = poseOf(moving());
+    expect(parseFloat(pose.x)).toBeGreaterThan(0);
+    expect(parseFloat(pose.y)).toBeLessThan(0);
+    expect(levels(container)).toEqual([
+      { level: "2", scale: "0.96", y: "8px", hidden: true },
+      { level: "1", scale: "1", y: "0px", hidden: true },
+    ]);
+  });
+
+  it("US-ENT-10 a card taken back comes in from the side it left, and the stack moves down by one level", async () => {
+    const { container } = render(ui({ depth: 2, enterFrom: "left" }));
+    expect(parseFloat(poseOf(moving()).x)).toBeLessThan(0);
+    expect(levels(container)[1]).toMatchObject({ scale: "1", y: "0px" });
+    await act(
+      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+    );
+    await act(() => new Promise((done) => requestAnimationFrame(done)));
+    expect(poseOf(moving())).toEqual(REST_POSE);
+    expect(levels(container)[1]).toMatchObject({ scale: "0.96", y: "8px" });
+  });
+
+  it("US-ENT-10 with reduced motion the stack is a still picture: no growth with the drag, a card taken back is there at once", () => {
+    setReducedMotion(true);
+    const { container } = render(ui({ depth: 2, enterFrom: "right" }));
+    expect(poseOf(moving())).toEqual(REST_POSE);
+    const el = screen.getByText("Karte");
+    fireEvent.pointerDown(el, { clientX: 200, clientY: 100 });
+    fireEvent.pointerMove(el, { clientX: 140, clientY: 100 });
+    expect(levels(container)[1]).toMatchObject({ scale: "0.96", y: "8px" });
   });
 });

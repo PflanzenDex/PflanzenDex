@@ -7,16 +7,35 @@ import {
   ResponsiveModal,
 } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { useShortcuts } from "../shortcut-provider/shortcut-provider";
+import { useViewKeyRows, type ViewKeyRow } from "../view-keys";
 import table from "./shortcut-overview.de.json";
 
 const t = texts(table);
 
 export type ShortcutOverviewRow = { id: string; keys: string; label: string };
 
+/** The rows of one section: the action and its keys, each row at least 44 px high. */
+function KeyRows(props: { rows: readonly ViewKeyRow[] }) {
+  return (
+    <ul className="flex flex-col divide-y divide-border">
+      {props.rows.map((row) => (
+        <li key={row.id} className="flex min-h-[44px] items-center justify-between gap-3 py-1">
+          <span>{row.label}</span>
+          <kbd className="whitespace-nowrap rounded-md border border-border bg-muted px-2 py-1 font-mono text-sm">
+            {row.keys}
+          </kbd>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * The overview of every keyboard shortcut (US-QS-11): opened by `?` and by the help entry, a bottom sheet on a phone and
  * a dialog from `md`. It lists the keys the mode shows, says when the shortcuts are off and where they come back on, and
- * closes with Escape, the close button or the outside, which returns the focus to its opener (DS-40).
+ * closes with Escape, the close button or the outside, which returns the focus to its opener (DS-40). The local keys
+ * of the view on screen follow in their own section (`view-keys.ts`); they work where the view has the focus, also while
+ * the shortcuts of the app are switched off.
  */
 export function ShortcutOverview(props: {
   open: boolean;
@@ -27,6 +46,7 @@ export function ShortcutOverview(props: {
   /** The control that had the focus when the overview opened (US-QS-08); `null` returns it to the start of the view. */
   returnFocusTo?: RefObject<HTMLElement | null> | undefined;
 }) {
+  const viewRows = useViewKeyRows();
   return (
     <ResponsiveModal
       title={t("overview.title")}
@@ -47,20 +67,16 @@ export function ShortcutOverview(props: {
           <h3 id="shortcut-overview-everywhere" className="text-base font-semibold">
             {t("overview.everywhere")}
           </h3>
-          <ul className="flex flex-col divide-y divide-border">
-            {props.rows.map((row) => (
-              <li
-                key={row.id}
-                className="flex min-h-[44px] items-center justify-between gap-3 py-1"
-              >
-                <span>{row.label}</span>
-                <kbd className="whitespace-nowrap rounded-md border border-border bg-muted px-2 py-1 font-mono text-sm">
-                  {row.keys}
-                </kbd>
-              </li>
-            ))}
-          </ul>
+          <KeyRows rows={props.rows} />
         </section>
+        {viewRows.length > 0 ? (
+          <section aria-labelledby="shortcut-overview-view" className="flex flex-col gap-2">
+            <h3 id="shortcut-overview-view" className="text-base font-semibold">
+              {t("overview.view")}
+            </h3>
+            <KeyRows rows={viewRows} />
+          </section>
+        ) : null}
       </div>
     </ResponsiveModal>
   );

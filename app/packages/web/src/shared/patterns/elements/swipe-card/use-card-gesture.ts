@@ -4,6 +4,7 @@ import {
   FLICK_FRESH_MS,
   gestureDirection,
   type SwipeDirection,
+  type Throw,
 } from "./swipe-gesture";
 
 /** Where a drag is now: the pointer moved `dx` and `dy` px from the press, with the card width and the speed (px per ms). */
@@ -70,8 +71,11 @@ function slide(g: Gesture, e: PointerEvent<HTMLElement>): Drag | null {
   return { dx, dy, width: g.width, speed };
 }
 
-/** The press ends: the direction it decides, or `null` for a tap and for a drag below the threshold. */
-function release(g: Gesture, e: PointerEvent<HTMLElement>): SwipeDirection | null {
+/** The press ends: the direction it decides with its throw, or `null` for a tap and for a drag below the threshold. */
+function release(
+  g: Gesture,
+  e: PointerEvent<HTMLElement>,
+): { direction: SwipeDirection; thrown: Throw } | null {
   const s = g.start;
   const dragged = g.active;
   g.start = null;
@@ -84,15 +88,19 @@ function release(g: Gesture, e: PointerEvent<HTMLElement>): SwipeDirection | nul
   // A drag is no click: the button under the finger does not fire when the drag ends on it.
   g.swallowClick = true;
   const speed = e.timeStamp - g.moved.t <= FLICK_FRESH_MS ? g.moved.speed : 0;
-  return gestureDirection({ dx, dy, width: g.width, speed });
+  const direction = gestureDirection({ dx, dy, width: g.width, speed });
+  return direction === null ? null : { direction, thrown: { dx, dy, speed } };
 }
 
 /**
  * The pointer side of `SwipeCard` (US-ENT-01, US-TAU-02): a press becomes a drag past a small slop, the drag reports
- * where it is, and a release past the threshold reports its direction. `blocked` ignores new presses (busy, or a card
- * that is already flying off).
+ * where it is, and a release past the threshold reports its direction and its throw (the line and speed of the release,
+ * US-ENT-10). `blocked` ignores new presses (busy, or a card that is already flying off).
  */
-export function useCardGesture(blocked: boolean, onSwipe: (d: SwipeDirection) => void) {
+export function useCardGesture(
+  blocked: boolean,
+  onSwipe: (d: SwipeDirection, thrown: Throw) => void,
+) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const g = useRef<Gesture>({
     start: null,
@@ -111,9 +119,9 @@ export function useCardGesture(blocked: boolean, onSwipe: (d: SwipeDirection) =>
       if (next !== null) setDrag(next);
     },
     onPointerUp: (e: PointerEvent<HTMLDivElement>) => {
-      const direction = release(g.current, e);
+      const released = release(g.current, e);
       setDrag(null);
-      if (direction !== null) onSwipe(direction);
+      if (released !== null) onSwipe(released.direction, released.thrown);
     },
     onPointerCancel: () => {
       g.current.start = null;
