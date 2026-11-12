@@ -82,6 +82,7 @@ describe("US-ACC-02 · GET /account/profile", () => {
       rarityConsent: false,
       positionThresholds: null,
       keyboardShortcuts: "plain",
+      motion: "system",
     });
   });
 
@@ -275,5 +276,27 @@ describe("US-QS-11 · keyboard shortcut mode in the profile", () => {
     expect((await put(subB, { ...profile, keyboardShortcuts: "modifier" })).status).toBe(200);
     expect((await read(subA)).keyboardShortcuts).toBe("disabled");
     expect((await read(subB)).keyboardShortcuts).toBe("modifier");
+  });
+});
+
+describe("US-QS-33 · motion choice in the profile", () => {
+  it("US-QS-33 is system for a fresh account, saves reduced, refuses an unknown value naming motion and keeps it when left out", async () => {
+    expect((await read(subKeepOther)).motion).toBe("system");
+    expect((await put(subA, { ...profile, motion: "reduced" })).status).toBe(200);
+    expect((await read(subA)).motion).toBe("reduced");
+    const bad = await put(subA, { ...profile, motion: "off" });
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: { details: unknown } }).error.details).toEqual([
+      { field: "motion", code: "input.invalid" },
+    ]);
+    expect((await put(subA, profile)).status).toBe(200);
+    expect((await read(subA)).motion).toBe("reduced");
+  });
+
+  it("US-QS-33 two accounts: account B cannot read or change the choice of account A (P-04)", async () => {
+    await put(subA, { ...profile, motion: "reduced" });
+    expect((await put(subB, { ...profile, motion: "system" })).status).toBe(200);
+    expect((await read(subA)).motion).toBe("reduced");
+    expect((await read(subB)).motion).toBe("system");
   });
 });

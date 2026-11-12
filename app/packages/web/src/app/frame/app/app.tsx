@@ -12,6 +12,7 @@ import { useClearOnSignOut } from "../../../shared/data";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { pageTitle } from "../../../shared/patterns/navigation/navigation/navigation";
+import { useAccountMotion } from "@/shared/platform/device/motion/motion-setting";
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
@@ -44,6 +45,12 @@ function useEntryTitle(kind: State["kind"]) {
   useEffect(() => {
     if (kind !== "signedIn") document.title = pageTitle(ENTRY_TITLES[kind]);
   }, [kind]);
+}
+
+/** Motion (US-QS-33): the account choice once known, the device alone without an account; while loading the copy stays. */
+function motionOf(z: State) {
+  if (z.kind === "signedIn") return z.account.motion ?? "system";
+  return z.kind === "loading" ? undefined : "device";
 }
 
 /** What shows before there is an account to work with: loading, an error, the invitation code (the welcome page has its own frame). */
@@ -105,6 +112,7 @@ export function App() {
   }, [signedIn]);
   useClearOnSignOut(signedIn);
   useEntryTitle(z.kind);
+  useAccountMotion(motionOf(z));
   // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
   if (z.kind === "signedOut") return <SignedOutWelcome session={s} state={z} />;
   if (z.kind !== "signedIn")

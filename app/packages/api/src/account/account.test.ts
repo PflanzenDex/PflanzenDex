@@ -104,6 +104,16 @@ describe("GET /account (US-ACC-01)", () => {
     expect((await account(app, using(`valid:${sub1}:no`))).keyboardShortcuts).toBe("modifier");
   });
 
+  it("US-QS-33 the motion choice comes with the account: system for a new one, the own choice for each person", async () => {
+    const app = createApp({ reviewer, pool });
+    const a = await account(app, using(`valid:${sub1}:no`));
+    expect(a.motion).toBe("system");
+    await withAccount(pool, a.id, (c) => c.query("update account_data set motion = 'reduced'"));
+    const b = await account(app, using(`valid:${sub2}:yes`));
+    expect(b.motion).toBe("system");
+    expect((await account(app, using(`valid:${sub1}:no`))).motion).toBe("reduced");
+  });
+
   it("each person sees only their own account", async () => {
     const app = createApp({ reviewer, pool });
     const a = await account(app, using(`valid:${sub1}:no`));

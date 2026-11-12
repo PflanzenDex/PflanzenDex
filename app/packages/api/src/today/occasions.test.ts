@@ -160,6 +160,7 @@ describe("US-MON-03 US-MON-04 the occasions of the reminders", () => {
       rarityConsent: null,
       positionThresholds: null,
       keyboardShortcuts: null,
+      motion: null,
     });
     const list = await ids(new Date("2026-11-05T12:00:00Z"));
     expect(list.some((i) => i.startsWith("treatment:"))).toBe(false);
@@ -244,6 +245,7 @@ describe("US-MON-02 the reminder at the phase change", () => {
       rarityConsent: null,
       positionThresholds: null,
       keyboardShortcuts: null,
+      motion: null,
     });
     expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(false);
   });
@@ -275,6 +277,7 @@ describe("US-EQU-04 the device check as an occasion of the reminders", () => {
       rarityConsent: null,
       positionThresholds: null,
       keyboardShortcuts: null,
+      motion: null,
     });
     expect(await ids(CREATED)).not.toContain(`equipment-check:${id}`);
   });

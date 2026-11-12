@@ -43,6 +43,19 @@
  */
 @custom-variant keyboard-input (:root[data-input="keyboard"] &);
 
+/*
+ * Reduced motion (US-QS-33): the device asks for it, or the keeper chose "Bewegung aus" and the page carries
+ * `data-motion="reduced"` (`motion-setting.ts`). Every `motion-reduce:` class follows both.
+ */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+  :root[data-motion="reduced"] & {
+    @slot;
+  }
+}
+
 :root {
   --background: #fafafa;
   --foreground: #18181b;
@@ -350,7 +363,7 @@
  */
 
 /*
- * Reduced motion (WCAG 2.3.3, DS-19): with the system setting, animations and transitions end at once. `!important`
+ * Reduced motion (WCAG 2.3.3, DS-19, US-QS-33): with the system setting or "Bewegung aus", animations and transitions end at once. `!important`
  * is the one exception to DS-33 here, because libraries set transitions as inline styles while a sheet moves.
  */
 @media (prefers-reduced-motion: reduce) {
@@ -369,6 +382,23 @@
     transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
+}
+/* "Bewegung aus" (US-QS-33): the same on every device of the keeper, also when the device does not ask for it. */
+:root[data-motion="reduced"] {
+  --motion-fast: 0ms;
+  --motion-base: 0ms;
+  --motion-slow: 0ms;
+}
+:root[data-motion="reduced"],
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] ::before,
+:root[data-motion="reduced"] ::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
 }
 
 /*
@@ -412,6 +442,11 @@
   ::view-transition-new(*) {
     animation-duration: 0s !important;
   }
+}
+:root[data-motion="reduced"]::view-transition-group(*),
+:root[data-motion="reduced"]::view-transition-old(*),
+:root[data-motion="reduced"]::view-transition-new(*) {
+  animation-duration: 0s !important;
 }
 
 /*

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import type { KeyboardShortcutMode } from "@pflanzendex/core";
+import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { ChoiceRow, type Choice } from "./choice-row/choice-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { applyMotion } from "@/shared/platform/device/motion/motion-setting";
 import table from "./switch-groups.de.json";
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
@@ -118,7 +119,7 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
 
 const t = texts(table);
 
-const CHOICES: readonly { value: KeyboardShortcutMode; label: string }[] = [
+const CHOICES: readonly Choice<KeyboardShortcutMode>[] = [
   { value: "plain", label: t("shortcuts.plain") },
   { value: "modifier", label: t("shortcuts.modifier") },
   { value: "disabled", label: t("shortcuts.off") },
@@ -126,8 +127,8 @@ const CHOICES: readonly { value: KeyboardShortcutMode; label: string }[] = [
 
 /**
  * Group "Tastenkürzel" (US-QS-11): one choice of three. Einzeltasten (the starting value), Alt and Umschalt with the key,
- * or none. The choice saves at once and takes effect at once; the help says what each one does and that all of it is
- * also reachable with buttons.
+ * or none. The choice saves at once and takes effect at once; the help says that all of it is also reachable with
+ * buttons.
  */
 export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
   const shortcuts = useShortcuts();
@@ -135,17 +136,41 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
     shortcuts.setMode(p.keyboardShortcuts),
   );
   return (
-    <div className="flex flex-col gap-3">
-      <p className="m-0 font-semibold">{t("shortcuts.label")}</p>
-      <SegmentedControl
+    <div className="flex flex-col gap-1">
+      <ChoiceRow
+        name="keyboardShortcuts"
         label={t("shortcuts.label")}
+        help={t("shortcuts.help")}
         options={CHOICES}
         value={saver.saved.keyboardShortcuts}
-        onChange={(mode) => {
-          if (mode !== saver.saved.keyboardShortcuts) void change({ keyboardShortcuts: mode });
-        }}
+        onPick={(keyboardShortcuts) => void change({ keyboardShortcuts })}
       />
-      <p className="m-0 text-sm text-muted-foreground">{t("shortcuts.help")}</p>
+      <Feedback error={error} saved={saved} />
+    </div>
+  );
+}
+
+const MOTION_CHOICES: readonly Choice<MotionSetting>[] = [
+  { value: "system", label: t("motion.system") },
+  { value: "reduced", label: t("motion.reduced") },
+];
+
+/**
+ * Choice "Bewegung" (US-QS-33): "Wie auf dem Gerät" (the starting value) or "Bewegung aus". It saves at once with the
+ * profile and applies at once on the open screen; a refused save keeps the old value and says why (P-10).
+ */
+export function MotionGroup({ saver }: { saver: ProfileSaver }) {
+  const { error, saved, change } = useSwitchSave(saver, (p) => applyMotion(p.motion));
+  return (
+    <div className="flex flex-col gap-1">
+      <ChoiceRow
+        name="motion"
+        label={t("motion.label")}
+        help={t("motion.help")}
+        options={MOTION_CHOICES}
+        value={saver.saved.motion}
+        onPick={(motion) => void change({ motion })}
+      />
       <Feedback error={error} saved={saved} />
     </div>
   );

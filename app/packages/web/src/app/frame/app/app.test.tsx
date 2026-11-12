@@ -39,6 +39,7 @@ vi.mock("oidc-client-ts", () => ({
 import { BrowserRouter, MemoryRouter } from "react-router";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { App } from "./app";
+import { MOTION_STORAGE_KEY, restoreMotion } from "@/shared/platform/device/motion/motion-setting";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import {
   answerCardRead,
@@ -208,12 +209,12 @@ const ANSWERS: Record<string, unknown> = {
   "/specimens/difficulty": { rows: [] },
 };
 
-function fakeServer(accountStatus = 200, plants = 0) {
+function fakeServer(accountStatus = 200, plants = 0, who: object = account) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
       const path = new URL(String(url)).pathname;
-      if (path === "/account") return response(accountStatus, account);
+      if (path === "/account") return response(accountStatus, who);
       if (path === "/specimens/count") return response(200, { count: plants, archived: 0 });
       if (path in ANSWERS) return response(200, ANSWERS[path]);
       if (path in WISHLIST) return response(200, WISHLIST[path]);
@@ -767,4 +768,32 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
     },
     20000,
   );
+});
+
+describe("US-QS-33 motion follows the account once it is known, the device before", () => {
+  const root = document.documentElement;
+  afterEach(() => {
+    delete root.dataset.motion;
+    window.localStorage.removeItem(MOTION_STORAGE_KEY);
+  });
+
+  it("US-QS-33 signed in, the account's 'Bewegung aus' applies to the whole app and is kept on this device", async () => {
+    fakeServer(200, 0, { ...account, motion: "reduced" });
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    expect(root.dataset.motion).toBe("reduced");
+    expect(window.localStorage.getItem(MOTION_STORAGE_KEY)).toBe("reduced");
+  });
+
+  it("US-QS-33 the sign-in page follows only the device, also when this device knows an earlier 'Bewegung aus'", async () => {
+    window.localStorage.setItem(MOTION_STORAGE_KEY, "reduced");
+    restoreMotion();
+    expect(root.dataset.motion).toBe("reduced");
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await screen.findByRole("button", { name: "Konto anlegen" });
+    expect(root.dataset.motion).toBeUndefined();
+  });
 });

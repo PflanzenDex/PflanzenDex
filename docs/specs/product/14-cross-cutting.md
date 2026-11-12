@@ -685,7 +685,7 @@ Acceptance criteria:
 
 Not part of this story: the screens from 768 px (a later pass; `design-system.md` holds there unchanged), the changes to the app and to the gates that still check the replaced rules (tickets from the design review), and the drawing style of the illustrations (US-QS-31).
 
-### US-QS-33 · Motion follows the device, with a switch in the app · ⬜ new
+### US-QS-33 · Motion follows the device, with a switch in the app · 🟨 new
 
 As a **plant keeper** I want short animations that show me what changed, and I want them to stop when my device asks for less motion or when I turn them off in the app, so that the app feels lively without making anyone dizzy.
 
@@ -703,6 +703,8 @@ Acceptance criteria:
 - Given the app starts, when the account setting is not loaded yet, then the last choice known on this device applies; with none known, the device setting applies; no animation runs in the first frame that the setting would forbid.
 - Given the sign-in pages before an account is known, then only the device setting applies.
 - Given the choice is saved, then it goes through the same validating operation as the other account settings (US-ACC-02, P-03); a value outside the set is refused with `input.invalid` naming `motion`.
+
+Status 🟨 (2026-11-12): the choice, its storage, the first frame, the sign-in pages and the reduced-motion rules for every existing motion (route transition, list entry, layers, the swipe card of US-ENT-01) are in place. Open: the rise of a new specimen into its place after "Pflanze anlegen" and the card stack of US-ENT-10 do not exist yet; they follow the same rules when they are built.
 
 Assumptions, decided by the PO (revisable): the choice is stored per account, like the shortcut mode of US-QS-11, so it follows the keeper to every device; the value set is `system` (default) and `reduced`. The device keeps a copy of the last value only to avoid motion on the first frame; the account value wins once it is loaded.
 

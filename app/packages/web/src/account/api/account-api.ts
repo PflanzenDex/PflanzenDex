@@ -16,6 +16,8 @@ export type Account = {
   features?: { social: boolean; ai: boolean; recommendations: boolean };
   /** How the keyboard shortcuts are taken (US-QS-11): all, only with Alt+Shift, or none; absent means none is known. */
   keyboardShortcuts?: "plain" | "modifier" | "disabled";
+  /** Motion of the app (US-QS-33): `system` follows the device, `reduced` is "Bewegung aus"; absent counts as `system`. */
+  motion?: "system" | "reduced";
 };
 
 export const OCCASIONS = [
@@ -44,6 +46,8 @@ export type AccountProfile = {
   positionThresholds: number[] | null;
   /** How the keyboard shortcuts are taken (US-QS-11): all of them, only with Alt+Shift, or none. */
   keyboardShortcuts: "plain" | "modifier" | "disabled";
+  /** Motion of the app (US-QS-33): follow the device, or "Bewegung aus". */
+  motion: "system" | "reduced";
 };
 
 type Environment = Record<string, string | undefined>;

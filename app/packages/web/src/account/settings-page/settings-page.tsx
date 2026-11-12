@@ -20,6 +20,7 @@ import {
   NotificationsGroup,
   PrivacyGroup,
   ShortcutsGroup,
+  MotionGroup,
 } from "./groups/switch-groups/switch-groups";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
@@ -84,10 +85,11 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       title: "Wie nutzt du die App?",
       value: styleText,
       body: (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <KeeperStyleSection api={props.api} token={props.token} />
           <CalmModeSection api={props.api} token={props.token} />
           <ShortcutsGroup saver={saver} />
+          <MotionGroup saver={saver} />
         </div>
       ),
     },

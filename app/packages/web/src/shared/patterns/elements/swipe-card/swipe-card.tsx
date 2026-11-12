@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 import { vibrateOnDecision } from "@/shared/platform/device/haptics";
-import { useReducedMotion } from "@/shared/platform/device/use-reduced-motion";
+import { useReducedMotion } from "@/shared/platform/device/motion/use-reduced-motion";
 import { useCardGesture, type Drag } from "./use-card-gesture";
 import {
   EXIT_MS,

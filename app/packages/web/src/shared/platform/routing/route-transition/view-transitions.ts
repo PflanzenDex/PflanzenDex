@@ -1,11 +1,14 @@
 // The view transition of a route change (US-QS-14), loaded after the shell is painted (DS-08).
+import { motionReduced } from "@/shared/platform/device/motion/motion-setting";
+
 /** Longest wait for a lazy view before the cross-fade starts anyway (starting value, assumption). */
 const MAX_WAIT_MS = 300;
 const ROOT = document.documentElement;
 
 type Where = { pathname: string; state: unknown };
 
-const calm = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** Reduced motion, by the device or by "Bewegung aus" (US-QS-33), starts no transition. */
+const calm = () => !motionReduced();
 /** A switch inside a view keeps its place (`keepFocus`), so it is not a view change either. */
 const isViewChange = (from: Where, to: Where) =>
   from.pathname !== to.pathname && (to.state as { keepFocus?: boolean } | null)?.keepFocus !== true;
