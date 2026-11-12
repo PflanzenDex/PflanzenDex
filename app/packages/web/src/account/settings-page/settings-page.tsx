@@ -20,6 +20,7 @@ import {
   NotificationsGroup,
   PrivacyGroup,
   ShortcutsGroup,
+  MotionGroup,
 } from "./groups/switch-groups/switch-groups";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
@@ -88,6 +89,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
           <KeeperStyleSection api={props.api} token={props.token} />
           <CalmModeSection api={props.api} token={props.token} />
           <ShortcutsGroup saver={saver} />
+          <MotionGroup saver={saver} />
         </div>
       ),
     },

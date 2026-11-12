@@ -2,6 +2,7 @@ import * as React from "react";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { motionReduced } from "@/shared/platform/device/motion/motion-setting";
 
 export type LoadMoreProps = {
   /** Items shown now. */
@@ -38,8 +39,7 @@ type Refs = {
 /** The new items are inserted above the button and push it down: keep a focused button in view, no jump (WCAG 2.4.7). */
 function keepInView(button: HTMLButtonElement | null) {
   if (!button || document.activeElement !== button) return;
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  button.scrollIntoView?.({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+  button.scrollIntoView?.({ block: "nearest", behavior: motionReduced() ? "auto" : "smooth" });
 }
 
 /** Tracks the load the user asked for: announces its result and puts lost focus back (see {@link LoadMore}). */

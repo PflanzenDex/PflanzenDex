@@ -6,7 +6,11 @@ import { createQueryClient } from "../shared/data";
 import { TransitionRouter } from "../shared/platform/routing/route-transition/transition-router/transition-router";
 import { scheduleAppWorker } from "../shared/platform/device/service-worker/register";
 import { startInstallPrompt } from "../shared/platform/device/service-worker/install-prompt";
+import { restoreMotion } from "../shared/platform/device/motion/motion-setting";
 import "../styles/tokens.css";
+
+// Before the first frame (US-QS-33): the last motion choice known on this device, so nothing moves that it forbids.
+restoreMotion();
 
 // The browser's install event can come before Konto mounts, so the app keeps it from its start (US-QS-28, issue 1690).
 startInstallPrompt();

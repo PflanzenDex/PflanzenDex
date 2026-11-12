@@ -3,5 +3,9 @@
   "shortcuts.plain": "Einzeltasten",
   "shortcuts.modifier": "Alt und Umschalt",
   "shortcuts.off": "Aus",
-  "shortcuts.help": "Alles geht auch mit Knöpfen."
+  "shortcuts.help": "Alles geht auch mit Knöpfen.",
+  "motion.label": "Bewegung",
+  "motion.system": "Wie auf dem Gerät",
+  "motion.reduced": "Bewegung aus",
+  "motion.help": "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar."
 }

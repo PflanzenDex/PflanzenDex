@@ -28,6 +28,7 @@ const PROFILE = {
   rarityConsent: false,
   positionThresholds: null,
   keyboardShortcuts: "modifier" as const,
+  motion: "reduced" as const,
 };
 
 async function newAccount(withData = true): Promise<string> {
@@ -69,6 +70,7 @@ describe("US-ACC-02 · profile in the database", () => {
       rarityConsent: false,
       positionThresholds: null,
       keyboardShortcuts: "plain",
+      motion: "system",
     });
   });
 
@@ -262,5 +264,35 @@ describe("US-QS-11 · the keyboard shortcut mode in the database", () => {
     );
     expect(touched.rowCount).toBe(0);
     expect((await profiles.find(a))?.keyboardShortcuts).toBe("disabled");
+  });
+});
+
+describe("US-QS-33 · the motion choice in the database", () => {
+  it("US-QS-33 is system for a new account, saved as reduced, and kept by null", async () => {
+    const id = await newAccount();
+    expect((await profiles.find(id))?.motion).toBe("system");
+    expect((await profiles.update(id, PROFILE))?.motion).toBe("reduced");
+    const kept = await profiles.update(id, { ...PROFILE, motion: null, timeZone: "UTC" });
+    expect(kept).toMatchObject({ motion: "reduced", timeZone: "UTC" });
+    expect((await profiles.update(id, { ...PROFILE, motion: "system" }))?.motion).toBe("system");
+  });
+
+  it("US-QS-33 the database refuses a value outside system and reduced (P-10)", async () => {
+    const id = await newAccount();
+    await expect(
+      withAccount(pool, id, (c) => c.query("update account_data set motion = 'off'")),
+    ).rejects.toThrow(/motion_check/);
+  });
+
+  it("US-QS-33 two accounts: account B neither reads nor changes the motion choice of account A (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
+    expect((await profiles.find(b))?.motion).toBe("system");
+    const touched = await withAccount(pool, b, (c) =>
+      c.query("update account_data set motion = 'system' where account_id = $1", [a]),
+    );
+    expect(touched.rowCount).toBe(0);
+    expect((await profiles.find(a))?.motion).toBe("reduced");
   });
 });

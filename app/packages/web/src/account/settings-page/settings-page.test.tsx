@@ -34,6 +34,7 @@ const PROFILE = {
   positionThresholds: null,
   rarityConsent: false,
   keyboardShortcuts: "plain" as const,
+  motion: "system" as const,
 };
 
 type Put = { body: Record<string, unknown>; key: string | undefined };
@@ -823,5 +824,72 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByTestId("mode").textContent).toBe("plain");
+  });
+});
+
+describe("US-QS-33 settings: motion", () => {
+  const root = document.documentElement;
+  afterEach(() => {
+    delete root.dataset.motion;
+    window.localStorage.clear();
+  });
+  const showStyle = () =>
+    render(
+      <MemoryRouter initialEntries={["/?sheet=style"]}>
+        <SettingsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+
+  it("US-QS-33 the layer 'Wie nutzt du die App?' offers 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
+    fakeServer();
+    showStyle();
+    const group = await screen.findByRole("group", { name: "Bewegung" });
+    expect(group).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Wie auf dem Gerät" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.getByRole("button", { name: "Bewegung aus" }).getAttribute("aria-pressed")).toBe(
+      "false",
+    );
+    expect(
+      screen.getByText(
+        "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-QS-33 'Bewegung aus' saves with the profile and applies at once on the open screen, without a reload", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    showStyle();
+    await user.click(await screen.findByRole("button", { name: "Bewegung aus" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]?.body["motion"]).toBe("reduced");
+    expect(puts[0]?.body["keyboardShortcuts"]).toBe("plain");
+    await waitFor(() => expect(root.dataset.motion).toBe("reduced"));
+    await user.click(screen.getByRole("button", { name: "Wie auf dem Gerät" }));
+    await waitFor(() => expect(puts).toHaveLength(2));
+    await waitFor(() => expect(root.dataset.motion).toBeUndefined());
+  });
+
+  it("US-QS-33 · P-10 a refused save keeps the old value and shows the German text of the error code", async () => {
+    const puts = fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+          details: [{ field: "motion", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    showStyle();
+    await user.click(await screen.findByRole("button", { name: "Bewegung aus" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(root.dataset.motion).toBeUndefined();
+    expect(
+      screen.getByRole("button", { name: "Wie auf dem Gerät" }).getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 });

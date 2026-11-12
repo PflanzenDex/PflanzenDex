@@ -14,26 +14,29 @@ export interface ProfileRow {
   readonly positionThresholds: readonly number[] | null;
   /** How the keyboard shortcuts are taken (US-QS-11): `plain`, `modifier` or `disabled`. */
   readonly keyboardShortcuts: "plain" | "modifier" | "disabled";
+  /** Motion of the app (US-QS-33): `system` follows the device, `reduced` is "Bewegung aus". */
+  readonly motion: "system" | "reduced";
 }
 
 /**
- * What a save sends: `replenishBuffer`, `rarityConsent`, `positionThresholds` and `keyboardShortcuts` set to `null` keep
- * the stored values.
+ * What a save sends: `replenishBuffer`, `rarityConsent`, `positionThresholds`, `keyboardShortcuts` and `motion` set to
+ * `null` keep the stored values.
  */
 export type ProfileUpdate = Omit<
   ProfileRow,
-  "replenishBuffer" | "rarityConsent" | "positionThresholds" | "keyboardShortcuts"
+  "replenishBuffer" | "rarityConsent" | "positionThresholds" | "keyboardShortcuts" | "motion"
 > & {
   readonly replenishBuffer: number | null;
   readonly rarityConsent: boolean | null;
   readonly positionThresholds: readonly number[] | null;
   readonly keyboardShortcuts: ProfileRow["keyboardShortcuts"] | null;
+  readonly motion: ProfileRow["motion"] | null;
 };
 
 const COLUMNS = `display_name as "displayName", time_zone as "timeZone", everything_private as "everythingPrivate",
   no_recommendations as "noRecommendations", notification_settings as "notifications", replenish_buffer as "replenishBuffer",
   rarity_consent as "rarityConsent", position_thresholds as "positionThresholds",
-  keyboard_shortcuts as "keyboardShortcuts"`;
+  keyboard_shortcuts as "keyboardShortcuts", motion`;
 
 /**
  * Adapter for the profile (US-ACC-02); every call runs as the account of the caller under the row rule (P-04): the
@@ -59,7 +62,7 @@ export class ProfilePostgres {
            no_recommendations = $4, notification_settings = $5::jsonb, replenish_buffer = coalesce($6, replenish_buffer),
            rarity_consent = coalesce($7, rarity_consent),
            position_thresholds = coalesce($8::jsonb, position_thresholds),
-           keyboard_shortcuts = coalesce($9, keyboard_shortcuts)
+           keyboard_shortcuts = coalesce($9, keyboard_shortcuts), motion = coalesce($10, motion)
          returning ${COLUMNS}`,
         [
           p.displayName,
@@ -71,6 +74,7 @@ export class ProfilePostgres {
           p.rarityConsent,
           p.positionThresholds === null ? null : JSON.stringify(p.positionThresholds),
           p.keyboardShortcuts,
+          p.motion,
         ],
       ),
     );

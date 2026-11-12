@@ -1,10 +1,11 @@
 import { useState } from "react";
-import type { KeyboardShortcutMode } from "@pflanzendex/core";
+import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { applyMotion } from "@/shared/platform/device/motion/motion-setting";
 import table from "./switch-groups.de.json";
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
@@ -146,6 +147,34 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
         }}
       />
       <p className="m-0 text-sm text-muted-foreground">{t("shortcuts.help")}</p>
+      <Feedback error={error} saved={saved} />
+    </div>
+  );
+}
+
+const MOTION_CHOICES: readonly { value: MotionSetting; label: string }[] = [
+  { value: "system", label: t("motion.system") },
+  { value: "reduced", label: t("motion.reduced") },
+];
+
+/**
+ * Choice "Bewegung" (US-QS-33): "Wie auf dem Gerät" (the starting value) or "Bewegung aus". It saves at once with the
+ * profile and applies at once on the open screen; a refused save keeps the old value and says why (P-10).
+ */
+export function MotionGroup({ saver }: { saver: ProfileSaver }) {
+  const { error, saved, change } = useSwitchSave(saver, (p) => applyMotion(p.motion));
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="m-0 font-semibold">{t("motion.label")}</p>
+      <SegmentedControl
+        label={t("motion.label")}
+        options={MOTION_CHOICES}
+        value={saver.saved.motion}
+        onChange={(motion) => {
+          if (motion !== saver.saved.motion) void change({ motion });
+        }}
+      />
+      <p className="m-0 text-sm text-muted-foreground">{t("motion.help")}</p>
       <Feedback error={error} saved={saved} />
     </div>
   );

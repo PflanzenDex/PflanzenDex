@@ -3,6 +3,7 @@ import type { OperatorCostFigure } from "./operator/operator-cost";
 import {
   defaultNotifications,
   KEYBOARD_SHORTCUT_DEFAULT,
+  MOTION_DEFAULT,
   REPLENISH_BUFFER_LIMITS,
   type AccountProfile,
   type ProfileChanges,
@@ -28,6 +29,7 @@ export class InMemoryProfiles implements ProfileStore {
         rarityConsent: false,
         positionThresholds: null,
         keyboardShortcuts: KEYBOARD_SHORTCUT_DEFAULT,
+        motion: MOTION_DEFAULT,
       });
   }
 
@@ -47,6 +49,7 @@ export class InMemoryProfiles implements ProfileStore {
       rarityConsent: changes.rarityConsent ?? stored.rarityConsent,
       positionThresholds: changes.positionThresholds ?? stored.positionThresholds,
       keyboardShortcuts: changes.keyboardShortcuts ?? stored.keyboardShortcuts,
+      motion: changes.motion ?? stored.motion,
     };
     this.rows.set(userId, saved);
     return saved;

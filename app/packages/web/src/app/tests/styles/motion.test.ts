@@ -45,3 +45,34 @@ describe("US-QS-14 · motion in tokens.css", () => {
     expect(props.filter((p) => p !== "from")).toEqual(["opacity", "transform"]);
   });
 });
+
+describe("US-QS-33 · 'Bewegung aus' in tokens.css", () => {
+  it("US-QS-33 the page marked data-motion=reduced gets zero motion tokens and ends every animation and transition at once", () => {
+    const start = css.indexOf(':root[data-motion="reduced"] {');
+    expect(start).toBeGreaterThan(-1);
+    const tokens = css.slice(start, css.indexOf("}", start));
+    expect(tokens).toMatch(/--motion-fast: 0ms;/);
+    expect(tokens).toMatch(/--motion-base: 0ms;/);
+    expect(tokens).toMatch(/--motion-slow: 0ms;/);
+    const all = css.slice(css.indexOf(':root[data-motion="reduced"] *,'));
+    const body = all.slice(0, all.indexOf("}"));
+    expect(body).toContain(':root[data-motion="reduced"] ::before');
+    expect(body).toMatch(/animation-duration: 1ms !important;/);
+    expect(body).toMatch(/transition-duration: 1ms !important;/);
+    expect(body).toMatch(/scroll-behavior: auto !important;/);
+  });
+
+  it("US-QS-33 the view transition pseudo-elements get no duration under 'Bewegung aus'", () => {
+    expect(css).toMatch(
+      /:root\[data-motion="reduced"\]::view-transition-group\(\*\),\s*:root\[data-motion="reduced"\]::view-transition-old\(\*\),\s*:root\[data-motion="reduced"\]::view-transition-new\(\*\) \{\s*animation-duration: 0s !important;/,
+    );
+  });
+
+  it("US-QS-33 the motion-reduce variant of the classes covers the device setting and the account choice", () => {
+    const start = css.indexOf("@custom-variant motion-reduce {");
+    expect(start).toBeGreaterThan(-1);
+    const block = css.slice(start, css.indexOf("\n}\n", start));
+    expect(block).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*@slot;/);
+    expect(block).toMatch(/:root\[data-motion="reduced"\] & \{\s*@slot;/);
+  });
+});

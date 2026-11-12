@@ -11,6 +11,7 @@ const PROFILE = {
   positionThresholds: null,
   rarityConsent: false,
   keyboardShortcuts: "plain" as const,
+  motion: "system" as const,
   notifications: {
     phase: true,
     treatment: false,
