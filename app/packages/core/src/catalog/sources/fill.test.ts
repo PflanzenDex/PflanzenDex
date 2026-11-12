@@ -107,7 +107,64 @@ describe("US-BES-12 fill the catalog from open sources", () => {
       },
     ];
     const [v] = deriveFields(snaps, "Ficus benjamina", ["germanName"]);
-    expect(v).toMatchObject({ value: "Weinfeige", source: "wikidata", disputed: true });
+    // The German article ranks before the Wikidata label for the German name (issue 1851).
+    expect(v).toMatchObject({ value: "Birkenfeige", source: "wikipedia", disputed: true });
+  });
+
+  it("US-BES-12 the German name comes from the German article before the Wikidata label, so a wrong label does not win (issue 1851)", () => {
+    const snaps: SourceSnapshot[] = [
+      {
+        speciesId: "s2",
+        source: "wikidata",
+        sourceId: "Q9334559",
+        retrievedAt: AT,
+        link: "https://www.wikidata.org/wiki/Q9334559",
+        license: "CC0-1.0",
+        raw: { entities: { Q9334559: { labels: { de: { value: "Krötenzwergmaus" } } } } },
+      },
+      {
+        speciesId: "s2",
+        source: "wikipedia",
+        sourceId: "Q9334559",
+        retrievedAt: AT,
+        link: "https://de.wikipedia.org/wiki/Gefleckte_Efeutute",
+        license: "CC-BY-SA-4.0",
+        raw: {
+          title: "Gefleckte Efeutute",
+          content_urls: { desktop: { page: "https://de.wikipedia.org/wiki/Gefleckte_Efeutute" } },
+        },
+      },
+    ];
+    const [v] = deriveFields(snaps, "Scindapsus pictus", ["germanName"]);
+    expect(v).toMatchObject({ value: "Gefleckte Efeutute", source: "wikipedia", disputed: true });
+  });
+
+  it("US-BES-12 without a German article the Wikidata label still fills the German name", () => {
+    const snaps: SourceSnapshot[] = [
+      {
+        speciesId: "s3",
+        source: "wikidata",
+        sourceId: "Q1",
+        retrievedAt: AT,
+        link: "w",
+        license: "CC0-1.0",
+        raw: { entities: { Q1: { labels: { de: { value: "Birkenfeige" } } } } },
+      },
+      {
+        speciesId: "s3",
+        source: "wikipedia",
+        sourceId: "Q1",
+        retrievedAt: AT,
+        link: "p",
+        license: "CC-BY-SA-4.0",
+        raw: {
+          title: "Ficus benjamina",
+          content_urls: { desktop: { page: "https://en.wikipedia.org/wiki/Ficus_benjamina" } },
+        },
+      },
+    ];
+    const [v] = deriveFields(snaps, "Ficus benjamina", ["germanName"]);
+    expect(v).toMatchObject({ value: "Birkenfeige", source: "wikidata", disputed: false });
   });
 
   it("US-BES-12 leaves a field unknown when no source gives it and never fills a non-empty field (P-08)", async () => {
