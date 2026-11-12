@@ -41,9 +41,15 @@ export const EQUIPMENT_TOOLS: readonly McpTool[] = [
     "Checks due",
     "The active devices whose check interval has passed by the keeper's local date, most overdue first; overdueDays null means never checked.",
   ),
+  area("list_equipment_wishes", "Equipment wishes", "The keeper's open equipment wishes."),
   area(
-    "get_equipment_wishes",
-    "Equipment wishes",
-    "The keeper's equipment wishes by status: open, bought and discarded.",
+    "list_bought_equipment_wishes",
+    "Bought equipment wishes",
+    "The equipment wishes marked as bought.",
+  ),
+  area(
+    "list_discarded_equipment_wishes",
+    "Discarded equipment wishes",
+    "The equipment wishes the keeper discarded; they are kept.",
   ),
 ];

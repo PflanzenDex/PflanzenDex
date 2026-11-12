@@ -110,7 +110,9 @@ describe("US-KI-12 every other area through the AI client", () => {
       "list_equipment_zones",
       "list_equipment_needs",
       "list_equipment_checks_due",
-      "get_equipment_wishes",
+      "list_equipment_wishes",
+      "list_bought_equipment_wishes",
+      "list_discarded_equipment_wishes",
     ])
       expect(AREA_NAMES).toContain(name);
   });

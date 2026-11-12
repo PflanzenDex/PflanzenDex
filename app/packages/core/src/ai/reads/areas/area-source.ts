@@ -96,10 +96,12 @@ export const AREA_READS = {
   },
   list_equipment_needs: { needs: "nothing", list: "needs", data: ["reason", "source"] },
   list_equipment_checks_due: { needs: "timeZone", list: "due", data: ["name"] },
-  get_equipment_wishes: {
+  list_equipment_wishes: { needs: "nothing", list: "open", data: ["name", "productId"] },
+  list_bought_equipment_wishes: { needs: "nothing", list: "bought", data: ["name", "productId"] },
+  list_discarded_equipment_wishes: {
     needs: "nothing",
-    list: null,
-    data: ["open[].name", "bought[].name", "discarded[].name"],
+    list: "discarded",
+    data: ["name", "productId"],
   },
 } as const satisfies Readonly<Record<string, AreaRead>>;
 

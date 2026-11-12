@@ -30,7 +30,9 @@ export const AREA_PATHS: Readonly<Record<AreaName, string>> = {
   list_equipment_zones: "/mcp/equipment/zones",
   list_equipment_needs: "/mcp/equipment/needs",
   list_equipment_checks_due: "/mcp/equipment/checks-due",
-  get_equipment_wishes: "/mcp/equipment/wishes",
+  list_equipment_wishes: "/mcp/equipment/wishes",
+  list_bought_equipment_wishes: "/mcp/equipment/wishes/bought",
+  list_discarded_equipment_wishes: "/mcp/equipment/wishes/discarded",
   list_ai_log: "/mcp/log",
   list_ai_drafts: "/mcp/drafts",
 };

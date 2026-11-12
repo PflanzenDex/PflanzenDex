@@ -245,7 +245,9 @@ const SAME_AS_APP: readonly [string, Json, () => string, (b: Json) => unknown][]
     () => `/equipment/checks-due${q}`,
     (b) => b["due"],
   ],
-  ["get_equipment_wishes", {}, () => "/equipment/wishes", (b) => b],
+  ["list_equipment_wishes", {}, () => "/equipment/wishes", (b) => b["open"]],
+  ["list_bought_equipment_wishes", {}, () => "/equipment/wishes", (b) => b["bought"]],
+  ["list_discarded_equipment_wishes", {}, () => "/equipment/wishes", (b) => b["discarded"]],
 ];
 /** The tool's answer without the paging and data markers, in the shape of the app's answer. */
 function appShape(name: string, body: Json) {
@@ -278,6 +280,19 @@ describe("US-KI-12 every other area through the AI client", () => {
     },
   );
 
+  it.each(SAME_AS_APP.filter(([name]) => AREA_READS[name as keyof typeof AREA_READS].list))(
+    "US-KI-12 %s: no value of the app's answer beside the list is hidden by a paging field (P-01)",
+    async (name, _args, path) => {
+      const list = AREA_READS[name as keyof typeof AREA_READS].list ?? "";
+      const MARKERS = ["dataFields", "items", "total", "offset", "limit", "nextOffset"];
+      const body = (await call(web(subA), "GET", path())).body;
+      const beside = Object.keys(body).filter((k) => k !== list);
+      expect(beside.filter((k) => MARKERS.includes(k))).toEqual(
+        name === "list_equipment_lamps" ? ["limit"] : [],
+      );
+    },
+  );
+
   it("US-KI-12 the light distribution and the profile are the app's values; free texts are named as data", async () => {
     const r = (await tool(subA, "get_light_distribution")).body;
     expect(r["distribution"]).toEqual(
@@ -306,7 +321,7 @@ describe("US-KI-12 every other area through the AI client", () => {
           ["list_equipment_zones", {}],
           ["list_equipment_needs", {}],
           ["list_equipment_checks_due", { timeZone: TZ }],
-          ["get_equipment_wishes", {}],
+          ["list_equipment_wishes", {}],
         ].map(async ([name, args]) => [
           name,
           (await tool(subA, name as string, args as Json)).body,
@@ -323,7 +338,7 @@ describe("US-KI-12 every other area through the AI client", () => {
     expect(ids(t("list_equipment_sensors")["items"])).toContain(sensor);
     expect(ids(t("list_equipment_agents")["items"])).toContain(agent);
     expect(ids(t("list_equipment_checks_due")["items"])).toContain(timer);
-    expect(ids(t("get_equipment_wishes")["open"])).toContain(wish);
+    expect(ids(t("list_equipment_wishes")["items"])).toContain(wish);
     expect(t("list_equipment_needs")["total"]).toBeGreaterThan(0);
     const zone = (t("list_equipment_zones")["items"] as Json[]).find(
       (z) => z["zoneId"] === A.zone["id"],
@@ -342,7 +357,7 @@ describe("US-KI-12 every other area through the AI client", () => {
     expect(t("list_equipment")["dataFields"]).toContain("items[].note");
     expect(t("list_equipment_lamps")["dataFields"]).toContain("items[].measurements[].method");
     expect(t("list_equipment_sensors")["dataFields"]).toContain("specimens[].name");
-    expect(t("get_equipment_wishes")["dataFields"]).toContain("open[].name");
+    expect(t("list_equipment_wishes")["dataFields"]).toContain("items[].name");
   });
 
   it("US-KI-12 catalog gaps follow the app's rule: reviewers only (the same refusal)", async () => {

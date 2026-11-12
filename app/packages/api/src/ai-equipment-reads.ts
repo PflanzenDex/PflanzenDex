@@ -31,7 +31,9 @@ type EquipmentAreas =
   | "list_equipment_zones"
   | "list_equipment_needs"
   | "list_equipment_checks_due"
-  | "get_equipment_wishes";
+  | "list_equipment_wishes"
+  | "list_bought_equipment_wishes"
+  | "list_discarded_equipment_wishes";
 
 /**
  * Equipment for the AI client (US-KI-12, KI-R10): the same functions and stores as the app's own routes `GET /equipment`,
@@ -68,6 +70,11 @@ export function equipmentAreaReadsFor(
       const today = localToday(opt.clock(), q.timeZone ?? "UTC");
       return ok({ due: await equipmentChecksDue({ equipment, measurements }, u, today) });
     },
-    get_equipment_wishes: async (u) => ok(await equipmentWishes({ wishes }, u)),
+    // One app answer, three paged tools like the plant wishes (FR-KI-16).
+    list_equipment_wishes: async (u) => ok({ open: (await equipmentWishes({ wishes }, u)).open }),
+    list_bought_equipment_wishes: async (u) =>
+      ok({ bought: (await equipmentWishes({ wishes }, u)).bought }),
+    list_discarded_equipment_wishes: async (u) =>
+      ok({ discarded: (await equipmentWishes({ wishes }, u)).discarded }),
   };
 }
