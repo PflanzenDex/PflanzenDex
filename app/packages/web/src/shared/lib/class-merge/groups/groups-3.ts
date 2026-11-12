@@ -108,6 +108,7 @@ export const GROUPS_3: Config<string, string>["classGroups"] = {
   "scroll-mt": [{ "scroll-mt": scaleUnambiguousSpacing() }],
   "scroll-mb": [{ "scroll-mb": scaleUnambiguousSpacing() }],
   "scroll-py": [{ "scroll-py": scaleUnambiguousSpacing() }],
+  touch: [{ touch: ["auto", "none", "manipulation"] }],
   "touch-x": [{ "touch-pan": ["x", "left", "right"] }],
   "touch-y": [{ "touch-pan": ["y", "up", "down"] }],
   select: [{ select: ["none", "text", "all", "auto"] }],

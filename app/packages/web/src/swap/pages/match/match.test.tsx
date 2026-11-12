@@ -374,7 +374,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     expect((await movingLayer()).style.getPropertyValue("--swipe-x")).toBe("0px");
   });
 
-  it("NFR-13 with reduced motion a swipe to the left still answers, at once and without a fly-off", async () => {
+  it("NFR-13 with reduced motion a swipe to the left still answers, after the stamp and without a fly-off", async () => {
     const before = window.matchMedia;
     window.matchMedia = ((query: string) => ({
       matches: query.includes("reduce"),
