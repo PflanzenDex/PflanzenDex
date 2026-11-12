@@ -3,6 +3,8 @@ import type { Suggestion, SuggestionDeck } from "@pflanzendex/core";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShortcutOverview } from "@/shared/platform/device/keyboard/shortcut-overview/shortcut-overview";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { REDUCED_STAMP_MS } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { DeckView } from "./deck-view";
 
 afterEach(cleanup);
@@ -120,7 +122,8 @@ describe("US-ENT-10 the arrow keys and Backspace decide while the deck has the f
     key(field, "ArrowRight");
     fireEvent.keyDown(front(), { key: "ArrowRight", altKey: true });
     key(document.body, "ArrowRight");
-    await act(() => new Promise((done) => setTimeout(done, 250)));
+    // The test setup reduces motion: a key that fired would decide after the stamp of REDUCED_STAMP_MS.
+    await act(() => new Promise((done) => setTimeout(done, REDUCED_STAMP_MS + 100)));
     expect(onDecide).not.toHaveBeenCalled();
     expect(front()).toBeTruthy();
   });
@@ -137,5 +140,52 @@ describe("US-ENT-10 the keys of the deck are listed in the shortcut overview of 
     await waitFor(() =>
       expect(screen.queryByRole("heading", { name: "In dieser Ansicht" })).toBeNull(),
     );
+  });
+});
+
+describe("US-ENT-10 a screen reader hears the result of each decision", () => {
+  it("US-ENT-10 Ja and Rückgängig are told in the polite live region of the app (US-QS-10)", async () => {
+    const onDecide = vi.fn(async (_s: string, decision: "yes" | "no") => ({
+      ok: true as const,
+      value: { decision, saved: true },
+    }));
+    const onUndo = vi.fn(async () => ({ ok: true as const, value: { undone: true } }));
+    const { container } = render(
+      <AnnouncerProvider>
+        <DeckView deck={three()} onDecide={onDecide} onUndo={onUndo} onNewDeck={() => undefined} />
+      </AnnouncerProvider>,
+    );
+    const region = () => container.querySelector("[aria-live='polite'].sr-only")?.textContent;
+    key(front(), "ArrowRight");
+    await waitFor(() => expect(region()).toBe("Ja: auf der Wunschliste."));
+    key(await screen.findByRole("heading", { name: "Aloe vera" }), "Backspace");
+    await waitFor(() => expect(region()).toBe("Rückgängig: die Karte liegt wieder oben."));
+  });
+});
+
+describe("US-ENT-10 Rückgängig brings the card back from the side it left", () => {
+  it("US-ENT-10 after a Nein the card taken back comes in from the left", async () => {
+    const before = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      setup();
+      key(front(), "ArrowLeft");
+      await screen.findByRole("button", { name: "Rückgängig" });
+      key(screen.getByRole("heading", { name: "Aloe vera" }), "Backspace");
+      const back = await screen.findByRole("heading", { name: "Ficus lyrata" });
+      const layer = back.closest("article")?.parentElement as HTMLElement;
+      expect(parseFloat(layer.style.getPropertyValue("--swipe-x"))).toBeLessThan(0);
+    } finally {
+      window.matchMedia = before;
+    }
   });
 });

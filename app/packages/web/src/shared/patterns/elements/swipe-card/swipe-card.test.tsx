@@ -318,6 +318,14 @@ describe("US-ENT-10 the cards lie as a stack with visible depth", () => {
     ]);
   });
 
+  it("US-ENT-10 the flight takes the time of the throw: the card's duration is the one the decision waits for", () => {
+    const { rerender } = render(ui({ depth: 1 }));
+    rerender(ui({ depth: 1, exit: "left" }));
+    expect(moving().className).toContain("duration-(--swipe-ms)");
+    expect(moving().className).not.toContain("duration-(--motion-base)");
+    expect(moving().style.getPropertyValue("--swipe-ms")).toBe("200ms");
+  });
+
   it("US-ENT-10 a card taken back comes in from the side it left, and the stack moves down by one level", async () => {
     const { container } = render(ui({ depth: 2, enterFrom: "left" }));
     expect(parseFloat(poseOf(moving()).x)).toBeLessThan(0);
