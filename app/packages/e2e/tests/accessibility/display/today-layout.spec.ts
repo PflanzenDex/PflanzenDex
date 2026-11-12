@@ -90,4 +90,27 @@ test.describe("US-QS-18 Heute at 360 px", () => {
       await page.locator("[data-fit-fill]").evaluate((el) => el.scrollHeight > el.clientHeight),
     ).toBe(true);
   });
+
+  test("US-QS-14: Heute taller than the window: scrolled to the end, Weiter lies fully above the bottom bar (issue 1835)", async ({
+    page,
+    account,
+  }, info) => {
+    test.skip(
+      info.project.name !== "mobil",
+      "a phone width: the desktop project is not sized for 360 px",
+    );
+    await answerOverview(page);
+    await signInToApp(page, account);
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+    const frame = page.locator("[data-fit-fill]");
+    expect(await frame.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+    await frame.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+    const weiter = await boxOf(page.getByRole("button", { name: "Weiter", exact: true }));
+    const bar = await boxOf(page.locator("nav[data-bottom-bar]"));
+    expect(
+      weiter.y + weiter.height,
+      "the bottom of Weiter against the top of the bar",
+    ).toBeLessThanOrEqual(bar.y);
+  });
 });

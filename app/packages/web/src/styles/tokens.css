@@ -345,8 +345,13 @@
     main > div:has(> [data-fit-fill]) {
       height: 100%;
     }
+    /*
+     * The view ends where the room for the bar begins (issue 1835): only its top and sides reach into the padding of
+     * `main`, so its own bottom padding, the last 0.5 rem of a scrolled view, stays above the bottom bar.
+     */
     main > div > [data-fit-fill] {
-      height: calc(100% + 1rem);
+      height: calc(100% + 0.5rem);
+      margin-bottom: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
     }

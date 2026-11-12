@@ -8,5 +8,6 @@
   "cardsOpener": "Sammlerkarten ansehen",
   "cardsTitle": "Sammlerkarten",
   "uncountedOpener": "Noch nicht gezählt ({count})",
-  "uncountedTitle": "Noch nicht gezählt"
+  "uncountedTitle": "Noch nicht gezählt",
+  "uncountedNone": "Jede deiner Pflanzen zählt schon für den Pokédex."
 }

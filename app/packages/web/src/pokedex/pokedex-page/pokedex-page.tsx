@@ -151,8 +151,9 @@ function Layers(props: {
   );
 }
 
+/** The specimens that do not count yet; opened by address without any, the layer says so instead of staying empty (P-09). */
 function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
-  if (props.specimens.length === 0) return null;
+  if (props.specimens.length === 0) return <p className="text-sm">{ui("uncountedNone")}</p>;
   return (
     <Pager
       items={props.specimens}
