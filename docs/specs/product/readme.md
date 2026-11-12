@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **229** | **48** | **142** | **39** |                           | **50**                 | **179** |
+| **Total**                        | **229** | **48** | **143** | **38** |                           | **50**                 | **179** |
 
 <!-- spec-status:end -->
 
