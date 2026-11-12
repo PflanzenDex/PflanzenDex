@@ -26,6 +26,7 @@ import {
 import type { Pool } from "pg";
 import { unlockListFor } from "./account";
 import { careAreaReadsFor, type AreaReadOptions } from "./ai-care-reads";
+import { equipmentAreaReadsFor } from "./ai-equipment-reads";
 import type { FeatureAccess } from "./kernel";
 
 type CollectionAreas =
@@ -95,5 +96,9 @@ export function appAreaReadsFor(
   },
 ): AppAreaReadSource {
   const all = { ...opt, clock: opt.clock ?? (() => new Date()) };
-  return { ...careAreaReadsFor(pool, all), ...collectionAreaReadsFor(pool, all) };
+  return {
+    ...careAreaReadsFor(pool, all),
+    ...collectionAreaReadsFor(pool, all),
+    ...equipmentAreaReadsFor(pool, all),
+  };
 }

@@ -12,6 +12,10 @@ export const NOT_RELEASED_TOOLS: Readonly<Record<string, NotReleasedCall>> = {
   list_offers: "offers",
   list_swaps: "swaps",
   get_recommendations: "recommendations",
+  // Equipment of friends, the own sharing and the product suggestions (US-EQU-10, US-EQU-12): only the own equipment is read.
+  get_friend_equipment: "friends",
+  get_equipment_sharing: "sharing",
+  list_equipment_recommendations: "recommendations",
   // The keeper's profile and display name; `get_profile` stays a released read.
   update_profile: "profile",
   set_display_name: "profile",

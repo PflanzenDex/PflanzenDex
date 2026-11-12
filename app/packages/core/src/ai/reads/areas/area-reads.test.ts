@@ -87,6 +87,41 @@ describe("US-KI-12 every other area through the AI client", () => {
     expect(r.ok && r.value).toMatchObject({ specimenId: uuid(1) });
   });
 
+  it("US-KI-12 equipment: the list is paged, the free texts beside it are named by their own path (FR-KI-07)", async () => {
+    const deps = fakes();
+    const sensors = { sensors: [{ name: "Sensor 1" }], specimens: [{ name: "Aloe" }] };
+    (deps.areas as Record<string, unknown>)["list_equipment_sensors"] = async () => ok(sensors);
+    const r = await aiAreaRead("list_equipment_sensors")(deps, call("anna", {}));
+    expect(r.ok && r.value).toMatchObject({
+      items: [{ name: "Sensor 1" }],
+      specimens: [{ name: "Aloe" }],
+      total: 1,
+    });
+    const fields = r.ok ? (r.value as { dataFields: string[] }).dataFields : [];
+    expect(fields).toEqual(expect.arrayContaining(["items[].name", "specimens[].name"]));
+  });
+
+  it("US-KI-12 equipment: every kind, need, check and wish has its read (EQU)", () => {
+    for (const name of [
+      "list_equipment",
+      "list_equipment_lamps",
+      "list_equipment_sensors",
+      "list_equipment_agents",
+      "list_equipment_zones",
+      "list_equipment_needs",
+      "list_equipment_checks_due",
+      "list_equipment_wishes",
+      "list_bought_equipment_wishes",
+      "list_discarded_equipment_wishes",
+    ])
+      expect(AREA_NAMES).toContain(name);
+  });
+
+  it("US-KI-12 equipment checks due need the keeper's 'today' (NFR-08)", async () => {
+    const r = await aiAreaRead("list_equipment_checks_due")(fakes(), call("anna", {}));
+    expect(!r.ok && r.error.code).toBe("input.invalid");
+  });
+
   it("US-KI-12 every area read is released as read and logged with a count, never with content (FR-KI-19)", async () => {
     for (const name of AREA_NAMES) expect(AI_OPERATION_CLASSES[name]).toBe("read");
     const deps = fakes();
