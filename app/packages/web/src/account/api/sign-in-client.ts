@@ -24,10 +24,14 @@ export const hereState = (): string =>
   returnState(window.location.origin, window.location.pathname, window.location.search);
 
 // Puts the address back where the person was, without the sign-in's own parameters (US-BES-17, #1639). Without a usable
-// state only the path stays, as before.
+// state only the path stays, as before. The router was created at the callback's address and does not see a
+// `replaceState`; a `popstate` makes it read the address again, so the layer or form of the query opens and a later
+// navigation does not write the sign-in's parameters back (issue 1823). The history entry keeps the router's own state.
 function restoreAddress(state: unknown): void {
   const address = addressFromState(window.location.origin, state) ?? new URL(here()).pathname;
-  window.history.replaceState({}, "", address);
+  const entry: unknown = window.history.state;
+  window.history.replaceState(entry, "", address);
+  window.dispatchEvent(new PopStateEvent("popstate", { state: entry }));
 }
 
 // The state of an error response of the sign-in library; anything else carries none.
