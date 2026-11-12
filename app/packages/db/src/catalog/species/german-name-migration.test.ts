@@ -1,20 +1,15 @@
-import { randomUUID } from "node:crypto";
 import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import pg from "pg";
+import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import {
-  migrate,
-  MIGRATIONS_DIRECTORY,
-  openAdminPool,
-  openPool,
-  testDatabaseUrl,
-} from "../../kernel/index.ts";
+import { createFileDatabase, migrate, MIGRATIONS_DIRECTORY, openPool } from "../../kernel/index.ts";
 
 // US-BES-12, FR-BES-17 (issue 1851): migration 0119 applies the new rank of the German name (the German article before
 // the Wikidata label) to the names the fill job has stored. A scratch database is migrated up to 0118, filled with
-// species, their stored snapshots and the provenance of their German name, then migrated to the end.
+// species, their stored snapshots and the provenance of their German name, then migrated to the end AS THE OWNER role
+// (NOSUPERUSER NOBYPASSRLS, as the deploy's `migrate` service, NFR-15, #1809): a data step the owner's row rules hide
+// would match no row and succeed silently. The superuser fixture pool seeds and reads.
 const MIGRATION = "0119";
 // Folders this file makes are removed after it, also when a test fails (#1278).
 const madeDirs: string[] = [];
@@ -24,11 +19,9 @@ function tempDir(prefix: string): string {
   return dir;
 }
 
-const DB = `german_name_${randomUUID()
-  .replace(/[0-9-]/g, "")
-  .slice(0, 8)}`;
-let admin: pg.Pool;
-let scratch: pg.Pool;
+let file: Awaited<ReturnType<typeof createFileDatabase>> | undefined;
+let owner: Pool; // the migration runner, as in deploy
+let scratch: Pool; // superuser of the scratch database: seeds it and reads
 
 const uid = (n: number) => `e2000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const DE_PAGE = "https://de.wikipedia.org/wiki/Gefleckte_Efeutute";
@@ -81,7 +74,7 @@ const CASES = {
   },
 } satisfies Record<string, Case>;
 
-async function seed(db: pg.Pool) {
+async function seed(db: Pool) {
   const c = await db.connect();
   try {
     await c.query("begin");
@@ -152,25 +145,26 @@ async function newestProvenance(id: string) {
 }
 
 beforeAll(async () => {
-  admin = openAdminPool();
-  await admin.query(`create database ${DB}`);
-  const url = new URL(testDatabaseUrl());
-  url.pathname = `/${DB}`;
-  scratch = openPool(url.toString());
+  file = await createFileDatabase("germanname1851");
+  owner = openPool(file.ownerUrl);
+  owner.on("error", () => undefined);
+  scratch = openPool(file.fixtureUrl, true);
   scratch.on("error", () => undefined);
   const before = tempDir("german-name-");
-  for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter((n) => n < MIGRATION))
+  for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter(
+    (n) => n.endsWith(".sql") && n < MIGRATION,
+  ))
     copyFileSync(join(MIGRATIONS_DIRECTORY, f), join(before, f));
-  await migrate(scratch, { directory: before });
+  await migrate(owner, { directory: before });
   await seed(scratch);
-  await migrate(scratch);
+  await migrate(owner);
 }, 120_000);
 
 afterAll(async () => {
   for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true });
-  await scratch.end();
-  await admin.query(`drop database if exists ${DB} with (force)`);
-  await admin.end();
+  await owner?.end();
+  await scratch?.end();
+  await file?.drop();
 });
 
 describe("US-BES-12 migration 0119: the German name from the German article (issue 1851)", () => {
