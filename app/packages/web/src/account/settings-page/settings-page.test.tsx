@@ -786,25 +786,32 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     showWithProvider();
-    await user.click(await screen.findByRole("button", { name: "Alt und Umschalt" }));
+    await user.selectOptions(
+      await screen.findByRole("combobox", { name: "Tastenkürzel" }),
+      "Alt und Umschalt",
+    );
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["keyboardShortcuts"]).toBe("modifier");
     expect(puts[0]?.body["notifications"]).toEqual(PROFILE.notifications);
     expect(screen.getByTestId("mode").textContent).toBe("modifier");
-    expect(
-      screen.getByRole("button", { name: "Alt und Umschalt" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("combobox", { name: "Tastenkürzel" }) as HTMLSelectElement).value,
+      ).toBe("modifier"),
+    );
   });
 
   it("US-QS-11 the choice 'Aus' turns every shortcut off; choosing the stored one again sends nothing", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     showWithProvider();
-    await user.click(await screen.findByRole("button", { name: "Aus" }));
+    const field = await screen.findByRole("combobox", { name: "Tastenkürzel" });
+    await user.selectOptions(field, "Aus");
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["keyboardShortcuts"]).toBe("disabled");
     expect(screen.getByTestId("mode").textContent).toBe("disabled");
-    await user.click(screen.getByRole("button", { name: "Aus" }));
+    await waitFor(() => expect((field as HTMLSelectElement).value).toBe("disabled"));
+    await user.selectOptions(field, "Aus");
     expect(puts).toHaveLength(1);
   });
 
@@ -820,7 +827,7 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
     );
     const user = userEvent.setup();
     showWithProvider();
-    await user.click(await screen.findByRole("button", { name: "Aus" }));
+    await user.selectOptions(await screen.findByRole("combobox", { name: "Tastenkürzel" }), "Aus");
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByTestId("mode").textContent).toBe("plain");
@@ -843,14 +850,9 @@ describe("US-QS-33 settings: motion", () => {
   it("US-QS-33 the layer 'Wie nutzt du die App?' offers 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
     fakeServer();
     showStyle();
-    const group = await screen.findByRole("group", { name: "Bewegung" });
-    expect(group).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Wie auf dem Gerät" }).getAttribute("aria-pressed"),
-    ).toBe("true");
-    expect(screen.getByRole("button", { name: "Bewegung aus" }).getAttribute("aria-pressed")).toBe(
-      "false",
-    );
+    const field = (await screen.findByRole("combobox", { name: "Bewegung" })) as HTMLSelectElement;
+    expect([...field.options].map((o) => o.text)).toEqual(["Wie auf dem Gerät", "Bewegung aus"]);
+    expect(field.value).toBe("system");
     expect(
       screen.getByText(
         "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar.",
@@ -862,12 +864,13 @@ describe("US-QS-33 settings: motion", () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     showStyle();
-    await user.click(await screen.findByRole("button", { name: "Bewegung aus" }));
+    const field = await screen.findByRole("combobox", { name: "Bewegung" });
+    await user.selectOptions(field, "Bewegung aus");
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["motion"]).toBe("reduced");
     expect(puts[0]?.body["keyboardShortcuts"]).toBe("plain");
     await waitFor(() => expect(root.dataset.motion).toBe("reduced"));
-    await user.click(screen.getByRole("button", { name: "Wie auf dem Gerät" }));
+    await user.selectOptions(field, "Wie auf dem Gerät");
     await waitFor(() => expect(puts).toHaveLength(2));
     await waitFor(() => expect(root.dataset.motion).toBeUndefined());
   });
@@ -884,12 +887,11 @@ describe("US-QS-33 settings: motion", () => {
     );
     const user = userEvent.setup();
     showStyle();
-    await user.click(await screen.findByRole("button", { name: "Bewegung aus" }));
+    const field = (await screen.findByRole("combobox", { name: "Bewegung" })) as HTMLSelectElement;
+    await user.selectOptions(field, "Bewegung aus");
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(root.dataset.motion).toBeUndefined();
-    expect(
-      screen.getByRole("button", { name: "Wie auf dem Gerät" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+    await waitFor(() => expect(field.value).toBe("system"));
   });
 });

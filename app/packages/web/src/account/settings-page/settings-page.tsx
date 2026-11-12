@@ -85,7 +85,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       title: "Wie nutzt du die App?",
       value: styleText,
       body: (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <KeeperStyleSection api={props.api} token={props.token} />
           <CalmModeSection api={props.api} token={props.token} />
           <ShortcutsGroup saver={saver} />
