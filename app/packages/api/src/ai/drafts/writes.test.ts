@@ -445,3 +445,26 @@ describe("FR-KI-23 tenant isolation of every write tool", () => {
     expect(await count(subB)).toBe(n);
   });
 });
+
+describe("FR-KI-23 ids the tools pass on unresolved stay within the account", () => {
+  it("FR-KI-23 a pot of B named in repot_specimen is refused and B's pot keeps its plant list", async () => {
+    const pot = await call(web(subB), "POST", "/equipment", { type: "Pot", name: `Topf ${tag}` });
+    const potId = pot.body["equipment"].id as string;
+    const before = await specimen(subA, A.blue["id"]);
+    const r = await tool(subA, "repot_specimen", { specimen: A.blue["id"], timeZone: TZ, potId });
+    expect(r.error).toBe(true);
+    expect(r.body["error"]["code"]).toMatch(/not_found$/);
+    expect((await specimen(subA, A.blue["id"]))["repottedAt"]).toBe(before["repottedAt"]);
+  });
+
+  it("FR-KI-23 a marker answer for B's specimen in create_specimen never changes B's specimen", async () => {
+    const before = await specimen(subB, B.blue["id"]);
+    await tool(subA, "create_specimen", {
+      species: A.species["id"],
+      marker: `m${tag}`.slice(0, 20),
+      timeZone: TZ,
+      markers: [{ specimenId: B.blue["id"], marker: "fremd" }],
+    });
+    expect(await specimen(subB, B.blue["id"])).toEqual(before);
+  });
+});
