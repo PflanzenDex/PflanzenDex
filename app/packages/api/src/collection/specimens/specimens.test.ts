@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
-import { collectionReadSourceFor } from "../ai-reads/read-source";
+import { collectionReadSourceFor } from "../ai-port/read-source";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 

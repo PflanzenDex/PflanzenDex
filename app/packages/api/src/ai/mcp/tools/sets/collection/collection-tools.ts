@@ -12,7 +12,7 @@ import {
   PAGE_SIZE,
   type JsonSchema,
 } from "@pflanzendex/core";
-import { query, seg, type Json, type McpTool } from "../schema";
+import { query, seg, type Json, type McpTool } from "../../schema";
 
 export const PAGE = {
   offset:

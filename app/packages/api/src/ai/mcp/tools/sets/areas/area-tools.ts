@@ -6,7 +6,7 @@
 import { AREA_READS, areaSchema, type AreaName } from "@pflanzendex/core";
 import { AREA_PATHS } from "../../../../reads/area-paths";
 import { query, type McpTool } from "../../schema";
-import { inputOf, PAGE, REF, TZ } from "../collection-tools";
+import { inputOf, PAGE, REF, TZ } from "../collection/collection-tools";
 
 const SPECIMEN = REF("specimen (species name with marker)", "Aloe vera – blau");
 const VALUES =

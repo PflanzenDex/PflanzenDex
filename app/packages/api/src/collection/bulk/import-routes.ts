@@ -21,7 +21,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { Pool } from "pg";
 import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
-import { collectionReadSourceFor } from "../ai-reads/read-source";
+import { collectionReadSourceFor } from "../ai-port/read-source";
 
 /** The body of the preview: the file as JSON. JSON escaping at most doubles the characters of a file (quotes, backslashes and line breaks), so a file of the largest allowed size fits; the margin is for the other fields (assumption). */
 const PREVIEW_BODY_LIMIT = 2 * IMPORT_LIMITS.bytes + 64 * 1024;

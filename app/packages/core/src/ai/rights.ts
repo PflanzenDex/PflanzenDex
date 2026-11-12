@@ -94,6 +94,15 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   list_ai_drafts: "read",
   // Rule discovery (US-KI-13): the rules a client respects before it writes, the same for every account.
   describe_rules: "read",
+  // Keeping the specimens (US-KI-14): facts the keeper has, reversible, so `write`; with "create drafts" they arrive as a
+  // draft of the same content (US-KI-07). Archiving is destructive and waits for the class `confirm` (US-KI-16).
+  create_specimen: "write",
+  set_specimen_marker: "write",
+  correct_catch_date: "write",
+  set_specimen_location: "write",
+  set_specimen_light_zone: "write",
+  repot_specimen: "write",
+  restore_specimen: "write",
   check_species_name: "read",
   claim_task: "draft",
   decline_task: "draft",

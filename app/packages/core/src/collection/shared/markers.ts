@@ -1,6 +1,6 @@
 // Naming rule DM-BES-03 and markers (US-BES-03): which specimens of a species must get a marker before a new one is
 // saved. Pure rules on the specimens of one species; the operations decide what to write.
-import { appError, isId, type AppError, type ErrorDetail } from "../../kernel";
+import { appError, described, isId, type AppError, type ErrorDetail } from "../../kernel";
 import { specimenName } from "./name";
 import { SPECIMEN_LIMITS, isActive } from "./types";
 import type { MarkerAssignment, SpecimenRow } from "./types";
@@ -30,6 +30,23 @@ export function markerAnswersField(value: unknown): readonly MarkerAnswer[] | Er
   const answers = (value as unknown[]).map(answerOf);
   return answers.every((a) => a !== null) ? answers : invalid;
 }
+// The JSON Schema of the answers, so a client that builds the input learns them from this check (US-KI-14, FR-KI-17).
+described(markerAnswersField, {
+  type: ["array", "null"],
+  maxItems: MAX_ANSWERS,
+  items: {
+    type: "object",
+    properties: {
+      specimenId: { type: "string", format: "uuid" },
+      marker: {
+        type: "string",
+        minLength: SPECIMEN_LIMITS.marker.min,
+        maxLength: SPECIMEN_LIMITS.marker.max,
+      },
+    },
+    required: ["specimenId", "marker"],
+  },
+});
 
 const same = (a: string | null, b: string) => a !== null && a.toLowerCase() === b.toLowerCase();
 

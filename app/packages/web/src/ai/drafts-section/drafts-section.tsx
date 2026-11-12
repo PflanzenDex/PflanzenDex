@@ -17,6 +17,14 @@ const TYPE_TEXT: Record<string, string> = {
   species: "Artprofil",
   photo_assessment: "Fotobeurteilung",
   discover_decision: "Entscheidung bei Entdecken",
+  // The writes of a client that may only create drafts (US-KI-14): one label per write tool.
+  create_specimen: "Neue Pflanze",
+  set_specimen_marker: "Markierung",
+  correct_catch_date: "Fangdatum korrigieren",
+  set_specimen_location: "Standort setzen",
+  set_specimen_light_zone: "Lichtzone setzen",
+  repot_specimen: "Eintopfen oder umtopfen",
+  restore_specimen: "Aus dem Archiv holen",
 };
 const DECISION_TEXT: Record<string, string> = { yes: "Ja", no: "Nein" };
 const QUALITY_TEXT: Record<string, string> = { healthy: "gesund", etiolated: "vergeilt" };
