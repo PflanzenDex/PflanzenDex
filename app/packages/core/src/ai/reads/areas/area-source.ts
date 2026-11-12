@@ -12,8 +12,21 @@ export interface AreaQuery {
   readonly connectionId: string;
 }
 
+/** The free texts of an equipment record (DM-EQU-01): what the keeper typed. */
+const EQUIPMENT_TEXTS = [
+  "name",
+  "manufacturer",
+  "model",
+  "productId",
+  "note",
+  "material",
+  "lifetimeValue",
+  "lifetimeSource",
+  "agentLink",
+];
+
 /**
- * The read areas (US-KI-12), named after their tools. Equipment (EQU) follows in its own slice; friends' data, sharing,
+ * The read areas (US-KI-12), named after their tools, equipment (EQU) included; friends' data, sharing,
  * offers, swaps, recommendations and the human-only functions are never released (FR-KI-10, FR-KI-22, `NOT_RELEASED_CALLS`).
  */
 export const AREA_READS = {
@@ -62,6 +75,34 @@ export const AREA_READS = {
   get_profile: { needs: "nothing", list: null, data: ["displayName"] },
   list_ai_log: { needs: "nothing", list: "log", data: [] },
   list_ai_drafts: { needs: "nothing", list: "drafts", data: ["content", "reference"] },
+  // Equipment (EQU), its own tool set after the areas above: every kind, lamps, sensors, plant agents, devices per zone,
+  // needs, checks due and wishes. Only the own equipment; what friends share stays unreachable (FR-KI-10).
+  list_equipment: { needs: "nothing", list: "equipment", data: EQUIPMENT_TEXTS },
+  list_equipment_lamps: {
+    needs: "nothing",
+    list: "lamps",
+    data: ["name", "zone.name", "last.method", "measurements[].method"],
+  },
+  list_equipment_sensors: {
+    needs: "nothing",
+    list: "sensors",
+    data: ["name", "target.name", "specimens[].name", "locations[].name"],
+  },
+  list_equipment_agents: { needs: "nothing", list: "agents", data: ["name", "agentLink"] },
+  list_equipment_zones: {
+    needs: "nothing",
+    list: "zones",
+    data: ["name", "lamps[].name", "unassigned[].name"],
+  },
+  list_equipment_needs: { needs: "nothing", list: "needs", data: ["reason", "source"] },
+  list_equipment_checks_due: { needs: "timeZone", list: "due", data: ["name"] },
+  list_equipment_wishes: { needs: "nothing", list: "open", data: ["name", "productId"] },
+  list_bought_equipment_wishes: { needs: "nothing", list: "bought", data: ["name", "productId"] },
+  list_discarded_equipment_wishes: {
+    needs: "nothing",
+    list: "discarded",
+    data: ["name", "productId"],
+  },
 } as const satisfies Readonly<Record<string, AreaRead>>;
 
 export interface AreaRead {
@@ -69,7 +110,10 @@ export interface AreaRead {
   readonly needs: "nothing" | "timeZone" | "specimen";
   /** The key of the app's answer that holds the list (paged, FR-KI-16); `null` for a single view. */
   readonly list: string | null;
-  /** Free texts of the keeper or of other keepers, delivered marked as data (FR-KI-07). */
+  /**
+   * Free texts of the keeper or of other keepers, delivered marked as data (FR-KI-07). In a list area a field of the
+   * list's items; one whose first key is beside the list in the app's answer keeps its own path (`specimens[].name`).
+   */
   readonly data: readonly string[];
 }
 

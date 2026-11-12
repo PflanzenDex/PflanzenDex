@@ -4,9 +4,9 @@
 // means unknown (P-08). Friends' data and the human-only functions are never released (FR-KI-10, FR-KI-22): their names
 // are in ../not-released-tools.ts and answer `ai.not_released`.
 import { AREA_READS, areaSchema, type AreaName } from "@pflanzendex/core";
-import { AREA_PATHS } from "../../../reads/area-paths";
-import { query, type McpTool } from "../schema";
-import { inputOf, PAGE, REF, TZ } from "./collection-tools";
+import { AREA_PATHS } from "../../../../reads/area-paths";
+import { query, type McpTool } from "../../schema";
+import { inputOf, PAGE, REF, TZ } from "../collection-tools";
 
 const SPECIMEN = REF("specimen (species name with marker)", "Aloe vera – blau");
 const VALUES =
@@ -22,7 +22,8 @@ function fieldsOf(name: AreaName): Record<string, string> {
   };
 }
 
-const area = (name: AreaName, title: string, description: string): McpTool => {
+/** The tool of one area: a thin adapter over its route, the input schema from the read operation (FR-KI-17). */
+export const area = (name: AreaName, title: string, description: string): McpTool => {
   const fields = fieldsOf(name);
   return {
     name,

@@ -58,7 +58,7 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   list_locations: "read",
   list_light_zones: "read",
   list_measurements: "read",
-  // Every other area (US-KI-12): the same reads as the app's views; equipment follows in its own slice.
+  // Every other area (US-KI-12): the same reads as the app's views, equipment included.
   list_care_phases: "read",
   list_open_treatments: "read",
   list_treatment_history: "read",
@@ -80,6 +80,16 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   list_my_corrections: "read",
   list_unlocks: "read",
   get_profile: "read",
+  list_equipment: "read",
+  list_equipment_lamps: "read",
+  list_equipment_sensors: "read",
+  list_equipment_agents: "read",
+  list_equipment_zones: "read",
+  list_equipment_needs: "read",
+  list_equipment_checks_due: "read",
+  list_equipment_wishes: "read",
+  list_bought_equipment_wishes: "read",
+  list_discarded_equipment_wishes: "read",
   list_ai_log: "read",
   list_ai_drafts: "read",
   // Rule discovery (US-KI-13): the rules a client respects before it writes, the same for every account.
