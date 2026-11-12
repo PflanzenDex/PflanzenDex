@@ -1,0 +1,233 @@
+# docs/guides/reference/style-guide.md
+
+How a phone screen of PflanzenDex looks and behaves. `design-system.md` says how UI code is built (layers, tokens, primitives, gates); this file says what the keeper sees. Every rule has a stable ID (`SG-<AREA>-nn`) so that a design finding, an issue or a review can cite it. IDs are never renumbered.
+
+- **Scope:** phones (below 768 px). Desktop is a later pass; until then `design-system.md` holds there unchanged.
+- **Source:** owner interview of 2026-11-10 and 2026-11-12 (US-QS-32, decision E-31 in `docs/specs/product/16-releases-and-decisions.md`, issue 1844).
+- **Language:** this file is English; quoted UI texts are German (ADR 0004).
+- **Status:** this is the **target**. The app does not match it yet. The mobile design review records the gap as findings; each fix is its own ticket. Section 3 lists the rules of `design-system.md` and the ADRs that this file replaces on phones, and what that means for the gates.
+
+## 1. Baseline and precedence
+
+| ID         | Rule                                                                                                                                                                                                                              | Why                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| SG-BASE-01 | On phones the baseline is Apple's Human Interface Guidelines (HIG) for look and behaviour and WCAG 2.2 level AA for accessibility.                                                                                                | A written outside reference replaces taste.                                       |
+| SG-BASE-02 | Order of precedence: WCAG 2.2 AA, then a rule of this file, then HIG, then `design-system.md`. A product principle (P-01 to P-12) is never overridden by any of them.                                                             | One answer when two sources disagree.                                             |
+| SG-BASE-03 | Where an own rule and HIG disagree and this file is silent, nobody decides alone: the conflict is a question to the owner, and the answer becomes a rule here.                                                                    | The owner approved every override so far and wants to approve the next ones.      |
+| SG-BASE-04 | HIG parts that the web cannot use are out: SF Symbols and the San Francisco font (licence), system materials, and controls that exist only natively. The behaviour they stand for is kept with the app's own font, icons, tokens. | The app is a PWA that also runs on Android; it follows HIG, it does not fake iOS. |
+
+## 2. Rules
+
+Numbers marked "starting value" are assumptions until measured or confirmed.
+
+### 2.1 Type
+
+| ID         | Rule                                                                                                                                                                                                                              | Why                                                                                    |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| SG-TYPE-01 | One family, Figtree, in the weights 400 and 600; 700 only for the page title. No other weight carries meaning.                                                                                                                    | HIG allows a custom font that stays legible; it is the brand mark (owner, conflict 9). |
+| SG-TYPE-02 | Primary content is 16 px (`text-base`): names, sentences, row titles, field values. Secondary content is 14 px (`text-sm`): meta lines, hints, captions. 12 to 13 px (`text-xs`, `text-label`) only for chips, badges and labels. | ADR 0011 decision 3; a phone is read at arm's length.                                  |
+| SG-TYPE-03 | Text below 14 px is never a sentence, and no text is below 12 px.                                                                                                                                                                 | Legibility (HIG typography: minimum 11 pt).                                            |
+| SG-TYPE-04 | Sizes are the rem steps of `tokens.css`; text scales to 200 % without cut or overlapping text (WCAG 1.4.4).                                                                                                                       | The keeper's text size setting holds.                                                  |
+| SG-TYPE-05 | A plant or species name wraps to two lines before it is cut. Only secondary lines truncate, with "…". At 200 % text nothing primary is cut.                                                                                       | A cut name ("Fenster…") hides the one thing the row is for.                            |
+| SG-TYPE-06 | Scientific names are italic; trade names and German names are not.                                                                                                                                                                | Botanical convention.                                                                  |
+| SG-TYPE-07 | A number and its unit never break apart; counts and measurements use tabular figures.                                                                                                                                             | Values stay comparable in a column (DS-63).                                            |
+
+### 2.2 Headings and the bar
+
+| ID         | Rule                                                                                                                                                                                                   | Why                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| SG-HEAD-01 | The top bar carries the title of the current page, not the product name. That title is the page's one `h1`.                                                                                            | HIG navigation bars (owner, conflict 2); it frees about 50 px per screen. |
+| SG-HEAD-02 | The product name "PflanzenDéx" shows on the entry and sign-in pages, in "Konto" and on the splash of the installed app, nowhere else as a heading.                                                     | The keeper knows which app is open.                                       |
+| SG-HEAD-03 | A screen has three heading levels at most: the page title, section labels at one fixed size (16 px, semibold), and row titles. No second heading at title size, and no title inside a card or a group. | One hierarchy; two large headings compete.                                |
+| SG-HEAD-04 | A sub-page shows a back chevron at the leading edge of the bar, named after its target ("Zurück zu …"), and at most two actions at the trailing edge.                                                  | HIG; DS-64 keeps holding for the name of the control.                     |
+
+### 2.3 Shape, surface and elevation
+
+| ID          | Rule                                                                                                                                                                                                                     | Why                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| SG-SHAPE-01 | The radius tokens stay: control 14 px, tile 16 px, card 22 px, pill. No other radius.                                                                                                                                    | Owner confirmed the tokens.                                |
+| SG-SHAPE-02 | The pill shape is for controls with one line of text only: buttons, chips, the indicator of the bottom bar. Anything with two lines, or a value with a label, is a tile or a row.                                        | A two-line pill reads as a stretched button.               |
+| SG-SHAPE-03 | Content is shown as flat grouped lists: a rounded group (card radius) on the page colour, rows separated by a hairline, no shadow. This holds for settings and facts and also for plants, species, wishes and equipment. | HIG lists and tables (owner, conflict 10).                 |
+| SG-SHAPE-04 | A card (a self-standing surface with its own photo and actions) exists only for the suggestion deck, the match deck and the collector cards.                                                                             | These are objects the keeper handles one at a time.        |
+| SG-SHAPE-05 | A shadow marks something that floats above the page: a sheet, a dialog, a menu. Nothing in the flow of a page has a shadow.                                                                                              | Elevation means "above", not "important".                  |
+| SG-SHAPE-06 | Groups and cards are never nested: no group inside a group, no card inside a card.                                                                                                                                       | Nested frames cost width at 360 px and blur the hierarchy. |
+| SG-SHAPE-07 | Spacing uses the 4 px scale: 16 px page gutter, 8 or 12 px inside a group, 24 px between sections. A row is at least 44 px high.                                                                                         | ADR 0011 decision 4, DS-13, DS-15.                         |
+
+### 2.4 Colour
+
+| ID          | Rule                                                                                                                                                                | Why                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| SG-COLOR-01 | Surfaces, text and separators are neutral (ADR 0017). Green marks an action or a selection, nothing else.                                                           | Six green things on one screen have no order.                     |
+| SG-COLOR-02 | A row or tile that navigates or shows a count is neutral: group fill, text in `foreground`, a chevron or the number. It is not outlined or tinted green.            | Owner: green means "this does something", not "this is tappable". |
+| SG-COLOR-03 | A filter or chip is neutral until it is selected; the selected one takes the accent fill and a semibold label.                                                      | Selection is the information.                                     |
+| SG-COLOR-04 | Red (`destructive`) is for destructive actions and for errors only. Amber (`warning`) is for a deviation the keeper should look at (etiolation). Neither decorates. | A colour keeps its meaning.                                       |
+| SG-COLOR-05 | Meaning is never carried by colour alone: text, an icon, a weight or a shape says the same (WCAG 1.4.1).                                                            | DS-19.                                                            |
+| SG-COLOR-06 | Text reaches 4.5:1, large text and the boundary of a control 3:1, in light and in dark (WCAG 1.4.3, 1.4.11).                                                        | DS-20.                                                            |
+| SG-COLOR-07 | Dark mode follows the system. Every screen works in both schemes; a photo gets no colour filter.                                                                    | ADR 0007 decision 6.                                              |
+
+### 2.5 Buttons and controls
+
+| ID         | Rule                                                                                                                                                                                                                    | Why                                                                  |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| SG-BTN-01  | Three button styles: **filled** (green fill, the primary action), **tinted** (accent fill, dark green text, no border, a secondary action), **plain** (green text only, a tertiary action). There is no outline button. | HIG buttons (owner, conflict 3).                                     |
+| SG-BTN-02  | A view shows at most one filled button. A group or card holds at most one tinted button.                                                                                                                                | One thing is the next step (P-09).                                   |
+| SG-BTN-03  | A destructive action is a plain or filled button in red, labelled with verb and object ("Pflanze löschen").                                                                                                             | HIG; the label says what is lost.                                    |
+| SG-BTN-04  | Every tap shows a pressed state within 100 ms. An action that takes longer than 1 s (starting value) shows progress on the control that started it, and that control cannot be triggered twice.                         | HIG feedback; DS-50.                                                 |
+| SG-BTN-05  | A disabled control says why nearby, or it is not shown.                                                                                                                                                                 | DS-39, P-09.                                                         |
+| SG-CTRL-01 | A segmented control marks the selected segment with a raised fill and a semibold label, without a check mark; the segments share the width.                                                                             | HIG segmented controls (owner, conflict 4); two cues besides colour. |
+| SG-CTRL-02 | A setting that takes effect at once is a switch in a full-width row, label at the leading edge. A checkbox appears only in a form that is sent with a save action (consent, choosing several entries).                  | HIG toggles (owner, conflict 6).                                     |
+| SG-CTRL-03 | A date is chosen with the system date picker on touch devices, prefilled with today. The stored value stays the local calendar date (NFR-08).                                                                           | HIG pickers (owner, conflict 5).                                     |
+| SG-CTRL-04 | A short fixed list of choices (up to about 5, starting value) is a segmented control or a menu, not free typing.                                                                                                        | Picking is faster than typing on a phone.                            |
+
+### 2.6 Touch and gestures
+
+| ID          | Rule                                                                                                                                                         | Why                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| SG-TOUCH-01 | Every control has a hit area of at least 44 × 44 px, and neighbours are at least 8 px apart.                                                                 | HIG; DS-15, DS-16; WCAG 2.5.8.     |
+| SG-TOUCH-02 | The whole row is the target of a row. A chevron stands only on a row that opens another view; a row that acts in place carries a switch or a button instead. | HIG lists; a chevron is a promise. |
+| SG-TOUCH-03 | Swipe, long-press and drag are shortcuts: each has a visible control that does the same (WCAG 2.5.1, 2.5.7).                                                 | A hidden gesture is found by few.  |
+| SG-TOUCH-04 | No system gesture is taken over: the edge swipe for Back, the pull from the top and the home gesture keep working on every page.                             | HIG gestures.                      |
+| SG-TOUCH-05 | Nothing works by hover only.                                                                                                                                 | DS-11.                             |
+
+### 2.7 Navigation
+
+| ID        | Rule                                                                                                                                                                                                        | Why                                                |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| SG-NAV-01 | The bottom bar has at most 5 destinations and stays visible on every page of a destination, sub-pages and forms included; only a sheet or a dialog covers it. The short window of DS-25 stays an exception. | HIG tab bars.                                      |
+| SG-NAV-02 | A destination keeps its state: coming back to it shows the same mode, scroll position and filter.                                                                                                           | HIG tab bars; the keeper does not lose the place.  |
+| SG-NAV-03 | A tap on the selected destination returns to its start page; a second tap scrolls to the top.                                                                                                               | HIG tab bars.                                      |
+| SG-NAV-04 | The detail of an object (a plant, a species, a wish, a friend's collection) and every topic that is read are **pages** with a back chevron, not sheets.                                                     | HIG modality (owner, conflict on DS-58 and DS-59). |
+| SG-NAV-05 | Back is predictable: the system gesture and the chevron do the same, they go to the parent, they never leave the app from a sub-page and never discard input without asking.                                | HIG navigation.                                    |
+| SG-NAV-06 | A destination that is still locked stays in the bar and says what unlocks it (US-ONB-05); it is never hidden or dead.                                                                                       | HIG: do not remove or disable a tab.               |
+
+### 2.8 Lists
+
+| ID         | Rule                                                                                                                                                                                  | Why                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| SG-LIST-01 | A list scrolls. On phones no list is cut into pages with "Zurück" and "Weiter"; a long list loads more as the keeper scrolls and says when a part failed to load (P-10).              | HIG (owner, conflict 1).            |
+| SG-LIST-02 | The bars stay in place while the list scrolls under them; the last row is never hidden behind the bottom bar.                                                                         | HIG; DS-22.                         |
+| SG-LIST-03 | A row of a plant, species or wish shows a square thumbnail (56 px, starting value), the name (SG-TYPE-05), one meta line, and at most one trailing element (value, badge or chevron). | One scan line per object at 360 px. |
+| SG-LIST-04 | A row, tile or card uses at most three text levels (title, body, meta) and two weights, shows at most two badges, and emphasises at most one number with its label and unit.          | Density without noise.              |
+| SG-LIST-05 | Zero and "unbekannt" look different from each other, and a count of 0 is not styled as an invitation to tap.                                                                          | P-08: unknown is not zero.          |
+
+### 2.9 Sheets, dialogs and alerts
+
+| ID          | Rule                                                                                                                                                                                           | Why                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| SG-SHEET-01 | A sheet or dialog is for one self-contained task with a clear end: fill in, pick, confirm. Reading and navigation happen on pages (SG-NAV-04).                                                 | HIG sheets and modality.                   |
+| SG-SHEET-02 | A sheet shows a grabber, is at most 90 % of the window high (starting value), and closes by swipe down, by Back and by a visible control.                                                      | HIG sheets; the page behind stays visible. |
+| SG-SHEET-03 | A sheet never opens a second sheet above itself; a further step replaces its content.                                                                                                          | One level of modality.                     |
+| SG-SHEET-04 | The actions of a sheet or a form page sit in its bar: "Abbrechen" at the leading edge, the confirming action ("Sichern", "Anlegen") at the trailing edge. There is no sticky footer button.    | HIG (owner, conflict 7).                   |
+| SG-SHEET-05 | An interrupting dialog is only for data loss or a step that cannot be undone. Its title says what happens; its buttons are verbs, never "Ja", "Nein" or "OK"; "Abbrechen" is the safe default. | HIG alerts.                                |
+| SG-SHEET-06 | What can be undone is not confirmed: it happens, and undo is offered at the place of the change (SG-FEED-03).                                                                                  | Undo is cheaper than a question.           |
+
+### 2.10 Forms and the keyboard
+
+| ID         | Rule                                                                                                                                                                                  | Why                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| SG-FORM-01 | Every field has a visible label above it. A placeholder is an example at most and never carries the meaning. An optional field says "optional"; a required one says nothing.          | HIG text fields; WCAG 3.3.2.    |
+| SG-FORM-02 | With the keyboard open, the focused field and the confirming action stay visible.                                                                                                     | HIG keyboards; WCAG 2.4.11.     |
+| SG-FORM-03 | A field sets `type`, `inputmode`, `autocomplete` and `enterkeyhint`: the return key says "Weiter" and moves on, or "Fertig" and confirms. Field text is 16 px.                        | DS-18, DS-19; no zoom on focus. |
+| SG-FORM-04 | A form asks only what the step needs. Defaults are prefilled (today, the last used light zone); the rest is behind "Mehr Angaben" (DS-66).                                            | HIG: ask as little as possible. |
+| SG-FORM-05 | An error shows at its field when the field is left or the form is sent, not while the first characters are typed. The message says how to fix it; the entered value is never cleared. | HIG; WCAG 3.3.1, 3.3.3; DS-38.  |
+| SG-FORM-06 | Unsaved input is never discarded without a question.                                                                                                                                  | DS-50, P-10.                    |
+
+### 2.11 States
+
+| ID          | Rule                                                                                                                                                           | Why                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| SG-STATE-01 | **Empty:** an illustration of the place (SG-ILLU), a title that says what belongs here, one line on why it is empty, one filled action.                        | P-09, DS-26, US-QS-31.                             |
+| SG-STATE-02 | **Loading:** a skeleton in the shape of the content (DS-52 to DS-57). A page never shows a bare spinner; a spinner sits only on the control whose action runs. | The layout does not jump.                          |
+| SG-STATE-03 | **Error:** its own mark (never the empty illustration), what failed in plain German, "Erneut versuchen", and whatever the keeper had entered is still there.   | P-10; a failure must not look like an empty place. |
+| SG-STATE-04 | **Locked:** what the function does, the condition that opens it, and "Jetzt freischalten". Never a dead end.                                                   | P-12, US-ONB-05.                                   |
+| SG-STATE-05 | **Offline:** a note that says so, and the last loaded data where there is any.                                                                                 | DS-11.                                             |
+| SG-STATE-06 | An unknown value shows "unbekannt", written out, never a dash, a zero or an invented number.                                                                   | P-08.                                              |
+
+### 2.12 Feedback
+
+| ID         | Rule                                                                                                                                                                                                 | Why                                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| SG-FEED-01 | There are no toasts. A result shows where the change is: the new row, the new value, the changed state.                                                                                              | HIG has no toast (owner, conflict 8).   |
+| SG-FEED-02 | A result is shown once, through one channel: in place for a change, at the field for an input error, a banner for a state that lasts (offline, a failed sync). Never two of them for the same thing. | Three messages for one event are noise. |
+| SG-FEED-03 | Undo sits at the place of the change for a few seconds (8 s, starting value): the row says "Gelöscht · Rückgängig".                                                                                  | Replaces the undo toast.                |
+| SG-FEED-04 | A result is announced to assistive technology through the shared live region (DS-69) even though no toast shows it.                                                                                  | WCAG 4.1.3.                             |
+| SG-FEED-05 | No message covers a control, and none moves the content that is already on screen (DS-54).                                                                                                           | Owner decision (bug #1841).             |
+
+### 2.13 Motion and haptics
+
+| ID           | Rule                                                                                                                                                                                      | Why                                         |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| SG-MOTION-01 | Three durations: 120 ms (press, toggle), 200 ms (entry, chip), 320 ms (page, sheet). Only transform and opacity move. Starting values (ADR 0011 decision 5).                              | Short and calm.                             |
+| SG-MOTION-02 | With reduced motion everything ends at once and the result stays visible without movement (WCAG 2.3.3).                                                                                   | DS-19.                                      |
+| SG-MOTION-03 | Nothing moves on its own for longer than 5 s, and nothing loops except a loading mark.                                                                                                    | WCAG 2.2.2.                                 |
+| SG-MOTION-04 | **Target:** a photo grows from its row or card into the page it opens (shared element, 320 ms).                                                                                           | The keeper keeps the place in the list.     |
+| SG-MOTION-05 | **Target:** a sheet follows the finger and settles with a short spring; released before the threshold it springs back.                                                                    | HIG sheets feel direct.                     |
+| SG-MOTION-06 | **Target:** an earned reward (a species caught for the first time, an achievement, the first plant) gets one moment: the badge or card scales and fades in once (600 ms, starting value). | The only celebration, and it never repeats. |
+| SG-MOTION-07 | **Target:** after a save the changed value or row is highlighted briefly in place (accent fade, 200 ms).                                                                                  | The eye finds what changed (SG-FEED-01).    |
+| SG-MOTION-08 | A short haptic marks a finished swipe decision and a successful save, never a plain tap. No sound.                                                                                        | Haptics confirm, they do not decorate.      |
+
+### 2.14 Icons, illustrations and photos
+
+| ID          | Rule                                                                                                                                                                                                                        | Why                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| SG-ICON-01  | Every mark is a lucide icon in its shipped stroke: 20 px in rows and buttons, 24 px in the bottom bar. No emoji and no text glyph ("✓", "★", "›", "!") stands in for an icon.                                               | The device draws an emoji, so it differs per phone. |
+| SG-ICON-02  | An icon-only control has a German accessible name; a decorative icon is hidden from assistive technology.                                                                                                                   | DS-17.                                              |
+| SG-ICON-03  | One icon means one thing across the app.                                                                                                                                                                                    | Recognition.                                        |
+| SG-ILLU-01  | Illustrations are one family: drawn for the app, the primary green as the leading colour, theme colours only, the same in light, dark and forced colours. The style is chosen by the owner from proposals (open, US-QS-31). | Owner 2026-11-12.                                   |
+| SG-ILLU-02  | The motifs are the eleven of US-QS-31; an empty state never shows the motif of another kind. An illustration has no motion, no numbers and no text.                                                                         | US-QS-31, P-08.                                     |
+| SG-PHOTO-01 | A photo has a fixed aspect ratio per place: 1:1 in a row or tile, 4:3 on a card, 3:4 at the top of a detail page (starting values). Its room is reserved before it loads.                                                   | No layout shift (DS-54).                            |
+| SG-PHOTO-02 | A missing or failed photo shows a drawn placeholder of the family, never a black or empty box.                                                                                                                              | P-10.                                               |
+| SG-PHOTO-03 | A photo from an outside source carries its credit next to it, in secondary text.                                                                                                                                            | Licence (Wikipedia, CC BY-SA).                      |
+
+### 2.15 Texts
+
+| ID         | Rule                                                                                                                                                                                                  | Why                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| SG-COPY-01 | The app says "du". Sentences are short and end with a full stop; titles, labels and buttons have none. No exclamation marks.                                                                          | Today's tone, confirmed.                      |
+| SG-COPY-02 | A button names its result as object plus verb in at most three words ("Pflanze anlegen", "Wunsch erfassen"). "OK", "Ja" and "Nein" are not button labels; "Weiter" is never the label of a last step. | The label says what happens.                  |
+| SG-COPY-03 | One thing has one name everywhere, the term of the glossary (`00-product-overview.md`).                                                                                                               | "Anmelden" and "Melde dich an" are two names. |
+| SG-COPY-04 | The ellipsis is the character "…" after a space (" …"), never three full stops.                                                                                                                       | Today's use, 72 of 72 in the message tables.  |
+| SG-COPY-05 | A hint is one line; more is behind "Mehr erfahren" (DS-62).                                                                                                                                           | A phone screen is short.                      |
+| SG-COPY-06 | An error text says what happened and what to do, in plain German, from the message table by error code (DS-49).                                                                                       | P-10.                                         |
+| SG-FMT-01  | A date is "TT.MM.JJJJ". Up to 7 days back or ahead it is relative ("heute", "gestern", "vor 3 Tagen").                                                                                                | One format per kind.                          |
+| SG-FMT-02  | A value and its unit are joined by a narrow no-break space ("12 cm"); decimals use a comma.                                                                                                           | German number format.                         |
+| SG-FMT-03  | A count agrees in number ("1 Pflanze", "2 Pflanzen"), also for zero ("0 Pflanzen").                                                                                                                   | Grammar.                                      |
+
+### 2.16 Search, introduction and the system
+
+| ID           | Rule                                                                                                                                                                                                         | Why                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| SG-SEARCH-01 | A search field sits at the top of its list, filters while typing from 2 characters (starting value), has a clear control and keeps its query when the keeper comes back.                                     | HIG search fields.    |
+| SG-SEARCH-02 | A search without hits names the query and offers to reset it or to propose a species.                                                                                                                        | P-09.                 |
+| SG-ONB-01    | The introduction has at most 3 steps and can be skipped.                                                                                                                                                     | HIG onboarding.       |
+| SG-ONB-02    | A later hint appears once, at the place it explains, and goes for good with one tap. A screen shows at most one hint, and a hint never pushes the page title down.                                           | Hints must not stack. |
+| SG-SYS-01    | A permission (camera, notifications, location) is asked only when the keeper taps the function that needs it, after one sentence that says why. A refusal leaves a working path and says where to change it. | HIG privacy.          |
+| SG-SYS-02    | The app opens where it was left, shows content first and never opens with a dialog; news and install hints wait in a quiet place.                                                                            | HIG launching.        |
+| SG-SYS-03    | Nothing interactive lies under the home indicator, a notch or the status bar; the page colour runs behind the system bars; a fixed bar adds the safe-area inset.                                             | HIG layout; DS-22.    |
+
+## 3. What this file replaces on phones
+
+Decided by the owner on 2026-11-12 (E-31). The left column stops being the target below 768 px; it keeps holding from 768 px until the desktop pass.
+
+| Replaced                                                                                               | By                         |
+| ------------------------------------------------------------------------------------------------------ | -------------------------- |
+| DS-58, DS-59: a destination is one screen, details and topics open as layers (`LayerSheet`, `?sheet=`) | SG-NAV-04, SG-SHEET-01     |
+| DS-58, DS-60, DS-61: no page scroll, long lists as `Pager` pages                                       | SG-LIST-01, SG-LIST-02     |
+| The app bar with the product name and an `h1` below it (`GlobalHeader`)                                | SG-HEAD-01, SG-HEAD-02     |
+| DS-65, ADR 0017: `outline` as the secondary button                                                     | SG-BTN-01                  |
+| The check mark of the selected segment (`SegmentedControl`)                                            | SG-CTRL-01                 |
+| `DateField` as the only date entry (US-QS-24)                                                          | SG-CTRL-03                 |
+| A checkbox for a setting that applies at once                                                          | SG-CTRL-02                 |
+| DS-62, DS-66: the one filled action in a sticky footer                                                 | SG-SHEET-04                |
+| The toast after a write (`ToastProvider`, the toast part of DS-50 and DS-69)                           | SG-FEED-01 to SG-FEED-04   |
+| ADR 0011 decisions 1 and 4: photo-led cards with elevation 1 as the default surface                    | SG-SHAPE-03 to SG-SHAPE-05 |
+
+**Gates.** The gates still check the replaced rules (the one-screen gate QG-U8, the layer register, the story snapshots). They stay as they are until the ticket that changes the matching part of the app; a gate change is its own pull request for the owner (`AGENTS.md`). Until then a new screen follows `design-system.md` where a gate enforces it, and names the `SG` rule it cannot meet yet in its pull request.
+
+## 4. Using the rules in a review
+
+- A finding names the rule it breaks by ID. No rule broken and no harm to the keeper means no finding. A pattern that no rule covers is a question to the owner (SG-BASE-03).
+- **Severity:** _blocker_: a task cannot be finished or data is lost. _Major_: a rule of this file is visibly broken or a WCAG 2.2 AA criterion fails. _Minor_: an inconsistency between pages that harms nobody. _Polish_: a refinement nobody would report.
+- **Issues:** one board issue per page for the findings only that page has, and one per cross-cutting pattern (for example "two-line pills"); a finding links to its issue.
+- **Schemes:** every state is reviewed in light; each page gets one check in dark.
+- **Limits of emulation:** an emulated iPhone runs Chromium or WebKit on a desktop, not Safari on iOS. The dynamic toolbar, the real safe areas, the input zoom and haptics are proven on a real device only; a finding that depends on them says so.
