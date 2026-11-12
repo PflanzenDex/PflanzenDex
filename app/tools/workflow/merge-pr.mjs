@@ -144,9 +144,10 @@ async function main(number) {
     console.error("usage: make merge PR=<number>");
     return 2;
   }
-  const fields =
-    "state,isDraft,baseRefName,baseRefOid,headRefOid,title,body,files,statusCheckRollup";
+  // baseRefOid is not a `gh pr view` field on every gh release (2.45 refuses it), so the base commit comes from the REST API.
+  const fields = "state,isDraft,baseRefName,headRefOid,title,body,files,statusCheckRollup";
   const pr = JSON.parse(gh("pr", "view", number, "--json", fields));
+  pr.baseRefOid = gh("api", `repos/{owner}/{repo}/pulls/${number}`, "--jq", ".base.sha").trim();
   const changes = baselineChanges(pr, {
     mergeBase: () => mergeBaseOf(pr),
     readAt,
