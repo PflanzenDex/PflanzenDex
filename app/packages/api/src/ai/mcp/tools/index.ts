@@ -6,7 +6,8 @@ import { rightNeeded, type AiRights } from "@pflanzendex/core";
 import { ACCOUNT_TOOLS } from "./sets/account-tools";
 import { AREA_TOOLS } from "./sets/areas/area-tools";
 import { EQUIPMENT_TOOLS } from "./sets/areas/equipment-tools";
-import { COLLECTION_TOOLS } from "./sets/collection-tools";
+import { COLLECTION_TOOLS } from "./sets/collection/collection-tools";
+import { SPECIMEN_WRITE_TOOLS } from "./sets/collection/specimen-write-tools";
 import { RESEARCH_TOOLS } from "./sets/research-tools";
 import { RULES_TOOLS } from "./sets/rules-tools";
 import type { McpTool } from "./schema";
@@ -19,7 +20,7 @@ export { NOT_RELEASED_TOOLS } from "./not-released-tools";
 export const MCP_TOOL_SETS: Readonly<Record<string, readonly McpTool[]>> = {
   account: ACCOUNT_TOOLS,
   research: RESEARCH_TOOLS,
-  collection: COLLECTION_TOOLS,
+  collection: [...COLLECTION_TOOLS, ...SPECIMEN_WRITE_TOOLS],
   rules: RULES_TOOLS,
   areas: AREA_TOOLS,
   equipment: EQUIPMENT_TOOLS,

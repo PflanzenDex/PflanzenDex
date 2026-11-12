@@ -18,7 +18,6 @@ import {
   SPECIMEN_PATHS,
   careProfileRoutes,
   careProfileZoneUsageFor,
-  collectionReadSourceFor,
   specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
@@ -49,7 +48,7 @@ import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { achievementsRoutes } from "./achievements";
-import { discoverRoutes, discoverSourceFor } from "./discover";
+import { discoverRoutes } from "./discover";
 import { monitoringRoutes } from "./monitoring";
 import { deletionRoutes, exportRoutes, operatorDeletionRoutes } from "./privacy";
 import { aiAccessRoutes } from "./ai";
@@ -61,11 +60,10 @@ import {
   bindWishlist,
   careOptions,
   careSources,
+  aiPorts,
   todaySources,
 } from "./app-bindings";
-import { measurementPhotoSourceFor, targetLocationFor } from "./care";
-import { todayStatusSource } from "./today";
-import { appAreaReadsFor } from "./ai-collection-reads";
+import { targetLocationFor } from "./care";
 
 export type { AppOptions } from "./app-options";
 
@@ -147,17 +145,8 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   bindCareOne(app, pool, auth, care);
   const today = { ...care, ...todaySources(pool, opt) };
   bindToday(app, pool, auth, today);
-  app.route(
-    "/",
-    aiAccessRoutes(pool, auth, opt.ai && { version: opt.version, ...opt.ai, features }, {
-      status: todayStatusSource(pool, today),
-      photo: measurementPhotoSourceFor(pool, opt.media),
-      discover: discoverSourceFor(pool, opt.zoneStock),
-      collection: collectionReadSourceFor(pool, { clock: opt.clock, ...careSources(pool, opt) }),
-      areas: appAreaReadsFor(pool, { ...opt, zoneStock: today.zoneStock, features }),
-      ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
-    }),
-  );
+  const ai = opt.ai && { version: opt.version, ...opt.ai, features };
+  app.route("/", aiAccessRoutes(pool, auth, ai, aiPorts(pool, opt, today, features)));
 }
 
 /**

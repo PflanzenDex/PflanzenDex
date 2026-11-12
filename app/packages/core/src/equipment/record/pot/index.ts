@@ -10,5 +10,5 @@ export type {
 } from "./types";
 export { equipmentPlacePot, placePlant } from "./ops/place";
 export type { PlaceDependencies } from "./ops/place";
-export { specimenRepotWithPot } from "./ops/repot-with-pot";
+export { specimenRepotWithPot, specimenRepotWithPotSchema } from "./ops/repot-with-pot";
 export type { RepotWithPotDependencies, RepotWithPotResult } from "./ops/repot-with-pot";

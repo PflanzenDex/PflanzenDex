@@ -25,8 +25,12 @@ import {
   measuredSourceFor,
   treatmentSourceFor,
   targetLocationFor,
+  measurementPhotoSourceFor,
 } from "./care";
-import { TODAY_PATHS, todayRoutes, type TodayOptions } from "./today";
+import { TODAY_PATHS, todayRoutes, todayStatusSource, type TodayOptions } from "./today";
+import { discoverSourceFor } from "./discover";
+import { collectionReadSourceFor, collectionWriteSourceFor } from "./collection";
+import { appAreaReadsFor } from "./ai-collection-reads";
 
 /** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
 export function bindCareOne(
@@ -105,5 +109,24 @@ export function careSources(pool: Pool, opt: AppOptions) {
     measured: measuredSourceFor(pool),
     treatments: opt.treatments ?? treatmentSourceFor(pool),
     provenance: opt.provenance ?? provenanceSourceFor(pool),
+  };
+}
+
+/** The ports of the app the AI client reads and writes through: the same functions as the app's routes (KI-R10). */
+export function aiPorts(
+  pool: Pool,
+  opt: AppOptions,
+  today: Parameters<typeof todayStatusSource>[1],
+  features: FeatureAccess,
+) {
+  const specimens = { clock: opt.clock, ...careSources(pool, opt) };
+  return {
+    status: todayStatusSource(pool, today),
+    photo: measurementPhotoSourceFor(pool, opt.media),
+    discover: discoverSourceFor(pool, opt.zoneStock),
+    collection: collectionReadSourceFor(pool, specimens),
+    writes: collectionWriteSourceFor(pool, specimens),
+    areas: appAreaReadsFor(pool, { ...opt, zoneStock: today.zoneStock, features }),
+    ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
   };
 }

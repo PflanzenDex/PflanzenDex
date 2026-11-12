@@ -17,6 +17,7 @@ import {
   type SourceClient,
   type StatusSource,
   type TaskStore,
+  type SpecimenWriteSource,
 } from "@pflanzendex/core";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -27,6 +28,7 @@ import { clientReadRoutes } from "./reads/client-read-routes";
 import { clientRulesRoutes } from "./reads/rules-routes";
 import { clientTaskRoutes } from "./tasks/client-task-routes";
 import { clientDraftRoutes } from "./drafts/client-draft-routes";
+import { clientWriteRoutes } from "./drafts/client-write-routes";
 import { clientAuthentication, type AiEnv } from "./guard/client-auth";
 import type { AiAccessOptions } from "./ai-routes";
 import { mcpRoutes } from "./mcp/mcp-routes";
@@ -52,6 +54,8 @@ export interface ClientStores {
   discover: DiscoverSource;
   /** The reads of the catalog and the collection (US-KI-11), over the same functions as the app's routes. */
   collection: CollectionReadSource;
+  /** The write tools of the specimens (US-KI-14), over the operations of the app's routes (KI-R10). */
+  writes: SpecimenWriteSource;
   /** Every other area (US-KI-12), over the same functions as the app's routes. */
   areas: AppAreaReadSource;
   sources?: SourceClient;
@@ -116,6 +120,7 @@ export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientSto
   client.route("/", clientDraftRoutes(guard, { drafts, types, log, tasks }, clock));
   client.route("/", clientDiscoverRoutes(guard, { discover, drafts, log }, clock));
   client.route("/", clientReadRoutes(guard, readStores(stores, clock), clock));
+  client.route("/", clientWriteRoutes(guard, stores, clock));
   client.route("/", clientTaskRoutes(guard, { tasks, log }, opt.resource, clock));
   client.route("/", clientRulesRoutes(guard, { log }, stores.sources !== undefined, clock));
   // The MCP endpoint (E-04): JSON-RPC tools over the routes above, with the caller's token and the same guards.
