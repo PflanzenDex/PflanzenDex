@@ -59,7 +59,7 @@ Acceptance criteria (hard filters before any scoring):
 
 - Excluded: caught species (US-POK-06, incl. cuttings), species with an own wish of any status (`Wishlist`, `Bought`, `Discarded`), species without a target light zone 2–4, species without epithet.
 - Catalog profiles with review status `ai-created, unreviewed` appear only with a label (FR-BES-06).
-- Optional filters of the keeper (DM-ENT-03): light zone, highest difficulty, "pet-safe". A filter on an **unknown** attribute does not exclude the species but shows "Pets: unknown" (P-08, P-10).
+- Optional filters of the keeper (DM-ENT-03): light zone, highest difficulty, "pet-safe", growth form (US-ENT-11). A filter on an **unknown** attribute does not exclude the species but shows "Pets: unknown" (P-08, P-10).
 
 ### US-ENT-03 · Understand why something is suggested · 🟨 new
 
@@ -164,21 +164,62 @@ Acceptance criteria:
 
 Assumptions, decided by the PO (revisable): built so far is the data layer: the table `taxon_attribute` (migration `0077`, shared, no account id, read-only for the application role, one row per species and field with source, link, license and retrieval date), the pure check `checkAttributeFact` and `attributesOf` in `core`, and the store `TaxonAttributesPostgres`. Accepted licenses are CC0-1.0, CC-BY-4.0, CC-BY-SA-4.0 and CC-BY-SA-3.0; the minimum temperature must lie between -30 and 30 degrees Celsius (an outside value is an extraction error); "needs dormancy" is derived and not stored. **Fill job and display (part 2):** the job `catalog.fill_attributes` (`orderAttributeFill`, `runAttributeFill`, port `AttributeFillStore`) fills the table from answers that the catalog fill (US-BES-12) already stored, so it sends no request itself (the Wikidata answer of an approved species is read through `TaxonAttributesPostgres.heightCandidates`). Only one field has a structured, citable source so far: the growth size from the Wikidata height (property P2048, metre or centimetre; preferred claims count, else normal ones; a deprecated claim, another unit or claims that fall into different classes give no value). Size classes are starting values, assumption: below 0.5 m small, up to 2 m medium, above that large (`GROWTH_SIZE_LIMITS_M`). Source is Wikidata, link is the item page, license is the one of the stored answer (CC0-1.0), date is the UTC retrieval date of that answer; every fact passes `checkAttributeFact` first and a refused one fails the job with its problems (P-10). Humidity, minimum temperature and toxic to pets stay unknown: no open source with a structured value was found (E-25; open decision 1 stays open for them). The job is idempotent (a stored field is not a candidate again) and runs only with `ATTRIBUTE_FILL=on` (unset or `off`: no handler, no order; any other value stops the start); it needs the stored answers of `CATALOG_FILL=on`. The Discover card shows a known value with its source link, license, retrieval date and the status "ungeprüft" (`attributeSources` of the suggestion; unknown attributes list no source). Every stored value counts as unreviewed because the review status of FR-BES-06 does not exist for attributes yet (no migration; a column comes with the review of US-BES-13). **Light statement (#1015):** the fifth attribute `lightDescription` with the fixed value set `low` / `medium` / `bright_indirect` / `direct_sun` (assumption, decided by the PO, revisable; German display "wenig Licht", "mittleres Licht", "helles indirektes Licht", "direkte Sonne"). It is only the statement of a source with link, name, license and retrieval date, shown as "Licht laut Quelle" and "ungeprüft". It does **not** feed the light zone derivation or the scoring: zones are numeric lux and a mapping from the statement would be an invented number (P-08); a sourced mapping is decided later. Migration `0097` widens the checks of `taxon_attribute`; `catalog:check-data` and `catalog:load` (also `--dry-run`) handle the field like the others. **Researched start data (part 3, #1005):** researched values live in the repo as data files (one record per species of the start list, per field value, source link, source name, license, retrieval date and an optional short note); `catalog:check-data` refuses a value without an https link on a host of the three sources, without an accepted license, with a retrieval date in the future, an unknown field or key, a value out of range, a note over 300 characters (starting value, against copied running text), a species twice or a species not on the start list, and names file, species and field for each problem. `catalog:load` runs the check first and writes nothing on a problem; otherwise it writes new or changed values in the transaction of the species (one row per species and field, a newer value replaces the old one). First example: toxic to pets for three species from Wikipedia (Wikidata and GBIF hold no structured value for them); the research of further batches follows. Not built yet: the review itself, the other three fields from an open source, the species card of the Pokédex (the spec asks for the attributes on the Discover card only) and replacing a value when a newer answer is stored.
 
+### US-ENT-10 · Swipe through a card stack that feels like a deck · ⬜ new
+
+As a **plant keeper** I want the suggestions to lie as a stack I can see into, react to my finger and leave in the direction I threw them, so that deciding feels quick and playful, and I want to take a slip back.
+
+Context: US-ENT-01 already holds the drag with tilt and stamp, the thresholds, the fly-off per decision, the spring-back, the next card underneath, the vibration and "Rückgängig". This story adds only what is missing for the card stack. The same card behaviour applies to swap matching (US-TAU-02) when that epic is built.
+
+Acceptance criteria:
+
+- Given a deck with at least three cards left, then the top card and up to two cards below it are visible as a stack: each lower card is a little smaller and offset downwards (starting values: 4 percent smaller and 8 px lower per level, assumption), so the depth and the rest of the deck are visible at a glance; with fewer cards left the stack shows only those. A line "Karte n von m" names the position in text (P-09, NFR-13).
+- Given a card is dragged, then the card below grows towards full size with the strength of the drag, and springs back with the top card when the drag ends below the threshold (US-ENT-01).
+- Given a drag ends past the threshold, then the card leaves along the direction and speed of the release (a throw to the upper right leaves to the upper right), the decision is still the one of the dominant direction (right Yes, left No, up or down Later, US-ENT-01), and the card below moves up to the top in the same motion.
+- Given "Rückgängig" after a Yes or a No (US-ENT-04), then the card comes back onto the stack from the side it left and the stack moves down by one level; with motion reduced it is back at once.
+- Given the deck has the focus (the card or one of its buttons), then the arrow keys decide: right is Yes, left is No, up or down is Later, and Backspace is "Rückgängig" where the button is offered; the keys act only inside the deck, never while the focus is in a text field, and they are listed in the shortcut overview of the view (US-QS-11). They are local keys of the deck, not global shortcuts, so they do not enter the global register that refuses arrow keys and Backspace.
+- Given buttons, keys or a swipe, then each leads to the same decision and the same animation (US-ENT-01), and the buttons No, Later, Yes and "Rückgängig" always stay visible as tap targets of at least 44 px (US-QS-07, NFR-13).
+- Given reduced motion (device or "Bewegung aus", US-QS-33), then the stack shows its depth as a still picture, the card does not follow the finger, does not tilt and does not fly; a swipe past the threshold, a button or a key decides as before, the stamp of the decision shows for a short moment (starting value 300 ms, assumption) and the next card stands in place at once (US-ENT-01).
+- Given any of these ways, then the decision is written only through the operations `discover.decide` and `discover.undo` (US-ENT-04); the stack adds no second write path (P-03), stores nothing of its own, and a refused write puts the card back with the error text (P-10).
+- Given the cards below the top card, then they are hidden from assistive technology and not focusable (US-ENT-01); a screen reader hears only the top card, its position "Karte n von m" and the result of each decision (US-QS-10).
+- Given the deck view at 360 × 640 px, then stack, reasons and the decision row fit the screen as in US-QS-21; the stack takes no more height than the single card took before.
+
+Assumptions, decided by the PO (revisable): two visible levels below the top card; offsets and timings are starting values to be tuned in a test with the start users; the code for the motion loads only with the suggestions (US-QS-14, ADR 0011).
+
+### US-ENT-11 · See the growth form of a species and filter by it · ⬜ new
+
+As a **plant keeper** I want to see whether a species grows hanging, bushy, upright, as a rosette or otherwise, and filter the suggestions by it, so that I pick plants that fit the place I have in mind (a shelf edge, a hanging pot, a windowsill).
+
+Context: growth form is a new species attribute of DM-ENT-01 and follows the rules of US-ENT-09 (table `taxon_attribute`, source, https link, free license and retrieval date per value, `checkAttributeFact`, `catalog:check-data`, `catalog:load`). It is not growth size: growth size says how much space, growth form says which shape.
+
+Acceptance criteria:
+
+- Given the controlled list of growth forms (DM-ENT-01: `upright`, `bushy`, `trailing`, `climbing`, `rosette`, `columnar`, `globular`, `creeping`), when a value is researched with a source from Wikipedia or Wikidata, an https link on one of their hosts, an accepted license and a retrieval date, then it is accepted and stored per species (US-ENT-09).
+- Given a value outside the list, more than two forms, no source, no link, no license, a retrieval date in the future, or an AI statement as the only evidence, then it is refused (`attribute.value_invalid` for a value outside the list) with every problem named, and nothing is stored (P-08, US-KI-06).
+- Given a species with one or two stored forms (for example climbing and trailing), then the Discover card shows "Wuchsform: kletternd, hängend" with source link, license, retrieval date and "ungeprüft" (US-ENT-09); without a stored value it shows "Wuchsform: unbekannt".
+- Given the filter "Wuchsform" of the deck (DM-ENT-03), when I choose one or more forms, then species with a matching form are shown; a species whose form is unknown is not excluded but shows "Wuchsform: unbekannt" (as the pet filter of US-ENT-02, P-10); when the filter leaves no candidate, the empty state of US-ENT-01 names the filter and offers to loosen it (P-09).
+- Given my decisions, then the growth form takes part in the preference factor of US-ENT-05 like the other DM-ENT-01 attributes; an unknown form is neutral (FR-ENT-04). No reason names a form the keeper did not decide on.
+- Given the profile of a species in the catalog and the location planning (the zone overview of US-LIC-02 and the list of a location), then the growth form of the species of each specimen is shown beside its name, and the location list can be filtered by it; the planning derives no rule from it (no "fits / does not fit" between a form and a place, P-08).
+- Given any view with a growth form, then no statement compares a specimen's shape with the growth form of its species or with a species average, and a specimen that grows differently is not marked; a stretched, etiolated specimen never counts as "upright" (FR-ENT-03, P-08).
+- Given the German labels, then they are "aufrecht", "buschig", "hängend", "kletternd", "Rosette", "säulenförmig", "kugelförmig" and "kriechend" (message table of the feature).
+
+Assumptions, decided by the PO (revisable): the list of eight forms is final for now and can only grow (a form is never renamed, P-10). A species carries one or two forms because many house plants grow in two ways (climbing or trailing); more than two would blur the filter. No structured Wikidata property for growth form is known to the PO, so values come through the researched start data of US-ENT-09 part 3 (Wikipedia sentence or Wikidata statement, linked, short note at most 300 characters); a structured source replaces the manual research once one is found. A specimen field cannot override the growth form (no specimen-level form, so no comparison arises).
+
 ## Data model
 
 ### DM-ENT-01 Species attributes (extension of DM-BES-01)
 
 Optional catalog fields. Because the catalog is shared, all users benefit from an enrichment. Every set field needs a source and is subject to the review status (FR-BES-06).
 
-| Field            | Values                       | Meaning                                                                         |
-| ---------------- | ---------------------------- | ------------------------------------------------------------------------------- |
-| Humidity         | `low` / `medium` / `high`    | Need for relative humidity                                                      |
-| Temperature min. | Number (°C)                  | Minimum temperature                                                             |
-| Needs dormancy   | yes / no                     | derived from dormancy from/until, if maintained                                 |
-| Growth size      | `small` / `medium` / `large` | Space need in the light zone                                                    |
-| Toxic to pets    | yes / no                     | for the filter "pet-safe"; source mandatory, no AI statement as fact (US-KI-06) |
-| Light statement  | `low` / `medium` / `bright_indirect` / `direct_sun` | Statement of a source about the light need, shown as "Licht laut Quelle"; assumption, no light zone is derived from it (P-08) |
-| Attribute source | Link/work                    | Evidence per entry                                                              |
+| Field            | Values                                                                                                         | Meaning                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Humidity         | `low` / `medium` / `high`                                                                                      | Need for relative humidity                                                                                                    |
+| Temperature min. | Number (°C)                                                                                                    | Minimum temperature                                                                                                           |
+| Needs dormancy   | yes / no                                                                                                       | derived from dormancy from/until, if maintained                                                                               |
+| Growth size      | `small` / `medium` / `large`                                                                                   | Space need in the light zone                                                                                                  |
+| Toxic to pets    | yes / no                                                                                                       | for the filter "pet-safe"; source mandatory, no AI statement as fact (US-KI-06)                                               |
+| Light statement  | `low` / `medium` / `bright_indirect` / `direct_sun`                                                            | Statement of a source about the light need, shown as "Licht laut Quelle"; assumption, no light zone is derived from it (P-08) |
+| Growth form      | one or two of `upright` / `bushy` / `trailing` / `climbing` / `rosette` / `columnar` / `globular` / `creeping` | Shape of growth (US-ENT-11); not the space need, which is growth size; assumption, decided by the PO                          |
+| Attribute source | Link/work                                                                                                      | Evidence per entry                                                                                                            |
 
 ### DM-ENT-02 Decision (extension of DM-WUN-01)
 
@@ -189,7 +230,7 @@ Optional catalog fields. Because the catalog is shared, all users benefit from a
 
 ### DM-ENT-03 Discover settings (per account)
 
-`Deck size` (starting value 10), `Exploration per deck` (starting value 2), `Highest difficulty` (empty), `Pet-safe` (off). Starting values are assumptions and readjustable.
+`Deck size` (starting value 10), `Exploration per deck` (starting value 2), `Highest difficulty` (empty), `Pet-safe` (off), `Growth forms` (empty = all, US-ENT-11). Starting values are assumptions and readjustable.
 
 ## Requirements
 
