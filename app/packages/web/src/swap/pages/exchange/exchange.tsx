@@ -9,6 +9,7 @@ import {
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { errorText } from "@/shared/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
@@ -69,6 +70,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
   const { api } = props;
   const withdraw = useWriteAction(props.token, props.onWritten);
   const layer = useLayer(OFFER_LAYER);
+  const say = useSay();
   const [part, choose] = usePart();
   return (
     // The part's list takes the free height of the page, page by page (US-QS-20, issue 1157).
@@ -113,6 +115,10 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
             token={props.token}
             specimens={props.data.specimens}
             onChanged={props.onWritten}
+            onCreated={(message) => {
+              layer.closeLayer();
+              say(message);
+            }}
           />
         ) : null}
       </LayerSheet>

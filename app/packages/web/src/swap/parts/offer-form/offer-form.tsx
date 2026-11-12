@@ -7,6 +7,7 @@ import { OfferFields, type OfferFieldValues } from "./offer-fields/offer-fields"
 import { OfferNotices } from "./offer-notices/offer-notices";
 
 type Token = () => Promise<string | undefined>;
+const CREATED = "Das Angebot ist erstellt. Deine Freunde sehen es in der Tauschbörse.";
 const EMPTY: OfferFieldValues = {
   specimenId: "",
   type: "cutting",
@@ -15,8 +16,24 @@ const EMPTY: OfferFieldValues = {
   note: "",
 };
 
+/** The request body of an offer: the optional texts only when filled, the confirmation only when given. */
+function offerBody(fields: OfferFieldValues, confirm: boolean) {
+  const { wish, note, ...rest } = fields;
+  return {
+    ...rest,
+    ...(wish.trim() ? { wish: wish.trim() } : {}),
+    ...(note.trim() ? { note: note.trim() } : {}),
+    ...(confirm ? { confirmTreatment: true } : {}),
+  };
+}
+
 /** The state of the dialog: the fields, the preview of the chosen specimen and the writes (create, share). */
-function useOfferForm(api: string, token: Token, onChanged: () => void) {
+function useOfferForm(
+  api: string,
+  token: Token,
+  onChanged: () => void,
+  onCreated?: (message: string) => void,
+) {
   const [fields, setFields] = useState<OfferFieldValues>(EMPTY);
   const [confirm, setConfirm] = useState(false);
   const refreshPreview = useInvalidate(["swap", "preview"]);
@@ -38,18 +55,15 @@ function useOfferForm(api: string, token: Token, onChanged: () => void) {
   const p = preview.value;
   const ready = p !== undefined && p.shared && !p.offered && (!p.health.treatmentOpen || confirm);
   const submit = async () => {
-    const { wish, note, ...rest } = fields;
-    await write.run(
-      (t) =>
-        createOffer(api, t, {
-          ...rest,
-          ...(wish.trim() ? { wish: wish.trim() } : {}),
-          ...(note.trim() ? { note: note.trim() } : {}),
-          ...(confirm ? { confirmTreatment: true } : {}),
-        }),
-      "Das Angebot ist erstellt. Deine Freunde sehen es in der Tauschbörse.",
-    );
+    let created = false;
+    await write.run(async (t) => {
+      const r = await createOffer(api, t, offerBody(fields, confirm));
+      created = r.ok;
+      return r;
+    }, CREATED);
     setConfirm(false);
+    // A form in a layer ends on success: the host closes the layer and confirms with a toast (issue 1696, D10).
+    if (created) onCreated?.(CREATED);
   };
   const share = () =>
     void write.run(
@@ -84,8 +98,10 @@ export function OfferForm(props: {
   token: Token;
   specimens: readonly OwnSpecimenRow[];
   onChanged: () => void;
+  /** The offer was created: the host closes the layer and shows `message` as a toast (issue 1696). */
+  onCreated?: (message: string) => void;
 }) {
-  const s = useOfferForm(props.api, props.token, props.onChanged);
+  const s = useOfferForm(props.api, props.token, props.onChanged, props.onCreated);
   return (
     // The layer "Zum Tausch anbieten" already names the form, so the section has no heading of its own (US-QS-24, issue 1032).
     <section aria-label="Zum Tausch anbieten" className="flex min-w-0 flex-col gap-3">
