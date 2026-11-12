@@ -105,7 +105,7 @@ async function data(sub: string, who: string) {
     successCriteria: "Dichte, flache Rosette.",
   });
   const zone = await call(web(sub), "POST", "/light-zones", {
-    name: `Hell ${who}`,
+    name: `Hell ${tag} ${who}`,
     luxCeiling: 30000,
   });
   const location = await call(web(sub), "POST", "/locations", {
@@ -132,7 +132,37 @@ async function data(sub: string, who: string) {
     date: "2026-11-05",
   });
   await call(web(sub), "POST", "/wishes", { name: `Kiwish${tag}${who} alba` });
-  return { species: species.body, specimen };
+  const equipment = await equipmentOf(sub, who, zone.body["id"], specimen["id"]);
+  return { species: species.body, specimen, zone: zone.body, equipment };
+}
+
+/** One account's equipment (EQU): a measured lamp in its zone, a sensor at the specimen, a plant agent running low (a
+ * need), a timer with a check interval and never checked (due, overdue unknown, so the date of the run plays no role),
+ * and an equipment wish. Every name carries the account's tag. */
+async function equipmentOf(sub: string, who: string, zoneId: string, specimenId: string) {
+  const make = async (type: string, name: string, extra: Json = {}) =>
+    (await call(web(sub), "POST", "/equipment", { type, name: `${name} ${tag} ${who}`, ...extra }))
+      .body["equipment"]["id"] as string;
+  const lamp = await make("Lamp", "Lampe", { lightZoneId: zoneId, note: `Notiz ${tag} ${who}` });
+  await call(web(sub), "POST", `/equipment/${lamp}/measurements`, {
+    measuredOn: "2026-10-01",
+    lux: 12000,
+    method: `Luxmeter ${tag} ${who}`,
+  });
+  const sensor = await make("Sensor", "Sensor");
+  await call(web(sub), "POST", `/equipment/${sensor}/sensor-target`, { specimenId });
+  const agent = await make("Plant agent", "Mittel");
+  await call(web(sub), "POST", `/equipment/${agent}/supply`, { supply: "low" });
+  await call(web(sub), "POST", `/equipment/${agent}/agent-link`, {
+    agentLink: `Neem ${tag} ${who}`,
+  });
+  const timer = await make("Timer", "Timer");
+  await call(web(sub), "POST", `/equipment/${timer}/maintenance`, { checkIntervalDays: 30 });
+  const wish = await call(web(sub), "POST", "/equipment/wishes", {
+    equipmentType: "Lamp",
+    name: `Wunschlampe ${tag} ${who}`,
+  });
+  return [lamp, sensor, agent, timer, wish.body["wish"]["id"] as string];
 }
 let A: Awaited<ReturnType<typeof data>>;
 let B: Awaited<ReturnType<typeof data>>;
@@ -149,7 +179,14 @@ beforeAll(async () => {
 afterAll(async () => {
   const subs = [[subA, subB]];
   const mine = "(select id from account where subject = any($1))";
-  for (const table of ["treatment", "measurement", "wish", "specimen"])
+  for (const table of [
+    "lamp_measurement",
+    "equipment",
+    "treatment",
+    "measurement",
+    "wish",
+    "specimen",
+  ])
     await admin.query(`delete from ${table} where account_id in ${mine}`, subs);
   await admin.query(
     `delete from species where id in (select object_id from review_case where account_id in ${mine})`,
@@ -196,6 +233,19 @@ const SAME_AS_APP: readonly [string, Json, () => string, (b: Json) => unknown][]
   ["list_collection_hints", {}, () => "/specimens/hints", (b) => b["hints"]],
   ["list_my_corrections", {}, () => "/catalog/corrections/mine", (b) => b],
   ["list_unlocks", { timeZone: TZ }, () => `/onboarding/unlocks${q}`, (b) => b["functions"]],
+  ["list_equipment", {}, () => "/equipment", (b) => b["equipment"]],
+  ["list_equipment_lamps", {}, () => "/equipment/lamps", (b) => b["lamps"]],
+  ["list_equipment_sensors", {}, () => "/equipment/sensors", (b) => b["sensors"]],
+  ["list_equipment_agents", {}, () => "/equipment/agents", (b) => b["agents"]],
+  ["list_equipment_zones", {}, () => "/equipment/zones", (b) => b["zones"]],
+  ["list_equipment_needs", {}, () => "/equipment/needs", (b) => b["needs"]],
+  [
+    "list_equipment_checks_due",
+    { timeZone: TZ },
+    () => `/equipment/checks-due${q}`,
+    (b) => b["due"],
+  ],
+  ["get_equipment_wishes", {}, () => "/equipment/wishes", (b) => b],
 ];
 /** The tool's answer without the paging and data markers, in the shape of the app's answer. */
 function appShape(name: string, body: Json) {
@@ -245,6 +295,56 @@ describe("US-KI-12 every other area through the AI client", () => {
     expect(treatments["dataFields"]).toContain("items[].reason");
   });
 
+  it("US-KI-12 equipment: the tools show the own equipment with the app's values beside the list; free texts are data", async () => {
+    const tools = Object.fromEntries(
+      await Promise.all(
+        [
+          ["list_equipment", {}],
+          ["list_equipment_lamps", {}],
+          ["list_equipment_sensors", {}],
+          ["list_equipment_agents", {}],
+          ["list_equipment_zones", {}],
+          ["list_equipment_needs", {}],
+          ["list_equipment_checks_due", { timeZone: TZ }],
+          ["get_equipment_wishes", {}],
+        ].map(async ([name, args]) => [
+          name,
+          (await tool(subA, name as string, args as Json)).body,
+        ]),
+      ),
+    ) as Record<string, Json>;
+    const t = (name: string): Json => tools[name] ?? {};
+    const [lamp, sensor, agent, timer, wish] = A.equipment;
+    const ids = (items: Json[]) => items.map((i) => i["id"]);
+    expect(ids(t("list_equipment")["items"])).toEqual(
+      expect.arrayContaining(A.equipment.slice(0, 4)),
+    );
+    expect(ids(t("list_equipment_lamps")["items"])).toContain(lamp);
+    expect(ids(t("list_equipment_sensors")["items"])).toContain(sensor);
+    expect(ids(t("list_equipment_agents")["items"])).toContain(agent);
+    expect(ids(t("list_equipment_checks_due")["items"])).toContain(timer);
+    expect(ids(t("get_equipment_wishes")["open"])).toContain(wish);
+    expect(t("list_equipment_needs")["total"]).toBeGreaterThan(0);
+    const zone = (t("list_equipment_zones")["items"] as Json[]).find(
+      (z) => z["zoneId"] === A.zone["id"],
+    );
+    expect(ids(zone?.["lamps"] ?? [])).toContain(lamp);
+    const app = async (path: string) => (await call(web(subA), "GET", path)).body;
+    const sensors = await app("/equipment/sensors");
+    expect(t("list_equipment_sensors")["specimens"]).toEqual(sensors["specimens"]);
+    expect(t("list_equipment_sensors")["locations"]).toEqual(sensors["locations"]);
+    expect(t("list_equipment_zones")["unassigned"]).toEqual(
+      (await app("/equipment/zones"))["unassigned"],
+    );
+    expect(t("list_equipment_lamps")["deviationLimit"]).toEqual(
+      (await app("/equipment/lamps"))["limit"],
+    );
+    expect(t("list_equipment")["dataFields"]).toContain("items[].note");
+    expect(t("list_equipment_lamps")["dataFields"]).toContain("items[].measurements[].method");
+    expect(t("list_equipment_sensors")["dataFields"]).toContain("specimens[].name");
+    expect(t("get_equipment_wishes")["dataFields"]).toContain("open[].name");
+  });
+
   it("US-KI-12 catalog gaps follow the app's rule: reviewers only (the same refusal)", async () => {
     const r = await tool(subA, "list_catalog_gaps");
     const app = await call(web(subA), "GET", "/catalog/gaps");
@@ -277,6 +377,9 @@ describe("US-KI-12 every other area through the AI client", () => {
       "list_offers",
       "list_swaps",
       "get_recommendations",
+      "get_equipment_sharing",
+      "get_friend_equipment",
+      "list_equipment_recommendations",
     ]) {
       const r = await tool(subA, name);
       expect(r.error).toBe(true);
@@ -296,6 +399,7 @@ describe("US-KI-12 every other area through the AI client", () => {
     app = createApp(options(NO_FEATURES));
     try {
       expect((await call(ai(subA), "GET", "/mcp/care-profiles")).status).toBe(404);
+      expect((await call(ai(subA), "GET", "/mcp/equipment")).status).toBe(404);
     } finally {
       app = before;
     }
@@ -320,6 +424,8 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
       expect(text).not.toContain(`${tag}anna`);
       expect(text).not.toContain(A.specimen["id"]);
       expect(text).not.toContain(A.species["id"]);
+      expect(text).not.toContain(A.zone["id"]);
+      for (const id of A.equipment) expect(text).not.toContain(id);
     },
   );
 
