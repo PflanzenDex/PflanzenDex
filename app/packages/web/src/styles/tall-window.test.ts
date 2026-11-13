@@ -45,10 +45,14 @@ describe("US-QS-14 tall window: one threshold for the bars and their room", () =
     expect(flat).toContain("@variant tall-window { ");
     expect(flat).toContain("div:has(> div > main [data-fit-screen]) { height: 100dvh; }");
     expect(flat).toContain(
-      "main > div > [data-fit-fill] { height: calc(100% + 0.5rem); margin-bottom: 0; overflow-y: auto;",
+      "main > div > [data-fit-fill] { height: calc(100% + 1rem); overflow-y: auto;",
     );
     expect(flat).toContain(
       "main:has([data-fit-screen]) { overflow-y: auto; overscroll-behavior: contain; }",
+    );
+    // Issue 1835: with the bottom bar the view ends at the room for the bar, so its last 0.5 rem is never under it.
+    expect(flat).toContain(
+      "@media (width < 48rem) { main > div > [data-fit-fill] { height: calc(100% + 0.5rem); margin-bottom: 0; } }",
     );
   });
 });
