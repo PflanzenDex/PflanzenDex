@@ -114,6 +114,13 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(contentFor("dark")).toBe(PAGE_DARK);
   });
 
+  it("US-QS-07 the viewport meta lets the on-screen keyboard shrink the layout, so a form's save button stays reachable while typing (issue 1663)", () => {
+    const viewport = htmlTags(indexHtml, META).find((meta) => meta.name === "viewport");
+    const parts = (viewport?.content ?? "").split(",").map((part) => part.trim());
+    expect(parts).toContain("interactive-widget=resizes-content");
+    expect(parts).toContain("viewport-fit=cover");
+  });
+
   it("US-QS-07 the manifest lists 192 and 512 px PNG icons for any, a maskable 512 px icon and a monochrome one", () => {
     const withPurpose = (purpose: string, sizes: string) =>
       manifest.icons.filter((icon) => icon.purpose === purpose && icon.sizes === sizes);

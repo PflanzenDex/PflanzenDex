@@ -120,6 +120,13 @@ describe("US-POK-06 page of the caught species", () => {
     expect(screen.getByRole("dialog", { name: "Noch nicht gezählt" })).toBeTruthy();
   });
 
+  it("US-POK-06 · P-09 the layer of the uncounted plants opened by address without any says that all of them count (issue 1653, F24)", async () => {
+    fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified: [] } }));
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const layer = await screen.findByRole("dialog", { name: "Noch nicht gezählt" });
+    expect(layer.textContent).toContain("Jede deiner Pflanzen zählt schon für den Pokédex.");
+  });
+
   it("US-POK-06 · P-10 the progress row says how many specimens do not count yet and the layer leads to them", async () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified } }));
     view(<PokedexPage api="http://api" token={token} />);
