@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FormMoreFields } from "./more-fields";
+import { FormRoot } from "../form";
+import { Input } from "../../input/input";
+import { FormMoreFields, MoreFields } from "./more-fields";
 
 afterEach(cleanup);
 
@@ -85,5 +87,54 @@ describe("US-QS-24 the shared disclosure Mehr Angaben (issue 1032)", () => {
     await vi.waitFor(() => expect(disclosure(container).open).toBe(true));
     await userEvent.click(screen.getByText("Mehr Angaben"));
     expect(disclosure(container).open).toBe(true);
+  });
+});
+
+/** A form whose one optional field sits behind "Mehr Angaben" (closed by default), as the wish form does. */
+function Revealing({ onSubmit }: { onSubmit: () => void }) {
+  return (
+    <FormRoot onSubmit={onSubmit}>
+      <Input aria-label="Name" />
+      <MoreFields>
+        <Input aria-label="Notiz" />
+      </MoreFields>
+      <button type="submit">Speichern</button>
+    </FormRoot>
+  );
+}
+
+const hint = (label: string) => screen.getByLabelText(label).getAttribute("enterkeyhint");
+
+describe("US-QS-32 · SG-FORM-03 the return-key hint follows Mehr Angaben", () => {
+  it("US-QS-32 · SG-FORM-03 a field behind a closed Mehr Angaben group is no next field: the field before it says done", () => {
+    render(<Revealing onSubmit={() => {}} />);
+    expect(hint("Name")).toBe("done");
+  });
+
+  it("US-QS-32 · SG-FORM-03 Enter in that field submits while the group is closed, as the label done says", async () => {
+    const onSubmit = vi.fn();
+    render(<Revealing onSubmit={onSubmit} />);
+    await userEvent.click(screen.getByLabelText("Name"));
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-32 · SG-FORM-03 opening Mehr Angaben gives the field before it next and the revealed field done", async () => {
+    const { container } = render(<Revealing onSubmit={() => {}} />);
+    await userEvent.click(screen.getByText("Mehr Angaben"));
+    expect(disclosure(container).open).toBe(true);
+    await waitFor(() => expect(hint("Name")).toBe("next"));
+    expect(hint("Notiz")).toBe("done");
+  });
+
+  it("US-QS-32 · SG-FORM-03 Enter in the field before an open Mehr Angaben group moves into the group and does not submit", async () => {
+    const onSubmit = vi.fn();
+    render(<Revealing onSubmit={onSubmit} />);
+    await userEvent.click(screen.getByText("Mehr Angaben"));
+    await waitFor(() => expect(hint("Name")).toBe("next"));
+    await userEvent.click(screen.getByLabelText("Name"));
+    await userEvent.keyboard("{Enter}");
+    expect(document.activeElement).toBe(screen.getByLabelText("Notiz"));
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
