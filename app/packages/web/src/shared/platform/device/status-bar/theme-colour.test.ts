@@ -1,13 +1,10 @@
 // US-QS-25 · The status bar follows the page, also while a sheet or dialog dims it (issue 1691). The colour constants
 // are read against the files they copy (tokens.css, index.html, the overlays), so a change of one of them fails here.
+// US-QS-32 · SG-COLOR-07 (issue 1867): the backdrop is the scrim token, black at SCRIM_OPACITY in both schemes, and the
+// dimmed status bar is the scrim over the page background.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import {
-  BACKDROP_OPACITY,
-  PAGE_BACKGROUND,
-  PAGE_FOREGROUND,
-  dimmedPageColour,
-} from "./theme-colour";
+import { PAGE_BACKGROUND, SCRIM_OPACITY, dimmedPageColour } from "./theme-colour";
 
 const here = (path: string) => new URL(path, import.meta.url);
 const tokens = readFileSync(here("../../../../styles/tokens.css"), "utf8");
@@ -22,20 +19,15 @@ const darkAt = tokens.search(/^@media \(prefers-color-scheme: dark\) \{/m);
 const lightRoot = tokens.slice(0, darkAt);
 const darkRoot = tokens.slice(darkAt);
 const BACKGROUND = /--background:\s*(#[0-9a-fA-F]{6});/;
-const FOREGROUND = /--foreground:\s*(#[0-9a-fA-F]{6});/;
 const THEME_META =
   /<meta name="theme-color" content="(#[0-9a-fA-F]{6})" media="\(prefers-color-scheme: (light|dark)\)"/g;
 const hexOf = (css: string, pattern: RegExp) => css.match(pattern)?.[1]?.toLowerCase();
 
 describe("US-QS-25 · the status bar follows the page: colour constants", () => {
-  it("US-QS-25 the page colours of the status bar are the background and foreground tokens in light and dark", () => {
+  it("US-QS-25 the page colour of the status bar is the background token in light and dark", () => {
     expect(PAGE_BACKGROUND).toEqual({
       light: hexOf(lightRoot, BACKGROUND),
       dark: hexOf(darkRoot, BACKGROUND),
-    });
-    expect(PAGE_FOREGROUND).toEqual({
-      light: hexOf(lightRoot, FOREGROUND),
-      dark: hexOf(darkRoot, FOREGROUND),
     });
   });
 
@@ -50,19 +42,39 @@ describe("US-QS-25 · the status bar follows the page: colour constants", () => 
     ]);
   });
 
-  it("US-QS-25 the backdrop of the sheet and of the dialog is the foreground at the backdrop opacity (50 %)", () => {
-    expect(BACKDROP_OPACITY).toBe(0.5);
-    expect(dialogSource).toContain(`bg-foreground/${BACKDROP_OPACITY * 100}`);
-    expect(sheetSource).toContain(`bg-foreground/${BACKDROP_OPACITY * 100}`);
-  });
-
   it("US-QS-25 the sheet and the dialog put the status bar dimming inside their backdrop", () => {
     expect(dialogSource).toContain("<StatusBarDim />");
     expect(sheetSource).toContain("<StatusBarDim />");
   });
+});
 
-  it("US-QS-25 the dimmed page colour is the foreground at 50 % composited over the background: #89898b light, #808081 dark", () => {
-    expect(dimmedPageColour("light")).toBe("#89898b");
-    expect(dimmedPageColour("dark")).toBe("#808081");
+describe("US-QS-32 · SG-COLOR-07 the backdrop of a sheet or dialog is the scrim", () => {
+  it("US-QS-32 · SG-COLOR-07 the scrim is black at the scrim opacity in both schemes, and it is exposed to Tailwind", () => {
+    expect(SCRIM_OPACITY).toBe(0.45);
+    expect(lightRoot).toContain(`--scrim: rgb(0 0 0 / ${SCRIM_OPACITY});`);
+    expect(darkRoot).toContain(`--scrim: rgb(0 0 0 / ${SCRIM_OPACITY});`);
+    expect(tokens).toContain("--color-scrim: var(--scrim);");
+  });
+
+  it("US-QS-32 · SG-COLOR-07 the sheet and the dialog overlays use the scrim class, never the foreground", () => {
+    for (const source of [dialogSource, sheetSource]) {
+      expect(source).toContain("bg-scrim");
+      expect(source).not.toMatch(/bg-foreground\//);
+    }
+  });
+
+  it("US-QS-32 · SG-COLOR-07 the dimmed status bar is black at 45 % over the page background: #8a8a8a light, #060607 dark", () => {
+    expect(dimmedPageColour("light")).toBe("#8a8a8a");
+    expect(dimmedPageColour("dark")).toBe("#060607");
+  });
+
+  it("US-QS-32 · SG-COLOR-07 the dimmed status bar stays darker than the page in both schemes", () => {
+    for (const scheme of ["light", "dark"] as const) {
+      const page = PAGE_BACKGROUND[scheme];
+      const dimmed = dimmedPageColour(scheme);
+      expect(Number.parseInt(dimmed.slice(1, 3), 16)).toBeLessThan(
+        Number.parseInt(page.slice(1, 3), 16),
+      );
+    }
   });
 });

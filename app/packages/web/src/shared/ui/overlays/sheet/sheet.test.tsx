@@ -96,4 +96,14 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     await userEvent.tab({ shift: true });
     expect(dialog.contains(document.activeElement)).toBe(true);
   });
+
+  it("US-QS-32 · SG-COLOR-07 the backdrop takes the scrim class, never the foreground, so it stays dark in dark mode", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    await screen.findByRole("dialog");
+    const backdrop = document.querySelector(".fixed.inset-0.z-50");
+    expect(backdrop).not.toBeNull();
+    expect(backdrop?.classList.contains("bg-scrim")).toBe(true);
+    expect(backdrop?.className).not.toContain("bg-foreground");
+  });
 });

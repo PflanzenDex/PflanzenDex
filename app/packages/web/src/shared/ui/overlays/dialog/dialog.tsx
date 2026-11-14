@@ -23,7 +23,7 @@ export type DialogContentProps = Omit<
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
   ({ className, title, description, closeLabel = "Schließen", children, ...props }, ref) => (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-foreground/50">
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim">
         <StatusBarDim />
       </DialogPrimitive.Overlay>
       <DialogPrimitive.Content
