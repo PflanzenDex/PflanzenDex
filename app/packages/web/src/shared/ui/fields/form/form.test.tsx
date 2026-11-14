@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -17,6 +17,7 @@ import {
   FormRoot,
 } from "./form";
 import { Input } from "../input/input";
+import { Button } from "../../button/button";
 
 afterEach(cleanup);
 
@@ -209,5 +210,65 @@ describe("FormRoot (US-QS-07 · DS-48)", () => {
     render(<FormRoot ref={ref} role="search" className="max-w-xl" />);
     expect(screen.getByRole("search").className).toContain("max-w-xl");
     expect(ref.current?.tagName).toBe("FORM");
+  });
+});
+
+function NetworkForm({ onValid }: { onValid: (v: Values) => void }) {
+  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
+  return (
+    <Form {...form}>
+      <FormRoot onSubmit={form.handleSubmit(onValid)}>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" needsNetwork>
+          Speichern
+        </Button>
+      </FormRoot>
+    </Form>
+  );
+}
+
+describe("Form needs the network (US-QS-30 · SG-BTN-05)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("US-QS-30 · offline a submit that needs the network does not send, keeps the input and says why", async () => {
+    const onValid = vi.fn();
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(true);
+    render(<NetworkForm onValid={onValid} />);
+    const input = screen.getByRole("textbox", { name: "Name" });
+    await userEvent.type(input, "Monstera");
+    state.mockReturnValue(false);
+    act(() => window.dispatchEvent(new Event("offline")));
+    const button = screen.getByRole("button", { name: "Speichern" });
+    await userEvent.click(button);
+    await userEvent.type(input, "{enter}");
+    expect(onValid).not.toHaveBeenCalled();
+    expect((input as HTMLInputElement).value).toBe("Monstera");
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    const reason = document.getElementById(button.getAttribute("aria-describedby") ?? "");
+    expect(reason?.textContent).toBe("Du bist offline. Das geht erst wieder mit Verbindung.");
+  });
+
+  it("US-QS-30 · online again the same submit sends the typed input", async () => {
+    const onValid = vi.fn();
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    render(<NetworkForm onValid={onValid} />);
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Monstera");
+    state.mockReturnValue(true);
+    act(() => window.dispatchEvent(new Event("online")));
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(onValid).toHaveBeenCalledTimes(1));
+    expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera" });
   });
 });

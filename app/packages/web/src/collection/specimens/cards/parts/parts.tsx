@@ -101,7 +101,10 @@ export function Actions({ children, className }: { children: ReactNode; classNam
   return <div className={cn("mt-3 flex flex-wrap gap-2", className)}>{children}</div>;
 }
 
-/** The buttons of a form: stacked full-width on a phone, side by side from `sm`; the submit shows its pending state (DS-50). */
+/**
+ * The buttons of a form: stacked full-width on a phone, side by side from `sm`; the submit shows its pending state (DS-50).
+ * The submit needs the network (US-QS-30): the forms of this footer send their write at once, not through the buffer.
+ */
 export function FormButtons(props: {
   submit: string;
   cancel: string;
@@ -110,7 +113,7 @@ export function FormButtons(props: {
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <Button type="submit" size="touch" pending={props.pending}>
+      <Button type="submit" size="touch" pending={props.pending} needsNetwork>
         {props.submit}
       </Button>
       <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>

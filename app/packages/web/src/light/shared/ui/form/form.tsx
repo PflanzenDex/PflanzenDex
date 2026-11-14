@@ -64,7 +64,7 @@ export function RefusalAlert<F extends FieldValues>({ sent }: { sent: Sent<F> })
   );
 }
 
-/** Submit button and optional cancel of a form row. */
+/** Submit button and optional cancel of a form row. The submit needs the network (US-QS-30): the zone and location writes go at once. */
 export function FormButtons(props: {
   label: string;
   running: boolean;
@@ -72,7 +72,7 @@ export function FormButtons(props: {
 }) {
   return (
     <div className="flex flex-col gap-3 md:col-span-2 md:flex-row">
-      <Button type="submit" disabled={props.running}>
+      <Button type="submit" disabled={props.running} needsNetwork>
         {props.label}
       </Button>
       {props.onCancel && (

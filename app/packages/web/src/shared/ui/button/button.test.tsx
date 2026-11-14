@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -187,5 +187,77 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     const classes = screen.getByRole("button", { name: "Mehr Angaben" }).className.split(/\s+/);
     expect(classes).toContain("border");
     expect(classes).toContain("border-primary");
+  });
+});
+
+describe("Button needsNetwork (US-QS-30 · SG-BTN-05, SG-STATE-05)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("US-QS-30 · offline a button that needs the network does not run its action and says why next to it", async () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const onClick = vi.fn();
+    render(
+      <Button needsNetwork onClick={onClick}>
+        Gießen
+      </Button>,
+    );
+    const button = screen.getByRole("button", { name: "Gießen" });
+    await userEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    const reason = document.getElementById(button.getAttribute("aria-describedby") ?? "");
+    expect(reason?.textContent).toBe("Du bist offline. Das geht erst wieder mit Verbindung.");
+  });
+
+  it("US-QS-30 · going offline keeps the same button and its focus", () => {
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(true);
+    render(<Button needsNetwork>Gießen</Button>);
+    const button = screen.getByRole("button", { name: "Gießen" });
+    button.focus();
+    state.mockReturnValue(false);
+    act(() => window.dispatchEvent(new Event("offline")));
+    expect(screen.getByRole("button", { name: "Gießen" })).toBe(button);
+    expect(document.activeElement).toBe(button);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("US-QS-30 · online again the button is active without a reload", async () => {
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const onClick = vi.fn();
+    render(
+      <Button needsNetwork onClick={onClick}>
+        Gießen
+      </Button>,
+    );
+    state.mockReturnValue(true);
+    act(() => window.dispatchEvent(new Event("online")));
+    const button = screen.getByRole("button", { name: "Gießen" });
+    expect(button.hasAttribute("aria-disabled")).toBe(false);
+    expect(button.hasAttribute("aria-describedby")).toBe(false);
+    await userEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-30 · reasonInline false keeps the reason for assistive technology only, no visible line", () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    render(
+      <Button needsNetwork reasonInline={false}>
+        Ja
+      </Button>,
+    );
+    const button = screen.getByRole("button", { name: "Ja" });
+    const reason = document.getElementById(button.getAttribute("aria-describedby") ?? "");
+    expect(reason?.textContent).toBe("Du bist offline. Das geht erst wieder mit Verbindung.");
+    expect(reason?.className).toContain("sr-only");
+  });
+
+  it("US-QS-30 · a button without needsNetwork stays active offline (buffered writes, DS-11)", async () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const onClick = vi.fn();
+    render(<Button onClick={onClick}>Gießen</Button>);
+    const button = screen.getByRole("button", { name: "Gießen" });
+    expect(button.hasAttribute("aria-disabled")).toBe(false);
+    await userEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

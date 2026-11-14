@@ -69,6 +69,7 @@ function StepContent(props: {
           variant="outline"
           className="self-start"
           disabled={act.running}
+          needsNetwork
           onClick={() =>
             void act.send(cancelDeletion, "Die Löschung ist zurückgenommen. Dein Konto bleibt.")
           }
@@ -149,6 +150,7 @@ export function DeletionFooter(props: {
         variant="destructive"
         className="w-full"
         disabled={props.typed.trim() !== CONFIRM_WORD || act.running}
+        needsNetwork
         onClick={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.")}
       >
         {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}

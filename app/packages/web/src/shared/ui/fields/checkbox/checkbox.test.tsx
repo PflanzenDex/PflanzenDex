@@ -67,3 +67,36 @@ describe("Checkbox (US-QS-07, DS-15, DS-38)", () => {
     expect(screen.getByRole("checkbox").className).toContain("focus-visible:ring-2");
   });
 });
+
+describe("Checkbox needsNetwork (US-QS-30 · SG-BTN-05)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("US-QS-30 · offline a checkbox that needs the network keeps its state and says why next to it", async () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const onChange = vi.fn();
+    render(
+      <Checkbox needsNetwork checked={false} onChange={onChange}>
+        Keine Empfehlungen
+      </Checkbox>,
+    );
+    await userEvent.click(screen.getByText("Keine Empfehlungen"));
+    const box = screen.getByRole("checkbox", { name: "Keine Empfehlungen" }) as HTMLInputElement;
+    expect(onChange).not.toHaveBeenCalled();
+    expect(box.checked).toBe(false);
+    expect(box.getAttribute("aria-disabled")).toBe("true");
+    const reason = document.getElementById(box.getAttribute("aria-describedby") ?? "");
+    expect(reason?.textContent).toBe("Du bist offline. Das geht erst wieder mit Verbindung.");
+  });
+
+  it("US-QS-30 · reasonInline false keeps the reason for assistive technology only, the group shows one line", () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    render(
+      <Checkbox needsNetwork reasonInline={false} checked={false} onChange={() => {}}>
+        Alles privat
+      </Checkbox>,
+    );
+    const box = screen.getByRole("checkbox", { name: "Alles privat" });
+    const reason = document.getElementById(box.getAttribute("aria-describedby") ?? "");
+    expect(reason?.className).toContain("sr-only");
+  });
+});

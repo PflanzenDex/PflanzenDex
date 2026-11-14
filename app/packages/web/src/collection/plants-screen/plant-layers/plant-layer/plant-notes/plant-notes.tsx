@@ -116,7 +116,14 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
   const notes = ready ? (request.value?.notes ?? null) : null;
   const action =
     mode === "edit" ? (
-      <Button type="submit" form={NOTES_FORM} size="touch" className="w-full" pending={saving}>
+      <Button
+        type="submit"
+        form={NOTES_FORM}
+        size="touch"
+        className="w-full"
+        pending={saving}
+        needsNetwork
+      >
         {t("form.submit")}
       </Button>
     ) : ready ? (

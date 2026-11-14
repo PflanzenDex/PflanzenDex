@@ -41,6 +41,8 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
           variant="outline"
           size="touch"
           className="min-w-24 flex-1"
+          needsNetwork
+          reasonInline={false}
           onClick={() => props.onDecide("no")}
         >
           {t("deck.no")}
@@ -49,11 +51,19 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
           variant="secondary"
           size="touch"
           className="min-w-24 flex-1"
+          needsNetwork
+          reasonInline={false}
           onClick={() => props.onDecide("later")}
         >
           {t("deck.later")}
         </Button>
-        <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
+        <Button
+          size="touch"
+          className="min-w-24 flex-1"
+          needsNetwork
+          reasonInline={false}
+          onClick={() => props.onDecide("yes")}
+        >
           {t("deck.yes")}
         </Button>
       </div>

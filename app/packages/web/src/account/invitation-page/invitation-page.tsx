@@ -76,20 +76,7 @@ export function InvitationPage(props: {
             autoCapitalize="characters"
             spellCheck={false}
           />
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="submit" size="touch" disabled={pending} className="sm:flex-1">
-              Registrieren
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="touch"
-              onClick={props.onSignOut}
-              className="sm:flex-1"
-            >
-              Abmelden
-            </Button>
-          </div>
+          <InvitationButtons pending={pending} onSignOut={props.onSignOut} />
           {props.error && (
             <p
               role="alert"
@@ -101,5 +88,34 @@ export function InvitationPage(props: {
         </FormRoot>
       </Form>
     </section>
+  );
+}
+
+/**
+ * The row of the form: "Registrieren" needs the network (US-QS-30, the code is redeemed at once); "Abmelden" does not
+ * write to the server and stays active.
+ */
+function InvitationButtons(props: { pending: boolean; onSignOut: () => void }) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row">
+      <Button
+        type="submit"
+        size="touch"
+        disabled={props.pending}
+        className="sm:flex-1"
+        needsNetwork
+      >
+        Registrieren
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="touch"
+        onClick={props.onSignOut}
+        className="sm:flex-1"
+      >
+        Abmelden
+      </Button>
+    </div>
   );
 }

@@ -137,7 +137,14 @@ function LeafLog({ api, token, specimenId }: Props) {
       </h3>
       {/* Two equal columns: both buttons keep their 48 px height and do not wrap on a 360 px phone (US-WAC-07). */}
       <div className="grid grid-cols-2 gap-2">
-        <Button type="button" size="touch" disabled={writes.busy} onClick={() => void quick()}>
+        <Button
+          type="button"
+          size="touch"
+          disabled={writes.busy}
+          needsNetwork
+          reasonInline={false}
+          onClick={() => void quick()}
+        >
           {t("newLeaf")}
         </Button>
         <Button type="button" variant="outline" size="touch" onClick={() => setFormOpen(true)}>

@@ -32,6 +32,7 @@ const show = () => render(<CalmModeSection api="http://api" token={token} />);
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("US-ACH-08 calm mode switch", () => {
@@ -68,5 +69,21 @@ describe("US-ACH-08 calm mode switch", () => {
     expect((await screen.findByRole("alert")).textContent).toBeTruthy();
     expect(screen.getByRole<HTMLInputElement>("checkbox").checked).toBe(false);
     expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
+describe("US-QS-30 calm mode switch offline", () => {
+  it("US-QS-30 offline the calm mode switch does not save, keeps the stored state and says why", async () => {
+    const puts = fakeServer(false, (b) => response(200, b));
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const user = userEvent.setup();
+    show();
+    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
+    await user.click(box);
+    expect(puts).toHaveLength(0);
+    expect(box.checked).toBe(false);
+    expect(box.getAttribute("aria-disabled")).toBe("true");
+    const reason = document.getElementById(box.getAttribute("aria-describedby") ?? "");
+    expect(reason?.textContent).toBe("Du bist offline. Das geht erst wieder mit Verbindung.");
   });
 });

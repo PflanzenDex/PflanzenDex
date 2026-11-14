@@ -97,7 +97,13 @@ function StepActions(props: {
     );
   return (
     <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
-      <Button type="submit" size="touch" pending={props.pending} pendingLabel="Speichert …">
+      <Button
+        type="submit"
+        size="touch"
+        pending={props.pending}
+        pendingLabel="Speichert …"
+        needsNetwork
+      >
         Vorschlag speichern
       </Button>
       <Button type="button" variant="secondary" onClick={props.onBack}>

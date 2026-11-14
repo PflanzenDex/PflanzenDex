@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { offlineReason } from "@/shared/ui/button/button";
+import { useOnline } from "@/shared/platform/browser/network";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { ChoiceRow, type Choice } from "./choice-row/choice-row";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -47,6 +49,14 @@ function Feedback(props: { error: ApiError | null; saved: boolean }) {
   ) : null;
 }
 
+/**
+ * The reason of a group of switches that write at once (US-QS-30): one visible line under the group, because the switches
+ * would repeat it; each switch names the same reason for assistive technology.
+ */
+function GroupReason() {
+  return useOnline() ? null : <p className="text-sm text-muted-foreground">{offlineReason}</p>;
+}
+
 /** Group "Benachrichtigungen": a switch per occasion (US-ACC-02). */
 export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
   const social = useFeature("social");
@@ -59,6 +69,8 @@ export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
           name={`notifications.${o}`}
           checked={saver.saved.notifications[o]}
           disabled={saver.saving}
+          needsNetwork
+          reasonInline={false}
           onChange={(e) =>
             void change({ notifications: { ...saver.saved.notifications, [o]: e.target.checked } })
           }
@@ -69,6 +81,7 @@ export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
       <p className="mt-1 text-sm text-muted-foreground">
         Erinnerungen werden erst verschickt, wenn sie eingerichtet sind.
       </p>
+      <GroupReason />
       <Feedback error={error} saved={saved} />
     </div>
   );
@@ -91,6 +104,8 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
           name={s.name}
           checked={saver.saved[s.name]}
           disabled={saver.saving}
+          needsNetwork
+          reasonInline={false}
           onChange={(e) => void change({ [s.name]: e.target.checked })}
         >
           {s.label}
@@ -112,6 +127,7 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
       >
         Du entscheidest, was geteilt und empfohlen wird.
       </MoreHelp>
+      <GroupReason />
       <Feedback error={error} saved={saved} />
     </div>
   );
@@ -142,6 +158,7 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
         label={t("shortcuts.label")}
         help={t("shortcuts.help")}
         options={CHOICES}
+        needsNetwork
         value={saver.saved.keyboardShortcuts}
         onPick={(keyboardShortcuts) => void change({ keyboardShortcuts })}
       />
@@ -168,6 +185,7 @@ export function MotionGroup({ saver }: { saver: ProfileSaver }) {
         label={t("motion.label")}
         help={t("motion.help")}
         options={MOTION_CHOICES}
+        needsNetwork
         value={saver.saved.motion}
         onPick={(motion) => void change({ motion })}
       />
