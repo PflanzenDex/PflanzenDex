@@ -229,3 +229,11 @@ IDs are never renumbered.
 - **Fix:** Reseed with `DEMO_SEED_SUBJECTS="test=<sub>,…"` and `DEMO_SEED_PROFILE=states` (`app/packages/api/perf/demo-seed/`).
 - **Can it become a gate?** No: it is the state of a shared service.
 - **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-028 A test reads streamed output before every asserted line arrived
+
+- **Symptom:** A tool test fails only in CI or under load: the output it asserts on holds the first line and misses the next one.
+- **Cause:** The test waits until one string appears and then asserts on other lines. A child process that writes lines separately delivers them in separate chunks, so the later line can still be on its way.
+- **Fix:** Wait (bounded, as `until` in `tools/lint/heavy-lock.test.mjs` does) until every line the test asserts on is in the output, then assert.
+- **Can it become a gate?** No: whether two writes arrive together depends on the scheduler, not on the code shape.
+- **Source:** Issue #2111, PR #2112 (CI run 43642600768 on PR #2105).
