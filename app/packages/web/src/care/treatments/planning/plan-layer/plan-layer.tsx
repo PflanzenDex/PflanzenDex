@@ -77,7 +77,13 @@ export function PlanLayer(props: { api: string; token: Token }) {
       id={PLAN_LAYER}
       title="Behandlung planen"
       primaryAction={
-        <Button type="submit" form={PLAN_FORM_ID} size="touch" disabled={planning.running}>
+        <Button
+          type="submit"
+          form={PLAN_FORM_ID}
+          size="touch"
+          disabled={planning.running}
+          needsNetwork
+        >
           Behandlung speichern
         </Button>
       }

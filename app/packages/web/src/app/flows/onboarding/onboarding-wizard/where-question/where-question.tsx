@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { Label } from "@/shared/ui/display/label/label";
@@ -165,14 +166,26 @@ export function WhereQuestion(props: {
         <ZoneChoice name={chosen.name} zones={places.zones} value={zoneId} onChange={setZoneId} />
       )}
       {error && <p role="alert">{error}</p>}
+      <StepActions saving={saving} onSave={() => void save()} onLater={() => props.onDone()} />
+    </section>
+  );
+}
+
+/**
+ * The actions of the step: "Speichern" writes the location (needs the network, US-ONB-02); "Später" writes nothing. The
+ * reason stands once below both buttons.
+ */
+function StepActions(props: { saving: boolean; onSave: () => void; onLater: () => void }) {
+  return (
+    <NetworkSlot>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button type="button" disabled={saving} onClick={() => void save()}>
+        <Button type="button" disabled={props.saving} needsNetwork onClick={props.onSave}>
           {ui("save")}
         </Button>
-        <Button type="button" variant="ghost" onClick={() => props.onDone()}>
+        <Button type="button" variant="ghost" onClick={props.onLater}>
           {ui("later")}
         </Button>
       </div>
-    </section>
+    </NetworkSlot>
   );
 }

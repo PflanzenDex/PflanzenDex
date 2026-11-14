@@ -1,4 +1,5 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useState, type RefObject } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -37,25 +38,33 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
       )}
     >
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="touch"
-          className="min-w-24 flex-1"
-          onClick={() => props.onDecide("no")}
-        >
-          {t("deck.no")}
-        </Button>
-        <Button
-          variant="secondary"
-          size="touch"
-          className="min-w-24 flex-1"
-          onClick={() => props.onDecide("later")}
-        >
-          {t("deck.later")}
-        </Button>
-        <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
-          {t("deck.yes")}
-        </Button>
+        <NetworkSlot visible={false}>
+          <Button
+            variant="outline"
+            size="touch"
+            className="min-w-24 flex-1"
+            needsNetwork
+            onClick={() => props.onDecide("no")}
+          >
+            {t("deck.no")}
+          </Button>
+          <Button
+            variant="secondary"
+            size="touch"
+            className="min-w-24 flex-1"
+            onClick={() => props.onDecide("later")}
+          >
+            {t("deck.later")}
+          </Button>
+          <Button
+            size="touch"
+            className="min-w-24 flex-1"
+            needsNetwork
+            onClick={() => props.onDecide("yes")}
+          >
+            {t("deck.yes")}
+          </Button>
+        </NetworkSlot>
       </div>
     </div>
   );
@@ -65,7 +74,7 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
 export function UndoButton(props: { onClick: () => void }) {
   return (
     <div className="text-center">
-      <Button variant="outline" size="touch" onClick={props.onClick}>
+      <Button variant="outline" size="touch" needsNetwork onClick={props.onClick}>
         {t("deck.undo")}
       </Button>
     </div>

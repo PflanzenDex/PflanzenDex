@@ -1,3 +1,5 @@
+import { isOnline } from "@/shared/platform/browser/network";
+
 type FetchFn = typeof fetch;
 
 /** Fired on `window` after every write that succeeded, so quiet observers (lock states, achievement banner) can look again. */
@@ -43,9 +45,7 @@ const OFFLINE_WRITE_ERROR: ApiError<never> = {
 
 /** The error of a request that got no answer: offline writes say that the connection is missing (issue 1863). */
 const unanswered = (method: string): ApiError<never> =>
-  method !== "GET" && typeof navigator !== "undefined" && navigator.onLine === false
-    ? OFFLINE_WRITE_ERROR
-    : NETWORK_ERROR;
+  method !== "GET" && !isOnline() ? OFFLINE_WRITE_ERROR : NETWORK_ERROR;
 
 export async function call<T, D = unknown>(
   fetchFn: FetchFn,
@@ -121,10 +121,16 @@ export async function withRepeatKey<T, D = unknown>(
 /**
  * Writes carry the repeat-guard key of their logical write (see `withRepeatKey`). A write that succeeded tells quiet
  * observers (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
+ * A write that is not buffered is refused here while the device is offline, before anything is sent (US-QS-30, P-10): a
+ * form submit, a key or a background mark cannot send it past the button. The buffer of `useWriteAction` (US-QS-03) holds
+ * its writes and sends them through this function only once the network is back.
  */
 export const createWrite =
   <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
-  (method, path, body) =>
-    withRepeatKey<unknown, D>(JSON.stringify([api, method, path, body ?? null]), (key) =>
+  (method, path, body) => {
+    if (!isOnline())
+      return Promise.resolve({ ok: false, error: OFFLINE_WRITE_ERROR as ApiError<D> });
+    return withRepeatKey<unknown, D>(JSON.stringify([api, method, path, body ?? null]), (key) =>
       call<unknown, D>(fetchFn, `${api}${path}`, token, { method, body, key }),
     );
+  };

@@ -13,9 +13,10 @@ paths:
 - Every view says what to do next (P-09): empty states and errors offer an action.
 - Unknown values show "unbekannt", never an invented number (P-08).
 - Tokens come from OIDC with PKCE; passwords never touch our code (FR-ACC-03). No secrets in `VITE_*` variables.
+- Visual and interaction rules are in `docs/guides/reference/style-guide.md`. It takes precedence over `design-system.md` (SG-BASE-02: WCAG 2.2 AA, then the style guide, then HIG, then `design-system.md`; the owner's HIG decisions live in the style guide).
 - Before building a component, check the component inventory in `docs/guides/reference/design-system.md` (section 4.4); a new component in `shared/ui`, `shared/patterns` or `app/frame` gets its row there (`make reference-check`, US-QG-10).
 - Tests carry the story ID in the name; components are tested through what the user sees.
 - Styling is Tailwind utility classes on components; `styles/tokens.css` (tokens, `@theme`, base layer with preflight) is the only stylesheet. No `*.css` next to components, no legacy class names, no `!` overrides (DS-27, DS-33).
 - Accessibility is part of every view, flow and control (FR-QG-10 item 11, NFR-13): the standing criteria of US-QS-08 to US-QS-12 in `docs/specs/product/14-cross-cutting.md` hold for each change. Check by hand with the playbook `.agents/skills/accessibility-check`. Focus moves on a view change go through `shared/platform/routing/route-focus/` and announcements through `shared/platform/announcer/` (DS-68, DS-69); the shortcut rules are DS-70.
 - Focus and contrast rules are DS-37, DS-38 and DS-40 in `docs/guides/reference/design-system.md`; `make a11y-routes` (QG-U7) runs axe and the keyboard walk over every registered view and layer.
-- Before you push a change to a UI text or a layout, run the affected screen with `make one-screen SCREEN=<id>` (issue 1608): CI otherwise finds an overflow 10 to 20 minutes later, in the one-screen gate.
+- Before you push a change to a UI text or a layout, run the affected screen with `make one-screen SCREEN=<id>` (issue 1608): CI otherwise finds an overflow 10 to 20 minutes later, in the one-screen gate. Transitional: this holds while the one-screen gate measures what it measures today; the design-review fix tickets change it part by part, each in its own owner PR (owner decision 2026-11-14), and this line follows them.

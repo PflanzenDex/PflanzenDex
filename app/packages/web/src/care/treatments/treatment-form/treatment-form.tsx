@@ -181,7 +181,12 @@ export function TreatmentForm(props: {
       >
         <BasicFields control={form.control} specimens={props.specimens} focusRef={props.focusRef} />
         <CourseFields control={form.control} />
-        <Button type="submit" size="touch" disabled={props.running || form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          size="touch"
+          disabled={props.running || form.formState.isSubmitting}
+          needsNetwork
+        >
           {isCourse ? "Kur planen" : "Behandlung speichern"}
         </Button>
       </FormRoot>

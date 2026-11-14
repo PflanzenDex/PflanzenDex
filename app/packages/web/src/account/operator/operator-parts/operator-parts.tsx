@@ -110,6 +110,7 @@ export function InvitationForm(props: {
         <Button
           type="submit"
           size="touch"
+          needsNetwork
           aria-disabled={props.running || undefined}
           aria-busy={props.running || undefined}
           className={BUSY_LOOK}
