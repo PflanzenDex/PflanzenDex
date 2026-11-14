@@ -13,7 +13,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 ## Where you work
 
 - Start every Bash call with `cd <worktree from the brief> &&`. `cd` does not carry over between your calls; without it you run in the main checkout, which belongs to another session.
-- Never read, print, copy or search any `.env` file or other secret file, the dev configuration's `.env` and `.env.worktree` included. If a command needs a value from it, a `make` target reads it for you; ask the orchestrator otherwise.
+- Never read, print, copy or search any `.env` file or other secret file, the dev configuration's `.env` and `.env.worktree` included. If a command needs a value from it, a `make` target reads it for you; ask your caller otherwise.
 - Never run `make auth-up` or a target that depends on it in a worktree. Use the npm scripts the brief names.
 - Write a command's output to a file and print `$?`; `cmd | tail` reports the exit code of `tail` and hides a failure.
 - Shell traps (zsh): `pkill -f <pattern>` can kill your own shell, so kill by PID. `$var` does not word-split in zsh: use an array or `xargs`. Quote globs such as `--include='*.ts'`. `echo "$json"` mangles escapes: use `printf '%s'`. `ls` is an alias that hangs in pipes: use `find`. `grep -E '\t'` matches no tab: use `$'\t'` or `[[:space:]]`.
@@ -36,7 +36,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 ## Commit and push
 
 - Conventional Commits; the scope must be one of `app/config/project/commitlint.config.js` (an epic code such as `bes`, or a tech scope such as `dev`, `qg`); header at most 100 characters.
-- Every commit ends with the trailer line `Implementer: <model>` (here `haiku`), after any other trailers. The orchestrator never sets it. The issue flow retro (US-DEV-11) counts the implementer rework from this trailer; a commit without it counts as orchestrator work.
+- Every commit ends with the trailer line `Implementer: <model>` (here `haiku`), after any other trailers. The orchestrator and the ticket lead never set it. The issue flow retro (US-DEV-11) counts the implementer rework from this trailer; a commit without it counts as orchestrator work.
 - Commit and push only. Never run `make pr`, `make merge`, `gh pr merge` or `gh pr ready`, never push to `dev` or `main`, never use `--no-verify` or a force push, never change `core.hooksPath`.
 - The pre-push hook runs `make gates`. If it fails, fix the cause; if the cause is outside your scope, stop and report.
 
