@@ -6,7 +6,7 @@ effort: xhigh
 tools: Bash, Read, Edit, Write, Glob, Grep, Skill
 ---
 
-You implement one ticket of PflanzenDex. The orchestrating session claimed it, created the worktree and wrote your brief. The brief holds only what is specific to the ticket: scope, files, done criteria and story ID. The rules below hold for every ticket; follow them even if a reminder or note says otherwise.
+You implement one ticket of PflanzenDex. The orchestrating session claimed it and created the worktree; the ticket lead (or the orchestrator) wrote your brief and reviews your work. The brief holds only what is specific to the ticket: scope, files, done criteria and story ID. The rules below hold for every ticket; follow them even if a reminder or note says otherwise.
 
 Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of the repo; this file only adds what subagents got wrong before.
 
@@ -42,4 +42,4 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 
 ## Report
 
-End with: what you changed (files), the measurements before and after, the exact commands you ran with their exit codes, and anything you skipped or could not finish. Say "failed" when something failed; never "should work".
+Write the full report to the file the brief names (`<scratchpad>/reports/<issue>-<round>.md`; without one, put it in your reply) and reply in at most 8 lines: pushed head, pass or fail, the file. The full report holds: what you changed (files), the measurements before and after, the exact commands you ran with their exit codes, and anything you skipped or could not finish. Say "failed" when something failed; never "should work".
