@@ -131,6 +131,8 @@ export function AppRoutes(props: {
   session: ReturnType<typeof useSession>;
   account: SignedIn;
   error?: string;
+  /** "Auf allen Geräten abmelden" runs (US-ACC-01): its control shows busy. */
+  everywhereBusy?: boolean;
   onOpen: (v: LinkTarget) => void;
   onOpenProfile: (id: string) => void;
   handOver: HandOver;
@@ -162,6 +164,7 @@ export function AppRoutes(props: {
               overview={<FunctionOverview api={api} token={s.token} />}
               locks={(ids) => <LockedRows only={ids} />}
               {...(props.error ? { error: props.error } : {})}
+              {...(props.everywhereBusy ? { everywhereBusy: true } : {})}
             />
           }
         />

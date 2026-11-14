@@ -123,7 +123,12 @@ export function App() {
     );
   return (
     <RouteBoundary resetKey="signed-in">
-      <SignedInFrame session={s} account={z.account} {...(z.error ? { error: z.error } : {})} />
+      <SignedInFrame
+        session={s}
+        account={z.account}
+        {...(z.error ? { error: z.error } : {})}
+        {...(z.everywhereBusy ? { everywhereBusy: true } : {})}
+      />
     </RouteBoundary>
   );
 }

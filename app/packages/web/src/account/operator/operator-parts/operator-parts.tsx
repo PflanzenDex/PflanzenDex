@@ -9,8 +9,8 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { BUSY_LOOK } from "@/shared/lib/utils";
 import { instantText } from "../../api/access-api";
-import { BUSY_LOOK } from "../operator-cost/operator-cost";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../schemas";
 

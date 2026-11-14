@@ -92,10 +92,12 @@ export function SignedInFrame({
   session: s,
   account,
   error,
+  everywhereBusy,
 }: {
   session: Session;
   account: SignedInAccount;
   error?: string;
+  everywhereBusy?: boolean;
 }) {
   const { setView, openProfile } = useViews();
   const { state: navState } = useLocation() as { state: { hint?: string } | null };
@@ -133,6 +135,7 @@ export function SignedInFrame({
                 session={s}
                 account={account}
                 {...(error ? { error } : {})}
+                {...(everywhereBusy ? { everywhereBusy } : {})}
                 onOpen={setView}
                 onOpenProfile={openProfile}
                 handOver={wishPath.handOver}

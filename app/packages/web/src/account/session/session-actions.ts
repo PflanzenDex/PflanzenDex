@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { UserManager } from "oidc-client-ts";
-import { setProfileTimeZone } from "../../shared/data";
+import type { User, UserManager } from "oidc-client-ts";
+import { setProfileTimeZone, type ApiError } from "../../shared/data";
 import { clearPhotoCache } from "../../shared/platform/browser/use-stored-photo";
-import { signOutEverywhere } from "../api/account-api";
+import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
@@ -31,11 +31,33 @@ function withError(z: State, error: string | undefined): State {
   return z;
 }
 
+// The busy mark of "Auf allen Geräten abmelden" sits on the signed-in state only (US-ACC-01).
+function withBusy(z: State, busy: boolean): State {
+  return z.kind === "signedIn" ? { ...z, everywhereBusy: busy } : z;
+}
+
+// The stored sign-in for a sign-out. An expired access token is renewed once, silently, first; a renewal that fails leaves no
+// user, which the caller reports as the error of the dialog (US-ACC-01).
+async function signedInUser(mgr: UserManager): Promise<User | null | undefined> {
+  const user = await mgr.getUser();
+  return user?.expired ? mgr.signinSilent().catch(() => undefined) : user;
+}
+
+// The text of a failed sign-out, chosen by code: no answer says the connection is missing, a server text is shown as it is,
+// and an answer without text falls back to the generic failure (US-ACC-01, SG-STATE-03).
+function everywhereText(error: ApiError): string {
+  if (error.code === SIGN_OUT_UNREACHABLE) return t("everywhere.offline");
+  return error.text || t("everywhere.failed");
+}
+
 export function sessionActions(
   manager: Promise<UserManager>,
   setState: Dispatch<SetStateAction<State>>,
+  api: string,
 ) {
   let detourRunning = false;
+  // A press while "Auf allen Geräten abmelden" runs does nothing: the request is sent once (US-ACC-01).
+  let everywhereRunning = false;
   // A press that starts a detour (US-ACC-01) restores the keys it may change when it fails and says so there.
   // A press during a detour is ignored. Released on success too: a back/forward return resolves the redirect (`pageshow`).
   const press = (keys: string[], failed: string, detour: (mgr: UserManager) => Promise<void>) => {
@@ -70,22 +92,28 @@ export function sessionActions(
     // "Abmelden" and "Anderes Konto" end the session first: prompt=login does not help while another session lives.
     signOut: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
     useAnotherAccount: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
+    // "Auf allen Geräten abmelden" (US-ACC-01, issue 2065): the API ends every session first. The local sign-in is removed
+    // only after that succeeded; a failure keeps the dialog open with the text of its code, so the keeper can press again.
     everywhereSignOut: async () => {
-      setState((z) => withError(z, undefined));
+      if (everywhereRunning) return;
+      everywhereRunning = true;
+      setState((z) => withBusy(withError(z, undefined), true));
+      const showError = (text: string) => setState((z) => withBusy(withError(z, text), false));
       try {
         const mgr = await manager;
-        const user = await mgr.getUser();
-        if (user) await signOutEverywhere(mgr.settings.authority, user.access_token);
+        const user = await signedInUser(mgr);
+        // Without a stored sign-in there is no token to end the sessions with; a success here would claim what did not happen.
+        if (!user) return showError(t("everywhere.failed"));
+        const r = await signOutEverywhere(api, user.access_token);
+        if (!r.ok) return showError(everywhereText(r.error));
         await mgr.removeUser();
         setProfileTimeZone(null);
         clearPhotoCache(); // the page goes on: no picture of the signed-out keeper stays in memory (P-05)
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });
       } catch {
-        setState((z) =>
-          z.kind === "signedIn"
-            ? { ...z, error: "Abmelden auf allen Geräten ist fehlgeschlagen." }
-            : z,
-        );
+        showError(t("everywhere.failed"));
+      } finally {
+        everywhereRunning = false;
       }
     },
   };
