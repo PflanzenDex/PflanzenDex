@@ -76,13 +76,14 @@ function EntryStates({ state: z, session: s }: { state: State; session: Session 
   );
 }
 
-/** The welcome page with the session's actions: sign in, register, another account (US-ACC-01). */
+/** The welcome page with the session's actions: sign in, register, switch the account (US-ACC-01, US-QS-32). */
 function SignedOutWelcome({ session: s, state: z }: { session: Session; state: SignedOut }) {
   return (
     <Welcome
       onRegister={s.register}
       onSignIn={s.signIn}
-      onAnotherAccount={s.useAnotherAccount}
+      onSwitchAccount={s.switchAccount}
+      canSwitch={z.canSwitch}
       hint={z.hint}
       error={z.error}
     />

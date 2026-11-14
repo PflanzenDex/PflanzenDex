@@ -274,13 +274,24 @@ describe("US-ACC-01 App", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 
-  it("US-ACC-01 signed out, the welcome page offers 'Anderes Konto', which ends the session at the sign-in service", async () => {
+  it("US-ACC-01 signed out with a live session at the sign-in service, the welcome page offers 'Konto wechseln', which ends it there", async () => {
+    // The tab knows of the live session (US-QS-32): the switch shows only then.
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
     fakeServer();
     mgr.getUser.mockResolvedValue(null);
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Anderes Konto" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Konto wechseln" }));
     expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 signed out without a live session at the sign-in service, the welcome page offers no 'Konto wechseln' and no 'Du bist abgemeldet.'", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await screen.findByRole("button", { name: "Konto anlegen" });
+    expect(screen.queryByRole("button", { name: "Konto wechseln" })).toBeNull();
+    expect(screen.queryByText("Du bist abgemeldet.")).toBeNull();
   });
 
   it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {
