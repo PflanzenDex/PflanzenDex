@@ -78,6 +78,16 @@ async function until(check, ms = 10_000) {
   }
 }
 
+// A lock held by a process outside the script, as a job of another checkout holds it: flock on the lock file for `seconds`.
+// Returns once the lock is held, so the script under test finds it taken.
+async function externalLock(dir, seconds) {
+  const lockFile = path.join(dir, "heavy-job.lock");
+  const child = spawn("flock", [lockFile, "sleep", String(seconds)], { stdio: "ignore" });
+  owners.push(child);
+  await until(() => spawnSync("flock", ["-n", lockFile, "true"]).status !== 0);
+  return child;
+}
+
 const noteOf = (dir) => readFileSync(path.join(dir, "heavy-job.owner"), "utf8");
 
 test("US-DEV-08: the first owner gets the lock at once, silently, and its note names it", () => {
@@ -172,6 +182,78 @@ test("US-DEV-08: the note of a dead owner does not block; the lock decides", asy
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, "");
   assert.match(noteOf(dir), new RegExp(`^${b.pid} `));
+});
+
+test("US-DEV-08: a lock held while the note names a dead owner waits silently", async () => {
+  const dir = lockFolder();
+  await externalLock(dir, 3);
+  const gone = owner();
+  const goneEnded = ended(gone);
+  gone.kill("SIGKILL");
+  await goneEnded;
+  writeFileSync(
+    path.join(dir, "heavy-job.owner"),
+    `${gone.pid} /old/checkout e2e 2026-11-01T10:00:00Z\n`,
+  );
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "one-screen"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "60",
+  });
+  assert.equal(await waiting.done, 0, waiting.err);
+  assert.equal(waiting.out, "");
+  assert.match(noteOf(dir), new RegExp(`^${b.pid} `));
+});
+
+test("US-DEV-08: a lock held with no note waits silently", async () => {
+  const dir = lockFolder();
+  await externalLock(dir, 3);
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "one-screen"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "60",
+  });
+  assert.equal(await waiting.done, 0, waiting.err);
+  assert.equal(waiting.out, "");
+  assert.match(noteOf(dir), new RegExp(`^${b.pid} `));
+});
+
+test("US-DEV-08: a free lock whose holder starts late waits silently", async () => {
+  const dir = lockFolder();
+  // The holder's flock starts two seconds late, as on a loaded machine; the lock stays free until then.
+  const shims = lockFolder();
+  const flock = spawnSync("bash", ["-c", "command -v flock"], { encoding: "utf8" }).stdout.trim();
+  writeFileSync(path.join(shims, "flock"), `#!/bin/sh\nsleep 2\nexec "${flock}" "$@"\n`, {
+    mode: 0o755,
+  });
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "one-screen"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "60",
+    PATH: `${shims}${path.delimiter}${process.env.PATH}`,
+  });
+  assert.equal(await waiting.done, 0, waiting.err);
+  assert.equal(waiting.out, "");
+  assert.match(noteOf(dir), new RegExp(`^${b.pid} `));
+});
+
+test("US-DEV-08: a wait line comes no earlier than one second after the call starts", async () => {
+  const dir = lockFolder();
+  const first = owner();
+  assert.equal(heavyLock([String(first.pid), "e2e"], { HEAVY_LOCK_DIR: dir }).status, 0);
+  const second = owner();
+  const callStarted = Date.now();
+  const waiting = heavyLockAsync([String(second.pid), "ui-gates"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "60",
+  });
+  await until(() => waiting.out.includes("waiting for ui-gates"));
+  const lineSeenAfter = Date.now() - callStarted;
+  assert.ok(lineSeenAfter >= 1000, `the wait line came ${lineSeenAfter} ms after the call started`);
+  const firstEnded = ended(first);
+  first.kill("SIGKILL");
+  await firstEnded;
+  assert.equal(await waiting.done, 0, waiting.err);
 });
 
 test("US-DEV-08: HEAVY_LOCK_WAIT gives up with exit 1, names the holder and leaves no holder behind", async () => {
