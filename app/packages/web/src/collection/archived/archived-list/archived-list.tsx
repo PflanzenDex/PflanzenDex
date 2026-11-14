@@ -1,4 +1,5 @@
 import type { ArchivedEntry } from "@pflanzendex/core";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { Card } from "@/shared/patterns/display/card/card";
 import { Button } from "@/shared/ui/button/button";
 import { Actions, GRID, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
@@ -44,15 +45,18 @@ export function ArchivedList(props: {
                     Fangdatum
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label={`Wiederherstellen: ${e.name}`}
-                  onClick={() => props.onRestore(e)}
-                >
-                  Wiederherstellen
-                </Button>
+                <NetworkSlot visible={false}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    needsNetwork
+                    aria-label={`Wiederherstellen: ${e.name}`}
+                    onClick={() => props.onRestore(e)}
+                  >
+                    Wiederherstellen
+                  </Button>
+                </NetworkSlot>
               </Actions>
             </Card>
           </li>

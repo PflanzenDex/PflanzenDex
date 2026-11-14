@@ -337,3 +337,17 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     expect(server.records.size).toBe(2);
   });
 });
+
+describe("US-QS-30 · a write through useWriteAction stays active offline", () => {
+  it("US-QS-30 · offline the buffered write control is active, buffers the write and is not refused", async () => {
+    online(false);
+    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
+    shell(send);
+    const button = screen.getByRole("button", { name: "Speichern" });
+    expect(button.hasAttribute("aria-disabled")).toBe(false);
+    await userEvent.click(button);
+    expect(send).not.toHaveBeenCalled();
+    await buffered();
+    expect(screen.queryByText(/Keine Verbindung/)).toBeNull();
+  });
+});

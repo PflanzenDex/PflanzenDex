@@ -1,4 +1,5 @@
-import type { EmptyReason, MatchCard as Card } from "@pflanzendex/core";
+import { MATCH_ANSWERS, type EmptyReason, type MatchCard as Card } from "@pflanzendex/core";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { Link } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -16,7 +17,7 @@ import { cardTitle as title } from "../deck-state";
 const t = texts(table);
 
 export type Answer = "no" | "later" | "yes";
-
+const LATER = MATCH_ANSWERS[1];
 export const SIGN = (c: Card) => `${title(c)} von ${c.ownerName ?? "einem Freund"}`;
 
 /** "Nein · Später · Ja" as buttons with text; the buttons are the way without a swipe (NFR-13, FR-TAU-08). */
@@ -26,45 +27,48 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
   return (
     <div className="z-10 border-t border-border bg-background py-2 tall-window:sticky tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tall-window:md:bottom-0">
       <div className="mx-auto flex w-full max-w-md gap-2">
-        <Button
-          variant="outline"
-          size="touch"
-          className="flex-1"
-          disabled={busy}
-          aria-label={`Nein: ${who}`}
-          onClick={() => props.onAnswer("no")}
-        >
-          Nein
-        </Button>
-        <Button
-          variant="secondary"
-          size="touch"
-          className="flex-1"
-          disabled={busy}
-          aria-label={`Später: ${who}`}
-          onClick={() => props.onAnswer("later")}
-        >
-          Später
-        </Button>
-        <Button
-          size="touch"
-          className="flex-1"
-          disabled={busy}
-          aria-label={`Ja, anfragen: ${who}`}
-          onClick={() => props.onAnswer("yes")}
-        >
-          Ja
-        </Button>
+        <NetworkSlot visible={false}>
+          <Button
+            variant="outline"
+            size="touch"
+            className="flex-1"
+            disabled={busy}
+            needsNetwork
+            aria-label={`Nein: ${who}`}
+            onClick={() => props.onAnswer("no")}
+          >
+            Nein
+          </Button>
+          <Button
+            variant="secondary"
+            size="touch"
+            className="flex-1"
+            disabled={busy}
+            needsNetwork
+            aria-label={`Später: ${who}`}
+            onClick={() => props.onAnswer(LATER)}
+          >
+            Später
+          </Button>
+          <Button
+            size="touch"
+            className="flex-1"
+            disabled={busy}
+            needsNetwork
+            aria-label={`Ja, anfragen: ${who}`}
+            onClick={() => props.onAnswer("yes")}
+          >
+            Ja
+          </Button>
+        </NetworkSlot>
       </div>
     </div>
   );
 }
 
 /** The text and the one filled action (label and href) of each empty reason (US-TAU-07, P-09); the texts of the two reasons of US-TAU-03 come from the message table. */
-const EMPTY_TEXT: Record<
-  EmptyReason,
-  { title: string; description: string; action: string; href: string }
-> = {
+type EmptyText = { title: string; description: string; action: string; href: string };
+const EMPTY_TEXT: Record<EmptyReason, EmptyText> = {
   no_friends: {
     title: "Du hast noch keine Freunde in der App.",
     description:

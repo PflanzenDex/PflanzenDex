@@ -125,3 +125,107 @@ IDs are never renumbered.
 - **Fix:** Use `gh api repos/<owner>/<repo>/…` (REST) for every read and write in a routine (`.agents/routines/*.md`); install the app on the organization (github.com/apps/claude → Configure → PflanzenDex) with the permission a routine writes with.
 - **Can it become a gate?** Partly: a check could refuse `gh pr list`, `gh issue list` and `gh issue comment` in `.agents/routines/`; not built (E-30, no incident yet).
 - **Source:** First runs of the routines of issue 1753 (2026-11-09).
+
+## PF-015 A new news fragment is missing from the web tests in an existing worktree
+
+- **Symptom:** After adding `app/packages/web/src/news/unreleased/<issue>-<slug>.json`, the full web suite fails in `whats-new.test.ts` ("every fragment file of news/unreleased is a line of the list": expected n + 1, got n), although the fragment is valid and the test passes in CI.
+- **Cause:** Vitest's file-system module cache (`app/node_modules/.vitest-cache`) keeps the result of the `import.meta.glob` over `news/unreleased` from a run before the file existed.
+- **Fix:** Run `npx vitest run --clearCache` in `app/packages/web` after adding a fragment, before the full suite. CI starts without the cache and is not affected.
+- **Can it become a gate?** No: it is local tool state, not repo content; the CI run is already correct.
+- **Source:** PRs 1908, 2092, 2091 and 2093 (2026-11-13/14), each implementer hit it once.
+
+## PF-016 `make claim` refuses because another issue or PR names the same story ID
+
+- **Symptom:** `make claim` or `make worktree` refuses a fresh, unassigned issue: "PR #n references it" or "branch origin/… already carries dev-05", although nobody works on that issue.
+- **Cause:** The claim key is the story ID in the issue title (`app/tools/workflow/claim/lib/claim-lib.mjs`). A second issue with the same ID, an open PR whose title or body names the ID or `#n`, or an origin branch with the same key counts as a claim on it.
+- **Fix:** Retitle the issue with another requirement ID that fits the change. A title with an NFR id (or none) gives the key `issue-<n>`, which never collides.
+- **Can it become a gate?** No: the refusal is the gate; the trap is choosing an ID that is already in flight.
+- **Source:** Session memory audit 2026-11-14 (A04); issue 2107 hit it against PR 2108.
+
+## PF-017 Editing a PR body starts an "edited" CI run that blocks the merge
+
+- **Symptom:** After `gh pr edit` or `make pr-text`, `make merge` waits or refuses although the last push was green; a rerun of that run checks the old title again.
+- **Cause:** The PR-title check runs on the `edited` event, and its `ci-status` blocks until it ends. `gh run rerun` replays the event payload of the original run, with the old title.
+- **Fix:** Fix title and body in one edit (title at most 100 characters, no colon inside the scope parentheses), wait for that run, and push or edit again instead of rerunning an edit run.
+- **Can it become a gate?** No: event and rerun behaviour belong to GitHub.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-018 A dispatched `ci.yml` on a PR head runs e2e and can block the merge
+
+- **Symptom:** After `gh workflow run ci.yml --ref <PR branch>` for e2e proof, a red e2e job makes `make merge` refuse, although the PR's own run is green.
+- **Cause:** A dispatch runs the full CI including e2e on the head commit, and its `ci-status` counts for that head.
+- **Fix:** For e2e proof push an empty commit to a new branch `exp/issue-<n>-e2e-proof` (suffix `-k` for more) and dispatch on that branch.
+- **Can it become a gate?** No: it is how check runs attach to a commit.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-019 CodeQL stays cancelled or without the actions analysis
+
+- **Symptom:** The merge stays blocked by CodeQL: after `make pr` on a draft there is one cancelled and one skipped CodeQL run, and a rerun turns green without unblocking; or after a GitHub Actions outage runs "failed" with no jobs and CodeQL lacks the actions analysis.
+- **Cause:** Not fully known: the draft-to-ready switch of `make pr` and its push start overlapping CodeQL runs, and the ruleset keeps reading the cancelled one; an outage drops one analysis of the required set.
+- **Fix:** After a draft `make pr`, push an empty commit for a clean set of runs. After an outage, rerun CodeQL. See also PF-012.
+- **Can it become a gate?** No: run scheduling belongs to GitHub.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-020 Two timed-out CI runs on one head keep `ci-status` red
+
+- **Symptom:** A rerun of one timed-out run turns green, but `ci-status` still blocks the merge.
+- **Cause:** The other run on the same head still carries its failed `ci-status`.
+- **Fix:** Rerun both runs with `gh run rerun <id> --failed`, each only after its whole run has ended.
+- **Can it become a gate?** No: GitHub behaviour.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-021 Auto-merge into `main` waits for the non-admin approval
+
+- **Symptom:** Auto-merge on a release PR into `main` never fires, though `ci-status` is green and an admin owns the PR.
+- **Cause:** Auto-merge does not use the admin bypass of the ruleset; it needs the one approval from a non-admin and a green `ci-status`.
+- **Fix:** Get the non-admin approval, or let the admin merge by hand (release checklist).
+- **Can it become a gate?** No: ruleset behaviour.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-022 `make merge … | tail` hides a failed merge
+
+- **Symptom:** A chain like `make merge PR=<n> | tail -1 && cleanup` removes the worktree although the PR was not merged.
+- **Cause:** The pipe returns the exit code of `tail`, not of `make merge`.
+- **Fix:** Run `make merge` without a pipe, or check its own exit code (`set -o pipefail`), before any cleanup.
+- **Can it become a gate?** No: it is the caller's shell.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-023 Migration data steps are silent no-ops under FORCE RLS
+
+- **Symptom:** A migration that updates or backfills rows reports success, but on the test host nothing changed; locally and in CI the data is right.
+- **Cause:** On the hosts migrations run as `pflanzendex_owner` (NOBYPASSRLS) under FORCE ROW LEVEL SECURITY, so `UPDATE`/`INSERT … SELECT` see no rows; `make migrate` and CI use the superuser and hide it.
+- **Fix:** Write data steps so they still reach the rows under FORCE RLS as `pflanzendex_owner` (see how migration 0117 redid 0098, 0112 and 0116), and check the row count on the host after the migration.
+- **Can it become a gate?** Yes, partly: CI could run migrations as `pflanzendex_owner`; could also be a step in the `db-migration` skill. Not built yet (E-30).
+- **Source:** Issue 1809; session memory audit 2026-11-14 (A04).
+
+## PF-024 Parallel PRs that shrink `one-screen-baseline.json` conflict
+
+- **Symptom:** Every merge of `origin/dev` into a branch conflicts in `app/config/gates/baselines/one-screen-baseline.json`.
+- **Cause:** Each PR removes its own entries and lowers `maxEntries`, so parallel PRs edit the same lines.
+- **Fix:** Take dev's file, re-apply only this PR's removals, and set `maxEntries` to dev's value minus the own removals.
+- **Can it become a gate?** No: the baseline gate already checks the result.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-025 "#1027" in a code comment trips the hex-colour check
+
+- **Symptom:** The design-system check reports DS-27 (hard-coded colour) on a line without a colour.
+- **Cause:** DS-27 matches `#` followed by hex digits, and an issue reference such as `#1027` in a comment looks like a colour.
+- **Fix:** Write "issue 1027" in code comments. For CodeQL on HTML-comment regexes see PF-012.
+- **Can it become a gate?** No: the check is right to stay strict.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-026 Storybook breaks while `make gates` stays green
+
+- **Symptom:** A change to `app/packages/web/vite.config` or a build plugin passes `make gates`, but the Storybook build or `ds-snapshots-check` fails in CI.
+- **Cause:** Storybook builds with the app's vite config, so the build plugins run there too, and `make gates` does not build Storybook.
+- **Fix:** Run `make ds-snapshots-check` after touching the vite config or its plugins.
+- **Can it become a gate?** Not assessed; `make ds-snapshots-check` is the existing check that builds it.
+- **Source:** Session memory audit 2026-11-14 (A04).
+
+## PF-027 Demo data is orphaned after a shared Keycloak re-import
+
+- **Symptom:** After the shared Keycloak realm is re-imported, the demo users sign in to empty collections.
+- **Cause:** The re-import gives the demo users new subjects, and the seeded data still points to the old ones.
+- **Fix:** Reseed with `DEMO_SEED_SUBJECTS="test=<sub>,…"` and `DEMO_SEED_PROFILE=states` (`app/packages/api/perf/demo-seed/`).
+- **Can it become a gate?** No: it is the state of a shared service.
+- **Source:** Session memory audit 2026-11-14 (A04).

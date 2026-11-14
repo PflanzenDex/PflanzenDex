@@ -118,16 +118,15 @@ function Cards(props: {
 }) {
   const { deck } = props;
   const { position, moves, endTitle, frontTitle } = useDeckPosition(props.takeFocus === true);
-  const { saved, error, taken, decide, undo, exit, setExit, returned } = useDecisions(
+  const { saved, error, taken, decide, exit, returned, fly, takeBack } = useDecisions(
     props.onDecide,
     props.onUndo,
     moves,
   );
   const current = deck.empty === null ? deck.suggestions[position] : undefined;
-  const fly = (d: SwipeDirection) => exit === null && setExit(d);
   const onKeyDown = useDeckKeys({
     onFly: current === undefined ? undefined : fly,
-    onUndo: taken === null ? undefined : () => void undo(),
+    onUndo: taken === null ? undefined : takeBack,
   });
   if (deck.empty !== null)
     return (
@@ -146,7 +145,7 @@ function Cards(props: {
           error={error}
           taken={taken !== null}
           titleRef={endTitle}
-          onUndo={undo}
+          onUndo={takeBack}
           onNewDeck={props.onNewDeck}
         />
       </div>
@@ -160,11 +159,11 @@ function Cards(props: {
         exit={exit}
         returned={returned}
         frontTitle={frontTitle}
-        onSwipe={setExit}
+        onSwipe={fly}
         onExited={(d) => void decide(current.species, DECISION[d])}
       />
       {error !== null && <Banner variant="error">{error}</Banner>}
-      {taken !== null && <UndoButton onClick={undo} />}
+      {taken !== null && <UndoButton onClick={takeBack} />}
       <p className="sr-only">{t("deck.hint")}</p>
       <Actions onDecide={(d) => fly(FLIGHT[d])} />
     </div>

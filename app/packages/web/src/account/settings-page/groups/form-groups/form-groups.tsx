@@ -116,6 +116,7 @@ function GroupForm(props: {
           type="submit"
           size="touch"
           disabled={saver.saving || (!saveAlways && !(form.formState.isDirty || fromDevice))}
+          needsNetwork
         >
           {saver.saving ? "Speichert …" : "Speichern"}
         </Button>

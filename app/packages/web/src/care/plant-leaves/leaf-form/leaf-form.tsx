@@ -73,6 +73,7 @@ export function LeafForm(props: {
           size="touch"
           className="w-full"
           disabled={form.formState.isSubmitting}
+          needsNetwork
         >
           {t("form.save")}
         </Button>

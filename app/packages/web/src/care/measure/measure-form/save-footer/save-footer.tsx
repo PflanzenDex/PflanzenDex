@@ -23,6 +23,7 @@ export function SaveFooter(props: {
         size="touch"
         className="w-full"
         disabled={props.pending}
+        needsNetwork
       >
         {props.children}
       </Button>
