@@ -82,10 +82,11 @@ test.describe("US-ACC-01 another account", () => {
     const other = await createTestAccount();
     await signIn(page, account);
     // The state of the bug: the app holds no sign-in any more (cleared storage), the sign-in service still does.
-    // The silent attempt was made once in this tab already, so the welcome page shows.
+    // The silent attempt was made once in this tab already, so the welcome page shows. The tab still knows of the live
+    // session: the sign-in returned a token to it, and sessionStorage survives the reload (US-QS-32).
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
-    await page.getByRole("button", { name: "Anderes Konto" }).click();
+    await page.getByRole("button", { name: "Konto wechseln" }).click();
     // Without an id token the sign-in service asks once before it ends the session, then returns to the app.
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();

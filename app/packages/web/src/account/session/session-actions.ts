@@ -14,6 +14,8 @@ export const MARKER = "pflanzendex.signed_out";
 export const SILENT_TRIED = "pflanzendex.silent_tried";
 // "Konto anlegen" (US-ACC-01): "check" during its silent check, "after_logout" while the session ends.
 export const REGISTER = "pflanzendex.register";
+// Set when this tab knows of a live session at the sign-in service: "Konto wechseln" shows only then (US-QS-32).
+export const LIVE = "pflanzendex.live_session";
 
 const t = texts(table);
 
@@ -21,6 +23,8 @@ const t = texts(table);
 export function endSession(mgr: UserManager, then?: "after_logout"): Promise<void> {
   // On the way to the registration nobody signed out: the marker would stay in the tab of the new account.
   window.sessionStorage.setItem(then ? REGISTER : MARKER, then ?? "1");
+  // The session ends here, so this tab no longer knows of a live one.
+  window.sessionStorage.removeItem(LIVE);
   return mgr.signoutRedirect();
 }
 
@@ -41,6 +45,15 @@ function withBusy(z: State, busy: boolean): State {
 async function signedInUser(mgr: UserManager): Promise<User | null | undefined> {
   const user = await mgr.getUser();
   return user?.expired ? mgr.signinSilent().catch(() => undefined) : user;
+}
+
+// What a sign-out at the sign-in service leaves in this tab: the stored sign-in, the live flag (the API ended every session
+// there, US-QS-32), the time zone and the photos. The page goes on, so no picture of the signed-out keeper stays in memory (P-05).
+async function forgetSignIn(mgr: UserManager): Promise<void> {
+  await mgr.removeUser();
+  window.sessionStorage.removeItem(LIVE);
+  setProfileTimeZone(null);
+  clearPhotoCache();
 }
 
 // The text of a failed sign-out, chosen by code: no answer says the connection is missing, a server text is shown as it is,
@@ -89,9 +102,9 @@ export function sessionActions(
         window.sessionStorage.setItem(SILENT_TRIED, "1");
         return mgr.signinRedirect({ prompt: "none" });
       }),
-    // "Abmelden" and "Anderes Konto" end the session first: prompt=login does not help while another session lives.
-    signOut: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
-    useAnotherAccount: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
+    // "Abmelden" and "Konto wechseln" end the session first: prompt=login does not help while another session lives.
+    signOut: () => press([MARKER, LIVE], t("signOut.failed"), (mgr) => endSession(mgr)),
+    switchAccount: () => press([MARKER, LIVE], t("signOut.failed"), (mgr) => endSession(mgr)),
     // "Auf allen Geräten abmelden" (US-ACC-01, issue 2065): the API ends every session first. The local sign-in is removed
     // only after that succeeded; a failure keeps the dialog open with the text of its code, so the keeper can press again.
     everywhereSignOut: async () => {
@@ -106,9 +119,7 @@ export function sessionActions(
         if (!user) return showError(t("everywhere.failed"));
         const r = await signOutEverywhere(api, user.access_token);
         if (!r.ok) return showError(everywhereText(r.error));
-        await mgr.removeUser();
-        setProfileTimeZone(null);
-        clearPhotoCache(); // the page goes on: no picture of the signed-out keeper stays in memory (P-05)
+        await forgetSignIn(mgr);
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });
       } catch {
         showError(t("everywhere.failed"));

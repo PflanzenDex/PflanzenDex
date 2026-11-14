@@ -119,7 +119,10 @@ describe("US-ACC-01 session", () => {
       vi.fn<typeof fetch>(async () => response(401)),
     );
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    // The sign-in service handed out a token, so its session lives and the switch shows (US-QS-32).
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
     expect(mgr.removeUser).toHaveBeenCalledOnce();
   });
 
@@ -192,10 +195,14 @@ describe("US-ACC-01 session", () => {
   });
 
   it("US-ACC-01 another account: the session at the sign-in service ends first, no login with prompt=login is asked", async () => {
+    // The tab knows of the live session (the silent check found it): the switch shows only then (US-QS-32).
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
     mgr.getUser.mockResolvedValue(null);
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
-    act(() => result.current.useAnotherAccount());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
+    act(() => result.current.switchAccount());
     await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
     // Keycloak refuses a different person while another session is alive, prompt=login included (see session.ts).
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
@@ -205,7 +212,7 @@ describe("US-ACC-01 session", () => {
     mgr.getUser.mockResolvedValue(user);
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
-    act(() => result.current.useAnotherAccount());
+    act(() => result.current.switchAccount());
     await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
     cleanup();
     // A fresh tab state: only the marker of the sign-out may keep the silent attempt from running.
@@ -517,7 +524,10 @@ describe("US-ACC-01 session", () => {
       vi.fn<typeof fetch>(async () => response(401, { error: { code: "not_signed_in" } })),
     );
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    // The token was handed out, so the sign-in service's session lives and the switch shows (US-QS-32).
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
     expect(mgr.removeUser).toHaveBeenCalledOnce();
   });
 
@@ -579,11 +589,121 @@ describe("US-ACC-01 session", () => {
   });
 });
 
-describe("US-ACC-01 Abmelden and Anderes Konto on a failure", () => {
+describe("US-QS-32 Konto wechseln only with a live session at the sign-in service, no hint without a real sign-out", () => {
+  const LIVE = "pflanzendex.live_session";
+
+  it("US-QS-32 a visitor who was never signed in gets no hint and no switch when the silent check answers login_required", async () => {
+    window.history.replaceState({}, "", "/?error=login_required&state=abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(result.current.state).not.toHaveProperty("hint");
+    expect(result.current.state).not.toHaveProperty("canSwitch");
+    expect(window.sessionStorage.getItem(LIVE)).toBeNull();
+  });
+
+  it("US-QS-32 a return with error=login_required removes a stale live flag: the service holds no session, so no switch shows", async () => {
+    // An earlier sign-in in this tab left the flag; the service now answers that it holds no session.
+    window.sessionStorage.setItem(LIVE, "1");
+    window.history.replaceState({}, "", "/?error=login_required&state=abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(result.current.state).not.toHaveProperty("canSwitch");
+    expect(window.sessionStorage.getItem(LIVE)).toBeNull();
+  });
+
+  it.each(["interaction_required", "consent_required", "account_selection_required"])(
+    "US-QS-32 a silent check answered %s shows the switch and no hint: the sign-in service holds a session",
+    async (error) => {
+      window.history.replaceState({}, "", `/?error=${error}&state=abc`);
+      mgr.getUser.mockResolvedValue(null);
+      const { result } = renderHook(() => useSession());
+      await waitFor(() =>
+        expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+      );
+      expect(result.current.state).not.toHaveProperty("hint");
+      expect(window.sessionStorage.getItem(LIVE)).toBe("1");
+    },
+  );
+
+  it("US-QS-32 signed in once in this tab, the stored sign-in is gone later: the switch shows and no hint", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const first = renderHook(() => useSession());
+    await waitFor(() => expect(first.result.current.state.kind).toBe("signedIn"));
+    cleanup();
+    mgr.getUser.mockResolvedValue(null);
+    const back = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(back.result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
+    expect(back.result.current.state).not.toHaveProperty("hint");
+  });
+
+  it("US-QS-32 after a real sign-out the welcome page shows the hint and no switch", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    act(() => result.current.signOut());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    cleanup();
+    mgr.getUser.mockResolvedValue(null);
+    const fresh = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(fresh.result.current.state).toEqual({
+        kind: "signedOut",
+        hint: "Du bist abgemeldet.",
+      }),
+    );
+    expect(fresh.result.current.state).not.toHaveProperty("canSwitch");
+  });
+
+  it("US-QS-32 the sign-out marker wins over a live flag: the hint shows and no switch", async () => {
+    window.sessionStorage.setItem("pflanzendex.signed_out", "1");
+    window.sessionStorage.setItem(LIVE, "1");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", hint: "Du bist abgemeldet." }),
+    );
+    expect(result.current.state).not.toHaveProperty("canSwitch");
+  });
+
+  it("US-QS-32 the sign-in service ends the session: the tab forgets the live session and the welcome page shows no switch", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    expect(window.sessionStorage.getItem(LIVE)).toBe("1");
+    act(() => mgr.handler["source"]?.forEach((f) => f()));
+    expect(window.sessionStorage.getItem(LIVE)).toBeNull();
+    expect(result.current.state).toEqual({
+      kind: "signedOut",
+      hint: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
+    });
+  });
+
+  it("US-QS-32 signing out on all devices ends the live session too: after a reload no switch shows", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, { ended: true })),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(window.sessionStorage.getItem(LIVE)).toBeNull();
+    cleanup();
+    mgr.getUser.mockResolvedValue(null);
+    const back = renderHook(() => useSession());
+    await waitFor(() => expect(back.result.current.state).toEqual({ kind: "signedOut" }));
+  });
+});
+
+describe("US-ACC-01 Abmelden and Konto wechseln on a failure", () => {
   const FAILED =
     "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
 
-  it("US-ACC-01 Abmelden: a failed sign-out says what to do, the person stays signed in and no marker stays behind", async () => {
+  it("US-ACC-01 Abmelden: a failed sign-out says what to do, the person stays signed in, no marker stays behind and the live flag stays (US-QS-32)", async () => {
     mgr.getUser.mockResolvedValue(user);
     mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
     const { result } = renderHook(() => useSession());
@@ -593,26 +713,36 @@ describe("US-ACC-01 Abmelden and Anderes Konto on a failure", () => {
       expect(result.current.state).toEqual({ kind: "signedIn", account, error: FAILED }),
     );
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.live_session")).toBe("1");
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });
 
-  it("US-ACC-01 Anderes Konto: a failed sign-out on the welcome page says so there, and no marker stays behind", async () => {
+  it("US-ACC-01 Konto wechseln: a failed sign-out on the welcome page says so there, no marker stays behind and the live flag stays", async () => {
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
     mgr.getUser.mockResolvedValue(null);
     mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
-    act(() => result.current.useAnotherAccount());
-    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut", error: FAILED }));
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
+    act(() => result.current.switchAccount());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true, error: FAILED }),
+    );
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.live_session")).toBe("1");
   });
 
-  it("US-ACC-01 Anderes Konto after a real sign-out: a failure keeps that sign-out, the marker stays", async () => {
+  it("US-QS-32 a failed Konto wechseln keeps the sign-out marker and the live flag as they were", async () => {
     window.sessionStorage.setItem("pflanzendex.signed_out", "1");
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
     mgr.getUser.mockResolvedValue(null);
     mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
-    act(() => result.current.useAnotherAccount());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", hint: "Du bist abgemeldet." }),
+    );
+    act(() => result.current.switchAccount());
     await waitFor(() =>
       expect(result.current.state).toEqual({
         kind: "signedOut",
@@ -621,6 +751,7 @@ describe("US-ACC-01 Abmelden and Anderes Konto on a failure", () => {
       }),
     );
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBe("1");
+    expect(window.sessionStorage.getItem("pflanzendex.live_session")).toBe("1");
   });
 
   it("US-ACC-01 Abmelden on the invitation page: a failed sign-out is said there too", async () => {
@@ -655,14 +786,18 @@ describe("US-ACC-01 Abmelden and Anderes Konto on a failure", () => {
   it("US-ACC-01 Abmelden sets the marker before the redirect starts, so the return shows the hint", async () => {
     mgr.getUser.mockResolvedValue(user);
     let markerAtRedirect: string | null = null;
+    let liveAtRedirect: string | null = "unset";
     mgr.signoutRedirect.mockImplementationOnce(async () => {
       markerAtRedirect = window.sessionStorage.getItem("pflanzendex.signed_out");
+      liveAtRedirect = window.sessionStorage.getItem("pflanzendex.live_session");
     });
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
     act(() => result.current.signOut());
     await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
     expect(markerAtRedirect).toBe("1");
+    // The session ends at the sign-in service: the tab no longer knows of a live one (US-QS-32).
+    expect(liveAtRedirect).toBeNull();
     expect(result.current.state).toEqual({ kind: "signedIn", account });
   });
 });

@@ -5,11 +5,19 @@ import { apiUrl, getAccount, type Account } from "../api/account-api";
 import { here, hereState, newManager, processReturn } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
-import { MARKER, REGISTER, SILENT_TRIED, endSession, sessionActions } from "./session-actions";
+import {
+  LIVE,
+  MARKER,
+  REGISTER,
+  SILENT_TRIED,
+  endSession,
+  sessionActions,
+} from "./session-actions";
 
 export type State =
   | { kind: "loading" }
-  | { kind: "signedOut"; hint?: string; error?: string | undefined }
+  /** canSwitch: this tab knows of a live session at the sign-in service, so "Konto wechseln" shows (US-QS-32). */
+  | { kind: "signedOut"; hint?: string; error?: string | undefined; canSwitch?: boolean }
   /** Signed in at the sign-in service, but registration needs an invitation code (US-ACC-05). */
   | { kind: "invitationNeeded"; error?: string | undefined }
   /** `everywhereBusy`: "Auf allen Geräten abmelden" runs; its control shows busy and a second press does nothing (US-ACC-01). */
@@ -50,6 +58,23 @@ async function registerReturn(
   return null;
 }
 
+// The error answers of a sign-in return that say the sign-in service holds a session for this browser, but needs an
+// interaction first (US-QS-32). `login_required` says there is none and is not among them.
+const LIVE_ERRORS = ["interaction_required", "consent_required", "account_selection_required"];
+
+// The welcome page of a visitor without a sign-in (US-ACC-01, US-QS-32). The hint names a real sign-out only (MARKER); the
+// switch shows while this tab knows of a live session and no sign-out happened. A field that does not apply is left out.
+function signedOutState(error?: string): State {
+  const signedOut = window.sessionStorage.getItem(MARKER);
+  const live = window.sessionStorage.getItem(LIVE) && !signedOut;
+  return {
+    kind: "signedOut",
+    ...(signedOut ? { hint: "Du bist abgemeldet." } : {}),
+    ...(error ? { error } : {}),
+    ...(live ? { canSwitch: true } : {}),
+  };
+}
+
 // The one silent attempt of the tab (US-ACC-01). The redirect leaves the page, so the state stays loading; when the
 // sign-in service cannot be reached, the welcome page says so. The attempt stays used up (SILENT_TRIED), so no retry follows.
 async function silentAttempt(mgr: UserManager): Promise<State> {
@@ -58,7 +83,7 @@ async function silentAttempt(mgr: UserManager): Promise<State> {
     await mgr.signinRedirect({ prompt: "none", redirect_uri: here(), state: hereState() });
     return { kind: "loading" };
   } catch {
-    return { kind: "signedOut", error: t("signIn.unreachable") };
+    return signedOutState(t("signIn.unreachable"));
   }
 }
 
@@ -69,6 +94,11 @@ async function loadState(mgr: UserManager): Promise<State> {
     window.sessionStorage.removeItem(REGISTER);
     const q = new URLSearchParams(window.location.search); // read before processReturn cleans the address
     const answered = q.has("code") || q.has("error");
+    // The sign-in service holds a session that needs an interaction first: this tab knows of it (US-QS-32).
+    // `login_required` says it holds none, so a flag left by an earlier sign-in in this tab goes (US-QS-32).
+    const error = q.get("error") ?? "";
+    if (LIVE_ERRORS.includes(error)) window.sessionStorage.setItem(LIVE, "1");
+    else if (error === "login_required") window.sessionStorage.removeItem(LIVE);
     const user = await processReturn(mgr);
     const registering = await registerReturn(mgr, intent, user, answered);
     if (registering) return registering;
@@ -79,9 +109,10 @@ async function loadState(mgr: UserManager): Promise<State> {
         window.sessionStorage.setItem(SILENT_TRIED, "1");
         return silentAttempt(mgr);
       }
-      const hint = window.sessionStorage.getItem(MARKER) ? "Du bist abgemeldet." : undefined;
-      return hint ? { kind: "signedOut", hint } : { kind: "signedOut" };
+      return signedOutState();
     }
+    // The sign-in service handed out a token, so its session lives and this tab knows of it (US-QS-32).
+    window.sessionStorage.setItem(LIVE, "1");
     const account = await getAccount(apiUrl(env), user.access_token);
     // Phases, due dates and "today" are computed in the time zone of the profile (NFR-08, US-ACC-02).
     setProfileTimeZone(account.timeZone ?? null);
@@ -89,7 +120,7 @@ async function loadState(mgr: UserManager): Promise<State> {
   } catch (e) {
     if (e instanceof Error && e.message === "not_signed_in") {
       await mgr.removeUser();
-      return { kind: "signedOut" };
+      return signedOutState();
     }
     if (e instanceof Error && e.message === "invitation_required")
       return { kind: "invitationNeeded" };
@@ -116,11 +147,14 @@ export function useSession() {
 
   useEffect(() => {
     void load();
-    const ended = () =>
+    const ended = () => {
+      // The session ended at the sign-in service, so this tab no longer knows of a live one (US-QS-32).
+      window.sessionStorage.removeItem(LIVE);
       setState({
         kind: "signedOut",
         hint: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
       });
+    };
     // A failed library rejects the manager: load tells the person about it, so the listeners do not attach here, and the
     // rejection is handled instead of left unhandled.
     const listening = manager.then(

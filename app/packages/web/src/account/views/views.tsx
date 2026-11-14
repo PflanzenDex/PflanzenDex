@@ -17,16 +17,19 @@ const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warn
 
 /**
  * The welcome page in the frame of the sign-in pages (US-QS-14): the wordmark, one line of text, the filled sign-in
- * button and the outline registration button, in that order, as on the sign-in service. Below them the text action
- * "Anderes Konto" (US-ACC-01): it ends the session at the sign-in service, so another person can sign in.
+ * button and the outline registration button, in that order, as on the sign-in service. Below them, only while this tab
+ * knows of a live session at the sign-in service (`canSwitch`), the text action "Konto wechseln" (US-ACC-01, US-QS-32):
+ * it ends that session, so another person can sign in.
  */
 export function Welcome(props: {
   onRegister: Action;
   onSignIn: Action;
-  onAnotherAccount: Action;
+  onSwitchAccount: Action;
+  /** The tab knows of a live session at the sign-in service; without it the switch is not offered (US-QS-32). */
+  canSwitch?: boolean | undefined;
   hint?: string | undefined;
   /**
-   * The error of a failed press on this page (US-ACC-01): "Anmelden", "Konto anlegen" or "Anderes Konto". It says what
+   * The error of a failed press on this page (US-ACC-01): "Anmelden", "Konto anlegen" or "Konto wechseln". It says what
    * to do, and the buttons stay for another try.
    */
   error?: string | undefined;
@@ -61,15 +64,17 @@ export function Welcome(props: {
           >
             {t("welcome.register")}
           </Button>
-          <Button
-            type="button"
-            variant="link"
-            size="touch"
-            onClick={props.onAnotherAccount}
-            className="text-base"
-          >
-            {t("welcome.otherAccount")}
-          </Button>
+          {props.canSwitch && (
+            <Button
+              type="button"
+              variant="link"
+              size="touch"
+              onClick={props.onSwitchAccount}
+              className="text-base"
+            >
+              {t("welcome.switchAccount")}
+            </Button>
+          )}
         </div>
       </section>
     </AuthFrame>
