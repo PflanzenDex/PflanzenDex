@@ -264,3 +264,9 @@ test("US-QS-14: the drawing and the three value lines of the sign-in theme equal
   }
   assert.equal(lines.length, 3);
 });
+
+test('US-QS-32 · Q-44: the sign-in theme marks its page as not to translate (translate="no" on html, google notranslate meta)', () => {
+  const htmlLine = template.split("\n").find((line) => line.startsWith("<html ")) ?? "";
+  assert.match(htmlLine, /\stranslate="no"/, 'the html element carries translate="no"');
+  assert.match(template, /<meta name="google" content="notranslate">/);
+});

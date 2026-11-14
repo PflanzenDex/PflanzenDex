@@ -121,6 +121,13 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(parts).toContain("viewport-fit=cover");
   });
 
+  it('US-QS-32 · Q-44 index.html marks the page as not to translate: translate="no" on html and the google notranslate meta', () => {
+    const [htmlTag] = htmlTags(indexHtml, /<html\s([^>]*?)>/g);
+    expect(htmlTag).toMatchObject({ lang: "de", translate: "no" });
+    const google = htmlTags(indexHtml, META).find((meta) => meta.name === "google");
+    expect(google?.content).toBe("notranslate");
+  });
+
   it("US-QS-07 the manifest lists 192 and 512 px PNG icons for any, a maskable 512 px icon and a monochrome one", () => {
     const withPurpose = (purpose: string, sizes: string) =>
       manifest.icons.filter((icon) => icon.purpose === purpose && icon.sizes === sizes);
