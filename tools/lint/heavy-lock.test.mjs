@@ -105,12 +105,13 @@ test("US-DEV-08: a second owner says which job it waits for and gets the lock wi
     HEAVY_LOCK_DIR: dir,
     HEAVY_LOCK_WAIT: "60",
   });
-  await until(() => waiting.out.includes("waiting for ui-gates"));
-  assert.match(
-    waiting.out,
-    /^heavy-lock: waiting for ui-gates in .+ \(since \d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\), one heavy job at a time \(US-DEV-08\)$/m,
-  );
-  assert.match(waiting.out, /^heavy-lock: held by .+ e2e \(pid \d+, since \S+Z\)$/m);
+  // The script writes the "waiting for" line and the "held by" line in two writes: wait until both are in the output.
+  const waitingLine =
+    /^heavy-lock: waiting for ui-gates in .+ \(since \d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\), one heavy job at a time \(US-DEV-08\)$/m;
+  const heldByLine = /^heavy-lock: held by .+ e2e \(pid \d+, since \S+Z\)$/m;
+  await until(() => waitingLine.test(waiting.out) && heldByLine.test(waiting.out));
+  assert.match(waiting.out, waitingLine);
+  assert.match(waiting.out, heldByLine);
   const firstEndedAt = await firstEnded;
   assert.equal(await waiting.done, 0, waiting.err);
   const gap = (waiting.endedAt - firstEndedAt) / 1000;
