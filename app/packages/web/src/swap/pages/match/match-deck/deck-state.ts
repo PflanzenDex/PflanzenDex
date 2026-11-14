@@ -19,7 +19,7 @@ export interface DeckState {
 export type DeckAction =
   | { type: "no"; card: Card; answeredOn: string; notice: string }
   | { type: "later"; card: Card; answeredOn: string; notice: string }
-  | { type: "yes"; offerId: string; requested: boolean; notice: string }
+  | { type: "yes"; offerId: string; notice: string }
   | { type: "gone"; notice: string }
   | { type: "refused"; error: string }
   | { type: "confirm"; on: boolean }
@@ -28,14 +28,16 @@ export type DeckAction =
   | { type: "remove"; offerId: string }
   | { type: "again" };
 
+/** The deck as the server gave it; `requested` is the count of my open requests on matching offers (US-TAU-02), so a reload keeps the summary right. */
 export const initialDeck = (
   cards: readonly Card[],
   entries: readonly MatchEntry[] = [],
+  requested = 0,
 ): DeckState => ({
   round: cards,
   pos: 0,
   entries,
-  requested: 0,
+  requested,
   last: null,
   notice: null,
   error: null,
@@ -121,7 +123,8 @@ export function deckReducer(s: DeckState, a: DeckAction): DeckState {
       return next(
         {
           ...s,
-          requested: s.requested + (a.requested ? 1 : 0),
+          // Both outcomes leave an open request of mine on the offer, so both count (US-TAU-02).
+          requested: s.requested + 1,
           entries: without(s.entries, a.offerId),
         },
         a.notice,

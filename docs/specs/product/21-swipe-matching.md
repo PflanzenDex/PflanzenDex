@@ -58,7 +58,7 @@ Acceptance criteria:
 - Given a drag to the right past the threshold, then the card returns to its place and the confirmation asks first (FR-TAU-03); nothing is sent before it. The button Yes sends at once, except on a card that fits both ways, where it asks first (US-TAU-05).
 - Given a drag left, a drag up or down, or a button answers a card, then the card flies off in the direction of the answer and the answer is written once it has left; a refused write brings the card back with the error (P-10).
 - Given `prefers-reduced-motion: reduce`, then a drag does not move the card and the answer, the stamp and the next card appear at once (NFR-13).
-- After the last card: "Done for now. N requested, M for later." with the next step (open "Requests" or the Later list, P-09).
+- After the last card: "Done for now. N requested, M for later." with the next step (open "Requests" or the Later list, P-09). N counts my open requests on matching offers, read from the server, so it stays right after a reload (P-10).
 
 ### US-TAU-03 · A request arises only from Yes · 🟨 new
 

@@ -43,6 +43,8 @@ const entry = (n: number, answer: "no" | "later", state = "open") => ({
 
 /** The reason the server gives for an empty deck (US-TAU-07); reset after each test. */
 let emptyReason: string | null = null;
+/** The open requests of the keeper the server counts (US-TAU-02); absent when `undefined`, reset after each test. */
+let serverRequested: number | undefined;
 
 function server(
   cards: unknown[],
@@ -75,7 +77,7 @@ function server(
         return yes(u.pathname.split("/")[3] ?? "");
       }
       return u.pathname === "/exchange/match"
-        ? response(200, { cards, entries, empty: emptyReason })
+        ? response(200, { cards, entries, empty: emptyReason, requested: serverRequested })
         : response(404, {});
     }),
   );
@@ -100,6 +102,7 @@ beforeEach(() => {
 
 afterEach(() => {
   emptyReason = null;
+  serverRequested = undefined;
   cleanup();
   vi.unstubAllGlobals();
   delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
@@ -533,5 +536,65 @@ describe("US-QS-14 · US-QS-15 the matching offers are a sub-page with one page 
     server([card(1)]);
     open();
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+});
+
+describe("US-TAU-02 the summary counts the open requests the server holds", () => {
+  it("US-TAU-02 P-10 after a reload the summary counts the open requests from the server", async () => {
+    serverRequested = 4;
+    server([], undefined, [entry(1, "later")]);
+    open();
+    expect(
+      await screen.findByText(/Für jetzt durch. 4 angefragt, 1 für später, 0 abgelehnt./),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-02 a Yes in this session adds one to the count the server gave", async () => {
+    serverRequested = 4;
+    server([card(1), card(2)]);
+    open();
+    await current();
+    await press(/^Ja, anfragen/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    await press(/^Nein/);
+    expect(
+      await screen.findByText(/Für jetzt durch. 5 angefragt, 0 für später, 1 abgelehnt./),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-02 a Yes that finds the offer already requested still counts, as a reload would", async () => {
+    // The request was made elsewhere: the card had no open request of mine at load, so the server count lacks it.
+    serverRequested = 4;
+    server([card(1), card(2)], async () =>
+      response(201, { outcome: "already_requested", swapId: null }),
+    );
+    open();
+    await current();
+    await press(/^Ja, anfragen/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    await press(/^Nein/);
+    expect(
+      await screen.findByText(/Für jetzt durch. 5 angefragt, 0 für später, 1 abgelehnt./),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-02 without a count from the server the summary starts at 0 and counts this session only", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    await press(/^Ja, anfragen/);
+    expect(
+      await screen.findByText(/Für jetzt durch. 1 angefragt, 0 für später, 0 abgelehnt./),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-07 US-ACH-08 calm mode shows no count from the server either", async () => {
+    serverRequested = 4;
+    server([card(1)]);
+    open(true);
+    await current();
+    await press(/^Nein/);
+    expect(await screen.findByText("Für jetzt durch.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/angefragt,|für später,/);
   });
 });

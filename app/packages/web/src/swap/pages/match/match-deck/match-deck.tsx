@@ -134,6 +134,8 @@ export function MatchDeck(props: {
   entries: readonly MatchEntry[];
   /** Why there is no card, from the server (US-TAU-07). */
   empty?: EmptyReason | null;
+  /** My open requests on matching offers, from the server, so the summary survives a reload (US-TAU-02). */
+  requested?: number;
   /** Calm mode: no counters (US-TAU-07, US-ACH-08). */
   calm?: boolean;
   onYes: OnYes;

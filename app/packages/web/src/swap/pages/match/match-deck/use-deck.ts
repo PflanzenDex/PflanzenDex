@@ -44,13 +44,7 @@ const GONE = new Set(["offer.not_active", "offer.not_found"]);
 /** Asks for the offer and turns the answer into a deck action; a refusal that is not "gone" keeps the card (P-10). */
 async function askFor(c: Card, onYes: OnYes, counter: string | null): Promise<DeckAction> {
   const r = await onYes(c.offerId, counter);
-  if (r.ok)
-    return {
-      type: "yes",
-      offerId: c.offerId,
-      requested: r.value.outcome === "requested",
-      notice: YES_NOTICE[r.value.outcome](c),
-    };
+  if (r.ok) return { type: "yes", offerId: c.offerId, notice: YES_NOTICE[r.value.outcome](c) };
   if (GONE.has(r.error.code))
     return { type: "gone", notice: `${errorText(r.error.code)} (${title(c)})` };
   return { type: "refused", error: errorText(r.error.code) };
@@ -88,12 +82,14 @@ function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<De
 export function useDeck(props: {
   cards: readonly Card[];
   entries: readonly MatchEntry[];
+  /** My open requests on matching offers, counted by the server (US-TAU-02); the session adds its own Yes answers. */
+  requested?: number;
   onYes: OnYes;
   onAnswer: OnAnswer;
   onUndo: OnUndo;
 }) {
   const [s, dispatch] = useReducer(deckReducer, undefined, () =>
-    initialDeck(props.cards, props.entries),
+    initialDeck(props.cards, props.entries, props.requested),
   );
   const [busy, setBusy] = useState(false);
   /** The direction the card flies to while its answer is written; `null` while it rests in its place. */

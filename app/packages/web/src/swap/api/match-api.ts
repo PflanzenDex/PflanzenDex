@@ -9,6 +9,8 @@ export interface DeckData {
   readonly entries: readonly MatchEntry[];
   /** Why there is no card to decide (US-TAU-07); `null` when there is one. */
   readonly empty?: EmptyReason | null;
+  /** My open requests on matching offers (US-TAU-02); the summary starts from it, absent counts as 0. */
+  readonly requested?: number;
 }
 
 /** The match deck (US-TAU-01): open offers of friends whose species is on the own wishlist, derived on every request. */

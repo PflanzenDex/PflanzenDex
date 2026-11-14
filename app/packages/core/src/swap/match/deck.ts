@@ -166,12 +166,14 @@ export async function matchDeck(
     readonly entries: readonly MatchEntry[];
     /** Set when `cards` is empty and the counts are known: the reason and so the next step (US-TAU-07). */
     readonly empty: EmptyReason | null;
+    readonly requested: number; // my open requests on matching offers (US-TAU-02)
   }>
 > {
   const r = await readDeck(deps, context, userId, query);
-  return r.ok ? ok({ cards: r.value.cards, entries: r.value.entries, empty: r.value.empty }) : r;
+  if (!r.ok) return r;
+  const { cards, entries, empty, requested } = r.value;
+  return ok({ cards, entries, empty, requested: requested.size });
 }
-
 function stateOf(offer: ExchangeOffer | undefined, card: MatchCard | null): EntryState {
   if (!offer) return "unavailable";
   if (!card) return "wish_done";
