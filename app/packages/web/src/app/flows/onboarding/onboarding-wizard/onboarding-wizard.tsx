@@ -116,6 +116,8 @@ function Step(props: {
       <SaveStep
         species={f.species}
         zones={f.zones}
+        zonesError={f.zonesError}
+        onRetryZones={f.retryZones}
         zoneId={f.zoneId}
         onZone={f.setZoneId}
         error={f.error}

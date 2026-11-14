@@ -2,7 +2,7 @@
 import { cleanup, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { AddPlant } from "./add-plant";
 import { useFirstPlant } from "../onboarding/onboarding-wizard/use-first-plant";
@@ -534,5 +534,65 @@ describe("US-ACC-03 · each step of a further plant is announced once (issue 161
     expect(document.activeElement).toBe(heading);
     expect(liveRegionsSaying("Schritt")).toEqual([]);
     expect(screen.getByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
+  });
+});
+
+const REASON = "Keine Verbindung. Deine Eingabe bleibt hier stehen.";
+
+describe("US-ONB-01 · issue 2098 the zones of a further plant when the device is offline", () => {
+  // The device starts offline; a test sets it online with `link.mockReturnValue(true)`.
+  let link: MockInstance<() => boolean>;
+  beforeEach(() => {
+    link = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+  });
+  afterEach(() => link.mockRestore());
+
+  it("US-ONB-01 offline, the default zones fail with the reason and a retry, never an empty list", async () => {
+    server([], []);
+    view();
+    await toSave();
+    expect(await screen.findByText(REASON)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.queryByRole("combobox", { name: "Lichtbedarf" })).toBeNull();
+    expect(writes.find((w) => w.path === "/light-zones/defaults")).toBeUndefined();
+  });
+
+  it("US-ONB-01 pressing Erneut versuchen online creates the zones and shows the select", async () => {
+    // The server holds the defaults once the device is back: the retry creates them and reads them again.
+    const pending: unknown[] = [];
+    server([], pending);
+    view();
+    await toSave();
+    await screen.findByText(REASON);
+    pending.push(...ZONES);
+    link.mockReturnValue(true);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    const select = await screen.findByRole("combobox", { name: "Lichtbedarf" });
+    expect(within(select).getByRole("option", { name: "Zone 4" })).toBeTruthy();
+    expect(writes.filter((w) => w.path === "/light-zones/defaults")).toHaveLength(1);
+  });
+
+  it("US-ONB-01 · US-BES-03 the species and the typed marker survive the retry of the zones", async () => {
+    const pending: unknown[] = [];
+    server(OWNED, pending);
+    view();
+    await toSave();
+    await screen.findByText(REASON);
+    const marker = (await screen.findByLabelText("Kennzeichen")) as HTMLInputElement;
+    await userEvent.clear(marker);
+    await userEvent.type(marker, "Blau");
+    pending.push(...ZONES);
+    link.mockReturnValue(true);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await screen.findByRole("combobox", { name: "Lichtbedarf" });
+    expect(((await screen.findByLabelText("Kennzeichen")) as HTMLInputElement).value).toBe("Blau");
+    expect(screen.getByText("Monstera deliciosa", { selector: "i" })).toBeTruthy();
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({ marker: "Blau" });
   });
 });

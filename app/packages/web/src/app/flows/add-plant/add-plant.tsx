@@ -101,6 +101,8 @@ function Flow(props: Props & { onAnother: () => void }) {
         <SaveStep
           species={species}
           zones={f.zones}
+          zonesError={f.zonesError}
+          onRetryZones={f.retryZones}
           zoneId={f.zoneId}
           onZone={f.setZoneId}
           error={f.error}

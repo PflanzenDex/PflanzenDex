@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { localToday, specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
-import { errorText } from "@/shared/lib/error-text";
+import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import {
   createSpecimen,
@@ -14,7 +14,7 @@ import {
   type MarkerRule,
 } from "../../../../collection";
 import { currentTimeZone, SIGN_IN, type ApiError } from "../../../../shared/data";
-import { useOwnZones } from "./save-step/save-step";
+import { useOwnZones } from "./save-step/use-own-zones";
 
 type Token = () => Promise<string | undefined>;
 
@@ -87,7 +87,8 @@ export function useFirstPlant(api: string, token: Token) {
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<{ name: string; id: string } | null>(null);
-  const zones = useOwnZones(api, token, species !== null);
+  // The zones keep the species, the marker and the zone choice across a failure and its retry (issue 2098).
+  const own = useOwnZones(api, token, species !== null);
   const marker = useMarkerPart(species?.id ?? null, api, token, refusal);
   // A button that unmounts takes the focus with it: move it to the heading of the new step. Comparing the step, not
   // counting runs: StrictMode runs the effect twice on mount, and the flow must not take the focus by appearing (issue 1362).
@@ -129,7 +130,10 @@ export function useFirstPlant(api: string, token: Token) {
     error,
     saving,
     created,
-    zones,
+    zones: own.zones,
+    /** The German reason the zones could not be read or made, by its code (P-10); `null` while none is held. */
+    zonesError: own.error ? refusalText(own.error) : null,
+    retryZones: own.retry,
     marker,
     save,
   };
