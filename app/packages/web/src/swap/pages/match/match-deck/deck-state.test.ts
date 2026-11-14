@@ -61,6 +61,17 @@ describe("US-TAU-02 deck state", () => {
     expect(deckReducer(s, { type: "confirm", on: true }).confirming).toBe(true);
   });
 
+  it("US-TAU-02 P-10 a reload starts the count from the server, a Yes adds one and the next round keeps it", () => {
+    let s = initialDeck([c("a"), c("b")], [], 4);
+    expect(s.requested).toBe(4);
+    s = deckReducer(s, { type: "yes", offerId: "a", requested: true, notice: "y" });
+    expect(s.requested).toBe(5);
+    s = deckReducer(s, { type: "yes", offerId: "b", requested: false, notice: "already" });
+    expect(s.requested).toBe(5);
+    expect(deckReducer(s, { type: "again" }).requested).toBe(5);
+    expect(initialDeck([c("a")]).requested).toBe(0);
+  });
+
   it("P-08 a card without any name is called unknown", () => {
     expect(cardTitle(c("a"))).toBe("Art unbekannt");
     expect(cardTitle(c("a", { speciesLatin: "Aloe vera" }))).toBe("Aloe vera");

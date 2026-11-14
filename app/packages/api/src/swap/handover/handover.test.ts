@@ -907,7 +907,7 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
     expect(body.cards.map((c: { offerId: string }) => c.offerId)).toContain(offerA2);
     expectExactKeys(
       body,
-      { cards: [MATCH_CARD], entries: [MATCH_ENTRY], empty: true },
+      { cards: [MATCH_CARD], entries: [MATCH_ENTRY], empty: true, requested: true },
       "GET /exchange/match",
     );
     for (const c of body.cards)

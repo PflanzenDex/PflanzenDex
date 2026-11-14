@@ -78,6 +78,7 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
               cards={deck.cards}
               entries={deck.entries}
               empty={deck.empty ?? null}
+              requested={deck.requested ?? 0}
               calm={props.calm ?? false}
               onYes={yes}
               onAnswer={answer}

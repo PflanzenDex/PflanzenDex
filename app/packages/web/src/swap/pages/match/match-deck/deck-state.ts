@@ -28,14 +28,16 @@ export type DeckAction =
   | { type: "remove"; offerId: string }
   | { type: "again" };
 
+/** The deck as the server gave it; `requested` is the count of my open requests on matching offers (US-TAU-02), so a reload keeps the summary right. */
 export const initialDeck = (
   cards: readonly Card[],
   entries: readonly MatchEntry[] = [],
+  requested = 0,
 ): DeckState => ({
   round: cards,
   pos: 0,
   entries,
-  requested: 0,
+  requested,
   last: null,
   notice: null,
   error: null,

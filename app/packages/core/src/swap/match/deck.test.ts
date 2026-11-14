@@ -527,3 +527,52 @@ describe("US-TAU-03 an open request of mine takes the offer out of the deck", ()
     expect(r.ok && r.value.empty).toBe("all_answered");
   });
 });
+
+describe("US-TAU-02 the summary counts my open requests from the server", () => {
+  const A = id(101);
+  const B = id(102);
+  const C = id(103);
+  /** My side of a request as the database releases it to me: the recipient's row (DM-SOZ-03). */
+  const mine = (offerId: string, extra: Partial<SwapSide> = {}) =>
+    swapSide({ swapId: `s-${offerId}`, role: "recipient", otherId: "ben", offerId, ...extra });
+  const requestedOf = async (deps: ExchangeDependencies, user = "anna") => {
+    const r = await deck(deps, user);
+    return r.ok ? r.value.requested : -1;
+  };
+
+  it("US-TAU-02 the deck counts my open requests on matching offers", async () => {
+    // Offer C is for Haworthia fasciata, which is not on my wishlist: my request on it is no match and is not counted.
+    const deps = setup([offer(1), offer(2), offer(3)]);
+    (deps.swaps as InMemoryExchange).sides["anna"] = [mine(A), mine(C)];
+    expect(await requestedOf(deps)).toBe(1);
+    const r = await deck(deps);
+    expect(r.ok && r.value.cards.map((c) => c.offerId)).toEqual([B]);
+  });
+
+  it("US-TAU-02 a declined, withdrawn or canceled request of mine is no open request and is not counted", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    (deps.swaps as InMemoryExchange).sides["anna"] = [
+      mine(A, { status: "declined" }),
+      mine(B, { status: "withdrawn" }),
+    ];
+    expect(await requestedOf(deps)).toBe(0);
+    (deps.swaps as InMemoryExchange).sides["anna"] = [mine(A, { status: "canceled" })];
+    expect(await requestedOf(deps)).toBe(0);
+  });
+
+  it("US-TAU-02 an accepted request is still open and counts; a request I received as the giver does not", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    (deps.swaps as InMemoryExchange).sides["anna"] = [
+      mine(A, { status: "accepted" }),
+      mine(B, { role: "giver" }),
+    ];
+    expect(await requestedOf(deps)).toBe(1);
+  });
+
+  it("US-TAU-02 P-05 P-04 the count holds only my own requests: another keeper's request on the same offer is not counted", async () => {
+    const deps = setup([offer(1)]);
+    (deps.swaps as InMemoryExchange).sides["cleo"] = [mine(A, { swapId: "s-cleo" })];
+    expect(await requestedOf(deps)).toBe(0);
+    expect(await requestedOf(deps, "cleo")).toBe(0);
+  });
+});

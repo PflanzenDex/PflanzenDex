@@ -88,12 +88,14 @@ function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<De
 export function useDeck(props: {
   cards: readonly Card[];
   entries: readonly MatchEntry[];
+  /** My open requests on matching offers, counted by the server (US-TAU-02); the session adds its own Yes answers. */
+  requested?: number;
   onYes: OnYes;
   onAnswer: OnAnswer;
   onUndo: OnUndo;
 }) {
   const [s, dispatch] = useReducer(deckReducer, undefined, () =>
-    initialDeck(props.cards, props.entries),
+    initialDeck(props.cards, props.entries, props.requested),
   );
   const [busy, setBusy] = useState(false);
   /** The direction the card flies to while its answer is written; `null` while it rests in its place. */
