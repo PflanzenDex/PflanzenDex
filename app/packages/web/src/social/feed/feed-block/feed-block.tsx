@@ -5,9 +5,9 @@ import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
-import { keepTogether } from "@/shared/lib/format";
+import { keepTogether, summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame, localDateOf, localTodayIso } from "../../../shared/data";
 import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
@@ -163,7 +163,7 @@ export function FeedBlock(props: {
             <p className="text-sm">
               {feed.hint.text} <strong>{feed.hint.nextAction}</strong>{" "}
               <span className="text-muted-foreground">
-                · {t("feed.asOf", { date: dateText(feed.asOf) })}
+                · {t("feed.asOf", { date: summaryDate(localDateOf(feed.asOf), localTodayIso()) })}
               </span>
             </p>
             {feed.events.length > 0 && (

@@ -28,7 +28,14 @@ function fakeServer(reply: () => Promise<Response>) {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
+
+/** Freezes the clock (Date only, so waits and timers still run) at the given instant. */
+const clockAt = (iso: string) => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(iso));
+};
 
 const render = (ui: React.ReactElement, path = "/today") =>
   plainRender(<MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>);
@@ -72,6 +79,7 @@ const INCOMPLETE = item(
 
 describe("US-QS-18 the most urgent item of Heute", () => {
   it("US-QS-18 shows the date, the single most urgent item with a short chip and its action, the further tasks inline", async () => {
+    clockAt("2026-11-15T10:00:00Z");
     fakeServer(() =>
       response(200, { date: "2026-10-03", upcoming: 2, items: [OVERDUE, PHASE, INCOMPLETE] }),
     );
@@ -306,5 +314,29 @@ describe("US-QS-14 Heute mixes no two secondary styles", () => {
     expect(action.className).toContain("px-[12px]");
     const tasks = screen.getByRole("region", { name: "Weitere Aufgaben" });
     expect(tasks.querySelector("ul")?.className).toContain("[contain:size]");
+  });
+});
+
+describe("US-QS-32 the date of the most urgent item in its summary line", () => {
+  it("US-QS-32 drops 'Stand' while the list is from today", async () => {
+    clockAt("2026-10-03T10:00:00Z");
+    fakeServer(() => response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE] }));
+    render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />);
+    expect(await screen.findByText("10 Tage überfällig")).toBeTruthy();
+    expect(screen.queryByText(/Stand/)).toBeNull();
+  });
+
+  it("US-QS-32 says 'Stand: gestern' when the list is from yesterday", async () => {
+    clockAt("2026-10-03T10:00:00Z");
+    fakeServer(() => response(200, { date: "2026-10-02", upcoming: 0, items: [OVERDUE] }));
+    render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />);
+    expect(await screen.findByText("Stand: gestern")).toBeTruthy();
+  });
+
+  it("US-QS-32 from 8 days back the list shows the absolute date", async () => {
+    clockAt("2026-10-03T10:00:00Z");
+    fakeServer(() => response(200, { date: "2026-09-25", upcoming: 0, items: [OVERDUE] }));
+    render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />);
+    expect(await screen.findByText("Stand: 25.09.2026")).toBeTruthy();
   });
 });

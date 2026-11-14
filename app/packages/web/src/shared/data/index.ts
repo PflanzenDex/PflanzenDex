@@ -20,4 +20,10 @@ export {
 export { SIGN_IN, WRITE_SUCCEEDED, useWriteAction } from "./write-action/use-write-action";
 export { FeaturesProvider, useFeature, useFeatures } from "./client/features/features";
 export type { FeatureStates } from "./client/features/features";
-export { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "./time-zone";
+export {
+  currentTimeZone,
+  deviceTimeZone,
+  localDateOf,
+  localTodayIso,
+  setProfileTimeZone,
+} from "./time-zone";

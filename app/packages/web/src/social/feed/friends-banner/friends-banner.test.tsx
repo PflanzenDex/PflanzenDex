@@ -44,10 +44,18 @@ function server(initial: unknown) {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
+
+/** Freezes the clock (Date only) at the given instant, so "Stand" is relative to a known day (US-QS-32). */
+const clockAt = (iso: string) => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(iso));
+};
 
 describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
   it("US-SOZ-06 names friend and species, says 'Stand' and stays until 'Okay'", async () => {
+    clockAt("2026-11-15T12:00:00Z");
     const { posts } = server(banner());
     render(<FriendsBanner api="http://api" token={token} />);
     const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
@@ -103,5 +111,32 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
     expect(region.textContent).toContain("Freunde haben 3 neue Pflanzen:");
     expect(region.textContent).not.toContain("Stand:");
     expect(screen.getByRole("button", { name: "Okay" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 'Stand' of the banner in a summary line", () => {
+  it("US-QS-32 says 'Stand: heute' on the day the banner was read", async () => {
+    clockAt("2026-10-06T10:05:00Z");
+    server(banner());
+    render(<FriendsBanner api="http://api" token={token} />);
+    const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
+    expect(region.textContent).toContain("Stand: heute");
+    expect(region.textContent).not.toContain("06.10.2026");
+  });
+
+  it("US-QS-32 an older copy shown without a network says 'Stand: vor 3 Tagen'", async () => {
+    clockAt("2026-10-09T12:00:00Z");
+    server(banner());
+    render(<FriendsBanner api="http://api" token={token} />);
+    const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
+    expect(region.textContent).toMatch(/Stand: vor 3\u00a0Tagen/);
+  });
+
+  it("US-QS-32 an old copy from more than 7 days shows the absolute date", async () => {
+    clockAt("2026-11-15T12:00:00Z");
+    server(banner());
+    render(<FriendsBanner api="http://api" token={token} />);
+    const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
+    expect(region.textContent).toContain("Stand: 06.10.2026");
   });
 });

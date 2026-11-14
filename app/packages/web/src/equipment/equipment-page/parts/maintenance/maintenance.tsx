@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { localToday } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { currentTimeZone } from "../../../../shared/data";
+import { localTodayIso } from "../../../../shared/data";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
-import { keepTogether } from "@/shared/lib/format";
+import { dateText, keepTogether, summaryDate } from "@/shared/lib/format";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
@@ -41,6 +40,7 @@ function toInput(f: Record<"since" | "interval" | "value" | "source", string>) {
 }
 
 function Values({ item }: { item: EquipmentRow }) {
+  const today = localTodayIso();
   const lifetime =
     item.lifetimeValue === null
       ? UNKNOWN
@@ -48,7 +48,7 @@ function Values({ item }: { item: EquipmentRow }) {
   return (
     <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm tabular-nums">
       <dt>In Betrieb seit</dt>
-      <dd className="m-0">{item.inOperationSince ?? UNKNOWN}</dd>
+      <dd className="m-0">{item.inOperationSince ? dateText(item.inOperationSince) : UNKNOWN}</dd>
       <dt>Prüfintervall</dt>
       <dd className="m-0">
         {item.checkIntervalDays === null
@@ -56,7 +56,9 @@ function Values({ item }: { item: EquipmentRow }) {
           : keepTogether(`alle ${item.checkIntervalDays} Tage`)}
       </dd>
       <dt>Zuletzt geprüft</dt>
-      <dd className="m-0">{item.lastCheckedOn ?? "noch nie"}</dd>
+      <dd className="m-0">
+        {item.lastCheckedOn ? summaryDate(item.lastCheckedOn, today) : "noch nie"}
+      </dd>
       <dt>Lebensdauer</dt>
       <dd className="m-0 break-words">{lifetime}</dd>
     </dl>
@@ -136,7 +138,7 @@ export function Maintenance(props: { item: EquipmentRow; actions: MaintenanceAct
           variant="secondary"
           disabled={actions.busy}
           aria-label={`Jetzt geprüft: ${item.name}`}
-          onClick={() => actions.onChecked(item, localToday(new Date(), currentTimeZone()))}
+          onClick={() => actions.onChecked(item, localTodayIso())}
         >
           Jetzt geprüft
         </Button>

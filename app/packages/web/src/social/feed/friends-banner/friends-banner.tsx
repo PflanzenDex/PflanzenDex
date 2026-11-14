@@ -2,10 +2,17 @@ import { useCallback, useEffect, useRef } from "react";
 import type { Banner, BannerItem } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { SCREEN_STALE_TIME, useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
+import {
+  localDateOf,
+  localTodayIso,
+  SCREEN_STALE_TIME,
+  useInvalidate,
+  useRequest,
+  useWriteAction,
+} from "../../../shared/data";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
-import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
 import { RequestsNotice } from "../requests-notice/requests-notice";
 import table from "../../social.de.json";
@@ -81,7 +88,7 @@ export function NewPlantsBody(props: {
       </p>
       {compact && !props.offline ? null : (
         <p className="text-sm text-muted-foreground">
-          {t("news.asOf", { date: dateText(news.asOf) })}
+          {t("news.asOf", { date: summaryDate(localDateOf(news.asOf), localTodayIso()) })}
           {props.offline ? t("news.offline") : ""}
         </p>
       )}
@@ -107,7 +114,8 @@ export function NewPlantsBody(props: {
 /**
  * "Friends have N new plants: …" (US-SOZ-06): stays until "Okay". What is new is what became visible to me since the last
  * "Okay" (shared, or the friendship started), read through what friends share (P-05); the banner names friend and species only.
- * "Stand: DD.MM.YYYY" tells when the data is from, so an older copy shown without a network is recognizable (FR-SOZ-03).
+ * "Stand: heute" (or "vor 3 Tagen", else the date) tells when the data is from, so an older copy shown without a network
+ * is recognizable (FR-SOZ-03, US-QS-32).
  * Without news (and on the very first visit) nothing is shown. `quiet` keeps a failed load from adding a second error.
  */
 function NewPlantsBanner(props: { api: string; token: Token; quiet?: boolean; compact?: boolean }) {

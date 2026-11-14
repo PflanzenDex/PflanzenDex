@@ -1,6 +1,6 @@
 import type { EquipmentRow } from "../../../equipment-api";
 import { useFeature } from "../../../../shared/data";
-import { withUnit } from "@/shared/lib/format";
+import { dateText, withUnit } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LAMP_TYPE, POT_TYPE, STATUS_LABELS, TYPE_LABELS } from "../../../labels";
 import table from "../../../equipment.de.json";
@@ -58,7 +58,7 @@ export function ItemCard(props: {
       ? ([["Lichtzone", zone ?? "ohne Zone"]] as [string, string][])
       : []),
     ["Preis", price],
-    ["Gekauft am", item.boughtAt],
+    ["Gekauft am", item.boughtAt ? dateText(item.boughtAt) : null],
   ];
   const facts = [...(all.filter(([, v]) => v) as [string, string][]), ...potRows(item)];
   const unknown = all.filter(([, v]) => !v).map(([l]) => l);

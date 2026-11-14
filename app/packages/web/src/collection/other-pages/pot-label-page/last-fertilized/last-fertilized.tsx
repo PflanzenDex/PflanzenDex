@@ -2,9 +2,9 @@
 // actions. A failed read says why and offers a retry (P-10); the line keeps its place while it loads.
 import type { FertilizingView } from "@pflanzendex/core";
 import { loadLastFertilized } from "@/monitoring";
-import { useRequest } from "@/shared/data";
+import { localTodayIso, useRequest } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
-import { dateText } from "@/shared/lib/format";
+import { summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import table from "../pot-label-page.de.json";
@@ -33,7 +33,7 @@ export function LastFertilized(props: { api: string; token: Token; specimenId: s
           ? null
           : date === null
             ? ui("neverFertilized")
-            : ui("lastFertilized", { date: dateText(date) })}
+            : ui("lastFertilized", { date: summaryDate(date, localTodayIso()) })}
       </p>
     </RequestState>
   );

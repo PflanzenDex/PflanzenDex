@@ -2,7 +2,8 @@ import { cva } from "class-variance-authority";
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
 import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
-import { overdueChip } from "@/shared/lib/format";
+import { overdueChip, summaryDate } from "@/shared/lib/format";
+import { localTodayIso } from "../../../../shared/data";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
@@ -39,6 +40,8 @@ const dueMark = cva("", {
 export function Measurement({ card }: { card: SpecimenCard }) {
   const m = card.lastMeasurement;
   if (!m) return <Quiet>noch keine Messung</Quiet>;
+  // Within 7 days the relative word stands alone ("vor 6 Tagen"); beyond, the absolute date keeps its "am" (SG-FMT-01).
+  const when = summaryDate(m.date, localTodayIso());
   return (
     <>
       <p>
@@ -46,7 +49,7 @@ export function Measurement({ card }: { card: SpecimenCard }) {
         <strong data-quality={m.quality} className={qualityMark({ quality: m.quality })}>
           {QUALITY_TEXT[m.quality]}
         </strong>{" "}
-        am {dateText(m.date)}
+        {when === dateText(m.date) ? <>am {when}</> : when}
       </p>
       {m.quality === "etiolated" && (
         <p className="border-l-4 border-warning-border bg-warning px-2 py-1.5 text-sm text-warning-foreground">
