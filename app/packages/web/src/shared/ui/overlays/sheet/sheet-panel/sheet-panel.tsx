@@ -50,7 +50,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-50 bg-foreground/50">
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-scrim">
             <StatusBarDim />
           </Drawer.Overlay>
           <Drawer.Content

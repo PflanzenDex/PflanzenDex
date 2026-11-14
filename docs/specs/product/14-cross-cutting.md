@@ -524,7 +524,7 @@ Acceptance criteria:
 
 - Given the installed app on Android in light or dark mode, when any view shows, then the status bar and the navigation area below the bottom bar take the page background of the active scheme (light `#fafafa`, dark `#0b0b0c`, the page tokens), and no brand-green strip shows under the bottom bar (US-QS-07).
 - Given the installed app starts, when the splash screen shows, then it is brand green (`#1b6b4a`) with the icon and the name, in light and in dark.
-- Given a sheet or a dialog opens, when its backdrop dims the page, then the status bar takes the dimmed page colour (the foreground at the backdrop opacity of 50 %, composited over the page background: `#89898b` in light, `#808081` in dark), and when the window has left the screen it takes the page background again.
+- Given a sheet or a dialog opens, when its backdrop dims the page, then the status bar takes the dimmed page colour (black at the scrim opacity of 45 %, a starting value and assumption of US-QS-32, composited over the page background: `#8a8a8a` in light, `#060607` in dark), and when the window has left the screen it takes the page background again.
 - Given two backdrops are on screen at once, when one of them leaves, then the status bar stays dimmed until the last one leaves.
 - Given the system switches between light and dark while the app is open, when a backdrop is on screen, then the status bar shows the dimmed colour of the new scheme.
 
