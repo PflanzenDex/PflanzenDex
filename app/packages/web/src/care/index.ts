@@ -33,3 +33,5 @@ export { OpenTreatmentsSkeleton } from "./treatments/open-treatments/open-treatm
 export { CarePhasesSkeleton } from "./phases/care-phases-page/care-phases-page.skeleton";
 // The open treatments as a count, the same request and key as the layer: the app icon's number (US-QS-29).
 export { useOpenCount } from "./shared/api/open-count/open-count";
+// The query key of the open treatments and the treatments of the account: a write of them changes "Heute" (SG-FEED-01).
+export { TREATMENTS } from "./shared/api/query-keys";

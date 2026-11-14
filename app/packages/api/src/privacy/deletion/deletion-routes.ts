@@ -47,7 +47,7 @@ export function deletionRoutes(pool: Pool, clock: () => Date = () => new Date())
 /**
  * The background job that removes an account when its grace period has ended. Without an object store the job fails and
  * retries (photos could not be removed), it never skips them silently (P-10). The identity removal is the one the server
- * composes (`identityRemovalFromEnv`); without its settings the subject stays in the deletion log until the operator
+ * composes (`identityRemovalFor`); without its settings the subject stays in the deletion log until the operator
  * removed the user and marked it (runbook `docs/guides/operations/account-deletion.md`).
  */
 export function deleteAccountHandlers(

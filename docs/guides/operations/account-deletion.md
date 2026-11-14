@@ -46,9 +46,16 @@ The removal at the sign-in service (Keycloak, realm `pflanzendex`) is automated 
 | `IDENTITY_ADMIN_CLIENT_ID`     | the service client (below), e.g. `pflanzendex-identity`                                                              |
 | `IDENTITY_ADMIN_CLIENT_SECRET` | its secret; only in the host's `.env`, never in the repo                                                             |
 
-All four or none. A partial set is named in the API's start log (names only) and the removal stays manual. Without any of them the
-job leaves the subject open and the operator removes the user by hand (below). Why automated: the job must not wait for a manual
-step, and the right it uses is limited to deleting users, so the API gets no realm administration.
+All four or none. A partial set is named in the API's start log (names only, one line for both features) and the removal stays
+manual. Without any of them the job leaves the subject open and the operator removes the user by hand (below). Why automated: the
+job must not wait for a manual step, and the right it uses is limited to the users of the realm, so the API gets no realm
+administration.
+
+The same service client also serves "Auf allen Geräten abmelden" (sign out on all devices, US-ACC-01, issue 2065): the API calls
+`POST <admin base>/users/<subject>/logout` with its token, to end the keeper's sessions at the sign-in service. The role
+`manage-users` covers that logout as well as the removal. Without the four variables that button answers 503 and no session is
+ended. The token request and the call share one budget of 10 seconds, below the 15 seconds the browser waits; a 404 from the
+logout counts as a failure (wrong realm or subject), never as ended.
 
 **Realm change needed once (not in the repo's realm config yet, so it is a manual step):** in the realm `pflanzendex` of the
 sign-in service:
@@ -56,7 +63,8 @@ sign-in service:
 1. Clients, Create client: Client ID `pflanzendex-identity`; Client authentication on (confidential); only the service accounts
    flow on (no standard flow, no direct access grants, no redirect URIs).
 2. Credentials: copy the client secret into `IDENTITY_ADMIN_CLIENT_SECRET` in the host's `.env`.
-3. Service account roles: assign the client role `manage-users` of `realm-management`, and no other role.
+3. Service account roles: assign the client role `manage-users` of `realm-management`, and no other role (it covers both the
+   removal of a user and the logout of its sessions).
 4. Restart the API so it reads the variables. The start log then names nothing about the identity removal.
 
 To rotate the secret: regenerate it in the Credentials tab, put it into `.env`, restart the API. A refused token (401) or

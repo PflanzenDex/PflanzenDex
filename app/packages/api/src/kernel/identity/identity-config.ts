@@ -1,9 +1,10 @@
 import { identityKept, type IdentityRemoval } from "@pflanzendex/core";
 import { keycloakIdentityRemoval } from "./keycloak-identity";
 
-// The identity removal (US-ACC-04, issue 1673): the sign-in service's admin interface, through a service client that may
-// only delete users (realm role `manage-users` of `realm-management`, nothing else). Four variables, all or none; the
-// values never leave the process (no log line, no answer, no database row).
+// The sign-in service's admin interface (US-ACC-04, issue 1673; US-ACC-01, issue 2065): one service client serves the
+// removal of a deleted keeper's user and "Auf allen Geräten abmelden" (the logout of its sessions). It needs only the realm
+// role `manage-users` of `realm-management`, which covers both, and no other role. Four variables, all or none; the values
+// never leave the process (no log line, no answer, no database row).
 const NAMES = [
   "IDENTITY_ADMIN_URL",
   "IDENTITY_TOKEN_URL",
@@ -51,22 +52,30 @@ export function identityAdminConfigFromEnv(
 }
 
 /**
- * The removal the server composes: the sign-in service's admin interface when configured; otherwise the stub, which keeps
- * the subject open for the operator (P-10). A partial configuration is named in the log and keeps the stub, so the API
- * still starts.
+ * The identity settings the server reads once at start: the configuration when all four variables are set, `null` otherwise.
+ * A partial set is named in the log by its variables only, once for both features; the API still starts with `null`.
  */
-export function identityRemovalFromEnv(
+export function identityConfigFromEnv(
   env: NodeJS.ProcessEnv,
   log: (line: string) => void = console.warn,
-  fetchFn?: typeof fetch,
-): IdentityRemoval {
+): IdentityAdminConfig | null {
   const config = identityAdminConfigFromEnv(env);
-  if (config === null) return identityKept;
   if (Array.isArray(config)) {
     log(
-      `Identity removal is manual (the operator marks it in the operator area), missing or invalid: ${config.join(", ")}.`,
+      `Identity settings are partial, missing or invalid: ${config.join(", ")}. The removal of users stays manual and "sign out on all devices" is unavailable.`,
     );
-    return identityKept;
+    return null;
   }
-  return keycloakIdentityRemoval(config, fetchFn);
+  return config;
+}
+
+/**
+ * The removal the server composes: the sign-in service's admin interface when configured; otherwise the stub `identityKept`,
+ * which keeps the subject open for the operator (P-10).
+ */
+export function identityRemovalFor(
+  config: IdentityAdminConfig | null,
+  fetchFn?: typeof fetch,
+): IdentityRemoval {
+  return config === null ? identityKept : keycloakIdentityRemoval(config, fetchFn);
 }

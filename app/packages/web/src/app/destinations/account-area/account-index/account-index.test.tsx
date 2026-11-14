@@ -70,6 +70,7 @@ const show = (
   props: {
     signOut?: () => void;
     everywhere?: () => void;
+    busy?: boolean;
     ai?: boolean;
     achievements?: boolean;
     current?: "settings";
@@ -93,6 +94,7 @@ const show = (
           hasOverview
           onSignOut={props.signOut ?? (() => undefined)}
           onEverywhereSignOut={props.everywhere ?? (() => undefined)}
+          everywhereBusy={props.busy ?? false}
         />
       </MemoryRouter>
     </FeaturesProvider>,
@@ -183,6 +185,30 @@ describe("US-QS-17 the index of Konto", () => {
     expect(signOut).toHaveBeenCalledOnce();
     await userEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-ACC-01 while signing out on all devices runs, its control is busy, keeps the focus and a press does nothing", async () => {
+    fakeServer();
+    const everywhere = vi.fn();
+    show({ everywhere, busy: true });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const control = within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" });
+    expect(control.getAttribute("aria-busy")).toBe("true");
+    expect(control.getAttribute("aria-disabled")).toBe("true");
+    await userEvent.click(control);
+    expect(everywhere).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(control);
+  });
+
+  it("US-ACC-01 the control of signing out on all devices is not busy before a press", async () => {
+    fakeServer();
+    show();
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const control = within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" });
+    expect(control.getAttribute("aria-busy")).toBeNull();
+    expect(control.getAttribute("aria-disabled")).toBeNull();
   });
 
   it("US-DEV-06 the index has a row that opens the page Neu in PflanzenDéx", async () => {

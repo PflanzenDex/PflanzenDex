@@ -11,6 +11,7 @@ const mgr = vi.hoisted(() => {
     removeUser: vi.fn(async () => undefined),
     signinCallback: vi.fn(),
     signinRedirect: vi.fn(async () => undefined),
+    signinSilent: vi.fn<() => Promise<unknown>>(async () => undefined),
     signoutRedirect: vi.fn(async () => undefined),
   };
 });
@@ -28,6 +29,7 @@ vi.mock("oidc-client-ts", () => ({
     removeUser = mgr.removeUser;
     signinCallback = mgr.signinCallback;
     signinRedirect = mgr.signinRedirect;
+    signinSilent = mgr.signinSilent;
     signoutRedirect = mgr.signoutRedirect;
   },
 }));
@@ -54,6 +56,7 @@ async function freshUseSession() {
 
 beforeEach(() => {
   mgr.getUser.mockReset();
+  mgr.signinSilent.mockReset();
   mgr.signinCallback.mockReset();
   mgr.removeUser.mockClear();
   mgr.signinRedirect.mockClear();
@@ -294,35 +297,175 @@ describe("US-ACC-01 session", () => {
     expect(window.sessionStorage.getItem("pflanzendex.register")).toBeNull();
   });
 
-  it("signing out on all devices ends the sessions at the sign-in service and signs out", async () => {
+  it("US-ACC-01 signing out on all devices ends the sessions through the API with the token and signs out", async () => {
     mgr.getUser.mockResolvedValue(user);
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async () => new Response(null, { status: 204 })),
+      vi.fn<typeof fetch>(async () => response(200, { ended: true })),
     );
     await act(() => result.current.everywhereSignOut());
-    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe("http://auth/realm/account/sessions");
-    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.method).toBe("DELETE");
+    // The API ends the sessions; the browser never calls the sign-in service's account API (issue 2065).
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe("http://localhost:3000/account/sessions/end");
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.method).toBe("POST");
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).toMatchObject({
+      Authorization: "Bearer tok",
+    });
+    expect(mgr.removeUser).toHaveBeenCalled();
     expect(result.current.state).toEqual({
       kind: "signedOut",
       hint: "Du bist auf allen Geräten abgemeldet.",
     });
   });
 
-  it("if signing out on all devices fails, the session stays with a visible error (P-10)", async () => {
+  it("US-ACC-01 if signing out on all devices fails, the session stays with the text of its code and the dialog can press again (P-10)", async () => {
+    const text =
+      "Abmelden auf allen Geräten hat nicht geklappt. Die anderen Geräte sind vielleicht noch angemeldet; versuche es gleich noch einmal.";
     mgr.getUser.mockResolvedValue(user);
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async () => response(500)),
+      vi.fn<typeof fetch>(async () =>
+        response(502, { error: { code: "account.sign_out_everywhere_failed", text } }),
+      ),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(result.current.state).toMatchObject({ kind: "signedIn", error: text });
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+    // A second press calls the API again and, once it answers, signs out.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, { ended: true })),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toEqual({
+      kind: "signedOut",
+      hint: "Du bist auf allen Geräten abgemeldet.",
+    });
+  });
+
+  it("US-ACC-01 a second press while signing out on all devices runs makes no second request and the state is busy meanwhile", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    // The first request waits until the test answers it, so the busy state can be seen.
+    let answer: (r: Response) => void = () => undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        () =>
+          new Promise<Response>((resolve) => {
+            answer = resolve;
+          }),
+      ),
+    );
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.everywhereSignOut();
+    });
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({ kind: "signedIn", everywhereBusy: true }),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    answer(new Response(JSON.stringify({ ended: true }), { status: 200 }));
+    await act(() => first);
+    expect(result.current.state).toEqual({
+      kind: "signedOut",
+      hint: "Du bist auf allen Geräten abgemeldet.",
+    });
+  });
+
+  it("US-ACC-01 an expired access token is renewed once, silently, and the sign-out uses the new token", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    mgr.getUser.mockResolvedValueOnce({ access_token: "old", expired: true });
+    mgr.signinSilent.mockResolvedValueOnce({ access_token: "new", expired: false });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, { ended: true })),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(mgr.signinSilent).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).toMatchObject({
+      Authorization: "Bearer new",
+    });
+    expect(mgr.removeUser).toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 an expired access token that cannot be renewed shows the error and ends nothing", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    mgr.getUser.mockResolvedValueOnce({ access_token: "old", expired: true });
+    mgr.signinSilent.mockRejectedValueOnce(new Error("login_required"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, { ended: true })),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(result.current.state).toMatchObject({
+      kind: "signedIn",
+      error: "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+    });
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 without a connection the sign-out says so with its own text, not the one of a write", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
     );
     await act(() => result.current.everywhereSignOut());
     expect(result.current.state).toMatchObject({
       kind: "signedIn",
-      error: "Abmelden auf allen Geräten ist fehlgeschlagen.",
+      error:
+        "Keine Verbindung. Abmelden auf allen Geräten hat nicht geklappt, versuch es gleich noch einmal.",
+    });
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 an unavailable sign-out on all devices shows the text of its code and removes nothing", async () => {
+    const text =
+      "Abmelden auf allen Geräten ist auf diesem Server nicht eingerichtet. Melde dich hier ab; andere Geräte bleiben dann angemeldet.";
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(503, { error: { code: "account.sign_out_everywhere_unavailable", text } }),
+      ),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(result.current.state).toMatchObject({ kind: "signedIn", error: text });
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+  });
+
+  it("US-ACC-01 signing out on all devices without a stored sign-in ends nothing and says so", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    mgr.getUser.mockResolvedValueOnce(undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, { ended: true })),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(result.current.state).toMatchObject({
+      kind: "signedIn",
+      error: "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
     });
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });
@@ -669,7 +812,7 @@ describe("US-ACC-01 Anmelden and Konto anlegen when the sign-in service cannot b
     await act(() => result.current.everywhereSignOut());
     expect(result.current.state).toMatchObject({
       kind: "signedIn",
-      error: "Abmelden auf allen Geräten ist fehlgeschlagen.",
+      error: "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
     });
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });

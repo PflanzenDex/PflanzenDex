@@ -3,7 +3,7 @@ import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet
 import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useRequest } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { loadToday } from "../today-api";
+import { loadToday, TODAY_LIST_KEY } from "../today-api";
 import { isTreatment, type TodayDestination } from "./today-row/today-row";
 import { NowSkeleton, TodaySkeleton } from "./today-skeleton/today-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -14,7 +14,7 @@ const t = texts(table);
 
 export type { TodayDestination };
 
-const KEY = ["today", "list"] as const;
+const KEY = TODAY_LIST_KEY;
 const TASKS = "tasks";
 /**
  * The central "Today" list (TE-07): what needs action today, most urgent first: treatments overdue or due, plants

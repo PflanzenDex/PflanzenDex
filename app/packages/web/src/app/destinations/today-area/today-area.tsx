@@ -21,6 +21,7 @@ import {
   type TodaySection,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { TodayOverview } from "./today-overview/today-overview";
+import { useTodayFollowsWrites } from "./today-follows-writes/today-follows-writes";
 import { WateringView, useWateringFilter } from "./watering-view/watering-view";
 
 type Token = () => Promise<string | undefined>;
@@ -69,6 +70,8 @@ export function TodayArea(props: {
 }) {
   useFormerAnchors();
   usePreloadParts();
+  // The list follows every write that changes what it derives from, wherever it is made (SG-FEED-01).
+  useTodayFollowsWrites();
   const treatments = useLayer("treatments");
   const hints = useLayer("hints");
   // The layer `plan` is the planning layer of the treatments (`PlanLayer`, its address value is `plan`).

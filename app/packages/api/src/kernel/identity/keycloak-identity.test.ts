@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { identityKept } from "@pflanzendex/core";
 import {
   identityAdminConfigFromEnv,
-  identityRemovalFromEnv,
+  identityConfigFromEnv,
+  identityRemovalFor,
   type IdentityAdminConfig,
 } from "./identity-config";
+import { adminRequest, IDENTITY_BUDGET_MS } from "./admin-client";
 import { keycloakIdentityRemoval } from "./keycloak-identity";
 
 // US-ACC-04 (issue 1673): the identity removal at the sign-in service. The fake fetch answers; no real service is called.
@@ -15,7 +17,13 @@ const config: IdentityAdminConfig = {
   clientId: "pflanzendex-identity",
   clientSecret: SECRET,
 };
-type Call = { url: string; method: string; headers: Record<string, string>; body: string };
+type Call = {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  signal?: AbortSignal;
+};
 
 /** A fake fetch: the token answer and the delete answer are chosen per test; every call is recorded. */
 function fakeFetch(
@@ -30,6 +38,7 @@ function fakeFetch(
       method: init?.method ?? "GET",
       headers: (init?.headers ?? {}) as Record<string, string>,
       body: String(init?.body ?? ""),
+      ...(init?.signal ? { signal: init.signal } : {}),
     });
     const answer = isToken ? token : remove;
     if (answer instanceof Error) throw answer;
@@ -92,7 +101,7 @@ describe("US-ACC-04 the identity removal at the sign-in service", () => {
   });
 });
 
-describe("US-ACC-04 the identity removal is configured by four variables, all or none", () => {
+describe("US-ACC-04 the identity settings are read once and are four variables, all or none", () => {
   const full = {
     IDENTITY_ADMIN_URL: config.adminUrl,
     IDENTITY_TOKEN_URL: config.tokenUrl,
@@ -100,21 +109,22 @@ describe("US-ACC-04 the identity removal is configured by four variables, all or
     IDENTITY_ADMIN_CLIENT_SECRET: SECRET,
   };
 
-  it("US-ACC-04 none set: no configuration, the stub keeps the subject open", async () => {
+  it("US-ACC-04 none set: no configuration, one stub keeps the subject open, and nothing is logged", async () => {
     expect(identityAdminConfigFromEnv({})).toBeNull();
     const logged: string[] = [];
-    const removal = identityRemovalFromEnv({}, (line) => logged.push(line));
+    const removal = identityRemovalFor(identityConfigFromEnv({}, (line) => logged.push(line)));
     expect(removal).toBe(identityKept);
     expect(logged).toEqual([]);
     expect(await removal.remove("sub-1")).toEqual({ ok: true, value: "pending" });
   });
 
-  it("US-ACC-04 a partial set keeps the stub, names the missing variables and never a value", async () => {
+  it("US-ACC-04 a partial set is logged once for both features, names the variables and never a value", () => {
     const partial: Record<string, string> = { ...full };
     delete partial["IDENTITY_ADMIN_CLIENT_SECRET"];
     const logged: string[] = [];
-    const removal = identityRemovalFromEnv(partial, (line) => logged.push(line));
-    expect(removal).toBe(identityKept);
+    const config = identityConfigFromEnv(partial, (line) => logged.push(line));
+    expect(config).toBeNull();
+    expect(identityRemovalFor(config)).toBe(identityKept);
     expect(logged).toHaveLength(1);
     expect(logged[0]).toContain("IDENTITY_ADMIN_CLIENT_SECRET");
     expect(logged.join("\n")).not.toContain(SECRET);
@@ -129,10 +139,25 @@ describe("US-ACC-04 the identity removal is configured by four variables, all or
   it("US-ACC-04 all four set: the service removes the user, and the secret never reaches a log line", async () => {
     const logged: string[] = [];
     const { calls, fetchFn } = fakeFetch(tokenOk());
-    const removal = identityRemovalFromEnv(full, (line) => logged.push(line), fetchFn);
+    const removal = identityRemovalFor(
+      identityConfigFromEnv(full, (line) => logged.push(line)),
+      fetchFn,
+    );
     expect(await removal.remove("sub-1")).toEqual({ ok: true, value: "removed" });
     expect(calls).toHaveLength(2);
     expect(logged).toEqual([]);
     expect(JSON.stringify(calls.map((c) => c.url))).not.toContain(SECRET);
+  });
+});
+
+describe("US-ACC-01 the token and the request share one deadline, below the browser's 15 seconds", () => {
+  it("US-ACC-01 both calls of one request carry the same signal, and its budget is 10 seconds", async () => {
+    const { calls, fetchFn } = fakeFetch(tokenOk());
+    await adminRequest(config, fetchFn, "POST", "/users/sub-1/logout");
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.signal).toBeDefined();
+    expect(calls[1]?.signal).toBe(calls[0]?.signal);
+    expect(IDENTITY_BUDGET_MS).toBe(10_000);
+    expect(IDENTITY_BUDGET_MS).toBeLessThan(15_000);
   });
 });

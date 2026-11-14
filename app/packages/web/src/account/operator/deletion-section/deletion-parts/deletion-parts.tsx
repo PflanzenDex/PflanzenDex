@@ -3,7 +3,7 @@ import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { DeletionEntry } from "../../../api/access-api";
-import { BUSY_LOOK } from "../../operator-cost/operator-cost";
+import { BUSY_LOOK } from "@/shared/lib/utils";
 import table from "../deletion-section.de.json";
 
 const t = texts(table);
