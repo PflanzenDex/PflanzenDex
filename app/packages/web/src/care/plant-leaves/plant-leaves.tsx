@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import {
   localToday,
   type LeafDirection,
@@ -136,21 +137,22 @@ function LeafLog({ api, token, specimenId }: Props) {
         {t("heading")}
       </h3>
       {/* Two equal columns: both buttons keep their 48 px height and do not wrap on a 360 px phone (US-WAC-07). */}
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
-          size="touch"
-          disabled={writes.busy}
-          needsNetwork
-          reasonInline={false}
-          onClick={() => void quick()}
-        >
-          {t("newLeaf")}
-        </Button>
-        <Button type="button" variant="outline" size="touch" onClick={() => setFormOpen(true)}>
-          {t("withDetails")}
-        </Button>
-      </div>
+      <NetworkSlot>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            size="touch"
+            disabled={writes.busy}
+            needsNetwork
+            onClick={() => void quick()}
+          >
+            {t("newLeaf")}
+          </Button>
+          <Button type="button" variant="outline" size="touch" onClick={() => setFormOpen(true)}>
+            {t("withDetails")}
+          </Button>
+        </div>
+      </NetworkSlot>
       {refusal && <RefusalAlert error={refusal} />}
       <LoadFrame
         queryKey={key}

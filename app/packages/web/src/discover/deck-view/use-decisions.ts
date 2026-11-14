@@ -3,6 +3,8 @@ import { useRef, useState } from "react";
 import { errorText } from "@/shared/lib/error-text";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { useAnnounce } from "@/shared/platform/announcer/context";
+import { useOnline } from "@/shared/platform/browser/network";
+import { offlineReason } from "@/shared/ui/button/network-gate/network-gate";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Response } from "../../shared/data";
 import table from "../discover.de.json";
@@ -43,6 +45,9 @@ const RESULT = {
   yes: t("deck.result.yes"),
   undone: t("deck.result.undone"),
 } as const;
+
+/** The directions whose decision writes nothing: "Später" (up and down). */
+const WRITES_NOTHING: ReadonlySet<SwipeDirection> = new Set<SwipeDirection>(["up", "down"]);
 
 /** The side a card left by its decision, so "Rückgängig" brings it back from there (US-ENT-10). */
 const SIDE = { yes: "right", no: "left" } as const satisfies Record<"yes" | "no", SwipeDirection>;
@@ -108,5 +113,33 @@ export function useDecisions(onDecide: OnDecide, onUndo: OnUndo, moves: Moves) {
     setReturned(SIDE[taken.decision]);
     moves.back();
   };
-  return { saved, error, decide, undo, taken, exit, setExit, returned };
+  const { fly, takeBack } = useDeckGate(exit, setExit, undo, announce);
+  return { saved, error, decide, undo, taken, exit, setExit, returned, fly, takeBack };
+}
+
+/**
+ * The network gate of the deck (US-ENT-04, US-QS-30): "Ja" and "Nein" write at once, so offline a swipe, a key or a button
+ * does nothing and the reason is said; "Später" writes nothing (DECISION in deck-view: up and down) and stays open offline.
+ * "Rückgängig" writes the take-back, so it needs the network too.
+ */
+function useDeckGate(
+  exit: SwipeDirection | null,
+  setExit: (d: SwipeDirection) => void,
+  undo: () => Promise<void>,
+  announce: ((text: string) => void) | undefined,
+) {
+  const online = useOnline();
+  const fly = (d: SwipeDirection) => {
+    if (exit !== null) return;
+    if (!online && !WRITES_NOTHING.has(d)) {
+      announce?.(offlineReason);
+      return;
+    }
+    setExit(d);
+  };
+  const takeBack = () => {
+    if (online) void undo();
+    else announce?.(offlineReason);
+  };
+  return { fly, takeBack };
 }

@@ -99,6 +99,7 @@ export function CostForm(props: {
           <Button
             type="submit"
             size="touch"
+            needsNetwork
             className={cn("w-full", BUSY_LOOK)}
             aria-disabled={props.running || undefined}
             aria-busy={props.running || undefined}

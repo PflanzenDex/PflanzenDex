@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
@@ -97,18 +98,20 @@ function StepActions(props: {
     );
   return (
     <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
-      <Button
-        type="submit"
-        size="touch"
-        pending={props.pending}
-        pendingLabel="Speichert …"
-        needsNetwork
-      >
-        Vorschlag speichern
-      </Button>
-      <Button type="button" variant="secondary" onClick={props.onBack}>
-        Zurück
-      </Button>
+      <NetworkSlot>
+        <Button
+          type="submit"
+          size="touch"
+          pending={props.pending}
+          pendingLabel="Speichert …"
+          needsNetwork
+        >
+          Vorschlag speichern
+        </Button>
+        <Button type="button" variant="secondary" onClick={props.onBack}>
+          Zurück
+        </Button>
+      </NetworkSlot>
     </div>
   );
 }

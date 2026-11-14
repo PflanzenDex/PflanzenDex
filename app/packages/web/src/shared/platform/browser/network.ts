@@ -1,8 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-/** Whether the device believes it has a network (DS-10: components never read `navigator` themselves). */
+/**
+ * Whether the device believes it has a network (DS-10: components never read `navigator` themselves). Only an explicit
+ * `false` is offline: an environment without the flag (no browser) counts as online, as before the write refusal (US-QS-30).
+ */
 export function isOnline(): boolean {
-  return typeof navigator === "undefined" || navigator.onLine;
+  return typeof navigator === "undefined" || navigator.onLine !== false;
 }
 
 function subscribe(notify: () => void): () => void {

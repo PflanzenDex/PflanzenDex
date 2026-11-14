@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
@@ -97,25 +98,27 @@ export function InvitationPage(props: {
  */
 function InvitationButtons(props: { pending: boolean; onSignOut: () => void }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row">
-      <Button
-        type="submit"
-        size="touch"
-        disabled={props.pending}
-        className="sm:flex-1"
-        needsNetwork
-      >
-        Registrieren
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="touch"
-        onClick={props.onSignOut}
-        className="sm:flex-1"
-      >
-        Abmelden
-      </Button>
-    </div>
+    <NetworkSlot>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          type="submit"
+          size="touch"
+          disabled={props.pending}
+          className="sm:flex-1"
+          needsNetwork
+        >
+          Registrieren
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          onClick={props.onSignOut}
+          className="sm:flex-1"
+        >
+          Abmelden
+        </Button>
+      </div>
+    </NetworkSlot>
   );
 }

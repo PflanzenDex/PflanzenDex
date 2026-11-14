@@ -411,16 +411,16 @@ describe("AppShell offline banner (US-QS-14, P-09, P-10)", () => {
     state.mockRestore();
   });
 
-  it("US-QS-30 the offline note promises no later sending: changes are possible online again (issue 1863)", () => {
+  it("US-QS-30 the offline note says what is sent later and what waits for the network (owner decision 2026-11-14)", () => {
     const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     at("/", <AppShell items={make(3)}>Inhalt</AppShell>);
     try {
       expect(
         screen.getByText(
-          "Angezeigte Daten können veraltet sein. Änderungen sind erst wieder online möglich.",
+          "Manches wird gesendet, sobald du wieder online bist. Anderes geht erst wieder mit Verbindung.",
         ),
       ).toBeTruthy();
-      expect(document.body.textContent).not.toMatch(/sobald du wieder online bist/);
+      expect(document.body.textContent).not.toMatch(/Änderungen sind erst wieder online möglich/);
     } finally {
       state.mockRestore();
     }

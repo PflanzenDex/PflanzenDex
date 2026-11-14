@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import type { Suggestion, SuggestionDeck } from "@pflanzendex/core";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeckView } from "./deck-view";
 
@@ -215,5 +216,28 @@ describe("US-ENT-04 Rückgängig is offered only after a Yes or No", () => {
   it("US-ENT-04 no undo button before a decision is written", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
+  });
+});
+
+describe("US-QS-30 the deck's network decisions wait offline (US-ENT-04)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("US-QS-30 offline Ja and Nein do not write and the card stays; Später still moves on", async () => {
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const onDecide = vi.fn(saveOk);
+    render(
+      <DeckView deck={deck} onDecide={onDecide} onUndo={undoOk} onNewDeck={() => undefined} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    expect(onDecide).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Ja" }).getAttribute("aria-disabled")).toBe("true");
+    const later = screen.getByRole("button", { name: "Später" });
+    expect(later.hasAttribute("aria-disabled")).toBe(false);
+    await userEvent.click(later);
+    expect(onDecide).not.toHaveBeenCalled();
+    expect(screen.getByText("Aloe vera")).toBeTruthy();
+    state.mockReturnValue(true);
+    act(() => window.dispatchEvent(new Event("online")));
+    expect(screen.getByRole("button", { name: "Ja" }).hasAttribute("aria-disabled")).toBe(false);
   });
 });

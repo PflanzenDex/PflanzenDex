@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useCallback, useState } from "react";
 import {
   useForm,
@@ -71,16 +72,18 @@ export function FormButtons(props: {
   onCancel?: (() => void) | undefined;
 }) {
   return (
-    <div className="flex flex-col gap-3 md:col-span-2 md:flex-row">
-      <Button type="submit" disabled={props.running} needsNetwork>
-        {props.label}
-      </Button>
-      {props.onCancel && (
-        <Button type="button" variant="secondary" onClick={props.onCancel}>
-          {t("form.cancel")}
+    <NetworkSlot className="md:col-span-2">
+      <div className="flex flex-col gap-3 md:col-span-2 md:flex-row">
+        <Button type="submit" disabled={props.running} needsNetwork>
+          {props.label}
         </Button>
-      )}
-    </div>
+        {props.onCancel && (
+          <Button type="button" variant="secondary" onClick={props.onCancel}>
+            {t("form.cancel")}
+          </Button>
+        )}
+      </div>
+    </NetworkSlot>
   );
 }
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
@@ -112,14 +113,16 @@ export function FormButtons(props: {
   onCancel: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row">
-      <Button type="submit" size="touch" pending={props.pending} needsNetwork>
-        {props.submit}
-      </Button>
-      <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>
-        {props.cancel}
-      </Button>
-    </div>
+    <NetworkSlot>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button type="submit" size="touch" pending={props.pending} needsNetwork>
+          {props.submit}
+        </Button>
+        <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>
+          {props.cancel}
+        </Button>
+      </div>
+    </NetworkSlot>
   );
 }
 
