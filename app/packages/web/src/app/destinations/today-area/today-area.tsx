@@ -173,7 +173,6 @@ function Tasks(props: {
       </LayerSheet>
       <LayerSheet id="watering" title="Gießen">
         <InLayer skeleton={<WateringLayerSkeleton />}>
-          {/* The layer pages with its own address part: the further tasks of the screen behind keep `from` (issue 2070). */}
           <WateringList api={api} token={token} param={LAYER_PARAM} />
         </InLayer>
       </LayerSheet>
