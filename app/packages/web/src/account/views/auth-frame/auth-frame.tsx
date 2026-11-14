@@ -1,4 +1,8 @@
 import type { ReactNode } from "react";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../views.de.json";
+
+const t = texts(table);
 
 /** The three value lines of the frame; the sign-in theme shows the same three (app/config/dev/keycloak-theme, US-QS-14). */
 const VALUE_LINES = [
@@ -52,18 +56,30 @@ function ShelfDrawing() {
 
 /**
  * The frame of the entry pages (US-QS-14): on a wide screen a calm panel with the drawing and the value lines on the
- * left and the content on the right; on a phone a band with the drawing above the content. The sign-in theme of the
- * Keycloak pages uses the same frame, the same tokens and the same German texts. Above 1920 px it keeps its 1920 px
- * layout, centred, like the app shell; its page colour makes the whole column the painted area (US-QS-14, issue 1160).
+ * left and the content on the right; on a phone a band with the drawing and the value lines above the content (owner
+ * decision Q-156, 2026-11-14: the value lines show on every screen). On a phone the band is at most 36 % of the window
+ * height (starting value, assumption) and scrolls inside itself beyond that, so at a large text size the content below
+ * stays on one screen (owner decision 2026-11-14, option a; one-screen gate, 200 % text). The band is a named, keyboard
+ * reachable region on every size (WCAG 4.1.2, 2.1.1). The sign-in theme of the Keycloak pages uses the same frame, the
+ * same tokens and the same German texts. Above 1920 px it keeps its 1920 px layout, centred, like the app shell; its page
+ * colour makes the whole column the painted area (US-QS-14, issue 1160).
  */
 export function AuthFrame(props: { children: ReactNode }) {
   return (
     <div className="mx-auto grid min-h-dvh w-full max-w-480 grid-cols-1 content-start bg-background md:grid-cols-2 md:content-stretch">
-      <div className="flex flex-col items-center justify-center gap-3 bg-muted px-4 py-1.5 md:gap-8 md:p-12">
+      {/*
+       * The focus ring is inset: a ring outside the box would be cut off by the scroll area of the band on a phone.
+       */}
+      <div
+        role="region"
+        aria-label={t("frame.region")}
+        tabIndex={0}
+        className="flex max-h-[36dvh] flex-col items-center justify-start gap-3 overflow-y-auto overscroll-contain bg-muted px-4 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:max-h-none md:justify-center md:gap-8 md:overflow-visible md:p-12"
+      >
         <ShelfDrawing />
-        <ul className="hidden list-none text-lg leading-snug text-muted-foreground md:block md:max-w-[440px]">
+        <ul className="list-none text-base leading-snug text-muted-foreground md:max-w-[440px] md:text-lg">
           {VALUE_LINES.map((line, index) => (
-            <li key={line} className={index > 0 ? "mt-3" : undefined}>
+            <li key={line} className={index > 0 ? "mt-2 md:mt-3" : undefined}>
               {line}
             </li>
           ))}

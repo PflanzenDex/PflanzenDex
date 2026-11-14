@@ -3,6 +3,7 @@
   "welcome.signIn": "Anmelden",
   "welcome.register": "Konto anlegen",
   "welcome.switchAccount": "Konto wechseln",
+  "frame.region": "Über PflanzenDéx",
   "loading.label": "Einen Moment, die Anmeldung wird geprüft …",
   "error.retry": "Erneut versuchen",
   "error.reloadPage": "Seite neu laden",
