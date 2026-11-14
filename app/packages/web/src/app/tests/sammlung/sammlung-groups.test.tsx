@@ -167,14 +167,18 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=plants&sheet=view");
   });
 
-  it("US-QS-19 · US-LIC-01 grouped by location the groups are a row of choices with their count; unknown values are named", async () => {
+  it("US-QS-19 · US-LIC-01 · US-QS-32 · SG-ICON-01 grouped by location the groups are a row of choices with their count; the chosen one has a check icon; unknown values are named", async () => {
     renderAt("/collection?view=plants&group=location");
     const row = await screen.findByRole("group", { name: "Standort wählen" });
     expect(
       within(row)
         .getAllByRole("button")
-        .map((b) => b.textContent),
-    ).toEqual(["✓Flur (1)", "Wohnzimmer (2)", "Standort unbekannt (1)"]);
+        .map((b) => [b.textContent, b.querySelector("svg.lucide-check") !== null]),
+    ).toEqual([
+      ["Flur (1)", true],
+      ["Wohnzimmer (2)", false],
+      ["Standort unbekannt (1)", false],
+    ]);
     expect(screen.getByText("Flur · Zone unbekannt · 1 Pflanze")).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     await userEvent.click(within(row).getByRole("button", { name: /Wohnzimmer/ }));

@@ -164,3 +164,50 @@ describe("US-QS-15 the rhythm beside a pane (issue 1640)", () => {
     expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
   });
 });
+
+describe("US-QS-32 · SG-ICON-01 the weeks are lucide icons with a legend, no glyph text", () => {
+  it("US-QS-32 · SG-ICON-01 each week shows its state as one decorative icon and no glyph; its name stays the sr-only text", async () => {
+    show(200, answer());
+    const items = await screen.findAllByRole("listitem");
+    expect(items).toHaveLength(5);
+    // none, on_time, on_time, open, pending: Minus, Check, Check, CircleDot, Clock (SG-ICON-01).
+    expect(
+      items.map(
+        (li) =>
+          li
+            .querySelector("svg")
+            ?.getAttribute("class")
+            ?.match(/lucide-[a-z-]+/)?.[0],
+      ),
+    ).toEqual([
+      "lucide-minus",
+      "lucide-check",
+      "lucide-check",
+      "lucide-circle-dot",
+      "lucide-clock",
+    ]);
+    for (const li of items) {
+      expect(li.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+      expect(li.textContent).not.toMatch(/[✓•…–]/);
+    }
+    expect(items[1]?.textContent).toBe("Woche vom 01.02.2026: pünktlich");
+  });
+
+  it("US-QS-32 · SG-ICON-01 one visible legend line under the grid pairs each icon with its word", async () => {
+    show(200, answer());
+    const list = await screen.findByRole("list", { name: "Die letzten 12 Wochen" });
+    const legend: [string, string][] = [
+      ["pünktlich", "lucide-check"],
+      ["offen", "lucide-circle-dot"],
+      ["läuft noch", "lucide-clock"],
+      ["nichts fällig", "lucide-minus"],
+    ];
+    for (const [word, icon] of legend) {
+      const entry = screen.getByText(word);
+      expect(entry.querySelector(`svg.${icon}`)).not.toBeNull();
+      expect(entry.closest("ol")).toBeNull();
+      expect(entry.className).not.toContain("sr-only");
+      expect(list.compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+});

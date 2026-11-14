@@ -99,10 +99,7 @@ const arrangement = async () => {
   const group = await screen.findByRole("group", { name: "Anordnung der Arten" });
   return within(group)
     .getAllByRole("button")
-    .map(
-      (b) =>
-        `${b.textContent?.replace("✓", "")}${b.getAttribute("aria-pressed") === "true" ? " *" : ""}`,
-    );
+    .map((b) => `${b.textContent}${b.getAttribute("aria-pressed") === "true" ? " *" : ""}`);
 };
 
 beforeAll(async () => {
@@ -277,6 +274,17 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByText(/Lege in der Sammlung eine Pflanze an/)).toBeTruthy();
     expect(await arrangement()).toEqual(["Pokédex", "Schwierigkeit *"]);
+  });
+
+  it("US-QS-32 · SG-ICON-01 the chosen arrangement in the layer Ansicht is marked by a check icon, not a glyph", async () => {
+    renderAt("/collection?view=species");
+    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    await openView();
+    const group = await screen.findByRole("group", { name: "Anordnung der Arten" });
+    const [pokedex, difficulty] = within(group).getAllByRole("button");
+    expect(pokedex?.querySelector("svg.lucide-check")?.getAttribute("aria-hidden")).toBe("true");
+    expect(difficulty?.querySelector("svg")).toBeNull();
+    expect(pokedex?.textContent).not.toContain("✓");
   });
 
   it("US-QS-14 · issue 1096 the species mode offers the arrangement Pokédex and Schwierigkeit in the layer Ansicht beside the title; the Pokédex is the default", async () => {

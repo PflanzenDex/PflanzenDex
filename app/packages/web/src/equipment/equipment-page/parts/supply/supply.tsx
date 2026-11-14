@@ -4,6 +4,7 @@ import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
 import { SUPPLY_LABELS } from "../../../labels";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const LEVELS = ["available", "low", "empty"] as const satisfies readonly SupplyLevel[];
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
@@ -70,9 +71,9 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
       </div>
       {item.type === "Plant agent" ? (
         <details>
-          <summary className="cursor-pointer">
+          <DisclosureSummary className="cursor-pointer">
             Verknüpfung mit Behandlungen{item.agentLink ? `: ${item.agentLink}` : " (keine)"}
-          </summary>
+          </DisclosureSummary>
           <LinkForm key={`${item.id}:${item.agentLink}`} item={item} actions={actions} />
         </details>
       ) : null}

@@ -119,20 +119,21 @@ describe("US-POK-08 search", () => {
 });
 
 describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
-  it("US-POK-08 'Alle' and 'Gefangen' are available and the chosen one is marked", async () => {
+  it("US-POK-08 · US-QS-32 · SG-ICON-01 'Alle' and 'Gefangen' are available and the chosen one is marked by a check icon", async () => {
     await open();
     const layer = await openFilters();
     expect(screen.queryByText("Fehlend")).toBeNull();
     const all = within(layer).getByRole("button", { name: "Alle" });
     expect(all.getAttribute("aria-pressed")).toBe("true");
-    // The marker is a visible check mark, not only aria-pressed (US-POK-08, DS-19).
-    expect(all.textContent).toContain("✓");
+    // The marker is a visible check icon, not only aria-pressed (US-POK-08, DS-19; SG-ICON-01: no glyph).
+    expect(all.querySelector("svg.lucide-check")?.getAttribute("aria-hidden")).toBe("true");
+    expect(all.textContent).not.toContain("✓");
     await userEvent.click(within(layer).getByRole("button", { name: "Gefangen" }));
     const caughtChip = within(layer).getByRole("button", { name: "Gefangen" });
     expect(caughtChip.getAttribute("aria-pressed")).toBe("true");
-    expect(caughtChip.textContent).toContain("✓");
+    expect(caughtChip.querySelector("svg.lucide-check")).not.toBeNull();
     expect(all.getAttribute("aria-pressed")).toBe("false");
-    expect(all.textContent).not.toContain("✓");
+    expect(all.querySelector("svg")).toBeNull();
     expect(shown()).toHaveLength(3);
   });
 
@@ -187,15 +188,19 @@ describe("US-POK-08 sort", () => {
     expect(within(layer).getByText(/Artenzahl der Gattungen ist noch unbekannt/)).toBeTruthy();
   });
 
-  it("US-POK-08 · US-QS-22 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
+  it("US-POK-08 · US-QS-22 · US-QS-32 · SG-ICON-01 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
     await open();
     await sortBy("Familie");
     const choices = screen.getByRole("group", { name: "Familie wählen" });
+    // The chosen family carries a check icon, the others none (SG-ICON-01).
     expect(
       within(choices)
         .getAllByRole("button")
-        .map((b) => b.textContent),
-    ).toEqual(["✓Asphodelaceae (1)", "Moraceae (2)"]);
+        .map((b) => [b.textContent, b.querySelector("svg") !== null]),
+    ).toEqual([
+      ["Asphodelaceae (1)", true],
+      ["Moraceae (2)", false],
+    ]);
     expect(shown()).toEqual(["Aloe vera"]);
     await userEvent.click(within(choices).getByRole("button", { name: /Moraceae/ }));
     expect(screen.getByText(/Moraceae \(Maulbeergewächse\) · 2 \/ unbekannt/)).toBeTruthy();
@@ -225,11 +230,12 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
     expect(screen.queryByText(/Familie unbekannt/)).toBeNull();
   });
 
-  it("US-QS-08 · WCAG 2.5.3 the species entry's accessible name is its visible text (no aria-label, no chevron in the text)", async () => {
+  it("US-QS-08 · WCAG 2.5.3 · US-QS-32 · SG-ICON-01 the species entry's accessible name is its visible text (no aria-label, the chevron is an icon, not text)", async () => {
     await open();
     const entry = screen.getByRole("button", { name: /^Aloe vera/ });
     expect(entry.hasAttribute("aria-label")).toBe(false);
     expect(entry.textContent).not.toContain("›");
+    expect(entry.querySelector("svg[data-chevron]")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("US-POK-09 · US-QS-22 a species opens its details in a layer and Escape returns the focus to its entry", async () => {

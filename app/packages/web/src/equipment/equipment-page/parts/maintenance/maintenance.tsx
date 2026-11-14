@@ -9,6 +9,7 @@ import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
 import { keepTogether } from "@/shared/lib/format";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 const UNKNOWN = "unbekannt";
@@ -126,7 +127,7 @@ export function Maintenance(props: { item: EquipmentRow; actions: MaintenanceAct
   if (item.status === null) return null;
   return (
     <details className="mt-2 text-sm">
-      <summary className="cursor-pointer">Betrieb und Wartung</summary>
+      <DisclosureSummary className="cursor-pointer">Betrieb und Wartung</DisclosureSummary>
       <div className="mt-2 flex flex-col gap-2">
         <Values item={item} />
         <Button

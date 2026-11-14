@@ -3,6 +3,7 @@ import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
 import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
 import { overdueChip } from "@/shared/lib/format";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
 // (US-QS-23) places them in its tabs; derived data only.
@@ -54,9 +55,9 @@ export function Measurement({ card }: { card: SpecimenCard }) {
       )}
       {m.note && (
         <details>
-          <summary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <DisclosureSummary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             Notiz der Messung
-          </summary>
+          </DisclosureSummary>
           <p>{m.note}</p>
         </details>
       )}

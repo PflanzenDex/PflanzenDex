@@ -7,6 +7,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import { cn } from "@/shared/lib/utils";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 type MoreFieldsProps = {
   /** Open while true: a field inside holds a value or a refusal (P-10). */
@@ -39,14 +40,14 @@ export function MoreFields({
       onToggle={(event) => setManual(event.currentTarget.open)}
       className={cn("rounded-lg border border-border", className)}
     >
-      <summary
+      <DisclosureSummary
         onClick={(event) => {
           if (forced) event.preventDefault();
         }}
-        className="flex min-h-11 cursor-pointer items-center rounded-lg px-3 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="min-h-11 rounded-lg px-3 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {label}
-      </summary>
+      </DisclosureSummary>
       {/*
         One column that may shrink (US-QS-15, DS-61): an auto column grows to the widest min-content of a field, so a
         textarea at a large text size pushed the group past the edge of the phone.

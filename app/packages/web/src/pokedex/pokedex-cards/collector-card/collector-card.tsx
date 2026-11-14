@@ -9,6 +9,7 @@ import { Badge } from "@/shared/ui/display/badge/badge";
 import { cn } from "@/shared/lib/utils";
 import { catchText } from "./catch-text";
 import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 
@@ -106,9 +107,9 @@ function Lines(props: { lines: readonly CardLine[] }) {
       {folded.length > 0 ? (
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
           <details className="min-w-0">
-            <summary className="inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <DisclosureSummary className="inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               {missingText(folded.length)}
-            </summary>
+            </DisclosureSummary>
             <span className="grid gap-1 pb-1 text-foreground">
               {folded.map((l) => (
                 <Fragment key={l.key}>{l.node}</Fragment>

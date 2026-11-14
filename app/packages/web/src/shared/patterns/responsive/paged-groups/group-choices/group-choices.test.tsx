@@ -149,12 +149,21 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     show(choicesOf(3), "/collection?view=plants&part=g1");
     const measured = Array.from(document.querySelectorAll("[data-group-measure] button"));
     expect(measured).toHaveLength(3);
-    expect(measured.every((b) => b.textContent?.includes("✓"))).toBe(true);
+    expect(measured.every((b) => b.querySelector("svg.lucide-check") !== null)).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: /Gruppe 3/ }));
     expect(formOf()).toBe("chips");
     expect(screen.getByRole("button", { name: /Gruppe 3/ }).getAttribute("aria-pressed")).toBe(
       "true",
     );
+  });
+
+  it("US-QS-32 · SG-ICON-01 the chosen chip is marked by a check icon, the other chips have none and no glyph text", async () => {
+    layout = { row: 300, chips: [90, 90, 90] };
+    show(choicesOf(3), "/collection?view=plants&part=g2");
+    const chips = screen.getAllByRole("button", { name: /Gruppe/ });
+    expect(chips.map((c) => c.querySelector("svg") !== null)).toEqual([false, true, false]);
+    expect(chips.some((c) => c.textContent?.includes("✓"))).toBe(false);
+    expect(chips[1]?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("US-QS-19 choosing in the selection field keeps the selection field", async () => {

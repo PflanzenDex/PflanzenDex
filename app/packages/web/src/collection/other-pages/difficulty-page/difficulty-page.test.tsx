@@ -79,6 +79,15 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(entries[1]?.textContent).toContain("Schwer");
   });
 
+  it("US-QS-32 · SG-ICON-01 every comparison entry ends with a chevron icon, not the glyph ›, and its name stays the visible text", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", { name: "Vergleichswerte: Bogenhanf" });
+    expect(entry.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(entry.querySelector("svg")?.getAttribute("class")).toContain("size-5");
+    expect(entry.textContent).not.toContain("›");
+  });
+
   it("US-BES-05 · US-QS-22 the layer of a species shows all columns of the comparison", async () => {
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");

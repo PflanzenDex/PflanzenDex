@@ -9,6 +9,7 @@ import { cancelTask, loadTasks, type AiTaskRow } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { NewTaskSkeleton, TasksSkeleton } from "./tasks-section.skeleton";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const ui = texts(table);
 
@@ -50,7 +51,9 @@ function Task(props: {
       {row.prompt && (
         <>
           <details>
-            <summary className="cursor-pointer">Text des Auftrags ansehen</summary>
+            <DisclosureSummary className="cursor-pointer">
+              Text des Auftrags ansehen
+            </DisclosureSummary>
             <pre className="m-0 mt-2 whitespace-pre-wrap break-words text-sm">{row.prompt}</pre>
           </details>
           <div className="flex flex-wrap gap-2">

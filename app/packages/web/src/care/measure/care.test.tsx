@@ -278,7 +278,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(html).toMatch(/<option value="healthy" selected[^>]*>Gesund<\/option>/);
     expect(html).toMatch(/<option value="etiolated"[^>]*>Vergeilt\/dünn<\/option>/);
-    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<\/summary>/);
+    // The summary holds the text and then the decorative chevron icon (US-QS-32 · SG-ICON-01); it stays closed.
+    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<svg/);
     expect(html).toContain("Vergeilung-Anzeichen dieser Art: Rosette streckt sich.");
   });
 
