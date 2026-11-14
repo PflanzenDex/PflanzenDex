@@ -26,7 +26,7 @@ function ShelfDrawing() {
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
-      className="h-16 w-auto max-w-full text-primary md:h-auto md:w-full md:max-w-[440px]"
+      className="h-12 w-auto max-w-full text-primary md:h-auto md:w-full md:max-w-[440px]"
     >
       <path d="M24 98 H376" strokeWidth={3} />
       <path d="M60 98 L54 112 M340 98 L346 112" />
@@ -74,12 +74,12 @@ export function AuthFrame(props: { children: ReactNode }) {
         role="region"
         aria-label={t("frame.region")}
         tabIndex={0}
-        className="flex max-h-[36dvh] flex-col items-center justify-start gap-3 overflow-y-auto overscroll-contain bg-muted px-4 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:max-h-none md:justify-center md:gap-8 md:overflow-visible md:p-12"
+        className="flex max-h-[36dvh] flex-col items-center justify-start gap-2 overflow-y-auto overscroll-contain bg-muted px-4 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:max-h-none md:justify-center md:gap-8 md:overflow-visible md:p-12"
       >
         <ShelfDrawing />
-        <ul className="list-none text-base leading-snug text-muted-foreground md:max-w-[440px] md:text-lg">
+        <ul className="list-none text-sm leading-[1.3] text-muted-foreground md:max-w-[440px] md:text-lg md:leading-snug">
           {VALUE_LINES.map((line, index) => (
-            <li key={line} className={index > 0 ? "mt-2 md:mt-3" : undefined}>
+            <li key={line} className={index > 0 ? "mt-1 md:mt-3" : undefined}>
               {line}
             </li>
           ))}
