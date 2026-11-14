@@ -181,6 +181,30 @@ describe("US-TAU-03 Yes asks for the offer", () => {
     expect(await screen.findByText("Schon angefragt: Echte Aloe 1.")).toBeTruthy();
   });
 
+  it("US-TAU-03 an answer on an offer I already requested is refused as such: the card moves on with that reason and nothing is stored", async () => {
+    const posts = server([card(1), card(2)], undefined, [], async () =>
+      response(409, { error: { code: "swap.already_requested", text: "x" } }),
+    );
+    open();
+    await current();
+    await press(/^Nein/);
+    expect(await screen.findByText("Schon angefragt: Echte Aloe 1.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
+    expect(posts.answers).toEqual(["PUT o1 no"]);
+    expect(screen.getByRole("region", { name: "Abgelehnt (0)" })).toBeTruthy();
+  });
+
+  it("US-TAU-06 P-10 a Later entry whose offer I requested stays listed, with a link to Requests and no silent drop", async () => {
+    server([card(2)], undefined, [entry(1, "later", "requested")]);
+    open();
+    await current();
+    const section = within(screen.getByRole("region", { name: "Später ansehen (1)" }));
+    expect(section.getByText("Schon angefragt, du findest sie unter Anfragen.")).toBeTruthy();
+    expect(section.getByRole("link", { name: /^Anfrage ansehen/ }).getAttribute("href")).toBe(
+      "/friends/exchange?part=requests",
+    );
+  });
+
   it("US-TAU-03 an offer that is gone shows the reason (P-10) and the deck goes on", async () => {
     server([card(1), card(2)], async () =>
       response(409, { error: { code: "offer.not_active", text: "x" } }),
@@ -460,6 +484,10 @@ describe("US-TAU-07 empty states and calm mode", () => {
     ["no_wishes", /Wunschliste ist leer/, "Wunsch hinzufügen", "/collection?view=wishlist"],
     ["no_offers", /bieten gerade nichts an/, "Tauschbörse öffnen", "/friends/exchange"],
     ["no_match", /passt kein Angebot/, "Tauschbörse öffnen", "/friends/exchange"],
+    // US-TAU-03: every matching offer has my open request; the link opens the requests part, not the offers.
+    ["all_requested", /hast du angefragt/, "Anfragen ansehen", "/friends/exchange?part=requests"],
+    // US-TAU-07: no card is left because my No or Later holds the rest; the link opens the deck with its lists.
+    ["all_answered", /Für jetzt durch/, "Später ansehen", "/friends/match"],
   ])(
     "US-TAU-07 P-09 an empty deck (%s) names the reason and the next step",
     async (reason, text, label, href) => {

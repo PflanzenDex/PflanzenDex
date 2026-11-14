@@ -7,7 +7,7 @@ import {
   friendOffer,
   swapSide,
 } from "../exchange/test-helpers";
-import type { ExchangeDependencies, FriendOffer } from "../exchange";
+import type { ExchangeDependencies, FriendOffer, SwapSide } from "../exchange";
 import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import { matchDeck, matchYes } from "./index";
@@ -371,5 +371,159 @@ describe("US-TAU-03 Yes on a card creates exactly one request", () => {
     await call();
     await call();
     expect((deps.swaps as InMemoryExchange).requests).toHaveLength(1);
+  });
+});
+
+describe("US-TAU-03 an open request of mine takes the offer out of the deck", () => {
+  const A = id(101);
+  const B = id(102);
+  /** My side of a request on offer A as the database releases it to me: the recipient's row (DM-SOZ-03). */
+  const mine = (extra: Partial<SwapSide> = {}) =>
+    swapSide({ swapId: "s-mine", role: "recipient", otherId: "ben", offerId: A, ...extra });
+  const sides = (deps: ExchangeDependencies) => deps.swaps as InMemoryExchange;
+  const cardIds = async (deps: ExchangeDependencies, user = "anna") => {
+    const r = await deck(deps, user);
+    return r.ok ? r.value.cards.map((c) => c.offerId) : [];
+  };
+
+  it("US-TAU-03 an offer on which I have an open request is no card: the deck leaves it out, it stays under Requests", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    sides(deps).sides["anna"] = [mine()];
+    expect(await cardIds(deps)).toEqual([B]);
+  });
+
+  it.each(["requested", "accepted"] as const)(
+    "US-TAU-03 an open request in the state %s counts, as the database counts it for 'already requested'",
+    async (status) => {
+      const deps = setup([offer(1)]);
+      sides(deps).sides["anna"] = [mine({ status })];
+      expect(await cardIds(deps)).toEqual([]);
+    },
+  );
+
+  it.each(["declined", "canceled", "withdrawn"] as const)(
+    "US-TAU-03 a request that is %s no longer counts: the offer is open again and a card again",
+    async (status) => {
+      const deps = setup([offer(1)]);
+      sides(deps).sides["anna"] = [mine({ status })];
+      expect(await cardIds(deps)).toEqual([A]);
+    },
+  );
+
+  it("US-TAU-03 only my own request as the recipient counts: a request I received as the giver does not hide the offer", async () => {
+    const deps = setup([offer(1)]);
+    sides(deps).sides["anna"] = [mine({ role: "giver" })];
+    expect(await cardIds(deps)).toEqual([A]);
+  });
+
+  it("US-TAU-03 after Yes the next deck load no longer contains the offer", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    expect(await cardIds(deps)).toEqual([A, B]);
+    const yes = await execute(
+      matchYes(deps, new InMemoryMatchAnswers()),
+      { idempotency: new InMemoryIdempotencyStore() },
+      { context: { userId: "anna" }, input: { offerId: A }, idempotencyKey: "yes-1" },
+    );
+    expect(yes).toEqual({ ok: true, value: { outcome: "requested", swapId: "s-1" } });
+    // The store writes my side of the request in the same step (DM-SOZ-03); the next read of the deck sees it.
+    sides(deps).sides["anna"] = [mine({ status: "requested" })];
+    expect(await cardIds(deps)).toEqual([B]);
+  });
+
+  it("US-TAU-03 P-04 another keeper's request does not hide the offer from me", async () => {
+    // Cleo asked for the same offer: her side is in her own list, and my deck reads only my sides.
+    const deps = setup([offer(1)]);
+    sides(deps).sides["cleo"] = [mine({ swapId: "s-cleo" })];
+    expect(await cardIds(deps)).toEqual([A]);
+  });
+
+  it("US-TAU-03 an offer I answered Later and then requested is no card: the Later list shows it as requested", async () => {
+    const deps = setup([offer(1)]);
+    const answers = new InMemoryMatchAnswers();
+    await answers.save("anna", {
+      offerId: A,
+      answer: "later",
+      answeredOn: "2026-10-09",
+      speciesLatin: "Aloe vera",
+      speciesGerman: "Deutsch",
+      giverName: "Ben",
+    });
+    sides(deps).sides["anna"] = [mine({ status: "requested" })];
+    const r = await matchDeck(
+      deps,
+      { answers, clock: () => new Date("2026-10-30T10:00:00Z") },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.cards).toEqual([]);
+    expect(r.ok && r.value.entries).toEqual([
+      expect.objectContaining({ offerId: A, answer: "later", state: "requested", card: null }),
+    ]);
+  });
+
+  it("US-TAU-07 names all_requested when every offer that matches my wishlist has my open request", async () => {
+    const deps = setup([offer(1)]);
+    sides(deps).sides["anna"] = [mine({ status: "requested" })];
+    const r = await matchDeck(
+      deps,
+      {
+        answers: new InMemoryMatchAnswers(),
+        clock: () => new Date(),
+        counts: { friends: async () => 2, wishes: async () => 3 },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.empty).toBe("all_requested");
+  });
+
+  it("US-TAU-07 names all_answered when no card is left because my No or Later holds the rest", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    const answers = new InMemoryMatchAnswers();
+    const same = {
+      answeredOn: "2026-10-09",
+      speciesLatin: null,
+      speciesGerman: null,
+      giverName: "Ben",
+    };
+    await answers.save("anna", { offerId: A, answer: "no", ...same });
+    await answers.save("anna", { offerId: B, answer: "later", ...same });
+    const r = await matchDeck(
+      deps,
+      {
+        answers,
+        clock: () => new Date("2026-10-09T10:00:00Z"),
+        counts: { friends: async () => 2, wishes: async () => 3 },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.cards).toEqual([]);
+    expect(r.ok && r.value.empty).toBe("all_answered");
+  });
+
+  it("US-TAU-07 a mix of my requests and my answers names all_answered: the lists hold the rest", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    sides(deps).sides["anna"] = [mine({ status: "requested" })];
+    const answers = new InMemoryMatchAnswers();
+    await answers.save("anna", {
+      offerId: B,
+      answer: "no",
+      answeredOn: "2026-10-09",
+      speciesLatin: null,
+      speciesGerman: null,
+      giverName: "Ben",
+    });
+    const r = await matchDeck(
+      deps,
+      {
+        answers,
+        clock: () => new Date("2026-10-09T10:00:00Z"),
+        counts: { friends: async () => 2, wishes: async () => 3 },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.empty).toBe("all_answered");
   });
 });

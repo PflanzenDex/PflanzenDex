@@ -68,6 +68,7 @@ Acceptance criteria:
 
 - Given I answer **Yes**, then exactly one swap request arises with the operation of US-SOZ-09 (same checks, states and limits, DM-SOZ-03); for the mode `swap` the request has an open return (free text empty), which I can complete in "Requests".
 - Given I already have an open request on this offer, then Yes creates no second one (US-SOZ-09: one open request per offer) and the card says "Already requested".
+- Given I have an open request on an offer, when the deck loads, then that offer is not in the deck (it is listed under "Requests"). A request that was withdrawn, declined or canceled no longer counts: the offer is open again and is a card again.
 - Given the offer was withdrawn, reserved or handed over in the meantime, then Yes creates nothing, the card says why ("Offer is no longer available") and the card moves to the Later list as unavailable (P-10).
 - Given I answer **No** or **Later**, then no request, no notification and no change reaches the giver (FR-TAU-02).
 - Writing happens only through the validating operations (P-03). The request is the record of the Yes; no second copy of it is stored (NFR-04).
@@ -119,7 +120,7 @@ Acceptance criteria:
 - Given the feature switch `social` is off (globally or for my account, US-DEV-06), then the match deck, its entry point and its API are absent like the rest of the social functions; the data of earlier answers is kept and shown again when the switch is on.
 - Given calm mode is on (US-ACH-08), then the deck shows no celebration, no animation beyond the card change, no counters like "N requested" and no push; the chip "Fits both ways" stays, because it is information and not a reward.
 - The deck is a mode of the destination "Freunde" next to the swap exchange (US-QS-14: at most five main destinations; no new one).
-- Given there is no card, then the empty state names the reason and the next step (P-09): no friends yet ("Invite a friend", US-SOZ-01); wishlist empty ("Add a wish", US-WUN-01 or "Discover", ENT); no friend offers anything ("Open the swap exchange"); everything decided ("Open the Later list").
+- Given there is no card, then the empty state names the reason and the next step (P-09): no friends yet ("Invite a friend", US-SOZ-01); wishlist empty ("Add a wish", US-WUN-01 or "Discover", ENT); no friend offers anything ("Open the swap exchange"); every matching offer already has my open request ("Open Requests", reason `all_requested`); no card is left because my No or Later holds the rest ("Open the Later list", reason `all_answered`).
 - Given I am offline, then the deck shows the last loaded state with "As of DD.MM.YYYY" and answers are not possible until the connection is back (FR-SOZ-03).
 - No notification is sent for new match cards (FR-TAU-09).
 

@@ -4,11 +4,16 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import {
   EXCHANGE_PATH,
+  MATCH_PATH,
   PATHS,
   WISHLIST_MODE_ADDRESS,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../../swap.de.json";
 import { cardTitle as title } from "../deck-state";
+
+const t = texts(table);
 
 export type Answer = "no" | "later" | "yes";
 
@@ -55,26 +60,52 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
   );
 }
 
-const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string }> = {
+/** The text and the one filled action (label and href) of each empty reason (US-TAU-07, P-09); the texts of the two reasons of US-TAU-03 come from the message table. */
+const EMPTY_TEXT: Record<
+  EmptyReason,
+  { title: string; description: string; action: string; href: string }
+> = {
   no_friends: {
     title: "Du hast noch keine Freunde in der App.",
     description:
       "Passende Angebote kommen von Freunden. Lade zuerst einen Freund ein; sobald er etwas anbietet, das auf deiner Wunschliste steht, erscheint es hier.",
+    action: "Freund einladen",
+    href: PATHS.friends,
   },
   no_wishes: {
     title: "Deine Wunschliste ist leer.",
     description:
       "Hier erscheinen Angebote deiner Freunde, deren Art auf deiner Wunschliste steht. Lege einen Wunsch an oder entdecke Arten, die dir gefallen könnten.",
+    action: "Wunsch hinzufügen",
+    href: WISHLIST_MODE_ADDRESS,
   },
   no_offers: {
     title: "Deine Freunde bieten gerade nichts an.",
     description:
       "Sobald ein Freund etwas anbietet, das auf deiner Wunschliste steht, erscheint es hier. In der Tauschbörse siehst du alle Angebote.",
+    action: "Tauschbörse öffnen",
+    href: EXCHANGE_PATH,
   },
   no_match: {
     title: "Zurzeit passt kein Angebot zu deiner Wunschliste.",
     description:
       "Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht.",
+    action: "Tauschbörse öffnen",
+    href: EXCHANGE_PATH,
+  },
+  // US-TAU-03: every offer that matches a wish has my open request; the next step is Requests (P-09).
+  all_requested: {
+    title: t("match.empty.allRequested.title"),
+    description: t("match.empty.allRequested.description"),
+    action: t("match.empty.allRequested.action"),
+    href: `${EXCHANGE_PATH}?part=requests`,
+  },
+  // US-TAU-07: no card is left because my No or Later holds the rest; the next step is the deck with its lists (P-09).
+  all_answered: {
+    title: t("match.empty.allAnswered.title"),
+    description: t("match.empty.allAnswered.description"),
+    action: t("match.empty.allAnswered.action"),
+    href: MATCH_PATH,
   },
 };
 
@@ -89,13 +120,7 @@ export function Empty(props: { reason?: EmptyReason | null }) {
         className="gap-3 py-6"
         title={text.title}
         description={text.description}
-        action={
-          invite
-            ? { label: "Freund einladen", href: PATHS.friends }
-            : reason === "no_wishes"
-              ? { label: "Wunsch hinzufügen", href: WISHLIST_MODE_ADDRESS }
-              : { label: "Tauschbörse öffnen", href: EXCHANGE_PATH }
-        }
+        action={{ label: text.action, href: text.href }}
       />
       <div className="flex flex-wrap justify-center gap-x-4">
         {reason === "no_wishes" && (

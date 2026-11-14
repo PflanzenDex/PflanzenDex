@@ -1,6 +1,8 @@
 import type { MatchCard as Card, MatchEntry, MatchYesResult } from "@pflanzendex/core";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { errorText } from "@/shared/lib/error-text";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../swap.de.json";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import type { Response } from "../../../../shared/data";
 import { cardTitle, deckReducer, initialDeck, type DeckAction } from "./deck-state";
@@ -27,6 +29,7 @@ export type OnAnswer = (
 export type OnUndo = (offerId: string) => Promise<Response<unknown>>;
 
 const title = cardTitle;
+const t = texts(table);
 
 /** What a Yes answered: the request exists, or it existed already (US-TAU-03); the offer is gone: the reason stays visible (P-10). */
 const YES_NOTICE: Record<MatchYesResult["outcome"], (c: Card) => string> = {
@@ -56,6 +59,9 @@ async function askFor(c: Card, onYes: OnYes, counter: string | null): Promise<De
 /** Stores "Nein" or "Später" and turns the answer into a deck action; a refusal keeps the card (P-10). */
 function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<DeckAction> {
   return onAnswer(c.offerId, a).then((r) => {
+    // Decided by an open request of mine: the card moves on with the reason, nothing is stored (US-TAU-03, P-10).
+    if (!r.ok && r.error.code === "swap.already_requested")
+      return { type: "gone", notice: t("match.alreadyRequested", { title: title(c) }) };
     if (!r.ok) return { type: "refused", error: errorText(r.error.code) };
     const answeredOn = r.value.answeredOn;
     return a === "no"
