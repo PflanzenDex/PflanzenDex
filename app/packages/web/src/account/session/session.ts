@@ -95,7 +95,10 @@ async function loadState(mgr: UserManager): Promise<State> {
     const q = new URLSearchParams(window.location.search); // read before processReturn cleans the address
     const answered = q.has("code") || q.has("error");
     // The sign-in service holds a session that needs an interaction first: this tab knows of it (US-QS-32).
-    if (LIVE_ERRORS.includes(q.get("error") ?? "")) window.sessionStorage.setItem(LIVE, "1");
+    // `login_required` says it holds none, so a flag left by an earlier sign-in in this tab goes (US-QS-32).
+    const error = q.get("error") ?? "";
+    if (LIVE_ERRORS.includes(error)) window.sessionStorage.setItem(LIVE, "1");
+    else if (error === "login_required") window.sessionStorage.removeItem(LIVE);
     const user = await processReturn(mgr);
     const registering = await registerReturn(mgr, intent, user, answered);
     if (registering) return registering;

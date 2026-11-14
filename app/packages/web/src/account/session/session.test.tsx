@@ -602,6 +602,17 @@ describe("US-QS-32 Konto wechseln only with a live session at the sign-in servic
     expect(window.sessionStorage.getItem(LIVE)).toBeNull();
   });
 
+  it("US-QS-32 a return with error=login_required removes a stale live flag: the service holds no session, so no switch shows", async () => {
+    // An earlier sign-in in this tab left the flag; the service now answers that it holds no session.
+    window.sessionStorage.setItem(LIVE, "1");
+    window.history.replaceState({}, "", "/?error=login_required&state=abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(result.current.state).not.toHaveProperty("canSwitch");
+    expect(window.sessionStorage.getItem(LIVE)).toBeNull();
+  });
+
   it.each(["interaction_required", "consent_required", "account_selection_required"])(
     "US-QS-32 a silent check answered %s shows the switch and no hint: the sign-in service holds a session",
     async (error) => {
