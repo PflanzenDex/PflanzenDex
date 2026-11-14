@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -103,12 +103,16 @@ function Revealing({ onSubmit }: { onSubmit: () => void }) {
   );
 }
 
-const hint = (label: string) => screen.getByLabelText(label).getAttribute("enterkeyhint");
+/** The hint of a field once it got the focus (SG-FORM-03: the hint is set on focus and decided again on Enter). */
+async function focusedHint(label: string): Promise<string | null> {
+  await userEvent.click(screen.getByLabelText(label));
+  return screen.getByLabelText(label).getAttribute("enterkeyhint");
+}
 
 describe("US-QS-32 · SG-FORM-03 the return-key hint follows Mehr Angaben", () => {
-  it("US-QS-32 · SG-FORM-03 a field behind a closed Mehr Angaben group is no next field: the field before it says done", () => {
+  it("US-QS-32 · SG-FORM-03 a field behind a closed Mehr Angaben group is no next field: the field before it says done", async () => {
     render(<Revealing onSubmit={() => {}} />);
-    expect(hint("Name")).toBe("done");
+    expect(await focusedHint("Name")).toBe("done");
   });
 
   it("US-QS-32 · SG-FORM-03 Enter in that field submits while the group is closed, as the label done says", async () => {
@@ -123,15 +127,14 @@ describe("US-QS-32 · SG-FORM-03 the return-key hint follows Mehr Angaben", () =
     const { container } = render(<Revealing onSubmit={() => {}} />);
     await userEvent.click(screen.getByText("Mehr Angaben"));
     expect(disclosure(container).open).toBe(true);
-    await waitFor(() => expect(hint("Name")).toBe("next"));
-    expect(hint("Notiz")).toBe("done");
+    expect(await focusedHint("Name")).toBe("next");
+    expect(await focusedHint("Notiz")).toBe("done");
   });
 
   it("US-QS-32 · SG-FORM-03 Enter in the field before an open Mehr Angaben group moves into the group and does not submit", async () => {
     const onSubmit = vi.fn();
     render(<Revealing onSubmit={onSubmit} />);
     await userEvent.click(screen.getByText("Mehr Angaben"));
-    await waitFor(() => expect(hint("Name")).toBe("next"));
     await userEvent.click(screen.getByLabelText("Name"));
     await userEvent.keyboard("{Enter}");
     expect(document.activeElement).toBe(screen.getByLabelText("Notiz"));

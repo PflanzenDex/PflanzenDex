@@ -1,9 +1,12 @@
-import * as React from "react";
+import type * as React from "react";
 
 /** The return-key hints of the HTML standard (`enterkeyhint`). */
 type EnterKeyHint = NonNullable<React.InputHTMLAttributes<HTMLInputElement>["enterKeyHint"]>;
 
-/** Input types that take text. A checkbox, radio, file, range or colour takes none, so it gets no return-key hint. */
+/**
+ * Input types that take text. They get a return-key hint, and the HTML implicit submission counts them: a form with no
+ * submit button submits on Enter only when exactly one of them is in it.
+ */
 const TEXT_TYPES = new Set([
   "text",
   "search",
@@ -19,89 +22,111 @@ const TEXT_TYPES = new Set([
   "datetime-local",
 ]);
 
-/** Input types that are no field of a form: buttons and hidden values. */
-const NOT_A_FIELD = new Set(["button", "submit", "reset", "image", "hidden"]);
+/** A field Enter can move the focus to: a text-like input or a textarea. */
+type TextField = HTMLInputElement | HTMLTextAreaElement;
 
-/** A control the keyboard reaches in a form: an input, a select or a textarea. */
-type KeyboardField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+/** Groups the keeper cannot reach: inert, hidden from assistive technology, hidden, or a closed "Mehr Angaben" group. */
+const UNREACHABLE_GROUPS = "[inert], [aria-hidden='true'], [hidden], details:not([open])";
+
+function isTextField(el: Element): el is TextField {
+  return (
+    (el instanceof HTMLInputElement && TEXT_TYPES.has(el.type)) || el instanceof HTMLTextAreaElement
+  );
+}
 
 /**
- * Whether the keyboard reaches the element: it is a field, it is enabled, the browser shows it (`display: none`, a closed
- * "Mehr Angaben" group and a `hidden` ancestor do not count), so Enter never moves onto a field that cannot take the
- * focus. Read from the DOM at the moment it is asked, so a group that opens counts at once. jsdom has no
- * `checkVisibility`; there the field counts as shown (as in route-focus).
+ * A text field the keeper can reach: enabled, not read-only, in the tab order, outside the unreachable groups, and shown by
+ * the browser (`checkVisibility`; jsdom has none, so a field counts as shown there).
  */
-function isKeyboardField(el: Element): el is KeyboardField {
-  const field =
-    el instanceof HTMLInputElement
-      ? !NOT_A_FIELD.has(el.type)
-      : el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement;
+function isReachable(el: Element): el is TextField {
   return (
-    field &&
+    isTextField(el) &&
     !el.matches(":disabled") &&
-    !el.closest("[hidden], details:not([open])") &&
+    !el.readOnly &&
+    el.tabIndex >= 0 &&
+    !el.closest(UNREACHABLE_GROUPS) &&
     (el.checkVisibility?.() ?? true)
   );
 }
 
-/** The next field of the same form, in DOM order, that the keyboard reaches; undefined when `el` is the last one. */
-function nextKeyboardField(el: KeyboardField): KeyboardField | undefined {
-  if (!el.form) return undefined;
+/** A control that submits its form when it is pressed: a submit button or an image input. */
+function isSubmitControl(el: Element): boolean {
+  return (
+    (el instanceof HTMLButtonElement && el.type === "submit") ||
+    (el instanceof HTMLInputElement && (el.type === "submit" || el.type === "image"))
+  );
+}
+
+/** What the return key says and does at one field, decided from the DOM at the moment it is asked (SG-FORM-03). */
+type Decision = {
+  /** The hint of the return key: "next", "done", "search", or none. */
+  hint: EnterKeyHint | undefined;
+  /** The field Enter moves the focus to; set only when the hint is "next". */
+  next: TextField | undefined;
+};
+
+const NO_HINT: Decision = { hint: undefined, next: undefined };
+/** A search field says "search" and Enter submits; it never moves on. */
+const SEARCH: Decision = { hint: "search", next: undefined };
+
+/**
+ * Decides the hint and the move of one Input in a single pass over the controls of its form (SG-FORM-03, US-QS-32):
+ * - a search field (type search, or any input of a form with role search) says "search" and Enter submits;
+ * - an input with a `list` (a datalist) and a field that takes no text get no hint, and Enter keeps its default;
+ * - a text field with a later reachable text field says "next", and Enter moves there over selects, checkboxes, radios
+ *   and buttons;
+ * - the last text field says "done", but only when the form can submit implicitly as HTML defines it: an enabled submit
+ *   button, or exactly one field that blocks implicit submission. Otherwise it gets no hint and Enter keeps its default.
+ */
+function decide(el: HTMLInputElement): Decision {
+  if (el.type === "search") return SEARCH;
+  const form = el.form;
+  if (!form) return NO_HINT;
+  if (form.getAttribute("role") === "search") return SEARCH;
+  if (!TEXT_TYPES.has(el.type) || el.hasAttribute("list")) return NO_HINT;
+  const { next, submits } = scanForm(el, Array.from(form.elements));
+  if (next) return { hint: "next", next };
+  return submits ? { hint: "done", next: undefined } : NO_HINT;
+}
+
+/**
+ * One pass over the controls of the form, in tree order: the first reachable text field after `el` (the move of Enter), and
+ * whether the form submits on Enter as HTML defines implicit submission (an enabled submit button, or without one exactly
+ * one field that blocks implicit submission).
+ */
+function scanForm(
+  el: HTMLInputElement,
+  controls: Element[],
+): { next: TextField | undefined; submits: boolean } {
+  let next: TextField | undefined;
   let passed = false;
-  for (const candidate of Array.from(el.form.elements)) {
-    if (candidate === el) passed = true;
-    else if (passed && isKeyboardField(candidate)) return candidate;
+  let blocking = 0;
+  let submit: Element | undefined;
+  for (const control of controls) {
+    if (control === el) passed = true;
+    else if (passed && !next && isReachable(control)) next = control;
+    if (control instanceof HTMLInputElement && TEXT_TYPES.has(control.type)) blocking++;
+    if (!submit && isSubmitControl(control)) submit = control;
   }
-  return undefined;
+  const submits = submit ? !submit.matches(":disabled") : blocking === 1;
+  return { next, submits };
 }
 
 /**
- * The hint an Input gets when its caller sets none (SG-FORM-03, US-QS-32): "next" on a text field with a later field in
- * its form, "done" on the last one (Enter submits there); "search" on a search field outside any form. Other inputs get
- * no hint.
+ * Sets the return-key hint of an Input from the DOM now. The Input calls it when the field gets the focus and when it is
+ * pressed, so the hint is current when the keyboard opens (SG-FORM-03). A caller's `enterKeyHint` is never overwritten.
  */
-function defaultEnterKeyHint(el: HTMLInputElement): EnterKeyHint | undefined {
-  if (!el.form) return el.type === "search" ? "search" : undefined;
-  if (!TEXT_TYPES.has(el.type)) return undefined;
-  return nextKeyboardField(el) ? "next" : "done";
+export function syncEnterKeyHint(el: HTMLInputElement) {
+  const { hint } = decide(el);
+  if (hint) el.setAttribute("enterkeyhint", hint);
+  else el.removeAttribute("enterkeyhint");
 }
 
 /**
- * Writes the default hint of an Input into the DOM and keeps it current. The form is watched for fields that appear or
- * go, for a group that opens, and for a field that is disabled, hidden or restyled: the field before a new field changes
- * from "done" to "next" at once, without a focus. A caller's `enterKeyHint` belongs to React and is never overwritten.
- * A change of `type` (the third argument) applies the hint of the new type.
- */
-export function useEnterKeyHint(
-  input: React.RefObject<HTMLInputElement | null>,
-  explicit: EnterKeyHint | undefined,
-  type: string,
-) {
-  React.useLayoutEffect(() => {
-    const el = input.current;
-    if (!el || explicit !== undefined) return;
-    const apply = () => {
-      const hint = defaultEnterKeyHint(el);
-      if (hint) el.setAttribute("enterkeyhint", hint);
-      else el.removeAttribute("enterkeyhint");
-    };
-    apply();
-    if (!el.form) return;
-    const watch = new MutationObserver(apply);
-    watch.observe(el.form, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ["open", "disabled", "hidden", "class", "style"],
-    });
-    return () => watch.disconnect();
-  }, [input, explicit, type]);
-}
-
-/**
- * Enter in a field that says "next" moves the focus to the next keyboard field of its form instead of submitting, so the
- * key does what its label says (SG-FORM-03, US-QS-32). Every other Enter keeps the browser's own action: the submit of the
- * last field, or the confirmed send of an explicit hint. IME confirmation and modifier keys are left alone.
+ * Enter in a field that says "next" moves the focus to the next text field instead of submitting, so the key does what its
+ * label says (SG-FORM-03, US-QS-32). The decision is made again at the press, because the form may have changed since the
+ * focus. Every other Enter keeps the browser's own action: the implicit submit, a datalist suggestion, a newline. An
+ * explicit `enterKeyHint` of the caller decides in place of the default. IME confirmation and modifier keys are left alone.
  */
 export function moveOnWithEnter(
   event: React.KeyboardEvent<HTMLInputElement>,
@@ -109,10 +134,8 @@ export function moveOnWithEnter(
 ) {
   if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
   if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-  const el = event.currentTarget;
-  if ((explicit ?? defaultEnterKeyHint(el)) !== "next") return;
-  const next = nextKeyboardField(el);
-  if (!next) return;
+  const { hint, next } = decide(event.currentTarget);
+  if ((explicit ?? hint) !== "next" || !next) return;
   event.preventDefault();
   next.focus();
 }

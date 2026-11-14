@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
-import { cn } from "@/shared/lib/utils";
+import { cn, mergeRefs } from "@/shared/lib/utils";
 import { Input, type InputProps } from "../input";
 
 export type SearchInputProps = Omit<InputProps, "type" | "value" | "defaultValue"> & {
@@ -22,15 +22,13 @@ export type SearchInputProps = Omit<InputProps, "type" | "value" | "defaultValue
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ className, value, onClear, disabled, keyHint, ...props }, ref) => {
     const inner = React.useRef<HTMLInputElement | null>(null);
+    // One stable callback for both refs: the clear button needs the element, the caller keeps its ref.
+    const setRef = React.useMemo(() => mergeRefs(inner, ref), [ref]);
     return (
       <div className={cn("relative", className)}>
         <Input
           {...props}
-          ref={(el) => {
-            inner.current = el;
-            if (typeof ref === "function") ref(el);
-            else if (ref) ref.current = el;
-          }}
+          ref={setRef}
           type="search"
           value={value}
           disabled={disabled}
