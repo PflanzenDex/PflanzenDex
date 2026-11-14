@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import {
   speciesDisplayName,
   zoneDerive,
@@ -11,14 +11,11 @@ import { Label } from "@/shared/ui/display/label/label";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { MarkerSection, type MarkerSectionProps } from "@/collection";
-import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
-import { refreshLight, sharedZones } from "../../../../../light";
-import { ensureHome } from "../where-question/where-question";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./save-step.de.json";
 
 const ui = texts(table);
-type Token = () => Promise<string | undefined>;
 
 /** A block of the field's size while the section's chunk arrives; it shows after the delay (DS-57, issue 1726). */
 function FieldSkeleton() {
@@ -27,29 +24,6 @@ function FieldSkeleton() {
       <Skeleton className="h-20 w-full" />
     </DelayedSkeleton>
   );
-}
-
-/** The own zones; a new account has none yet, so the standard lamps are laid out silently first (US-ONB-02 gives them from the start). */
-async function ownZones(
-  client: QueryClient,
-  api: string,
-  token: Token,
-): Promise<readonly LightZone[]> {
-  const t = await token();
-  if (!t) return [];
-  const first = await sharedZones(client, api, t);
-  if (!first.ok) return [];
-  if (first.value.length > 0) {
-    await ensureHome(client, api, t);
-    return first.value;
-  }
-  const made = await createWrite(api, t)("POST", "/light-zones/defaults", {});
-  if (!made.ok) return [];
-  // The new zones refresh the shared light data (issue 1244); the default location "Zuhause" comes with them (US-ONB-02).
-  await refreshLight(client);
-  await ensureHome(client, api, t);
-  const again = await sharedZones(client, api, t);
-  return again.ok ? again.value : [];
 }
 
 /** The zone the species needs, derived live from its light demand (FR-BES-10); `null` = unknown (P-08). */
@@ -65,19 +39,47 @@ export const derivedZone = (species: Species, zones: readonly LightZone[]): Ligh
   return d.kind === "zone" ? d.zone : null;
 };
 
-/** Light zones of the account for the save step; `zones` is `null` while they load. */
-export function useOwnZones(api: string, token: Token, enabled: boolean) {
-  const [zones, setZones] = useState<readonly LightZone[] | null>(null);
-  const client = useQueryClient();
-  useEffect(() => {
-    if (!enabled || zones !== null) return;
-    let current = true;
-    void ownZones(client, api, token).then((z) => current && setZones(z));
-    return () => {
-      current = false;
-    };
-  }, [api, token, enabled, zones, client]);
-  return zones;
+/**
+ * The light need field: the select with the derived value first. While the zones are missing, the reason and a retry
+ * replace the whole block, so no empty list looks like a choice (US-ONB-01, issue 2098, P-10).
+ */
+function ZoneField(props: {
+  zones: readonly LightZone[] | null;
+  derived: LightZone | null;
+  zoneId: string;
+  onZone: (id: string) => void;
+  zonesError: string | null | undefined;
+  onRetryZones: (() => void) | undefined;
+}) {
+  if (props.zonesError)
+    return (
+      <RequestState
+        status="error"
+        errorText={props.zonesError}
+        onRetry={props.onRetryZones ?? (() => undefined)}
+      />
+    );
+  return (
+    <>
+      <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
+      <Select
+        id="first-plant-zone"
+        value={props.zoneId}
+        disabled={props.zones === null}
+        onChange={(e) => props.onZone(e.target.value)}
+      >
+        <option value="">
+          {props.derived ? ui("derived", { name: zoneLabel(props.derived.name) }) : ui("unknown")}
+        </option>
+        {(props.zones ?? []).map((z) => (
+          <option key={z.id} value={z.id}>
+            {zoneLabel(z.name)}
+          </option>
+        ))}
+      </Select>
+      <p className="m-0 text-sm text-muted-foreground">{ui("hint")}</p>
+    </>
+  );
 }
 
 /**
@@ -87,6 +89,10 @@ export function useOwnZones(api: string, token: Token, enabled: boolean) {
 export function SaveStep(props: {
   species: Species;
   zones: readonly LightZone[] | null;
+  /** The German reason the zones could not be read or made: the zone block shows it with a retry (issue 2098). */
+  zonesError?: string | null;
+  /** Loads the zones again after `zonesError` (US-ONB-01, issue 2098). */
+  onRetryZones?: () => void;
   /** Empty = the zone derived from the species. */
   zoneId: string;
   onZone: (id: string) => void;
@@ -129,23 +135,14 @@ export function SaveStep(props: {
           />
         </Suspense>
       )}
-      <Label htmlFor="first-plant-zone">{ui("zoneLabel")}</Label>
-      <Select
-        id="first-plant-zone"
-        value={props.zoneId}
-        disabled={zones === null}
-        onChange={(e) => props.onZone(e.target.value)}
-      >
-        <option value="">
-          {derived ? ui("derived", { name: zoneLabel(derived.name) }) : ui("unknown")}
-        </option>
-        {(zones ?? []).map((z) => (
-          <option key={z.id} value={z.id}>
-            {zoneLabel(z.name)}
-          </option>
-        ))}
-      </Select>
-      <p className="m-0 text-sm text-muted-foreground">{ui("hint")}</p>
+      <ZoneField
+        zones={zones}
+        derived={derived}
+        zoneId={props.zoneId}
+        onZone={props.onZone}
+        zonesError={props.zonesError}
+        onRetryZones={props.onRetryZones}
+      />
       {props.children}
       {props.error && <p role="alert">{props.error}</p>}
     </section>
