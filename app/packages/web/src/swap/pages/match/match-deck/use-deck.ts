@@ -44,13 +44,7 @@ const GONE = new Set(["offer.not_active", "offer.not_found"]);
 /** Asks for the offer and turns the answer into a deck action; a refusal that is not "gone" keeps the card (P-10). */
 async function askFor(c: Card, onYes: OnYes, counter: string | null): Promise<DeckAction> {
   const r = await onYes(c.offerId, counter);
-  if (r.ok)
-    return {
-      type: "yes",
-      offerId: c.offerId,
-      requested: r.value.outcome === "requested",
-      notice: YES_NOTICE[r.value.outcome](c),
-    };
+  if (r.ok) return { type: "yes", offerId: c.offerId, notice: YES_NOTICE[r.value.outcome](c) };
   if (GONE.has(r.error.code))
     return { type: "gone", notice: `${errorText(r.error.code)} (${title(c)})` };
   return { type: "refused", error: errorText(r.error.code) };

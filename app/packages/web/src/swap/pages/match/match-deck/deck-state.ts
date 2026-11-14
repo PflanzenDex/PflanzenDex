@@ -19,7 +19,7 @@ export interface DeckState {
 export type DeckAction =
   | { type: "no"; card: Card; answeredOn: string; notice: string }
   | { type: "later"; card: Card; answeredOn: string; notice: string }
-  | { type: "yes"; offerId: string; requested: boolean; notice: string }
+  | { type: "yes"; offerId: string; notice: string }
   | { type: "gone"; notice: string }
   | { type: "refused"; error: string }
   | { type: "confirm"; on: boolean }
@@ -123,7 +123,8 @@ export function deckReducer(s: DeckState, a: DeckAction): DeckState {
       return next(
         {
           ...s,
-          requested: s.requested + (a.requested ? 1 : 0),
+          // Both outcomes leave an open request of mine on the offer, so both count (US-TAU-02).
+          requested: s.requested + 1,
           entries: without(s.entries, a.offerId),
         },
         a.notice,

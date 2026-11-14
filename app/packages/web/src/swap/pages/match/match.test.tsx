@@ -562,6 +562,22 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
     ).toBeTruthy();
   });
 
+  it("US-TAU-02 a Yes that finds the offer already requested still counts, as a reload would", async () => {
+    // The request was made elsewhere: the card had no open request of mine at load, so the server count lacks it.
+    serverRequested = 4;
+    server([card(1), card(2)], async () =>
+      response(201, { outcome: "already_requested", swapId: null }),
+    );
+    open();
+    await current();
+    await press(/^Ja, anfragen/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    await press(/^Nein/);
+    expect(
+      await screen.findByText(/Für jetzt durch. 5 angefragt, 0 für später, 1 abgelehnt./),
+    ).toBeTruthy();
+  });
+
   it("US-TAU-02 without a count from the server the summary starts at 0 and counts this session only", async () => {
     server([card(1)]);
     open();
