@@ -44,7 +44,7 @@ export function MoreFields({
         onClick={(event) => {
           if (forced) event.preventDefault();
         }}
-        className="min-h-11 rounded-lg px-3 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="rounded-lg px-3 font-medium"
       >
         {label}
       </DisclosureSummary>

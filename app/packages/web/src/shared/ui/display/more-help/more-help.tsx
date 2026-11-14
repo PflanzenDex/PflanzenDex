@@ -19,7 +19,7 @@ export function MoreHelp({ children, more, className }: MoreHelpProps) {
     <div className={cn("text-sm text-muted-foreground", className)}>
       <p className="m-0">{children}</p>
       <details className="mt-1">
-        <DisclosureSummary className="inline-flex min-h-[44px] gap-2 text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+        <DisclosureSummary className="inline-flex w-auto text-primary underline underline-offset-2">
           Mehr erfahren
         </DisclosureSummary>
         <div className="mt-1">{more}</div>

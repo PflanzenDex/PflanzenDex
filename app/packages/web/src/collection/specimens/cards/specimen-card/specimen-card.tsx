@@ -55,9 +55,7 @@ export function Measurement({ card }: { card: SpecimenCard }) {
       )}
       {m.note && (
         <details>
-          <DisclosureSummary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            Notiz der Messung
-          </DisclosureSummary>
+          <DisclosureSummary className="rounded-md">Notiz der Messung</DisclosureSummary>
           <p>{m.note}</p>
         </details>
       )}

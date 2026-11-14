@@ -127,7 +127,7 @@ export function Maintenance(props: { item: EquipmentRow; actions: MaintenanceAct
   if (item.status === null) return null;
   return (
     <details className="mt-2 text-sm">
-      <DisclosureSummary className="cursor-pointer">Betrieb und Wartung</DisclosureSummary>
+      <DisclosureSummary>Betrieb und Wartung</DisclosureSummary>
       <div className="mt-2 flex flex-col gap-2">
         <Values item={item} />
         <Button

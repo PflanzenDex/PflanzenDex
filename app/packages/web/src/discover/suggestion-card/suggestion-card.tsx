@@ -78,7 +78,7 @@ function Facts({ s }: { s: Suggestion }) {
   );
 }
 
-/** Facts, sources and reasons after "Mehr"; collapsed, the card fits one screen (US-QS-21). */
+/** Facts, sources and reasons after "Mehr erfahren"; collapsed, the card fits one screen (US-QS-21, SG-COPY-05). */
 function Details({ s, more }: { s: Suggestion; more: boolean }) {
   return (
     <div className={cn("grid gap-3", !more && "hidden")}>
@@ -140,7 +140,7 @@ export function SuggestionCard(props: {
         type="button"
         variant="link"
         aria-expanded={more}
-        className="w-fit"
+        className="min-h-11 w-fit px-0"
         onClick={() => setMore((m) => !m)}
       >
         {more ? t("card.less") : t("card.more")}

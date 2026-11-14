@@ -65,10 +65,10 @@ export function FoldNext() {
 /** One line: the count opens the names of the missing facts, the next step stands beside it (US-QS-24). */
 function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-2 text-muted-foreground">
       <details className="min-w-0">
         {/* `relative`: the sr-only name list is absolutely positioned; without a positioned box it escapes an inner scroll region and makes the page scroll (US-QS-15, DS-61). */}
-        <DisclosureSummary className="relative inline-flex min-h-[44px] gap-2 rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        <DisclosureSummary className="relative inline-flex w-auto rounded-sm tabular-nums focus-visible:ring-offset-2 focus-visible:ring-offset-background">
           <span>{missingText(labels.length)}</span>
           <span className="sr-only"> (Namen anzeigen)</span>
         </DisclosureSummary>

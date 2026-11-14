@@ -71,7 +71,7 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
       </div>
       {item.type === "Plant agent" ? (
         <details>
-          <DisclosureSummary className="cursor-pointer">
+          <DisclosureSummary>
             Verknüpfung mit Behandlungen{item.agentLink ? `: ${item.agentLink}` : " (keine)"}
           </DisclosureSummary>
           <LinkForm key={`${item.id}:${item.agentLink}`} item={item} actions={actions} />
