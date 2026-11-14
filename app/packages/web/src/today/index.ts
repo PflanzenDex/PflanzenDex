@@ -11,3 +11,5 @@ export { TodaySkeleton } from "./today-page/today-skeleton/today-skeleton";
 // "Heute" narrowed to the watering tasks by its address `?tasks=watering` (US-QS-26): the page and the address rule.
 export { TodayFilter } from "./today-page/today-filter/today-filter";
 export { taskFilterOf, WATERING_TASKS } from "./today-page/today-filter/task-filter";
+// The query key of the central list: the area reloads it when a write changes what it derives from (SG-FEED-01).
+export { TODAY_LIST_KEY } from "./today-api";

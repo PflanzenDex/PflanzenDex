@@ -1,7 +1,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Button } from "@/shared/ui/button/button";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -56,7 +56,12 @@ function Row(props: {
   );
 }
 
-function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[] }) {
+function Rows(props: {
+  api: string;
+  token: Token;
+  rows: readonly WateringDueRow[];
+  param?: PagerPart;
+}) {
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const again = useInvalidate(KEY);
   const write = useWriteAction(props.token, again);
@@ -76,6 +81,7 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
       <Pager
         items={props.rows}
         pageSize={PAGE_SIZE}
+        {...(props.param ? { param: props.param } : {})}
         label={ui("pager")}
         getKey={(r) => r.specimenId}
         renderItem={(r) => (
@@ -121,6 +127,11 @@ export function WateringList(props: {
   token: Token;
   /** With `count` the list renders nothing of its own and hands the due count to it (US-QS-18). */
   count?: (due: DueCount) => ReactNode;
+  /**
+   * The address part of its pages: a list in a layer passes `LAYER_PARAM`, so it does not share `from` with the screen
+   * behind it (US-QS-18, issue 2070). Alone on its screen it keeps the default.
+   */
+  param?: PagerPart;
 }) {
   if (props.count)
     return (
@@ -128,10 +139,12 @@ export function WateringList(props: {
         {props.count}
       </DueCountOf>
     );
-  return <DueList api={props.api} token={props.token} />;
+  return (
+    <DueList api={props.api} token={props.token} {...(props.param ? { param: props.param } : {})} />
+  );
 }
 
-function DueList(props: { api: string; token: Token }) {
+function DueList(props: { api: string; token: Token; param?: PagerPart }) {
   const load = useCallback((t: string) => loadWateringDue(props.api, t), [props.api]);
   return (
     <LoadFrame
@@ -145,7 +158,12 @@ function DueList(props: { api: string; token: Token }) {
         rows.length === 0 ? (
           <EmptyState level={3} title={ui("none.title")} description={ui("none.description")} />
         ) : (
-          <Rows api={props.api} token={props.token} rows={rows} />
+          <Rows
+            api={props.api}
+            token={props.token}
+            rows={rows}
+            {...(props.param ? { param: props.param } : {})}
+          />
         )
       }
     </LoadFrame>

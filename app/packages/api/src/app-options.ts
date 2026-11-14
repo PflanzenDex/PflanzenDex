@@ -10,6 +10,7 @@ import type {
   ImageProcessor,
   FeatureSet,
   ProductEntry,
+  IdentitySessions,
 } from "@pflanzendex/core";
 import type { TokenVerifier } from "./account";
 import type { AiAccessOptions } from "./ai";
@@ -63,4 +64,6 @@ export type AppOptions = {
   redeemLimit?: RedeemLimit;
   /** The operator's product catalog for equipment recommendations (US-EQU-10); without it nothing is recommended. */
   products?: readonly ProductEntry[];
+  /** Ends the keeper's sessions at the sign-in service (US-ACC-01, sign out on all devices); without it the answer is 503 unavailable. */
+  identitySessions?: IdentitySessions;
 };

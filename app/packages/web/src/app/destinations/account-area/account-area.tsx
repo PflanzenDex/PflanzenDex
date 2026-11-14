@@ -29,6 +29,8 @@ type Props = {
   token: Token;
   account: Account;
   error?: string;
+  /** "Auf allen Geräten abmelden" runs (US-ACC-01): its control shows busy and ignores a second press. */
+  everywhereBusy?: boolean;
   onSignOut: () => void;
   onEverywhereSignOut: () => void;
   /** The overview "Was die App kann" (US-ONB-06) from the shell, which no area imports; without it the section is missing. */
@@ -181,6 +183,7 @@ export function AccountArea(props: Props) {
             onSignOut={props.onSignOut}
             onEverywhereSignOut={props.onEverywhereSignOut}
             {...(props.error ? { error: props.error } : {})}
+            {...(props.everywhereBusy ? { everywhereBusy: true } : {})}
           />
         </div>
         {open !== undefined ? (

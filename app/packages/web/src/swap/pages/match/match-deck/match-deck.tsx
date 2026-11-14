@@ -56,7 +56,7 @@ function End(props: {
         action={
           later > 0
             ? { label: "Später-Karten ansehen", onClick: () => dispatch({ type: "again" }) }
-            : { label: "Anfragen ansehen", href: EXCHANGE_PATH }
+            : { label: "Anfragen ansehen", href: `${EXCHANGE_PATH}?part=requests` }
         }
       />
       {s.last !== null && <UndoButton onClick={props.undo} />}

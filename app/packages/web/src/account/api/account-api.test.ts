@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   addressFromState,
+  SIGN_OUT_UNREACHABLE,
   signOutEverywhere,
   getAccount,
   oidcSettings,
@@ -149,29 +150,98 @@ describe("fetch account from the API", () => {
   });
 });
 
-describe("sign out on all devices", () => {
-  it("deletes all sessions of the account at the sign-in service", async () => {
-    const f = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
-    await signOutEverywhere("http://id/realms/x", "tok", f);
-    expect(f).toHaveBeenCalledWith("http://id/realms/x/account/sessions", {
-      method: "DELETE",
-      headers: { Authorization: "Bearer tok", Accept: "application/json" },
+describe("US-ACC-01 sign out on all devices goes through the API (issue 2065)", () => {
+  it("US-ACC-01 posts to the API's session route with the token and a repeat-guard key, not to the sign-in service", async () => {
+    const f = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ ended: true }), { status: 200 }));
+    const r = await signOutEverywhere("http://api", "tok", f);
+    expect(r).toEqual({ ok: true, value: { ended: true } });
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(f).toHaveBeenCalledWith("http://api/account/sessions/end", {
+      method: "POST",
+      headers: { Authorization: "Bearer tok", "Idempotency-Key": expect.any(String) },
       signal: expect.any(AbortSignal),
     });
   });
 
   it("US-ACC-01 signing out on all devices gives up after the same 15 seconds", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout");
-    const f = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
-    await signOutEverywhere("http://id/realms/x", "tok", f);
+    const f = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ ended: true }), { status: 200 }));
+    await signOutEverywhere("http://api", "tok", f);
     expect(timeout).toHaveBeenCalledWith(15_000);
     timeout.mockRestore();
   });
 
-  it("throws on errors so the UI reports nothing wrong", async () => {
-    const f = vi.fn().mockResolvedValue(new Response(null, { status: 403 }));
-    await expect(signOutEverywhere("http://id/realms/x", "tok", f)).rejects.toThrow(
-      "sign_out_failed",
+  it("US-ACC-01 a refusal of the API comes back with its code and its text, never as a thrown error", async () => {
+    const text =
+      "Abmelden auf allen Geräten ist auf diesem Server nicht eingerichtet. Melde dich hier ab; andere Geräte bleiben dann angemeldet.";
+    const f = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ error: { code: "account.sign_out_everywhere_unavailable", text } }),
+          { status: 503 },
+        ),
+      );
+    expect(await signOutEverywhere("http://api", "tok", f)).toEqual({
+      ok: false,
+      error: { code: "account.sign_out_everywhere_unavailable", text },
+    });
+  });
+
+  it("US-ACC-01 a request that gets no answer comes back as the server not reachable, like the other writes", async () => {
+    const f = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    const r = await signOutEverywhere("http://api", "tok", f);
+    expect(r.ok ? null : r.error.code).toBe("network.not_reachable");
+  });
+});
+
+describe("US-ACC-01 sign out on all devices: the answers the dialog can show", () => {
+  it("US-ACC-01 a request that times out gets no answer, so the dialog says the connection is missing", async () => {
+    const f = vi
+      .fn()
+      .mockRejectedValue(new DOMException("The operation timed out.", "TimeoutError"));
+    const r = await signOutEverywhere("http://api-timeout", "tok", f);
+    expect(r).toEqual({ ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } });
+  });
+
+  it("US-ACC-01 an answer without a text is the generic failure code, with no text of its own", async () => {
+    const f = vi.fn().mockResolvedValue(new Response("<html>gateway</html>", { status: 502 }));
+    const r = await signOutEverywhere("http://api-no-text", "tok", f);
+    expect(r).toEqual({
+      ok: false,
+      error: { code: "account.sign_out_everywhere_failed", text: "" },
+    });
+  });
+
+  it("US-ACC-01 a repeat after no answer sends the same Idempotency-Key, so the server ends the sessions once", async () => {
+    const f = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    await signOutEverywhere("http://api-repeat", "tok", f);
+    await signOutEverywhere("http://api-repeat", "tok", f);
+    const keys = f.mock.calls.map(
+      (call) => (call[1] as RequestInit).headers as Record<string, string>,
     );
+    expect(keys[0]?.["Idempotency-Key"]).toBeDefined();
+    expect(keys[1]?.["Idempotency-Key"]).toBe(keys[0]?.["Idempotency-Key"]);
+  });
+
+  it("US-ACC-01 a refusal frees the key, so the next press sends a new one", async () => {
+    const refusal = () =>
+      new Response(
+        JSON.stringify({ error: { code: "account.sign_out_everywhere_failed", text: "x" } }),
+        {
+          status: 502,
+        },
+      );
+    const f = vi.fn().mockResolvedValueOnce(refusal()).mockResolvedValueOnce(refusal());
+    await signOutEverywhere("http://api-refused", "tok", f);
+    await signOutEverywhere("http://api-refused", "tok", f);
+    const keys = f.mock.calls.map(
+      (call) => (call[1] as RequestInit).headers as Record<string, string>,
+    );
+    expect(keys[1]?.["Idempotency-Key"]).not.toBe(keys[0]?.["Idempotency-Key"]);
   });
 });

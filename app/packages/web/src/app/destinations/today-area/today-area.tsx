@@ -5,6 +5,7 @@ import {
   LayerSheet,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
@@ -20,6 +21,7 @@ import {
   type TodaySection,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { TodayOverview } from "./today-overview/today-overview";
+import { useTodayFollowsWrites } from "./today-follows-writes/today-follows-writes";
 import { WateringView, useWateringFilter } from "./watering-view/watering-view";
 
 type Token = () => Promise<string | undefined>;
@@ -68,6 +70,8 @@ export function TodayArea(props: {
 }) {
   useFormerAnchors();
   usePreloadParts();
+  // The list follows every write that changes what it derives from, wherever it is made (SG-FEED-01).
+  useTodayFollowsWrites();
   const treatments = useLayer("treatments");
   const hints = useLayer("hints");
   // The layer `plan` is the planning layer of the treatments (`PlanLayer`, its address value is `plan`).
@@ -169,7 +173,7 @@ function Tasks(props: {
       </LayerSheet>
       <LayerSheet id="watering" title="Gießen">
         <InLayer skeleton={<WateringLayerSkeleton />}>
-          <WateringList api={api} token={token} />
+          <WateringList api={api} token={token} param={LAYER_PARAM} />
         </InLayer>
       </LayerSheet>
       <LayerSheet id="hints" title="Fehlt noch">
