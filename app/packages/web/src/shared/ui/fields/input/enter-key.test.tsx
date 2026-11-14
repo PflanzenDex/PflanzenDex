@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormRoot } from "../
 import { Select } from "../select/select";
 import { Textarea } from "../textarea/textarea";
 import { Input } from "./input";
+import { DateField } from "./native-fields/date-field/date-field";
 
 afterEach(cleanup);
 
@@ -391,5 +392,72 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
     await userEvent.keyboard("{Enter}");
     expect(onKeyDown).toHaveBeenCalledTimes(1);
     expect(document.activeElement).toBe(screen.getByLabelText("Vorname"));
+  });
+});
+
+describe("DateField return-key hint (US-QS-32 · SG-FORM-03)", () => {
+  it("US-QS-32 · SG-FORM-03 a date field that is the last text field says done, the field before it says next, and Enter moves onto the date field without submitting", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <FormRoot onSubmit={onSubmit}>
+        <Input aria-label="Messwert" />
+        <DateField aria-label="Datum" />
+        <button type="submit">Speichern</button>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Messwert")).toBe("next");
+    expect(focusAndHint("Datum")).toBe("done");
+    act(() => screen.getByLabelText("Messwert").focus());
+    await userEvent.keyboard("{Enter}");
+    expect(document.activeElement).toBe(screen.getByLabelText("Datum"));
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-FORM-03 a date field before another text field says next, and Enter moves on to that field", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <FormRoot onSubmit={onSubmit}>
+        <DateField aria-label="Datum" />
+        <Input aria-label="Notiz" />
+        <button type="submit">Speichern</button>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Datum")).toBe("next");
+    await userEvent.keyboard("{Enter}");
+    expect(document.activeElement).toBe(screen.getByLabelText("Notiz"));
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-FORM-03 an explicit enterKeyHint on a date field wins: it is kept on focus, and Enter submits in place of moving on", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <FormRoot onSubmit={onSubmit}>
+        <DateField aria-label="Datum" enterKeyHint="send" />
+        <Input aria-label="Notiz" />
+        <button type="submit">Speichern</button>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Datum")).toBe("send");
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(screen.getByLabelText("Datum"));
+  });
+
+  it("US-QS-32 · SG-FORM-03 a caller's onFocus and onKeyDown on a date field still run, and an Enter the caller prevents does not move on", async () => {
+    const onFocus = vi.fn();
+    const onKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLInputElement>) => {
+      event.preventDefault();
+    });
+    render(
+      <FormRoot onSubmit={() => {}}>
+        <DateField aria-label="Datum" onFocus={onFocus} onKeyDown={onKeyDown} />
+        <Input aria-label="Notiz" />
+      </FormRoot>,
+    );
+    await userEvent.click(screen.getByLabelText("Datum"));
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    await userEvent.keyboard("{Enter}");
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(screen.getByLabelText("Datum"));
   });
 });

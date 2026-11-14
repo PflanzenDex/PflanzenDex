@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../form/form";
 import { cn } from "@/shared/lib/utils";
-import { moveOnWithEnter, syncEnterKeyHint } from "./enter-key";
+import { enterKeyHandlers } from "./enter-key";
 
 /**
  * Shared look of the text-like fields (Input, Textarea, Select): token border (`--input`, 3:1 on the surface,
@@ -56,18 +56,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       aria-invalid={invalid || props["aria-invalid"] || undefined}
       className={cn(fieldClasses, "min-h-[44px] py-2", className)}
       enterKeyHint={enterKeyHint}
-      onFocus={(event) => {
-        if (enterKeyHint === undefined) syncEnterKeyHint(event.currentTarget);
-        onFocus?.(event);
-      }}
-      onPointerDown={(event) => {
-        if (enterKeyHint === undefined) syncEnterKeyHint(event.currentTarget);
-        onPointerDown?.(event);
-      }}
-      onKeyDown={(event) => {
-        onKeyDown?.(event);
-        if (!event.defaultPrevented) moveOnWithEnter(event, enterKeyHint);
-      }}
+      {...enterKeyHandlers(enterKeyHint, { onFocus, onPointerDown, onKeyDown })}
       {...props}
     />
   ),
