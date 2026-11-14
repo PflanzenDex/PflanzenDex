@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
-import { useRequest } from "../../shared/data";
+import { TODAY_KEY, useRequest } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { loadToday } from "../today-api";
 import { isTreatment, type TodayDestination } from "./today-row/today-row";
@@ -14,7 +14,8 @@ const t = texts(table);
 
 export type { TodayDestination };
 
-const KEY = ["today", "list"] as const;
+// Under the shared prefix: a write in a sheet of "Heute" refreshes it (`useRefreshToday`, SG-FEED-01).
+const KEY = [...TODAY_KEY, "list"] as const;
 const TASKS = "tasks";
 /**
  * The central "Today" list (TE-07): what needs action today, most urgent first: treatments overdue or due, plants

@@ -79,23 +79,74 @@ const LOCATIONS = [{ id: "l1", name: "Regal", lightZoneId: null }];
 
 /** A server for the three sections; it returns what is posted. */
 function fakeServer(setup: Setup = {}) {
-  let open = setup.treatments ?? [treatment("a", "Aloe", "overdue", "überfällig seit 2 Tagen")];
+  // The rows the server holds: a write takes its row away or adds one, so the next read shows the change (SG-FEED-01).
+  let open: unknown[] = setup.treatments ?? [
+    treatment("a", "Aloe", "overdue", "überfällig seit 2 Tagen"),
+  ];
+  let today: unknown[] = [...(setup.items ?? [])];
+  let hintRows: unknown[] = [...(setup.hints ?? [noLocation])];
   const posts: string[] = [];
   const hints = () =>
     setup.hintsStatus && setup.hintsStatus !== 200
       ? response(setup.hintsStatus, { error: { code: "server.error", text: "x" } })
-      : response(200, { hints: setup.hints ?? [noLocation] });
+      : response(200, { hints: hintRows });
+  const names = (setup.cards ?? setup.specimens ?? CARDS) as { id: string; name: string }[];
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       const post = init?.method === "POST";
       if (post) posts.push(path);
+      const located = /^\/specimens\/([^/]+)\/location$/.exec(path);
+      if (post && located) {
+        const id = located[1];
+        hintRows = hintRows.filter((h) => (h as { specimenId?: string }).specimenId !== id);
+        today = today.filter(
+          (i) =>
+            (i as { specimenId?: string; kind?: string }).specimenId !== id ||
+            (i as { kind?: string }).kind !== "location_missing",
+        );
+        return response(200, {});
+      }
       const answers: Record<string, () => Promise<Response>> = {
-        "/today": () =>
-          response(200, { date: "2026-10-03", upcoming: 0, items: setup.items ?? [] }),
-        "/treatments": () =>
-          post ? response(201, { treatments: [{}] }) : response(200, { treatments: open }),
+        "/today": () => response(200, { date: "2026-10-03", upcoming: 0, items: today }),
+        "/treatments": () => {
+          if (!post) return response(200, { treatments: open });
+          const body = JSON.parse(String(init?.body)) as {
+            specimenIds: string[];
+            reason: string;
+            agent?: string;
+            date: string;
+          };
+          const nameOf = (specimenId: string) =>
+            names.find((n) => n.id === specimenId)?.name ?? specimenId;
+          open = [
+            ...open,
+            ...body.specimenIds.map((specimenId) => ({
+              id: `new-${specimenId}`,
+              specimenId,
+              specimenName: nameOf(specimenId),
+              reason: body.reason,
+              agent: body.agent ?? null,
+              dueAt: body.date,
+              status: { kind: "today", text: "heute fällig" },
+            })),
+          ];
+          // The server derives the first card of Heute from the open treatments: one planned for today is due today (SG-FEED-01).
+          today = [
+            ...today,
+            ...body.specimenIds.map((specimenId) => ({
+              id: `new-${specimenId}`,
+              kind: "treatment_due",
+              specimenId,
+              specimenName: nameOf(specimenId),
+              text: `„${nameOf(specimenId)}“: ${body.reason} – heute fällig.`,
+              nextAction: "Hake den Termin ab.",
+              target: "treatments",
+            })),
+          ];
+          return response(201, { treatments: [{}] });
+        },
         "/watering/due": () => response(200, { due: setup.due ?? [] }),
         "/specimens/count": () => response(200, { count: 1, archived: 0 }),
         "/onboarding/hints": () => response(200, { hint: null, guideEnded: false }),
@@ -107,13 +158,15 @@ function fakeServer(setup: Setup = {}) {
           response(200, { specimens: setup.cards ?? setup.specimens ?? CARDS }),
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
-        "/specimens/e1/location": () => response(200, {}),
         "/achievements/anniversaries": () =>
           response(200, setup.anniversaries ?? { calmMode: true }),
       };
-      if (/^\/treatments\/[^/]+\/complete$/.test(path)) {
-        open = [];
-        return response(200, { treatment: { id: "a", done: true, doneAt: "2026-10-03" } });
+      const completed = /^\/treatments\/([^/]+)\/complete$/.exec(path);
+      if (completed) {
+        const id = completed[1];
+        open = open.filter((r) => (r as { id?: string }).id !== id);
+        today = today.filter((i) => (i as { id?: string }).id !== id);
+        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
       }
       return (answers[path] ?? (() => response(404, {})))();
     }),
@@ -686,5 +739,145 @@ describe("US-QS-14 issue 1697 · Heute loads its counts behind one skeleton", ()
     show();
     expect(await screen.findByRole("list", { name: "Themen" })).toBeTruthy();
     expect(loadingStatuses()).toHaveLength(0);
+  });
+});
+
+/** The first card of Heute names the overdue treatment "a" of Aloe, the same treatment as the open list. */
+const todayAloe = { ...todayItem, id: "a" };
+
+describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card of the day", () => {
+  it("US-QS-18 · SG-FEED-01 after a tick-off in the layer Behandlungen the first card no longer names that treatment", async () => {
+    fakeServer({ items: [todayAloe] });
+    const user = userEvent.setup();
+    show();
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: /^Behandlungen/ }));
+    const layer = await dialog("Behandlungen");
+    await user.click(
+      await within(layer).findByRole("button", {
+        name: "Grund a bei Aloe als erledigt abhaken",
+      }),
+    );
+    expect(await within(layer).findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
+  });
+
+  it("US-QS-18 · SG-FEED-01 after a location is set from Fehlt noch the first card no longer asks for it", async () => {
+    fakeServer({ items: [noLocation] });
+    const user = userEvent.setup();
+    show();
+    expect(await screen.findByText(/keinen\s+Standort/)).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: /^1Fehlt noch$/ }));
+    const layer = await dialog("Fehlt noch");
+    await user.selectOptions(await within(layer).findByLabelText("Standort für „Bogenhanf“"), "l1");
+    await user.click(within(layer).getByRole("button", { name: "Standort setzen: Bogenhanf" }));
+    expect(
+      await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
+    ).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText(/keinen\s+Standort/)).toBeNull());
+  });
+
+  it("US-QS-18 · SG-FEED-01 a planned treatment is listed in Offen of the layer Behandlungen at once, without a reload", async () => {
+    fakeServer({ treatments: [] });
+    const user = userEvent.setup();
+    show("/today?sheet=treatments");
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByRole("heading", {
+      level: 3,
+      name: "Keine offenen Behandlungen.",
+    });
+    await user.click(
+      within(empty.parentElement as HTMLElement).getByRole("button", {
+        name: "Behandlung planen",
+      }),
+    );
+    const form = await dialog("Behandlung planen");
+    await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
+    await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
+    );
+    const open = within(await dialog("Behandlungen"));
+    const list = await open.findByRole("list", { name: "Offene Behandlungen" });
+    expect(open.queryByText("Keine offenen Behandlungen.")).toBeNull();
+    expect(within(list).getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+    expect(within(list).getByText(/Läuse/)).toBeTruthy();
+  });
+
+  it("US-QS-18 · SG-FEED-01 a treatment planned for today is the first card of Heute at once, with the tiles", async () => {
+    fakeServer({ treatments: [], items: [] });
+    const user = userEvent.setup();
+    show("/today");
+    expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: /^0Behandlungen$/ }));
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByRole("heading", {
+      level: 3,
+      name: "Keine offenen Behandlungen.",
+    });
+    await user.click(
+      within(empty.parentElement as HTMLElement).getByRole("button", {
+        name: "Behandlung planen",
+      }),
+    );
+    const form = await dialog("Behandlung planen");
+    await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
+    await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    // The card of Heute names the planned treatment as due today, without a reload.
+    expect(await screen.findByText("Heute fällig")).toBeTruthy();
+    expect(screen.queryByText("Heute steht nichts an.")).toBeNull();
+  });
+
+  it("US-QS-18 · SG-FEED-01 a planned treatment shows in Offen when the answer of the list comes after the layer opened again", async () => {
+    const posts = fakeServer({ treatments: [] });
+    const fetchFn = vi.mocked(fetch);
+    const base = fetchFn.getMockImplementation() as typeof fetch;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    let held = false;
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (
+        path === "/treatments" &&
+        init?.method !== "POST" &&
+        posts.includes("/treatments") &&
+        !held
+      ) {
+        held = true;
+        await gate;
+      }
+      return base(url, init);
+    });
+    const user = userEvent.setup();
+    show("/today?sheet=treatments");
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByRole("heading", {
+      level: 3,
+      name: "Keine offenen Behandlungen.",
+    });
+    await user.click(
+      within(empty.parentElement as HTMLElement).getByRole("button", {
+        name: "Behandlung planen",
+      }),
+    );
+    const form = await dialog("Behandlung planen");
+    await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
+    await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await waitFor(() => expect(held).toBe(true));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
+    );
+    const reopened = within(await dialog("Behandlungen"));
+    release();
+    const list = await reopened.findByRole("list", { name: "Offene Behandlungen" });
+    expect(within(list).getByText(/Läuse/)).toBeTruthy();
   });
 });

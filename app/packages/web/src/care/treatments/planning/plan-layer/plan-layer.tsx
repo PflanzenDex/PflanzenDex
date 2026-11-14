@@ -4,7 +4,7 @@ import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/l
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import { useInvalidate, useRequest, type ApiError } from "@/shared/data";
+import { useRefreshToday, useRequest, type ApiError } from "@/shared/data";
 import { OPEN_KEY, SPECIMENS_KEY } from "../../../shared/api/query-keys";
 import { RefusalAlert } from "../../../shared/notices/notices";
 import { loadTreatableSpecimens, type TreatmentInput } from "../../../shared/api/treatments-api";
@@ -59,7 +59,8 @@ export function PlanLayer(props: { api: string; token: Token }) {
   const { api, token } = props;
   const { open, closeLayer } = useLayer(PLAN_LAYER);
   const toast = useToast();
-  const refreshOpen = useInvalidate(OPEN_KEY);
+  // A planned treatment is a new row of the list and, when it is due today, a new first card of "Heute" (SG-FEED-01).
+  const refreshOpen = useRefreshToday(OPEN_KEY);
   const planning = usePlanning(api, token, (message) => {
     refreshOpen();
     toast.show({ message });

@@ -106,6 +106,25 @@ export function useInvalidate(queryKey: QueryKey): () => void {
   return useCallback(() => void reload(), [reload]);
 }
 
+/**
+ * The prefix of the central list of "Heute" (TE-07, US-QS-18). Its first card is derived from the whole account, so a write
+ * in one of the sheets over "Heute" changes what it shows (SG-FEED-01); those writes refresh it through
+ * `useRefreshToday`, and the list never keeps a state that a write has already changed.
+ */
+export const TODAY_KEY = ["today"] as const;
+
+/**
+ * `useInvalidate` for a write in a sheet of "Heute" (SG-FEED-01): refreshes the list of the sheet and the central list of
+ * "Heute" in one step, so the first card, the tiles and the lists of the layers show the same state after the write.
+ */
+export function useRefreshToday(queryKey: QueryKey): () => void {
+  const client = useQueryClient();
+  return useCallback(() => {
+    void client.invalidateQueries({ queryKey });
+    void client.invalidateQueries({ queryKey: TODAY_KEY });
+  }, [client, queryKey]);
+}
+
 /** A list read in pages (FR-BES-23): the pages loaded so far and the state of the next one. */
 export type PagesRequest<P> = {
   /** The first page decides: "pending" until it is there, "error" when it failed (the view fails as a whole, P-10). */

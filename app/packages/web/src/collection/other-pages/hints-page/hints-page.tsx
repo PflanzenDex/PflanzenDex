@@ -2,7 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../../shared/data";
+import { LoadFrame, useRefreshToday, useQueryClient, useWriteAction } from "../../../shared/data";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
   GRID,
@@ -70,7 +70,7 @@ function HintsList(props: HintsListProps) {
   const Frame = host ? Plain : PageFrame;
   // In its layer the list pages by the free height, so every region down to it passes the height on (issue 1156).
   const frameClass = host ? FILL : undefined;
-  const again = useInvalidate(KEY);
+  const again = useRefreshToday(KEY);
   const place = useWriteAction(token, again);
   const client = useQueryClient();
   const load = useCallback(
