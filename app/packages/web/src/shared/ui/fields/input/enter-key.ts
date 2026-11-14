@@ -139,3 +139,40 @@ export function moveOnWithEnter(
   event.preventDefault();
   next.focus();
 }
+
+/** The three handlers of a text-like input that carry the return-key logic, and the caller's own handlers around them. */
+export type EnterKeyHandlers = {
+  onFocus: (event: React.FocusEvent<HTMLInputElement>) => void;
+  onPointerDown: (event: React.PointerEvent<HTMLInputElement>) => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+};
+
+/**
+ * The return-key behaviour of Input for any custom text field (SG-FORM-03, US-QS-32), so a field does not copy the three
+ * handlers: spread the result onto the `<input>` and pass the caller's own `onFocus`, `onPointerDown` and `onKeyDown` in
+ * `handlers`. The hint is set on focus and on press, unless the caller gave `enterKeyHint`; the caller's handlers run
+ * first, and Enter moves on (`moveOnWithEnter`) unless the caller prevented it.
+ */
+export function enterKeyHandlers(
+  enterKeyHint: EnterKeyHint | undefined,
+  handlers: {
+    onFocus?: React.FocusEventHandler<HTMLInputElement> | undefined;
+    onPointerDown?: React.PointerEventHandler<HTMLInputElement> | undefined;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement> | undefined;
+  },
+): EnterKeyHandlers {
+  return {
+    onFocus(event) {
+      if (enterKeyHint === undefined) syncEnterKeyHint(event.currentTarget);
+      handlers.onFocus?.(event);
+    },
+    onPointerDown(event) {
+      if (enterKeyHint === undefined) syncEnterKeyHint(event.currentTarget);
+      handlers.onPointerDown?.(event);
+    },
+    onKeyDown(event) {
+      handlers.onKeyDown?.(event);
+      if (!event.defaultPrevented) moveOnWithEnter(event, enterKeyHint);
+    },
+  };
+}

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
 import { fieldClasses, type InputProps } from "../../input";
+import { enterKeyHandlers } from "../../enter-key";
 
 const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
 const GERMAN = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
@@ -35,10 +36,27 @@ export function showDateText(iso: string): string {
  * The one date field (US-QS-24): shows `TT.MM.JJJJ` in every browser and locale, the value stays the local calendar
  * date `YYYY-MM-DD` (NFR-08, DS-51), or `""` while the text is no real day. `min`/`max` (`YYYY-MM-DD`) mark an
  * out-of-range day as invalid. Takes the props of `Input`; `onChange` receives an event whose `target.value` is the ISO date.
+ * The return key works as in `Input` (SG-FORM-03, US-QS-32): the date field is a text field, so a field before it says
+ * "next" and Enter moves on onto it, and the last text field says "done" and Enter submits. A caller's `enterKeyHint` wins.
  */
 const DateField = React.forwardRef<HTMLInputElement, Omit<InputProps, "type">>(
   (
-    { className, invalid, value, defaultValue, onChange, onBlur, min, max, placeholder, ...props },
+    {
+      className,
+      invalid,
+      value,
+      defaultValue,
+      onChange,
+      onBlur,
+      min,
+      max,
+      placeholder,
+      enterKeyHint,
+      onFocus,
+      onPointerDown,
+      onKeyDown,
+      ...props
+    },
     ref,
   ) => {
     const initial = String(value ?? defaultValue ?? "");
@@ -57,6 +75,8 @@ const DateField = React.forwardRef<HTMLInputElement, Omit<InputProps, "type">>(
         min={min}
         max={max}
         maxLength={10}
+        enterKeyHint={enterKeyHint}
+        {...enterKeyHandlers(enterKeyHint, { onFocus, onPointerDown, onKeyDown })}
         {...props}
         value={shown}
         aria-invalid={
