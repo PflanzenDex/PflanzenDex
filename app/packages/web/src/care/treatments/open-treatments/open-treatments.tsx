@@ -7,7 +7,7 @@ import {
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
-import { LoadFrame, SIGN_IN, useRefreshToday, type ApiError } from "../../../shared/data";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../shared/data";
 import { LIST_CLASSES, RefusalAlert, StatusNote } from "../../shared/notices";
 import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
@@ -151,8 +151,7 @@ export function OpenTreatments(props: {
   const { api, token } = props;
   const host = props.host === true;
   const Title = host ? "h3" : "h2";
-  // A tick-off changes the card of "Heute" too (SG-FEED-01), so the central list refreshes with the treatments.
-  const changed = useRefreshToday(TREATMENTS);
+  const changed = useInvalidate(TREATMENTS);
   const completion = useCompletion(api, token, changed);
   const load = useCallback((t: string) => loadOpenTreatments(api, t), [api]);
   return (

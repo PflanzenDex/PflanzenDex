@@ -10,10 +10,8 @@ export {
 export { loadShared } from "./client/request/shared-load";
 export { useQueryClient, type QueryClient } from "@tanstack/react-query";
 export {
-  TODAY_KEY,
   useClearOnSignOut,
   useInvalidate,
-  useRefreshToday,
   useReload,
   useRequest,
   useRequestPages,

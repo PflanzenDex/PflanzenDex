@@ -5,7 +5,7 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame, useRefreshToday, useWriteAction } from "../../../shared/data";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
 import { loadWateringDue, markWatered, type WateringDueRow } from "../../api/reminders-api";
 import { WateringListSkeleton } from "./watering-list.skeleton";
@@ -58,8 +58,7 @@ function Row(props: {
 
 function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[] }) {
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
-  // Watering is a write of a sheet of "Heute" as well: the central list refreshes with it (SG-FEED-01).
-  const again = useRefreshToday(KEY);
+  const again = useInvalidate(KEY);
   const write = useWriteAction(props.token, again);
   const toggle = (id: string) =>
     setChosen((c) => {

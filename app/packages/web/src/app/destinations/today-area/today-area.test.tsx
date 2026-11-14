@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useInvalidate, useQueryClient, type QueryClient } from "@/shared/data";
 import { AnniversaryLayer, AnniversaryTile } from "@/achievements";
+import { TREATMENTS } from "@/care";
+import { TODAY_LIST_KEY } from "@/today";
 import { TodayArea } from "./today-area";
 
 const response = (status: number, body: unknown) =>
@@ -20,6 +24,7 @@ const treatment = (id: string, name: string, kind: string, text: string) => ({
   dueAt: "2026-10-01",
   status: { kind, text },
 });
+/** A hint about incomplete specimens, as the API lists it under Fehlt noch (`SpecimenHint`). */
 const noLocation = {
   kind: "location_missing",
   specimenId: "e1",
@@ -28,8 +33,19 @@ const noLocation = {
   text: "„Bogenhanf“ hat noch keinen Standort.",
   nextAction: "Weise der Pflanze einen Standort zu.",
 };
+/** The same missing location on the list of "Heute": kind `specimen_incomplete`, id `hint:<specimen>:<kind>` (core `todayStatus`). */
+const noLocationItem = {
+  id: "hint:e1:location_missing",
+  kind: "specimen_incomplete",
+  specimenId: "e1",
+  specimenName: "Bogenhanf",
+  text: noLocation.text,
+  nextAction: noLocation.nextAction,
+  target: "hints",
+};
+/** The overdue treatment "a" of Aloe on the list of "Heute": id `treatment:<id>` (core `treatmentItem`). */
 const todayItem = {
-  id: "t1",
+  id: "treatment:a",
   kind: "treatment_overdue",
   specimenId: "s-a",
   specimenName: "Aloe",
@@ -101,11 +117,7 @@ function fakeServer(setup: Setup = {}) {
       if (post && located) {
         const id = located[1];
         hintRows = hintRows.filter((h) => (h as { specimenId?: string }).specimenId !== id);
-        today = today.filter(
-          (i) =>
-            (i as { specimenId?: string; kind?: string }).specimenId !== id ||
-            (i as { kind?: string }).kind !== "location_missing",
-        );
+        today = today.filter((i) => (i as { id?: string }).id !== `hint:${id}:location_missing`);
         return response(200, {});
       }
       const answers: Record<string, () => Promise<Response>> = {
@@ -120,28 +132,26 @@ function fakeServer(setup: Setup = {}) {
           };
           const nameOf = (specimenId: string) =>
             names.find((n) => n.id === specimenId)?.name ?? specimenId;
-          open = [
-            ...open,
-            ...body.specimenIds.map((specimenId) => ({
-              id: `new-${specimenId}`,
-              specimenId,
-              specimenName: nameOf(specimenId),
-              reason: body.reason,
-              agent: body.agent ?? null,
-              dueAt: body.date,
-              status: { kind: "today", text: "heute fällig" },
-            })),
-          ];
-          // The server derives the first card of Heute from the open treatments: one planned for today is due today (SG-FEED-01).
+          const rows = body.specimenIds.map((specimenId) => ({
+            id: `new-${specimenId}`,
+            specimenId,
+            specimenName: nameOf(specimenId),
+            reason: body.reason,
+            agent: body.agent ?? null,
+            dueAt: body.date,
+            status: { kind: "today", text: "heute fällig" },
+          }));
+          open = [...open, ...rows];
+          // The server lists a treatment due today on the first card of Heute, as `treatment:<id>` (SG-FEED-01).
           today = [
             ...today,
-            ...body.specimenIds.map((specimenId) => ({
-              id: `new-${specimenId}`,
+            ...rows.map((r) => ({
+              id: `treatment:${r.id}`,
               kind: "treatment_due",
-              specimenId,
-              specimenName: nameOf(specimenId),
-              text: `„${nameOf(specimenId)}“: ${body.reason} – heute fällig.`,
-              nextAction: "Hake den Termin ab.",
+              specimenId: r.specimenId,
+              specimenName: r.specimenName,
+              text: `„${r.specimenName}“: ${r.reason} – heute fällig.`,
+              nextAction: "Behandle die Pflanze und hake den Termin als erledigt ab.",
               target: "treatments",
             })),
           ];
@@ -165,7 +175,7 @@ function fakeServer(setup: Setup = {}) {
       if (completed) {
         const id = completed[1];
         open = open.filter((r) => (r as { id?: string }).id !== id);
-        today = today.filter((i) => (i as { id?: string }).id !== id);
+        today = today.filter((i) => (i as { id?: string }).id !== `treatment:${id}`);
         return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
       }
       return (answers[path] ?? (() => response(404, {})))();
@@ -742,12 +752,35 @@ describe("US-QS-14 issue 1697 · Heute loads its counts behind one skeleton", ()
   });
 });
 
-/** The first card of Heute names the overdue treatment "a" of Aloe, the same treatment as the open list. */
-const todayAloe = { ...todayItem, id: "a" };
+/** How many GET requests the test server got for `path`: the server is the global fetch mock. */
+const requestsTo = (path: string) =>
+  vi
+    .mocked(fetch)
+    .mock.calls.filter(
+      ([url, init]) => new URL(String(url)).pathname === path && (init?.method ?? "GET") === "GET",
+    ).length;
+
+/**
+ * A tick-off made outside the sheets of Heute, the way the plant detail's care path makes one: it completes the treatment
+ * and invalidates the treatments with the key of the open list (`useInvalidate(TREATMENTS)`, SG-FEED-01).
+ */
+function OutsideTickOff() {
+  const invalidate = useInvalidate(TREATMENTS);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void fetch("http://api/treatments/a/complete", { method: "POST" }).then(() => invalidate());
+      }}
+    >
+      Außerhalb abhaken
+    </button>
+  );
+}
 
 describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card of the day", () => {
   it("US-QS-18 · SG-FEED-01 after a tick-off in the layer Behandlungen the first card no longer names that treatment", async () => {
-    fakeServer({ items: [todayAloe] });
+    fakeServer({ items: [todayItem] });
     const user = userEvent.setup();
     show();
     expect(await screen.findByText(/Läuse/)).toBeTruthy();
@@ -763,7 +796,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
   });
 
   it("US-QS-18 · SG-FEED-01 after a location is set from Fehlt noch the first card no longer asks for it", async () => {
-    fakeServer({ items: [noLocation] });
+    fakeServer({ items: [noLocationItem] });
     const user = userEvent.setup();
     show();
     expect(await screen.findByText(/keinen\s+Standort/)).toBeTruthy();
@@ -879,5 +912,75 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     release();
     const list = await reopened.findByRole("list", { name: "Offene Behandlungen" });
     expect(within(list).getByText(/Läuse/)).toBeTruthy();
+  });
+
+  it("US-QS-18 · SG-FEED-01 a tick-off outside the sheets (the plant detail's care path invalidates the treatments) changes the first card of Heute", async () => {
+    fakeServer({ items: [todayItem] });
+    const user = userEvent.setup();
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/today"]}>
+          {area()}
+          <OutsideTickOff />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Außerhalb abhaken" }));
+    await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
+  });
+
+  it("US-QS-18 · SG-FEED-01 a watering does not load the first card of Heute again, because no kind of the list derives from it", async () => {
+    const posts = fakeServer({ due: DUE, items: [todayItem] });
+    const user = userEvent.setup();
+    show("/today?sheet=watering");
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    const watering = await screen.findByRole("button", { name: "Ficus als gegossen eintragen" });
+    const todayBefore = requestsTo("/today");
+    const dueBefore = requestsTo("/watering/due");
+    await user.click(watering);
+    await waitFor(() => expect(posts).toContain("/watering"));
+    // The watering list loads again after its write; the card of Heute does not.
+    await waitFor(() => expect(requestsTo("/watering/due")).toBeGreaterThan(dueBefore));
+    expect(requestsTo("/today")).toBe(todayBefore);
+  });
+
+  it("US-QS-18 · SG-FEED-01 once Heute is closed it no longer follows the writes of the app", async () => {
+    fakeServer({ items: [todayItem] });
+    const user = userEvent.setup();
+    let client: QueryClient | undefined;
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      client = useQueryClient();
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(false)}>
+            Heute schließen
+          </button>
+          {open && area()}
+          <OutsideTickOff />
+        </>
+      );
+    }
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/today"]}>
+          <Harness />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Heute schließen" }));
+    await user.click(screen.getByRole("button", { name: "Außerhalb abhaken" }));
+    // The write reached the cache (the treatments are invalidated); the list of Heute must not hear of it.
+    await waitFor(() =>
+      expect(
+        client?.getQueryCache().find({ queryKey: ["care", "treatments", "open"], exact: true })
+          ?.state.isInvalidated,
+      ).toBe(true),
+    );
+    const list = client?.getQueryCache().find({ queryKey: TODAY_LIST_KEY, exact: true });
+    expect(list).toBeDefined();
+    expect(list?.state.isInvalidated).toBe(false);
   });
 });
