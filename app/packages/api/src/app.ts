@@ -10,6 +10,7 @@ import {
   authentication,
   operatorRoutes,
   registrationRoutes,
+  signOutRoutes,
   unlockRoutes,
   type TokenVerifier,
 } from "./account";
@@ -51,7 +52,6 @@ import { achievementsRoutes } from "./achievements";
 import { discoverRoutes } from "./discover";
 import { monitoringRoutes } from "./monitoring";
 import { deletionRoutes, exportRoutes, operatorDeletionRoutes } from "./privacy";
-import { sessionRoutes } from "./sessions";
 import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
 import {
@@ -89,7 +89,7 @@ function bindAccount(
   app.route("/account", accountRoutes(pool, opt.access));
   app.route("/account", exportRoutes(pool, opt.media?.store));
   app.route("/account", deletionRoutes(pool, opt.clock));
-  app.route("/account", sessionRoutes(pool, opt.identitySessions));
+  app.route("/account", signOutRoutes(pool, opt.identitySessions));
   for (const path of OPERATOR_PATHS) app.use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
   app.route("/", operatorDeletionRoutes(pool, opt.clock));

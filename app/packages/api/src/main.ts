@@ -17,11 +17,15 @@ import { reminderChannelFromEnv, remindersRuntime } from "./monitoring";
 import { reminderOccasionsFor } from "./today";
 import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
-import { REDEEM_LIMIT, WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
-import { createTokenVerifier } from "./account";
+import {
+  REDEEM_LIMIT,
+  WRITE_LIMIT,
+  createMemorySourceCache,
+  createSourceClient,
+  identityRemovalFromEnv,
+} from "./kernel";
+import { createTokenVerifier, identitySessionsFromEnv } from "./account";
 import { deleteAccountHandlers, NO_STORE } from "./privacy";
-import { identityRemovalFromEnv } from "./identity";
-import { identitySessionsFromEnv } from "./sessions";
 import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 

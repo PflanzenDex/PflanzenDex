@@ -2,7 +2,7 @@ import { sessionsNotConfigured, signOutEverywhere, type IdentitySessions } from 
 import { IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { write, type AuthEnv } from "../kernel";
+import { write, type AuthEnv } from "../../kernel";
 
 /**
  * Sign out on all devices (US-ACC-01, issue 2065): `POST /account/sessions/end` (`Idempotency-Key`, no body) ends every
@@ -10,7 +10,7 @@ import { write, type AuthEnv } from "../kernel";
  * body's; the path sits behind the sign-in guard of `/account/*`, so a request without a valid token answers 401 first.
  * Without the identity settings the answer is 503 `account.sign_out_everywhere_unavailable`.
  */
-export function sessionRoutes(
+export function signOutRoutes(
   pool: Pool,
   identity: IdentitySessions = sessionsNotConfigured,
 ): Hono<AuthEnv> {

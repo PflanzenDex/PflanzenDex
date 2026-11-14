@@ -3,8 +3,8 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AI_OPERATION_CLASSES, ERROR_TEXTS, type IdentitySessions } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
-import { createApp, type AppOptions } from "../app";
-import type { IdentityAdminConfig } from "../identity";
+import { createApp, type AppOptions } from "../../app";
+import type { IdentityAdminConfig } from "../../kernel";
 import { identitySessionsFromEnv, keycloakSessionsEnding } from "./keycloak-sessions";
 
 // US-ACC-01 (issue 2065): sign out on all devices through the API. The sign-in service is a fake fetch; the database is real.

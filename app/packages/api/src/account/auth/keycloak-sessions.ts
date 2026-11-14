@@ -5,9 +5,9 @@ import {
   sessionsNotConfigured,
   type IdentitySessions,
 } from "@pflanzendex/core";
-import { adminRequest, identityAdminConfigFromEnv, type IdentityAdminConfig } from "../identity";
+import { adminRequest, identityAdminConfigFromEnv, type IdentityAdminConfig } from "../../kernel";
 
-// Ends a keeper's sessions at the sign-in service (US-ACC-01, issue 2065): `POST <admin base>/users/<subject>/logout` with
+// Ends a keeper's sessions at the sign-in service (US-ACC-01, issue 2065; the admin client is in kernel/identity): `POST <admin base>/users/<subject>/logout` with
 // the client credentials token of the identity service client, the same client as the identity removal (realm role
 // manage-users of realm-management, nothing else). Nothing is read back and no realm is changed.
 

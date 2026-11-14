@@ -31,12 +31,19 @@ function withError(z: State, error: string | undefined): State {
   return z;
 }
 
+// The busy mark of "Auf allen Geräten abmelden" sits on the signed-in state only (US-ACC-01).
+function withBusy(z: State, busy: boolean): State {
+  return z.kind === "signedIn" ? { ...z, everywhereBusy: busy } : z;
+}
+
 export function sessionActions(
   manager: Promise<UserManager>,
   setState: Dispatch<SetStateAction<State>>,
   api: string,
 ) {
   let detourRunning = false;
+  // A press while "Auf allen Geräten abmelden" runs does nothing: the request is sent once (US-ACC-01).
+  let everywhereRunning = false;
   // A press that starts a detour (US-ACC-01) restores the keys it may change when it fails and says so there.
   // A press during a detour is ignored. Released on success too: a back/forward return resolves the redirect (`pageshow`).
   const press = (keys: string[], failed: string, detour: (mgr: UserManager) => Promise<void>) => {
@@ -74,8 +81,10 @@ export function sessionActions(
     // "Auf allen Geräten abmelden" (US-ACC-01, issue 2065): the API ends every session first. The local sign-in is removed
     // only after that succeeded; a failure keeps the dialog open with the text of its code, so the keeper can press again.
     everywhereSignOut: async () => {
-      setState((z) => withError(z, undefined));
-      const showError = (text: string) => setState((z) => withError(z, text));
+      if (everywhereRunning) return;
+      everywhereRunning = true;
+      setState((z) => withBusy(withError(z, undefined), true));
+      const showError = (text: string) => setState((z) => withBusy(withError(z, text), false));
       try {
         const mgr = await manager;
         const user = await mgr.getUser();
@@ -89,6 +98,8 @@ export function sessionActions(
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });
       } catch {
         showError(t("everywhere.failed"));
+      } finally {
+        everywhereRunning = false;
       }
     },
   };

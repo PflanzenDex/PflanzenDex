@@ -32,6 +32,8 @@ const ROW =
 /** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
 const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
+// The look of a control while its action runs: `aria-disabled` keeps the focus on it (SC 2.4.3), as the operator controls do.
+const BUSY_LOOK = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 function Row(props: {
@@ -59,6 +61,8 @@ function SignOutRow(props: {
   onEverywhereSignOut: () => void;
   /** The error of the last try (US-ACC-01): the dialog stays open, so the person can press again. */
   error?: string;
+  /** "Auf allen Geräten abmelden" runs: the control is busy and a press does nothing (US-ACC-01). */
+  busy?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -86,7 +90,17 @@ function SignOutRow(props: {
           <Button type="button" size="touch" onClick={props.onSignOut}>
             Abmelden
           </Button>
-          <Button type="button" variant="outline" size="touch" onClick={props.onEverywhereSignOut}>
+          <Button
+            type="button"
+            variant="outline"
+            size="touch"
+            aria-disabled={props.busy || undefined}
+            aria-busy={props.busy || undefined}
+            className={BUSY_LOOK}
+            onClick={() => {
+              if (!props.busy) props.onEverywhereSignOut();
+            }}
+          >
             Auf allen Geräten abmelden
           </Button>
           <Button type="button" variant="ghost" size="touch" onClick={() => setOpen(false)}>
@@ -95,6 +109,15 @@ function SignOutRow(props: {
         </div>
       </ResponsiveModal>
     </>
+  );
+}
+
+/** The last list item: "Abmelden…" with its confirmation dialog (US-QS-17, US-ACC-01). */
+function SignOutItem(props: React.ComponentProps<typeof SignOutRow>) {
+  return (
+    <li>
+      <SignOutRow {...props} />
+    </li>
   );
 }
 
@@ -115,6 +138,8 @@ export function AccountIndex(props: {
   onEverywhereSignOut: () => void;
   /** The error of a failed sign-out (US-ACC-01), shown in its dialog. */
   error?: string;
+  /** "Auf allen Geräten abmelden" runs (US-ACC-01): busy until its answer. */
+  everywhereBusy?: boolean;
 }) {
   const ai = useFeature("ai");
   const values = useAccountValues(props.api, props.token);
@@ -155,13 +180,12 @@ export function AccountIndex(props: {
           );
         })}
         <InstallRow />
-        <li>
-          <SignOutRow
-            onSignOut={props.onSignOut}
-            onEverywhereSignOut={props.onEverywhereSignOut}
-            {...(props.error ? { error: props.error } : {})}
-          />
-        </li>
+        <SignOutItem
+          onSignOut={props.onSignOut}
+          onEverywhereSignOut={props.onEverywhereSignOut}
+          {...(props.error ? { error: props.error } : {})}
+          busy={props.everywhereBusy ?? false}
+        />
       </ul>
     </nav>
   );

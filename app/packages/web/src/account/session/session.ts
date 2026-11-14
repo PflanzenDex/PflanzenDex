@@ -12,7 +12,8 @@ export type State =
   | { kind: "signedOut"; hint?: string; error?: string | undefined }
   /** Signed in at the sign-in service, but registration needs an invitation code (US-ACC-05). */
   | { kind: "invitationNeeded"; error?: string | undefined }
-  | { kind: "signedIn"; account: Account; error?: string | undefined }
+  /** `everywhereBusy`: "Auf allen Geräten abmelden" runs; its control shows busy and a second press does nothing (US-ACC-01). */
+  | { kind: "signedIn"; account: Account; error?: string | undefined; everywhereBusy?: boolean }
   /** reloadPage: the sign-in library did not load, so the page offers a full reload instead of a retry (US-ACC-01). */
   | { kind: "error"; text: string; reloadPage?: boolean };
 

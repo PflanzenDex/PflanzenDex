@@ -1,5 +1,10 @@
-export { mayShareWithFriends, accountFromClaims } from "./account";
-export type { AccountData } from "./account";
+export {
+  mayShareWithFriends,
+  accountFromClaims,
+  sessionsNotConfigured,
+  signOutEverywhere,
+} from "./account";
+export type { AccountData, IdentitySessions, SignOutDependencies } from "./account";
 export {
   accountUpdateProfile,
   defaultNotifications,

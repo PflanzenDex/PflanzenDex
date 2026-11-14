@@ -19,4 +19,3 @@ export * from "./discover";
 export * from "./social";
 export * from "./swap";
 export * from "./achievements";
-export * from "./sessions";

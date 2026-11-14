@@ -344,6 +344,38 @@ describe("US-ACC-01 session", () => {
     });
   });
 
+  it("US-ACC-01 a second press while signing out on all devices runs makes no second request and the state is busy meanwhile", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    // The first request waits until the test answers it, so the busy state can be seen.
+    let answer: (r: Response) => void = () => undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        () =>
+          new Promise<Response>((resolve) => {
+            answer = resolve;
+          }),
+      ),
+    );
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.everywhereSignOut();
+    });
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({ kind: "signedIn", everywhereBusy: true }),
+    );
+    await act(() => result.current.everywhereSignOut());
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    answer(new Response(JSON.stringify({ ended: true }), { status: 200 }));
+    await act(() => first);
+    expect(result.current.state).toEqual({
+      kind: "signedOut",
+      hint: "Du bist auf allen Geräten abgemeldet.",
+    });
+  });
+
   it("US-ACC-01 an unavailable sign-out on all devices shows the text of its code and removes nothing", async () => {
     const text =
       "Abmelden auf allen Geräten ist auf diesem Server nicht eingerichtet. Melde dich hier ab; andere Geräte bleiben dann angemeldet.";
