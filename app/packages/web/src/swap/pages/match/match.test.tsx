@@ -460,6 +460,8 @@ describe("US-TAU-07 empty states and calm mode", () => {
     ["no_wishes", /Wunschliste ist leer/, "Wunsch hinzufügen", "/collection?view=wishlist"],
     ["no_offers", /bieten gerade nichts an/, "Tauschbörse öffnen", "/friends/exchange"],
     ["no_match", /passt kein Angebot/, "Tauschbörse öffnen", "/friends/exchange"],
+    // US-TAU-03: every matching offer is requested already, so the deck is empty and says so (no "no match").
+    ["all_decided", /hast du angefragt/, "Anfragen ansehen", "/friends/exchange"],
   ])(
     "US-TAU-07 P-09 an empty deck (%s) names the reason and the next step",
     async (reason, text, label, href) => {

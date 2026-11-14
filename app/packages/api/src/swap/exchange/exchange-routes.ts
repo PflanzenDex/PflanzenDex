@@ -35,10 +35,12 @@ const publicOffer = <T extends { ownerId: string }>(offer: T) => withoutKey(offe
  *   unknown), `onWishlist` (a hint, the list is never transmitted, FR-WUN-07) and `requested`
  * - GET /exchange/match?timeZone=…: `{ cards, entries }`, the match deck (US-TAU-01): the same offers narrowed to
  *   species on the own wishlist, each with its `reasons` (the wish, and "fits both ways" when the giver asked for an own offer, US-TAU-05), oldest offer first; no score and no ranking (FR-TAU-06).
- *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06); `entries`
+ *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06), without any
+ *   offer on which the caller has an open request (US-TAU-03: it is listed under "Anfragen"); `entries`
  *   are all answers of the caller (No and Later) with `answeredOn`, the `state` of the offer (`open`, `requested`,
  *   `wish_done`, `unavailable`) and the `card` while it is open, so nothing disappears silently (P-10); `empty` names why
- *   there is no card (`no_friends`, `no_wishes`, `no_offers`, `no_match`) or is `null` (US-TAU-07)
+ *   there is no card (`no_friends`, `no_wishes`, `no_offers`, `no_match`, or `all_decided` when every offer that matches a
+ *   wish is requested or answered) or is `null` (US-TAU-07)
  * - PUT /exchange/match/:offerId/answer `{ answer: "no" | "later", timeZone }` (with `Idempotency-Key`; US-TAU-02):
  *   stores the private answer of the caller, 200 `{ answeredOn }`; 404 `offer.not_found` for an offer that is no card of
  *   the caller (also for a foreign one, P-05); the giver learns nothing (FR-TAU-02)

@@ -10,6 +10,7 @@ import {
 import { exchangeList, type ExchangeQuery } from "../exchange";
 import type { ExchangeDependencies, ExchangeOffer } from "../exchange";
 import type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
+import { emptyReason, type EmptyReason, type MatchCounts } from "./empty";
 import {
   bothWays,
   ownOffersAsked,
@@ -74,17 +75,6 @@ export function deckOrder(a: MatchCard, b: MatchCard): number {
   );
 }
 
-/** Why the deck has no card to decide, in the order the keeper can act on it (US-TAU-07, P-09). */
-export type EmptyReason = "no_friends" | "no_wishes" | "no_offers" | "no_match";
-
-/** Numbers of the keeper's own data that explain an empty deck; never data of a friend (P-05). */
-export interface MatchCounts {
-  /** Confirmed friends of the caller. */
-  friends(userId: string): Promise<number>;
-  /** Open plant wishes of the caller. */
-  wishes(userId: string): Promise<number>;
-}
-
 /** What the deck needs besides the exchange: the private answers, the clock (NFR-08), the counts that explain an empty deck and the own offers for "fits both ways". */
 export interface MatchContext {
   readonly answers: MatchAnswers;
@@ -102,6 +92,7 @@ export interface MatchContext {
  * (FR-TAU-04); an offer of an unknown species never matches. What the caller answered is derived on every read
  * (NFR-04, US-TAU-02, US-TAU-06): `cards` are the offers without an answer plus those answered with Later on an earlier
  * day (they come back after a day, starting value); an offer answered with No stays out until the keeper reconsiders it.
+ * An offer on which the keeper has an open request is no card either: it is decided and lives under "Anfragen" (US-TAU-03).
  * `entries` lists every answer with its state, so Later and No stay findable and an ended offer is marked, never dropped
  * silently (P-10); only the keeper removes an entry.
  */
@@ -144,7 +135,9 @@ export async function matchDeck(
       ],
     }))
     .sort(deckOrder);
+  // An open request of mine (requested or accepted, DM-SOZ-03) decides the offer: it lives under "Anfragen" (US-TAU-03).
   const cards = matching.filter((c) => {
+    if (c.requested) return false;
     const a = given.get(c.offerId);
     return !a || (a.answer === "later" && daysBetween(a.answeredOn, today) >= LATER_DAYS);
   });
@@ -154,7 +147,9 @@ export async function matchDeck(
     .map((a) => entryOf(a, byId.get(a.offerId), cardById.get(a.offerId) ?? null))
     .sort((a, b) => compare(a.answeredOn, b.answeredOn) || compare(a.offerId, b.offerId));
   const empty =
-    cards.length > 0 ? null : await emptyReason(context.counts, userId, list.value.offers.length);
+    cards.length > 0
+      ? null
+      : await emptyReason(context.counts, userId, list.value.offers.length, matching.length);
   return ok({ cards, entries, empty });
 }
 
@@ -181,20 +176,4 @@ function entryOf(
     state,
     card: state === "open" ? card : null,
   };
-}
-
-/**
- * The first thing missing for a card, from the keeper's own numbers: no friends, then an empty wishlist, then no open
- * offers of friends at all, otherwise offers exist but none matches a wish. Nothing is guessed (P-08); `null` while the
- * counts are not asked.
- */
-async function emptyReason(
-  counts: MatchCounts | undefined,
-  userId: string,
-  offers: number,
-): Promise<EmptyReason | null> {
-  if (!counts) return null;
-  if ((await counts.friends(userId)) === 0) return "no_friends";
-  if ((await counts.wishes(userId)) === 0) return "no_wishes";
-  return offers === 0 ? "no_offers" : "no_match";
 }

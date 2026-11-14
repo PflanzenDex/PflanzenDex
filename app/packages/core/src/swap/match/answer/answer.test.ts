@@ -7,6 +7,7 @@ import {
   StubFacts,
   StubWishHints,
   friendOffer,
+  swapSide,
 } from "../../exchange/test-helpers";
 import { StubPhases } from "../../offer/test-helpers";
 import { matchAnswer, matchDeck, matchUndo, matchYes } from "../index";
@@ -263,5 +264,17 @@ describe("US-TAU-06 find Later and No again", () => {
     const two = await read(s);
     expect(two).toEqual(one);
     expect(JSON.stringify(one)).not.toMatch(/score|percent|rank|stars/i);
+  });
+});
+
+describe("US-TAU-03 an offer I requested is decided", () => {
+  it("US-TAU-03 No or Later on an offer with my open request is offer.not_found: it is no card any more", async () => {
+    const s = setup();
+    (s.deps.swaps as InMemoryExchange).sides["anna"] = [
+      swapSide({ swapId: "s-mine", role: "recipient", offerId: A, status: "requested" }),
+    ];
+    const r = await answer(s, { offerId: A, answer: "later", timeZone: TZ });
+    expect(!r.ok && r.error.code).toBe("offer.not_found");
+    expect(s.answers.rows["anna"]?.size ?? 0).toBe(0);
   });
 });

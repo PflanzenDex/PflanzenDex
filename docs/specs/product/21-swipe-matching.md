@@ -68,6 +68,7 @@ Acceptance criteria:
 
 - Given I answer **Yes**, then exactly one swap request arises with the operation of US-SOZ-09 (same checks, states and limits, DM-SOZ-03); for the mode `swap` the request has an open return (free text empty), which I can complete in "Requests".
 - Given I already have an open request on this offer, then Yes creates no second one (US-SOZ-09: one open request per offer) and the card says "Already requested".
+- Given I have an open request on an offer, when the deck loads, then that offer is not in the deck (it is listed under "Anfragen"). A request that was withdrawn, declined or canceled no longer counts: the offer is open again and is a card again.
 - Given the offer was withdrawn, reserved or handed over in the meantime, then Yes creates nothing, the card says why ("Offer is no longer available") and the card moves to the Later list as unavailable (P-10).
 - Given I answer **No** or **Later**, then no request, no notification and no change reaches the giver (FR-TAU-02).
 - Writing happens only through the validating operations (P-03). The request is the record of the Yes; no second copy of it is stored (NFR-04).

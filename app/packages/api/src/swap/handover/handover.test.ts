@@ -671,10 +671,10 @@ describe("US-TAU-02 No and Later through the API", () => {
       status: 201,
       body: { outcome: "requested" },
     });
-    // The offer stays a card, now marked as requested; the stored Later is gone.
+    // US-TAU-03: the request is the record. The offer is no card any more and the stored Later is gone.
     const d = await deck(subE);
     expect(d.later.map((c) => c.offerId)).not.toContain(offerId);
-    expect(d.cards.find((c) => c.offerId === offerId)).toMatchObject({ requested: true });
+    expect(d.cards.map((c) => c.offerId)).not.toContain(offerId);
   });
 });
 
@@ -920,5 +920,79 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
           MATCH_REASONS[r.kind as keyof typeof MATCH_REASONS],
           "entries[].card.reasons",
         );
+  });
+});
+
+// US-TAU-03 after a request, through the API (real PostgreSQL). Runs after the scenarios above. subE is not a friend any
+// more from the US-SOZ-13 friendship scenario on, so the requesters here are subB and subD and the other keeper is subC.
+describe("US-TAU-03 an open request takes the offer out of the deck (real PostgreSQL)", () => {
+  const deck = async (sub: string) =>
+    (await call(sub, "GET", "/exchange/match?timeZone=Europe%2FBerlin")).body as {
+      cards: { offerId: string }[];
+      entries: { offerId: string }[];
+    };
+  const cardIds = async (sub: string) => (await deck(sub)).cards.map((c) => c.offerId);
+  /** An open shared offer of subA whose species is on the wishlists of subB, subC and subD. */
+  const wanted = async (m: string) => {
+    const id = await specimen(subA, m);
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode: "swap" })
+    ).body.id as string;
+    const latin = (
+      await call(subB, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerId).speciesLatin as string;
+    for (const sub of [subB, subC, subD]) await call(sub, "POST", "/wishes", { name: latin });
+    return offerId;
+  };
+
+  it("US-TAU-03 after Yes the offer is gone from my deck on the next load, is listed under my requests and marked requested in the exchange", async () => {
+    const offerId = await wanted("U1");
+    expect(await cardIds(subB)).toContain(offerId);
+    const yes = await call(subB, "POST", `/exchange/match/${offerId}/yes`, {});
+    expect(yes).toMatchObject({ status: 201, body: { outcome: "requested" } });
+    // The reload: a fresh read of the deck no longer offers it, not even in the Later list.
+    expect(await cardIds(subB)).not.toContain(offerId);
+    expect((await deck(subB)).entries.map((e) => e.offerId)).not.toContain(offerId);
+    expect((await swaps(subB)).sent.map((s) => s.swapId)).toContain(yes.body.swapId);
+    const listed = (
+      await call(subB, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerId);
+    expect(listed?.requested).toBe(true);
+  });
+
+  it("US-TAU-03 P-04 another keeper's request does not hide the offer from me", async () => {
+    const offerId = await wanted("U2");
+    expect(await cardIds(subC)).toContain(offerId);
+    expect((await call(subB, "POST", `/exchange/match/${offerId}/yes`, {})).status).toBe(201);
+    expect(await cardIds(subC)).toContain(offerId);
+    expect(await cardIds(subB)).not.toContain(offerId);
+  });
+
+  it("US-TAU-03 a withdrawn request brings the offer back into my deck", async () => {
+    const offerId = await wanted("U3");
+    const yes = await call(subB, "POST", `/exchange/match/${offerId}/yes`, {});
+    expect(await cardIds(subB)).not.toContain(offerId);
+    expect(
+      (await call(subB, "POST", `/swaps/${yes.body.swapId}/answer`, { action: "withdraw" })).status,
+    ).toBe(200);
+    expect(await cardIds(subB)).toContain(offerId);
+  });
+
+  it("US-TAU-03 a declined request brings the offer back into my deck, and the giver's decline is shown to me", async () => {
+    const offerId = await wanted("U4");
+    const yes = await call(subD, "POST", `/exchange/match/${offerId}/yes`, {});
+    expect(await cardIds(subD)).not.toContain(offerId);
+    expect(
+      (
+        await call(subA, "POST", `/swaps/${yes.body.swapId}/answer`, {
+          action: "decline",
+          reason: "Gerade nicht",
+        })
+      ).status,
+    ).toBe(200);
+    expect(await cardIds(subD)).toContain(offerId);
+    const mine = (await swaps(subD)).sent.find((s) => s.swapId === yes.body.swapId);
+    expect(mine?.status).toBe("declined");
   });
 });

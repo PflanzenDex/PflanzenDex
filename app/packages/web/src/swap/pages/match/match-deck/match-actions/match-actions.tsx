@@ -8,7 +8,11 @@ import {
   WISHLIST_MODE_ADDRESS,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../../swap.de.json";
 import { cardTitle as title } from "../deck-state";
+
+const t = texts(table);
 
 export type Answer = "no" | "later" | "yes";
 
@@ -55,7 +59,7 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
   );
 }
 
-const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string }> = {
+const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string; action?: string }> = {
   no_friends: {
     title: "Du hast noch keine Freunde in der App.",
     description:
@@ -76,6 +80,12 @@ const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string }> = 
     description:
       "Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht.",
   },
+  // US-TAU-03: every offer that matches a wish is requested already; the next step is the requests (P-09).
+  all_decided: {
+    title: t("match.empty.allDecided.title"),
+    description: t("match.empty.allDecided.description"),
+    action: t("match.empty.allDecided.action"),
+  },
 };
 
 /** The empty deck names the reason and the next step (US-TAU-07, P-09); one filled action, the other ways stay as text links. */
@@ -94,7 +104,7 @@ export function Empty(props: { reason?: EmptyReason | null }) {
             ? { label: "Freund einladen", href: PATHS.friends }
             : reason === "no_wishes"
               ? { label: "Wunsch hinzufügen", href: WISHLIST_MODE_ADDRESS }
-              : { label: "Tauschbörse öffnen", href: EXCHANGE_PATH }
+              : { label: text.action ?? "Tauschbörse öffnen", href: EXCHANGE_PATH }
         }
       />
       <div className="flex flex-wrap justify-center gap-x-4">

@@ -52,5 +52,8 @@
   "stamp.later": "Später",
   "match.title": "Passende Angebote",
   "match.intro": "Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.",
-  "match.loading": "Angebote werden geladen …"
+  "match.loading": "Angebote werden geladen …",
+  "match.empty.allDecided.title": "Alle passenden Angebote hast du angefragt.",
+  "match.empty.allDecided.description": "Deine Anfragen verfolgst du in der Tauschbörse. Neue passende Angebote erscheinen hier von selbst.",
+  "match.empty.allDecided.action": "Anfragen ansehen"
 }
