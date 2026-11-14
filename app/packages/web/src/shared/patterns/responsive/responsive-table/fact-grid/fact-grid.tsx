@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 /**
  * One label and its value. A value is unknown when it is `null`, `undefined`, `false`, or a string that is empty or
@@ -67,10 +68,10 @@ function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React
     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
       <details className="min-w-0">
         {/* `relative`: the sr-only name list is absolutely positioned; without a positioned box it escapes an inner scroll region and makes the page scroll (US-QS-15, DS-61). */}
-        <summary className="relative inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        <DisclosureSummary className="relative inline-flex min-h-[44px] gap-2 rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
           <span>{missingText(labels.length)}</span>
           <span className="sr-only"> (Namen anzeigen)</span>
-        </summary>
+        </DisclosureSummary>
         <p className="m-0 break-words pb-2 text-foreground">{labels.join(", ")}</p>
       </details>
       <span aria-hidden="true">·</span>

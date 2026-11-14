@@ -3,6 +3,7 @@ import { EQUIPMENT_STATUSES, zoneLabel } from "@pflanzendex/core";
 import { Select } from "@/shared/ui/fields/select/select";
 import { STATUS_LABELS } from "../../labels";
 import type { EquipmentStatus } from "../../equipment-api";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 export interface LampActions {
   onZone: (lamp: Lamp, lightZoneId: string) => void;
@@ -68,17 +69,20 @@ function ZoneGroup(props: {
   const counted = zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens);
   return (
     <details className="min-w-0 rounded-lg border border-border">
-      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-3 py-2">
-        <span className="font-semibold">{zoneLabel(zone.name)}</span>
-        <span className="text-sm text-muted-foreground">
-          {lamps} · {counted}
-        </span>
-        {warning ? (
-          <span className="rounded bg-warning px-1.5 text-sm font-semibold text-warning-foreground">
-            keine aktive Lampe
+      <DisclosureSummary className="cursor-pointer px-3 py-2">
+        {/* The text wraps in its own block, so the chevron keeps the first line at 200 % text (SG-ICON-01). */}
+        <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+          <span className="font-semibold">{zoneLabel(zone.name)}</span>
+          <span className="text-sm text-muted-foreground">
+            {lamps} · {counted}
           </span>
-        ) : null}
-      </summary>
+          {warning ? (
+            <span className="rounded bg-warning px-1.5 text-sm font-semibold text-warning-foreground">
+              keine aktive Lampe
+            </span>
+          ) : null}
+        </span>
+      </DisclosureSummary>
       <div className="flex flex-col gap-2 px-3 pb-3">
         {zone.note ? (
           <p

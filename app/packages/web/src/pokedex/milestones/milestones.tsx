@@ -10,6 +10,7 @@ import {
   type MilestoneTree,
 } from "@pflanzendex/core";
 import table from "./milestones.de.json";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const ui = texts(table);
 
@@ -95,9 +96,9 @@ export function Milestones(props: {
       )}
       {reached.length > 0 && (
         <details>
-          <summary>
+          <DisclosureSummary>
             {reached.length === 1 ? ui("reachedOne") : ui("reachedMany", { count: reached.length })}
-          </summary>
+          </DisclosureSummary>
           <ul className="grid gap-1 pt-2">
             {reached.map((m) => (
               <li key={m.id}>{m.reachedOn ? `${label(m)} (${m.reachedOn})` : label(m)}</li>

@@ -1,5 +1,6 @@
 import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
+import { Check } from "lucide-react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
@@ -82,7 +83,7 @@ export function FilterPanel(props: {
               className={cn("rounded-full px-4", selected && "border-2 border-primary font-bold")}
               onClick={() => props.onFilter(f.id)}
             >
-              {selected && <span aria-hidden="true">✓ </span>}
+              {selected && <Check aria-hidden="true" className="size-5 shrink-0" />}
               {f.label}
             </Button>
           );

@@ -51,6 +51,20 @@ describe("US-POK-11 milestones with an instruction for action", () => {
     expect(screen.getByText("Kakteen: Kenner (2026-02-03)")).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-ICON-01 the reached milestones hide the browser's marker and show a chevron icon, not a glyph", () => {
+    view(
+      <Milestones
+        caught={[caught("A a", "2026-01-02"), caught("A b", "2026-02-03")]}
+        tree={tree}
+      />,
+    );
+    const summary = screen.getByText("2 Meilensteine erreicht");
+    expect(summary.tagName).toBe("SUMMARY");
+    expect(summary.className).toContain("list-none");
+    expect(summary.querySelector("svg[aria-hidden='true']")).not.toBeNull();
+    expect(summary.textContent).toBe("2 Meilensteine erreicht");
+  });
+
   it("US-POK-11 the open milestones come two per page, so the layer fits one screen (DS-58, starting value)", async () => {
     view(<Milestones caught={[]} tree={tree} />);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();

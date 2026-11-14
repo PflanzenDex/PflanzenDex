@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import { useSearchParams } from "react-router";
+import { Check } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { Select } from "@/shared/ui/fields/select/select";
 import { cn } from "@/shared/lib/utils";
@@ -44,7 +45,7 @@ function ChipRow({
             onClick={() => onChoose(c.key)}
             className={cn("shrink-0 whitespace-nowrap", selected && "font-semibold")}
           >
-            {selected ? <span aria-hidden="true">✓</span> : null}
+            {selected ? <Check aria-hidden="true" className="size-5 shrink-0" /> : null}
             {c.label} <span className="tabular-nums">({c.count})</span>
           </Button>
         );
@@ -80,7 +81,7 @@ function MeasureRow({
             size="sm"
             className="shrink-0 whitespace-nowrap"
           >
-            <span aria-hidden="true">✓</span>
+            <Check aria-hidden="true" className="size-5 shrink-0" />
             {c.label} <span className="tabular-nums">({c.count})</span>
           </Button>
         ))}

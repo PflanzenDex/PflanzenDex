@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -55,11 +56,11 @@ export function SpeciesRow({ c }: { c: CaughtSpecies }) {
         <span className="font-semibold">{c.species}</span>{" "}
         <span className="text-sm font-normal text-muted-foreground">{second}</span>
       </span>
-      {/* Drawn by CSS, not in the text: the button's visible text stays the name and the date (WCAG 2.5.3, US-QS-08). */}
-      <span
+      {/* An icon, not text: the button's visible text stays the name and the date (WCAG 2.5.3, US-QS-08; SG-ICON-01). */}
+      <ChevronRight
         data-chevron
-        className="text-2xl leading-none text-muted-foreground after:content-['›']"
         aria-hidden="true"
+        className="size-5 shrink-0 text-muted-foreground"
       />
     </Button>
   );

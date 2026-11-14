@@ -8,6 +8,7 @@ import {
   type AnniversaryItem,
   type AnniversaryPhoto,
 } from "../achievements-api";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 type Token = () => Promise<string | undefined>;
 
@@ -61,7 +62,9 @@ function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen
       </div>
       {(item.first || item.latest) && (
         <details>
-          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">Fotos</summary>
+          <DisclosureSummary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            Fotos
+          </DisclosureSummary>
           <div className="flex flex-wrap gap-3">
             {item.first && (
               <Photo api={props.api} token={props.token} photo={item.first} label="Erstes Foto" />

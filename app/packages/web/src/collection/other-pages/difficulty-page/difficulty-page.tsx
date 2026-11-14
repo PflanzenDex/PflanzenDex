@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
+import { ChevronRight } from "lucide-react";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { profileAddress } from "@/shared/patterns/navigation/navigation/navigation";
@@ -99,9 +100,7 @@ function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] 
         <span className="font-semibold">{row.speciesName}</span>
         <span className="text-sm font-normal text-muted-foreground">{entryLine(row, hidden)}</span>
       </span>
-      <span className="text-2xl leading-none text-muted-foreground" aria-hidden="true">
-        ›
-      </span>
+      <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
     </Button>
   );
 }
