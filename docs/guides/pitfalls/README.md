@@ -237,3 +237,11 @@ IDs are never renumbered.
 - **Fix:** Wait (bounded, as `until` in `tools/lint/heavy-lock.test.mjs` does) until every line the test asserts on is in the output, then assert.
 - **Can it become a gate?** No: whether two writes arrive together depends on the scheduler, not on the code shape.
 - **Source:** Issue #2111, PR #2112 (CI run 43642600768 on PR #2105).
+
+## PF-029 A whole-second threshold fires a few milliseconds after the start
+
+- **Symptom:** A script that should stay silent for its first second (a wait line, a progress note) sometimes speaks at once, mostly under load, and the flake rarely reproduces on demand.
+- **Cause:** `date +%s >= started + 1` counts whole seconds, so a call that starts late in a second passes the threshold after a few milliseconds. A condition that only means "not done yet" (no note, a dead owner's note) then reads as "someone else holds it".
+- **Fix:** Measure the threshold in milliseconds (`$EPOCHREALTIME` in bash 5, as `tools/lint/heavy-lock.sh` does) and print only on positive evidence (the note names another live owner). Show the race in a test with a shim that delays the slow step (a `flock` on `PATH` that sleeps first), not with CPU load: load reproduced it in 0 of 100 runs.
+- **Can it become a gate?** No: whether a time check is coarse depends on what it guards, which a pattern cannot tell.
+- **Source:** Issue #2119, PR #2125 (first seen while measuring #2111 in PR #2112).
