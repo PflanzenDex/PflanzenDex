@@ -75,6 +75,22 @@ function signedOutState(error?: string): State {
   };
 }
 
+// The return of "Konto wechseln" (US-ACC-01), null if not about it: its session has ended, so the sign-in form opens for the
+// other account at once (owner decision 2026-11-14). A redirect that cannot start shows the welcome page with its error (P-10).
+async function switchReturn(
+  mgr: UserManager,
+  intent: string | null,
+  user: User | undefined,
+): Promise<State | null> {
+  if (intent !== "after_switch" || user) return null;
+  try {
+    await mgr.signinRedirect({ prompt: "login", redirect_uri: here(), state: hereState() });
+    return { kind: "loading" };
+  } catch {
+    return signedOutState(t("signIn.failed"));
+  }
+}
+
 // The one silent attempt of the tab (US-ACC-01). The redirect leaves the page, so the state stays loading; when the
 // sign-in service cannot be reached, the welcome page says so. The attempt stays used up (SILENT_TRIED), so no retry follows.
 async function silentAttempt(mgr: UserManager): Promise<State> {
@@ -102,6 +118,8 @@ async function loadState(mgr: UserManager): Promise<State> {
     const user = await processReturn(mgr);
     const registering = await registerReturn(mgr, intent, user, answered);
     if (registering) return registering;
+    const switching = await switchReturn(mgr, intent, user);
+    if (switching) return switching;
     if (!user) {
       if (shouldTrySilently()) {
         // A live session at the sign-in service (app token lost, other port, cleared site data) is picked up

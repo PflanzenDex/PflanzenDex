@@ -87,10 +87,15 @@ test.describe("US-ACC-01 another account", () => {
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
     await page.getByRole("button", { name: "Konto wechseln" }).click();
-    // Without an id token the sign-in service asks once before it ends the session, then returns to the app.
+    // Without an id token the sign-in service asks once before it ends the session. Then the sign-in form opens for the
+    // other account at once, with no welcome page in between (owner decision 2026-11-14).
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
-    await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
-    await signIn(page, other);
+    await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
+    await expect(page.locator("#username")).toBeVisible();
+    await page.locator("#username").fill(other.email);
+    await page.locator("#password").fill(other.password);
+    await page.locator("#kc-login").click();
+    await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
     await page.getByRole("link", { name: "Konto", exact: true }).click();
     const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
     await expect(index.getByText(other.email, { exact: true })).toBeVisible();
