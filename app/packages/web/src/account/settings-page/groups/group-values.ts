@@ -1,5 +1,4 @@
 import type { AccountProfile } from "../../api/account-api";
-import { visibleOccasions } from "../../settings-fields/settings-fields";
 
 /** What a row shows when a value cannot be read (P-08). */
 export const UNKNOWN = "unbekannt";
@@ -10,12 +9,11 @@ const known = (text: string | null | undefined) => (text ? text : UNKNOWN);
 export const profileValue = (p: AccountProfile) =>
   `${known(p.displayName)} · ${known(p.timeZone).replaceAll("/", "/\u200b")}`;
 
-/** Row "Benachrichtigungen": how many of the occasions that have a switch are on. */
-export function notificationsValue(p: AccountProfile, social: boolean): string {
-  const occasions = visibleOccasions(social);
-  const on = occasions.filter((o) => p.notifications[o]).length;
-  return `${on} von ${occasions.length} an`;
-}
+/**
+ * Row "Benachrichtigungen": reminders are not sent yet, push is not set up (issue 2028, US-QS-32), so the row says so
+ * instead of counting the switches that are on. It counts again once push exists.
+ */
+export const notificationsValue = "noch nicht eingerichtet";
 
 /** Row "Datenschutz und Empfehlungen": "Standard" while nothing deviates, otherwise what is on. */
 export function privacyValue(p: AccountProfile): string {

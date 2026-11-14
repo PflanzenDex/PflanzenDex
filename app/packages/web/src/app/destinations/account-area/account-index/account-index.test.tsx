@@ -115,7 +115,7 @@ describe("US-QS-17 the index of Konto", () => {
     const value = (name: RegExp, text: string) =>
       waitFor(() => expect(within(list).getByRole("link", { name }).textContent).toContain(text));
     await value(/^Einstellungen/, "Lena · Europe/Berlin");
-    await value(/^Erinnerungen/, "an");
+    await value(/^Erinnerungen/, "im Posteingang");
     await value(/^Erfolge/, "3");
     await value(/^KI-Clients/, "1");
     expect(within(list).getByRole("link", { name: "Nutzungsdaten" })).toBeTruthy();
@@ -239,6 +239,29 @@ describe("US-ONB-09 the keeper's switch achievement_views in the index", () => {
     show({ achievements: true });
     const row = await screen.findByRole("link", { name: /^Erfolge/ });
     await waitFor(() => expect(row.textContent).toContain("3"));
+  });
+});
+
+describe("US-QS-32 the row Erinnerungen while push is not set up", () => {
+  it("US-QS-32 reads im Posteingang while a reminder is on and never an", async () => {
+    fakeServer();
+    show();
+    const row = await screen.findByRole("link", { name: /^Erinnerungen/ });
+    await waitFor(() => expect(within(row).getByText("im Posteingang")).toBeTruthy());
+    expect(within(row).queryByText("an")).toBeNull();
+  });
+
+  it("US-QS-32 reads aus while every occasion is off", async () => {
+    fakeServer({
+      profile: {
+        displayName: "Lena",
+        timeZone: "Europe/Berlin",
+        notifications: { phase: false, swap: false },
+      },
+    });
+    show();
+    const row = await screen.findByRole("link", { name: /^Erinnerungen/ });
+    await waitFor(() => expect(within(row).getByText("aus")).toBeTruthy());
   });
 });
 

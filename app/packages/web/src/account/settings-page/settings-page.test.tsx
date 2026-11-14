@@ -625,7 +625,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     fakeServer();
     show();
     expect((await row("Profil")).textContent).toContain("Anna · Europe/\u200bBerlin");
-    expect((await row("Benachrichtigungen")).textContent).toContain("7 von 7 an");
+    expect((await row("Benachrichtigungen")).textContent).toContain("noch nicht eingerichtet");
     expect((await row("Datenschutz und Empfehlungen")).textContent).toContain("Standard");
     expect((await row("Wie nutzt du die App?")).textContent).toContain("ein paar Pflanzen");
     expect((await row("Wunschliste")).textContent).toContain("mind. 2 je Zone");
@@ -652,7 +652,26 @@ describe("US-QS-17 settings as a list of groups", () => {
       "alles privat · Seltenheit zählt mit",
     );
     expect((await row("Licht")).textContent).toContain("eigene Schwellen");
-    expect((await row("Benachrichtigungen")).textContent).toContain("6 von 7 an");
+    expect((await row("Benachrichtigungen")).textContent).toContain("noch nicht eingerichtet");
+  });
+
+  it("US-QS-32 the row Benachrichtigungen says noch nicht eingerichtet and counts no switch, also with every switch off", async () => {
+    fakeServer({
+      ...PROFILE,
+      notifications: {
+        phase: false,
+        treatment: false,
+        measurement: false,
+        watering: false,
+        swap: false,
+        friends: false,
+        equipment: false,
+      },
+    });
+    show();
+    const text = (await row("Benachrichtigungen")).textContent ?? "";
+    expect(text).toContain("noch nicht eingerichtet");
+    expect(text).not.toMatch(/von \d+ an/);
   });
 
   it("US-QS-17 · P-10 a failing style load reads 'unbekannt' in its row only", async () => {

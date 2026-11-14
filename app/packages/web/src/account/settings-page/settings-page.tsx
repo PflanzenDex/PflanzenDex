@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { CalmModeSection, loadAchievementSettings } from "../../achievements";
-import { LoadFrame, useFeature, useRequest } from "../../shared/data";
+import { LoadFrame, useRequest } from "../../shared/data";
 import { loadProfile, type AccountProfile } from "../api/account-api";
 import { LightGroup, ProfileGroup, WishlistGroup } from "./groups/form-groups/form-groups";
 import { SETTINGS_LAYER } from "../index";
@@ -57,7 +57,6 @@ function useStyleValue(api: string, token: Token): ReactNode {
 
 function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
   const saver = useProfileSaver(props.api, props.token, props.profile);
-  const social = useFeature("social");
   const styleText = useStyleValue(props.api, props.token);
   const p = saver.saved;
   const ids = SETTINGS_LAYER;
@@ -71,7 +70,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
     {
       id: ids.notifications,
       title: "Benachrichtigungen",
-      value: notificationsValue(p, social),
+      value: notificationsValue,
       body: <NotificationsGroup saver={saver} />,
     },
     {
