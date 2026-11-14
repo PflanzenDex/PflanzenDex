@@ -12,20 +12,32 @@ import type { State } from "./session";
 export const MARKER = "pflanzendex.signed_out";
 // Set before the one silent attempt per tab, so a refused attempt (`login_required`) can never loop.
 export const SILENT_TRIED = "pflanzendex.silent_tried";
-// "Konto anlegen" (US-ACC-01): "check" during its silent check, "after_logout" while the session ends.
+// The intent of a detour to a sign-in form (US-ACC-01), read and cleared by its return in session.ts: "Konto anlegen" sets
+// "check" during its silent check and "after_logout" while the session ends; "Konto wechseln" sets "after_switch" while
+// its session ends. The key keeps its name, so a detour in flight during a deploy still finds it.
 export const REGISTER = "pflanzendex.register";
 // Set when this tab knows of a live session at the sign-in service: "Konto wechseln" shows only then (US-QS-32).
 export const LIVE = "pflanzendex.live_session";
 
 const t = texts(table);
 
-// Ends the session at the sign-in service; `then` says what the return does (see registerReturn in session.ts).
-export function endSession(mgr: UserManager, then?: "after_logout"): Promise<void> {
-  // On the way to the registration nobody signed out: the marker would stay in the tab of the new account.
+// Ends the session at the sign-in service; `then` says what the return does (registerReturn and switchReturn in session.ts).
+export function endSession(
+  mgr: UserManager,
+  then?: "after_logout" | "after_switch",
+): Promise<void> {
+  // On the way to a sign-in form nobody signed out: the marker would stay in the tab and show "Du bist abgemeldet.".
   window.sessionStorage.setItem(then ? REGISTER : MARKER, then ?? "1");
   // The session ends here, so this tab no longer knows of a live one.
   window.sessionStorage.removeItem(LIVE);
   return mgr.signoutRedirect();
+}
+
+// "Konto wechseln" ends the session first, and its return opens the sign-in form for the other account (owner decision
+// 2026-11-14). The silent flag is set first, so that return never attempts silently, as for "Konto anlegen".
+function endForSwitch(mgr: UserManager): Promise<void> {
+  window.sessionStorage.setItem(SILENT_TRIED, "1");
+  return endSession(mgr, "after_switch");
 }
 
 // The error of a press sits on the screen the person pressed the button on; a state without that field stays as it is.
@@ -102,9 +114,10 @@ export function sessionActions(
         window.sessionStorage.setItem(SILENT_TRIED, "1");
         return mgr.signinRedirect({ prompt: "none" });
       }),
-    // "Abmelden" and "Konto wechseln" end the session first: prompt=login does not help while another session lives.
+    // "Abmelden" ends the session first: prompt=login does not help while another session lives.
     signOut: () => press([MARKER, LIVE], t("signOut.failed"), (mgr) => endSession(mgr)),
-    switchAccount: () => press([MARKER, LIVE], t("signOut.failed"), (mgr) => endSession(mgr)),
+    switchAccount: () =>
+      press([MARKER, LIVE, REGISTER, SILENT_TRIED], t("signOut.failed"), endForSwitch),
     // "Auf allen Geräten abmelden" (US-ACC-01, issue 2065): the API ends every session first. The local sign-in is removed
     // only after that succeeded; a failure keeps the dialog open with the text of its code, so the keeper can press again.
     everywhereSignOut: async () => {

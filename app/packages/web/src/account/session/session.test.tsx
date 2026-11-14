@@ -208,21 +208,56 @@ describe("US-ACC-01 session", () => {
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
   });
 
-  it("US-ACC-01 another account: the return shows the welcome page with the hint and makes no silent attempt", async () => {
-    mgr.getUser.mockResolvedValue(user);
+  it("US-ACC-01 Konto wechseln: the return opens the sign-in form for the other account at once, with no hint and no silent attempt", async () => {
+    // The tab knows of the live session: the switch shows only then (US-QS-32).
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
+    mgr.getUser.mockResolvedValue(null);
     const { result } = renderHook(() => useSession());
-    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
     act(() => result.current.switchAccount());
     await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
     cleanup();
-    // A fresh tab state: only the marker of the sign-out may keep the silent attempt from running.
-    window.sessionStorage.removeItem("pflanzendex.silent_tried");
-    mgr.getUser.mockResolvedValue(null);
+    // The return from the sign-in service: the session has ended, so the sign-in form opens for the other account
+    // (owner decision 2026-11-14). The press set the silent flag, so no silent attempt runs on this return.
     const back = renderHook(() => useSession());
     await waitFor(() =>
-      expect(back.result.current.state).toEqual({ kind: "signedOut", hint: "Du bist abgemeldet." }),
+      expect(mgr.signinRedirect).toHaveBeenCalledWith({
+        prompt: "login",
+        redirect_uri: `${window.location.origin}/`,
+        state: "/",
+      }),
     );
-    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+    expect(back.result.current.state).toEqual({ kind: "loading" });
+    expect(window.sessionStorage.getItem("pflanzendex.register")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.live_session")).toBeNull();
+  });
+
+  it("US-ACC-01 Konto wechseln: the press keeps no sign-out marker, removes the live flag and leaves the intent and the silent flag for the return", async () => {
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
+    // Removed after the page has loaded: the press itself has to set it for the return.
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    let atRedirect: Record<string, string | null> = {};
+    mgr.signoutRedirect.mockImplementationOnce(async () => {
+      atRedirect = {
+        register: window.sessionStorage.getItem("pflanzendex.register"),
+        marker: window.sessionStorage.getItem("pflanzendex.signed_out"),
+        live: window.sessionStorage.getItem("pflanzendex.live_session"),
+        silent: window.sessionStorage.getItem("pflanzendex.silent_tried"),
+      };
+    });
+    act(() => result.current.switchAccount());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    expect(atRedirect).toEqual({ register: "after_switch", marker: null, live: null, silent: "1" });
   });
 
   it("sign in and register start the detour via the sign-in service; register checks the session first (prompt=none)", async () => {
@@ -799,6 +834,72 @@ describe("US-ACC-01 Abmelden and Konto wechseln on a failure", () => {
     // The session ends at the sign-in service: the tab no longer knows of a live one (US-QS-32).
     expect(liveAtRedirect).toBeNull();
     expect(result.current.state).toEqual({ kind: "signedIn", account });
+  });
+
+  it("US-ACC-01 Konto wechseln fails: the intent and the silent flag are removed again and the live flag is back (P-10)", async () => {
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
+    // Removed after the page has loaded: the failed press must give back that it had not been set.
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    mgr.signoutRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    act(() => result.current.switchAccount());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", canSwitch: true, error: FAILED }),
+    );
+    expect(window.sessionStorage.getItem("pflanzendex.register")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.silent_tried")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.live_session")).toBe("1");
+  });
+
+  it("US-ACC-01 Konto wechseln: a sign-in that cannot start on the return shows the welcome page with its error, no hint and no intent left (P-10)", async () => {
+    const SIGN_IN_FAILED =
+      "Anmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.";
+    window.sessionStorage.setItem("pflanzendex.register", "after_switch");
+    mgr.getUser.mockResolvedValue(null);
+    mgr.signinRedirect.mockRejectedValueOnce(new Error("discovery failed"));
+    const { result } = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: "signedOut", error: SIGN_IN_FAILED }),
+    );
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+    expect(mgr.signinRedirect).toHaveBeenCalledWith({
+      prompt: "login",
+      redirect_uri: `${window.location.origin}/`,
+      state: "/",
+    });
+    expect(window.sessionStorage.getItem("pflanzendex.register")).toBeNull();
+    expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
+  });
+
+  it("US-ACC-01 Konto wechseln under Strict Mode: the sign-in form opens once on the return, the intent is read once", async () => {
+    const { StrictMode } = await import("react");
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
+    mgr.getUser.mockResolvedValue(null);
+    const first = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(first.result.current.state).toEqual({ kind: "signedOut", canSwitch: true }),
+    );
+    // Removed after the page has loaded: the press has to set it again, so the return never attempts silently (see the press test above).
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    act(() => first.result.current.switchAccount());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
+    cleanup();
+    renderHook(() => useSession(), { wrapper: StrictMode });
+    await waitFor(() =>
+      expect(mgr.signinRedirect).toHaveBeenCalledWith({
+        prompt: "login",
+        redirect_uri: `${window.location.origin}/`,
+        state: "/",
+      }),
+    );
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    expect(mgr.signinRedirect).toHaveBeenCalledOnce();
+    expect(mgr.signinRedirect).not.toHaveBeenCalledWith({ prompt: "none" });
   });
 });
 
