@@ -11,5 +11,6 @@
   "signIn.failed": "Anmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.",
   "signIn.unreachable": "Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.",
   "register.failed": "Konto anlegen hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.",
-  "everywhere.failed": "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal."
+  "everywhere.failed": "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+  "everywhere.offline": "Keine Verbindung. Abmelden auf allen Geräten hat nicht geklappt, versuch es gleich noch einmal."
 }

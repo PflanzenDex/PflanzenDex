@@ -1,5 +1,5 @@
 import type { UserManagerSettings } from "oidc-client-ts";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, createWrite, withRepeatKey, type ApiError, type Response } from "../../shared/data";
 
 export type Account = {
   id: string;
@@ -141,20 +141,42 @@ export async function getAccount(
   return (await res.json()) as Account;
 }
 
+/** The code of a sign-out that got no answer: offline, or no answer within the timeout (US-ACC-01). */
+export const SIGN_OUT_UNREACHABLE = "network.not_reachable";
+
 /**
  * "Sign out on all devices" (US-ACC-01, issue 2065): the API ends every session of the keeper at the sign-in service. The
  * browser does not call the sign-in service's account API: its token has no right there, and the refusal carries no CORS
- * header. A request that gives up after the same 15 seconds as the others. The answer is the API's: an error carries its
- * code and the text of that code (`error.text`), so the dialog can say what happened and that a retry helps.
+ * header. One POST with the repeat-guard key (a repeat of an open press reuses it) and the 15 s timeout, which stays above
+ * the API's 10 s budget for the sign-in service. It does not go through `createWrite`: a sign-out announces no write, since
+ * the observers would fetch again with the token that is being removed. A refusal comes back with its code and the server's
+ * text (none when the answer has no text); no answer comes back as `SIGN_OUT_UNREACHABLE`.
  */
 export function signOutEverywhere(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<unknown>> {
-  const timed: FetchFn = (input, init) =>
-    fetchFn(input, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000) });
-  return createWrite(api, token, timed)("POST", "/account/sessions/end");
+  return withRepeatKey<unknown>(
+    JSON.stringify([api, "POST", "/account/sessions/end"]),
+    async (key) => {
+      try {
+        const res = await fetchFn(`${api}/account/sessions/end`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": key },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
+        });
+        const body = (await res.json().catch(() => ({}))) as { error?: ApiError };
+        if (res.ok) return { ok: true, value: body };
+        return {
+          ok: false,
+          error: body.error ?? { code: "account.sign_out_everywhere_failed", text: "" },
+        };
+      } catch {
+        return { ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } };
+      }
+    },
+  );
 }
 
 export const loadProfile = (

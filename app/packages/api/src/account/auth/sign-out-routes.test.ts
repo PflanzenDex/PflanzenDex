@@ -4,8 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AI_OPERATION_CLASSES, ERROR_TEXTS, type IdentitySessions } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
-import type { IdentityAdminConfig } from "../../kernel";
-import { identitySessionsFromEnv, keycloakSessionsEnding } from "./keycloak-sessions";
+import { identityConfigFromEnv, type IdentityAdminConfig } from "../../kernel";
+import { identitySessionsFor, keycloakSessionsEnding } from "./keycloak-sessions";
 
 // US-ACC-01 (issue 2065): sign out on all devices through the API. The sign-in service is a fake fetch; the database is real.
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -22,6 +22,13 @@ const full = {
   IDENTITY_ADMIN_CLIENT_ID: config.clientId,
   IDENTITY_ADMIN_CLIENT_SECRET: SECRET,
 };
+
+/** The sessions port of the server for these settings: parsed once, as main.ts does. */
+const sessionsFor = (
+  env: Record<string, string>,
+  log: (line: string) => void = () => undefined,
+  fetchFn?: typeof fetch,
+) => identitySessionsFor(identityConfigFromEnv(env, log), log, fetchFn);
 
 const subA = `acc1s-${randomUUID()}`;
 const subB = `acc1s-${randomUUID()}`;
@@ -96,7 +103,7 @@ async function signOut(
 describe("US-ACC-01 sign out on all devices ends the sessions of the keeper", () => {
   it("US-ACC-01 logs out the own subject with the service token and nothing else, then answers ended", async () => {
     const { calls, fetchFn } = fakeService(answer(204));
-    const app = appWith(identitySessionsFromEnv(full, () => undefined, fetchFn));
+    const app = appWith(sessionsFor(full, () => undefined, fetchFn));
     const r = await signOut(app, subA);
     expect(r).toEqual({ status: 200, body: { ended: true } });
     expect(calls).toEqual([
@@ -107,19 +114,30 @@ describe("US-ACC-01 sign out on all devices ends the sessions of the keeper", ()
 
   it("US-ACC-01 the subject comes from the verified token only: a body that names another subject changes nothing", async () => {
     const { calls, fetchFn } = fakeService(answer(204));
-    const app = appWith(identitySessionsFromEnv(full, () => undefined, fetchFn));
+    const app = appWith(sessionsFor(full, () => undefined, fetchFn));
     await signOut(app, subA, { subject: subB });
     expect(logoutCalls(calls).map((c) => c.url)).toEqual([
       `${config.adminUrl}/users/${subA}/logout`,
     ]);
   });
 
-  it("US-ACC-01 a keeper whose user is already gone (404) counts as ended, and so does a 200", async () => {
-    for (const status of [404, 200]) {
+  it("US-ACC-01 a 204 or a 200 from the logout counts as ended", async () => {
+    for (const status of [204, 200]) {
       const { fetchFn } = fakeService(answer(status));
-      const app = appWith(identitySessionsFromEnv(full, () => undefined, fetchFn));
+      const app = appWith(sessionsFor(full, () => undefined, fetchFn));
       expect((await signOut(app, subA)).status).toBe(200);
     }
+  });
+
+  it("US-ACC-01 a 404 from the logout is a failure, never ended: the token was accepted, so the realm or the subject is wrong", async () => {
+    const lines: string[] = [];
+    const { fetchFn } = fakeService(answer(404));
+    const app = appWith(keycloakSessionsEnding(config, fetchFn, (line) => lines.push(line)));
+    const r = await signOut(app, subA);
+    expect(r.status).toBe(502);
+    expect(r.body.error?.code).toBe("account.sign_out_everywhere_failed");
+    expect(r.body.ended).toBeUndefined();
+    expect(lines.join("\n")).toContain("logout answered 404");
   });
 
   it("US-ACC-01 another answer of the service, a refused token or an unreachable service is 502 failed, never ended", async () => {
@@ -150,7 +168,7 @@ describe("US-ACC-01 sign out on all devices ends the sessions of the keeper", ()
     expect(r.status).toBe(503);
     expect(r.body.error?.code).toBe("account.sign_out_everywhere_unavailable");
     const { calls, fetchFn } = fakeService(answer(204));
-    const unset = appWith(identitySessionsFromEnv({}, () => undefined, fetchFn));
+    const unset = appWith(sessionsFor({}, () => undefined, fetchFn));
     expect((await signOut(unset, subA)).status).toBe(503);
     expect(calls).toEqual([]);
   });
@@ -160,7 +178,7 @@ describe("US-ACC-01 sign out on all devices ends the sessions of the keeper", ()
     delete partial["IDENTITY_ADMIN_CLIENT_SECRET"];
     const lines: string[] = [];
     const { calls, fetchFn } = fakeService(answer(204));
-    const app = appWith(identitySessionsFromEnv(partial, (line) => lines.push(line), fetchFn));
+    const app = appWith(sessionsFor(partial, (line) => lines.push(line), fetchFn));
     expect((await signOut(app, subA)).status).toBe(503);
     expect(lines).toHaveLength(1);
     expect(lines[0]).toContain("IDENTITY_ADMIN_CLIENT_SECRET");
@@ -170,14 +188,14 @@ describe("US-ACC-01 sign out on all devices ends the sessions of the keeper", ()
 
   it("US-ACC-01 without sign-in the route answers 401 and calls nothing", async () => {
     const { calls, fetchFn } = fakeService(answer(204));
-    const app = appWith(identitySessionsFromEnv(full, () => undefined, fetchFn));
+    const app = appWith(sessionsFor(full, () => undefined, fetchFn));
     expect((await signOut(app, null)).status).toBe(401);
     expect(calls).toEqual([]);
   });
 
   it("US-ACC-01 the same Idempotency-Key ends the sessions once and repeats the answer", async () => {
     const { calls, fetchFn } = fakeService(answer(204));
-    const app = appWith(identitySessionsFromEnv(full, () => undefined, fetchFn));
+    const app = appWith(sessionsFor(full, () => undefined, fetchFn));
     const key = randomUUID();
     const first = await signOut(app, subA, undefined, key);
     const second = await signOut(app, subA, undefined, key);

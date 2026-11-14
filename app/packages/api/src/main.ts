@@ -22,9 +22,10 @@ import {
   WRITE_LIMIT,
   createMemorySourceCache,
   createSourceClient,
-  identityRemovalFromEnv,
+  identityConfigFromEnv,
+  identityRemovalFor,
 } from "./kernel";
-import { createTokenVerifier, identitySessionsFromEnv } from "./account";
+import { createTokenVerifier, identitySessionsFor } from "./account";
 import { deleteAccountHandlers, NO_STORE } from "./privacy";
 import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
@@ -67,6 +68,8 @@ const catalogFill = catalogFillEnabled(process.env);
 // Attribute fill (US-ENT-09): turns answers the catalog fill stored into species attributes, sends no request itself;
 // only `ATTRIBUTE_FILL=on` starts it (P-08).
 const attributeFill = attributeFillEnabled(process.env);
+// The identity settings are read once for both features (removal of users, sign out on all devices).
+const identityConfig = identityConfigFromEnv(process.env);
 const app = createApp({
   features,
   ...(media ? { media } : {}),
@@ -95,7 +98,7 @@ const app = createApp({
   // Redeeming invitation codes per subject and address (US-ACC-05, issue 305).
   redeemLimit: REDEEM_LIMIT,
   // Sign out on all devices (US-ACC-01): the sign-in service's admin interface, unavailable without its settings.
-  identitySessions: identitySessionsFromEnv(process.env),
+  identitySessions: identitySessionsFor(identityConfig),
   webOrigin: process.env["WEB_ORIGIN"] ?? "http://localhost:5173",
 });
 
@@ -123,7 +126,7 @@ const worker = createJobWorker({
     ...(catalogFill ? catalogFillJobHandlers({ pool, sources }) : {}),
     ...(attributeFill ? attributeFillJobHandlers({ pool }) : {}),
     ...reminders.handlers,
-    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE, identityRemovalFromEnv(process.env)),
+    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE, identityRemovalFor(identityConfig)),
   },
 });
 worker.start();

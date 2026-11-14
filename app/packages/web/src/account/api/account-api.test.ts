@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   addressFromState,
+  SIGN_OUT_UNREACHABLE,
   signOutEverywhere,
   getAccount,
   oidcSettings,
@@ -195,5 +196,52 @@ describe("US-ACC-01 sign out on all devices goes through the API (issue 2065)", 
     const f = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
     const r = await signOutEverywhere("http://api", "tok", f);
     expect(r.ok ? null : r.error.code).toBe("network.not_reachable");
+  });
+});
+
+describe("US-ACC-01 sign out on all devices: the answers the dialog can show", () => {
+  it("US-ACC-01 a request that times out gets no answer, so the dialog says the connection is missing", async () => {
+    const f = vi
+      .fn()
+      .mockRejectedValue(new DOMException("The operation timed out.", "TimeoutError"));
+    const r = await signOutEverywhere("http://api-timeout", "tok", f);
+    expect(r).toEqual({ ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } });
+  });
+
+  it("US-ACC-01 an answer without a text is the generic failure code, with no text of its own", async () => {
+    const f = vi.fn().mockResolvedValue(new Response("<html>gateway</html>", { status: 502 }));
+    const r = await signOutEverywhere("http://api-no-text", "tok", f);
+    expect(r).toEqual({
+      ok: false,
+      error: { code: "account.sign_out_everywhere_failed", text: "" },
+    });
+  });
+
+  it("US-ACC-01 a repeat after no answer sends the same Idempotency-Key, so the server ends the sessions once", async () => {
+    const f = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    await signOutEverywhere("http://api-repeat", "tok", f);
+    await signOutEverywhere("http://api-repeat", "tok", f);
+    const keys = f.mock.calls.map(
+      (call) => (call[1] as RequestInit).headers as Record<string, string>,
+    );
+    expect(keys[0]?.["Idempotency-Key"]).toBeDefined();
+    expect(keys[1]?.["Idempotency-Key"]).toBe(keys[0]?.["Idempotency-Key"]);
+  });
+
+  it("US-ACC-01 a refusal frees the key, so the next press sends a new one", async () => {
+    const refusal = () =>
+      new Response(
+        JSON.stringify({ error: { code: "account.sign_out_everywhere_failed", text: "x" } }),
+        {
+          status: 502,
+        },
+      );
+    const f = vi.fn().mockResolvedValueOnce(refusal()).mockResolvedValueOnce(refusal());
+    await signOutEverywhere("http://api-refused", "tok", f);
+    await signOutEverywhere("http://api-refused", "tok", f);
+    const keys = f.mock.calls.map(
+      (call) => (call[1] as RequestInit).headers as Record<string, string>,
+    );
+    expect(keys[1]?.["Idempotency-Key"]).not.toBe(keys[0]?.["Idempotency-Key"]);
   });
 });

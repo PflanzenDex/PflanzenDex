@@ -12,5 +12,5 @@ export { REDEEM_LIMIT, WRITE_LIMIT, rateLimited, redeemGate, writeLimit } from "
 export type { RedeemLimit, WriteLimit } from "./write-limit";
 export type { FeatureAccess } from "./feature-gate";
 export { adminRequest } from "./identity/admin-client";
-export { identityAdminConfigFromEnv, identityRemovalFromEnv } from "./identity/identity-config";
+export { identityConfigFromEnv, identityRemovalFor } from "./identity/identity-config";
 export type { IdentityAdminConfig } from "./identity/identity-config";

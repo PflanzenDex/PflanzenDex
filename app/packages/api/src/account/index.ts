@@ -7,4 +7,4 @@ export { OPERATOR_PATHS, operatorRoutes } from "./operator-routes";
 export { registrationRoutes } from "./registration-routes";
 export { unlockListFor, unlockRoutes } from "./unlock";
 export { signOutRoutes } from "./auth/sign-out-routes";
-export { identitySessionsFromEnv } from "./auth/keycloak-sessions";
+export { identitySessionsFor } from "./auth/keycloak-sessions";

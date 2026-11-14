@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { useFeature } from "@/shared/data";
-import { cn } from "@/shared/lib/utils";
+import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button/button";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import {
@@ -32,8 +32,6 @@ const ROW =
 /** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
 const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
-// The look of a control while its action runs: `aria-disabled` keeps the focus on it (SC 2.4.3), as the operator controls do.
-const BUSY_LOOK = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 function Row(props: {

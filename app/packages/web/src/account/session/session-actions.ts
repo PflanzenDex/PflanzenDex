@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { UserManager } from "oidc-client-ts";
-import { setProfileTimeZone } from "../../shared/data";
+import type { User, UserManager } from "oidc-client-ts";
+import { setProfileTimeZone, type ApiError } from "../../shared/data";
 import { clearPhotoCache } from "../../shared/platform/browser/use-stored-photo";
-import { signOutEverywhere } from "../api/account-api";
+import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
@@ -34,6 +34,20 @@ function withError(z: State, error: string | undefined): State {
 // The busy mark of "Auf allen Geräten abmelden" sits on the signed-in state only (US-ACC-01).
 function withBusy(z: State, busy: boolean): State {
   return z.kind === "signedIn" ? { ...z, everywhereBusy: busy } : z;
+}
+
+// The stored sign-in for a sign-out. An expired access token is renewed once, silently, first; a renewal that fails leaves no
+// user, which the caller reports as the error of the dialog (US-ACC-01).
+async function signedInUser(mgr: UserManager): Promise<User | null | undefined> {
+  const user = await mgr.getUser();
+  return user?.expired ? mgr.signinSilent().catch(() => undefined) : user;
+}
+
+// The text of a failed sign-out, chosen by code: no answer says the connection is missing, a server text is shown as it is,
+// and an answer without text falls back to the generic failure (US-ACC-01, SG-STATE-03).
+function everywhereText(error: ApiError): string {
+  if (error.code === SIGN_OUT_UNREACHABLE) return t("everywhere.offline");
+  return error.text || t("everywhere.failed");
 }
 
 export function sessionActions(
@@ -87,11 +101,11 @@ export function sessionActions(
       const showError = (text: string) => setState((z) => withBusy(withError(z, text), false));
       try {
         const mgr = await manager;
-        const user = await mgr.getUser();
+        const user = await signedInUser(mgr);
         // Without a stored sign-in there is no token to end the sessions with; a success here would claim what did not happen.
         if (!user) return showError(t("everywhere.failed"));
         const r = await signOutEverywhere(api, user.access_token);
-        if (!r.ok) return showError(r.error.text);
+        if (!r.ok) return showError(everywhereText(r.error));
         await mgr.removeUser();
         setProfileTimeZone(null);
         clearPhotoCache(); // the page goes on: no picture of the signed-out keeper stays in memory (P-05)
