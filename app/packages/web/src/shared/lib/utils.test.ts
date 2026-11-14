@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { cn } from "./utils";
+import { describe, expect, it, vi } from "vitest";
+import { cn, mergeRefs } from "./utils";
 
 describe("cn (US-QS-07, DS-57)", () => {
   it("US-QS-07 · DS-31 cn merges class names with caller classes last", () => {
@@ -12,5 +12,19 @@ describe("cn (US-QS-07, DS-57)", () => {
 
   it("US-QS-07 · DS-31 cn lets a caller class override a conflicting base class", () => {
     expect(cn("px-2 text-sm", "px-6")).toBe("text-sm px-6");
+  });
+});
+
+describe("mergeRefs (US-QS-32 · SG-FORM-03)", () => {
+  it("US-QS-32 · SG-FORM-03 mergeRefs hands one element to a callback and to a ref object, and skips an empty ref", () => {
+    const node = {} as HTMLDivElement;
+    const callback = vi.fn();
+    const object = { current: null as HTMLDivElement | null };
+    mergeRefs<HTMLDivElement>(callback, undefined, object)(node);
+    expect(callback).toHaveBeenCalledWith(node);
+    expect(object.current).toBe(node);
+    mergeRefs<HTMLDivElement>(callback, object)(null);
+    expect(callback).toHaveBeenLastCalledWith(null);
+    expect(object.current).toBeNull();
   });
 });

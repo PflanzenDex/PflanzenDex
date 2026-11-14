@@ -2,6 +2,7 @@ import * as React from "react";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../form/form";
 import { cn } from "@/shared/lib/utils";
+import { moveOnWithEnter, syncEnterKeyHint } from "./enter-key";
 
 /**
  * Shared look of the text-like fields (Input, Textarea, Select): token border (`--input`, 3:1 on the surface,
@@ -27,15 +28,46 @@ export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & FieldInva
  */
 const DATE_HINT = { placeholder: "JJJJ-MM-TT", pattern: "\\d{4}-\\d{2}-\\d{2}" };
 
-/** Single-line field (US-QS-07, DS-15, DS-18, DS-19). `type`, `inputMode` and `autoComplete` pass through; dates stay `YYYY-MM-DD` strings (DS-51). */
+/**
+ * Single-line field (US-QS-07, DS-15, DS-18, DS-19). `type`, `inputMode` and `autoComplete` pass through; dates stay
+ * `YYYY-MM-DD` strings (DS-51). The return-key hint (`enterkeyhint`) is set when the field gets the focus or is pressed:
+ * "next" when a later text field of its form follows, where Enter moves on, and "done" on the last one, where Enter submits
+ * (SG-FORM-03, US-QS-32). A search field says "search". A caller's `enterKeyHint` wins.
+ */
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, invalid, type = "text", ...props }, ref) => (
+  (
+    {
+      className,
+      invalid,
+      type = "text",
+      enterKeyHint,
+      onFocus,
+      onPointerDown,
+      onKeyDown,
+      ...props
+    },
+    ref,
+  ) => (
     <input
+      // The ref goes straight through: a stable ref is attached once, not again on every render.
       ref={ref}
       type={type}
       {...(type === "date" ? DATE_HINT : {})}
       aria-invalid={invalid || props["aria-invalid"] || undefined}
       className={cn(fieldClasses, "min-h-[44px] py-2", className)}
+      enterKeyHint={enterKeyHint}
+      onFocus={(event) => {
+        if (enterKeyHint === undefined) syncEnterKeyHint(event.currentTarget);
+        onFocus?.(event);
+      }}
+      onPointerDown={(event) => {
+        if (enterKeyHint === undefined) syncEnterKeyHint(event.currentTarget);
+        onPointerDown?.(event);
+      }}
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        if (!event.defaultPrevented) moveOnWithEnter(event, enterKeyHint);
+      }}
       {...props}
     />
   ),
