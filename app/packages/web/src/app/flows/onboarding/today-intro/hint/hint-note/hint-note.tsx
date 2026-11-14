@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { Button } from "@/shared/ui/button/button";
 import { saveHint } from "../hint-api";
 import { HINT_TEXTS } from "../hint-texts";
@@ -37,9 +38,11 @@ export function HintNote(props: {
       className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-3 py-2"
     >
       <p className="m-0 min-w-0 flex-1">{HINT_TEXTS[occasion]}</p>
-      <Button type="button" variant="ghost" onClick={() => void dismiss()}>
-        Okay
-      </Button>
+      <NetworkSlot visible={false}>
+        <Button type="button" variant="ghost" needsNetwork onClick={() => void dismiss()}>
+          Okay
+        </Button>
+      </NetworkSlot>
       {failed && (
         <p className="m-0 w-full text-sm" role="alert">
           Das ließ sich gerade nicht speichern. Der Hinweis bleibt noch stehen; versuche es gleich

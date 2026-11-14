@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { ChoiceRow, type Choice } from "./choice-row/choice-row";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -53,19 +54,24 @@ export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
   const { error, saved, change } = useSwitchSave(saver);
   return (
     <div className="flex flex-col gap-1">
-      {visibleOccasions(social).map((o) => (
-        <Checkbox
-          key={o}
-          name={`notifications.${o}`}
-          checked={saver.saved.notifications[o]}
-          disabled={saver.saving}
-          onChange={(e) =>
-            void change({ notifications: { ...saver.saved.notifications, [o]: e.target.checked } })
-          }
-        >
-          {OCCASION_TEXT[o]}
-        </Checkbox>
-      ))}
+      <NetworkSlot>
+        {visibleOccasions(social).map((o) => (
+          <Checkbox
+            key={o}
+            name={`notifications.${o}`}
+            checked={saver.saved.notifications[o]}
+            disabled={saver.saving}
+            needsNetwork
+            onChange={(e) =>
+              void change({
+                notifications: { ...saver.saved.notifications, [o]: e.target.checked },
+              })
+            }
+          >
+            {OCCASION_TEXT[o]}
+          </Checkbox>
+        ))}
+      </NetworkSlot>
       <p className="mt-1 text-sm text-muted-foreground">
         Erinnerungen werden erst verschickt, wenn sie eingerichtet sind.
       </p>
@@ -85,17 +91,20 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
   const { error, saved, change } = useSwitchSave(saver);
   return (
     <div className="flex flex-col gap-1">
-      {PRIVACY_SWITCHES.map((s) => (
-        <Checkbox
-          key={s.name}
-          name={s.name}
-          checked={saver.saved[s.name]}
-          disabled={saver.saving}
-          onChange={(e) => void change({ [s.name]: e.target.checked })}
-        >
-          {s.label}
-        </Checkbox>
-      ))}
+      <NetworkSlot>
+        {PRIVACY_SWITCHES.map((s) => (
+          <Checkbox
+            key={s.name}
+            name={s.name}
+            checked={saver.saved[s.name]}
+            disabled={saver.saving}
+            needsNetwork
+            onChange={(e) => void change({ [s.name]: e.target.checked })}
+          >
+            {s.label}
+          </Checkbox>
+        ))}
+      </NetworkSlot>
       <MoreHelp
         more={
           <>
@@ -142,6 +151,7 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
         label={t("shortcuts.label")}
         help={t("shortcuts.help")}
         options={CHOICES}
+        needsNetwork
         value={saver.saved.keyboardShortcuts}
         onPick={(keyboardShortcuts) => void change({ keyboardShortcuts })}
       />
@@ -168,6 +178,7 @@ export function MotionGroup({ saver }: { saver: ProfileSaver }) {
         label={t("motion.label")}
         help={t("motion.help")}
         options={MOTION_CHOICES}
+        needsNetwork
         value={saver.saved.motion}
         onPick={(motion) => void change({ motion })}
       />

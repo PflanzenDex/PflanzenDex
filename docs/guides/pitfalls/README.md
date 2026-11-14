@@ -125,3 +125,11 @@ IDs are never renumbered.
 - **Fix:** Use `gh api repos/<owner>/<repo>/…` (REST) for every read and write in a routine (`.agents/routines/*.md`); install the app on the organization (github.com/apps/claude → Configure → PflanzenDex) with the permission a routine writes with.
 - **Can it become a gate?** Partly: a check could refuse `gh pr list`, `gh issue list` and `gh issue comment` in `.agents/routines/`; not built (E-30, no incident yet).
 - **Source:** First runs of the routines of issue 1753 (2026-11-09).
+
+## PF-015 A new news fragment is missing from the web tests in an existing worktree
+
+- **Symptom:** After adding `app/packages/web/src/news/unreleased/<issue>-<slug>.json`, the full web suite fails in `whats-new.test.ts` ("every fragment file of news/unreleased is a line of the list": expected n + 1, got n), although the fragment is valid and the test passes in CI.
+- **Cause:** Vitest's file-system module cache (`app/node_modules/.vitest-cache`) keeps the result of the `import.meta.glob` over `news/unreleased` from a run before the file existed.
+- **Fix:** Run `npx vitest run --clearCache` in `app/packages/web` after adding a fragment, before the full suite. CI starts without the cache and is not affected.
+- **Can it become a gate?** No: it is local tool state, not repo content; the CI run is already correct.
+- **Source:** PRs 1908, 2092, 2091 and 2093 (2026-11-13/14), each implementer hit it once.
