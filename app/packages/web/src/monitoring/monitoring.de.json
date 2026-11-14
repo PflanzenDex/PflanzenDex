@@ -2,5 +2,6 @@
   "inbox.loading": "Erinnerungen werden geladen …",
   "times.loading": "Erinnerungseinstellungen werden geladen …",
   "pauses.loading": "Pausen werden geladen …",
+  "reminders.inboxOnly": "Erinnerungen erscheinen im Posteingang, noch nicht als Mitteilung.",
   "subscriptions.loading": "Push-Geräte werden geladen …"
 }
