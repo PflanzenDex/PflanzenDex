@@ -4,7 +4,7 @@ import {
   EmptyState,
   type EmptyStateAction,
 } from "@/shared/patterns/elements/empty-state/empty-state";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../shared/data";
@@ -106,6 +106,7 @@ function OpenList(props: {
         <Pager
           items={rows}
           pageSize={PAGE_SIZE}
+          param={LAYER_PARAM}
           label="Offene Behandlungen"
           getKey={(row) => row.id}
           renderItem={(row) => (
