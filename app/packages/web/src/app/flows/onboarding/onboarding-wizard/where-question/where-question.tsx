@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
-import { errorText } from "@/shared/lib/error-text";
+import { errorText, refusalText } from "@/shared/lib/error-text";
+import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { setSpecimenLocation } from "../../../../../collection";
 import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
-import { refreshLight, sharedLocations, sharedZones } from "../../../../../light";
+import { refreshLight } from "../../../../../light";
 import { zoneLabel } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { usePlaces, type Places } from "./use-places";
 import table from "./where-question.de.json";
 
 const ui = texts(table);
@@ -18,46 +20,6 @@ type Token = () => Promise<string | undefined>;
 /** The note after a save: the place and, when it has one, its light zone (P-10). */
 const savedText = (name: string, zone: LightZone | undefined) =>
   ui("saved", { name, zone: zone ? `, ${zoneLabel(zone.name)}` : "" });
-
-/**
- * Makes sure the account has a place for the first plant: the server lays out the default location "Zuhause" only for
- * an account without locations and refuses otherwise (US-ONB-02); the refusal is the normal case, so it is ignored.
- * A location that was laid out refreshes the shared light data (issue 1244).
- */
-export async function ensureHome(client: QueryClient, api: string, token: string): Promise<void> {
-  const own = await sharedLocations(client, api, token);
-  if (own.ok && own.value.length === 0) {
-    const made = await createWrite(api, token)("POST", "/locations/defaults", {});
-    if (made.ok) await refreshLight(client);
-  }
-}
-
-interface Places {
-  readonly locations: readonly LightLocation[];
-  readonly zones: readonly LightZone[];
-}
-
-function usePlaces(api: string, token: Token): Places | null {
-  const [places, setPlaces] = useState<Places | null>(null);
-  const client = useQueryClient();
-  useEffect(() => {
-    let current = true;
-    void (async () => {
-      const t = await token();
-      if (!t) return;
-      await ensureHome(client, api, t);
-      const [l, z] = await Promise.all([
-        sharedLocations(client, api, t),
-        sharedZones(client, api, t),
-      ]);
-      if (current && l.ok && z.ok) setPlaces({ locations: l.value, zones: z.value });
-    })();
-    return () => {
-      current = false;
-    };
-  }, [api, token, client]);
-  return places;
-}
 
 /** The location with the light it stands under, so the choice shows what it brings with it (P-10). */
 const zoneOf = (l: LightLocation, zones: readonly LightZone[]) => {
@@ -111,25 +73,50 @@ async function placeSpecimen(
   return named;
 }
 
-/**
- * After the first plant is saved: one question at the plant, once (US-ONB-02). "Später" leaves the plant without a
- * place, which is no error; the collection shows it as "ohne Standort" with the way to set it. The question is a
- * hint, not a step.
- */
-export function WhereQuestion(props: {
+type WhereProps = {
   api: string;
   token: Token;
   specimenId: string;
   /** `note` says what was saved (P-10); without it nothing was changed. */
   onDone: (note?: string) => void;
-}) {
-  const places = usePlaces(props.api, props.token);
+  /** Moves the focus to the heading of the step before a retry: the retry button leaves the screen (issue 2127). */
+  focusHeading?: () => void;
+};
+
+/**
+ * After the first plant is saved: one question at the plant, once (US-ONB-02). "Später" leaves the plant without a
+ * place, which is no error; the collection shows it as "ohne Standort" with the way to set it. The question is a
+ * hint, not a step. When the places cannot be read or made, the reason stands with "Erneut versuchen" and "Später"
+ * (P-09, P-10, issue 2127).
+ */
+export function WhereQuestion(props: WhereProps) {
+  const { places, error, retry } = usePlaces(props.api, props.token);
+  // The retry button leaves the screen: the focus goes to the step's heading first (issue 2127).
+  const again = () => {
+    props.focusHeading?.();
+    retry();
+  };
+  if (error)
+    return (
+      <section className="flex flex-col gap-3">
+        <RequestState status="error" errorText={refusalText(error)} onRetry={again} />
+        <Button type="button" variant="ghost" onClick={() => props.onDone()}>
+          {ui("later")}
+        </Button>
+      </section>
+    );
+  if (!places || places.locations.length === 0) return null;
+  return <PlaceChoice {...props} places={places} />;
+}
+
+/** The choice of the location and of its zone, and the save. Mounted once the places are there, so the choice survives a retry. */
+function PlaceChoice(props: WhereProps & { places: Places }) {
+  const { places } = props;
   const client = useQueryClient();
   const [locationId, setLocationId] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  if (!places || places.locations.length === 0) return null;
   const chosen = places.locations.find((l) => l.id === (locationId || places.locations[0]?.id));
   const save = async () => {
     if (!chosen) return;
