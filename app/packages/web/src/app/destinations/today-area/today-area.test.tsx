@@ -78,6 +78,15 @@ const FURTHER_TASKS = [
   },
 ];
 
+/** Ten plants due to be watered (US-MON-05): the layer Gießen pages three per page on a phone (issue 2070). */
+const TEN_DUE = Array.from({ length: 10 }, (_, i) => ({
+  specimenId: `w${i + 1}`,
+  name: `Gieß ${i + 1}`,
+  intervalDays: 7,
+  lastWateredOn: "2026-09-30",
+  daysSince: 8 + i,
+}));
+
 type Setup = {
   treatments?: unknown[];
   hints?: unknown[];
@@ -197,6 +206,17 @@ function stubFittedRegion(height: number, row = height): () => void {
     return { height: h, width: 0, top: 0, left: 0, right: 0, bottom: h, x: 0, y: 0 } as DOMRect;
   });
   return () => spy.mockRestore();
+}
+
+/**
+ * The "Seite n von m" texts outside the layer: the lists of the screen behind it stay in the document while the layer is
+ * open, so a page change in the layer must leave them where they are (issue 2070).
+ */
+function positionsBehind(layer: HTMLElement): (string | null)[] {
+  return screen
+    .getAllByText(/^Seite \d+ von \d+$/)
+    .filter((el) => !layer.contains(el))
+    .map((el) => el.textContent);
 }
 
 beforeAll(async () => {
@@ -584,6 +604,42 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
         ["Pflanze 5", "Pflanze 6"],
         ["Pflanze 7", "Pflanze 8"],
         ["Pflanze 9", "Pflanze 10"],
+      ]);
+      expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
+        true,
+      );
+      // The further tasks behind the layer keep their page: the two lists do not share the address (issue 2070).
+      expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+    } finally {
+      restore();
+    }
+  });
+
+  it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the fitted further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks keep their page", async () => {
+    fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
+    const restore = stubFittedRegion(100);
+    try {
+      const user = userEvent.setup();
+      show("/today?sheet=watering");
+      const layer = await dialog("Gießen");
+      const list = await within(layer).findByRole("list", { name: "Zu gießen" });
+      const names = () =>
+        within(list)
+          .getAllByText(/^Gieß \d+$/)
+          .map((el) => el.textContent);
+      const position = () => within(layer).getByText(/^Seite \d+ von \d+$/).textContent;
+      const pages: string[][] = [];
+      for (let page = 1; page <= 4; page++) {
+        expect(position()).toBe(`Seite ${page} von 4`);
+        pages.push(names());
+        expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+        if (page < 4) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
+      }
+      expect(pages).toEqual([
+        ["Gieß 1", "Gieß 2", "Gieß 3"],
+        ["Gieß 4", "Gieß 5", "Gieß 6"],
+        ["Gieß 7", "Gieß 8", "Gieß 9"],
+        ["Gieß 10"],
       ]);
       expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
         true,
