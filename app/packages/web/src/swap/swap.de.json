@@ -53,7 +53,13 @@
   "match.title": "Passende Angebote",
   "match.intro": "Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.",
   "match.loading": "Angebote werden geladen …",
-  "match.empty.allDecided.title": "Alle passenden Angebote hast du angefragt.",
-  "match.empty.allDecided.description": "Deine Anfragen verfolgst du in der Tauschbörse. Neue passende Angebote erscheinen hier von selbst.",
-  "match.empty.allDecided.action": "Anfragen ansehen"
+  "match.empty.allRequested.title": "Alle passenden Angebote hast du angefragt.",
+  "match.empty.allRequested.description": "Deine Anfragen verfolgst du in der Tauschbörse. Neue passende Angebote erscheinen hier von selbst.",
+  "match.empty.allRequested.action": "Anfragen ansehen",
+  "match.empty.allAnswered.title": "Für jetzt durch.",
+  "match.empty.allAnswered.description": "Die Karten für später findest du unter „Später ansehen“, die abgelehnten unter „Abgelehnt“.",
+  "match.empty.allAnswered.action": "Später ansehen",
+  "match.entry.requests": "Anfrage ansehen",
+  "match.entry.requests.aria": "Anfrage ansehen: {name}",
+  "match.alreadyRequested": "Schon angefragt: {title}."
 }

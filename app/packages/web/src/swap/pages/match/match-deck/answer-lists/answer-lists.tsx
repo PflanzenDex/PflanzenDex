@@ -1,5 +1,11 @@
 import type { MatchEntry } from "@pflanzendex/core";
+import { Link } from "react-router";
 import { Button } from "@/shared/ui/button/button";
+import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../../swap.de.json";
+
+const t = texts(table);
 
 const germanDate = (d: string) => d.split("-").reverse().join(".");
 const entryName = (e: MatchEntry) =>
@@ -25,6 +31,16 @@ function EntryRow(props: {
     <li className="grid gap-1 border-b border-border py-2 last:border-b-0">
       <span>{`${entryName(e)} · ${germanDate(e.answeredOn)}`}</span>
       {closed && <span className="text-muted-foreground">{STATE_TEXT[e.state]}</span>}
+      {e.state === "requested" && (
+        <Button asChild variant="outline" size="touch">
+          <Link
+            to={`${EXCHANGE_PATH}?part=requests`}
+            aria-label={t("match.entry.requests.aria", { name: entryName(e) })}
+          >
+            {t("match.entry.requests")}
+          </Link>
+        </Button>
+      )}
       {(closed || props.label) && (
         <Button
           variant="outline"

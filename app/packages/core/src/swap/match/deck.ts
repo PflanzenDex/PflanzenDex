@@ -1,16 +1,16 @@
 import {
+  daysBetween,
   isTimeZone,
   localToday,
   ok,
   type Result,
   failed,
   appError,
-  daysBetween,
 } from "../../kernel";
 import { exchangeList, type ExchangeQuery } from "../exchange";
 import type { ExchangeDependencies, ExchangeOffer } from "../exchange";
 import type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
-import { emptyReason, type EmptyReason, type MatchCounts } from "./empty";
+import { emptyReason, type EmptyReason, type Held, type MatchCounts } from "./empty";
 import {
   bothWays,
   ownOffersAsked,
@@ -18,6 +18,9 @@ import {
   type FriendWishes,
   type MyOffers,
 } from "./both-ways";
+
+/** Days a "Later" card stays out of the deck (starting value 1 day, assumption of the PO). */
+export const LATER_DAYS = 1;
 
 /** The wish behind a card (US-TAU-04): the species it names and the keeper's own reasoning, nothing more (P-08). */
 export interface WishlistReason {
@@ -57,8 +60,15 @@ export interface MatchEntry {
   readonly card: MatchCard | null;
 }
 
-/** Days a "Later" card stays out of the deck (starting value 1 day, assumption of the PO). */
-export const LATER_DAYS = 1;
+/** Why a match is no card: my open request (`requested`, listed under Requests) or my No or Later (`answered`). */
+type Hold = "requested" | "answered" | null;
+
+function holdOf(requested: boolean, answer: StoredMatchAnswer | undefined, today: string): Hold {
+  if (requested) return "requested";
+  if (!answer) return null;
+  const back = answer.answer === "later" && daysBetween(answer.answeredOn, today) >= LATER_DAYS;
+  return back ? null : "answered";
+}
 
 const compare = (a: string | null, b: string | null) => (a ?? "").localeCompare(b ?? "", "de");
 
@@ -86,29 +96,15 @@ export interface MatchContext {
 }
 
 /**
- * The match deck (US-TAU-01): the exchange list narrowed to offers whose species is on the caller's own wishlist.
- * It reuses the exchange read, so only open offers of confirmed friends with `Share = friends` can appear and the
- * wishlist is only asked per species (P-05, FR-WUN-07, FR-TAU-02). The match is the exact species and nothing else
- * (FR-TAU-04); an offer of an unknown species never matches. What the caller answered is derived on every read
- * (NFR-04, US-TAU-02, US-TAU-06): `cards` are the offers without an answer plus those answered with Later on an earlier
- * day (they come back after a day, starting value); an offer answered with No stays out until the keeper reconsiders it.
- * An offer on which the keeper has an open request is no card either: it is decided and lives under "Anfragen" (US-TAU-03).
- * `entries` lists every answer with its state, so Later and No stay findable and an ended offer is marked, never dropped
- * silently (P-10); only the keeper removes an entry.
+ * The deck as one read (US-TAU-01 to US-TAU-06): the exchange list narrowed to offers whose species is on the caller's
+ * wishlist, with the reasons of each card, derived on every read (NFR-04). `entries` lists every answer with its state (P-10).
  */
-export async function matchDeck(
+export async function readDeck(
   deps: ExchangeDependencies,
   context: MatchContext,
   userId: string,
   query: Pick<ExchangeQuery, "timeZone">,
-): Promise<
-  Result<{
-    readonly cards: readonly MatchCard[];
-    readonly entries: readonly MatchEntry[];
-    /** Set when `cards` is empty and the counts are known: the reason and so the next step (US-TAU-07). */
-    readonly empty: EmptyReason | null;
-  }>
-> {
+) {
   if (!isTimeZone(query.timeZone))
     return failed(
       appError("input.invalid", { details: [{ field: "timeZone", code: "input.invalid" }] }),
@@ -135,12 +131,12 @@ export async function matchDeck(
       ],
     }))
     .sort(deckOrder);
-  // An open request of mine (requested or accepted, DM-SOZ-03) decides the offer: it lives under "Anfragen" (US-TAU-03).
-  const cards = matching.filter((c) => {
-    if (c.requested) return false;
-    const a = given.get(c.offerId);
-    return !a || (a.answer === "later" && daysBetween(a.answeredOn, today) >= LATER_DAYS);
-  });
+  const holds = matching.map((c) => holdOf(c.requested, given.get(c.offerId), today));
+  const cards = matching.filter((_, i) => holds[i] === null);
+  const held: Held = {
+    requested: holds.filter((h) => h === "requested").length,
+    answered: holds.filter((h) => h === "answered").length,
+  };
   const byId = new Map(list.value.offers.map((o) => [o.offerId, o]));
   const cardById = new Map(matching.map((c) => [c.offerId, c]));
   const entries = [...given.values()]
@@ -149,8 +145,31 @@ export async function matchDeck(
   const empty =
     cards.length > 0
       ? null
-      : await emptyReason(context.counts, userId, list.value.offers.length, matching.length);
-  return ok({ cards, entries, empty });
+      : await emptyReason(context.counts, userId, list.value.offers.length, held);
+  const requested = new Set(matching.filter((c) => c.requested).map((c) => c.offerId));
+  return ok({ cards, entries, empty, requested });
+}
+
+/**
+ * The match deck (US-TAU-01): the cards, the answers and the reason of an empty deck, as `readDeck` reads them. Only open
+ * offers of confirmed friends with `Share = friends` appear (P-05, FR-TAU-02); the match is the exact species (FR-TAU-04).
+ * An offer with my No or Later stays out (Later comes back after a day), and one with my open request is no card (US-TAU-03).
+ */
+export async function matchDeck(
+  deps: ExchangeDependencies,
+  context: MatchContext,
+  userId: string,
+  query: Pick<ExchangeQuery, "timeZone">,
+): Promise<
+  Result<{
+    readonly cards: readonly MatchCard[];
+    readonly entries: readonly MatchEntry[];
+    /** Set when `cards` is empty and the counts are known: the reason and so the next step (US-TAU-07). */
+    readonly empty: EmptyReason | null;
+  }>
+> {
+  const r = await readDeck(deps, context, userId, query);
+  return r.ok ? ok({ cards: r.value.cards, entries: r.value.entries, empty: r.value.empty }) : r;
 }
 
 function stateOf(offer: ExchangeOffer | undefined, card: MatchCard | null): EntryState {

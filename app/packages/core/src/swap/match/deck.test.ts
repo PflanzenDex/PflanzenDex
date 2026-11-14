@@ -386,7 +386,7 @@ describe("US-TAU-03 an open request of mine takes the offer out of the deck", ()
     return r.ok ? r.value.cards.map((c) => c.offerId) : [];
   };
 
-  it("US-TAU-03 an offer on which I have an open request is no card: the deck leaves it out, it stays under Anfragen", async () => {
+  it("US-TAU-03 an offer on which I have an open request is no card: the deck leaves it out, it stays under Requests", async () => {
     const deps = setup([offer(1), offer(2)]);
     sides(deps).sides["anna"] = [mine()];
     expect(await cardIds(deps)).toEqual([B]);
@@ -461,7 +461,7 @@ describe("US-TAU-03 an open request of mine takes the offer out of the deck", ()
     ]);
   });
 
-  it("US-TAU-07 names all_decided when every offer that matches my wishlist is requested, not no_match", async () => {
+  it("US-TAU-07 names all_requested when every offer that matches my wishlist has my open request", async () => {
     const deps = setup([offer(1)]);
     sides(deps).sides["anna"] = [mine({ status: "requested" })];
     const r = await matchDeck(
@@ -474,6 +474,56 @@ describe("US-TAU-03 an open request of mine takes the offer out of the deck", ()
       "anna",
       { timeZone: "Europe/Berlin" },
     );
-    expect(r.ok && r.value.empty).toBe("all_decided");
+    expect(r.ok && r.value.empty).toBe("all_requested");
+  });
+
+  it("US-TAU-07 names all_answered when no card is left because my No or Later holds the rest", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    const answers = new InMemoryMatchAnswers();
+    const same = {
+      answeredOn: "2026-10-09",
+      speciesLatin: null,
+      speciesGerman: null,
+      giverName: "Ben",
+    };
+    await answers.save("anna", { offerId: A, answer: "no", ...same });
+    await answers.save("anna", { offerId: B, answer: "later", ...same });
+    const r = await matchDeck(
+      deps,
+      {
+        answers,
+        clock: () => new Date("2026-10-09T10:00:00Z"),
+        counts: { friends: async () => 2, wishes: async () => 3 },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.cards).toEqual([]);
+    expect(r.ok && r.value.empty).toBe("all_answered");
+  });
+
+  it("US-TAU-07 a mix of my requests and my answers names all_answered: the lists hold the rest", async () => {
+    const deps = setup([offer(1), offer(2)]);
+    sides(deps).sides["anna"] = [mine({ status: "requested" })];
+    const answers = new InMemoryMatchAnswers();
+    await answers.save("anna", {
+      offerId: B,
+      answer: "no",
+      answeredOn: "2026-10-09",
+      speciesLatin: null,
+      speciesGerman: null,
+      giverName: "Ben",
+    });
+    const r = await matchDeck(
+      deps,
+      {
+        answers,
+        clock: () => new Date("2026-10-09T10:00:00Z"),
+        counts: { friends: async () => 2, wishes: async () => 3 },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.empty).toBe("all_answered");
   });
 });

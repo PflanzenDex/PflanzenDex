@@ -268,13 +268,13 @@ describe("US-TAU-06 find Later and No again", () => {
 });
 
 describe("US-TAU-03 an offer I requested is decided", () => {
-  it("US-TAU-03 No or Later on an offer with my open request is offer.not_found: it is no card any more", async () => {
+  it("US-TAU-03 No or Later on an offer with my open request is refused as already requested, and nothing is stored", async () => {
     const s = setup();
     (s.deps.swaps as InMemoryExchange).sides["anna"] = [
       swapSide({ swapId: "s-mine", role: "recipient", offerId: A, status: "requested" }),
     ];
     const r = await answer(s, { offerId: A, answer: "later", timeZone: TZ });
-    expect(!r.ok && r.error.code).toBe("offer.not_found");
+    expect(!r.ok && r.error.code).toBe("swap.already_requested");
     expect(s.answers.rows["anna"]?.size ?? 0).toBe(0);
   });
 });
