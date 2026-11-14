@@ -34,6 +34,7 @@ function withError(z: State, error: string | undefined): State {
 export function sessionActions(
   manager: Promise<UserManager>,
   setState: Dispatch<SetStateAction<State>>,
+  api: string,
 ) {
   let detourRunning = false;
   // A press that starts a detour (US-ACC-01) restores the keys it may change when it fails and says so there.
@@ -70,22 +71,24 @@ export function sessionActions(
     // "Abmelden" and "Anderes Konto" end the session first: prompt=login does not help while another session lives.
     signOut: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
     useAnotherAccount: () => press([MARKER], t("signOut.failed"), (mgr) => endSession(mgr)),
+    // "Auf allen Geräten abmelden" (US-ACC-01, issue 2065): the API ends every session first. The local sign-in is removed
+    // only after that succeeded; a failure keeps the dialog open with the text of its code, so the keeper can press again.
     everywhereSignOut: async () => {
       setState((z) => withError(z, undefined));
+      const showError = (text: string) => setState((z) => withError(z, text));
       try {
         const mgr = await manager;
         const user = await mgr.getUser();
-        if (user) await signOutEverywhere(mgr.settings.authority, user.access_token);
+        // Without a stored sign-in there is no token to end the sessions with; a success here would claim what did not happen.
+        if (!user) return showError(t("everywhere.failed"));
+        const r = await signOutEverywhere(api, user.access_token);
+        if (!r.ok) return showError(r.error.text);
         await mgr.removeUser();
         setProfileTimeZone(null);
         clearPhotoCache(); // the page goes on: no picture of the signed-out keeper stays in memory (P-05)
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });
       } catch {
-        setState((z) =>
-          z.kind === "signedIn"
-            ? { ...z, error: "Abmelden auf allen Geräten ist fehlgeschlagen." }
-            : z,
-        );
+        showError(t("everywhere.failed"));
       }
     },
   };

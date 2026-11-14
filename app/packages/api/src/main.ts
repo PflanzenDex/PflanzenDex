@@ -19,7 +19,9 @@ import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
 import { REDEEM_LIMIT, WRITE_LIMIT, createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
-import { deleteAccountHandlers, identityRemovalFromEnv, NO_STORE } from "./privacy";
+import { deleteAccountHandlers, NO_STORE } from "./privacy";
+import { identityRemovalFromEnv } from "./identity";
+import { identitySessionsFromEnv } from "./sessions";
 import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
@@ -88,6 +90,8 @@ const app = createApp({
   writeLimit: WRITE_LIMIT,
   // Redeeming invitation codes per subject and address (US-ACC-05, issue 305).
   redeemLimit: REDEEM_LIMIT,
+  // Sign out on all devices (US-ACC-01): the sign-in service's admin interface, unavailable without its settings.
+  identitySessions: identitySessionsFromEnv(process.env),
   webOrigin: process.env["WEB_ORIGIN"] ?? "http://localhost:5173",
 });
 

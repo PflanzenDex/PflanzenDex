@@ -140,7 +140,7 @@ export function useSession() {
   }, [manager, load]);
 
   const token = useCallback(async () => (await (await manager).getUser())?.access_token, [manager]);
-  const actions = useMemo(() => sessionActions(manager, setState), [manager]);
+  const actions = useMemo(() => sessionActions(manager, setState, apiUrl(env)), [manager]);
 
   return { state, token, reload: load, ...actions };
 }

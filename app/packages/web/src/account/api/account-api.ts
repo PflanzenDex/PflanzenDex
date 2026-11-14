@@ -141,18 +141,20 @@ export async function getAccount(
   return (await res.json()) as Account;
 }
 
-/** "Sign out on all devices": ends all sessions of the account at the sign-in service (account API). */
-export async function signOutEverywhere(
-  authority: string,
+/**
+ * "Sign out on all devices" (US-ACC-01, issue 2065): the API ends every session of the keeper at the sign-in service. The
+ * browser does not call the sign-in service's account API: its token has no right there, and the refusal carries no CORS
+ * header. A request that gives up after the same 15 seconds as the others. The answer is the API's: an error carries its
+ * code and the text of that code (`error.text`), so the dialog can say what happened and that a retry helps.
+ */
+export function signOutEverywhere(
+  api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<void> {
-  const res = await fetchFn(`${authority}/account/sessions`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
-  });
-  if (!res.ok) throw new Error("sign_out_failed");
+): Promise<Response<unknown>> {
+  const timed: FetchFn = (input, init) =>
+    fetchFn(input, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000) });
+  return createWrite(api, token, timed)("POST", "/account/sessions/end");
 }
 
 export const loadProfile = (
