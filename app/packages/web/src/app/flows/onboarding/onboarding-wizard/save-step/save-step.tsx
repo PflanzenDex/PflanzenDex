@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useRef, type ReactNode } from "react";
 import {
   speciesDisplayName,
   zoneDerive,
@@ -109,9 +109,15 @@ export function SaveStep(props: {
 }) {
   const { species, zones } = props;
   const derived = zones ? derivedZone(species, zones) : null;
+  const heading = useRef<HTMLHeadingElement>(null);
+  // The retry button leaves the screen when it is pressed: the focus goes to the step's heading, not to the body (issue 2098).
+  const retry = () => {
+    heading.current?.focus();
+    props.onRetryZones?.();
+  };
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold">
+      <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold">
         {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
         {props.stepLabel && " "}
         {ui("title")}
@@ -141,7 +147,7 @@ export function SaveStep(props: {
         zoneId={props.zoneId}
         onZone={props.onZone}
         zonesError={props.zonesError}
-        onRetryZones={props.onRetryZones}
+        onRetryZones={retry}
       />
       {props.children}
       {props.error && <p role="alert">{props.error}</p>}

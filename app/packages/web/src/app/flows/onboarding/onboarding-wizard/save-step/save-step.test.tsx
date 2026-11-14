@@ -142,6 +142,20 @@ describe("US-ONB-01 offline, the default zones fail with the reason and a retry 
     expect(writes.filter((w) => w.path === "/light-zones/defaults")).toHaveLength(1);
   });
 
+  it("US-ONB-01 after Erneut versuchen the focus stays on the step heading, not the body (issue 2098)", async () => {
+    const net = connection();
+    server();
+    view();
+    await toSave();
+    await screen.findByText(REASON);
+    net.mockReturnValue(true);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await screen.findByRole("combobox", { name: "Lichtbedarf" });
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { name: "Schritt 2 von 2: Pflanze speichern" }),
+    );
+  });
+
   it("US-ONB-01 the device coming back online loads the zones again, without a press", async () => {
     const net = connection();
     server();
