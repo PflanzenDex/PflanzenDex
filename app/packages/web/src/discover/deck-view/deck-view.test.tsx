@@ -3,6 +3,7 @@ import type { Suggestion, SuggestionDeck } from "@pflanzendex/core";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
 import { DeckView } from "./deck-view";
 
 afterEach(cleanup);
@@ -239,5 +240,34 @@ describe("US-QS-30 the deck's network decisions wait offline (US-ENT-04)", () =>
     state.mockReturnValue(true);
     act(() => window.dispatchEvent(new Event("online")));
     expect(screen.getByRole("button", { name: "Ja" }).hasAttribute("aria-disabled")).toBe(false);
+  });
+});
+
+/** The text the request itself gives when it got no answer (`network.not_reachable`, issue 1884). */
+const NO_ANSWER = "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.";
+const noAnswer = async () => ({
+  ok: false as const,
+  error: { code: "network.not_reachable", text: NO_ANSWER },
+});
+
+describe("US-QS-32 a decision without an answer shows the text of its request (issue 1884)", () => {
+  it("US-QS-32 a Ja that gets no answer shows the request's own text, not the generic error, and the card stays", async () => {
+    render(
+      <DeckView deck={deck} onDecide={noAnswer} onUndo={undoOk} onNewDeck={() => undefined} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await screen.findByText(NO_ANSWER)).toBeTruthy();
+    expect(screen.queryByText(GENERIC_ERROR_TEXT)).toBeNull();
+    expect(screen.getByText("Ficus lyrata")).toBeTruthy();
+  });
+
+  it("US-QS-32 a Rückgängig that gets no answer shows the request's own text too", async () => {
+    render(
+      <DeckView deck={deck} onDecide={saveOk} onUndo={noAnswer} onNewDeck={() => undefined} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Rückgängig" }));
+    expect(await screen.findByText(NO_ANSWER)).toBeTruthy();
+    expect(screen.queryByText(GENERIC_ERROR_TEXT)).toBeNull();
   });
 });

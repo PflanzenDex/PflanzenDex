@@ -96,10 +96,12 @@ export function WhereQuestion(props: WhereProps) {
     props.focusHeading?.();
     retry();
   };
+  // usePlaces loads the places again by itself when the device is back online (issue 2127): `ownOffline` keeps
+  // RequestState from loading them a second time (US-QS-32).
   if (error)
     return (
       <section className="flex flex-col gap-3">
-        <RequestState status="error" errorText={refusalText(error)} onRetry={again} />
+        <RequestState status="error" errorText={refusalText(error)} onRetry={again} ownOffline />
         <Button type="button" variant="ghost" onClick={() => props.onDone()}>
           {ui("later")}
         </Button>

@@ -51,12 +51,15 @@ function ZoneField(props: {
   zonesError: string | null | undefined;
   onRetryZones: (() => void) | undefined;
 }) {
+  // The zones load again by themselves when the device is back online (useOwnZones, issue 2098): `ownOffline` keeps
+  // RequestState from loading them a second time (US-QS-32).
   if (props.zonesError)
     return (
       <RequestState
         status="error"
         errorText={props.zonesError}
         onRetry={props.onRetryZones ?? (() => undefined)}
+        ownOffline
       />
     );
   return (
