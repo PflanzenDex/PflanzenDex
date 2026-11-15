@@ -10,6 +10,10 @@ import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-te
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { FeaturesProvider } from "@/shared/data";
+import {
+  GUARD,
+  stateFlag,
+} from "../../../collection/plants-screen/plant-layers/plant-forms/address/form-address";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -94,12 +98,18 @@ describe("US-WAC-01 collection wired with measuring", () => {
 });
 
 /** The address of the test render and the navigator of its router, so a test can press Back (US-QS-15). */
-const route: { navigate: NavigateFunction | null; search: string } = { navigate: null, search: "" };
+const route: { navigate: NavigateFunction | null; search: string; guarded: boolean } = {
+  navigate: null,
+  search: "",
+  guarded: false,
+};
 function Address() {
   const navigate = useNavigate();
   const location = useLocation();
   route.navigate = navigate;
   route.search = location.search;
+  // The guard entry the form pushes when typed input asks before Back (US-QS-15): committed or not yet.
+  route.guarded = stateFlag(location.state, GUARD);
   return null;
 }
 const back = () => act(() => route.navigate?.(-1));
@@ -193,6 +203,10 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
+    // into the product race of the follow-up issue to #2136 (see its pull request), so the test waits for the commit,
+    // as the next tap of a person would.
+    await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
@@ -210,6 +224,10 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await userEvent.type(await screen.findByLabelText(/^Kennzeichen(?: \(optional\))?$/), "rot");
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
+    // into the product race of the follow-up issue to #2136 (see its pull request), so the test waits for the commit,
+    // as the next tap of a person would.
+    await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
     await waitFor(() => expect(document.getElementById("marker-title")).toBeNull(), {
       timeout: 5_000,
