@@ -39,8 +39,10 @@ function layerOpener(nav: {
 }
 
 /**
- * Whether an arrival from `left` moves no focus and says no title: the same entry, a `keepFocus` step, or the same view. A
- * step the app takes over its own history (a settle, issue 2165) is quiet too, once: it takes its entry off the list.
+ * Whether an arrival from `left` moves no focus and says no title: the same entry, a `keepFocus` step, the same view, or
+ * a step the app takes over its own history (a settle, issue 2165). Every change of entry takes the entry off the quiet
+ * list, even one that is quiet for another reason, so a listed entry cannot silence a later change from it. The effect
+ * runs again without a change of entry; then nothing is taken.
  */
 function staysPut(nav: {
   left: string;
@@ -49,8 +51,9 @@ function staysPut(nav: {
   sameView: boolean;
 }): boolean {
   const { left, key, keepFocus, sameView } = nav;
-  if (left === key || keepFocus || sameView) return true;
-  return takeQuiet(left);
+  if (left === key) return true;
+  const quiet = takeQuiet(left);
+  return quiet || keepFocus || sameView;
 }
 
 /**
