@@ -21,7 +21,7 @@ function Reasons(props: { card: Card }) {
             </p>
           ),
       )}
-      {both.length > 0 && <Badge variant="secondary">Passt in beide Richtungen</Badge>}
+      {both.length > 0 && <Badge variant="default">Passt in beide Richtungen</Badge>}
       {both.map((r) => (
         <p key={r.offerId} className="m-0 w-full text-sm">
           {`${c.ownerName ?? "Ein Freund"} möchte ${r.speciesGerman ?? r.speciesLatin ?? "dein Angebot"} von dir.`}

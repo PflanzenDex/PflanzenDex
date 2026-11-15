@@ -136,6 +136,16 @@ describe("US-EQU-01 equipment page", () => {
     expect(card.textContent).toContain("ohne Zone");
   });
 
+  it("US-QS-32 'Gekauft am' shows the date as TT.MM.JJJJ, never the stored form", async () => {
+    fakeServer([item({ boughtAt: "2026-10-03" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Zone 3" });
+    const value = within(card).getByText("03.10.2026");
+    expect(value.tagName).toBe("DD");
+    expect(value.previousElementSibling?.textContent).toBe("Gekauft am");
+    expect(card.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
   it("US-EQU-01 an empty list says what to do next", async () => {
     fakeServer([]);
     view(<EquipmentPage api="http://api" token={token} />);
@@ -583,6 +593,23 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
     const layer = await screen.findByRole("dialog", { name: "Zone 3" });
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' is neutral text", async () => {
+    fakeServer([
+      item({ id: "e1", name: "Lampe defekt", status: "defective" }),
+      item({ id: "e2", name: "Lampe aktiv", status: "active" }),
+      item({ id: "e3", name: "Lampe alt", status: "retired" }),
+    ]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const defective = await screen.findByRole("button", { name: /Lampe defekt/ });
+    expect(within(defective).getByText("Defekt").className.split(" ")).toContain("bg-warning");
+    const active = screen.getByRole("button", { name: /Lampe aktiv/ });
+    expect(active.textContent).not.toContain("Aktiv");
+    expect(active.textContent).not.toContain("Defekt");
+    const retired = screen.getByRole("button", { name: /Lampe alt/ });
+    expect(retired.textContent).toMatch(/Ausgemustert$/);
+    expect(retired.querySelector(".bg-warning")).toBeNull();
   });
 
   it.each([360, 1440])(

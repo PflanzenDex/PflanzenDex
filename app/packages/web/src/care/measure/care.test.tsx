@@ -6,7 +6,7 @@ import { createQueryClient, deviceTimeZone, setProfileTimeZone } from "../../sha
 import { renderToString as render } from "react-dom/server";
 import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { localToday, type MeasurementView, type MeasurementRow } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
 import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
@@ -193,6 +193,24 @@ describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)"
 });
 
 describe("US-WAC-01 Ansicht „Messen“", () => {
+  // The keeper's today is fixed: the fact line says "am 03.10.2026" beyond 7 days (US-QS-32).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("US-QS-32 the fact line reads 'vor 6 Tagen' within 7 days and the value keeps its unit", () => {
+    vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
+    const m = measurement();
+    const page = render(<MeasurementHeader view={view({ measurements: [m], last: m })} />);
+    expect(page).toContain("Letzte Messung");
+    expect(page).toContain("12,5\u00a0cm vor 6\u00a0Tagen");
+    expect(page).not.toContain("am 03.10.2026");
+  });
+
   it('shows "Was messen?", last measurement and last rating', () => {
     const m = measurement({ quality: "etiolated" });
     const html = renderToString(

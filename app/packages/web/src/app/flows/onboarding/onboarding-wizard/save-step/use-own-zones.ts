@@ -9,7 +9,7 @@ import {
   type QueryClient,
 } from "../../../../../shared/data";
 import { refreshLight, sharedZones } from "../../../../../light";
-import { ensureHome } from "../where-question/where-question";
+import { ensureHome } from "../where-question/use-places";
 
 type Token = () => Promise<string | undefined>;
 
@@ -27,6 +27,7 @@ async function ownZones(client: QueryClient, api: string, token: Token): Promise
   const first = await sharedZones(client, api, t);
   if (!first.ok) return { ok: false, error: first.error };
   if (first.value.length > 0) {
+    // The result is not shown here: the where question reports a default location that could not be made (issue 2127).
     await ensureHome(client, api, t);
     return { ok: true, zones: first.value };
   }
@@ -34,6 +35,7 @@ async function ownZones(client: QueryClient, api: string, token: Token): Promise
   if (!made.ok) return { ok: false, error: made.error };
   // The new zones refresh the shared light data (issue 1244); the default location "Zuhause" comes with them (US-ONB-02).
   await refreshLight(client);
+  // The result is not shown here: the where question reports a default location that could not be made (issue 2127).
   await ensureHome(client, api, t);
   const again = await sharedZones(client, api, t);
   return again.ok ? { ok: true, zones: again.value } : { ok: false, error: again.error };

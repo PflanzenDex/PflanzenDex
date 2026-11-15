@@ -85,6 +85,7 @@ const show = (id = "e1", on = true) =>
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("US-BES-17 a scanned pot label opens the plant with quick actions", () => {
@@ -203,12 +204,36 @@ describe("US-MON-09 Gedüngt on a scanned pot label", () => {
   });
 
   it("US-MON-09 the label shows the date of the latest fertilizing", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
     server({
       "GET /specimens/e1": () => json(200, specimen()),
       "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
     });
     show();
     expect(await screen.findByText("Zuletzt gedüngt: 02.11.2026")).toBeTruthy();
+  });
+
+  it("US-QS-32 the label says 'Zuletzt gedüngt: heute' on the day of the fertilizing", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-02T12:00:00Z"));
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
+    });
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: heute")).toBeTruthy();
+  });
+
+  it("US-QS-32 the label says 'Zuletzt gedüngt: vor 3 Tagen' within 7 days", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-05T12:00:00Z"));
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
+    });
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: vor 3 Tagen")).toBeTruthy();
   });
 
   it("US-MON-09 the label says 'noch nie' while no fertilizing is logged (P-08, P-09)", async () => {

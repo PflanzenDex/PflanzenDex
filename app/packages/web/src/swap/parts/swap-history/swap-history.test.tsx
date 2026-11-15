@@ -111,6 +111,15 @@ describe("US-SOZ-13 swap history", () => {
     expect(await screen.findByText("Übergeben")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Tauschverlauf" })).toBeTruthy();
   });
+
+  it("US-QS-32 an ended swap, handed over included, is outlined: the same look as the ended states in Meine and Anfragen", async () => {
+    server([entry()]);
+    show();
+    const handed = await screen.findByText("Übergeben");
+    expect(handed.className).toContain("bg-card");
+    expect(handed.className).not.toContain("bg-secondary");
+    expect(handed.className).not.toContain("bg-primary");
+  });
 });
 
 describe("US-QS-14 issue 1697 · the swap history show their shaped skeleton once", () => {

@@ -1,4 +1,4 @@
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, useRef, useState, type ReactNode } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../../../account";
@@ -12,7 +12,6 @@ import table from "./onboarding-wizard.de.json";
 const ui = texts(table);
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
-
 type Token = () => Promise<string | undefined>;
 type Flow = ReturnType<typeof useFirstPlant>;
 
@@ -26,9 +25,10 @@ function Created(props: {
 }) {
   const [asked, setAsked] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold">
+      <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold">
         {ui("created", { name: props.name })}
       </h2>
       <p className="m-0">{ui("howItGrows")}</p>
@@ -41,6 +41,7 @@ function Created(props: {
             setNote(n ?? null);
             setAsked(true);
           }}
+          focusHeading={() => heading.current?.focus()}
         />
       )}
       {note && (

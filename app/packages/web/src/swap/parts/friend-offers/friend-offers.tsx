@@ -54,7 +54,7 @@ function Card(props: {
       <span className="mt-1 flex flex-wrap items-center gap-2">
         {o.lack === true && <Badge variant="default">{t("friends.lack")}</Badge>}
         {o.onWishlist && <Badge variant="outline">{t("friends.onWishlist")}</Badge>}
-        {o.requested && <Badge variant="secondary">{t("friends.requested")}</Badge>}
+        {o.requested && <Badge variant="default">{t("friends.requested")}</Badge>}
       </span>
       {!o.requested && !props.open && (
         <div className="mt-1">
