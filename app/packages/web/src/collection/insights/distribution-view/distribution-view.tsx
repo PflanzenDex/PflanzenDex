@@ -6,9 +6,12 @@ import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
 import { zoneLabel } from "@pflanzendex/core";
 import { LightNeedAction } from "@/light";
 
-/** The bar of the thinnest zone takes the warning token; the words "am leersten" carry the meaning too (DS-38). */
+/**
+ * The bar of the thinnest zone is neutral, not amber: a thin zone is no deviation to look at (SG-COLOR-04). The words
+ * "am leersten" carry the meaning (DS-38, SG-COLOR-05).
+ */
 const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
-  variants: { thinnest: { true: "bg-warning-border", false: "bg-primary" } },
+  variants: { thinnest: { true: "bg-muted-foreground", false: "bg-primary" } },
   defaultVariants: { thinnest: false },
 });
 

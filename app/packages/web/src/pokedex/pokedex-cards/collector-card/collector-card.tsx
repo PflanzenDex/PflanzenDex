@@ -184,7 +184,7 @@ export function CollectorCard(props: { card: Card }) {
         <Badge variant={caught ? "default" : "outline"}>
           {c.caughtDate === null ? "noch nicht gefangen" : catchText(c.caughtDate)}
         </Badge>
-        {c.speciesPoor && <Badge variant="warning">Artenarm</Badge>}
+        {c.speciesPoor && <Badge variant="default">Artenarm</Badge>}
       </span>
       {c.specimenCount > 1 && (
         <span className="text-muted-foreground">{`${c.specimenCount} Pflanzen`}</span>
