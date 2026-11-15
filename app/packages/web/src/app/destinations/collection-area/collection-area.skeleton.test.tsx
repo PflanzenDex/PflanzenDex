@@ -19,7 +19,7 @@ const shape = (over: Partial<SammlungShape> = {}): SammlungShape => ({
 const MODES: [string, SammlungShape, string][] = [
   ["the plants", shape(), "Sammlung wird geladen …"],
   ["the plants grouped by care phase", shape({ group: "phase" }), "Pflegephasen werden geladen …"],
-  ["the species (Pokédex)", shape({ view: "species" }), "Pokédex wird geladen …"],
+  ["the species (Pokédex)", shape({ view: "species" }), "Arten werden geladen …"],
   [
     "the species compared by difficulty",
     shape({ view: "species", sort: "difficulty" }),

@@ -7,8 +7,9 @@
   "botanist": "Botaniker",
   "sectionLabel": "Sammlerrang",
   "unknown": "unbekannt",
-  "countWithPercent": "{caught} / {total} Arten gefangen ({percent} %)",
-  "countWithoutPercent": "{caught} / {total} Arten gefangen",
+  "countWithPercent": "{caught} von {total} Arten gefangen ({percent} %)",
+  "countWithoutPercent": "{caught} von {total} Arten gefangen",
+  "rowOpens": "– Fortschritt",
   "progressTo": "Fortschritt bis {rank}",
   "remaining": "Noch {remaining} bis „{rank}“",
   "topRank": "Höchster Rang erreicht",
@@ -17,8 +18,6 @@
   "treeMissing": "Der Baum der Arten ist noch nicht aufgebaut, darum fehlen Gesamtzahl und Ordnungen.",
   "notInTreeOne": "1 gefangene Art zählt noch nicht, weil sie nicht im Baum der Arten steht.",
   "notInTreeMany": "{count} gefangene Arten zählen noch nicht, weil sie nicht im Baum der Arten stehen.",
-  "rowCaught": "{caught} gefangen",
-  "rowOfTotal": "{caught} von {total} Arten",
   "uncountedOne": "1 Pflanze zählt noch nicht",
   "uncountedMany": "{count} Pflanzen zählen noch nicht"
 }

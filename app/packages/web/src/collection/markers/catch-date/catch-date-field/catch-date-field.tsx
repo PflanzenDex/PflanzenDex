@@ -113,7 +113,7 @@ function CorrectedDateField(props: { control: Control<CatchDateFields>; today: s
 
 /**
  * Correct the catch date of an existing specimen (US-BES-11): preset to the stored date (or today if it is unknown),
- * never later than the keeper's local today. Only the catch date changes; the Pokédex derives its date from it.
+ * never later than the keeper's local today. Only the catch date changes; the species view derives its date from it.
  */
 export function CatchDateForm(props: {
   state: Pick<ReturnType<typeof useCatchDate>, "send" | "setOpen"> & { open: CatchDateTarget };
@@ -139,7 +139,7 @@ export function CatchDateForm(props: {
       <p className="mb-2 text-muted-foreground">„{open.name}“</p>
       <Quiet className="mb-5">
         Bisher: {open.caughtAt ? dateText(open.caughtAt) : UNKNOWN}. Nur das Fangdatum ändert sich;
-        der Pokédex rechnet mit dem neuen Datum.
+        die Ansicht „Arten“ rechnet mit dem neuen Datum.
       </Quiet>
       <Form {...form}>
         <FormRoot
