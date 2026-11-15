@@ -120,11 +120,7 @@ export function SuggestionCard(props: {
     >
       <Picture s={s} />
       <div>
-        {s.exploration && (
-          <Badge variant="secondary" className="mb-1">
-            {t("card.exploration")}
-          </Badge>
-        )}
+        {s.exploration && <Badge className="mb-1">{t("card.exploration")}</Badge>}
         <h2
           id={titleId}
           ref={props.titleRef}
