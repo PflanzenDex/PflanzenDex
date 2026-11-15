@@ -820,7 +820,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     const open = vi.fn();
     const user = userEvent.setup();
     show("/today?sheet=hints", open);
-    const empty = await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" });
+    const empty = await screen.findByRole("heading", { level: 3, name: "Nichts fehlt" });
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", { name: "Zur Sammlung" }),
     );
@@ -960,7 +960,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.selectOptions(await within(layer).findByLabelText("Standort für „Bogenhanf“"), "l1");
     await user.click(within(layer).getByRole("button", { name: "Standort setzen: Bogenhanf" }));
     expect(
-      await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
+      await within(layer).findByRole("heading", { level: 3, name: "Nichts fehlt" }),
     ).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/keinen\s+Standort/)).toBeNull());
   });

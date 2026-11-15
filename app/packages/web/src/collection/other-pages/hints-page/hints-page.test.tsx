@@ -77,7 +77,7 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
   it("US-BES-08 without hints it says so and what the page checks (P-09)", async () => {
     fakeServer(() => response(200, { hints: [] }));
     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
-    await screen.findByText(/Keine Hinweise/);
+    await screen.findByText(/Nichts fehlt/);
     expect(screen.getByText(/Jede Pflanze hat eine Art/).textContent).toContain("Standort");
     expect(screen.queryByRole("list")).toBeNull();
   });
@@ -149,7 +149,7 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
         <HintsPage api="http://api" token={token} onOpen={open} host />
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 3, name: "Nichts fehlt" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledWith("collection");
   });

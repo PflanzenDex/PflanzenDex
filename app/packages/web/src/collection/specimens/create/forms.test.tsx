@@ -169,7 +169,7 @@ describe("US-BES-08 DS-26 an empty view offers the next action", () => {
     );
     const open = vi.fn();
     render(<HintsPage api="http://api" token={async () => "tok"} onOpen={open} />);
-    expect(await screen.findByText(/Keine Hinweise/)).toBeTruthy();
+    expect(await screen.findByText(/Nichts fehlt/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledWith("collection");
   });

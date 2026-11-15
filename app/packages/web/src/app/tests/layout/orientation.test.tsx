@@ -161,7 +161,7 @@ describe("US-QS-09 · a view with nothing to do says so and names the next step 
     renderAt("/hints", empty);
     const layer = await screen.findByRole("dialog", { name: "Fehlt noch" });
     expect(
-      await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
+      await within(layer).findByRole("heading", { level: 3, name: "Nichts fehlt" }),
     ).toBeTruthy();
     expect(within(layer).getByRole("button", { name: "Zur Sammlung" })).toBeTruthy();
     // The page behind keeps its one main heading.

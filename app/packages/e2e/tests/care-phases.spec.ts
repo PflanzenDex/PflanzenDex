@@ -51,7 +51,7 @@ async function closeCareProfile(page: Page, species: string): Promise<void> {
 
 /**
  * Sets the target location of the dormancy phase and, when given, the dormancy period in the editor of the care profile
- * (US-BES-09, FR-PHA-02). "Weiter" leads to the page of the dormancy period (the plant layer has "Weitere Pflanze"); the
+ * (US-BES-09, FR-PHA-02). "Weiter" leads to the page of the dormancy period (the plant layer has "Pflanze anlegen"); the
  * save button stays below all pages.
  */
 async function setProfile(
