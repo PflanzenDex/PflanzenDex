@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import { findCardButton } from "../../../collection/specimens/tests/plants-test-helpers";
 import userEvent from "@testing-library/user-event";
@@ -108,8 +109,10 @@ function Address() {
   const location = useLocation();
   route.navigate = navigate;
   route.search = location.search;
-  // The guard entry the form pushes when typed input asks before Back (US-QS-15): committed or not yet.
-  route.guarded = stateFlag(location.state, GUARD);
+  // The guard flag comes from the committed location only: a render that React throws away must not set it.
+  useLayoutEffect(() => {
+    route.guarded = stateFlag(location.state, GUARD);
+  }, [location]);
   return null;
 }
 const back = () => act(() => route.navigate?.(-1));
@@ -186,7 +189,8 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
-    // The first input pushes the guard entry; a Back before that commit is the same race (see the wait below).
+    // The first input pushes the guard entry; a Back before that commit is the race of the bug
+    // "Verwerfen can leave a plant form open when the guard entry commits late".
     await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
@@ -203,13 +207,14 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
-    // The first input pushes the guard entry; a Back before that commit is the same race (see the wait below).
+    // The first input pushes the guard entry; a Back before that commit is the race of the bug
+    // "Verwerfen can leave a plant form open when the guard entry commits late".
     await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
-    // into the product race of the follow-up issue to #2136 (see its pull request), so the test waits for the commit,
-    // as the next tap of a person would.
+    // into the bug "Verwerfen can leave a plant form open when the guard entry commits late", so the test waits for the
+    // commit, as the next tap of a person would.
     await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
@@ -226,13 +231,14 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await screen.findByRole("heading", { name: "Kennzeichen ändern" });
     expect(route.search).toContain("form=marker");
     await userEvent.type(await screen.findByLabelText(/^Kennzeichen(?: \(optional\))?$/), "rot");
-    // The first input pushes the guard entry; a Back before that commit is the same race (see the wait below).
+    // The first input pushes the guard entry; a Back before that commit is the race of the bug
+    // "Verwerfen can leave a plant form open when the guard entry commits late".
     await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
-    // into the product race of the follow-up issue to #2136 (see its pull request), so the test waits for the commit,
-    // as the next tap of a person would.
+    // into the bug "Verwerfen can leave a plant form open when the guard entry commits late", so the test waits for the
+    // commit, as the next tap of a person would.
     await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
     await waitFor(() => expect(document.getElementById("marker-title")).toBeNull(), {

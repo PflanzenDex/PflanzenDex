@@ -78,8 +78,12 @@ describe("US-QS-14 issue 1784 · the care profile layer shows the shape of the p
     // The profile's status is found by its own text: a status of another lazy part must not stand in for it.
     const label = await screen.findByText("Pflegeprofil wird geladen …");
     const status = label.closest<HTMLElement>('[role="status"]');
-    expect(status?.textContent).toBe("Pflegeprofil wird geladen …");
-    expect(status?.querySelectorAll(".animate-pulse").length).toBeGreaterThan(3);
+    expect(status).not.toBeNull();
+    const shape = status as HTMLElement;
+    expect(shape.textContent).toBe("Pflegeprofil wird geladen …");
+    expect(shape.querySelectorAll(".animate-pulse").length).toBeGreaterThan(3);
+    // The profile's status is the only one on screen, as the first status was before this wait by text.
+    expect(screen.getAllByRole("status")).toEqual([shape]);
     await act(async () => gate.release());
     expect(await screen.findByText("Pflegeprofil-Inhalt")).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();

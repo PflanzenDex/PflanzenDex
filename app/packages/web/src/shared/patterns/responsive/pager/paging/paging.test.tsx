@@ -61,7 +61,9 @@ function weiterMismatches(
     if (!(target < count)) return [`Weiter ${where}: no entry after page ${page}`];
     const next = position({ from: target, size, count });
     if (next.first !== target || next.page !== page + 1 || next.pages !== start.pages) {
-      return [`Weiter ${where}: page ${page} to ${next.page} at ${next.first}, expected ${target}`];
+      return [
+        `Weiter ${where}: page ${page} to ${next.page} at ${next.first} (expected ${target}), pages ${next.pages} (expected ${start.pages})`,
+      ];
     }
     at = next.first;
     page = next.page;
