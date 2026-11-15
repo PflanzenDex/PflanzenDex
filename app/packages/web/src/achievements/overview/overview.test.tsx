@@ -177,7 +177,7 @@ describe("US-ACH-02 achievements overview", () => {
     expect(screen.queryByRole("button", { name: /\(\d+\)/ })).toBeNull();
   });
 
-  it("US-ACH-02 a new account's group choice reads 0 von 3 and the section Erreicht says Noch keiner erreicht", async () => {
+  it("US-ACH-02 a new account's group choice reads 0 von 3 and the heading Erreicht says · noch keiner, with no extra line", async () => {
     const open = (ids: string[]) => ids.map((id) => item(id, { nextStep: step(`${id}.next`) }));
     serve({
       calmMode: false,
@@ -200,14 +200,16 @@ describe("US-ACH-02 achievements overview", () => {
       ],
     });
     expect(await screen.findByRole("button", { name: "Pflege · 0 von 3" })).toBeTruthy();
-    const earned = screen.getByRole("region", { name: "Erreicht" });
-    expect(within(earned).getByText("Noch keiner erreicht.")).toBeTruthy();
+    const earned = screen.getByRole("region", { name: "Erreicht · noch keiner" });
+    // The empty state is the muted text of the heading: no paragraph, no card in the section (SG-LIST-08, height).
+    expect(earned.querySelector("p")).toBeNull();
+    expect(within(earned).getByText("· noch keiner").className).toContain("text-muted-foreground");
     expect(
       within(screen.getByRole("region", { name: "Noch offen" })).getByText("Steckling bewurzelt"),
     ).toBeTruthy();
   });
 
-  it("US-ACH-02 an open section with nothing left says Alle erreicht", async () => {
+  it("US-ACH-02 an open section with nothing left says · keiner in its heading", async () => {
     serve({
       calmMode: false,
       earnedCount: 1,
@@ -220,9 +222,9 @@ describe("US-ACH-02 achievements overview", () => {
         empty("collecting"),
       ],
     });
-    const open = await screen.findByRole("region", { name: "Noch offen" });
-    expect(within(open).getByText("Alle erreicht.")).toBeTruthy();
-    expect(within(open).queryByText("Noch keiner erreicht.")).toBeNull();
+    const open = await screen.findByRole("region", { name: "Noch offen · keiner" });
+    expect(open.querySelector("p")).toBeNull();
+    expect(within(open).getByText("· keiner").className).toContain("text-muted-foreground");
   });
 
   it("US-ACH-02 the group Sammeln links to the Pokédex and shows no achievements of its own", async () => {
