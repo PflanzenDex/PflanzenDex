@@ -7,12 +7,14 @@ import {
   focusModalTitle,
 } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
-import { keptOpener, layerOpenerId, restoreFocus, useLayer } from "./use-layer";
-import { LayerGuarded, useLayerGuard } from "./layer-sheet.guard";
+import { UnsavedQuestion } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question";
+import { LayerGuardContext, keptOpener, layerOpenerId, restoreFocus, useLayer } from "./use-layer";
+import { useLayerGuard, type LayerGuard } from "./layer-sheet.guard";
 import { LayerHostContext } from "./layer-host/layer-host";
 import { LayerBody, LayerPane } from "./layer-host/layer-pane/layer-pane";
 
 export { useExitValue, useLayer } from "./use-layer";
+export { useKeptWhileUnsaved } from "./layer-sheet.history";
 export { useUnsavedInput } from "./use-layer";
 export { LayerHost } from "./layer-host/layer-host";
 
@@ -43,6 +45,17 @@ export function LayerOpener({
     >
       {children}
     </Button>
+  );
+}
+
+/** Provides the guard to the forms of a layer; the question sits beside the layer, not inside its pane or sheet. */
+export function LayerGuarded(props: { guard: LayerGuard; children: React.ReactNode }) {
+  const { guard } = props;
+  return (
+    <LayerGuardContext.Provider value={guard.value}>
+      {props.children}
+      {guard.asking ? <UnsavedQuestion onKeep={guard.keep} onDiscard={guard.discard} /> : null}
+    </LayerGuardContext.Provider>
   );
 }
 
@@ -125,13 +138,16 @@ export function LayerSheet({
   const { open, replaced, closeLayer } = useLayer(id);
   // A close the person asks for goes through the guard: typed input that is not saved asks first (US-QS-32).
   const guard = useLayerGuard(id, open, closeLayer);
+  // A layer that a second Back passed with unsaved input stays on screen, with its body, until its question is answered
+  // (issue 2145): the address alone would close it in this render.
+  const shown = open || guard.held;
   const isLg = useIsLg();
   const host = React.useContext(LayerHostContext);
   const pane = host?.pane ?? null;
   // A layer that mounts on Back (a POP) is one that was left for a layer above it: its opener may be back (issue 1363).
   const returning = useNavigationType() === "POP";
-  const { showBody, onExited } = useLeavingBody(open, replaced, isLg);
-  useFocusOnLeave(open);
+  const { showBody, onExited } = useLeavingBody(shown, replaced, isLg);
+  useFocusOnLeave(shown);
 
   React.useEffect(() => {
     if (import.meta.env.DEV && open && isLg && !host) {
@@ -142,7 +158,7 @@ export function LayerSheet({
   }, [host, id, isLg, open]);
 
   if (isLg) {
-    if (!open) return null;
+    if (!shown) return null;
     const layer = (
       <LayerPane
         id={id}
@@ -164,7 +180,7 @@ export function LayerSheet({
       <ResponsiveModal
         title={title}
         closeLabel={closeLabel}
-        open={open}
+        open={shown}
         onOpenChange={(next) => {
           if (!next) guard.requestClose();
         }}

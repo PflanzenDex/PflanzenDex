@@ -3,6 +3,7 @@ import type { SpecimenCard } from "@pflanzendex/core";
 import {
   LayerSheet,
   useExitValue,
+  useKeptWhileUnsaved,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
@@ -88,7 +89,10 @@ export function PlantLayers(props: LayerProps) {
   const { card, direct } = useLayerPlant(props, plantIdOf(sheet));
   const plant = plantOpenAt(card, plantLayerId, sheet);
   const profile = plantOpenAt(card, careProfileLayerId, sheet);
-  const notes = plantOpenAt(card, notesLayerId, sheet);
+  // The notes stay mounted through a Back that passes their layer with unsaved text (issue 2145); otherwise as before.
+  const notes = useKeptWhileUnsaved(plantOpenAt(card, notesLayerId, sheet), (c) =>
+    notesLayerId(c.id),
+  );
   const signs = plantOpenAt(card, signsLayerId, sheet);
   // The plant layer keeps its last plant while it slides out: the address has lost it at once (US-QS-15, F12).
   const shownPlant = useExitValue(plant);

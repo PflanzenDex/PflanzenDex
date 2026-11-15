@@ -151,7 +151,6 @@ export function FriendCollectionPage(props: {
   const queryKey = ["social", "friend-collection", friendId];
   // The same request as the frame below shares one cached copy: the heading names the friend once it is there (US-QS-20).
   const loaded = useRequest({ queryKey, token: props.token, load });
-  const equipment = useLayer(EQUIPMENT_LAYER);
   const title = collectionTitle(loaded.value?.friend.name ?? null);
   return (
     <LayerHost data-fit-screen="">
@@ -172,14 +171,12 @@ export function FriendCollectionPage(props: {
             <>
               <Body name={data.friend.name} cards={data.cards} api={api} token={props.token} />
               <LayerSheet id={EQUIPMENT_LAYER} title={`Geräte von ${nameOf(data.friend.name)}`}>
-                {equipment.open ? (
-                  <FriendEquipment
-                    api={api}
-                    token={props.token}
-                    friendId={friendId}
-                    name={nameOf(data.friend.name)}
-                  />
-                ) : null}
+                <FriendEquipment
+                  api={api}
+                  token={props.token}
+                  friendId={friendId}
+                  name={nameOf(data.friend.name)}
+                />
               </LayerSheet>
             </>
           )}

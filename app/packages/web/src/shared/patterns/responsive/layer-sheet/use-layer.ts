@@ -9,6 +9,13 @@ export const FROM_APP = "layerFromApp";
  * that entry and asks first, and a close walks back over it.
  */
 export const LAYER_GUARD = "layerGuard";
+/**
+ * History state of a layer's own entry: the address of the entry directly below it, the one the layer was opened from (or
+ * the list a reload or a link gets below it). A Back that lands on that address, and no further, holds the layer (issue 2145).
+ */
+export const BELOW = "layerBelow";
+/** An address of a history entry, as far as the layers compare it (path and query). */
+export type Below = { pathname: string; search: string };
 /** The layers that walk back over their own history entries to close (US-QS-32, see `closeLayer`). */
 const closing = new Set<string>();
 
@@ -27,8 +34,10 @@ type LayerControl = {
   /** Opens the layer: pushes a history entry, so Back closes it. Pass the event target to return focus to it. */
   openLayer: (from?: HTMLElement | null) => void;
   /**
-   * Closes the layer: back when the app opened it, otherwise it only removes the address part. On the guard entry above
-   * the layer (typed input, US-QS-32) it walks back over the guard and the layer's entry, so no guard entry is left.
+   * Closes the layer: back when the app opened it, otherwise it only removes the address part. A layer that a reload or a
+   * link opened gets its list below it first (`useLayerOrdering`, issue 2145), so it is back too; the replace is the
+   * fallback. On the guard entry above the layer (typed input, US-QS-32) it walks back over the guard and the layer's
+   * entry, so no guard entry is left.
    */
   closeLayer: () => void;
 };
@@ -70,9 +79,21 @@ export const setClosing = (id: string, on: boolean): void => {
   else closing.delete(id);
 };
 
+/** The address of the entry below a layer's entry, from its history state (issue 2145); `null` when the state names none. */
+export const belowOf = (state: unknown): Below | null =>
+  ((state as Record<string, unknown> | null)?.[BELOW] as Below | undefined) ?? null;
+
 /** The state of the guard entry: it keeps the app flag of the layer below it (US-QS-32). */
-export function guardState(state: unknown) {
-  return { [LAYER_GUARD]: true, keepFocus: true, [FROM_APP]: stateFlag(state, FROM_APP) };
+export function guardState(fromApp: boolean) {
+  return { [LAYER_GUARD]: true, keepFocus: true, [FROM_APP]: fromApp };
+}
+
+/** The search without the layer, as the list shows it (a layer opened by a reload gets its list below it, US-QS-15). */
+export function withoutLayer(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete(PARAM);
+  const text = params.toString();
+  return text ? `?${text}` : "";
 }
 
 /**
@@ -98,8 +119,10 @@ export function useLayer(id: string): LayerControl {
       returnTo = null;
       const next = new URLSearchParams(params);
       next.set(PARAM, id);
-      // RouteFocus ignores `?sheet`, so the view behind the layer does not move the focus to its heading.
-      setParams(next, { state: { [FROM_APP]: true } });
+      // RouteFocus ignores `?sheet`, so the view behind the layer does not move the focus to its heading. The entry below
+      // the layer is the address it is opened from (issue 2145).
+      const below = { pathname: location.pathname, search: location.search };
+      setParams(next, { state: { [FROM_APP]: true, [BELOW]: below } });
     },
     closeLayer: () => {
       if (open && guarded) {
