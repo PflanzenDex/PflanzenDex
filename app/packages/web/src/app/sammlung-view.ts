@@ -3,6 +3,7 @@ import { readStored, writeStored } from "@/shared/platform/browser/storage";
 import { useFeatures } from "@/shared/data";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { GROUP_PARAM, MANAGE_PARAM } from "../shared/patterns/navigation/navigation/navigation";
+import { SAMMLUNG_VIEW_KEY } from "../shared/patterns/navigation/nav-item";
 
 export type SammlungView = "plants" | "species" | "wishlist" | "equipment";
 /** How the species mode is arranged: the Pokédex, or the comparison by difficulty (US-BES-05). */
@@ -10,8 +11,8 @@ export type SpeciesSort = "pokedex" | "difficulty";
 
 /** The query parameter of the mode in the address, e.g. `/collection?view=species` (US-QS-14). */
 export const VIEW_PARAM = "view";
-/** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). */
-export const VIEW_KEY = "pflanzendex.collection-view";
+/** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). The key lives in the navigation (SG-NAV-03). */
+export const VIEW_KEY = SAMMLUNG_VIEW_KEY;
 
 /**
  * The four modes of the switch. The labels are short so that the switch stands in one row on a 360 px phone at normal

@@ -2,13 +2,14 @@ import { useSearchParams } from "react-router";
 import { readStored, writeStored } from "@/shared/platform/browser/storage";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useFeature } from "@/shared/data";
+import { DISCOVER_VIEW_KEY } from "@/shared/patterns/navigation/nav-item";
 
 export type DiscoverView = "suggestions" | "catalog";
 
 /** The query parameter of the mode in the address, e.g. `/discover?view=catalog` (US-QS-14). */
 export const DISCOVER_VIEW_PARAM = "view";
-/** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). */
-export const DISCOVER_VIEW_KEY = "pflanzendex.discover-view";
+/** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). The key lives in the navigation (SG-NAV-03). */
+export { DISCOVER_VIEW_KEY };
 
 export const DISCOVER_VIEWS: readonly { value: DiscoverView; label: string }[] = [
   { value: "suggestions", label: "Vorschläge" },

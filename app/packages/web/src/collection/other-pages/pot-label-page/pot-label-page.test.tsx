@@ -161,6 +161,15 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     expect(within(unknownLabel).queryByText(/fremd|unbekannt/)).toBeNull();
   });
 
+  it("US-QS-32 the scanned label is one screen (DS-61): its frame fits the window and scrolls inside, also for the not-found view", async () => {
+    server({});
+    const { container } = show("unbekannt");
+    await screen.findByRole("heading", { level: 1, name: "Pflanze nicht gefunden" });
+    const frame = container.querySelector("[data-fit-screen][data-fit-fill]");
+    expect(frame).not.toBeNull();
+    expect(frame?.className).toContain("min-h-0");
+  });
+
   it("US-BES-17 an archived plant says it is archived and offers no quick actions (P-09, P-10)", async () => {
     server({
       "GET /specimens/e1": () =>

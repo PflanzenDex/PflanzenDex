@@ -8,7 +8,7 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import { DISPLAY_NAME, type NavItem } from "../nav-item";
+import { DISPLAY_NAME, START_MODES, type NavItem } from "../nav-item";
 
 export type View =
   "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
@@ -147,10 +147,7 @@ const visible = (id: View, who: Who) =>
         ? who.social !== false
         : true;
 
-/**
- * The destinations for the shared shell (US-QS-07, DS-25). The review list is only for operators and reviewers
- * (US-BES-10), the operator area only for the operator (US-ACC-05); everybody else never sees these entries.
- */
+/** The shell's destinations (US-QS-07, DS-25); the role entries need their role (US-BES-10, US-ACC-05). */
 export function navItems(who: Who): NavItem[] {
   return ENTRIES.filter((e) => visible(e.id, who)).map((e) => ({
     href: PATHS[e.id],
@@ -158,6 +155,7 @@ export function navItems(who: Who): NavItem[] {
     icon: <e.icon aria-hidden="true" className="size-5 shrink-0" />,
     ...(who.locks?.[e.id] ? { note: who.locks[e.id] } : {}),
     ...(e.group ? { group: e.group } : {}),
+    ...(START_MODES[e.id] ?? {}),
   }));
 }
 
