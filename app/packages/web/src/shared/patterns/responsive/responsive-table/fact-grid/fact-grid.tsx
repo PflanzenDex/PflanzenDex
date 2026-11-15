@@ -41,13 +41,15 @@ export function FactGrid({ facts, next, className }: FactGridProps) {
     <div className={cn("@container grid min-w-0 gap-2 text-sm", className)}>
       {known.length > 0 ? (
         // The value column may shrink below its longest word, so a long value wraps and never runs past the panel (issue 1019).
+        // `anywhere` on the list lowers the min-content of the `auto` label column (issue 1019). The value itself breaks only
+        // inside a word longer than the column (`break-word` on the cell, F-0228, US-QS-32).
         // In a box narrower than 12 rem (a container query in rem, so it follows the text size) each label stands above its
         // value: at 200 % text the label column alone takes the room of the value, which then ran past the box (US-QS-15, issue 1180).
-        <dl className="m-0 grid grid-cols-1 gap-x-3 gap-y-2 [overflow-wrap:break-word] @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
+        <dl className="m-0 grid grid-cols-1 gap-x-3 gap-y-2 [overflow-wrap:anywhere] @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
           {known.map((f, index) => (
             <div key={`${index}-${f.label}`} className="contents">
               <dt className="font-semibold">{f.label}</dt>
-              <dd className="m-0">{f.value}</dd>
+              <dd className="m-0 [overflow-wrap:break-word]">{f.value}</dd>
             </div>
           ))}
         </dl>

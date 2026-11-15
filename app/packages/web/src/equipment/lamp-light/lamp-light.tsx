@@ -38,7 +38,11 @@ function Values({ lamp }: { lamp: LampLight }) {
       <dt>Herstellerangabe</dt>
       <dd className="m-0">{lamp.manufacturerLux === null ? UNKNOWN : lux(lamp.manufacturerLux)}</dd>
       <dt>Leistung</dt>
-      <dd className="m-0">{lamp.powerW === null ? UNKNOWN : `${lamp.powerW}\u00a0W`}</dd>
+      <dd className="m-0">
+        {lamp.powerW === null
+          ? UNKNOWN
+          : `${lamp.powerW.toLocaleString("de-DE", { maximumFractionDigits: 1 })}\u00a0W`}
+      </dd>
       <dt>Gemessen</dt>
       <dd className="m-0">
         {last
@@ -85,7 +89,10 @@ function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightAction
         <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
           <span className="break-words font-semibold">{lamp.name}</span>
           <span className="text-sm text-muted-foreground">
-            {lamp.powerW === null ? UNKNOWN : `${lamp.powerW}\u00a0W`} · {where}
+            {lamp.powerW === null
+              ? UNKNOWN
+              : `${lamp.powerW.toLocaleString("de-DE", { maximumFractionDigits: 1 })}\u00a0W`}{" "}
+            · {where}
           </span>
         </span>
       </DisclosureSummary>

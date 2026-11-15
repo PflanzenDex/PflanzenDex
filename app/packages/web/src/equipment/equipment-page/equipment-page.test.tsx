@@ -785,6 +785,14 @@ describe("US-QS-32 zone names and a missing zone in equipment", () => {
     expect(facts.parentElement?.className.split(" ")).toContain("@container");
   });
 
+  it("US-QS-32 a lamp's watts group the thousands the German way: 1.500 W, with no break before the unit", async () => {
+    fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf({ powerW: 1500 })] });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const card = (await screen.findByText("Lampe Regal")).closest("details") as HTMLElement;
+    expect(card.textContent).toContain("1.500\u00a0W");
+    expect(card.textContent).not.toContain("1500");
+  });
+
   it("US-QS-32 the lamp sheet reads '15 W · Zone 1 (Stecklingslicht)' with no break in the power, and 'Lichtzone fehlt' without a zone", async () => {
     fakeServer(
       [],

@@ -36,6 +36,12 @@ describe("US-QS-32 category tiles of Heute: the count agrees with the label", ()
     expect(tiles.getByRole("button", { name: /Behandlungen$/ })).toBeTruthy();
   });
 
+  it("US-QS-32 a failed load never reads 'Behandlung' beside 'nicht geladen', even with a stored count of one", () => {
+    const tiles = renderTiles({ status: "error", count: 1 });
+    expect(tiles.getByRole("button", { name: "nicht geladen Behandlungen" })).toBeTruthy();
+    expect(tiles.queryByRole("button", { name: /Behandlung$/ })).toBeNull();
+  });
+
   it("US-QS-32 Gießen and Fehlt noch need no plural: the label stays as it is at any count", () => {
     const tiles = renderTiles(ready(1));
     expect(tiles.getByRole("button", { name: "0 Gießen" })).toBeTruthy();

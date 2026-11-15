@@ -5,12 +5,12 @@ import { WateringList } from "@/monitoring";
 import { TodayPage, type TodayDestination } from "@/today";
 import type { LinkTarget } from "@/shared/patterns/navigation/navigation/navigation";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { NBSP } from "@/shared/lib/format";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import type { TodayTile } from "../today-area";
 import table from "../today-area.de.json";
 import { Tiles, type CategoryCount } from "./tiles/tiles";
 
-const NBSP = " ";
 const t = texts(table);
 const plural = plurals(table);
 

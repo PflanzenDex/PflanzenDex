@@ -7,7 +7,8 @@ export type TextTable = Readonly<Record<string, string>>;
 export type TextValues = Readonly<Record<string, string | number>>;
 
 const PLACEHOLDER = /\{(\w+)\}/g;
-const NBSP = "\u00a0";
+/** The no-break space of counts and units (SG-TYPE-07); format.ts re-exports it. */
+export const NBSP = "\u00a0";
 
 function fill(key: string, text: string, values: TextValues): string {
   return text.replace(PLACEHOLDER, (_, name: string) => {

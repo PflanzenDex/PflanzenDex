@@ -34,10 +34,13 @@ describe("US-QS-24 FactGrid", () => {
       <FactGrid facts={[{ label: "Modell", value: "Hersteller-Modell-X" }]} />,
     );
     const dl = container.querySelector("dl") as HTMLElement;
-    const classes = dl.className.split(" ");
-    expect(classes).toContain("[overflow-wrap:break-word]");
-    expect(classes).not.toContain("[overflow-wrap:anywhere]");
-    expect(classes).toContain("grid-cols-1");
+    // The list keeps `anywhere` (it lowers the min-content of the auto label column, issue 1019); the value cell breaks
+    // only inside a word longer than the column.
+    expect(dl.className.split(" ")).toContain("[overflow-wrap:anywhere]");
+    expect(dl.className.split(" ")).toContain("grid-cols-1");
+    const value = dl.querySelector("dd") as HTMLElement;
+    expect(value.className.split(" ")).toContain("[overflow-wrap:break-word]");
+    expect(value.className).not.toContain("break-all");
     expect(dl.className).not.toContain("break-all");
   });
 

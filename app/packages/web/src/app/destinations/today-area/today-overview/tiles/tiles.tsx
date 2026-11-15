@@ -7,6 +7,10 @@ import type { DrawTile, TodayTile } from "../../today-area";
 const t = texts(todayTexts);
 const plural = plurals(todayTexts);
 
+/** The count that picks the form of the treatments label: only a loaded count counts; while it loads or failed the plural stands (US-QS-32). */
+const treatmentsCount = (category: CategoryCount): number | undefined =>
+  category.status === "ready" ? category.count : undefined;
+
 /** What a category tile and the summary need of one list (US-QS-18). */
 export type CategoryCount = {
   status: "pending" | "ready" | "error";
@@ -64,7 +68,7 @@ export function Tiles(props: {
       {!props.treatmentFirst && (
         <CategoryTile
           id="treatments"
-          label={plural.word("tiles.treatments", props.treatments.count)}
+          label={plural.word("tiles.treatments", treatmentsCount(props.treatments))}
           category={props.treatments}
         />
       )}

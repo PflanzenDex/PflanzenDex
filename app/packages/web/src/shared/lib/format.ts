@@ -1,4 +1,7 @@
 import { daysBetween } from "@pflanzendex/core";
+import { NBSP } from "./text-rules/texts";
+
+export { NBSP };
 
 /** P-08: what is missing is called "unknown" and is never filled with a value. */
 export const UNKNOWN = "unbekannt";
@@ -8,8 +11,6 @@ export function dateText(iso: string): string {
   const [jahr, month, tag] = iso.split("-");
   return `${tag}.${month}.${jahr}`;
 }
-
-const NBSP = "\u00a0";
 
 /** Up to this many days back or ahead a date reads relative in a summary line (SG-FMT-01). */
 const RELATIVE_DAYS = 7;
