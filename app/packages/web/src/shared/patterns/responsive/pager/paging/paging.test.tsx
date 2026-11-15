@@ -32,6 +32,61 @@ function Paged(props: { loaded: number; failure?: string; plain?: boolean }) {
   );
 }
 
+/**
+ * The checks of one case of `position` for the sweep below: the first entry is in range, and Weiter and Zurück step one
+ * page at a time (issue 2136). Returns the mismatches as text; none when every check held.
+ */
+function sweepMismatches(size: number, count: number, from: number): string[] {
+  const where = `size ${size} count ${count} from ${from}`;
+  const start = position({ from, size, count });
+  const inRange = count === 0 ? start.first === 0 : start.first >= 0 && start.first < count;
+  return [
+    ...(inRange ? [] : [`${where}: first ${start.first} out of range`]),
+    ...weiterMismatches(where, start, size, count),
+    ...zurueckMismatches(where, start, size, count),
+  ];
+}
+
+/** Weiter is enabled exactly while the page is not the last one: the entries after it still exist. */
+function weiterMismatches(
+  where: string,
+  start: ReturnType<typeof position>,
+  size: number,
+  count: number,
+): string[] {
+  let at = start.first;
+  let page = start.page;
+  while (page < start.pages) {
+    const target = at + size;
+    if (!(target < count)) return [`Weiter ${where}: no entry after page ${page}`];
+    const next = position({ from: target, size, count });
+    if (next.first !== target || next.page !== page + 1 || next.pages !== start.pages) {
+      return [`Weiter ${where}: page ${page} to ${next.page} at ${next.first}, expected ${target}`];
+    }
+    at = next.first;
+    page = next.page;
+  }
+  return page === start.pages ? [] : [`Weiter ${where}: ends on page ${page}`];
+}
+
+/** Zurück goes back one page each time and ends at the first entry on page 1. */
+function zurueckMismatches(
+  where: string,
+  start: ReturnType<typeof position>,
+  size: number,
+  count: number,
+): string[] {
+  let at = start.first;
+  let page = start.page;
+  while (page > 1) {
+    const next = position({ from: Math.max(0, at - size), size, count });
+    if (next.page !== page - 1) return [`Zurück ${where}: page ${page} to ${next.page}`];
+    at = next.first;
+    page = next.page;
+  }
+  return at === 0 ? [] : [`Zurück ${where}: ends at ${at}`];
+}
+
 describe("FR-BES-23 the focus after a retry of a further page (issue 1304)", () => {
   it("FR-BES-23 a retry that worked moves the focus to the first plant of the page, not to nowhere", async () => {
     const view = render(<Paged loaded={3} failure="Fehlgeschlagen." />);
@@ -96,41 +151,21 @@ describe("FR-BES-23 position of a paged list (issue 1492)", () => {
   });
 
   it("FR-BES-23 for sizes 1 to 12, counts 0 to 40 and entries 0 to 45, the first entry is in range and Weiter and Zurück step one page", () => {
+    // Every case is checked, but the mismatches are collected as text and asserted once. One matcher call per check
+    // (hundreds of thousands of them) made this test time out under machine load (issue 2136); the checks are the same.
+    const mismatches: string[] = [];
     for (let size = 1; size <= 12; size++) {
       for (let count = 0; count <= 40; count++) {
         for (let from = 0; from <= 45; from++) {
-          const start = position({ from, size, count });
-          const inRange = count === 0 ? start.first === 0 : start.first >= 0 && start.first < count;
-          expect(inRange, `size ${size} count ${count} from ${from}`).toBe(true);
-
-          // Weiter is enabled exactly while the page is not the last one: the entries after it still exist.
-          let at = start.first;
-          let page = start.page;
-          while (page < start.pages) {
-            const target = at + size;
-            expect(target < count, `Weiter size ${size} count ${count} from ${from}`).toBe(true);
-            const next = position({ from: target, size, count });
-            expect(next.first).toBe(target);
-            expect(next.page).toBe(page + 1);
-            expect(next.pages).toBe(start.pages);
-            at = next.first;
-            page = next.page;
-          }
-          expect(page).toBe(start.pages);
-
-          // Zurück from the start goes back one page each time and ends at the first entry on page 1.
-          at = start.first;
-          page = start.page;
-          while (page > 1) {
-            const next = position({ from: Math.max(0, at - size), size, count });
-            expect(next.page).toBe(page - 1);
-            at = next.first;
-            page = next.page;
-          }
-          expect(at).toBe(0);
+          mismatches.push(...sweepMismatches(size, count, from));
         }
       }
     }
+    // The count, and the first mismatches for the message; both are empty exactly when every check held.
+    expect({ mismatches: mismatches.length, first: mismatches.slice(0, 20) }).toEqual({
+      mismatches: 0,
+      first: [],
+    });
   });
 });
 

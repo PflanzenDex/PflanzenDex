@@ -35,12 +35,14 @@ const emptyView = {
   growth: { count: 0, ratePerYear: null, trend: null, signal: null },
 };
 
-// Both pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how
-// long the first import of a chunk takes on a busy machine (#444).
+// The pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how long
+// the first import of a chunk takes on a busy machine (#444). The sheet's code is one of them: a layer's sheet asks for
+// it 1.5 s after it mounts (sheet.tsx), and that first transform in the middle of a test stalled it for seconds (issue 2136).
 beforeAll(async () => {
   await Promise.all([
     import("../../../collection/collection-page/collection-page"),
     import("../../../care/measure/measure-page/measure-page"),
+    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
   ]);
 }, 30_000);
 
