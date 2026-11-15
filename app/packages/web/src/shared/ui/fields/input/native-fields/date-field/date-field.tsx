@@ -62,10 +62,18 @@ function useTypedText(props: Pick<DateProps, "value" | "defaultValue" | "min" | 
   const [left, setLeft] = React.useState(false);
   const shown = value === undefined ? draft : draftFor(draft, String(value));
   const iso = parseDateText(shown);
-  const noDay = shown.trim() !== "" && iso === "";
-  const outOfRange =
-    iso !== "" && Boolean((max && iso > String(max)) || (min && iso < String(min)));
-  return { setDraft, setLeft, shown, iso, left, problem: noDay || outOfRange };
+  return { setDraft, setLeft, shown, iso, left, problem: problemOf(shown, iso, min, max) };
+}
+
+/**
+ * What is wrong with the typed text, as the message the keeper reads (SG-FORM-05: it says how to fix it): a text that is
+ * no real day, a day after `max` (the last day to choose) or before `min` (the first day). `null` when it is fine.
+ */
+function problemOf(shown: string, iso: string, min: DateProps["min"], max: DateProps["max"]) {
+  if (iso === "") return shown.trim() === "" ? null : t("invalid");
+  if (max && iso > String(max)) return t("beforeMax", { date: showDateText(String(max)) });
+  if (min && iso < String(min)) return t("afterMin", { date: showDateText(String(min)) });
+  return null;
 }
 type TypedText = ReturnType<typeof useTypedText>;
 
@@ -111,7 +119,7 @@ const TypedDate = React.forwardRef<HTMLInputElement, DateProps>((props, ref) => 
   const typed = useTypedText({ value: rest.value, defaultValue, min: rest.min, max: rest.max });
   const callerInvalid = Boolean(invalid || rest["aria-invalid"]);
   // A caller's own refusal (its form message) stands alone: the field adds no second message beside it.
-  const message = !callerInvalid && typed.left && typed.problem ? t("invalid") : null;
+  const message = !callerInvalid && typed.left ? typed.problem : null;
   const describedBy =
     [rest["aria-describedby"], message ? messageId : undefined].filter(Boolean).join(" ") ||
     undefined;

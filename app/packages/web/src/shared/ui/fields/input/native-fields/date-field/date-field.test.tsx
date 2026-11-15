@@ -97,7 +97,26 @@ describe("DateField (US-QS-24, US-QS-32, NFR-08)", () => {
     expect(input.getAttribute("aria-invalid")).toBeNull();
     fireEvent.blur(input);
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    expect(screen.getByText(NO_DAY)).toBeTruthy();
+    expect(screen.getByText("Wähle ein Datum bis zum 30.10.2026.")).toBeTruthy();
+  });
+
+  it("US-QS-32 a real day after max says the last day to choose, not that the text is no day (SG-FORM-05)", async () => {
+    render(<DateField aria-label="Tag" max="2026-10-30" onChange={() => {}} />);
+    const input = screen.getByLabelText("Tag");
+    await userEvent.type(input, "01.11.2026");
+    await userEvent.tab();
+    expect(screen.getByRole("alert").textContent).toBe("Wähle ein Datum bis zum 30.10.2026.");
+    expect(screen.queryByText(NO_DAY)).toBeNull();
+  });
+
+  it("US-QS-32 a real day before min says the first day to choose, not that the text is no day (SG-FORM-05)", async () => {
+    render(<DateField aria-label="Tag" min="2026-01-01" onChange={() => {}} />);
+    const input = screen.getByLabelText("Tag");
+    await userEvent.type(input, "31.12.2025");
+    await userEvent.tab();
+    expect(screen.getByRole("alert").textContent).toBe("Wähle ein Datum ab dem 01.01.2026.");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.queryByText(NO_DAY)).toBeNull();
   });
 
   it("US-QS-32 the typed field keeps its German placeholder", () => {
