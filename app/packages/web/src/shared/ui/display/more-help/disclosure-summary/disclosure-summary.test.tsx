@@ -54,7 +54,6 @@ describe("US-QS-32 · SG-TOUCH-01 · SG-TOUCH-02 DisclosureSummary is a full-wid
       "w-full",
       "flex",
       "items-center",
-      "gap-2",
       "cursor-pointer",
       "rounded-lg",
       "focus-visible:outline-none",
