@@ -267,12 +267,16 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry, as in the Back tests above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     // Both Backs land before the form has handled the first one: they are batched into one render (US-QS-15).
     act(() => {
       route.navigate?.(-1);
       route.navigate?.(-1);
     });
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The guard entry commits after the question shows, as in the Verwerfen test above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     expect(document.getElementById("measure-title")).not.toBeNull();
     expect(route.search).toContain("form=measure");
     expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
@@ -288,11 +292,15 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry, as in the Back tests above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     act(() => {
       route.navigate?.(-1);
       route.navigate?.(-1);
     });
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The guard entry commits after the question shows, as in the Verwerfen test above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Weiter bearbeiten" }));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Eingabe verwerfen?" })).toBeNull(),
