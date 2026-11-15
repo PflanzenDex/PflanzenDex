@@ -113,7 +113,9 @@ describe("US-LIC-05 page locations and light zones", () => {
     await userEvent.click(await screen.findByRole("button", { name: REFERENCE }));
     await userEvent.click(screen.getByRole("button", { name: "Regeln" }));
     expect(await screen.findByRole("heading", { name: "Einstufungsregeln" })).toBeTruthy();
-    expect(screen.getByRole("table", { name: "Deine Lichtzonen" })).toBeTruthy();
+    // US-QS-32: the zones are one grouped list, a labelled region with one row per zone.
+    expect(screen.getByRole("region", { name: "Deine Lichtzonen" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Deine Lichtzonen", level: 3 })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
