@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { Label } from "@/shared/ui/display/label/label";
 import { FileField } from "./file-field";
 
 afterEach(cleanup);
@@ -85,5 +86,50 @@ describe("FileField (US-QS-24)", () => {
     render(<FileField id="f" accept=".csv,text/csv" />);
     expect(screen.queryByLabelText("Foto aufnehmen")).toBeNull();
     expect(screen.queryByText("Foto aufnehmen")).toBeNull();
+  });
+});
+
+/** The text of the element an `aria-labelledby` names: the accessible name a control takes from its face (WCAG 2.5.3). */
+const namedBy = (el: Element | null): string | null => {
+  const ids = el?.getAttribute("aria-labelledby")?.split(" ") ?? [];
+  return ids.map((id) => document.getElementById(id)?.textContent ?? "").join(" ") || null;
+};
+
+describe("US-QS-32 the file picker is named by its visible face (WCAG 2.5.3, issue 1981)", () => {
+  it("US-QS-32 the photo input is named by its visible face 'Foto wählen' and the camera input by 'Foto aufnehmen'", () => {
+    const { container } = render(<FileField id="p" accept="image/jpeg,image/png" />);
+    const picker = screen.getByLabelText("Foto wählen");
+    expect(picker).toBe(container.querySelector("input#p"));
+    expect(picker.getAttribute("type")).toBe("file");
+    expect(namedBy(picker)).toBe("Foto wählen");
+    const camera = screen.getByLabelText("Foto aufnehmen");
+    expect(camera.getAttribute("type")).toBe("file");
+    expect(namedBy(camera)).toBe("Foto aufnehmen");
+  });
+
+  it("US-QS-32 a file field for other files is named by its visible face 'Datei wählen'", () => {
+    render(<FileField id="f" accept=".csv,text/csv" />);
+    const input = screen.getByLabelText("Datei wählen");
+    expect(input.getAttribute("id")).toBe("f");
+    expect(namedBy(input)).toBe("Datei wählen");
+  });
+
+  it("US-QS-32 a field given a visible label is a group named by that label, and the input keeps its own name", () => {
+    render(
+      <>
+        <Label id="photo-label">Foto (optional)</Label>
+        <FileField id="p" accept="image/jpeg,image/png" groupLabelledBy="photo-label" />
+      </>,
+    );
+    const group = screen.getByRole("group", { name: "Foto (optional)" });
+    const picker = screen.getByLabelText("Foto wählen");
+    expect(group.contains(picker)).toBe(true);
+    // The group label is not spread onto the input: the input is named by its face only.
+    expect(namedBy(picker)).toBe("Foto wählen");
+  });
+
+  it("US-QS-32 a file field without a group label is no group", () => {
+    render(<FileField id="f" accept=".csv,text/csv" />);
+    expect(screen.queryByRole("group")).toBeNull();
   });
 });
