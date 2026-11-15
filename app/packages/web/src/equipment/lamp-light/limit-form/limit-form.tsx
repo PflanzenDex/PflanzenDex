@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../equipment.de.json";
 import { wholeNumber } from "../parse";
+
+const t = texts(table);
 
 /**
  * The keeper's limit for "Zone prüfen" (US-EQU-03): the share in percent by which the last measurement may deviate from
@@ -15,6 +19,7 @@ export function LimitForm(props: {
 }) {
   const [text, setText] = useState(props.limit?.toString() ?? "");
   const [problem, setProblem] = useState<string | null>(null);
+  const hintId = useId();
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const percent = wholeNumber(text);
@@ -31,9 +36,18 @@ export function LimitForm(props: {
           : `Du wirst gewarnt, wenn die letzte Messung um mehr als ${props.limit} % von der Obergrenze der Zone abweicht.`}
       </p>
       <label className="flex min-w-0 flex-col gap-1 text-sm">
-        Abweichungsgrenze in Prozent (leer = keine Prüfung)
-        <Input inputMode="numeric" value={text} onChange={(e) => setText(e.target.value)} />
+        Abweichungsgrenze (optional)
+        <Input
+          inputMode="numeric"
+          value={text}
+          suffix="%"
+          aria-describedby={hintId}
+          onChange={(e) => setText(e.target.value)}
+        />
       </label>
+      <p id={hintId} className="text-sm text-muted-foreground">
+        {t("limit.emptyHint")}
+      </p>
       {problem ? (
         <p role="alert" className="text-sm text-destructive">
           {problem}

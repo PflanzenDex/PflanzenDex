@@ -63,7 +63,8 @@ export function DerivationForm({ onDerive }: { onDerive: Derive }) {
         <TextField
           control={control}
           name="lightDemandLux"
-          label="Lichtbedarf der Art (Lux)"
+          label="Lichtbedarf der Art"
+          suffix="lx"
           type="number"
           inputMode="numeric"
           min={LUX_LIMITS[0]}

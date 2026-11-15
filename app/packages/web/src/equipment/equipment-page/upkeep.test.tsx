@@ -95,7 +95,7 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
     await user.click(await screen.findByRole("button", { name: "Jetzt geprüft: Timer A" }));
     expect((await lastPost(fetchFn)).path).toBe("/equipment/t1/checked");
     const form = screen.getByRole("form", { name: "Betriebsdaten für Timer A" });
-    await user.type(within(form).getByLabelText("Prüfintervall in Tagen (optional)"), "30");
+    await user.type(within(form).getByRole("textbox", { name: "Prüfintervall (optional)" }), "30");
     await user.click(within(form).getByRole("button", { name: "Betriebsdaten speichern" }));
     expect(await lastPost(fetchFn)).toMatchObject({
       path: "/equipment/t1/maintenance",

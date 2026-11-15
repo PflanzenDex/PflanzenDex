@@ -63,6 +63,8 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   inset: [{ inset: scaleInset() }],
   "inset-x": [{ "inset-x": scaleInset() }],
   "inset-y": [{ "inset-y": scaleInset() }],
+  // Logical inset at the end of a field: the unit of Input sits there (US-QS-32).
+  end: [{ "inset-e": scaleInset(), end: scaleInset() }],
   top: [{ top: scaleInset() }],
   right: [{ right: scaleInset() }],
   bottom: [{ bottom: scaleInset() }],
@@ -105,6 +107,8 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   pb: [{ pb: scaleUnambiguousSpacing() }],
   pr: [{ pr: scaleUnambiguousSpacing() }],
   pl: [{ pl: scaleUnambiguousSpacing() }],
+  ps: [{ ps: scaleUnambiguousSpacing() }],
+  pe: [{ pe: scaleUnambiguousSpacing() }],
   m: [{ m: scaleMargin() }],
   mx: [{ mx: scaleMargin() }],
   my: [{ my: scaleMargin() }],

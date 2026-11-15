@@ -51,6 +51,16 @@ export const Invalid: Story = {
   ),
 };
 
+// A unit inside the field at its right edge (SG-FORM-01): the label stays the bare text, the unit is read as the description.
+export const Suffix: Story = {
+  render: () => (
+    <div className="flex flex-col gap-2 p-4">
+      <Label htmlFor="i-suffix">Obergrenze</Label>
+      <Input id="i-suffix" inputMode="numeric" defaultValue="12000" suffix="lx" />
+    </div>
+  ),
+};
+
 export const Types: Story = {
   render: () => (
     <div className="flex flex-col gap-4 p-4">

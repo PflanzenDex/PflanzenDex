@@ -17,36 +17,41 @@ const plants = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
 type FieldProps = { control: Control<WishFields> };
 
-export function NameFields({ control }: FieldProps) {
+/** The required name: it stays in the visible part of the form, never behind "Mehr Angaben" (SG-FORM-04). */
+export function NameField({ control }: FieldProps) {
   return (
-    <>
-      <FormField
-        control={control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Name</FormLabel>
-            <FormControl>
-              <Input {...field} autoComplete="off" maxLength={WISH_LIMITS.name.max} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name="german"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Deutscher Name (optional)</FormLabel>
-            <FormControl>
-              <Input {...field} autoComplete="off" maxLength={WISH_LIMITS.german.max} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </>
+    <FormField
+      control={control}
+      name="name"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Name</FormLabel>
+          <FormControl>
+            <Input {...field} autoComplete="off" maxLength={WISH_LIMITS.name.max} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/** The German name, optional, behind "Mehr Angaben" (SG-FORM-01). */
+export function GermanNameField({ control }: FieldProps) {
+  return (
+    <FormField
+      control={control}
+      name="german"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel optional>Deutscher Name</FormLabel>
+          <FormControl>
+            <Input {...field} autoComplete="off" maxLength={WISH_LIMITS.german.max} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }
 
@@ -58,7 +63,7 @@ export function ChoiceFields({ control, zones }: FieldProps & { zones: readonly 
         name="targetZoneId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Ziel-Lichtzone</FormLabel>
+            <FormLabel optional>Ziel-Lichtzone</FormLabel>
             <FormControl>
               <Select {...field}>
                 <option value="">unbekannt</option>
@@ -78,7 +83,7 @@ export function ChoiceFields({ control, zones }: FieldProps & { zones: readonly 
         name="difficulty"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Schwierigkeit</FormLabel>
+            <FormLabel optional>Schwierigkeit</FormLabel>
             <FormControl>
               <Select {...field}>
                 <option value="">unbekannt</option>
@@ -96,7 +101,7 @@ export function ChoiceFields({ control, zones }: FieldProps & { zones: readonly 
         name="reasoning"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Begründung (optional)</FormLabel>
+            <FormLabel optional>Begründung</FormLabel>
             <FormControl>
               <Textarea {...field} rows={3} maxLength={WISH_LIMITS.reasoning.max} />
             </FormControl>
@@ -108,6 +113,7 @@ export function ChoiceFields({ control, zones }: FieldProps & { zones: readonly 
   );
 }
 
+/** The picture address and its source: both optional as a pair; the https rule is named in the error text only (SG-FORM-01). */
 export function ImageFields({ control }: FieldProps) {
   return (
     <>
@@ -116,7 +122,7 @@ export function ImageFields({ control }: FieldProps) {
         name="imageUrl"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Bild-Adresse (https)</FormLabel>
+            <FormLabel optional>Bild-Adresse</FormLabel>
             <FormControl>
               <Input
                 {...field}
@@ -139,7 +145,7 @@ export function ImageFields({ control }: FieldProps) {
         name="imageSource"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Bildquelle</FormLabel>
+            <FormLabel optional>Bildquelle</FormLabel>
             <FormControl>
               <Input {...field} autoComplete="off" maxLength={WISH_LIMITS.imageSource.max} />
             </FormControl>

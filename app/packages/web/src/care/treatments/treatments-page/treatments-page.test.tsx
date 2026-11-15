@@ -155,7 +155,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     await user.type(screen.getByLabelText("Datum"), "2026-10-10");
     await user.click(screen.getByRole("checkbox", { name: "Kur planen (mehrere Termine)" }));
     expect((screen.getByLabelText("Anzahl der Termine") as HTMLInputElement).value).toBe("3");
-    expect((screen.getByLabelText("Abstand in Tagen") as HTMLInputElement).value).toBe("7");
+    expect((screen.getByLabelText("Abstand") as HTMLInputElement).value).toBe("7");
     await user.click(screen.getByRole("button", { name: "Kur planen" }));
     expect((await screen.findByRole("status")).textContent).toContain("3 Termine");
     expect(posts[0]?.body).toMatchObject({ count: 3, intervalDays: 7 });

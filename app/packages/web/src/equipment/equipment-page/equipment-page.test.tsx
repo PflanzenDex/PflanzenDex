@@ -254,7 +254,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Art"), "Timer");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
-    await user.type(screen.getByLabelText("Preis in Euro (optional)"), "49,90");
+    await user.type(screen.getByLabelText("Preis (optional)"), "49,90");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
     // The layer closes, the outcome stands on the screen and the tile counts the new record (US-QS-22).
     expect(await screen.findByText(/Gerät „Neue Lampe“ gespeichert/)).toBeTruthy();
@@ -357,7 +357,7 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("Lux-Messung");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
-    await user.type(within(form).getByLabelText("Lux"), "12000");
+    await user.type(within(form).getByRole("textbox", { name: "Lichtstärke" }), "12000");
     await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
     const post = await vi.waitFor(() => {
       const call = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -374,7 +374,7 @@ describe("US-EQU-01 equipment page", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
-    await user.type(within(form).getByLabelText(/Abweichungsgrenze in Prozent/), "150");
+    await user.type(within(form).getByLabelText(/^Abweichungsgrenze \(optional\)/), "150");
     await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("1 bis 100");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
@@ -409,12 +409,12 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByText("Herstellerangabe ändern"));
     const form = screen.getByRole("form", { name: "Herstellerangabe für Lampe Regal" });
-    await user.type(within(form).getByLabelText(/Leistung in Watt/), "abc");
+    await user.type(within(form).getByLabelText(/^Leistung \(optional\)/), "abc");
     await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("ganze Zahlen");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
-    await user.clear(within(form).getByLabelText(/Leistung in Watt/));
-    await user.type(within(form).getByLabelText(/Leistung in Watt/), "40");
+    await user.clear(within(form).getByLabelText(/^Leistung \(optional\)/));
+    await user.type(within(form).getByLabelText(/^Leistung \(optional\)/), "40");
     await user.type(within(form).getByLabelText(/Lichtstärke laut Hersteller/), "20000");
     await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
     const post = await postsTo(fetchFn);
@@ -430,7 +430,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
     expect(form.textContent).toContain("mehr als 25 %");
-    await user.clear(within(form).getByLabelText(/Abweichungsgrenze in Prozent/));
+    await user.clear(within(form).getByLabelText(/^Abweichungsgrenze \(optional\)/));
     await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
     const post = await postsTo(fetchFn);
     expect(String(post[0])).toContain("/equipment/lamps/limit");
@@ -463,8 +463,8 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(await screen.findByText("Alle Messungen (2)"));
     expect(screen.getByText("2026-10-01: 12.000 lx")).toBeTruthy();
     const form = screen.getByRole("form", { name: "Messung für Lampe Regal" });
-    await user.type(within(form).getByLabelText("Lux"), "500");
-    await user.type(within(form).getByLabelText(/Abstand in cm/), "x");
+    await user.type(within(form).getByRole("textbox", { name: "Lichtstärke" }), "500");
+    await user.type(within(form).getByLabelText(/^Abstand \(optional\)/), "x");
     await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("Abstand");
   });
@@ -542,7 +542,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByLabelText("Art")).toBeTruthy();
     // The optional fields sit behind "Mehr Angaben" (US-QS-22).
     const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLElement;
-    expect(more.contains(within(layer).getByLabelText("Preis in Euro (optional)"))).toBe(true);
+    expect(more.contains(within(layer).getByLabelText("Preis (optional)"))).toBe(true);
     expect(more.contains(within(layer).getByLabelText("Name"))).toBe(false);
     // The save button stays in view while the form scrolls inside the layer.
     const save = within(layer).getByRole("button", { name: "Gerät speichern" });

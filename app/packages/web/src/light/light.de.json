@@ -24,7 +24,7 @@
   "reference.parts": "Teil der Lichtangaben",
   "reference.overview": "Lichtbedarf",
   "reference.rules": "Regeln",
-  "reference.derive": "Zone ermitteln",
+  "reference.derive": "Rechner",
   "reference.loadFailed": "Lichtbedarf konnte nicht geladen werden",
   "reference.retry": "Erneut versuchen",
   "derive.title": "Zone einer Art ermitteln",
