@@ -64,6 +64,17 @@ describe("US-QS-24 one word per concept", () => {
 /** SG-COPY-01: a title is one sentence without a full stop; a full stop at its end or before a next sentence fails. */
 const SENTENCE_END = /\.\s*$|\.\s+[\p{Lu}\p{Nd}{]/u;
 
+/** Abbreviations whose full stop is no sentence end ("z. B.", "u. a.", "Nr. 3", "bzw.", "ca."). Listed, not guessed: a rule for
+ * any short word would hide real endings such as "Heute steht nichts an." */
+const ABBREVIATION =
+  /\b(?:z\. ?B|u\. ?a|d\. ?h|z\. ?T|bzw|ca|usw|etc|vgl|inkl|evtl|ggf|Nr|Std|Min|Abs|Dr|Mio|Mrd|Tel)\./g;
+
+/** The text ends a sentence inside a title (SG-COPY-01): an abbreviation's full stop does not count. */
+const isSentenceEnd = (text: string) => SENTENCE_END.test(text.replace(ABBREVIATION, "abk"));
+
+/** A property value that is only a type name ("string", "string | undefined"): no literal can be in it. */
+const TYPE_ONLY = /^[\w.<>[\]|\s]+$/;
+
 /** The index just past the quoted string or template that starts at `i`. */
 function stringEnd(src: string, i: number): number {
   const quote = src.charAt(i);
@@ -96,7 +107,7 @@ function valueEnd(src: string, i: number): number {
     else if (")]}".includes(c)) {
       if (depth === 0) return j;
       depth--;
-    } else if (c === "," && depth === 0) return j;
+    } else if ((c === "," || c === ";") && depth === 0) return j;
   }
   return src.length;
 }
@@ -132,16 +143,18 @@ function titleHits(src: string): { line: number; text: string }[] {
   for (const m of src.matchAll(/\bconst\s+(\w+)\s*=\s*"([^"\n]*)"/g))
     constants.set(m[1] ?? "", m[2] ?? "");
   const hits: { line: number; text: string }[] = [];
-  for (const m of src.matchAll(/(?:^|[\s{,(])title\s*(?:=(?!=)|:)\s*/gm)) {
+  for (const m of src.matchAll(/(?:^|[\s{,(])title\??\s*(?:=(?!=)|:)\s*/gm)) {
     const at = (m.index ?? 0) + m[0].length;
     const sep = m[0].trimEnd().slice(-1);
     let expr: string;
     if (sep === "=" && src.charAt(at) === '"') expr = src.slice(at, stringEnd(src, at));
     else if (sep === "=" && src.charAt(at) === "{") expr = src.slice(at + 1, valueEnd(src, at + 1));
-    else if (sep === ":") expr = src.slice(at, valueEnd(src, at));
-    else continue;
+    else if (sep === ":") {
+      expr = src.slice(at, valueEnd(src, at));
+      if (TYPE_ONLY.test(expr.trim()) && !constants.has(expr.trim())) continue;
+    } else continue;
     for (const text of literalsIn(expr, constants))
-      if (SENTENCE_END.test(text.trim()))
+      if (isSentenceEnd(text.trim()))
         hits.push({ line: src.slice(0, at).split("\n").length, text });
   }
   return hits;
@@ -163,12 +176,22 @@ describe("US-QS-32 copy rules (SG-COPY-01, SG-COPY-04)", () => {
     expect(titleHits(sample).map((h) => h.text)).toEqual(["Schlecht.", "Eins. {} zwei", "Ende."]);
   });
 
+  it("US-QS-32 SG-COPY-01 the title scan reads a constant on the next line, skips type annotations and keeps abbreviations apart", () => {
+    const wrapped = 'const N =\n  "Ende.";\nconst q = <X title={N} />;';
+    expect(titleHits(wrapped).map((h) => h.text)).toEqual(["Ende."]);
+    const types = "interface P { title: string; title?: string | undefined; }";
+    expect(titleHits(types)).toEqual([]);
+    const abbreviations =
+      'const a = <X title="Teil z. B. 3 und Nr. 4" />;\nconst b = <X title="Heute steht nichts an." />;';
+    expect(titleHits(abbreviations).map((h) => h.text)).toEqual(["Heute steht nichts an."]);
+  });
+
   it("US-QS-32 SG-COPY-01 a title has no full stop and holds one sentence, in a message table or a title prop", () => {
     const hits: string[] = [];
     for (const file of sources.filter((f) => f.endsWith(".de.json"))) {
       const table = JSON.parse(readFileSync(join(root, file), "utf8")) as Record<string, string>;
       for (const [key, text] of Object.entries(table))
-        if (/title$/i.test(key) && SENTENCE_END.test(text)) hits.push(`${file} ${key}`);
+        if (/title$/i.test(key) && isSentenceEnd(text)) hits.push(`${file} ${key}`);
     }
     for (const file of sources.filter((f) => f.endsWith(".tsx") || f.endsWith(".ts")))
       for (const hit of titleHits(readFileSync(join(root, file), "utf8")))

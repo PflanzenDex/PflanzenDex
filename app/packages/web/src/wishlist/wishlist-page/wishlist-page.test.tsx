@@ -236,6 +236,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await screen.findByRole("heading", { name: "Keine offenen Kandidaten" });
     expect(screen.getByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
+    expect(screen.queryByText("Keine offenen Kandidaten in der Wunschliste.")).toBeNull();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 
