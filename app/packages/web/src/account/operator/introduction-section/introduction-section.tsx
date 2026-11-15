@@ -1,45 +1,113 @@
 import type { IntroductionFigure, IntroductionFigures } from "@pflanzendex/core";
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
+import { Check, X } from "lucide-react";
 import { LoadFrame } from "../../../shared/data";
 import { loadIntroduction } from "../../api/access-api";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { keepTogether } from "@/shared/lib/format";
+import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
+import { keepTogether, withUnit } from "@/shared/lib/format";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./introduction-section.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
-/** A figure with its target as plain text; an unknown one says why (P-08), the target stays visible. */
-function figureText(f: IntroductionFigure, unit: (n: number) => string, target: string): string {
-  if (!f.known) return `unbekannt (zu wenige Konten) · Ziel: ${target}`;
-  return `${unit(f.value)} · Ziel: ${target} · ${f.targetMet ? "erreicht" : "nicht erreicht"}`;
+/** A duration: seconds below a minute, minutes and seconds from 60 s on: "6 min 19 s" for 379 s (US-QS-32). */
+function duration(seconds: number): string {
+  if (seconds < 60) return withUnit(seconds, t("unit.second"));
+  const minutes = withUnit(Math.floor(seconds / 60), t("unit.minute"));
+  const rest = seconds % 60;
+  return rest === 0 ? minutes : `${minutes} ${withUnit(rest, t("unit.second"))}`;
 }
 
-const seconds = (n: number) => `${n} Sekunden`;
-const percent = (n: number) => `${n} Prozent`;
+/** The verdict as a mark and words, so it is not carried by colour alone (SG-COLOR-05). */
+function Verdict(props: { met: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {props.met ? (
+        <Check aria-hidden="true" className="size-4 shrink-0" />
+      ) : (
+        <X aria-hidden="true" className="size-4 shrink-0" />
+      )}
+      {t(props.met ? "figure.met" : "figure.notMet")}
+    </span>
+  );
+}
+
+/** The target and the verdict of a figure: "Ziel: höchstens 90 s · erreicht"; an unknown figure keeps its target (P-08). */
+function targetLine(target: string, met: boolean | null): ReactNode {
+  const goal = t("figure.target", { target });
+  if (met === null) return goal;
+  return (
+    <>
+      {goal}
+      {" · "}
+      <Verdict met={met} />
+    </>
+  );
+}
+
+/**
+ * One figure as a row: its name, its one emphasised value (or "unbekannt (zu wenige Konten)" while too few accounts
+ * exist), and its target with the verdict in the meta line.
+ */
+function Figure(props: {
+  title: string;
+  figure: IntroductionFigure;
+  format: (n: number) => string;
+  target: string;
+}) {
+  const { figure } = props;
+  return (
+    <GroupedRow
+      title={props.title}
+      trailing={
+        <span className="font-semibold tabular-nums">
+          {figure.known ? props.format(figure.value) : t("figure.unknown")}
+        </span>
+      }
+      meta={targetLine(props.target, figure.known ? figure.targetMet : null)}
+    />
+  );
+}
 
 function Figures(props: { figures: IntroductionFigures }) {
   const f = props.figures;
+  const secondsTarget = t("target.limit", { value: withUnit(90, t("unit.second")) });
+  const percentTarget = t("target.limit", { value: withUnit(25, t("unit.percent")) });
   return (
     <>
-      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 @lg:grid-cols-[auto_1fr]">
-        <dt className="text-sm text-muted-foreground sm:text-base">
-          Mediane Zeit bis zur ersten Pflanze
-        </dt>
-        <dd className="m-0 mb-2 font-semibold @lg:mb-0">
-          {figureText(f.medianSecondsToFirstPlant, seconds, "höchstens 90 Sekunden")}
-        </dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">
-          {`Konten ohne Pflanze nach ${f.settleDays} Tagen`}
-        </dt>
-        <dd className="m-0 mb-2 font-semibold @lg:mb-0">
-          {figureText(f.withoutPlantPercent, percent, "höchstens 25 Prozent")}
-        </dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">
-          Schritte bis zur ersten Pflanze
-        </dt>
-        <dd className="m-0 font-semibold">
-          {`${f.steps.value} · Ziel: höchstens 3 · ${f.steps.targetMet ? "erreicht" : "nicht erreicht"}`}
-        </dd>
-      </dl>
+      <GroupedList>
+        <Figure
+          title="Mediane Zeit bis zur ersten Pflanze"
+          figure={f.medianSecondsToFirstPlant}
+          format={duration}
+          target={secondsTarget}
+        />
+        <Figure
+          title={`Konten ohne Pflanze nach ${f.settleDays} Tagen`}
+          figure={f.withoutPlantPercent}
+          format={(n) => withUnit(n, t("unit.percent"))}
+          target={percentTarget}
+        />
+        <GroupedRow
+          title="Schritte bis zur ersten Pflanze"
+          trailing={<span className="font-semibold tabular-nums">{f.steps.value}</span>}
+          // The steps keep their line as it was ("Ziel: höchstens 3 · erreicht"): this file holds its literal
+          // count in the ui-text ratchet (FR-QG-26) until its texts move to the table.
+          meta={
+            <span className="inline-flex items-center gap-1">
+              {f.steps.targetMet ? (
+                <Check aria-hidden="true" className="size-4 shrink-0" />
+              ) : (
+                <X aria-hidden="true" className="size-4 shrink-0" />
+              )}
+              {`Ziel: höchstens 3 · ${t(f.steps.targetMet ? "figure.met" : "figure.notMet")}`}
+            </span>
+          }
+        />
+      </GroupedList>
       <MoreHelp
         className="mt-3"
         more={keepTogether(

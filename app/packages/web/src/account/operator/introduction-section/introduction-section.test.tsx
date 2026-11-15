@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { IntroductionSection } from "./introduction-section";
 
@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 describe("US-ONB-08 figures of the introduction in the operator area", () => {
-  it("US-ONB-08 shows the figures against the targets as text, with what is counted and that nobody is tracked", async () => {
+  it("US-QS-32 one row per figure: the name, the value emphasised, and the target with the verdict in words", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async () =>
@@ -31,14 +31,56 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
       ),
     );
     render(<IntroductionSection api="http://api" token={async () => "tok"} />);
-    expect(
-      await screen.findByText("75 Sekunden · Ziel: höchstens 90 Sekunden · erreicht"),
-    ).toBeTruthy();
-    expect(
-      screen.getByText("40 Prozent · Ziel: höchstens 25 Prozent · nicht erreicht"),
-    ).toBeTruthy();
-    expect(screen.getByText("2 · Ziel: höchstens 3 · erreicht")).toBeTruthy();
+    const median = await screen.findByText("Mediane Zeit bis zur ersten Pflanze");
+    const row = median.closest("li") as HTMLElement;
+    expect(row.textContent).toContain("1\u00a0min 15\u00a0s");
+    expect(within(row).getByText(/Ziel: höchstens 90\s+s/)).toBeTruthy();
+    expect(within(row).getByText("erreicht")).toBeTruthy();
+    const without = screen
+      .getByText("Konten ohne Pflanze nach 7 Tagen")
+      .closest("li") as HTMLElement;
+    expect(within(without).getByText(/^40\s%$/)).toBeTruthy();
+    expect(within(without).getByText("nicht erreicht")).toBeTruthy();
+    expect(within(without).getByText(/Ziel: höchstens 25\s+%/)).toBeTruthy();
     expect(screen.getByText(/kein einzelnes Konto und kein Klick erfasst/)).toBeTruthy();
+  });
+
+  it("US-QS-32 a duration of 60 s or more reads in minutes and seconds: 379 s is '6 min 19 s'", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        json(200, {
+          ...base,
+          medianSecondsToFirstPlant: { known: true, value: 379, targetMet: false },
+          withoutPlantPercent: { known: true, value: 60, targetMet: false },
+        }),
+      ),
+    );
+    render(<IntroductionSection api="http://api" token={async () => "tok"} />);
+    const row = (await screen.findByText("Mediane Zeit bis zur ersten Pflanze")).closest(
+      "li",
+    ) as HTMLElement;
+    expect(row.textContent).toContain("6\u00a0min 19\u00a0s");
+    expect(row.textContent).toContain("nicht erreicht");
+  });
+
+  it("US-QS-32 the steps are a row too: the value 2 and the target with its verdict", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        json(200, {
+          ...base,
+          medianSecondsToFirstPlant: { known: true, value: 75, targetMet: true },
+          withoutPlantPercent: { known: true, value: 40, targetMet: false },
+        }),
+      ),
+    );
+    render(<IntroductionSection api="http://api" token={async () => "tok"} />);
+    const row = (await screen.findByText("Schritte bis zur ersten Pflanze")).closest(
+      "li",
+    ) as HTMLElement;
+    expect(row.textContent).toContain("2");
+    expect(row.textContent).toContain("Ziel: höchstens 3 · erreicht");
   });
 
   it("US-ONB-08 · P-08 too few accounts: the figure is unknown with its reason, the target stays visible", async () => {
@@ -54,9 +96,12 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
       ),
     );
     render(<IntroductionSection api="http://api" token={async () => "tok"} />);
-    expect(
-      await screen.findByText("unbekannt (zu wenige Konten) · Ziel: höchstens 90 Sekunden"),
-    ).toBeTruthy();
+    const row = (await screen.findByText("Mediane Zeit bis zur ersten Pflanze")).closest(
+      "li",
+    ) as HTMLElement;
+    expect(row.textContent).toContain("unbekannt (zu wenige Konten)");
+    expect(row.textContent).toContain("Ziel: höchstens 90 s");
+    expect(row.textContent).not.toContain("erreicht");
     expect(screen.getByText(/\(unbekannt, weniger als/)).toBeTruthy();
   });
 
@@ -72,7 +117,7 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 
-  it("US-QS-15 the figures take one column beside a pane and two from the width of their layer, not the window (issue 1640)", async () => {
+  it("US-QS-15 the figures are rows of one group inside the layer; the layer is a container, not the window (issue 1640)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async () =>
@@ -84,11 +129,10 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
       ),
     );
     render(<IntroductionSection api="http://api" token={async () => "tok"} />);
-    await screen.findByText("75 Sekunden · Ziel: höchstens 90 Sekunden · erreicht");
+    await screen.findByText("Mediane Zeit bis zur ersten Pflanze");
     const region = screen.getByRole("region", { name: "Einstieg" });
-    const list = region.querySelector("dl") as HTMLElement;
     expect(region.className.split(" ")).toContain("@container");
-    expect(list.className.split(" ")).toContain("@lg:grid-cols-[auto_1fr]");
-    expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+    expect(region.querySelectorAll("li")).toHaveLength(3);
+    expect(region.innerHTML.match(/(^|\s)(sm|md|lg|xl):/g)).toBeNull();
   });
 });

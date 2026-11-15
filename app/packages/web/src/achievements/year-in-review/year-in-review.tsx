@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
+import { CountingRules, FACTS } from "./counting-rules";
 import { dateText, valueText } from "@/shared/lib/format";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -14,16 +16,6 @@ import table from "./year-in-review.de.json";
 
 const t = texts(table);
 type Token = () => Promise<string | undefined>;
-
-/** One counted fact per row, with the basis it is counted from (P-08): nothing is rated or compared (FR-ACH-04). */
-const FACTS = [
-  ["speciesCaught", "fact.speciesCaught", "basis.speciesCaught"],
-  ["cuttingsRooted", "fact.cuttingsRooted", "basis.cuttingsRooted"],
-  ["treatmentsCompleted", "fact.treatmentsCompleted", "basis.treatmentsCompleted"],
-  ["measurements", "fact.measurements", "basis.measurements"],
-  ["handovers", "fact.handovers", "basis.handovers"],
-  ["achievementsEarned", "fact.achievementsEarned", "basis.achievementsEarned"],
-] as const;
 
 function Photo(props: { api: string; token: Token; url: string; photo: YearPhoto; label: string }) {
   const state = useStoredPhoto({ api: props.api, token: props.token }, props.url);
@@ -51,25 +43,24 @@ function Facts({ v }: { v: Year }) {
   }
   return (
     <>
-      <ul className="m-0 flex list-none flex-col gap-1 p-0">
-        {FACTS.map(([key, label, basis]) => (
-          <li key={key}>
-            <span className="font-bold tabular-nums">{v.counts[key]}</span> {t(label)}{" "}
-            <span className="text-sm text-muted-foreground">({t(basis)})</span>
-          </li>
+      {/* One row per counted fact: the name leading, the count trailing and emphasised (US-QS-32). */}
+      <GroupedList>
+        {FACTS.map(([key, label]) => (
+          <GroupedRow
+            key={key}
+            title={t(label)}
+            trailing={<span className="font-semibold tabular-nums">{v.counts[key]}</span>}
+          />
         ))}
-      </ul>
+      </GroupedList>
       <p className="m-0">
         {v.growth ? (
-          <>
-            {t("growth", {
-              name: v.growth.name,
-              growth: valueText(v.growth.growth),
-              from: dateText(v.growth.from),
-              until: dateText(v.growth.until),
-            })}{" "}
-            <span className="text-sm text-muted-foreground">{t("growthBasis")}</span>
-          </>
+          t("growth", {
+            name: v.growth.name,
+            growth: valueText(v.growth.growth),
+            from: dateText(v.growth.from),
+            until: dateText(v.growth.until),
+          })
         ) : (
           <>
             {t("growthUnknown")}{" "}
@@ -77,6 +68,7 @@ function Facts({ v }: { v: Year }) {
           </>
         )}
       </p>
+      <CountingRules />
     </>
   );
 }
