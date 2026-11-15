@@ -68,7 +68,7 @@ function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React
     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-2 text-muted-foreground">
       <details className="min-w-0">
         {/* `relative`: the sr-only name list is absolutely positioned; without a positioned box it escapes an inner scroll region and makes the page scroll (US-QS-15, DS-61). */}
-        <DisclosureSummary className="relative inline-flex w-auto rounded-sm tabular-nums focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        <DisclosureSummary className="relative inline-flex w-auto gap-2 rounded-sm tabular-nums focus-visible:ring-offset-2 focus-visible:ring-offset-background">
           <span>{missingText(labels.length)}</span>
           <span className="sr-only"> (Namen anzeigen)</span>
         </DisclosureSummary>

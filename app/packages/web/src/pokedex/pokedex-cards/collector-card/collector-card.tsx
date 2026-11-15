@@ -107,7 +107,7 @@ function Lines(props: { lines: readonly CardLine[] }) {
       {folded.length > 0 ? (
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
           <details className="min-w-0">
-            <DisclosureSummary className="inline-flex w-auto rounded-sm tabular-nums">
+            <DisclosureSummary className="inline-flex w-auto gap-2 rounded-sm tabular-nums">
               {missingText(folded.length)}
             </DisclosureSummary>
             <span className="grid gap-1 pb-1 text-foreground">
