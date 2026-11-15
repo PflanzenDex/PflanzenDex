@@ -33,8 +33,10 @@ export function PotLabelPage(props: { api: string; token: Token }) {
   const { id = "" } = useParams();
   const on = useFeature("pot_labels");
   if (!on) return <Navigate to={plantAddress(id)} replace />;
+  // One screen (DS-61, US-QS-15): the page fits the window and its content scrolls inside it at a larger text size; a
+  // page taller than the window (200 % text, the taller bar) would scroll the whole document instead.
   return (
-    <LayerHost>
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <LabelPlant api={props.api} token={props.token} id={id} />
     </LayerHost>
   );
