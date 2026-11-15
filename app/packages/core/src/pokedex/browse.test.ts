@@ -43,11 +43,11 @@ describe("US-POK-08 search, filter, sort", () => {
   it("US-POK-08 search is case-insensitive over species name, German name, genus and family", () => {
     const find = (query: string) =>
       names(browsePokedex(all, { query, filter: "all", sort: "alphabetical" }).flat);
-    expect(find("FICUS")).toEqual(["Ficus elastica", "Ficus lyrata"]);
+    expect(find("FICUS")).toEqual(["Ficus lyrata", "Ficus elastica"]);
     expect(find("geigen")).toEqual(["Ficus lyrata"]);
     expect(find("citr")).toEqual(["Citrus limon"]);
     expect(find("asphodel")).toEqual(["Aloe vera"]);
-    expect(find("maulbeer")).toEqual(["Ficus elastica", "Ficus lyrata"]);
+    expect(find("maulbeer")).toEqual(["Ficus lyrata", "Ficus elastica"]);
     expect(find("  zitrone ")).toEqual(["Citrus limon"]);
   });
 
@@ -71,10 +71,10 @@ describe("US-POK-08 search, filter, sort", () => {
     expect(names(r.flat)).toEqual(["Aloe vera"]);
   });
 
-  it("US-POK-08 sorted alphabetically by species name", () => {
+  it("US-POK-08 · US-QS-32 sorted alphabetically by the name shown (the German name where there is one)", () => {
     expect(
       names(browsePokedex(all, { query: "", filter: "all", sort: "alphabetical" }).flat),
-    ).toEqual(["Aloe vera", "Citrus limon", "Ficus elastica", "Ficus lyrata"]);
+    ).toEqual(["Aloe vera", "Ficus lyrata", "Ficus elastica", "Citrus limon"]);
   });
 
   it("US-POK-08 sorted by catch date: newest first, without date after", () => {
@@ -93,7 +93,7 @@ describe("US-POK-08 search, filter, sort", () => {
     const r = browsePokedex(all, { query: "", filter: "all", sort: "family" });
     expect(r.groups.map((g) => [g.family, g.caught, g.total, names(g.species)])).toEqual([
       ["Asphodelaceae", 1, null, ["Aloe vera"]],
-      ["Moraceae", 2, null, ["Ficus elastica", "Ficus lyrata"]],
+      ["Moraceae", 2, null, ["Ficus lyrata", "Ficus elastica"]],
       [null, 1, null, ["Citrus limon"]],
     ]);
     expect(r.flat).toEqual([]);
@@ -106,5 +106,31 @@ describe("US-POK-08 search, filter, sort", () => {
   it("US-POK-08 search and filter apply inside groups", () => {
     const r = browsePokedex(all, { query: "ficus", filter: "all", sort: "family" });
     expect(r.groups.map((g) => g.family)).toEqual(["Moraceae"]);
+  });
+});
+
+describe("US-QS-32 the sort follows the name shown (F-0119)", () => {
+  it("US-QS-32 alphabetical order follows the German name where a species has one, else the scientific name", () => {
+    // Shown: Echte Aloe, Geigenfeige, Gummibaum, Zitrone.
+    expect(
+      names(browsePokedex(all, { query: "", filter: "all", sort: "alphabetical" }).flat),
+    ).toEqual(["Aloe vera", "Ficus lyrata", "Ficus elastica", "Citrus limon"]);
+  });
+
+  it("US-QS-32 a missing or empty German name, or one equal to the scientific name, sorts by the scientific name", () => {
+    const bellis = card("Bellis perennis", { germanName: null });
+    const carica = card("Ficus carica", { germanName: "Ficus carica" });
+    const empty = card("Carex brizoides", { germanName: "" });
+    const list = [citrus, carica, bellis, empty];
+    expect(
+      names(browsePokedex(list, { query: "", filter: "all", sort: "alphabetical" }).flat),
+    ).toEqual(["Bellis perennis", "Carex brizoides", "Ficus carica", "Citrus limon"]);
+  });
+
+  it("US-QS-32 the species of a family are listed in the order of the name shown", () => {
+    const moraceae = browsePokedex(all, { query: "", filter: "all", sort: "family" }).groups.find(
+      (g) => g.family === "Moraceae",
+    );
+    expect(names(moraceae?.species ?? [])).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 });

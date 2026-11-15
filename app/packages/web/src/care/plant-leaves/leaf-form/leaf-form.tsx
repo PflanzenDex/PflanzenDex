@@ -24,13 +24,13 @@ function Fields(props: { control: Control<LeafFields>; today: string }) {
       <Field control={props.control} name="date" label={t("form.date")}>
         {(field) => <DateField {...field} max={props.today} />}
       </Field>
-      <Field control={props.control} name="length" label={t("form.length")}>
+      <Field control={props.control} name="length" label={t("form.length")} optional suffix="mm">
         {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
       </Field>
-      <Field control={props.control} name="width" label={t("form.width")}>
+      <Field control={props.control} name="width" label={t("form.width")} optional suffix="mm">
         {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
       </Field>
-      <Field control={props.control} name="note" label={t("form.note")}>
+      <Field control={props.control} name="note" label={t("form.note")} optional>
         {(field) => <Textarea {...field} rows={2} maxLength={LEAF_LIMITS.note.max} />}
       </Field>
     </>

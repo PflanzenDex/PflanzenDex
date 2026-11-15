@@ -1,6 +1,7 @@
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
 import { Discard } from "../../../candidate-card/discard/discard";
 
@@ -21,6 +22,9 @@ export function WishRow(props: {
   const { c, rank } = props;
   const { openLayer, open } = useLayer(wishLayerId(c.id));
   const level = c.difficulty ? (LEVELS[c.difficulty] ?? UNKNOWN) : UNKNOWN;
+  // The label reads in the order the row shows: the name, the scientific name, the zone (WCAG 2.5.3, US-QS-32).
+  const german = germanNameOf(c.name, c.german);
+  const named = german === null ? c.name : `${german} ${c.name}`;
   return (
     <div
       data-priority={c.priority.kind}
@@ -33,14 +37,16 @@ export function WishRow(props: {
         size="sm"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${rank}. ${c.title} ${c.zoneText} · Schwierigkeit: ${level}`}
+        aria-label={`${rank}. ${named} ${c.zoneText} · Schwierigkeit: ${level}`}
         className="h-auto min-w-0 shrink-0 grow basis-28 flex-col items-start justify-start gap-0 whitespace-normal px-1 py-1 text-left"
         onClick={(event) => openLayer(event.currentTarget)}
       >
-        <span className="break-words font-semibold">{`${rank}. ${c.title}`}</span>
-        <span className="break-words text-sm font-normal text-muted-foreground">
-          {`${c.zoneText} · Schwierigkeit: ${level}`}
-        </span>
+        <SpeciesName
+          lead={`${rank}. `}
+          scientific={c.name}
+          german={c.german}
+          meta={<>{`${c.zoneText} · Schwierigkeit: ${level}`}</>}
+        />
       </Button>
       <Button
         type="button"

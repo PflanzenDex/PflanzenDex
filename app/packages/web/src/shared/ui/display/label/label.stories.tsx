@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Label } from "./label";
 
-// Catalog of the Label states (TE-18): default, required, next to a disabled control and next to an invalid one.
+// Catalog of the Label states (TE-18): default, optional (" (optional)" after the text, SG-FORM-01), next to a disabled control and next to an invalid one.
 const meta = { title: "ui/Label", component: Label, args: { children: "Name" } } satisfies Meta<
   typeof Label
 >;
@@ -20,11 +20,11 @@ export const Default: Story = {
   ),
 };
 
-export const Required: Story = {
+export const Optional: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2 p-4">
-      <Label {...args} htmlFor="l-required" required />
-      <input id="l-required" required className={field} />
+      <Label {...args} htmlFor="l-optional" optional />
+      <input id="l-optional" className={field} />
     </div>
   ),
 };

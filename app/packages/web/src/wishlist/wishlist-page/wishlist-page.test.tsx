@@ -120,7 +120,9 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     expect((await screen.findByRole("status")).textContent).toContain("geladen");
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
-    expect(item.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
+    expect(item.textContent).toContain("1. Korbmarante");
+    // The scientific name is italic on the meta line, once (US-QS-32, SG-TYPE-08).
+    expect(within(item).getByText("Calathea orbifolia").tagName).toBe("I");
     expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
     expect(item.textContent).toContain("Mittel");
     expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
@@ -131,7 +133,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     const btn = await screen.findByRole("button", { name: /^1\. Korbmarante/ });
     const label = btn.getAttribute("aria-label") ?? "";
-    for (const text of ["1. Korbmarante (Calathea orbifolia)", "Fenster 3 — 1 Pflanze", "Mittel"])
+    for (const text of ["1. Korbmarante Calathea orbifolia", "Fenster 3 — 1 Pflanze", "Mittel"])
       expect(label).toContain(text);
   });
 
@@ -153,7 +155,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
     const item = await screen.findByRole("heading", {
-      name: "Korbmarante (Calathea orbifolia)",
+      name: "Korbmarante",
       level: 2,
     });
     const card = item.closest("li") as HTMLElement;
@@ -194,7 +196,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await screen.findAllByRole("listitem");
     const rows = screen.getAllByRole("listitem");
-    expect(rows[0]?.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
+    expect(rows[0]?.textContent).toContain("1. Korbmarante");
     expect(rows[1]?.textContent).toContain("2. Ficus");
     expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · Schwierigkeit: unbekannt");
   });
@@ -304,7 +306,7 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Der Server antwortet nicht.");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByText(/Korbmarante \(Calathea orbifolia\)/)).toBeTruthy();
+    expect(await screen.findByText(/Korbmarante$/)).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 offline after an earlier load shows the cached list with the note", async () => {
@@ -326,24 +328,24 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
       );
     }
     view(<Toggle />);
-    await screen.findByText(/Korbmarante \(Calathea orbifolia\)/);
+    await screen.findByText(/Korbmarante$/);
     offline = true;
     await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
     await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
     expect(await screen.findByText("Offline - zuletzt geladene Daten")).toBeTruthy();
-    expect(screen.getByText(/Korbmarante \(Calathea orbifolia\)/)).toBeTruthy();
+    expect(screen.getByText(/Korbmarante$/)).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 a saved wish refreshes the list without a page reload", async () => {
     fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText(/Korbmarante \(Calathea orbifolia\)/);
+    await screen.findByText(/Korbmarante$/);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
     await userEvent.type(await screen.findByLabelText("Name"), "Neu");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     // The layer closes and the new row stands in the list (US-QS-22).
-    expect(await screen.findByText("1. Neu")).toBeTruthy();
-    expect(screen.queryByText(/Korbmarante \(Calathea orbifolia\)/)).toBeNull();
+    expect(await screen.findByRole("button", { name: /^1\. Neu\b/ })).toBeTruthy();
+    expect(screen.queryByText(/Korbmarante$/)).toBeNull();
     await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
   });
 });
@@ -353,7 +355,7 @@ describe("US-QS-15 · F12 the wish layer leaves as it came", () => {
     holdSheetExit();
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
-    await screen.findByRole("heading", { name: "Korbmarante (Calathea orbifolia)", level: 2 });
+    await screen.findByRole("heading", { name: "Korbmarante", level: 2 });
     await userEvent.keyboard("{Escape}");
     expect(screen.getByText("Mag gleichmäßig feuchte Erde.")).toBeTruthy();
     endSheetExit();
@@ -387,8 +389,8 @@ describe("US-WUN-01 recording a wish", () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
-    await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit"), "3");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone (optional)"), "z2");
+    await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit (optional)"), "3");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText(/Wunsch „Neu“ gespeichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -399,7 +401,7 @@ describe("US-WUN-01 recording a wish", () => {
     });
     expect((post?.[1]?.headers as Record<string, string>)["Idempotency-Key"]).toBeTruthy();
     // The saved wish stands in the list, the layer is closed and its form is gone (US-QS-22).
-    expect(await screen.findByText("1. Neu")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^1\. Neu\b/ })).toBeTruthy();
     await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
   });
 
@@ -426,7 +428,9 @@ describe("US-WUN-01 recording a wish", () => {
     expect(document.activeElement).toBe(name);
     expect(name.value).toBe("Neu");
     expect(screen.queryByText(/gespeichert/)).toBeNull();
-    expect(screen.getByLabelText("Schwierigkeit").getAttribute("aria-invalid")).not.toBe("true");
+    expect(screen.getByLabelText("Schwierigkeit (optional)").getAttribute("aria-invalid")).not.toBe(
+      "true",
+    );
   });
 
   it("US-WUN-01 marks the zone field when the server says the zone is not the keeper's", async () => {
@@ -436,9 +440,9 @@ describe("US-WUN-01 recording a wish", () => {
     );
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone (optional)"), "z2");
     await save();
-    const zone = screen.getByLabelText("Ziel-Lichtzone") as HTMLSelectElement;
+    const zone = screen.getByLabelText("Ziel-Lichtzone (optional)") as HTMLSelectElement;
     await vi.waitFor(() => expect(zone.getAttribute("aria-invalid")).toBe("true"));
     expect(describedText(zone)).toContain("gibt es nicht");
     expect(document.activeElement).toBe(zone);
@@ -455,7 +459,7 @@ describe("US-WUN-01 recording a wish", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
-    const url = screen.getByLabelText("Bild-Adresse (https)");
+    const url = screen.getByLabelText("Bild-Adresse (optional)");
     await vi.waitFor(() => expect(url.getAttribute("aria-invalid")).toBe("true"));
     expect(document.activeElement).toBe(url);
   });
@@ -500,13 +504,16 @@ describe("US-WUN-01 recording a wish", () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.type(screen.getByLabelText("Bild-Adresse (https)"), "https://x.example/a.jpg");
+    await userEvent.type(
+      screen.getByLabelText("Bild-Adresse (optional)"),
+      "https://x.example/a.jpg",
+    );
     await save();
-    const source = screen.getByLabelText("Bildquelle");
+    const source = screen.getByLabelText("Bildquelle (optional)");
     expect(source.getAttribute("aria-invalid")).toBe("true");
     expect(describedText(source)).toContain("Quelle");
     await vi.waitFor(() => expect(document.activeElement).toBe(source));
-    expect((screen.getByLabelText("Bild-Adresse (https)") as HTMLInputElement).value).toBe(
+    expect((screen.getByLabelText("Bild-Adresse (optional)") as HTMLInputElement).value).toBe(
       "https://x.example/a.jpg",
     );
     expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Neu");
@@ -517,8 +524,8 @@ describe("US-WUN-01 recording a wish", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.type(screen.getByLabelText("Bildquelle"), "Quelle");
-    const url = screen.getByLabelText("Bild-Adresse (https)");
+    await userEvent.type(screen.getByLabelText("Bildquelle (optional)"), "Quelle");
+    const url = screen.getByLabelText("Bild-Adresse (optional)");
     await userEvent.type(url, "http://x.example/a.jpg");
     await save();
     expect(url.getAttribute("aria-invalid")).toBe("true");
@@ -607,12 +614,14 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
-    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
+    // US-QS-32 (F-0171): the required Name is in the visible part, Mehr Angaben starts closed.
+    expect(screen.getByLabelText("Name").closest("details")).toBeNull();
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
     await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
     await userEvent.click(await screen.findByRole("button", { name: /Epipremnum aureum/ }));
     expect(await screen.findByText(/Gewählt: Epipremnum aureum \(Efeutute\)/)).toBeTruthy();
     // The pick shows the names, so they do not open the group (issue 1032).
-    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText(/Wunsch „Epipremnum aureum“ gespeichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -623,13 +632,14 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     expect(screen.queryByText(/Gewählt:/)).toBeNull();
   });
 
-  it("US-WUN-01 · #902 saving without a species opens Mehr Angaben and names the missing name", async () => {
+  it("US-WUN-01 · #902 · US-QS-32 saving without a species names the missing name at the visible field; Mehr Angaben stays closed", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
-    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(true);
+    expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
   });
 
   it("US-QS-24 · US-WUN-01 'Neuer Wunsch' has no heading inside the form that repeats the layer title; Mehr Angaben starts closed; the save button sits in a sticky footer", async () => {
@@ -940,18 +950,23 @@ describe("US-QS-22 the wishlist fits one screen", () => {
   const many = (n: number) =>
     list(
       Array.from({ length: n }, (_, i) =>
-        candidate({ id: `w${i + 1}`, title: `Wunsch ${i + 1}`, name: `Wunsch ${i + 1}` }),
+        candidate({
+          id: `w${i + 1}`,
+          title: `Wunsch ${i + 1}`,
+          name: `Wunsch ${i + 1}`,
+          german: null,
+        }),
       ),
     );
 
   it("US-QS-22 the wishes are compact rows in pages, ranked as before", async () => {
     fakeServer(many(6));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("1. Wunsch 1");
+    await screen.findByRole("button", { name: /^1\. Wunsch 1\b/ });
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("5. Wunsch 5")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^5\. Wunsch 5\b/ })).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 
@@ -992,7 +1007,7 @@ describe("US-QS-22 the wishlist fits one screen", () => {
   it("US-QS-22 a layer mounts its content only while it is open", async () => {
     fakeServer(many(1));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("1. Wunsch 1");
+    await screen.findByRole("button", { name: /^1\. Wunsch 1\b/ });
     expect(screen.queryByLabelText("Art suchen")).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
   });

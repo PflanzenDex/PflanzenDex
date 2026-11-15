@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1129,
+  "maxTotal": 1112,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -310,16 +310,12 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/collection/care-profile/sections/care-profile-fields/care-profile-fields.tsx",
-      "count": 3
-    },
-    {
       "file": "packages/web/src/collection/care-profile/sections/care-profile-fields/care-profile-row/care-profile-row.tsx",
       "count": 3
     },
     {
       "file": "packages/web/src/collection/care-profile/sections/care-profile-sections/care-profile-sections.tsx",
-      "count": 6
+      "count": 1
     },
     {
       "file": "packages/web/src/collection/collection-page/collection-page.tsx",

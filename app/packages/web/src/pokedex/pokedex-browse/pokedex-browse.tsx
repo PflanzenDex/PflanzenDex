@@ -17,6 +17,7 @@ import {
   speciesLayerId,
 } from "../pokedex-cards/pokedex-cards";
 import { SpeciesDetail } from "../pokedex-detail/pokedex-detail";
+import { germanNameOf } from "@/shared/species-name/species-name";
 import { Controls, FILTER_LAYER, FilterPanel } from "../pokedex-controls/pokedex-controls";
 
 const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
@@ -79,7 +80,7 @@ export function Browse(props: {
       {shownChosen ? (
         <LayerSheet
           id={speciesLayerId(shownChosen.species)}
-          title={shownChosen.germanName ?? shownChosen.species}
+          title={germanNameOf(shownChosen.species, shownChosen.germanName) ?? shownChosen.species}
         >
           <SpeciesDetail species={shownChosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
         </LayerSheet>

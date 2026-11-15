@@ -34,6 +34,9 @@ const buttonVariants = cva(
         lg: "min-h-[48px] rounded-pill px-6 text-base",
         icon: "min-h-[44px] min-w-[44px] rounded-control",
         touch: "min-h-[48px] w-full rounded-pill px-4 sm:w-auto",
+        // A full-width row of a grouped list (US-QS-32, SG-SHAPE-03): square, because the group clips its corners; the
+        // class merge does not know the pill radius, so the row size leaves it out instead of overriding it.
+        row: "h-auto min-h-11 w-full justify-start gap-3 rounded-none px-4 py-3 text-left text-base font-normal",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

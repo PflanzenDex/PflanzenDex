@@ -151,6 +151,23 @@ describe("US-ACH-04 explicit pause", () => {
     fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
   });
+
+  it("US-QS-32 a new pause starts with today's date (prefilled, US-ACH-04); a typed text that is no day sends nothing", async () => {
+    const calls = showWithWrites(
+      answer(),
+      () => new Response(JSON.stringify({ id: "p3" }), { status: 201 }),
+    );
+    await screen.findByLabelText("Von");
+    const from = screen.getByLabelText("Von") as HTMLInputElement;
+    expect(from.value).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+    fireEvent.change(from, { target: { value: "31.02.2026" } });
+    fireEvent.blur(from);
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
+    );
+    expect(calls).toEqual([]);
+  });
 });
 
 describe("US-QS-15 the rhythm beside a pane (issue 1640)", () => {

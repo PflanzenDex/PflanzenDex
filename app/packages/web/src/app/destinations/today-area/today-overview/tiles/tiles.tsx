@@ -19,10 +19,11 @@ export type CategoryCount = {
 
 /**
  * The look of a tile that opens a layer: the control radius (size `sm`), not a pill, so the longest label ("Behandlungen") keeps clear of the
- * rounded edge in a 104 px tile at 360 px (issue 1092).
+ * rounded edge in a 104 px tile at 360 px (issue 1092). Neutral like every count (US-QS-32, SG-COLOR-02): the card colour and
+ * foreground text, no green outline.
  */
 const TILE =
-  "h-auto min-h-14 w-full flex-col items-center justify-center gap-0 px-1 py-1 text-center";
+  "h-auto min-h-14 w-full flex-col items-center justify-center gap-0 border-transparent bg-card px-1 py-1 text-center text-foreground hover:bg-muted hover:text-foreground";
 /**
  * The category tiles: three in a row while a tile holds its label (6.5 rem, 104 px at normal text, starting value); at a
  * larger text size the tiles stack, one per row, so no label runs into its neighbour (issue 1019). The `minmax` is a rem
@@ -37,7 +38,16 @@ export function CategoryTile(props: { id: string; label: string; category: Categ
     <li>
       <LayerOpener id={props.id} size="sm" className={TILE}>
         {category.status === "ready" ? (
-          <span className="text-lg font-semibold tabular-nums">{category.count}</span>
+          // Zero reads as nothing to work through, not as a number to tap (SG-LIST-05): regular and muted.
+          <span
+            className={
+              category.count === 0
+                ? "text-lg tabular-nums text-muted-foreground"
+                : "text-lg font-semibold tabular-nums"
+            }
+          >
+            {category.count}
+          </span>
         ) : category.status === "error" ? (
           <span className="text-sm">{t("tiles.failed")}</span>
         ) : (

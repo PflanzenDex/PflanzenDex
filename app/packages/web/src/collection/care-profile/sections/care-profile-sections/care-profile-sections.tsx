@@ -10,10 +10,10 @@ import {
   Choice,
   DaysInput,
   HintsInput,
-  MonthDay,
   Row,
   dayText,
 } from "../care-profile-fields/care-profile-fields";
+import { MonthDay } from "../care-profile-fields/month-day/month-day";
 import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
 import { ZoneField } from "./zone-field/zone-field";
 
@@ -59,7 +59,7 @@ export function Days(props: Shared) {
       busy={busy}
       onReset={() => props.reset({ [key]: null }, label)}
     >
-      <DaysInput control={control} name={key} label={`${label} (Tage) für „${name}“`} />
+      <DaysInput control={control} name={key} label={label} species={name} />
     </Row>
   );
   return (
@@ -84,20 +84,11 @@ export function Dormancy(props: Shared) {
       busy={props.busy}
       onReset={() => props.reset({ dormancyFrom: null, dormancyUntil: null }, NAME.period)}
     >
-      <MonthDay
-        control={control}
-        label="Ruhephase von"
-        species={name}
-        month="fromMonth"
-        day="fromDay"
-      />
-      <MonthDay
-        control={control}
-        label="Ruhephase bis"
-        species={name}
-        month="untilMonth"
-        day="untilDay"
-      />
+      <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0">
+        <legend className="mb-1 text-sm font-medium">{NAME.period}</legend>
+        <MonthDay control={control} when="from" species={name} month="fromMonth" day="fromDay" />
+        <MonthDay control={control} when="until" species={name} month="untilMonth" day="untilDay" />
+      </fieldset>
     </Row>
   );
 }
@@ -131,7 +122,8 @@ export function Places(props: Shared & { lists: Lists; fields?: readonly PlaceFi
               <Choice
                 control={control}
                 name={key}
-                label={`${label} für „${name}“`}
+                label={label}
+                species={name}
                 items={lists.locations}
               />
             </Row>
@@ -162,7 +154,7 @@ export function Hints(props: Shared) {
       busy={props.busy}
       onReset={() => props.reset({ ownHints: null }, NAME.hints)}
     >
-      <HintsInput control={props.control} label={`${NAME.hints} für „${name}“`} />
+      <HintsInput control={props.control} label={NAME.hints} species={name} />
     </Row>
   );
 }

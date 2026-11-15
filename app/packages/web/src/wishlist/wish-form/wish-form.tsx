@@ -10,7 +10,7 @@ import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notice
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "../../shared/data";
 import { SpeciesPick } from "./species-pick/species-pick";
-import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
+import { ChoiceFields, GermanNameField, ImageFields, NameField } from "./wish-fields/wish-fields";
 import {
   EMPTY_FIELDS,
   fieldsOfRefusal,
@@ -20,17 +20,19 @@ import {
 } from "../schemas";
 import type { WishInput } from "../wishlist-api";
 
-/** Every field behind "Mehr Angaben": a value or a refusal opens it (P-10). */
+/**
+ * Every optional field behind "Mehr Angaben": a value or a refusal opens it (P-10). The required name is not among them:
+ * it stays in the visible part of the form (SG-FORM-04, F-0171).
+ */
 const FOLDED: readonly (keyof WishFields)[] = [
-  "name",
   "german",
   "targetZoneId",
   "difficulty",
   "reasoning",
   "imageUrl",
 ];
-/** After a pick the names are shown by the pick itself, so only the other fields open the group by their value. */
-const FOLDED_AFTER_PICK = FOLDED.filter((name) => name !== "name" && name !== "german");
+/** After a pick the German name is shown by the pick itself, so only the other fields open the group by their value. */
+const FOLDED_AFTER_PICK = FOLDED.filter((name) => name !== "german");
 
 /** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (US-QS-24, issue 1032). */
 function FieldGroups(props: {
@@ -55,12 +57,13 @@ function FieldGroups(props: {
           setChosen(h.germanName ? `${h.latinName} (${h.germanName})` : h.latinName);
         }}
       />
+      <NameField control={form.control} />
       <FormMoreFields
         control={form.control}
         names={chosen ? FOLDED_AFTER_PICK : FOLDED}
-        forced={Boolean(form.formState.errors.name ?? form.formState.errors.german)}
+        forced={Boolean(form.formState.errors.german)}
       >
-        <NameFields control={form.control} />
+        <GermanNameField control={form.control} />
         <ChoiceFields control={form.control} zones={props.zones} />
         <ImageFields control={form.control} />
       </FormMoreFields>

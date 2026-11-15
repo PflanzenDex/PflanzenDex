@@ -1,6 +1,7 @@
 // Search, filter and sort of the caught species (US-POK-08). Pure view logic over what `pokedexOwnership` derived;
 // nothing is stored (P-01). Species count and family total come from the taxonomy build (US-POK-03): where it is
 // unknown it stays `null` and sorts last, no number is guessed (P-08).
+import { shownSpeciesName } from "../collection";
 import type { CaughtSpecies } from "./types";
 
 export type PokedexFilter = "all" | "caught" | "species_poor";
@@ -35,7 +36,12 @@ export interface Browsed {
 export const SPECIES_POOR_MAX = 10;
 
 const lower = (text: string) => text.toLocaleLowerCase("de");
-const byName = (a: CaughtSpecies, b: CaughtSpecies) => a.species.localeCompare(b.species, "de");
+/** By the name the card shows: the German name where there is one (US-QS-32, F-0119), then the scientific name. */
+const byName = (a: CaughtSpecies, b: CaughtSpecies) =>
+  shownSpeciesName(a.species, a.germanName).localeCompare(
+    shownSpeciesName(b.species, b.germanName),
+    "de",
+  ) || a.species.localeCompare(b.species, "de");
 
 function matches(c: CaughtSpecies, query: string): boolean {
   if (query === "") return true;

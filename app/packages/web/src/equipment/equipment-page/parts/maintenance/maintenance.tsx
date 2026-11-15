@@ -4,6 +4,7 @@ import { Button } from "@/shared/ui/button/button";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { currentTimeZone } from "../../../../shared/data";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
@@ -75,6 +76,8 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
   const [problem, setProblem] = useState<string | null>(null);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
+    // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is saved.
+    if (!isHandedDate(since)) return;
     const checked = toInput({ since, interval, value, source });
     if ("problem" in checked) return setProblem(checked.problem);
     setProblem(null);
@@ -92,10 +95,11 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
           <DateField value={since} onChange={(e) => setSince(e.target.value)} />
         </label>
         <label className={LABEL}>
-          Prüfintervall in Tagen (optional)
+          Prüfintervall (optional)
           <Input
             inputMode="numeric"
             value={interval}
+            suffix="Tage"
             onChange={(e) => setInterval(e.target.value)}
           />
         </label>

@@ -13,8 +13,9 @@ import { SettingsFormSkeleton } from "./settings-form.skeleton";
 
 beforeAll(() => {
   // jsdom has no matchMedia; a wide screen shows the layers as panes (US-QS-15), so the footers are in the page.
+  // A fine pointer keeps the typed date field (US-QS-32): only the width answers true.
   window.matchMedia = ((query: string) => ({
-    matches: true,
+    matches: !/pointer:\s*coarse/.test(query),
     media: query,
     addEventListener: () => undefined,
     removeEventListener: () => undefined,

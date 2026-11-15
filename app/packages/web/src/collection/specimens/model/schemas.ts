@@ -1,5 +1,9 @@
 import { z } from "zod";
 import type { Sibling } from "../../markers/marker/marker-rule";
+import {
+  requiredDate,
+  dateValue,
+} from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 
 /** Fast client feedback in German (DS-47, DS-49); the server operation validates again (P-03). */
 export const MARKER_MISSING =
@@ -19,7 +23,7 @@ export const createSchema = (rule: { required: boolean; missing: readonly Siblin
       locationId: z.string(),
       /** Own light zone of the specimen (US-LIC-02); empty = derived from location and species. */
       lightZoneId: z.string(),
-      catchDate: z.string(),
+      catchDate: dateValue(),
     })
     .superRefine((f, ctx) => {
       if (rule.required && f.marker.trim() === "")
@@ -40,7 +44,7 @@ export const CATCH_DATE_MISSING = "Gib ein Fangdatum an: heute oder ein frühere
 
 /** The form to correct the catch date of a specimen (US-BES-11); the server checks the date again (P-03). */
 export const catchDateSchema = z.object({
-  catchDate: z.string().min(1, CATCH_DATE_MISSING),
+  catchDate: requiredDate(CATCH_DATE_MISSING),
 });
 export type CatchDateFields = z.infer<typeof catchDateSchema>;
 
@@ -51,7 +55,7 @@ export const REPOT_DATE_MISSING = "Gib ein Datum an: heute oder ein früheres Da
  * empty for "Kein erfasster Topf" and for a cutting.
  */
 export const repotSchema = z.object({
-  date: z.string().min(1, REPOT_DATE_MISSING),
+  date: requiredDate(REPOT_DATE_MISSING),
   potId: z.string(),
 });
 export type RepotFields = z.infer<typeof repotSchema>;

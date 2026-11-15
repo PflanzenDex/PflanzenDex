@@ -62,10 +62,9 @@ const open = async (onOpenSpecies?: (id: string) => void) => {
   );
   await screen.findByRole("heading", { level: 1, name: "Pokédex" });
 };
+// The entry's name is its German name where known, so the scientific name is found anywhere in the accessible name.
 const card = (name: string) =>
-  screen.getByRole("button", {
-    name: (accessible) => accessible.startsWith(`${name} `) || accessible === name,
-  });
+  screen.getByRole("button", { name: (accessible) => accessible.includes(name) });
 const detail = () => screen.getByRole("region", { name: /Details/ });
 
 afterEach(() => {
@@ -166,6 +165,25 @@ describe("US-POK-09 view details of a species", () => {
     await userEvent.click(card("Ficus lyrata"));
     expect(within(detail()).queryByRole("button", { name: /Wunschliste/ })).toBeNull();
     expect(within(detail()).queryByText(/Freund/)).toBeNull();
+  });
+});
+
+describe("US-QS-32 the species sheet names a species the SG-TYPE-08 way (F-0119)", () => {
+  it("US-QS-32 with a German name the body shows the scientific name in italics once, under the German title", async () => {
+    await open();
+    await userEvent.click(card("Ficus lyrata"));
+    const d = within(detail());
+    const latin = d.getByText("Ficus lyrata");
+    expect(latin.tagName).toBe("I");
+    expect(d.getAllByText("Ficus lyrata")).toHaveLength(1);
+    expect(screen.getByRole("dialog", { name: "Geigenfeige" })).toBeTruthy();
+  });
+
+  it("US-QS-32 without a German name the sheet title holds the scientific name, and the body does not repeat it", async () => {
+    await open();
+    await userEvent.click(card("Aloe vera"));
+    expect(screen.getByRole("dialog", { name: "Aloe vera" })).toBeTruthy();
+    expect(within(detail()).queryByText("Aloe vera")).toBeNull();
   });
 });
 
