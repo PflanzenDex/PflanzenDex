@@ -210,7 +210,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
     fakeServer();
     const signOut = vi.fn();
     show("/account", { signOut, error: "Abmelden hat nicht geklappt: Prüfe deine Verbindung." });
-    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("alert").textContent).toContain("Abmelden hat nicht geklappt");
     expect(within(dialog).getByRole("button", { name: "Abmelden" })).toBeTruthy();

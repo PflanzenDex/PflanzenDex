@@ -45,7 +45,7 @@ function End(props: {
           // Calm mode: no counters (US-TAU-07, US-ACH-08).
           props.calm
             ? "Für jetzt durch"
-            : `Für jetzt durch. ${s.requested} angefragt, ${later} für später, ${countOf(s, "no")} abgelehnt`
+            : `Für jetzt durch: ${s.requested} angefragt, ${later} für später, ${countOf(s, "no")} abgelehnt`
         }
         description={
           later > 0

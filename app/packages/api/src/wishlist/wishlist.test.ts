@@ -222,11 +222,11 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     expect(after.find((c) => c.name === `Bryo ${run}`)?.stock).toBe(0);
   });
 
-  it("without open candidates: 'Keine offenen Kandidaten in der Wunschliste' and a next action", async () => {
+  it("without open candidates: 'Keine offenen Kandidaten in der Wunschliste.' and a next action", async () => {
     const r = await candidates(subC);
     expect(r.status).toBe(200);
     expect(r.body["candidates"]).toEqual([]);
-    expect(r.body["hint"]).toMatchObject({ text: "Keine offenen Kandidaten in der Wunschliste" });
+    expect(r.body["hint"]).toMatchObject({ text: "Keine offenen Kandidaten in der Wunschliste." });
     expect(r.body["hint"].nextAction).not.toBe("");
   });
 

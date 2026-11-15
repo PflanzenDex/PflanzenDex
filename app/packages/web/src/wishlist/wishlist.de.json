@@ -4,6 +4,7 @@
   "page.caption.one": "1 offener Wunsch",
   "page.caption.other": "{count} offene Wünsche",
   "candidates.label": "Offene Kandidaten",
+  "candidates.emptyTitle": "Keine offenen Kandidaten",
   "controls.create": "Wunsch erfassen",
   "controls.hints": "Hinweise ({count})",
   "controls.bought": "Gekauft ({count})",

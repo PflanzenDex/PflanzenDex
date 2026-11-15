@@ -256,7 +256,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     await press(/^Später/);
     expect(
-      await screen.findByText("Für jetzt durch. 0 angefragt, 1 für später, 1 abgelehnt"),
+      await screen.findByText("Für jetzt durch: 0 angefragt, 1 für später, 1 abgelehnt"),
     ).toBeTruthy();
     expect([...posts]).toEqual([]);
     expect(posts.answers).toEqual(["PUT o1 no", "PUT o2 later"]);
@@ -515,7 +515,7 @@ describe("US-TAU-07 empty states and calm mode", () => {
     await current();
     await press(/^Nein/);
     expect(
-      await screen.findByText("Für jetzt durch. 0 angefragt, 0 für später, 1 abgelehnt"),
+      await screen.findByText("Für jetzt durch: 0 angefragt, 0 für später, 1 abgelehnt"),
     ).toBeTruthy();
   });
 });
@@ -545,7 +545,7 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
     server([], undefined, [entry(1, "later")]);
     open();
     expect(
-      await screen.findByText("Für jetzt durch. 4 angefragt, 1 für später, 0 abgelehnt"),
+      await screen.findByText("Für jetzt durch: 4 angefragt, 1 für später, 0 abgelehnt"),
     ).toBeTruthy();
   });
 
@@ -558,7 +558,7 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     await press(/^Nein/);
     expect(
-      await screen.findByText("Für jetzt durch. 5 angefragt, 0 für später, 1 abgelehnt"),
+      await screen.findByText("Für jetzt durch: 5 angefragt, 0 für später, 1 abgelehnt"),
     ).toBeTruthy();
   });
 
@@ -574,7 +574,7 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     await press(/^Nein/);
     expect(
-      await screen.findByText("Für jetzt durch. 5 angefragt, 0 für später, 1 abgelehnt"),
+      await screen.findByText("Für jetzt durch: 5 angefragt, 0 für später, 1 abgelehnt"),
     ).toBeTruthy();
   });
 
@@ -584,7 +584,7 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
     await current();
     await press(/^Ja, anfragen/);
     expect(
-      await screen.findByText("Für jetzt durch. 1 angefragt, 0 für später, 0 abgelehnt"),
+      await screen.findByText("Für jetzt durch: 1 angefragt, 0 für später, 0 abgelehnt"),
     ).toBeTruthy();
   });
 

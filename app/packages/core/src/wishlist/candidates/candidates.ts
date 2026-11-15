@@ -123,7 +123,7 @@ function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
   const first = list[0];
   if (!first)
     return {
-      text: "Keine offenen Kandidaten in der Wunschliste",
+      text: "Keine offenen Kandidaten in der Wunschliste.",
       nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
     };
   if (!first.zone)

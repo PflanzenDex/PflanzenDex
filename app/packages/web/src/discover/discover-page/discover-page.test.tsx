@@ -176,7 +176,8 @@ describe("US-ENT-01 suggestions as a card", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     await user.click(screen.getByRole("button", { name: "Ja" }));
-    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
+    expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Neuer Stapel" }));
     expect(await screen.findByText(/Keine neuen Vorschläge/)).toBeTruthy();
     expect(
@@ -279,7 +280,8 @@ describe("US-ENT-04 decisions are saved", () => {
       expect.objectContaining({ species: "Aspidistra elatior", decision: "yes" }),
       expect.objectContaining({ species: "Ficus lyrata", decision: "no" }),
     ]);
-    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
+    expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
   });
 
   it("US-ENT-04 a swipe to the right decides Ja, a swipe to the left Nein", async () => {
@@ -424,7 +426,8 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     await user.click(screen.getByRole("button", { name: "Ja" }));
-    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
+    expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
     await user.click(await back());
     expect(await screen.findByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
     expect(screen.queryByText(/Für heute durch/)).toBeNull();
@@ -438,7 +441,8 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
     await user.click(screen.getByRole("button", { name: "Ja" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Später" }));
-    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
+    expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
   });
 

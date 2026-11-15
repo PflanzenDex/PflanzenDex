@@ -18,7 +18,7 @@ import type { ProfileSaver } from "../profile-saver";
 type Key = "displayName" | "timeZone" | "replenishBuffer" | "positionThresholds";
 
 const UNCHANGED = "Keine Änderung: Die Werte sind schon gespeichert.";
-const INVALID = "Bitte prüfe die markierten Felder.";
+const INVALID = "Prüfe die markierten Felder.";
 
 /** The form fields a key stands for: the four threshold fields of "positionThresholds" (US-LIC-03). */
 function fieldPathsOf(key: Key): Path<Fields>[] {

@@ -254,7 +254,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     show("add");
     await userEvent.click(await screen.findByRole("tab", { name: "Code eingeben" }));
     await userEvent.click(await screen.findByRole("button", { name: "Anfrage senden" }));
-    expect(await screen.findByText("Bitte gib den Freundescode ein.")).toBeTruthy();
+    expect(await screen.findByText("Gib den Freundescode ein.")).toBeTruthy();
     expect(calls).toEqual([]);
     await userEvent.type(screen.getByLabelText("Freundescode"), "BAD");
     await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));

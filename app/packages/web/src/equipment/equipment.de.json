@@ -51,7 +51,7 @@
   "pot.materialField": "Material",
   "pot.drainageField": "Abfluss",
   "pot.sizeHint": "Eine Zahl von 1 bis 300 mit höchstens einer Nachkommastelle; leer heißt unbekannt.",
-  "pot.sizeInvalid": "Bitte gib eine Größe von 1 bis 300 cm an, höchstens mit einer Nachkommastelle.",
+  "pot.sizeInvalid": "Gib eine Größe von 1 bis 300 cm an, höchstens mit einer Nachkommastelle.",
   "pot.materialTooLong": "Das Material hat höchstens 60 Zeichen.",
   "pot.drainageUnknown": "Unbekannt",
   "pot.drainageYes": "Ja",

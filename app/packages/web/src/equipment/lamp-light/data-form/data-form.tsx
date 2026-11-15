@@ -22,7 +22,7 @@ export function DataForm(props: {
     const powerW = wholeNumber(power);
     const luxStatement = wholeNumber(statement);
     if (Number.isNaN(powerW) || Number.isNaN(luxStatement))
-      return setProblem("Bitte gib ganze Zahlen an oder lass das Feld leer.");
+      return setProblem("Gib ganze Zahlen an oder lass das Feld leer.");
     setProblem(null);
     props.onSend({ powerW, luxStatement });
   };

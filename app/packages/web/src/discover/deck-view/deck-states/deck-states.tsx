@@ -93,8 +93,8 @@ export function DeckEnd(props: {
   return (
     <>
       <EmptyState
-        title={t("deck.end.title", { saved: props.saved })}
-        description={t("deck.end.description")}
+        title={t("deck.end.title")}
+        description={t("deck.end.description", { saved: props.saved })}
         titleRef={props.titleRef}
         action={{ label: t("deck.newDeck"), onClick: props.onNewDeck }}
       />

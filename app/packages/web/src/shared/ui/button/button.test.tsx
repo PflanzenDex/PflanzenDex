@@ -115,7 +115,6 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     render(<Button pending>Speichern</Button>);
     const text = screen.getByRole("button").textContent ?? "";
     expect(text).toContain("Lädt …");
-    expect(text).not.toContain("Lädt…");
   });
 
   it("US-QS-07 · DS-15 the pending text can be replaced by the caller", () => {

@@ -15,9 +15,9 @@ export const Default: Story = {};
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-end gap-6 p-4">
-      <PlantLoader size="sm" label="Lädt klein…" />
-      <PlantLoader size="md" label="Lädt mittel…" />
-      <PlantLoader size="lg" label="Lädt groß…" />
+      <PlantLoader size="sm" label="Lädt klein …" />
+      <PlantLoader size="md" label="Lädt mittel …" />
+      <PlantLoader size="lg" label="Lädt groß …" />
     </div>
   ),
 };

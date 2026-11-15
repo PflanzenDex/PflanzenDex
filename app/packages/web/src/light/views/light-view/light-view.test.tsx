@@ -135,7 +135,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
         }}
       />,
     );
-    expect(h).toContain("Bitte prüfe: Lux-Decke.");
+    expect(h).toContain("Prüfe: Lux-Decke.");
   });
 });
 

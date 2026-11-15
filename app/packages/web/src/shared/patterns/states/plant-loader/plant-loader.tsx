@@ -15,7 +15,7 @@ const plantLoaderVariants = cva(
 
 export type PlantLoaderProps = Omit<React.HTMLAttributes<HTMLSpanElement>, "children"> &
   VariantProps<typeof plantLoaderVariants> & {
-    /** Text read out while loading, supplied by the caller (German "Lädt…"). */
+    /** Text read out while loading, supplied by the caller (German "Lädt …"). */
     label?: string;
     /** Draw only: no status, for places that already carry one (a skeleton group). */
     decorative?: boolean;
@@ -26,7 +26,7 @@ export type PlantLoaderProps = Omit<React.HTMLAttributes<HTMLSpanElement>, "chil
  * motion tokens; under reduced motion it stands still. Announced once as `role="status"`, or hidden when `decorative`.
  */
 const PlantLoader = React.forwardRef<HTMLSpanElement, PlantLoaderProps>(
-  ({ className, size, label = "Lädt…", decorative = false, ...props }, ref) => (
+  ({ className, size, label = "Lädt …", decorative = false, ...props }, ref) => (
     <span
       ref={ref}
       {...(decorative ? { "aria-hidden": true } : { role: "status" })}

@@ -162,7 +162,7 @@ describe("US-EQU-01 equipment page", () => {
     await user.type(screen.getByLabelText("Produkt-ID (optional)"), "https://shop.example/x");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
     expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
-    expect(screen.getByText(/Bitte keine URL/)).toBeTruthy();
+    expect(screen.getByText(/Gib keine URL ein/)).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
 
@@ -175,7 +175,7 @@ describe("US-EQU-01 equipment page", () => {
     await user.selectOptions(screen.getByLabelText("Art"), "Lamp");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
-    expect(await screen.findByText(/Bitte wähle die Lichtzone/)).toBeTruthy();
+    expect(await screen.findByText(/Wähle die Lichtzone/)).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.selectOptions(screen.getByLabelText("Lichtzone"), "z2");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));

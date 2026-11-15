@@ -142,10 +142,10 @@ describe("US-WUN-01 what a candidate shows", () => {
 });
 
 describe("US-WUN-01 empty list and the next action (P-09)", () => {
-  it("US-WUN-01 without open candidates the text is 'Keine offenen Kandidaten in der Wunschliste'", async () => {
+  it("US-WUN-01 without open candidates the text is 'Keine offenen Kandidaten in der Wunschliste.'", async () => {
     const list = await candidates();
     expect(list.candidates).toEqual([]);
-    expect(list.hint.text).toBe("Keine offenen Kandidaten in der Wunschliste");
+    expect(list.hint.text).toBe("Keine offenen Kandidaten in der Wunschliste.");
     expect(list.hint.nextAction).not.toBe("");
   });
 

@@ -7,7 +7,7 @@ const required = (message: string) => z.string().trim().min(1, message);
 const optional = z.string().trim();
 const monthDay = optional.refine(
   (v) => v === "" || /^\d\d-\d\d$/.test(v),
-  "Bitte gib Monat und Tag als MM-TT an, z. B. 11-15.",
+  "Gib Monat und Tag als MM-TT an, z. B. 11-15.",
 );
 
 /**
@@ -16,17 +16,17 @@ const monthDay = optional.refine(
  */
 export const proposalSchema = z
   .object({
-    latinName: required("Bitte gib den lateinischen Namen an."),
+    latinName: required("Gib den lateinischen Namen an."),
     difficulty: optional,
     standardLevel: optional,
     lightDemandLux: optional.refine(
       (v) => v === "" || (/^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= LUX_MAX),
-      "Bitte gib den Lichtbedarf als ganze Zahl zwischen 1 und 200.000 Lux an.",
+      "Gib den Lichtbedarf als ganze Zahl zwischen 1 und 200.000 Lux an.",
     ),
     softLeaf: z.enum(["", "yes", "no"]),
-    growthMeasure: required("Bitte wähle das Wachstumsmaß."),
-    etiolationSigns: required("Bitte beschreibe die Vergeilung-Anzeichen."),
-    successCriteria: required("Bitte beschreibe die Erfolgskriterien."),
+    growthMeasure: required("Wähle das Wachstumsmaß."),
+    etiolationSigns: required("Beschreibe die Vergeilung-Anzeichen."),
+    successCriteria: required("Beschreibe die Erfolgskriterien."),
     germanName: optional,
     englishName: optional,
     familyGerman: optional,
@@ -48,12 +48,12 @@ export const proposalSchema = z
     if (f.dormancyFrom !== "" && f.dormancyUntil === "")
       missing(
         "dormancyUntil",
-        "Beide Angaben zur Ruhephase gehören zusammen: Bitte gib auch das Ende an.",
+        "Beide Angaben zur Ruhephase gehören zusammen: Gib auch das Ende an.",
       );
     if (f.dormancyFrom === "" && f.dormancyUntil !== "")
       missing(
         "dormancyFrom",
-        "Beide Angaben zur Ruhephase gehören zusammen: Bitte gib auch den Beginn an.",
+        "Beide Angaben zur Ruhephase gehören zusammen: Gib auch den Beginn an.",
       );
   });
 

@@ -10,7 +10,7 @@ describe("PlantLoader (US-QS-07, DS-56)", () => {
   it("US-QS-07 · DS-56 is announced once as a status with the German loading text", () => {
     render(<PlantLoader />);
     const status = screen.getByRole("status");
-    expect(status.textContent).toBe("Lädt…");
+    expect(status.textContent).toBe("Lädt …");
     expect(status.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 

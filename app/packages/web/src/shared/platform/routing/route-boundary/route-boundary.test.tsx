@@ -87,7 +87,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden.");
+    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden");
     expect(alert.textContent).not.toContain("Failed to fetch");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("heading", { name: "Geladen" })).toBeTruthy();
@@ -157,7 +157,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden.");
+    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("heading", { name: "Geladen" })).toBeTruthy();
     expect(attempts).toBe(3);

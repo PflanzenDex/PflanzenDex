@@ -243,7 +243,7 @@ describe("US-BES-01 · DS-48 proposal schema", () => {
 
   it("the dormancy needs both dates or none, as MM-DD", () => {
     expect(issues({ dormancyFrom: "11-15" })).toEqual([
-      "dormancyUntil: Beide Angaben zur Ruhephase gehören zusammen: Bitte gib auch das Ende an.",
+      "dormancyUntil: Beide Angaben zur Ruhephase gehören zusammen: Gib auch das Ende an.",
     ]);
     expect(issues({ dormancyFrom: "11-15", dormancyUntil: "02-28" })).toEqual([]);
     expect(issues({ dormancyFrom: "1115", dormancyUntil: "02-28" })).toHaveLength(1);

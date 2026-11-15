@@ -61,25 +61,128 @@ describe("US-QS-24 one word per concept", () => {
   });
 });
 
-/**
- * Files another open PR is changing (US-QS-32, the same rule as EXCEPTIONS in term-table.ts): their title literal waits for
- * that PR. Remove the row when it lands; a row is never added to turn the test green.
- */
-const IN_FLIGHT = [/(^|\/)request-state\/request-state\.tsx$/];
+/** SG-COPY-01: a title is one sentence without a full stop; a full stop at its end or before a next sentence fails. */
+const SENTENCE_END = /\.\s*$|\.\s+[\p{Lu}\p{Nd}{]/u;
 
-describe("US-QS-32 copy rules (SG-COPY-01)", () => {
-  it("US-QS-32 SG-COPY-01 a title has no full stop, in a message table or in a title prop", () => {
+/** The index just past the quoted string or template that starts at `i`. */
+function stringEnd(src: string, i: number): number {
+  const quote = src.charAt(i);
+  let j = i + 1;
+  while (j < src.length && src.charAt(j) !== quote) j += src.charAt(j) === "\\" ? 2 : 1;
+  return j + 1;
+}
+
+/** The index where the comment that starts at `j` ends, or `null` when no comment starts there. */
+function commentEnd(src: string, j: number): number | null {
+  if (src.charAt(j) !== "/") return null;
+  if (src.charAt(j + 1) === "/") {
+    const nl = src.indexOf("\n", j);
+    return nl < 0 ? src.length : nl;
+  }
+  if (src.charAt(j + 1) !== "*") return null;
+  const close = src.indexOf("*/", j);
+  return close < 0 ? src.length : close + 1;
+}
+
+/** The index of the `,` or the closing bracket that ends the value starting at `i`; strings and comments are skipped. */
+function valueEnd(src: string, i: number): number {
+  let depth = 0;
+  for (let j = i; j < src.length; j++) {
+    const c = src.charAt(j);
+    const cEnd = commentEnd(src, j);
+    if (cEnd !== null) j = cEnd;
+    else if (c === '"' || c === "'" || c === "`") j = stringEnd(src, j) - 1;
+    else if ("([{".includes(c)) depth++;
+    else if (")]}".includes(c)) {
+      if (depth === 0) return j;
+      depth--;
+    } else if (c === "," && depth === 0) return j;
+  }
+  return src.length;
+}
+
+/** The text of a template with its `${…}` parts marked as `{}`, so a sentence end before a value is seen. */
+const templateText = (body: string) => body.replace(/\$\{[^}]*\}/g, "{}");
+
+/** The string literals an expression can show: quotes, templates and named constants; comments are skipped. */
+function literalsIn(expr: string, constants: ReadonlyMap<string, string>): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < expr.length; i++) {
+    const c = expr.charAt(i);
+    const cEnd = commentEnd(expr, i);
+    if (cEnd !== null) i = cEnd;
+    else if (c === '"' || c === "'" || c === "`") {
+      const end = stringEnd(expr, i);
+      const body = expr.slice(i + 1, end - 1);
+      out.push(c === "`" ? templateText(body) : body);
+      i = end - 1;
+    } else if (/[A-Za-z_]/.test(c)) {
+      const word = /^\w+/.exec(expr.slice(i))?.[0] ?? c;
+      const value = constants.get(word);
+      if (value !== undefined) out.push(value);
+      i += word.length - 1;
+    }
+  }
+  return out;
+}
+
+/** The title values of a source with a sentence end: `title=` attributes and `title:` properties, constants included. */
+function titleHits(src: string): { line: number; text: string }[] {
+  const constants = new Map<string, string>();
+  for (const m of src.matchAll(/\bconst\s+(\w+)\s*=\s*"([^"\n]*)"/g))
+    constants.set(m[1] ?? "", m[2] ?? "");
+  const hits: { line: number; text: string }[] = [];
+  for (const m of src.matchAll(/(?:^|[\s{,(])title\s*(?:=(?!=)|:)\s*/gm)) {
+    const at = (m.index ?? 0) + m[0].length;
+    const sep = m[0].trimEnd().slice(-1);
+    let expr: string;
+    if (sep === "=" && src.charAt(at) === '"') expr = src.slice(at, stringEnd(src, at));
+    else if (sep === "=" && src.charAt(at) === "{") expr = src.slice(at + 1, valueEnd(src, at + 1));
+    else if (sep === ":") expr = src.slice(at, valueEnd(src, at));
+    else continue;
+    for (const text of literalsIn(expr, constants))
+      if (SENTENCE_END.test(text.trim()))
+        hits.push({ line: src.slice(0, at).split("\n").length, text });
+  }
+  return hits;
+}
+
+describe("US-QS-32 copy rules (SG-COPY-01, SG-COPY-04)", () => {
+  it("US-QS-32 SG-COPY-01 the title scan sees a full stop in a multi-line title, a key and a constant", () => {
+    const sample = [
+      'const T = "Ende.";',
+      "const a = <EmptyState",
+      "  title={",
+      "    // note",
+      '    ok ? "Gut" : "Schlecht."',
+      "  }",
+      "/>;",
+      "const o = { title: `Eins. {} zwei` };",
+      "const p = <X title={T} />;",
+    ].join("\n");
+    expect(titleHits(sample).map((h) => h.text)).toEqual(["Schlecht.", "Eins. {} zwei", "Ende."]);
+  });
+
+  it("US-QS-32 SG-COPY-01 a title has no full stop and holds one sentence, in a message table or a title prop", () => {
     const hits: string[] = [];
     for (const file of sources.filter((f) => f.endsWith(".de.json"))) {
       const table = JSON.parse(readFileSync(join(root, file), "utf8")) as Record<string, string>;
       for (const [key, text] of Object.entries(table))
-        if (/title$/i.test(key) && text.endsWith(".")) hits.push(`${file} ${key}`);
+        if (/title$/i.test(key) && SENTENCE_END.test(text)) hits.push(`${file} ${key}`);
     }
-    for (const file of sources.filter(
-      (f) => f.endsWith(".tsx") && !IN_FLIGHT.some((e) => e.test(f)),
-    ))
-      for (const { text, n } of lines(file))
-        if (/\btitle=/.test(text) && /["`][^"`\n]*\.["`]/.test(text)) hits.push(`${file}:${n}`);
+    for (const file of sources.filter((f) => f.endsWith(".tsx") || f.endsWith(".ts")))
+      for (const hit of titleHits(readFileSync(join(root, file), "utf8")))
+        hits.push(`${file}:${hit.line} ${JSON.stringify(hit.text)}`);
     expect(hits).toEqual([]);
+  });
+
+  it("US-QS-32 SG-COPY-04 an omission has a space before the ellipsis, in a text or a message table", () => {
+    const hits: string[] = [];
+    // The dated release notes are history and keep their texts (EXCEPTIONS in term-table.ts).
+    for (const file of sources.filter((f) => !/(^|\/)news\/news\.de\.json$/.test(f)))
+      for (const { text, n } of lines(file)) if (/\p{L}…/u.test(text)) hits.push(`${file}:${n}`);
+    expect(hits).toEqual([]);
+    expect(/\p{L}…/u.test("Lädt…")).toBe(true);
+    expect(/\p{L}…/u.test("Lädt …")).toBe(false);
   });
 });

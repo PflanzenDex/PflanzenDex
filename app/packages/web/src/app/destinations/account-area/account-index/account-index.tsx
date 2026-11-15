@@ -72,7 +72,7 @@ function SignOutRow(props: {
         className={cn(ROW, "h-auto justify-start font-normal")}
         onClick={() => setOpen(true)}
       >
-        Abmelden…
+        Abmelden …
         <ChevronRight
           aria-hidden="true"
           className="ml-auto size-4 shrink-0 text-muted-foreground"

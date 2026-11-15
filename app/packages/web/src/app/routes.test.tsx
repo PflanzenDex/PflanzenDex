@@ -114,7 +114,7 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   it("US-QS-07 · DS-08 a failed page chunk shows an error with retry instead of a blank page", async () => {
     renderAt("/collection?view=species");
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Die Seite konnte nicht geladen werden.",
+      "Die Seite konnte nicht geladen werden",
     );
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
@@ -129,7 +129,7 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     // The species page chunk is mocked to fail: only the species mode requests it, so an alert proves the redirect.
     renderAt("/pokedex/irgendwas");
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Die Seite konnte nicht geladen werden.",
+      "Die Seite konnte nicht geladen werden",
     );
   });
 

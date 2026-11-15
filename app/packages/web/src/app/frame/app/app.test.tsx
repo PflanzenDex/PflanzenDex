@@ -99,7 +99,7 @@ const WISHLIST: Record<string, unknown> = {
     duplicates: [],
     unfit: [],
     hint: {
-      text: "Keine offenen Kandidaten in der Wunschliste",
+      text: "Keine offenen Kandidaten in der Wunschliste.",
       nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
     },
     replenishment: {
@@ -485,7 +485,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
-    expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(await screen.findByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Wünsche" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
