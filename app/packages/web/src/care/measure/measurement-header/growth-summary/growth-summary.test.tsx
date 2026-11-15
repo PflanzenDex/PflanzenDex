@@ -14,9 +14,9 @@ describe("US-WAC-03 growth rate and trend in the view", () => {
     expect(screen.queryByText(/cm\/Jahr/)).toBeNull();
   });
 
-  it('one measurement: "1 Messung — noch kein Wachstum"', () => {
+  it('one measurement: "noch nicht berechenbar (1 Messung)"', () => {
     show({ count: 1, ratePerYear: null, trend: null, signal: null });
-    expect(screen.getByText("1 Messung — noch kein Wachstum")).toBeTruthy();
+    expect(screen.getByText("noch nicht berechenbar (1 Messung)")).toBeTruthy();
   });
 
   it("two measurements: rate in cm/year and the hint that the trend comes with the 3rd measurement", () => {

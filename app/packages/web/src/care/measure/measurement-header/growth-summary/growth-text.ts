@@ -28,9 +28,9 @@ export function growthLines(g: GrowthTrend): GrowthLines {
 
 function rateAndTrend(g: GrowthTrend): GrowthLines {
   if (g.count === 0) return { rate: "noch keine Messung", trend: "" };
-  if (g.count === 1) return { rate: "1 Messung — noch kein Wachstum", trend: "" };
+  if (g.count === 1) return { rate: "noch nicht berechenbar (1 Messung)", trend: "" };
   if (g.ratePerYear === null)
-    return { rate: "noch kein Wachstum: die Messungen liegen am selben Tag", trend: "" };
+    return { rate: "noch nicht berechenbar: die Messungen liegen am selben Tag", trend: "" };
   const rate = rateText(g.ratePerYear);
   if (g.trend) return { rate, trend: TREND_TEXT[g.trend] };
   if (g.count === 2) return { rate, trend: "ab der 3. Messung siehst du hier einen Trend" };

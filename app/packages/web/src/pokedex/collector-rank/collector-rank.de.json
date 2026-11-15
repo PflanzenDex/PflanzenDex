@@ -9,6 +9,8 @@
   "unknown": "unbekannt",
   "countWithPercent": "{caught} von {total} Arten gefangen ({percent} %)",
   "countWithoutPercent": "{caught} von {total} Arten gefangen",
+  "unknownTotal.one": "{count} Art gefangen, Gesamtzahl unbekannt",
+  "unknownTotal.other": "{count} Arten gefangen, Gesamtzahl unbekannt",
   "rowOpens": "– Fortschritt",
   "progressTo": "Fortschritt bis {rank}",
   "remaining": "Noch {remaining} bis „{rank}“",

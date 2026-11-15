@@ -153,14 +153,14 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(screen.getByText(/Höhe\./)).toBeTruthy();
   });
 
-  it('US-WAC-03 shows rate and trend of the view; with one measurement "noch kein Wachstum"', async () => {
+  it('US-WAC-03 shows rate and trend of the view; with one measurement "noch nicht berechenbar (1 Messung)"', async () => {
     fakeServer();
     show();
     await screen.findAllByText("noch keine Messung");
     await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     await openCourse();
-    expect(await screen.findByText("1 Messung — noch kein Wachstum")).toBeTruthy();
+    expect(await screen.findByText("noch nicht berechenbar (1 Messung)")).toBeTruthy();
   });
 
   it("US-WAC-01 saves with Idempotency-Key, reports the measurement and reloads the course", async () => {

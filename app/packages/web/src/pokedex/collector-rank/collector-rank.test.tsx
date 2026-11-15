@@ -10,7 +10,8 @@ describe("US-POK-10 collector rank and progress", () => {
   it("US-POK-10 shows rank, caught count, progress bar and the species missing until the next rank", () => {
     render(<CollectorRank caught={12} />);
     expect(screen.getByText("Setzling")).toBeTruthy();
-    expect(screen.getByText("12 von unbekannt Arten gefangen")).toBeTruthy();
+    expect(screen.getByText("12 Arten gefangen, Gesamtzahl unbekannt")).toBeTruthy();
+    expect(screen.queryByText(/von unbekannt/)).toBeNull();
     expect(screen.getByText("Noch 3 bis „Jungpflanze“")).toBeTruthy();
     const bar = screen.getByRole("progressbar", { name: "Fortschritt bis Jungpflanze" });
     expect(bar.getAttribute("aria-valuenow")).toBe("70");
