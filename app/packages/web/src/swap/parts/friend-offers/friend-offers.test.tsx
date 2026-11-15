@@ -115,7 +115,7 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     const { gets } = server();
     show();
     await screen.findByRole("list", { name: "Angebote von Freunden" });
-    await userEvent.selectOptions(screen.getByLabelText("Art des Angebots"), "plant");
+    await userEvent.selectOptions(screen.getByLabelText("Angebotsform"), "plant");
     await vi.waitFor(() => expect(gets.at(-1)).toContain("type=plant"));
     await userEvent.click(screen.getByLabelText("Nur was dir fehlt"));
     await vi.waitFor(() => expect(gets.at(-1)).toContain("lack=true"));

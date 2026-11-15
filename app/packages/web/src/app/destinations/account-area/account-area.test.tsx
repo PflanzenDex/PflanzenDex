@@ -175,12 +175,13 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
-  it("US-MON-08 the section Erinnerungen names its quiet window Erinnerungspause, not Ruhezeit (issue 897)", async () => {
+  it("US-MON-08 · US-QS-32 the section Erinnerungen names its two pauses by their effect: Ruhezeit and Erinnerungen aussetzen (F-0287)", async () => {
     fakeServer();
     show("/account/reminders");
     const region = await screen.findByRole("region", { name: "Erinnerungen" });
-    expect(await within(region).findByText("Uhrzeit, Erinnerungspause und Messung")).toBeTruthy();
-    expect(region.textContent).not.toContain("Ruhezeit");
+    expect(await within(region).findByText("Uhrzeit, Ruhezeit und Messung")).toBeTruthy();
+    expect(within(region).getByText("Je Anlass bis zu einem Datum")).toBeTruthy();
+    expect(region.textContent).not.toMatch(/Erinnerungspause|Pausen je Anlass|einem Tag/);
   });
 
   it("US-QS-17 · US-ACC-01 the section Profil shows name and e-mail and no sign-out that skips the confirmation (issue 1098)", async () => {
@@ -537,20 +538,22 @@ describe("US-ONB-09 the keeper's switch achievement_views hides the section Erfo
     fakeServer();
     showWith("/account/achievements", { achievement_views: false });
     await waitFor(() => expect(screen.getByTestId("address").textContent).toBe("/account"));
-    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge" })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge und Rückblick" })).toBeNull();
   });
 
   it("US-ONB-09 with achievement_views off the former anchor /account#erfolge does not land on the section", async () => {
     fakeServer();
     showWith("/account#erfolge", { achievement_views: false });
     await waitFor(() => expect(screen.getByTestId("address").textContent).toBe("/account"));
-    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge" })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge und Rückblick" })).toBeNull();
   });
 
   it("US-ONB-09 with achievement_views on the address /account/achievements opens the section Erfolge", async () => {
     fakeServer();
     showWith("/account/achievements", { achievement_views: true });
-    expect(await screen.findByRole("heading", { level: 1, name: "Erfolge" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Erfolge und Rückblick" }),
+    ).toBeTruthy();
     expect(screen.getByTestId("address").textContent).toBe("/account/achievements");
   });
 

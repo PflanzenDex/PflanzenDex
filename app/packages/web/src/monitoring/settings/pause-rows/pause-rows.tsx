@@ -24,7 +24,7 @@ export const withPause = (paused: Paused, o: ReminderOccasion, until: string): P
   return Object.fromEntries(Object.entries(paused).filter(([k]) => k !== o));
 };
 
-/** One row of "Pause je Anlass": a date, "Eine Woche" and, while paused, "Pause beenden". */
+/** One row of "Erinnerungen aussetzen": a date, "Eine Woche" and, while paused, "Pause beenden". */
 export function PauseRow(props: {
   occasion: ReminderOccasion;
   until: string;
@@ -72,7 +72,7 @@ export function PauseRows(props: {
 }) {
   return (
     <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
-      <legend className="mb-1 text-sm font-medium">Pause je Anlass</legend>
+      <legend className="sr-only">Erinnerungen aussetzen</legend>
       <p className="m-0 text-sm text-muted-foreground">
         Eine Pause gilt bis zum gewählten Tag einschließlich. Die Heute-Liste zeigt weiterhin alles,
         was fällig ist; Daten gehen nicht verloren. Einen Anlass ganz auszuschalten geht unter

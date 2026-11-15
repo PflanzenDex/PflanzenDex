@@ -24,7 +24,7 @@ const answer = (over: object = {}) => ({
   ...over,
 });
 
-/** The section with one of its layers open by its address: "Pflegerhythmus" (`rhythm`) or "Pause eintragen" (`pause`). */
+/** The section with one of its layers open by its address: "Pflegerhythmus" (`rhythm`) or "Urlaub eintragen" (`pause`). */
 function show(status: number, body: unknown, at = "/?sheet=rhythm") {
   vi.stubGlobal(
     "fetch",
@@ -113,8 +113,8 @@ describe("US-ACH-04 explicit pause", () => {
       answer({ pauses: [pause] }),
       () => new Response("{}", { status: 200 }),
     );
-    fireEvent.click(await screen.findByRole("button", { name: /Pause vom 01.07.2026 entfernen/ }));
-    expect(await screen.findByText("Pause entfernt.")).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: /Urlaub vom 01.07.2026 entfernen/ }));
+    expect(await screen.findByText("Urlaub entfernt.")).toBeTruthy();
     expect(calls).toEqual(["DELETE /achievements/rhythm/pauses/p1"]);
   });
 
@@ -130,8 +130,8 @@ describe("US-ACH-04 explicit pause", () => {
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-07-14" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
-    expect(await screen.findByText("Pause eingetragen.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    expect(await screen.findByText("Urlaub eingetragen.")).toBeTruthy();
     expect(calls).toEqual(["POST /achievements/rhythm/pauses"]);
   });
 
@@ -148,7 +148,7 @@ describe("US-ACH-04 explicit pause", () => {
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-09-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
   });
 });

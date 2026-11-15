@@ -127,7 +127,11 @@ describe("US-SOZ-07 a friend's shared collection", () => {
   it("US-SOZ-07 facts only: no rank, no score, no comparison between friends; the way back is offered", async () => {
     show({ friend: { name: null }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
-    expect(screen.getByText(/keine Wertung und keinen Vergleich/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Freigegeben von Name unbekannt, ohne Wertung und Vergleich: nur Art, Name, Fangdatum und ob es ein Steckling ist.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );

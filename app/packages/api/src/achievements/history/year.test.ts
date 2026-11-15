@@ -64,6 +64,36 @@ describe("US-ACH-07 year in review through the API logic", () => {
     expect(r.photos).toBeNull();
   });
 
+  it("US-ACH-07 a finished single treatment and a finished course each count once by the date of their last tick (RR-Q2, F-0383)", async () => {
+    const t = (id: string, courseId: string | null, doneAt: string | null) => ({
+      id,
+      specimenId: "a",
+      courseId,
+      done: doneAt !== null,
+      doneAt,
+    });
+    const withTreatments = {
+      ...src,
+      treatments: {
+        open: async () => new Map([["b", [t("t5", "c2", null)]]]),
+        doneMany: async () =>
+          new Map([
+            [
+              "a",
+              [
+                t("t1", null, "2026-11-14"),
+                t("t2", "c1", "2026-03-01"),
+                t("t3", "c1", "2026-03-08"),
+              ],
+            ],
+            ["b", [t("t4", "c2", "2026-04-01")]],
+          ]),
+      },
+    } as unknown as FactSources;
+    const r = await achievementsYear(withTreatments, who, 2026);
+    expect(r.counts).toMatchObject({ treatmentsCompleted: 2 });
+  });
+
   it("US-ACH-07 the year parameter defaults to the running year and refuses future or malformed years", () => {
     expect(parseYear(undefined, "2026-10-17")).toBe(2026);
     expect(parseYear("2025", "2026-10-17")).toBe(2025);

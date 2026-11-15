@@ -107,8 +107,8 @@ describe("US-ONB-05 lock page", () => {
   it("US-ONB-05 a direct link to a locked function shows reason and way and the unlock button", async () => {
     server(() => [swapping()]);
     page("/unlock/swapping");
-    expect(await screen.findByRole("heading", { level: 1, name: "Tauschen" })).toBeTruthy();
-    expect(screen.getByText(/Tauschen: lege noch 3 Pflanzen an\./)).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Tauschbörse" })).toBeTruthy();
+    expect(screen.getByText(/Tauschbörse: lege noch 3 Pflanzen an\./)).toBeTruthy();
     expect(screen.getByText("Noch gesperrt")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Jetzt freischalten" })).toBeTruthy();
   });
@@ -137,17 +137,17 @@ describe("US-ONB-05 lock page", () => {
     page("/unlock/swapping");
     await user.click(await screen.findByRole("button", { name: "Jetzt freischalten" }));
     const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("Tauschen ist jetzt freigeschaltet.");
+    expect(status.textContent).toContain("Tauschbörse ist jetzt freigeschaltet.");
     expect(status.textContent).toContain("Du hast noch keine Freunde zum Tauschen");
     expect(posts).toHaveLength(1);
     expect(posts[0]?.path).toBe("/onboarding/unlocks/swapping");
     expect(typeof posts[0]?.body["timeZone"]).toBe("string");
     expect(posts[0]?.key).toBeTruthy();
-    expect(await screen.findByRole("link", { name: "Tauschen öffnen" })).toBeTruthy();
+    expect(await screen.findByRole("link", { name: "Tauschbörse öffnen" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Jetzt freischalten" })).toBeNull();
     // The button is gone: the focus is on the heading, not on the body (WCAG 2.4.3).
     expect(document.activeElement).toBe(
-      screen.getByRole("heading", { level: 1, name: "Tauschen" }),
+      screen.getByRole("heading", { level: 1, name: "Tauschbörse" }),
     );
   });
 
@@ -176,7 +176,9 @@ describe("US-ONB-05 lock page", () => {
     cleanup();
     page("/unlock/nonsense");
     expect(await screen.findByRole("heading", { level: 1 })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Zum Start" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Zu Heute" }).getAttribute("href")).toBe("/today");
+    expect(screen.getByText("Diese Adresse nennt keine Funktion der App.")).toBeTruthy();
+    expect(screen.queryByText(/Start/)).toBeNull();
   });
 
   it("US-ONB-05 · A-03 an open function is a card with the button that opens it, not an underlined sentence", async () => {
@@ -221,7 +223,7 @@ describe("US-ONB-05 locked rows", () => {
   it("US-ONB-05 locked functions stay visible as rows with the mark and the way, and link to the lock page", async () => {
     server(() => [open("pokedex"), swapping()]);
     page("/");
-    const row = await screen.findByRole("link", { name: /Tauschen: lege noch 3 Pflanzen an/ });
+    const row = await screen.findByRole("link", { name: /Tauschbörse: lege noch 3 Pflanzen an/ });
     expect(within(row).getByText("Noch gesperrt")).toBeTruthy();
     expect(row.getAttribute("href")).toBe("/unlock/swapping");
     expect(screen.queryByText(/Pokédex/)).toBeNull();
@@ -262,7 +264,7 @@ describe("US-ONB-05 locked rows", () => {
     expect(within(row).getByText("Noch gesperrt")).toBeTruthy();
     expect(row.getAttribute("href")).toBe("/unlock/wishlist");
     expect(screen.getByRole("heading", { level: 3, name: "Noch nicht geöffnet" })).toBeTruthy();
-    expect(screen.queryByText(/Tauschen/)).toBeNull();
+    expect(screen.queryByText(/Tauschbörse/)).toBeNull();
     expect(screen.queryByText(/KI-Zugang/)).toBeNull();
   });
 });
@@ -312,7 +314,7 @@ describe("US-QS-14 · US-ONB-05 the unlock pages are one card with buttons", () 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     const card = heading.closest("section") as HTMLElement;
     expect(card.className).toContain("bg-card");
-    const start = within(card).getByRole("link", { name: "Zum Start" });
+    const start = within(card).getByRole("link", { name: "Zu Heute" });
     const all = within(card).getByRole("link", { name: "Alle Funktionen ansehen" });
     expect(start.className).not.toContain("underline");
     expect(all.className).not.toContain("underline");
@@ -340,7 +342,7 @@ describe("US-QS-15 the unlock pages are one screen (DS-61, NFR-13)", () => {
   it("US-QS-15 a locked function's card is the one-screen frame: at 200 % text only its content region scrolls", async () => {
     server(() => [swapping()]);
     page("/unlock/swapping");
-    const heading = await screen.findByRole("heading", { level: 1, name: "Tauschen" });
+    const heading = await screen.findByRole("heading", { level: 1, name: "Tauschbörse" });
     expect(heading.closest("section")?.hasAttribute("data-fit-screen")).toBe(true);
   });
 
