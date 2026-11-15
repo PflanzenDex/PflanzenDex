@@ -141,6 +141,30 @@ describe("US-WUN-01 what a candidate shows", () => {
   });
 });
 
+describe("US-QS-32 one name per wish (F-0067)", () => {
+  it("US-QS-32 a German name equal to the scientific name is no German name: the title is the name once", async () => {
+    wishes.seed("anna", {
+      id: "m",
+      name: "Monstera adansonii",
+      german: "Monstera adansonii",
+      targetZoneId: Z3,
+    });
+    const [c] = (await candidates()).candidates;
+    expect(c).toMatchObject({ title: "Monstera adansonii", german: "Monstera adansonii" });
+  });
+
+  it("US-QS-32 the duplicate and unfit hints name the wish once too", async () => {
+    wishes.seed("anna", {
+      id: "m",
+      name: "Monstera adansonii",
+      german: "Monstera adansonii",
+      targetZoneId: null,
+    });
+    const list = await candidates();
+    expect(list.unfit.map((u) => u.title)).toEqual(["Monstera adansonii"]);
+  });
+});
+
 describe("US-WUN-01 empty list and the next action (P-09)", () => {
   it("US-WUN-01 without open candidates the text is 'Keine offenen Kandidaten in der Wunschliste.'", async () => {
     const list = await candidates();
@@ -255,9 +279,10 @@ describe("FR-WUN-03 hints for wishes without a fitting zone", () => {
     wishes.seed("anna", { id: "a", name: "Aloe", german: "Aloe", targetZoneId: "zone-1" });
     const { unfit } = await candidates();
     expect(unfit).toHaveLength(1);
+    // A German name equal to the scientific one is not doubled in the title (US-QS-32, F-0067).
     expect(unfit[0]).toMatchObject({
       id: "a",
-      title: "Aloe (Aloe)",
+      title: "Aloe",
       kind: "zone_outside",
       zone: "Anzucht",
     });

@@ -232,7 +232,7 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
 
   it("US-QS-08 · WCAG 2.5.3 · US-QS-32 · SG-ICON-01 the species entry's accessible name is its visible text (no aria-label, the chevron is an icon, not text)", async () => {
     await open();
-    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    const entry = screen.getByRole("button", { name: /Aloe vera/ });
     expect(entry.hasAttribute("aria-label")).toBe(false);
     expect(entry.textContent).not.toContain("›");
     expect(entry.querySelector("svg[data-chevron]")?.getAttribute("aria-hidden")).toBe("true");
@@ -240,12 +240,31 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
 
   it("US-POK-09 · US-QS-22 a species opens its details in a layer and Escape returns the focus to its entry", async () => {
     await open();
-    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    const entry = screen.getByRole("button", { name: /Aloe vera/ });
     await userEvent.click(entry);
     const layer = await screen.findByRole("dialog", { name: "Echte Aloe" });
     expect(within(layer).getByText("Gattung: Aloe")).toBeTruthy();
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(entry);
+  });
+});
+
+describe("US-QS-32 the species list names a species the SG-TYPE-08 way (F-0119)", () => {
+  it("US-QS-32 the entry leads with the German name, upright; the scientific name is italic on the meta line before the catch date", async () => {
+    await open();
+    const entry = document.querySelector('[data-species="Ficus lyrata"]') as HTMLElement;
+    expect(within(entry).getByText("Geigenfeige").closest("i")).toBeNull();
+    const latin = within(entry).getByText("Ficus lyrata");
+    expect(latin.tagName).toBe("I");
+    expect(latin.parentElement?.textContent).toBe("Ficus lyrata · gefangen 05.03.2026");
+  });
+
+  it("US-QS-32 without a German name the scientific name is the one italic title, once", async () => {
+    await open([species("Opuntia ficus", { caughtDate: { date: null, source: "unknown" } })]);
+    const entry = document.querySelector('[data-species="Opuntia ficus"]') as HTMLElement;
+    expect(within(entry).getAllByText("Opuntia ficus")).toHaveLength(1);
+    expect(within(entry).getByText("Opuntia ficus").tagName).toBe("I");
+    expect(entry.textContent).toContain("Datum unbekannt");
   });
 });

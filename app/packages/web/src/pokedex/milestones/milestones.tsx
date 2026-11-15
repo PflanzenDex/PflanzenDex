@@ -1,4 +1,5 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
+import { SpeciesNameInline } from "@/shared/species-name/species-name";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { dateText } from "@/shared/lib/format";
@@ -21,8 +22,6 @@ export const MILESTONES_LAYER = "milestones";
 const PAGE_SIZE = 2;
 
 const label = (m: Milestone) => (m.title === "" ? ui(m.level) : `${m.title}: ${ui(m.level)}`);
-const named = (s: { latin: string; german: string | null }) =>
-  s.german === null ? s.latin : `${s.german} (${s.latin})`;
 
 /** The milestones of the tree with the catch date of each species (US-POK-11). */
 function overviewOf(caught: readonly CaughtSpecies[], tree: MilestoneTree) {
@@ -64,7 +63,13 @@ function Open(props: { milestone: Milestone }) {
         />
       </div>
       <span>
-        {ui("remaining", { remaining: m.remaining, missing: m.missing.map(named).join(", ") })}
+        {ui("remainingLead", { remaining: m.remaining })}{" "}
+        {m.missing.map((s, i) => (
+          <Fragment key={s.latin}>
+            {i > 0 ? ", " : null}
+            <SpeciesNameInline scientific={s.latin} german={s.german} />
+          </Fragment>
+        ))}
       </span>
     </div>
   );

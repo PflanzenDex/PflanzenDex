@@ -1,8 +1,13 @@
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { SpeciesName } from "@/shared/species-name/species-name";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
 import { Discard } from "../../../candidate-card/discard/discard";
+import table from "../../../wishlist.de.json";
+
+const t = texts(table);
 
 /** The layer of one wish is named after the wish: `?sheet=wish-<id>` (US-QS-22). */
 export const wishLayerId = (id: string): string => `wish-${id}`;
@@ -33,24 +38,26 @@ export function WishRow(props: {
         size="sm"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${rank}. ${c.title} ${c.zoneText} · Schwierigkeit: ${level}`}
+        aria-label={`${rank}. ${c.title} ${c.zoneText} · ${t("card.difficulty", { level })}`}
         className="h-auto min-w-0 shrink-0 grow basis-28 flex-col items-start justify-start gap-0 whitespace-normal px-1 py-1 text-left"
         onClick={(event) => openLayer(event.currentTarget)}
       >
-        <span className="break-words font-semibold">{`${rank}. ${c.title}`}</span>
-        <span className="break-words text-sm font-normal text-muted-foreground">
-          {`${c.zoneText} · Schwierigkeit: ${level}`}
-        </span>
+        <SpeciesName
+          lead={`${rank}. `}
+          scientific={c.name}
+          german={c.german}
+          meta={`${c.zoneText} · ${t("card.difficulty", { level })}`}
+        />
       </Button>
       <Button
         type="button"
         variant="outline"
         size="sm"
         disabled={props.busy}
-        aria-label={`Gekauft: ${c.title}`}
+        aria-label={t("card.buyLabel", { title: c.title })}
         onClick={() => props.onBuy(c)}
       >
-        Gekauft
+        {t("card.buy")}
       </Button>
       <Discard c={c} onDiscard={props.onDiscard} busy={props.busy} compact />
     </div>

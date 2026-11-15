@@ -241,7 +241,11 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
     expect(within(milestones).getByText("Cactaceae: Vollständig")).toBeTruthy();
     await userEvent.click(within(milestones).getByRole("button", { name: "Weiter" }));
     expect(await within(milestones).findByText("Citrus: Vollständig")).toBeTruthy();
-    expect(within(milestones).getByText("Noch 1: Bitterorange (Citrus aurantium)")).toBeTruthy();
+    // The German name leads, the scientific name is italic in brackets (US-QS-32, SG-TYPE-08).
+    const remaining = within(milestones)
+      .getAllByText(/^Noch 1:/)
+      .find((el) => el.textContent === "Noch 1: Bitterorange (Citrus aurantium)");
+    expect(remaining?.querySelector("i")?.textContent).toBe("Citrus aurantium");
   });
 
   it("US-POK-10 the rank and N count the caught species of the tree; a caught species outside it is named as not counted yet (owner decision 2026-11-07)", async () => {

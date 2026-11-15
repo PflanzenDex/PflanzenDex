@@ -388,3 +388,30 @@ describe("US-QS-14 · US-BES-05 the comparison hosted by the Sammlung", () => {
     expect(onCaption).toHaveBeenLastCalledWith(null);
   });
 });
+
+describe("US-QS-32 the comparison names a species the SG-TYPE-08 way (F-0121)", () => {
+  it("US-QS-32 the entry leads with the German name, upright; the botanical name is italic on the meta line before the values", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", { name: "Vergleichswerte: Bogenhanf" });
+    const german = within(entry).getByText("Bogenhanf");
+    expect(german.closest("i")).toBeNull();
+    const latin = within(entry).getByText("Dracaena trifasciata");
+    expect(latin.tagName).toBe("I");
+    expect(latin.parentElement?.textContent).toBe("Dracaena trifasciata · Leicht · Zone 2");
+  });
+
+  it("US-QS-32 without a German name the botanical name is the one italic title, not repeated", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [row({ speciesName: "Dracaena trifasciata" })],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: "Vergleichswerte: Dracaena trifasciata",
+    });
+    expect(within(entry).getAllByText("Dracaena trifasciata")).toHaveLength(1);
+    expect(within(entry).getByText("Dracaena trifasciata").tagName).toBe("I");
+  });
+});

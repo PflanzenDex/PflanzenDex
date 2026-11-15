@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
@@ -9,16 +9,18 @@ afterEach(cleanup);
 
 const wish = {
   id: "w1",
+  name: "Aloe vera",
+  german: "Aloe",
   title: "Aloe (Aloe vera)",
   zoneText: "Zone 2 · 3 Pflanzen",
   difficulty: null,
   priority: { kind: "thinnest" },
 } as unknown as Candidate;
 
-function show() {
+function show(c: Candidate = wish) {
   return render(
     <MemoryRouter>
-      <WishRow c={wish} rank={1} onBuy={vi.fn()} onDiscard={vi.fn()} busy={false} />
+      <WishRow c={c} rank={1} onBuy={vi.fn()} onDiscard={vi.fn()} busy={false} />
     </MemoryRouter>,
   );
 }
@@ -35,5 +37,36 @@ describe("US-QS-22 a compact wish row (issue 1045)", () => {
     expect(open.textContent).toContain("Schwierigkeit: unbekannt");
     expect(open.textContent).toContain("Zone 2 · 3 Pflanzen");
     expect(open.textContent).not.toContain("—");
+  });
+});
+
+describe("US-QS-32 the wish row names a species the SG-TYPE-08 way (F-0067)", () => {
+  it("US-QS-32 the row leads with the German name, upright; the scientific name is italic on the meta line", () => {
+    const { container } = show();
+    const title = within(container).getByText("1. Aloe");
+    expect(title.querySelector("i")).toBeNull();
+    const latin = within(container).getByText("Aloe vera");
+    expect(latin.tagName).toBe("I");
+    expect(latin.parentElement?.textContent).toBe(
+      "Aloe vera · Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt",
+    );
+  });
+
+  it("US-QS-32 a wish without a German name shows its scientific name once, italic, and no doubled name", () => {
+    const { container } = show({ ...wish, german: null, title: "Aloe vera" } as Candidate);
+    expect(within(container).getAllByText("Aloe vera")).toHaveLength(1);
+    expect(within(container).getByText("Aloe vera").tagName).toBe("I");
+    expect(container.textContent).not.toContain("Aloe vera (Aloe vera)");
+  });
+
+  it("US-QS-32 a German name equal to the scientific name is not a second name in the row (F-0067)", () => {
+    const { container } = show({
+      ...wish,
+      name: "Monstera adansonii",
+      german: "Monstera adansonii",
+      title: "Monstera adansonii",
+    } as Candidate);
+    expect(container.textContent).not.toContain("Monstera adansonii Monstera adansonii");
+    expect(within(container).getAllByText("Monstera adansonii")).toHaveLength(1);
   });
 });

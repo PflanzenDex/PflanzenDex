@@ -17,6 +17,7 @@ import {
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/shared/ui/button/button";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { SpeciesName } from "@/shared/species-name/species-name";
 import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
@@ -97,8 +98,12 @@ function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] 
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">
-        <span className="font-semibold">{row.speciesName}</span>
-        <span className="text-sm font-normal text-muted-foreground">{entryLine(row, hidden)}</span>
+        {/* `speciesName` is the German name, or the botanical name where there is none: SpeciesName takes that as none (US-QS-32, F-0121). */}
+        <SpeciesName
+          scientific={row.botanicalName}
+          german={row.speciesName}
+          meta={entryLine(row, hidden)}
+        />
       </span>
       <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
     </Button>
