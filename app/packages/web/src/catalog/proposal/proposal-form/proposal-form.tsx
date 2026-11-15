@@ -59,12 +59,7 @@ function RefusalNotice(props: {
   return (
     <>
       {error && !props.namesField && (
-        <Banner
-          variant="error"
-          tabIndex={-1}
-          ref={props.alertRef}
-          className="md:col-span-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
+        <Banner variant="error" tabIndex={-1} ref={props.alertRef} className="md:col-span-2">
           {refusalText(error)}
         </Banner>
       )}

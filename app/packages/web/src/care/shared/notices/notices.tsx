@@ -20,12 +20,7 @@ export function RefusalAlert({ error }: { error: ApiError }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => ref.current?.focus(), [error]);
   return (
-    <Banner
-      variant="error"
-      tabIndex={-1}
-      ref={ref}
-      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
+    <Banner variant="error" tabIndex={-1} ref={ref}>
       {refusalText(error)}
     </Banner>
   );

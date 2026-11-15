@@ -54,12 +54,7 @@ type Sent<F extends FieldValues> = ReturnType<typeof useSaveForm<F>>;
 export function RefusalAlert<F extends FieldValues>({ sent }: { sent: Sent<F> }) {
   if (sent.alertText === null) return null;
   return (
-    <Banner
-      variant="error"
-      tabIndex={-1}
-      ref={sent.alertRef}
-      className="md:col-span-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
+    <Banner variant="error" tabIndex={-1} ref={sent.alertRef} className="md:col-span-2">
       {sent.alertText}
     </Banner>
   );

@@ -107,12 +107,7 @@ function GroupForm(props: {
       >
         {props.children(form.control)}
         {alertText !== null && (
-          <Banner
-            variant="error"
-            tabIndex={-1}
-            ref={alertRef}
-            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
+          <Banner variant="error" tabIndex={-1} ref={alertRef}>
             {alertText}
           </Banner>
         )}

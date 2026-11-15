@@ -29,7 +29,6 @@ export function FormNotices(props: {
           variant="error"
           tabIndex={-1}
           ref={props.alertRef}
-          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           {...(props.onRetry ? { action: { label: t("retry"), onClick: props.onRetry } } : {})}
         >
           {props.alertText}
