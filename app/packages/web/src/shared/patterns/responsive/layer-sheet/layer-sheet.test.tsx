@@ -844,3 +844,88 @@ describe("US-QS-15 a second Back keeps the layer and its question; a layer opene
     expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
   });
 });
+
+/** A filter-like replace inside the layer, without state, as the catalog's filters do (US-QS-15, issue 2145). */
+function ReplaceInside() {
+  const [, setParams] = useSearchParams();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setParams(
+          (prev) => {
+            prev.set("q", "rosa");
+            return prev;
+          },
+          { replace: true },
+        )
+      }
+    >
+      Filter setzen
+    </button>
+  );
+}
+
+describe("US-QS-15 a layer keeps its input through a second Back; the hold stays on the entry below (issue 2145)", () => {
+  it("US-QS-15 a replace without state inside an open layer adds no history entry, so a filter in the layer does not ask for an entry", async () => {
+    setViewportWidth(360);
+    window.history.replaceState(null, "", "/start");
+    render(
+      <BrowserRouter>
+        <LayerHost>
+          <LayerOpener id="liste">Liste</LayerOpener>
+          <LayerSheet id="liste" title="Liste">
+            <ReplaceInside />
+          </LayerSheet>
+        </LayerHost>
+      </BrowserRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Liste" }));
+    await screen.findByRole("dialog", { name: "Liste" });
+    const entries = window.history.length;
+    await userEvent.click(screen.getByRole("button", { name: "Filter setzen" }));
+    await waitFor(() => expect(new URL(window.location.href).searchParams.get("q")).toBe("rosa"));
+    expect(window.history.length).toBe(entries);
+    expect(screen.getByRole("dialog", { name: "Liste" })).toBeTruthy();
+  });
+
+  it("US-QS-15 a Back that jumps past the entry below the layer is not pulled forward: no question, no layer", async () => {
+    setViewportWidth(360);
+    keys = [];
+    window.history.replaceState(null, "", "/before");
+    window.history.pushState(null, "", "/start");
+    render(
+      <BrowserRouter>
+        <TypingLayer />
+      </BrowserRouter>,
+    );
+    await openAndType("Basilikum");
+    // Three entries back: the entry below the layer is the one at /start, the jump lands on /before.
+    window.history.go(-3);
+    await waitFor(() => expect(seen.pathname).toBe("/before"));
+    expect(seen.search).toBe("");
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+    expect(window.location.pathname).toBe("/before");
+  });
+
+  it("US-QS-15 a second Back while the question is open keeps the field as the focus target; Weiter bearbeiten returns to the field", async () => {
+    setViewportWidth(360);
+    keys = [];
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    const field = screen.getByLabelText("Text");
+    window.history.back();
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    const before = keys.length;
+    window.history.back();
+    await waitFor(() => expect(keys.length).toBeGreaterThan(before));
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    const question = screen.getByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect((field as HTMLInputElement).value).toBe("Basilikum");
+  });
+});

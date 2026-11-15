@@ -7,6 +7,8 @@ import {
   type SetStateAction,
 } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
+import { BELOW, belowOf, type Below } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { isBelow } from "@/shared/patterns/responsive/layer-sheet/layer-sheet.history";
 import { FROM_APP, GUARD, guardState, listSearch, stateFlag, type FormKind } from "./form-address";
 
 export type Ref<T> = MutableRefObject<T>;
@@ -19,11 +21,12 @@ export type Latest = {
   navigate: ReturnType<typeof useNavigate>;
   type: ReturnType<typeof useNavigationType>;
 };
-/** The last form the address named: where it was, and which form it was (a Back that passes it puts it back, issue 2145). */
+/** The last form the address named: where it was, which form it was, and the entry directly below it (issue 2145). */
 export type Named = {
   at: { pathname: string; search: string; hash: string };
   kind: FormKind;
   plantId: string;
+  below: Below | null;
 };
 /** What the history handling remembers between renders: input unsaved, a guard above the form, a close in progress. */
 export type Refs = {
@@ -42,29 +45,34 @@ export function useLatest(value: Latest): Ref<Latest> {
   return ref;
 }
 
-/** Keeps the last form the address named, so a Back that passes it can put it back (issue 2145). */
+/** Keeps the last form the address named, on its own entry and not on the guard above it (issue 2145). */
 export function useKeepNamed(refs: Refs, location: Latest["location"], current: Latest["current"]) {
   useLayoutEffect(() => {
-    if (!current) return;
+    if (!current || stateFlag(location.state, GUARD)) return;
     const { pathname, search, hash } = location;
+    // Without a recorded entry below (the push of a reload is not seen yet), the list the form is addressed from is it.
+    const below = belowOf(location.state) ??
+      refs.named.current?.below ?? { pathname, search: listSearch(search) };
     refs.named.current = {
       at: { pathname, search, hash },
       kind: current.kind,
       plantId: current.plantId,
+      below,
     };
   });
 }
 
 /**
- * Whether this render holds a form the address no longer names (issue 2145): a Back landed on the list while the guard
- * was armed and the input unsaved, which is the second of two quick Backs. The form stays on screen in this very render,
- * so its input survives; `usePopGuard` puts it back with its question. Same rule as `isHeld` of the layers.
+ * Whether this render holds a form the address no longer names (issue 2145): a Back landed on the entry directly below the
+ * form while the guard was armed and the input unsaved. That Back is the second of two quick Backs. The form stays on screen
+ * in this very render, so its input survives; `usePopGuard` puts it back with its question. Same rule as `isHeld` of the layers.
  */
 export function isHeldForm(p: {
   enabled: boolean;
   current: Latest["current"];
   type: Latest["type"];
   state: unknown;
+  landed: Below;
   refs: Refs;
 }): boolean {
   const { refs } = p;
@@ -76,11 +84,14 @@ export function isHeldForm(p: {
     refs.guarded.current &&
     refs.dirty.current &&
     !refs.leaving.current &&
-    refs.named.current !== null
+    isBelow(p.landed, refs.named.current?.below ?? null)
   );
 }
 
-/** A form opened without the app (a reload or a link) gets a list entry below it, so Back closes it (US-QS-15). */
+/**
+ * A form opened without the app (a reload or a link) gets a list entry below it, so Back closes it (US-QS-15). The list is
+ * the entry directly below the form, which a Back onto it holds the form on (issue 2145).
+ */
 export function useOrdering(latest: Ref<Latest>, fromApp: boolean, key: string, hasForm: boolean) {
   const ordering = useRef(false);
   useLayoutEffect(() => {
@@ -92,20 +103,25 @@ export function useOrdering(latest: Ref<Latest>, fromApp: boolean, key: string, 
     if (ordering.current) return;
     ordering.current = true;
     const { pathname, hash, search } = c.location;
-    void c.navigate({ pathname, search: listSearch(search), hash }, { replace: true });
-    void c.navigate({ pathname, search, hash }, { state: { [FROM_APP]: true } });
+    const list = listSearch(search);
+    void c.navigate({ pathname, search: list, hash }, { replace: true });
+    void c.navigate(
+      { pathname, search, hash },
+      { state: { [FROM_APP]: true, [BELOW]: { pathname, search: list } } },
+    );
   }, [key, fromApp, hasForm, latest]);
 }
 
 /**
  * The second of two quick Backs passed the form, which the render holds (`isHeldForm`): the form goes back on its entry
- * above the list, with its guard above that, and the question comes up (US-QS-32, issue 2145).
+ * above the entry below it, with its guard above that, and the question comes up (US-QS-32, issue 2145). Without unsaved
+ * input left there is nothing to ask for, so nothing comes back.
  */
 function reopenForm(c: Latest, refs: Refs, setAsking: Dispatch<SetStateAction<boolean>>): void {
   const named = refs.named.current;
-  if (!named) return;
+  if (!named || !refs.dirty.current) return;
   setAsking(true);
-  void c.navigate(named.at, { state: { [FROM_APP]: true } });
+  void c.navigate(named.at, { state: { [FROM_APP]: true, [BELOW]: named.below } });
   void c.navigate(named.at, { state: guardState(true) });
 }
 

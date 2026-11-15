@@ -1,5 +1,6 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
+import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import {
   FORM_PARAM,
   FROM_APP,
@@ -72,9 +73,13 @@ function useFormInput(
       setNotice(null);
       // A form opened from a layer replaces that layer's entry, so its close is one step back to the list.
       const replaces = new URLSearchParams(c.location.search).has(SHEET_PARAM);
+      // The entry below the form is the list, or, when the form replaces a layer, the entry below that layer (issue 2145).
+      const below = replaces
+        ? belowOf(c.location.state)
+        : { pathname: c.location.pathname, search: c.location.search };
       void c.navigate(
         { pathname: c.location.pathname, search: `?${next}`, hash: c.location.hash },
-        { replace: replaces, state: { [FROM_APP]: true } },
+        { replace: replaces, state: { [FROM_APP]: true, [BELOW]: below } },
       );
     },
     [latest, setNotice],
@@ -117,7 +122,8 @@ export function useFormAddress(enabled: boolean): FormAddress {
     named: { current: null },
   }));
   // A Back that passes the form with unsaved input holds it on screen until its question is answered (issue 2145).
-  const held = isHeldForm({ enabled, current, type, state: location.state, refs });
+  const landed = { pathname: location.pathname, search: location.search };
+  const held = isHeldForm({ enabled, current, type, state: location.state, landed, refs });
   // The form the render shows: the one the address names, or the one a held render keeps.
   const shown = current ?? (held ? refs.named.current : null);
   const latest = useLatest({ location, current, held, navigate, type });

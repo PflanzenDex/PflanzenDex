@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../../../insights/distribution-test-helpers";
@@ -293,5 +293,44 @@ describe("US-BES-18 change the notes in their layer", () => {
     expect(await within(layer).findByRole("alert")).toBeTruthy();
     expect(field.value).toBe(NOTE);
     expect(within(layer).queryByText(/gespeichert/)).toBeNull();
+  });
+});
+
+/** The navigator and the address of the render, so a test presses Back the way the browser does (US-BES-18, issue 2145). */
+const route: { navigate: NavigateFunction | null; search: string } = { navigate: null, search: "" };
+function Route() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  route.navigate = navigate;
+  route.search = location.search;
+  return null;
+}
+
+describe("US-BES-18 unsaved notes survive a second Back (US-QS-15, issue 2145)", () => {
+  it("US-BES-18 a second Back with unsaved notes keeps the typed note in its layer and asks; the address still names the notes", async () => {
+    fakeServer();
+    render(
+      <MemoryRouter>
+        <Route />
+        <CollectionPage
+          api="http://api"
+          token={async () => "tok"}
+          newSpecies={null}
+          onSpeciesChoose={vi.fn()}
+          onCompleted={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    const { field } = await notesForm("Notiz schreiben");
+    await userEvent.type(field, NOTE);
+    // Two steps back: the notes entry's guard, then the notes, and the plant overview below them is where it lands.
+    act(() => {
+      route.navigate?.(-1);
+      route.navigate?.(-1);
+    });
+    await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    expect(field.isConnected).toBe(true);
+    expect(field.value).toBe(NOTE);
+    expect(route.search).toContain("sheet=notes-e1");
   });
 });
