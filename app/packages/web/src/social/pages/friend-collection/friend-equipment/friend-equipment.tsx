@@ -64,7 +64,7 @@ export function FriendEquipment(props: {
 }) {
   const { api, friendId, name } = props;
   const load = useCallback((t: string) => loadFriendEquipment(api, t, friendId), [api, friendId]);
-  // No heading of its own: the layer's title ("Geräte von …") names the section (US-QS-32, issue 1981); the list is named below.
+  // No heading of its own: the layer's title is the one heading and names the dialog (US-QS-32, issue 2002, F-0267); the list is named below.
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <LoadFrame

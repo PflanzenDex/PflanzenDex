@@ -42,7 +42,7 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
       </h2>
       <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 @lg:grid-cols-2 @3xl:grid-cols-3">
         {view.sensors.map((s) => {
-          // The select is named by its visible text and the sensor's name (WCAG 2.5.3, issue 1981).
+          // The select is named by its visible text and the sensor's name (WCAG 2.5.3, issue 1942, F-0158).
           const labelId = `${ids}-${s.id}-label`;
           const nameId = `${ids}-${s.id}-name`;
           return (
