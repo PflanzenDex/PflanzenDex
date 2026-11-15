@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { DraftsSection } from "./drafts-section";
@@ -38,11 +38,16 @@ function fakeServer(rows: Record<string, unknown>[]) {
   );
   return calls;
 }
+/** The address of the router: the layer the last control opened (`?sheet=<id>`, US-QS-15). */
+function Address() {
+  return <output data-testid="address">{useLocation().search}</output>;
+}
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
       <MemoryRouter>
         <DraftsSection api="http://api" token={token} />
+        <Address />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -52,10 +57,20 @@ afterEach(() => {
 });
 
 describe("US-KI-09 inbox of AI drafts", () => {
-  it("US-KI-09 says when there are no drafts", async () => {
+  it("US-KI-09 FX-81 says what will come here and offers 'Auftrag anlegen', which opens the new-task layer", async () => {
     fakeServer([]);
+    const user = userEvent.setup();
     show();
-    expect(await screen.findByText("Keine Entwürfe vorhanden.")).toBeTruthy();
+    const line = await screen.findByRole("heading", { level: 3, name: "Noch keine Entwürfe" });
+    const box = line.parentElement as HTMLElement;
+    expect(within(box).getByText("Hier erscheinen die Ergebnisse deiner Aufträge.")).toBeTruthy();
+    expect(
+      within(box)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Auftrag anlegen"]);
+    await user.click(within(box).getByRole("button", { name: "Auftrag anlegen" }));
+    expect(screen.getByTestId("address").textContent).toBe("?sheet=new-task");
   });
 
   it("US-KI-09 shows type, name, connection, source and the label 'not reviewed' (KI-R5)", async () => {

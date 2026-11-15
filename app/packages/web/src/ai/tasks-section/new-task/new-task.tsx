@@ -3,8 +3,13 @@ import { Button } from "@/shared/ui/button/button";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import { copyText } from "@/shared/platform/browser/clipboard";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { useWriteAction } from "../../../shared/data";
 import { createTask, previewTask, type AiTaskType } from "../../api/connections-api";
+import { HOWTO_LAYER, StepButton } from "../../clients-section/connect-step/connect-step";
+import table from "../../ai.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -75,6 +80,21 @@ function NoClient() {
   );
 }
 
+/** Without a client: the line, then the step to connect one above the disabled "Auftrag anlegen" (FX-81). */
+function NoClientStep() {
+  return (
+    <>
+      <NoClient />
+      <StepButton
+        layer={HOWTO_LAYER}
+        label={ui("step.connect")}
+        variant="secondary"
+        className="self-start"
+      />
+    </>
+  );
+}
+
 function Messages(props: { error: string | null; status: string | null }) {
   return (
     <>
@@ -130,7 +150,7 @@ export function NewTask(props: {
         }}
         onReference={setReference}
       />
-      {!props.connected && <NoClient />}
+      {!props.connected && <NoClientStep />}
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"

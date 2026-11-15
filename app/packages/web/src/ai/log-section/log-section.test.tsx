@@ -28,9 +28,14 @@ afterEach(() => {
 });
 
 describe("US-KI-10 log of AI actions", () => {
-  it("US-KI-10 says when nothing happened", async () => {
+  it("US-KI-10 FX-81 says what the log holds (reads and changes) and offers no action", async () => {
     show([]);
-    expect(await screen.findByText("Dein KI-Client hat noch nichts getan.")).toBeTruthy();
+    expect(
+      await screen.findByText(
+        "Noch nichts geschehen. Hier steht, was dein KI-Client in deinem Konto liest und ändert.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("US-KI-10 lists operation, effect, client and time", async () => {
