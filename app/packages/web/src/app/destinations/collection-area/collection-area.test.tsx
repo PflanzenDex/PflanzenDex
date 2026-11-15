@@ -1,16 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { startTransition, useCallback, useLayoutEffect, useState, type ReactNode } from "react";
-import {
-  MemoryRouter,
-  NavigationType,
-  Router,
-  UNSAFE_createMemoryHistory,
-  useLocation,
-  useNavigate,
-  type Location,
-  type NavigateFunction,
-} from "react-router";
+import { useLayoutEffect } from "react";
+import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import { findCardButton } from "../../../collection/specimens/tests/plants-test-helpers";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -20,10 +11,17 @@ import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-te
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { FeaturesProvider } from "@/shared/data";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import {
   GUARD,
   stateFlag,
 } from "../../../collection/plants-screen/plant-layers/plant-forms/address/form-address";
+import {
+  GatedRouter,
+  hold,
+  releaseHold,
+  resetHold,
+} from "@/shared/patterns/responsive/layer-sheet/layer-sheet.test-helpers";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -39,6 +37,17 @@ const card = {
   lastMeasurement: null,
   treatment: null,
   moreTreatments: 0,
+};
+/** The row the API answers a written measurement with (US-WAC-01). */
+const savedRow = {
+  id: "m1",
+  specimenId: "e1",
+  date: "2026-11-15",
+  value: 44,
+  quality: "healthy",
+  note: null,
+  ratedBy: "keeper",
+  photo: null,
 };
 const emptyView = {
   specimenId: "e1",
@@ -57,6 +66,7 @@ beforeAll(async () => {
     import("../../../collection/collection-page/collection-page"),
     import("../../../care/measure/measure-page/measure-page"),
     import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("@/shared/platform/routing/route-focus/focus-moves"),
   ]);
 }, 30_000);
 
@@ -66,15 +76,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** The API of one plant (Bogenhanf) with its measurements, locations and archive. */
-function stubCollection() {
+/** The API of one plant (Bogenhanf) with its measurements, locations and archive; `saves` collects the measurements written. */
+function stubCollection(saves: string[] = []) {
   vi.stubGlobal(
     "fetch",
-    vi.fn<typeof fetch>(async (url) => {
+    vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+      if (path === "/specimens/e1/measurements" && init?.method === "POST") {
+        saves.push(String(init.body));
+        return response(201, savedRow);
+      }
       if (path === "/specimens/e1/measurements") return response(200, emptyView);
       return answerCardRead(new URL(String(url)), [card as SpecimenCard]) ?? response(404, {});
     }),
@@ -128,65 +142,6 @@ function Address() {
 const back = () => act(() => route.navigate?.(-1));
 const forward = () => act(() => route.navigate?.(1));
 
-/**
- * The router of the tests of issue 2154: a MemoryRouter whose history changes can be held back. The real routers
- * apply a history change in a transition, so a question set at normal priority can be on screen while the guard entry
- * is still pending. While `hold.on` is set, a change that pushes or replaces an entry waits in `hold.queued`; a later
- * change replaces it, as the last update of a transition decides what renders. A back step applies at once and drops
- * the held change. `releaseHold` applies the held change in a transition. A suspending child would hold the transition
- * too, but inside `act` such a render never settled in these tests, so the hold does not suspend.
- */
-type Routed = { action: NavigationType; location: Location };
-const hold: { on: boolean; queued: Routed | null; apply: ((next: Routed) => void) | null } = {
-  on: false,
-  queued: null,
-  apply: null,
-};
-function GatedRouter({ entry, children }: { entry: string; children: ReactNode }) {
-  const [history] = useState(() =>
-    UNSAFE_createMemoryHistory({ initialEntries: [entry], v5Compat: true }),
-  );
-  const [state, setStateImpl] = useState<Routed>({
-    action: history.action,
-    location: history.location,
-  });
-  const apply = useCallback((next: Routed) => startTransition(() => setStateImpl(next)), []);
-  useLayoutEffect(() => {
-    hold.apply = apply;
-    // The layout effects of the children run before this one: the ordering of a form opened by its address may have
-    // moved the history already. The router catches up with it, so the screen it shows is the entry the history is on.
-    apply({ action: history.action, location: history.location });
-    return history.listen((update) => {
-      if (hold.on && update.action !== NavigationType.Pop) {
-        hold.queued = update;
-        return;
-      }
-      hold.queued = null;
-      apply(update);
-    });
-  }, [history, apply]);
-  return (
-    <Router location={state.location} navigationType={state.action} navigator={history}>
-      {children}
-    </Router>
-  );
-}
-/** Applies the held change in a transition, as the router would once the guard entry renders (issue 2154). */
-async function releaseHold() {
-  hold.on = false;
-  const queued = hold.queued;
-  hold.queued = null;
-  await act(async () => {
-    if (queued) hold.apply?.(queued);
-    await Promise.resolve();
-  });
-}
-/** Clears the hold between tests. */
-function resetHold() {
-  hold.on = false;
-  hold.queued = null;
-  hold.apply = null;
-}
 /** Renders the area under the gated router, for the tests that hold a guard entry (issue 2154). */
 function renderHeldAt(entry: string) {
   render(
@@ -526,6 +481,173 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     });
     await forwardOpensThenLeaves();
   }, 15_000);
+});
+
+/**
+ * A save that keeps the measure view open (issue 2165): the form settles, and the history must not keep the guard entry the
+ * typed input pushed. The measurement is saved with the form's own button, as a person does.
+ */
+describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (issue 2165)", () => {
+  /** Types a measurement, waits for the guard entry to commit (PF-031), saves and waits for the saved toast. */
+  async function typeAndSave(saves: string[]) {
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await waitFor(() => expect(saves).toHaveLength(1), { timeout: 5_000 });
+    await waitFor(() => expect(document.body.textContent).toContain("Gespeichert"), {
+      timeout: 5_000,
+    });
+    // The settle commits the history in two steps (back to the list, then the form again); the test waits for the form.
+    await waitFor(() => {
+      expect(route.guarded).toBe(false);
+      expect(route.search).toContain("form=measure");
+    });
+  }
+
+  it("US-QS-15 a saved measurement that keeps the form open leaves no guard entry ahead: Forward reaches the form, a second Forward does nothing (issue 2165)", async () => {
+    const saves: string[] = [];
+    stubCollection(saves);
+    renderAt("/collection?view=plants");
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    const heading = await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await typeAndSave(saves);
+    // The save keeps the form on screen: it is the same heading, not one after a remount.
+    expect(heading.isConnected).toBe(true);
+    // Back from the form is one visible step to the list.
+    back();
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull(),
+    );
+    forward();
+    await waitFor(() => expect(route.search).toContain("form=measure"));
+    expect(route.guarded).toBe(false);
+    // Nothing is ahead of the form: a second Forward does nothing.
+    forward();
+    expect(route.guarded).toBe(false);
+    expect(route.search).toContain("form=measure");
+    expect(screen.getByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
+  }, 20_000);
+
+  it("US-QS-15 after a save that keeps the form open, typing again arms the guard: Back asks before it leaves (issue 2165)", async () => {
+    const saves: string[] = [];
+    stubCollection(saves);
+    renderAt("/collection?view=plants");
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await typeAndSave(saves);
+    await userEvent.type(screen.getByLabelText(/^Messwert/), "7");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    back();
+    await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The question is modal, so the form is hidden from the accessibility tree: the form is found by its title element.
+    expect(document.getElementById("measure-title")).not.toBeNull();
+  }, 20_000);
+});
+
+/**
+ * The focus and the announcements of the page from now on: every focus move and every change of the polite live region
+ * (issue 2165). `stop` ends the watch.
+ */
+function watchFocusAndSpeech() {
+  const focused: Element[] = [];
+  const said: string[] = [];
+  const live = document.querySelector<HTMLElement>('[aria-live="polite"]');
+  const observer = new MutationObserver(() => said.push(live?.textContent ?? ""));
+  if (live) observer.observe(live, { childList: true, characterData: true, subtree: true });
+  const onFocus = (event: FocusEvent) => focused.push(event.target as Element);
+  document.addEventListener("focusin", onFocus);
+  return {
+    focused,
+    said,
+    stop: () => {
+      observer.disconnect();
+      document.removeEventListener("focusin", onFocus);
+    },
+  };
+}
+
+/** The area with the page's focus handling and its announcer, as the app renders it (issue 2165). */
+function renderFocusedArea() {
+  render(
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={["/collection?view=plants"]}>
+        <Address />
+        <main id="inhalt" tabIndex={-1}>
+          <RouteFocus titleOf={() => "Sammlung"} />
+          <CollectionArea
+            api="http://api"
+            token={async () => "tok"}
+            newSpecies={null}
+            onSpeciesChoose={() => {}}
+            onCompleted={() => {}}
+          />
+        </main>
+      </MemoryRouter>
+    </AnnouncerProvider>,
+  );
+}
+
+describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)", () => {
+  /** Opens the measure view and types a measurement; the guard entry is committed before the save (PF-031). */
+  async function measureAndType() {
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+  }
+
+  /** Saves with the form's button and waits until the form is on screen again with no guard entry (PF-031). */
+  async function save(saves: string[]) {
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await waitFor(() => expect(saves).toHaveLength(1), { timeout: 5_000 });
+    await waitFor(() => {
+      expect(route.guarded).toBe(false);
+      expect(route.search).toContain("form=measure");
+    });
+  }
+
+  it("US-QS-15 after a save that keeps the form open, the focus stays on the save button and no view title is announced (issue 2165)", async () => {
+    const saves: string[] = [];
+    stubCollection(saves);
+    renderFocusedArea();
+    await measureAndType();
+    const saveButton = screen.getByRole("button", { name: "Messung speichern" });
+    const watch = watchFocusAndSpeech();
+    await save(saves);
+    // The settle has committed; the focus handling of the new entries runs after the commit, so it gets a short moment.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    watch.stop();
+    expect(document.activeElement).toBe(saveButton);
+    // The press of the save button is the only focus event: the settle moves the focus nowhere.
+    expect(watch.focused).toEqual([saveButton]);
+    expect(watch.said.filter((text) => text.includes("Sammlung"))).toEqual([]);
+  }, 20_000);
+
+  it("US-QS-15 a Forward onto the form that the settle pushed again moves the focus to its heading, as any form entry does (issue 2165)", async () => {
+    const saves: string[] = [];
+    stubCollection(saves);
+    renderFocusedArea();
+    await measureAndType();
+    await save(saves);
+    back();
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull(),
+    );
+    // Back to the list moves the focus to the control the view was opened from.
+    await waitFor(() =>
+      expect(document.activeElement?.closest('ul[aria-label="Pflanzen"]')).not.toBeNull(),
+    );
+    const watch = watchFocusAndSpeech();
+    forward();
+    await waitFor(() => expect(document.activeElement?.id).toBe("measure-title"));
+    watch.stop();
+    expect(watch.said.some((text) => text.includes("Sammlung"))).toBe(true);
+  }, 20_000);
 });
 
 describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {

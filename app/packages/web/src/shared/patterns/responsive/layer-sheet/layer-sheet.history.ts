@@ -1,18 +1,14 @@
 import * as React from "react";
 import type { NavigateFunction, useLocation, useNavigationType } from "react-router";
+import { BELOW, FROM_APP, LAYER_GUARD, belowOf, guardState, stateFlag } from "./use-layer";
 import {
-  BELOW,
-  FROM_APP,
-  LAYER_GUARD,
-  belowOf,
-  guardState,
   isClosing,
   setClosing,
-  stateFlag,
+  setGuarded,
   walkOverGuard,
   withoutLayer,
   type Below,
-} from "./use-layer";
+} from "./use-layer.history";
 
 /** The address of a history entry, the way a layer or a form is named: path, query and hash. */
 export type Address = { pathname: string; search: string; hash: string };
@@ -55,19 +51,14 @@ export const isBelow = (landed: Below, below: Below | null): boolean =>
   below !== null && landed.pathname === below.pathname && landed.search === below.search;
 
 /** Pushes the guard entry above the layer at `at` (US-QS-32): it keeps the app flag of the layer below it. */
-export function pushGuard(
-  navigate: NavigateFunction,
-  at: Address,
-  fromApp: boolean,
-  guarded: { current: boolean },
-): void {
-  guarded.current = true;
+export function pushGuard(navigate: NavigateFunction, at: Address, fromApp: boolean): void {
   void navigate(at, { state: guardState(fromApp) });
 }
 
 /** Pushes the guard entry above the layer that the latest render shows (US-QS-32). */
 export function guardHere(c: Latest, guarded: { current: boolean }): void {
-  pushGuard(c.navigate, addressOf(c.location), stateFlag(c.location.state, FROM_APP), guarded);
+  setGuarded(c.id, guarded, true);
+  pushGuard(c.navigate, addressOf(c.location), stateFlag(c.location.state, FROM_APP));
 }
 
 /**
@@ -78,7 +69,7 @@ export function guardHere(c: Latest, guarded: { current: boolean }): void {
 export function closeHere(refs: Refs, id: string): void {
   const c = refs.latest.current;
   if (!refs.guarded.current) return c.closeLayer();
-  refs.guarded.current = false;
+  setGuarded(id, refs.guarded, false);
   setClosing(id, true);
   const { pathname, search, hash } = c.location;
   const below = refs.named.current?.below ?? { pathname, search: withoutLayer(search) };
@@ -131,7 +122,8 @@ export function isHeld(p: {
 /** Puts a held layer back on the entry it had, above the entry below it, with the guard above it (issue 2145). */
 export function reopenLayer(c: Latest, guarded: { current: boolean }, named: Named): void {
   void c.navigate(named.at, { state: { [FROM_APP]: true, [BELOW]: named.below } });
-  pushGuard(c.navigate, named.at, true, guarded);
+  setGuarded(c.id, guarded, true);
+  pushGuard(c.navigate, named.at, true);
 }
 
 /**
