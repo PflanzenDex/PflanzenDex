@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
-import { CountingRules, FACTS } from "./counting-rules";
+import { CountingRules, FACTS } from "./counting-rules/counting-rules";
 import { dateText, valueText } from "@/shared/lib/format";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";

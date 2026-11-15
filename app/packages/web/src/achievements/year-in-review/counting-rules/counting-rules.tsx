@@ -1,6 +1,6 @@
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 import { texts } from "@/shared/lib/text-rules/texts";
-import table from "./year-in-review.de.json";
+import table from "../year-in-review.de.json";
 
 const t = texts(table);
 
