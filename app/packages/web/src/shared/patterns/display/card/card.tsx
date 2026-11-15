@@ -4,8 +4,9 @@ import { Button, type ButtonProps } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 
 /**
- * Card surface (US-QS-07, DS-34, DS-35): Greenhouse card radius and elevation 1. The interactive variants lift to
- * elevation 2 on hover (shadow only, no movement) and carry the shared focus ring and a 44 px target (DS-15).
+ * Card surface (US-QS-07, DS-34, DS-35, US-QS-32): Greenhouse card radius on the card colour, flat. Nothing in the flow
+ * of a page has a shadow (SG-SHAPE-05); only overlays float. The interactive variants show their hover as a neutral
+ * fill change, carry the shared focus ring and a 44 px target (DS-15).
  */
 const cardVariants = cva(
   "block min-w-0 break-words rounded-card border border-transparent forced-colors:border-[CanvasText]",
@@ -13,15 +14,15 @@ const cardVariants = cva(
     variants: {
       interactive: {
         true:
-          "min-h-[44px] w-full text-left transition-shadow duration-(--motion-fast) ease-(--ease-enter) hover:shadow-elevation-2 motion-reduce:transition-none " +
+          "min-h-[44px] w-full text-left transition-colors duration-(--motion-fast) ease-(--ease-enter) hover:bg-muted motion-reduce:transition-none " +
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         false: "",
       },
-      // A card inside the page card: flat, one step tinted (ADR 0011 decision 4, depth from the surface step), no
-      // second shadow and no second border line.
+      // A card inside the page card: one step tinted (ADR 0011 decision 4, depth from the surface step), no border line.
+      // Flat like the other card: no shadow.
       nested: {
-        true: "bg-secondary text-secondary-foreground shadow-none",
-        false: "bg-card text-card-foreground shadow-elevation-1",
+        true: "bg-secondary text-secondary-foreground",
+        false: "bg-card text-card-foreground",
       },
     },
     defaultVariants: { interactive: false, nested: false },
@@ -100,7 +101,7 @@ const Card = React.forwardRef<HTMLElement, CardProps>((props, ref) => {
         variant="ghost"
         className={cn(
           cardVariants({ interactive: true, nested }),
-          "h-auto items-stretch justify-start whitespace-normal rounded-[var(--radius-card)] p-0 text-left text-base font-normal hover:bg-card hover:text-card-foreground",
+          "h-auto items-stretch justify-start whitespace-normal rounded-[var(--radius-card)] p-0 text-left text-base font-normal hover:text-card-foreground",
           pad,
           className,
         )}

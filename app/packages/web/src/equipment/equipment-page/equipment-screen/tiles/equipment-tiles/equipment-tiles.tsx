@@ -14,9 +14,12 @@ const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : 
 
 function Tile(props: { id: string; name: string; info: string }) {
   return (
+    // Neutral like every count (US-QS-32, SG-COLOR-02), and the control radius: two lines are a tile, not a pill
+    // (SG-SHAPE-02).
     <LayerOpener
       id={props.id}
-      className="h-auto w-full flex-col items-start gap-0 whitespace-normal px-3 py-2 text-left"
+      size="sm"
+      className="h-auto w-full flex-col items-start gap-0 whitespace-normal border-transparent bg-card px-3 py-2 text-left text-foreground hover:bg-muted hover:text-foreground"
     >
       <span className="font-semibold">{props.name}</span>
       <span className="text-sm font-normal text-muted-foreground">{props.info}</span>

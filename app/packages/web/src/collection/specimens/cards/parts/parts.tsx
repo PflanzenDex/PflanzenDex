@@ -13,19 +13,12 @@ import {
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
- * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
- * pass its height down to the list (issue 1029).
+ * The page of the module on the page colour, flat (US-QS-32, SG-SHAPE-06): no frame and no border around it, so a group
+ * inside it is not nested in a frame. `className` lets a one-screen page pass its height down to the list (issue 1029).
  */
 export function PageFrame({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={cn(
-        "min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7",
-        className,
-      )}
-    >
-      {children}
-    </div>
+    <div className={cn("min-w-0 px-4 py-6 text-foreground md:p-7", className)}>{children}</div>
   );
 }
 
