@@ -190,7 +190,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
     const profileSection = screen.getByRole("region", { name: "Profil" });
     expect(await within(profileSection).findByText("Hallo, Lena")).toBeTruthy();
     expect(within(profileSection).getByText("lena@example.test")).toBeTruthy();
-    // The one way out is "Abmelden…" in the index, which asks first; nothing signs out with a single tap.
+    // The one way out is "Abmelden …" in the index, which asks first; nothing signs out with a single tap.
     expect(within(profileSection).queryByRole("button", { name: /abmelden/i })).toBeNull();
     expect(screen.queryByRole("button", { name: "Abmelden" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Auf allen Geräten abmelden" })).toBeNull();

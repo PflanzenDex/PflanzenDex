@@ -110,7 +110,7 @@ function SignOutRow(props: {
   );
 }
 
-/** The last list item: "Abmelden…" with its confirmation dialog (US-QS-17, US-ACC-01). */
+/** The last list item: "Abmelden …" with its confirmation dialog (US-QS-17, US-ACC-01). */
 function SignOutItem(props: React.ComponentProps<typeof SignOutRow>) {
   return (
     <li>
@@ -121,7 +121,7 @@ function SignOutItem(props: React.ComponentProps<typeof SignOutRow>) {
 
 /**
  * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
- * "Abmelden…". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
+ * "Abmelden …". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
  * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
  * function "ai", no overview) have no row.
  */

@@ -195,7 +195,7 @@
     "steps": [
       {
         "role": "button",
-        "name": "Abmelden…",
+        "name": "Abmelden …",
         "nth": 0
       }
     ],

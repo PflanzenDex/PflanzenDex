@@ -107,7 +107,7 @@ afterEach(() => {
 });
 
 describe("US-QS-17 the index of Konto", () => {
-  it("US-QS-17 shows the profile row, a row per section with its current value and Abmelden…", async () => {
+  it("US-QS-17 shows the profile row, a row per section with its current value and Abmelden …", async () => {
     fakeServer();
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
@@ -124,7 +124,7 @@ describe("US-QS-17 the index of Konto", () => {
     expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 
-  it("US-QS-17 Abmelden… is a row with the same chevron as the sections (issue 1045)", async () => {
+  it("US-QS-17 Abmelden … is a row with the same chevron as the sections (issue 1045)", async () => {
     show();
     const button = await screen.findByRole("button", { name: "Abmelden …" });
     expect(button.querySelector("svg")).not.toBeNull();
@@ -170,7 +170,7 @@ describe("US-QS-17 the index of Konto", () => {
     ).toBeNull();
   });
 
-  it("US-QS-17 Abmelden… opens a confirmation with Abmelden, Auf allen Geräten abmelden and a way to cancel", async () => {
+  it("US-QS-17 Abmelden … opens a confirmation with Abmelden, Auf allen Geräten abmelden and a way to cancel", async () => {
     fakeServer();
     const signOut = vi.fn();
     const everywhere = vi.fn();
@@ -266,7 +266,7 @@ describe("US-QS-32 the row Erinnerungen while push is not set up", () => {
 });
 
 describe("US-QS-28 the install row of the index", () => {
-  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden…", async () => {
+  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden …", async () => {
     install.offer = "promptable";
     fakeServer();
     show();
