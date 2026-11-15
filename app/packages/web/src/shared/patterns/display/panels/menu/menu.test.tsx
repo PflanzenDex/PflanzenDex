@@ -1,8 +1,25 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { LayerPane } from "@/shared/patterns/responsive/layer-sheet/layer-host/layer-pane/layer-pane";
+import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
+import { Sheet, SheetContent } from "@/shared/ui/overlays/sheet/sheet";
 import { Menu } from "./menu";
+
+beforeAll(() => {
+  // jsdom has no matchMedia, Vaul reads it.
+  window.matchMedia ??= ((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+    onchange: null,
+  })) as unknown as typeof window.matchMedia;
+});
 
 afterEach(cleanup);
 
@@ -83,5 +100,215 @@ describe("Menu (US-QS-07, DS-34)", () => {
     await user.click(trigger());
     await user.click(document.body);
     expect(screen.queryByRole("menu")).toBeNull();
+  });
+});
+
+const items = [
+  { label: "Bearbeiten", onSelect: () => undefined },
+  { label: "Löschen", onSelect: () => undefined, destructive: true },
+];
+const menuTrigger = () => screen.getByRole("button", { name: "Weitere Aktionen" });
+
+/** Radix registers its press-outside listener after a timer; let it run before the press. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** The DOM rectangle of a panel, as jsdom has no layout. */
+const rectAt = (left: number, width: number): DOMRect =>
+  ({
+    left,
+    right: left + width,
+    top: 0,
+    bottom: 40,
+    width,
+    height: 40,
+    x: left,
+    y: 0,
+    toJSON: () => ({}),
+  }) as DOMRect;
+
+/** jsdom has no layout: the panel (role menu or dialog) gets the rectangle of the test, every other element none. */
+function placePanel(rect: () => DOMRect) {
+  return vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: Element,
+  ) {
+    return this.matches('[role="menu"], [role="dialog"]') ? rect() : rectAt(0, 0);
+  });
+}
+
+function setWindowWidth(width: number) {
+  Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+}
+
+describe("Menu inside a layer, sheet or dialog (US-QS-32, F-0356)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setWindowWidth(1024);
+  });
+
+  it("US-QS-32 Escape in an open menu inside a dialog closes the menu only and returns focus to the trigger", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Dialog defaultOpen onOpenChange={onOpenChange}>
+        <DialogContent title="Pflanze">
+          <Menu label="Weitere Aktionen" items={items} />
+        </DialogContent>
+      </Dialog>,
+    );
+    await settle();
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Pflanze" })).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(document.activeElement).toBe(menuTrigger());
+  });
+
+  it("US-QS-32 Escape in an open menu inside a sheet closes the menu only and returns focus to the trigger", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Sheet defaultOpen onOpenChange={onOpenChange}>
+        <SheetContent title="Pflanze">
+          <Menu label="Weitere Aktionen" items={items} />
+        </SheetContent>
+      </Sheet>,
+    );
+    expect(await screen.findByRole("dialog", { name: "Pflanze" })).toBeTruthy();
+    await settle();
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Pflanze" })).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    await waitFor(() => expect(document.activeElement).toBe(menuTrigger()));
+  });
+
+  it("US-QS-32 a press on the backdrop outside an open menu inside a dialog closes the menu only", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Dialog defaultOpen onOpenChange={onOpenChange}>
+        <DialogContent title="Pflanze">
+          <Menu label="Weitere Aktionen" items={items} />
+        </DialogContent>
+      </Dialog>,
+    );
+    await settle();
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await settle();
+    const backdrop = document.querySelector<HTMLElement>(".bg-scrim");
+    expect(backdrop).not.toBeNull();
+    await user.click(backdrop as HTMLElement);
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Pflanze" })).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("US-QS-32 a press on the backdrop outside an open menu inside a sheet closes the menu only", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Sheet defaultOpen onOpenChange={onOpenChange}>
+        <SheetContent title="Pflanze">
+          <Menu label="Weitere Aktionen" items={items} />
+        </SheetContent>
+      </Sheet>,
+    );
+    await screen.findByRole("dialog", { name: "Pflanze" });
+    await settle();
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await settle();
+    const backdrop = document.querySelector<HTMLElement>(".bg-scrim");
+    expect(backdrop).not.toBeNull();
+    await user.click(backdrop as HTMLElement);
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Pflanze" })).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("US-QS-32 Escape in an open menu inside the layer pane does not close the pane", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <LayerPane id="pflanze" title="Pflanze" returning={false} onClose={onClose}>
+        <Menu label="Weitere Aktionen" items={items} />
+      </LayerPane>,
+    );
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 Escape with the menu closed still closes the layer pane", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <LayerPane id="pflanze" title="Pflanze" returning={false} onClose={onClose}>
+        <Menu label="Weitere Aktionen" items={items} />
+      </LayerPane>,
+    );
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-32 an open menu that sticks out at the left window edge moves in until 16 px separate it from the edge", async () => {
+    setWindowWidth(360);
+    placePanel(() => rectAt(-40, 300));
+    const user = userEvent.setup();
+    render(<Menu label="Weitere Aktionen" items={items} />);
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu").style.transform).toBe("translateX(56px)");
+  });
+
+  it("US-QS-32 an open menu that sticks out at the right window edge moves in until 16 px separate it from the edge", async () => {
+    setWindowWidth(360);
+    placePanel(() => rectAt(300, 200));
+    const user = userEvent.setup();
+    render(<Menu label="Weitere Aktionen" items={items} />);
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu").style.transform).toBe("translateX(-156px)");
+  });
+
+  it("US-QS-32 an open menu that lies inside the window is not moved", async () => {
+    setWindowWidth(360);
+    placePanel(() => rectAt(100, 150));
+    const user = userEvent.setup();
+    render(<Menu label="Weitere Aktionen" items={items} />);
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu").style.transform).toBe("");
+  });
+
+  it("US-QS-32 the window clamp is measured again when the window is resized", async () => {
+    setWindowWidth(360);
+    let rect = rectAt(100, 150);
+    placePanel(() => rect);
+    const user = userEvent.setup();
+    render(<Menu label="Weitere Aktionen" items={items} />);
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu").style.transform).toBe("");
+    setWindowWidth(200);
+    rect = rectAt(100, 150);
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(screen.getByRole("menu").style.transform).toBe("translateX(-66px)");
+  });
+
+  it("US-QS-32 the panel is at most 100vw minus 32 px wide and its rows wrap their text", async () => {
+    const user = userEvent.setup();
+    render(<Menu label="Weitere Aktionen" items={items} />);
+    await user.click(menuTrigger());
+    const panel = screen.getByRole("menu");
+    expect(panel.className).toContain("max-w-[min(20rem,calc(100vw-32px))]");
+    expect(panel.className).toContain("min-w-[min(12rem,calc(100vw-32px))]");
+    for (const row of screen.getAllByRole("menuitem"))
+      expect(row.className).toContain("whitespace-normal");
   });
 });

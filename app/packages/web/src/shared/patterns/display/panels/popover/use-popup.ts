@@ -1,40 +1,84 @@
 import * as React from "react";
 
+/** The gap an open panel keeps to both edges of the window, in px (US-QS-32, F-0209). */
+const POPUP_EDGE_GAP = 16;
+
 /**
- * Open state shared by Popover and Menu (US-QS-07): closes on Escape (focus returns to the trigger), on a press outside
- * and when focus leaves the root. Listeners exist only while open, so closed popups cost nothing.
+ * Moves an open panel sideways until it is `POPUP_EDGE_GAP` px inside both window edges (US-QS-32, F-0209). The panel is
+ * aligned to its trigger, so near an edge, or at 200 % text on a 360 px phone, it would stick out. The shift is reset
+ * before each measure, so shifts never add up; the width stays, because `popupPanelClass` caps it at 100vw minus 32 px.
+ */
+function keepInWindow(panel: HTMLElement): void {
+  panel.style.transform = "";
+  const { left, right } = panel.getBoundingClientRect();
+  let shift = 0;
+  if (left < POPUP_EDGE_GAP) shift = POPUP_EDGE_GAP - left;
+  else if (right > window.innerWidth - POPUP_EDGE_GAP)
+    shift = window.innerWidth - POPUP_EDGE_GAP - right;
+  if (shift !== 0) panel.style.transform = `translateX(${shift}px)`;
+}
+
+/**
+ * Open state shared by Popover and Menu (US-QS-07, US-QS-32). While open it closes on Escape (focus returns to the trigger),
+ * on a press outside and when focus leaves the root; it keeps the open panel inside the window (`keepInWindow`), measured
+ * when it opens and on every resize. Listeners exist only while open, so closed popups cost nothing.
+ *
+ * Escape and a press outside are caught on `window` in the capture phase and stopped there (US-QS-32, F-0356): a Radix
+ * dialog or a Vaul sheet around the popup listens on `document` and would close with the popup, and a layer pane would take
+ * the Escape in its React handler. The popup closes and the event goes no further. Focus leaving the root still closes it
+ * on `document`, as before.
  */
 export function usePopup() {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
   const close = React.useCallback(() => {
     setOpen(false);
     triggerRef.current?.focus();
   }, []);
+  React.useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!open || !panel) return;
+    const keep = () => keepInWindow(panel);
+    keep();
+    window.addEventListener("resize", keep);
+    return () => window.removeEventListener("resize", keep);
+  }, [open]);
   React.useEffect(() => {
     if (!open) return;
-    const outside = (event: Event) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    const inside = (target: EventTarget | null) =>
+      rootRef.current?.contains(target as Node) ?? false;
+    const outside = (event: PointerEvent) => {
+      if (inside(event.target)) return;
+      event.stopPropagation();
+      setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      close();
     };
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("focusin", outside);
-    document.addEventListener("keydown", onKey);
+    const onFocus = (event: FocusEvent) => {
+      if (!inside(event.target)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", outside, true);
+    window.addEventListener("keydown", onKey, true);
+    document.addEventListener("focusin", onFocus);
     return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("focusin", outside);
-      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", outside, true);
+      window.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("focusin", onFocus);
     };
   }, [open, close]);
-  return { open, setOpen, close, rootRef, triggerRef };
+  return { open, setOpen, close, rootRef, triggerRef, panelRef };
 }
 
 export type PopupAlign = "start" | "end";
 
+/** The panel of a popup: at most 20 rem, and never wider than the window less 16 px on each side (US-QS-32, F-0209). */
 export const popupPanelClass =
-  "absolute top-full z-30 mt-2 max-w-[min(20rem,calc(100vw-2rem))] rounded-card border border-border bg-card p-2 text-card-foreground shadow-elevation-2 forced-colors:border-[CanvasText]";
+  "absolute top-full z-30 mt-2 max-w-[min(20rem,calc(100vw-32px))] rounded-card border border-border bg-card p-2 text-card-foreground shadow-elevation-2 forced-colors:border-[CanvasText]";
 
 export const popupAlignClass = (align: PopupAlign) => (align === "end" ? "right-0" : "left-0");
