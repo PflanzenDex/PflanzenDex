@@ -1,15 +1,8 @@
 import * as React from "react";
-import { cva } from "class-variance-authority";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../form/form";
 import { cn } from "@/shared/lib/utils";
 import { enterKeyHandlers } from "./enter-key";
-
-/** A field with a unit leaves room at its end for the unit (SG-FORM-01); the other fields keep their padding. */
-const inputVariants = cva("", {
-  variants: { suffix: { true: "pe-24", false: "" } },
-  defaultVariants: { suffix: false },
-});
 
 /**
  * Shared look of the text-like fields (Input, Textarea, Select): token border (`--input`, 3:1 on the surface,
@@ -59,6 +52,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       onFocus,
       onPointerDown,
       onKeyDown,
+      style,
       "aria-describedby": describedBy,
       ...props
     },
@@ -66,6 +60,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const suffixId = React.useId();
     const hasSuffix = Boolean(suffix);
+    // The room for the unit follows its length: "W" reserves little, "µmol/m²/s" enough. The 1.5 rem is the gap to the
+    // edge plus the unit's own padding; both scale with the text size (SG-FORM-01, SG-TYPE-04). Without a unit the
+    // variable is unset and the class falls back to the normal end padding.
+    const unitRoom = suffix ? `calc(${suffix.length}ch + 1.5rem)` : undefined;
     const control = (
       <input
         // The ref goes straight through: a stable ref is attached once, not again on every render.
@@ -79,9 +77,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         className={cn(
           fieldClasses,
           "min-h-[44px] py-2",
-          inputVariants({ suffix: hasSuffix }),
+          "pe-[var(--unit-room,0.75rem)]",
           className,
         )}
+        style={{ "--unit-room": unitRoom, ...style } as React.CSSProperties}
         enterKeyHint={enterKeyHint}
         {...enterKeyHandlers(enterKeyHint, { onFocus, onPointerDown, onKeyDown })}
         {...props}
