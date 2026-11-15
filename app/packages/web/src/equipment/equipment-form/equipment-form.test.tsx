@@ -20,15 +20,15 @@ const save = () => userEvent.click(screen.getByRole("button", { name: "Gerät sp
 describe("US-BES-19 the pot fields of the equipment form", () => {
   it("US-BES-19 the pot fields show for the type Topf only", async () => {
     renderForm();
-    expect(screen.queryByLabelText("Durchmesser (cm)")).toBeNull();
+    expect(screen.queryByLabelText("Durchmesser (optional)")).toBeNull();
     await userEvent.selectOptions(screen.getByLabelText("Art"), "Pot");
-    expect(screen.getByLabelText("Durchmesser (cm)")).toBeTruthy();
-    expect(screen.getByLabelText("Höhe (cm)")).toBeTruthy();
-    expect(screen.getByLabelText("Material")).toBeTruthy();
-    expect(screen.getByLabelText("Abfluss")).toBeTruthy();
+    expect(screen.getByLabelText("Durchmesser (optional)")).toBeTruthy();
+    expect(screen.getByLabelText("Höhe (optional)")).toBeTruthy();
+    expect(screen.getByLabelText("Material (optional)")).toBeTruthy();
+    expect(screen.getByLabelText("Abfluss (optional)")).toBeTruthy();
     await userEvent.selectOptions(screen.getByLabelText("Art"), "Sensor");
-    expect(screen.queryByLabelText("Durchmesser (cm)")).toBeNull();
-    expect(screen.queryByLabelText("Abfluss")).toBeNull();
+    expect(screen.queryByLabelText("Durchmesser (optional)")).toBeNull();
+    expect(screen.queryByLabelText("Abfluss (optional)")).toBeNull();
   });
 
   it("US-BES-19 · P-08 a pot with nothing known sends its size and material as null and drainage Unbekannt as null", async () => {
@@ -51,10 +51,10 @@ describe("US-BES-19 the pot fields of the equipment form", () => {
     const onSend = renderForm();
     await userEvent.selectOptions(screen.getByLabelText("Art"), "Pot");
     await userEvent.type(screen.getByLabelText("Name"), "Blauer Topf");
-    await userEvent.type(screen.getByLabelText("Durchmesser (cm)"), "12,5");
-    await userEvent.type(screen.getByLabelText("Höhe (cm)"), "20");
-    await userEvent.type(screen.getByLabelText("Material"), "Terrakotta");
-    await userEvent.selectOptions(screen.getByLabelText("Abfluss"), "yes");
+    await userEvent.type(screen.getByLabelText("Durchmesser (optional)"), "12,5");
+    await userEvent.type(screen.getByLabelText("Höhe (optional)"), "20");
+    await userEvent.type(screen.getByLabelText("Material (optional)"), "Terrakotta");
+    await userEvent.selectOptions(screen.getByLabelText("Abfluss (optional)"), "yes");
     await save();
     await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
     expect(onSend).toHaveBeenCalledWith({
@@ -70,7 +70,7 @@ describe("US-BES-19 the pot fields of the equipment form", () => {
   it("US-BES-19 another type sends no pot field, even one typed before the type changed", async () => {
     const onSend = renderForm();
     await userEvent.selectOptions(screen.getByLabelText("Art"), "Pot");
-    await userEvent.type(screen.getByLabelText("Durchmesser (cm)"), "0");
+    await userEvent.type(screen.getByLabelText("Durchmesser (optional)"), "0");
     await userEvent.selectOptions(screen.getByLabelText("Art"), "Sensor");
     await userEvent.type(screen.getByLabelText("Name"), "Feuchtesensor");
     await save();
@@ -82,7 +82,7 @@ describe("US-BES-19 the pot fields of the equipment form", () => {
     const onSend = renderForm();
     await userEvent.selectOptions(screen.getByLabelText("Art"), "Pot");
     await userEvent.type(screen.getByLabelText("Name"), "Blauer Topf");
-    await userEvent.type(screen.getByLabelText("Durchmesser (cm)"), "0");
+    await userEvent.type(screen.getByLabelText("Durchmesser (optional)"), "0");
     await save();
     expect(
       await screen.findByText(
@@ -90,5 +90,29 @@ describe("US-BES-19 the pot fields of the equipment form", () => {
       ),
     ).toBeTruthy();
     expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-FORM-01 the pot labels carry no unit, the units stand as suffixes, the optional fields say so and the range only in the error", async () => {
+    renderForm();
+    await userEvent.selectOptions(screen.getByLabelText("Art"), "Pot");
+    expect(screen.queryByLabelText(/\(cm\)/)).toBeNull();
+    expect(screen.getByText("Angaben zum Topf")).toBeTruthy();
+    // The unit stands inside each size field; the range rule is not a hint any more.
+    expect(screen.getAllByText("cm")).toHaveLength(2);
+    expect(screen.queryByText(/Eine Zahl von 1 bis 300/)).toBeNull();
+    await userEvent.type(screen.getByLabelText("Durchmesser (optional)"), "0");
+    await save();
+    expect(
+      await screen.findByText(
+        "Gib eine Größe von 1 bis 300 cm an, höchstens mit einer Nachkommastelle.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-FORM-01 a lamp keeps its light zone unmarked, since the zone is required", async () => {
+    renderForm();
+    await userEvent.selectOptions(screen.getByLabelText("Art"), "Lamp");
+    expect(screen.getByLabelText("Lichtzone")).toBeTruthy();
+    expect(screen.queryByLabelText("Lichtzone (optional)")).toBeNull();
   });
 });

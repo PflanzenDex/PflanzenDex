@@ -203,7 +203,7 @@ describe("US-LIC-05 page locations and light zones", () => {
       screen.getByLabelText("Name", { selector: "form[aria-label='Lichtzone anlegen'] input" }),
       "Fensterbank",
     );
-    await userEvent.type(screen.getByLabelText("Lux-Decke (Lux)"), "8000");
+    await userEvent.type(screen.getByLabelText("Obergrenze"), "8000");
     await userEvent.click(screen.getByRole("button", { name: "Zone anlegen" }));
     expect(await screen.findByRole("heading", { name: "Fensterbank" })).toBeTruthy();
     const post = calls.find((a) => a.method === "POST" && a.url === "/light-zones");
@@ -360,7 +360,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
     await userEvent.click(screen.getByRole("button", { name: "Art" }));
-    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
+    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
     expect(await screen.findByText("Lichtzone: Zone 2")).toBeTruthy();
     const get = calls.find((a) => a.url === "/light-zones/derivation");
@@ -376,7 +376,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
     await userEvent.click(screen.getByRole("button", { name: "Art" }));
     signedIn = false;
-    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
+    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
     expect((await screen.findAllByText(SIGNED_OUT)).length).toBeGreaterThan(0);
   });
@@ -420,7 +420,7 @@ describe("US-LIC-05 · DS-48 forms and refusals", () => {
       selector: "form[aria-label='Lichtzone anlegen'] input",
     });
     await userEvent.type(name, "Zone 2");
-    await userEvent.type(screen.getByLabelText("Lux-Decke (Lux)"), "8000");
+    await userEvent.type(screen.getByLabelText("Obergrenze"), "8000");
     await userEvent.click(screen.getByRole("button", { name: "Zone anlegen" }));
     expect(await screen.findByText("Eine Lichtzone mit diesem Namen gibt es schon.")).toBeTruthy();
     expect(screen.queryByText(/raw server text/)).toBeNull();

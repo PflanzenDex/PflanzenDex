@@ -44,9 +44,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         Gerät erfassen
       </Button>
       {props.data.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Noch kein Gerät erfasst. Nur Art und Name sind nötig.
-        </p>
+        <p className="text-sm text-muted-foreground">Noch kein Gerät erfasst.</p>
       ) : null}
       <EquipmentTiles data={props.data} />
       <EquipmentLayers

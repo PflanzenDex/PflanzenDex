@@ -41,7 +41,7 @@ function StepNotice({ step }: { step: 1 | 2 }) {
     <>
       <p className="text-sm text-muted-foreground">Nur du siehst die Art, bis sie geprüft ist.</p>
       <p className="text-sm text-muted-foreground">
-        {step === 1 ? "Schritt 1 von 2 · * = Pflichtfeld" : "Schritt 2 von 2 · alles optional"}
+        {step === 1 ? "Schritt 1 von 2" : "Schritt 2 von 2"}
       </p>
     </>
   );

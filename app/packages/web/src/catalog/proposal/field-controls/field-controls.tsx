@@ -18,7 +18,10 @@ type Base = {
   name: keyof ProposalFields;
   label: string;
   help?: string;
+  /** Required fields say nothing; `required` is the attribute for assistive technology only (SG-FORM-01). */
   required?: boolean;
+  /** An optional field says "(optional)" after its label (SG-FORM-01, F-0245). */
+  optional?: boolean;
   /** Spans both columns from `md` up. */
   wide?: boolean;
 };
@@ -27,14 +30,14 @@ const item = (wide?: boolean) => cn(wide && "md:col-span-2");
 
 /** One labelled text field of the proposal form with its help and message (DS-47). */
 export function TextField(props: Base & Omit<InputProps, "name" | "value" | "onChange" | "ref">) {
-  const { control, name, label, help, required, wide, ...input } = props;
+  const { control, name, label, help, required, optional, wide, ...input } = props;
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem className={item(wide)}>
-          <FormLabel required={required ?? false}>{label}</FormLabel>
+          <FormLabel optional={optional}>{label}</FormLabel>
           <FormControl>
             <Input {...field} {...input} required={required ?? false} />
           </FormControl>
@@ -48,14 +51,14 @@ export function TextField(props: Base & Omit<InputProps, "name" | "value" | "onC
 
 /** One labelled multi-line field. */
 export function AreaField(props: Base & { rows: number; maxLength?: number }) {
-  const { control, name, label, help, required, wide, rows, maxLength } = props;
+  const { control, name, label, help, required, optional, wide, rows, maxLength } = props;
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem className={item(wide)}>
-          <FormLabel required={required ?? false}>{label}</FormLabel>
+          <FormLabel optional={optional}>{label}</FormLabel>
           <FormControl>
             <Textarea
               {...field}
@@ -74,14 +77,14 @@ export function AreaField(props: Base & { rows: number; maxLength?: number }) {
 
 /** One labelled choice; the empty first option asks to choose and counts as "not answered". */
 export function ChoiceField(props: Base & { options: [string, string][]; emptyLabel?: string }) {
-  const { control, name, label, help, required, options, emptyLabel } = props;
+  const { control, name, label, help, required, optional, options, emptyLabel } = props;
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel required={required ?? false}>{label}</FormLabel>
+          <FormLabel optional={optional}>{label}</FormLabel>
           <FormControl>
             <Select {...field} required={required ?? false}>
               <option value="">{emptyLabel ?? "Bitte wählen"}</option>

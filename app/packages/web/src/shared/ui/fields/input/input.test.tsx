@@ -75,6 +75,29 @@ describe("Input (US-QS-07, DS-15, DS-19, DS-38)", () => {
     expect(cls).toContain("focus-visible:ring-2");
   });
 
+  it("US-QS-32 · SG-FORM-01 a suffix shows the unit at the right edge of the field and keeps the caller's description", () => {
+    render(
+      <>
+        <Input aria-label="Durchmesser" suffix="cm" aria-describedby="hint" />
+        <p id="hint">Ganze Zahl.</p>
+      </>,
+    );
+    const el = screen.getByLabelText("Durchmesser");
+    const suffix = screen.getByText("cm");
+    expect(el.parentElement?.contains(suffix)).toBe(true);
+    expect(suffix.className).toContain("end-0");
+    const described = el.getAttribute("aria-describedby")?.split(" ") ?? [];
+    expect(described).toEqual(["hint", suffix.id]);
+    expect(el.className).toContain("pe-24");
+  });
+
+  it("US-QS-32 · SG-FORM-01 without a suffix the field renders as before, no wrapper", () => {
+    render(<Input aria-label="Name" />);
+    const el = screen.getByLabelText("Name");
+    expect(el.parentElement?.tagName).not.toBe("SPAN");
+    expect(el.className).not.toContain("pe-24");
+  });
+
   it("US-QS-14 · Greenhouse look: control radius on the card surface", () => {
     render(<Input aria-label="Name" />);
     const cls = screen.getByLabelText("Name").className;

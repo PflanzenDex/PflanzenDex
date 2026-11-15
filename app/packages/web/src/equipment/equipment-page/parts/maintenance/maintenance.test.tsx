@@ -89,7 +89,7 @@ describe("US-EQU-04 operation and maintenance of a device", () => {
     const a = actions();
     render(<Maintenance item={device()} actions={a} />);
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Prüfintervall in Tagen (optional)"), "90");
+    await user.type(screen.getByRole("textbox", { name: "Prüfintervall (optional)" }), "90");
     await user.click(screen.getByRole("button", { name: "Betriebsdaten speichern" }));
     expect(a.onSave).toHaveBeenCalledWith(expect.objectContaining({ id: "d1" }), {
       inOperationSince: null,
@@ -107,7 +107,7 @@ describe("US-EQU-04 operation and maintenance of a device", () => {
     await user.click(screen.getByRole("button", { name: "Betriebsdaten speichern" }));
     expect(await screen.findByText(/braucht ihre Quelle/)).toBeTruthy();
     await user.type(screen.getByLabelText("Quelle der Lebensdauer"), "Datenblatt");
-    await user.type(screen.getByLabelText("Prüfintervall in Tagen (optional)"), "0");
+    await user.type(screen.getByRole("textbox", { name: "Prüfintervall (optional)" }), "0");
     await user.click(screen.getByRole("button", { name: "Betriebsdaten speichern" }));
     expect(await screen.findByText(/von 1 bis 3650 Tagen/)).toBeTruthy();
     expect(a.onSave).not.toHaveBeenCalled();

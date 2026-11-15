@@ -71,7 +71,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await page.getByRole("button", { name: "Neue Lichtzone" }).click();
     const form = page.getByRole("form", { name: "Lichtzone anlegen" });
     await form.getByLabel("Name").fill("Fensterbank");
-    await form.getByLabel("Lux-Decke (Lux)").fill("8000");
+    await form.getByLabel("Obergrenze").fill("8000");
     await form.getByRole("button", { name: "Zone anlegen" }).click();
     await expect(page.getByRole("heading", { level: 3, name: "Fensterbank" })).toBeVisible();
     await expect(page.getByText("bis 8.000 Lux")).toBeVisible();
@@ -97,11 +97,11 @@ test.describe("US-LIC-01 determine the zone of a species", () => {
       .getByRole("button", { name: "Art", exact: true })
       .click();
     const form = page.getByRole("form", { name: "Zone ermitteln" });
-    await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("15000");
+    await form.getByLabel("Lux-Bedarf der Art").fill("15000");
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
     await expect(form.getByText("Lichtzone: Zone 2")).toBeVisible();
 
-    await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("100000");
+    await form.getByLabel("Lux-Bedarf der Art").fill("100000");
     await form.getByLabel("Sonnenliebende C3-Pflanze mit weichem Blatt").check();
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
     await expect(form.getByText("Lichtzone: Zone 2")).toBeVisible();

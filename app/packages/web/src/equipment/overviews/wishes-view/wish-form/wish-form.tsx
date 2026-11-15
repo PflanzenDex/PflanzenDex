@@ -20,14 +20,23 @@ import type { EquipmentWishInput } from "../wishes-api";
 
 type TextName = "name" | "productId" | "priceEur";
 
-const TEXTS: { name: TextName; label: string; max?: number; decimal?: boolean }[] = [
+/** The optional ones say so after the label (SG-FORM-01); a unit stands as the suffix inside the field. */
+const TEXTS: {
+  name: TextName;
+  label: string;
+  optional?: boolean;
+  suffix?: string;
+  max?: number;
+  decimal?: boolean;
+}[] = [
   { name: "name", label: "Name des Wunsches", max: EQUIPMENT_LIMITS.name.max },
   {
     name: "productId",
-    label: "Produkt-ID des Wunsches (optional)",
+    label: "Produkt-ID des Wunsches",
+    optional: true,
     max: EQUIPMENT_LIMITS.productId.max,
   },
-  { name: "priceEur", label: "Geplanter Preis in Euro (optional)", decimal: true },
+  { name: "priceEur", label: "Geplanter Preis", optional: true, suffix: "€", decimal: true },
 ];
 
 function TypeField({ control }: { control: Control<WishFields> }) {
@@ -85,11 +94,12 @@ export function WishForm(props: {
             name={t.name}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t.label}</FormLabel>
+                <FormLabel optional={t.optional}>{t.label}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     autoComplete="off"
+                    suffix={t.suffix}
                     {...(t.max ? { maxLength: t.max } : {})}
                     {...(t.decimal ? { inputMode: "decimal" as const } : {})}
                   />

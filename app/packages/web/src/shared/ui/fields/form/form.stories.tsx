@@ -52,7 +52,7 @@ function Demo({ submitEmpty, serverError, pending }: DemoProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required>Name</FormLabel>
+              <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input {...field} required />
               </FormControl>
