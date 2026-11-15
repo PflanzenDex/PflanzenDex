@@ -193,4 +193,16 @@ describe("US-QS-32 GroupedRow (SG-LIST-04, SG-TYPE-02, SG-COLOR-02)", () => {
     );
     expect(screen.getByText("3").parentElement?.className).toContain("tabular-nums");
   });
+  it("US-QS-32 the id of a row sits on its focusable element, so a view can return the focus to the row", () => {
+    render(
+      wrap(
+        <GroupedList>
+          <GroupedRow id="konto-row-settings" to="/account/settings" title="Einstellungen" />
+          <GroupedRow id="konto-row-news" onClick={() => undefined} title="Neu" />
+        </GroupedList>,
+      ),
+    );
+    expect(document.getElementById("konto-row-settings")?.tagName).toBe("A");
+    expect(document.getElementById("konto-row-news")?.tagName).toBe("BUTTON");
+  });
 });

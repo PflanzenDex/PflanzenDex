@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
-import { Link } from "react-router";
 import { useFeature } from "@/shared/data";
-import { BUSY_LOOK, cn } from "@/shared/lib/utils";
+import { BUSY_LOOK } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
@@ -12,12 +12,17 @@ import {
 } from "@/shared/patterns/navigation/navigation/navigation";
 import type { Account } from "@/account";
 import { SECTIONS, rowId } from "../account-model/account-model";
+import table from "../account-area.de.json";
 import { useAccountValues, type Values } from "./account-values";
 import { InstallRow } from "./install-row/install-row";
 import { EverywhereError } from "./everywhere-error/everywhere-error";
 
-/** The rows of the index: every section that is on for the account; the profile has its own row above them. */
-function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
+const t = texts(table);
+
+type Section = (typeof SECTIONS)[number];
+
+/** The sections that are on for the account; the profile has its own group above them (US-QS-17). */
+function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean): Section[] {
   return SECTIONS.filter(
     (s) =>
       s.key !== "profile" &&
@@ -27,30 +32,29 @@ function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
   );
 }
 
+/** The rows of one group that are on, in the order of the group (US-QS-32). */
+function rowsIn(rows: Section[], keys: readonly AccountSection[]): Section[] {
+  return keys.flatMap((key) => rows.filter((s) => s.key === key));
+}
+
 type Token = () => Promise<string | undefined>;
 
-const ROW =
-  "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-base text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-/** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
-const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
-const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
-
-function Row(props: {
-  to: AccountSection;
-  id: string;
-  current: boolean;
-  children: React.ReactNode;
+/** One section as a row: its name, its current value when it is text, and the chevron of a navigation row. */
+function SectionRow(props: {
+  section: Section;
+  values: Values;
+  current: AccountSection | undefined;
 }) {
+  const { section } = props;
+  const value = props.values[section.key];
   return (
-    <Link
-      id={props.id}
-      to={accountAddress(props.to)}
-      aria-current={props.current ? "page" : undefined}
-      className={cn(ROW, props.current && CURRENT)}
-    >
-      {props.children}
-      <ChevronRight aria-hidden="true" className="ml-auto size-4 shrink-0 text-muted-foreground" />
-    </Link>
+    <GroupedRow
+      id={rowId(section.key)}
+      to={accountAddress(section.key)}
+      current={props.current === section.key}
+      title={section.title}
+      {...(typeof value === "string" ? { trailing: value } : {})}
+    />
   );
 }
 
@@ -68,19 +72,10 @@ function SignOutRow(props: {
   const [open, setOpen] = useState(false);
   return (
     <>
-      {/* The same row as the sections, with its chevron, so it reads as an action of the list and not as plain text (issue 1045). */}
-      <Button
-        type="button"
-        variant="ghost"
-        className={cn(ROW, "h-auto justify-start font-normal")}
-        onClick={() => setOpen(true)}
-      >
-        Abmelden …
-        <ChevronRight
-          aria-hidden="true"
-          className="ml-auto size-4 shrink-0 text-muted-foreground"
-        />
-      </Button>
+      {/* Its own group, in red and without a chevron: the one destructive step of the index (SG-COLOR-04, US-QS-32). */}
+      <GroupedList>
+        <GroupedRow tone="destructive" onClick={() => setOpen(true)} title="Abmelden …" />
+      </GroupedList>
       <ResponsiveModal title="Abmelden?" closeLabel="Schließen" open={open} onOpenChange={setOpen}>
         <div className="flex flex-col gap-3">
           {props.error && <Banner variant="error">{props.error}</Banner>}
@@ -116,15 +111,6 @@ function SignOutRow(props: {
   );
 }
 
-/** The last list item: "Abmelden …" with its confirmation dialog (US-QS-17, US-ACC-01). */
-function SignOutItem(props: React.ComponentProps<typeof SignOutRow>) {
-  return (
-    <li>
-      <SignOutRow {...props} />
-    </li>
-  );
-}
-
 type IndexProps = {
   api: string;
   token: Token;
@@ -142,59 +128,59 @@ type IndexProps = {
 };
 
 /**
- * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
- * "Abmelden …". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
- * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
- * function "ai", no overview) have no row.
+ * The index of "Konto" (US-QS-17, US-QS-32): the profile in a group of its own, then the groups "Konto", "Daten" and
+ * "App" as flat grouped lists, and "Abmelden …" alone in red. Each row opens its section as a view of its own. The
+ * current section is marked by `aria-current` and a semibold title, not by colour alone. Sections that are off (calm
+ * mode, the keeper's switch of the achievements, function "ai", no overview) have no row; a group without a row is not
+ * shown.
  */
 export function AccountIndex(props: IndexProps) {
   const ai = useFeature("ai");
   const values = useAccountValues(props.api, props.token);
   const rows = rowsOf(values, ai, props.hasOverview);
   const name = props.account.displayName || props.account.email;
+  const konto = rowsIn(rows, ["settings", "reminders", "achievements", "aiClients"]);
+  const daten = rowsIn(rows, ["measured", "data"]);
+  const app = rowsIn(rows, ["functions", "news"]);
+  const shown = (section: Section) => (
+    <SectionRow key={section.key} section={section} values={values} current={props.current} />
+  );
   return (
-    <nav aria-label="Abschnitte von Konto">
-      <ul className={LIST}>
-        <li>
-          <Row to="profile" id={rowId("profile")} current={props.current === "profile"}>
+    <nav aria-label="Abschnitte von Konto" className="flex min-w-0 flex-col gap-6">
+      <GroupedList>
+        <GroupedRow
+          id={rowId("profile")}
+          to={accountAddress("profile")}
+          current={props.current === "profile"}
+          leading={
             <span
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-base font-semibold text-accent-foreground"
+              className="flex size-9 items-center justify-center rounded-xl bg-muted text-base font-semibold text-foreground"
             >
               {name.slice(0, 1).toUpperCase()}
             </span>
-            <span className="flex min-w-0 flex-col">
-              <span className="font-semibold [overflow-wrap:anywhere]">{name}</span>
-              <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-                {props.account.email}
-              </span>
-            </span>
-          </Row>
-        </li>
-        {rows.map((s) => {
-          const value = values[s.key];
-          return (
-            <li key={s.key}>
-              <Row to={s.key} id={rowId(s.key)} current={props.current === s.key}>
-                <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-3">
-                  <span>{s.title}</span>
-                  {typeof value === "string" && (
-                    <span className="text-sm font-normal text-muted-foreground">{value}</span>
-                  )}
-                </span>
-              </Row>
-            </li>
-          );
-        })}
-        <InstallRow />
-        <SignOutItem
-          onSignOut={props.onSignOut}
-          onEverywhereSignOut={props.onEverywhereSignOut}
-          {...(props.error ? { error: props.error } : {})}
-          {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
-          busy={props.everywhereBusy ?? false}
+          }
+          title={<span className="font-semibold [overflow-wrap:anywhere]">{name}</span>}
+          meta={props.account.email}
         />
-      </ul>
+      </GroupedList>
+      {konto.length > 0 && (
+        <GroupedList label={t("index.group.account")}>{konto.map(shown)}</GroupedList>
+      )}
+      {daten.length > 0 && (
+        <GroupedList label={t("index.group.data")}>{daten.map(shown)}</GroupedList>
+      )}
+      <GroupedList label={t("index.group.app")}>
+        {app.map(shown)}
+        <InstallRow />
+      </GroupedList>
+      <SignOutRow
+        onSignOut={props.onSignOut}
+        onEverywhereSignOut={props.onEverywhereSignOut}
+        {...(props.error ? { error: props.error } : {})}
+        {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
+        busy={props.everywhereBusy ?? false}
+      />
     </nav>
   );
 }

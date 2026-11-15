@@ -75,15 +75,17 @@ export type GroupedRowProps = {
   trailing?: ReactNode;
 };
 
-/**
- * One row of a `GroupedList`: a link, a button or plain content. A navigation or action row shows the neutral chevron
- * at the trailing edge, after its value, unless it is destructive.
- */
-export function GroupedRow(props: GroupedRowProps) {
-  const destructive = props.tone === "destructive";
-  const interactive = props.to !== undefined || props.onClick !== undefined;
-  const chevron = interactive && !destructive;
-  const content = (
+/** The inside of a row: the leading mark, the title and meta line, the trailing value and the chevron. */
+function RowContent(props: {
+  leading: ReactNode;
+  title: ReactNode;
+  meta: ReactNode;
+  trailing: ReactNode;
+  current: boolean;
+  destructive: boolean;
+  chevron: boolean;
+}) {
+  return (
     <>
       {props.leading !== undefined && (
         <span className="flex shrink-0 items-center">{props.leading}</span>
@@ -93,7 +95,7 @@ export function GroupedRow(props: GroupedRowProps) {
           className={cn(
             "text-base [overflow-wrap:anywhere]",
             props.current ? "font-semibold" : "font-normal",
-            destructive && "text-destructive",
+            props.destructive && "text-destructive",
           )}
         >
           {props.title}
@@ -109,10 +111,30 @@ export function GroupedRow(props: GroupedRowProps) {
           {props.trailing}
         </span>
       )}
-      {chevron && (
+      {props.chevron && (
         <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
       )}
     </>
+  );
+}
+
+/**
+ * One row of a `GroupedList`: a link, a button or plain content. A navigation or action row shows the neutral chevron
+ * at the trailing edge, after its value, unless it is destructive.
+ */
+export function GroupedRow(props: GroupedRowProps) {
+  const destructive = props.tone === "destructive";
+  const interactive = props.to !== undefined || props.onClick !== undefined;
+  const content = (
+    <RowContent
+      leading={props.leading}
+      title={props.title}
+      meta={props.meta}
+      trailing={props.trailing}
+      current={props.current === true}
+      destructive={destructive}
+      chevron={interactive && !destructive}
+    />
   );
   const look = cn(
     ROW,
@@ -120,18 +142,33 @@ export function GroupedRow(props: GroupedRowProps) {
     props.current && "bg-muted",
     destructive && "text-destructive",
   );
+  // The id sits on the focusable element, so a view can return the focus to the row (the Konto index does).
   return (
-    <li id={props.id} className={HAIRLINE}>
+    <li className={HAIRLINE}>
       {props.to !== undefined ? (
-        <Link to={props.to} aria-current={props.current ? "page" : undefined} className={look}>
+        <Link
+          id={props.id}
+          to={props.to}
+          aria-current={props.current ? "page" : undefined}
+          className={look}
+        >
           {content}
         </Link>
       ) : props.onClick !== undefined ? (
-        <Button type="button" variant="ghost" size="row" onClick={props.onClick} className={look}>
+        <Button
+          id={props.id}
+          type="button"
+          variant="ghost"
+          size="row"
+          onClick={props.onClick}
+          className={look}
+        >
           {content}
         </Button>
       ) : (
-        <div className={look}>{content}</div>
+        <div id={props.id} className={look}>
+          {content}
+        </div>
       )}
     </li>
   );

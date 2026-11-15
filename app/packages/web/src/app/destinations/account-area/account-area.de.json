@@ -1,5 +1,8 @@
 {
   "title": "Konto",
   "index.loading": "Konto wird geladen …",
-  "index.retry": "Erneut versuchen"
+  "index.retry": "Erneut versuchen",
+  "index.group.account": "Konto",
+  "index.group.data": "Daten",
+  "index.group.app": "App"
 }
