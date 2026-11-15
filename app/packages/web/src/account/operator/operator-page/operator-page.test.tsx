@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>
@@ -140,13 +141,27 @@ describe("US-ACC-05 operator area: counts, no content", () => {
 });
 
 describe("US-ACC-05 monthly cost and cost per user", () => {
-  it("US-ACC-05 without a figure: cost per user unknown with what to do (P-08, P-09)", async () => {
+  it("US-ACC-05 without a figure: cost per user is unbekannt and Kosten eintragen opens the cost layer (P-08, P-09)", async () => {
     const facts = await numbers();
-    expect(fact(facts, "Monatliche Kosten")).toBe("nicht eingetragen");
-    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: trage die Kosten eines Monats ein");
+    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekanntKosten eintragen");
+    expect(within(facts).getByText("unbekannt")).toBeTruthy();
+    expect(within(facts).getByRole("button", { name: "Kosten eintragen" })).toBeTruthy();
+    // The monthly cost is shown once, in its own overview row (US-QS-15), not in the sheet.
+    expect(within(facts).queryByText("Monatliche Kosten")).toBeNull();
+    expect(within(facts).queryByText("nicht eingetragen")).toBeNull();
   });
 
-  it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen'", async () => {
+  it("US-ACC-05 Kosten eintragen replaces the sheet Zahlen with the layer Monatliche Kosten and its form (US-QS-15)", async () => {
+    const facts = await numbers();
+    await userEvent.click(within(facts).getByRole("button", { name: "Kosten eintragen" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Monatliche Kosten" })).toBeTruthy();
+    expect(within(dialog).getByLabelText("Betrag")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Zahlen" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Zahlen" })).toBeNull();
+  });
+
+  it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen', and no Kosten eintragen", async () => {
     current = overview({
       cost: { amountCents: 4999, currency: "EUR", month: "2026-09" },
       costPerUser: {
@@ -158,10 +173,11 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       },
     });
     const facts = await numbers();
-    expect(fact(facts, "Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
     expect(fact(facts, "Kosten pro Nutzer")).toMatch(
       /^10,00\s€ \(September 2026, manuell eingetragen\)$/,
     );
+    expect(within(facts).queryByRole("button", { name: "Kosten eintragen" })).toBeNull();
+    expect(within(facts).queryByText("Monatliche Kosten")).toBeNull();
   });
 
   it("US-ACC-05 a figure without active users: cost per user unknown with the reason", async () => {
@@ -421,6 +437,157 @@ describe("US-ACC-05 invitation codes", () => {
       ).toBeTruthy(),
     );
     setProfileTimeZone(null);
+  });
+});
+
+describe("US-ACC-05 US-QS-32 the new code: one line, share or copy (fixture code only)", () => {
+  const created = {
+    id: "i9",
+    code: "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01",
+    expiresAt: "2026-10-11T10:00:00.000Z",
+  };
+  const listed = {
+    id: "i9",
+    createdAt: "2026-10-04T10:00:00.000Z",
+    expiresAt: "2026-10-11T10:00:00.000Z",
+    redeemedAt: null,
+  };
+  const copied = "Kopiert";
+  const hand = "Kopieren nicht möglich. Markiere den Code und kopiere ihn von Hand.";
+
+  /**
+   * Creates a code in the layer and returns its box and the clipboard write to watch. The write is watched after the
+   * first user event: user-event puts its clipboard stub on navigator then, and the spy replaces its writeText.
+   */
+  const createCode = async (writeFails = false) => {
+    serve(async (path, init) => {
+      if (path !== "/operator/invitations" || init.method !== "POST") return json(404, {});
+      // As the server does: the reload after a create lists the new code, so the empty list's action is gone.
+      current = overview({ invitations: [{ ...listed, status: "open" as const }] });
+      return json(201, created);
+    });
+    await open();
+    const dialog = await topic(/^Einladungscodes/);
+    const write = vi.spyOn(navigator.clipboard, "writeText");
+    if (writeFails) write.mockRejectedValue(new Error("denied"));
+    else write.mockResolvedValue(undefined);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
+    const box = await screen.findByRole("region", { name: "Neuer Einladungscode" });
+    return { dialog, box, write };
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    Reflect.deleteProperty(navigator, "share");
+  });
+
+  it("US-ACC-05 US-QS-32 after creating a code the layer has one filled button, Code teilen and Code kopieren", async () => {
+    const { dialog, box } = await createCode();
+    expect(within(box).getByRole("button", { name: "Code teilen" }).className).toContain(
+      "bg-secondary",
+    );
+    expect(within(box).getByRole("button", { name: "Code kopieren" }).className).not.toContain(
+      "bg-secondary",
+    );
+    const filled = within(dialog)
+      .getAllByRole("button")
+      .filter((b) => b.className.split(" ").includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Code erstellen"]);
+  });
+
+  it("US-ACC-05 US-QS-32 the code is one line in 16 px monospace that scrolls on its own, and stays selectable", async () => {
+    const { box } = await createCode();
+    const code = within(box).getByText(created.code);
+    expect(code.className.split(" ")).toEqual(
+      expect.arrayContaining(["font-mono", "text-base", "whitespace-nowrap", "select-all"]),
+    );
+    expect(code.closest('[role="region"]')?.className).toContain("overflow-x-auto");
+  });
+
+  it("US-ACC-05 US-QS-32 Code teilen shares only the code through the share sheet", async () => {
+    const share = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "share", { configurable: true, value: share });
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(share).toHaveBeenCalledWith({ text: created.code });
+    expect(write).not.toHaveBeenCalled();
+    expect(within(box).queryByRole("button", { name: copied })).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 without the Web Share API Code teilen copies the code and the copy button reads Kopiert", async () => {
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(write).toHaveBeenCalledWith(created.code);
+    expect(await within(box).findByRole("button", { name: copied })).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 Code kopieren copies the code and then reads Kopiert", async () => {
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code kopieren" }));
+    expect(write).toHaveBeenCalledWith(created.code);
+    expect(await within(box).findByRole("button", { name: copied })).toBeTruthy();
+    expect(within(box).queryByText(hand)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 a failing copy shows the hand-copy line and no fake success", async () => {
+    const { box } = await createCode(true);
+    await userEvent.click(within(box).getByRole("button", { name: "Code kopieren" }));
+    expect(await within(box).findByText(hand)).toBeTruthy();
+    expect(within(box).queryByRole("button", { name: copied })).toBeNull();
+    expect(within(box).getByRole("button", { name: "Code kopieren" })).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 a share sheet the keeper closes changes nothing", async () => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async () => {
+        throw Object.assign(new Error("closed"), { name: "AbortError" });
+      },
+    });
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(write).not.toHaveBeenCalled();
+    expect(within(box).queryByRole("button", { name: copied })).toBeNull();
+    expect(within(box).queryByText(hand)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 a share sheet that refuses for another reason falls back to copying the code", async () => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async () => {
+        throw Object.assign(new Error("not allowed"), { name: "NotAllowedError" });
+      },
+    });
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(write).toHaveBeenCalledWith(created.code);
+    expect(await within(box).findByRole("button", { name: copied })).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 the copied code is announced politely through the shared live region", async () => {
+    serve(async (path, init) =>
+      path === "/operator/invitations" && init.method === "POST"
+        ? json(201, created)
+        : json(404, {}),
+    );
+    render(
+      <MemoryRouter>
+        <AnnouncerProvider>
+          <OperatorPage api="http://api" token={token} />
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("button", { name: /^Zahlen/ });
+    await topic(/^Einladungscodes/);
+    vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
+    await userEvent.click(screen.getByRole("button", { name: "Code erstellen" }));
+    const box = await screen.findByRole("region", { name: "Neuer Einladungscode" });
+    await userEvent.click(within(box).getByRole("button", { name: "Code kopieren" }));
+    await waitFor(() =>
+      expect(document.querySelector('[aria-live="polite"]')?.textContent).toContain(
+        "Der Code liegt in der Zwischenablage.",
+      ),
+    );
   });
 });
 

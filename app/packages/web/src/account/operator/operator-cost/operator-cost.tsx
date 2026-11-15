@@ -30,13 +30,14 @@ export function monthText(month: string): string {
   }).format(new Date(Date.UTC(year ?? 2000, (m ?? 1) - 1, 1)));
 }
 
-/** The cost per user with its source, or "unbekannt" with the reason and what to do (P-08, P-09). */
+/**
+ * The cost per user with its source, or "unbekannt" with the reason (P-08). Without a figure the value is "unbekannt"
+ * alone: the sheet shows the button that enters the figure (US-QS-15, operator-parts).
+ */
 export function costPerUserText(c: CostPerUser): string {
   if (c.known)
     return `${moneyText(c.amountCents, c.currency)} (${monthText(c.month)}, manuell eingetragen)`;
-  return c.reason === "no_figure"
-    ? "unbekannt: trage die Kosten eines Monats ein"
-    : "unbekannt: es gibt noch keine aktiven Nutzer";
+  return c.reason === "no_figure" ? "unbekannt" : "unbekannt: es gibt noch keine aktiven Nutzer";
 }
 
 /** The current month as `YYYY-MM` (UTC, like the rule on the server). */
