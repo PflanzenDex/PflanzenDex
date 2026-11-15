@@ -37,7 +37,8 @@ export function ZoneField(props: {
       <Choice
         control={control}
         name="lightZoneId"
-        label={t("zone.for", { label, name })}
+        label={label}
+        species={name}
         items={zones}
         selectRef={zoneChoice}
       />

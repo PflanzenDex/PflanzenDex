@@ -6,6 +6,7 @@ import {
 } from "@pflanzendex/core";
 import { z } from "zod";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { requiredDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import type { MeasurementInput } from "./api/measurements-api";
 import type { TreatmentInput } from "./api/treatments-api";
 import table from "./shared.de.json";
@@ -15,7 +16,7 @@ const ui = texts(table);
 /**
  * The form to record a measurement (US-WAC-01, DS-47): fast feedback per field in German, so a typo does not occupy
  * the server first. The server operation validates again (P-03). The date stays a `YYYY-MM-DD` string. An emptied
- * date (or a typed one that is no real day, which the date field turns into "") is refused here (P-10): the server
+ * date (or a typed one that is no real day, which the date field hands on as typed) is refused here (P-10): the server
  * would otherwise take a missing date for today without a word.
  */
 const NUMBER = /^\d+[.,]?\d*$/;
@@ -31,7 +32,7 @@ export const measurementSchema = z.object({
     if (value > MEASUREMENT_LIMITS.value.max) return issue(NUMBER_ERROR);
     if (!Number.isInteger(value / MEASUREMENT_LIMITS.step)) issue(STEP_ERROR);
   }),
-  date: z.string().min(1, ui("dateMissing")),
+  date: requiredDate(ui("dateMissing")),
   quality: z.enum(QUALITIES, { error: "Wähle die Qualität: gesund oder vergeilt/dünn." }),
   note: z.string(),
 });
@@ -72,7 +73,7 @@ export const treatmentSchema = z
     specimenIds: z.array(z.string()).min(1, "Wähle mindestens eine Pflanze."),
     reason: z.string().trim().min(1, "Nenne einen Grund, zum Beispiel Wollläuse."),
     agent: z.string(),
-    date: z.string().min(1, "Wähle ein Datum für den ersten Termin."),
+    date: requiredDate("Wähle ein Datum für den ersten Termin."),
     isCourse: z.boolean(),
     count: z.string(),
     intervalDays: z.string(),

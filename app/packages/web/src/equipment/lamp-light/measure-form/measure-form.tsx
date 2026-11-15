@@ -4,6 +4,7 @@ import { Button } from "@/shared/ui/button/button";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { currentTimeZone } from "../../../shared/data";
 import type { MeasurementInput } from "../../equipment-api";
 import { wholeNumber } from "../parse";
@@ -38,11 +39,13 @@ function toInput(
  * Adds one measurement of a lamp (US-EQU-03): date (today, in the keeper's time zone, NFR-08) and lux are required,
  * distance and method may stay empty (unknown, P-08). The server validates again (P-03).
  */
-export function MeasureForm(props: {
+type MeasureFormProps = {
   lampName: string;
   busy: boolean;
   onSend: (input: MeasurementInput) => Promise<boolean>;
-}) {
+};
+
+export function MeasureForm(props: MeasureFormProps) {
   const [date, setDate] = useState(() => localToday(new Date(), currentTimeZone()));
   const [luxText, setLuxText] = useState("");
   const [distance, setDistance] = useState("");
@@ -50,6 +53,7 @@ export function MeasureForm(props: {
   const [problem, setProblem] = useState<string | null>(null);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!isHandedDate(date)) return; // no real day: its field says so on leaving it (US-QS-32)
     const checked = toInput(date, luxText, distance, method);
     if ("problem" in checked) return setProblem(checked.problem);
     setProblem(null);

@@ -1,112 +1,164 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { fieldClasses, type InputProps } from "../../input";
 import { enterKeyHandlers } from "../../enter-key";
+import { draftFor, handedFor, parseDateText, showDateText } from "./date-field-text";
+import table from "./date-field.de.json";
 
-const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
-const GERMAN = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+export { parseDateText, showDateText };
 
-/** Is `y-m-d` a real calendar day? Pure calendar arithmetic, no time zone involved (NFR-08). */
-function isRealDay(y: number, m: number, d: number): boolean {
-  const date = new Date(Date.UTC(y, m - 1, d));
-  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+const t = texts(table);
+const COARSE = "(pointer: coarse)";
+type DateProps = Omit<InputProps, "type">;
+
+/** Does the device point with a finger (a coarse pointer)? Without `matchMedia`, as in jsdom, the pointer is fine. */
+function coarseNow(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia(COARSE).matches
+    : false;
 }
 
-/** "09.03.2026" or "2026-03-09" as the local calendar date `YYYY-MM-DD`; `""` when it is no real day (NFR-08). */
-export function parseDateText(text: string): string {
-  const t = text.trim();
-  const iso = ISO.exec(t);
-  const de = GERMAN.exec(t);
-  const [y, m, d] = iso
-    ? [Number(iso[1]), Number(iso[2]), Number(iso[3])]
-    : de
-      ? [Number(de[3]), Number(de[2]), Number(de[1])]
-      : [0, 0, 0];
-  if (!y || !isRealDay(y, m, d)) return "";
-  return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
-
-/** `YYYY-MM-DD` as "09.03.2026"; anything else is shown as it is. */
-export function showDateText(iso: string): string {
-  const m = ISO.exec(iso);
-  return m ? `${m[3]}.${m[2]}.${m[1]}` : iso;
+/** The pointer of the device, followed while it changes (a keyboard docked to a tablet, a window that resizes). */
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = React.useState(coarseNow);
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia(COARSE);
+    const update = () => setCoarse(media.matches);
+    update();
+    media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
+  }, []);
+  return coarse;
 }
 
 /**
- * The one date field (US-QS-24): shows `TT.MM.JJJJ` in every browser and locale, the value stays the local calendar
- * date `YYYY-MM-DD` (NFR-08, DS-51), or `""` while the text is no real day. `min`/`max` (`YYYY-MM-DD`) mark an
- * out-of-range day as invalid. Takes the props of `Input`; `onChange` receives an event whose `target.value` is the ISO date.
- * The return key works as in `Input` (SG-FORM-03, US-QS-32): the date field is a text field, so a field before it says
- * "next" and Enter moves on onto it, and the last text field says "done" and Enter submits. A caller's `enterKeyHint` wins.
+ * A touch device: the system date picker (SG-CTRL-03). The value is the local calendar date `YYYY-MM-DD` as it is, and
+ * the picker shows no placeholder, length limit or number pad of its own (US-QS-32).
  */
-const DateField = React.forwardRef<HTMLInputElement, Omit<InputProps, "type">>(
-  (
-    {
-      className,
-      invalid,
-      value,
-      defaultValue,
-      onChange,
-      onBlur,
-      min,
-      max,
-      placeholder,
-      enterKeyHint,
-      onFocus,
-      onPointerDown,
-      onKeyDown,
-      ...props
+const PickerDate = React.forwardRef<HTMLInputElement, DateProps>(
+  ({ className, invalid, enterKeyHint, onFocus, onPointerDown, onKeyDown, ...props }, ref) => (
+    <input
+      ref={ref}
+      type="date"
+      enterKeyHint={enterKeyHint}
+      {...enterKeyHandlers(enterKeyHint, { onFocus, onPointerDown, onKeyDown })}
+      {...props}
+      placeholder={undefined}
+      maxLength={undefined}
+      inputMode={undefined}
+      aria-invalid={invalid || props["aria-invalid"] || undefined}
+      className={cn(fieldClasses, "min-h-[44px] py-2", className)}
+    />
+  ),
+);
+PickerDate.displayName = "PickerDate";
+
+/** The typed text and what it means: the shown draft, its calendar date, whether it is a problem, and whether it was left. */
+function useTypedText(props: Pick<DateProps, "value" | "defaultValue" | "min" | "max">) {
+  const { value, defaultValue, min, max } = props;
+  const [draft, setDraft] = React.useState(() => showDateText(String(value ?? defaultValue ?? "")));
+  const [left, setLeft] = React.useState(false);
+  const shown = value === undefined ? draft : draftFor(draft, String(value));
+  const iso = parseDateText(shown);
+  const noDay = shown.trim() !== "" && iso === "";
+  const outOfRange =
+    iso !== "" && Boolean((max && iso > String(max)) || (min && iso < String(min)));
+  return { setDraft, setLeft, shown, iso, left, problem: noDay || outOfRange };
+}
+type TypedText = ReturnType<typeof useTypedText>;
+
+/** Focus selects the whole text (Q-134); Enter shows the message, because the form may submit now (US-QS-32). */
+function typedKeys(
+  typed: TypedText,
+  h: Pick<DateProps, "enterKeyHint" | "onFocus" | "onPointerDown" | "onKeyDown">,
+) {
+  return enterKeyHandlers(h.enterKeyHint, {
+    onFocus: (event) => {
+      event.currentTarget.select();
+      typed.setLeft(false);
+      h.onFocus?.(event);
     },
-    ref,
-  ) => {
-    const initial = String(value ?? defaultValue ?? "");
-    const [draft, setDraft] = React.useState(showDateText(initial));
-    const shown = value === undefined ? draft : draftFor(draft, String(value));
-    const iso = parseDateText(shown);
-    const outOfRange = iso !== "" && ((max && iso > String(max)) || (min && iso < String(min)));
-    const typedButInvalid = shown.trim() !== "" && iso === "";
-    return (
+    onPointerDown: h.onPointerDown,
+    onKeyDown: (event) => {
+      if (event.key === "Enter") typed.setLeft(true);
+      h.onKeyDown?.(event);
+    },
+  });
+}
+
+/** The change a caller gets: `target.value` is the calendar date, or the typed text while it is no day (US-QS-32). */
+function handedEvent(e: React.ChangeEvent<HTMLInputElement>, name: string | undefined) {
+  return {
+    ...e,
+    target: { name: name ?? "", value: handedFor(e.target.value) },
+    currentTarget: e.currentTarget,
+  } as unknown as React.ChangeEvent<HTMLInputElement>;
+}
+
+/** The typed attributes of a fine pointer (the browser's keyboard shows letters-free digits, US-QS-24). */
+const TYPED = { type: "text", inputMode: "numeric", autoComplete: "off", maxLength: 10 } as const;
+
+/**
+ * A fine pointer: the typed `TT.MM.JJJJ` field (US-QS-24). Focus selects the whole text (Q-134). A text that is no real
+ * day, or out of `min`/`max`, is marked when the field is left, with one message under it (SG-FORM-05, US-QS-32);
+ * nothing shows while the keeper types, and the typed text is never cleared.
+ */
+const TypedDate = React.forwardRef<HTMLInputElement, DateProps>((props, ref) => {
+  const { invalid, defaultValue, onChange, onBlur, ...rest } = props;
+  const messageId = `${React.useId()}-message`;
+  const typed = useTypedText({ value: rest.value, defaultValue, min: rest.min, max: rest.max });
+  const callerInvalid = Boolean(invalid || rest["aria-invalid"]);
+  // A caller's own refusal (its form message) stands alone: the field adds no second message beside it.
+  const message = !callerInvalid && typed.left && typed.problem ? t("invalid") : null;
+  const describedBy =
+    [rest["aria-describedby"], message ? messageId : undefined].filter(Boolean).join(" ") ||
+    undefined;
+  return (
+    <>
       <input
         ref={ref}
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        placeholder={placeholder ?? "TT.MM.JJJJ"}
-        min={min}
-        max={max}
-        maxLength={10}
-        enterKeyHint={enterKeyHint}
-        {...enterKeyHandlers(enterKeyHint, { onFocus, onPointerDown, onKeyDown })}
-        {...props}
-        value={shown}
-        aria-invalid={
-          invalid || props["aria-invalid"] || outOfRange || typedButInvalid || undefined
-        }
-        className={cn(fieldClasses, "min-h-[44px] py-2", className)}
+        {...TYPED}
+        {...rest}
+        placeholder={rest.placeholder ?? "TT.MM.JJJJ"}
+        {...typedKeys(typed, rest)}
+        value={typed.shown}
+        aria-invalid={callerInvalid || message ? true : undefined}
+        aria-describedby={describedBy}
+        className={cn(fieldClasses, "min-h-[44px] py-2", rest.className)}
         onChange={(e) => {
-          const text = e.target.value;
-          setDraft(text);
-          const next = parseDateText(text);
-          // Callers read `event.target.value` (react-hook-form too), so hand them the calendar date, not the text.
-          onChange?.({
-            ...e,
-            target: { name: props.name ?? "", value: next },
-            currentTarget: e.currentTarget,
-          } as unknown as React.ChangeEvent<HTMLInputElement>);
+          typed.setDraft(e.target.value);
+          onChange?.(handedEvent(e, rest.name));
         }}
         onBlur={(e) => {
-          if (iso) setDraft(showDateText(iso));
+          typed.setLeft(true);
+          if (typed.iso) typed.setDraft(showDateText(typed.iso));
           onBlur?.(e);
         }}
       />
-    );
-  },
-);
-DateField.displayName = "DateField";
+      {message && (
+        <p id={messageId} role="alert" className="text-sm font-medium text-destructive">
+          {message}
+        </p>
+      )}
+    </>
+  );
+});
+TypedDate.displayName = "TypedDate";
 
-/** While the parent's ISO value is the date the draft already means, keep the draft (the user is typing). */
-function draftFor(draft: string, value: string): string {
-  return parseDateText(draft) === value ? draft : showDateText(value);
-}
+/**
+ * The one date field (US-QS-24, SG-CTRL-03). A fine pointer gets the typed `TT.MM.JJJJ` field, a touch device the system
+ * date picker; the value is the local calendar date `YYYY-MM-DD` in both (NFR-08, DS-51). `min`/`max` (`YYYY-MM-DD`)
+ * mark an out-of-range day. Takes the props of `Input`; `onChange` receives an event whose `target.value` is the ISO date,
+ * or the typed text while it is no real day (the form refuses it). The return key works as in `Input` (SG-FORM-03,
+ * US-QS-32): the typed field is a text field, so a field before it says "next" and Enter moves on onto it, and the last
+ * text field says "done" and Enter submits. A caller's `enterKeyHint` wins.
+ */
+const DateField = React.forwardRef<HTMLInputElement, DateProps>((props, ref) => {
+  const coarse = useCoarsePointer();
+  return coarse ? <PickerDate {...props} ref={ref} /> : <TypedDate {...props} ref={ref} />;
+});
+DateField.displayName = "DateField";
 
 export { DateField };

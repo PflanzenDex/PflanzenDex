@@ -1,6 +1,7 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { FormRoot } from "@/shared/ui/fields/form/form";
+import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
@@ -94,6 +95,8 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
   const write = useWriteAction(props.token, useInvalidate(KEY));
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is saved.
+    if (!Object.values(paused).every(isHandedDate)) return;
     const next: ReminderSettings = { ...saved, paused };
     void write.run((t) => saveReminderSettings(props.api, t, next), "Pausen gespeichert.");
   };

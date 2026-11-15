@@ -510,7 +510,7 @@ Acceptance criteria:
 - Given a layer or an overview, then help text is at most one line; a longer explanation opens behind "Mehr erfahren".
 - Given a form, then its optional fields sit behind the one disclosure "Mehr Angaben" (not "Weitere Angaben" or another name), closed by default and open while one of them holds a value or a refusal (DS-64, issue 1032).
 - Given a number with a unit (cm, Lux, Tage, %, kB, ...) or a date range, then they never break apart (a non-breaking space through the shared helper `keepTogether`/`withUnit`), and counts, measurements, dates and money use tabular digits.
-- Given any date, file or month field, then it shows German text and no browser-locale English: dates as `TT.MM.JJJJ` with the value kept as the local calendar date `YYYY-MM-DD` (NFR-08), a file as the button "Foto wählen" ("Datei wählen" for non-images) with "Kein Foto gewählt", a month as a select with German month names; a dev seed species shows a German source text (#1033).
+- Given any date, file or month field, then it shows German text and no browser-locale English: dates as `TT.MM.JJJJ` typed on a fine pointer and as the system date picker on a touch device (SG-CTRL-03, US-QS-32), with the value kept as the local calendar date `YYYY-MM-DD` (NFR-08), a file as the button "Foto wählen" ("Datei wählen" for non-images) with "Kein Foto gewählt", a month as a select with German month names; a dev seed species shows a German source text (#1033).
 - Given any search field (first-plant search, species search, Pokédex, wish form, plant picker), when it holds text, then it shows its own ghost button "Suche leeren" (44 × 44 px, reachable by Tab, Enter and Space work) instead of the browser's blue clear icon; when the keeper presses it, then the field is empty and has the focus again; when the field is empty, then no button is shown (owner decision 2026-11-01, issue 1094; component `SearchInput`).
 - Given a text with an omission or a follow-up action ("Wird geladen …", "Pflanze wählen …"), then it uses the ellipsis character "…", never three dots (a test scans the texts).
 
@@ -690,6 +690,8 @@ Acceptance criteria:
 - Given a case in which an older rule and the baseline disagree and the guide is silent, then the owner decides and the answer becomes a rule of the guide.
 
 Not part of this story: the screens from 768 px (a later pass; `design-system.md` holds there unchanged), the changes to the app and to the gates that still check the replaced rules (tickets from the design review), and the drawing style of the illustrations (US-QS-31).
+
+State of implementation (fix FX-45, issues 1859, 1962 and 1986, findings F-0008, F-0156 and F-0224 of the mobile design review): a date on a touch device is the system date picker, a typed date keeps `TT.MM.JJJJ` and shows one message under the field when it is left with a text that is no day (`DateField`, `date-field-schema.ts`); the rest period of the care profile is one row "Ruhephase" with the pickers "von" and "bis" (month and day side by side, owner answers Q-129 and Q-134), and no visible label names the species. F-0225 (the reset button before every field) stays open.
 
 ### US-QS-33 · Motion follows the device, with a switch in the app · 🟨 new
 
