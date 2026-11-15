@@ -108,7 +108,7 @@ export async function proposeSpecies(
   await proposal.getByLabel("Lateinischer Name").fill(latinName);
   await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
   await proposal.getByRole("button", { name: "Weiter" }).click();
-  await proposal.getByLabel("Vergeilung-Anzeichen").fill("Die Rosette streckt sich.");
+  await proposal.getByLabel("Vergeilungsanzeichen").fill("Die Rosette streckt sich.");
   await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");
   if (dormancy) {
     await proposal.getByText("Mehr Angaben", { exact: true }).click();

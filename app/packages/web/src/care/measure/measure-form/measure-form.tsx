@@ -37,7 +37,7 @@ function EtiolationSigns({ signs }: { signs: string | null }) {
   return (
     <details className="text-sm">
       <DisclosureSummary className="rounded-md">Wie erkennen?</DisclosureSummary>
-      <p>Vergeilung-Anzeichen dieser Art: {signs}</p>
+      <p>Vergeilungsanzeichen dieser Art: {signs}</p>
     </details>
   );
 }

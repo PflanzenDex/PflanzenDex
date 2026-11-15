@@ -1,5 +1,5 @@
 {
-  "title": "Verlauf: {name}",
+  "title": "Messverlauf: {name}",
   "parts.label": "Teile des Verlaufs",
   "part.overview": "Überblick",
   "part.curve": "Kurve",

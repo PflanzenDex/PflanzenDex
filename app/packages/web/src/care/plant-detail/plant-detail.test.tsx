@@ -81,7 +81,7 @@ describe("US-QS-23 the growth trend of the overview", () => {
         json(200, view({ growth: growth({ trend: "faster", signal: "etiolated" }) })),
     });
     show();
-    expect(await screen.findByText(/trotz Rate kein Erfolgssignal/)).toBeTruthy();
+    expect(await screen.findByText(/trotz Wachstum kein Erfolgssignal/)).toBeTruthy();
   });
 
   it("US-QS-23 · P-08 without a measurement the trend reads unbekannt", async () => {
@@ -89,6 +89,14 @@ describe("US-QS-23 the growth trend of the overview", () => {
     show();
     expect(await screen.findByText("Trend: unbekannt")).toBeTruthy();
     expect(screen.getByText("Wachstum: noch keine Messung")).toBeTruthy();
+  });
+
+  it("US-QS-32 the dot of the growth line sticks to the trend, so a line never ends with ' ·'", async () => {
+    server({ "GET /specimens/e1/measurements": () => json(200, view({ growth: growth({}) })) });
+    show();
+    const trend = await screen.findByText("Trend: stabil");
+    // The dot is part of the trend's element (with a no-break space), so a line break can come before it, never after it.
+    expect(trend.textContent).toBe("· Trend: stabil");
   });
 
   it("US-QS-23 · P-10 a failed load says so and offers a retry", async () => {

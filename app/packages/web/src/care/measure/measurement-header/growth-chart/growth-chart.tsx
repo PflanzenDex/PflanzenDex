@@ -48,7 +48,7 @@ export function GrowthChart({ measurements }: { measurements: readonly Measureme
   const y = (p: MeasurementRow) => scale(p.value, [lo, hi], [H - PAD, PAD]);
   const etiolated = points.filter((p) => p.quality === "etiolated").length;
   const label =
-    `Verlauf: ${points.length} Messungen von ${dateText(first.date)} bis ${dateText(last.date)}, ` +
+    `Messverlauf: ${points.length} Messungen von ${dateText(first.date)} bis ${dateText(last.date)}, ` +
     `Werte von ${valueText(lo)} bis ${valueText(hi)}` +
     (etiolated ? `, ${etiolated} davon vergeilt/dünn` : "");
   return (

@@ -69,7 +69,7 @@ function show(measurements: MeasurementRow[], at = "/collection?view=plants&shee
 /** Renders the layer and waits until its dialog has mounted: the dialog part loads lazily. */
 async function showReady(measurements: MeasurementRow[], at?: string) {
   const result = show(measurements, at);
-  await screen.findByText("Verlauf: Bogenhanf");
+  await screen.findByText("Messverlauf: Bogenhanf");
   return result;
 }
 
@@ -81,7 +81,7 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
     await showReady(course);
     expect(pressed("Überblick")).toBe(true);
     expect(screen.getByText("Was messen?")).toBeTruthy();
-    expect(screen.queryByRole("img", { name: /^Verlauf:/ })).toBeNull();
+    expect(screen.queryByRole("img", { name: /^Messverlauf:/ })).toBeNull();
     expect(screen.queryByRole("list", { name: "Messungen und Fotos" })).toBeNull();
   });
 
@@ -89,7 +89,7 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
     await showReady(course);
     await userEvent.click(screen.getByRole("button", { name: "Kurve" }));
     expect(pressed("Kurve")).toBe(true);
-    expect(screen.getByRole("img", { name: /^Verlauf: 3 Messungen/ })).toBeTruthy();
+    expect(screen.getByRole("img", { name: /^Messverlauf: 3 Messungen/ })).toBeTruthy();
     expect(screen.queryByText("Was messen?")).toBeNull();
   });
 
@@ -97,7 +97,7 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
     await showReady([course[0] as MeasurementRow]);
     await userEvent.click(screen.getByRole("button", { name: "Kurve" }));
     expect(screen.getByText(/Ab der 2\. Messung/)).toBeTruthy();
-    expect(screen.queryByRole("img", { name: /^Verlauf:/ })).toBeNull();
+    expect(screen.queryByRole("img", { name: /^Messverlauf:/ })).toBeNull();
   });
 
   it("US-QS-15 · US-WAC-01 Messungen lists the entries newest first, paged and marked for the free height", async () => {
@@ -130,7 +130,7 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
   it("US-QS-15 · US-WAC-01 a reload with teil=kurve opens Kurve", async () => {
     await showReady(course, "/collection?sheet=verlauf-e1&teil=kurve");
     expect(pressed("Kurve")).toBe(true);
-    expect(screen.getByRole("img", { name: /^Verlauf: 3 Messungen/ })).toBeTruthy();
+    expect(screen.getByRole("img", { name: /^Messverlauf: 3 Messungen/ })).toBeTruthy();
   });
 
   it("US-QS-15 · US-WAC-01 an entry with a photo shows the compact picture, so one entry fits a phone", async () => {

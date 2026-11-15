@@ -191,7 +191,7 @@ describe("US-QS-23 Überblick", () => {
     expect(within(panel).getByText(/Letzte Messung: 12,5 cm/)).toBeTruthy();
     expect(within(panel).getByText(/am 01\.10\.2026/)).toBeTruthy();
     expect(within(panel).getByText("Trend: stabil")).toBeTruthy();
-    expect(within(panel).getByText("Zustand:").textContent).toContain("Gesund");
+    expect(within(panel).getByText("Qualität:").textContent).toContain("Gesund");
     expect(within(panel).getByText("Noch kein Foto")).toBeTruthy();
     expect(panel.innerHTML).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });

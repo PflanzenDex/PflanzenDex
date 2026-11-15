@@ -80,7 +80,7 @@ export async function specimenByKeyboard(page: Page, species: string): Promise<v
   await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
   await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
   await press(page, form.getByRole("button", { name: "Weiter" }));
-  await typeInto(page, form.getByLabel(/^Vergeilung-Anzeichen/), "Die Rosette streckt sich.");
+  await typeInto(page, form.getByLabel(/^Vergeilungsanzeichen/), "Die Rosette streckt sich.");
   await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
   // The light is optional and sits behind "Mehr Angaben" (US-QS-24): the disclosure is opened with the keyboard.
   await press(page, form.getByText("Mehr Angaben", { exact: true }));

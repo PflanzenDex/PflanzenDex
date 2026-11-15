@@ -13,7 +13,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await proposal.getByLabel("Lateinischer Name").fill(species);
   await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
   await proposal.getByRole("button", { name: "Weiter" }).click();
-  await proposal.getByLabel("Vergeilung-Anzeichen").fill("Die Rosette streckt sich.");
+  await proposal.getByLabel("Vergeilungsanzeichen").fill("Die Rosette streckt sich.");
   await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");
   await proposal.getByText("Mehr Angaben", { exact: true }).click();
   await proposal.getByLabel("Schwierigkeit").selectOption({ index: 1 });
@@ -37,27 +37,27 @@ async function measureFromCollection(page: Page): Promise<void> {
 }
 
 /**
- * The facts and the course of a specimen live in the layer "Verlauf" of the measure page (US-QS-15); the page keeps the
+ * The facts and the course of a specimen live in the layer "Messverlauf" of the measure page (US-QS-15); the page keeps the
  * last measurement, the form and "Messung speichern". Escape closes the layer again (`closeCourse`).
  */
 async function openCourse(page: Page): Promise<void> {
-  await page.getByRole("button", { name: /^Verlauf \(\d+\)$/ }).click();
-  const heading = page.getByRole("heading", { name: /^Verlauf: / });
+  await page.getByRole("button", { name: /^Messverlauf \(\d+\)$/ }).click();
+  const heading = page.getByRole("heading", { name: /^Messverlauf: / });
   await expect(heading).toBeVisible();
   // Escape closes a layer only while the focus is inside it, and the layer takes the focus on mount (its title, US-QS-15).
   await expect(heading).toBeFocused();
 }
 
 /**
- * Escape closes the layer "Verlauf" and the page is back. The close commits late: the address changes in a transition.
+ * Escape closes the layer "Messverlauf" and the page is back. The close commits late: the address changes in a transition.
  * Until it commits, a value typed right after Escape lands in a layer that is about to close, and the focus trap of the
  * still-open layer pulls the focus back. So the test waits until the layer is gone and the focus is back on its opener
  * (US-WAC-01, issue 1791).
  */
 async function closeCourse(page: Page): Promise<void> {
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { name: /^Verlauf: / })).toBeHidden();
-  await expect(page.getByRole("button", { name: /^Verlauf \(\d+\)$/ })).toBeFocused();
+  await expect(page.getByRole("heading", { name: /^Messverlauf: / })).toBeHidden();
+  await expect(page.getByRole("button", { name: /^Messverlauf \(\d+\)$/ })).toBeFocused();
 }
 
 /** The layer opens on "Überblick"; the rows of the measurements are its part "Messungen" (US-QS-15). */
