@@ -253,3 +253,11 @@ IDs are never renumbered.
 - **Fix:** Reproduce it with one traversal over both entries (`window.history.go(-2)` on a `BrowserRouter`) or with two `navigate(-1)` calls in one event, as `layer-sheet.test.tsx` does. Decide the hold in the render that lands below the layer, not in a later effect, and keep the layer's form mounted through it (a parent that renders the form only while the address names the layer loses it).
 - **Can it become a gate?** No: whether a test covers the race depends on how it drives the history, which a pattern cannot tell.
 - **Source:** Issue #2145, PR #2146 (first noted in the Handoff of PR #2140).
+
+## PF-031 A web test acts on screen before the router committed the navigation that goes with it
+
+- **Symptom:** A web test that presses Back or a button right after a question or view appears times out only under load (CI, a busy machine). The step it waits for never comes; unloaded it passes in milliseconds.
+- **Cause:** The routers apply history changes in `startTransition` (`TransitionRouter`, `MemoryRouter`), while state such as an open question renders at normal priority. The question can be on screen while the history entry pushed with it is still pending. A step back taken then lands on the entry already committed, the location key does not change, and an effect keyed on it never runs again. A lazy part requested on a timer (the sheet asks for its code 1.5 s after it mounts) can also land in the middle of a test and stall it.
+- **Fix:** Wait in the test for the committed location the next step needs (a probe in the router, as `Address` records `route.guarded` in `collection-area.test.tsx`), and load the lazy parts of the path in `beforeAll` (#444). To find such a race, log every committed location with a timestamp in the test router and compare a hung run with a passing one; CPU load (24 busy loops, five parallel runs) reproduces it.
+- **Can it become a gate?** No: whether a step depends on a pending transition is a property of the flow, not of a code pattern.
+- **Source:** Issue #2136, PR #2142; the product side of the race is filed as its own bug.

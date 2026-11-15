@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import { findCardButton } from "../../../collection/specimens/tests/plants-test-helpers";
 import userEvent from "@testing-library/user-event";
@@ -10,6 +11,10 @@ import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-te
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { FeaturesProvider } from "@/shared/data";
+import {
+  GUARD,
+  stateFlag,
+} from "../../../collection/plants-screen/plant-layers/plant-forms/address/form-address";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -35,12 +40,14 @@ const emptyView = {
   growth: { count: 0, ratePerYear: null, trend: null, signal: null },
 };
 
-// Both pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how
-// long the first import of a chunk takes on a busy machine (#444).
+// The pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how long
+// the first import of a chunk takes on a busy machine (#444). The sheet's code is one of them: a layer's sheet asks for
+// it 1.5 s after it mounts (sheet.tsx), and that first transform in the middle of a test stalled it for seconds (issue 2136).
 beforeAll(async () => {
   await Promise.all([
     import("../../../collection/collection-page/collection-page"),
     import("../../../care/measure/measure-page/measure-page"),
+    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
   ]);
 }, 30_000);
 
@@ -92,12 +99,20 @@ describe("US-WAC-01 collection wired with measuring", () => {
 });
 
 /** The address of the test render and the navigator of its router, so a test can press Back (US-QS-15). */
-const route: { navigate: NavigateFunction | null; search: string } = { navigate: null, search: "" };
+const route: { navigate: NavigateFunction | null; search: string; guarded: boolean } = {
+  navigate: null,
+  search: "",
+  guarded: false,
+};
 function Address() {
   const navigate = useNavigate();
   const location = useLocation();
   route.navigate = navigate;
   route.search = location.search;
+  // The guard flag comes from the committed location only: a render that React throws away must not set it.
+  useLayoutEffect(() => {
+    route.guarded = stateFlag(location.state, GUARD);
+  }, [location]);
   return null;
 }
 const back = () => act(() => route.navigate?.(-1));
@@ -174,6 +189,9 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry; a Back before that commit is the race of the bug
+    // "Verwerfen can leave a plant form open when the guard entry commits late".
+    await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     expect(document.getElementById("measure-title")).not.toBeNull();
@@ -189,8 +207,15 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry; a Back before that commit is the race of the bug
+    // "Verwerfen can leave a plant form open when the guard entry commits late".
+    await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
+    // into the bug "Verwerfen can leave a plant form open when the guard entry commits late", so the test waits for the
+    // commit, as the next tap of a person would.
+    await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
@@ -206,8 +231,15 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await screen.findByRole("heading", { name: "Kennzeichen ändern" });
     expect(route.search).toContain("form=marker");
     await userEvent.type(await screen.findByLabelText(/^Kennzeichen(?: \(optional\))?$/), "rot");
+    // The first input pushes the guard entry; a Back before that commit is the race of the bug
+    // "Verwerfen can leave a plant form open when the guard entry commits late".
+    await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
+    // into the bug "Verwerfen can leave a plant form open when the guard entry commits late", so the test waits for the
+    // commit, as the next tap of a person would.
+    await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
     await waitFor(() => expect(document.getElementById("marker-title")).toBeNull(), {
       timeout: 5_000,
@@ -235,12 +267,16 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry, as in the Back tests above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     // Both Backs land before the form has handled the first one: they are batched into one render (US-QS-15).
     act(() => {
       route.navigate?.(-1);
       route.navigate?.(-1);
     });
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The guard entry commits after the question shows, as in the Verwerfen test above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     expect(document.getElementById("measure-title")).not.toBeNull();
     expect(route.search).toContain("form=measure");
     expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
@@ -256,11 +292,15 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry, as in the Back tests above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     act(() => {
       route.navigate?.(-1);
       route.navigate?.(-1);
     });
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    // The guard entry commits after the question shows, as in the Verwerfen test above.
+    await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Weiter bearbeiten" }));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Eingabe verwerfen?" })).toBeNull(),
