@@ -53,6 +53,20 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(icon).toContain("min-w-[44px]");
   });
 
+  it("US-QS-32 the row size is a full-width, square row of at least 44 px with no pill radius (SG-SHAPE-03)", () => {
+    render(
+      <Button size="row" variant="ghost">
+        Zeile
+      </Button>,
+    );
+    const cls = screen.getByRole("button", { name: "Zeile" }).className;
+    expect(cls).toContain("w-full");
+    expect(cls).toContain("min-h-11");
+    expect(cls).toContain("rounded-none");
+    expect(cls).not.toContain("rounded-pill");
+    expect(cls).not.toContain("rounded-control");
+  });
+
   it("US-QS-07 · DS-15 sm button has a 44 px minimum width (issue 970)", () => {
     render(<Button size="sm">Ok</Button>);
     const cls = screen.getByRole("button", { name: "Ok" }).className;

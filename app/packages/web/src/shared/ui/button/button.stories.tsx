@@ -95,3 +95,13 @@ export const AsLink: Story = {
     </div>
   ),
 };
+
+export const Row: Story = {
+  render: (args) => (
+    <div className="w-72 p-4">
+      <Button {...args} variant="ghost" size="row">
+        Zeile in einer Liste
+      </Button>
+    </div>
+  ),
+};
