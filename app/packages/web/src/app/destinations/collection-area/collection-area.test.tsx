@@ -186,6 +186,8 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry; a Back before that commit is the same race (see the wait below).
+    await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     expect(document.getElementById("measure-title")).not.toBeNull();
@@ -201,6 +203,8 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants&form=measure&plant=e1");
     await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // The first input pushes the guard entry; a Back before that commit is the same race (see the wait below).
+    await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
@@ -222,6 +226,8 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await screen.findByRole("heading", { name: "Kennzeichen ändern" });
     expect(route.search).toContain("form=marker");
     await userEvent.type(await screen.findByLabelText(/^Kennzeichen(?: \(optional\))?$/), "rot");
+    // The first input pushes the guard entry; a Back before that commit is the same race (see the wait below).
+    await waitFor(() => expect(route.guarded).toBe(true));
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     // The question shows before the router commits the guard entry it pushed again. A Verwerfen before that commit runs
