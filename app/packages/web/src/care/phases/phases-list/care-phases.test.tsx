@@ -197,4 +197,22 @@ describe("US-QS-32 amber only for a deviation, a missing location stays neutral 
     );
     expect(classOf(deviating, "Weicht ab")).toContain("bg-warning");
   });
+
+  it("US-QS-32 the hint chip is neutral: a hint that names the next step of a missing entry carries no warning class (SG-COLOR-04)", () => {
+    const h = renderToString(
+      <Entry
+        bare
+        row={row({ locationId: null, targetLocationId: "s2" })}
+        locations={home}
+        busy={false}
+        onConfirm={undefined}
+      />,
+    );
+    const chip = classOf(h, "Weise der Pflanze");
+    expect(chip).toContain("bg-secondary");
+    expect(chip).toContain("text-foreground");
+    expect(chip).not.toContain("bg-warning");
+    expect(chip).not.toContain("text-warning-foreground");
+    expect(chip).not.toContain("border-warning-border");
+  });
 });

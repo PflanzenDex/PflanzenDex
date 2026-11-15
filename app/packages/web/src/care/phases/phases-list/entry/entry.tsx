@@ -36,13 +36,16 @@ function SwitchAction(props: {
   );
 }
 
-/** The first hint as a chip; further hints are counted and stay reachable as text and title (P-10). */
+/**
+ * The first hint as a chip, neutral: a hint names the next step of a missing entry, it is no deviation (SG-COLOR-04). Further
+ * hints are counted and stay reachable as text and title (P-10).
+ */
 function HintChip({ hints }: { hints: readonly string[] }) {
   if (hints.length === 0) return null;
   return (
     <p
       title={hints.join(" ")}
-      className="mt-1 w-fit rounded-full border border-warning-border bg-warning px-2 py-0.5 text-xs font-semibold text-warning-foreground"
+      className="mt-1 w-fit rounded-full border border-transparent bg-secondary px-2 py-0.5 text-xs font-semibold text-foreground"
     >
       {hints[0]}
       {hints.length > 1 && (
