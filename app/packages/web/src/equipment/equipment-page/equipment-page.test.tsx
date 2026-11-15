@@ -258,7 +258,7 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
     // The layer closes, the outcome stands on the screen and the tile counts the new record (US-QS-22).
     expect(await screen.findByText(/Gerät „Neue Lampe“ gespeichert/)).toBeTruthy();
-    expect(await screen.findByText("1 Teil")).toBeTruthy();
+    expect(await screen.findByText("1 Gerät")).toBeTruthy();
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       type: "Timer",
@@ -521,14 +521,17 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const tile = async (name: string) =>
       (
         await screen.findByRole("button", {
-          name: (accessible) => accessible.startsWith(name) && !accessible.endsWith("erfassen"),
+          name: (accessible) =>
+            accessible.startsWith(name) &&
+            !accessible.startsWith(`${name}-`) &&
+            !accessible.endsWith("erfassen"),
         })
       ).textContent;
-    expect(await tile("Geräte")).toContain("2 Teile");
+    expect(await tile("Geräte")).toContain("2 Geräte");
     expect(await tile("Kosten")).toContain("unbekannt");
     expect(await tile("Bedarf")).toContain("nichts fehlt");
     expect(await tile("Sensoren")).toContain("0 Sensoren");
-    expect(await tile("Wunschliste")).toContain("0 offene");
+    expect(await tile("Geräte-Wünsche")).toContain("0 offene Wünsche");
   });
 
   it("US-QS-22 'Gerät erfassen' is the one primary action and opens the form as a layer", async () => {
@@ -568,7 +571,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await screen.findByRole("button", { name: /^Kosten/ });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Zone 3")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /^Geräte1 Teil/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Geräte1 Gerät/ }));
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
     expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
@@ -624,7 +627,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
             <EquipmentPage api="http://api" token={token} />
           </StrictMode>,
         );
-        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2 Teile/ }));
+        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2 Geräte/ }));
         await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
         await screen.findByRole("heading", { name: "Zone 3" });
         await userEvent.keyboard("{Escape}");

@@ -102,7 +102,7 @@ export function RequiredFields({ control }: FieldProps) {
         name="name"
         label="Name"
         max={EQUIPMENT_LIMITS.name.max}
-        hint="Der Name ist einmalig. Bei mehreren gleichen Teilen hänge eine Unterscheidung an, zum Beispiel „ – Regal 2“."
+        hint="Der Name ist einmalig. Bei mehreren gleichen Geräten hänge eine Unterscheidung an, zum Beispiel „ – Regal 2“."
       />
     </>
   );
