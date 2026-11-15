@@ -14,6 +14,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "@/shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Warning } from "../../../../../specimens/cards/parts/parts";
@@ -75,6 +76,8 @@ export function NotesForm(props: {
   );
   const { setFocus } = form;
   useEffect(() => setFocus("notes"), [setFocus]);
+  // Typed text that is not saved asks before the layer leaves it, a cancel included (US-QS-32, SG-FORM-06).
+  const { leave } = useUnsavedInput(form.formState.isDirty);
   const submit = form.handleSubmit(async (values) => {
     const refused = await send(values.notes);
     setError(refused);
@@ -94,7 +97,7 @@ export function NotesForm(props: {
             <p>{alertText}</p>
           </Warning>
         )}
-        <Button type="button" variant="outline" onClick={props.onCancel}>
+        <Button type="button" variant="outline" onClick={() => leave(props.onCancel)}>
           {t("form.cancel")}
         </Button>
       </FormRoot>

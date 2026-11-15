@@ -3,7 +3,14 @@ import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 const PARAM = "sheet";
 /** History state set when the app itself opened the layer, so closing can go back instead of leaving the app. */
-const FROM_APP = "layerFromApp";
+export const FROM_APP = "layerFromApp";
+/**
+ * History state of the entry above a layer whose typed input is unsaved (US-QS-32): Back from the layer then lands on
+ * that entry and asks first, and a close walks back over it.
+ */
+export const LAYER_GUARD = "layerGuard";
+/** The layers that walk back over their own history entries to close (US-QS-32, see `closeLayer`). */
+const closing = new Set<string>();
 
 /** The element that opened the layer; focus returns to it when the layer closes (US-QS-15). */
 let opener: HTMLElement | null = null;
@@ -19,9 +26,54 @@ type LayerControl = {
   replaced: boolean;
   /** Opens the layer: pushes a history entry, so Back closes it. Pass the event target to return focus to it. */
   openLayer: (from?: HTMLElement | null) => void;
-  /** Closes the layer: back when the app opened it, otherwise it only removes the address part. */
+  /**
+   * Closes the layer: back when the app opened it, otherwise it only removes the address part. On the guard entry above
+   * the layer (typed input, US-QS-32) it walks back over the guard and the layer's entry, so no guard entry is left.
+   */
   closeLayer: () => void;
 };
+
+/** What a form tells its layer (US-QS-32): unsaved input, and a cancel that asks first. */
+export type UnsavedGuard = {
+  setDirty: (dirty: boolean) => void;
+  leave: (action: () => void) => void;
+};
+
+/** The guard of the layer a form is in; `null` outside a layer (`layer-sheet.guard.tsx` provides it). */
+export const LayerGuardContext = React.createContext<UnsavedGuard | null>(null);
+
+const runNow = (action: () => void) => action();
+
+/**
+ * A form reports its unsaved input (US-QS-32, SG-FORM-06): the layer asks before a close or Back leaves it. `leave` runs
+ * a cancel of the form after the question. Outside a layer it is a no-op.
+ */
+export function useUnsavedInput(dirty: boolean): { leave: (action: () => void) => void } {
+  const guard = React.useContext(LayerGuardContext);
+  React.useEffect(() => {
+    guard?.setDirty(dirty);
+  }, [guard, dirty]);
+  // An unmounted form leaves nothing unsaved behind.
+  React.useEffect(() => () => guard?.setDirty(false), [guard]);
+  return { leave: guard ? guard.leave : runNow };
+}
+
+/** The flag `flag` of a history state is set. */
+export const stateFlag = (state: unknown, flag: string): boolean =>
+  (state as Record<string, unknown> | null)?.[flag] === true;
+
+/** Whether the layer `id` walks back over its entries to close (see `closeLayer`). */
+export const isClosing = (id: string): boolean => closing.has(id);
+/** Starts or ends the walk back of the layer `id`. */
+export const setClosing = (id: string, on: boolean): void => {
+  if (on) closing.add(id);
+  else closing.delete(id);
+};
+
+/** The state of the guard entry: it keeps the app flag of the layer below it (US-QS-32). */
+export function guardState(state: unknown) {
+  return { [LAYER_GUARD]: true, keepFocus: true, [FROM_APP]: stateFlag(state, FROM_APP) };
+}
 
 /**
  * The id of the element that opens the layer `id`. The opener of a layer has it, so the focus finds the opener again when
@@ -36,7 +88,8 @@ export function useLayer(id: string): LayerControl {
   const navigate = useNavigate();
   const named = params.get(PARAM);
   const open = named === id;
-  const fromApp = (location.state as Record<string, unknown> | null)?.[FROM_APP] === true;
+  const fromApp = stateFlag(location.state, FROM_APP);
+  const guarded = stateFlag(location.state, LAYER_GUARD);
   return {
     open,
     replaced: named !== null && !open,
@@ -49,6 +102,11 @@ export function useLayer(id: string): LayerControl {
       setParams(next, { state: { [FROM_APP]: true } });
     },
     closeLayer: () => {
+      if (open && guarded) {
+        setClosing(id, true);
+        void navigate(-1);
+        return;
+      }
       if (fromApp) {
         void navigate(-1);
         return;
@@ -80,6 +138,22 @@ export function restoreFocus(): void {
 export function keptOpener(layer: HTMLElement | null): HTMLElement | null {
   const el = returnTo ? document.getElementById(returnTo) : null;
   return el && layer?.contains(el) ? el : null;
+}
+
+/**
+ * The focus after "Weiter bearbeiten" (US-QS-32): the control that had it before the question when it is in a layer's
+ * body, else the title of the layer (the focus was on the page behind after a Back).
+ */
+export function focusLayer(returnTo: HTMLElement | null): void {
+  if (returnTo?.isConnected && returnTo.closest("[data-layer-body]")) {
+    returnTo.focus();
+    return;
+  }
+  const body = document.querySelector<HTMLElement>("[data-layer-body]");
+  body
+    ?.closest<HTMLElement>("[data-layer-pane], [role='dialog']")
+    ?.querySelector<HTMLElement>("h2")
+    ?.focus();
 }
 
 /**

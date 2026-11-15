@@ -13,6 +13,7 @@ import {
   type ProfileFields as Fields,
 } from "../../../schemas";
 import { BufferField, NameFields, ThresholdsField } from "../../../settings-fields/settings-fields";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ProfileSaver } from "../profile-saver";
 
 type Key = "displayName" | "timeZone" | "replenishBuffer" | "positionThresholds";
@@ -92,6 +93,8 @@ function GroupForm(props: {
     keys,
     saveAlways,
   );
+  // Typed input that is not saved asks before the layer of the group closes (US-QS-32).
+  useUnsavedInput(form.formState.isDirty);
 
   return (
     <Form {...form}>

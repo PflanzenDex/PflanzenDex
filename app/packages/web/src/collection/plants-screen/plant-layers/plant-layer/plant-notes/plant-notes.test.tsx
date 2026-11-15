@@ -229,16 +229,34 @@ describe("US-BES-18 change the notes in their layer", () => {
     expect(within(layer).getByText(/Noch keine Notiz/)).toBeTruthy();
   });
 
-  it("US-BES-18 cancelling writes nothing and shows the notes as they were", async () => {
+  it("US-BES-18 cancelling writes nothing and shows the notes as they were; typed text asks first (US-QS-32)", async () => {
     const posts = fakeServer({ notes: NOTE });
     render(page());
     const { layer, field } = await notesForm("Notiz bearbeiten");
     await userEvent.type(field, " Anders.");
     await userEvent.click(within(layer).getByRole("button", { name: "Abbrechen" }));
+    const question = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
     expect(posts).toEqual([]);
     expect(within(layer).getByText(NOTE)).toBeTruthy();
     expect(document.activeElement).toBe(
       within(layer).getByRole("button", { name: "Notiz bearbeiten" }),
+    );
+  });
+
+  it("US-QS-32 Escape with a changed note asks, and Weiter bearbeiten keeps the text in the layer", async () => {
+    fakeServer({ notes: NOTE });
+    render(page());
+    const { layer, field } = await notesForm("Notiz bearbeiten");
+    await userEvent.type(field, " Anders.");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Eingabe verwerfen?" })).toBeNull(),
+    );
+    expect((within(layer).getByLabelText("Notiz") as HTMLTextAreaElement).value).toBe(
+      `${NOTE} Anders.`,
     );
   });
 

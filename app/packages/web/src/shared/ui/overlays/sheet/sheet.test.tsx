@@ -106,4 +106,22 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     expect(backdrop?.classList.contains("bg-scrim")).toBe(true);
     expect(backdrop?.className).not.toContain("bg-foreground");
   });
+  it("US-QS-32 a close that the parent refuses (typed input unsaved) snaps the dragged sheet back to its place", async () => {
+    function Controlled({ refusals }: { refusals: number }) {
+      return (
+        <Sheet open onOpenChange={() => undefined}>
+          <SheetContent title="Notiz" closeRefusals={refusals}>
+            <button>Eins</button>
+          </SheetContent>
+        </Sheet>
+      );
+    }
+    const { rerender } = render(<Controlled refusals={0} />);
+    const sheet = await screen.findByRole("dialog", { name: "Notiz" });
+    // Vaul writes the drag into the inline transform of the sheet and of its overlay.
+    sheet.style.transform = "translate3d(0, 120px, 0)";
+    rerender(<Controlled refusals={1} />);
+    await waitFor(() => expect(sheet.style.transform).toBe("translate3d(0, 0, 0)"));
+    expect(sheet.style.transition).toContain("transform");
+  });
 });

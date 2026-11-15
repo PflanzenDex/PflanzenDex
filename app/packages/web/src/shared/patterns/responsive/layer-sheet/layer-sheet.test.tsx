@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { StrictMode } from "react";
+import { StrictMode, useState } from "react";
 import {
   act,
   cleanup,
@@ -8,15 +8,16 @@ import {
   renderHook,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
+import { MemoryRouter, useLocation, useNavigate, useSearchParams } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
-import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
+import { LayerHost, LayerOpener, LayerSheet, useLayer, useUnsavedInput } from "./layer-sheet";
 import { useExitValue } from "./use-layer";
 
 beforeAll(() => {
@@ -426,5 +427,246 @@ describe("LayerSheet (US-QS-15)", () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+/** The address and history of the last render of a `Probe`, so a test reads where Back and a close have led (US-QS-32). */
+let seen: { pathname: string; search: string; state: unknown } = {
+  pathname: "",
+  search: "",
+  state: null,
+};
+/** The keys of the history entries the probe has seen, in order: a new entry is a new key (US-QS-32). */
+let keys: string[] = [];
+function Probe() {
+  const location = useLocation();
+  seen = { pathname: location.pathname, search: location.search, state: location.state };
+  if (keys.at(-1) !== location.key) keys = [...keys, location.key];
+  return null;
+}
+
+/** A form with typed input, as the forms of the layers are (US-QS-32); `save` closes the layer as a saved write does. */
+function TypingForm({ save }: { save: boolean }) {
+  const [text, setText] = useState("");
+  const { closeLayer } = useLayer("notiz");
+  useUnsavedInput(text !== "");
+  return (
+    <>
+      <label>
+        Text
+        <input value={text} onChange={(event) => setText(event.target.value)} />
+      </label>
+      {save ? (
+        <button
+          type="button"
+          onClick={() => {
+            // A saved write closes the layer first and empties the form after it, as the layers of the equipment do.
+            closeLayer();
+            setText("");
+          }}
+        >
+          Speichern
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+function TypingLayer({ save = false }: { save?: boolean }) {
+  return (
+    <>
+      <Probe />
+      <LayerHost>
+        <LayerOpener id="notiz">Notiz</LayerOpener>
+        <LayerSheet id="notiz" title="Notiz">
+          <TypingForm save={save} />
+        </LayerSheet>
+      </LayerHost>
+      <Back />
+    </>
+  );
+}
+
+/** The app at `entries`, the last one (`index`) is where it starts; the opener of the layer is on the last entry. */
+function renderTyping(entries: string[], index: number, save = false) {
+  return render(
+    <MemoryRouter initialEntries={entries} initialIndex={index}>
+      <TypingLayer save={save} />
+    </MemoryRouter>,
+  );
+}
+
+const QUESTION = { name: "Eingabe verwerfen?" };
+
+/** Opens the layer from its opener and types into its field; from 1024 px the layer is a pane, not a dialog. */
+async function openAndType(text: string, role: "dialog" | "complementary" = "dialog") {
+  await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+  const layer = await screen.findByRole(role, { name: "Notiz" });
+  await userEvent.type(within(layer).getByLabelText("Text"), text);
+  return layer;
+}
+
+describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-SHEET-05)", () => {
+  it("US-QS-32 Escape with typed input asks; Weiter bearbeiten keeps the input and the layer open", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect(screen.getByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-32 Escape on the question keeps the layer and its input, as Weiter bearbeiten does", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await userEvent.keyboard("{Escape}");
+    await screen.findByRole("dialog", QUESTION);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(screen.getByRole("dialog", { name: "Notiz" })).toBeTruthy();
+  });
+
+  it("US-QS-32 Verwerfen after Escape closes the layer and its address loses ?sheet", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/start");
+    expect(seen.search).toBe("");
+  });
+
+  it("US-QS-32 from 1024 px the pane asks as well: Escape and its close control, Weiter bearbeiten keeps the pane", async () => {
+    setViewportWidth(1280);
+    renderTyping(["/start"], 0);
+    const pane = await openAndType("Basilikum", "complementary");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await screen.findByRole("dialog", QUESTION)).getByRole("button", {
+        name: "Weiter bearbeiten",
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    await userEvent.click(within(pane).getByRole("button", { name: "Schließen" }));
+    const question = await screen.findByRole("dialog", QUESTION);
+    // While the question is open, the layer behind it is hidden from assistive technology, but it is still there.
+    expect(screen.getByRole("complementary", { name: "Notiz", hidden: true })).toBeTruthy();
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("complementary", { name: "Notiz" })).toBeNull());
+  });
+
+  it("US-QS-32 the close control of a dialog from md asks while input is unsaved", async () => {
+    setViewportWidth(800);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    const dialog = screen.getByRole("dialog", { name: "Notiz" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Schließen" }));
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+    // The question hides the layer from assistive technology; the layer itself stays mounted with its input.
+    expect(dialog.isConnected).toBe(true);
+    expect(dialog.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-QS-32 Back with typed input asks and keeps the layer; Verwerfen lands on the list and a following Back goes where it went before", async () => {
+    setViewportWidth(360);
+    renderTyping(["/before", "/start"], 1);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    expect(seen.search).toContain("sheet=notiz");
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(seen.pathname).toBe("/before"));
+  });
+
+  it("US-QS-32 Back with typed input and Weiter bearbeiten keeps the layer; the next Back asks again", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-32 the first typed input pushes one guard entry at the same address, keeping the app flag and the focus flag", async () => {
+    setViewportWidth(360);
+    keys = [];
+    renderTyping(["/start"], 0);
+    await openAndType("B");
+    const entries = keys.length;
+    expect(seen.search).toContain("sheet=notiz");
+    expect(seen.state).toMatchObject({ layerGuard: true, layerFromApp: true, keepFocus: true });
+    // Further typing adds no entry: the guard is pushed once, not with every key.
+    await userEvent.type(screen.getByLabelText("Text"), "asilikum");
+    expect(keys.length).toBe(entries);
+  });
+
+  it("US-QS-32 a clean layer closes at once on Escape and on Back, with no question", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    await screen.findByRole("dialog", { name: "Notiz" });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.pathname).toBe("/start");
+  });
+
+  it("US-QS-32 a saved write closes the layer through closeLayer without the question, and no guard entry remains", async () => {
+    setViewportWidth(360);
+    renderTyping(["/before", "/start"], 1, true);
+    await openAndType("Thymian");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.search).toBe("");
+    expect(seen.pathname).toBe("/start");
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(seen.pathname).toBe("/before"));
+  });
+
+  it("US-QS-32 a sheet that is swiped down with typed input asks and slides back to its place", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    const layer = await openAndType("Basilikum");
+    // The swipe moved the sheet down (Vaul writes its transform inline while the finger drags).
+    layer.style.transform = "translate3d(0, 120px, 0)";
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+    await waitFor(() => expect(layer.style.transform).toBe("translate3d(0, 0, 0)"));
+  });
+
+  it("US-QS-32 outside a layer useUnsavedInput is a no-op: leave runs its action at once", () => {
+    let ran = false;
+    function Bare() {
+      const { leave } = useUnsavedInput(true);
+      return <button type="button" onClick={() => leave(() => (ran = true))} />;
+    }
+    render(<Bare />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(ran).toBe(true);
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
   });
 });

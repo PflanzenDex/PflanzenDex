@@ -8,10 +8,12 @@ import {
 } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
 import { keptOpener, layerOpenerId, restoreFocus, useLayer } from "./use-layer";
+import { LayerGuarded, useLayerGuard } from "./layer-sheet.guard";
 import { LayerHostContext } from "./layer-host/layer-host";
 import { LayerBody, LayerPane } from "./layer-host/layer-pane/layer-pane";
 
 export { useExitValue, useLayer } from "./use-layer";
+export { useUnsavedInput } from "./use-layer";
 export { LayerHost } from "./layer-host/layer-host";
 
 /** A button that opens the layer `id` (US-QS-15); outline by default, because a layer owns the one filled action. */
@@ -121,6 +123,8 @@ export function LayerSheet({
   children,
 }: LayerSheetProps) {
   const { open, replaced, closeLayer } = useLayer(id);
+  // A close the person asks for goes through the guard: typed input that is not saved asks first (US-QS-32).
+  const guard = useLayerGuard(id, open, closeLayer);
   const isLg = useIsLg();
   const host = React.useContext(LayerHostContext);
   const pane = host?.pane ?? null;
@@ -145,30 +149,33 @@ export function LayerSheet({
         title={title}
         primaryAction={primaryAction}
         closeLabel={closeLabel}
-        onClose={closeLayer}
+        onClose={guard.requestClose}
         returning={returning}
       >
         {children}
       </LayerPane>
     );
     // Without a frame the pane stays where it is (the dev warning above says so); inside one it goes to its pane column.
-    if (!host) return layer;
-    return pane ? createPortal(layer, pane) : null;
+    if (!host) return <LayerGuarded guard={guard}>{layer}</LayerGuarded>;
+    return pane ? <LayerGuarded guard={guard}>{createPortal(layer, pane)}</LayerGuarded> : null;
   }
   return (
-    <ResponsiveModal
-      title={title}
-      closeLabel={closeLabel}
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) closeLayer();
-      }}
-      onOpenAutoFocus={(event) => focusLayerStart(event, returning)}
-      onExited={onExited}
-    >
-      {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22),
-          so the body renders only while the layer is open or still leaving (US-QS-15, F7). */}
-      {showBody ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
-    </ResponsiveModal>
+    <LayerGuarded guard={guard}>
+      <ResponsiveModal
+        title={title}
+        closeLabel={closeLabel}
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) guard.requestClose();
+        }}
+        onOpenAutoFocus={(event) => focusLayerStart(event, returning)}
+        onExited={onExited}
+        closeRefusals={guard.refusals}
+      >
+        {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22),
+            so the body renders only while the layer is open or still leaving (US-QS-15, F7). */}
+        {showBody ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
+      </ResponsiveModal>
+    </LayerGuarded>
   );
 }
