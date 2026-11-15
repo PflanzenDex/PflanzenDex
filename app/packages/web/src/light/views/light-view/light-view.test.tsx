@@ -70,6 +70,28 @@ describe("US-LIC-05 view locations and light zones", () => {
     expect(h).toContain("Zone 2 · außen");
   });
 
+  it("US-QS-32 a location names its cutting light in brackets; a location without zone reads 'Lichtzone fehlt' first in its meta", () => {
+    const cutting = {
+      id: "z0",
+      name: "Zone 1 · Stecklingslicht",
+      luxCeiling: 1500,
+      ppfd: 36,
+      sortOrder: 1,
+    };
+    const h = html({
+      ...empty,
+      zones: [cutting],
+      locations: [
+        { id: "s1", name: "Fensterbank", lightZoneId: "z0", kind: "indoor" },
+        { id: "s2", name: "Regal", lightZoneId: null, kind: "indoor" },
+      ],
+    });
+    expect(h).toContain("Zone 1 (Stecklingslicht) · innen");
+    expect(h).not.toContain("Zone 1 · Stecklingslicht · innen");
+    expect(h).toContain("Lichtzone fehlt · innen");
+    expect(h).not.toContain("Keine Lichtzone · innen");
+  });
+
   it("US-QS-19 location without zone: the notice counts the hints, the layer says what to do (P-09)", () => {
     const h = html({
       zones: [zone],
@@ -84,7 +106,7 @@ describe("US-LIC-05 view locations and light zones", () => {
       ],
     });
     expect(h).toContain("Hinweise (1)");
-    expect(h).toContain("Keine Lichtzone");
+    expect(h).toContain("Lichtzone fehlt");
     expect(h).toContain("Lichthunger und Einstufung");
   });
 

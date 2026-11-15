@@ -12,12 +12,13 @@ const numberFormat = new Intl.NumberFormat("de-DE");
 export const lux = (n: number) => `${numberFormat.format(n)}\u00a0Lux`;
 export const kindText = (a: LightLocation["kind"]) => (a === "indoor" ? "innen" : "außen");
 
+/** The zone of a location as it reads in a line joined by " · " (US-QS-32): "Zone 1 (Stecklingslicht) · innen". */
 export const zoneName = (zones: readonly LightZone[], id: string | null): string | null =>
   id === null
     ? null
     : (() => {
         const n = zones.find((z) => z.id === id)?.name;
-        return n === undefined ? null : zoneLabel(n);
+        return n === undefined ? null : zoneLabel(n, { inLine: true });
       })();
 
 const FIELDS: Record<string, string> = {

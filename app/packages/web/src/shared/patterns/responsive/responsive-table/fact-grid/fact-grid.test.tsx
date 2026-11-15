@@ -29,6 +29,21 @@ describe("US-QS-24 FactGrid", () => {
     expect(screen.queryByText("unbekannt")).toBeNull();
   });
 
+  it("US-QS-32 F-0228 the value breaks only inside a word longer than the column, never break-all", () => {
+    const { container } = render(
+      <FactGrid facts={[{ label: "Modell", value: "Hersteller-Modell-X" }]} />,
+    );
+    const dl = container.querySelector("dl") as HTMLElement;
+    // The list keeps `anywhere` (it lowers the min-content of the auto label column, issue 1019); the value cell breaks
+    // only inside a word longer than the column.
+    expect(dl.className.split(" ")).toContain("[overflow-wrap:anywhere]");
+    expect(dl.className.split(" ")).toContain("grid-cols-1");
+    const value = dl.querySelector("dd") as HTMLElement;
+    expect(value.className.split(" ")).toContain("[overflow-wrap:break-word]");
+    expect(value.className).not.toContain("break-all");
+    expect(dl.className).not.toContain("break-all");
+  });
+
   it("US-QS-24 folds the unknown facts into one line with the count and the German plural", () => {
     render(<FactGrid facts={facts} />);
     expect(screen.getByText("2 Angaben fehlen")).toBeTruthy();

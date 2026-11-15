@@ -6,8 +6,12 @@ import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { zoneLabel } from "@pflanzendex/core";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import table from "../equipment.de.json";
+
+const t = texts(table);
 
 export interface LampLightActions {
   busy: boolean;
@@ -34,7 +38,11 @@ function Values({ lamp }: { lamp: LampLight }) {
       <dt>Herstellerangabe</dt>
       <dd className="m-0">{lamp.manufacturerLux === null ? UNKNOWN : lux(lamp.manufacturerLux)}</dd>
       <dt>Leistung</dt>
-      <dd className="m-0">{lamp.powerW === null ? UNKNOWN : `${lamp.powerW} W`}</dd>
+      <dd className="m-0">
+        {lamp.powerW === null
+          ? UNKNOWN
+          : `${lamp.powerW.toLocaleString("de-DE", { maximumFractionDigits: 1 })}\u00a0W`}
+      </dd>
       <dt>Gemessen</dt>
       <dd className="m-0">
         {last
@@ -70,7 +78,7 @@ function History({ lamp }: { lamp: LampLight }) {
 }
 
 function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightActions }) {
-  const where = lamp.zone ? zoneLabel(lamp.zone.name) : "ohne Zone";
+  const where = lamp.zone ? zoneLabel(lamp.zone.name, { inLine: true }) : t("zone.missing");
   return (
     <details
       className="min-w-0 rounded-lg border border-border"
@@ -81,7 +89,10 @@ function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightAction
         <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
           <span className="break-words font-semibold">{lamp.name}</span>
           <span className="text-sm text-muted-foreground">
-            {lamp.powerW === null ? UNKNOWN : `${lamp.powerW} W`} · {where}
+            {lamp.powerW === null
+              ? UNKNOWN
+              : `${lamp.powerW.toLocaleString("de-DE", { maximumFractionDigits: 1 })}\u00a0W`}{" "}
+            · {where}
           </span>
         </span>
       </DisclosureSummary>

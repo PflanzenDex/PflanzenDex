@@ -45,7 +45,10 @@ function Nothing(props: { title: string; description: string }) {
 
 function Items(props: { data: EquipmentData; lamps: Lamps }) {
   const { data } = props;
-  const zoneNames = new Map(data.zones.zones.map((z) => [z.zoneId, zoneLabel(z.name)]));
+  // The row's meta line joins the zone with " · ", so the cutting light reads "Zone 1 (Stecklingslicht)" (US-QS-32).
+  const zoneNames = new Map(
+    data.zones.zones.map((z) => [z.zoneId, zoneLabel(z.name, { inLine: true })]),
+  );
   if (data.items.length === 0)
     return <Nothing title={t("items.none.title")} description={t("items.none.description")} />;
   return (

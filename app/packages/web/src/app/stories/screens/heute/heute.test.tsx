@@ -33,7 +33,7 @@ describe("US-QS-14 · page story Heute", () => {
 
   it("US-QS-18 the story with another item first shows the Behandlungen tile once", async () => {
     await PhaseFirst.run();
-    expect(await screen.findByRole("button", { name: /^2Behandlungen$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^2 Behandlungen$/ })).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
   });
 

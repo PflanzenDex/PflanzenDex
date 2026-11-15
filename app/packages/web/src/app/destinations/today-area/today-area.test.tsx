@@ -323,8 +323,8 @@ describe("US-QS-18 Heute fits one screen", () => {
     const tiles = within(screen.getByRole("list", { name: "Themen" }));
     expect(tiles.queryByRole("button", { name: /Behandeln|Behandlungen/ })).toBeNull();
     expect(tiles.getAllByRole("listitem")).toHaveLength(2);
-    expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
-    expect(tiles.getByRole("button", { name: /^1Fehlt noch$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^0 Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^1 Fehlt noch$/ })).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /^Behandlungen/ })).toHaveLength(1);
     // The topics are layers: no section of them stands on the page.
     expect(screen.queryByRole("heading", { level: 2, name: "Behandlungen" })).toBeNull();
@@ -337,11 +337,11 @@ describe("US-QS-18 Heute fits one screen", () => {
     });
     show();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect((await tiles.findByRole("button", { name: /^1Behandlungen$/ })).textContent).toBe(
-      "1Behandlungen",
+    expect((await tiles.findByRole("button", { name: /^1 Behandlung$/ })).textContent).toBe(
+      "1 Behandlung",
     );
     expect(tiles.getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getAllByRole("button", { name: /Behandlungen$/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Behandlung(en)?$/ })).toHaveLength(1);
     expect(screen.getByText(/1 Behandlung offen, davon 1 überfällig/)).toBeTruthy();
   });
 
@@ -397,7 +397,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     const names = within(tiles)
       .getAllByRole("button")
       .map((b) => b.textContent);
-    expect(names.at(-1)).toBe("2Neu bei Freunden");
+    expect(names.at(-1)).toBe("2 Neu bei Freunden");
     // The most urgent item is a treatment: its entry stands on the row, so the tiles are the two categories and the news.
     expect(names).toHaveLength(3);
     await user.click(within(tiles).getByRole("button", { name: /Neu bei Freunden$/ }));
@@ -409,7 +409,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     fakeServer();
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: /Behandlungen$/ }));
+    await user.click(await screen.findByRole("button", { name: /Behandlung(en)?$/ }));
     const layer = await dialog("Behandlungen");
     expect(address()).toBe("/today?sheet=treatments");
     expect(
@@ -474,7 +474,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     show();
     expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: /^0Behandlungen$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^0 Behandlungen$/ })).toBeTruthy();
   });
 });
 
@@ -516,7 +516,7 @@ describe("US-QS-26 Heute narrowed to the watering tasks by its address", () => {
     await user.click(await screen.findByRole("button", { name: "Alle Aufgaben zeigen" }));
     expect(address()).toBe("/today");
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(tiles.getByRole("button", { name: /^2Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^2 Gießen$/ })).toBeTruthy();
     expect(screen.queryByText(FILTER_NOTICE)).toBeNull();
   });
 
@@ -589,7 +589,7 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
         </MemoryRouter>
       </ToastProvider>,
     );
-    const tile = await screen.findByRole("button", { name: "1Jubiläen" });
+    const tile = await screen.findByRole("button", { name: "1 Jubiläen" });
     const { content, pane } = columns(container);
     expect(content.contains(tile)).toBe(true);
     expect(pane.contains(tile)).toBe(false);
@@ -858,7 +858,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     const user = userEvent.setup();
     show();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(await tiles.findByRole("button", { name: /^nicht geladenFehlt noch$/ })).toBeTruthy();
+    expect(await tiles.findByRole("button", { name: /^nicht geladen Fehlt noch$/ })).toBeTruthy();
     expect(screen.getByText(/Fehlt noch: nicht geladen|Hinweise: nicht geladen/)).toBeTruthy();
     await user.click(tiles.getByRole("button", { name: /Fehlt noch$/ }));
     const alert = await within(await dialog("Fehlt noch")).findByRole("alert");
@@ -895,7 +895,7 @@ describe("US-QS-14 issue 1697 · Heute loads its counts behind one skeleton", ()
     expect(screen.queryByText("lädt …")).toBeNull();
     release();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^0 Gießen$/ })).toBeTruthy();
     expect(loadingStatuses()).toHaveLength(0);
   });
 
@@ -955,7 +955,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const user = userEvent.setup();
     show();
     expect(await screen.findByText(/keinen\s+Standort/)).toBeTruthy();
-    await user.click(await screen.findByRole("button", { name: /^1Fehlt noch$/ }));
+    await user.click(await screen.findByRole("button", { name: /^1 Fehlt noch$/ }));
     const layer = await dialog("Fehlt noch");
     await user.selectOptions(await within(layer).findByLabelText("Standort für „Bogenhanf“"), "l1");
     await user.click(within(layer).getByRole("button", { name: "Standort setzen: Bogenhanf" }));
@@ -999,7 +999,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const user = userEvent.setup();
     show("/today");
     expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
-    await user.click(await screen.findByRole("button", { name: /^0Behandlungen$/ }));
+    await user.click(await screen.findByRole("button", { name: /^0 Behandlungen$/ }));
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByRole("heading", {
       level: 3,

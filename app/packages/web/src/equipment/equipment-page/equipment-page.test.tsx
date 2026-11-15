@@ -133,7 +133,7 @@ describe("US-EQU-01 equipment page", () => {
       "Noch unbekannt: Hersteller und Modell, Produkt-ID, Preis, Gekauft am",
     );
     expect(card.textContent?.match(/unbekannt/g)).toHaveLength(3);
-    expect(card.textContent).toContain("ohne Zone");
+    expect(card.textContent).toContain("Lichtzone fehlt");
   });
 
   it("US-QS-32 'Gekauft am' shows the date as TT.MM.JJJJ, never the stored form", async () => {
@@ -727,5 +727,92 @@ describe("US-QS-22 the equipment fits one screen", () => {
     });
     expect(JSON.parse(String(posts[0]?.[1]?.body))).toEqual({ supply: "low" });
     expect(JSON.parse(String(posts[1]?.[1]?.body))).toEqual({ supply: "available" });
+  });
+});
+
+const NBSP = "\u00a0";
+const CUTTING = zone({ zoneId: "z1", name: "Zone 1 · Stecklingslicht", specimens: 0, lamps: [] });
+
+describe("US-QS-32 zone names and a missing zone in equipment", () => {
+  it("US-QS-32 a lamp row names its zone in brackets, a lamp without a zone reads 'Lichtzone fehlt'", async () => {
+    fakeServer(
+      [
+        item({ id: "e1", name: "Regal Lampe", lightZoneId: "z1" }),
+        item({ id: "e2", name: "Lose Lampe", lightZoneId: null }),
+      ],
+      undefined,
+      { zones: [CUTTING], unassigned: [] },
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const layer = await screen.findByRole("dialog", { name: "Geräte" });
+    const regal = await within(layer).findByRole("button", { name: /Regal Lampe/ });
+    expect(regal.textContent).toContain("Lampe · Zone 1 (Stecklingslicht)");
+    expect(regal.textContent).not.toContain("Zone 1 · Stecklingslicht");
+    const lose = within(layer).getByRole("button", { name: /Lose Lampe/ });
+    expect(lose.textContent).toContain("Lichtzone fehlt");
+    expect(lose.textContent).not.toContain("ohne Zone");
+  });
+
+  it("US-QS-32 the record of a lamp keeps the zone in its own fact without brackets, and says 'Lichtzone fehlt' when there is none", async () => {
+    fakeServer([item({ id: "e1", name: "Regal Lampe", lightZoneId: "z1" })], undefined, {
+      zones: [CUTTING],
+      unassigned: [],
+    });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Regal Lampe" });
+    expect(card.textContent).toContain("Lichtzone");
+    expect(card.textContent).toContain("Zone 1 · Stecklingslicht");
+    expect(card.textContent).not.toContain("Zone 1 (Stecklingslicht)");
+  });
+
+  it("US-QS-32 F-0228 a device value breaks only inside a word; the record's facts stack in a narrow box", async () => {
+    fakeServer(
+      [item({ id: "e1", name: "Regal Lampe", manufacturer: "Acme", model: "Modell X" })],
+      undefined,
+      {
+        zones: [],
+        unassigned: [],
+      },
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Regal Lampe" });
+    const value = within(card).getByText("Acme Modell X");
+    expect(value.className.split(" ")).toContain("[overflow-wrap:break-word]");
+    expect(value.className).not.toContain("break-all");
+    const facts = card.querySelector("dl") as HTMLElement;
+    expect(facts.className.split(" ")).toContain("grid-cols-1");
+    expect(facts.className).toContain("@min-[12rem]:grid-cols-[auto_minmax(0,1fr)]");
+    expect(facts.parentElement?.className.split(" ")).toContain("@container");
+  });
+
+  it("US-QS-32 a lamp's watts group the thousands the German way: 1.500 W, with no break before the unit", async () => {
+    fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf({ powerW: 1500 })] });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const card = (await screen.findByText("Lampe Regal")).closest("details") as HTMLElement;
+    expect(card.textContent).toContain("1.500\u00a0W");
+    expect(card.textContent).not.toContain("1500");
+  });
+
+  it("US-QS-32 the lamp sheet reads '15 W · Zone 1 (Stecklingslicht)' with no break in the power, and 'Lichtzone fehlt' without a zone", async () => {
+    fakeServer(
+      [],
+      undefined,
+      { zones: [CUTTING], unassigned: [] },
+      {
+        limit: null,
+        lamps: [
+          lightOf({
+            powerW: 15,
+            zone: { id: "z1", name: "Zone 1 · Stecklingslicht", luxCeiling: 1500 },
+          }),
+          lightOf({ id: "l2", name: "Lampe Keller", zone: null, powerW: 20 }),
+        ],
+      },
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const card = (await screen.findByText("Lampe Regal")).closest("details") as HTMLElement;
+    expect(card.textContent).toContain(`15${NBSP}W · Zone 1 (Stecklingslicht)`);
+    const keller = (await screen.findByText("Lampe Keller")).closest("details") as HTMLElement;
+    expect(keller.textContent).toContain(`20${NBSP}W · Lichtzone fehlt`);
   });
 });

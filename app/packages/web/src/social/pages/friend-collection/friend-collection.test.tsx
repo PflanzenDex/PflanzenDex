@@ -200,11 +200,39 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     const [lamp, timer] = within(list).getAllByRole("listitem");
     expect(lamp?.textContent).toContain("Lampe Alpha");
     expect(lamp?.textContent).toContain("GL-9");
-    expect(lamp?.textContent).toMatch(/bis 15\.000 lx/);
+    expect(lamp?.textContent).toMatch(/bis 15\.000\u00a0lx/);
     expect(lamp?.textContent).toContain("sehr hell");
     expect(lamp?.textContent).not.toMatch(/Preis|Kaufdatum|Seriennummer/);
     expect(timer?.textContent).toContain("Modell");
     expect(timer?.textContent).toContain("unbekannt");
+  });
+
+  it("US-QS-32 the light level of a friend's lamp keeps number and unit together, and its facts stack in a narrow box (F-0367)", async () => {
+    show(
+      { friend: { name: "Anna" }, cards: CARDS },
+      200,
+      {
+        friend: { name: "Anna" },
+        devices: [
+          {
+            id: "d1",
+            type: "Lamp",
+            name: "Lampe Alpha",
+            model: "GL-9",
+            luxCeiling: 5000,
+            note: null,
+          },
+        ],
+      },
+      "/?sheet=equipment",
+    );
+    const list = await screen.findByRole("list", { name: "Geräte von Anna" });
+    const [lamp] = within(list).getAllByRole("listitem");
+    expect(lamp?.textContent).toContain("bis 5.000\u00a0lx");
+    const facts = lamp?.querySelector("dl");
+    expect(facts?.className.split(" ")).toContain("grid-cols-1");
+    expect(facts?.className).toContain("@min-[12rem]:grid-cols-[auto_minmax(0,1fr)]");
+    expect(lamp?.firstElementChild?.className.split(" ")).toContain("@container");
   });
 
   it("US-EQU-12 a friend who shares no device says what to do next (P-09)", async () => {

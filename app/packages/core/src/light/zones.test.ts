@@ -233,6 +233,31 @@ describe("US-QS-24 zone labels", () => {
     expect(zoneLabel("Lampe 2 links")).toBe("Lampe 2 links");
   });
 
+  it("US-QS-32 inside a line joined by ' · ' the cutting light reads with brackets: 'Zone 1 (Stecklingslicht)'", () => {
+    expect(zoneLabel("Zone 1 · Stecklingslicht", { inLine: true })).toBe(
+      "Zone 1 (Stecklingslicht)",
+    );
+    expect(zoneLabel("Lampe 1", { inLine: true })).toBe("Zone 1 (Stecklingslicht)");
+    expect(zoneLabel("Zone 1", { inLine: true })).toBe("Zone 1 (Stecklingslicht)");
+  });
+
+  it("US-QS-32 the bracket form changes only the cutting light; the other default zones read the same", () => {
+    expect(zoneLabel("Zone 2", { inLine: true })).toBe("Zone 2");
+    expect(zoneLabel("Lampe 3", { inLine: true })).toBe("Zone 3");
+    expect(zoneLabel("Zone 4", { inLine: false })).toBe("Zone 4");
+  });
+
+  it("US-QS-32 a name the keeper chose stays as typed, also inside a joined line", () => {
+    expect(zoneLabel("Regal (Keller)", { inLine: true })).toBe("Regal (Keller)");
+    expect(zoneLabel("Regal", { inLine: true })).toBe("Regal");
+  });
+
+  it("US-QS-32 without the option the cutting light keeps the plain form for a standalone label", () => {
+    expect(zoneLabel("Zone 1 · Stecklingslicht")).toBe("Zone 1 · Stecklingslicht");
+    expect(zoneLabel("Lampe 1")).toBe("Zone 1 · Stecklingslicht");
+    expect(zoneLabel("Lampe 1", {})).toBe("Zone 1 · Stecklingslicht");
+  });
+
   it("US-QS-24 the defaults for new accounts no longer say Lampe", () => {
     expect(ZONE_DEFAULT.map((z) => z.name)).toEqual([
       "Zone 1 · Stecklingslicht",

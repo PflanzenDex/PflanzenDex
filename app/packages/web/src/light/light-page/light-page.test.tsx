@@ -346,7 +346,7 @@ describe("US-QS-14 feedback on the light page", () => {
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
     await userEvent.click(await screen.findByRole("button", { name: "Hinweise (1)" }));
-    expect(await screen.findByText("Lichtzone unbekannt")).toBeTruthy();
+    expect(await screen.findByText("Lichtzone fehlt")).toBeTruthy();
     expect(screen.getByText(/Für Balkon fehlt die Lichtzone/)).toBeTruthy();
   });
 });
@@ -502,7 +502,7 @@ describe("US-QS-19 management on one screen", () => {
     expect(await screen.findByRole("button", { name: "Zone 2 ändern" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Balkon ändern" })).toBeTruthy();
     expect(screen.getByText(/^bis 15\.000/)).toBeTruthy();
-    expect(screen.getByText("Keine Lichtzone · außen")).toBeTruthy();
+    expect(screen.getByText("Lichtzone fehlt · außen")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Balkon ändern" }));
     expect(
       screen.getByLabelText("Name", { selector: "form[aria-label='Balkon ändern'] input" }),
