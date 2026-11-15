@@ -128,43 +128,23 @@ describe("US-QS-17 the index of Konto", () => {
     expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 
-  it("US-QS-32 Abmelden … is a red row of a list of its own, without a chevron (SG-COLOR-04)", async () => {
+  it("US-QS-17 Abmelden … is a row with the same chevron as the sections (issue 1045)", async () => {
     show();
     const button = await screen.findByRole("button", { name: "Abmelden …" });
-    expect(button.querySelector("svg")).toBeNull();
-    expect(button.className).toContain("text-destructive");
-    const group = button.closest("ul") as HTMLElement;
-    expect(group.querySelectorAll("li")).toHaveLength(1);
+    expect(button.querySelector("svg")).not.toBeNull();
+    expect(button.className).toContain("border-transparent");
   });
 
-  it("US-QS-32 the index is flat groups: the profile without a label, then Konto, Daten and App, and Abmelden … alone", async () => {
-    fakeServer();
+  it("US-QS-17 · issue 1099 the rows bleed into the gutter by their bar and padding, so their content lines up with the heading", async () => {
     show();
-    const nav = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
-    await screen.findByRole("link", { name: /^Erfolge/ });
-    const groups = within(nav).getAllByRole("list");
-    expect(groups).toHaveLength(5);
-    const labels = within(nav)
-      .getAllByRole("heading", { level: 2 })
-      .map((h) => h.textContent);
-    expect(labels).toEqual(["Konto", "Daten", "App"]);
-    expect(groups[0]?.querySelectorAll("li")).toHaveLength(1);
-    expect(groups[1]?.querySelectorAll("li")).toHaveLength(4);
-    expect(groups[2]?.querySelectorAll("li")).toHaveLength(2);
-    expect(groups[3]?.querySelectorAll("li")).toHaveLength(2);
-    expect(groups[4]?.querySelectorAll("li")).toHaveLength(1);
-  });
-
-  it("US-QS-32 a section that is off leaves no row and no empty group: every group of the index has a row", async () => {
-    fakeServer({ achievements: { calmMode: true } });
-    show({ ai: false, achievements: false });
-    const nav = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
-    await screen.findByRole("link", { name: /^Einstellungen/ });
-    expect(within(nav).queryByRole("link", { name: /^Erfolge/ })).toBeNull();
-    expect(within(nav).queryByRole("link", { name: /^KI-Clients/ })).toBeNull();
-    for (const group of within(nav).getAllByRole("list"))
-      expect(group.querySelectorAll("li").length).toBeGreaterThan(0);
-    expect(within(nav).getByRole("heading", { name: "Konto" })).toBeTruthy();
+    const list = screen
+      .getByRole("navigation", { name: "Abschnitte von Konto" })
+      .querySelector("ul");
+    expect(list?.className).toContain("-mx-[calc(0.75rem+4px)]");
+    const row = await screen.findByRole("button", { name: "Abmelden …" });
+    // The bleed is the row's 4 px bar plus its 0.75 rem padding.
+    expect(row.className).toContain("border-l-4");
+    expect(row.className).toContain("px-3");
   });
 
   it("US-QS-17 · P-08 a value that cannot be read says unbekannt", async () => {

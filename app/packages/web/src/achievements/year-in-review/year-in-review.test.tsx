@@ -57,31 +57,11 @@ describe("US-ACH-07 year in review", () => {
   it("US-ACH-07 shows counted facts with their basis and the largest healthy growth, no rating", async () => {
     show(answer());
     expect(await screen.findByText(`Jahresrückblick ${thisYear}`)).toBeTruthy();
-    expect((await screen.findAllByText(/Arten gefangen/)).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/Arten gefangen/)).toBeTruthy();
     expect(screen.getByText(/Fangdatum im Jahr/)).toBeTruthy();
-    expect(screen.getAllByText(/Messungen erfasst/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Messungen erfasst/)).toBeTruthy();
     expect(screen.getByText(/Größtes gesundes Wachstum: „Alma“, 8 cm/)).toBeTruthy();
     expect(screen.queryByText(/%|besser|Platz|Rang/)).toBeNull();
-  });
-
-  it("US-QS-32 each fact is a row with its count trailing, and no row carries brackets; the counting rules sit behind So wird gezählt", async () => {
-    show(answer());
-    await screen.findByText(`Jahresrückblick ${thisYear}`);
-    const rows = (await screen.findAllByRole("listitem")).filter((li) => !li.querySelector("li"));
-    expect(rows).toHaveLength(6);
-    expect(rows.every((row) => !row.textContent?.includes("("))).toBe(true);
-    expect(rows[0]?.textContent).toContain("3");
-    const rules = screen.getByText("So wird gezählt");
-    const details = rules.closest("details") as HTMLElement;
-    expect(details).toBeTruthy();
-    expect(details.textContent).toContain("Fangdatum im Jahr");
-    expect(details.textContent).toContain("eigene Messungen mit Qualität „gesund“");
-  });
-
-  it("US-QS-32 the growth line keeps its sentence without brackets", async () => {
-    show(answer());
-    const line = await screen.findByText(/Größtes gesundes Wachstum: „Alma“, 8 cm/);
-    expect(line.textContent).not.toContain("(");
   });
 
   it("US-ACH-07 unknown growth says unknown and what is needed (P-08)", async () => {
