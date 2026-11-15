@@ -8,13 +8,13 @@ import {
   PLANT_PARAM,
   SHEET_PARAM,
   formOf,
-  guardState,
   stateFlag,
   type FormAddress,
   type FormKind,
 } from "./form-address";
 import {
   isHeldForm,
+  pushGuard,
   useKeepNamed,
   useLatest,
   useOrdering,
@@ -37,7 +37,8 @@ function useCloseActions(
       refs.guarded.current = false;
       setAsking(false);
       if (text !== undefined) setNotice(text);
-      if (!c.current) return;
+      // A held form is on screen too (issue 2145): its close walks back from its entry, as a shown form (issue 2154).
+      if (!c.current && !c.held) return;
       refs.leaving.current = true;
       void c.navigate(-1);
     },
@@ -90,11 +91,7 @@ function useFormInput(
     refs.dirty.current = true;
     if (refs.guarded.current) return;
     refs.guarded.current = true;
-    const { pathname, hash, search } = c.location;
-    void c.navigate(
-      { pathname, search, hash },
-      { state: guardState(stateFlag(c.location.state, FROM_APP)) },
-    );
+    pushGuard(c, refs);
   }, [latest, refs]);
   const settle = useCallback(() => {
     if (!refs.dirty.current) return;

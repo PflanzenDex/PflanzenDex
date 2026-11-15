@@ -113,6 +113,25 @@ export function useOrdering(latest: Ref<Latest>, fromApp: boolean, key: string, 
 }
 
 /**
+ * Pushes the guard above the committed form entry (US-QS-15, issue 2154). The router applies a history change in a
+ * transition, so a Back or a Verwerfen can land before the guard entry commits. A step back then lands on the form
+ * entry already on screen: the location key does not change and `usePopGuard` never runs again. So the form entry is
+ * replaced by a copy of itself first, with a new key. A step back onto the copy settles on another key than the
+ * committed one, and the guard runs. Both changes are made in one handler, so the router applies them as one update.
+ * The copy gets the state a form entry is always pushed with (FROM_APP and the entry below it), and the guard FROM_APP;
+ * not the router's state: right after the mount the router still shows the entry the address came with, which has neither.
+ */
+export function pushGuard(c: Latest, refs: Refs): void {
+  const { pathname, hash, search } = c.location;
+  const below = refs.named.current?.below ?? { pathname, search: listSearch(search) };
+  void c.navigate(
+    { pathname, search, hash },
+    { replace: true, state: { [FROM_APP]: true, [BELOW]: below } },
+  );
+  void c.navigate({ pathname, search, hash }, { state: guardState(true) });
+}
+
+/**
  * The second of two quick Backs passed the form, which the render holds (`isHeldForm`): the form goes back on its entry
  * above the entry below it, with its guard above that, and the question comes up (US-QS-32, issue 2145). Without unsaved
  * input left there is nothing to ask for, so nothing comes back.
@@ -160,10 +179,6 @@ export function usePopGuard(
       return;
     }
     setAsking(true);
-    const { pathname, hash, search } = c.location;
-    void c.navigate(
-      { pathname, search, hash },
-      { state: guardState(stateFlag(c.location.state, FROM_APP)) },
-    );
+    pushGuard(c, refs);
   }, [key, latest, refs, setAsking]);
 }

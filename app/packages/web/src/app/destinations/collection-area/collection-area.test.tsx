@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { useLayoutEffect } from "react";
-import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
+import { startTransition, useCallback, useLayoutEffect, useState, type ReactNode } from "react";
+import {
+  MemoryRouter,
+  NavigationType,
+  Router,
+  UNSAFE_createMemoryHistory,
+  useLocation,
+  useNavigate,
+  type Location,
+  type NavigateFunction,
+} from "react-router";
 import { findCardButton } from "../../../collection/specimens/tests/plants-test-helpers";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -53,6 +62,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   cleanup();
+  resetHold();
   vi.unstubAllGlobals();
 });
 
@@ -116,6 +126,81 @@ function Address() {
   return null;
 }
 const back = () => act(() => route.navigate?.(-1));
+
+/**
+ * The router of the tests of issue 2154: a MemoryRouter whose history changes can be held back. The real routers
+ * apply a history change in a transition, so a question set at normal priority can be on screen while the guard entry
+ * is still pending. While `hold.on` is set, a change that pushes or replaces an entry waits in `hold.queued`; a later
+ * change replaces it, as the last update of a transition decides what renders. A back step applies at once and drops
+ * the held change. `releaseHold` applies the held change in a transition. A suspending child would hold the transition
+ * too, but inside `act` such a render never settled in these tests, so the hold does not suspend.
+ */
+type Routed = { action: NavigationType; location: Location };
+const hold: { on: boolean; queued: Routed | null; apply: ((next: Routed) => void) | null } = {
+  on: false,
+  queued: null,
+  apply: null,
+};
+function GatedRouter({ entry, children }: { entry: string; children: ReactNode }) {
+  const [history] = useState(() =>
+    UNSAFE_createMemoryHistory({ initialEntries: [entry], v5Compat: true }),
+  );
+  const [state, setStateImpl] = useState<Routed>({
+    action: history.action,
+    location: history.location,
+  });
+  const apply = useCallback((next: Routed) => startTransition(() => setStateImpl(next)), []);
+  useLayoutEffect(() => {
+    hold.apply = apply;
+    // The layout effects of the children run before this one: the ordering of a form opened by its address may have
+    // moved the history already. The router catches up with it, so the screen it shows is the entry the history is on.
+    apply({ action: history.action, location: history.location });
+    return history.listen((update) => {
+      if (hold.on && update.action !== NavigationType.Pop) {
+        hold.queued = update;
+        return;
+      }
+      hold.queued = null;
+      apply(update);
+    });
+  }, [history, apply]);
+  return (
+    <Router location={state.location} navigationType={state.action} navigator={history}>
+      {children}
+    </Router>
+  );
+}
+/** Applies the held change in a transition, as the router would once the guard entry renders (issue 2154). */
+async function releaseHold() {
+  hold.on = false;
+  const queued = hold.queued;
+  hold.queued = null;
+  await act(async () => {
+    if (queued) hold.apply?.(queued);
+    await Promise.resolve();
+  });
+}
+/** Clears the hold between tests. */
+function resetHold() {
+  hold.on = false;
+  hold.queued = null;
+  hold.apply = null;
+}
+/** Renders the area under the gated router, for the tests that hold a guard entry (issue 2154). */
+function renderHeldAt(entry: string) {
+  render(
+    <GatedRouter entry={entry}>
+      <Address />
+      <CollectionArea
+        api="http://api"
+        token={async () => "tok"}
+        newSpecies={null}
+        onSpeciesChoose={() => {}}
+        onCompleted={() => {}}
+      />
+    </GatedRouter>,
+  );
+}
 const NOT_FOUND_TEXT =
   "Diese Pflanze gibt es in deiner Sammlung nicht (mehr). Die Ansicht ist geschlossen.";
 
@@ -309,6 +394,67 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     expect(route.search).toContain("form=measure");
     expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
   });
+
+  it("US-WAC-01 Verwerfen before the re-pushed guard entry commits still leaves the measure view (issue 2154)", async () => {
+    stubCollection();
+    renderHeldAt("/collection?view=plants&form=measure&plant=e1");
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    // The guard entry that Back pushes again stays pending while the question shows (a slow device, issue 2154).
+    hold.on = true;
+    back();
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    expect(route.guarded).toBe(false);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await releaseHold();
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
+    expect(route.search).not.toContain("form=measure");
+  }, 15_000);
+
+  it("US-QS-15 Back before the first guard entry commits still asks (issue 2154)", async () => {
+    stubCollection();
+    renderHeldAt("/collection?view=plants&form=measure&plant=e1");
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    // The first input pushes the guard entry, and that entry stays pending: Back then lands on the form entry shown.
+    hold.on = true;
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    back();
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    expect(document.getElementById("measure-title")).not.toBeNull();
+    expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
+    await releaseHold();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Eingabe verwerfen?" })).toBeNull(),
+    );
+    expect(document.getElementById("measure-title")).not.toBeNull();
+    expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
+  }, 15_000);
+
+  it("US-QS-15 Verwerfen before the held form and its guard entry commit still leaves the measure view (issue 2154)", async () => {
+    stubCollection();
+    renderHeldAt("/collection?view=plants&form=measure&plant=e1");
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    // The two quick Backs land on the list; the form is held and put back with its guard entry, which stays pending.
+    hold.on = true;
+    act(() => {
+      route.navigate?.(-1);
+      route.navigate?.(-1);
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    expect(route.guarded).toBe(false);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await releaseHold();
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
+    expect(route.search).not.toContain("form=measure");
+  }, 15_000);
 });
 
 describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {
