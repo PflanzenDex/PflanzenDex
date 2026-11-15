@@ -17,7 +17,7 @@ import {
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/shared/ui/button/button";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
-import { SpeciesName } from "@/shared/species-name/species-name";
+import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
@@ -87,13 +87,16 @@ function UnreadableNote({ count }: { count: number }) {
 
 function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] }) {
   const { openLayer, open } = useLayer(layerId(row));
+  // The label holds the names in the order the row shows them (WCAG 2.5.3, US-QS-32).
+  const german = germanNameOf(row.botanicalName, row.speciesName);
+  const named = german === null ? row.botanicalName : `${german} ${row.botanicalName}`;
   return (
     <Button
       type="button"
       variant="outline"
       aria-haspopup="dialog"
       aria-expanded={open}
-      aria-label={`Vergleichswerte: ${row.speciesName}`}
+      aria-label={`Vergleichswerte: ${named}`}
       className={SPECIES_ENTRY_ROW}
       onClick={(event) => openLayer(event.currentTarget)}
     >

@@ -82,10 +82,21 @@ describe("US-BES-05 page of the difficulty overview", () => {
   it("US-QS-32 · SG-ICON-01 every comparison entry ends with a chevron icon, not the glyph ›, and its name stays the visible text", async () => {
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />);
-    const entry = await screen.findByRole("button", { name: "Vergleichswerte: Bogenhanf" });
+    const entry = await screen.findByRole("button", {
+      name: "Vergleichswerte: Bogenhanf Dracaena trifasciata",
+    });
     expect(entry.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
     expect(entry.querySelector("svg")?.getAttribute("class")).toContain("size-5");
     expect(entry.textContent).not.toContain("›");
+  });
+
+  it("US-QS-32 the entry's label names the German and the scientific name in the order the row shows them (WCAG 2.5.3)", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: "Vergleichswerte: Bogenhanf Dracaena trifasciata",
+    });
+    expect(entry.textContent).toMatch(/^Bogenhanf\s*Dracaena trifasciata/);
   });
 
   it("US-BES-05 · US-QS-22 the layer of a species shows all columns of the comparison", async () => {
@@ -370,7 +381,9 @@ describe("US-QS-22 the comparison fits one screen", () => {
     view(<DifficultyPage api="http://api" token={token} />);
     await screen.findByRole("list", { name: "Artenvergleich" });
     expect(screen.queryByRole("table")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Vergleichswerte: Bogenhanf" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Vergleichswerte: Bogenhanf Dracaena trifasciata" }),
+    );
     expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
   });
 });
@@ -393,7 +406,9 @@ describe("US-QS-32 the comparison names a species the SG-TYPE-08 way (F-0121)", 
   it("US-QS-32 the entry leads with the German name, upright; the botanical name is italic on the meta line before the values", async () => {
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />);
-    const entry = await screen.findByRole("button", { name: "Vergleichswerte: Bogenhanf" });
+    const entry = await screen.findByRole("button", {
+      name: "Vergleichswerte: Bogenhanf Dracaena trifasciata",
+    });
     const german = within(entry).getByText("Bogenhanf");
     expect(german.closest("i")).toBeNull();
     const latin = within(entry).getByText("Dracaena trifasciata");
