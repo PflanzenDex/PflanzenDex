@@ -148,7 +148,7 @@ function Groups({ overview, api, token }: { overview: Shown; api: string; token:
             renderItem={(s) => <StateSection section={s} card={CARDS[s.kind]} />}
           />
           <p className="m-0 text-sm">
-            Rang, Fortschritt und Meilensteine des Sammelns findest du im{" "}
+            Rang und Meilensteine stehen im{" "}
             <Link to={SPECIES_MODE_ADDRESS} className="underline">
               Pokédex
             </Link>

@@ -485,7 +485,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       "Meine Freunde1 Freund",
     );
     expect(screen.getByRole("button", { name: /^Was Freunde sehen/ }).textContent).toBe(
-      "Was Freunde sehenNoch keine Pflanzen".replace("Noch keine Pflanzen", "Alles privat"),
+      "Was Freunde sehen0 von 2 Pflanzen geteilt",
     );
     expect(screen.getByText(/Ohne deine Freigabe sieht niemand etwas\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mehr erfahren" })).toBeTruthy();

@@ -27,7 +27,7 @@ export const INVITATIONS_PAGE_SIZE = 5;
 /**
  * One topic of the operator area on the overview (US-QS-15): its name, its current value and the layer it opens
  * (`?sheet=<id>`). The value wraps instead of being cut off, so it stays readable at 200 % text. A value that loads (the
- * counts of "Fristen") is a node, so the row stays the same button while it waits.
+ * counts of "Löschfristen") is a node, so the row stays the same button while it waits.
  */
 export function OperatorRow(props: { id: string; title: string; value: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
@@ -52,7 +52,7 @@ export function OperatorRow(props: { id: string; title: string; value: ReactNode
 }
 
 /**
- * The plain button under "Kosten pro Nutzer" when no figure is entered: it opens the layer that enters one and replaces
+ * The plain button under "Kosten pro aktivem Konto" when no figure is entered: it opens the layer that enters one and replaces
  * the sheet "Zahlen" with it (US-QS-15). The sheet's layer id is the opener's id, so Back returns the focus here.
  */
 export function EnterCostButton() {

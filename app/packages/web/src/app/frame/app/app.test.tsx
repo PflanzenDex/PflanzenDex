@@ -362,9 +362,9 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
     // The numbers are the layer of their row on the overview (US-QS-15).
     await userEvent.click(await screen.findByRole("button", { name: /^Zahlen/ }));
-    expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
-      /^unbekannt/,
-    );
+    expect(
+      (await screen.findByText("Kosten pro aktivem Konto")).nextElementSibling?.textContent,
+    ).toMatch(/^unbekannt/);
   });
 
   it("US-QS-16 · US-ONB-01 signed in: starts on Heute with the first plant for a new account", async () => {

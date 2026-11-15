@@ -24,8 +24,8 @@ export function nextStepText(key: string, specimenName: string | null): string {
       return "Topfe einen Steckling in einen eigenen Topf um, sobald er Wurzeln hat.";
     case "treatment-completed.next":
       return specimenName
-        ? `Hake das letzte offene Datum der Kur bei ${specimenName} ab.`
-        : "Schließe eine Kur ab: Hake alle ihre Termine ab.";
+        ? `Hake die offene Behandlung bei ${specimenName} ab.`
+        : "Schließe eine Behandlung ab: Hake ihren letzten offenen Termin ab.";
     case "through-dormancy.next":
       return "Pflege eine Pflanze durch eine ganze Ruhephase, vom Beginn bis zum Ende.";
     case "healthy-for-a-year.next":
@@ -42,7 +42,7 @@ export const MISSING_TEXTS: Record<string, string> = {
   no_measurements: "Es gibt noch keine Messung.",
   no_photo: "Es gibt Messungen, aber noch keine mit Foto.",
   too_few_measurements: "Es sind noch nicht genug Messungen da (mindestens vier an einer Pflanze).",
-  no_treatment: "Es gibt noch keine Kur.",
+  no_treatment: "Es gibt noch keine Behandlung.",
   no_catch_date: "Bei keiner Pflanze ist ein Fangdatum bekannt.",
   no_dormancy_period: "Für keine deiner Pflanzen ist eine Ruhephase bekannt.",
 };

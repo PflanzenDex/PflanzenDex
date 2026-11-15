@@ -73,7 +73,7 @@ describe("US-ONB-05 routes of locked functions", () => {
 
   it("US-ONB-05 the exchange shows its own lock page while swapping is locked", async () => {
     renderAt("/friends/exchange", [entry("swapping", "locked")]);
-    expect(await screen.findByRole("heading", { level: 1, name: "Tauschen" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Tauschbörse" })).toBeTruthy();
   });
 
   it("US-ONB-05 / FR-ONB-06 with everything open (style many) the address opens the function as before", async () => {

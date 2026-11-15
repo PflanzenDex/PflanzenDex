@@ -769,7 +769,7 @@
     "id": "account-achievements",
     "account": "test2",
     "path": "/account/achievements",
-    "title": "Erfolge"
+    "title": "Erfolge und Rückblick"
   },
   {
     "id": "account-reminders",
@@ -970,7 +970,7 @@
     "account": "test3",
     "path": "/operator?sheet=fristen",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
-    "title": "Betreiber: Fristen"
+    "title": "Betreiber: Löschfristen"
   },
   {
     "id": "operator-sheet-registrierung",
@@ -1063,7 +1063,7 @@
     "account": "test2",
     "path": "/account/achievements?sheet=pause",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
-    "title": "Pause eintragen"
+    "title": "Urlaub eintragen"
   },
   {
     "id": "today-tasks",

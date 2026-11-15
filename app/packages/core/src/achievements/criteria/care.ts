@@ -4,7 +4,10 @@ import type { Criterion, Earned, AchievementSpecimenFact } from "../types";
 const earliest = (events: readonly Earned[]): Earned | null =>
   events.reduce<Earned | null>((a, e) => (a === null || e.earnedOn < a.earnedOn ? e : a), null);
 
-/** Treatment completed: every date of a course ticked off; earned on the day the last one was ticked (US-BEH-03). */
+/**
+ * Treatment completed: every date of a course ticked off, a single treatment being a course of one date (owner answer
+ * RR-Q2); earned on the day the last one was ticked (US-BEH-03).
+ */
 export const treatmentCompleted: Criterion = (facts) => {
   const done: Earned[] = [];
   let next: { specimenId: string; open: number } | null = null;

@@ -132,7 +132,11 @@ export function CareRhythmSection(props: { api: string; token: Token }) {
           <RhythmWeeks weeks={v.weeks} />
         </div>
       </LayerPart>
-      <LayerPart id="pause" title="Pause eintragen" value="Urlaub oder Krankheit, bis 4 Wochen">
+      <LayerPart
+        id="pause"
+        title="Urlaub eintragen"
+        value="Bis 4 Wochen, zählt nicht gegen deinen Pflegerhythmus"
+      >
         <RhythmPauses api={api} token={token} pauses={v.pauses ?? []} />
       </LayerPart>
     </>
