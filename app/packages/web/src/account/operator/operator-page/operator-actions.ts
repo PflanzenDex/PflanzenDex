@@ -30,12 +30,13 @@ export function useOperatorActions(api: string, token: Token) {
   const [created, setCreated] = useState<CreatedInvitation | null>(null);
   const busy = useRef(false);
 
+  /** Resolves true when the write was saved; false when it was refused or skipped because another write runs (US-QS-32). */
   const run = async <T>(
     scope: Scope,
     send: (t: string) => Promise<Response<T>>,
     done: (value: T) => string,
-  ) => {
-    if (busy.current) return;
+  ): Promise<boolean> => {
+    if (busy.current) return false;
     busy.current = true;
     setRunning(true);
     const t = await token();
@@ -48,6 +49,7 @@ export function useOperatorActions(api: string, token: Token) {
         : { scope, message: null, error: r.error },
     );
     if (r.ok) invalidate();
+    return r.ok;
   };
 
   return {
