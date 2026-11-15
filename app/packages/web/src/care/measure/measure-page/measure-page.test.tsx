@@ -494,7 +494,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     const { posts, photoPosts } = fakeServer({ withPhoto: true });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     await screen.findByText(/Gespeichert:/);
     expect(posts).toHaveLength(1);
@@ -521,7 +521,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await screen.findAllByText("noch keine Messung");
     const more = screen.getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
     expect(more.open).toBe(false);
-    expect(more.contains(screen.getByLabelText("Foto (optional)"))).toBe(true);
+    expect(more.contains(screen.getByRole("group", { name: "Foto (optional)" }))).toBe(true);
     expect(more.contains(screen.getByLabelText("Notiz (optional)"))).toBe(true);
     expect(
       screen.getByRole("button", { name: "Messung speichern" }).parentElement?.className,
@@ -535,7 +535,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent
       .setup({ applyAccept: false })
       .upload(
-        screen.getByLabelText("Foto (optional)"),
+        screen.getByLabelText("Foto wählen"),
         new File(["x"], "x.pdf", { type: "application/pdf" }),
       );
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
@@ -551,7 +551,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent
       .setup({ applyAccept: false })
       .upload(
-        screen.getByLabelText("Foto (optional)"),
+        screen.getByLabelText("Foto wählen"),
         new File(["x"], "x.pdf", { type: "application/pdf" }),
       );
     await save();
@@ -567,7 +567,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     const alert = await refusalToast();
     expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
@@ -581,7 +581,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     const { photoPosts } = fakeServer({ photoSave: () => held.answer });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
     const status = await screen.findByText("Foto wird gespeichert …");
@@ -602,7 +602,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     fakeServer({ photoSave: () => held.answer });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     await screen.findByText("Foto wird gespeichert …");
     held.release(response(201, { photo: "p.webp" }));
@@ -618,7 +618,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     });
     show();
     await fillValue("12,5");
-    await userEvent.upload(screen.getByLabelText("Foto (optional)"), IMAGE);
+    await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     const alert = await refusalToast();
     // Nothing says "Gespeichert" before or beside the error: the success text would be a lie about the photo (P-10).
@@ -643,11 +643,15 @@ describe("US-QS-07 taking a photo offers the camera", () => {
     setViewportWidth(1024);
     fakeServer({ existing: [measurement] });
     show();
-    imageInput(await screen.findByLabelText("Foto (optional)"));
+    imageInput(await screen.findByLabelText("Foto wählen"));
     const cameras = () => screen.getAllByLabelText("Foto aufnehmen");
     expect(cameras()).toHaveLength(1);
     await openEntries();
-    imageInput(await screen.findByLabelText(/Foto hinzufügen/));
+    imageInput(
+      within(await screen.findByRole("group", { name: /Foto hinzufügen/ })).getByLabelText(
+        "Foto wählen",
+      ),
+    );
     expect(cameras().length).toBeGreaterThanOrEqual(1);
     for (const camera of cameras()) expect(camera.getAttribute("capture")).toBe("environment");
   });
@@ -656,8 +660,11 @@ describe("US-QS-07 taking a photo offers the camera", () => {
 describe("US-WAC-05 add or replace the photo of an existing measurement", () => {
   const exists = () =>
     response(409, { error: { code: "measurement.photo_exists", text: "raw server text" } });
-  const pick = async (label: RegExp) =>
-    userEvent.upload(await screen.findByLabelText(label), IMAGE);
+  const pick = async (group: RegExp) =>
+    userEvent.upload(
+      within(await screen.findByRole("group", { name: group })).getByLabelText("Foto wählen"),
+      IMAGE,
+    );
 
   it("adds a photo to a measurement without one, for its date, without replace", async () => {
     setViewportWidth(1024);
@@ -728,7 +735,7 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     show();
     await openEntries();
     await screen.findAllByRole("heading", { level: 3 });
-    expect(screen.getAllByLabelText(/Foto hinzufügen/)).toHaveLength(1);
+    expect(screen.getAllByRole("group", { name: /Foto hinzufügen/ })).toHaveLength(1);
   });
 
   it("US-QS-03 a lost answer to a photo, then the same file again: the keeper gets the normal success and no replace question", async () => {
@@ -766,6 +773,24 @@ describe("US-WAC-05 add or replace the photo of an existing measurement", () => 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(photoPosts[1]?.key).toBe(photoPosts[0]?.key);
+  });
+});
+
+describe("US-QS-32 the photo field is a group named by its label, and its input by its face (issue 1981)", () => {
+  it("US-QS-32 a new measurement's photo is the group 'Foto (optional)' with the input 'Foto wählen'", async () => {
+    fakeServer();
+    show();
+    const group = await screen.findByRole("group", { name: "Foto (optional)" });
+    expect(within(group).getByLabelText("Foto wählen").getAttribute("type")).toBe("file");
+  });
+
+  it("US-QS-32 an existing measurement's photo is the group 'Foto hinzufügen' with the input 'Foto wählen'", async () => {
+    setViewportWidth(1024);
+    fakeServer({ existing: [measurement] });
+    show();
+    await openEntries();
+    const group = await screen.findByRole("group", { name: "Foto hinzufügen" });
+    expect(within(group).getByLabelText("Foto wählen").getAttribute("type")).toBe("file");
   });
 });
 

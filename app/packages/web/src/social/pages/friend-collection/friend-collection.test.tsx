@@ -212,6 +212,12 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
   });
 
+  it("US-QS-32 the devices of a friend name the layer once: its title is the only heading 'Geräte von …' (issue 1981)", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
+    await screen.findByText(/Anna hat noch kein Gerät freigegeben/);
+    expect(screen.getAllByRole("heading", { name: "Geräte von Anna" })).toHaveLength(1);
+  });
+
   it("US-QS-20 the devices open from 'Geräte', not stacked below the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Anna" });

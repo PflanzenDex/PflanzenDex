@@ -83,12 +83,16 @@ export function PhotoAction(props: {
   const say = useSay();
   const up = usePhotoUpload({ ...props, say });
   const id = `photo-action-${props.date}`;
+  const labelId = `${id}-label`;
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{props.hasPhoto ? "Foto ersetzen" : "Foto hinzufügen"}</Label>
+      <Label id={labelId} htmlFor={id}>
+        {props.hasPhoto ? "Foto ersetzen" : "Foto hinzufügen"}
+      </Label>
       <FileField
         key={up.inputKey}
         id={id}
+        groupLabelledBy={labelId}
         accept={MEDIA_LIMITS.uploadTypes.join(",")}
         onChange={(e) => up.pick(e.target.files?.[0])}
       />

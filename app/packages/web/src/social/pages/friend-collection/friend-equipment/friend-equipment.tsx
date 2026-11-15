@@ -64,11 +64,9 @@ export function FriendEquipment(props: {
 }) {
   const { api, friendId, name } = props;
   const load = useCallback((t: string) => loadFriendEquipment(api, t, friendId), [api, friendId]);
+  // No heading of its own: the layer's title ("Geräte von …") names the section (US-QS-32, issue 1981); the list is named below.
   return (
-    <section aria-labelledby="friend-equipment-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-equipment-title" className="sr-only">
-        Geräte von {name}
-      </h2>
+    <section className="flex min-w-0 flex-col gap-3">
       <LoadFrame
         queryKey={["social", "friend-equipment", friendId]}
         token={props.token}
