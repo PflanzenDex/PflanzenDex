@@ -3,16 +3,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronRight } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { BUSY_LOOK } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { instantText } from "../../api/access-api";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../schemas";
+import partsTable from "./operator-parts.de.json";
+import { NewCode } from "./new-code/new-code";
+
+const t = texts(partsTable);
 
 const STATUS_TEXT: Record<InvitationStatus, string> = {
   open: "offen",
@@ -46,6 +51,26 @@ export function OperatorRow(props: { id: string; title: string; value: ReactNode
         </span>
       </span>
       <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+    </Button>
+  );
+}
+
+/**
+ * The plain button under "Kosten pro Nutzer" when no figure is entered: it opens the layer that enters one and replaces
+ * the sheet "Zahlen" with it (US-QS-15). The sheet's layer id is the opener's id, so Back returns the focus here.
+ */
+export function EnterCostButton() {
+  const { openLayer } = useLayer("kosten");
+  return (
+    <Button
+      id={layerOpenerId("kosten")}
+      type="button"
+      variant="link"
+      aria-haspopup="dialog"
+      className="px-0"
+      onClick={(event) => openLayer(event.currentTarget)}
+    >
+      {t("cost.enter")}
     </Button>
   );
 }
@@ -136,27 +161,6 @@ export function InvitationsArea(props: {
       {props.created && <NewCode created={props.created} />}
       <InvitationList invitations={props.invitations} onStart={() => field.current?.focus()} />
     </div>
-  );
-}
-
-/** The code is shown exactly once; afterwards only its hash exists on the server. */
-export function NewCode(props: { created: CreatedInvitation }) {
-  const { created } = props;
-  return (
-    <section
-      aria-label="Neuer Einladungscode"
-      className="flex flex-col gap-2 rounded-lg border-2 border-primary px-3 py-2"
-    >
-      <p>
-        <code className="select-all text-xl tracking-widest [overflow-wrap:anywhere]">
-          {created.code}
-        </code>
-      </p>
-      <p className="rounded-lg border border-border p-3">
-        Gültig bis {instantText(created.expiresAt)}. Der Code wird nur jetzt angezeigt: Gib ihn
-        weiter oder notiere ihn, später kannst du ihn nicht mehr ansehen.
-      </p>
-    </section>
   );
 }
 

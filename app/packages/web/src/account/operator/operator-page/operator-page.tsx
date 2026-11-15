@@ -7,7 +7,12 @@ import { loadOverview } from "../../api/access-api";
 import { DeadlineRow, DeletionSection } from "../deletion-section/deletion-section";
 import { IntroductionSection } from "../introduction-section/introduction-section";
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
-import { InvitationsArea, ModeSection, OperatorRow } from "../operator-parts/operator-parts";
+import {
+  EnterCostButton,
+  InvitationsArea,
+  ModeSection,
+  OperatorRow,
+} from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
 import { LayerNotice } from "./layer-notice/layer-notice";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -34,13 +39,10 @@ function Numbers(props: { overview: OperatorOverview }) {
           {keepTogether(`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`)}
         </dt>
         <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.activeAccounts}</dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">Monatliche Kosten</dt>
-        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] @lg:mb-0">
-          {costText(o.cost)}
-        </dd>
         <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro Nutzer</dt>
-        <dd className="m-0 font-semibold [overflow-wrap:anywhere]">
-          {costPerUserText(o.costPerUser)}
+        <dd className="m-0 flex flex-col items-start font-semibold [overflow-wrap:anywhere]">
+          <span>{costPerUserText(o.costPerUser)}</span>
+          {!o.costPerUser.known && o.costPerUser.reason === "no_figure" && <EnterCostButton />}
         </dd>
       </dl>
       <p className="mt-3 text-sm text-muted-foreground">
