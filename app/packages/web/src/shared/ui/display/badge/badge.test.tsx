@@ -25,14 +25,11 @@ describe("Badge (US-QS-07, DS-34, DS-36)", () => {
     expect(cls).not.toContain("px-2.5");
   });
 
-  it("US-QS-07 · US-QS-32 · DS-35 offers every named variant: default and secondary share the neutral look, the others differ", () => {
-    const variants = ["default", "secondary", "outline", "destructive", "warning"] as const;
+  it("US-QS-07 · US-QS-32 · DS-35 offers every named variant, each with its own look (no secondary variant, issue 1884)", () => {
+    const variants = ["default", "outline", "destructive", "warning"] as const;
     for (const variant of variants) render(<Badge variant={variant}>{variant}</Badge>);
     const looks = variants.map((variant) => screen.getByText(variant).className);
-    const [defaultLook, secondaryLook, ...others] = looks;
-    expect(secondaryLook).toBe(defaultLook);
-    expect(new Set(looks).size).toBe(4);
-    expect(new Set(others).size).toBe(others.length);
+    expect(new Set(looks).size).toBe(variants.length);
     for (const look of looks) expect(look).not.toContain("bg-primary");
   });
 

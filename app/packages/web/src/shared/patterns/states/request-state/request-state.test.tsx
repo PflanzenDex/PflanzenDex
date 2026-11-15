@@ -214,3 +214,125 @@ describe("US-QS-14 issue 1772 · RequestState holds a shown shapeless loader (D5
     expect(screen.getByRole("alert").textContent).toContain("Nicht erreichbar.");
   });
 });
+
+/** The title of a failed load while the device is offline: the view is not there yet, the server did not fail (issue 1884). */
+const OFFLINE_TITLE =
+  "Diese Ansicht ist noch nicht geladen. Sie lädt, sobald du wieder online bist.";
+
+/** The device's connection (`navigator.onLine`) of a test; the test dispatches the browser's `online` event itself. */
+function connection(online: boolean) {
+  return vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(online);
+}
+
+describe("US-QS-32 · RequestState failed while the device is offline (issue 1884)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("US-QS-32 an error while offline says the view is not loaded yet, not that the server failed", () => {
+    connection(false);
+    render(
+      <RequestState
+        {...props}
+        status="error"
+        errorText="Der Server ist gerade nicht erreichbar."
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain(OFFLINE_TITLE);
+    expect(screen.queryByText("Der Server ist gerade nicht erreichbar.")).toBeNull();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+
+  it("US-QS-32 an error while online keeps the caller's text", () => {
+    connection(true);
+    render(
+      <RequestState
+        {...props}
+        status="error"
+        errorText="Der Server ist gerade nicht erreichbar."
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Der Server ist gerade nicht erreichbar.",
+    );
+    expect(screen.queryByText(OFFLINE_TITLE)).toBeNull();
+  });
+
+  it("US-QS-32 the device coming back online while the error shows calls onRetry exactly once", () => {
+    const net = connection(false);
+    const onRetry = vi.fn();
+    render(<RequestState onRetry={onRetry} status="error" errorText="Nicht erreichbar." />);
+    net.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-32 an error that comes back after that reload does not reload again (no loop)", () => {
+    const net = connection(false);
+    const onRetry = vi.fn();
+    const { rerender } = render(
+      <RequestState onRetry={onRetry} status="error" errorText="Nicht erreichbar." />,
+    );
+    net.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    rerender(<RequestState onRetry={onRetry} status="pending" />);
+    rerender(<RequestState onRetry={onRetry} status="error" errorText="Nicht erreichbar." />);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-32 an error that arrives while the device is online does not call onRetry", () => {
+    connection(true);
+    const onRetry = vi.fn();
+    const { rerender } = render(
+      <RequestState onRetry={onRetry} status="ready">
+        <p>Inhalt</p>
+      </RequestState>,
+    );
+    rerender(<RequestState onRetry={onRetry} status="error" errorText="Nicht erreichbar." />);
+    expect(onRetry).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toContain("Nicht erreichbar.");
+  });
+
+  it("US-QS-32 the device coming back online while the content shows does not reload it", () => {
+    const net = connection(false);
+    const onRetry = vi.fn();
+    render(
+      <RequestState onRetry={onRetry} status="ready">
+        <p>Inhalt</p>
+      </RequestState>,
+    );
+    net.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(onRetry).not.toHaveBeenCalled();
+    expect(screen.getByText("Inhalt")).toBeTruthy();
+  });
+
+  it("US-QS-32 with ownOffline the caller's text stays offline, and coming back online does not call onRetry", () => {
+    const net = connection(false);
+    const onRetry = vi.fn();
+    render(
+      <RequestState
+        onRetry={onRetry}
+        status="error"
+        errorText="Keine Verbindung. Deine Eingabe bleibt hier stehen."
+        ownOffline
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Keine Verbindung. Deine Eingabe bleibt hier stehen.",
+    );
+    expect(screen.queryByText(OFFLINE_TITLE)).toBeNull();
+    net.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+});
