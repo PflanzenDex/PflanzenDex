@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { AiClientsSection } from "./clients-section";
@@ -10,6 +10,11 @@ import { AiSection } from "../ai-section/ai-section";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "../ai.de.json";
 import { ClientsSkeleton } from "./clients-section.skeleton";
+
+/** The address of the router: the layer the last control opened (`?sheet=<id>`, US-QS-15). */
+function Address() {
+  return <output data-testid="address">{useLocation().search}</output>;
+}
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -59,8 +64,34 @@ describe("US-KI-07 connected AI clients", () => {
   it("US-KI-07 says where the data goes and that nothing is connected yet", async () => {
     fakeServer([]);
     show();
-    expect(await screen.findByText("Noch ist kein KI-Client verbunden.")).toBeTruthy();
+    expect(await screen.findByText("Noch ist kein KI-Client verbunden")).toBeTruthy();
     expect(screen.getByText(/Der Anbieter deines KI-Clients erhält die Daten/)).toBeTruthy();
+  });
+
+  it("US-KI-07 FX-81 the empty list holds one step, 'KI-Client verbinden', that opens the how-to layer", async () => {
+    fakeServer([]);
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter initialEntries={["/?sheet=clients"]}>
+          <AiSection api="http://api" token={token} />
+          <Address />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const line = await screen.findByRole("heading", {
+      level: 3,
+      name: "Noch ist kein KI-Client verbunden",
+    });
+    const box = line.parentElement as HTMLElement;
+    expect(
+      within(box)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["KI-Client verbinden"]);
+    await user.click(within(box).getByRole("button", { name: "KI-Client verbinden" }));
+    expect(screen.getByTestId("address").textContent).toBe("?sheet=howto");
+    expect(await screen.findByText("http://api/mcp")).toBeTruthy();
   });
 
   it("US-KI-07 the layer of how to connect shows the address of the interface, in its own layer", async () => {

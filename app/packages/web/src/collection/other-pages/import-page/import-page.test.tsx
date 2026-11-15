@@ -217,7 +217,7 @@ const sentTo = (sent: Sent[], path: string) => sent.filter((s) => s.path === pat
 /** Picks the file and asks for the preview; returns once the preview is on the screen. */
 async function previewOfCsv(text = CSV) {
   const u = user();
-  await u.upload(screen.getByLabelText("CSV-Datei"), fileOf(text));
+  await u.upload(screen.getByLabelText("Datei wählen"), fileOf(text));
   await waitFor(() => expect(isDisabled(reviewButton())).toBe(false));
   await u.click(reviewButton());
   await screen.findByRole("heading", { name: "Vorschau" });
@@ -241,6 +241,13 @@ describe("US-BES-18 the import page follows its keeper switch and offers the tem
     server();
     show({ csv_import: false });
     expect(screen.getByTestId("address").textContent).toBe("/collection");
+  });
+
+  it("US-QS-32 the CSV field is a group named 'CSV-Datei' whose input is named by its face 'Datei wählen' (issue 1981)", () => {
+    server();
+    show();
+    const group = screen.getByRole("group", { name: "CSV-Datei" });
+    expect(within(group).getByLabelText("Datei wählen").getAttribute("type")).toBe("file");
   });
 
   it("US-BES-18 the template is generated in the browser and holds only the header line", async () => {
@@ -278,7 +285,7 @@ describe("US-BES-18 the import page follows its keeper switch and offers the tem
     const big = new File([new Uint8Array(IMPORT_LIMITS.bytes + 1)], "gross.csv", {
       type: "text/csv",
     });
-    await user().upload(screen.getByLabelText("CSV-Datei"), big);
+    await user().upload(screen.getByLabelText("Datei wählen"), big);
     expect(await screen.findByText(ERROR_TEXTS["import.too_large"])).toBeTruthy();
     expect(isDisabled(reviewButton())).toBe(true);
     expect(sent).toHaveLength(0);
@@ -440,7 +447,7 @@ describe("US-BES-18 a failed request keeps the state and offers a retry", () => 
     const sent = server({ previewFails: 1 });
     show();
     const u = user();
-    await u.upload(screen.getByLabelText("CSV-Datei"), fileOf(CSV));
+    await u.upload(screen.getByLabelText("Datei wählen"), fileOf(CSV));
     await waitFor(() => expect(isDisabled(reviewButton())).toBe(false));
     await u.click(reviewButton());
     expect(await screen.findByRole("alert")).toBeTruthy();

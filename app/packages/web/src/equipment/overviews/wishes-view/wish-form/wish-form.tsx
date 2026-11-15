@@ -12,6 +12,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Select } from "@/shared/ui/fields/select/select";
 import { TYPE_LABELS } from "../../../labels";
 import { EMPTY_WISH, toWishInput, wishSchema, type WishFields } from "../../../schemas";
@@ -64,6 +65,8 @@ export function WishForm(props: {
     resolver: zodResolver(wishSchema),
     defaultValues: EMPTY_WISH,
   });
+  // Typed input that is not saved asks before the layer closes (US-QS-32).
+  useUnsavedInput(form.formState.isDirty);
   const submit = form.handleSubmit(async (values) => {
     if (await props.onCreate(toWishInput(values))) form.reset(EMPTY_WISH);
   });

@@ -49,12 +49,16 @@ function PhotoInput(props: {
   inputKey: number;
 }) {
   const id = "measure-photo";
+  const labelId = `${id}-label`;
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>Foto (optional)</Label>
+      <Label id={labelId} htmlFor={id}>
+        Foto (optional)
+      </Label>
       <FileField
         key={props.inputKey}
         id={id}
+        groupLabelledBy={labelId}
         accept={MEDIA_LIMITS.uploadTypes.join(",")}
         aria-describedby="measure-photo-hint"
         onChange={(e) => props.onPick(e.target.files?.[0] ?? null)}

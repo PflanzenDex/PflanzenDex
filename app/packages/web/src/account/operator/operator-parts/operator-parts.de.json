@@ -1,0 +1,11 @@
+{
+  "cost.enter": "Kosten eintragen",
+  "code.section": "Neuer Einladungscode",
+  "code.label": "Einladungscode",
+  "code.validity": "Gültig bis {until}. Der Code wird nur jetzt angezeigt: Gib ihn weiter oder notiere ihn, später kannst du ihn nicht mehr ansehen.",
+  "code.share": "Code teilen",
+  "code.copy": "Code kopieren",
+  "code.copied": "Kopiert",
+  "code.copyFailed": "Kopieren nicht möglich. Markiere den Code und kopiere ihn von Hand.",
+  "code.copiedAnnounce": "Der Code liegt in der Zwischenablage."
+}

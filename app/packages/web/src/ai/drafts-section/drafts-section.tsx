@@ -6,6 +6,7 @@ import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/co
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { DraftsSkeleton } from "./drafts-section.skeleton";
+import { EmptySheet, NEW_TASK_LAYER } from "../clients-section/connect-step/connect-step";
 
 const ui = texts(table);
 
@@ -108,7 +109,12 @@ function List(props: { api: string; token: Token; rows: readonly AiDraftRow[] })
         nach 14&nbsp;Tagen und bleiben danach sichtbar.
       </p>
       {props.rows.length === 0 ? (
-        <p className="m-0">Keine Entwürfe vorhanden.</p>
+        <EmptySheet
+          title="Noch keine Entwürfe"
+          description={ui("drafts.empty")}
+          layer={NEW_TASK_LAYER}
+          label={ui("step.newTask")}
+        />
       ) : (
         <Pager
           items={props.rows}

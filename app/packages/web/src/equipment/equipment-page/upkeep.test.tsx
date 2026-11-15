@@ -125,7 +125,10 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
     await userEvent
       .setup()
-      .selectOptions(await screen.findByLabelText("Zuordnung von Feuchtesensor"), "specimen:p1");
+      .selectOptions(
+        await screen.findByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" }),
+        "specimen:p1",
+      );
     expect(await lastPost(fetchFn)).toMatchObject({
       path: "/equipment/s1/sensor-target",
       body: { specimenId: "p1", locationId: null },
