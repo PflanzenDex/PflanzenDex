@@ -585,6 +585,23 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' is neutral text", async () => {
+    fakeServer([
+      item({ id: "e1", name: "Lampe defekt", status: "defective" }),
+      item({ id: "e2", name: "Lampe aktiv", status: "active" }),
+      item({ id: "e3", name: "Lampe alt", status: "retired" }),
+    ]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const defective = await screen.findByRole("button", { name: /Lampe defekt/ });
+    expect(within(defective).getByText("Defekt").className.split(" ")).toContain("bg-warning");
+    const active = screen.getByRole("button", { name: /Lampe aktiv/ });
+    expect(active.textContent).not.toContain("Aktiv");
+    expect(active.textContent).not.toContain("Defekt");
+    const retired = screen.getByRole("button", { name: /Lampe alt/ });
+    expect(retired.textContent).toMatch(/Ausgemustert$/);
+    expect(retired.querySelector(".bg-warning")).toBeNull();
+  });
+
   it.each([360, 1440])(
     "US-QS-15 · US-QS-22 at %i px, Escape closes an item and the focus returns to the row it was opened from (WCAG 2.4.3)",
     async (width) => {

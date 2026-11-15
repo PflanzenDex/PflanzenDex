@@ -116,9 +116,9 @@ async function expectPhases(
   await expect(page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ })).toBeVisible();
   // Dormancy today: the plant at Fensterbank stands off its target Keller; the profile species stands at it.
   await expect(card(ruhe)).toContainText("Soll-Phase heute: Ruhephase");
-  await expect(card(ruhe)).toContainText(
-    "Standort: Fensterbank · Soll-Standort: Keller · Weicht ab",
-  );
+  await expect(card(ruhe)).toContainText("Standort: Fensterbank · Soll-Standort: Keller");
+  // The deviation is an amber badge beside the line, not a suffix of it (US-QS-32, SG-COLOR-04).
+  await expect(card(ruhe).getByText("Abweichung", { exact: true })).toBeVisible();
   await expect(card(ruhe)).toContainText("Nächster Wechsel zur Wachstumsphase");
   await expect(card(profil)).toContainText("Soll-Phase heute: Ruhephase");
   await expect(card(profil)).toContainText("Standort: Keller · Soll-Standort: Keller");

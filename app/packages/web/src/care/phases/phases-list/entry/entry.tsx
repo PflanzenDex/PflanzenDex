@@ -1,4 +1,5 @@
 import { phaseStatus, type LightLocation, type PhasesRow } from "@pflanzendex/core";
+import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { CARD_CLASSES, WARNING_CLASSES } from "../../../shared/notices/notices";
@@ -35,13 +36,16 @@ function SwitchAction(props: {
   );
 }
 
-/** The first hint as a chip; further hints are counted and stay reachable as text and title (P-10). */
+/**
+ * The first hint as a chip, neutral: a hint names the next step of a missing entry, it is no deviation (SG-COLOR-04). Further
+ * hints are counted and stay reachable as text and title (P-10).
+ */
 function HintChip({ hints }: { hints: readonly string[] }) {
   if (hints.length === 0) return null;
   return (
     <p
       title={hints.join(" ")}
-      className="mt-1 w-fit rounded-full border border-warning-border bg-warning px-2 py-0.5 text-xs font-semibold text-warning-foreground"
+      className="mt-1 w-fit rounded-full border border-transparent bg-secondary px-2 py-0.5 text-xs font-semibold text-foreground"
     >
       {hints[0]}
       {hints.length > 1 && (
@@ -100,14 +104,18 @@ function CompactEntry(props: {
         <span>Soll-Phase heute: {PHASE_TEXT[z.phase]}</span> ·{" "}
         <span>{nextChangeText(z.nextChange)}</span>
       </p>
+      {/* A missing location is a missing entry: bold, neutral (SG-COLOR-04). A deviation is amber: a small badge in the text
+          flow after the line, so the card keeps its height on a phone (US-QS-32, one-screen). */}
       {status === "location_missing" ? (
-        <p className="font-semibold text-warning-foreground">
-          Standort fehlt · Soll-Standort: {target}
-        </p>
+        <p className="font-semibold">Standort fehlt · Soll-Standort: {target}</p>
       ) : (
-        <p className={status === "deviation" ? "font-semibold" : "text-muted-foreground"}>
+        <p className="text-muted-foreground">
           Standort: {here} · Soll-Standort: {target}
-          {status === "deviation" ? " · Weicht ab" : ""}
+          {status === "deviation" && (
+            <Badge variant="warning" className="ml-1 py-0 leading-none">
+              Abweichung
+            </Badge>
+          )}
         </p>
       )}
       <HintChip hints={hints} />
@@ -137,7 +145,7 @@ export function Entry(props: {
         <p className="font-semibold">Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.</p>
       )}
       {status === "location_missing" ? (
-        <p className={WARNING_CLASSES}>Standort fehlt</p>
+        <p className="font-semibold">Standort fehlt</p>
       ) : (
         <p className="text-muted-foreground">Standort: {locationText(locations, z.locationId)}</p>
       )}

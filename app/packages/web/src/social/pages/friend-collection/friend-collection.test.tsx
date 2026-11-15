@@ -67,6 +67,19 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(unknown?.textContent).toContain("Vergleich unbekannt");
   });
 
+  it("US-QS-32 · SG-COLOR-04 both ownership badges are neutral states, not amber or primary; the unknown one is outlined", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    const have = screen.getByText("Du hast sie", { exact: true }).className;
+    const lack = screen.getByText("Du hast sie nicht", { exact: true }).className;
+    for (const look of [have, lack]) {
+      expect(look).toContain("bg-secondary");
+      expect(look).not.toContain("bg-warning");
+      expect(look).not.toContain("bg-primary");
+    }
+    expect(screen.getByText("Vergleich unbekannt").className).toContain("bg-card");
+  });
+
   it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are paged", async () => {
     const many = Array.from({ length: 8 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
     show({ friend: { name: "Clara" }, cards: many });
