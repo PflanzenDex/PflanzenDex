@@ -9,7 +9,7 @@ const meta = { title: "ui/Badge", component: Badge, args: { children: "Neu" } } 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const variants = ["default", "secondary", "outline", "destructive", "warning"] as const;
+const variants = ["default", "outline", "destructive", "warning"] as const;
 
 export const Default: Story = {};
 

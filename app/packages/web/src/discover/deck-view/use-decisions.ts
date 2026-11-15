@@ -1,6 +1,6 @@
 import type { DecideResult, UndoDecisionResult } from "@pflanzendex/core";
 import { useRef, useState } from "react";
-import { errorText } from "@/shared/lib/error-text";
+import { refusalText } from "@/shared/lib/error-text";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useOnline } from "@/shared/platform/browser/network";
@@ -85,7 +85,8 @@ export function useDecisions(onDecide: OnDecide, onUndo: OnUndo, moves: Moves) {
     busy.current = false;
     if (!r.ok) {
       setExit(null);
-      setError(errorText(r.error.code));
+      // A request without an answer carries its own German text (`network.not_reachable`, issue 1884).
+      setError(refusalText(r.error));
       return;
     }
     setError(null);
@@ -104,7 +105,7 @@ export function useDecisions(onDecide: OnDecide, onUndo: OnUndo, moves: Moves) {
     busy.current = false;
     setTaken(null);
     if (!r.ok) {
-      setError(errorText(r.error.code));
+      setError(refusalText(r.error));
       return;
     }
     setError(null);

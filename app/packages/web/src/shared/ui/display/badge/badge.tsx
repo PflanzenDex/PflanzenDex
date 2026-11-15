@@ -14,8 +14,6 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "border-transparent bg-secondary text-foreground",
-        // Kept for callers; the same neutral look as `default` (suggestion-card is in another open PR).
-        secondary: "border-transparent bg-secondary text-foreground",
         outline: "border-border bg-card text-foreground",
         destructive: "border-transparent bg-destructive text-destructive-foreground",
         warning: "border-warning-border bg-warning text-warning-foreground",

@@ -29,7 +29,8 @@ export const SCREEN_STALE_TIME = 10_000;
 /**
  * The one cache for server state (DS-09, ADR 0006). Requests run even when the browser reports "offline", so the
  * failure is a visible `network.not_reachable` and the last loaded data stays on screen (US-QS-07). No automatic
- * retries: the user decides with "Erneut versuchen". Data of an earlier session never survives sign-out (P-04).
+ * retries and no reload on reconnect here: the user decides with "Erneut versuchen", and only a failed view loads once by
+ * itself when the device is back online (`RequestState`, US-QS-32). Data of an earlier session never survives sign-out (P-04).
  */
 export function createQueryClient(): QueryClient {
   return new QueryClient({
