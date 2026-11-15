@@ -15,11 +15,11 @@
     },
     {
       "file": "packages/web/src/account/operator/operator-page/operator-page.tsx",
-      "count": 19
+      "count": 18
     },
     {
       "file": "packages/web/src/account/operator/operator-parts/operator-parts.tsx",
-      "count": 17
+      "count": 14
     },
     {
       "file": "packages/web/src/account/settings-fields/settings-fields.tsx",
