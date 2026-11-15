@@ -10,7 +10,17 @@ import { useChipsFit } from "./use-chips-fit";
 /** The query parameter of the chosen group, e.g. `?group=location&part=Regal` (US-QS-19). */
 export const PART_PARAM = "part";
 
-export type GroupChoice = { key: string; label: string; count: number };
+export type GroupChoice = {
+  key: string;
+  label: string;
+  count: number;
+  /** What the count means in words (US-ACH-02); replaces the number in brackets. */
+  countText?: string;
+};
+
+/** The count after the label: "(3)", or "· 2 von 3" when the choice says what it counts (`countText`). */
+const countLabel = (c: GroupChoice) =>
+  c.countText === undefined ? `(${c.count})` : `· ${c.countText}`;
 
 /** The chosen group of the address: the one named by `part=`, else the first (US-QS-19). */
 export function usePart(choices: readonly GroupChoice[]): GroupChoice | undefined {
@@ -46,7 +56,7 @@ function ChipRow({
             className={cn("shrink-0 whitespace-nowrap", selected && "font-semibold")}
           >
             {selected ? <Check aria-hidden="true" className="size-5 shrink-0" /> : null}
-            {c.label} <span className="tabular-nums">({c.count})</span>
+            {c.label} <span className="tabular-nums">{countLabel(c)}</span>
           </Button>
         );
       })}
@@ -82,7 +92,7 @@ function MeasureRow({
             className="shrink-0 whitespace-nowrap"
           >
             <Check aria-hidden="true" className="size-5 shrink-0" />
-            {c.label} <span className="tabular-nums">({c.count})</span>
+            {c.label} <span className="tabular-nums">{countLabel(c)}</span>
           </Button>
         ))}
       </div>
@@ -126,7 +136,7 @@ export function GroupChoices({
         >
           {choices.map((c) => (
             <option key={c.key} value={c.key}>
-              {`${c.label} (${c.count})`}
+              {`${c.label} ${countLabel(c)}`}
             </option>
           ))}
         </Select>
