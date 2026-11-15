@@ -48,3 +48,22 @@ describe("US-QS-32 category tiles of Heute: the count agrees with the label", ()
     expect(tiles.getByRole("button", { name: "1 Fehlt noch" })).toBeTruthy();
   });
 });
+
+describe("US-QS-32 the category tiles are neutral (SG-COLOR-02, SG-LIST-05)", () => {
+  it("US-QS-32 a tile is on the card colour with foreground text and no green outline", () => {
+    const tiles = renderTiles(ready(2));
+    const cls = tiles.getByRole("button", { name: "2 Behandlungen" }).className;
+    expect(cls).toContain("bg-card");
+    expect(cls).toContain("border-transparent");
+    expect(cls).toContain("text-foreground");
+    expect(cls).not.toContain("text-primary");
+    expect(cls).not.toMatch(/border-primary/);
+  });
+
+  it("US-QS-32 a count of zero is regular and muted, not styled as a number to tap", () => {
+    const tiles = renderTiles(ready(1));
+    const zero = tiles.getByRole("button", { name: /Wassergaben|Gießen/ });
+    expect(zero.querySelector("span")?.className).toContain("text-muted-foreground");
+    expect(zero.querySelector("span")?.className).not.toContain("font-semibold");
+  });
+});

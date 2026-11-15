@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -16,22 +16,22 @@ const zones: LightZone[] = [
 ];
 
 describe("US-LIC-04 look up the classification rules (view)", () => {
-  it("shows the keeper's own zones sorted, with lux ceiling (de-DE) and unknown PPFD as 'unbekannt'", () => {
+  it("US-QS-32 each zone is one row, sorted: its name once and its reach in lux and PPFD, unknown PPFD as 'PPFD unbekannt'", () => {
     render(
       <MemoryRouter>
         <RulesView zones={zones} />
       </MemoryRouter>,
     );
-    const rows = screen.getAllByRole("row").slice(1);
-    const cells = rows.map((r) =>
-      within(r)
-        .getAllByRole("cell")
-        .map((c) => c.textContent),
-    );
-    expect(cells).toEqual([
-      ["Zone 1 · Stecklingslicht", "1.500", "unbekannt"],
-      ["Fensterbank", "15.000", "300"],
-    ]);
+    // The pager wraps each part in its own item; the zone rows are the items without a nested item.
+    const rows = screen.getAllByRole("listitem").filter((li) => !li.querySelector("li"));
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toMatch(/^Zone 1 · Stecklingslicht/);
+    expect(rows[0]?.textContent).toMatch(/bis 1\.500\s+Lux/);
+    expect(rows[0]?.textContent).toContain("PPFD unbekannt");
+    expect(rows[1]?.textContent).toMatch(/^Fensterbank/);
+    expect(rows[1]?.textContent).toMatch(/bis 15\.000\s+Lux · PPFD 300\s+µmol\/m²\/s/);
+    expect(document.body.textContent).not.toContain("Zone Zone");
+    expect(screen.queryByRole("row")).toBeNull();
   });
 
   it("US-QS-19 the parts come one per page: the indicators on page 2, the warning signs on page 3", async () => {

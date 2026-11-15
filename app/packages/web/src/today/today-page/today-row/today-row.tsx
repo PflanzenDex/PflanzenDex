@@ -24,8 +24,8 @@ const GO: Record<TodayTarget, string> = {
   wishlist: "Zur Wunschliste",
   equipment: "Zu den Geräten",
 };
-const CARD =
-  "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";
+// Flat like every row of a page (US-QS-32, SG-SHAPE-05): the card colour, no shadow in the flow of the page.
+const CARD = "min-w-0 rounded-card bg-card p-3 text-card-foreground [overflow-wrap:anywhere]";
 const URGENT = "border-warning-border bg-warning text-warning-foreground";
 export const isTreatment = (item: TodayItem) =>
   item.kind === "treatment_overdue" || item.kind === "treatment_due";

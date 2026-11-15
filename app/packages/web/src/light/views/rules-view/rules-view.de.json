@@ -1,0 +1,7 @@
+{
+  "zone.lux": "bis {value}",
+  "zone.ppfd": "PPFD {value}",
+  "zone.ppfdUnknown": "PPFD unbekannt",
+  "unit.lux": "Lux",
+  "unit.ppfd": "µmol/m²/s"
+}

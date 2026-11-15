@@ -1,0 +1,10 @@
+{
+  "figure.target": "Ziel: {target}",
+  "figure.met": "erreicht",
+  "figure.notMet": "nicht erreicht",
+  "figure.unknown": "unbekannt (zu wenige Konten)",
+  "target.limit": "höchstens {value}",
+  "unit.second": "s",
+  "unit.minute": "min",
+  "unit.percent": "%"
+}
