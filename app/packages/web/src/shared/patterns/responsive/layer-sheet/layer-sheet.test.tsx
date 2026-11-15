@@ -520,6 +520,18 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     expect(seen.search).toContain("sheet=notiz");
   });
 
+  it("US-QS-32 Weiter bearbeiten puts the focus back on the field the person typed in, inside the layer", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    const field = screen.getByLabelText("Text");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect(screen.getByRole("dialog", { name: "Notiz" }).contains(field)).toBe(true);
+  });
+
   it("US-QS-32 Escape on the question keeps the layer and its input, as Weiter bearbeiten does", async () => {
     setViewportWidth(360);
     renderTyping(["/start"], 0);
