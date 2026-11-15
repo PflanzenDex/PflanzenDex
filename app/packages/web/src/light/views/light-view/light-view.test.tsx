@@ -117,7 +117,7 @@ describe("US-LIC-05 view locations and light zones", () => {
 
   it("forms carry visible labels and input aids for numbers", () => {
     const h = renderToString(<ZoneForm onSave={nothing} />);
-    expect(h).toContain("Lux-Decke (Lux)");
+    expect(h).toContain("Obergrenze");
     expect(h).toContain('inputMode="numeric"');
     expect(renderToString(<LocationForm zones={[zone]} onSave={nothing} />)).toContain(
       "Keine Lichtzone (erscheint in den Hinweisen)",
@@ -184,7 +184,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
 describe("US-LIC-01 view: derive the zone of a species", () => {
   it("offers lux need, default level and the C3 hint and explains why", () => {
     const h = renderToString(<DerivationForm onDerive={actions.zoneDerive} />);
-    expect(h).toContain("Lux-Bedarf der Art (Lux)");
+    expect(h).toContain("Lux-Bedarf der Art");
     expect(h).toContain("Stufe 4");
     expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
   });

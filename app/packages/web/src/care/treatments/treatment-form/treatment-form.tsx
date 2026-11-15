@@ -80,7 +80,7 @@ export function TermFields({ control }: { control: Control<TreatmentFields> }) {
           />
         )}
       </Field>
-      <Field control={control} name="agent" label="Mittel (optional)">
+      <Field control={control} name="agent" label="Mittel" optional>
         {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
       </Field>
       <Field control={control} name="date" label="Datum">
@@ -139,7 +139,7 @@ export function CourseFields({ control }: { control: Control<TreatmentFields> })
           <Field control={control} name="count" label="Anzahl der Termine">
             {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
           </Field>
-          <Field control={control} name="intervalDays" label="Abstand in Tagen">
+          <Field control={control} name="intervalDays" label="Abstand" suffix="Tage">
             {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
           </Field>
         </div>

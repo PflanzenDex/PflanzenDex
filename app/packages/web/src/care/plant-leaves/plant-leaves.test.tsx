@@ -233,8 +233,8 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     show();
     await user.click(await screen.findByRole("button", { name: "Mit Details" }));
     await screen.findByRole("dialog");
-    await user.type(screen.getByLabelText("Länge in mm (optional)"), "42");
-    await user.type(screen.getByLabelText("Breite in mm (optional)"), "11");
+    await user.type(screen.getByLabelText("Länge (optional)"), "42");
+    await user.type(screen.getByLabelText("Breite (optional)"), "11");
     await user.type(screen.getByLabelText("Notiz (optional)"), "Fenster");
     await user.click(screen.getByRole("button", { name: "Blatt speichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));

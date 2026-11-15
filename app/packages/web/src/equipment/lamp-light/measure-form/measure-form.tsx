@@ -35,6 +35,53 @@ function toInput(
   };
 }
 
+/** The four fields of a measurement; the units stand inside the fields as suffixes (SG-FORM-01). */
+function MeasureFields(props: {
+  date: string;
+  onDate: (value: string) => void;
+  lux: string;
+  onLux: (value: string) => void;
+  distance: string;
+  onDistance: (value: string) => void;
+  method: string;
+  onMethod: (value: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <label className={LABEL}>
+        Datum
+        <DateField value={props.date} onChange={(e) => props.onDate(e.target.value)} required />
+      </label>
+      <label className={LABEL}>
+        Lichtstärke
+        <Input
+          inputMode="numeric"
+          value={props.lux}
+          suffix="lx"
+          onChange={(e) => props.onLux(e.target.value)}
+        />
+      </label>
+      <label className={LABEL}>
+        Abstand (optional)
+        <Input
+          inputMode="numeric"
+          value={props.distance}
+          suffix="cm"
+          onChange={(e) => props.onDistance(e.target.value)}
+        />
+      </label>
+      <label className={LABEL}>
+        Methode (optional)
+        <Input
+          value={props.method}
+          maxLength={60}
+          onChange={(e) => props.onMethod(e.target.value)}
+        />
+      </label>
+    </div>
+  );
+}
+
 /**
  * Adds one measurement of a lamp (US-EQU-03): date (today, in the keeper's time zone, NFR-08) and lux are required,
  * distance and method may stay empty (unknown, P-08). The server validates again (P-03).
@@ -69,28 +116,16 @@ export function MeasureForm(props: MeasureFormProps) {
       aria-label={`Messung für ${props.lampName}`}
       className="flex flex-col gap-2"
     >
-      <div className="grid grid-cols-2 gap-2">
-        <label className={LABEL}>
-          Datum
-          <DateField value={date} onChange={(e) => setDate(e.target.value)} required />
-        </label>
-        <label className={LABEL}>
-          Lux
-          <Input inputMode="numeric" value={luxText} onChange={(e) => setLuxText(e.target.value)} />
-        </label>
-        <label className={LABEL}>
-          Abstand in cm (optional)
-          <Input
-            inputMode="numeric"
-            value={distance}
-            onChange={(e) => setDistance(e.target.value)}
-          />
-        </label>
-        <label className={LABEL}>
-          Methode (optional)
-          <Input value={method} maxLength={60} onChange={(e) => setMethod(e.target.value)} />
-        </label>
-      </div>
+      <MeasureFields
+        date={date}
+        onDate={setDate}
+        lux={luxText}
+        onLux={setLuxText}
+        distance={distance}
+        onDistance={setDistance}
+        method={method}
+        onMethod={setMethod}
+      />
       {problem ? (
         <p role="alert" className="text-sm text-destructive">
           {problem}

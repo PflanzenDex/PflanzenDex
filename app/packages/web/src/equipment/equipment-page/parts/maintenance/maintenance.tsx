@@ -95,10 +95,11 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
           <DateField value={since} onChange={(e) => setSince(e.target.value)} />
         </label>
         <label className={LABEL}>
-          Prüfintervall in Tagen (optional)
+          Prüfintervall (optional)
           <Input
             inputMode="numeric"
             value={interval}
+            suffix="Tage"
             onChange={(e) => setInterval(e.target.value)}
           />
         </label>

@@ -389,8 +389,8 @@ describe("US-WUN-01 recording a wish", () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
-    await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit"), "3");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone (optional)"), "z2");
+    await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit (optional)"), "3");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText(/Wunsch „Neu“ gespeichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -428,7 +428,9 @@ describe("US-WUN-01 recording a wish", () => {
     expect(document.activeElement).toBe(name);
     expect(name.value).toBe("Neu");
     expect(screen.queryByText(/gespeichert/)).toBeNull();
-    expect(screen.getByLabelText("Schwierigkeit").getAttribute("aria-invalid")).not.toBe("true");
+    expect(screen.getByLabelText("Schwierigkeit (optional)").getAttribute("aria-invalid")).not.toBe(
+      "true",
+    );
   });
 
   it("US-WUN-01 marks the zone field when the server says the zone is not the keeper's", async () => {
@@ -438,9 +440,9 @@ describe("US-WUN-01 recording a wish", () => {
     );
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone (optional)"), "z2");
     await save();
-    const zone = screen.getByLabelText("Ziel-Lichtzone") as HTMLSelectElement;
+    const zone = screen.getByLabelText("Ziel-Lichtzone (optional)") as HTMLSelectElement;
     await vi.waitFor(() => expect(zone.getAttribute("aria-invalid")).toBe("true"));
     expect(describedText(zone)).toContain("gibt es nicht");
     expect(document.activeElement).toBe(zone);
@@ -457,7 +459,7 @@ describe("US-WUN-01 recording a wish", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
-    const url = screen.getByLabelText("Bild-Adresse (https)");
+    const url = screen.getByLabelText("Bild-Adresse (optional)");
     await vi.waitFor(() => expect(url.getAttribute("aria-invalid")).toBe("true"));
     expect(document.activeElement).toBe(url);
   });
@@ -502,13 +504,16 @@ describe("US-WUN-01 recording a wish", () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.type(screen.getByLabelText("Bild-Adresse (https)"), "https://x.example/a.jpg");
+    await userEvent.type(
+      screen.getByLabelText("Bild-Adresse (optional)"),
+      "https://x.example/a.jpg",
+    );
     await save();
-    const source = screen.getByLabelText("Bildquelle");
+    const source = screen.getByLabelText("Bildquelle (optional)");
     expect(source.getAttribute("aria-invalid")).toBe("true");
     expect(describedText(source)).toContain("Quelle");
     await vi.waitFor(() => expect(document.activeElement).toBe(source));
-    expect((screen.getByLabelText("Bild-Adresse (https)") as HTMLInputElement).value).toBe(
+    expect((screen.getByLabelText("Bild-Adresse (optional)") as HTMLInputElement).value).toBe(
       "https://x.example/a.jpg",
     );
     expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Neu");
@@ -519,8 +524,8 @@ describe("US-WUN-01 recording a wish", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.type(screen.getByLabelText("Bildquelle"), "Quelle");
-    const url = screen.getByLabelText("Bild-Adresse (https)");
+    await userEvent.type(screen.getByLabelText("Bildquelle (optional)"), "Quelle");
+    const url = screen.getByLabelText("Bild-Adresse (optional)");
     await userEvent.type(url, "http://x.example/a.jpg");
     await save();
     expect(url.getAttribute("aria-invalid")).toBe("true");
@@ -609,12 +614,14 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
-    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
+    // US-QS-32 (F-0171): the required Name is in the visible part, Mehr Angaben starts closed.
+    expect(screen.getByLabelText("Name").closest("details")).toBeNull();
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
     await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
     await userEvent.click(await screen.findByRole("button", { name: /Epipremnum aureum/ }));
     expect(await screen.findByText(/Gewählt: Epipremnum aureum \(Efeutute\)/)).toBeTruthy();
     // The pick shows the names, so they do not open the group (issue 1032).
-    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     await screen.findByText(/Wunsch „Epipremnum aureum“ gespeichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -625,13 +632,14 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     expect(screen.queryByText(/Gewählt:/)).toBeNull();
   });
 
-  it("US-WUN-01 · #902 saving without a species opens Mehr Angaben and names the missing name", async () => {
+  it("US-WUN-01 · #902 · US-QS-32 saving without a species names the missing name at the visible field; Mehr Angaben stays closed", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
-    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(true);
+    expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
   });
 
   it("US-QS-24 · US-WUN-01 'Neuer Wunsch' has no heading inside the form that repeats the layer title; Mehr Angaben starts closed; the save button sits in a sticky footer", async () => {
