@@ -118,7 +118,10 @@ function useFormInput(
     refs.dirty.current = false;
     if (!refs.guarded.current) return;
     refs.guarded.current = false;
-    void latest.current.navigate(-1);
+    // Two steps back, over the guard entry and the form's own entry, to the entry below the form: `usePopGuard` pushes the
+    // form again there, so no guard entry stays ahead of it (issue 2165). A plain step back would leave the guard ahead.
+    refs.settling.current = true;
+    void latest.current.navigate(-2);
   }, [latest, refs]);
   return { open, typed, settle };
 }
@@ -137,6 +140,7 @@ export function useFormAddress(enabled: boolean): FormAddress {
     guarded: { current: false },
     leaving: { current: false },
     named: { current: null },
+    settling: { current: false },
   }));
   // A Back that passes the form with unsaved input holds it on screen until its question is answered (issue 2145).
   const landed = { pathname: location.pathname, search: location.search };

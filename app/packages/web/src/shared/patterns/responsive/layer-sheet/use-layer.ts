@@ -1,6 +1,13 @@
 import * as React from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import { PARAM, setClosing, walkOverGuard, withoutLayer, type Below } from "./use-layer.history";
+import {
+  PARAM,
+  isGuarded,
+  setClosing,
+  walkOverGuard,
+  withoutLayer,
+  type Below,
+} from "./use-layer.history";
 
 /** History state set when the app itself opened the layer, so closing can go back instead of leaving the app. */
 export const FROM_APP = "layerFromApp";
@@ -105,7 +112,8 @@ export function useLayer(id: string): LayerControl {
       setParams(next, { state: { [FROM_APP]: true, [BELOW]: below } });
     },
     closeLayer: () => {
-      if (open && guarded) {
+      // The committed guard flag lags behind a guard entry that is still pending (PF-031): a pushed guard counts too (2165).
+      if (open && (guarded || isGuarded(id))) {
         setClosing(id, true);
         const { pathname, search, hash } = location;
         return walkOverGuard(navigate, { pathname, search: withoutLayer(search), hash });

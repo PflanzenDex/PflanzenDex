@@ -2,7 +2,7 @@ import * as React from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
 import { preloadUnsavedQuestion } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question";
 import { FROM_APP, LAYER_GUARD, focusLayer, stateFlag, type UnsavedGuard } from "./use-layer";
-import { isClosing, setClosing } from "./use-layer.history";
+import { isClosing, setClosing, setGuarded } from "./use-layer.history";
 import {
   closeHere,
   guardHere,
@@ -94,13 +94,13 @@ function useWalk(layer: { id: string; open: boolean; key: string }, refs: Refs, 
     if (isClosing(id)) {
       if (!c.open) {
         setClosing(id, false);
-        refs.guarded.current = false;
+        setGuarded(id, refs.guarded, false);
       }
       return;
     }
     if (c.type !== "POP" || stateFlag(c.location.state, LAYER_GUARD) || !refs.guarded.current)
       return;
-    refs.guarded.current = false;
+    setGuarded(id, refs.guarded, false);
     if (c.held) {
       // Held (issue 2145): the layer comes back with its question, but only while its input is still unsaved.
       if (refs.named.current && refs.dirty.current) {
@@ -118,14 +118,20 @@ function useWalk(layer: { id: string; open: boolean; key: string }, refs: Refs, 
     guardHere(c, refs.guarded);
   }, [key, id, refs, ask]);
   // A layer mounted only while its address names it unmounts when the walk lands off it: the walk ends with it.
-  React.useEffect(() => () => setClosing(id, false), [id]);
+  React.useEffect(
+    () => () => {
+      setClosing(id, false);
+      setGuarded(id, refs.guarded, false);
+    },
+    [id, refs],
+  );
   React.useEffect(() => {
     if (open) return;
-    refs.guarded.current = false;
+    setGuarded(id, refs.guarded, false);
     pending.current = null;
     asked.current = false;
     setAsking(false);
-  }, [open, refs, pending, asked, setAsking]);
+  }, [open, id, refs, pending, asked, setAsking]);
   React.useEffect(() => {
     if (asking || !kept.current) return;
     kept.current = false;

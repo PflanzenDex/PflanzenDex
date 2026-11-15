@@ -29,12 +29,13 @@ export type Named = {
   plantId: string;
   below: Below | null;
 };
-/** What the history handling remembers between renders: input unsaved, a guard above the form, a close in progress. */
+/** What the history handling remembers between renders: input unsaved, a guard above the form, a close, a settle (2165). */
 export type Refs = {
   dirty: Ref<boolean>;
   guarded: Ref<boolean>;
   leaving: Ref<boolean>;
   named: Ref<Named | null>;
+  settling: Ref<boolean>;
 };
 
 /** Keeps the values of the latest render for the handlers and the effects. */
@@ -82,8 +83,7 @@ export function isHeldForm(p: {
     p.current === null &&
     p.type === "POP" &&
     !stateFlag(p.state, GUARD) &&
-    refs.guarded.current &&
-    refs.dirty.current &&
+    (refs.settling.current || (refs.guarded.current && refs.dirty.current)) &&
     !refs.leaving.current &&
     isBelow(p.landed, refs.named.current?.below ?? null)
   );
@@ -163,6 +163,15 @@ export function usePopGuard(
     if (refs.leaving.current) {
       if (c.current) void c.navigate(-1);
       else refs.leaving.current = false;
+      return;
+    }
+    // A settle stepped back over its guard (issue 2165): the form is pushed again on its own entry, held until then.
+    if (refs.settling.current && c.type === "POP") {
+      refs.settling.current = false;
+      if (!c.current && refs.named.current) {
+        const { at, below } = refs.named.current;
+        void c.navigate(at, { state: { [FROM_APP]: true, [BELOW]: below } });
+      }
       return;
     }
     if (c.type !== "POP" || stateFlag(c.location.state, GUARD)) return;

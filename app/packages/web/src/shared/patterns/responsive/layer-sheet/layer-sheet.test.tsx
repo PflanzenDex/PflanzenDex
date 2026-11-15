@@ -25,6 +25,7 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
 import { LayerHost, LayerOpener, LayerSheet, useLayer, useUnsavedInput } from "./layer-sheet";
 import { useExitValue } from "./use-layer";
+import { GatedRouter, hold, releaseHold, resetHold } from "./layer-sheet.test-helpers";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -32,6 +33,7 @@ beforeAll(() => {
 });
 
 afterEach(cleanup);
+afterEach(resetHold);
 afterEach(releaseSheetExits);
 
 function Back() {
@@ -946,6 +948,53 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.state).not.toMatchObject({ layerGuard: true });
     expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+  });
+
+  /** The guard entry of a change waits in the gated router, as on a slow device: the saved close runs while it is pending (PF-031). */
+  function renderGatedTyping(entry: string, save: boolean) {
+    return render(
+      <GatedRouter entry={entry}>
+        <TypingLayer save={save} />
+      </GatedRouter>,
+    );
+  }
+
+  it("US-QS-15 a saved close whose guard entry is still pending closes the layer; Forward reaches the layer, a second Forward closes it (issue 2165)", async () => {
+    setViewportWidth(360);
+    renderGatedTyping("/start", true);
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    // The first input pushes the guard entry; the router holds it back, so the saved close runs while it is pending.
+    hold.on = true;
+    await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
+    expect(hold.queued).not.toBeNull();
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    await releaseHold();
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.search).toBe("");
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+  });
+
+  it("US-QS-15 a layer opened by a reload: a saved close whose guard entry is still pending lands on its list, and Forward reaches the layer's own entry (issue 2165)", async () => {
+    setViewportWidth(360);
+    renderGatedTyping("/?sheet=notiz", true);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    hold.on = true;
+    await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
+    expect(hold.queued).not.toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    await releaseHold();
+    expect(seen.pathname).toBe("/");
+    expect(seen.search).toBe("");
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).toMatchObject({ layerFromApp: true });
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
   });
 });
 

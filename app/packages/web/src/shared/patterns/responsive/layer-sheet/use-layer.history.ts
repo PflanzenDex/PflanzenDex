@@ -17,6 +17,21 @@ export const setClosing = (id: string, on: boolean): void => {
 };
 
 /**
+ * The layers whose guard entry is pushed (issue 2165). A guard the router does not show yet is still ahead in the history,
+ * so `closeLayer` reads this set as well as the committed state. It mirrors the `guarded` ref of the layer (`setGuarded`).
+ */
+const guarded = new Set<string>();
+
+/** Whether the guard entry of the layer `id` is pushed, committed or not (see `closeLayer`, issue 2165). */
+export const isGuarded = (id: string): boolean => guarded.has(id);
+/** Sets the guard flag `ref` of the layer `id` and the set `isGuarded` reads, which stay equal. */
+export function setGuarded(id: string, ref: { current: boolean }, on: boolean): void {
+  ref.current = on;
+  if (on) guarded.add(id);
+  else guarded.delete(id);
+}
+
+/**
  * Closes from the guard entry above a layer or a form (issue 2158): the guard becomes a plain entry at `to`, as a forward
  * entry cannot be deleted; the step back reaches `to` over the layer's entry, in one handler.
  */
