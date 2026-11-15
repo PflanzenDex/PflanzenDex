@@ -17,7 +17,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");
   await proposal.getByText("Mehr Angaben", { exact: true }).click();
   await proposal.getByLabel("Schwierigkeit").selectOption({ index: 1 });
-  await proposal.getByLabel("Standard-Stufe (Lichtzone)").selectOption("3");
+  await proposal.getByLabel("Standard-Lichtzone").selectOption("3");
   await proposal.getByLabel(/Lichtbedarf/).fill("40000");
   await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
   await page.getByRole("button", { name: "Diese Art wählen" }).click();

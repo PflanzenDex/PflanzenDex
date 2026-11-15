@@ -3,10 +3,16 @@ import type { DifficultyRow } from "@pflanzendex/core";
 import { zoneLabel } from "@pflanzendex/core";
 import {
   isUnknown,
-  missingText,
   type Fact,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { keepTogether } from "@/shared/lib/format";
+import { plurals } from "@/shared/lib/text-rules/texts";
+import table from "./difficulty-page.de.json";
+
+const plural = plurals(table);
+
+/** The fold of the comparison values that are missing: "1 Vergleichswert fehlt" (not the profile's "Angaben", US-QS-32). */
+export const missingValuesText = (count: number): string => plural.counted("missing", count);
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 /** Unknown difficulty is `null` (P-08), never "Leicht"; the fold shows it (US-QS-24). */
@@ -30,12 +36,12 @@ function wateringText(r: DifficultyRow): string | null {
 
 /** The values of one species in the order of the comparison; `null` = unknown, folded in the layer (US-QS-24). */
 const FACTS: { header: string; value: (r: DifficultyRow) => string | null }[] = [
-  { header: "Botanischer Name", value: (r) => r.botanicalName },
+  { header: "Lateinischer Name", value: (r) => r.botanicalName },
   { header: "Lichtzone", value: zoneText },
   { header: "Gießregel", value: wateringText },
   { header: "Substrat", value: (r) => r.substrate },
   { header: "Schnitt", value: (r) => r.pruning },
-  { header: "Erfolgskriterium", value: (r) => r.successCriteria },
+  { header: "Erfolgskriterien", value: (r) => r.successCriteria },
   { header: "Schwierigkeit", value: (r) => level(r.difficulty) },
 ];
 
@@ -54,5 +60,5 @@ export function entryLine(r: DifficultyRow, hidden: readonly string[]): string {
   const shown = ENTRY_FACTS(r).filter((f) => !hidden.includes(f.label));
   const known = shown.filter((f) => !isUnknown(f.value)).map((f) => f.value);
   const missing = shown.length - known.length;
-  return [...known, missing > 0 ? missingText(missing) : null].filter(Boolean).join(" · ");
+  return [...known, missing > 0 ? missingValuesText(missing) : null].filter(Boolean).join(" · ");
 }

@@ -85,7 +85,7 @@ export async function specimenByKeyboard(page: Page, species: string): Promise<v
   // The light is optional and sits behind "Mehr Angaben" (US-QS-24): the disclosure is opened with the keyboard.
   await press(page, form.getByText("Mehr Angaben", { exact: true }));
   await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
-  await chooseByArrows(page, form.getByLabel(/^Standard-Stufe/), 3);
+  await chooseByArrows(page, form.getByLabel(/^Standard-Lichtzone/), 3);
   await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
   await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
