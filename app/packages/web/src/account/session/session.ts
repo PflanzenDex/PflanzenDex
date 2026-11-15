@@ -12,6 +12,7 @@ import {
   SILENT_TRIED,
   endSession,
   sessionActions,
+  shouldTrySilently,
 } from "./session-actions";
 
 export type State =
@@ -20,20 +21,20 @@ export type State =
   | { kind: "signedOut"; hint?: string; error?: string | undefined; canSwitch?: boolean }
   /** Signed in at the sign-in service, but registration needs an invitation code (US-ACC-05). */
   | { kind: "invitationNeeded"; error?: string | undefined }
-  /** `everywhereBusy`: "Auf allen Geräten abmelden" runs; its control shows busy and a second press does nothing (US-ACC-01). */
-  | { kind: "signedIn"; account: Account; error?: string | undefined; everywhereBusy?: boolean }
+  /** `everywhereBusy`: "Auf allen Geräten abmelden" runs; its control shows busy and a second press does nothing (US-ACC-01).
+   * `everywhereError`: its failure, with the retry that repeats it (US-QS-32). */
+  | {
+      kind: "signedIn";
+      account: Account;
+      error?: string | undefined;
+      everywhereError?: string | undefined;
+      everywhereBusy?: boolean;
+    }
   /** reloadPage: the sign-in library did not load, so the page offers a full reload instead of a retry (US-ACC-01). */
   | { kind: "error"; text: string; reloadPage?: boolean };
 
 const env = import.meta.env as Record<string, string | undefined>;
 const t = texts(table);
-
-// Once per tab, never after an explicit sign-out and never while the address still carries a result of the detour.
-function shouldTrySilently(): boolean {
-  const q = new URLSearchParams(window.location.search);
-  if (q.has("code") || q.has("error")) return false;
-  return !window.sessionStorage.getItem(MARKER) && !window.sessionStorage.getItem(SILENT_TRIED);
-}
 
 // The return of "Konto anlegen" (US-ACC-01), null if not about it: a live session ends first (id token: no logout page).
 async function registerReturn(

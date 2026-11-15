@@ -303,6 +303,17 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await waitFor(() => expect(route.search).not.toContain("form=marker"));
   });
 
+  it("US-QS-32 · SG-COLOR-04 the notice of a plant that is not there is a failed load: the error tone, not amber", async () => {
+    stubCollection();
+    renderAt("/collection?view=plants&form=marker&plant=zz");
+    const notice = (await screen.findByText(NOT_FOUND_TEXT, undefined, { timeout: 5_000 })).closest(
+      "[role]",
+    );
+    expect(notice?.getAttribute("role")).toBe("alert");
+    expect(notice?.className).toContain("border-destructive");
+    expect(notice?.className).not.toMatch(/warning/);
+  });
+
   it("US-QS-15 two quick Backs with typed measurement keep the measure view and ask; Verwerfen then walks back to the list", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");

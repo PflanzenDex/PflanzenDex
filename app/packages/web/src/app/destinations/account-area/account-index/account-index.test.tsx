@@ -74,6 +74,8 @@ const show = (
     ai?: boolean;
     achievements?: boolean;
     current?: "settings";
+    error?: string;
+    everywhereError?: string;
   } = {},
 ) =>
   render(
@@ -95,6 +97,8 @@ const show = (
           onSignOut={props.signOut ?? (() => undefined)}
           onEverywhereSignOut={props.everywhere ?? (() => undefined)}
           everywhereBusy={props.busy ?? false}
+          {...(props.error ? { error: props.error } : {})}
+          {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
         />
       </MemoryRouter>
     </FeaturesProvider>,
@@ -185,6 +189,44 @@ describe("US-QS-17 the index of Konto", () => {
     expect(signOut).toHaveBeenCalledOnce();
     await userEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-COLOR-04 a failed sign-out is drawn in the error tone, with its mark and no warning token", async () => {
+    fakeServer();
+    show({ error: "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar." });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const alert = within(dialog).getByRole("alert");
+    expect(alert.textContent).toContain("Abmelden hat nicht geklappt");
+    expect(alert.className).toContain("border-destructive");
+    expect(alert.className).not.toMatch(/warning/);
+    expect(alert.querySelector("svg")).not.toBeNull();
+    expect(within(alert).queryByRole("button")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-STATE-03 a failed sign-out on all devices offers Erneut versuchen, and the click repeats that sign-out", async () => {
+    fakeServer();
+    const everywhere = vi.fn();
+    show({
+      everywhere,
+      everywhereError:
+        "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const alert = within(dialog).getByRole("alert");
+    expect(alert.className).toContain("border-destructive");
+    expect(alert.className).not.toMatch(/warning/);
+    await userEvent.click(within(alert).getByRole("button", { name: "Erneut versuchen" }));
+    expect(everywhere).toHaveBeenCalledOnce();
+  });
+
+  it("US-QS-32 · SG-STATE-03 a failed sign-out on this device offers no Erneut versuchen: the dialog's own Abmelden is the retry", async () => {
+    fakeServer();
+    show({ error: "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar." });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    expect(within(dialog).queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
   });
 
   it("US-ACC-01 while signing out on all devices runs, its control is busy, keeps the focus and a press does nothing", async () => {

@@ -169,11 +169,12 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
     expect(h).toContain("leer bleibt der Wert unbekannt");
   });
 
-  it("takes the search text as the name and explains visibility and review", () => {
+  it("takes the search text as the name and says in one neutral line who sees the proposal (F-0246)", () => {
     const h = html();
     expect(h).toContain('value="Aloe"');
-    expect(h).toContain("Nur für dich sichtbar");
-    expect(h).toContain("Prüfliste");
+    expect(h).toContain("Nur du siehst die Art, bis sie geprüft ist.");
+    expect(h).not.toContain("Prüfliste");
+    expect(h).not.toContain("bg-warning");
   });
 
   it("US-QS-24 optional details are collapsed behind Mehr Angaben; numbers have input aids", () => {

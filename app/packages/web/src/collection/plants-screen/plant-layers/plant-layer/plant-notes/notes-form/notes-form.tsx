@@ -17,7 +17,7 @@ import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "@/shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Warning } from "../../../../../specimens/cards/parts/parts";
+import { ErrorNotice } from "../../../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../../../specimens/model/refusal";
 import { notesSchema, type NotesFields } from "../../../../../specimens/model/schemas";
 import table from "../plant-notes.de.json";
@@ -93,9 +93,9 @@ export function NotesForm(props: {
       >
         <NotesField control={form.control} />
         {alertText !== null && (
-          <Warning>
+          <ErrorNotice>
             <p>{alertText}</p>
-          </Warning>
+          </ErrorNotice>
         )}
         <Button type="button" variant="outline" onClick={() => leave(props.onCancel)}>
           {t("form.cancel")}

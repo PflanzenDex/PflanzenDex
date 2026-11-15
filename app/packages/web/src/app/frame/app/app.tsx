@@ -129,6 +129,7 @@ export function App() {
         account={z.account}
         {...(z.error ? { error: z.error } : {})}
         {...(z.everywhereBusy ? { everywhereBusy: true } : {})}
+        {...(z.everywhereError ? { everywhereError: z.everywhereError } : {})}
       />
     </RouteBoundary>
   );

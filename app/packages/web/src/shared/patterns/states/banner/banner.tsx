@@ -5,17 +5,20 @@ import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 
 /** Banner looks (US-QS-07, DS-34). Colour only supports the meaning: every variant has an icon and text (DS-38). */
-const bannerVariants = cva("flex min-w-0 items-start gap-3 rounded-card border p-4 text-sm", {
-  variants: {
-    variant: {
-      info: "border-border bg-secondary text-secondary-foreground",
-      success: "border-primary bg-accent text-accent-foreground",
-      warning: "border-warning-border bg-warning text-warning-foreground",
-      error: "border-destructive bg-card text-card-foreground",
+const bannerVariants = cva(
+  "flex min-w-0 items-start gap-3 rounded-card border p-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+  {
+    variants: {
+      variant: {
+        info: "border-border bg-secondary text-secondary-foreground",
+        success: "border-primary bg-accent text-accent-foreground",
+        warning: "border-warning-border bg-warning text-warning-foreground",
+        error: "border-destructive bg-card text-card-foreground",
+      },
     },
+    defaultVariants: { variant: "info" },
   },
-  defaultVariants: { variant: "info" },
-});
+);
 
 type BannerVariant = NonNullable<VariantProps<typeof bannerVariants>["variant"]>;
 

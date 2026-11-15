@@ -1,4 +1,5 @@
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { DISPLAY_NAME } from "@/shared/patterns/navigation/nav-item";
@@ -13,7 +14,6 @@ type Action = () => void;
 const CARD =
   "flex w-full max-w-md min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card p-5";
 const ACTIONS = "flex flex-col gap-3";
-const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 /**
  * The welcome page in the frame of the sign-in pages (US-QS-14): the wordmark, one line of text, the filled sign-in
@@ -46,11 +46,7 @@ export function Welcome(props: {
             {props.hint}
           </p>
         )}
-        {props.error && (
-          <p role="alert" className={NOTICE}>
-            {props.error}
-          </p>
-        )}
+        {props.error && <Banner variant="error">{props.error}</Banner>}
         <div className={ACTIONS}>
           <Button type="button" size="touch" onClick={props.onSignIn} className="text-base">
             {t("welcome.signIn")}

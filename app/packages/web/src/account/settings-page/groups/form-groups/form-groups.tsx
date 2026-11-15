@@ -5,7 +5,8 @@ import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
-import { ALERT_CLASSES, useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import {
   profileSchema,
   toProfile,
@@ -106,9 +107,9 @@ function GroupForm(props: {
       >
         {props.children(form.control)}
         {alertText !== null && (
-          <div role="alert" tabIndex={-1} ref={alertRef} className={ALERT_CLASSES}>
-            <p>{alertText}</p>
-          </div>
+          <Banner variant="error" tabIndex={-1} ref={alertRef}>
+            {alertText}
+          </Banner>
         )}
         {message && (
           <p role="status" className="rounded-lg border border-border p-3">

@@ -16,7 +16,7 @@ import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-shee
 import { Button } from "@/shared/ui/button/button";
 import { useHeldLoader } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { LoadingNote, Quiet, Warning } from "../../../specimens/cards/parts/parts";
+import { LoadingNote, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { loadRepotPlan, REPOT_PLAN_KEY, type RepotPlanView } from "../repot-api";
 import { signLabel } from "./observations/observations";
 import { potItemText, potSizeText } from "./pot-text";
@@ -67,13 +67,13 @@ export function RepotPlanSection(props: {
   if (plan.status === "error")
     return (
       <section aria-label={t("plan.title")} className="grid gap-2">
-        <Warning>
+        <ErrorNotice>
           <p>{t("plan.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
           <Button type="button" variant="outline" onClick={plan.retry}>
             {t("plan.retry")}
           </Button>
-        </Warning>
+        </ErrorNotice>
       </section>
     );
   const view = plan.value;

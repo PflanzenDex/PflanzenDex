@@ -17,7 +17,7 @@ import {
   FormRoot,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { LoadingNote } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import { repotSchema, type RepotFields } from "../../../specimens/model/schemas";
@@ -136,9 +136,9 @@ function RepotFormBody(props: FormState & { plan: RepotPlanView | null; reload: 
           {potChoice && plan !== null ? <PotField control={form.control} plan={plan} /> : null}
           {planted && !potChoice ? <Quiet>{t("pot.leaveNotice")}</Quiet> : null}
           {alertText !== null && (
-            <Warning>
+            <ErrorNotice>
               <p>{alertText}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit={t("form.submit")}
@@ -171,10 +171,10 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
   if (plan.status === "error" || plan.value === undefined)
     return (
       <RepotFrame open={open}>
-        <Warning>
+        <ErrorNotice>
           <p>{t("form.potsFailed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
-        </Warning>
+        </ErrorNotice>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button type="button" size="touch" onClick={plan.retry}>
             {t("form.retry")}

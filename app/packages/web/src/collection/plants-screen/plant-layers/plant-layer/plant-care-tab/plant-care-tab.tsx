@@ -14,7 +14,7 @@ import {
   DelayedSkeleton,
   useHeldLoader,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
+import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
 import {
   RepotPlanSection,
@@ -130,13 +130,13 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
         </DelayedSkeleton>
       ) : null}
       {!loading && plan.status === "error" ? (
-        <Warning>
+        <ErrorNotice>
           <p>{t("signs.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
           <Button type="button" variant="outline" onClick={plan.retry}>
             {t("signs.retry")}
           </Button>
-        </Warning>
+        </ErrorNotice>
       ) : null}
       {!loading && plan.value !== undefined && !plan.value.hidden ? (
         <Observations

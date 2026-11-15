@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { SIGN_IN, type ApiError } from "../../shared/data";
@@ -78,14 +79,7 @@ export function InvitationPage(props: {
             spellCheck={false}
           />
           <InvitationButtons pending={pending} onSignOut={props.onSignOut} />
-          {props.error && (
-            <p
-              role="alert"
-              className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-            >
-              {props.error}
-            </p>
-          )}
+          {props.error && <Banner variant="error">{props.error}</Banner>}
         </FormRoot>
       </Form>
     </section>

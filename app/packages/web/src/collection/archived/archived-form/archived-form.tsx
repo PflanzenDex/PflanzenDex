@@ -14,7 +14,7 @@ import {
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../../shared/data";
-import { FormButtons, Quiet, TITLE, Warning } from "../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
 import { useEdited } from "../../specimens/model/refusal";
 import {
@@ -111,9 +111,9 @@ export function ArchiveForm(props: {
           <ReasonChoice control={form.control} />
           <OwnReason control={form.control} />
           {error && (
-            <Warning>
+            <ErrorNotice>
               <p>{refusalText(error)}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit="Archivieren"

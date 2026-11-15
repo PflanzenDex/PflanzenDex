@@ -5,7 +5,7 @@ import { specimenName } from "@pflanzendex/core";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { MarkerInput } from "../marker-fields/marker-fields";
-import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
 import { useEdited } from "../../../specimens/model/refusal";
 import { markerSchema, type MarkerFields } from "../../../specimens/model/schemas";
@@ -57,9 +57,9 @@ export function MarkerForm(props: {
           )}
           <MarkerInput control={form.control} name="marker" label="Kennzeichen" />
           {error && (
-            <Warning>
+            <ErrorNotice>
               <p>{refusalText(error)}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit="Kennzeichen speichern"

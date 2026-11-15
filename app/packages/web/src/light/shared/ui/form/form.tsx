@@ -11,12 +11,12 @@ import {
 import type { z } from "zod";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { cn } from "@/shared/lib/utils";
 import table from "../../../light.de.json";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
-import { ALERT_CLASSES, useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 
 const t = texts(table);
 
@@ -50,18 +50,13 @@ export function useSaveForm<F extends FieldValues>(opts: {
 
 type Sent<F extends FieldValues> = ReturnType<typeof useSaveForm<F>>;
 
-/** Alert of a refusal that names no field; takes the focus. */
+/** Alert of a refusal that names no field; takes the focus. The one error tone: red border and error mark (SG-COLOR-04). */
 export function RefusalAlert<F extends FieldValues>({ sent }: { sent: Sent<F> }) {
   if (sent.alertText === null) return null;
   return (
-    <div
-      role="alert"
-      tabIndex={-1}
-      ref={sent.alertRef}
-      className={cn(ALERT_CLASSES, "md:col-span-2")}
-    >
-      <p>{sent.alertText}</p>
-    </div>
+    <Banner variant="error" tabIndex={-1} ref={sent.alertRef} className="md:col-span-2">
+      {sent.alertText}
+    </Banner>
   );
 }
 
