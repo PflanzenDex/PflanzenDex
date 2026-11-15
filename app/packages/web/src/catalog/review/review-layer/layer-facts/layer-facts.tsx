@@ -4,7 +4,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { ageText, issueText } from "../../review-text";
 import {
-  FIELD_LABELS,
+  FIELDS,
   growthText,
   difficultyText,
   dormancyPhase,
@@ -17,7 +17,7 @@ import table from "./layer-facts.de.json";
 const t = texts(table);
 
 /** The label of a field in the words of the shared field table (US-QS-32); the key stands in for an unknown one. */
-const field = (key: keyof typeof FIELD_LABELS): string => FIELD_LABELS[key];
+const field = (key: keyof typeof FIELDS): string => FIELDS[key];
 
 /**
  * One label and its value. Beside each other the label takes the room it needs and the value the rest; in a box narrower
