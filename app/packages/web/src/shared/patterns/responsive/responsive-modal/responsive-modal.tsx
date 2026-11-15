@@ -42,6 +42,8 @@ export type ResponsiveModalProps = {
   onOpenAutoFocus?: (event: Event) => void;
   /** Runs once the modal has closed and left the page, after its exit animation (US-QS-15, F7); a layer keeps its body until then. */
   onExited?: () => void;
+  /** How often the parent refused a close (US-QS-32): a sheet snaps back to its place at each one; a dialog does not move. */
+  closeRefusals?: number;
   /**
    * The element the focus returns to when the modal closes, for a controlled modal without a trigger (US-QS-08). When it
    * has left the page, the focus goes to the start of the view (`returnFocus`). Omit it to keep the default of each container.
@@ -104,6 +106,7 @@ export function ResponsiveModal({
   onOpenChange,
   onOpenAutoFocus,
   onExited,
+  closeRefusals,
   returnFocusTo,
   children,
 }: ResponsiveModalProps) {
@@ -146,6 +149,7 @@ export function ResponsiveModal({
             {...copy}
             {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
             {...(sheetCloseFocus ? { onCloseAutoFocus: sheetCloseFocus } : {})}
+            {...(closeRefusals !== undefined ? { closeRefusals } : {})}
           >
             {body}
           </SheetContent>

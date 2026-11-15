@@ -7,6 +7,7 @@ import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "../../shared/data";
 import { SpeciesPick } from "./species-pick/species-pick";
 import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
@@ -82,6 +83,8 @@ export function WishForm(props: {
     defaultValues: EMPTY_FIELDS,
   });
   const { alertText, alertRef } = useServerRefusal(props.error, form.setError, fieldsOfRefusal);
+  // Typed input that is not saved asks before the layer closes (US-QS-32).
+  useUnsavedInput(form.formState.isDirty);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {
