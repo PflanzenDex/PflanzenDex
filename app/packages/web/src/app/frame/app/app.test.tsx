@@ -511,7 +511,7 @@ describe("US-ACC-01 App", () => {
     renderApp("/light");
     // The overview is a layer of the management (US-QS-19): it opens from its button first.
     await userEvent.click(
-      await screen.findByRole("button", { name: "Lichthunger und Einstufung" }),
+      await screen.findByRole("button", { name: "Lichtbedarf und Einstufung" }),
     );
     await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
     expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
