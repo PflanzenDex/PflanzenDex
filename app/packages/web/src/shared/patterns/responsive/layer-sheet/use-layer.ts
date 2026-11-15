@@ -1,7 +1,7 @@
 import * as React from "react";
-import { useLocation, useNavigate, useSearchParams, type NavigateFunction } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { PARAM, setClosing, walkOverGuard, withoutLayer, type Below } from "./use-layer.history";
 
-const PARAM = "sheet";
 /** History state set when the app itself opened the layer, so closing can go back instead of leaving the app. */
 export const FROM_APP = "layerFromApp";
 /**
@@ -14,10 +14,6 @@ export const LAYER_GUARD = "layerGuard";
  * the list a reload or a link gets below it). A Back that lands on that address, and no further, holds the layer (issue 2145).
  */
 export const BELOW = "layerBelow";
-/** An address of a history entry, as far as the layers compare it (path and query). */
-export type Below = { pathname: string; search: string };
-/** The layers that are closing over their guard entry right now (US-QS-32, issue 2158, see `closeLayer`). */
-const closing = new Set<string>();
 
 /** The element that opened the layer; focus returns to it when the layer closes (US-QS-15). */
 let opener: HTMLElement | null = null;
@@ -71,23 +67,6 @@ export function useUnsavedInput(dirty: boolean): { leave: (action: () => void) =
 export const stateFlag = (state: unknown, flag: string): boolean =>
   (state as Record<string, unknown> | null)?.[flag] === true;
 
-/** Whether the layer `id` is closing over its guard entry (see `closeLayer`). */
-export const isClosing = (id: string): boolean => closing.has(id);
-/** Starts or ends the close of the layer `id` over its guard entry. */
-export const setClosing = (id: string, on: boolean): void => {
-  if (on) closing.add(id);
-  else closing.delete(id);
-};
-
-/**
- * Closes from the guard entry above a layer or a form (issue 2158): the guard becomes a plain entry at `to`, as a forward
- * entry cannot be deleted; the step back reaches `to` over the layer's entry, in one handler.
- */
-export function walkOverGuard(navigate: NavigateFunction, to: Below & { hash: string }): void {
-  void navigate(to, { replace: true });
-  void navigate(-2);
-}
-
 /** The address of the entry below a layer's entry, from its history state (issue 2145); `null` when the state names none. */
 export const belowOf = (state: unknown): Below | null =>
   ((state as Record<string, unknown> | null)?.[BELOW] as Below | undefined) ?? null;
@@ -95,14 +74,6 @@ export const belowOf = (state: unknown): Below | null =>
 /** The state of the guard entry: it keeps the app flag of the layer below it (US-QS-32). */
 export function guardState(fromApp: boolean) {
   return { [LAYER_GUARD]: true, keepFocus: true, [FROM_APP]: fromApp };
-}
-
-/** The search without the layer, as the list shows it (a layer opened by a reload gets its list below it, US-QS-15). */
-export function withoutLayer(search: string): string {
-  const params = new URLSearchParams(search);
-  params.delete(PARAM);
-  const text = params.toString();
-  return text ? `?${text}` : "";
 }
 
 /**

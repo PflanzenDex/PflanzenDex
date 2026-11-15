@@ -1,18 +1,13 @@
 import * as React from "react";
 import type { NavigateFunction, useLocation, useNavigationType } from "react-router";
+import { BELOW, FROM_APP, LAYER_GUARD, belowOf, guardState, stateFlag } from "./use-layer";
 import {
-  BELOW,
-  FROM_APP,
-  LAYER_GUARD,
-  belowOf,
-  guardState,
   isClosing,
   setClosing,
-  stateFlag,
   walkOverGuard,
   withoutLayer,
   type Below,
-} from "./use-layer";
+} from "./use-layer.history";
 
 /** The address of a history entry, the way a layer or a form is named: path, query and hash. */
 export type Address = { pathname: string; search: string; hash: string };

@@ -1,6 +1,7 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
-import { BELOW, belowOf, walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import {
   FORM_PARAM,
   FROM_APP,

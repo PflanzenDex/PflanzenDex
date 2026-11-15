@@ -7,7 +7,8 @@ import {
   type SetStateAction,
 } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
-import { BELOW, belowOf, type Below } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import type { Below } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import { isBelow } from "@/shared/patterns/responsive/layer-sheet/layer-sheet.history";
 import { FROM_APP, GUARD, guardState, listSearch, stateFlag, type FormKind } from "./form-address";
 
