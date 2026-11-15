@@ -11,6 +11,7 @@ import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-te
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { FeaturesProvider } from "@/shared/data";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import {
   GUARD,
   stateFlag,
@@ -65,6 +66,7 @@ beforeAll(async () => {
     import("../../../collection/collection-page/collection-page"),
     import("../../../care/measure/measure-page/measure-page"),
     import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("@/shared/platform/routing/route-focus/focus-moves"),
   ]);
 }, 30_000);
 
@@ -541,6 +543,110 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
     await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     // The question is modal, so the form is hidden from the accessibility tree: the form is found by its title element.
     expect(document.getElementById("measure-title")).not.toBeNull();
+  }, 20_000);
+});
+
+/**
+ * The focus and the announcements of the page from now on: every focus move and every change of the polite live region
+ * (issue 2165). `stop` ends the watch.
+ */
+function watchFocusAndSpeech() {
+  const focused: Element[] = [];
+  const said: string[] = [];
+  const live = document.querySelector<HTMLElement>('[aria-live="polite"]');
+  const observer = new MutationObserver(() => said.push(live?.textContent ?? ""));
+  if (live) observer.observe(live, { childList: true, characterData: true, subtree: true });
+  const onFocus = (event: FocusEvent) => focused.push(event.target as Element);
+  document.addEventListener("focusin", onFocus);
+  return {
+    focused,
+    said,
+    stop: () => {
+      observer.disconnect();
+      document.removeEventListener("focusin", onFocus);
+    },
+  };
+}
+
+/** The area with the page's focus handling and its announcer, as the app renders it (issue 2165). */
+function renderFocusedArea() {
+  render(
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={["/collection?view=plants"]}>
+        <Address />
+        <main id="inhalt" tabIndex={-1}>
+          <RouteFocus titleOf={() => "Sammlung"} />
+          <CollectionArea
+            api="http://api"
+            token={async () => "tok"}
+            newSpecies={null}
+            onSpeciesChoose={() => {}}
+            onCompleted={() => {}}
+          />
+        </main>
+      </MemoryRouter>
+    </AnnouncerProvider>,
+  );
+}
+
+describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)", () => {
+  /** Opens the measure view and types a measurement; the guard entry is committed before the save (PF-031). */
+  async function measureAndType() {
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+  }
+
+  /** Saves with the form's button and waits until the form is on screen again with no guard entry (PF-031). */
+  async function save(saves: string[]) {
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await waitFor(() => expect(saves).toHaveLength(1), { timeout: 5_000 });
+    await waitFor(() => {
+      expect(route.guarded).toBe(false);
+      expect(route.search).toContain("form=measure");
+    });
+  }
+
+  it("US-QS-15 after a save that keeps the form open, the focus stays on the save button and no view title is announced (issue 2165)", async () => {
+    const saves: string[] = [];
+    stubCollection(saves);
+    renderFocusedArea();
+    await measureAndType();
+    const saveButton = screen.getByRole("button", { name: "Messung speichern" });
+    const watch = watchFocusAndSpeech();
+    await save(saves);
+    // The settle has committed; the focus handling of the new entries runs after the commit, so it gets a short moment.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    watch.stop();
+    expect(document.activeElement).toBe(saveButton);
+    // The press of the save button is the only focus event: the settle moves the focus nowhere.
+    expect(watch.focused).toEqual([saveButton]);
+    expect(watch.said.filter((text) => text.includes("Sammlung"))).toEqual([]);
+  }, 20_000);
+
+  it("US-QS-15 a Forward onto the form that the settle pushed again moves the focus to its heading, as any form entry does (issue 2165)", async () => {
+    const saves: string[] = [];
+    stubCollection(saves);
+    renderFocusedArea();
+    await measureAndType();
+    await save(saves);
+    back();
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull(),
+    );
+    // Back to the list moves the focus to the control the view was opened from.
+    await waitFor(() =>
+      expect(document.activeElement?.closest('ul[aria-label="Pflanzen"]')).not.toBeNull(),
+    );
+    const watch = watchFocusAndSpeech();
+    forward();
+    await waitFor(() => expect(document.activeElement?.id).toBe("measure-title"));
+    watch.stop();
+    expect(watch.said.some((text) => text.includes("Sammlung"))).toBe(true);
   }, 20_000);
 });
 

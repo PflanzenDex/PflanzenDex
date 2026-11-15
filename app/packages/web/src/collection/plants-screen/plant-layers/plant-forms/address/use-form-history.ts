@@ -10,6 +10,7 @@ import { useLocation, useNavigate, useNavigationType } from "react-router";
 import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import type { Below } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import { isBelow } from "@/shared/patterns/responsive/layer-sheet/layer-sheet.history";
+import { quietFrom } from "@/shared/platform/routing/route-focus/quiet-steps";
 import { FROM_APP, GUARD, guardState, listSearch, stateFlag, type FormKind } from "./form-address";
 
 export type Ref<T> = MutableRefObject<T>;
@@ -169,6 +170,7 @@ export function usePopGuard(
     if (refs.settling.current && c.type === "POP") {
       refs.settling.current = false;
       if (!c.current && refs.named.current) {
+        quietFrom(c.location.key);
         const { at, below } = refs.named.current;
         void c.navigate(at, { state: { [FROM_APP]: true, [BELOW]: below } });
       }

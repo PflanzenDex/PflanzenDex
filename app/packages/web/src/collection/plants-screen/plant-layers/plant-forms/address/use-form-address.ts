@@ -1,6 +1,7 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
 import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { quietFrom } from "@/shared/platform/routing/route-focus/quiet-steps";
 import { walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import {
   FORM_PARAM,
@@ -121,6 +122,8 @@ function useFormInput(
     // Two steps back, over the guard entry and the form's own entry, to the entry below the form: `usePopGuard` pushes the
     // form again there, so no guard entry stays ahead of it (issue 2165). A plain step back would leave the guard ahead.
     refs.settling.current = true;
+    // The focus stays where the save left it: the steps of the settle are the app's, not the person's (issue 2165).
+    quietFrom(latest.current.location.key);
     void latest.current.navigate(-2);
   }, [latest, refs]);
   return { open, typed, settle };
