@@ -229,6 +229,46 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     expect(document.getElementById("marker-title")).toBeNull();
     await waitFor(() => expect(route.search).not.toContain("form=marker"));
   });
+
+  it("US-QS-15 two quick Backs with typed measurement keep the measure view and ask; Verwerfen then walks back to the list", async () => {
+    stubCollection();
+    renderAt("/collection?view=plants&form=measure&plant=e1");
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    // Both Backs land before the form has handled the first one: they are batched into one render (US-QS-15).
+    act(() => {
+      route.navigate?.(-1);
+      route.navigate?.(-1);
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    expect(document.getElementById("measure-title")).not.toBeNull();
+    expect(route.search).toContain("form=measure");
+    expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
+    expect(route.search).not.toContain("form=measure");
+  });
+
+  it("US-QS-15 two quick Backs with typed measurement, then Weiter bearbeiten, keep the input and the measure view", async () => {
+    stubCollection();
+    renderAt("/collection?view=plants&form=measure&plant=e1");
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    act(() => {
+      route.navigate?.(-1);
+      route.navigate?.(-1);
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Eingabe verwerfen?" })).toBeNull(),
+    );
+    expect(document.getElementById("measure-title")).not.toBeNull();
+    expect(route.search).toContain("form=measure");
+    expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
+  });
 });
 
 describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {

@@ -12,7 +12,15 @@ import {
   type FormAddress,
   type FormKind,
 } from "./form-address";
-import { useLatest, useOrdering, usePopGuard, type Latest, type Refs } from "./use-form-history";
+import {
+  isHeldForm,
+  useKeepNamed,
+  useLatest,
+  useOrdering,
+  usePopGuard,
+  type Latest,
+  type Refs,
+} from "./use-form-history";
 
 /** The handlers that close a form, and the question "Eingabe verwerfen?" (US-QS-15). */
 function useCloseActions(
@@ -78,7 +86,10 @@ function useFormInput(
     if (refs.guarded.current) return;
     refs.guarded.current = true;
     const { pathname, hash, search } = c.location;
-    void c.navigate({ pathname, search, hash }, { state: guardState(c.location.state) });
+    void c.navigate(
+      { pathname, search, hash },
+      { state: guardState(stateFlag(c.location.state, FROM_APP)) },
+    );
   }, [latest, refs]);
   const settle = useCallback(() => {
     if (!refs.dirty.current) return;
@@ -103,13 +114,19 @@ export function useFormAddress(enabled: boolean): FormAddress {
     dirty: { current: false },
     guarded: { current: false },
     leaving: { current: false },
+    named: { current: null },
   }));
-  const latest = useLatest({ location, current, navigate, type });
+  // A Back that passes the form with unsaved input holds it on screen until its question is answered (issue 2145).
+  const held = isHeldForm({ enabled, current, type, state: location.state, refs });
+  // The form the render shows: the one the address names, or the one a held render keeps.
+  const shown = current ?? (held ? refs.named.current : null);
+  const latest = useLatest({ location, current, held, navigate, type });
+  useKeepNamed(refs, location, current);
   useOrdering(latest, fromApp, location.key, current !== null);
   usePopGuard(latest, refs, setAsking, location.key);
   return {
-    kind: current?.kind ?? null,
-    plantId: current?.plantId ?? null,
+    kind: shown?.kind ?? null,
+    plantId: shown?.plantId ?? null,
     ...useFormInput(latest, refs, setNotice),
     ...useCloseActions(latest, refs, setAsking, setNotice),
     asking,

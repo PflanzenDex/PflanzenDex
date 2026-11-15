@@ -55,10 +55,10 @@ export const stateFlag = (state: unknown, flag: string): boolean =>
   (state as Record<string, unknown> | null)?.[flag] === true;
 
 /** The state of a guard entry: it belongs to the form below it, so it keeps the app flag of that form. */
-export const guardState = (state: unknown) => ({
+export const guardState = (fromApp: boolean) => ({
   [GUARD]: true,
   keepFocus: true,
-  [FROM_APP]: stateFlag(state, FROM_APP),
+  [FROM_APP]: fromApp,
 });
 
 export type FormAddress = {

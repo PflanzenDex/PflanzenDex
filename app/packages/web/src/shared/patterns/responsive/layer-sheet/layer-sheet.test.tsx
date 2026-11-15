@@ -11,7 +11,13 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation, useNavigate, useSearchParams } from "react-router";
+import {
+  BrowserRouter,
+  MemoryRouter,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
@@ -472,6 +478,27 @@ function TypingForm({ save }: { save: boolean }) {
   );
 }
 
+/** Two Backs in one event: both steps are batched into one render, which lands on the list (US-QS-15). */
+function DoubleBack() {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void navigate(-1);
+        void navigate(-1);
+      }}
+    >
+      Zweimal zurück
+    </button>
+  );
+}
+
+function Forward() {
+  const navigate = useNavigate();
+  return <button onClick={() => void navigate(1)}>Browser vor</button>;
+}
+
 function TypingLayer({ save = false }: { save?: boolean }) {
   return (
     <>
@@ -483,6 +510,8 @@ function TypingLayer({ save = false }: { save?: boolean }) {
         </LayerSheet>
       </LayerHost>
       <Back />
+      <DoubleBack />
+      <Forward />
     </>
   );
 }
@@ -680,5 +709,138 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     fireEvent.click(screen.getByRole("button"));
     expect(ran).toBe(true);
     expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+  });
+});
+
+/** The app on the browser history of the page: `window.history.back()` moves through its entries as a real Back does. */
+function renderOnBrowser(path: string) {
+  window.history.replaceState(null, "", path);
+  return render(
+    <BrowserRouter>
+      <TypingLayer />
+    </BrowserRouter>,
+  );
+}
+
+describe("US-QS-15 a second Back keeps the layer and its question; a layer opened by a reload closes to its list", () => {
+  it("US-QS-15 two Backs in quick succession with typed input keep the layer open and ask; the address still names it", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    window.history.back();
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 two Backs in one traversal (history.go(-2) on the browser history) keep the layer open and ask; the address still names it", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    // One step over both entries: the page sees the list at once, as when the two Backs arrive before React renders.
+    window.history.go(-2);
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 two Backs batched into one render keep the layer open and ask; the address still names it", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Zweimal zurück"));
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 a second Back after the question shows lands on the layer and asks again; input and address stay", async () => {
+    setViewportWidth(360);
+    keys = [];
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    const before = keys.length;
+    window.history.back();
+    await waitFor(() => expect(keys.length).toBeGreaterThan(before));
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect(screen.getByRole("dialog", QUESTION)).toBeTruthy();
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 Verwerfen after two quick Backs walks back to the list and leaves the layer", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    window.history.back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+  });
+
+  it("US-QS-15 Weiter bearbeiten after two quick Backs keeps the input; the focus is in the question while it is open and returns into the layer", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    const field = screen.getByLabelText("Text");
+    window.history.back();
+    window.history.back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    expect(question.contains(document.activeElement)).toBe(true);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect((field as HTMLInputElement).value).toBe("Basilikum");
+    expect(screen.getByRole("dialog", { name: "Notiz" }).contains(field)).toBe(true);
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 a layer opened by a reload closes with Back to its list, not to the page before it", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1);
+    await screen.findByRole("dialog", { name: "Notiz" });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/");
+    expect(seen.search).toBe("");
+  });
+
+  it("US-QS-15 a layer opened by a reload with typed input asks on Back, and Verwerfen lands on its list", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.type(within(layer).getByLabelText("Text"), "Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/");
+  });
+
+  it("US-QS-15 a layer opened by a reload: a saved close lands on the list, and Forward reaches the layer's own entry, not a guard entry", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1, true);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.pathname).toBe("/");
+    expect(seen.search).toBe("");
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).toMatchObject({ layerFromApp: true });
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
   });
 });
