@@ -47,7 +47,8 @@ export function badge(species: Species): string {
   return STATUS[species.reviewStatus];
 }
 
-export const FIELDS: Record<string, string> = {
+/** The labels of the species fields by key (US-QS-32): typed, so a lookup by an unknown key does not compile. */
+export const FIELD_LABELS = {
   latinName: "Lateinischer Name",
   germanName: "Deutscher Name",
   englishName: "Englischer Name",
@@ -62,4 +63,7 @@ export const FIELDS: Record<string, string> = {
   growthMeasure: "Wachstumsmaß",
   etiolationSigns: "Vergeilungsanzeichen",
   successCriteria: "Erfolgskriterien",
-};
+} as const satisfies Record<string, string>;
+
+/** The same labels for a key that comes from outside (an API field name): an unknown key has no label. */
+export const FIELDS: Record<string, string> = FIELD_LABELS;

@@ -10,7 +10,7 @@ export const SENSORS_LAYER = "sensors";
 export const WISHES_LAYER = "wishes";
 export const NEW_LAYER = "new";
 
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const count = (n: number, one: string, many: string) => `${n}\u00a0${n === 1 ? one : many}`;
 
 function Tile(props: { id: string; name: string; info: string }) {
   return (

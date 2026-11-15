@@ -5,6 +5,7 @@ import {
   isUnknown,
   type Fact,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
+import { DIFFICULTY } from "@/catalog";
 import { keepTogether } from "@/shared/lib/format";
 import { plurals } from "@/shared/lib/text-rules/texts";
 import table from "./difficulty-page.de.json";
@@ -14,9 +15,8 @@ const plural = plurals(table);
 /** The fold of the comparison values that are missing: "1 Vergleichswert fehlt" (not the profile's "Angaben", US-QS-32). */
 export const missingValuesText = (count: number): string => plural.counted("missing", count);
 
-const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 /** Unknown difficulty is `null` (P-08), never "Leicht"; the fold shows it (US-QS-24). */
-const level = (d: number | null): string | null => (d === null ? null : (LEVELS[d] ?? null));
+const level = (d: number | null): string | null => (d === null ? null : (DIFFICULTY[d] ?? null));
 const OWN = " (dein Pflegeprofil)";
 
 /** The zone; my care-profile zone says where it comes from (US-BES-09, #306). */

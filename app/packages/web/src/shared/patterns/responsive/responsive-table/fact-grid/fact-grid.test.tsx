@@ -60,7 +60,7 @@ describe("US-QS-24 FactGrid", () => {
       />,
     );
     expect(screen.getByText("1 Angabe fehlt")).toBeTruthy();
-    expect(missingText(12)).toBe("12 Angaben fehlen");
+    expect(missingText(12)).toBe("12\u00a0Angaben fehlen");
   });
 
   it("US-QS-24 the names of the missing facts open behind the count", () => {
@@ -72,7 +72,7 @@ describe("US-QS-24 FactGrid", () => {
   it("US-QS-24 the summary says what it opens to a screen reader and has the token focus ring", () => {
     const { container } = render(<FactGrid facts={facts} />);
     const summary = container.querySelector("summary") as HTMLElement;
-    expect(summary.textContent).toBe("2 Angaben fehlen (Namen anzeigen)");
+    expect(summary.textContent).toBe("2\u00a0Angaben fehlen (Namen anzeigen)");
     expect(summary.className).toContain("focus-visible:ring-2");
     expect(summary.className).toContain("focus-visible:ring-ring");
     expect(summary.className).toContain("focus-visible:ring-offset-background");

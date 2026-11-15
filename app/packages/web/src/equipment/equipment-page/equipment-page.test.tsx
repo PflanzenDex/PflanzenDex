@@ -527,11 +527,11 @@ describe("US-QS-22 the equipment fits one screen", () => {
             !accessible.endsWith("erfassen"),
         })
       ).textContent;
-    expect(await tile("Geräte")).toContain("2 Geräte");
+    expect(await tile("Geräte")).toContain("2\u00a0Geräte");
     expect(await tile("Kosten")).toContain("unbekannt");
     expect(await tile("Bedarf")).toContain("nichts fehlt");
-    expect(await tile("Sensoren")).toContain("0 Sensoren");
-    expect(await tile("Geräte-Wünsche")).toContain("0 offene Wünsche");
+    expect(await tile("Sensoren")).toContain("0\u00a0Sensoren");
+    expect(await tile("Geräte-Wünsche")).toContain("0\u00a0offene Wünsche");
   });
 
   it("US-QS-22 'Gerät erfassen' is the one primary action and opens the form as a layer", async () => {
@@ -571,7 +571,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await screen.findByRole("button", { name: /^Kosten/ });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Zone 3")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /^Geräte1 Gerät/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Geräte1\u00a0Gerät/ }));
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
     expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
@@ -627,7 +627,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
             <EquipmentPage api="http://api" token={token} />
           </StrictMode>,
         );
-        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2 Geräte/ }));
+        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2\u00a0Geräte/ }));
         await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
         await screen.findByRole("heading", { name: "Zone 3" });
         await userEvent.keyboard("{Escape}");

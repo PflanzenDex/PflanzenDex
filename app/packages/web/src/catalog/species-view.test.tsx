@@ -81,7 +81,7 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     for (const tab of ["Steckbrief", "Pflege", "Herkunft"]) expect(h).toContain(`>${tab}<`);
     expect(h).toContain("<dl");
     // Unknown stays unknown: counted in one line with the names behind it, no empty row each, nothing filled in.
-    expect(h).toContain("3 Angaben fehlen");
+    expect(h).toContain("3\u00a0Angaben fehlen");
     expect(h).toContain("Englischer Name, Ruhephase, Standort-Hinweis");
     expect(h).not.toMatch(/Englischer Name<\/dt>/);
   });

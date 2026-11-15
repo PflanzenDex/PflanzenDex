@@ -30,7 +30,7 @@ export type FactGridProps = {
 
 /** The fold line of unknown facts with its German plural: "1 Angabe fehlt", "12 Angaben fehlen" (US-QS-24). */
 export const missingText = (count: number): string =>
-  count === 1 ? "1 Angabe fehlt" : `${count} Angaben fehlen`;
+  count === 1 ? "1\u00a0Angabe fehlt" : `${count}\u00a0Angaben fehlen`;
 
 /**
  * The known facts as a compact label/value grid; the unknown ones fold into ONE line with their count, their names
