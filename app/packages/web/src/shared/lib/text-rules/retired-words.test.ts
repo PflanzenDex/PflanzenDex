@@ -57,6 +57,29 @@ describe("US-QS-24 one word per concept", () => {
       for (const { text, n } of lines(file)) if (THREE_DOTS.test(text)) hits.push(`${file}:${n}`);
     expect(hits).toEqual([]);
     expect(THREE_DOTS.test("Lädt...")).toBe(true);
-    expect(THREE_DOTS.test("Lädt…")).toBe(false);
+    expect(THREE_DOTS.test("Lädt …")).toBe(false);
+  });
+});
+
+/**
+ * Files another open PR is changing (US-QS-32, the same rule as EXCEPTIONS in term-table.ts): their title literal waits for
+ * that PR. Remove the row when it lands; a row is never added to turn the test green.
+ */
+const IN_FLIGHT = [/(^|\/)request-state\/request-state\.tsx$/];
+
+describe("US-QS-32 copy rules (SG-COPY-01)", () => {
+  it("US-QS-32 SG-COPY-01 a title has no full stop, in a message table or in a title prop", () => {
+    const hits: string[] = [];
+    for (const file of sources.filter((f) => f.endsWith(".de.json"))) {
+      const table = JSON.parse(readFileSync(join(root, file), "utf8")) as Record<string, string>;
+      for (const [key, text] of Object.entries(table))
+        if (/title$/i.test(key) && text.endsWith(".")) hits.push(`${file} ${key}`);
+    }
+    for (const file of sources.filter(
+      (f) => f.endsWith(".tsx") && !IN_FLIGHT.some((e) => e.test(f)),
+    ))
+      for (const { text, n } of lines(file))
+        if (/\btitle=/.test(text) && /["`][^"`\n]*\.["`]/.test(text)) hits.push(`${file}:${n}`);
+    expect(hits).toEqual([]);
   });
 });

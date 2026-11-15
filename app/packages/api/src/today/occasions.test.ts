@@ -263,7 +263,7 @@ describe("US-EQU-04 the device check as an occasion of the reminders", () => {
     const list = await source().occasions(account, "Europe/Berlin", CREATED);
     expect(list.find((o) => o.id === `equipment-check:${id}`)).toMatchObject({
       occasion: "equipment",
-      text: expect.stringContaining("Prüfung fällig"),
+      text: expect.stringContaining("noch nie geprüft"),
     });
     const profiles = new ProfilePostgres(pool);
     const own = await profiles.find(account);

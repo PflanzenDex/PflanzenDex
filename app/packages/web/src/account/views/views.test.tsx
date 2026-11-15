@@ -205,7 +205,7 @@ describe("error with a reload of the page (US-ACC-01)", () => {
 
   it("US-ACC-01 an error without reloadPage keeps Erneut versuchen, and the click calls the retry", async () => {
     const onReload = vi.fn();
-    render(<AppError text="Das Konto konnte nicht geladen werden." onReload={onReload} />);
+    render(<AppError text="Konto nicht geladen" onReload={onReload} />);
     expect(screen.queryByRole("button", { name: "Seite neu laden" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(onReload).toHaveBeenCalledOnce();

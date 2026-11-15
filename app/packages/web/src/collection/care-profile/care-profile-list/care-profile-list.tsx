@@ -42,7 +42,7 @@ export function ProfileList(props: {
       )}
       {data.entries.length === 0 ? (
         <EmptyState
-          title="Du hast noch keine Pflanze dieser Art."
+          title="Du hast noch keine Pflanze dieser Art"
           description="Lege zuerst mit „Diese Art wählen“ eine Pflanze an, dann kannst du hier das Pflegeprofil der Art anpassen."
         />
       ) : (

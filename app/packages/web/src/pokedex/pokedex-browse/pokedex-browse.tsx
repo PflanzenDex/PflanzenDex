@@ -91,7 +91,7 @@ export function Browse(props: {
 function NothingCaught() {
   return (
     <EmptyState
-      title="Noch keine Art gefangen."
+      title="Noch keine Art gefangen"
       description="Lege eine Pflanze mit bestimmter Art an, dann zählt sie."
       action={{ label: "Pflanze anlegen", href: "/collection" }}
     />
@@ -101,7 +101,7 @@ function NothingCaught() {
 function NoHit(props: { onReset: () => void }) {
   return (
     <EmptyState
-      title="Keine Art gefunden."
+      title="Keine Art gefunden"
       description="Ändere die Suche oder den Filter."
       action={{ label: "Suche zurücksetzen", onClick: props.onReset }}
     />

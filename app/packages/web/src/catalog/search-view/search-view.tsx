@@ -38,7 +38,7 @@ function Empty(props: { searchText: string; onPropose: () => void }) {
   const text = props.searchText.trim();
   return (
     <EmptyState
-      title={text ? `Keine Art zu „${text}“ gefunden.` : "Der gemeinsame Katalog ist noch leer."}
+      title={text ? `Keine Art zu „${text}“ gefunden` : "Der gemeinsame Katalog ist noch leer"}
       description={
         text
           ? "Prüfe die Schreibweise oder schlage die Art vor. Findest du ohne Suchtext auch nichts, ist der Katalog noch leer."
@@ -52,7 +52,7 @@ function Empty(props: { searchText: string; onPropose: () => void }) {
 function NoMatch(props: { onClear: () => void }) {
   return (
     <EmptyState
-      title="Keine Art passt zu den Filtern."
+      title="Keine Art passt zu den Filtern"
       description="Nimm einen Filter heraus, dann siehst du mehr Arten."
       action={{ label: "Filter zurücksetzen", onClick: props.onClear }}
     />

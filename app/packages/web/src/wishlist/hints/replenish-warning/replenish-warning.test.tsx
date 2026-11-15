@@ -21,7 +21,7 @@ const low: Replenishment = {
       zoneNumber: 3,
       name: "Zone 3",
       open: 1,
-      text: "Nachschub nötig: Zone 3 (1 offener Kandidat)",
+      text: "Zone 3 braucht Nachschub (1 offener Kandidat).",
     },
   ],
   nextAction: "Erfasse einen Wunsch mit Ziel-Zone Zone 3 (Formular „Wunsch erfassen“).",
@@ -31,7 +31,7 @@ describe("US-WUN-02 replenishment warning in the wishlist", () => {
   it("US-WUN-02 shows the warning per zone below the buffer with what to do next", () => {
     render(<ReplenishWarning replenishment={low} />);
     expect(screen.getByRole("status").textContent).toContain(
-      "Nachschub nötig: Zone 3 (1 offener Kandidat)",
+      "Zone 3 braucht Nachschub (1 offener Kandidat).",
     );
     expect(screen.getByText(/Erfasse einen Wunsch mit Ziel-Zone Zone 3/)).toBeTruthy();
   });

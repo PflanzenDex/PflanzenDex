@@ -26,7 +26,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
     // The skeleton shows after the delay (US-QS-14, DS-57, issue 1697), exactly once.
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByText("Lädt…")).toBeTruthy();
+    expect(screen.getByText("Lädt …")).toBeTruthy();
     release({ default: (p) => <h1>{p.title}</h1> });
     expect(await screen.findByRole("heading", { name: "Meine Sammlung" })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();

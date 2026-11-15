@@ -166,7 +166,7 @@ describe("US-ACC-01 session", () => {
     await waitFor(() =>
       expect(result.current.state).toEqual({
         kind: "error",
-        text: "Das Konto konnte nicht geladen werden.",
+        text: "Konto nicht geladen",
       }),
     );
     vi.stubGlobal(
@@ -1179,7 +1179,7 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     await waitFor(() => expect(result.current.state.kind).toBe("error"));
     expect(result.current.state).toEqual({
       kind: "error",
-      text: "Das Konto konnte nicht geladen werden.",
+      text: "Konto nicht geladen",
     });
     expect(result.current.state).not.toHaveProperty("reloadPage");
   });
@@ -1203,7 +1203,7 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
       await waitFor(() =>
         expect(result.current.state).toEqual({
           kind: "error",
-          text: "Das Konto konnte nicht geladen werden.",
+          text: "Konto nicht geladen",
         }),
       );
       expect(timeout).toHaveBeenCalledWith(15_000);

@@ -40,8 +40,8 @@ function EquipmentOpener() {
 type Filter = "all" | "lack" | "both";
 const FILTERS = [
   { value: "all", label: "Alle" },
-  { value: "lack", label: "Ich habe nicht" },
-  { value: "both", label: "Wir haben beide" },
+  { value: "lack", label: "Fehlen dir" },
+  { value: "both", label: "Hast du auch" },
 ] as const;
 
 /** Cards per page (starting values, assumption; the page size from the free height is #1029): 2 columns below 768 px (2 cards on a short phone, 4 otherwise), 3 from 768 px, 4 from 1024 px. */
@@ -138,7 +138,7 @@ function Body(props: {
 
 /**
  * The shared collection of one friend (US-SOZ-07): collector cards of the species the friend shares, with "you have it" or
- * "you don't have it" from my own collection, and the filters "Ich habe nicht" and "Wir haben beide". Only what the friend
+ * "you don't have it" from my own collection, and the filters "Fehlen dir" and "Hast du auch". Only what the friend
  * shares (P-05); no rank, no rating (FR-SOZ-11); unknown stays unknown (P-08).
  */
 export function FriendCollectionPage(props: {

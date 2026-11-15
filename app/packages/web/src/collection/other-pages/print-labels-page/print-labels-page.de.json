@@ -11,7 +11,7 @@
   "loadingMore": "Weitere Pflanzen werden geladen …",
   "failed": "Die Pflanzen konnten nicht geladen werden.",
   "retry": "Erneut versuchen",
-  "emptyTitle": "Du hast noch keine Pflanze.",
+  "emptyTitle": "Du hast noch keine Pflanze",
   "emptyText": "Lege zuerst eine Pflanze an, dann kannst du ihr Etikett drucken.",
   "toCollection": "Zur Sammlung",
   "noPlant": "Wähle mindestens eine Pflanze aus.",

@@ -142,7 +142,7 @@ async function loadState(mgr: UserManager): Promise<State> {
     }
     if (e instanceof Error && e.message === "invitation_required")
       return { kind: "invitationNeeded" };
-    return { kind: "error", text: "Das Konto konnte nicht geladen werden." };
+    return { kind: "error", text: "Konto nicht geladen" };
   }
 }
 

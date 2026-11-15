@@ -99,7 +99,7 @@ const WISHLIST: Record<string, unknown> = {
     duplicates: [],
     unfit: [],
     hint: {
-      text: "Keine offenen Kandidaten in der Wunschliste.",
+      text: "Keine offenen Kandidaten in der Wunschliste",
       nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
     },
     replenishment: {
@@ -298,7 +298,7 @@ describe("US-ACC-01 App", () => {
     fakeServer(500);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect((await screen.findByRole("alert")).textContent).toContain("nicht geladen werden");
+    expect((await screen.findByRole("alert")).textContent).toContain("Konto nicht geladen");
     fakeServer();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
@@ -444,7 +444,7 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/care-phases");
-    expect(await screen.findByText("Noch keine Pflanze hat eine Phase.")).toBeTruthy();
+    expect(await screen.findByText("Noch keine Pflanze hat eine Phase")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     expect(

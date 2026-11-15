@@ -27,7 +27,7 @@ export function replenishment(
       zoneNumber: i + 2,
       name: z.name,
       open: n,
-      text: `Nachschub nötig: ${zoneLabel(z.name)} (${candidates(n)})`,
+      text: `${zoneLabel(z.name)} braucht Nachschub (${candidates(n)}).`,
     }));
   return {
     buffer,

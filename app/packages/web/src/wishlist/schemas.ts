@@ -18,7 +18,7 @@ export function isPlainHttps(text: string): boolean {
  */
 export const wishSchema = z
   .object({
-    name: z.string().trim().min(WISH_LIMITS.name.min, "Bitte gib einen Namen an."),
+    name: z.string().trim().min(WISH_LIMITS.name.min, "Gib einen Namen ein."),
     german: z.string(),
     targetZoneId: z.string(),
     difficulty: z.string(),

@@ -214,7 +214,7 @@ describe("US-BES-17 printing QR pot labels", () => {
   it("US-BES-17 without plants the page offers the way to the collection (P-09)", async () => {
     server([]);
     show();
-    expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zur Sammlung" }).getAttribute("href")).toBe(
       "/collection",
     );

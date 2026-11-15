@@ -396,7 +396,7 @@ describe("US-LIC-05 · DS-48 forms and refusals", () => {
     });
     expect(document.activeElement).toBe(name);
     expect(name.getAttribute("aria-invalid")).toBe("true");
-    const message = await screen.findByText("Bitte gib einen Namen ein.");
+    const message = await screen.findByText("Gib einen Namen ein.");
     expect(name.getAttribute("aria-describedby")).toContain(message.id);
     expect(calls.some((a) => a.method === "POST")).toBe(false);
   });

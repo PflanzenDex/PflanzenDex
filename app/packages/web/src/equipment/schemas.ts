@@ -31,7 +31,7 @@ const isPrice = (v: string): boolean => {
 export const equipmentSchema = z
   .object({
     type: z.enum(EQUIPMENT_TYPES, { error: "Bitte wähle eine Art." }),
-    name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Bitte gib einen Namen an."),
+    name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Gib einen Namen ein."),
     manufacturer: z.string(),
     model: z.string(),
     productId: z
@@ -137,7 +137,7 @@ export function fieldsOfRefusal(error: {
 /** The form to record an equipment wish (US-EQU-08): type and name are required, the rest stays unknown (P-08). */
 export const wishSchema = z.object({
   type: z.enum(EQUIPMENT_TYPES, { error: "Bitte wähle eine Art." }),
-  name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Bitte gib einen Namen an."),
+  name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Gib einen Namen ein."),
   productId: z
     .string()
     .trim()

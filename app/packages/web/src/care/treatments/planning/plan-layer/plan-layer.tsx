@@ -37,7 +37,7 @@ function PlanBody(props: {
       skeleton={<TreatmentFormSkeleton label={LOADING} />}
       empty={
         <EmptyState
-          title="Du hast noch keine Pflanze."
+          title="Du hast noch keine Pflanze"
           description="Lege zuerst eine Pflanze in der Sammlung an."
           action={{ label: "Zur Sammlung", href: "/collection" }}
         />

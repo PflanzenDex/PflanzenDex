@@ -40,7 +40,7 @@ function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
     return `Deine Bestätigung ist gespeichert. Sobald ${s.otherName ?? "der Freund"} auch bestätigt hat, wird übergeben.`;
   return s.role === "recipient"
     ? "Die Übergabe ist abgeschlossen. Die Pflanze ist jetzt in deiner Sammlung."
-    : "Die Übergabe ist abgeschlossen. Deine Pflanze ist archiviert, der Freund hat ein neues.";
+    : "Die Übergabe ist abgeschlossen. Deine Pflanze ist jetzt im Archiv.";
 }
 
 /** The requests for my offers and the ones I sent in one list, each marked, so one pager serves both (US-QS-20). */

@@ -231,10 +231,10 @@ describe("US-BEH-02 offene Behandlungen", () => {
     expect(chip.className).not.toContain("rounded-full");
   });
 
-  it('US-BEH-02 without open treatments it says "Keine offenen Behandlungen." and what to do next (P-09)', async () => {
+  it('US-BEH-02 without open treatments it says "Keine offenen Behandlungen" and what to do next (P-09)', async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     show();
-    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    expect(await screen.findByText("Keine offenen Behandlungen")).toBeTruthy();
     expect(screen.getByText(/Plane unten einen Termin/)).toBeTruthy();
   });
 
@@ -242,7 +242,7 @@ describe("US-BEH-02 offene Behandlungen", () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     const user = userEvent.setup();
     show();
-    await screen.findByText("Keine offenen Behandlungen.");
+    await screen.findByText("Keine offenen Behandlungen");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     expect(document.activeElement).toBe(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
   });
@@ -283,12 +283,12 @@ describe("US-BEH-02 offene Behandlungen", () => {
     );
     const user = userEvent.setup();
     show();
-    await screen.findByText("Keine offenen Behandlungen.");
+    await screen.findByText("Keine offenen Behandlungen");
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
-    expect(screen.queryByText("Keine offenen Behandlungen.")).toBeNull();
+    expect(screen.queryByText("Keine offenen Behandlungen")).toBeNull();
   });
 });
 
@@ -379,7 +379,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
     await user.click(
       await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
     );
-    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    expect(await screen.findByText("Keine offenen Behandlungen")).toBeTruthy();
   });
 
   it("US-BEH-03 a double tap sends one request", async () => {
