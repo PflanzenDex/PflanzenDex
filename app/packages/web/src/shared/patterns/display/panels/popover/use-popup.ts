@@ -19,14 +19,22 @@ function keepInWindow(panel: HTMLElement): void {
 }
 
 /**
+ * The popups that are open, outermost first (US-QS-32). Only the topmost one answers Escape, so one Escape closes one
+ * popup: a Menu inside an open Popover closes first, and the Popover on the next Escape.
+ */
+const openPopups: object[] = [];
+
+/**
  * Open state shared by Popover and Menu (US-QS-07, US-QS-32). While open it closes on Escape (focus returns to the trigger),
  * on a press outside and when focus leaves the root; it keeps the open panel inside the window (`keepInWindow`), measured
  * when it opens and on every resize. Listeners exist only while open, so closed popups cost nothing.
  *
- * Escape and a press outside are caught on `window` in the capture phase and stopped there (US-QS-32, F-0356): a Radix
- * dialog or a Vaul sheet around the popup listens on `document` and would close with the popup, and a layer pane would take
- * the Escape in its React handler. The popup closes and the event goes no further. Focus leaving the root still closes it
- * on `document`, as before.
+ * Escape and a press outside are caught on `window` in the capture phase (US-QS-32, F-0356). A Radix dialog or a Vaul
+ * sheet around the popup listens on `document` and would close with it, and a layer pane would take the Escape in its
+ * React handler. The topmost popup stops the Escape there. A press outside stops there only when it lands on the backdrop
+ * of the layer around the popup (a dialog, a sheet or a layer pane); a press on another control of that layer, or with no
+ * layer around the popup, reaches its target, because that control may act on `pointerdown`. Focus leaving the root still
+ * closes the popup on `document`, as before.
  */
 export function usePopup() {
   const [open, setOpen] = React.useState(false);
@@ -47,17 +55,20 @@ export function usePopup() {
   }, [open]);
   React.useEffect(() => {
     if (!open) return;
+    const token = {};
+    openPopups.push(token);
     const inside = (target: EventTarget | null) =>
       rootRef.current?.contains(target as Node) ?? false;
     const outside = (event: PointerEvent) => {
       if (inside(event.target)) return;
-      event.stopPropagation();
+      const layer = rootRef.current?.closest('[role="dialog"], [data-layer-pane]') ?? null;
+      if (layer && !layer.contains(event.target as Node)) event.stopPropagation();
       setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || openPopups[openPopups.length - 1] !== token) return;
       event.preventDefault();
-      event.stopPropagation();
+      event.stopImmediatePropagation();
       close();
     };
     const onFocus = (event: FocusEvent) => {
@@ -67,6 +78,8 @@ export function usePopup() {
     window.addEventListener("keydown", onKey, true);
     document.addEventListener("focusin", onFocus);
     return () => {
+      const index = openPopups.indexOf(token);
+      if (index !== -1) openPopups.splice(index, 1);
       window.removeEventListener("pointerdown", outside, true);
       window.removeEventListener("keydown", onKey, true);
       document.removeEventListener("focusin", onFocus);

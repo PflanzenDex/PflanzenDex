@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { LayerPane } from "@/shared/patterns/responsive/layer-sheet/layer-host/layer-pane/layer-pane";
 import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
 import { Sheet, SheetContent } from "@/shared/ui/overlays/sheet/sheet";
+import { Popover } from "../popover/popover";
 import { Menu } from "./menu";
 
 beforeAll(() => {
@@ -229,6 +230,67 @@ describe("Menu inside a layer, sheet or dialog (US-QS-32, F-0356)", () => {
     expect(screen.queryByRole("menu")).toBeNull();
     expect(screen.getByRole("dialog", { name: "Pflanze" })).toBeTruthy();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("US-QS-32 a press on another control of the same dialog reaches it, and the open menu closes", async () => {
+    const user = userEvent.setup();
+    const onPointerDown = vi.fn();
+    render(
+      <Dialog defaultOpen>
+        <DialogContent title="Pflanze">
+          <Menu label="Weitere Aktionen" items={items} />
+          <button type="button" onPointerDown={onPointerDown}>
+            Gießen
+          </button>
+        </DialogContent>
+      </Dialog>,
+    );
+    await settle();
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Gießen" }));
+    expect(onPointerDown).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Pflanze" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a press outside a menu with no layer around it reaches its target and closes the menu", async () => {
+    const user = userEvent.setup();
+    const onPointerDown = vi.fn();
+    render(
+      <>
+        <Menu label="Weitere Aktionen" items={items} />
+        <button type="button" onPointerDown={onPointerDown}>
+          Draußen
+        </button>
+      </>,
+    );
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Draußen" }));
+    expect(onPointerDown).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("US-QS-32 Escape with a menu open inside a popover closes the menu only; a second Escape closes the popover", async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover label="Zur Pflanze">
+        <Menu label="Weitere Aktionen" items={items} />
+      </Popover>,
+    );
+    const popoverTrigger = screen.getByRole("button", { name: "Zur Pflanze" });
+    await user.click(popoverTrigger);
+    const menuButton = menuTrigger();
+    await user.click(menuButton);
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Zur Pflanze" })).toBeTruthy();
+    expect(document.activeElement).toBe(menuButton);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Zur Pflanze" })).toBeNull();
+    expect(document.activeElement).toBe(popoverTrigger);
   });
 
   it("US-QS-32 Escape in an open menu inside the layer pane does not close the pane", async () => {
