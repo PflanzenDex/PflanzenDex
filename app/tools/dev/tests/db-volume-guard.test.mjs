@@ -1,8 +1,19 @@
-// Tests for check_db_volume in deploy/scripts/deploy.sh with a stubbed docker and compose, no Docker (US-DEV-07, P-10).
-// The check runs its real shell code against directories that stand for the data volume.
+// Tests for the guards of deploy/scripts/deploy.sh with a stubbed docker and compose, no Docker: check_db_volume (US-DEV-07,
+// P-10) and refresh_keycloak_theme (US-DEV-06, #2161). Each check runs its real shell code against folders that stand for
+// the data volume or the theme tree.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  unlinkSync,
+  utimesSync,
+  writeFileSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test, after } from "node:test";
@@ -133,4 +144,162 @@ test("US-DEV-07 an image pinned to an exact version and a digest still names its
   const r = run({ major, files: { PG_VERSION: "16\n" } });
   assert.equal(r.status, 1);
   assert.match(r.stderr, /holds old 16 data, but this deploy starts postgres:18 /);
+});
+
+// refresh_keycloak_theme (US-DEV-06, #2161). The checkout's theme tree is <root>/dev/keycloak-theme; the function runs in
+// <root>/deploy, where deploy.sh cd's, and searches ../dev/keycloak-theme from there.
+const themeBin = tempDir("keycloak-theme-bin-");
+// Stub docker: `inspect` prints STUB_STARTED (the StartedAt of the container) or fails with STUB_INSPECT=fail.
+writeFileSync(
+  join(themeBin, "docker"),
+  `#!/usr/bin/env bash
+echo "docker $*" >> "$STUB_LOG"
+[ "\${STUB_INSPECT:-}" != fail ] || { echo "Error: no such object" >&2; exit 1; }
+printf '%s\\n' "$STUB_STARTED"
+`,
+);
+chmodSync(join(themeBin, "docker"), 0o755);
+// Stub compose: `ps -q keycloak` prints STUB_CONTAINER (empty: no container) or fails with STUB_PS=fail; `restart` fails
+// with STUB_RESTART=fail. Every call is logged.
+writeFileSync(
+  join(themeBin, "compose"),
+  `#!/usr/bin/env bash
+echo "compose $*" >> "$STUB_LOG"
+case "$1" in
+  ps) [ "\${STUB_PS:-}" != fail ] || { echo "Error: compose ps failed" >&2; exit 1; }; [ -z "\${STUB_CONTAINER:-}" ] || echo "$STUB_CONTAINER" ;;
+  restart) [ "\${STUB_RESTART:-}" != fail ] || { echo "Error: restart failed" >&2; exit 1; } ;;
+esac
+`,
+);
+chmodSync(join(themeBin, "compose"), 0o755);
+
+const KEYCLOAK_START = "2026-11-15T08:00:00Z";
+const OLD = new Date("2026-11-01T00:00:00Z");
+// Every entry of the theme tree gets the old time, so only the entries a test names are newer than the start.
+function setOld(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) setOld(path);
+    utimesSync(path, OLD, OLD);
+  }
+  utimesSync(dir, OLD, OLD);
+}
+
+// changed: theme path → time its file was written (an existing file); removed: theme path → time its file was removed,
+// which changes its folder at that time. fail: "inspect", "ps" or "restart", the call that fails.
+function refresh({
+  started = KEYCLOAK_START,
+  container = "kc-1",
+  changed = {},
+  removed = {},
+  fail = "",
+} = {}) {
+  const root = tempDir("keycloak-theme-");
+  const theme = join(root, "dev", "keycloak-theme");
+  const login = join(theme, "pflanzendex", "login");
+  mkdirSync(join(login, "resources", "css"), { recursive: true });
+  writeFileSync(join(login, "template.ftl"), "");
+  writeFileSync(join(login, "resources", "css", "pflanzendex.css"), "");
+  mkdirSync(join(root, "deploy"));
+  setOld(theme);
+  for (const [path, when] of Object.entries(changed)) {
+    writeFileSync(join(theme, path), "changed");
+    utimesSync(join(theme, path), new Date(when), new Date(when));
+  }
+  for (const [path, when] of Object.entries(removed)) {
+    unlinkSync(join(theme, path));
+    utimesSync(join(theme, dirname(path)), new Date(when), new Date(when));
+  }
+  const log = join(tempDir("keycloak-theme-calls-"), "calls");
+  writeFileSync(log, "");
+  // Only the function is taken from the script; the call runs under the shell options of deploy.sh. TZ is Berlin, so a
+  // StartedAt read as local time would show.
+  const script = `set -euo pipefail; source <(sed -n '/^refresh_keycloak_theme() {/,/^}/p' "$DEPLOY"); compose=("$STUB_COMPOSE"); refresh_keycloak_theme`;
+  const r = spawnSync("bash", ["-c", script], {
+    encoding: "utf8",
+    cwd: join(root, "deploy"),
+    env: {
+      PATH: `${themeBin}:${process.env.PATH}`,
+      TZ: "Europe/Berlin",
+      DEPLOY: deploy,
+      STUB_COMPOSE: join(themeBin, "compose"),
+      STUB_LOG: log,
+      STUB_STARTED: started,
+      STUB_CONTAINER: container,
+      STUB_INSPECT: fail === "inspect" ? "fail" : "",
+      STUB_PS: fail === "ps" ? "fail" : "",
+      STUB_RESTART: fail === "restart" ? "fail" : "",
+    },
+  });
+  return { ...r, calls: readFileSync(log, "utf8").trim().split("\n").filter(Boolean) };
+}
+const CSS = "pflanzendex/login/resources/css/pflanzendex.css";
+const TEMPLATE = "pflanzendex/login/template.ftl";
+
+test("US-DEV-06 a theme file written after keycloak started restarts keycloak, and the log line names the file (#2161)", () => {
+  const r = refresh({ changed: { [CSS]: "2026-11-15T08:30:00Z" } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(
+    r.stdout,
+    /keycloak theme changed since keycloak started \(\S*pflanzendex\.css\); restarting keycloak/,
+  );
+  assert.ok(r.calls.includes("compose restart keycloak"), r.calls.join("\n"));
+});
+
+test("US-DEV-06 a theme tree older than the start of keycloak leaves keycloak running (#2161)", () => {
+  const r = refresh();
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, "");
+  assert.ok(!r.calls.some((c) => c.startsWith("compose restart")), r.calls.join("\n"));
+});
+
+test("US-DEV-06 no keycloak container yet (a first deploy) returns 0 without a restart (#2161)", () => {
+  const r = refresh({ container: "", changed: { [TEMPLATE]: "2026-11-15T08:30:00Z" } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(r.calls, ["compose ps -q keycloak"]);
+});
+
+test("US-DEV-06 a failing docker inspect is an error, not an unchanged theme (P-10, #2161)", () => {
+  const r = refresh({ fail: "inspect", changed: { [TEMPLATE]: "2026-11-15T08:30:00Z" } });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /ERROR: docker inspect of keycloak failed/);
+  assert.ok(!r.calls.some((c) => c.includes("restart")), r.calls.join("\n"));
+});
+
+test("US-DEV-06 a failing compose ps is an error, not a missing container (P-10, #2161)", () => {
+  const r = refresh({ fail: "ps", changed: { [TEMPLATE]: "2026-11-15T08:30:00Z" } });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /ERROR: .* ps -q keycloak failed/);
+  assert.deepEqual(r.calls, ["compose ps -q keycloak"]);
+});
+
+test("US-DEV-06 a failing restart of keycloak fails the deploy with a message (#2161)", () => {
+  const r = refresh({ fail: "restart", changed: { [CSS]: "2026-11-15T08:30:00Z" } });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /restarting keycloak failed; logs: .* logs keycloak/);
+});
+
+test("US-DEV-06 a theme file written a fraction of a second after the start restarts keycloak (#2161)", () => {
+  const r = refresh({
+    started: "2026-11-15T08:00:00.123456789Z",
+    changed: { [TEMPLATE]: "2026-11-15T08:00:00.400Z" },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(r.calls.includes("compose restart keycloak"), r.calls.join("\n"));
+});
+
+test("US-DEV-06 a theme file removed after the start restarts keycloak, and the log line names its folder (#2161)", () => {
+  const r = refresh({ removed: { [CSS]: "2026-11-15T08:30:00Z" } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(
+    r.stdout,
+    /keycloak theme changed since keycloak started \(\S*\/css\); restarting keycloak/,
+  );
+  assert.ok(r.calls.includes("compose restart keycloak"), r.calls.join("\n"));
+});
+
+test("US-DEV-06 the start time counts as UTC: a change at 07:30 UTC is before a start at 08:00Z (#2161)", () => {
+  const r = refresh({ changed: { [TEMPLATE]: "2026-11-15T07:30:00Z" } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!r.calls.some((c) => c.startsWith("compose restart")), r.calls.join("\n"));
 });
