@@ -177,7 +177,7 @@ describe("US-ONB-05 lock page", () => {
     page("/unlock/nonsense");
     expect(await screen.findByRole("heading", { level: 1 })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zu Heute" }).getAttribute("href")).toBe("/today");
-    expect(screen.getByText("Diese Adresse nennt keine Funktion der App.")).toBeTruthy();
+    expect(screen.getByText("Unter dieser Adresse findest du keine Funktion.")).toBeTruthy();
     expect(screen.queryByText(/Start/)).toBeNull();
   });
 

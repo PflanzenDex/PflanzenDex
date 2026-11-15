@@ -57,7 +57,7 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
       <h1 id="unlock-title" className="text-2xl font-semibold">
         Diese Funktion gibt es hier nicht
       </h1>
-      <p>Diese Adresse nennt keine Funktion der App.</p>
+      <p>Unter dieser Adresse findest du keine Funktion.</p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button asChild>
           <Link to={PATHS.today}>Zu Heute</Link>

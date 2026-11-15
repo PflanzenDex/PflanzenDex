@@ -10,10 +10,13 @@ import table from "./deletion-section.de.json";
 
 const t = texts(table);
 
+/** No deadline near or passed and no identity removal open: the row and the sheet decide it the same way. */
+const nothingOpen = (view: DeletionsView): boolean =>
+  view.near.length === 0 && view.past.length === 0 && view.identityRemovals.length === 0;
+
 /** The row "Löschfristen" on the overview: the counts of the card (P-09). */
 export function deadlineSummary(view: DeletionsView): string {
-  if (view.near.length === 0 && view.past.length === 0 && view.identityRemovals.length === 0)
-    return t("row.none");
+  if (nothingOpen(view)) return t("row.none");
   return t("row.summary", {
     near: view.near.length,
     past: view.past.length,
@@ -60,8 +63,7 @@ export function DeletionBody(props: {
   onMark: (entryId: string) => void;
 }) {
   const { view } = props;
-  if (view.near.length === 0 && view.past.length === 0 && view.identityRemovals.length === 0)
-    return <p className="m-0">{t("all.none")}</p>;
+  if (nothingOpen(view)) return <p className="m-0">{t("all.none")}</p>;
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">{t("help", { days: view.warningDays })}</p>

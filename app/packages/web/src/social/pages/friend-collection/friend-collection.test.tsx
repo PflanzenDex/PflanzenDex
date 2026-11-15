@@ -129,7 +129,7 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
     expect(
       screen.getByText(
-        "Freigegeben von Name unbekannt, ohne Wertung und Vergleich: nur Art, Name, Fangdatum und ob es ein Steckling ist.",
+        "Freigegeben von Name unbekannt, ohne Wertung und Vergleich: nur Art, Name, Fangdatum, ob es ein Steckling ist und wann er eingetopft wurde.",
       ),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(

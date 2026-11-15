@@ -20,18 +20,16 @@ describe("US-QS-32 sharing panel copy", () => {
 
 /**
  * The word for every field of the whitelist a friend sees of a shared plant (QG-D2, P-05). A new field in
- * `SharedSpecimen` fails the type check here until its word is in the text. Left out: the id, the photo flag (no photo
- * leaves before US-WAC-05) and the repot day, which the friend route strips (US-SOZ-04).
+ * `SharedSpecimen` fails the type check here until its word is in the text. Left out: the id and the photo flag (no
+ * photo leaves before US-WAC-05). The repot day reaches friends as the feed event "Eingetopft" (US-SOZ-05).
  */
-const FIELD_WORDS: Record<
-  Exclude<keyof SharedSpecimen, "id" | "photoShared" | "repottedAt">,
-  string
-> = {
+const FIELD_WORDS: Record<Exclude<keyof SharedSpecimen, "id" | "photoShared">, string> = {
   speciesLatin: "Art",
   speciesGerman: "Art",
   name: "Name",
   caughtAt: "Fangdatum",
   isCutting: "Steckling",
+  repottedAt: "eingetopft",
 };
 
 describe("US-QS-32 · US-SOZ-04 one list of shared fields, true to the whitelist (F-0256, F-0249)", () => {

@@ -77,7 +77,7 @@ function measurementRows(
 /**
  * Reads the keeper's own data into the plain facts of the achievements (US-ACH-01, FR-ACH-02): nothing is stored.
  * Archived specimens stay in (the event history is kept, P-10). A course is the set of treatments sharing a course id;
- * a single treatment without course is no course (assumption, decided by the PO). The handover instant becomes the
+ * a single treatment without course is a course of one date (owner answer RR-Q2, see `courseFacts`). The handover instant becomes the
  * local date in the keeper's time zone (NFR-08). Measurements and treatments are read once for all specimens (NFR-12),
  * in the order of the per-specimen reads: collections are small (starting value, assumption).
  */
