@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { Leaf } from "lucide-react";
-import { Link, NavLink } from "react-router";
+import { Link } from "react-router";
 import { cn } from "@/shared/lib/utils";
 import {
   BRAND_HREF,
@@ -12,6 +12,7 @@ import {
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
 import { NavNote, ShortcutKeyNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
+import { ReselectLink } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { navigationHint } from "../app-shell/shortcut-targets";
 
@@ -49,9 +50,9 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
         {items.map((item) => {
           const key = navigationHint(hint, item.href);
           return (
-            <NavLink
+            <ReselectLink
               key={item.href}
-              to={item.href}
+              item={item}
               end={item.href === "/"}
               aria-keyshortcuts={key?.aria}
               className={({ isActive }) => cn(stackedItem, "w-full", stackedLabel(isActive))}
@@ -64,7 +65,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
                   <NavNote text={item.note} />
                 </>
               )}
-            </NavLink>
+            </ReselectLink>
           );
         })}
       </div>
@@ -94,8 +95,8 @@ function SidebarLink({ item, index, total }: { item: NavItem; index: number; tot
   return (
     <Fragment>
       {index === PRIMARY && total > PRIMARY ? <hr className="my-2 shrink-0 border-border" /> : null}
-      <NavLink
-        to={item.href}
+      <ReselectLink
+        item={item}
         end={item.href === "/"}
         aria-keyshortcuts={key?.aria}
         className={({ isActive }) =>
@@ -111,7 +112,7 @@ function SidebarLink({ item, index, total }: { item: NavItem; index: number; tot
         <span className="whitespace-nowrap">{item.label}</span>
         <ShortcutKeyNote hint={key} inline />
         <NavNote text={item.note} inline />
-      </NavLink>
+      </ReselectLink>
     </Fragment>
   );
 }

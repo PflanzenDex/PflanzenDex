@@ -1,20 +1,16 @@
 import type { CreatedInvitation, InvitationRecord, InvitationStatus } from "@pflanzendex/core";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronRight } from "lucide-react";
 import { useRef, type ReactNode } from "react";
-import { useForm } from "react-hook-form";
 import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import { BUSY_LOOK } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { instantText } from "../../api/access-api";
-import { TextField } from "@/shared/ui/fields/input/input";
-import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../schemas";
 import partsTable from "./operator-parts.de.json";
+import { InvitationForm } from "./invitation-form/invitation-form";
 import { NewCode } from "./new-code/new-code";
 
 const t = texts(partsTable);
@@ -105,54 +101,12 @@ export function ModeSection(props: {
   );
 }
 
-/**
- * The days field and the button; a value outside the limits is refused before anything is sent. `focusRef` receives
- * the days field so a neighbour (the empty list) can move the focus there.
- */
-export function InvitationForm(props: {
-  running: boolean;
-  onCreate: (days: number) => void;
-  focusRef?: React.MutableRefObject<HTMLInputElement | null>;
-}) {
-  const form = useForm<InvitationDaysFields>({
-    resolver: zodResolver(invitationDaysSchema),
-    defaultValues: { days: String(DAYS.default) },
-  });
-  const submit = form.handleSubmit((v) => props.onCreate(Number(v.days)));
-  return (
-    <Form {...form}>
-      <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
-        <TextField
-          control={form.control}
-          name="days"
-          label="Gültig für (Tage)"
-          focusRef={props.focusRef}
-          type="number"
-          inputMode="numeric"
-          min={DAYS.min}
-          max={DAYS.max}
-        />
-        <Button
-          type="submit"
-          size="touch"
-          needsNetwork
-          aria-disabled={props.running || undefined}
-          aria-busy={props.running || undefined}
-          className={BUSY_LOOK}
-        >
-          Code erstellen
-        </Button>
-      </FormRoot>
-    </Form>
-  );
-}
-
 /** The days field, the new code and the list, all in the layer of the codes: the empty list sends the operator to the field (P-09). */
 export function InvitationsArea(props: {
   running: boolean;
   created: CreatedInvitation | null;
   invitations: readonly InvitationRecord[];
-  onCreate: (days: number) => void;
+  onCreate: (days: number) => Promise<boolean>;
 }) {
   const field = useRef<HTMLInputElement | null>(null);
   return (

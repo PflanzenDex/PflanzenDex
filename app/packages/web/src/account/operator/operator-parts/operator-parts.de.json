@@ -1,5 +1,7 @@
 {
   "cost.enter": "Kosten eintragen",
+  "days.label": "Gültig für (Tage)",
+  "code.create": "Code erstellen",
   "code.section": "Neuer Einladungscode",
   "code.label": "Einladungscode",
   "code.validity": "Gültig bis {until}. Der Code wird nur jetzt angezeigt: Gib ihn weiter oder notiere ihn, später kannst du ihn nicht mehr ansehen.",
