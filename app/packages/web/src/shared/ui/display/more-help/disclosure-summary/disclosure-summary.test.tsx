@@ -38,3 +38,54 @@ describe("US-QS-32 · SG-ICON-01 DisclosureSummary", () => {
     expect(summary.className).toContain("list-none");
   });
 });
+
+describe("US-QS-32 · SG-TOUCH-01 · SG-TOUCH-02 DisclosureSummary is a full-width row", () => {
+  const tokensOf = (el: Element | null | undefined) => (el?.getAttribute("class") ?? "").split(" ");
+
+  it("US-QS-32 · SG-TOUCH-01 the summary is a full-width flex row of at least 44 px with a visible focus ring", () => {
+    const { container } = render(
+      <details>
+        <DisclosureSummary>Mehr erfahren</DisclosureSummary>
+      </details>,
+    );
+    const tokens = tokensOf(container.querySelector("summary"));
+    for (const token of [
+      "min-h-11",
+      "w-full",
+      "flex",
+      "items-center",
+      "cursor-pointer",
+      "rounded-lg",
+      "focus-visible:outline-none",
+      "focus-visible:ring-2",
+      "focus-visible:ring-ring",
+    ])
+      expect(tokens).toContain(token);
+  });
+
+  it("US-QS-32 · SG-ICON-01 the chevron of a row is 20 px and stands at its end", () => {
+    const { container } = render(
+      <details>
+        <DisclosureSummary>Fotos</DisclosureSummary>
+      </details>,
+    );
+    const icon = container.querySelector("summary > svg");
+    expect(tokensOf(icon)).toContain("size-5");
+    expect(tokensOf(icon)).toContain("ml-auto");
+  });
+
+  it("US-QS-32 · SG-TOUCH-01 a caller's display classes replace the row's, and an inline opener keeps its own width", () => {
+    const { container } = render(
+      <details>
+        <DisclosureSummary className="inline-flex w-auto">Mehr erfahren</DisclosureSummary>
+      </details>,
+    );
+    const tokens = tokensOf(container.querySelector("summary"));
+    expect(tokens).toContain("inline-flex");
+    expect(tokens).not.toContain("flex");
+    expect(tokens).toContain("w-auto");
+    expect(tokens).not.toContain("w-full");
+    // The row keeps its height: an inline opener is at least 44 px high as well.
+    expect(tokens).toContain("min-h-11");
+  });
+});

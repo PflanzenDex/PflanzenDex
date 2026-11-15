@@ -57,9 +57,7 @@ function History({ lamp }: { lamp: LampLight }) {
   if (lamp.measurements.length < 2) return null;
   return (
     <details className="text-sm">
-      <DisclosureSummary className="cursor-pointer">
-        Alle Messungen ({lamp.measurements.length})
-      </DisclosureSummary>
+      <DisclosureSummary>Alle Messungen ({lamp.measurements.length})</DisclosureSummary>
       <ul className="m-0 mt-1 list-none p-0">
         {lamp.measurements.map((m) => (
           <li key={m.id}>
@@ -78,7 +76,7 @@ function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightAction
       className="min-w-0 rounded-lg border border-border"
       open={lamp.check ? true : undefined}
     >
-      <DisclosureSummary className="cursor-pointer p-3">
+      <DisclosureSummary className="p-3">
         {/* The text wraps in its own block, so the chevron keeps the first line at 200 % text (SG-ICON-01). */}
         <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
           <span className="break-words font-semibold">{lamp.name}</span>
@@ -107,9 +105,7 @@ function LampCard({ lamp, actions }: { lamp: LampLight; actions: LampLightAction
           onSend={(input) => actions.onMeasure(lamp, input)}
         />
         <details>
-          <DisclosureSummary className="cursor-pointer text-sm">
-            Herstellerangabe ändern
-          </DisclosureSummary>
+          <DisclosureSummary className="text-sm">Herstellerangabe ändern</DisclosureSummary>
           <div className="mt-2">
             <DataForm
               lampName={lamp.name}
@@ -151,7 +147,7 @@ export function LampLightView({
         renderItem={(l) => <LampCard lamp={l} actions={actions} />}
       />
       <details className="rounded-lg border border-border">
-        <DisclosureSummary className="cursor-pointer p-3 text-sm">
+        <DisclosureSummary className="p-3 text-sm">
           Abweichungsgrenze {view.limit === null ? "(nicht festgelegt)" : `(${view.limit} %)`}
         </DisclosureSummary>
         <div className="px-3 pb-3">

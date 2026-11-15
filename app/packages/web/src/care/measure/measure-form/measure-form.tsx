@@ -36,9 +36,7 @@ function EtiolationSigns({ signs }: { signs: string | null }) {
   if (!signs) return null;
   return (
     <details className="text-sm">
-      <DisclosureSummary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        Wie erkennen?
-      </DisclosureSummary>
+      <DisclosureSummary className="rounded-md">Wie erkennen?</DisclosureSummary>
       <p>Vergeilung-Anzeichen dieser Art: {signs}</p>
     </details>
   );

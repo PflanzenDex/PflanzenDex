@@ -176,15 +176,32 @@ describe("US-ENT-09 attributes show their source", () => {
   });
 });
 
-describe("US-QS-21 the card shows the essentials and opens the rest with Mehr", () => {
-  it("US-QS-21 Mehr and Weniger toggle the facts, sources and reasons", async () => {
+describe("US-QS-21 the card shows the essentials and opens the rest with Mehr erfahren", () => {
+  it("US-QS-21 Mehr erfahren and Weniger anzeigen toggle the facts, sources and reasons", async () => {
     show(suggestion());
-    const toggle = screen.getByRole("button", { name: "Mehr" });
+    const toggle = screen.getByRole("button", { name: "Mehr erfahren" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     await userEvent.click(toggle);
-    expect(screen.getByRole("button", { name: "Weniger" }).getAttribute("aria-expanded")).toBe(
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Weniger anzeigen" }).getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+});
+
+describe("US-QS-32 · SG-COPY-05 · SG-TOUCH-01 the card's toggle is a row of 44 px at the text column", () => {
+  it("US-QS-32 · SG-COPY-05 the toggle reads 'Mehr erfahren' and, once open, 'Weniger anzeigen'", async () => {
+    show(suggestion());
+    expect(screen.getByRole("button", { name: "Mehr erfahren" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr erfahren" }));
+    expect(screen.getByRole("button", { name: "Weniger anzeigen" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Mehr erfahren" })).toBeNull();
+  });
+
+  it("US-QS-32 · SG-TOUCH-01 the toggle is at least 44 px high (min-h-11) and has no left padding (px-0), so it aligns with the text", () => {
+    show(suggestion());
+    const tokens = screen.getByRole("button", { name: "Mehr erfahren" }).className.split(" ");
+    expect(tokens).toContain("min-h-11");
+    expect(tokens).toContain("px-0");
   });
 });
 

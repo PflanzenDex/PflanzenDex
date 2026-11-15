@@ -69,7 +69,7 @@ function ZoneGroup(props: {
   const counted = zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens);
   return (
     <details className="min-w-0 rounded-lg border border-border">
-      <DisclosureSummary className="cursor-pointer px-3 py-2">
+      <DisclosureSummary className="px-3 py-2">
         {/* The text wraps in its own block, so the chevron keeps the first line at 200 % text (SG-ICON-01). */}
         <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
           <span className="font-semibold">{zoneLabel(zone.name)}</span>

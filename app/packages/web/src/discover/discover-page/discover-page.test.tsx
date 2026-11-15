@@ -134,7 +134,7 @@ describe("US-ENT-01 suggestions as a card", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "Mehr",
+      "Mehr erfahren",
       "Nein",
       "Später",
       "Ja",

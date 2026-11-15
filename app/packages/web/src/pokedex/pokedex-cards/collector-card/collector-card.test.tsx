@@ -249,6 +249,15 @@ describe("US-POK-01 · US-QS-24 the card on a short screen (issue 1154)", () => 
     expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-ICON-01 the fold's summary keeps 8 px between its text and its chevron (gap-2)", () => {
+    windowHeight(640);
+    show(unknownCard);
+    const summary = screen.getByText("5 Angaben fehlen").closest("summary") as HTMLElement;
+    const tokens = summary.getAttribute("class")?.split(" ") ?? [];
+    expect(tokens).toContain("inline-flex");
+    expect(tokens).toContain("gap-2");
+  });
+
   it("US-POK-01 · issue 1154 on a taller screen every line shows as before, without a fold", () => {
     windowHeight(844);
     show(unknownCard);

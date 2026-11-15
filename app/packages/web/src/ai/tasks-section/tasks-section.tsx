@@ -51,9 +51,7 @@ function Task(props: {
       {row.prompt && (
         <>
           <details>
-            <DisclosureSummary className="cursor-pointer">
-              Text des Auftrags ansehen
-            </DisclosureSummary>
+            <DisclosureSummary>Text des Auftrags ansehen</DisclosureSummary>
             <pre className="m-0 mt-2 whitespace-pre-wrap break-words text-sm">{row.prompt}</pre>
           </details>
           <div className="flex flex-wrap gap-2">
