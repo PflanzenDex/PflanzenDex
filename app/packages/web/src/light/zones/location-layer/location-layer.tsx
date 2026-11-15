@@ -16,7 +16,7 @@ export function LocationLayer(props: {
   const { location } = props;
   const { closeLayer } = useLayer(locationLayerId(location.id));
   return (
-    <LayerSheet id={locationLayerId(location.id)} title="Standort bearbeiten">
+    <LayerSheet id={locationLayerId(location.id)} title="Standort ändern">
       <LocationForm
         zones={props.zones}
         start={location}

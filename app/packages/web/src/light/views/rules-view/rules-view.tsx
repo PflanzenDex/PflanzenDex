@@ -45,7 +45,7 @@ function rulePartsFor(zones: readonly LightZone[], size: number): ReactNode[] {
     sorted.length === 0
       ? [
           <p key="empty" className="text-sm text-muted-foreground">
-            Deine Stufentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
+            Deine Zonentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
             hast.
           </p>,
         ]
@@ -67,7 +67,7 @@ function rulePartsFor(zones: readonly LightZone[], size: number): ReactNode[] {
       >
         Die niedrigste Zone ist Stecklingslicht und nie Ziel für erwachsene Pflanzen.
       </MoreHelp>
-      <h3 className={H3}>Indikatoren für höhere Stufen</h3>
+      <h3 className={H3}>Indikatoren für höhere Zonen</h3>
       <ul className={LIST}>
         {rules.indicators.map((i) => (
           <li key={i.key}>{i.text}</li>

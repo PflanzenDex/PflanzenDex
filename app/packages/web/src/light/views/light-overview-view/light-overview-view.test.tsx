@@ -50,7 +50,7 @@ describe("US-LIC-03: light overview view", () => {
     show([row()]);
     const item = screen.getAllByRole("listitem")[0] as HTMLElement;
     expect(item.textContent).toContain("Monstera deliciosa");
-    expect(item.textContent).toContain("Zone 2 · Lux-Bedarf 15.000");
+    expect(item.textContent).toContain("Zone 2 · Lichtbedarf 15.000");
     expect(item.textContent).toContain("sehr nah (~10 cm)");
   });
 
@@ -67,7 +67,7 @@ describe("US-LIC-03: light overview view", () => {
       }),
     ]);
     const items = screen.getAllByRole("listitem");
-    expect(items[0]?.textContent).toContain("Lichtzone unbekannt · Lux-Bedarf unbekannt");
+    expect(items[0]?.textContent).toContain("Lichtzone unbekannt · Lichtbedarf unbekannt");
     expect(items[0]?.textContent).not.toMatch(/\b0\b/);
     const link = within(items[0] as HTMLElement).getByRole("link", {
       name: "Lichtbedarf eintragen für „Monstera deliciosa“",
@@ -78,8 +78,8 @@ describe("US-LIC-03: light overview view", () => {
 
   it("formats five-digit demands with the German thousands separator", () => {
     show([row({ lightDemandLux: 50000 }), row({ speciesId: "sp2", lightDemandLux: 110000 })]);
-    expect(screen.getByText(/Lux-Bedarf 50\.000/)).toBeTruthy();
-    expect(screen.getByText(/Lux-Bedarf 110\.000/)).toBeTruthy();
+    expect(screen.getByText(/Lichtbedarf 50\.000/)).toBeTruthy();
+    expect(screen.getByText(/Lichtbedarf 110\.000/)).toBeTruthy();
   });
 
   it("renders the rows in the order delivered (sorting is done by core, US-LIC-03 core and API tests)", () => {
@@ -95,7 +95,7 @@ describe("US-LIC-03: light overview view", () => {
   it("US-LIC-03 · US-QS-15 · issue 1155 the species are rows paged by the free height of the layer, not a table", () => {
     show([row()]);
     expect(screen.queryByRole("table")).toBeNull();
-    const list = screen.getByRole("list", { name: "Lichthunger der Arten" });
+    const list = screen.getByRole("list", { name: "Lichtbedarf der Arten" });
     expect(list.hasAttribute("data-page-fit")).toBe(true);
   });
 });

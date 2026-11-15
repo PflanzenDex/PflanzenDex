@@ -41,9 +41,9 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("status").textContent).toContain("Seite 1 von 3");
-    expect(screen.queryByRole("heading", { name: "Indikatoren für höhere Stufen" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Indikatoren für höhere Zonen" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByRole("heading", { name: "Indikatoren für höhere Stufen" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Indikatoren für höhere Zonen" })).toBeTruthy();
     expect(screen.getByText(/CAM-Stoffwechsel/)).toBeTruthy();
     expect(screen.getByText(/Dornen/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
@@ -58,7 +58,7 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
         <RulesView zones={[]} />
       </MemoryRouter>,
     );
-    expect(screen.getByText(/Stufentabelle erscheint/)).toBeTruthy();
+    expect(screen.getByText(/Zonentabelle erscheint/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByText(/Warnzeichen/)).toBeTruthy();

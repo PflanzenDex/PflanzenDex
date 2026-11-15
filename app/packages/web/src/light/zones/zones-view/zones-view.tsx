@@ -58,7 +58,7 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
         <TextField
           control={control}
           name="luxCeiling"
-          label="Lux-Decke (Lux)"
+          label="Lux-Obergrenze (Lux)"
           {...numeric(LUX_LIMITS)}
         />
         <TextField
@@ -75,7 +75,7 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
         />
         <RefusalAlert sent={sent} />
         <FormButtons
-          label={z ? "Speichern" : "Zone anlegen"}
+          label={z ? "Speichern" : "Lichtzone anlegen"}
           running={sent.running}
           onCancel={props.onCancel}
         />
