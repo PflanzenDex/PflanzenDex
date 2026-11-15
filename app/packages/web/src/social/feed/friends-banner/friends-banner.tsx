@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
-import type { Banner, BannerItem } from "@pflanzendex/core";
+import { localToday, type Banner, type BannerItem } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
-  localDateOf,
-  localTodayIso,
+  currentTimeZone,
   SCREEN_STALE_TIME,
   useInvalidate,
   useRequest,
@@ -88,7 +87,12 @@ export function NewPlantsBody(props: {
       </p>
       {compact && !props.offline ? null : (
         <p className="text-sm text-muted-foreground">
-          {t("news.asOf", { date: summaryDate(localDateOf(news.asOf), localTodayIso()) })}
+          {t("news.asOf", {
+            date: summaryDate(
+              localToday(new Date(news.asOf), currentTimeZone()),
+              localToday(new Date(), currentTimeZone()),
+            ),
+          })}
           {props.offline ? t("news.offline") : ""}
         </p>
       )}

@@ -1,8 +1,8 @@
 // The date of the latest fertilizing of a plant on its pot label (US-MON-09, P-08, P-09): one line under the quick
 // actions. A failed read says why and offers a retry (P-10); the line keeps its place while it loads.
-import type { FertilizingView } from "@pflanzendex/core";
+import { localToday, type FertilizingView } from "@pflanzendex/core";
 import { loadLastFertilized } from "@/monitoring";
-import { localTodayIso, useRequest } from "@/shared/data";
+import { currentTimeZone, useRequest } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -33,7 +33,9 @@ export function LastFertilized(props: { api: string; token: Token; specimenId: s
           ? null
           : date === null
             ? ui("neverFertilized")
-            : ui("lastFertilized", { date: summaryDate(date, localTodayIso()) })}
+            : ui("lastFertilized", {
+                date: summaryDate(date, localToday(new Date(), currentTimeZone())),
+              })}
       </p>
     </RequestState>
   );

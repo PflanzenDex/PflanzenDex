@@ -26,7 +26,7 @@ function relativeDay(iso: string, today: string): string | null {
 
 /**
  * A date in a summary line ("Stand: gestern", "Zuletzt geprüft heute"; SG-FMT-01): relative up to 7 days back or ahead,
- * else "TT.MM.JJJJ". `iso` and `today` are calendar dates of the keeper's zone (`localTodayIso`).
+ * else "TT.MM.JJJJ". `iso` and `today` are calendar dates of the keeper's zone (core `localToday`, `currentTimeZone()`).
  */
 export function summaryDate(iso: string, today: string): string {
   return relativeDay(iso, today) ?? dateText(iso);

@@ -1,9 +1,9 @@
 import { cva } from "class-variance-authority";
-import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
+import { localToday, type SpecimenCard, type MeasurementQuality } from "@pflanzendex/core";
 import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
 import { overdueChip, summaryDate } from "@/shared/lib/format";
-import { localTodayIso } from "../../../../shared/data";
+import { currentTimeZone } from "../../../../shared/data";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
@@ -41,7 +41,7 @@ export function Measurement({ card }: { card: SpecimenCard }) {
   const m = card.lastMeasurement;
   if (!m) return <Quiet>noch keine Messung</Quiet>;
   // Within 7 days the relative word stands alone ("vor 6 Tagen"); beyond, the absolute date keeps its "am" (SG-FMT-01).
-  const when = summaryDate(m.date, localTodayIso());
+  const when = summaryDate(m.date, localToday(new Date(), currentTimeZone()));
   return (
     <>
       <p>

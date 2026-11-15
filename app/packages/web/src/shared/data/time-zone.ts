@@ -1,5 +1,3 @@
-import { localToday } from "@pflanzendex/core";
-
 // The time zone every date of the app is computed in (NFR-08, US-ACC-02): the one chosen in the profile, until then the
 // device's. Only `localToday`-style local dates come from it, never UTC.
 let chosen: string | null = null;
@@ -14,10 +12,3 @@ export function setProfileTimeZone(timeZone: string | null): void {
 
 /** Phases, due dates and "today" use this one place, so a change in the profile reaches every request. */
 export const currentTimeZone = (): string => chosen ?? deviceTimeZone();
-
-/** Today's calendar date `YYYY-MM-DD` in the keeper's zone: the reference of the relative dates (US-QS-32, SG-FMT-01). */
-export const localTodayIso = (): string => localToday(new Date(), currentTimeZone());
-
-/** The calendar date `YYYY-MM-DD` of an instant (ISO 8601, such as `asOf` of the banner or the feed) in the keeper's zone. */
-export const localDateOf = (instant: string): string =>
-  localToday(new Date(instant), currentTimeZone());

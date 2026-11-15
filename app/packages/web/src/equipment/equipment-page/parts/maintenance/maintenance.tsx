@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { localToday } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { localTodayIso } from "../../../../shared/data";
+import { currentTimeZone } from "../../../../shared/data";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
@@ -40,7 +41,7 @@ function toInput(f: Record<"since" | "interval" | "value" | "source", string>) {
 }
 
 function Values({ item }: { item: EquipmentRow }) {
-  const today = localTodayIso();
+  const today = localToday(new Date(), currentTimeZone());
   const lifetime =
     item.lifetimeValue === null
       ? UNKNOWN
@@ -138,7 +139,7 @@ export function Maintenance(props: { item: EquipmentRow; actions: MaintenanceAct
           variant="secondary"
           disabled={actions.busy}
           aria-label={`Jetzt geprüft: ${item.name}`}
-          onClick={() => actions.onChecked(item, localTodayIso())}
+          onClick={() => actions.onChecked(item, localToday(new Date(), currentTimeZone()))}
         >
           Jetzt geprüft
         </Button>

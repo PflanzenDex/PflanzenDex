@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setProfileTimeZone } from "@/shared/data";
 import { FriendsBanner } from "./friends-banner";
 
 const response = (status: number, body: unknown) =>
@@ -45,6 +46,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  setProfileTimeZone(null);
 });
 
 /** Freezes the clock (Date only) at the given instant, so "Stand" is relative to a known day (US-QS-32). */
@@ -130,6 +132,25 @@ describe("US-QS-32 'Stand' of the banner in a summary line", () => {
     render(<FriendsBanner api="http://api" token={token} />);
     const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
     expect(region.textContent).toMatch(/Stand: vor 3\u00a0Tagen/);
+  });
+
+  it("US-QS-32 the day of 'Stand' follows the profile's time zone, not the UTC date", async () => {
+    // 2026-11-14 12:00 UTC: the 14th in Berlin, the 15th in Auckland. Now is 2026-11-15 10:00 UTC.
+    clockAt("2026-11-15T10:00:00Z");
+    const asOf = { asOf: "2026-11-14T12:00:00.000Z" };
+    setProfileTimeZone("Europe/Berlin");
+    server(banner(asOf));
+    const first = render(<FriendsBanner api="http://api" token={token} />);
+    expect((await screen.findByRole("region", { name: /Neu bei Freunden/ })).textContent).toContain(
+      "Stand: gestern",
+    );
+    first.unmount();
+    setProfileTimeZone("Pacific/Auckland");
+    server(banner(asOf));
+    render(<FriendsBanner api="http://api" token={token} />);
+    expect((await screen.findByRole("region", { name: /Neu bei Freunden/ })).textContent).toContain(
+      "Stand: heute",
+    );
   });
 
   it("US-QS-32 an old copy from more than 7 days shows the absolute date", async () => {
