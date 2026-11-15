@@ -9,6 +9,7 @@ import { allowAgain, loadConnections, revokeConnection, setRights } from "../api
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { ClientsSkeleton } from "./clients-section.skeleton";
+import { EmptySheet, HOWTO_LAYER } from "./connect-step/connect-step";
 
 const ui = texts(table);
 
@@ -142,7 +143,11 @@ function List(props: { api: string; token: Token; rows: readonly AiConnection[] 
         Er sieht nur deine eigenen Daten, nie die von Freunden.
       </MoreHelp>
       {props.rows.length === 0 ? (
-        <p className="m-0">Noch ist kein KI-Client verbunden.</p>
+        <EmptySheet
+          title="Noch ist kein KI-Client verbunden"
+          layer={HOWTO_LAYER}
+          label={ui("step.connect")}
+        />
       ) : (
         <Pager
           items={props.rows}

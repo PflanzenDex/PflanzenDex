@@ -10,6 +10,11 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { NewTaskSkeleton, TasksSkeleton } from "./tasks-section.skeleton";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import {
+  EmptySheet,
+  HOWTO_LAYER,
+  NEW_TASK_LAYER,
+} from "../clients-section/connect-step/connect-step";
 
 const ui = texts(table);
 
@@ -78,7 +83,23 @@ function Task(props: {
   );
 }
 
-function List(props: { api: string; token: Token; rows: readonly AiTaskRow[] }) {
+/** No task yet (FX-81): a new task when a client is connected, else the step to connect one. */
+function NoTasks({ clientConnected }: { clientConnected: boolean }) {
+  return (
+    <EmptySheet
+      title="Keine Aufträge vorhanden"
+      layer={clientConnected ? NEW_TASK_LAYER : HOWTO_LAYER}
+      label={ui(clientConnected ? "step.newTask" : "step.connect")}
+    />
+  );
+}
+
+function List(props: {
+  api: string;
+  token: Token;
+  rows: readonly AiTaskRow[];
+  clientConnected: boolean;
+}) {
   const again = useInvalidate(KEY);
   const write = useWriteAction(props.token, again);
   const [copied, setCopied] = useState<string | null>(null);
@@ -94,7 +115,7 @@ function List(props: { api: string; token: Token; rows: readonly AiTaskRow[] }) 
         Ein Auftrag bittet deinen KI-Client um etwas. Das Ergebnis kommt als Entwurf.
       </MoreHelp>
       {props.rows.length === 0 ? (
-        <p className="m-0">Keine Aufträge vorhanden.</p>
+        <NoTasks clientConnected={props.clientConnected} />
       ) : (
         <Pager
           items={props.rows}
@@ -142,7 +163,14 @@ export function TasksSection(props: { api: string; token: Token }) {
       loadingText={ui("tasks.loading")}
       loadingFallback={<TasksSkeleton label={ui("tasks.loading")} />}
     >
-      {(data) => <List api={props.api} token={props.token} rows={data.tasks} />}
+      {(data) => (
+        <List
+          api={props.api}
+          token={props.token}
+          rows={data.tasks}
+          clientConnected={data.clientConnected}
+        />
+      )}
     </LoadFrame>
   );
 }

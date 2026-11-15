@@ -103,6 +103,8 @@ Acceptance criteria:
 - List "Connected AI clients": name, rights, connected since, last use. Revocation takes effect immediately; a revoked or expired access is rejected.
 - A connection belongs to exactly one account (KI-R6). Instructions for connecting (copy link, example flows) are in the app.
 
+State of implementation (issue 2022, FX-81): every empty sheet of "KI-Clients" offers its next step ("KI-Client verbinden", or "Auftrag anlegen" where a client is connected), and the log says that it lists what the client reads and changes; the status stays 🟨.
+
 ### US-KI-08 · Tasks from the app to the AI client · 🟨 new
 
 As a **plant keeper** I want to trigger something in the app that my AI client handles (path B).
