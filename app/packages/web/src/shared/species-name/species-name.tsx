@@ -45,6 +45,10 @@ export function SpeciesName(props: SpeciesNameProps) {
         {lead}
         {german ?? <i>{scientific}</i>}
       </Title>
+      {/* A space between title and meta line: every caller lays both out in a grid or flex box, where it renders nothing,
+          but the computed text of a labelled row reads "Bogenhanf Dracaena …", not "BogenhanfDracaena …" (axe
+          label-content-name-mismatch, WCAG 2.5.3). */}
+      {german !== null || hasMeta ? " " : null}
       {german !== null || hasMeta ? (
         <span className="break-words text-sm font-normal text-muted-foreground">
           {german !== null ? <i>{scientific}</i> : null}

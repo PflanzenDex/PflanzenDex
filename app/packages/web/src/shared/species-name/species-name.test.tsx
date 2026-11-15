@@ -30,7 +30,7 @@ describe("US-QS-32 SpeciesName: the German name leads, the scientific name is it
     const meta = latin.parentElement as HTMLElement;
     expect(meta.className).toContain("text-sm");
     expect(meta.textContent).toBe("Aglaonema commutatum · gefangen 07.09.2026");
-    expect(container.textContent).toBe("KolbenfadenAglaonema commutatum · gefangen 07.09.2026");
+    expect(container.textContent).toBe("Kolbenfaden Aglaonema commutatum · gefangen 07.09.2026");
   });
 
   it("US-QS-32 with a German name and no further meta the meta line is the scientific name alone", () => {
@@ -48,7 +48,7 @@ describe("US-QS-32 SpeciesName: the German name leads, the scientific name is it
     expect(title.tagName).toBe("I");
     expect(title.parentElement?.className).toContain("font-semibold");
     // The meta line holds only the meta: the name is not repeated there.
-    expect(container.textContent).toBe("Aloe veragefangen 01.01.2026");
+    expect(container.textContent).toBe("Aloe vera gefangen 01.01.2026");
   });
 
   it("US-QS-32 a German name equal to the scientific name is no German name: the name stands once, italic", () => {

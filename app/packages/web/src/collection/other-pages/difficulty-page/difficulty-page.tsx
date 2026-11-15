@@ -87,9 +87,11 @@ function UnreadableNote({ count }: { count: number }) {
 
 function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] }) {
   const { openLayer, open } = useLayer(layerId(row));
-  // The label holds the names in the order the row shows them (WCAG 2.5.3, US-QS-32).
+  // The label holds the row's visible text in its order: the title, then the meta line (WCAG 2.5.3, US-QS-32).
   const german = germanNameOf(row.botanicalName, row.speciesName);
-  const named = german === null ? row.botanicalName : `${german} ${row.botanicalName}`;
+  const line = entryLine(row, hidden);
+  const meta = [german === null ? null : row.botanicalName, line].filter(Boolean).join(" · ");
+  const named = [german ?? row.botanicalName, meta].filter(Boolean).join(" ");
   return (
     <Button
       type="button"
@@ -102,11 +104,7 @@ function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] 
     >
       <span className="grid min-w-0 gap-0 break-words">
         {/* `speciesName` is the German name, or the botanical name where there is none: SpeciesName takes that as none (US-QS-32, F-0121). */}
-        <SpeciesName
-          scientific={row.botanicalName}
-          german={row.speciesName}
-          meta={entryLine(row, hidden)}
-        />
+        <SpeciesName scientific={row.botanicalName} german={row.speciesName} meta={line} />
       </span>
       <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
     </Button>

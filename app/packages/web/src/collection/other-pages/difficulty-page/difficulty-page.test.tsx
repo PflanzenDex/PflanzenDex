@@ -83,7 +83,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />);
     const entry = await screen.findByRole("button", {
-      name: "Vergleichswerte: Bogenhanf Dracaena trifasciata",
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
     });
     expect(entry.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
     expect(entry.querySelector("svg")?.getAttribute("class")).toContain("size-5");
@@ -94,9 +94,11 @@ describe("US-BES-05 page of the difficulty overview", () => {
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />);
     const entry = await screen.findByRole("button", {
-      name: "Vergleichswerte: Bogenhanf Dracaena trifasciata",
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
     });
-    expect(entry.textContent).toMatch(/^Bogenhanf\s*Dracaena trifasciata/);
+    // The whole visible text, title and meta line, is part of the label (axe label-content-name-mismatch).
+    const parts = Array.from(entry.querySelectorAll(":scope > span > span"), (n) => n.textContent);
+    expect(entry.getAttribute("aria-label")).toBe(`Vergleichswerte: ${parts.join(" ")}`);
   });
 
   it("US-BES-05 · US-QS-22 the layer of a species shows all columns of the comparison", async () => {
@@ -382,7 +384,7 @@ describe("US-QS-22 the comparison fits one screen", () => {
     await screen.findByRole("list", { name: "Artenvergleich" });
     expect(screen.queryByRole("table")).toBeNull();
     await userEvent.click(
-      screen.getByRole("button", { name: "Vergleichswerte: Bogenhanf Dracaena trifasciata" }),
+      screen.getByRole("button", { name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/ }),
     );
     expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
   });
@@ -407,7 +409,7 @@ describe("US-QS-32 the comparison names a species the SG-TYPE-08 way (F-0121)", 
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />);
     const entry = await screen.findByRole("button", {
-      name: "Vergleichswerte: Bogenhanf Dracaena trifasciata",
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
     });
     const german = within(entry).getByText("Bogenhanf");
     expect(german.closest("i")).toBeNull();
@@ -424,7 +426,7 @@ describe("US-QS-32 the comparison names a species the SG-TYPE-08 way (F-0121)", 
     );
     view(<DifficultyPage api="http://api" token={token} />);
     const entry = await screen.findByRole("button", {
-      name: "Vergleichswerte: Dracaena trifasciata",
+      name: /^Vergleichswerte: Dracaena trifasciata/,
     });
     expect(within(entry).getAllByText("Dracaena trifasciata")).toHaveLength(1);
     expect(within(entry).getByText("Dracaena trifasciata").tagName).toBe("I");
