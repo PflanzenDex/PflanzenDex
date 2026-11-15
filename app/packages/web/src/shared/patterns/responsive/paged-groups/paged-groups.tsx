@@ -9,6 +9,11 @@ export type PagedGroup<T> = {
   items: readonly T[];
   /** All entries of the group on the server, when they are not all loaded (FR-BES-23); the choice shows it. */
   count?: number;
+  /**
+   * What the choice counts in words, e.g. "2 von 3" (US-ACH-02): the choice then reads "Pflege · 2 von 3" instead of
+   * "Pflege (3)". Without it the choice shows the number in brackets.
+   */
+  countText?: string;
   /** The server paging of the group's entries (see `PagerPaging`); used while the group is chosen. */
   paging?: PagerPaging;
 };
@@ -36,6 +41,7 @@ export function PagedGroups<T>(props: {
     key: g.key,
     label: g.label,
     count: g.count ?? g.items.length,
+    ...(g.countText === undefined ? {} : { countText: g.countText }),
   }));
   const chosen = usePart(choices);
   const group = props.groups.find((g) => g.key === chosen?.key);

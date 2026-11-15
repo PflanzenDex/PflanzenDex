@@ -105,6 +105,126 @@ describe("US-ACH-02 achievements overview", () => {
     expect(screen.queryByText(/Dein erster Schritt/)).toBeNull();
   });
 
+  it("US-ACH-02 earned and open achievements stand in separate sections Erreicht and Noch offen", async () => {
+    serve({
+      calmMode: false,
+      earnedCount: 1,
+      newCount: 0,
+      firstStep: null,
+      groups: [
+        {
+          group: "care",
+          earned: [item("cutting-rooted", { earnedOn: "2026-05-04" })],
+          open: [item("treatment-completed", { nextStep: step("treatment-completed.next") })],
+        },
+        empty("growth"),
+        empty("swapping"),
+        empty("collecting"),
+      ],
+    });
+    const earned = await screen.findByRole("region", { name: "Erreicht" });
+    const open = screen.getByRole("region", { name: "Noch offen" });
+    expect(within(earned).getByText("Steckling bewurzelt")).toBeTruthy();
+    expect(within(earned).queryByText("Behandlung abgeschlossen")).toBeNull();
+    expect(within(open).getByText("Behandlung abgeschlossen")).toBeTruthy();
+    expect(within(open).queryByText("Steckling bewurzelt")).toBeNull();
+    // Earned comes first (the order of the server), open follows.
+    expect(earned.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: "Erreicht" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: "Noch offen" })).toBeTruthy();
+    // The icon of a section heading is a decoration; the text names the state.
+    expect(earned.querySelector("h3 svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-ACH-02 the group choice counts earned of all, e.g. Pflege · 2 von 3", async () => {
+    serve({
+      calmMode: false,
+      earnedCount: 2,
+      newCount: 0,
+      firstStep: null,
+      groups: [
+        {
+          group: "care",
+          earned: [
+            item("cutting-rooted", { earnedOn: "2026-05-04" }),
+            item("treatment-completed", { earnedOn: "2026-06-01" }),
+          ],
+          open: [item("through-dormancy", { nextStep: step("through-dormancy.next") })],
+        },
+        {
+          group: "growth",
+          earned: [],
+          open: [
+            item("first-measurement-photo", { nextStep: step("first-measurement-photo.next") }),
+            item("healthy-for-a-year", { nextStep: step("healthy-for-a-year.next") }),
+          ],
+        },
+        {
+          group: "swapping",
+          earned: [],
+          open: [item("first-handover", { nextStep: step("first-handover.next") })],
+        },
+        empty("collecting"),
+      ],
+    });
+    expect(
+      (await screen.findByRole("button", { name: "Pflege · 2 von 3" })).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("true");
+    expect(screen.getByRole("button", { name: "Wachstum · 0 von 2" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tauschen · 0 von 1" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /\(\d+\)/ })).toBeNull();
+  });
+
+  it("US-ACH-02 a new account's group choice reads 0 von 3 and the section Erreicht says Noch keiner erreicht", async () => {
+    const open = (ids: string[]) => ids.map((id) => item(id, { nextStep: step(`${id}.next`) }));
+    serve({
+      calmMode: false,
+      earnedCount: 0,
+      newCount: 0,
+      firstStep: step("first-measurement-photo.next"),
+      groups: [
+        {
+          group: "care",
+          earned: [],
+          open: open(["cutting-rooted", "treatment-completed", "through-dormancy"]),
+        },
+        {
+          group: "growth",
+          earned: [],
+          open: open(["first-measurement-photo", "healthy-for-a-year"]),
+        },
+        { group: "swapping", earned: [], open: open(["first-handover"]) },
+        empty("collecting"),
+      ],
+    });
+    expect(await screen.findByRole("button", { name: "Pflege · 0 von 3" })).toBeTruthy();
+    const earned = screen.getByRole("region", { name: "Erreicht" });
+    expect(within(earned).getByText("Noch keiner erreicht.")).toBeTruthy();
+    expect(
+      within(screen.getByRole("region", { name: "Noch offen" })).getByText("Steckling bewurzelt"),
+    ).toBeTruthy();
+  });
+
+  it("US-ACH-02 an open section with nothing left says Alle erreicht", async () => {
+    serve({
+      calmMode: false,
+      earnedCount: 1,
+      newCount: 0,
+      firstStep: null,
+      groups: [
+        { group: "care", earned: [item("cutting-rooted", { earnedOn: "2026-05-04" })], open: [] },
+        empty("growth"),
+        empty("swapping"),
+        empty("collecting"),
+      ],
+    });
+    const open = await screen.findByRole("region", { name: "Noch offen" });
+    expect(within(open).getByText("Alle erreicht.")).toBeTruthy();
+    expect(within(open).queryByText("Noch keiner erreicht.")).toBeNull();
+  });
+
   it("US-ACH-02 the group Sammeln links to the Pokédex and shows no achievements of its own", async () => {
     serve({ calmMode: false, earnedCount: 0, firstStep: null, groups: [empty("collecting")] });
     expect((await screen.findByRole("link", { name: "Pokédex" })).getAttribute("href")).toBe(

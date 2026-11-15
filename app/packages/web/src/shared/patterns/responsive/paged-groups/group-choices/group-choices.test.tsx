@@ -258,6 +258,29 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
   });
 });
 
+describe("US-ACH-02 group choices say what they count (countText)", () => {
+  it("US-ACH-02 countText replaces the count in brackets in the chips, the measure and the selection field", () => {
+    const choices: GroupChoice[] = [
+      { key: "g1", label: "Pflege", count: 3, countText: "2 von 3" },
+      { key: "g2", label: "Wachstum", count: 2, countText: "0 von 2" },
+    ];
+    layout = { row: 300, chips: [90, 90] };
+    show(choices, "/collection?view=plants&part=g1");
+    expect(screen.getByRole("button", { name: "Pflege · 2 von 3" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wachstum · 0 von 2" })).toBeTruthy();
+    expect(document.querySelector("[data-group-measure]")?.textContent).toBe(
+      "Pflege · 2 von 3Wachstum · 0 von 2",
+    );
+    expect(document.body.textContent).not.toMatch(/\(\d+\)/);
+    cleanup();
+    layout = { row: 300, chips: [200, 200] };
+    show(choices);
+    expect(formOf()).toBe("select");
+    expect(screen.getByRole("option", { name: "Pflege · 2 von 3" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Wachstum · 0 von 2" })).toBeTruthy();
+  });
+});
+
 describe("US-QS-19 the wrap is simulated greedily, not by the sum of the widths", () => {
   it("US-QS-19 two chips that pack badly need three lines in a row that holds 2 x their sum", () => {
     // 200 + 8 + 200 > 300, so each 200 px chip takes its own line; the 100 px chip then needs a third line.
