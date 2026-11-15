@@ -15,7 +15,7 @@ import { Heading, NamePreview, OtherFields } from "../create-fields/create-field
 import { toCreateInput, type CreateInput } from "../create-input";
 import { MarkerFields } from "../../../markers/marker/marker-fields/marker-fields";
 import { markerRule, type Sibling } from "../../../markers/marker/marker-rule";
-import { FormButtons, Warning } from "../../cards/parts/parts";
+import { FormButtons, ErrorNotice } from "../../cards/parts/parts";
 import { useEdited, useRefusal } from "../../model/refusal";
 import { createSchema, type CreateFields } from "../../model/schemas";
 import { createStart } from "../../model/create-start";
@@ -35,7 +35,7 @@ function fieldsOfRefusal(error: ApiError): (keyof CreateFields)[] {
 function ErrorBox({ text, error }: { text: string; error: ApiError }) {
   const conflict = nameConflict(error);
   return (
-    <Warning>
+    <ErrorNotice>
       <p>{text}</p>
       {conflict && (
         <>
@@ -45,7 +45,7 @@ function ErrorBox({ text, error }: { text: string; error: ApiError }) {
           <p>{ui("withMarker", { name: conflict.name })}</p>
         </>
       )}
-    </Warning>
+    </ErrorNotice>
   );
 }
 

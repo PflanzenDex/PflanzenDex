@@ -180,17 +180,21 @@ describe("US-BES-01 Seite Arten", () => {
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
-  it("a proposal lands in the review list: hint above the new profile", async () => {
+  it("US-QS-32 · SG-COLOR-04 a saved proposal says in one neutral line that only the keeper sees it until it is reviewed, with no amber and no Prüfliste", async () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
     await fillProposal("Blätter kippen.", "Aufrecht.");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
-    expect((await screen.findByRole("status")).textContent).toContain("liegt in der Prüfliste");
+    const result = await screen.findByRole("status");
+    expect(result.textContent).toBe("Vorschlag gesichert. Nur du siehst ihn, bis er geprüft ist.");
+    expect(result.className).not.toMatch(/warning/);
+    expect(result.className).toContain("border-border");
+    expect(result.textContent).not.toContain("Prüfliste");
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Suche" }));
-    expect(screen.queryByText(/liegt in der Prüfliste/)).toBeNull();
+    expect(screen.queryByText(/Vorschlag gesichert/)).toBeNull();
   });
 
   it("US-LIC-01 the form asks for the soft-leaf flag and explains its effect on the zone derivation", async () => {
@@ -497,9 +501,20 @@ describe("US-QS-21 propose in two steps", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    const notice = within(layer).getByText(/Nur für dich sichtbar/);
+    const notice = within(layer).getByText(/Nur du siehst die Art/);
     expect((notice.textContent ?? "").split(/[.;] /).length).toBeLessThanOrEqual(1);
     expect((notice.textContent ?? "").length).toBeLessThanOrEqual(60);
+  });
+
+  it("US-QS-32 · SG-COLOR-04 the visibility hint of the sheet is a neutral line: no warning token, no border, no Prüfliste", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    const notice = within(layer).getByText("Nur du siehst die Art, bis sie geprüft ist.");
+    expect(notice.className).toContain("text-muted-foreground");
+    expect(notice.className).not.toMatch(/warning|border/);
+    expect(within(layer).queryByText(/Prüfliste/)).toBeNull();
   });
 
   it("US-QS-21 a refusal of a step-1 field on step 2 brings step 1 back with the message on the field", async () => {

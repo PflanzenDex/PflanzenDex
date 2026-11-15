@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { renderToString as render } from "react-dom/server";
 import { cleanup, render as plainRender } from "@testing-library/react";
+import { OctagonAlert } from "lucide-react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
@@ -145,6 +146,25 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
     expect(h).toContain("Pflanze: Monstera Nr. 1");
     expect(h).toContain("Art: Echinopsis");
     expect(h).toContain("Pflegeprofil der Art: Bogenhanf"); // US-BES-09: the zone override of a care profile
+  });
+
+  it("US-QS-32 · SG-COLOR-04 a refused zone deletion is drawn in the error tone: red border, error mark, no warning token, the users stay listed", () => {
+    const h = renderToString(
+      <ErrorMessage
+        error={{
+          code: "light_zone.in_use",
+          text: "",
+          data: [{ kind: "location", id: "s1", name: "Regal" }],
+        }}
+      />,
+    );
+    const mark = renderToString(<OctagonAlert />).match(/<svg[^>]*>(.*)<\/svg>/)?.[1] ?? "";
+    expect(mark).not.toBe("");
+    expect(h).toContain("border-destructive");
+    expect(h).not.toContain("bg-warning");
+    expect(h).not.toContain("border-warning-border");
+    expect(h).toContain(mark);
+    expect(h).toContain("Standort: Regal");
   });
 
   it("translates complained-about fields into words", () => {

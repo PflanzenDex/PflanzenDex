@@ -374,7 +374,7 @@ describe("US-ACC-01 session", () => {
       ),
     );
     await act(() => result.current.everywhereSignOut());
-    expect(result.current.state).toMatchObject({ kind: "signedIn", error: text });
+    expect(result.current.state).toMatchObject({ kind: "signedIn", everywhereError: text });
     expect(mgr.removeUser).not.toHaveBeenCalled();
     // A second press calls the API again and, once it answers, signs out.
     vi.stubGlobal(
@@ -453,7 +453,8 @@ describe("US-ACC-01 session", () => {
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     expect(result.current.state).toMatchObject({
       kind: "signedIn",
-      error: "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+      everywhereError:
+        "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
     });
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });
@@ -471,7 +472,7 @@ describe("US-ACC-01 session", () => {
     await act(() => result.current.everywhereSignOut());
     expect(result.current.state).toMatchObject({
       kind: "signedIn",
-      error:
+      everywhereError:
         "Keine Verbindung. Abmelden auf allen Geräten hat nicht geklappt, versuch es gleich noch einmal.",
     });
     expect(mgr.removeUser).not.toHaveBeenCalled();
@@ -490,7 +491,7 @@ describe("US-ACC-01 session", () => {
       ),
     );
     await act(() => result.current.everywhereSignOut());
-    expect(result.current.state).toMatchObject({ kind: "signedIn", error: text });
+    expect(result.current.state).toMatchObject({ kind: "signedIn", everywhereError: text });
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });
 
@@ -507,7 +508,8 @@ describe("US-ACC-01 session", () => {
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     expect(result.current.state).toMatchObject({
       kind: "signedIn",
-      error: "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+      everywhereError:
+        "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
     });
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });
@@ -1048,7 +1050,8 @@ describe("US-ACC-01 Anmelden and Konto anlegen when the sign-in service cannot b
     await act(() => result.current.everywhereSignOut());
     expect(result.current.state).toMatchObject({
       kind: "signedIn",
-      error: "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+      everywhereError:
+        "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
     });
     expect(mgr.removeUser).not.toHaveBeenCalled();
   });

@@ -1,3 +1,4 @@
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import type { Account } from "../../api/account-api";
 
 const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
@@ -12,11 +13,7 @@ function Notices(props: { account: Account; error?: string }) {
           erst danach möglich.
         </p>
       )}
-      {props.error && (
-        <p role="alert" className={NOTICE}>
-          {props.error}
-        </p>
-      )}
+      {props.error && <Banner variant="error">{props.error}</Banner>}
     </>
   );
 }

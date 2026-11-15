@@ -11,7 +11,7 @@ import table from "./switch-groups.de.json";
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { refusalText } from "@/shared/lib/error-text";
-import { ALERT_CLASSES } from "@/shared/ui/fields/form/server-refusal";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { OCCASION_TEXT, visibleOccasions } from "../../../settings-fields/settings-fields";
 import type { ProfileSaver } from "../profile-saver";
 
@@ -35,12 +35,7 @@ function useSwitchSave(saver: ProfileSaver, onSaved?: (profile: AccountProfile) 
 }
 
 function Feedback(props: { error: ApiError | null; saved: boolean }) {
-  if (props.error)
-    return (
-      <p role="alert" className={ALERT_CLASSES}>
-        {refusalText(props.error)}
-      </p>
-    );
+  if (props.error) return <Banner variant="error">{refusalText(props.error)}</Banner>;
   return props.saved ? (
     <p role="status" className="rounded-lg border border-border p-3">
       Gespeichert.

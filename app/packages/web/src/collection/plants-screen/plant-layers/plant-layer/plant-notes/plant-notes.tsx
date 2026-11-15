@@ -11,7 +11,7 @@ import {
   useHeldLoader,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
+import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { notesKey, useNotes } from "../../../../specimens/hooks/use-notes";
 import { loadSpecimenNotes, type SpecimenNotes } from "../../../../specimens/model/specimens-api";
 import { NOTES_FORM, NotesForm } from "./notes-form/notes-form";
@@ -69,13 +69,13 @@ function NotesText(props: { notes: string | null }) {
 /** A read that failed says so and offers a retry (P-10). */
 function NotesFailed(props: { error: ApiError; onRetry: () => void }) {
   return (
-    <Warning>
+    <ErrorNotice>
       <p>{t("layer.failed")}</p>
       <p>{refusalText(props.error)}</p>
       <Button type="button" variant="outline" onClick={props.onRetry}>
         {t("layer.retry")}
       </Button>
-    </Warning>
+    </ErrorNotice>
   );
 }
 

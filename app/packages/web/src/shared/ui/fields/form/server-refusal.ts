@@ -5,10 +5,6 @@ import { refusalText } from "@/shared/lib/error-text";
 /** What a refusal of the server carries: its code and its own text (`ApiError` of `shared/data`). */
 type Refusal = { code: string; text: string };
 
-/** The red alert box of a refusal that names no field; takes the focus (see `useServerRefusal`). */
-export const ALERT_CLASSES =
-  "rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
 /**
  * Hands a server refusal to a form: the fields it names get the German text of the refusal (`refusalText`, DS-49,
  * P-10, and the app's own network text when the server does not answer, FR-QG-11) and the first of them takes the

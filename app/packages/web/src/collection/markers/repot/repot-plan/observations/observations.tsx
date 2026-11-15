@@ -5,7 +5,7 @@ import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
+import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { setRepotSign } from "../../repot-api";
 import table from "../../repot.de.json";
 
@@ -24,9 +24,13 @@ const SIGN_KEY = {
 /** The German name of an observation, as the keeper reads it (US-BES-19). */
 export const signLabel = (sign: RepotSign): string => t(SIGN_KEY[sign]);
 
+/** A tick that was not saved: its sign and the tick the keeper gave, so "Erneut versuchen" repeats that same change (US-QS-32). */
+type Failed = { sign: RepotSign; ticked: boolean; error: ApiError };
+
 /**
  * The three observations (US-BES-19): a tick writes the observation of that day, a clear removes it. A refused write
- * stays on screen with its German text (P-10); a written one reloads the plan, so the hint shows or goes at once.
+ * stays on screen as an error that names its sign, with its German text and "Erneut versuchen" (P-10, SG-STATE-03); a
+ * written one reloads the plan, so the hint shows or goes at once.
  */
 export function Observations(props: {
   access: PhotoAccess;
@@ -36,17 +40,17 @@ export function Observations(props: {
 }) {
   const { access, id, hints, reload } = props;
   const [busy, setBusy] = useState<RepotSign | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [failed, setFailed] = useState<Failed | null>(null);
   const change = async (sign: RepotSign, ticked: boolean) => {
     setBusy(sign);
-    setError(null);
+    setFailed(null);
     const token = await access.token();
     const r = token
       ? await setRepotSign(access.api, token, { id, sign, ticked })
       : { ok: false as const, error: SIGN_IN };
     setBusy(null);
     if (r.ok) reload();
-    else setError(r.error);
+    else setFailed({ sign, ticked, error: r.error });
   };
   return (
     <fieldset className="grid gap-1 border-0 p-0">
@@ -62,10 +66,16 @@ export function Observations(props: {
           {signLabel(sign)}
         </Checkbox>
       ))}
-      {error ? (
-        <Warning>
-          <p>{refusalText(error)}</p>
-        </Warning>
+      {failed ? (
+        <ErrorNotice
+          title={t("observe.failed", { sign: signLabel(failed.sign) })}
+          action={{
+            label: t("observe.retry"),
+            onClick: () => void change(failed.sign, failed.ticked),
+          }}
+        >
+          <p>{refusalText(failed.error)}</p>
+        </ErrorNotice>
       ) : null}
     </fieldset>
   );

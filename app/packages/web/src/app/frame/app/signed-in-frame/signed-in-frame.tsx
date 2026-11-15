@@ -84,6 +84,14 @@ function SignedInShell({ account, children }: { account: SignedInAccount; childr
   );
 }
 
+type FrameProps = {
+  session: Session;
+  account: SignedInAccount;
+  error?: string;
+  everywhereError?: string;
+  everywhereBusy?: boolean;
+};
+
 /**
  * The signed-in frame: the shell, its keyboard shortcuts, the unlocks and the page routes. Its code is its own chunk
  * (issue 1728): the sign-in page is the first paint for a signed-out visitor, and it does not carry any of this.
@@ -92,13 +100,9 @@ export function SignedInFrame({
   session: s,
   account,
   error,
+  everywhereError,
   everywhereBusy,
-}: {
-  session: Session;
-  account: SignedInAccount;
-  error?: string;
-  everywhereBusy?: boolean;
-}) {
+}: FrameProps) {
   const { setView, openProfile } = useViews();
   const { state: navState } = useLocation() as { state: { hint?: string } | null };
   const handOver = useSpeciesHandOver(setView);
@@ -135,6 +139,7 @@ export function SignedInFrame({
                 session={s}
                 account={account}
                 {...(error ? { error } : {})}
+                {...(everywhereError ? { everywhereError } : {})}
                 {...(everywhereBusy ? { everywhereBusy } : {})}
                 onOpen={setView}
                 onOpenProfile={openProfile}

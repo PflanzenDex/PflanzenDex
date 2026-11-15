@@ -13,7 +13,7 @@ import {
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../../../shared/data";
 import { loadCard } from "../../../specimens/cards/cards-api";
-import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
 import { refusalText } from "@/shared/lib/error-text";
@@ -136,9 +136,9 @@ export function LightZoneForm(props: {
           : "Die eigene Zone geht vor der Zone von Standort und Art."}
       </Quiet>
       {zones.failed && (
-        <Warning>
+        <ErrorNotice>
           <p>Die Lichtzonen konnten nicht geladen werden. Versuche es später noch einmal.</p>
-        </Warning>
+        </ErrorNotice>
       )}
       <Form {...form}>
         <FormRoot
@@ -148,9 +148,9 @@ export function LightZoneForm(props: {
         >
           <ZoneSelect control={form.control} zones={zones.items} />
           {error && (
-            <Warning>
+            <ErrorNotice>
               <p>{refusalText(error)}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit="Lichtzone speichern"

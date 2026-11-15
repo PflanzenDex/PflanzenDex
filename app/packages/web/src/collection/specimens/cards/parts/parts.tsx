@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { Banner, type BannerAction } from "@/shared/patterns/states/banner/banner";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
@@ -85,15 +86,28 @@ export function Status({ children }: { children: ReactNode }) {
   );
 }
 
-/** A refusal or problem that stays visible until the keeper acts (P-10); the warning tokens, not red alone (DS-38). */
-export function Warning({ children }: { children: ReactNode }) {
+/**
+ * A refusal or a failed load that stays visible until the keeper acts (P-10): the one error tone, a red border and the
+ * error mark, read at once (SG-COLOR-04, SG-STATE-03). Amber is for deviations only, never for an error.
+ */
+export function ErrorNotice({
+  children,
+  title,
+  action,
+}: {
+  children: ReactNode;
+  title?: string;
+  action?: BannerAction;
+}) {
   return (
-    <div
-      role="alert"
-      className="mb-3 grid gap-1 rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+    <Banner
+      variant="error"
+      className="mb-3"
+      {...(title ? { title } : {})}
+      {...(action ? { action } : {})}
     >
-      {children}
-    </div>
+      <div className="grid gap-1">{children}</div>
+    </Banner>
   );
 }
 

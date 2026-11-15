@@ -11,7 +11,7 @@ import {
   Quiet,
   Status,
   TITLE,
-  Warning,
+  ErrorNotice,
 } from "../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
 import { sharedLocations } from "../../../light";
@@ -99,9 +99,9 @@ function HintsList(props: HintsListProps) {
           <>
             {place.message && <Status>{place.message}</Status>}
             {place.error && (
-              <Warning>
+              <ErrorNotice>
                 <p>{refusalText(place.error)}</p>
-              </Warning>
+              </ErrorNotice>
             )}
             <HintList
               data={data}

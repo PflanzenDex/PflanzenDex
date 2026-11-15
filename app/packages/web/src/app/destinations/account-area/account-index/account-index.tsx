@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { useFeature } from "@/shared/data";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import {
@@ -13,6 +14,7 @@ import type { Account } from "@/account";
 import { SECTIONS, rowId } from "../account-model/account-model";
 import { useAccountValues, type Values } from "./account-values";
 import { InstallRow } from "./install-row/install-row";
+import { EverywhereError } from "./everywhere-error/everywhere-error";
 
 /** The rows of the index: every section that is on for the account; the profile has its own row above them. */
 function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
@@ -32,7 +34,6 @@ const ROW =
 /** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
 const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
-const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 function Row(props: {
   to: AccountSection;
@@ -59,6 +60,8 @@ function SignOutRow(props: {
   onEverywhereSignOut: () => void;
   /** The error of the last try (US-ACC-01): the dialog stays open, so the person can press again. */
   error?: string;
+  /** The error of a failed "Auf allen Geräten abmelden": its retry repeats that sign-out (US-QS-32). */
+  everywhereError?: string;
   /** "Auf allen Geräten abmelden" runs: the control is busy and a press does nothing (US-ACC-01). */
   busy?: boolean;
 }) {
@@ -80,10 +83,13 @@ function SignOutRow(props: {
       </Button>
       <ResponsiveModal title="Abmelden?" closeLabel="Schließen" open={open} onOpenChange={setOpen}>
         <div className="flex flex-col gap-3">
-          {props.error && (
-            <p role="alert" className={NOTICE}>
-              {props.error}
-            </p>
+          {props.error && <Banner variant="error">{props.error}</Banner>}
+          {props.everywhereError && (
+            <EverywhereError
+              text={props.everywhereError}
+              busy={props.busy}
+              onRetry={props.onEverywhereSignOut}
+            />
           )}
           <Button type="button" size="touch" onClick={props.onSignOut}>
             Abmelden
@@ -119,13 +125,7 @@ function SignOutItem(props: React.ComponentProps<typeof SignOutRow>) {
   );
 }
 
-/**
- * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
- * "Abmelden …". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
- * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
- * function "ai", no overview) have no row.
- */
-export function AccountIndex(props: {
+type IndexProps = {
   api: string;
   token: Token;
   account: Account;
@@ -136,9 +136,18 @@ export function AccountIndex(props: {
   onEverywhereSignOut: () => void;
   /** The error of a failed sign-out (US-ACC-01), shown in its dialog. */
   error?: string;
+  everywhereError?: string;
   /** "Auf allen Geräten abmelden" runs (US-ACC-01): busy until its answer. */
   everywhereBusy?: boolean;
-}) {
+};
+
+/**
+ * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
+ * "Abmelden …". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
+ * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
+ * function "ai", no overview) have no row.
+ */
+export function AccountIndex(props: IndexProps) {
   const ai = useFeature("ai");
   const values = useAccountValues(props.api, props.token);
   const rows = rowsOf(values, ai, props.hasOverview);
@@ -182,6 +191,7 @@ export function AccountIndex(props: {
           onSignOut={props.onSignOut}
           onEverywhereSignOut={props.onEverywhereSignOut}
           {...(props.error ? { error: props.error } : {})}
+          {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
           busy={props.everywhereBusy ?? false}
         />
       </ul>

@@ -33,6 +33,23 @@ describe("welcome (US-ACC-01)", () => {
     expect(html).toContain("Konto wechseln");
   });
 
+  it("US-QS-32 · SG-COLOR-04 the welcome page's failed sign-in is drawn in the error tone, with its mark and no warning token", () => {
+    const html = renderToString(
+      <Welcome
+        onRegister={nothing}
+        onSignIn={nothing}
+        onSwitchAccount={nothing}
+        error="Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal."
+      />,
+    );
+    // The opening tag of the alert carries its classes: the error tone is read from that tag.
+    const tag = html.match(/<[^>]*role="alert"[^>]*>/)?.[0] ?? "";
+    expect(tag).toContain("border-destructive");
+    expect(tag).not.toContain("bg-warning");
+    expect(tag).not.toContain("border-warning-border");
+    expect(html).toContain("Die Anmeldung ist gerade nicht erreichbar.");
+  });
+
   it("offers register and sign in", () => {
     const html = renderToString(
       <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
@@ -161,6 +178,23 @@ describe("signed-in view (US-ACC-01)", () => {
   it("shows no warning for a confirmed email", () => {
     const html = renderToString(<AccountView account={account} />);
     expect(html).not.toContain("bestätigen");
+  });
+
+  it("US-QS-32 · SG-COLOR-04 the error of the last sign-in step is drawn in the error tone, the unconfirmed e-mail stays amber (a deviation)", () => {
+    const html = renderToString(
+      <AccountView
+        account={{ ...account, emailConfirmed: false, mayShareWithFriends: false }}
+        error="Die Anmeldung ist gerade nicht erreichbar."
+      />,
+    );
+    const tags = [...html.matchAll(/<[^>]*role="alert"[^>]*>/g)].map((m) => m[0]);
+    expect(tags).toHaveLength(2);
+    const [unconfirmed, failed] = tags;
+    expect(unconfirmed).toContain("bg-warning");
+    expect(unconfirmed).not.toContain("border-destructive");
+    expect(failed).toContain("border-destructive");
+    expect(failed).not.toContain("bg-warning");
+    expect(html).toContain("Die Anmeldung ist gerade nicht erreichbar.");
   });
 });
 

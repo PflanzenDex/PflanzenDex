@@ -350,4 +350,44 @@ describe("US-BES-19 the keeper ticks what they see in the layer and the hint fol
     ).toBeTruthy();
     expect(screen.queryByText("Roher Serverkram")).toBeNull();
   });
+
+  it("US-QS-32 · SG-STATE-03 a failed tick is an error that names its sign, keeps the box unticked and offers Erneut versuchen, which repeats the same change", async () => {
+    const sent = fakeRepotServer({
+      signRefusal: {
+        status: 400,
+        body: { error: { code: "input.invalid", text: "Roher Serverkram" } },
+      },
+      signRefusalOnce: true,
+    });
+    renderCollection();
+    const dialog = await openSigns((await openPlan()) as HTMLElement);
+    const box = within(dialog).getByRole("checkbox", {
+      name: "Wurzeln aus dem Topf",
+    }) as HTMLInputElement;
+    await userEvent.click(box);
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.className).toContain("border-destructive");
+    expect(alert.className).not.toMatch(/warning/);
+    expect(
+      within(alert).getByText("Der Haken bei „Wurzeln aus dem Topf“ ist nicht gespeichert."),
+    ).toBeTruthy();
+    expect(
+      within(alert).getByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Roher Serverkram")).toBeNull();
+    expect(box.checked).toBe(false);
+    await userEvent.click(within(alert).getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(box.checked).toBe(true));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(posts(sent)).toEqual([
+      {
+        path: "/specimens/e1/repot-signs",
+        body: { sign: "roots_out", ticked: true, timeZone: expect.any(String) },
+      },
+      {
+        path: "/specimens/e1/repot-signs",
+        body: { sign: "roots_out", ticked: true, timeZone: expect.any(String) },
+      },
+    ]);
+  });
 });

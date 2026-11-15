@@ -13,7 +13,7 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import type { ApiError } from "../../../../shared/data";
-import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {
   catchDateSchema,
@@ -149,9 +149,9 @@ export function CatchDateForm(props: {
         >
           <CorrectedDateField control={form.control} today={today} />
           {alertText !== null && (
-            <Warning>
+            <ErrorNotice>
               <p>{alertText}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit="Fangdatum speichern"

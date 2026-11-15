@@ -21,6 +21,13 @@ export const LIVE = "pflanzendex.live_session";
 
 const t = texts(table);
 
+// Once per tab, never after an explicit sign-out and never while the address still carries a result of the detour.
+export function shouldTrySilently(): boolean {
+  const q = new URLSearchParams(window.location.search);
+  if (q.has("code") || q.has("error")) return false;
+  return !window.sessionStorage.getItem(MARKER) && !window.sessionStorage.getItem(SILENT_TRIED);
+}
+
 // Ends the session at the sign-in service; `then` says what the return does (registerReturn and switchReturn in session.ts).
 export function endSession(
   mgr: UserManager,
@@ -50,6 +57,11 @@ function withError(z: State, error: string | undefined): State {
 // The busy mark of "Auf allen Geräten abmelden" sits on the signed-in state only (US-ACC-01).
 function withBusy(z: State, busy: boolean): State {
   return z.kind === "signedIn" ? { ...z, everywhereBusy: busy } : z;
+}
+
+// The failure of "Auf allen Geräten abmelden" has its own field, so only its alert offers the retry that repeats it (US-QS-32).
+function withEverywhereError(z: State, error: string | undefined): State {
+  return z.kind === "signedIn" ? { ...z, everywhereError: error } : z;
 }
 
 // The stored sign-in for a sign-out. An expired access token is renewed once, silently, first; a renewal that fails leaves no
@@ -123,8 +135,9 @@ export function sessionActions(
     everywhereSignOut: async () => {
       if (everywhereRunning) return;
       everywhereRunning = true;
-      setState((z) => withBusy(withError(z, undefined), true));
-      const showError = (text: string) => setState((z) => withBusy(withError(z, text), false));
+      setState((z) => withBusy(withEverywhereError(withError(z, undefined), undefined), true));
+      const showError = (text: string) =>
+        setState((z) => withBusy(withEverywhereError(z, text), false));
       try {
         const mgr = await manager;
         const user = await signedInUser(mgr);

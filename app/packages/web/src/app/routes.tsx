@@ -133,6 +133,8 @@ export function AppRoutes(props: {
   error?: string;
   /** "Auf allen Geräten abmelden" runs (US-ACC-01): its control shows busy. */
   everywhereBusy?: boolean;
+  /** Its failure, with the retry that repeats it (US-QS-32). */
+  everywhereError?: string;
   onOpen: (v: LinkTarget) => void;
   onOpenProfile: (id: string) => void;
   handOver: HandOver;
@@ -165,6 +167,7 @@ export function AppRoutes(props: {
               locks={(ids) => <LockedRows only={ids} />}
               {...(props.error ? { error: props.error } : {})}
               {...(props.everywhereBusy ? { everywhereBusy: true } : {})}
+              {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
             />
           }
         />

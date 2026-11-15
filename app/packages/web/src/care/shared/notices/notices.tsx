@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { refusalText } from "@/shared/lib/error-text";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import type { ApiError } from "../../../shared/data";
 
 /** What a successful action says happened (P-09). */
@@ -11,19 +12,22 @@ export function StatusNote(props: { children: React.ReactNode }) {
   );
 }
 
-/** A refusal of an action: stays visible with the text of its code and takes the focus (P-10). */
+/**
+ * A refusal of an action: stays visible with the text of its code and takes the focus (P-10). The one error tone of the app
+ * (SG-COLOR-04, SG-STATE-03): red border and error mark.
+ */
 export function RefusalAlert({ error }: { error: ApiError }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => ref.current?.focus(), [error]);
   return (
-    <div
-      role="alert"
+    <Banner
+      variant="error"
       tabIndex={-1}
       ref={ref}
-      className="rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <p>{refusalText(error)}</p>
-    </div>
+      {refusalText(error)}
+    </Banner>
   );
 }
 
