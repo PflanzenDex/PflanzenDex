@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { todayTexts } from "@/today";
 import type { DrawTile, TodayTile } from "../../today-area";
 
 const t = texts(todayTexts);
+const plural = plurals(todayTexts);
 
 /** What a category tile and the summary need of one list (US-QS-18). */
 export type CategoryCount = {
@@ -38,6 +39,7 @@ export function CategoryTile(props: { id: string; label: string; category: Categ
         ) : (
           <span className="text-sm text-muted-foreground">{t("tiles.loading")}</span>
         )}
+        {/* A space between count and label: the accessible name reads "1 Behandlung" (US-QS-32, F-0071); the flex column shows none. */}{" "}
         <span className="text-sm">{props.label}</span>
       </LayerOpener>
     </li>
@@ -60,7 +62,11 @@ export function Tiles(props: {
   return (
     <ul className={TILE_GRID} aria-label={t("tiles.label")}>
       {!props.treatmentFirst && (
-        <CategoryTile id="treatments" label={t("tiles.treatments")} category={props.treatments} />
+        <CategoryTile
+          id="treatments"
+          label={plural.word("tiles.treatments", props.treatments.count)}
+          category={props.treatments}
+        />
       )}
       <CategoryTile id="watering" label={t("tiles.watering")} category={props.watering} />
       <CategoryTile id="hints" label={t("tiles.hints")} category={props.hints} />

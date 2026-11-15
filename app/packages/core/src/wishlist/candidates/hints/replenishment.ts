@@ -10,8 +10,10 @@ import { zoneLabel } from "../../../light";
  */
 export const REPLENISH_BUFFER = 2;
 
+/** The count and its word stay on one line: a no-break space between them (US-QS-32, SG-TYPE-07). */
+const NBSP = "\u00a0";
 const candidates = (n: number): string =>
-  `${n} ${n === 1 ? "offener Kandidat" : "offene Kandidaten"}`;
+  `${n}${NBSP}${n === 1 ? "offener Kandidat" : "offene Kandidaten"}`;
 
 /** The zones below the buffer, each with the warning text; `nextAction` is `null` while nothing is missing. */
 export function replenishment(

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { SharedDevice } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { withUnit } from "@/shared/lib/format";
 import { LoadFrame } from "../../../../shared/data";
 import { loadFriendEquipment } from "../../../api/friends-api";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -29,19 +30,17 @@ const label = (type: string) => TYPE_LABELS[type] ?? type;
 
 function Device({ d }: { d: SharedDevice }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border p-3">
+    <div className="@container min-w-0 rounded-lg border border-border p-3">
       <h3 className="break-words font-semibold">{d.name}</h3>
       <p className="m-0 text-sm text-muted-foreground">{label(d.type)}</p>
-      <dl className="m-0 mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+      <dl className="m-0 mt-2 grid grid-cols-1 gap-x-3 gap-y-1 text-sm @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
         <dt>Modell</dt>
         <dd className="m-0">{d.model ?? "unbekannt"}</dd>
         {d.type === "Lamp" ? (
           <>
             <dt>Lichtstufe</dt>
             <dd className="m-0">
-              {d.luxCeiling === null
-                ? "unbekannt"
-                : `bis ${d.luxCeiling.toLocaleString("de-DE")} lx`}
+              {d.luxCeiling === null ? "unbekannt" : `bis ${withUnit(d.luxCeiling, "lx")}`}
             </dd>
           </>
         ) : null}

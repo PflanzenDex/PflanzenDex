@@ -18,7 +18,8 @@ const lux = new Intl.NumberFormat("de-DE");
  * the next step on the row itself (P-09).
  */
 function Row({ r }: { r: LightOverviewRow }) {
-  const zone = r.zone ? zoneLabel(r.zone.name) : t("overview.zoneUnknown");
+  // The zone is one part of a line joined by " · " (US-QS-32): the cutting light reads "Zone 1 (Stecklingslicht)".
+  const zone = r.zone ? zoneLabel(r.zone.name, { inLine: true }) : t("overview.zoneUnknown");
   const need = r.lightDemandLux === null ? t("overview.unknown") : lux.format(r.lightDemandLux);
   return (
     <div className="grid min-w-0 gap-0.5 break-words rounded-lg border border-border p-3 text-sm">

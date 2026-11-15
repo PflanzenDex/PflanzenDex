@@ -49,12 +49,18 @@ const UNITS =
 const NUMBER_UNIT = new RegExp(`(\\d(?:[\\d.,]*\\d)?) (${UNITS})(?![\\p{L}])`, "gu");
 const DATE_RANGE = /(\d{2}\.\d{2}\.\d{4}) (–|-|bis) (\d{2}\.\d{2}\.\d{4})/g;
 
+/** A zone or lamp name and its number: "Zone 2", "Lampe 2", "Zone 1 (Stecklingslicht)" (US-QS-32). */
+const ZONE_NUMBER = /\b(Zone|Lampe) (\d+)\b/g;
+
 /**
- * Number and unit, and the two ends of a date range, never break apart (US-QS-15, US-QS-18, US-QS-24):
- * "10 Tage", "12,5 cm", "30.000 Lux" and "03.10.2026 – 05.10.2026" get non-breaking spaces.
+ * Number and unit, the two ends of a date range and a zone name with its number never break apart (US-QS-15, US-QS-18,
+ * US-QS-24, US-QS-32): "10 Tage", "12,5 cm", "30.000 Lux", "03.10.2026 – 05.10.2026" and "Zone 2" get non-breaking spaces.
  */
 export const keepTogether = (text: string): string =>
-  text.replace(NUMBER_UNIT, `$1${NBSP}$2`).replace(DATE_RANGE, `$1${NBSP}$2${NBSP}$3`);
+  text
+    .replace(NUMBER_UNIT, `$1${NBSP}$2`)
+    .replace(DATE_RANGE, `$1${NBSP}$2${NBSP}$3`)
+    .replace(ZONE_NUMBER, `$1${NBSP}$2`);
 
 /** A number with its unit as one unbreakable piece: `withUnit(30000, "Lux")` is "30.000 Lux" (US-QS-24). */
 export const withUnit = (value: number, unit: string): string =>

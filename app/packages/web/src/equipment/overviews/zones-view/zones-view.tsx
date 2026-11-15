@@ -43,7 +43,7 @@ function LampRow(props: {
             disabled={actions.busy}
             onChange={(e) => e.target.value && actions.onZone(lamp, e.target.value)}
           >
-            {zoneId === "" ? <option value="">ohne Zone</option> : null}
+            {zoneId === "" ? <option value="">Lichtzone fehlt</option> : null}
             {zones.map((z) => (
               <option key={z.zoneId} value={z.zoneId}>
                 {zoneLabel(z.name)}

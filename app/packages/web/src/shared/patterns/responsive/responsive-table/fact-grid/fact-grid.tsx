@@ -43,7 +43,7 @@ export function FactGrid({ facts, next, className }: FactGridProps) {
         // The value column may shrink below its longest word, so a long value wraps and never runs past the panel (issue 1019).
         // In a box narrower than 12 rem (a container query in rem, so it follows the text size) each label stands above its
         // value: at 200 % text the label column alone takes the room of the value, which then ran past the box (US-QS-15, issue 1180).
-        <dl className="m-0 grid grid-cols-1 gap-x-3 gap-y-2 [overflow-wrap:anywhere] @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
+        <dl className="m-0 grid grid-cols-1 gap-x-3 gap-y-2 [overflow-wrap:break-word] @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
           {known.map((f, index) => (
             <div key={`${index}-${f.label}`} className="contents">
               <dt className="font-semibold">{f.label}</dt>

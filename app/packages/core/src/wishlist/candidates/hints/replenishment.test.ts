@@ -32,9 +32,17 @@ describe("US-WUN-02 warning before the list is empty", () => {
     const r = await replenishment();
     expect(r.buffer).toBe(2);
     expect(r.zones.map((z) => [z.zoneId, z.open, z.text])).toEqual([
-      ["z3", 1, "Zone 3 braucht Nachschub (1 offener Kandidat)."],
-      ["z4", 0, "Zone 4 braucht Nachschub (0 offene Kandidaten)."],
+      ["z3", 1, "Zone 3 braucht Nachschub (1\u00a0offener Kandidat)."],
+      ["z4", 0, "Zone 4 braucht Nachschub (0\u00a0offene Kandidaten)."],
     ]);
+  });
+
+  it("US-QS-32 the count and its word never break apart: a no-break space joins them in the warning", async () => {
+    open("z3", 1);
+    const r = await replenishment();
+    const text = r.zones.find((z) => z.zoneId === "z3")?.text ?? "";
+    expect(text).toContain("(1\u00a0offener Kandidat)");
+    expect(text).not.toMatch(/\d (offen|Kandidat)/);
   });
 
   it("US-WUN-02 no warning when every zone has the buffer", async () => {

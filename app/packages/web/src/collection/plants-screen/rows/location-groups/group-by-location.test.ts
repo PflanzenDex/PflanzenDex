@@ -7,6 +7,18 @@ describe("US-QS-14 plants grouped by location", () => {
     expect(groupTitle("Wohnzimmer", "Zone 2", 2)).toBe("Wohnzimmer · Zone 2 · 2 Pflanzen");
   });
 
+  it("US-QS-32 the cutting light in the heading reads with brackets, the other zones as they are", () => {
+    expect(groupTitle("Flur", "Zone 1 · Stecklingslicht", 1)).toBe(
+      "Flur · Zone 1 (Stecklingslicht) · 1 Pflanze",
+    );
+    expect(groupTitle("Flur", "Lampe 2", 1)).toBe("Flur · Zone 2 · 1 Pflanze");
+    expect(groupTitle("Flur", "Regal oben", 1)).toBe("Flur · Regal oben · 1 Pflanze");
+  });
+
+  it("US-QS-32 the zone 'unbekannt' of a plant group stays as it is (P-08)", () => {
+    expect(groupTitle("Flur", null, 1)).toBe("Flur · Zone unbekannt · 1 Pflanze");
+  });
+
   it("US-QS-14 an unknown zone is named, a zone that is not loaded yet is left out (P-08)", () => {
     expect(groupTitle("Flur", null, 1)).toBe("Flur · Zone unbekannt · 1 Pflanze");
     expect(groupTitle("Flur", undefined, 1)).toBe("Flur · 1 Pflanze");

@@ -1,6 +1,7 @@
 {
   "tiles.label": "Themen",
-  "tiles.treatments": "Behandlungen",
+  "tiles.treatments.one": "Behandlung",
+  "tiles.treatments.other": "Behandlungen",
   "tiles.watering": "Gießen",
   "tiles.hints": "Fehlt noch",
   "tiles.failed": "nicht geladen",
@@ -13,7 +14,8 @@
   "empty.action": "Zur Sammlung",
   "later.one": "Ein weiterer Behandlungstermin steht später an.",
   "later.other": "{count} weitere Behandlungstermine stehen später an.",
-  "later.short": "{count} Termine später",
+  "later.short.one": "{count} Termin später",
+  "later.short.other": "{count} Termine später",
   "tasks.title": "Weitere Aufgaben",
   "filter.shown": "Nur Gießen ist angezeigt.",
   "filter.hidden": "Behandlungen und fehlende Angaben sind ausgeblendet.",

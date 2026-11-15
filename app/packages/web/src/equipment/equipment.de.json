@@ -14,6 +14,7 @@
   "costs.none.description": "Sie erscheinen, sobald du Geräte mit Preis erfasst.",
   "lamps.none.title": "Noch keine Lampe erfasst",
   "lamps.none.description": "Erfasse eine Lampe mit „Gerät erfassen“; sie bekommt eine Lichtzone.",
+  "zone.missing": "Lichtzone fehlt",
   "sensors.none.title": "Noch kein Sensor erfasst",
   "sensors.none.description": "Erfasse einen Sensor mit „Gerät erfassen“ und ordne ihn dann einer Pflanze oder einem Standort zu.",
   "needs.title": "Fehlt / Nachkaufen",

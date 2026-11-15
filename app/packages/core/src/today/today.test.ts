@@ -291,7 +291,7 @@ describe("US-QS-04 deviations become visible in the today list", () => {
       id: "buffer:z3",
       specimenId: null,
       specimenName: null,
-      text: "Zone 3 braucht Nachschub (1 offener Kandidat).",
+      text: "Zone 3 braucht Nachschub (1\u00a0offener Kandidat).",
       target: "wishlist",
     });
     expect(r.value.items[0]?.nextAction).toContain("Zone 3");

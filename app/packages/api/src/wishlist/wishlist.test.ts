@@ -204,7 +204,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
       ["Zone 3", 1],
       ["Zone 4", 1],
     ]);
-    expect(own.zones[0]?.text).toBe("Zone 2 braucht Nachschub (1 offener Kandidat).");
+    expect(own.zones[0]?.text).toBe("Zone 2 braucht Nachschub (1\u00a0offener Kandidat).");
     // Ben's zones are his own and hold none of Anna's wishes (P-04).
     const ben = (await candidates(subB)).body["replenishment"] as { zones: { open: number }[] };
     expect(ben.zones.map((z) => z.open)).toEqual([0, 0, 0]);

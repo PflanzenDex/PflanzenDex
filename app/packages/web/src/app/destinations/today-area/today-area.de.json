@@ -1,5 +1,12 @@
 {
   "layer.treatments": "Behandlungen werden geladen …",
   "layer.watering": "Gießliste wird geladen …",
-  "layer.hints": "Hinweise werden geladen …"
+  "layer.hints": "Hinweise werden geladen …",
+  "summary.treatments.one": "{count} Behandlung offen",
+  "summary.treatments.other": "{count} Behandlungen offen",
+  "summary.overdue": "davon {count}\u00a0überfällig",
+  "summary.watering.one": "{count} Pflanze zu gießen",
+  "summary.watering.other": "{count} Pflanzen zu gießen",
+  "summary.hints.one": "{count} Angabe fehlt",
+  "summary.hints.other": "{count} Angaben fehlen"
 }

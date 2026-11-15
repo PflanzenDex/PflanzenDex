@@ -5,11 +5,14 @@ import { WateringList } from "@/monitoring";
 import { TodayPage, type TodayDestination } from "@/today";
 import type { LinkTarget } from "@/shared/patterns/navigation/navigation/navigation";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import type { TodayTile } from "../today-area";
+import table from "../today-area.de.json";
 import { Tiles, type CategoryCount } from "./tiles/tiles";
 
 const NBSP = " ";
-const count = (n: number, one: string, many: string) => `${n}${NBSP}${n === 1 ? one : many}`;
+const t = texts(table);
+const plural = plurals(table);
 
 /**
  * The one "Behandlungen" entry on the "Jetzt dran" row when the most urgent item is a treatment (US-QS-18): the name,
@@ -62,11 +65,13 @@ export function TodaySummary(props: {
   };
   if (withTreatments)
     add(treatments, "Behandlungen", (n) => {
-      const base = count(n, "Behandlung offen", "Behandlungen offen");
-      return treatments.urgent ? `${base}, davon ${treatments.urgent} überfällig` : base;
+      const base = plural.counted("summary.treatments", n);
+      return treatments.urgent
+        ? `${base}, ${t("summary.overdue", { count: treatments.urgent })}`
+        : base;
     });
-  add(watering, "Gießen", (n) => count(n, "Pflanze zu gießen", "Pflanzen zu gießen"));
-  add(hints, "Hinweise", (n) => count(n, "Angabe fehlt", "Angaben fehlen"));
+  add(watering, "Gießen", (n) => plural.counted("summary.watering", n));
+  add(hints, "Hinweise", (n) => plural.counted("summary.hints", n));
   if (parts.length === 0 && failed.length === 0) return null;
   const tint =
     withTreatments && treatments.urgent

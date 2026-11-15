@@ -1,6 +1,6 @@
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { summaryDate } from "@/shared/lib/format";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
@@ -12,6 +12,7 @@ import { NowSkeleton } from "../today-skeleton/today-skeleton";
 import table from "../../today.de.json";
 
 const t = texts(table);
+const plural = plurals(table);
 
 export type { TodayDestination };
 
@@ -20,8 +21,8 @@ export type { TodayDestination };
  * US-QS-18): three on a phone, so Heute still fits 360×640 px; six from 768 px.
  */
 const PAGE_SIZE = { phone: 3, md: 6 } as const;
-const laterText = (n: number): string =>
-  n === 1 ? t("later.one") : t("later.other", { count: n });
+/** "Ein weiterer Behandlungstermin …" for one, "{count} weitere …" otherwise, the count with a no-break space (US-QS-32). */
+const laterText = (n: number): string => plural.counted("later", n);
 
 /**
  * The single most urgent item and, below the tiles, the further tasks as compact rows (US-QS-18). Treatment items are
@@ -105,7 +106,9 @@ export function Below(props: { list: TodayList; onOpen: (d: TodayDestination) =>
       )}
       {first && list.upcoming > 0 && (
         <p className="text-sm text-muted-foreground">
-          {rest.length > 0 ? t("later.short", { count: list.upcoming }) : laterText(list.upcoming)}
+          {rest.length > 0
+            ? plural.counted("later.short", list.upcoming)
+            : laterText(list.upcoming)}
         </p>
       )}
     </>

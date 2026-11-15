@@ -32,7 +32,7 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
   const { openLayer } = useLayer(sheet);
   const facts = [
     TYPE_LABELS[item.type],
-    item.type === LAMP_TYPE ? (zone ?? "ohne Zone") : null,
+    item.type === LAMP_TYPE ? (zone ?? t("zone.missing")) : null,
     item.type === POT_TYPE
       ? item.diameterCm === null
         ? t("pot.sizeUnknown")
