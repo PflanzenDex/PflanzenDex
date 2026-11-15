@@ -14,7 +14,9 @@ const t = texts(table);
 type Token = () => Promise<string | undefined>;
 
 /** A duration: seconds below a minute, minutes and seconds from 60 s on: "6 min 19 s" for 379 s (US-QS-32). */
-function duration(seconds: number): string {
+function duration(value: number): string {
+  // Whole seconds first, so a fractional median reads as the seconds the keeper sees (379.5 s is "6 min 20 s").
+  const seconds = Math.round(value);
   if (seconds < 60) return withUnit(seconds, t("unit.second"));
   const minutes = withUnit(Math.floor(seconds / 60), t("unit.minute"));
   const rest = seconds % 60;

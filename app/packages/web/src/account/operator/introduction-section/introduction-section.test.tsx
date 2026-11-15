@@ -135,4 +135,23 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
     expect(region.querySelectorAll("li")).toHaveLength(3);
     expect(region.innerHTML.match(/(^|\s)(sm|md|lg|xl):/g)).toBeNull();
   });
+  it("US-QS-32 a fractional median is rounded to whole seconds first: 379.5 s reads 6 min 20 s", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        json(200, {
+          ...base,
+          medianSecondsToFirstPlant: { known: true, value: 379.5, targetMet: false },
+          withoutPlantPercent: { known: true, value: 60, targetMet: false },
+        }),
+      ),
+    );
+    render(<IntroductionSection api="http://api" token={async () => "tok"} />);
+    const row = (await screen.findByText("Mediane Zeit bis zur ersten Pflanze")).closest(
+      "li",
+    ) as HTMLElement;
+    expect(row.textContent).toContain("6\u00a0min 20\u00a0s");
+    expect(row.textContent).not.toContain("19,5");
+    expect(row.textContent).not.toContain(".5");
+  });
 });
