@@ -126,6 +126,7 @@ function Address() {
   return null;
 }
 const back = () => act(() => route.navigate?.(-1));
+const forward = () => act(() => route.navigate?.(1));
 
 /**
  * The router of the tests of issue 2154: a MemoryRouter whose history changes can be held back. The real routers
@@ -454,6 +455,76 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
       timeout: 5_000,
     });
     expect(route.search).not.toContain("form=measure");
+  }, 15_000);
+
+  /**
+   * Forward twice from the list (issue 2158): the measure view comes back on its own entry, and the second Forward leaves
+   * it. No entry ahead carries the form guard, so the second Forward never lands on a guard entry.
+   */
+  async function forwardOpensThenLeaves() {
+    forward();
+    await waitFor(() => expect(route.search).toContain("form=measure"));
+    expect(route.guarded).toBe(false);
+    await waitFor(() => expect(document.getElementById("measure-title")).not.toBeNull(), {
+      timeout: 5_000,
+    });
+    forward();
+    await waitFor(() => expect(route.search).not.toContain("form=measure"));
+    expect(route.guarded).toBe(false);
+    expect(document.getElementById("measure-title")).toBeNull();
+  }
+
+  it("US-QS-15 Verwerfen after a Back with typed measurement leaves no guard entry ahead of a form opened by the app (issue 2158)", async () => {
+    stubCollection();
+    renderAt("/collection?view=plants");
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    back();
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
+    await forwardOpensThenLeaves();
+  }, 15_000);
+
+  it("US-QS-15 Verwerfen after a Back with typed measurement leaves no guard entry ahead of a form opened by a reload (issue 2158)", async () => {
+    stubCollection();
+    renderAt("/collection?view=plants&form=measure&plant=e1");
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    back();
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
+    expect(route.search).not.toContain("form=measure");
+    await forwardOpensThenLeaves();
+  }, 15_000);
+
+  it("US-QS-15 Verwerfen after the view's own back control with typed measurement leaves no guard entry ahead (issue 2158)", async () => {
+    stubCollection();
+    renderAt("/collection?view=plants");
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
+      timeout: 5_000,
+    });
+    await forwardOpensThenLeaves();
   }, 15_000);
 });
 

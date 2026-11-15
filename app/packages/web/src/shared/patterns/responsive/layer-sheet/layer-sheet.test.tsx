@@ -845,6 +845,110 @@ describe("US-QS-15 a second Back keeps the layer and its question; a layer opene
   });
 });
 
+/**
+ * A close over the guard entry leaves no guard entry ahead (issue 2158): the guard becomes a plain entry of the list, so
+ * Forward reaches the layer's own entry, a second Forward closes the layer, and every Back on the way back shows a change.
+ */
+describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (issue 2158)", () => {
+  /** From the list: Forward opens the layer on its own entry, a second Forward closes it; no entry ahead is a guard. */
+  async function forwardOpensThenCloses() {
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).toMatchObject({ layerFromApp: true });
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.search).toBe("");
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+  }
+
+  it("US-QS-15 Verwerfen after a Back leaves no guard entry ahead: Forward reaches the layer, a second Forward closes it (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    // The guard entry that the question was pushed with commits after the question shows (PF-031).
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+    // Every Back on the way back changes what is shown: the layer, then the list.
+    fireEvent.click(screen.getByText("Browser zurück"));
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/start");
+  });
+
+  it("US-QS-15 Verwerfen after a Back in a layer opened by a reload leaves no guard entry ahead (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.type(within(layer).getByLabelText("Text"), "Basilikum");
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/");
+    await forwardOpensThenCloses();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/");
+  });
+
+  it("US-QS-15 Escape then Verwerfen leaves no guard entry ahead: a second Forward closes the layer (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+  });
+
+  it("US-QS-15 a saved close with typed input leaves no guard entry ahead: Forward reaches the layer, a second Forward closes it (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/before", "/start"], 1, true);
+    await openAndType("Thymian");
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.search).toBe("");
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+  });
+
+  it("US-QS-15 on the browser history, Verwerfen after a Back leaves no guard entry ahead: Forward opens the layer, a second Forward closes it (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(window.location.search).toBe("");
+    // The browser's own history: the popstate of each step arrives later, so each Forward is awaited.
+    window.history.forward();
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    window.history.forward();
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+  });
+});
+
 /** A filter-like replace inside the layer, without state, as the catalog's filters do (US-QS-15, issue 2145). */
 function ReplaceInside() {
   const [, setParams] = useSearchParams();

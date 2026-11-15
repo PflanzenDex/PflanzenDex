@@ -147,8 +147,9 @@ function reopenForm(c: Latest, refs: Refs, setAsking: Dispatch<SetStateAction<bo
 /**
  * The guard of the history (US-QS-15): the first input pushes a guard entry above the form. Back from the form then lands
  * on that entry; with unsaved input the person is put back on the form and asked, otherwise the guard is passed. A second
- * Back that passes the form with unsaved input is put back on it with the question (issue 2145). A close walks back out
- * of the form's own entries (its guard and its layers) to the list the form replaced.
+ * Back that passes the form with unsaved input is put back on it with the question (issue 2145). A close that is not over
+ * the guard walks back out of the form's own entries to the list the form replaced; a close over the guard turns the guard
+ * into that list (`closeOverGuard`, issue 2158).
  */
 export function usePopGuard(
   latest: Ref<Latest>,

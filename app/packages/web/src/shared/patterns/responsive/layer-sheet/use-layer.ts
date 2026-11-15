@@ -1,12 +1,12 @@
 import * as React from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams, type NavigateFunction } from "react-router";
 
 const PARAM = "sheet";
 /** History state set when the app itself opened the layer, so closing can go back instead of leaving the app. */
 export const FROM_APP = "layerFromApp";
 /**
  * History state of the entry above a layer whose typed input is unsaved (US-QS-32): Back from the layer then lands on
- * that entry and asks first, and a close walks back over it.
+ * that entry and asks first, and a close turns it into the list it leaves to (`walkOverGuard`, issue 2158).
  */
 export const LAYER_GUARD = "layerGuard";
 /**
@@ -16,7 +16,7 @@ export const LAYER_GUARD = "layerGuard";
 export const BELOW = "layerBelow";
 /** An address of a history entry, as far as the layers compare it (path and query). */
 export type Below = { pathname: string; search: string };
-/** The layers that walk back over their own history entries to close (US-QS-32, see `closeLayer`). */
+/** The layers that are closing over their guard entry right now (US-QS-32, issue 2158, see `closeLayer`). */
 const closing = new Set<string>();
 
 /** The element that opened the layer; focus returns to it when the layer closes (US-QS-15). */
@@ -36,8 +36,8 @@ type LayerControl = {
   /**
    * Closes the layer: back when the app opened it, otherwise it only removes the address part. A layer that a reload or a
    * link opened gets its list below it first (`useLayerOrdering`, issue 2145), so it is back too; the replace is the
-   * fallback. On the guard entry above the layer (typed input, US-QS-32) it walks back over the guard and the layer's
-   * entry, so no guard entry is left.
+   * fallback. On the guard entry above the layer (typed input, US-QS-32) the guard becomes the list and the step back
+   * reaches it (`walkOverGuard`), so no guard entry is left ahead (issue 2158).
    */
   closeLayer: () => void;
 };
@@ -71,13 +71,22 @@ export function useUnsavedInput(dirty: boolean): { leave: (action: () => void) =
 export const stateFlag = (state: unknown, flag: string): boolean =>
   (state as Record<string, unknown> | null)?.[flag] === true;
 
-/** Whether the layer `id` walks back over its entries to close (see `closeLayer`). */
+/** Whether the layer `id` is closing over its guard entry (see `closeLayer`). */
 export const isClosing = (id: string): boolean => closing.has(id);
-/** Starts or ends the walk back of the layer `id`. */
+/** Starts or ends the close of the layer `id` over its guard entry. */
 export const setClosing = (id: string, on: boolean): void => {
   if (on) closing.add(id);
   else closing.delete(id);
 };
+
+/**
+ * Closes from the guard entry above a layer or a form (issue 2158): the guard becomes a plain entry at `to`, as a forward
+ * entry cannot be deleted; the step back reaches `to` over the layer's entry, in one handler.
+ */
+export function walkOverGuard(navigate: NavigateFunction, to: Below & { hash: string }): void {
+  void navigate(to, { replace: true });
+  void navigate(-2);
+}
 
 /** The address of the entry below a layer's entry, from its history state (issue 2145); `null` when the state names none. */
 export const belowOf = (state: unknown): Below | null =>
@@ -127,8 +136,8 @@ export function useLayer(id: string): LayerControl {
     closeLayer: () => {
       if (open && guarded) {
         setClosing(id, true);
-        void navigate(-1);
-        return;
+        const { pathname, search, hash } = location;
+        return walkOverGuard(navigate, { pathname, search: withoutLayer(search), hash });
       }
       if (fromApp) {
         void navigate(-1);

@@ -11,6 +11,7 @@ import {
   type UnsavedGuard,
 } from "./use-layer";
 import {
+  closeHere,
   guardHere,
   isHeld,
   nameLayer,
@@ -47,7 +48,7 @@ function useQuestion(refs: Refs, id: string) {
   /** A close the person asks for: asks while input is unsaved, otherwise closes at once. */
   const requestClose = () => {
     if (!refs.dirty.current) {
-      refs.latest.current.closeLayer();
+      closeHere(refs, id);
       return;
     }
     setRefusals((n) => n + 1);
@@ -60,7 +61,7 @@ function useQuestion(refs: Refs, id: string) {
     setAsking(false);
   }, []);
   const discard = React.useCallback(() => {
-    const action = pending.current ?? (() => refs.latest.current.closeLayer());
+    const action = pending.current ?? (() => closeHere(refs, id));
     pending.current = null;
     asked.current = false;
     refs.dirty.current = false;
@@ -86,9 +87,9 @@ function useQuestion(refs: Refs, id: string) {
 type QuestionState = ReturnType<typeof useQuestion>;
 
 /**
- * The address drives the guard (US-QS-32): Back asks, or closes a layer without input; a walk back over the guard goes on
- * until the address drops the layer; the focus returns into the layer after "Weiter bearbeiten". A Back that passes a
- * layer with unsaved input is held and put back with its question (issue 2145).
+ * The address drives the guard (US-QS-32): Back asks, or closes a layer without input; the focus returns into the layer
+ * after "Weiter bearbeiten". A Back that passes a layer with unsaved input is held and put back with its question (issue
+ * 2145). A close over the guard is one step to the list (`closeHere`, issue 2158).
  */
 function useWalk(layer: { id: string; open: boolean; key: string }, refs: Refs, q: QuestionState) {
   const { id, open, key } = layer;
@@ -96,19 +97,12 @@ function useWalk(layer: { id: string; open: boolean; key: string }, refs: Refs, 
   const { asking, setAsking, pending, returnTo, kept, asked, ask } = q;
   React.useEffect(() => {
     const c = refs.latest.current;
+    // A close over the guard steps back to the list in one go (`closeHere`): the walk ends when the layer is gone.
     if (isClosing(id)) {
       if (!c.open) {
         setClosing(id, false);
         refs.guarded.current = false;
-        return;
       }
-      if (stateFlag(c.location.state, FROM_APP)) {
-        void c.navigate(-1);
-        return;
-      }
-      setClosing(id, false);
-      refs.guarded.current = false;
-      c.closeLayer();
       return;
     }
     if (c.type !== "POP" || stateFlag(c.location.state, LAYER_GUARD) || !refs.guarded.current)
@@ -149,8 +143,8 @@ function useWalk(layer: { id: string; open: boolean; key: string }, refs: Refs, 
 /**
  * The guard of a layer (US-QS-32, SG-FORM-06, SG-SHEET-05). Typed input pushes a guard entry above the layer, so Back
  * lands on it and asks. A close the person asks for (Escape, close control, swipe, outside tap) asks while input is
- * unsaved. A close the app makes after a saved write does not ask: `closeLayer` walks back over the guard. A second Back
- * onto the entry below the layer holds the layer on screen (`held`), so its input survives (issue 2145).
+ * unsaved. A close the app makes after a saved write does not ask: `closeLayer` walks back over the guard (issue 2158).
+ * A second Back onto the entry below the layer holds the layer on screen (`held`), so its input survives (issue 2145).
  */
 export function useLayerGuard(id: string, open: boolean, closeLayer: () => void) {
   const location = useLocation();
