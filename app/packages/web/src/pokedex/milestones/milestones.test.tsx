@@ -47,8 +47,29 @@ describe("US-POK-11 milestones with an instruction for action", () => {
       />,
     );
     expect(screen.getByText("2 Meilensteine erreicht")).toBeTruthy();
-    expect(screen.getByText("Kakteen: Entdeckt (2026-01-02)")).toBeTruthy();
-    expect(screen.getByText("Kakteen: Kenner (2026-02-03)")).toBeTruthy();
+    expect(screen.getByText("Kakteen: Entdeckt")).toBeTruthy();
+    expect(screen.getByText("Kakteen: Kenner")).toBeTruthy();
+  });
+
+  it("US-QS-32 a reached milestone shows its date as TT.MM.JJJJ in the trailing value, without brackets", () => {
+    const { container } = view(
+      <Milestones
+        caught={[caught("A a", "2026-01-02"), caught("A b", "2026-02-03")]}
+        tree={tree}
+      />,
+    );
+    const discovered = screen.getByText("Kakteen: Entdeckt").closest("li") as HTMLElement;
+    expect(within(discovered).getByText("02.01.2026").tagName).toBe("SPAN");
+    expect(discovered.textContent).not.toMatch(/[()]/);
+    const connoisseur = screen.getByText("Kakteen: Kenner").closest("li") as HTMLElement;
+    expect(within(connoisseur).getByText("03.02.2026")).toBeTruthy();
+    expect(container.querySelector("ul")?.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it("US-QS-32 no milestone view prints a date in the storage form YYYY-MM-DD", () => {
+    const { container } = view(<Milestones caught={[caught("A a", "2026-01-02")]} tree={tree} />);
+    expect(container.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    expect(container.textContent).toContain("Kakteen: Entdeckt");
   });
 
   it("US-QS-32 · SG-ICON-01 the reached milestones hide the browser's marker and show a chevron icon, not a glyph", () => {

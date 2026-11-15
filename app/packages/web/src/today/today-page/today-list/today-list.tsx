@@ -1,12 +1,12 @@
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
-import { dateText } from "@/shared/lib/format";
+import { summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import type { TodayList } from "@pflanzendex/core";
+import { localToday, type TodayList } from "@pflanzendex/core";
 import type { ReactNode } from "react";
-import type { Request } from "../../../shared/data";
+import { currentTimeZone, type Request } from "../../../shared/data";
 import { isTreatment, TodayRow, type TodayDestination } from "../today-row/today-row";
 import { NowSkeleton } from "../today-skeleton/today-skeleton";
 import table from "../../today.de.json";
@@ -34,12 +34,14 @@ function Content(props: {
 }) {
   const { list } = props;
   const [first] = list.items;
+  const today = localToday(new Date(), currentTimeZone());
   return (
     <>
       {first ? (
         <TodayRow
           item={first}
-          date={dateText(list.date)}
+          // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
+          {...(list.date === today ? {} : { date: summaryDate(list.date, today) })}
           onOpen={props.onOpen}
           {...(isTreatment(first) && props.treatmentsEntry
             ? { action: props.treatmentsEntry }

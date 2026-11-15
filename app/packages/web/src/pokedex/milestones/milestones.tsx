@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
   milestoneOverview,
@@ -101,7 +102,13 @@ export function Milestones(props: {
           </DisclosureSummary>
           <ul className="grid gap-1 pt-2">
             {reached.map((m) => (
-              <li key={m.id}>{m.reachedOn ? `${label(m)} (${m.reachedOn})` : label(m)}</li>
+              // The date is the trailing value of its row, in the form of the keeper's dates (US-QS-32, SG-FMT-01).
+              <li key={m.id} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0">{label(m)}</span>
+                {m.reachedOn && (
+                  <span className="shrink-0 tabular-nums">{dateText(m.reachedOn)}</span>
+                )}
+              </li>
             ))}
           </ul>
         </details>

@@ -45,6 +45,7 @@ const last = (fetchFn: ReturnType<typeof server>) =>
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
@@ -115,6 +116,20 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     expect(screen.getByRole("list", { name: "Neuigkeiten" }).hasAttribute("data-page-fit")).toBe(
       true,
     );
+  });
+
+  it("US-QS-32 says 'Stand: heute' when the feed was read today", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:05:00Z"));
+    server(feed([event()]));
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    const hint = (await screen.findByText("Das ist neu.")).closest("p") as HTMLElement;
+    expect(hint.textContent).toContain("Stand: heute");
+    expect(hint.textContent).not.toContain("06.10.2026");
   });
 
   it("US-SOZ-05 an empty feed still says what to do next", async () => {

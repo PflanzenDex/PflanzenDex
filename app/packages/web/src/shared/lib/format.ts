@@ -1,3 +1,5 @@
+import { daysBetween } from "@pflanzendex/core";
+
 /** P-08: what is missing is called "unknown" and is never filled with a value. */
 export const UNKNOWN = "unbekannt";
 
@@ -8,6 +10,35 @@ export function dateText(iso: string): string {
 }
 
 const NBSP = "\u00a0";
+
+/** Up to this many days back or ahead a date reads relative in a summary line (SG-FMT-01). */
+const RELATIVE_DAYS = 7;
+
+/** The relative phrase of `iso` seen from `today` (both `YYYY-MM-DD`), or `null` beyond 7 days: calendar days, no zone. */
+function relativeDay(iso: string, today: string): string | null {
+  const days = daysBetween(today, iso);
+  if (Math.abs(days) > RELATIVE_DAYS) return null;
+  if (days === 0) return "heute";
+  if (days === -1) return "gestern";
+  if (days === 1) return "morgen";
+  return days < 0 ? `vor ${-days}${NBSP}Tagen` : `in ${days}${NBSP}Tagen`;
+}
+
+/**
+ * A date in a summary line ("Stand: gestern", "Zuletzt geprüft heute"; SG-FMT-01): relative up to 7 days back or ahead,
+ * else "TT.MM.JJJJ". `iso` and `today` are calendar dates of the keeper's zone (core `localToday`, `currentTimeZone()`).
+ */
+export function summaryDate(iso: string, today: string): string {
+  return relativeDay(iso, today) ?? dateText(iso);
+}
+
+/**
+ * A date in a phrase that reads "am <date>" (SG-FMT-01): "Gesund vor 6 Tagen" within 7 days, "Gesund am 01.10.2026"
+ * beyond. The relative word replaces "am", so "am heute" never appears.
+ */
+export function onDate(iso: string, today: string): string {
+  return relativeDay(iso, today) ?? `am ${dateText(iso)}`;
+}
 
 /** "12,5 cm": the growth measures of the species are measured in centimetres (US-WAC-01). */
 export const valueText = (value: number): string =>
