@@ -11,26 +11,57 @@ export type NavItem = {
   note?: string;
   /** German name of the group the item belongs to; the labelled sidebar shows it as a heading above the group (issue 1093). */
   group?: string;
+  /** The address a tap on this destination goes to while it is the current one (SG-NAV-03); `href` when not set. */
+  start?: string;
+  /** The mode a tap on the current destination remembers on this device, e.g. "plants" for "Sammlung" (SG-NAV-03). */
+  remember?: { key: string; value: string };
 };
 
-/** Same look for the bottom bar and the rail: a 56x30 px pill behind a 22 px icon, the label under it (ADR 0011 decision 6). */
+/**
+ * The per-device copy of the mode of "Sammlung" and "Entdecken" (DS-10; the address always wins). The keys live here, in a
+ * leaf module (its only import is a type), so the view modules and the navigation read them without an import cycle.
+ */
+export const SAMMLUNG_VIEW_KEY = "pflanzendex.collection-view";
+export const DISCOVER_VIEW_KEY = "pflanzendex.discover-view";
+
+/**
+ * What a tap on the current destination does besides going to its start (SG-NAV-03, US-QS-32): "Sammlung" opens its plants
+ * and remembers them, "Entdecken" its suggestions. The addresses are those of `PATHS` in the navigation; the other
+ * destinations start at their own address.
+ */
+export const START_MODES: Partial<Record<string, Pick<NavItem, "start" | "remember">>> = {
+  collection: {
+    start: "/collection?view=plants",
+    remember: { key: SAMMLUNG_VIEW_KEY, value: "plants" },
+  },
+  discover: {
+    start: "/discover?view=suggestions",
+    remember: { key: DISCOVER_VIEW_KEY, value: "suggestions" },
+  },
+};
+
+/** Same look for the bottom bar and the rail: a 56x30 px pill behind a 24 px icon, the label under it (ADR 0011 decision 6). */
 export const stackedItem =
-  "group flex min-h-[44px] shrink-0 min-w-[44px] flex-col items-center justify-center gap-1 px-0.5 py-1 text-center text-xs font-semibold " +
+  "group flex min-h-[44px] shrink-0 min-w-[44px] flex-col items-center justify-center gap-1 px-0.5 py-1 text-center text-xs " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 /**
- * The pill is the selection (accent fill); the semibold foreground label and `aria-current` repeat it, so colour is never
- * alone (DS-19). `w-14` is 3.5 rem, so it doubles with the text size; `max-w-full` keeps it inside its slot of the bar
- * at 200 % text (issue 1019: it stuck out of the bar at the right edge).
+ * The pill is the selection: its accent fill and a 1 px boundary in primary, which reaches 3:1 against the card of the bar
+ * in both schemes (SG-COLOR-06: 6.46:1 in light, 10.04:1 in dark). The label's weight (600 against 400) and `aria-current`
+ * repeat it, so colour is never alone (DS-19, SG-COLOR-05). `w-14` is 3.5 rem, so it doubles with the text size;
+ * `max-w-full` keeps it inside its slot of the bar at 200 % text (issue 1019: it stuck out of the bar at the right edge).
+ * `relative` lets the lock mark sit on the icon's corner; `[&>svg]` sizes only the direct icon in px (SG-ICON-01, 24 px),
+ * so the mark's own glyph keeps its size.
  */
 export const stackedPill = (active: boolean) =>
-  "flex h-[30px] w-14 max-w-full items-center justify-center rounded-full border border-transparent [&_svg]:size-[22px] " +
+  "relative flex h-[30px] w-14 max-w-full items-center justify-center rounded-full border [&>svg]:size-[24px] " +
   (active
-    ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
-    : "text-muted-foreground group-hover:bg-muted");
+    ? "border-primary bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
+    : "border-transparent text-muted-foreground group-hover:bg-muted");
 
+/** The selected label is semibold, the others regular (US-QS-32, F-0054); the colour follows the same choice. */
 export const stackedLabel = (active: boolean) =>
-  active ? "text-foreground" : "text-muted-foreground";
+  active ? "font-semibold text-foreground" : "font-normal text-muted-foreground";
 
 export const isActivePath = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");

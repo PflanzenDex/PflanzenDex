@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Clock, Ellipsis, Lock } from "lucide-react";
-import { NavLink, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { Button } from "@/shared/ui/button/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { cn } from "@/shared/lib/utils";
@@ -12,24 +12,44 @@ import {
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
 import { NavNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
+import { ReselectLink } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 
 /** At most 5 slots in the bar (DS-25): 5 destinations, or 4 plus "Mehr". */
 const BAR_SLOTS = 5;
 
 /**
- * The words under the icons (US-QS-15, owner decision 2026-11-01, issue 1107): a label never breaks inside a word. The
- * bar is a size container; once its inner width is below 21.75 rem (five slots of the longest label, "Sammlung" at
- * 4 rem, plus their padding and gaps), a label no longer fits its slot, so all labels leave the view and stay the
- * accessible name, and the bar shows icons only. The query is in rem, so a larger text size reaches it on a wider
- * screen (from about 110 % text at 360 px); at 100 % text the bar keeps its one line of labels.
+ * The words under the icons (US-QS-32, SG-NAV-07, F-0354): a label wraps to at most two lines inside its slot, and a word
+ * too wide for the slot breaks at a syllable with a hyphen (`hyphens-auto`; the document is `lang="de"`).
+ * `[overflow-wrap:anywhere]` is only the last fallback, so nothing leaves its slot. No label leaves the view at a larger
+ * text size (owner decision 2026-11-14, which reverses issue 1107); the bar grows with its labels.
  */
-const barText = "flex max-w-full flex-col items-center gap-1 @max-[21.75rem]:sr-only";
+const barWords = "block max-w-full text-center hyphens-auto [overflow-wrap:anywhere]";
 
 /**
- * The mark of a destination that is not open yet, in the bar (US-ONB-05, issue 1830): a small lock ("Noch gesperrt")
- * or clock ("Bald") beside the icon (placed on the link, so the pill stays its first child), and the words for assistive technology only. Written out below the label the words
- * wrapped, the bar grew to three lines (93 px instead of 59 px) and "Heute" lost that room on a phone. Plain, no colour
- * alarm and no motion (FR-ONB-08); the side navigation has the room and keeps the words.
+ * The label of a slot. With a text mark the accessible name reads "Freunde, Noch gesperrt" with no blank before the comma
+ * (F-0055): an absolutely placed element (sr-only) counts as a block for the accessible name and gets a blank before it, so
+ * the words for assistive technology are one element that holds the label and the mark, and the visible label is hidden
+ * from them.
+ */
+function BarWords({ label, note }: { label: string; note: string | undefined }) {
+  if (!note) return <span className={barWords}>{label}</span>;
+  return (
+    <>
+      <span aria-hidden="true" className={barWords}>
+        {label}
+      </span>
+      <span className="sr-only">
+        {label}, {note}
+      </span>
+    </>
+  );
+}
+
+/**
+ * The mark of a destination that is not open yet, in the bar (US-ONB-05, issue 1830, F-0055): a lock ("Noch gesperrt") or a
+ * clock ("Bald") in the upper right corner of the icon. It is 12 px with an 8 px glyph, set in px, so it stays the icon's
+ * size at a larger text size and inside its slot. It sits in the pill (which is `relative`), so the pill stays the link's
+ * first child. Plain, no colour alarm and no motion (FR-ONB-08); the words are for assistive technology (`BarWords`).
  */
 function LockMark({ note }: { note: string | undefined }) {
   if (!note) return null;
@@ -38,9 +58,9 @@ function LockMark({ note }: { note: string | undefined }) {
     <span
       aria-hidden="true"
       data-lock-mark={note === "Bald" ? "soon" : "locked"}
-      className="absolute left-1/2 top-1 ml-2 flex size-4 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
+      className="absolute left-1/2 top-[-4px] ml-[6px] flex size-[12px] items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
     >
-      <Icon className="size-2.5" strokeWidth={2.5} />
+      <Icon className="size-[8px]" strokeWidth={2.5} />
     </span>
   );
 }
@@ -69,17 +89,15 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           <span className={stackedPill(active)}>
             <Ellipsis aria-hidden="true" />
           </span>
-          <span className={barText}>
-            <span className="whitespace-nowrap">Mehr</span>
-          </span>
+          <BarWords label="Mehr" note={undefined} />
         </Button>
       </SheetTrigger>
       <SheetContent title="Mehr">
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
             <li key={item.href}>
-              <NavLink
-                to={item.href}
+              <ReselectLink
+                item={item}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   cn(
@@ -91,7 +109,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
                 {item.icon}
                 {item.label}
                 <NavNote text={item.note} inline />
-              </NavLink>
+              </ReselectLink>
             </li>
           ))}
         </ul>
@@ -102,10 +120,11 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
 
 /**
  * Fixed bottom bar below `md` (US-QS-07, DS-25, DS-22). Takes plain items, never modules (DS-44): the first four
- * stay in the bar, the rest move into the "Mehr" drawer. The active one has the accent pill, a semibold label and
- * `aria-current`, so color is never the only signal (DS-19). Greenhouse look: ADR 0011 decision 6. It follows the content
- * in the flow, after `main`, so it stays reachable at the end of the page (US-QS-14); from 30 rem of window height (the
- * `tall-window` variant) it is fixed to the window bottom.
+ * stay in the bar, the rest move into the "Mehr" drawer. The selected one has the accent pill with its boundary, a semibold
+ * label and `aria-current`, so colour is never the only signal (DS-19, SG-COLOR-05); the others have a regular label. A tap
+ * on the selected destination goes to its start page, and a second tap scrolls to the top (SG-NAV-03). Greenhouse look:
+ * ADR 0011 decision 6. It follows the content in the flow, after `main`, so it stays reachable at the end of the page
+ * (US-QS-14); from 30 rem of window height (the `tall-window` variant) it is fixed to the window bottom.
  */
 export function MobileNavBar({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation();
@@ -118,28 +137,25 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
     <nav
       aria-label="Navigation unten"
       data-bottom-bar
-      className="@container inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden"
+      className="inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden"
     >
       {inBar.map((item) => (
-        <NavLink
+        <ReselectLink
           key={item.href}
-          to={item.href}
+          item={item}
           end={item.href === "/"}
-          className={({ isActive: active }) =>
-            cn(stackedItem, "relative flex-1", stackedLabel(active))
-          }
+          className={({ isActive: active }) => cn(stackedItem, "flex-1", stackedLabel(active))}
         >
           {({ isActive: active }) => (
             <>
-              <span className={stackedPill(active)}>{item.icon}</span>
-              <LockMark note={item.note} />
-              <span className={barText}>
-                <span className="whitespace-nowrap">{item.label}</span>
+              <span className={stackedPill(active)}>
+                {item.icon}
+                <LockMark note={item.note} />
               </span>
-              {item.note ? <span className="sr-only">, {item.note}</span> : null}
+              <BarWords label={item.label} note={item.note} />
             </>
           )}
-        </NavLink>
+        </ReselectLink>
       ))}
       {overflow ? <MoreDrawer items={inDrawer} active={moreActive} /> : null}
     </nav>
