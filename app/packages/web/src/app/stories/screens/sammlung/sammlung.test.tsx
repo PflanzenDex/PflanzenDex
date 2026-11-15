@@ -36,7 +36,9 @@ describe("US-QS-14 · page story Sammlung", () => {
 
   it("US-QS-14 · the wishlist mode shows the open wishes in order", async () => {
     await WishlistPhone.run();
-    expect(await screen.findByText(/Zebra-Haworthie \(Haworthia fasciata\)/)).toBeTruthy();
+    // The German name leads and the scientific name is italic on the meta line (US-QS-32, SG-TYPE-08).
+    expect(await screen.findByText(/Zebra-Haworthie$/)).toBeTruthy();
+    expect(screen.getByText("Haworthia fasciata").tagName).toBe("I");
     expect(screen.getByText(/^2\. /)).toBeTruthy();
   });
 

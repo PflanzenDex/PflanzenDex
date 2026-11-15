@@ -1,7 +1,7 @@
 // Species compared by difficulty (US-BES-05): one row per species with at least one active specimen, easiest first.
 // Pure derivation, never stored (P-01). A value the catalog does not know stays `null` ("unbekannt", P-08).
 import { lightNeedUnknown, zoneDerive, type LightZone } from "../../light";
-import { speciesDisplayName } from "../shared/name";
+import { shownSpeciesName, speciesDisplayName } from "../shared/name";
 import { isActive, type SpeciesSource, type SpecimenRow } from "../shared/types";
 import type { CareProfile, CareProfileReader } from "../care-profile/care-profile-types";
 
@@ -102,9 +102,14 @@ export async function difficultyOverview(
       difficulty: species.difficulty,
     });
   }
+  // Ties by the name the row shows: the German name where there is one (US-QS-32, F-0119), then the botanical name.
   rows.sort(
     (a, b) =>
       rank(a.difficulty) - rank(b.difficulty) ||
+      shownSpeciesName(a.botanicalName, a.speciesName).localeCompare(
+        shownSpeciesName(b.botanicalName, b.speciesName),
+        "de",
+      ) ||
       a.botanicalName.localeCompare(b.botanicalName, "de"),
   );
   return { rows, unreadable };

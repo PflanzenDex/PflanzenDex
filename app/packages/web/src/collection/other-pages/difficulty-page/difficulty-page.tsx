@@ -17,6 +17,7 @@ import {
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/shared/ui/button/button";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
@@ -86,19 +87,24 @@ function UnreadableNote({ count }: { count: number }) {
 
 function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] }) {
   const { openLayer, open } = useLayer(layerId(row));
+  // The label holds the row's visible text in its order: the title, then the meta line (WCAG 2.5.3, US-QS-32).
+  const german = germanNameOf(row.botanicalName, row.speciesName);
+  const line = entryLine(row, hidden);
+  const meta = [german === null ? null : row.botanicalName, line].filter(Boolean).join(" · ");
+  const named = [german ?? row.botanicalName, meta].filter(Boolean).join(" ");
   return (
     <Button
       type="button"
       variant="outline"
       aria-haspopup="dialog"
       aria-expanded={open}
-      aria-label={`Vergleichswerte: ${row.speciesName}`}
+      aria-label={`Vergleichswerte: ${named}`}
       className={SPECIES_ENTRY_ROW}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">
-        <span className="font-semibold">{row.speciesName}</span>
-        <span className="text-sm font-normal text-muted-foreground">{entryLine(row, hidden)}</span>
+        {/* `speciesName` is the German name, or the botanical name where there is none: SpeciesName takes that as none (US-QS-32, F-0121). */}
+        <SpeciesName scientific={row.botanicalName} german={row.speciesName} meta={line} />
       </span>
       <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
     </Button>

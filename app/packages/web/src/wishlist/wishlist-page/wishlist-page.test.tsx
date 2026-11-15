@@ -120,7 +120,9 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     expect((await screen.findByRole("status")).textContent).toContain("geladen");
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
-    expect(item.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
+    expect(item.textContent).toContain("1. Korbmarante");
+    // The scientific name is italic on the meta line, once (US-QS-32, SG-TYPE-08).
+    expect(within(item).getByText("Calathea orbifolia").tagName).toBe("I");
     expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
     expect(item.textContent).toContain("Mittel");
     expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
@@ -131,7 +133,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     const btn = await screen.findByRole("button", { name: /^1\. Korbmarante/ });
     const label = btn.getAttribute("aria-label") ?? "";
-    for (const text of ["1. Korbmarante (Calathea orbifolia)", "Fenster 3 — 1 Pflanze", "Mittel"])
+    for (const text of ["1. Korbmarante Calathea orbifolia", "Fenster 3 — 1 Pflanze", "Mittel"])
       expect(label).toContain(text);
   });
 
@@ -153,7 +155,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
     const item = await screen.findByRole("heading", {
-      name: "Korbmarante (Calathea orbifolia)",
+      name: "Korbmarante",
       level: 2,
     });
     const card = item.closest("li") as HTMLElement;
@@ -194,7 +196,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await screen.findAllByRole("listitem");
     const rows = screen.getAllByRole("listitem");
-    expect(rows[0]?.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
+    expect(rows[0]?.textContent).toContain("1. Korbmarante");
     expect(rows[1]?.textContent).toContain("2. Ficus");
     expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · Schwierigkeit: unbekannt");
   });
@@ -304,7 +306,7 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
     view(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Der Server antwortet nicht.");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByText(/Korbmarante \(Calathea orbifolia\)/)).toBeTruthy();
+    expect(await screen.findByText(/Korbmarante$/)).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 offline after an earlier load shows the cached list with the note", async () => {
@@ -326,24 +328,24 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
       );
     }
     view(<Toggle />);
-    await screen.findByText(/Korbmarante \(Calathea orbifolia\)/);
+    await screen.findByText(/Korbmarante$/);
     offline = true;
     await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
     await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
     expect(await screen.findByText("Offline - zuletzt geladene Daten")).toBeTruthy();
-    expect(screen.getByText(/Korbmarante \(Calathea orbifolia\)/)).toBeTruthy();
+    expect(screen.getByText(/Korbmarante$/)).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 a saved wish refreshes the list without a page reload", async () => {
     fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText(/Korbmarante \(Calathea orbifolia\)/);
+    await screen.findByText(/Korbmarante$/);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
     await userEvent.type(await screen.findByLabelText("Name"), "Neu");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     // The layer closes and the new row stands in the list (US-QS-22).
-    expect(await screen.findByText("1. Neu")).toBeTruthy();
-    expect(screen.queryByText(/Korbmarante \(Calathea orbifolia\)/)).toBeNull();
+    expect(await screen.findByRole("button", { name: /^1\. Neu\b/ })).toBeTruthy();
+    expect(screen.queryByText(/Korbmarante$/)).toBeNull();
     await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
   });
 });
@@ -353,7 +355,7 @@ describe("US-QS-15 · F12 the wish layer leaves as it came", () => {
     holdSheetExit();
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
-    await screen.findByRole("heading", { name: "Korbmarante (Calathea orbifolia)", level: 2 });
+    await screen.findByRole("heading", { name: "Korbmarante", level: 2 });
     await userEvent.keyboard("{Escape}");
     expect(screen.getByText("Mag gleichmäßig feuchte Erde.")).toBeTruthy();
     endSheetExit();
@@ -399,7 +401,7 @@ describe("US-WUN-01 recording a wish", () => {
     });
     expect((post?.[1]?.headers as Record<string, string>)["Idempotency-Key"]).toBeTruthy();
     // The saved wish stands in the list, the layer is closed and its form is gone (US-QS-22).
-    expect(await screen.findByText("1. Neu")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^1\. Neu\b/ })).toBeTruthy();
     await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
   });
 
@@ -940,18 +942,23 @@ describe("US-QS-22 the wishlist fits one screen", () => {
   const many = (n: number) =>
     list(
       Array.from({ length: n }, (_, i) =>
-        candidate({ id: `w${i + 1}`, title: `Wunsch ${i + 1}`, name: `Wunsch ${i + 1}` }),
+        candidate({
+          id: `w${i + 1}`,
+          title: `Wunsch ${i + 1}`,
+          name: `Wunsch ${i + 1}`,
+          german: null,
+        }),
       ),
     );
 
   it("US-QS-22 the wishes are compact rows in pages, ranked as before", async () => {
     fakeServer(many(6));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("1. Wunsch 1");
+    await screen.findByRole("button", { name: /^1\. Wunsch 1\b/ });
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("5. Wunsch 5")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^5\. Wunsch 5\b/ })).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 
@@ -992,7 +999,7 @@ describe("US-QS-22 the wishlist fits one screen", () => {
   it("US-QS-22 a layer mounts its content only while it is open", async () => {
     fakeServer(many(1));
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("1. Wunsch 1");
+    await screen.findByRole("button", { name: /^1\. Wunsch 1\b/ });
     expect(screen.queryByLabelText("Art suchen")).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
   });

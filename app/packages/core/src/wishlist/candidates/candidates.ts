@@ -67,9 +67,12 @@ function priority(
   };
 }
 
-/** "German (name)"; just the name while no German name is known (P-08). */
+/**
+ * "German (name)"; just the name while no German name is known (P-08). A "German" name that is the scientific name
+ * itself is no German name, so the name is not doubled (US-QS-32, F-0067).
+ */
 export const titleOf = (w: Pick<WishRow, "name" | "german">): string =>
-  w.german ? `${w.german} (${w.name})` : w.name;
+  w.german && w.german !== w.name ? `${w.german} (${w.name})` : w.name;
 
 function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candidate {
   const zone = zones.find((z) => z.zoneId === w.targetZoneId);

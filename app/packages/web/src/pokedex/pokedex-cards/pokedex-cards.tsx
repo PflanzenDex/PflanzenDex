@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
+import { SpeciesName } from "@/shared/species-name/species-name";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
@@ -39,9 +40,6 @@ export const speciesLayerId = (species: string): string => `species-${species}`;
 /** One caught species as a compact entry (US-QS-22): the name, the German name where known and the catch date. */
 export function SpeciesRow({ c }: { c: CaughtSpecies }) {
   const { openLayer, open } = useLayer(speciesLayerId(c.species));
-  const second = [c.germanName, catchText(c.caughtDate)]
-    .filter((t): t is string => typeof t === "string")
-    .join(" · ");
   return (
     <Button
       type="button"
@@ -53,8 +51,7 @@ export function SpeciesRow({ c }: { c: CaughtSpecies }) {
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">
-        <span className="font-semibold">{c.species}</span>{" "}
-        <span className="text-sm font-normal text-muted-foreground">{second}</span>
+        <SpeciesName scientific={c.species} german={c.germanName} meta={catchText(c.caughtDate)} />
       </span>
       {/* An icon, not text: the button's visible text stays the name and the date (WCAG 2.5.3, US-QS-08; SG-ICON-01). */}
       <ChevronRight

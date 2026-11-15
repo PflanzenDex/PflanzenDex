@@ -286,7 +286,8 @@ describe("US-WUN-06 a stored picture opens large from the card", () => {
       <CandidateCard c={mockCandidate({ image: image(true) })} rank={1} photoAccess={ACCESS} />,
     );
     const picture = await screen.findByRole("button", { name: PICTURE });
-    const title = screen.getByRole("heading", { name: "Geigenfeige (Ficus lyrata)" });
+    // Without a German name in the fixture the scientific name is the heading (US-QS-32).
+    const title = screen.getByRole("heading", { name: "Test Wish" });
     const row = picture.closest(".flex");
     expect(row?.contains(title)).toBe(true);
     expect(picture.className).toContain("w-32");
@@ -311,5 +312,40 @@ describe("US-WUN-06 a stored picture opens large from the card", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: /groß anzeigen/ })).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("US-QS-32 the candidate card names a species the SG-TYPE-08 way (F-0067)", () => {
+  afterEach(cleanup);
+
+  it("US-QS-32 the German name is the heading, upright; the scientific name is italic on the line below it", () => {
+    render(
+      <CandidateCard
+        c={mockCandidate({
+          name: "Ficus lyrata",
+          german: "Geigenfeige",
+          title: "Geigenfeige (Ficus lyrata)",
+        })}
+        rank={1}
+      />,
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Geigenfeige" });
+    expect(heading.closest("i")).toBeNull();
+    const latin = screen.getByText("Ficus lyrata");
+    expect(latin.tagName).toBe("I");
+    expect(heading.compareDocumentPosition(latin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByText("Ficus lyrata")).toHaveLength(1);
+  });
+
+  it("US-QS-32 without a German name the scientific name is the one italic heading, not repeated", () => {
+    render(
+      <CandidateCard
+        c={mockCandidate({ name: "Ficus lyrata", german: null, title: "Ficus lyrata" })}
+        rank={1}
+      />,
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Ficus lyrata" });
+    expect(heading.querySelector("i")).not.toBeNull();
+    expect(screen.getAllByText("Ficus lyrata")).toHaveLength(1);
   });
 });

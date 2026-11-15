@@ -6,6 +6,7 @@ import {
   missingText,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Badge } from "@/shared/ui/display/badge/badge";
+import { SpeciesName } from "@/shared/species-name/species-name";
 import { cn } from "@/shared/lib/utils";
 import { catchText } from "./catch-text";
 import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
@@ -169,10 +170,7 @@ export function CollectorCard(props: { card: Card }) {
     >
       <Picture card={c} />
       <span className="text-sm text-muted-foreground">{`#${String(c.number).padStart(3, "0")}`}</span>
-      <span className="font-semibold">{c.species}</span>
-      {c.germanName !== null && (
-        <span title={c.germanNameFull ?? c.germanName}>{c.germanName}</span>
-      )}
+      <SpeciesName scientific={c.species} german={c.germanName} tooltip={c.germanNameFull} />
       {/* Two lines on a short screen; the full text is in the species profile (issue 1154). */}
       <span className="text-sm [@media(max-height:700px)]:line-clamp-2">
         {c.summary ?? "Keine Beschreibung vorhanden."}
