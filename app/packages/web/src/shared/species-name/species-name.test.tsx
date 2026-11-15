@@ -124,3 +124,20 @@ describe("US-QS-32 SpeciesNameInline: a name in running text (milestones)", () =
     expect(container.textContent).toBe("Monstera adansonii");
   });
 });
+
+describe("US-QS-32 the meta line is regular weight, whatever row it sits in (F-0119)", () => {
+  it("US-QS-32 with a German name the meta line is font-normal, not the semibold of the row button", () => {
+    render(
+      <SpeciesName scientific="Ficus lyrata" german="Geigenfeige" meta="gefangen 05.03.2026" />,
+    );
+    const meta = screen.getByText("Ficus lyrata").parentElement as HTMLElement;
+    expect(meta.className).toContain("font-normal");
+    expect(meta.className).not.toContain("font-semibold");
+  });
+
+  it("US-QS-32 without a German name the meta line is font-normal too", () => {
+    render(<SpeciesName scientific="Aloe vera" german={null} meta="gefangen 01.01.2026" />);
+    const meta = screen.getByText("gefangen 01.01.2026").closest("span") as HTMLElement;
+    expect(meta.className).toContain("font-normal");
+  });
+});

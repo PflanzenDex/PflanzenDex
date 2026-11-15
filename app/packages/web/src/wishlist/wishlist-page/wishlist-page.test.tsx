@@ -133,7 +133,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     const btn = await screen.findByRole("button", { name: /^1\. Korbmarante/ });
     const label = btn.getAttribute("aria-label") ?? "";
-    for (const text of ["1. Korbmarante (Calathea orbifolia)", "Fenster 3 — 1 Pflanze", "Mittel"])
+    for (const text of ["1. Korbmarante Calathea orbifolia", "Fenster 3 — 1 Pflanze", "Mittel"])
       expect(label).toContain(text);
   });
 
@@ -942,7 +942,12 @@ describe("US-QS-22 the wishlist fits one screen", () => {
   const many = (n: number) =>
     list(
       Array.from({ length: n }, (_, i) =>
-        candidate({ id: `w${i + 1}`, title: `Wunsch ${i + 1}`, name: `Wunsch ${i + 1}` }),
+        candidate({
+          id: `w${i + 1}`,
+          title: `Wunsch ${i + 1}`,
+          name: `Wunsch ${i + 1}`,
+          german: null,
+        }),
       ),
     );
 

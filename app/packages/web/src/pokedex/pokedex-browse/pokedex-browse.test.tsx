@@ -99,7 +99,7 @@ describe("US-POK-08 search", () => {
     expect(shown()).toEqual(["Aloe vera"]);
     await userEvent.clear(screen.getByRole("searchbox", { name: /Suche/ }));
     await search("ficus");
-    expect(shown()).toEqual(["Ficus elastica", "Ficus lyrata"]);
+    expect(shown()).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 
   it("US-POK-08 without a hit it says 'Keine Art gefunden' and offers the reset (P-09)", async () => {
@@ -168,7 +168,7 @@ describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
 describe("US-POK-08 sort", () => {
   it("US-POK-08 alphabetical is the default flat list", async () => {
     await open();
-    expect(shown()).toEqual(["Aloe vera", "Ficus elastica", "Ficus lyrata"]);
+    expect(shown()).toEqual(["Aloe vera", "Ficus lyrata", "Ficus elastica"]);
   });
 
   it("US-POK-08 by catch date: newest first, without date last", async () => {
@@ -204,7 +204,7 @@ describe("US-POK-08 sort", () => {
     expect(shown()).toEqual(["Aloe vera"]);
     await userEvent.click(within(choices).getByRole("button", { name: /Moraceae/ }));
     expect(screen.getByText(/Moraceae \(Maulbeergewächse\) · 2 \/ unbekannt/)).toBeTruthy();
-    expect(shown()).toEqual(["Ficus elastica", "Ficus lyrata"]);
+    expect(shown()).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 
   it("US-POK-08 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
@@ -266,5 +266,22 @@ describe("US-QS-32 the species list names a species the SG-TYPE-08 way (F-0119)"
     expect(within(entry).getAllByText("Opuntia ficus")).toHaveLength(1);
     expect(within(entry).getByText("Opuntia ficus").tagName).toBe("I");
     expect(entry.textContent).toContain("Datum unbekannt");
+  });
+});
+
+describe("US-QS-32 the species sheet's title follows the rule of its body (F-0119)", () => {
+  it("US-QS-32 an empty German name titles the sheet with the scientific name, never an empty title", async () => {
+    await open([species("Opuntia ficus", { germanName: "" })]);
+    await userEvent.click(document.querySelector('[data-species="Opuntia ficus"]') as HTMLElement);
+    expect(await screen.findByRole("dialog", { name: "Opuntia ficus" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a German name equal to the scientific one titles the sheet once, with the scientific name", async () => {
+    await open([species("Ficus carica", { germanName: "Ficus carica" })]);
+    await userEvent.click(document.querySelector('[data-species="Ficus carica"]') as HTMLElement);
+    await screen.findByRole("dialog", { name: "Ficus carica" });
+    // The title is the dialog's heading; the details below it do not repeat the name.
+    const details = screen.getByRole("region", { name: /Details/ });
+    expect(within(details).queryByText("Ficus carica")).toBeNull();
   });
 });

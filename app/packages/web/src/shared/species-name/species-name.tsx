@@ -46,7 +46,7 @@ export function SpeciesName(props: SpeciesNameProps) {
         {german ?? <i>{scientific}</i>}
       </Title>
       {german !== null || hasMeta ? (
-        <span className="break-words text-sm text-muted-foreground">
+        <span className="break-words text-sm font-normal text-muted-foreground">
           {german !== null ? <i>{scientific}</i> : null}
           {german !== null && hasMeta ? " · " : null}
           {hasMeta ? meta : null}

@@ -1,13 +1,9 @@
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { SpeciesName } from "@/shared/species-name/species-name";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
 import { Discard } from "../../../candidate-card/discard/discard";
-import table from "../../../wishlist.de.json";
-
-const t = texts(table);
 
 /** The layer of one wish is named after the wish: `?sheet=wish-<id>` (US-QS-22). */
 export const wishLayerId = (id: string): string => `wish-${id}`;
@@ -26,6 +22,9 @@ export function WishRow(props: {
   const { c, rank } = props;
   const { openLayer, open } = useLayer(wishLayerId(c.id));
   const level = c.difficulty ? (LEVELS[c.difficulty] ?? UNKNOWN) : UNKNOWN;
+  // The label reads in the order the row shows: the name, the scientific name, the zone (WCAG 2.5.3, US-QS-32).
+  const german = germanNameOf(c.name, c.german);
+  const named = german === null ? c.name : `${german} ${c.name}`;
   return (
     <div
       data-priority={c.priority.kind}
@@ -38,7 +37,7 @@ export function WishRow(props: {
         size="sm"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${rank}. ${c.title} ${c.zoneText} · ${t("card.difficulty", { level })}`}
+        aria-label={`${rank}. ${named} ${c.zoneText} · Schwierigkeit: ${level}`}
         className="h-auto min-w-0 shrink-0 grow basis-28 flex-col items-start justify-start gap-0 whitespace-normal px-1 py-1 text-left"
         onClick={(event) => openLayer(event.currentTarget)}
       >
@@ -46,7 +45,7 @@ export function WishRow(props: {
           lead={`${rank}. `}
           scientific={c.name}
           german={c.german}
-          meta={`${c.zoneText} · ${t("card.difficulty", { level })}`}
+          meta={<>{`${c.zoneText} · Schwierigkeit: ${level}`}</>}
         />
       </Button>
       <Button
@@ -54,10 +53,10 @@ export function WishRow(props: {
         variant="outline"
         size="sm"
         disabled={props.busy}
-        aria-label={t("card.buyLabel", { title: c.title })}
+        aria-label={`Gekauft: ${c.title}`}
         onClick={() => props.onBuy(c)}
       >
-        {t("card.buy")}
+        Gekauft
       </Button>
       <Discard c={c} onDiscard={props.onDiscard} busy={props.busy} compact />
     </div>

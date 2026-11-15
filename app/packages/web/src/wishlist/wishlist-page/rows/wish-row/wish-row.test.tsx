@@ -70,3 +70,17 @@ describe("US-QS-32 the wish row names a species the SG-TYPE-08 way (F-0067)", ()
     expect(within(container).getAllByText("Monstera adansonii")).toHaveLength(1);
   });
 });
+
+describe("US-QS-32 the wish row's label reads in the order it shows (WCAG 2.5.3, F-0067)", () => {
+  it("US-QS-32 the label names the German name, then the scientific name, then the zone and the difficulty", () => {
+    show();
+    const label = screen.getByRole("button", { name: /^1\. Aloe/ }).getAttribute("aria-label");
+    expect(label).toBe("1. Aloe Aloe vera Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt");
+  });
+
+  it("US-QS-32 without a German name the label names the scientific name once", () => {
+    show({ ...wish, german: null, title: "Aloe vera" } as Candidate);
+    const label = screen.getByRole("button", { name: /^1\. Aloe vera/ }).getAttribute("aria-label");
+    expect(label).toBe("1. Aloe vera Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt");
+  });
+});
