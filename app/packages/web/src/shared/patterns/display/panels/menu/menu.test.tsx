@@ -272,6 +272,29 @@ describe("Menu inside a layer, sheet or dialog (US-QS-32, F-0356)", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
+  it("US-QS-32 a press on the page behind an open layer pane reaches its target; the pane stays open and the menu closes", async () => {
+    const user = userEvent.setup();
+    const onPointerDown = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <>
+        <LayerPane id="pflanze" title="Pflanze" returning={false} onClose={onClose}>
+          <Menu label="Weitere Aktionen" items={items} />
+        </LayerPane>
+        <button type="button" onPointerDown={onPointerDown}>
+          Hinter der Seite
+        </button>
+      </>,
+    );
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menu")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Hinter der Seite" }));
+    expect(onPointerDown).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Pflanze" })).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("US-QS-32 Escape with a menu open inside a popover closes the menu only; a second Escape closes the popover", async () => {
     const user = userEvent.setup();
     render(

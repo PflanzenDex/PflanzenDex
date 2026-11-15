@@ -32,9 +32,10 @@ const openPopups: object[] = [];
  * Escape and a press outside are caught on `window` in the capture phase (US-QS-32, F-0356). A Radix dialog or a Vaul
  * sheet around the popup listens on `document` and would close with it, and a layer pane would take the Escape in its
  * React handler. The topmost popup stops the Escape there. A press outside stops there only when it lands on the backdrop
- * of the layer around the popup (a dialog, a sheet or a layer pane); a press on another control of that layer, or with no
- * layer around the popup, reaches its target, because that control may act on `pointerdown`. Focus leaving the root still
- * closes the popup on `document`, as before.
+ * of the dialog or sheet around the popup (the `role="dialog"` ancestor, which is modal and closes on that press); a press
+ * on another control of that dialog or sheet, a press on the page behind an open layer pane (not modal, it does not close
+ * on a press), or a press with no dialog around the popup reaches its target, because that control may act on
+ * `pointerdown`. Focus leaving the root still closes the popup on `document`, as before.
  */
 export function usePopup() {
   const [open, setOpen] = React.useState(false);
@@ -61,7 +62,7 @@ export function usePopup() {
       rootRef.current?.contains(target as Node) ?? false;
     const outside = (event: PointerEvent) => {
       if (inside(event.target)) return;
-      const layer = rootRef.current?.closest('[role="dialog"], [data-layer-pane]') ?? null;
+      const layer = rootRef.current?.closest('[role="dialog"]') ?? null;
       if (layer && !layer.contains(event.target as Node)) event.stopPropagation();
       setOpen(false);
     };
