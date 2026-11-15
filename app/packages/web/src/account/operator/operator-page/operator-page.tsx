@@ -62,7 +62,7 @@ function CostLayer(props: { overview: OperatorOverview; actions: Actions }) {
       <CostForm
         cost={props.overview.cost}
         running={props.actions.running}
-        onSave={(f) => void props.actions.setCost(f)}
+        onSave={props.actions.setCost}
       />
     </div>
   );
@@ -151,7 +151,7 @@ function Layers(props: {
             running={actions.running}
             created={actions.created}
             invitations={overview.invitations}
-            onCreate={(d) => void actions.create(d)}
+            onCreate={actions.create}
           />
         </div>
       </LayerSheet>

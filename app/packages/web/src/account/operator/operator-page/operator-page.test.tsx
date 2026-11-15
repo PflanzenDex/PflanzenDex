@@ -2,12 +2,13 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { BrowserRouter, MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>
@@ -798,5 +799,188 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     fireEvent.pointerUp(row);
     fireEvent.click(row);
     expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
+});
+
+describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard typed input (SG-FORM-06)", () => {
+  const created = {
+    id: "i9",
+    code: "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01",
+    expiresAt: "2026-10-11T10:00:00.000Z",
+  };
+  const question = { name: "Eingabe verwerfen?" };
+  const costLayer = { name: "Monatliche Kosten" };
+  const codesLayer = { name: "Einladungscodes" };
+
+  beforeEach(() => setViewportWidth(360));
+
+  /** The page on the browser history, so that Back is a real history step (US-QS-15, US-QS-32). */
+  const openOnBrowser = async () => {
+    window.history.replaceState(null, "", "/betreiber");
+    render(
+      <BrowserRouter>
+        <OperatorPage api="http://api" token={token} />
+      </BrowserRouter>,
+    );
+    await screen.findByRole("heading", { name: "Betreiber" });
+    await screen.findByRole("button", { name: /^Zahlen/ });
+  };
+
+  /** Opens the cost layer and types an amount into it, which is not saved. */
+  const typeAmount = async (amount: string) => {
+    const layer = await topic(/^Monatliche Kosten/);
+    await userEvent.type(within(layer).getByLabelText("Betrag"), amount);
+    return layer;
+  };
+
+  const askedQuestion = () => screen.findByRole("dialog", question);
+  const noQuestion = () => waitFor(() => expect(screen.queryByRole("dialog", question)).toBeNull());
+
+  it("US-ACC-05 US-QS-32 Escape with a changed amount asks Eingabe verwerfen?; Weiter bearbeiten keeps the amount and the layer", async () => {
+    await open();
+    await typeAmount("12,50");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
+    );
+    await noQuestion();
+    expect(screen.getByRole("dialog", costLayer)).toBeTruthy();
+    expect((screen.getByLabelText("Betrag") as HTMLInputElement).value).toBe("12,50");
+  });
+
+  it("US-ACC-05 US-QS-32 Escape with a changed amount, then Verwerfen, closes the cost layer", async () => {
+    await open();
+    await typeAmount("12,50");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(within(await askedQuestion()).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 the close control of the cost layer from md asks while the amount is changed", async () => {
+    setViewportWidth(800);
+    await open();
+    const layer = await typeAmount("12,50");
+    await userEvent.click(within(layer).getByRole("button", { name: "Schließen" }));
+    expect(await askedQuestion()).toBeTruthy();
+    expect(screen.getByLabelText("Betrag")).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 an outside tap on the scrim of the cost sheet asks while the amount is changed", async () => {
+    await open();
+    await typeAmount("12,50");
+    const scrim = document.querySelector<HTMLElement>(".bg-scrim");
+    expect(scrim).not.toBeNull();
+    await userEvent.click(scrim as HTMLElement);
+    expect(await askedQuestion()).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 an outside tap on the scrim closes an unchanged cost sheet at once, with no question", async () => {
+    await open();
+    await topic(/^Monatliche Kosten/);
+    const scrim = document.querySelector<HTMLElement>(".bg-scrim");
+    expect(scrim).not.toBeNull();
+    await userEvent.click(scrim as HTMLElement);
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 Back with a changed amount asks; Verwerfen lands on the list, its address without ?sheet", async () => {
+    await openOnBrowser();
+    await typeAmount("12,50");
+    window.history.back();
+    const ask = await askedQuestion();
+    expect(window.location.search).toContain("sheet=kosten");
+    await userEvent.click(within(ask).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(window.location.search).toBe(""));
+    expect(screen.queryByRole("dialog", costLayer)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 an unchanged cost layer closes at once on Escape, with no question", async () => {
+    await open();
+    await topic(/^Monatliche Kosten/);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 an unchanged cost layer closes at once on Back, with no question", async () => {
+    await openOnBrowser();
+    await topic(/^Monatliche Kosten/);
+    window.history.back();
+    await waitFor(() => expect(window.location.search).toBe(""));
+    expect(screen.queryByRole("dialog", costLayer)).toBeNull();
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 after a saved cost the layer is clean: Escape closes it without a question", async () => {
+    serve((path, init) =>
+      path === "/operator/cost" && init.method === "PUT"
+        ? json(200, JSON.parse(String(init.body)))
+        : json(404, {}),
+    );
+    await open();
+    await typeAmount("12,50");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
+    );
+    await noQuestion();
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 a refused cost save keeps the amount unsaved, so Escape still asks", async () => {
+    serve(() =>
+      json(400, {
+        error: {
+          code: "operator_cost.month_in_future",
+          text: "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
+        },
+      }),
+    );
+    await open();
+    await typeAmount("10");
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
+    await userEvent.keyboard("{Escape}");
+    expect(await askedQuestion()).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 the validity field of the codes layer asks on Escape after a changed value", async () => {
+    await open();
+    const layer = await topic(/^Einladungscodes/);
+    const days = within(layer).getByLabelText("Gültig für (Tage)");
+    await userEvent.clear(days);
+    await userEvent.type(days, "3");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(within(await askedQuestion()).getByRole("button", { name: "Verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", codesLayer)).toBeNull());
+  });
+
+  it("US-ACC-05 US-QS-32 after a created code the codes layer is clean: Escape closes it without a question", async () => {
+    serve(async (path, init) =>
+      path === "/operator/invitations" && init.method === "POST"
+        ? json(201, created)
+        : json(404, {}),
+    );
+    await open();
+    const layer = await topic(/^Einladungscodes/);
+    const days = within(layer).getByLabelText("Gültig für (Tage)");
+    await userEvent.clear(days);
+    await userEvent.type(days, "3");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
+    );
+    await noQuestion();
+    await userEvent.click(screen.getByRole("button", { name: "Code erstellen" }));
+    await screen.findByRole("region", { name: "Neuer Einladungscode" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", codesLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
   });
 });

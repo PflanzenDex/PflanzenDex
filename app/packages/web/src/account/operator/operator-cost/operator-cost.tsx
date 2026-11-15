@@ -14,6 +14,7 @@ import {
 import { TextField } from "@/shared/ui/fields/input/input";
 import { MonthField } from "@/shared/ui/fields/input/native-fields/month-field/month-field";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { costSchema, parseAmount, type CostFields } from "../../schemas";
 
 /** An amount in cents as money in German notation, e.g. `1.234,50 €`. */
@@ -66,7 +67,8 @@ function MonthRow(props: { control: Control<CostFields>; max: string }) {
 export function CostForm(props: {
   cost: OperatorCostFigure | null;
   running: boolean;
-  onSave: (figure: OperatorCostFigure) => void;
+  /** Resolves true when the figure was saved; the form is then empty of unsaved input (US-QS-32). */
+  onSave: (figure: OperatorCostFigure) => Promise<boolean>;
 }) {
   const form = useForm<CostFields>({
     resolver: zodResolver(costSchema),
@@ -76,13 +78,17 @@ export function CostForm(props: {
       month: props.cost?.month ?? thisMonth(),
     },
   });
-  const submit = form.handleSubmit((v) =>
-    props.onSave({
+  // Typed input that is not saved asks before the layer closes (US-QS-32).
+  useUnsavedInput(form.formState.isDirty);
+  const submit = form.handleSubmit(async (v) => {
+    const saved = await props.onSave({
       amountCents: parseAmount(v.amount) ?? 0,
       currency: v.currency.trim().toUpperCase(),
       month: v.month,
-    }),
-  );
+    });
+    // The layer stays open after a save and shows the notice: the saved values are no unsaved input any more.
+    if (saved) form.reset(v);
+  });
   return (
     <Form {...form}>
       <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
