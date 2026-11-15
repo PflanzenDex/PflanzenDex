@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { localToday } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { dateText } from "@/shared/lib/format";
 import { errorText } from "@/shared/lib/error-text";
-import { useInvalidate, useWriteAction } from "../../../shared/data";
+import { currentTimeZone, useInvalidate, useWriteAction } from "../../../shared/data";
 import type { RhythmPauseItem } from "../../achievements-api";
 import { addRhythmPause, removeRhythmPause } from "./pause-api";
 
@@ -31,11 +33,15 @@ function PauseList(props: { pauses: RhythmPauseItem[]; remove: (id: string) => v
  */
 export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmPauseItem[] }) {
   const { api, token, pauses } = props;
-  const [from, setFrom] = useState("");
-  const [until, setUntil] = useState("");
+  // A pause is set from today on, and the keeper changes both days (US-ACH-04, US-QS-32: prefilled with today).
+  const today = localToday(new Date(), currentTimeZone());
+  const [from, setFrom] = useState(today);
+  const [until, setUntil] = useState(today);
   const refresh = useInvalidate(["achievements"]);
   const write = useWriteAction(token, refresh);
   const submit = () => {
+    // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is sent.
+    if (!isHandedDate(from) || !isHandedDate(until)) return;
     void write.run((t) => addRhythmPause(api, t, { from, until }), "Pause eingetragen.");
   };
   return (

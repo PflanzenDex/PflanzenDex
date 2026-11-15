@@ -248,9 +248,11 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.clear(date);
     await userEvent.type(date, "31.02.2026");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain(
-      "Gib ein Datum an, das es gibt",
+    // One message under the field, the one the field shows on leaving it (US-QS-32, SG-FORM-05).
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
     );
+    expect(date.getAttribute("aria-invalid")).toBe("true");
     expect(posts).toHaveLength(0);
   });
 
