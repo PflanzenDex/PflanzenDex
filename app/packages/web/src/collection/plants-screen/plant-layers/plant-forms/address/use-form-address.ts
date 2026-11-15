@@ -1,6 +1,6 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
-import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { BELOW, belowOf, walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import {
   FORM_PARAM,
   FROM_APP,
@@ -8,6 +8,7 @@ import {
   PLANT_PARAM,
   SHEET_PARAM,
   formOf,
+  listSearch,
   stateFlag,
   type FormAddress,
   type FormKind,
@@ -23,6 +24,17 @@ import {
   type Refs,
 } from "./use-form-history";
 
+/**
+ * Closes the form from the guard entry above it (US-QS-15, issue 2158): the guard becomes a plain entry of the list the form
+ * closes to, and the step back reaches that list over the form's own entry (`walkOverGuard`). The guard is read from
+ * `refs.guarded` by the caller, since the router may not show the guard entry yet.
+ */
+function closeOverGuard(c: Latest, refs: Refs): void {
+  const { pathname, hash, search } = c.location;
+  const below = refs.named.current?.below ?? { pathname, search: listSearch(search) };
+  walkOverGuard(c.navigate, { ...below, hash });
+}
+
 /** The handlers that close a form, and the question "Eingabe verwerfen?" (US-QS-15). */
 function useCloseActions(
   latest: { current: Latest },
@@ -33,12 +45,19 @@ function useCloseActions(
   const closeNow = useCallback(
     (text?: string) => {
       const c = latest.current;
+      // Read before the refs are cleared: the guard entry is on the history at once, while the latest render may not show it
+      // yet (issue 2158).
+      const overGuard = refs.guarded.current;
       refs.dirty.current = false;
       refs.guarded.current = false;
       setAsking(false);
       if (text !== undefined) setNotice(text);
       // A held form is on screen too (issue 2145): its close walks back from its entry, as a shown form (issue 2154).
       if (!c.current && !c.held) return;
+      if (overGuard) {
+        closeOverGuard(c, refs);
+        return;
+      }
       refs.leaving.current = true;
       void c.navigate(-1);
     },

@@ -7,7 +7,9 @@ import {
   belowOf,
   guardState,
   isClosing,
+  setClosing,
   stateFlag,
+  walkOverGuard,
   withoutLayer,
   type Below,
 } from "./use-layer";
@@ -66,6 +68,21 @@ export function pushGuard(
 /** Pushes the guard entry above the layer that the latest render shows (US-QS-32). */
 export function guardHere(c: Latest, guarded: { current: boolean }): void {
   pushGuard(c.navigate, addressOf(c.location), stateFlag(c.location.state, FROM_APP), guarded);
+}
+
+/**
+ * Closes the layer `id` from the guard entry above it (US-QS-32, issue 2158). The guard is read from the refs: the router
+ * may not show a pending guard entry yet. Over the guard the close lands on the entry below the layer, which the layer's
+ * entry names (`named`), or on the list the layer is addressed from.
+ */
+export function closeHere(refs: Refs, id: string): void {
+  const c = refs.latest.current;
+  if (!refs.guarded.current) return c.closeLayer();
+  refs.guarded.current = false;
+  setClosing(id, true);
+  const { pathname, search, hash } = c.location;
+  const below = refs.named.current?.below ?? { pathname, search: withoutLayer(search) };
+  walkOverGuard(c.navigate, { ...below, hash });
 }
 
 /**
