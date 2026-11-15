@@ -23,7 +23,7 @@ function Notices(props: { account: Account; error?: string }) {
 
 /**
  * The profile card of "Konto" (US-QS-14): avatar tile, name and e-mail. It has no heading of its own: the destination
- * names it "Profil" and carries the one h1. It offers no sign-out: the one way out is "Abmelden…" in the index of
+ * names it "Profil" and carries the one h1. It offers no sign-out: the one way out is "Abmelden …" in the index of
  * "Konto", which always asks first (issue 1098).
  */
 export function AccountView(props: { account: Account; error?: string }) {

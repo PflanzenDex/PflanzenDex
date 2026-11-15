@@ -109,7 +109,7 @@ export function PhasesList(props: {
   if (props.rows.length === 0)
     return (
       <EmptyState
-        title="Noch keine Pflanze hat eine Phase."
+        title="Noch keine Pflanze hat eine Phase"
         description="Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege in der Sammlung eine Pflanze einer solchen Art an."
         action={{ label: "Zur Sammlung", href: "/collection" }}
       />

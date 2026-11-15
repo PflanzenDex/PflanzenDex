@@ -3,6 +3,7 @@ import { localToday, type Banner, type BannerItem } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { summaryDate } from "@/shared/lib/format";
+import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
   currentTimeZone,
@@ -108,7 +109,7 @@ export function NewPlantsBody(props: {
       </div>
       {okay.error && (
         <p role="alert" className="text-destructive">
-          {t("news.okayFailed")}
+          {refusalText(okay.error)}
         </p>
       )}
     </>

@@ -95,7 +95,7 @@ const ButtonControl = React.forwardRef<HTMLButtonElement, ControlProps>(
       size,
       asChild = false,
       pending = false,
-      pendingLabel = "Lädt…",
+      pendingLabel = "Lädt …",
       disabled,
       onClick,
       "aria-describedby": describedBy,

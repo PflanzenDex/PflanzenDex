@@ -107,7 +107,7 @@ afterEach(() => {
 });
 
 describe("US-QS-17 the index of Konto", () => {
-  it("US-QS-17 shows the profile row, a row per section with its current value and Abmelden…", async () => {
+  it("US-QS-17 shows the profile row, a row per section with its current value and Abmelden …", async () => {
     fakeServer();
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
@@ -121,12 +121,12 @@ describe("US-QS-17 the index of Konto", () => {
     expect(within(list).getByRole("link", { name: "Nutzungsdaten" })).toBeTruthy();
     expect(within(list).getByRole("link", { name: "Was die App kann" })).toBeTruthy();
     expect(within(list).getByRole("link", { name: "Meine Daten" })).toBeTruthy();
-    expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();
+    expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 
-  it("US-QS-17 Abmelden… is a row with the same chevron as the sections (issue 1045)", async () => {
+  it("US-QS-17 Abmelden … is a row with the same chevron as the sections (issue 1045)", async () => {
     show();
-    const button = await screen.findByRole("button", { name: "Abmelden…" });
+    const button = await screen.findByRole("button", { name: "Abmelden …" });
     expect(button.querySelector("svg")).not.toBeNull();
     expect(button.className).toContain("border-transparent");
   });
@@ -137,7 +137,7 @@ describe("US-QS-17 the index of Konto", () => {
       .getByRole("navigation", { name: "Abschnitte von Konto" })
       .querySelector("ul");
     expect(list?.className).toContain("-mx-[calc(0.75rem+4px)]");
-    const row = await screen.findByRole("button", { name: "Abmelden…" });
+    const row = await screen.findByRole("button", { name: "Abmelden …" });
     // The bleed is the row's 4 px bar plus its 0.75 rem padding.
     expect(row.className).toContain("border-l-4");
     expect(row.className).toContain("px-3");
@@ -170,12 +170,12 @@ describe("US-QS-17 the index of Konto", () => {
     ).toBeNull();
   });
 
-  it("US-QS-17 Abmelden… opens a confirmation with Abmelden, Auf allen Geräten abmelden and a way to cancel", async () => {
+  it("US-QS-17 Abmelden … opens a confirmation with Abmelden, Auf allen Geräten abmelden and a way to cancel", async () => {
     fakeServer();
     const signOut = vi.fn();
     const everywhere = vi.fn();
     show({ signOut, everywhere });
-    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
     const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" }),
@@ -191,7 +191,7 @@ describe("US-QS-17 the index of Konto", () => {
     fakeServer();
     const everywhere = vi.fn();
     show({ everywhere, busy: true });
-    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
     const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
     const control = within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" });
     expect(control.getAttribute("aria-busy")).toBe("true");
@@ -204,7 +204,7 @@ describe("US-QS-17 the index of Konto", () => {
   it("US-ACC-01 the control of signing out on all devices is not busy before a press", async () => {
     fakeServer();
     show();
-    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
     const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
     const control = within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" });
     expect(control.getAttribute("aria-busy")).toBeNull();
@@ -266,12 +266,12 @@ describe("US-QS-32 the row Erinnerungen while push is not set up", () => {
 });
 
 describe("US-QS-28 the install row of the index", () => {
-  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden…", async () => {
+  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden …", async () => {
     install.offer = "promptable";
     fakeServer();
     show();
     const entry = await screen.findByRole("button", { name: "App installieren" });
-    const signOut = screen.getByRole("button", { name: "Abmelden…" });
+    const signOut = screen.getByRole("button", { name: "Abmelden …" });
     expect(entry.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -289,6 +289,6 @@ describe("US-QS-28 the install row of the index", () => {
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
     expect(within(list).queryByRole("button", { name: "App installieren" })).toBeNull();
-    expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();
+    expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 });

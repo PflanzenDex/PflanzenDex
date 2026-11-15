@@ -233,6 +233,27 @@ describe("US-SOZ-11 confirming the handover", () => {
     expect(posts[0]?.body).toMatchObject({ marker: "rot" });
   });
 
+  it("US-QS-32 the giver is told the handover is done and where the plant is now", async () => {
+    server({ received: [accepted()] }, () => response(200, { status: "handed_over" }));
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Übergabe bestätigen: Echte Aloe" }),
+    );
+    expect(
+      await screen.findByText("Die Übergabe ist abgeschlossen. Deine Pflanze ist jetzt im Archiv."),
+    ).toBeTruthy();
+  });
+
+  it("US-QS-32 the recipient's marker field names his new plant without a typo", async () => {
+    server({ sent: [accepted({ role: "recipient" })] });
+    show();
+    expect(
+      await screen.findByLabelText(
+        "Kennzeichen für deine neue Pflanze (nur nötig, wenn du die Art schon hast)",
+      ),
+    ).toBeTruthy();
+  });
+
   it("a refusal (marker needed) shows the German text of its code and keeps the form (P-10)", async () => {
     server({ sent: [accepted({ role: "recipient" })] }, () =>
       response(409, { error: { code: "specimen.marker_required", text: "raw server text" } }),

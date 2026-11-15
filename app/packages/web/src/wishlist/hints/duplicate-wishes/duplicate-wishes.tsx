@@ -41,7 +41,7 @@ function DuplicateRow({ w, repair }: { w: DuplicateWish; repair: Repair }) {
   const [asking, setAsking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const send = () => {
-    if (name.trim() === "") return setProblem("Bitte gib einen Namen an.");
+    if (name.trim() === "") return setProblem("Gib einen Namen ein.");
     setProblem(null);
     repair.rename(w, name.trim());
   };

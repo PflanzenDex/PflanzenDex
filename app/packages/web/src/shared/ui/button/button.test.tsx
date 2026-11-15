@@ -105,10 +105,16 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     const button = screen.getByRole("button");
     expect(button.getAttribute("aria-busy")).toBe("true");
     expect((button as HTMLButtonElement).disabled).toBe(true);
-    expect(button.textContent).toContain("Lädt…");
+    expect(button.textContent).toContain("Lädt …");
     expect(button.textContent).toContain("Speichern");
     await userEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 SG-COPY-04 the default pending label is 'Lädt …' with a space before the ellipsis", () => {
+    render(<Button pending>Speichern</Button>);
+    const text = screen.getByRole("button").textContent ?? "";
+    expect(text).toContain("Lädt …");
   });
 
   it("US-QS-07 · DS-15 the pending text can be replaced by the caller", () => {

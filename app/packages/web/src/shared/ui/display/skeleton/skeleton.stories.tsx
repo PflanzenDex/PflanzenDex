@@ -13,7 +13,7 @@ export const Default: Story = { args: { className: "h-6 w-40" } };
 export const CardContainer: Story = {
   render: () => (
     <SkeletonGroup
-      label="Lädt…"
+      label="Lädt …"
       className="flex max-w-sm flex-col gap-2 rounded-lg border border-border bg-card p-4"
     >
       <Skeleton className="h-6 w-2/3" />

@@ -89,7 +89,7 @@ function OpenList(props: {
   if (rows.length === 0)
     return (
       <EmptyState
-        title="Keine offenen Behandlungen."
+        title="Keine offenen Behandlungen"
         level={props.host ? 3 : 2}
         description={
           props.host

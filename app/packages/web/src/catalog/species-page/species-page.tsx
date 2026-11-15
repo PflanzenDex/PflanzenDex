@@ -52,7 +52,7 @@ function ProfilePage(props: {
       {profile.status === "error" && profile.error && (
         <EmptyState
           variant="error"
-          title="Die Art konnte nicht geladen werden."
+          title="Die Art konnte nicht geladen werden"
           description={refusalText(profile.error)}
           action={{ label: "Zurück zur Suche", onClick: props.onBack }}
         />
@@ -92,7 +92,7 @@ function SearchFailure(props: { error: ApiError; onRetry: () => void }) {
   return (
     <EmptyState
       variant="error"
-      title="Die Suche hat nicht geklappt."
+      title="Die Suche hat nicht geklappt"
       description={refusalText(props.error)}
       action={{ label: "Erneut versuchen", onClick: props.onRetry }}
     />

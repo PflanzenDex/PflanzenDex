@@ -91,16 +91,16 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(collectionTitle(null)).toBe("Sammlung eines Freundes");
   });
 
-  it("US-SOZ-07 the filters 'Ich habe nicht' and 'Wir haben beide' narrow the cards", async () => {
+  it("US-SOZ-07 · US-QS-32 the filters 'Fehlen dir' and 'Hast du auch' narrow the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    await userEvent.click(screen.getByRole("button", { name: "Ich habe nicht" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fehlen dir" }));
     const lack = within(screen.getByRole("list", { name: "Sammlung von Anna" })).getAllByRole(
       "listitem",
     );
     expect(lack).toHaveLength(1);
     expect(lack[0]?.textContent).toContain("Aloe vera");
-    await userEvent.click(screen.getByRole("button", { name: "Wir haben beide" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hast du auch" }));
     const both = within(screen.getByRole("list", { name: "Sammlung von Anna" })).getAllByRole(
       "listitem",
     );
@@ -115,7 +115,7 @@ describe("US-SOZ-07 a friend's shared collection", () => {
   it("US-SOZ-07 a filter without result and a friend who shares nothing say what to do next (P-09)", async () => {
     show({ friend: { name: "Anna" }, cards: [card()] });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    await userEvent.click(screen.getByRole("button", { name: "Ich habe nicht" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fehlen dir" }));
     expect(screen.getByText(/Du hast schon alle Arten/)).toBeTruthy();
     expect(screen.getByText(/Wähle „Alle“/)).toBeTruthy();
     cleanup();

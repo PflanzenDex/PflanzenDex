@@ -169,7 +169,7 @@ export function PlantsScreen(props: Props) {
   const body =
     props.summary.total === 0 ? (
       <EmptyState
-        title="Du hast noch keine Pflanze."
+        title="Du hast noch keine Pflanze"
         description="Wähle zuerst eine Art aus dem Katalog."
         action={{ label: "Art wählen", onClick: props.onSpeciesChoose }}
       />

@@ -31,6 +31,6 @@
   "form.save": "Blatt speichern",
   "form.close": "Schließen",
   "form.hint": "Ganze Zahlen von 1 bis 5.000 mm. Lass Felder leer, die du nicht messen willst.",
-  "error.size": "Bitte gib eine ganze Zahl von 1 bis 5.000 mm an oder lass das Feld leer.",
+  "error.size": "Gib eine ganze Zahl von 1 bis 5.000 mm an oder lass das Feld leer.",
   "error.note": "Die Notiz darf höchstens 500 Zeichen lang sein."
 }

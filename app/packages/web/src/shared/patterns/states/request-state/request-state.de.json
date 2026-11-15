@@ -1,3 +1,4 @@
 {
-  "offline": "Diese Ansicht ist noch nicht geladen. Sie lädt, sobald du wieder online bist."
+  "offline": "Diese Ansicht ist noch nicht geladen",
+  "offlineHint": "Sie lädt, sobald du wieder online bist."
 }

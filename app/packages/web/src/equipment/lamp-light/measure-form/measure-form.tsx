@@ -20,7 +20,7 @@ function toInput(
   const value = wholeNumber(luxText);
   const cm = wholeNumber(distance);
   if (value === null || Number.isNaN(value) || value < 1)
-    return { problem: "Bitte gib die Lux-Messung als ganze Zahl an." };
+    return { problem: "Gib die Lux-Messung als ganze Zahl an." };
   if (cm !== null && (Number.isNaN(cm) || cm < 1))
     return { problem: "Der Abstand ist eine ganze Zahl in Zentimetern." };
   const trimmed = method.trim();

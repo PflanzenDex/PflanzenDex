@@ -109,7 +109,7 @@ export function LoadMore(props: LoadMoreProps) {
           <span className="inline-flex size-6 items-center justify-center">
             {pending ? <PlantLoader size="sm" decorative /> : null}
           </span>
-          {pending ? (props.pendingLabel ?? "Lädt…") : (props.label ?? "Mehr laden")}
+          {pending ? (props.pendingLabel ?? "Lädt …") : (props.label ?? "Mehr laden")}
         </Button>
       ) : (
         <p

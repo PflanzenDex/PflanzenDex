@@ -38,7 +38,7 @@ describe("US-QS-07 · RequestState loading without a skeleton (DS-56)", () => {
   it("US-QS-07 pending without a skeleton shows the PlantLoader as the one loading status", async () => {
     render(<RequestState onRetry={() => undefined} status="pending" />);
     expect(await screen.findAllByRole("status")).toHaveLength(1);
-    expect(screen.getByRole("status").textContent).toBe("Lädt…");
+    expect(screen.getByRole("status").textContent).toBe("Lädt …");
   });
 });
 
@@ -114,7 +114,7 @@ describe("US-QS-14 issue 1772 · RequestState holds a shown shapeless loader (D5
     act(() => {
       vi.advanceTimersByTime(SKELETON_DELAY_MS);
     });
-    expect(screen.getByRole("status").textContent).toBe("Lädt…");
+    expect(screen.getByRole("status").textContent).toBe("Lädt …");
     act(() => {
       vi.advanceTimersByTime(50);
     });
@@ -126,7 +126,7 @@ describe("US-QS-14 issue 1772 · RequestState holds a shown shapeless loader (D5
     act(() => {
       vi.advanceTimersByTime(STATUS_HOLD_MS - 51);
     });
-    expect(screen.getByRole("status").textContent).toBe("Lädt…");
+    expect(screen.getByRole("status").textContent).toBe("Lädt …");
     expect(screen.queryByText("Inhalt")).toBeNull();
     act(() => {
       vi.advanceTimersByTime(1);
@@ -216,8 +216,8 @@ describe("US-QS-14 issue 1772 · RequestState holds a shown shapeless loader (D5
 });
 
 /** The title of a failed load while the device is offline: the view is not there yet, the server did not fail (issue 1884). */
-const OFFLINE_TITLE =
-  "Diese Ansicht ist noch nicht geladen. Sie lädt, sobald du wieder online bist.";
+const OFFLINE_TITLE = "Diese Ansicht ist noch nicht geladen";
+const OFFLINE_HINT = "Sie lädt, sobald du wieder online bist.";
 
 /** The device's connection (`navigator.onLine`) of a test; the test dispatches the browser's `online` event itself. */
 function connection(online: boolean) {
@@ -237,6 +237,7 @@ describe("US-QS-32 · RequestState failed while the device is offline (issue 188
       />,
     );
     expect(screen.getByRole("alert").textContent).toContain(OFFLINE_TITLE);
+    expect(screen.getByRole("alert").textContent).toContain(OFFLINE_HINT);
     expect(screen.queryByText("Der Server ist gerade nicht erreichbar.")).toBeNull();
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });

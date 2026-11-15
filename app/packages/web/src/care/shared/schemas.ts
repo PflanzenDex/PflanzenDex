@@ -19,7 +19,7 @@ const ui = texts(table);
  * would otherwise take a missing date for today without a word.
  */
 const NUMBER = /^\d+[.,]?\d*$/;
-const NUMBER_ERROR = "Bitte gib eine Zahl ab 0 an, zum Beispiel 12,5.";
+const NUMBER_ERROR = "Gib eine Zahl ab 0 an, zum Beispiel 12,5.";
 const STEP_ERROR = "Miss in Schritten von 0,5 cm, zum Beispiel 12 oder 12,5.";
 
 export const measurementSchema = z.object({
@@ -32,7 +32,7 @@ export const measurementSchema = z.object({
     if (!Number.isInteger(value / MEASUREMENT_LIMITS.step)) issue(STEP_ERROR);
   }),
   date: z.string().min(1, ui("dateMissing")),
-  quality: z.enum(QUALITIES, { error: "Bitte wähle die Qualität: gesund oder vergeilt/dünn." }),
+  quality: z.enum(QUALITIES, { error: "Wähle die Qualität: gesund oder vergeilt/dünn." }),
   note: z.string(),
 });
 export type MeasurementFields = z.infer<typeof measurementSchema>;
@@ -69,10 +69,10 @@ const INTERVAL = TREATMENT_LIMITS.courseInterval;
  */
 export const treatmentSchema = z
   .object({
-    specimenIds: z.array(z.string()).min(1, "Wähle mindestens eine Pflanze, das behandelt wird."),
-    reason: z.string().trim().min(1, "Bitte nenne einen Grund, zum Beispiel Wollläuse."),
+    specimenIds: z.array(z.string()).min(1, "Wähle mindestens eine Pflanze."),
+    reason: z.string().trim().min(1, "Nenne einen Grund, zum Beispiel Wollläuse."),
     agent: z.string(),
-    date: z.string().min(1, "Bitte wähle ein Datum für den ersten Termin."),
+    date: z.string().min(1, "Wähle ein Datum für den ersten Termin."),
     isCourse: z.boolean(),
     count: z.string(),
     intervalDays: z.string(),

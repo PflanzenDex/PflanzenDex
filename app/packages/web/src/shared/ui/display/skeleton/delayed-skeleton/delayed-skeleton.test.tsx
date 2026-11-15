@@ -21,7 +21,7 @@ beforeEach(() => {
 
 const loading = (
   <DelayedSkeleton>
-    <SkeletonGroup label="Lädt…">
+    <SkeletonGroup label="Lädt …">
       <Skeleton className="h-24 w-full" />
     </SkeletonGroup>
   </DelayedSkeleton>
@@ -53,13 +53,13 @@ describe("DelayedSkeleton (US-QS-14, DS-57, issue 1697)", () => {
       vi.advanceTimersByTime(SKELETON_DELAY_MS);
     });
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByRole("status").textContent).toContain("Lädt…");
+    expect(screen.getByRole("status").textContent).toContain("Lädt …");
   });
 
   it("US-QS-14 issue 1697 · the delay is a parameter, a zero delay shows at once", () => {
     render(
       <DelayedSkeleton delayMs={0}>
-        <SkeletonGroup label="Lädt…">
+        <SkeletonGroup label="Lädt …">
           <Skeleton />
         </SkeletonGroup>
       </DelayedSkeleton>,
@@ -87,7 +87,7 @@ describe("DelayedSkeleton inside a Suspense boundary (US-QS-14, issue 1697)", ()
       <Suspense
         fallback={
           <DelayedSkeleton>
-            <SkeletonGroup label="Lädt…">
+            <SkeletonGroup label="Lädt …">
               <Skeleton />
             </SkeletonGroup>
           </DelayedSkeleton>
@@ -117,7 +117,7 @@ describe("DelayedSkeleton inside a Suspense boundary (US-QS-14, issue 1697)", ()
       <Suspense
         fallback={
           <DelayedSkeleton>
-            <SkeletonGroup label="Lädt…">
+            <SkeletonGroup label="Lädt …">
               <Skeleton />
             </SkeletonGroup>
           </DelayedSkeleton>
@@ -143,7 +143,7 @@ describe("DelayedSkeleton nested in a due one (US-QS-14, DS-57, issue 1697)", ()
   it("US-QS-14 issue 1697 · a skeleton inside a due skeleton shows at once, so a composed skeleton waits one delay only", () => {
     render(
       <DelayedSkeleton>
-        <SkeletonGroup label="Lädt…">
+        <SkeletonGroup label="Lädt …">
           <DelayedSkeleton>
             <Skeleton data-testid="inner" />
           </DelayedSkeleton>

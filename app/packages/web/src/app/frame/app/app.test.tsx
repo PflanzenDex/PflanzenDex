@@ -298,7 +298,7 @@ describe("US-ACC-01 App", () => {
     fakeServer(500);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect((await screen.findByRole("alert")).textContent).toContain("nicht geladen werden");
+    expect((await screen.findByRole("alert")).textContent).toContain("Konto nicht geladen");
     fakeServer();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
@@ -444,7 +444,7 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/care-phases");
-    expect(await screen.findByText("Noch keine Pflanze hat eine Phase.")).toBeTruthy();
+    expect(await screen.findByText("Noch keine Pflanze hat eine Phase")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     expect(
@@ -485,7 +485,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
-    expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(await screen.findByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Wünsche" }).getAttribute("aria-pressed")).toBe(
       "true",
     );

@@ -218,7 +218,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
               "buffer_low",
               "wishlist",
               "x",
-              "Nachschub nötig: Lampe 3 (0 offene Kandidaten)",
+              "Lampe 3 braucht Nachschub (0 offene Kandidaten).",
               "Erfasse einen Wunsch.",
             ),
             specimenId: null,
@@ -238,7 +238,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(await within(layer).findByText("Nachschub")).toBeTruthy();
     await userEvent.click(
       within(layer).getByRole("button", {
-        name: "Zur Wunschliste: Nachschub nötig: Lampe 3 (0 offene Kandidaten)",
+        name: "Zur Wunschliste: Lampe 3 braucht Nachschub (0 offene Kandidaten).",
       }),
     );
     expect(onOpen).toHaveBeenLastCalledWith("wishlist");
@@ -248,7 +248,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     fakeServer(() => response(200, { date: "2026-10-03", upcoming: 1, items: [] }));
     const onOpen = vi.fn();
     render(<TodayPage api="http://api" token={token} onOpen={onOpen} />);
-    expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
+    expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     expect(screen.getByText("Ein weiterer Behandlungstermin steht später an.")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(onOpen).toHaveBeenCalledWith("collection");
@@ -271,7 +271,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(screen.getByText("Zusammenfassung")).toBeTruthy();
     expect(screen.getByText("Kacheln")).toBeTruthy();
-    expect(screen.queryByText("Heute steht nichts an.")).toBeNull();
+    expect(screen.queryByText("Heute steht nichts an")).toBeNull();
   });
 });
 

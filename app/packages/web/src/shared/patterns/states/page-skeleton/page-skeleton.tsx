@@ -14,7 +14,7 @@ export type PageSkeletonProps = {
  * blocks, no numbers (P-08). The blocks show only after the delay (US-QS-14, DS-57, issue 1697); the destination's heading
  * is text, not a loader, so it stands at once.
  */
-export function PageSkeleton({ label = "Lädt…", heading }: PageSkeletonProps) {
+export function PageSkeleton({ label = "Lädt …", heading }: PageSkeletonProps) {
   if (heading)
     return (
       // The h1 sits where the destination's header puts it (top of the content, 28 px semibold), so it does not move

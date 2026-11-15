@@ -102,10 +102,10 @@ describe("US-POK-08 search", () => {
     expect(shown()).toEqual(["Ficus elastica", "Ficus lyrata"]);
   });
 
-  it("US-POK-08 without a hit it says 'Keine Art gefunden.' and offers the reset (P-09)", async () => {
+  it("US-POK-08 without a hit it says 'Keine Art gefunden' and offers the reset (P-09)", async () => {
     await open();
     await search("zzz");
-    expect(screen.getByText("Keine Art gefunden.")).toBeTruthy();
+    expect(screen.getByText("Keine Art gefunden")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Suche zurücksetzen" }));
     expect(shown()).toHaveLength(3);
     expect(document.activeElement).toBe(screen.getByRole("searchbox", { name: /Suche/ }));

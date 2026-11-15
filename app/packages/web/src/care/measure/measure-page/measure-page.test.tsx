@@ -233,7 +233,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.clear(date);
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Bitte gib ein Datum an, das es gibt",
+      "Gib ein Datum an, das es gibt",
     );
     expect(date.getAttribute("aria-invalid")).toBe("true");
     expect(document.activeElement).toBe(date);
@@ -249,7 +249,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.type(date, "31.02.2026");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Bitte gib ein Datum an, das es gibt",
+      "Gib ein Datum an, das es gibt",
     );
     expect(posts).toHaveLength(0);
   });

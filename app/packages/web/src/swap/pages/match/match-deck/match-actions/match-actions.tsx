@@ -70,28 +70,28 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
 type EmptyText = { title: string; description: string; action: string; href: string };
 const EMPTY_TEXT: Record<EmptyReason, EmptyText> = {
   no_friends: {
-    title: "Du hast noch keine Freunde in der App.",
+    title: "Du hast noch keine Freunde in der App",
     description:
       "Passende Angebote kommen von Freunden. Lade zuerst einen Freund ein; sobald er etwas anbietet, das auf deiner Wunschliste steht, erscheint es hier.",
     action: "Freund einladen",
     href: PATHS.friends,
   },
   no_wishes: {
-    title: "Deine Wunschliste ist leer.",
+    title: "Deine Wunschliste ist leer",
     description:
       "Hier erscheinen Angebote deiner Freunde, deren Art auf deiner Wunschliste steht. Lege einen Wunsch an oder entdecke Arten, die dir gefallen könnten.",
     action: "Wunsch hinzufügen",
     href: WISHLIST_MODE_ADDRESS,
   },
   no_offers: {
-    title: "Deine Freunde bieten gerade nichts an.",
+    title: "Deine Freunde bieten gerade nichts an",
     description:
       "Sobald ein Freund etwas anbietet, das auf deiner Wunschliste steht, erscheint es hier. In der Tauschbörse siehst du alle Angebote.",
     action: "Tauschbörse öffnen",
     href: EXCHANGE_PATH,
   },
   no_match: {
-    title: "Zurzeit passt kein Angebot zu deiner Wunschliste.",
+    title: "Zurzeit passt kein Angebot zu deiner Wunschliste",
     description:
       "Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht.",
     action: "Tauschbörse öffnen",

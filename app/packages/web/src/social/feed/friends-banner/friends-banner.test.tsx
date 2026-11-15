@@ -105,6 +105,22 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
     await vi.waitFor(() => expect(container.textContent).toBe(""));
   });
 
+  it("US-QS-32 SG-COPY-06 a failed 'Okay' shows the German text of its error code, not a generic sentence", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (init?.method === "POST" && path === "/feed/seen")
+          return response(403, { error: { code: "access.denied", text: "raw server text" } });
+        return path === "/feed/banner" ? response(200, banner()) : response(404, {});
+      }),
+    );
+    render(<FriendsBanner api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Okay" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Darauf hast du keinen Zugriff.");
+    expect(screen.getByRole("region", { name: /Neu bei Freunden/ })).toBeTruthy();
+  });
+
   it("US-SOZ-06 · US-QS-15 · issue 1157 the compact banner is one row with 'Okay' at its end and leaves 'Stand' to the feed", async () => {
     server(banner());
     render(<FriendsBanner api="http://api" token={token} compact />);

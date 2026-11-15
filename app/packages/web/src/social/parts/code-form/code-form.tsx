@@ -8,7 +8,7 @@ import { TextField } from "@/shared/ui/fields/input/input";
 import { refusalText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../../shared/data";
 
-const schema = z.object({ code: z.string().trim().min(1, "Bitte gib den Freundescode ein.") });
+const schema = z.object({ code: z.string().trim().min(1, "Gib den Freundescode ein.") });
 type Fields = z.infer<typeof schema>;
 
 /**

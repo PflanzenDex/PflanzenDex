@@ -12,6 +12,7 @@ import table from "./request-state.de.json";
 const ui = texts(table);
 /** The title of a failure while the device is offline: the view is not loaded yet, and the server did not fail (US-QS-32). */
 const offlineTitle = ui("offline");
+const offlineHint = ui("offlineHint");
 
 export type RequestStatus = "pending" | "error" | "empty" | "ready";
 
@@ -85,15 +86,15 @@ export function RequestState(props: RequestStateProps) {
         {loader ?? <PlantLoader className="mx-auto my-8 flex" size="lg" />}
       </DelayedSkeleton>
     );
+  const offlineFailure = !online && !ownOffline;
   if (status === "error")
     return (
       <>
         {heading ? <h1 className="mb-3 text-2xl font-semibold">{heading}</h1> : null}
         <EmptyState
           variant="error"
-          title={
-            !online && !ownOffline ? offlineTitle : (errorText ?? "Das Laden ist fehlgeschlagen.")
-          }
+          title={offlineFailure ? offlineTitle : (errorText ?? "Das Laden ist fehlgeschlagen")}
+          {...(offlineFailure ? { description: offlineHint } : {})}
           action={{ label: "Erneut versuchen", onClick: onRetry }}
         />
       </>

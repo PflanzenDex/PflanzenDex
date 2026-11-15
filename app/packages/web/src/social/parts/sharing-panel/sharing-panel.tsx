@@ -140,7 +140,7 @@ export function SharingPanel(props: {
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
       {rows.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-3">
-          Du hast noch keine Pflanzen, die du freigeben könntest. Lege zuerst unter „Sammlung“ ein
+          Du hast noch keine Pflanzen, die du freigeben könntest. Lege zuerst unter „Sammlung“ eine
           Pflanze an.
         </p>
       ) : (

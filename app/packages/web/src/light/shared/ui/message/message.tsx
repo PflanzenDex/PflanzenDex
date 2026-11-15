@@ -11,7 +11,7 @@ export function ErrorMessage({ error }: { error: ApiError }) {
       className="mt-3 flex min-w-0 flex-col gap-1 break-words rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
     >
       <p>{refusalText(error)}</p>
-      {fields.length > 0 && <p>Bitte prüfe: {fields.join(", ")}.</p>}
+      {fields.length > 0 && <p>Prüfe: {fields.join(", ")}.</p>}
       {error.data && error.data.length > 0 && (
         <ul className="list-disc pl-5">
           {error.data.map((n) => (

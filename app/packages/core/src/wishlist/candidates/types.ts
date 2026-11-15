@@ -62,7 +62,7 @@ export interface ReplenishZone {
   readonly zoneNumber: number;
   readonly name: string;
   readonly open: number;
-  /** "Nachschub nötig: <zone> (N offene Kandidaten)". */
+  /** "<zone> braucht Nachschub (N offene Kandidaten)." */
   readonly text: string;
 }
 

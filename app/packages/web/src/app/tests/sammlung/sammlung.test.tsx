@@ -221,7 +221,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Sammlung");
     expect(screen.getByRole("heading", { level: 2, name: "Wunschliste" })).toBeTruthy();
-    expect(screen.getByText("Erfasse einen Wunsch.")).toBeTruthy();
+    expect(screen.getByText(/Erfasse einen Wunsch\./)).toBeTruthy();
   });
 
   it("US-QS-19 the mode switch labels are Pflanzen, Arten, Wünsche, Geräte", async () => {

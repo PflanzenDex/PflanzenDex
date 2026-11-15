@@ -85,7 +85,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");
-    expect(describedText(marker)).toContain("Bitte gib ein Kennzeichen an");
+    expect(describedText(marker)).toContain("Gib ein Kennzeichen an");
     expect(posts).toHaveLength(0);
   });
 
@@ -108,7 +108,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     const marker = screen.getByLabelText("Kennzeichen");
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");
-    expect(describedText(marker)).toContain("Bitte gib ein Kennzeichen an");
+    expect(describedText(marker)).toContain("Gib ein Kennzeichen an");
     expect(posts).toHaveLength(0);
   });
 });
@@ -123,7 +123,7 @@ describe("US-BES-07 DS-48 invalid submission of the archive reason", () => {
     const own = screen.getByLabelText("Eigener Grund");
     await waitFor(() => expect(document.activeElement).toBe(own));
     expect(own.getAttribute("aria-invalid")).toBe("true");
-    expect(describedText(own)).toContain("Bitte nenne einen Grund");
+    expect(describedText(own)).toContain("Nenne einen Grund");
     expect(posts).toHaveLength(0);
   });
 });

@@ -234,8 +234,9 @@ describe("US-WUN-01 page of the candidate list", () => {
       }),
     );
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
-    expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    await screen.findByRole("heading", { name: "Keine offenen Kandidaten" });
+    expect(screen.getByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
+    expect(screen.queryByText("Keine offenen Kandidaten in der Wunschliste.")).toBeNull();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 
@@ -250,7 +251,7 @@ describe("US-WUN-01 page of the candidate list", () => {
             zoneNumber: 3,
             name: "Fenster 3",
             open: 1,
-            text: "Nachschub nötig: Fenster 3 (1 offener Kandidat)",
+            text: "Fenster 3 braucht Nachschub (1 offener Kandidat).",
           },
         ],
         actions: { discover: false, suggestions: false },
@@ -259,7 +260,9 @@ describe("US-WUN-01 page of the candidate list", () => {
     });
     view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Hinweise (1)" }));
-    expect(await screen.findByText("Nachschub nötig: Fenster 3 (1 offener Kandidat)")).toBeTruthy();
+    expect(
+      await screen.findByText("Fenster 3 braucht Nachschub (1 offener Kandidat)."),
+    ).toBeTruthy();
     expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Zone Fenster 3.")).toBeTruthy();
   });
 
@@ -594,7 +597,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
       }),
     );
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
+    await screen.findByRole("heading", { name: "Keine offenen Kandidaten" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
     // The species pick is the main way into the form (#902), so the focus goes there.
     expect(document.activeElement).toBe(screen.getByLabelText("Art suchen"));
@@ -625,7 +628,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    expect(await screen.findByText("Bitte gib einen Namen an.")).toBeTruthy();
+    expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
     expect(screen.getByLabelText("Name").closest("details")?.open).toBe(true);
   });
 
@@ -725,7 +728,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
     const posts = fetchFn.mock.calls.filter(([, init]) => init?.method === "POST");
     expect(posts).toHaveLength(1);
     expect(new Headers(posts[0]?.[1]?.headers).get("Idempotency-Key")).toBeTruthy();
-    expect(await screen.findByText("Keine offenen Kandidaten in der Wunschliste.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Keine offenen Kandidaten" })).toBeTruthy();
     // The history is the layer "Gekauft" (US-QS-22); the row of controls names its count.
     await userEvent.click(await screen.findByRole("button", { name: "Gekauft (1)" }));
     const history = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
@@ -981,8 +984,8 @@ describe("US-QS-22 the wishlist fits one screen", () => {
       list([], { text: "Keine offenen Kandidaten.", nextAction: "Erfasse einen Wunsch." }),
     );
     view(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("Keine offenen Kandidaten.");
-    expect(screen.getByText("Erfasse einen Wunsch.")).toBeTruthy();
+    await screen.findByRole("heading", { name: "Keine offenen Kandidaten" });
+    expect(screen.getByText(/Erfasse einen Wunsch\./)).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Wunsch erfassen" })).toHaveLength(1);
   });
 

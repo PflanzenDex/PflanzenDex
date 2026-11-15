@@ -168,7 +168,7 @@ export function InvitationList(props: {
   if (props.invitations.length === 0)
     return (
       <EmptyState
-        title="Noch keine Einladung erstellt."
+        title="Noch keine Einladung erstellt"
         description="Erstelle oben einen Code."
         action={{ label: "Gültigkeit wählen", onClick: props.onStart }}
       />

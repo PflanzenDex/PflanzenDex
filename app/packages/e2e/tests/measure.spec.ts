@@ -133,7 +133,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     for (const value of ["abc", "-3"]) {
       await form.getByLabel(/^Messwert/).fill(value);
       await page.getByRole("button", { name: "Messung speichern" }).click();
-      await expect(page.getByRole("alert")).toContainText("Bitte gib eine Zahl ab 0 an");
+      await expect(page.getByRole("alert")).toContainText("Gib eine Zahl ab 0 an");
     }
     await openCourse(page);
     await expect(page.getByText("Trage oben den ersten Messwert ein.")).toBeVisible();

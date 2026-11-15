@@ -111,9 +111,7 @@ describe("US-ACC-05 registration with an invitation code", () => {
   it("US-ACC-05 an empty field sends nothing and asks for the code", async () => {
     open();
     await userEvent.setup().click(screen.getByRole("button", { name: "Registrieren" }));
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      "Bitte gib deinen Einladungscode ein.",
-    );
+    expect((await screen.findByRole("alert")).textContent).toBe("Gib deinen Einladungscode ein.");
     expect(fetch).not.toHaveBeenCalled();
   });
 

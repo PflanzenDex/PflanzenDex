@@ -29,7 +29,7 @@ describe("LoadMore (US-QS-07, DS-34)", () => {
 
   it("US-QS-07 pending: disabled, busy, PlantLoader drawn, and the button text says Lädt", () => {
     const { container } = render(<LoadMore {...base} pending />);
-    const button = screen.getByRole("button", { name: "Lädt…" });
+    const button = screen.getByRole("button", { name: "Lädt …" });
     expect(button.hasAttribute("disabled")).toBe(true);
     expect(button.getAttribute("aria-busy")).toBe("true");
     expect(container.querySelector("svg")).toBeTruthy();

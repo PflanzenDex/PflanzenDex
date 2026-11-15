@@ -300,7 +300,7 @@ describe("US-QS-23 the other tabs", () => {
     expect(screen.getByTestId("address").textContent).toBe(
       "?sheet=profil-e1&tab=pflege&teil=profil",
     );
-    expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art.")).toBeTruthy();
+    expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art")).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
     act(() => screen.getByText("Browser zurück").click());
     const back = await screen.findByRole("dialog", { name: "Aloe" });

@@ -104,7 +104,7 @@ describe("US-BES-01 Seite Arten", () => {
   it('empty catalog: says what to do and offers "Art vorschlagen" (P-09)', async () => {
     fakeServer();
     render(page());
-    expect(await screen.findByText("Der gemeinsame Katalog ist noch leer.")).toBeTruthy();
+    expect(await screen.findByText("Der gemeinsame Katalog ist noch leer")).toBeTruthy();
     expect(screen.getByText(/Schlage die erste Art vor/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Art vorschlagen" })).toBeTruthy();
   });
@@ -242,7 +242,7 @@ describe("US-BES-01 Seite Arten", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     const name = screen.getByLabelText(/Lateinischer Name/);
     await vi.waitFor(() => expect(document.activeElement).toBe(name));
-    const message = screen.getByText("Bitte gib den lateinischen Namen an.");
+    const message = screen.getByText("Gib den lateinischen Namen an.");
     expect(name.getAttribute("aria-describedby")).toContain(message.id);
     expect(screen.getByLabelText(/Wachstumsmaß/).getAttribute("aria-invalid")).toBe("true");
     // The first step does not let go until its fields are valid; the optional light fields have not been shown yet.

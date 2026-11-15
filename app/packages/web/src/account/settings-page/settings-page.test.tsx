@@ -554,7 +554,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
       await user.click(screen.getByRole("button", { name: "Speichern" }));
       expect(await screen.findByText(message)).toBeTruthy();
       expect(input.getAttribute("aria-invalid")).toBe("true");
-      expect(screen.getByText("Bitte prüfe die markierten Felder.")).toBeTruthy();
+      expect(screen.getByText("Prüfe die markierten Felder.")).toBeTruthy();
       expect(puts).toHaveLength(0);
     },
   );

@@ -257,7 +257,7 @@ describe("US-QS-19 the layers of the plants", () => {
   it("US-QS-19 · P-09 without a plant the mode says what to do next", () => {
     const onSpeciesChoose = vi.fn();
     screenWith([], { onSpeciesChoose });
-    expect(screen.getByText("Du hast noch keine Pflanze.")).toBeTruthy();
+    expect(screen.getByText("Du hast noch keine Pflanze")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Art wählen" }));
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
@@ -308,7 +308,7 @@ describe("US-QS-19 loading and error states of the plants", () => {
       }),
     );
     render(page());
-    expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
     vi.unstubAllGlobals();
   });

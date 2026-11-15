@@ -86,7 +86,7 @@ describe("US-BES-19 the pot fields of the equipment form", () => {
     await save();
     expect(
       await screen.findByText(
-        "Bitte gib eine Größe von 1 bis 300 cm an, höchstens mit einer Nachkommastelle.",
+        "Gib eine Größe von 1 bis 300 cm an, höchstens mit einer Nachkommastelle.",
       ),
     ).toBeTruthy();
     expect(onSend).not.toHaveBeenCalled();

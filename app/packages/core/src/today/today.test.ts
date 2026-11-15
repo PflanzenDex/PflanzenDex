@@ -291,7 +291,7 @@ describe("US-QS-04 deviations become visible in the today list", () => {
       id: "buffer:z3",
       specimenId: null,
       specimenName: null,
-      text: "Nachschub nötig: Zone 3 (1 offener Kandidat)",
+      text: "Zone 3 braucht Nachschub (1 offener Kandidat).",
       target: "wishlist",
     });
     expect(r.value.items[0]?.nextAction).toContain("Zone 3");
@@ -359,9 +359,19 @@ describe("US-EQU-04 a due device check in the today list", () => {
     expect(r.value.items[1]).toMatchObject({
       id: "equipment-check:d1",
       target: "equipment",
-      text: "Prüfung fällig: Timer A – zuletzt geprüft am 01.08.2026.",
+      text: "Timer A wurde zuletzt am 01.08.2026 geprüft.",
     });
     expect(r.value.items[1]?.nextAction.length).toBeGreaterThan(0);
+  });
+
+  it("US-EQU-04 · US-QS-32 a device never checked reads 'wurde noch nie geprüft.' as one sentence", async () => {
+    const today = await setUp([], [], { devices: [device({ lastCheckedOn: null })] });
+    const r = await today();
+    if (!r.ok) throw new Error("failed");
+    expect(r.value.items[0]).toMatchObject({
+      id: "equipment-check:d1",
+      text: "Timer A wurde noch nie geprüft.",
+    });
   });
 
   it("US-EQU-04 without an interval, with a recent check or for another account nothing is listed", async () => {

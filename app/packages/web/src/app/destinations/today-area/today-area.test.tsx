@@ -472,7 +472,7 @@ describe("US-QS-18 Heute fits one screen", () => {
   it("US-QS-18 nothing open says so with the next step, and the tiles stay", async () => {
     fakeServer({ treatments: [], hints: [] });
     show();
-    expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
+    expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
     expect(await screen.findByRole("button", { name: /^0Behandlungen$/ })).toBeTruthy();
   });
@@ -616,7 +616,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     );
     expect((await screen.findByText(/als erledigt eingetragen/)).textContent).toContain("Aloe");
     expect(posts).toEqual(["/treatments/a/complete"]);
-    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    expect(await screen.findByText("Keine offenen Behandlungen")).toBeTruthy();
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
@@ -765,21 +765,23 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(await screen.findByText(/Termin.* geplant/)).toBeTruthy();
   });
 
-  it("US-BEH-01 · A-04 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {
+  it("US-BEH-01 · A-04 · US-QS-32 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {
     fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
-    expect(await within(form).findByText(/Wähle mindestens eine Pflanze/)).toBeTruthy();
+    expect(await within(form).findByText("Wähle mindestens eine Pflanze.")).toBeTruthy();
     expect(
       within(form).getByRole("button", { name: "Pflanzen (0)" }).getAttribute("aria-pressed"),
     ).toBe("true");
     // A plant is chosen, the reason is missing: the view moves to the reason and names it.
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
-    expect(await within(form).findByText(/Bitte nenne einen Grund/)).toBeTruthy();
+    expect(
+      await within(form).findByText("Nenne einen Grund, zum Beispiel Wollläuse."),
+    ).toBeTruthy();
     expect(within(form).getByRole("button", { name: "Termin" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
@@ -830,7 +832,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     show("/today?sheet=treatments");
     const empty = await screen.findByRole("heading", {
       level: 3,
-      name: "Keine offenen Behandlungen.",
+      name: "Keine offenen Behandlungen",
     });
     expect(
       within(empty.parentElement as HTMLElement).getByRole("button", { name: "Behandlung planen" }),
@@ -842,7 +844,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     show("/today?sheet=treatments");
     const empty = await screen.findByRole("heading", {
       level: 3,
-      name: "Keine offenen Behandlungen.",
+      name: "Keine offenen Behandlungen",
     });
     expect(
       within(empty.parentElement as HTMLElement)
@@ -944,7 +946,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
         name: "Grund a bei Aloe als erledigt abhaken",
       }),
     );
-    expect(await within(layer).findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    expect(await within(layer).findByText("Keine offenen Behandlungen")).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
   });
 
@@ -970,7 +972,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByRole("heading", {
       level: 3,
-      name: "Keine offenen Behandlungen.",
+      name: "Keine offenen Behandlungen",
     });
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", {
@@ -987,7 +989,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     );
     const open = within(await dialog("Behandlungen"));
     const list = await open.findByRole("list", { name: "Offene Behandlungen" });
-    expect(open.queryByText("Keine offenen Behandlungen.")).toBeNull();
+    expect(open.queryByText("Keine offenen Behandlungen")).toBeNull();
     expect(within(list).getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
     expect(within(list).getByText(/Läuse/)).toBeTruthy();
   });
@@ -996,12 +998,12 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     fakeServer({ treatments: [], items: [] });
     const user = userEvent.setup();
     show("/today");
-    expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
+    expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     await user.click(await screen.findByRole("button", { name: /^0Behandlungen$/ }));
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByRole("heading", {
       level: 3,
-      name: "Keine offenen Behandlungen.",
+      name: "Keine offenen Behandlungen",
     });
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", {
@@ -1015,7 +1017,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
     // The card of Heute names the planned treatment as due today, without a reload.
     expect(await screen.findByText("Heute fällig")).toBeTruthy();
-    expect(screen.queryByText("Heute steht nichts an.")).toBeNull();
+    expect(screen.queryByText("Heute steht nichts an")).toBeNull();
   });
 
   it("US-QS-18 · SG-FEED-01 a planned treatment shows in Offen when the answer of the list comes after the layer opened again", async () => {
@@ -1045,7 +1047,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByRole("heading", {
       level: 3,
-      name: "Keine offenen Behandlungen.",
+      name: "Keine offenen Behandlungen",
     });
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", {
