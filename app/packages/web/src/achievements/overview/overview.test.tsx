@@ -177,7 +177,7 @@ describe("US-ACH-02 achievements overview", () => {
     expect(screen.queryByRole("button", { name: /\(\d+\)/ })).toBeNull();
   });
 
-  it("US-ACH-02 a new account's group choice reads 0 von 3 and the heading Erreicht says · noch keiner, with no extra line", async () => {
+  it("US-ACH-02 a new account's group choice reads 0 von 3 and shows no section Erreicht, only the open ones", async () => {
     const open = (ids: string[]) => ids.map((id) => item(id, { nextStep: step(`${id}.next`) }));
     serve({
       calmMode: false,
@@ -199,17 +199,16 @@ describe("US-ACH-02 achievements overview", () => {
         empty("collecting"),
       ],
     });
+    // The choice carries the fact (SG-LIST-07): no empty "Erreicht" section, no line that repeats the count.
     expect(await screen.findByRole("button", { name: "Pflege · 0 von 3" })).toBeTruthy();
-    const earned = screen.getByRole("region", { name: "Erreicht · noch keiner" });
-    // The empty state is the muted text of the heading: no paragraph, no card in the section (SG-LIST-08, height).
-    expect(earned.querySelector("p")).toBeNull();
-    expect(within(earned).getByText("· noch keiner").className).toContain("text-muted-foreground");
+    expect(screen.queryByRole("region", { name: /Erreicht/ })).toBeNull();
+    expect(screen.queryByRole("heading", { name: /Erreicht/ })).toBeNull();
     expect(
       within(screen.getByRole("region", { name: "Noch offen" })).getByText("Steckling bewurzelt"),
     ).toBeTruthy();
   });
 
-  it("US-ACH-02 an open section with nothing left says · keiner in its heading", async () => {
+  it("US-ACH-02 a group with everything earned shows no section Noch offen, only Erreicht", async () => {
     serve({
       calmMode: false,
       earnedCount: 1,
@@ -222,9 +221,12 @@ describe("US-ACH-02 achievements overview", () => {
         empty("collecting"),
       ],
     });
-    const open = await screen.findByRole("region", { name: "Noch offen · keiner" });
-    expect(open.querySelector("p")).toBeNull();
-    expect(within(open).getByText("· keiner").className).toContain("text-muted-foreground");
+    const earned = await screen.findByRole("region", { name: "Erreicht" });
+    expect(within(earned).getByText("Steckling bewurzelt")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: /Noch offen/ })).toBeNull();
+    expect(screen.queryByRole("heading", { name: /Noch offen/ })).toBeNull();
+    // The existing line for a group that is complete stays (US-ACH-02).
+    expect(document.body.textContent).toContain("Du hast alle Erfolge dieser Liste erreicht.");
   });
 
   it("US-ACH-02 the group Sammeln links to the Pokédex and shows no achievements of its own", async () => {

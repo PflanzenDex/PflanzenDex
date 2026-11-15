@@ -1,7 +1,5 @@
 {
   "earned": "Erreicht",
   "open": "Noch offen",
-  "noneEarned": "noch keiner",
-  "allEarned": "keiner",
   "count": "{earned} von {total}"
 }

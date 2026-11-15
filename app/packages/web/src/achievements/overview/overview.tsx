@@ -31,7 +31,7 @@ type Shown = Extract<AchievementsOverview, { calmMode: false }>;
  */
 const PAGE = 3;
 
-const CARD = "flex min-w-0 flex-col gap-1 rounded-card bg-card p-4 shadow-elevation-1";
+const CARD = "flex min-w-0 flex-col gap-0.5 rounded-card bg-card p-4 shadow-elevation-1";
 
 function Earned({ item }: { item: AchievementItem }) {
   return (
@@ -118,10 +118,11 @@ function Groups({ overview, api, token }: { overview: Shown; api: string; token:
       label: GROUP_TITLES[g.group] ?? g.group,
       // The choice counts the earned of all achievements of the group, open ones included (US-ACH-02).
       countText: text("count", { earned: g.earned.length, total: g.earned.length + g.open.length }),
+      // A state without achievements has no section (SG-LIST-07: the choice already says how many are earned).
       items: [
         { kind: "earned" as const, items: g.earned },
         { kind: "open" as const, items: g.open },
-      ],
+      ].filter((s) => s.items.length > 0),
     }));
   return (
     <>
@@ -137,7 +138,7 @@ function Groups({ overview, api, token }: { overview: Shown; api: string; token:
         title="Erfolge"
         value={earned === 0 ? "Noch keiner erreicht" : `${earned} erreicht`}
       >
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-2">
           <PagedGroups
             choicesLabel="Gruppen der Erfolge"
             listLabel="Erfolge"
@@ -169,7 +170,8 @@ function Groups({ overview, api, token }: { overview: Shown; api: string; token:
  * The overview of the achievements (US-ACH-02): earned ones with date and specimen, open ones with the next step or
  * the data that is missing. Derived from the own data on every visit; no percentage, no score, no comparison with others
  * (FR-ACH-04). The list is one layer "Erfolge" in pages by group (US-QS-15); each group shows its earned and its open
- * achievements as the sections "Erreicht" and "Noch offen". In calm mode nothing is shown (US-ACH-08).
+ * achievements as the sections "Erreicht" and "Noch offen", a state without achievements is not shown. In calm mode
+ * nothing is shown (US-ACH-08).
  */
 export function AchievementsOverviewSection(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadAchievements(props.api, t), [props.api]);
