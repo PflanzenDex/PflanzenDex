@@ -208,6 +208,16 @@ describe("US-QS-07 · DS-32 distribution bars", () => {
     );
     expect(bars(container).map((b) => b.style.getPropertyValue("--value"))).toEqual(["0"]);
   });
+
+  it("US-QS-32 · SG-COLOR-04 the thinnest zones' bars are neutral, not amber; the other bars stay primary", () => {
+    const { container } = render(<DistributionView distribution={distribution()} />);
+    const [two, three, four] = bars(container);
+    expect(two?.className.split(" ")).toContain("bg-primary");
+    for (const thin of [three, four]) {
+      expect(thin?.className.split(" ")).toContain("bg-muted-foreground");
+      expect(thin?.className).not.toContain("bg-warning");
+    }
+  });
 });
 
 describe("US-LIC-02 collection page shows the distribution", () => {

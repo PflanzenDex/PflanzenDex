@@ -41,9 +41,8 @@ function Entry({ e }: { e: HistoryEntry }) {
         </span>
       )}
       <span className="mt-1">
-        <Badge variant={e.status === "handed_over" ? "default" : "outline"}>
-          {STATUS_TEXT[e.status]}
-        </Badge>
+        {/* Every entry is an ended swap: outlined, like the ended states in "Meine" and "Anfragen" (US-QS-32). */}
+        <Badge variant="outline">{STATUS_TEXT[e.status]}</Badge>
       </span>
     </div>
   );

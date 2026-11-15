@@ -114,3 +114,87 @@ describe("US-QS-19 compact entry hints (P-10)", () => {
     expect(h).toContain("Wähle im Pflegeprofil der Art einen Soll-Standort");
   });
 });
+
+describe("US-QS-32 amber only for a deviation, a missing location stays neutral (SG-COLOR-04)", () => {
+  const home: LightLocation[] = [
+    ...locations,
+    { id: "s2", name: "Keller", lightZoneId: null, kind: "indoor" },
+  ];
+  /** The class names of the element whose text starts with `text` (the badge or line the text sits in). */
+  const classOf = (html: string, text: string): string[] => {
+    const at = html.indexOf(`>${text}`);
+    const open = at < 0 ? -1 : html.lastIndexOf('class="', at);
+    if (open < 0) return [];
+    const start = open + 'class="'.length;
+    return html.slice(start, html.indexOf('"', start)).split(" ");
+  };
+
+  it("US-QS-32 a plant off its target shows 'Abweichung' as an amber badge after the location line, the line itself stays quiet", () => {
+    const h = renderToString(
+      <Entry
+        bare
+        row={row({ locationId: "s1", targetLocationId: "s2" })}
+        locations={home}
+        busy={false}
+        onConfirm={undefined}
+      />,
+    );
+    expect(classOf(h, "Abweichung")).toContain("bg-warning");
+    expect(classOf(h, "Standort: Regal Süd")).toContain("text-muted-foreground");
+    expect(h).not.toContain("Weicht ab");
+  });
+
+  it("US-QS-32 a plant at its target has no 'Abweichung' badge", () => {
+    const h = renderToString(
+      <Entry
+        bare
+        row={row({ locationId: "s2", targetLocationId: "s2" })}
+        locations={home}
+        busy={false}
+        onConfirm={undefined}
+      />,
+    );
+    expect(h).not.toContain("Abweichung");
+  });
+
+  it("US-QS-32 a missing location is bold neutral text in the compact entry, with no warning class", () => {
+    const h = renderToString(
+      <Entry
+        bare
+        row={row({ locationId: null, targetLocationId: "s2" })}
+        locations={home}
+        busy={false}
+        onConfirm={undefined}
+      />,
+    );
+    expect(classOf(h, "Standort fehlt")).toContain("font-semibold");
+    expect(classOf(h, "Standort fehlt")).not.toContain("bg-warning");
+    expect(classOf(h, "Standort fehlt")).not.toContain("text-warning-foreground");
+  });
+
+  it("US-QS-32 a missing location is bold neutral text in the full entry too, and the full deviation paragraph stays amber", () => {
+    const missing = renderToString(
+      <ul>
+        <Entry
+          row={row({ locationId: null, targetLocationId: "s2" })}
+          locations={home}
+          busy={false}
+          onConfirm={undefined}
+        />
+      </ul>,
+    );
+    expect(classOf(missing, "Standort fehlt")).toContain("font-semibold");
+    expect(classOf(missing, "Standort fehlt")).not.toContain("bg-warning");
+    const deviating = renderToString(
+      <ul>
+        <Entry
+          row={row({ locationId: "s1", targetLocationId: "s2" })}
+          locations={home}
+          busy={false}
+          onConfirm={undefined}
+        />
+      </ul>,
+    );
+    expect(classOf(deviating, "Weicht ab")).toContain("bg-warning");
+  });
+});

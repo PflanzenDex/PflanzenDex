@@ -4,13 +4,16 @@ import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { dateText } from "../../../parts/invite-card/invite-card";
 
-/** "du hast sie" / "du hast sie nicht", or the comparison is unknown (P-08): text carries the meaning, colour only supports it. */
+/**
+ * "du hast sie" / "du hast sie nicht": both are open states, neutral (SG-COLOR-01, SG-COLOR-04: no deviation to look at).
+ * An unknown comparison is outlined (P-08). The text carries the meaning, colour only supports it.
+ */
 const ownership = (iHave: boolean | null) =>
   iHave === null
     ? { text: "Vergleich unbekannt", variant: "outline" as const }
     : iHave
       ? { text: "Du hast sie", variant: "default" as const }
-      : { text: "Du hast sie nicht", variant: "warning" as const };
+      : { text: "Du hast sie nicht", variant: "default" as const };
 
 /**
  * A card of a friend's shared species (US-SOZ-07, in the style of the collector cards of US-POK-01): the species, how many

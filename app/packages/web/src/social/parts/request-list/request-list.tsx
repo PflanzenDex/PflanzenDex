@@ -51,7 +51,7 @@ function Outgoing({ request: r }: { request: FriendRequest }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
       <span className="min-w-0 break-words">Anfrage an {nameOf(r.otherName)}</span>
-      <Badge variant={r.status === "declined" ? "outline" : "secondary"}>
+      <Badge variant={r.status === "declined" ? "outline" : "default"}>
         {r.status === "declined" ? "Nicht angenommen" : "Wartet auf Antwort"}
       </Badge>
     </div>
