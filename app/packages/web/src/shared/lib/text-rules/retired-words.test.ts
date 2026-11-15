@@ -182,7 +182,7 @@ describe("US-QS-32 copy rules (SG-COPY-01, SG-COPY-04)", () => {
     for (const file of sources.filter((f) => !/(^|\/)news\/news\.de\.json$/.test(f)))
       for (const { text, n } of lines(file)) if (/\p{L}…/u.test(text)) hits.push(`${file}:${n}`);
     expect(hits).toEqual([]);
-    expect(/\p{L}…/u.test("Lädt…")).toBe(true);
+    expect(/\p{L}…/u.test("Laden…")).toBe(true);
     expect(/\p{L}…/u.test("Lädt …")).toBe(false);
   });
 });
