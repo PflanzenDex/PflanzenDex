@@ -157,7 +157,7 @@
 
 <body id="keycloak-bg" class="${properties.kcBodyClass!}" data-page-id="login-${pageId}">
 <div class="pdx-page">
-  <div class="pdx-side" role="region" tabindex="0" aria-label="${msg('pdxFrameLabel')}">
+  <div class="pdx-side" role="region" aria-label="${msg('pdxFrameLabel')}">
     <svg class="pdx-drawing" viewBox="0 0 400 120" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
       <path d="M24 98 H376" stroke-width="3"/>
       <path d="M60 98 L54 112 M340 98 L346 112"/>
@@ -188,6 +188,24 @@
       <li>${msg("pdxValue3")}</li>
     </ul>
   </div>
+  <#-- The band is a tab stop only while it scrolls (US-QS-14, issue 2124): a stop that scrolls nothing does nothing. The
+       script watches the band and its drawing and lines, as the welcome page of the web app does (useScrolls in AuthFrame). -->
+  <script>
+    (function () {
+      var band = document.querySelector(".pdx-side");
+      if (!band) return;
+      function measure() {
+        if (band.scrollHeight > band.clientHeight) band.setAttribute("tabindex", "0");
+        else band.removeAttribute("tabindex");
+      }
+      measure();
+      // Without ResizeObserver the band is measured once, as in the web app.
+      if (typeof ResizeObserver === "undefined") return;
+      var observer = new ResizeObserver(measure);
+      observer.observe(band);
+      for (var i = 0; i < band.children.length; i++) observer.observe(band.children[i]);
+    })();
+  </script>
   <div class="pdx-content">
     <div class="pdx-card">
       <header id="kc-header" class="pdx-brand">

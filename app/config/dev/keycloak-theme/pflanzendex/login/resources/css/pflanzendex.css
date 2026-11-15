@@ -113,7 +113,8 @@
   overscroll-behavior: contain;
 }
 
-/* The band is a keyboard-reachable region: its ring is inset, a ring outside would be cut off by its scroll area. */
+/* The band is a tab stop only while it scrolls (issue 2124, the script after it in template.ftl sets the tabindex): its ring
+   is inset, a ring outside would be cut off by its scroll area. */
 .pdx-side:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
