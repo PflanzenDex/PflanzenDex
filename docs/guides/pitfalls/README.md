@@ -261,3 +261,11 @@ IDs are never renumbered.
 - **Fix:** Wait in the test for the committed location the next step needs (a probe in the router, as `Address` records `route.guarded` in `collection-area.test.tsx`), and load the lazy parts of the path in `beforeAll` (#444). To find such a race, log every committed location with a timestamp in the test router and compare a hung run with a passing one; CPU load (24 busy loops, five parallel runs) reproduces it.
 - **Can it become a gate?** No: whether a step depends on a pending transition is a property of the flow, not of a code pattern.
 - **Source:** Issue #2136, PR #2142; the product side of the race is filed as its own bug.
+
+## PF-032 `make ds-snapshots` rewrites baselines nobody changed
+
+- **Symptom:** After `make ds-snapshots`, dozens of PNGs under `.storybook/snapshots` and `.storybook/page-snapshots` show as modified, including components and pages the change never touched (57 files in PR #2172: buttons, selects, the "Entdecken" and "Heute" pages).
+- **Cause:** The update run writes every baseline anew; tiny rendering differences that stay inside the comparison threshold still produce a different file. The check run (`make ds-snapshots-check`) passes against the old files.
+- **Fix:** After the rewrite, keep only the pictures the change explains; restore the rest with `git checkout -- <png>` and confirm with `make ds-snapshots-check` that the committed baselines still match. Name the kept pictures in the PR.
+- **Can it become a gate?** No: whether a picture change is caused by the diff needs judgment; the check run already fails on a real difference.
+- **Source:** Issue #2075, PR #2172.
