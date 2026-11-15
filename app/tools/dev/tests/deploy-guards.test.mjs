@@ -159,15 +159,15 @@ printf '%s\\n' "$STUB_STARTED"
 `,
 );
 chmodSync(join(themeBin, "docker"), 0o755);
-// Stub compose: `ps -q keycloak` prints STUB_CONTAINER (empty: no container) or fails with STUB_PS=fail; `restart` fails
-// with STUB_RESTART=fail. Every call is logged.
+// Stub compose: `ps -q keycloak` prints STUB_CONTAINER (empty: no container) or fails with STUB_PS=fail; `up` (the
+// recreate) fails with STUB_RECREATE=fail. Every call is logged.
 writeFileSync(
   join(themeBin, "compose"),
   `#!/usr/bin/env bash
 echo "compose $*" >> "$STUB_LOG"
 case "$1" in
   ps) [ "\${STUB_PS:-}" != fail ] || { echo "Error: compose ps failed" >&2; exit 1; }; [ -z "\${STUB_CONTAINER:-}" ] || echo "$STUB_CONTAINER" ;;
-  restart) [ "\${STUB_RESTART:-}" != fail ] || { echo "Error: restart failed" >&2; exit 1; } ;;
+  up) [ "\${STUB_RECREATE:-}" != fail ] || { echo "Error: up failed" >&2; exit 1; } ;;
 esac
 `,
 );
@@ -186,7 +186,7 @@ function setOld(dir) {
 }
 
 // changed: theme path → time its file was written (an existing file); removed: theme path → time its file was removed,
-// which changes its folder at that time. fail: "inspect", "ps" or "restart", the call that fails.
+// which changes its folder at that time. fail: "inspect", "ps" or "recreate", the call that fails.
 function refresh({
   started = KEYCLOAK_START,
   container = "kc-1",
@@ -228,32 +228,34 @@ function refresh({
       STUB_CONTAINER: container,
       STUB_INSPECT: fail === "inspect" ? "fail" : "",
       STUB_PS: fail === "ps" ? "fail" : "",
-      STUB_RESTART: fail === "restart" ? "fail" : "",
+      STUB_RECREATE: fail === "recreate" ? "fail" : "",
     },
   });
   return { ...r, calls: readFileSync(log, "utf8").trim().split("\n").filter(Boolean) };
 }
 const CSS = "pflanzendex/login/resources/css/pflanzendex.css";
 const TEMPLATE = "pflanzendex/login/template.ftl";
+// The recreate: a new container drops the gzip cache and the resources version of the old one (#2161, measured).
+const RECREATE = "compose up -d --no-deps --force-recreate keycloak";
 
-test("US-DEV-06 a theme file written after keycloak started restarts keycloak, and the log line names the file (#2161)", () => {
+test("US-DEV-06 a theme file written after keycloak started recreates keycloak, and the log line names the file (#2161)", () => {
   const r = refresh({ changed: { [CSS]: "2026-11-15T08:30:00Z" } });
   assert.equal(r.status, 0, r.stderr);
   assert.match(
     r.stdout,
-    /keycloak theme changed since keycloak started \(\S*pflanzendex\.css\); restarting keycloak/,
+    /keycloak theme changed since keycloak started \(\S*pflanzendex\.css\); recreating keycloak \(its gzip cache/,
   );
-  assert.ok(r.calls.includes("compose restart keycloak"), r.calls.join("\n"));
+  assert.ok(r.calls.includes(RECREATE), r.calls.join("\n"));
 });
 
 test("US-DEV-06 a theme tree older than the start of keycloak leaves keycloak running (#2161)", () => {
   const r = refresh();
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, "");
-  assert.ok(!r.calls.some((c) => c.startsWith("compose restart")), r.calls.join("\n"));
+  assert.ok(!r.calls.some((c) => c.startsWith("compose up")), r.calls.join("\n"));
 });
 
-test("US-DEV-06 no keycloak container yet (a first deploy) returns 0 without a restart (#2161)", () => {
+test("US-DEV-06 no keycloak container yet (a first deploy) returns 0 without a recreate (#2161)", () => {
   const r = refresh({ container: "", changed: { [TEMPLATE]: "2026-11-15T08:30:00Z" } });
   assert.equal(r.status, 0, r.stderr);
   assert.deepEqual(r.calls, ["compose ps -q keycloak"]);
@@ -263,7 +265,7 @@ test("US-DEV-06 a failing docker inspect is an error, not an unchanged theme (P-
   const r = refresh({ fail: "inspect", changed: { [TEMPLATE]: "2026-11-15T08:30:00Z" } });
   assert.equal(r.status, 1);
   assert.match(r.stderr, /ERROR: docker inspect of keycloak failed/);
-  assert.ok(!r.calls.some((c) => c.includes("restart")), r.calls.join("\n"));
+  assert.ok(!r.calls.some((c) => c.includes("up -d")), r.calls.join("\n"));
 });
 
 test("US-DEV-06 a failing compose ps is an error, not a missing container (P-10, #2161)", () => {
@@ -273,33 +275,33 @@ test("US-DEV-06 a failing compose ps is an error, not a missing container (P-10,
   assert.deepEqual(r.calls, ["compose ps -q keycloak"]);
 });
 
-test("US-DEV-06 a failing restart of keycloak fails the deploy with a message (#2161)", () => {
-  const r = refresh({ fail: "restart", changed: { [CSS]: "2026-11-15T08:30:00Z" } });
+test("US-DEV-06 a failing recreate of keycloak fails the deploy with a message (#2161)", () => {
+  const r = refresh({ fail: "recreate", changed: { [CSS]: "2026-11-15T08:30:00Z" } });
   assert.equal(r.status, 1);
-  assert.match(r.stderr, /restarting keycloak failed; logs: .* logs keycloak/);
+  assert.match(r.stderr, /recreating keycloak failed; logs: .* logs keycloak/);
 });
 
-test("US-DEV-06 a theme file written a fraction of a second after the start restarts keycloak (#2161)", () => {
+test("US-DEV-06 a theme file written a fraction of a second after the start recreates keycloak (#2161)", () => {
   const r = refresh({
     started: "2026-11-15T08:00:00.123456789Z",
     changed: { [TEMPLATE]: "2026-11-15T08:00:00.400Z" },
   });
   assert.equal(r.status, 0, r.stderr);
-  assert.ok(r.calls.includes("compose restart keycloak"), r.calls.join("\n"));
+  assert.ok(r.calls.includes(RECREATE), r.calls.join("\n"));
 });
 
-test("US-DEV-06 a theme file removed after the start restarts keycloak, and the log line names its folder (#2161)", () => {
+test("US-DEV-06 a theme file removed after the start recreates keycloak, and the log line names its folder (#2161)", () => {
   const r = refresh({ removed: { [CSS]: "2026-11-15T08:30:00Z" } });
   assert.equal(r.status, 0, r.stderr);
   assert.match(
     r.stdout,
-    /keycloak theme changed since keycloak started \(\S*\/css\); restarting keycloak/,
+    /keycloak theme changed since keycloak started \(\S*\/css\); recreating keycloak/,
   );
-  assert.ok(r.calls.includes("compose restart keycloak"), r.calls.join("\n"));
+  assert.ok(r.calls.includes(RECREATE), r.calls.join("\n"));
 });
 
 test("US-DEV-06 the start time counts as UTC: a change at 07:30 UTC is before a start at 08:00Z (#2161)", () => {
   const r = refresh({ changed: { [TEMPLATE]: "2026-11-15T07:30:00Z" } });
   assert.equal(r.status, 0, r.stderr);
-  assert.ok(!r.calls.some((c) => c.startsWith("compose restart")), r.calls.join("\n"));
+  assert.ok(!r.calls.some((c) => c.startsWith("compose up")), r.calls.join("\n"));
 });
