@@ -3,6 +3,7 @@
 // same frame content as the welcome page of the web app.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -269,4 +270,20 @@ test('US-QS-32 · Q-44: the sign-in theme marks its page as not to translate (tr
   const htmlLine = template.split("\n").find((line) => line.startsWith("<html ")) ?? "";
   assert.match(htmlLine, /\stranslate="no"/, 'the html element carries translate="no"');
   assert.match(template, /<meta name="google" content="notranslate">/);
+});
+
+// US-DEV-06, #2161: Keycloak serves a theme file for 30 days (cache-control max-age) under a URL whose resources version
+// belongs to the container, not to the file. The stylesheet link therefore carries a content version (`?v=`, the first 12
+// hex digits of the sha256 of css/pflanzendex.css). A changed stylesheet needs a new value here, or browsers keep the old one.
+test("US-DEV-06 #2161: the stylesheet link carries the content version of css/pflanzendex.css (a changed stylesheet needs a new ?v=)", () => {
+  const digest = createHash("sha256")
+    .update(readFileSync(join(login, "resources", "css", "pflanzendex.css")))
+    .digest("hex")
+    .slice(0, 12);
+  const expected = `css/pflanzendex.css?v=${digest}`;
+  const styles = properties.match(/^styles=(.*)$/m)?.[1]?.split(" ") ?? [];
+  assert.ok(
+    styles.includes(expected),
+    `theme.properties must name styles=css/styles.css ${expected} (the content version of css/pflanzendex.css); it names: ${styles.join(" ") || "nothing"}`,
+  );
 });
