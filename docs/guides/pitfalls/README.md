@@ -245,3 +245,11 @@ IDs are never renumbered.
 - **Fix:** Measure the threshold in milliseconds (`$EPOCHREALTIME` in bash 5, as `tools/lint/heavy-lock.sh` does) and print only on positive evidence (the note names another live owner). Show the race in a test with a shim that delays the slow step (a `flock` on `PATH` that sleeps first), not with CPU load: load reproduced it in 0 of 100 runs.
 - **Can it become a gate?** No: whether a time check is coarse depends on what it guards, which a pattern cannot tell.
 - **Source:** Issue #2119, PR #2125 (first seen while measuring #2111 in PR #2112).
+
+## PF-030 Two `history.back()` calls in a test do not reproduce a quick double Back
+
+- **Symptom:** A history guard (the "Eingabe verwerfen?" question of a layer or a plant form) passes its double-Back test in jsdom, yet two quick Backs on a phone pass the layer without the question and the input is lost.
+- **Cause:** jsdom renders and runs the effects between two separate `window.history.back()` calls, so the guard entry is back before the second Back. In a browser the second traversal can land before the effect, or React batches both POPs into one render that never shows the layer's own entry.
+- **Fix:** Reproduce it with one traversal over both entries (`window.history.go(-2)` on a `BrowserRouter`) or with two `navigate(-1)` calls in one event, as `layer-sheet.test.tsx` does. Decide the hold in the render that lands below the layer, not in a later effect, and keep the layer's form mounted through it (a parent that renders the form only while the address names the layer loses it).
+- **Can it become a gate?** No: whether a test covers the race depends on how it drives the history, which a pattern cannot tell.
+- **Source:** Issue #2145, PR #2146 (first noted in the Handoff of PR #2140).
