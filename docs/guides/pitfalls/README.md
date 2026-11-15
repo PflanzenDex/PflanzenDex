@@ -246,7 +246,15 @@ IDs are never renumbered.
 - **Can it become a gate?** No: whether a time check is coarse depends on what it guards, which a pattern cannot tell.
 - **Source:** Issue #2119, PR #2125 (first seen while measuring #2111 in PR #2112).
 
-## PF-030 A web test acts on screen before the router committed the navigation that goes with it
+## PF-030 Two `history.back()` calls in a test do not reproduce a quick double Back
+
+- **Symptom:** A history guard (the "Eingabe verwerfen?" question of a layer or a plant form) passes its double-Back test in jsdom, yet two quick Backs on a phone pass the layer without the question and the input is lost.
+- **Cause:** jsdom renders and runs the effects between two separate `window.history.back()` calls, so the guard entry is back before the second Back. In a browser the second traversal can land before the effect, or React batches both POPs into one render that never shows the layer's own entry.
+- **Fix:** Reproduce it with one traversal over both entries (`window.history.go(-2)` on a `BrowserRouter`) or with two `navigate(-1)` calls in one event, as `layer-sheet.test.tsx` does. Decide the hold in the render that lands below the layer, not in a later effect, and keep the layer's form mounted through it (a parent that renders the form only while the address names the layer loses it).
+- **Can it become a gate?** No: whether a test covers the race depends on how it drives the history, which a pattern cannot tell.
+- **Source:** Issue #2145, PR #2146 (first noted in the Handoff of PR #2140).
+
+## PF-031 A web test acts on screen before the router committed the navigation that goes with it
 
 - **Symptom:** A web test that presses Back or a button right after a question or view appears times out only under load (CI, a busy machine). The step it waits for never comes; unloaded it passes in milliseconds.
 - **Cause:** The routers apply history changes in `startTransition` (`TransitionRouter`, `MemoryRouter`), while state such as an open question renders at normal priority. The question can be on screen while the history entry pushed with it is still pending. A step back taken then lands on the entry already committed, the location key does not change, and an effect keyed on it never runs again. A lazy part requested on a timer (the sheet asks for its code 1.5 s after it mounts) can also land in the middle of a test and stall it.

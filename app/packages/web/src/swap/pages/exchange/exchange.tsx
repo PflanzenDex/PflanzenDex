@@ -109,18 +109,16 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
       {part === "friends" && <FriendOffers api={api} token={props.token} />}
       {part === "history" && <SwapHistory api={api} token={props.token} />}
       <LayerSheet id={OFFER_LAYER} title={t("exchange.offer")}>
-        {layer.open ? (
-          <OfferForm
-            api={api}
-            token={props.token}
-            specimens={props.data.specimens}
-            onChanged={props.onWritten}
-            onCreated={(message) => {
-              layer.closeLayer();
-              say(message);
-            }}
-          />
-        ) : null}
+        <OfferForm
+          api={api}
+          token={props.token}
+          specimens={props.data.specimens}
+          onChanged={props.onWritten}
+          onCreated={(message) => {
+            layer.closeLayer();
+            say(message);
+          }}
+        />
       </LayerSheet>
     </div>
   );
