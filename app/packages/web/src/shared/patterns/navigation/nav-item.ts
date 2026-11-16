@@ -74,12 +74,29 @@ export const BAR_SLOTS = 5;
 /** The button of the drawer at the end of the bottom bar, when destinations do not fit (DS-25). */
 export const MORE_LABEL = "Mehr";
 
-/** The labels of the bottom bar as it shows them: the destinations, or four and "Mehr" when they do not fit (DS-25). */
-export function barLabelsOf(items: readonly NavItem[]): string[] {
-  return items.length > BAR_SLOTS
-    ? [...items.slice(0, BAR_SLOTS - 1).map((item) => item.label), MORE_LABEL]
-    : items.map((item) => item.label);
-}
+/** When a slot of the bottom bar shows (SG-NAV-07, owner 2026-11-16, issue 2249): at both text sizes, the normal one or the large. */
+export type BarShow = "always" | "normal" | "large";
+
+/**
+ * The classes that hide a slot at one text size. The bar is a size container (`bottomBar`, `@container/bar`) and measures its
+ * text size by its content width in rem, which shrinks as the text grows. 20.5 rem (328 px of content at 100 % text, a bar
+ * of 336 px) is where the five slots hold the longest label of the normal layout, the selected "Entdecken" (60 px at 12 px,
+ * measured 2026-11-16), at 12 px; below it, at a larger text, "Entdecken" moves into "Mehr" (SG-NAV-07). Both layouts are one
+ * slot list (`barSlotsOf` in `app/frame/mobile-nav-bar/bar-slots.ts`), and CSS shows the one that fits.
+ */
+export const BAR_SHOW_CLASS: Record<BarShow, string> = {
+  always: "",
+  normal: "@max-[20.5rem]/bar:hidden",
+  large: "@min-[20.5rem]/bar:hidden",
+};
+
+/** One slot of the bottom bar: a destination, or "Mehr" with the destinations of its drawer (DS-25). */
+export type BarSlot =
+  | { label: string; show: BarShow; item: NavItem }
+  | { label: string; show: BarShow; drawer: NavItem[] };
+
+/** What the start frame keeps of a slot on this device: its words and when it shows (`start-frame/bar-labels.ts`). */
+export type BarSlotLabel = { label: string; show: BarShow };
 
 /**
  * The classes of the shell's bars and of their rows (issue 2230): the top bar, the bottom bar, the row of a page's title in
@@ -88,8 +105,12 @@ export function barLabelsOf(items: readonly NavItem[]): string[] {
  */
 export const topBar =
   "top-0 z-40 flex items-center gap-4 border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] tall-window:sticky md:hidden";
+/**
+ * The spacings of the bottom bar are px, not rem: at 100 % text they are the same, and at a larger text they stay, so the five
+ * slots keep their room for the labels (issue 2249). `@container/bar` names the container of the slot visibility (`BAR_SHOW_CLASS`).
+ */
 export const bottomBar =
-  "inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden";
+  "inset-x-0 bottom-0 z-40 flex items-stretch gap-[2px] border-t border-border bg-card px-[4px] pb-[env(safe-area-inset-bottom)] @container/bar tall-window:fixed md:hidden";
 export const brandLink =
   "flex min-h-[44px] items-center text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 export const barRow = "flex min-h-[44px] w-full min-w-0 flex-wrap items-center gap-2";
@@ -100,20 +121,34 @@ export const contentRow = "flex min-w-0 flex-wrap items-center gap-2";
  * inside a word (`hyphens-manual` and the default break, no syllables). A word wider than its slot shrinks: the font size is
  * at most the text-xs size and at most the slot's width (`barSlot`, 100cqi) over the characters of the label's longest word
  * (`--bar-word`, `barWordsStyle`) times 0.61 em, the widest measured average glyph of the bar's labels in Figtree semibold
- * ("Sammlung", 0.601 em). A label that fits keeps its size. `overflow-hidden text-ellipsis` is the last safety net.
+ * ("Sammlung", 0.601 em). A label that fits keeps its size. `overflow-hidden text-ellipsis` is the last safety net. The size
+ * never goes below 12 px, the size at 100 % text (issue 2249): the bar's layouts leave room for it (`BAR_SHOW_CLASS`).
  */
 export const barWords =
-  "block max-w-full overflow-hidden text-center text-ellipsis hyphens-manual [font-size:min(var(--text-xs),calc(100cqi/(var(--bar-word)*0.61)))]";
-/** The slots of the bottom bar and of the start frame's bar are size containers, so their words size by the slot (not the side rail). */
-export const barSlot = "[container-type:inline-size]";
+  "block max-w-full overflow-hidden text-center text-ellipsis hyphens-manual [font-size:max(12px,min(var(--text-xs),calc(100cqi/(var(--bar-word)*0.61))))]";
+/**
+ * The slots of the bottom bar and of the start frame's bar are size containers, so their words size by the slot (not the side
+ * rail), and they keep 2 px of side room in px (issue 2249, `bottomBar`).
+ */
+export const barSlot = "[container-type:inline-size] px-[2px]";
 /** The custom property `barWords` sizes a label by: the characters of the label's longest word. */
 export const barWordsStyle = (label: string): CSSProperties =>
   ({
     "--bar-word": Math.max(1, ...label.split(/\s+/).map((word) => [...word].length)),
   }) as CSSProperties;
 
-/** The defaults of the bottom bar for a keeper without a stored copy of its labels (`start-frame/bar-labels.ts`). */
-export const DEFAULT_BAR_LABELS = ["Heute", "Sammlung", "Entdecken", "Freunde", "Konto"];
+/**
+ * The slots of the bottom bar of a keeper without a stored copy (`start-frame/bar-labels.ts`): the plain keeper's, at both text
+ * sizes. A test keeps them equal to `barSlotsOf` (`app/frame/mobile-nav-bar/bar-slots.ts`) of the plain destinations.
+ */
+export const DEFAULT_BAR_SLOTS: BarSlotLabel[] = [
+  { label: "Heute", show: "always" },
+  { label: "Sammlung", show: "always" },
+  { label: "Entdecken", show: "normal" },
+  { label: "Freunde", show: "always" },
+  { label: "Konto", show: "always" },
+  { label: "Mehr", show: "large" },
+];
 
 /** The Betreiber page: its name in the top bar and its address (equals `PATHS.operator`, as `BRAND_HREF` equals `PATHS.today`). */
 export const OPERATOR_HEADING = "Betreiber";

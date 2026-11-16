@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { likelySignedIn } from "@/account";
 import { navItems, PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { barSlot, barWords, bottomBar, topBar } from "@/shared/patterns/navigation/nav-item";
+import { barSlotsOf } from "../../mobile-nav-bar/bar-slots";
 import { GlobalHeader } from "../../global-header/global-header";
 import { MobileNavBar } from "../../mobile-nav-bar/mobile-nav-bar";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -29,6 +30,9 @@ beforeEach(() => setViewportWidth(360));
 function topBarOf(container: HTMLElement): HTMLElement | undefined {
   return Array.from(container.querySelectorAll("div")).find((d) => d.className === topBar);
 }
+
+/** The classes of an element as a list, so a class is matched whole. */
+const classesOf = (el: Element) => el.className.split(/\s+/).filter(Boolean);
 
 /** Renders the frame at the start of the app (the skeleton shows at once, SG-STATE-02) and ends the start after the test. */
 function startingAt(path: string) {
@@ -57,7 +61,8 @@ describe("US-QS-32 one loading picture from the app start to the page (SG-STATE-
       const bar = container.querySelector("[data-start-bar]");
       expect(bar?.className).toContain("tall-window:fixed");
       expect(bar?.getAttribute("aria-hidden")).toBe("true");
-      expect(bar?.children).toHaveLength(5);
+      // The slots of both text sizes: five at each, Entdecken and the large "Mehr" in one of them (issue 2249).
+      expect(bar?.children).toHaveLength(6);
     } finally {
       end();
     }
@@ -152,23 +157,66 @@ describe("US-QS-32 the start frame and the shell draw the bars alike (issue 2230
   });
 
   it("US-QS-32 the start bar's slots are size containers and its words size by their longest word, as the shell's do (SG-NAV-07, issue 2245)", () => {
-    window.localStorage.setItem(BAR_LABELS_KEY, JSON.stringify(["Heute", "Sammlung", "Entdecken"]));
+    const stored = ["Heute", "Sammlung", "Entdecken"].map((label) => ({ label, show: "always" }));
+    window.localStorage.setItem(BAR_LABELS_KEY, JSON.stringify(stored));
     const { container } = frameAt(PATHS.today);
     const slots = Array.from(container.querySelectorAll<HTMLElement>("[data-start-bar] > span"));
-    expect(slots.map((s) => s.className.split(" ").includes(barSlot))).toEqual([true, true, true]);
+    const tokens = barSlot.split(" ");
+    expect(slots.map((s) => tokens.every((t) => s.className.split(" ").includes(t)))).toEqual([
+      true,
+      true,
+      true,
+    ]);
     const words = slots.map((s) => s.querySelector<HTMLElement>("span:last-child"));
     expect(words.map((w) => w?.style.getPropertyValue("--bar-word"))).toEqual(["5", "8", "9"]);
   });
 
-  it("US-QS-32 the start frame draws the labels the shell stored on this device", () => {
-    const stored = ["Heute", "Sammlung", "Entdecken", "Freunde", "Mehr"];
+  it("US-QS-32 the start frame draws the slots the shell stored on this device, hidden ones included (issue 2249)", () => {
+    const stored = [
+      { label: "Heute", show: "always" },
+      { label: "Sammlung", show: "always" },
+      { label: "Entdecken", show: "normal" },
+      { label: "Freunde", show: "always" },
+      { label: "Konto", show: "always" },
+      { label: "Mehr", show: "large" },
+    ];
     window.localStorage.setItem(BAR_LABELS_KEY, JSON.stringify(stored));
     const { container } = frameAt(PATHS.today);
     const labels = Array.from(
       container.querySelectorAll("[data-start-bar] > span > span:last-child"),
       (s) => s.textContent,
     );
-    expect(labels).toEqual(stored);
+    expect(labels).toEqual(stored.map((s) => s.label));
+  });
+
+  it("US-QS-32 (issue 2249) the start bar's slots carry the show classes and labels of the real bar, for stored and default slots", () => {
+    const shown = (root: Element, selector: string) =>
+      Array.from(root.querySelectorAll<HTMLElement>(selector), (slot) => [
+        slot.textContent,
+        classesOf(slot).filter((c) => c.startsWith("@")),
+      ]);
+    const realBar = (items: ReturnType<typeof navItems>) =>
+      shown(
+        render(
+          <MemoryRouter>
+            <MobileNavBar items={items} />
+          </MemoryRouter>,
+        ).container,
+        "nav[data-bottom-bar] > *",
+      );
+    const overflow = navItems({ operator: true, reviewer: true });
+    const forStored = (items: ReturnType<typeof navItems>) =>
+      barSlotsOf(items).map(({ label, show }) => ({ label, show }));
+
+    // Defaults: no stored copy; the plain keeper's bar.
+    const plain = frameAt(PATHS.today);
+    expect(shown(plain.container, "[data-start-bar] > span")).toEqual(realBar(navItems({})));
+    cleanup();
+
+    // Stored: the overflow keeper's slots, as the shell stores them.
+    window.localStorage.setItem(BAR_LABELS_KEY, JSON.stringify(forStored(overflow)));
+    const stored = frameAt(PATHS.today);
+    expect(shown(stored.container, "[data-start-bar] > span")).toEqual(realBar(overflow));
   });
 });
 
