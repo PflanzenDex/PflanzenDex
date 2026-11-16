@@ -109,7 +109,7 @@ describe("US-ACC-02 settings page: display name", () => {
     expect(puts[0]?.body["displayName"]).toBe("Anna Beispiel");
   });
 
-  it("US-ACC-02 a cleared display name is sent as empty text so the server refuses it and the field is marked", async () => {
+  it("US-QS-32 · F-0085 a cleared display name is refused on the client: its message shows at the field and nothing is sent", async () => {
     const puts = fakeServer(PROFILE, () =>
       response(400, {
         error: {
@@ -125,10 +125,10 @@ describe("US-ACC-02 settings page: display name", () => {
     await user.clear(name);
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     const alert = await screen.findByRole("alert");
-    expect(puts[0]?.body["displayName"]).toBe("");
+    expect(alert.textContent).toBe("Gib einen Namen ein.");
     expect(name.getAttribute("aria-invalid")).toBe("true");
     expect(name.getAttribute("aria-describedby")).toContain(alert.id);
-    expect(screen.getByText(/darf aber nicht leer sein/)).toBeTruthy();
+    expect(puts).toEqual([]);
   });
 });
 
@@ -182,7 +182,9 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.clear(zone);
     await user.type(zone, "Mars/Olympus");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Wähle eine Zeitzone aus der Liste.",
+    );
     expect(zone.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByLabelText("Anzeigename").getAttribute("aria-invalid")).not.toBe("true");
     expect((zone as HTMLInputElement).value).toBe("Mars/Olympus");
@@ -405,7 +407,8 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findAllByRole("alert");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
-    expect(document.body.textContent).toContain("Die Eingabe ist ungültig");
+    expect(document.body.textContent).toContain("Gib einen Namen ein, höchstens 80 Zeichen.");
+    expect(document.body.textContent).not.toContain("Die Eingabe ist ungültig");
   });
 
   it("US-ACC-02 · DS-48 editing a refused field takes its error away", async () => {
