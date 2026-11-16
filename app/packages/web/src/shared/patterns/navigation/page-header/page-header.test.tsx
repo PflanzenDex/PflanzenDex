@@ -247,6 +247,24 @@ describe("US-QS-32 PageHeader in the top bar below md (SG-HEAD-01, SG-HEAD-04, S
     expect(document.querySelector("[data-page-header]")?.className).toContain("min-h-[44px]");
   });
 
+  it("US-QS-32 in the bar an action wraps below the title and the title keeps its longest word, so no bar row squeezes the title to nothing at 200 % text (FX-44)", () => {
+    render(
+      <InShell>
+        <PageHeader
+          title="Tauschbörse"
+          back={back}
+          action={<button type="button">Zum Tausch anbieten</button>}
+        />
+      </InShell>,
+    );
+    const row = document.querySelector("[data-app-bar-slot] [data-page-header]") as HTMLElement;
+    expect(row.className.split(" ")).toContain("flex-wrap");
+    const title = within(row).getByRole("heading", { level: 1 });
+    expect(title.className.split(" ")).toContain("min-w-min");
+    expect(title.className.split(" ")).not.toContain("min-w-0");
+    expect(title.className).toContain("text-lg");
+  });
+
   it("US-QS-32 the bar's back control keeps its 44 px target and stays at the leading edge", () => {
     render(
       <InShell>
