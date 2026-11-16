@@ -110,3 +110,26 @@ describe("US-QS-11 · a choice shows its key", () => {
     ).toBeNull();
   });
 });
+
+describe("SegmentedControl alerts (US-QS-32 · F-0106)", () => {
+  it("US-QS-32 · F-0106 a segment with errors shows a mark and carries its count in its accessible name, the others stay plain", () => {
+    render(
+      <SegmentedControl
+        label="Teile"
+        options={[
+          { value: "pick", label: "Pflanzen (0)" },
+          { value: "terms", label: "Termin" },
+        ]}
+        value="pick"
+        onChange={() => undefined}
+        alerts={{ pick: "1 Angabe fehlt" }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Pflanzen (0), 1 Angabe fehlt" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Termin" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Pflanzen (0), 1 Angabe fehlt" }).querySelector("svg"),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Termin" }).querySelector("svg")).toBeNull();
+  });
+});

@@ -5,6 +5,7 @@ import { useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form"
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { currentTimeZone } from "@/shared/data";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import { CourseFields, TermFields } from "../../../treatment-form/treatment-form";
 import type { TreatableSpecimen, TreatmentInput } from "../../../../shared/api/treatments-api";
@@ -15,6 +16,9 @@ import {
   type TreatmentFields,
 } from "../../../../shared/schemas";
 import { SpecimenPicker } from "../specimen-picker/specimen-picker";
+import table from "./plan-form.de.json";
+
+const ui = texts(table);
 
 /** The id of the form: the save button of the layer's footer submits it from outside, so it stays in view (US-QS-15). */
 export const PLAN_FORM_ID = "plan-treatment-form";
@@ -29,11 +33,32 @@ const ORDER: readonly (keyof TreatmentFields)[] = [
   "count",
   "intervalDays",
 ];
+/** The fields of the segment "Termin" (the term and the course). */
+const TERMS: readonly (keyof TreatmentFields)[] = [
+  "reason",
+  "agent",
+  "date",
+  "count",
+  "intervalDays",
+];
 const viewOf = (field: keyof TreatmentFields): View => (field === "specimenIds" ? "pick" : "terms");
 
 /** The first failing field in the form's order, or none. */
 function firstInvalid(errors: FieldErrors<TreatmentFields>): keyof TreatmentFields | null {
   return ORDER.find((name) => errors[name]) ?? null;
+}
+
+/**
+ * The mark and the count of each segment that holds errors (F-0106, US-QS-32): "Termin, 1 Angabe fehlt" and
+ * "Pflanzen (0), 1 Angabe fehlt". A segment without errors gets no mark.
+ */
+function alertsOf(errors: FieldErrors<TreatmentFields>) {
+  const missing = (n: number) =>
+    n === 0 ? undefined : ui(n === 1 ? "missing.one" : "missing.other", { count: n });
+  return {
+    pick: missing(errors.specimenIds ? 1 : 0),
+    terms: missing(TERMS.filter((name) => errors[name]).length),
+  };
 }
 
 /**
@@ -93,6 +118,7 @@ export function PlanForm(props: {
           ]}
           value={view}
           onChange={setView}
+          alerts={alertsOf(form.formState.errors)}
         />
         {/* Both views stay mounted; the hidden one leaves the page and the accessibility tree. */}
         <div hidden={view !== "pick"} className={cn(view !== "pick" && "hidden")}>
