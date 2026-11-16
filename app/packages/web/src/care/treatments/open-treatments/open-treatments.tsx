@@ -83,14 +83,16 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
 function OpenList(props: {
   all: readonly TreatmentListRow[];
   completion: ReturnType<typeof useCompletion>;
-  next: EmptyStateAction;
+  next: EmptyStateAction | undefined;
   host: boolean;
 }) {
   const { completion } = props;
   const rows = props.all.filter((r) => !completion.doneIds.includes(r.id));
   const next = nextStepText(rows);
-  // One line and the next step, as every empty section of a page or sheet (US-QS-32, SG-STATE-01).
-  if (rows.length === 0) return <EmptySection text={ui("empty.line")} action={props.next} />;
+  // One line and the next step, as every empty section of a page or sheet (US-QS-32, SG-STATE-01); without `next` the
+  // step already stands on the screen and the line stays alone (issue 2233).
+  if (rows.length === 0)
+    return <EmptySection text={ui("empty.line")} {...(props.next ? { action: props.next } : {})} />;
   return (
     <>
       {next && !props.host && <p className="font-semibold">{next}</p>}
@@ -130,14 +132,18 @@ function OpenList(props: {
 
 /**
  * The open treatments by urgency (US-BEH-02): earliest first (the server sorts), status as text, never by colour
- * alone. Without any, the view says so and what to do next (P-09): `next` is that action. Planning and every tick-off
- * attempt invalidate the treatments, so this list and the history load again without a page reload.
+ * alone. Without any, the view says so and what to do next (P-09): `next` is that action, unless the screen shows it.
+ * Planning and every tick-off attempt invalidate the treatments, so this list and the history load again without a
+ * page reload.
  */
 export function OpenTreatments(props: {
   api: string;
   token: Token;
-  /** What to do when there is nothing open: plan one, or create a specimen first. */
-  next: EmptyStateAction;
+  /**
+   * What to do when there is nothing open: plan one, or create a specimen first. Left out when the screen shows that
+   * step already, so the empty line does not repeat it (SG-STATE-01, issue 2233).
+   */
+  next?: EmptyStateAction | undefined;
   /** Shown as a section of "Heute" (US-QS-14): its heading is one level lower. */
   host?: boolean;
 }) {

@@ -102,8 +102,9 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     show();
     expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
     const links = screen.getAllByRole("link", { name: "Pflanze anlegen" });
-    expect(links.length).toBeGreaterThan(0);
-    for (const link of links) expect(link.getAttribute("href")).toBe("/collection/new");
+    // Issue 2233: one step, once on the screen; the empty open list does not repeat the planning's.
+    expect(links).toHaveLength(1);
+    expect(links[0]?.getAttribute("href")).toBe("/collection/new");
   });
 
   it("US-BEH-01 saves one treatment with several specimens, reason, agent and date, with an Idempotency-Key", async () => {
@@ -554,6 +555,21 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     showHost();
     const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
     expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
+  });
+
+  it("US-QS-32 · issue 2233 the empty layer shows Behandlung planen once: the empty line has no second one", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")]);
+    showHost();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(await screen.findAllByRole("button", { name: "Behandlung planen" })).toHaveLength(1);
+  });
+
+  it("US-QS-32 · issue 2233 the empty layer without a plant names Pflanze anlegen once", async () => {
+    fakeServer([]);
+    showHost();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(await screen.findAllByRole("link", { name: "Pflanze anlegen" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Behandlung planen" })).toBeNull();
   });
 
   it("US-QS-14 · US-BEH-01 · A-04 the host has no form: Behandlung planen hands over to the planning layer", async () => {
