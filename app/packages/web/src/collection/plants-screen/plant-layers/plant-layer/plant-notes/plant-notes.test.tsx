@@ -236,7 +236,7 @@ describe("US-BES-18 change the notes in their layer", () => {
     await userEvent.type(field, " Anders.");
     await userEvent.click(within(layer).getByRole("button", { name: "Abbrechen" }));
     const question = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     expect(posts).toEqual([]);
     expect(within(layer).getByText(NOTE)).toBeTruthy();
     expect(document.activeElement).toBe(

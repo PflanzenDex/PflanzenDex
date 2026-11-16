@@ -46,7 +46,7 @@ export function PagingNote({ paging, missing }: { paging: PagerPaging; missing: 
       <p role="alert" className="text-sm">
         {paging.failure}
       </p>
-      <Button type="button" variant="outline" onClick={paging.onRetry}>
+      <Button type="button" variant="tinted" onClick={paging.onRetry}>
         {paging.retryText}
       </Button>
     </div>

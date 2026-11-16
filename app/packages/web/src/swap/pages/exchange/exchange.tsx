@@ -56,6 +56,7 @@ function OfferOpener() {
   return (
     <Button
       type="button"
+      variant="tinted"
       size="touch"
       className="w-auto"
       aria-haspopup="dialog"
@@ -144,7 +145,7 @@ export function ExchangePage(props: { api: string; token: Token }) {
         action={<OfferOpener />}
       >
         <div>
-          <Button asChild variant="outline" size="touch" className="w-auto">
+          <Button asChild variant="plain" size="touch" className="w-auto">
             <Link to="/friends/match">{t("exchange.match")}</Link>
           </Button>
         </div>

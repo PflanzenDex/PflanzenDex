@@ -20,10 +20,16 @@ const buttonVariants = cva(
         // The quiet fill keeps its boundary in the field boundary colour (US-QS-14, WCAG 1.4.11): --input reaches 3:1 on background, card, warning, secondary and muted.
         secondary:
           "border border-input bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        // Green marks intent (ADR 0017): the outline carries the primary colour, its border reaches 6:1 (WCAG 1.4.11).
+        // Tinted: the secondary action of a group or card (SG-BTN-01): accent fill, dark green text, no border.
+        tinted: "bg-accent text-accent-foreground hover:bg-accent/80",
+        // Plain: a tertiary action (SG-BTN-01): green text only; the hover fill is the accent.
+        plain: "text-primary hover:bg-accent hover:text-accent-foreground",
+        // A destructive action that does not confirm anything (SG-BTN-03): red text, labelled with verb and object.
+        "destructive-plain": "text-destructive hover:bg-destructive/10",
+        // Deprecated alias (SG-BTN-01, FX-39 of issue 1853): there is no outline button. It looks like `tinted` until the
+        // remaining call sites move to `tinted` or `plain`; do not use it in new code.
+        outline: "bg-accent text-accent-foreground hover:bg-accent/80",
         // Ghost stays neutral, because tabs, segments, navigation and accordions build on it.
-        outline:
-          "border border-primary bg-transparent text-primary hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",

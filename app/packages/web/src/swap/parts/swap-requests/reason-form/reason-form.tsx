@@ -37,7 +37,7 @@ export function ReasonForm(props: {
         >
           {props.submit}
         </Button>
-        <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>
+        <Button type="button" size="touch" variant="plain" onClick={props.onCancel}>
           Abbrechen
         </Button>
       </div>
