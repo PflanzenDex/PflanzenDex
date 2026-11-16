@@ -21,7 +21,7 @@ import { GlobalHeader } from "../global-header/global-header";
 import { SideNav } from "../side-nav/side-nav";
 import { MobileNavBar } from "../mobile-nav-bar/mobile-nav-bar";
 import type { NavItem } from "../../../shared/patterns/navigation/nav-item";
-import { useRememberBarLabels } from "../app/start-frame/bar-labels";
+import { useRememberBarSlots } from "../mobile-nav-bar/bar-slots";
 
 const MAIN_ID = "inhalt";
 const t = texts(table);
@@ -148,7 +148,7 @@ export function AppShell({
   const shell = useRef<HTMLDivElement>(null);
   useStickyScrollPadding(shell);
   // The start frame draws the words of this bar while the shell loads (issue 2230).
-  useRememberBarLabels(items);
+  useRememberBarSlots(items);
   return (
     <ShortcutProvider mode={shortcutMode} targets={SHORTCUT_TARGETS}>
       <AnnouncerProvider>

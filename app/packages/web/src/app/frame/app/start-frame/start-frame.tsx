@@ -1,6 +1,6 @@
 import { useLocation } from "react-router";
 import {
-  BAR_SLOTS,
+  BAR_SHOW_CLASS,
   BRAND_HREF,
   DISPLAY_NAME,
   OPERATOR_ADDRESS,
@@ -25,7 +25,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { TodaySkeletonBody } from "@/today";
 import { OperatorRouteBody } from "@/account";
-import { startBarLabels } from "./bar-labels";
+import { startBarSlots } from "./bar-labels";
 
 /**
  * The skeleton body of the address, the body its route shows while it loads (issue 2230): "Heute" for the root and for
@@ -39,34 +39,39 @@ function StartBody(props: { pathname: string }) {
 }
 
 /**
- * The bottom bar of the start: the same box as the shell's bar, with its slots at the height of the labels the shell stored
- * (`startBarLabels`). The pill has the classes of the selected-or-not pill, the label words are the words of the bar in
- * transparent ink on the skeleton, so a label that wraps at 200 % text takes the same height (issue 2230).
+ * The bottom bar of the start: the same box as the shell's bar, with the slots the shell stored (`startBarSlots`), each with the
+ * show class of the real bar's slot, so both layouts take the same height (issue 2249). The pill has the classes of the
+ * selected-or-not pill, the label words are the words of the bar in transparent ink on the skeleton, so a label that wraps at
+ * 200 % text takes the same height (issue 2230).
  */
 function StartBar() {
   return (
     <div aria-hidden="true" data-start-bar="" className={bottomBar}>
-      {startBarLabels()
-        .slice(0, BAR_SLOTS)
-        .map((label, index) => (
-          <span key={index} className={cn(stackedItem, barSlot, stackedLabel(false), "flex-1")}>
-            <span
-              className={cn(
-                stackedPill(false),
-                "animate-pulse bg-muted motion-reduce:animate-none",
-              )}
-            />
-            <span
-              className={cn(
-                barWords,
-                "rounded-control bg-muted text-transparent animate-pulse motion-reduce:animate-none",
-              )}
-              style={barWordsStyle(label)}
-            >
-              {label}
-            </span>
+      {startBarSlots().map((slot, index) => (
+        <span
+          key={index}
+          className={cn(
+            stackedItem,
+            barSlot,
+            BAR_SHOW_CLASS[slot.show],
+            stackedLabel(false),
+            "flex-1",
+          )}
+        >
+          <span
+            className={cn(stackedPill(false), "animate-pulse bg-muted motion-reduce:animate-none")}
+          />
+          <span
+            className={cn(
+              barWords,
+              "rounded-control bg-muted text-transparent animate-pulse motion-reduce:animate-none",
+            )}
+            style={barWordsStyle(slot.label)}
+          >
+            {slot.label}
           </span>
-        ))}
+        </span>
+      ))}
     </div>
   );
 }

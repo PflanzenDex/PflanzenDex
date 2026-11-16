@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  BAR_SHOW_CLASS,
   barSlot,
   barWords,
   barWordsStyle,
@@ -112,10 +114,10 @@ describe("US-QS-32 the bottom bar: selection cue, icons, labels, lock mark (FX-1
     expect(stackedPill(true) + stackedPill(false)).not.toMatch(/22px|size-\[22/);
   });
 
-  it("US-QS-32 no label leaves the view at a larger text size: no sr-only, no container query, no nowrap; a label wraps at spaces and never inside a word (SG-NAV-07, issue 2245)", () => {
+  it("US-QS-32 no label leaves the view at a larger text size: no sr-only, no nowrap; a label wraps at spaces and never inside a word (SG-NAV-07, issue 2245, issue 2249)", () => {
     renderBar("/p0", items);
     const nav = screen.getByRole("navigation", { name: "Navigation unten" });
-    expect(nav.className).not.toMatch(/@container|@max-/);
+    expect(classesOf(nav)).toContain("@container/bar");
     const slots = [...bar().getAllByRole("link"), bar().getByRole("button", { name: "Mehr" })];
     expect(slots).toHaveLength(5);
     for (const slot of slots) {
@@ -128,7 +130,7 @@ describe("US-QS-32 the bottom bar: selection cue, icons, labels, lock mark (FX-1
       expect(classesOf(word)).toEqual(expect.arrayContaining(barWords.split(" ")));
       expect(word?.className).not.toMatch(/hyphens-auto|overflow-wrap|break-|@max-|truncate/);
       // The slot is a size container, so the word shrinks by the slot's width; the custom property holds its longest word.
-      expect(classesOf(slot)).toContain(barSlot);
+      expect(classesOf(slot)).toEqual(expect.arrayContaining(barSlot.split(" ")));
       expect(word?.style.getPropertyValue("--bar-word")).toBe("4");
     }
     expect(
@@ -177,6 +179,60 @@ describe("US-QS-32 the bottom bar: selection cue, icons, labels, lock mark (FX-1
       </MemoryRouter>,
     );
     expect(bar().getByRole("link", { name: "Freunde, Bald" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 the bottom bar at a large text size: Entdecken moves into Mehr (SG-NAV-07, issue 2249)", () => {
+  it("US-QS-32 (issue 2249) the bar keeps its text size measure on its content: the normal slot hides at a large size, the large Mehr at the normal one", () => {
+    renderBar("/today", navItems({}));
+    const nav = screen.getByRole("navigation", { name: "Navigation unten" });
+    expect(classesOf(nav)).toContain("@container/bar");
+    expect(classesOf(bar().getByRole("link", { name: "Entdecken" }))).toContain(
+      BAR_SHOW_CLASS.normal,
+    );
+    expect(classesOf(bar().getByRole("button", { name: "Mehr" }))).toContain(BAR_SHOW_CLASS.large);
+    expect(classesOf(bar().getByRole("link", { name: "Heute" }))).not.toContain(
+      BAR_SHOW_CLASS.large,
+    );
+  });
+
+  it("US-QS-32 (issue 2249) at a large text size the drawer of Mehr holds Entdecken with its full name, and Mehr is selected on /discover", async () => {
+    renderBar("/discover?view=catalog", navItems({}));
+    const more = bar().getByRole("button", { name: "Mehr" });
+    expect(classesOf(more.querySelector(":scope > span.rounded-full"))).toContain("bg-accent");
+    expect(classesOf(more)).toContain("font-semibold");
+    await userEvent.click(more);
+    const dialog = await screen.findByRole("dialog", { name: "Mehr" });
+    expect(
+      within(dialog)
+        .getAllByRole("link")
+        .map((l) => l.textContent),
+    ).toEqual(["Entdecken"]);
+  });
+
+  it("US-QS-32 (issue 2249) the overflow keeper: the normal Mehr keeps Konto and the rest, the large one Entdecken and the rest", async () => {
+    renderBar("/today", navItems({ operator: true, reviewer: true }));
+    const [normal, large] = bar().getAllByRole("button", { name: "Mehr" });
+    expect(classesOf(normal)).toContain(BAR_SHOW_CLASS.normal);
+    expect(classesOf(large)).toContain(BAR_SHOW_CLASS.large);
+    await userEvent.click(normal as HTMLElement);
+    const drawer = within(await screen.findByRole("dialog", { name: "Mehr" }));
+    expect(drawer.getAllByRole("link").map((l) => l.textContent)).toEqual([
+      "Konto",
+      "Prüfliste",
+      "Betreiber",
+    ]);
+  });
+
+  it("US-QS-32 (issue 2249) at normal text the drawer of the overflow keeper is unchanged: Entdecken stays in the bar", async () => {
+    renderBar("/today", navItems({ operator: true, reviewer: true }));
+    await userEvent.click(bar().getAllByRole("button", { name: "Mehr" })[1] as HTMLElement);
+    const drawer = within(await screen.findByRole("dialog", { name: "Mehr" }));
+    expect(drawer.getAllByRole("link").map((l) => l.textContent)).toEqual([
+      "Entdecken",
+      "Prüfliste",
+      "Betreiber",
+    ]);
   });
 });
 

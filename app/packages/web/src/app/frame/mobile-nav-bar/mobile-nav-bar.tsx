@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/button/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { cn } from "@/shared/lib/utils";
 import {
-  BAR_SLOTS,
+  BAR_SHOW_CLASS,
   barSlot,
   barWords,
   barWordsStyle,
@@ -13,9 +13,11 @@ import {
   stackedItem,
   stackedLabel,
   stackedPill,
+  type BarShow,
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
 import { NavNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
+import { barSlotsOf } from "./bar-slots";
 import {
   ReselectLink,
   isActivePath,
@@ -67,10 +69,12 @@ function LockMark({ note }: { note: string | undefined }) {
 }
 
 /**
- * The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). Choosing a
- * destination closes the drawer, so the new page is not left behind an overlay that holds the focus (US-QS-08).
+ * The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). `show` is the text size
+ * the button shows at (`barSlotsOf`): a bar has one "Mehr" per size, and CSS shows the one of its size, so the drawer of the
+ * other is never opened. Choosing a destination closes the drawer, so the new page is not left behind an overlay that holds
+ * the focus (US-QS-08).
  */
-function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
+function MoreDrawer({ items, show, active }: { items: NavItem[]; show: BarShow; active: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -82,6 +86,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           className={cn(
             stackedItem,
             barSlot,
+            BAR_SHOW_CLASS[show],
             "h-auto flex-1 rounded-none hover:bg-transparent",
             // Like the links beside it, the item has no box in forced colors; the icon pill shows the state (US-QS-14).
             "forced-colors:border-0",
@@ -122,42 +127,50 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
 
 /**
  * Fixed bottom bar below `md` (US-QS-07, DS-25, DS-22). Takes plain items, never modules (DS-44): the first four
- * stay in the bar, the rest move into the "Mehr" drawer. The selected one has the accent pill with its boundary, a semibold
- * label and `aria-current`, so colour is never the only signal (DS-19, SG-COLOR-05); the others have a regular label. A tap
+ * stay in the bar, the rest move into the "Mehr" drawer. At a large text size "Entdecken" moves into the drawer too, and the
+ * bar shows a second "Mehr" for it (SG-NAV-07, issue 2249); the slots come from `barSlotsOf`, and CSS shows the layout of the
+ * text size. The selected one has the accent pill with its boundary, a semibold label and `aria-current`, so colour is never
+ * the only signal (DS-19, SG-COLOR-05); the others have a regular label. A tap
  * on the selected destination goes to its start page, and a second tap scrolls to the top (SG-NAV-03). Greenhouse look:
  * ADR 0011 decision 6. It follows the content in the flow, after `main`, so it stays reachable at the end of the page
  * (US-QS-14); from 30 rem of window height (the `tall-window` variant) it is fixed to the window bottom.
  */
 export function MobileNavBar({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation();
-  const overflow = items.length > BAR_SLOTS;
-  const inBar = overflow ? items.slice(0, BAR_SLOTS - 1) : items;
-  const inDrawer = overflow ? items.slice(BAR_SLOTS - 1) : [];
-  const moreActive = inDrawer.some((i) => isActivePath(pathname, i.href));
-
   return (
     <nav aria-label="Navigation unten" data-bottom-bar className={bottomBar}>
-      {inBar.map((item) => (
-        <ReselectLink
-          key={item.href}
-          item={item}
-          end={item.href === "/"}
-          className={({ isActive: active }) =>
-            cn(stackedItem, barSlot, "flex-1", stackedLabel(active))
-          }
-        >
-          {({ isActive: active }) => (
-            <>
-              <span className={stackedPill(active)}>
-                {item.icon}
-                <LockMark note={item.note} />
-              </span>
-              <BarWords label={item.label} note={item.note} />
-            </>
-          )}
-        </ReselectLink>
-      ))}
-      {overflow ? <MoreDrawer items={inDrawer} active={moreActive} /> : null}
+      {barSlotsOf(items).map((slot) => {
+        if ("drawer" in slot)
+          return (
+            <MoreDrawer
+              key={`more-${slot.show}`}
+              items={slot.drawer}
+              show={slot.show}
+              active={slot.drawer.some((i) => isActivePath(pathname, i.href))}
+            />
+          );
+        const { item, show } = slot;
+        return (
+          <ReselectLink
+            key={item.href}
+            item={item}
+            end={item.href === "/"}
+            className={({ isActive: active }) =>
+              cn(stackedItem, barSlot, BAR_SHOW_CLASS[show], "flex-1", stackedLabel(active))
+            }
+          >
+            {({ isActive: active }) => (
+              <>
+                <span className={stackedPill(active)}>
+                  {item.icon}
+                  <LockMark note={item.note} />
+                </span>
+                <BarWords label={item.label} note={item.note} />
+              </>
+            )}
+          </ReselectLink>
+        );
+      })}
     </nav>
   );
 }

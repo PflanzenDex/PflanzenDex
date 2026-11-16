@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./app-shell";
 import {
+  BAR_SHOW_CLASS,
   BRAND_HREF,
   DISPLAY_NAME,
   destinationHeading,
@@ -182,10 +183,12 @@ describe("US-QS-07 · DS-25 navigation items", () => {
       </MemoryRouter>,
     );
     const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
-    expect(bar.getAllByRole("link").length + bar.getAllByRole("button").length).toBeLessThanOrEqual(
-      5,
+    // The bar renders the slots of both text sizes and CSS hides one (issue 2249); the normal text size is counted here.
+    const shown = [...bar.getAllByRole("link"), ...bar.getAllByRole("button")].filter(
+      (el) => !el.classList.contains(BAR_SHOW_CLASS.large),
     );
-    expect(bar.getByRole("button", { name: "Mehr" })).toBeTruthy();
+    expect(shown.length).toBeLessThanOrEqual(5);
+    expect(bar.getAllByRole("button", { name: "Mehr" }).length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -229,7 +232,7 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
       </MemoryRouter>,
     );
     const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
-    const slots = [...bar.getAllByRole("link"), bar.getByRole("button", { name: "Mehr" })];
+    const slots = [...bar.getAllByRole("link"), ...bar.getAllByRole("button", { name: "Mehr" })];
     for (const el of slots) {
       const svg = el.querySelector("svg");
       expect(svg, el.textContent ?? "").not.toBeNull();
