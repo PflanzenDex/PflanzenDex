@@ -3,7 +3,7 @@ import { readStored, writeStored } from "@/shared/platform/browser/storage";
 import { useFeatures } from "@/shared/data";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { GROUP_PARAM, MANAGE_PARAM } from "../shared/patterns/navigation/navigation/navigation";
-import { SAMMLUNG_VIEW_KEY } from "../shared/patterns/navigation/nav-item";
+import { SAMMLUNG_VIEW_KEY } from "../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 
 export type SammlungView = "plants" | "species" | "wishlist" | "equipment";
 /** How the species mode is arranged: the name order, or the comparison by difficulty (US-BES-05). */

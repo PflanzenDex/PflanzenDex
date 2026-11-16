@@ -3,8 +3,6 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  DISCOVER_VIEW_KEY,
-  SAMMLUNG_VIEW_KEY,
   barSlot,
   barWords,
   barWordsStyle,
@@ -13,7 +11,11 @@ import {
   stackedPill,
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
-import { isActivePath } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
+import {
+  DISCOVER_VIEW_KEY,
+  SAMMLUNG_VIEW_KEY,
+  isActivePath,
+} from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 import { navItems } from "../../../shared/patterns/navigation/navigation/navigation";
 import { MobileNavBar } from "./mobile-nav-bar";
 

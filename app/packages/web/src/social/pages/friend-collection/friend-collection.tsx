@@ -7,7 +7,8 @@ import {
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
-import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Button } from "@/shared/ui/button/button";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";

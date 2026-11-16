@@ -1,4 +1,5 @@
-import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 
 /** Compact rows per page (starting values, assumption; US-QS-22): 4 below 768 px, 8 from 768 px, 10 from 1024 px. */
 export function useRowPageSize(): number {

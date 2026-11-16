@@ -1,6 +1,7 @@
 import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
-import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { PHASE_TEXT } from "../../shared/text";
 import { Groups, type Confirm } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";

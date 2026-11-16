@@ -17,13 +17,6 @@ export type NavItem = {
   remember?: { key: string; value: string };
 };
 
-/**
- * The per-device copy of the mode of "Sammlung" and "Entdecken" (DS-10; the address always wins). The keys live here, in a
- * leaf module (its only import is a type), so the view modules and the navigation read them without an import cycle.
- */
-export const SAMMLUNG_VIEW_KEY = "pflanzendex.collection-view";
-export const DISCOVER_VIEW_KEY = "pflanzendex.discover-view";
-
 /** Same look for the bottom bar and the rail: a 56x30 px pill behind a 24 px icon, the label under it (ADR 0011 decision 6). */
 export const stackedItem =
   "group flex min-h-[44px] shrink-0 min-w-[44px] flex-col items-center justify-center gap-1 px-0.5 py-1 text-center text-xs " +
