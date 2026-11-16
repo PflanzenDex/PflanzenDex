@@ -1,5 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { CalmModeSection, loadAchievementSettings } from "../../achievements";
 import { LoadFrame, useRequest } from "../../shared/data";
 import { loadProfile, type AccountProfile } from "../api/account-api";
@@ -142,7 +143,7 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
             : "flex min-w-0 flex-col gap-4"
         }
       >
-        {props.host !== true && <h1 className="text-2xl font-semibold">Einstellungen</h1>}
+        {props.host !== true && <PageHeader title="Einstellungen" />}
         <LoadFrame
           queryKey={["account", "profile"]}
           fresh

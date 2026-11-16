@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
+import { PageHeader } from "../../../../shared/patterns/navigation/page-header/page-header";
 import {
   SegmentedControl,
   type SegmentedOption,
 } from "../../../../shared/patterns/elements/segmented-control/segmented-control";
 
 /**
- * The title area of the destination "Sammlung" (US-QS-14): the one main heading, a small count line when the shown
- * view has loaded, and the switch between the views. Takes data and callbacks only (DS-44).
+ * The title area of the destination "Sammlung" (US-QS-14, US-QS-32): the one main heading, in the top bar below `md`, and a
+ * small count line when the shown view has loaded, then the switch between the views. The name stays the same in every
+ * mode; the selected segment names the mode (SG-HEAD-01). Takes data and callbacks only (DS-44).
  */
 export function SammlungHeader<V extends string>(props: {
   view: V;
@@ -18,19 +20,19 @@ export function SammlungHeader<V extends string>(props: {
   switchLabel?: string;
   /** A second control that belongs to the chosen view, e.g. the arrangement of the species. */
   children?: ReactNode;
-  /** A control beside the heading, e.g. the opener of the layer "Ansicht" (US-QS-19). */
+  /** A control beside the heading, e.g. the opener of the layer "Ansicht" (US-QS-19); it goes into the bar below `md`. */
   action?: ReactNode;
+  /** Keeps the title in the content below `md` too: a destination that is not on the top bar yet (US-QS-32). */
+  inContent?: boolean;
 }) {
   return (
     <div className="mb-1.5 flex flex-col gap-1.5">
-      {/* The action goes below the heading when there is no room beside it at a larger text size (issue 1019). */}
-      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
-          {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
-        </div>
-        {props.action}
-      </div>
+      <PageHeader
+        title={props.title ?? "Sammlung"}
+        {...(props.action ? { action: props.action } : {})}
+        {...(props.inContent ? { inContent: true } : {})}
+      />
+      {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
       <SegmentedControl
         label={props.switchLabel ?? "Ansicht der Sammlung"}
         options={props.options}

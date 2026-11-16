@@ -1,8 +1,6 @@
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
 import { VIEW_LAYER } from "@/collection";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { buttonVariants } from "@/shared/ui/button/button";
-import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { SAMMLUNG_VIEWS, useOfferedView, type SammlungView } from "../../../sammlung-view";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
@@ -19,8 +17,8 @@ const SHORTCUT_OF_VIEW: Partial<Record<SammlungView, ShortcutId>> = {
 
 /**
  * The title area of the Sammlung: the switch and, beside the heading, the opener "Ansicht" of the layer that arranges
- * the plants or the species (issue 1096). Wunschliste and Geräte have nothing to arrange; an invisible stand-in of the
- * same size keeps the header's height, so nothing below it jumps between the modes.
+ * the plants or the species (issue 1096, US-QS-32: in the top bar below `md`). Wunschliste and Geräte have nothing to
+ * arrange, so they have no action: no invisible stand-in keeps an empty row (F-0112).
  */
 export function AreaHeader(props: {
   view: SammlungView;
@@ -43,19 +41,7 @@ export function AreaHeader(props: {
       options={options}
       onChoose={props.onChoose}
       caption={props.caption}
-      action={
-        arranged ? (
-          <LayerOpener id={VIEW_LAYER}>{ui("view")}</LayerOpener>
-        ) : (
-          <span
-            aria-hidden="true"
-            data-testid="view-stand-in"
-            className={cn(buttonVariants({ variant: "outline" }), "invisible")}
-          >
-            {ui("view")}
-          </span>
-        )
-      }
+      {...(arranged ? { action: <LayerOpener id={VIEW_LAYER}>{ui("view")}</LayerOpener> } : {})}
     />
   );
 }

@@ -1,7 +1,7 @@
 {
+  "form.back": "Zurück zur Sammlung",
   "form.titleCutting": "Steckling eintopfen",
   "form.titlePlant": "Pflanze umtopfen",
-  "form.nameLine": "„{name}“",
   "form.quietCutting": "Nur der Status ändert sich: Aus dem Steckling wird eine Pflanze. Ab dem Datum gilt die Lichtzone ihres Standorts oder der Art.",
   "form.quietPlant": "Ab diesem Tag beginnt der Zeitraum bis zum nächsten Umtopfen neu, und die Haken bei den Beobachtungen sind wieder leer.",
   "form.dateCutting": "Eingetopft am",

@@ -14,11 +14,12 @@ test.describe("US-QS-08 focus while a view loads", () => {
       await route.continue();
     });
     await signInByKeyboard(page, account);
-    const brand = page.getByRole("link", { name: "PflanzenDéx, zu Heute" });
-    await tabTo(page, brand);
+    // The first control of the page stands on every width: the brand leaves the top bar while a page claims it (US-QS-32).
+    const skip = page.getByRole("link", { name: "Zum Inhalt springen" });
+    await tabTo(page, skip);
     await expect(
       page.getByRole("heading", { level: 2, name: "Deine erste Pflanze" }),
     ).toBeVisible();
-    await expect(brand).toBeFocused();
+    await expect(skip).toBeFocused();
   });
 });

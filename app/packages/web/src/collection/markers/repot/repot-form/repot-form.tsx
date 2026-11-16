@@ -5,6 +5,7 @@ import { useRequest, type ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { useHeldLoader } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import {
   Form,
@@ -18,8 +19,7 @@ import {
   useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
-import { LoadingNote } from "../../../specimens/cards/parts/parts";
+import { FormButtons, LoadingNote, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import { repotSchema, type RepotFields } from "../../../specimens/model/schemas";
 import type { RepotTarget, useRepot } from "../../../specimens/hooks/use-repot";
@@ -80,14 +80,16 @@ function RepotDateField(props: {
 }
 
 /** The frame of the form: the one heading, the target's name and what the write does (P-09). */
-function RepotFrame(props: { open: RepotTarget; children: ReactNode }) {
+function RepotFrame(props: { open: RepotTarget; onBack: () => void; children: ReactNode }) {
   const planted = props.open.status === PLANT_STATUS;
   return (
-    <section aria-labelledby="repot-title">
-      <h1 id="repot-title" className={TITLE}>
-        {planted ? t("form.titlePlant") : t("form.titleCutting")}
-      </h1>
-      <p className="mb-2 text-muted-foreground">{t("form.nameLine", { name: props.open.name })}</p>
+    <section aria-labelledby="repot-title" className="flex min-w-0 flex-col gap-2">
+      <PageHeader
+        headingId="repot-title"
+        title={planted ? t("form.titlePlant") : t("form.titleCutting")}
+        subject={props.open.name}
+        back={{ label: t("form.back"), onBack: props.onBack }}
+      />
       <Quiet className="mb-5">{planted ? t("form.quietPlant") : t("form.quietCutting")}</Quiet>
       {props.children}
     </section>
@@ -121,7 +123,7 @@ function RepotFormBody(props: FormState & { plan: RepotPlanView | null; reload: 
     if (refused && planted) reload();
   });
   return (
-    <RepotFrame open={open}>
+    <RepotFrame open={open} onBack={() => setOpen(null)}>
       <Form {...form}>
         <FormRoot
           onSubmit={submit}
@@ -165,13 +167,13 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
   const loading = useHeldLoader(plan.status === "pending");
   if (loading)
     return (
-      <RepotFrame open={open}>
+      <RepotFrame open={open} onBack={() => setOpen(null)}>
         <LoadingNote>{t("form.loadingPots")}</LoadingNote>
       </RepotFrame>
     );
   if (plan.status === "error" || plan.value === undefined)
     return (
-      <RepotFrame open={open}>
+      <RepotFrame open={open} onBack={() => setOpen(null)}>
         <ErrorNotice>
           <p>{t("form.potsFailed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}

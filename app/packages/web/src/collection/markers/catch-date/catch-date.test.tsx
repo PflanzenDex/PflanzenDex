@@ -301,3 +301,15 @@ describe("US-BES-11 correct the catch date on the card", () => {
     expect(posts).toHaveLength(0);
   });
 });
+
+describe("US-QS-32 the catch-date form is a full view: the task in the header, the plant's name as the subject", () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+    fakeServer([card()], () => json(200, {}));
+    render(page());
+    await openForm();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1, name: "Fangdatum korrigieren" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+  });
+});

@@ -2,7 +2,9 @@
 // can return the focus here without loading the focus handling of RouteFocus, which is a chunk of its own (DS-08).
 
 // The heading of a route's loading skeleton is not the view's own (issue 1097): focusing it would lose the focus when the page replaces it.
+// Below `md` the page's heading may sit in the top bar (US-QS-32, SG-HEAD-01): the bar's heading is the view's own, then the main one.
 export const mainHeading = () =>
+  document.querySelector<HTMLElement>("[data-app-bar-slot] h1:not([data-route-fallback])") ??
   document.querySelector<HTMLElement>("#inhalt h1:not([data-route-fallback])");
 export const mainRegion = () => document.getElementById("inhalt");
 

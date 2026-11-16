@@ -34,7 +34,7 @@ function Done(props: { name: string; onAnother: () => void }) {
   const navigate = useNavigate();
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold" ref={(e) => e?.focus()}>
+      <h2 tabIndex={-1} className="text-base font-semibold" ref={(e) => e?.focus()}>
         {ui("created", { name: props.name })}
       </h2>
       <div className={ACTIONS}>

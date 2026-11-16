@@ -51,6 +51,7 @@ export function DiscoverArea(props: {
         options={options}
         onChoose={choose}
         caption={null}
+        inContent
       />
       <Suspense fallback={<DiscoverModeSkeleton view={view} />}>
         {view === "catalog" ? (

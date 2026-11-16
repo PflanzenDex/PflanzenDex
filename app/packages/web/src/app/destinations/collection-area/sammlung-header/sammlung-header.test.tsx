@@ -19,10 +19,13 @@ describe("US-QS-15 the title area at a larger text size (issue 1019)", () => {
         action={<button type="button">Ansicht</button>}
       />,
     );
-    const row = screen.getByRole("button", { name: "Ansicht" }).parentElement;
+    // The heading and the action share one row (PageHeader); the action sits in its own wrapper inside it.
+    const heading = screen.getByRole("heading", { level: 1, name: "Sammlung" });
+    const row = heading.parentElement;
     expect(row?.className).toContain("flex-wrap");
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Sammlung" }).parentElement?.className,
-    ).toContain("min-w-0");
+    expect(row?.className).toContain("min-w-0");
+    expect(screen.getByRole("button", { name: "Ansicht" }).parentElement?.className).toContain(
+      "max-w-full",
+    );
   });
 });

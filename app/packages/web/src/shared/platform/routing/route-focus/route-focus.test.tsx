@@ -19,6 +19,7 @@ import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
 import { quietFrom } from "./quiet-steps";
+import { mainHeading } from "./view-start";
 
 afterEach(() => {
   cleanup();
@@ -536,5 +537,29 @@ describe("US-QS-15 · issue 2165 a listed entry is taken off the list by its fir
     // A real view change from that entry: the focus moves to the heading of the new view.
     await userEvent.click(screen.getByRole("link", { name: "Zweite" }));
     await waitFor(() => expect(document.activeElement?.textContent).toBe("Zweite Seite"));
+  });
+});
+
+describe("US-QS-32 · the view's heading is the one in the top bar below md (SG-HEAD-01)", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("US-QS-32 the heading of the top bar is the view's heading, before the one of the main region", () => {
+    document.body.innerHTML =
+      '<header><div data-app-bar-slot=""><h1>Tauschbörse</h1></div></header><main id="inhalt"><h1>Inhalt</h1></main>';
+    expect(mainHeading()?.textContent).toBe("Tauschbörse");
+  });
+
+  it("US-QS-32 a loading skeleton's heading in the bar is not the view's heading; the main region's one is taken", () => {
+    document.body.innerHTML =
+      '<header><div data-app-bar-slot=""><h1 data-route-fallback="">Sammlung</h1></div></header><main id="inhalt"><h1>Sammlung</h1></main>';
+    expect(mainHeading()?.parentElement?.closest("main")).not.toBeNull();
+  });
+
+  it("US-QS-32 without a heading in the bar (from md up) the main region's heading is the view's", () => {
+    document.body.innerHTML =
+      '<header><div data-app-bar-slot=""></div></header><main id="inhalt"><h1>Heute</h1></main>';
+    expect(mainHeading()?.textContent).toBe("Heute");
   });
 });

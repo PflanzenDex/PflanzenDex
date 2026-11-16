@@ -318,14 +318,24 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
     expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
   });
 
-  it("US-QS-22 · issue 1096 Wunschliste and Geräte offer no Ansicht, but a hidden stand-in keeps the header's height", async () => {
+  it("US-QS-32 · F-0112 Wunschliste and Geräte offer no Ansicht and keep no invisible stand-in: no empty row at 200 % text", async () => {
     for (const view of ["wishlist", "equipment"]) {
       renderAt(`/collection?view=${view}`);
       await screen.findByRole("heading", { level: 1, name: "Sammlung" });
       expect(screen.queryByRole("button", { name: "Ansicht" })).toBeNull();
-      const standIn = screen.getByTestId("view-stand-in");
-      expect(standIn.getAttribute("aria-hidden")).toBe("true");
-      expect(standIn.className).toContain("invisible");
+      expect(screen.queryByTestId("view-stand-in")).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("US-QS-32 the title stays Sammlung in every mode, and the arranged modes keep the Ansicht opener beside it", async () => {
+    for (const view of ["plants", "species", "wishlist", "equipment"]) {
+      renderAt(`/collection?view=${view}`);
+      expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+      expect(screen.queryByRole("button", { name: "Ansicht" }) !== null).toBe(
+        view === "plants" || view === "species",
+      );
       cleanup();
     }
   });

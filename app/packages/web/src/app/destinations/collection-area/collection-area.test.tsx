@@ -116,7 +116,7 @@ describe("US-WAC-01 collection wired with measuring", () => {
     // The collection page is a lazy part; its first import can take longer than the default second under load.
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
   });
@@ -181,13 +181,11 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants");
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await screen.findByRole("heading", { name: "Messen" });
     expect(route.search).toContain("form=measure");
     expect(route.search).toContain("plant=e1");
     back();
-    await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull());
   });
 
   it("US-QS-15 Back from the measure view returns to the list and focuses the plant it was opened from", async () => {
@@ -208,27 +206,25 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     // RouteFocus loads its focus module after the first paint (DS-08) and remembers the opener from then on.
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await screen.findByRole("heading", { name: "Messen" });
     back();
     await waitFor(
       () => expect(document.activeElement?.closest('ul[aria-label="Pflanzen"]')).not.toBeNull(),
       { timeout: 8_000 },
     );
-    expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull();
   }, 15_000);
 
   it("US-WAC-01 a reload at the address of the measure view opens it for that plant", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");
-    expect(
-      await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 }),
-    ).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 })).toBeTruthy();
   });
 
   it("US-WAC-01 Back with typed measurement asks before it leaves; Weiter bearbeiten keeps the input", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     // The first input pushes the guard entry; a Back before that commit is the race of the bug
     // "Verwerfen can leave a plant form open when the guard entry commits late".
@@ -246,7 +242,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-WAC-01 Verwerfen after a Back with typed measurement leaves the measure view", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     // The first input pushes the guard entry; a Back before that commit is the race of the bug
     // "Verwerfen can leave a plant form open when the guard entry commits late".
@@ -317,7 +313,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 two quick Backs with typed measurement keep the measure view and ask; Verwerfen then walks back to the list", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     // The first input pushes the guard entry, as in the Back tests above.
     await waitFor(() => expect(route.guarded).toBe(true));
@@ -342,7 +338,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 two quick Backs with typed measurement, then Weiter bearbeiten, keep the input and the measure view", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     // The first input pushes the guard entry, as in the Back tests above.
     await waitFor(() => expect(route.guarded).toBe(true));
@@ -365,7 +361,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-WAC-01 Verwerfen before the re-pushed guard entry commits still leaves the measure view (issue 2154)", async () => {
     stubCollection();
     renderHeldAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
     // The guard entry that Back pushes again stays pending while the question shows (a slow device, issue 2154).
@@ -384,7 +380,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 Back before the first guard entry commits still asks (issue 2154)", async () => {
     stubCollection();
     renderHeldAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     // The first input pushes the guard entry, and that entry stays pending: Back then lands on the form entry shown.
     hold.on = true;
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
@@ -404,7 +400,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 Verwerfen before the held form and its guard entry commit still leaves the measure view (issue 2154)", async () => {
     stubCollection();
     renderHeldAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
     // The two quick Backs land on the list; the form is held and put back with its guard entry, which stays pending.
@@ -445,7 +441,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants");
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
     back();
@@ -461,7 +457,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 Verwerfen after a Back with typed measurement leaves no guard entry ahead of a form opened by a reload (issue 2158)", async () => {
     stubCollection();
     renderAt("/collection?view=plants&form=measure&plant=e1");
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" }, { timeout: 5_000 });
+    await screen.findByRole("heading", { name: "Messen" }, { timeout: 5_000 });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
     back();
@@ -480,7 +476,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     renderAt("/collection?view=plants");
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
@@ -521,15 +517,13 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
     renderAt("/collection?view=plants");
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    const heading = await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    const heading = await screen.findByRole("heading", { name: "Messen" });
     await typeAndSave(saves);
     // The save keeps the form on screen: it is the same heading, not one after a remount.
     expect(heading.isConnected).toBe(true);
     // Back from the form is one visible step to the list.
     back();
-    await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull());
     forward();
     await waitFor(() => expect(route.search).toContain("form=measure"));
     expect(route.guarded).toBe(false);
@@ -537,7 +531,7 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
     forward();
     expect(route.guarded).toBe(false);
     expect(route.search).toContain("form=measure");
-    expect(screen.getByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Messen" })).toBeTruthy();
   }, 20_000);
 
   it("US-QS-15 after a save that keeps the form open, typing again arms the guard: Back asks before it leaves (issue 2165)", async () => {
@@ -546,7 +540,7 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
     renderAt("/collection?view=plants");
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await screen.findByRole("heading", { name: "Messen" });
     await typeAndSave(saves);
     await userEvent.type(screen.getByLabelText(/^Messwert/), "7");
     await waitFor(() => expect(route.guarded).toBe(true));
@@ -605,7 +599,7 @@ describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)",
   async function measureAndType() {
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
   }
@@ -646,9 +640,7 @@ describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)",
     await measureAndType();
     await save(saves);
     back();
-    await waitFor(() =>
-      expect(screen.queryByRole("heading", { name: "Messen: Bogenhanf" })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull());
     // Back to the list moves the focus to the control the view was opened from.
     await waitFor(() =>
       expect(document.activeElement?.closest('ul[aria-label="Pflanzen"]')).not.toBeNull(),
@@ -667,7 +659,7 @@ describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {
     renderArea();
     await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
-    const heading = await screen.findByRole("heading", { name: "Messen: Bogenhanf" });
+    const heading = await screen.findByRole("heading", { name: "Messen" });
     expect(heading.closest("[data-fit-screen]")).not.toBeNull();
   });
 

@@ -1,3 +1,4 @@
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -13,9 +14,7 @@ const t = texts(table);
 export function TodaySkeleton() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      <h1 data-route-fallback="" className="text-2xl font-semibold">
-        {t("page.title")}
-      </h1>
+      <PageHeader fallback title={t("page.title")} />
       <DelayedSkeleton>
         <SkeletonGroup label={t("page.loading")} className="flex min-w-0 flex-col gap-3">
           <Skeleton className="h-5 w-2/3" />

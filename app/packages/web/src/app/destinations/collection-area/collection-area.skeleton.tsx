@@ -5,6 +5,7 @@ import { LightPageSkeleton } from "@/light";
 import { PokedexPageSkeleton } from "@/pokedex";
 import { WishlistPageSkeleton } from "@/wishlist";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
@@ -81,16 +82,12 @@ export function CollectionRouteSkeleton({ shape }: { shape: SammlungShape }) {
     <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="mb-1.5 flex flex-col gap-1.5">
-          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-            <h1 data-route-fallback="" className="text-2xl font-semibold">
-              {t("title")}
-            </h1>
-            {arranged ? (
-              <HeaderBlock className="h-11 w-24 shrink-0" />
-            ) : (
-              <span aria-hidden="true" className="block h-11 w-24" />
-            )}
-          </div>
+          {/* The title is the page's header (US-QS-32): in the top bar below md, where the page's own header goes. */}
+          <PageHeader
+            fallback
+            title={t("title")}
+            {...(arranged ? { action: <HeaderBlock className="h-11 w-24 shrink-0" /> } : {})}
+          />
           <HeaderBlock className="h-[52px] w-72 max-w-full" />
         </div>
         <CollectionModeSkeleton shape={shape} />

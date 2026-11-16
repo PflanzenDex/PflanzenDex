@@ -229,3 +229,15 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     expect(posts).toHaveLength(0);
   });
 });
+
+describe("US-QS-32 the light-zone form is a full view: the task in the header, the plant's name as the subject", () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+    fakeServer({ cards: [card()] });
+    render(page());
+    await open();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+  });
+});
