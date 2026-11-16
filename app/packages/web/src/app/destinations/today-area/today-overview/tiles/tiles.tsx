@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
-import { todayTexts } from "@/today";
 import type { DrawTile, TodayTile } from "../../today-area";
+import table from "./tiles.de.json";
 
-const t = texts(todayTexts);
-const plural = plurals(todayTexts);
+const t = texts(table);
+const plural = plurals(table);
 
 /** The count that picks the form of the treatments label: only a loaded count counts; while it loads or failed the plural stands (US-QS-32). */
 const treatmentsCount = (category: CategoryCount): number | undefined =>

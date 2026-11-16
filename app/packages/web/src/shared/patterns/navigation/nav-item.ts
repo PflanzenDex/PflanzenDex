@@ -24,22 +24,6 @@ export type NavItem = {
 export const SAMMLUNG_VIEW_KEY = "pflanzendex.collection-view";
 export const DISCOVER_VIEW_KEY = "pflanzendex.discover-view";
 
-/**
- * What a tap on the current destination does besides going to its start (SG-NAV-03, US-QS-32): "Sammlung" opens its plants
- * and remembers them, "Entdecken" its suggestions. The addresses are those of `PATHS` in the navigation; the other
- * destinations start at their own address.
- */
-export const START_MODES: Partial<Record<string, Pick<NavItem, "start" | "remember">>> = {
-  collection: {
-    start: "/collection?view=plants",
-    remember: { key: SAMMLUNG_VIEW_KEY, value: "plants" },
-  },
-  discover: {
-    start: "/discover?view=suggestions",
-    remember: { key: DISCOVER_VIEW_KEY, value: "suggestions" },
-  },
-};
-
 /** Same look for the bottom bar and the rail: a 56x30 px pill behind a 24 px icon, the label under it (ADR 0011 decision 6). */
 export const stackedItem =
   "group flex min-h-[44px] shrink-0 min-w-[44px] flex-col items-center justify-center gap-1 px-0.5 py-1 text-center text-xs " +
@@ -62,9 +46,6 @@ export const stackedPill = (active: boolean) =>
 /** The selected label is semibold, the others regular (US-QS-32, F-0054); the colour follows the same choice. */
 export const stackedLabel = (active: boolean) =>
   active ? "font-semibold text-foreground" : "font-normal text-muted-foreground";
-
-export const isActivePath = (pathname: string, href: string) =>
-  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
 /** How the product is shown to users (US-QS-14). Identifiers, repository and docs keep "PflanzenDex". */
 export const DISPLAY_NAME = "PflanzenDéx";
@@ -93,9 +74,6 @@ export const destinationHeading = (pathname: string): string | null =>
 
 /** Where every brand link leads: "Heute", the home screen (US-QS-16); equals `PATHS.today`. */
 export const BRAND_HREF = "/today";
-
-/** Accessible name of every brand link; the brand leads to "Heute", the home screen (US-QS-16). */
-export const BRAND_LINK_LABEL = `${DISPLAY_NAME}, zu Heute`;
 
 /** The slots of the bottom bar (DS-25): at most five, or four destinations and "Mehr"; the start frame draws the same count. */
 export const BAR_SLOTS = 5;

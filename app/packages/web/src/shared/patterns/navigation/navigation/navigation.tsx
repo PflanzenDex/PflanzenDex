@@ -8,7 +8,11 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import { START_MODES, pageTitle, type NavItem } from "../nav-item";
+import { DISPLAY_NAME, pageTitle, type NavItem } from "../nav-item";
+import { START_MODES } from "./reselect-link/reselect-link";
+
+/** Accessible name of every brand link; the brand leads to "Heute", the home screen (US-QS-16). */
+export const BRAND_LINK_LABEL = `${DISPLAY_NAME}, zu Heute`;
 
 export type View =
   "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";

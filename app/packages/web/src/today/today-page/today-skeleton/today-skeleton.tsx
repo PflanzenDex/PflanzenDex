@@ -3,7 +3,7 @@ import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/d
 import { SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
-import table from "../../today.de.json";
+import table from "./today-skeleton.de.json";
 import { TodaySkeletonBody } from "./today-skeleton-body/today-skeleton-body";
 
 const t = texts(table);

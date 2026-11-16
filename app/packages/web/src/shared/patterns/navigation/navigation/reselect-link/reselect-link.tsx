@@ -3,7 +3,26 @@ import { NavLink, useLocation, useNavigate, type NavLinkProps } from "react-rout
 import { writeStored } from "@/shared/platform/browser/storage";
 import { motionReduced } from "@/shared/platform/device/motion/motion-setting";
 import { mainRegion } from "@/shared/platform/routing/route-focus/view-start";
-import { isActivePath, type NavItem } from "../../nav-item";
+import { DISCOVER_VIEW_KEY, SAMMLUNG_VIEW_KEY, type NavItem } from "../../nav-item";
+
+/**
+ * What a tap on the current destination does besides going to its start (SG-NAV-03, US-QS-32): "Sammlung" opens its plants
+ * and remembers them, "Entdecken" its suggestions. The addresses are those of `PATHS` in the navigation; the other
+ * destinations start at their own address. Here, with the link that applies it, so the start frame does not carry it (issue 2242).
+ */
+export const START_MODES: Partial<Record<string, Pick<NavItem, "start" | "remember">>> = {
+  collection: {
+    start: "/collection?view=plants",
+    remember: { key: SAMMLUNG_VIEW_KEY, value: "plants" },
+  },
+  discover: {
+    start: "/discover?view=suggestions",
+    remember: { key: DISCOVER_VIEW_KEY, value: "suggestions" },
+  },
+};
+
+export const isActivePath = (pathname: string, href: string) =>
+  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
 /** A plain click: the primary button without a modifier. A modified click (a new tab) is left to the link. */
 const plainClick = (event: MouseEvent) =>

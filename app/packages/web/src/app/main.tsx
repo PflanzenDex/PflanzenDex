@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { App } from "./flows";
+import { App } from "./frame/app/app";
 import { createQueryClient } from "../shared/data";
 import { TransitionRouter } from "../shared/platform/routing/route-transition/transition-router/transition-router";
 import { scheduleAppWorker } from "../shared/platform/device/service-worker/register";

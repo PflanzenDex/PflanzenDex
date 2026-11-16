@@ -5,11 +5,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./app-shell";
 import {
   BRAND_HREF,
-  BRAND_LINK_LABEL,
   DISPLAY_NAME,
   destinationHeading,
   pageTitle,
 } from "../../../shared/patterns/navigation/nav-item";
+import { BRAND_LINK_LABEL } from "../../../shared/patterns/navigation/navigation/navigation";
 import {
   CATALOG_ADDRESS,
   DIFFICULTY_ADDRESS,
