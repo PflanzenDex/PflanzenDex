@@ -21,7 +21,7 @@ const START_ACTS = ["pointerdown", "click", "keydown"] as const;
 
 /** What a page change starts from: a link, a button or another control (a tap on the drawn start frame is none). */
 const CONTROL =
-  "a[href], button, input, select, textarea, summary, [role='button'], [role='link'], [tabindex]";
+  "a[href], button, input, select, textarea, summary, [role='button'], [role='link'], [tabindex]:not([tabindex='-1'])";
 
 /** True during the app start (SG-STATE-02, owner answer Q-27): see `beginAppStart`. */
 let starting = false;

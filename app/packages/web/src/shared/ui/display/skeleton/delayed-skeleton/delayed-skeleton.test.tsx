@@ -257,13 +257,18 @@ describe("US-QS-32 the app start shows its skeletons without the delay (SG-STATE
     }
   });
 
-  it("US-QS-32 · Q-27 a tap on the drawn start frame acts on nothing and keeps the start", () => {
+  it("US-QS-32 · Q-27 a tap on the drawn start frame or on the focus target main acts on nothing and keeps the start", () => {
     const end = beginAppStart();
+    const main = document.createElement("main");
+    main.tabIndex = -1;
+    document.body.append(main);
     try {
       document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      main.dispatchEvent(new Event("pointerdown", { bubbles: true }));
       render(loading);
       expect(screen.getAllByRole("status")).toHaveLength(1);
     } finally {
+      main.remove();
       end();
     }
   });
