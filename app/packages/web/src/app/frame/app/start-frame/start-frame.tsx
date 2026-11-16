@@ -1,4 +1,5 @@
 import { useLocation } from "react-router";
+import { cn } from "@/shared/lib/utils";
 import { DISPLAY_NAME, stackedItem } from "@/shared/patterns/navigation/nav-item";
 import { destinationHeading } from "@/shared/patterns/navigation/navigation/navigation";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
@@ -54,7 +55,7 @@ export function StartFrame() {
         className="inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden"
       >
         {Array.from({ length: BAR_SLOTS }, (_, i) => (
-          <span key={i} className={`${stackedItem} flex-1`}>
+          <span key={i} className={cn(stackedItem, "flex-1")}>
             <Skeleton className="h-[30px] w-14 max-w-full rounded-full" />
             <Skeleton className="h-3 w-10 max-w-full" />
           </span>
