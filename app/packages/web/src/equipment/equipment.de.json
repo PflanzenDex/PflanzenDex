@@ -65,12 +65,5 @@
   "pot.drainage": "Abfluss",
   "share.more": "Sie sehen Art, Name, Modell, Lichtstufe und deine Erfahrung, aber nie Kaufort, Seriennummer, Standort oder Kaufdatum. Zurückziehen wirkt beim nächsten Abruf; was schon angezeigt wurde, lässt sich nicht zurückholen.",
   "supply.label": "Vorrat",
-  "supply.group": "Vorrat von {name}",
-  "link.more": "Die Verknüpfung findet nur den Vorrat dazu.",
-  "link.form": "Verknüpfung für {name}",
-  "link.field": "Text in der Behandlung (optional)",
-  "link.note": "Dein Behandlungstext bleibt, wie er ist.",
-  "link.save": "Verknüpfung speichern",
-  "link.summary": "Verknüpfung mit Behandlungen: {link}",
-  "link.summaryNone": "Verknüpfung mit Behandlungen (keine)"
+  "link.more": "Die Verknüpfung findet nur den Vorrat dazu."
 }

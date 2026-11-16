@@ -20,19 +20,23 @@ export type SegmentedControlProps<V extends string> = {
    * accessible name carries after the label, e.g. "1 Angabe fehlt". The component reads no German text itself.
    */
   alerts?: Readonly<Partial<Record<V, string | undefined>>>;
-  /** Locks every segment while an action runs (the busy state of a write); a locked segment is not pressed. */
+  /**
+   * Locks every segment while an action runs (the busy state of a write). The chosen level stays pressed (aria-pressed)
+   * while the group is locked; the others cannot be chosen.
+   */
   disabled?: boolean;
   className?: string;
 };
 
-// Two or three choices: one row of equal columns, the segments share the full width (SG-CTRL-01).
-const ROW_LAYOUT = "grid-flow-col auto-cols-fr";
+// Two or three choices: one row of equal columns, the segments share the full width (SG-CTRL-01); the track is a pill.
+const ROW_LAYOUT = "grid-flow-col auto-cols-fr rounded-full";
 // Four choices (the Sammlung switch, issue 1858): two columns, and one row of four from a container width given in rem.
 // Measured in a browser at 100 % text: the widest label in its selected (semibold) state, "Wünsche", needs 73.3 px with
 // its padding and border, so one row of four needs 313 px (19.6 rem) with the gaps and the track. The phone container
 // is 328 px at 360 px wide (the page gutter is 16 px each side), so 20 rem keeps one row at normal text. At 200 % text
-// the rem threshold doubles to 640 px and the container is 296 px, so the four become a 2 x 2 grid.
-const FOUR_LAYOUT = "grid-cols-2 @min-[20rem]:grid-cols-4";
+// the rem threshold doubles to 640 px and the container is 296 px, so the four become a 2 x 2 grid. On two rows the track
+// is a 22 px card radius, not a lozenge (SG-SHAPE-02); the segments themselves stay pills.
+const FOUR_LAYOUT = "grid-cols-2 rounded-2xl @min-[20rem]:grid-cols-4 @min-[20rem]:rounded-full";
 
 /**
  * A segmented control of two to four exclusive choices (US-QS-14, DS-15, US-QS-32, SG-CTRL-01): toggle buttons in a named
@@ -55,7 +59,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
       aria-label={props.label}
       data-scroll-x={four ? undefined : "row"}
       className={cn(
-        "grid w-full gap-1 overflow-x-auto overscroll-x-contain rounded-full bg-muted p-1 [scrollbar-width:none]",
+        "grid w-full gap-1 overflow-x-auto overscroll-x-contain bg-muted p-1 [scrollbar-width:none]",
         four ? FOUR_LAYOUT : ROW_LAYOUT,
         props.className,
       )}

@@ -158,6 +158,39 @@ describe("US-QS-32 segmented control with four choices (the Sammlung switch)", (
     expect(group?.className).not.toContain("grid-cols-2");
     expect(group?.className).not.toContain("@min-");
   });
+
+  it("US-QS-32 four choices: the track is a card radius on two rows and a pill on one row, the segments stay pills", () => {
+    const { container } = render(
+      <SegmentedControl label="Ansicht" options={FOUR} value="plants" onChange={() => undefined} />,
+    );
+    const classes = container.querySelector('[role="group"]')?.className.split(" ") ?? [];
+    expect(classes).toEqual(expect.arrayContaining(["rounded-2xl", "@min-[20rem]:rounded-full"]));
+    expect(classes).not.toContain("rounded-full");
+    for (const choice of container.querySelectorAll("button"))
+      expect(choice.className).toContain("rounded-full");
+  });
+});
+
+describe("US-QS-32 segmented control while an action runs (busy)", () => {
+  it("US-QS-32 a locked group keeps the chosen segment pressed and disables every segment", () => {
+    render(
+      <SegmentedControl
+        label="Vorrat"
+        options={[
+          { value: "a", label: "Vorhanden" },
+          { value: "b", label: "Leer" },
+        ]}
+        value="a"
+        onChange={() => undefined}
+        disabled
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Vorhanden" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    for (const choice of screen.getAllByRole("button"))
+      expect((choice as HTMLButtonElement).disabled).toBe(true);
+  });
 });
 
 describe("US-QS-15 the switch at a larger text size (issue 1019)", () => {

@@ -79,6 +79,9 @@ describe("US-EQU-05 supply of a consumable", () => {
   it("US-QS-32 while an action runs no level can be tapped (busy handling as before)", async () => {
     const a = { ...actions(), busy: true };
     render(<Supply item={consumable()} actions={a} />);
+    expect(screen.getByRole("button", { name: "Vorhanden" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
     for (const name of ["Vorhanden", "Wird knapp", "Leer"])
       expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
     await userEvent.setup().click(screen.getByRole("button", { name: "Leer" }));

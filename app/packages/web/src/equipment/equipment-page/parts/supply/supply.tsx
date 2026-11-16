@@ -38,17 +38,17 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
   return (
     <FormRoot
       onSubmit={submit}
-      aria-label={t("link.form", { name: item.name })}
+      aria-label={`Verknüpfung für ${item.name}`}
       className="mt-2 flex flex-col gap-2"
     >
       <label className={LABEL}>
-        {t("link.field")}
+        Text in der Behandlung (optional)
         <Input value={text} onChange={(e) => setText(e.target.value)} />
       </label>
       {/* One line at 14 px (SG-COPY-05, SG-TYPE-03; the sentence was 12 px); the rest sits behind Mehr erfahren. */}
-      <MoreHelp more={t("link.more")}>{t("link.note")}</MoreHelp>
+      <MoreHelp more={t("link.more")}>Dein Behandlungstext bleibt, wie er ist.</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
-        {t("link.save")}
+        Verknüpfung speichern
       </Button>
     </FormRoot>
   );
@@ -57,8 +57,7 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
 /**
  * The supply of a consumable (US-EQU-05): one tap sets it to available, low or empty. A consumable that is low or empty
  * is a need that "Was fehlt?" derives (US-EQU-07). A plant agent can be linked to the text of a treatment. A device has
- * no supply. The three levels are the shared segmented control under the visible label "Vorrat" (US-QS-32, SG-CTRL-01):
- * the chosen one is pressed, nothing is filled as a primary button, and a tap writes at once.
+ * no supply.
  */
 export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
   const { item, actions } = props;
@@ -68,7 +67,7 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
       <div className="flex flex-col gap-1">
         <p className="font-semibold">{t("supply.label")}</p>
         <SegmentedControl
-          label={t("supply.group", { name: item.name })}
+          label={`Vorrat von ${item.name}`}
           options={LEVEL_OPTIONS}
           value={item.supply}
           disabled={actions.busy}
@@ -80,7 +79,7 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
       {item.type === "Plant agent" ? (
         <details>
           <DisclosureSummary>
-            {item.agentLink ? t("link.summary", { link: item.agentLink }) : t("link.summaryNone")}
+            Verknüpfung mit Behandlungen{item.agentLink ? `: ${item.agentLink}` : " (keine)"}
           </DisclosureSummary>
           <LinkForm key={`${item.id}:${item.agentLink}`} item={item} actions={actions} />
         </details>
