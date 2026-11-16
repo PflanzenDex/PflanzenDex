@@ -269,3 +269,11 @@ IDs are never renumbered.
 - **Fix:** After the rewrite, keep only the pictures the change explains; restore the rest with `git checkout -- <png>` and confirm with `make ds-snapshots-check` that the committed baselines still match. Name the kept pictures in the PR.
 - **Can it become a gate?** No: whether a picture change is caused by the diff needs judgment; the check run already fails on a real difference.
 - **Source:** Issue #2075, PR #2172.
+
+## PF-033 The initial JavaScript sits just under its ceiling, so code in the entry fails only in CI
+
+- **Symptom:** A change that adds a little code to the first paint (a frame drawn during the session check, a helper read before the first render) passes `make gates` and every unit test, and then `app-ui` fails in CI: "bundle budget (QG-U6, DS-08): initial JS is 141.3 kB gzip, allowed 140.0 kB".
+- **Cause:** `make gates` does not build the web app; the budget runs in `make ci-ui` only. Dev stood at 139.9 kB of the fixed 140.0 kB ceiling (2026-11-16), so even a few hundred bytes in `app/main.tsx`, `app/frame/app/app.tsx` or a module the entry imports (the `account` index pulls more into it) break it. Moving the new code into a lazy chunk does not help on its own: the bundler re-splits the shared chunks, and the initial size grew to 141.6 kB.
+- **Fix:** Before pushing a change to the entry, run `npm run build -w @pflanzendex/web && npm run bundle-budget` in `app/`, and compare with dev's number (build dev's `src` the same way). When the change needs room, either make room first in its own PR (code that the first paint does not use, in a lazy chunk) or ask the owner about the ceiling (ADR 0018); never edit `quality-limits.json` to pass.
+- **Can it become a gate?** It is one already (QG-U6 in CI); running it in `make gates` costs a full build on every push.
+- **Source:** FX-08, PR #2182 (the app start of issue 1876 was taken out of the PR for it).
