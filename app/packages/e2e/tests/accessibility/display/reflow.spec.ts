@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import {
   TEXT_SPACING_CSS,
   VIEWS,
+  brokenWords,
   layoutProblems,
   openView,
   signInToApp,
@@ -151,26 +152,9 @@ test.describe("FR-BES-23 Sammlung tiles at 200 % text", () => {
   });
 });
 
-/**
- * The words of the page title in the top bar whose text runs over more than one line, i.e. that break inside the word.
- * Each word is a range of the title's text; a word on one line has all its boxes at the same top.
- */
+/** The words of the page title in the top bar that break inside the word (see `brokenWords`). */
 async function brokenTitleWords(page: Page): Promise<string[]> {
-  return page.locator("[data-app-bar-slot] h1").evaluate((h1) => {
-    const broken: string[] = [];
-    const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      const text = node.textContent ?? "";
-      for (const match of text.matchAll(/\S+/g)) {
-        const range = document.createRange();
-        range.setStart(node, match.index);
-        range.setEnd(node, match.index + match[0].length);
-        const tops = new Set([...range.getClientRects()].map((r) => Math.round(r.top)));
-        if (tops.size > 1) broken.push(match[0]);
-      }
-    }
-    return broken;
-  });
+  return brokenWords(page.locator("[data-app-bar-slot] h1"));
 }
 
 // US-QS-32 (issue 2231): at 200 % text a bar title never breaks inside a word, an action wraps under it instead. The h1

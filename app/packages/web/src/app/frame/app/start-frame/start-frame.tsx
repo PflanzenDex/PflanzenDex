@@ -4,7 +4,9 @@ import {
   BRAND_HREF,
   DISPLAY_NAME,
   OPERATOR_ADDRESS,
+  barSlot,
   barWords,
+  barWordsStyle,
   bottomBar,
   brandLink,
   stackedItem,
@@ -47,7 +49,7 @@ function StartBar() {
       {startBarLabels()
         .slice(0, BAR_SLOTS)
         .map((label, index) => (
-          <span key={index} className={cn(stackedItem, stackedLabel(false), "flex-1")}>
+          <span key={index} className={cn(stackedItem, barSlot, stackedLabel(false), "flex-1")}>
             <span
               className={cn(
                 stackedPill(false),
@@ -59,6 +61,7 @@ function StartBar() {
                 barWords,
                 "rounded-control bg-muted text-transparent animate-pulse motion-reduce:animate-none",
               )}
+              style={barWordsStyle(label)}
             >
               {label}
             </span>

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /** One navigation destination: data only, never a module or domain object (DS-44). */
 export type NavItem = {
@@ -124,8 +124,22 @@ export const brandLink =
 export const barRow = "flex min-h-[44px] w-full min-w-0 flex-wrap items-center gap-2";
 export const barTitle = "min-w-0 flex-1 break-words text-lg font-semibold";
 export const contentRow = "flex min-w-0 flex-wrap items-center gap-2";
-/** The words under an icon: a label wraps to at most two lines in its slot, and a long word breaks at a syllable (US-QS-32). */
-export const barWords = "block max-w-full text-center hyphens-auto [overflow-wrap:anywhere]";
+/**
+ * The words under an icon (SG-NAV-07, issue 2245): whole words that wrap at spaces to at most two lines and never break
+ * inside a word (`hyphens-manual` and the default break, no syllables). A word wider than its slot shrinks: the font size is
+ * at most the text-xs size and at most the slot's width (`barSlot`, 100cqi) over the characters of the label's longest word
+ * (`--bar-word`, `barWordsStyle`) times 0.61 em, the widest measured average glyph of the bar's labels in Figtree semibold
+ * ("Sammlung", 0.601 em). A label that fits keeps its size. `overflow-hidden text-ellipsis` is the last safety net.
+ */
+export const barWords =
+  "block max-w-full overflow-hidden text-center text-ellipsis hyphens-manual [font-size:min(var(--text-xs),calc(100cqi/(var(--bar-word)*0.61)))]";
+/** The slots of the bottom bar and of the start frame's bar are size containers, so their words size by the slot (not the side rail). */
+export const barSlot = "[container-type:inline-size]";
+/** The custom property `barWords` sizes a label by: the characters of the label's longest word. */
+export const barWordsStyle = (label: string): CSSProperties =>
+  ({
+    "--bar-word": Math.max(1, ...label.split(/\s+/).map((word) => [...word].length)),
+  }) as CSSProperties;
 
 /** The defaults of the bottom bar for a keeper without a stored copy of its labels (`start-frame/bar-labels.ts`). */
 export const DEFAULT_BAR_LABELS = ["Heute", "Sammlung", "Entdecken", "Freunde", "Konto"];

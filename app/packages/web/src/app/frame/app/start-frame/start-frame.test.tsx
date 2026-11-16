@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { likelySignedIn } from "@/account";
 import { navItems, PATHS } from "@/shared/patterns/navigation/navigation/navigation";
-import { barWords, bottomBar, topBar } from "@/shared/patterns/navigation/nav-item";
+import { barSlot, barWords, bottomBar, topBar } from "@/shared/patterns/navigation/nav-item";
 import { GlobalHeader } from "../../global-header/global-header";
 import { MobileNavBar } from "../../mobile-nav-bar/mobile-nav-bar";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -149,6 +149,15 @@ describe("US-QS-32 the start frame and the shell draw the bars alike (issue 2230
     const realWords = shell.container.querySelector("nav[data-bottom-bar] a > span:last-child");
     expect(realWords?.className).toContain(barWords);
     expect(startBar?.querySelector("span > span:last-child")?.className).toContain(barWords);
+  });
+
+  it("US-QS-32 the start bar's slots are size containers and its words size by their longest word, as the shell's do (SG-NAV-07, issue 2245)", () => {
+    window.localStorage.setItem(BAR_LABELS_KEY, JSON.stringify(["Heute", "Sammlung", "Entdecken"]));
+    const { container } = frameAt(PATHS.today);
+    const slots = Array.from(container.querySelectorAll<HTMLElement>("[data-start-bar] > span"));
+    expect(slots.map((s) => s.className.split(" ").includes(barSlot))).toEqual([true, true, true]);
+    const words = slots.map((s) => s.querySelector<HTMLElement>("span:last-child"));
+    expect(words.map((w) => w?.style.getPropertyValue("--bar-word"))).toEqual(["5", "8", "9"]);
   });
 
   it("US-QS-32 the start frame draws the labels the shell stored on this device", () => {

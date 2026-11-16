@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DISCOVER_VIEW_KEY,
   SAMMLUNG_VIEW_KEY,
+  barSlot,
+  barWords,
+  barWordsStyle,
   isActivePath,
   stackedItem,
   stackedLabel,
@@ -107,7 +110,7 @@ describe("US-QS-32 the bottom bar: selection cue, icons, labels, lock mark (FX-1
     expect(stackedPill(true) + stackedPill(false)).not.toMatch(/22px|size-\[22/);
   });
 
-  it("US-QS-32 no label leaves the view at a larger text size: no sr-only, no container query, no nowrap; a label may wrap and hyphenate (SG-NAV-07)", () => {
+  it("US-QS-32 no label leaves the view at a larger text size: no sr-only, no container query, no nowrap; a label wraps at spaces and never inside a word (SG-NAV-07, issue 2245)", () => {
     renderBar("/p0", items);
     const nav = screen.getByRole("navigation", { name: "Navigation unten" });
     expect(nav.className).not.toMatch(/@container|@max-/);
@@ -120,15 +123,24 @@ describe("US-QS-32 the bottom bar: selection cue, icons, labels, lock mark (FX-1
       expect(word, slot.textContent ?? "").toBeTruthy();
       expect(classesOf(word)).not.toContain("sr-only");
       expect(classesOf(word)).not.toContain("whitespace-nowrap");
-      expect(classesOf(word)).toEqual(expect.arrayContaining(["hyphens-auto", "max-w-full"]));
-      expect(word?.className).toContain("[overflow-wrap:anywhere]");
-      expect(word?.className).not.toMatch(/@max-|break-all|truncate/);
+      expect(classesOf(word)).toEqual(expect.arrayContaining(barWords.split(" ")));
+      expect(word?.className).not.toMatch(/hyphens-auto|overflow-wrap|break-|@max-|truncate/);
+      // The slot is a size container, so the word shrinks by the slot's width; the custom property holds its longest word.
+      expect(classesOf(slot)).toContain(barSlot);
+      expect(word?.style.getPropertyValue("--bar-word")).toBe("4");
     }
     expect(
       bar()
         .getAllByRole("link")
         .map((l) => l.textContent),
     ).toEqual(items.slice(0, 4).map((i) => i.label));
+  });
+
+  it("US-QS-32 the custom property of a label is the character count of its longest word, so a long word sizes the label (SG-NAV-07, issue 2245)", () => {
+    expect(barWordsStyle("Heute")).toEqual({ "--bar-word": 5 });
+    expect(barWordsStyle("Noch gesperrt")).toEqual({ "--bar-word": 8 });
+    expect(barWordsStyle("Prüfliste")).toEqual({ "--bar-word": 9 });
+    expect(barWordsStyle("")).toEqual({ "--bar-word": 1 });
   });
 
   it("US-QS-32 the lock mark is a 12 px badge with an 8 px glyph inside the pill, the pill stays the link's first child (F-0055)", () => {

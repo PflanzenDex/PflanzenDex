@@ -6,7 +6,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sh
 import { cn } from "@/shared/lib/utils";
 import {
   BAR_SLOTS,
+  barSlot,
   barWords,
+  barWordsStyle,
   bottomBar,
   isActivePath,
   stackedItem,
@@ -24,10 +26,15 @@ import { ReselectLink } from "../../../shared/patterns/navigation/navigation/res
  * from them.
  */
 function BarWords({ label, note }: { label: string; note: string | undefined }) {
-  if (!note) return <span className={barWords}>{label}</span>;
+  if (!note)
+    return (
+      <span className={barWords} style={barWordsStyle(label)}>
+        {label}
+      </span>
+    );
   return (
     <>
-      <span aria-hidden="true" className={barWords}>
+      <span aria-hidden="true" className={barWords} style={barWordsStyle(label)}>
         {label}
       </span>
       <span className="sr-only">
@@ -72,6 +79,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           aria-label="Mehr"
           className={cn(
             stackedItem,
+            barSlot,
             "h-auto flex-1 rounded-none hover:bg-transparent",
             // Like the links beside it, the item has no box in forced colors; the icon pill shows the state (US-QS-14).
             "forced-colors:border-0",
@@ -132,7 +140,9 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
           key={item.href}
           item={item}
           end={item.href === "/"}
-          className={({ isActive: active }) => cn(stackedItem, "flex-1", stackedLabel(active))}
+          className={({ isActive: active }) =>
+            cn(stackedItem, barSlot, "flex-1", stackedLabel(active))
+          }
         >
           {({ isActive: active }) => (
             <>
