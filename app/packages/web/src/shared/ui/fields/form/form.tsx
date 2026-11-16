@@ -17,6 +17,8 @@ import { Label } from "../../display/label/label";
 import {
   FieldContext,
   ItemContext,
+  focusSend,
+  keepFieldFocus,
   useFormField,
   useItemContextValue,
   useRenderedPart,
@@ -163,16 +165,13 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
 );
 FormMessage.displayName = "FormMessage";
 
-/**
- * The `<form>` of the Form family, directly under `Form`, with `onSubmit={form.handleSubmit(...)}`: `noValidate`
- * (the zod resolver validates) and no native reload. The handler may be async.
- */
+/** The `<form>` under `Form`: `noValidate`, no reload, keeps the field focus on a send press. */
 const FormRoot = React.forwardRef<
   HTMLFormElement,
   Omit<React.FormHTMLAttributes<HTMLFormElement>, "onSubmit" | "noValidate"> & {
     onSubmit?: (event: React.FormEvent<HTMLFormElement>) => unknown;
   }
->(({ onSubmit, ...props }, ref) => (
+>(({ onSubmit, onMouseDown, ...props }, ref) => (
   <form
     ref={ref}
     noValidate
@@ -180,6 +179,8 @@ const FormRoot = React.forwardRef<
       event.preventDefault();
       void onSubmit?.(event);
     }}
+    onMouseDown={(event) => keepFieldFocus(event, onMouseDown)}
+    onClickCapture={focusSend}
     {...props}
   />
 ));
