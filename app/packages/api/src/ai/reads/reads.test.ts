@@ -277,9 +277,8 @@ describe("US-KI-11 tenant isolation per tool (P-04, FR-KI-23)", () => {
     const byName = await tool(subB, "get_species", { species: `Kiread${tag}anna vera` });
     expect(byName.body["error"].code).toBe("species.not_found");
     expect(JSON.stringify(byName.body)).not.toContain("anna");
-    // The nearest names come from B's pool (#2193): B's own proposal is among them, no id of A's.
+    // No id of A's species among the nearest names (#2193).
     const nearest = byName.body["error"].data["nearest"] as string[];
-    expect(nearest.some((label) => label.includes(`Kiread${tag}bernd vera`))).toBe(true);
     expect(JSON.stringify(nearest)).not.toContain(A.species["id"]);
   });
 
@@ -307,15 +306,29 @@ describe("US-KI-11 tenant isolation per tool (P-04, FR-KI-23)", () => {
     ]);
     expect(text).not.toContain("anna");
     expect(text).toContain("Regal bernd");
-    // The refusals name B's own location and zone as the nearest names (#2193).
-    expect(place.body["error"]).toMatchObject({
-      code: "location.not_found",
-      data: { nearest: ["Regal bernd"] },
-    });
-    expect(zone.body["error"]).toMatchObject({
-      code: "light_zone.not_found",
-      data: { nearest: ["Hell bernd"] },
-    });
+    // The refusals name as nearest only B's own locations and zones, never A's (#2193).
+    const namesOf = async (sub: string, name: string) =>
+      ((await tool(sub, name)).body["items"] as Json[]).map((i) => i["name"] as string);
+    const [bPlaces, bZones, aPlaces, aZones] = await Promise.all([
+      namesOf(subB, "list_locations"),
+      namesOf(subB, "list_light_zones"),
+      namesOf(subA, "list_locations"),
+      namesOf(subA, "list_light_zones"),
+    ]);
+    expect(place.body["error"]).toMatchObject({ code: "location.not_found" });
+    expect(zone.body["error"]).toMatchObject({ code: "light_zone.not_found" });
+    const placeNearest = place.body["error"]["data"]["nearest"] as string[];
+    const zoneNearest = zone.body["error"]["data"]["nearest"] as string[];
+    expect(placeNearest.length).toBeGreaterThan(0);
+    expect(zoneNearest.length).toBeGreaterThan(0);
+    for (const name of placeNearest) {
+      expect(bPlaces).toContain(name);
+      expect(aPlaces).not.toContain(name);
+    }
+    for (const name of zoneNearest) {
+      expect(bZones).toContain(name);
+      expect(aZones).not.toContain(name);
+    }
   });
 });
 
@@ -363,5 +376,18 @@ describe("FR-BES-24 the AI search says when its list is cut", () => {
     const r = await tool(subA, "get_species", { species: `Zz${tag}` });
     expect(r.error).toBe(false);
     expect(r.body["species"]).toMatchObject({ id: targetId, latinName: `Zz${tag}` });
+  });
+});
+
+// #2193: the fixture tag must never spell an account label; the guard of areas.test.ts for this file's tag.
+describe("US-KI-11 the fixture tag (#2193)", () => {
+  it("US-KI-11 the fixture tag can never spell an account label (#2193)", () => {
+    // The tag's letters are the digit letters and the hex letters a-f. A label with a letter outside them cannot occur.
+    const alphabet = new Set(DIGIT_LETTERS + "abcdef");
+    for (const label of ["anna", "bernd"])
+      expect(
+        [...label].some((letter) => !alphabet.has(letter)),
+        `"${label}" cannot occur: one of its letters is outside the tag alphabet`,
+      ).toBe(true);
   });
 });

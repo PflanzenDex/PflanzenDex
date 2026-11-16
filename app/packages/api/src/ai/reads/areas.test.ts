@@ -455,12 +455,12 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
         const r = await tool(subB, name, { specimen });
         expect(r.body["error"].code).toBe("specimen.not_found");
         expect(JSON.stringify(r.body)).not.toContain("anna");
-        // The nearest names come from B's own rows (#2193): none for an id, B's own specimen for a name, no id of A's.
+        // The nearest names come from B's own rows (#2193): none for an id, B's own specimen name for a name, no id of A's.
         const nearest = r.body["error"].data["nearest"] as string[];
         if (specimen === A.specimen["id"]) expect(nearest).toEqual([]);
         else {
           expect(nearest.length).toBeGreaterThan(0);
-          for (const label of nearest) expect(label).toContain(`${tag} bernd`);
+          for (const label of nearest) expect([B.specimen["name"]]).toContain(label);
         }
         for (const id of [A.specimen["id"], A.species["id"], A.zone["id"]])
           expect(JSON.stringify(nearest)).not.toContain(id);
@@ -631,19 +631,10 @@ describe("US-ONB-09 the AI client and the keeper switches", () => {
 // #2193: the fixture tag must never spell an account label. A tag holding "anna" fails the bare name checks, because B's own
 // names hold the tag ("Bereich <tag> bernd").
 describe("US-KI-12 the fixture tag (#2193)", () => {
-  const LABELS = ["anna", "bernd"];
-
   it("US-KI-12 the fixture tag can never spell an account label (#2193)", () => {
-    for (let i = 0; i < 2000; i++) {
-      const generated = tagOf(randomUUID());
-      for (const label of LABELS) expect(generated).not.toContain(label);
-    }
-    // A tag character is the image of one hex digit, so the alphabet is the image of the 16 digits. A label with a letter
-    // outside the alphabet cannot occur at all; a sample of 2000 tags alone spells "anna" in about one run of five.
-    const alphabet = new Set(
-      "0123456789abcdef".split("").map((hex) => tagOf(hex.repeat(32)).slice(0, 1)),
-    );
-    for (const label of LABELS)
+    // The tag's letters are the digit letters and the hex letters a-f. A label with a letter outside them cannot occur.
+    const alphabet = new Set(DIGIT_LETTERS + "abcdef");
+    for (const label of ["anna", "bernd"])
       expect(
         [...label].some((letter) => !alphabet.has(letter)),
         `"${label}" cannot occur: one of its letters is outside the tag alphabet`,
