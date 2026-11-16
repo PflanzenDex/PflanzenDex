@@ -2,13 +2,13 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
-import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormRoot } from "../form/form";
 import { Select } from "../select/select";
 import { Textarea } from "../textarea/textarea";
 import { Input } from "./input";
 import { DateField } from "./native-fields/date-field/date-field";
+import { useFieldForm } from "@/shared/ui/fields/form/form";
 
 afterEach(cleanup);
 
@@ -318,7 +318,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
 
   it("US-QS-32 · SG-FORM-03 the field inside the Form family (FormField, FormControl) gets the same hints", () => {
     function Registered() {
-      const form = useForm<{ vorname: string; ort: string }>({
+      const form = useFieldForm<{ vorname: string; ort: string }>({
         defaultValues: { vorname: "", ort: "" },
       });
       return (

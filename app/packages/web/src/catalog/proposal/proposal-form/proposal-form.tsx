@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormSetError } from "react-hook-form";
+import { type UseFormSetError } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../shared/data";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
@@ -125,7 +125,7 @@ export function ProposalForm(props: {
   /** The step to start on (tests and stories); the form starts on step 1. */
   startStep?: 1 | 2;
 }) {
-  const form = useForm<ProposalFields>({
+  const form = useFieldForm<ProposalFields>({
     resolver: zodResolver(proposalSchema),
     defaultValues: { ...EMPTY_PROPOSAL, latinName: props.start ?? "" },
   });

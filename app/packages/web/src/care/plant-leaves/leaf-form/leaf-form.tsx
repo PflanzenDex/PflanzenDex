@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { LEAF_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -47,7 +47,7 @@ export function LeafForm(props: {
   onSend: (input: LeafInput) => Promise<ApiError | null>;
   onSaved: () => void;
 }) {
-  const form = useForm<LeafFields>({
+  const form = useFieldForm<LeafFields>({
     resolver: zodResolver(leafSchema),
     defaultValues: leafDefaults(),
   });

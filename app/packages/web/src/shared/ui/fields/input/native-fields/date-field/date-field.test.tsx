@@ -3,10 +3,9 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { useState } from "react";
 import userEvent from "@testing-library/user-event";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { DateField, parseDateText, showDateText } from "./date-field";
 import { NO_DAY_TEXT, dateValue, requiredDate } from "./date-field-schema";
@@ -142,7 +141,7 @@ describe("DateField (US-QS-24, US-QS-32, NFR-08)", () => {
   it("US-QS-32 a refused date in a form shows exactly one message under the field and blocks the save", async () => {
     const onValid = vi.fn();
     function Host() {
-      const form = useForm<{ date: string }>({
+      const form = useFieldForm<{ date: string }>({
         resolver: zodResolver(z.object({ date: requiredDate("Gib ein Datum an.") })),
         defaultValues: { date: "2026-03-09" },
       });
