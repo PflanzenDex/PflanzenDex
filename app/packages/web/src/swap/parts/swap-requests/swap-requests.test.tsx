@@ -210,7 +210,7 @@ describe("US-SOZ-10 requests I sent", () => {
   it("without any swap the section says what to do next (P-09)", async () => {
     server({});
     show();
-    expect(await screen.findByText(/Noch keine Anfragen/)).toBeTruthy();
+    expect(await screen.findByText(/Noch keine Anfrage\./)).toBeTruthy();
   });
 });
 

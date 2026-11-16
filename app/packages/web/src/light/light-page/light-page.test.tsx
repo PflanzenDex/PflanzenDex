@@ -190,7 +190,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
     fetchFn.mockImplementation(normal);
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByText(/noch keine arten/i)).toBeTruthy();
+    expect(await screen.findByText(/Noch keine Art: lege zuerst eine Pflanze an\./)).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 

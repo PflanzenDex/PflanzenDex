@@ -146,7 +146,11 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(screen.getByText(/Wähle „Alle“/)).toBeTruthy();
     cleanup();
     show({ friend: { name: "Anna" }, cards: [] });
-    expect(await screen.findByText(/Anna hat noch nichts freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt noch nichts\./)).toBeTruthy();
+    // The one step: the sharing layer of the friends page (US-QS-32, SG-STATE-01).
+    expect(screen.getByRole("link", { name: "Selbst etwas teilen" }).getAttribute("href")).toBe(
+      "/friends?sheet=sharing",
+    );
     expect(screen.queryByRole("list", { name: /Sammlung von/ })).toBeNull();
     // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265).
     expect(document.body.textContent).not.toContain("teilt Art");
@@ -275,21 +279,21 @@ describe("US-SOZ-07 a friend's shared collection", () => {
 
   it("US-EQU-12 a friend who shares no device says what to do next (P-09)", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
-    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt keine Geräte\./)).toBeTruthy();
   });
 
   it("US-QS-32 the devices of a friend name the layer once: its title is the only heading 'Geräte von …' (issue 1981)", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
-    await screen.findByText(/Anna hat noch kein Gerät freigegeben/);
+    await screen.findByText(/Anna teilt keine Geräte\./);
     expect(screen.getAllByRole("heading", { name: "Geräte von Anna" })).toHaveLength(1);
   });
 
   it("US-QS-20 the devices open from 'Geräte', not stacked below the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    expect(screen.queryByText(/Anna hat noch kein Gerät freigegeben/)).toBeNull();
+    expect(screen.queryByText(/Anna teilt keine Geräte\./)).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Geräte" }));
-    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt keine Geräte\./)).toBeTruthy();
   });
 });
 

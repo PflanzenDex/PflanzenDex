@@ -7,6 +7,10 @@ import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementPhoto } from "../../measure/measurement-header/measurement-photo";
 import { CARD_CLASSES } from "../../shared/notices/notices";
 import { QUALITY_NAME, dateText, valueText } from "../../shared/text";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./plant-history.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -58,7 +62,7 @@ export function PlantHistory(props: {
     (t: string) => loadMeasurementView(api, t, specimenId),
     [api, specimenId],
   );
-  const loading = "Verlauf wird geladen …";
+  const loading = t("loading");
   return (
     <LoadFrame
       queryKey={key}
@@ -72,16 +76,19 @@ export function PlantHistory(props: {
       }
       empty={{
         isEmpty: (view) => view.measurements.length === 0,
-        title: "Noch keine Messung",
-        description: "Trage die erste Messung ein, dann erscheint sie hier.",
-        ...(props.onMeasure ? { action: { label: "Messen", onClick: props.onMeasure } } : {}),
+        title: t("empty.line"),
+        // An empty part of the history, not a page: one line and one tinted action (US-QS-32, SG-STATE-01).
+        section: true,
+        ...(props.onMeasure
+          ? { action: { label: t("empty.action"), onClick: props.onMeasure } }
+          : {}),
       }}
     >
       {(view) => (
         <Pager
           items={view.measurements}
           pageSize={props.pageSize ?? PAGE_SIZE}
-          label="Messungen und Fotos"
+          label={t("pager")}
           param="vfrom"
           replace
           getKey={(m) => m.id}

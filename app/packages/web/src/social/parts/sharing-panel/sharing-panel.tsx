@@ -5,6 +5,8 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import table from "../../social.de.json";
 
 const tx = texts(table);
@@ -146,10 +148,10 @@ export function SharingPanel(props: {
     <section aria-label="Was Freunde sehen" className="flex min-w-0 flex-col gap-3">
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3">
-          Du hast noch keine Pflanzen, die du freigeben könntest. Lege zuerst unter „Sammlung“ eine
-          Pflanze an.
-        </p>
+        <EmptySection
+          text={tx("sharing.none")}
+          action={{ label: tx("sharing.addPlant"), href: ADD_PLANT_PATH }}
+        />
       ) : (
         <>
           <BulkBar count={rows.length} busy={props.busy} onSetAll={props.onSetAll} />

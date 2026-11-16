@@ -1,3 +1,4 @@
+import { CircleAlert, Sprout, type LucideIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -12,6 +13,8 @@ export type EmptyStateProps = {
   action?: EmptyStateAction;
   /** `error` is announced as an alert; `empty` is plain content. */
   variant?: "empty" | "error";
+  /** The lucide mark of an empty state (SG-ICON-01, SG-ILLU-02); `Sprout` when the caller passes none. The error has its own mark. */
+  icon?: LucideIcon | undefined;
   /** Without the icon tile and with less room: for a state below a notice that already says most of it (issue 1343). */
   compact?: boolean;
   className?: string;
@@ -21,13 +24,27 @@ export type EmptyStateProps = {
   titleRef?: React.Ref<HTMLHeadingElement>;
 };
 
-function IconTile({ variant }: { variant: "empty" | "error" }) {
+/**
+ * The mark of a state, decorative and hidden from assistive technology (SG-ICON-02). An error always draws its own mark,
+ * a red circle on a neutral tile, never the green accent tile of an empty place (SG-STATE-03, SG-COLOR-04).
+ */
+function IconTile({ variant, icon }: { variant: "empty" | "error"; icon: LucideIcon | undefined }) {
+  if (variant === "error")
+    return (
+      <span
+        aria-hidden="true"
+        className="flex size-14 items-center justify-center rounded-tile bg-muted"
+      >
+        <CircleAlert aria-hidden="true" className="size-6 text-destructive" />
+      </span>
+    );
+  const Mark = icon ?? Sprout;
   return (
     <span
       aria-hidden="true"
-      className="flex size-14 items-center justify-center rounded-tile bg-accent text-2xl text-accent-foreground"
+      className="flex size-14 items-center justify-center rounded-tile bg-accent text-accent-foreground"
     >
-      {variant === "error" ? "!" : "🌱"}
+      <Mark aria-hidden="true" className="size-6" />
     </span>
   );
 }
@@ -38,6 +55,7 @@ export function EmptyState({
   description,
   action,
   variant = "empty",
+  icon,
   compact = false,
   className,
   level = 2,
@@ -54,7 +72,7 @@ export function EmptyState({
         className,
       )}
     >
-      {compact ? null : <IconTile variant={variant} />}
+      {compact ? null : <IconTile variant={variant} icon={icon} />}
       <Title
         ref={titleRef}
         tabIndex={titleRef ? -1 : undefined}

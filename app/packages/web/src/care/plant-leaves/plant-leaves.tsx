@@ -17,6 +17,7 @@ import {
   type Response,
 } from "@/shared/data";
 import { Button } from "@/shared/ui/button/button";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -78,15 +79,20 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
   };
 }
 
-function LeafList(props: { view: LeafLogView; busy: boolean; onRemove: (row: Leaf) => void }) {
+function LeafList(props: {
+  view: LeafLogView;
+  busy: boolean;
+  onRemove: (row: Leaf) => void;
+  onAdd: () => void;
+}) {
   const { view } = props;
-  // Two plain lines, not the empty panel: the buttons above already are the next step (P-09), and the tab fits one screen.
+  // One line and one tinted action, as every empty part of the history (US-QS-32, SG-STATE-01): the action opens the form.
   if (view.count === 0)
     return (
-      <div className="grid gap-1">
-        <p className="font-semibold">{t("empty.title")}</p>
-        <p className="text-sm text-muted-foreground">{t("empty.description")}</p>
-      </div>
+      <EmptySection
+        text={t("empty.line")}
+        action={{ label: t("empty.action"), onClick: props.onAdd }}
+      />
     );
   return (
     <div className="grid gap-3">
@@ -131,6 +137,8 @@ function LeafLog({ api, token, specimenId }: Props) {
   const today = localToday(new Date(), currentTimeZone());
   const quick = async () => setRefusal(await writes.send({}));
   const remove = async (row: Leaf) => setRefusal(await writes.remove(row.id));
+  const drop = (row: Leaf) => void remove(row);
+  const openForm = () => setFormOpen(true);
   return (
     <section aria-labelledby="leaf-heading" className="grid gap-3">
       <h3 id="leaf-heading" className="sr-only">
@@ -161,7 +169,7 @@ function LeafLog({ api, token, specimenId }: Props) {
         loadingText={t("loading")}
         loadingFallback={<LeafLogSkeleton label={t("loading")} />}
       >
-        {(view) => <LeafList view={view} busy={writes.busy} onRemove={(row) => void remove(row)} />}
+        {(view) => <LeafList view={view} busy={writes.busy} onRemove={drop} onAdd={openForm} />}
       </LoadFrame>
       <ResponsiveModal
         title={t("form.title")}

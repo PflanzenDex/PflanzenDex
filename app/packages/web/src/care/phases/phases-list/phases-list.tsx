@@ -4,14 +4,19 @@ import {
   type PhaseStatus,
   type PhasesRow,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { LIST_CLASSES } from "../../shared/notices/notices";
 import { locationText } from "../../shared/text";
 import { switchGroups, switchedText } from "../phase-groups";
 import { Entry, type Confirm } from "./entry/entry";
+import table from "./phases-list.de.json";
 
 export type { Confirm };
+
+const ui = texts(table);
 
 export function Groups(props: {
   rows: readonly PhasesRow[];
@@ -108,11 +113,7 @@ export function PhasesList(props: {
   const busy = props.busy ?? false;
   if (props.rows.length === 0)
     return (
-      <EmptyState
-        title="Noch keine Pflanze hat eine Phase"
-        description="Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege in der Sammlung eine Pflanze einer solchen Art an."
-        action={{ label: "Zur Sammlung", href: "/collection" }}
-      />
+      <EmptySection text={ui("none")} action={{ label: ui("addPlant"), href: ADD_PLANT_PATH }} />
     );
   return (
     <section aria-labelledby="care-phases-title" className="flex flex-col gap-4">

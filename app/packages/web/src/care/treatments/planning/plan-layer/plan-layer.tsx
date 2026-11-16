@@ -1,7 +1,9 @@
 import { useCallback, useEffect } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useInvalidate, useRequest, type ApiError } from "@/shared/data";
@@ -11,11 +13,13 @@ import { loadTreatableSpecimens, type TreatmentInput } from "../../../shared/api
 import { TreatmentFormSkeleton } from "../../treatments-page/treatments-page.skeleton";
 import { usePlanning } from "../planning";
 import { PLAN_FORM_ID, PlanForm } from "./plan-form/plan-form";
+import table from "./plan-layer.de.json";
 
 type Token = () => Promise<string | undefined>;
 /** The layer's address value, `?sheet=plan` (US-QS-18). */
 const PLAN_LAYER = "plan";
 const LOADING = "Pflanzen werden geladen …";
+const ui = texts(table);
 
 /** The form with the plants of the account; it loads only while the layer is open (a closed layer loads nothing). */
 function PlanBody(props: {
@@ -36,10 +40,9 @@ function PlanBody(props: {
       onRetry={request.retry}
       skeleton={<TreatmentFormSkeleton label={LOADING} />}
       empty={
-        <EmptyState
-          title="Du hast noch keine Pflanze"
-          description="Lege zuerst eine Pflanze in der Sammlung an."
-          action={{ label: "Zur Sammlung", href: "/collection" }}
+        <EmptySection
+          text={ui("empty.line")}
+          action={{ label: ui("empty.action"), href: ADD_PLANT_PATH }}
         />
       }
       offline={request.offline}

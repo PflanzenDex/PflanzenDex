@@ -100,10 +100,10 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     cleanup();
     fakeServer([]);
     show();
-    expect(await screen.findByText(/Lege zuerst eine Pflanze in der Sammlung an/)).toBeTruthy();
-    const links = screen.getAllByRole("link", { name: "Zur Sammlung" });
+    expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: "Pflanze anlegen" });
     expect(links.length).toBeGreaterThan(0);
-    for (const link of links) expect(link.getAttribute("href")).toBe("/collection");
+    for (const link of links) expect(link.getAttribute("href")).toBe("/collection/new");
   });
 
   it("US-BEH-01 saves one treatment with several specimens, reason, agent and date, with an Idempotency-Key", async () => {
@@ -234,15 +234,15 @@ describe("US-BEH-02 offene Behandlungen", () => {
   it('US-BEH-02 without open treatments it says "Keine offenen Behandlungen" and what to do next (P-09)', async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     show();
-    expect(await screen.findByText("Keine offenen Behandlungen")).toBeTruthy();
-    expect(screen.getByText(/Plane unten einen Termin/)).toBeTruthy();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Behandlung planen" })).toBeTruthy();
   });
 
   it("US-BEH-02 · DS-26 the empty list offers an action that moves to the form", async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     const user = userEvent.setup();
     show();
-    await screen.findByText("Keine offenen Behandlungen");
+    await screen.findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     expect(document.activeElement).toBe(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
   });
@@ -283,12 +283,12 @@ describe("US-BEH-02 offene Behandlungen", () => {
     );
     const user = userEvent.setup();
     show();
-    await screen.findByText("Keine offenen Behandlungen");
+    await screen.findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
-    expect(screen.queryByText("Keine offenen Behandlungen")).toBeNull();
+    expect(screen.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
   });
 });
 
@@ -379,7 +379,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
     await user.click(
       await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
     );
-    expect(await screen.findByText("Keine offenen Behandlungen")).toBeTruthy();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
   });
 
   it("US-BEH-03 a double tap sends one request", async () => {

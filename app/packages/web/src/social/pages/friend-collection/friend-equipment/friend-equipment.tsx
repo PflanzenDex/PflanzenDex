@@ -3,6 +3,7 @@ import type { SharedDevice } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { withUnit } from "@/shared/lib/format";
 import { LoadFrame } from "../../../../shared/data";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { loadFriendEquipment } from "../../../api/friends-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../social.de.json";
@@ -75,10 +76,7 @@ export function FriendEquipment(props: {
       >
         {(data) =>
           data.devices.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-3">
-              {name} hat noch kein Gerät freigegeben. Gib selbst unter „Geräte“ ein Gerät für
-              Freunde frei, wenn du deine Erfahrung teilen möchtest.
-            </p>
+            <EmptySection text={t("friendEquipment.none", { name })} />
           ) : (
             <Pager
               items={data.devices}

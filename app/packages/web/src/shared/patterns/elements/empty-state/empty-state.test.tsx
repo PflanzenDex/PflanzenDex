@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Bell } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmptyState } from "./empty-state";
 
@@ -70,5 +71,51 @@ describe("EmptyState (US-QS-07, DS-26, P-09)", () => {
     expect((container.firstChild as HTMLElement).className).toContain("rounded-card");
     expect(container.querySelector('[aria-hidden="true"].rounded-tile.bg-accent')).not.toBeNull();
     expect(screen.getByRole("link", { name: "Los" })).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-ICON-01 the empty mark is a lucide Sprout by default, decorative and hidden", () => {
+    const { container } = render(<EmptyState title="Leer" />);
+    const svg = container.querySelector("svg.lucide-sprout");
+    expect(svg).not.toBeNull();
+    expect(svg?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.textContent).not.toContain("🌱");
+  });
+
+  it("US-QS-32 · SG-ICON-01 an empty state draws the icon its caller passes", () => {
+    const { container } = render(<EmptyState title="Leer" icon={Bell} />);
+    expect(container.querySelector("svg.lucide-bell")).not.toBeNull();
+    expect(container.querySelector("svg.lucide-sprout")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-STATE-03 the error draws its own red circle mark on a neutral tile, never the green accent tile", () => {
+    const { container } = render(
+      <EmptyState
+        variant="error"
+        title="Laden fehlgeschlagen"
+        action={{ label: "Erneut versuchen", onClick: () => undefined }}
+      />,
+    );
+    const mark = container.querySelector("svg.lucide-circle-alert");
+    expect(mark).not.toBeNull();
+    expect(mark?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.getAttribute("class")).toContain("text-destructive");
+    const tile = mark?.parentElement;
+    expect(tile?.className).toContain("bg-muted");
+    expect(tile?.className).not.toContain("bg-accent");
+    expect(container.querySelector("svg.lucide-sprout")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-ICON-01 no exclamation mark and no emoji stand in for an icon", () => {
+    const { container } = render(
+      <EmptyState
+        variant="error"
+        title="Laden fehlgeschlagen"
+        action={{ label: "Erneut versuchen", onClick: () => undefined }}
+      />,
+    );
+    expect(container.textContent).not.toContain("!");
+    expect(container.textContent).not.toContain("🌱");
+    const empty = render(<EmptyState title="Leer" />);
+    expect(empty.container.textContent).not.toContain("🌱");
   });
 });

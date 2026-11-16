@@ -148,8 +148,8 @@ describe("US-WAC-01 Seite Messen", () => {
     expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect((await screen.findAllByText("noch keine Messung")).length).toBeGreaterThan(0);
     await openCourse();
-    expect(await screen.findByText("Noch keine Messung")).toBeTruthy();
-    expect(screen.getByText("Trage oben den ersten Messwert ein.")).toBeTruthy();
+    expect(await screen.findByText("Noch keine Messung.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Messung erfassen" })).toBeTruthy();
     expect(screen.getByText(/Höhe\./)).toBeTruthy();
   });
 
@@ -461,7 +461,7 @@ describe("US-WAC-01 Seite Messen", () => {
     fakeServer();
     show();
     await openCourse();
-    await userEvent.click(await screen.findByRole("button", { name: "Messwert eintragen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Messung erfassen" }));
     // The course layer closes; the focus returns to its opener, the value field is right above the course (P-09).
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(screen.getByLabelText(/Messwert \(/)).toBeTruthy();

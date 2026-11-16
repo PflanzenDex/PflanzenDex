@@ -523,7 +523,7 @@ describe("US-QS-26 Heute narrowed to the watering tasks by its address", () => {
   it("US-QS-26 with nothing due the filtered page still says what it shows and why the list is empty (P-09, P-10)", async () => {
     fakeServer({ due: [] });
     show("/today?tasks=watering");
-    expect(await screen.findByText("Heute nichts zu gießen")).toBeTruthy();
+    expect(await screen.findByText(/^Heute nichts zu gießen\./)).toBeTruthy();
     expect(screen.getByText(FILTER_NOTICE)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Alle Aufgaben zeigen" })).toBeTruthy();
   });
@@ -616,7 +616,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     );
     expect((await screen.findByText(/als erledigt eingetragen/)).textContent).toContain("Aloe");
     expect(posts).toEqual(["/treatments/a/complete"]);
-    expect(await screen.findByText("Keine offenen Behandlungen")).toBeTruthy();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
@@ -812,9 +812,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   it("US-QS-18 · US-MON-05 the layer Gießen shows the empty state with its next step", async () => {
     fakeServer();
     show("/today?sheet=watering");
-    expect(
-      await screen.findByRole("heading", { level: 3, name: "Heute nichts zu gießen" }),
-    ).toBeTruthy();
+    expect(await screen.findByText(/^Heute nichts zu gießen\./)).toBeTruthy();
   });
 });
 
@@ -834,27 +832,21 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
   it("US-QS-18 · US-BEH-02 no open treatment offers planning one", async () => {
     fakeServer({ treatments: [] });
     show("/today?sheet=treatments");
-    const empty = await screen.findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen",
-    });
+    const empty = await screen.findByText(/^Keine offenen Behandlungen\.$/);
     expect(
       within(empty.parentElement as HTMLElement).getByRole("button", { name: "Behandlung planen" }),
     ).toBeTruthy();
   });
 
-  it("US-QS-18 · US-BEH-01 without a plant the treatments point to the collection", async () => {
+  it("US-QS-18 · US-BEH-01 without a plant the treatments offer Pflanze anlegen", async () => {
     fakeServer({ treatments: [], specimens: [] });
     show("/today?sheet=treatments");
-    const empty = await screen.findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen",
-    });
+    const empty = await screen.findByText(/^Keine offenen Behandlungen\.$/);
     expect(
       within(empty.parentElement as HTMLElement)
-        .getByRole("link", { name: "Zur Sammlung" })
+        .getByRole("link", { name: "Pflanze anlegen" })
         .getAttribute("href"),
-    ).toBe("/collection");
+    ).toBe("/collection/new");
   });
 
   it("US-QS-18 · P-10 a failing category says so on its tile and in its layer; the other tiles stay usable", async () => {
@@ -950,7 +942,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
         name: "Grund a bei Aloe als erledigt abhaken",
       }),
     );
-    expect(await within(layer).findByText("Keine offenen Behandlungen")).toBeTruthy();
+    expect(await within(layer).findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
   });
 
@@ -974,10 +966,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     const layer = await dialog("Behandlungen");
-    const empty = await within(layer).findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen",
-    });
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", {
         name: "Behandlung planen",
@@ -993,7 +982,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     );
     const open = within(await dialog("Behandlungen"));
     const list = await open.findByRole("list", { name: "Offene Behandlungen" });
-    expect(open.queryByText("Keine offenen Behandlungen")).toBeNull();
+    expect(open.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
     expect(within(list).getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
     expect(within(list).getByText(/Läuse/)).toBeTruthy();
   });
@@ -1005,10 +994,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     await user.click(await screen.findByRole("button", { name: /^0 Behandlungen$/ }));
     const layer = await dialog("Behandlungen");
-    const empty = await within(layer).findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen",
-    });
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", {
         name: "Behandlung planen",
@@ -1049,10 +1035,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     const layer = await dialog("Behandlungen");
-    const empty = await within(layer).findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen",
-    });
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", {
         name: "Behandlung planen",

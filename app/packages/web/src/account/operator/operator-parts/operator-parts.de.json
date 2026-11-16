@@ -9,5 +9,6 @@
   "code.copy": "Code kopieren",
   "code.copied": "Kopiert",
   "code.copyFailed": "Kopieren nicht möglich. Markiere den Code und kopiere ihn von Hand.",
-  "code.copiedAnnounce": "Der Code liegt in der Zwischenablage."
+  "code.copiedAnnounce": "Der Code liegt in der Zwischenablage.",
+  "invitations.none": "Noch keine Einladung erstellt. Erstelle oben einen Code."
 }

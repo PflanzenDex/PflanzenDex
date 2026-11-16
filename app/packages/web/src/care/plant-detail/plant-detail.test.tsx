@@ -154,7 +154,7 @@ describe("US-QS-23 Verlauf", () => {
     server({ "GET /specimens/e1/measurements": () => json(200, view()) });
     const onMeasure = vi.fn();
     show(onMeasure);
-    await userEvent.click(await screen.findByRole("button", { name: "Messen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Messung erfassen" }));
     expect(onMeasure).toHaveBeenCalledOnce();
   });
 

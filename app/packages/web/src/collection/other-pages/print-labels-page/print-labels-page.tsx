@@ -5,7 +5,7 @@ import { Navigate } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
+import { ADD_PLANT_PATH, PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { Pager, type PagerPaging } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
@@ -94,7 +94,7 @@ function LabelsView(props: { api: string; token: Token }) {
             <EmptyState
               title={ui("emptyTitle")}
               description={ui("emptyText")}
-              action={{ label: ui("toCollection"), href: PATHS.collection }}
+              action={{ label: ui("addPlant"), href: ADD_PLANT_PATH }}
             />
           }
         >

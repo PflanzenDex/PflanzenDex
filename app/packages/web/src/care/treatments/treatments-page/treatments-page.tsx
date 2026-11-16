@@ -8,6 +8,7 @@ import { Planning, usePlanning } from "../planning/planning";
 import { loadTreatableSpecimens } from "../../shared/api/treatments-api";
 import { Button } from "@/shared/ui/button/button";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 type View = "open" | "done";
@@ -58,7 +59,7 @@ function TreatmentsList(props: { api: string; token: Token; host?: boolean; onPl
   const plan = host ? () => props.onPlan?.() : () => firstField.current?.focus();
   const next = canPlan
     ? { label: "Behandlung planen", onClick: plan }
-    : { label: "Zur Sammlung", href: "/collection" };
+    : { label: "Pflanze anlegen", href: ADD_PLANT_PATH };
   if (host)
     return (
       <div className="flex min-w-0 flex-col gap-4">

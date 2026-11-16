@@ -673,7 +673,7 @@ describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
       .getAllByRole("button")
       .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
     expect(filled.map((b) => b.textContent)).toEqual(["Code erstellen"]);
-    expect(within(layer).getByText("Erstelle oben einen Code.")).toBeTruthy();
+    expect(within(layer).getByText(/Erstelle oben einen Code\./)).toBeTruthy();
   });
 
   it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {

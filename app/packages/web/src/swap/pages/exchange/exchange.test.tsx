@@ -90,7 +90,9 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 an empty list says what to do next (P-09)", async () => {
     server();
     view();
-    expect(await screen.findByText(/Du hast noch nichts angeboten/)).toBeTruthy();
+    expect(await screen.findByText(/Noch kein Angebot\./)).toBeTruthy();
+    // The one step opens the same layer as "Zum Tausch anbieten" (US-QS-32, SG-STATE-01).
+    expect(screen.getByRole("button", { name: "Pflanze anbieten" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
@@ -99,7 +101,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 · US-QS-20 the form is a layer behind 'Zum Tausch anbieten', not stacked above the list", async () => {
     server();
     view();
-    await screen.findByText(/Du hast noch nichts angeboten/);
+    await screen.findByText(/Noch kein Angebot\./);
     expect(screen.queryByLabelText("Pflanze", { selector: "select" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Zum Tausch anbieten" }));
     expect(await screen.findByLabelText("Pflanze", { selector: "select" })).toBeTruthy();
@@ -228,7 +230,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-QS-32 · SG-BTN-01 the offer in the title row is tinted, and the match link is a plain button", async () => {
     server();
     view();
-    await screen.findByText(/Du hast noch nichts angeboten/);
+    await screen.findByText(/Noch kein Angebot\./);
     expect(
       screen.getByRole("button", { name: "Zum Tausch anbieten" }).className.split(/\s+/),
     ).toContain("bg-accent");
@@ -240,7 +242,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-QS-07 · US-SOZ-08 a created offer closes the layer and is confirmed by a toast, without the open-offer line (issue 1696)", async () => {
     server();
     view();
-    await screen.findByText(/Du hast noch nichts angeboten/);
+    await screen.findByText(/Noch kein Angebot\./);
     const opener = screen.getByRole("button", { name: "Zum Tausch anbieten" });
     await userEvent.click(opener);
     await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
@@ -273,7 +275,7 @@ describe("US-QS-14 · US-QS-15 the exchange is a sub-page with one page header",
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
-    expect(await screen.findByText(/Du hast noch nichts angeboten/)).toBeTruthy();
+    expect(await screen.findByText(/Noch kein Angebot\./)).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 });
