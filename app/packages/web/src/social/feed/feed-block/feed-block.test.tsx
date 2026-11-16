@@ -120,7 +120,7 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     );
   });
 
-  it("US-QS-32 FR-SOZ-03 'Stand: heute' is its own muted line; the hint above it stays one plain line", async () => {
+  it("US-QS-32 FR-SOZ-03 a copy read today has no 'Stand' line; the hint above stays one plain line", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-06T10:05:00Z"));
     server(feed([event()]));
@@ -132,11 +132,38 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     const hint = (await screen.findByText("Das ist neu.")).closest("p") as HTMLElement;
     expect(hint.textContent).toBe("Das ist neu.");
     expect(hint.querySelector("strong")).toBeNull();
-    const asOf = screen.getByText("Stand: heute");
+    expect(screen.queryByText(/^Stand: /)).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("US-QS-32 FR-SOZ-03 an older copy says so in its own muted line: 'Stand: gestern' for yesterday's copy", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:05:00Z"));
+    server({ ...feed([event()]), asOf: "2026-10-05T10:00:00.000Z" });
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    const asOf = await screen.findByText("Stand: gestern");
     expect(asOf.tagName).toBe("P");
     expect(asOf.className).toContain("text-muted-foreground");
     expect(asOf.className).not.toContain("font-semibold");
-    expect(document.body.textContent).not.toContain("06.10.2026");
+    expect(document.body.textContent).not.toContain("05.10.2026");
+    vi.useRealTimers();
+  });
+
+  it("US-QS-32 FR-SOZ-03 a copy from days back shows its age in the summary form, 'Stand: vor 3 Tagen'", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:05:00Z"));
+    server({ ...feed([event()]), asOf: "2026-10-03T10:00:00.000Z" });
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Stand: vor 3 Tagen")).toBeTruthy();
+    vi.useRealTimers();
     vi.useRealTimers();
   });
 

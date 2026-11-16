@@ -17,6 +17,8 @@ export function FeedHint(props: { feed: Feed }) {
   const { feed } = props;
   const addFriend = useLayer("add");
   const share = useLayer("sharing");
+  const copyDay = localToday(new Date(feed.asOf), currentTimeZone());
+  const today = localToday(new Date(), currentTimeZone());
   return (
     <>
       <p className="text-sm">{feed.hint.text}</p>
@@ -38,14 +40,12 @@ export function FeedHint(props: { feed: Feed }) {
           {t("feed.shareOwn")}
         </Button>
       )}
-      <p className="text-sm text-muted-foreground">
-        {t("feed.asOf", {
-          date: summaryDate(
-            localToday(new Date(feed.asOf), currentTimeZone()),
-            localToday(new Date(), currentTimeZone()),
-          ),
-        })}
-      </p>
+      {/* Only an older copy says so (FR-SOZ-03): a copy of today needs no "Stand". Calendar dates of the keeper's zone. */}
+      {copyDay < today && (
+        <p className="text-sm text-muted-foreground">
+          {t("feed.asOf", { date: summaryDate(copyDay, today) })}
+        </p>
+      )}
     </>
   );
 }
