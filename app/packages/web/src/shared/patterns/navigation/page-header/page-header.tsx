@@ -1,11 +1,11 @@
-import { useLayoutEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
-import { useAppBarSlot } from "./app-bar-slot/app-bar-slot";
+import { useAppBarSlot, useBarClaim } from "./app-bar-slot/app-bar-slot";
 
 /**
  * The way back of a page (US-QS-14): an icon-only chevron of 44 px (DS-15, DS-17), a ghost button because going back is a
@@ -113,14 +113,6 @@ function useInBar(heading: "h1" | "h2", element: HTMLElement | null, inContent: 
   return heading === "h1" && narrow && element !== null && !inContent;
 }
 
-/** The header claims the bar while it is in it. `claim` is stable across renders, so the claim runs once per header. */
-function useClaimBar(inBar: boolean, claim: (() => () => void) | undefined): void {
-  useLayoutEffect(() => {
-    if (!inBar || !claim) return;
-    return claim();
-  }, [inBar, claim]);
-}
-
 /** The row: the way back, the heading and the actions. In the bar it is the bar's row; in the content it is the page's. */
 function HeaderRow(props: {
   inBar: boolean;
@@ -173,7 +165,7 @@ export function PageHeader(props: PageHeaderProps) {
   const bar = useAppBarSlot();
   const element = bar?.element ?? null;
   const inBar = useInBar(heading, element, props.inContent === true);
-  useClaimBar(inBar, bar?.claim);
+  const owned = useBarClaim(inBar);
   const actions: readonly ReactNode[] = props.actions ?? (props.action ? [props.action] : []);
   const row = (
     <HeaderRow
@@ -187,7 +179,8 @@ export function PageHeader(props: PageHeaderProps) {
       className={className}
     />
   );
-  const header = inBar && element !== null ? createPortal(row, element) : row;
+  // A header in the bar renders only while it holds the bar's claim: one title in the bar, the first one mounted (issue 2230).
+  const header = !inBar ? row : owned && element !== null ? createPortal(row, element) : null;
   if (subject === undefined || subject === null) return header;
   return (
     <>
