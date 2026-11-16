@@ -2,6 +2,7 @@ import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError, LightZone } from "../../shared/light-api/light-api";
 import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "../../shared/ui/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import {
   LUX_LIMITS,
   NAME_MAX,
@@ -46,6 +47,8 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
     clear: !z,
   });
   const { control } = sent.form;
+  // Typed input that is not saved asks before the layer of the zone closes (US-QS-32).
+  useUnsavedInput(sent.form.formState.isDirty);
   return (
     <Form {...sent.form}>
       <FormRoot

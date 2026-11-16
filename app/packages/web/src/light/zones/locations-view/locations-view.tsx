@@ -8,6 +8,7 @@ import {
   useSaveForm,
 } from "../../shared/ui/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import {
   LOCATION_REFUSABLE,
   NAME_MAX,
@@ -40,6 +41,8 @@ export function LocationForm(props: {
     clear: !s,
   });
   const { control } = sent.form;
+  // Typed input that is not saved asks before the layer of the location closes (US-QS-32).
+  useUnsavedInput(sent.form.formState.isDirty);
   return (
     <Form {...sent.form}>
       <FormRoot

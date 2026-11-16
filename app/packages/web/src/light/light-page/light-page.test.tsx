@@ -1,18 +1,46 @@
 // @vitest-environment jsdom
-import { cleanup, render as plainRender, screen, within } from "@testing-library/react";
+import { useLayoutEffect } from "react";
+import {
+  act,
+  cleanup,
+  render as plainRender,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_GUARD, stateFlag } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LightPage } from "./light-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+
+/** The navigator and the address of the page, so a test can press Back (US-QS-32); the guard flag is the committed one. */
+const route: { navigate: NavigateFunction | null; search: string; guarded: boolean } = {
+  navigate: null,
+  search: "",
+  guarded: false,
+};
+function Address() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  route.navigate = navigate;
+  route.search = location.search;
+  useLayoutEffect(() => {
+    route.guarded = stateFlag(location.state, LAYER_GUARD);
+  }, [location]);
+  return null;
+}
+const back = () => act(() => route.navigate?.(-1));
 
 /** The page lives inside the app shell, which owns the toast provider (US-QS-14), and inside the frame of its destination (US-QS-15). */
 const render = (ui: React.ReactElement) =>
   plainRender(
     <MemoryRouter>
+      <Address />
       <ToastProvider>
         <LayerHost>{ui}</LayerHost>
       </ToastProvider>
@@ -509,5 +537,117 @@ describe("US-QS-19 management on one screen", () => {
     await userEvent.click(screen.getByRole("button", { name: "Regeln" }));
     expect(screen.queryByText("Art c")).toBeNull();
     expect(screen.getByRole("heading", { name: "Einstufungsregeln" })).toBeTruthy();
+  });
+});
+
+const QUESTION = { name: "Eingabe verwerfen?" };
+const ZONE_NAME = "form[aria-label='Zone 2 ändern'] input";
+
+describe("US-QS-32 the light layers ask before they discard typed input", () => {
+  it("US-QS-32 Lichtzone ändern: typed name and Escape asks; Weiter bearbeiten keeps the value and the layer", async () => {
+    fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect((screen.getByLabelText("Name", { selector: ZONE_NAME }) as HTMLInputElement).value).toBe(
+      "Zone 2 neu",
+    );
+  });
+
+  it("US-QS-32 Lichtzone ändern: typed name and Back asks; Eingabe verwerfen closes the layer and writes nothing", async () => {
+    const { calls } = fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
+    // The first input pushes the guard entry; Back is pressed once that entry is committed, as the Back tests of US-QS-15 do.
+    await waitFor(() => expect(route.guarded).toBe(true));
+    back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Name", { selector: ZONE_NAME })).toBeNull(),
+    );
+    expect(route.search).not.toContain("sheet=zone-z1");
+    expect(calls.every((a) => a.method === "GET")).toBe(true);
+  });
+
+  it("US-QS-32 Lichtzone ändern without typed input: Escape closes the layer at once, with no question", async () => {
+    fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await screen.findByLabelText("Name", { selector: ZONE_NAME });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Name", { selector: ZONE_NAME })).toBeNull(),
+    );
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+  });
+
+  it("US-QS-32 Lichtzone ändern: Abbrechen after typed input closes the layer without a question", async () => {
+    const { calls } = fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Name", { selector: ZONE_NAME })).toBeNull(),
+    );
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(calls.every((a) => a.method === "GET")).toBe(true);
+  });
+
+  it("US-QS-32 Lichtzone ändern: a saved change closes the layer without a question", async () => {
+    fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByRole("heading", { name: "Zone 2 neu" })).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Name", { selector: ZONE_NAME })).toBeNull(),
+    );
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+  });
+
+  it("US-QS-32 Standort ändern: typed name and Escape asks", async () => {
+    fakeServer({ zones: [zone], locations: [location] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Balkon ändern" }));
+    await userEvent.type(
+      screen.getByLabelText("Name", { selector: "form[aria-label='Balkon ändern'] input" }),
+      " Süd",
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+  });
+
+  it("US-QS-32 Lichtzone anlegen: typed name and Escape asks", async () => {
+    fakeServer();
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await screen.findByText("Noch keine Lichtzonen", { exact: false });
+    await pressFirst("Neue Lichtzone");
+    await userEvent.type(
+      screen.getByLabelText("Name", { selector: "form[aria-label='Lichtzone anlegen'] input" }),
+      "Fensterbank",
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+  });
+
+  it("US-QS-32 Standort anlegen: typed name and Escape asks", async () => {
+    fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await screen.findByRole("heading", { name: "Zone 2" });
+    await pressFirst("Neuer Standort");
+    await userEvent.type(
+      screen.getByLabelText("Name", { selector: "form[aria-label='Standort anlegen'] input" }),
+      "Fensterbank",
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
   });
 });
