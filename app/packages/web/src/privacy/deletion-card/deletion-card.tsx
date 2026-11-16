@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { layerOpenerId } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { Button } from "@/shared/ui/button/button";
 import {
@@ -61,6 +62,7 @@ export function DeletionCard(props: { api: string; token: Token }) {
       opener={
         <div className="@lg:col-span-2 mt-3 grid justify-items-start gap-1">
           <Button
+            id={layerOpenerId("delete")}
             type="button"
             variant="destructive-plain"
             aria-haspopup="dialog"

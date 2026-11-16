@@ -51,8 +51,8 @@ function useSwipe(page: number, pages: number, turn: (delta: 1 | -1) => void) {
 }
 
 /**
- * A disabled page button keeps its text and border neutral: the outline green at half opacity fell to about 1.8:1
- * (issue 1045). It is still disabled and shows no action (DS-39, DS-65).
+ * A disabled plain page button keeps its text neutral: the green at half opacity fell to about 1.8:1 (issue 1045). It stays
+ * disabled and shows no action (DS-39, SG-BTN-01).
  */
 const DISABLED_PAGE_BUTTON = "disabled:text-muted-foreground disabled:opacity-100";
 

@@ -120,6 +120,8 @@ describe("US-QS-32 · SG-BTN-03 the deletion is a red plain button below the exp
     show();
     const remove = await deleteRow();
     expect(remove.textContent).toBe("Konto löschen");
+    // The opener of the deletion layer: Back returns the focus here when the page remounts (issue 1363).
+    expect(remove.id).toBe("delete-opener");
     expect(remove.className.split(/\s+/)).toContain("text-destructive");
     expect(remove.className.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
     const exportButton = await exportRow();
