@@ -1,9 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { refusalText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../../shared/data";
@@ -21,7 +20,7 @@ export function CodeForm(props: {
   refusal: ApiError | null;
   onSend: (code: string) => Promise<boolean>;
 }) {
-  const form = useForm<Fields>({ resolver: zodResolver(schema), defaultValues: { code: "" } });
+  const form = useFieldForm<Fields>({ resolver: zodResolver(schema), defaultValues: { code: "" } });
   const { setError } = form;
   const { refusal } = props;
   useEffect(() => {

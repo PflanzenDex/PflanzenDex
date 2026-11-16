@@ -554,6 +554,19 @@ a {
   color: var(--foreground);
 }
 
+/* Long words wrap inside the column, an e-mail address at 200 % text too (US-QS-32, F-0330). */
+.instruction,
+.pf-v5-c-alert__title,
+.kc-feedback-text,
+#kc-info.pdx-info-above {
+  overflow-wrap: anywhere;
+}
+
+/* The explanation of the reset page stands above its field, with a gap to it (US-QS-32, F-0321). The id rule of #kc-info resets the margin, so the id is named too. */
+#kc-info.pdx-info-above {
+  margin: 0 0 16px;
+}
+
 /* Forced colours (WCAG 1.4.11, 2.4.7): the system colours carry the boundaries and the focus. */
 @media (forced-colors: active) {
   .pf-v5-c-form-control {

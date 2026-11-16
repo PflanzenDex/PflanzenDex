@@ -1,0 +1,7 @@
+{
+  "displayName.empty": "Gib einen Namen ein.",
+  "displayName.refused": "Gib einen Namen ein, höchstens {max} Zeichen.",
+  "timeZone.refused": "Wähle eine Zeitzone aus der Liste.",
+  "replenishBuffer.refused": "Gib eine ganze Zahl von {min} bis {max} ein.",
+  "positionThresholds.refused": "Gib vier ganze Lux-Werte von {min} bis {max} ein, jeder kleiner als der Wert darüber."
+}

@@ -114,6 +114,23 @@ describe("US-QS-17 Meine Daten as two rows", () => {
   });
 });
 
+describe("US-QS-32 · SG-BTN-03 the deletion is a red plain button below the export", () => {
+  it("US-QS-32 · SG-BTN-03 the delete control of Meine Daten reads 'Konto löschen' without '?', is red and follows the export row", async () => {
+    fakeServer();
+    show();
+    const remove = await deleteRow();
+    expect(remove.textContent).toBe("Konto löschen");
+    // The opener of the deletion layer: Back returns the focus here when the page remounts (issue 1363).
+    expect(remove.id).toBe("delete-opener");
+    expect(remove.className.split(/\s+/)).toContain("text-destructive");
+    expect(remove.className.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
+    const exportButton = await exportRow();
+    expect(
+      exportButton.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  });
+});
+
 describe("US-ACC-04 download of all own data", () => {
   it("US-ACC-04 one tap fetches the archive, saves it and says what it holds", async () => {
     stubDownload();

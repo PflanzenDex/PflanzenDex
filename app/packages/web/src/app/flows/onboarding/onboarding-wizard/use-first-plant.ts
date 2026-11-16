@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { type Resolver, type UseFormReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday, specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import {
+  createSchema,
   createSpecimen,
   markerFormStart,
   markerInputOf,
@@ -15,8 +17,24 @@ import {
 } from "../../../../collection";
 import { currentTimeZone, SIGN_IN, type ApiError } from "../../../../shared/data";
 import { useOwnZones } from "./save-step/use-own-zones";
+import { useFieldForm } from "@/shared/ui/fields/form/form";
 
 type Token = () => Promise<string | undefined>;
+
+/** Before the species is read: no marker is asked yet (the first plant of a species). */
+const NO_RULE = { required: false, missing: [] } as const;
+
+/**
+ * The marker is checked before anything is sent (F-0093, US-QS-32): a missing one takes its message and the focus, and
+ * the save stops. Resolves to whether the form is valid.
+ */
+async function markerChecked(form: UseFormReturn<CreateFields>): Promise<boolean> {
+  let valid = false;
+  await form.handleSubmit(() => {
+    valid = true;
+  })();
+  return valid;
+}
 
 /**
  * What the first plant sends (US-ONB-01): the marker as it is typed (the server refuses a missing one and names its field,
@@ -55,13 +73,21 @@ function useMarkerPart(
 ) {
   const [rule, setRule] = useState<MarkerRule | null>(null);
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<CreateFields>({ defaultValues: markerFormStart(today) });
+  // The schema of the species' rule is read at each check: the rule comes with the section of step 2 (F-0093).
+  const ruleNow = useRef<MarkerRule | null>(null);
+  const resolver = useCallback<Resolver<CreateFields>>(
+    (values, context, options) =>
+      zodResolver(createSchema(ruleNow.current ?? NO_RULE))(values, context, options),
+    [],
+  );
+  const form = useFieldForm<CreateFields>({ resolver, defaultValues: markerFormStart(today) });
   useServerRefusal(refusal, form.setError, markerRefusalFields);
   // The form takes the preset of the long form once per species and rule. A step that comes back for the same species
   // keeps the marker the keeper typed (US-ONB-01), so the preset is not set again on every visit.
   const presetOf = useRef<string | null>(null);
   const report = useCallback(
     (r: MarkerRule | null) => {
+      ruleNow.current = r;
       setRule(r);
       if (!r) return;
       const key = [speciesId, r.required, r.preset, r.missing.map((s) => s.id).join(",")].join("|");
@@ -106,7 +132,7 @@ export function useFirstPlant(api: string, token: Token) {
     setRefusal(null);
   };
   const save = async () => {
-    if (!species || !marker.rule) return;
+    if (!species || !marker.rule || !(await markerChecked(marker.form))) return;
     setSaving(true);
     const r = await createPlant({ api, token, species, marker, zoneId, locationId });
     setSaving(false);

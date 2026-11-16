@@ -28,10 +28,15 @@ export function Candidates(props: {
   // The starting value until the layout measures the free height; then the page holds the whole rows that fit (issue 1154).
   const size = useRowPageSize();
   if (list.candidates.length === 0)
-    return <EmptyState title={t("candidates.emptyTitle")} description={list.hint.nextAction} />;
+    return (
+      <EmptyState title={t("candidates.emptyTitle")} description={list.hint.nextAction ?? ""} />
+    );
   return (
     <>
-      <p className="text-sm text-muted-foreground">{list.hint.nextAction}</p>
+      {/* No line when the first row already says what to do (US-QS-32, F-0162). */}
+      {list.hint.nextAction ? (
+        <p className="text-sm text-muted-foreground">{list.hint.nextAction}</p>
+      ) : null}
       <Pager
         items={list.candidates}
         pageSize={size}

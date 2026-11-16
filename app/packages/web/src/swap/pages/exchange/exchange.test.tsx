@@ -150,7 +150,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     const calls = server({ offers: [offer()] });
     view();
     await userEvent.click(
-      await screen.findByRole("button", { name: "Angebot für Haworthia zurückziehen" }),
+      await screen.findByRole("button", { name: "Angebot zurückziehen: Haworthia" }),
     );
     expect(await screen.findByText("Das Angebot für Haworthia ist zurückgezogen.")).toBeTruthy();
     expect(calls[0]).toMatchObject({ method: "POST", path: "/offers/o1/withdraw" });
@@ -223,6 +223,18 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
       wish: "Ableger",
       confirmTreatment: true,
     });
+  });
+
+  it("US-QS-32 · SG-BTN-01 the offer in the title row is tinted, and the match link is a plain button", async () => {
+    server();
+    view();
+    await screen.findByText(/Du hast noch nichts angeboten/);
+    expect(
+      screen.getByRole("button", { name: "Zum Tausch anbieten" }).className.split(/\s+/),
+    ).toContain("bg-accent");
+    const match = screen.getByRole("link", { name: "Passende Angebote" }).className.split(/\s+/);
+    expect(match).toContain("text-primary");
+    expect(match.some((c) => /^bg-/.test(c))).toBe(false);
   });
 
   it("US-QS-07 · US-SOZ-08 a created offer closes the layer and is confirmed by a toast, without the open-offer line (issue 1696)", async () => {

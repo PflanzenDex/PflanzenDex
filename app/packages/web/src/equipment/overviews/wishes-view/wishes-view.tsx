@@ -43,12 +43,17 @@ function WishCard(props: { wish: EquipmentWishRow; actions?: WishActions | undef
       </p>
       {actions ? (
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button size="touch" disabled={actions.busy} onClick={() => actions.onBuy(w)}>
+          <Button
+            size="touch"
+            variant="tinted"
+            disabled={actions.busy}
+            onClick={() => actions.onBuy(w)}
+          >
             {t("wishes.buy", { name: w.name })}
           </Button>
           <Button
             size="touch"
-            variant="outline"
+            variant="plain"
             disabled={actions.busy}
             onClick={() => actions.onDiscard(w)}
           >

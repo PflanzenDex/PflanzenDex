@@ -67,7 +67,7 @@ function StepContent(props: {
         </p>
         <Button
           type="button"
-          variant="outline"
+          variant="tinted"
           className="self-start"
           disabled={act.running}
           needsNetwork
@@ -157,7 +157,7 @@ export function DeletionFooter(props: {
         >
           {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
         </Button>
-        <Button type="button" variant="outline" className="w-full" onClick={() => props.onStep(1)}>
+        <Button type="button" variant="plain" className="w-full" onClick={() => props.onStep(1)}>
           Zurück
         </Button>
         <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>

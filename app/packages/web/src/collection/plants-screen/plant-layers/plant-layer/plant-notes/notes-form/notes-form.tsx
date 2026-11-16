@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { SPECIMEN_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import {
@@ -12,6 +12,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -65,7 +66,7 @@ export function NotesForm(props: {
 }) {
   const { send, onSaved } = props;
   const [error, setError] = useState<ApiError | null>(null);
-  const form = useForm<NotesFields>({
+  const form = useFieldForm<NotesFields>({
     resolver: zodResolver(notesSchema),
     defaultValues: { notes: props.notes ?? "" },
   });

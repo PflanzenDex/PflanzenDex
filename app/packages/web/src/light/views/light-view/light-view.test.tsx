@@ -108,7 +108,7 @@ describe("US-LIC-05 view locations and light zones", () => {
     });
     expect(h).toContain("Hinweise (1)");
     expect(h).toContain("Lichtzone fehlt");
-    expect(h).toContain("Lichthunger und Einstufung");
+    expect(h).toContain("Lichtbedarf und Einstufung");
   });
 
   it("US-QS-19 without affected locations there is no hints notice", () => {
@@ -117,7 +117,7 @@ describe("US-LIC-05 view locations and light zones", () => {
 
   it("forms carry visible labels and input aids for numbers", () => {
     const h = renderToString(<ZoneForm onSave={nothing} />);
-    expect(h).toContain("Obergrenze");
+    expect(h).toContain("Lux-Obergrenze");
     expect(h).toContain('inputMode="numeric"');
     expect(renderToString(<LocationForm zones={[zone]} onSave={nothing} />)).toContain(
       "Keine Lichtzone (erscheint in den Hinweisen)",
@@ -177,15 +177,15 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
         }}
       />,
     );
-    expect(h).toContain("Prüfe: Lux-Decke.");
+    expect(h).toContain("Prüfe: Lux-Obergrenze.");
   });
 });
 
 describe("US-LIC-01 view: derive the zone of a species", () => {
   it("offers lux need, default level and the C3 hint and explains why", () => {
     const h = renderToString(<DerivationForm onDerive={actions.zoneDerive} />);
-    expect(h).toContain("Lux-Bedarf der Art");
-    expect(h).toContain("Stufe 4");
+    expect(h).toContain("Lichtbedarf der Art");
+    expect(h).toContain("Zone 4");
     expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
   });
 

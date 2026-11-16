@@ -118,7 +118,7 @@ export function ReferenceLayer(props: {
   const [topic, setTopic] = useState<Topic>("overview");
   return (
     <LayerSheet id={REFERENCE} title={t("layers.reference")}>
-      {/* The species of "Lichthunger" page by the free height of the layer (issue 1155). */}
+      {/* The species of "Lichtbedarf" page by the free height of the layer (issue 1155). */}
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <SegmentedControl
           label={t("reference.parts")}

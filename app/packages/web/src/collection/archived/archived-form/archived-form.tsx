@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type Control } from "react-hook-form";
+import { useWatch, type Control } from "react-hook-form";
 import { ARCHIVED_REASONS } from "@pflanzendex/core";
 import {
   Form,
@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
@@ -79,7 +80,7 @@ export function ArchiveForm(props: {
   onSend: (reason: string) => Promise<ApiError | null>;
   onCancel: () => void;
 }) {
-  const form = useForm<ArchiveFields>({
+  const form = useFieldForm<ArchiveFields>({
     resolver: zodResolver(archiveSchema),
     defaultValues: { choice: ARCHIVED_REASONS[0], free: "" },
   });

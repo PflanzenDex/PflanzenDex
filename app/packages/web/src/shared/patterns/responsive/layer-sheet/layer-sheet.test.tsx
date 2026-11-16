@@ -581,7 +581,7 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     await openAndType("Basilikum");
     await userEvent.keyboard("{Escape}");
     const question = await screen.findByRole("dialog", QUESTION);
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
     expect(seen.pathname).toBe("/start");
     expect(seen.search).toBe("");
@@ -602,7 +602,7 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     const question = await screen.findByRole("dialog", QUESTION);
     // While the question is open, the layer behind it is hidden from assistive technology, but it is still there.
     expect(screen.getByRole("complementary", { name: "Notiz", hidden: true })).toBeTruthy();
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(screen.queryByRole("complementary", { name: "Notiz" })).toBeNull());
   });
 
@@ -625,7 +625,7 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     fireEvent.click(screen.getByText("Browser zurück"));
     const question = await screen.findByRole("dialog", QUESTION);
     expect(seen.search).toContain("sheet=notiz");
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.pathname).toBe("/start");
     expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
@@ -784,7 +784,7 @@ describe("US-QS-15 a second Back keeps the layer and its question; a layer opene
     window.history.back();
     window.history.back();
     const question = await screen.findByRole("dialog", QUESTION);
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.pathname).toBe("/start");
     expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
@@ -824,7 +824,7 @@ describe("US-QS-15 a second Back keeps the layer and its question; a layer opene
     await userEvent.type(within(layer).getByLabelText("Text"), "Basilikum");
     fireEvent.click(screen.getByText("Browser zurück"));
     const question = await screen.findByRole("dialog", QUESTION);
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.pathname).toBe("/");
   });
@@ -873,7 +873,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     const question = await screen.findByRole("dialog", QUESTION);
     // The guard entry that the question was pushed with commits after the question shows (PF-031).
     await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.pathname).toBe("/start");
     await forwardOpensThenCloses();
@@ -894,7 +894,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     fireEvent.click(screen.getByText("Browser zurück"));
     const question = await screen.findByRole("dialog", QUESTION);
     await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.pathname).toBe("/");
     await forwardOpensThenCloses();
@@ -912,7 +912,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
     await userEvent.keyboard("{Escape}");
     const question = await screen.findByRole("dialog", QUESTION);
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(seen.pathname).toBe("/start");
     await forwardOpensThenCloses();
@@ -937,7 +937,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     window.history.back();
     const question = await screen.findByRole("dialog", QUESTION);
     await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(seen.search).toBe(""));
     expect(window.location.search).toBe("");
     // The browser's own history: the popstate of each step arrives later, so each Forward is awaited.

@@ -1,6 +1,6 @@
 import type { CostPerUser, OperatorCostFigure } from "@pflanzendex/core";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
 import {
   Form,
@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { MonthField } from "@/shared/ui/fields/input/native-fields/month-field/month-field";
@@ -70,7 +71,7 @@ export function CostForm(props: {
   /** Resolves true when the figure was saved; the form is then empty of unsaved input (US-QS-32). */
   onSave: (figure: OperatorCostFigure) => Promise<boolean>;
 }) {
-  const form = useForm<CostFields>({
+  const form = useFieldForm<CostFields>({
     resolver: zodResolver(costSchema),
     defaultValues: {
       amount: props.cost ? (props.cost.amountCents / 100).toFixed(2).replace(".", ",") : "",

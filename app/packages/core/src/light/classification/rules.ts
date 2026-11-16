@@ -48,8 +48,8 @@ const WARNINGS: readonly ClassificationWarning[] = [
   },
   {
     key: "no_demand",
-    sign: "Kein Lux-Bedarf hinterlegt",
-    action: "Trage den Lux-Bedarf der Art ein, bis dahin bleibt die Zone unbekannt.",
+    sign: "Kein Lichtbedarf hinterlegt",
+    action: "Trage den Lichtbedarf der Art ein, bis dahin bleibt die Zone unbekannt.",
   },
 ];
 

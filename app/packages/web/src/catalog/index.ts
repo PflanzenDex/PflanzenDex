@@ -13,6 +13,8 @@ export const searchSpecies = async (
 export const loadSpecies = async (
   ...args: Parameters<typeof import("./species-api").loadSpecies>
 ) => (await import("./species-api")).loadSpecies(...args);
+// The difficulty words of the catalog, the same as the comparison and the search read them (US-QS-32).
+export { DIFFICULTY } from "./shared/text";
 // The skeleton of the species catalog, the mode's skeleton on "Entdecken" (US-QS-14, issue 1697).
 export { SpeciesPageSkeleton } from "./species-page/species-page.skeleton";
 // The route fallback of the species profile (US-QS-14, issue 1727): the card of the profile with its skeleton.

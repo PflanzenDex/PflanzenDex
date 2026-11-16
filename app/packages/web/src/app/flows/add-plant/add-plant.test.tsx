@@ -214,11 +214,13 @@ describe("US-QS-14 · US-ONB-01 Pflanze anlegen is a full-view page with one pag
     expect(title.closest("[data-fit-screen]")).not.toBeNull();
   });
 
-  it("US-QS-14 the step's back is an outline button and 'Mehr Angaben' a ghost button, no filled grey one (ADR 0017)", async () => {
+  it("US-QS-32 · SG-BTN-01 the step's back is a plain button, and 'Mehr Angaben' a ghost button, no filled grey one (ADR 0017)", async () => {
     server();
     view();
     await toSave();
-    expect(screen.getByRole("button", { name: "Zurück" }).className).toContain("border-primary");
+    const back = screen.getByRole("button", { name: "Zurück" }).className.split(/\s+/);
+    expect(back).toContain("text-primary");
+    expect(back.some((c) => /^(border|bg)(-|$)/.test(c))).toBe(false);
     const more = screen.getByRole("button", { name: "Mehr Angaben" }).className;
     expect(more).toContain("hover:bg-accent");
     expect(more).not.toContain("border-primary");
@@ -303,6 +305,10 @@ const noMarkerWhenOwned: Refuse = (body) =>
   body["marker"] === undefined ? { code: "specimen.marker_required" } : null;
 const REFUSED_MARKER_TEXT =
   "Du hast schon eine Pflanze dieser Art. Gib der neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.";
+/** The client's own texts of the marker rule (collection's MARKER_MISSING and MARKERS_MISSING, F-0093). */
+const CLIENT_MARKER_TEXT =
+  "Gib ein Kennzeichen an, damit du die Töpfe dieser Art unterscheiden kannst.";
+const MISSING_ANSWERS_TEXT = "Vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst.";
 
 describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form (issue 1638)", () => {
   it("US-BES-03 · US-ONB-01 an owned species waits for the lazily loaded marker field, preset as in the long form, and saves with it (issue 1638)", async () => {
@@ -326,7 +332,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     expect(screen.queryByLabelText(/Kennzeichen/)).toBeNull();
   });
 
-  it("US-QS-15 · US-BES-03 a cleared marker is refused: the field takes the focus and the text says what to do", async () => {
+  it("US-QS-32 · US-BES-03 a cleared marker is checked on send: the field shows its message and takes the focus, nothing is sent", async () => {
     server(OWNED, ZONES, LOCATIONS, noMarkerWhenOwned);
     view();
     await toSave();
@@ -334,9 +340,40 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await userEvent.clear(marker);
     await untilSaveEnabled();
     await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
-    expect(await screen.findByText(REFUSED_MARKER_TEXT)).toBeTruthy();
+    expect(await screen.findByText(CLIENT_MARKER_TEXT)).toBeTruthy();
+    expect(marker.getAttribute("aria-invalid")).toBe("true");
     expect(document.activeElement).toBe(marker);
+    expect(writes).toEqual([]);
     expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
+  });
+
+  it("US-QS-32 · US-BES-03 the third plant checks its missing markers on send: the empty one takes the message and the focus", async () => {
+    server([
+      {
+        id: "e5",
+        name: "Alt",
+        speciesId: "sp1",
+        location: "Zuhause",
+        caughtAt: "2026-02-01",
+        marker: null,
+      },
+      {
+        id: "e6",
+        name: "Neu",
+        speciesId: "sp1",
+        location: "Balkon",
+        caughtAt: "2026-03-01",
+        marker: "Rot",
+      },
+    ]);
+    view();
+    await toSave();
+    const answer = await screen.findByLabelText("Kennzeichen für „Alt“");
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByText(MISSING_ANSWERS_TEXT)).toBeTruthy();
+    expect(document.activeElement).toBe(answer);
+    expect(writes).toEqual([]);
   });
 
   it("US-QS-15 · US-BES-03 a refused marker the form did not show appears, takes the focus, and the next save with it goes through", async () => {
@@ -466,6 +503,20 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
     expect(await screen.findByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-BTN-02 after the first plant is saved, the next step is the one filled button and another plant is tinted", async () => {
+    server();
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    const another = await screen.findByRole("button", { name: "Noch eine Pflanze" });
+    expect(another.className.split(/\s+/)).toContain("bg-accent");
+    const filled = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Zur Sammlung"]);
   });
 
   it("US-ONB-01 the done screen leads to the collection (issue 1638)", async () => {

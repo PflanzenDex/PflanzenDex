@@ -1,4 +1,4 @@
-// The page that prints the QR pot labels (US-BES-17, FR-BES-25): the keeper chooses plants and a format, "Drucken" opens
+// The page that prints the QR pot labels (US-BES-17, FR-BES-25): the keeper chooses plants and a format, "Etiketten drucken" opens
 // the print dialog. The labels live in a print-only region in the body; the rest of the app is hidden in print.
 import { useState } from "react";
 import { Navigate } from "react-router";
@@ -14,7 +14,7 @@ import { Label } from "@/shared/ui/display/label/label";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { useFeature } from "@/shared/data";
 import { useCardPages, type CardPages } from "../../specimens/cards/use-card-pages";
 import { PrintRegion, type LabelFormat, type LabelPlant } from "./label-sheet/label-sheet";
@@ -24,6 +24,7 @@ import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 const ui = texts(table);
+const plural = plurals(table);
 
 /** The server paging of the plant list for the Pager (FR-BES-23): the total, the loading state and a failure's text. */
 function pagingOf(list: CardPages): PagerPaging {
@@ -115,7 +116,7 @@ function LabelsView(props: { api: string; token: Token }) {
   );
 }
 
-/** The choice: the format, the plants in pages with a checkbox each, and "Drucken" with the next step (P-09). */
+/** The choice: the format, the plants in pages with a checkbox each, and the print button with the next step (P-09). */
 function ChoicePanel(props: {
   list: CardPages;
   rows: number;
@@ -165,6 +166,7 @@ function ChoicePanel(props: {
       />
       <PrintAction
         ready={ready}
+        count={chosen.length}
         unreadable={cultivars.unreadable}
         hint={nextStep(chosen.length, format, cultivars.status === "pending")}
       />
@@ -172,8 +174,8 @@ function ChoicePanel(props: {
   );
 }
 
-/** "Drucken" opens the print dialog once everything is chosen; the hint says what is missing (P-09, P-10). */
-function PrintAction(props: { ready: boolean; unreadable: boolean; hint: string }) {
+/** Printing opens the print dialog once everything is chosen; its label counts the labels (US-QS-32); the hint says what is missing (P-09, P-10). */
+function PrintAction(props: { ready: boolean; unreadable: boolean; count: number; hint: string }) {
   return (
     <div className="flex flex-col gap-2">
       {props.unreadable ? (
@@ -187,7 +189,7 @@ function PrintAction(props: { ready: boolean; unreadable: boolean; hint: string 
         aria-describedby="print-labels-hint"
         onClick={() => window.print()}
       >
-        {ui("print")}
+        {props.count === 0 ? ui("print") : plural.counted("printCount", props.count)}
       </Button>
       <p id="print-labels-hint" className="text-sm text-muted-foreground">
         {props.hint}

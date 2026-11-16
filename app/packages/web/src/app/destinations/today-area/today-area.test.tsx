@@ -774,7 +774,9 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
     expect(await within(form).findByText("Wähle mindestens eine Pflanze.")).toBeTruthy();
     expect(
-      within(form).getByRole("button", { name: "Pflanzen (0)" }).getAttribute("aria-pressed"),
+      within(form)
+        .getByRole("button", { name: "Pflanzen (0), 1 Angabe fehlt" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     // A plant is chosen, the reason is missing: the view moves to the reason and names it.
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
@@ -782,9 +784,11 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(
       await within(form).findByText("Nenne einen Grund, zum Beispiel Wollläuse."),
     ).toBeTruthy();
-    expect(within(form).getByRole("button", { name: "Termin" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
+    expect(
+      within(form)
+        .getByRole("button", { name: "Termin, 1 Angabe fehlt" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
     expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement);
   });
 
@@ -820,7 +824,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     const open = vi.fn();
     const user = userEvent.setup();
     show("/today?sheet=hints", open);
-    const empty = await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" });
+    const empty = await screen.findByRole("heading", { level: 3, name: "Nichts fehlt" });
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", { name: "Zur Sammlung" }),
     );
@@ -960,7 +964,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.selectOptions(await within(layer).findByLabelText("Standort für „Bogenhanf“"), "l1");
     await user.click(within(layer).getByRole("button", { name: "Standort setzen: Bogenhanf" }));
     expect(
-      await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
+      await within(layer).findByRole("heading", { level: 3, name: "Nichts fehlt" }),
     ).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/keinen\s+Standort/)).toBeNull());
   });

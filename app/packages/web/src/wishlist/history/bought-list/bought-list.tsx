@@ -38,6 +38,7 @@ export function BoughtList(props: {
               onCreateSpecimen && (
                 <CreateSpecimenButton
                   named
+                  variant="tinted"
                   wish={{ id: w.id, name: w.name, title: w.title }}
                   onCreate={onCreateSpecimen}
                 />

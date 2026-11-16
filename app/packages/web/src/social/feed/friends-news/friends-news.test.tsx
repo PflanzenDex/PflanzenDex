@@ -79,14 +79,14 @@ afterEach(() => {
 });
 
 describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (issue 1156)", () => {
-  it("US-QS-18 · US-SOZ-06 the tile names the count and opens a layer with friend, species, 'Stand' and 'Okay'", async () => {
+  it("US-QS-18 · US-SOZ-06 the tile names the count and opens a layer with friend, species, 'Stand' and 'Als gelesen markieren'", async () => {
     const { posts } = server(banner(1));
     render(<Today />);
     await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     expect(layer.textContent).toContain("Freunde haben 1 neue Pflanze: Clara: 1 × Glücksfeder");
     expect(layer.textContent).toContain("Stand: 06.10.2026");
-    await userEvent.click(within(layer).getByRole("button", { name: "Okay" }));
+    await userEvent.click(within(layer).getByRole("button", { name: "Als gelesen markieren" }));
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(posts).toEqual([{ upTo: ASOF }]);
     expect(screen.queryByRole("button", { name: /Neu bei Freunden/ })).toBeNull();
@@ -163,14 +163,14 @@ describe("NFR-12 Heute asks for the news of friends once on a cold start (issue 
     expect(bannerReads()).toBe(1);
   });
 
-  it("NFR-12 · US-SOZ-06 'Okay' still reads again at once inside the window", async () => {
+  it("NFR-12 · US-SOZ-06 'Als gelesen markieren' still reads again at once inside the window", async () => {
     server(banner(1));
     const client = createQueryClient();
     const view = await layerAnswered(client);
     view.rerender(<ColdStart client={client} tile />);
     await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    await userEvent.click(within(layer).getByRole("button", { name: "Okay" }));
+    await userEvent.click(within(layer).getByRole("button", { name: "Als gelesen markieren" }));
     await vi.waitFor(() =>
       expect(screen.queryByRole("button", { name: /Neu bei Freunden/ })).toBeNull(),
     );

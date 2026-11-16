@@ -1,10 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { SIGN_IN, type ApiError } from "../../shared/data";
 import { redeemInvitation } from "../api/access-api";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
@@ -21,7 +20,7 @@ const codeField = () => ["code" as const];
  * refusal of the server stays visible at the field and the focus returns to it (P-10).
  */
 function useRedeem(api: string, token: Token, onRegistered: () => void) {
-  const form = useForm<InvitationCodeFields>({
+  const form = useFieldForm<InvitationCodeFields>({
     resolver: zodResolver(invitationCodeSchema),
     defaultValues: { code: "" },
   });

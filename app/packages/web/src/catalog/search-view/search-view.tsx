@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
-import { useForm } from "react-hook-form";
 import type { SpeciesHit } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -13,6 +12,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
@@ -60,7 +60,7 @@ function NoMatch(props: { onClear: () => void }) {
 }
 
 function SearchField(props: { searchText: string; onSearch: (text: string) => void }) {
-  const form = useForm<SearchFields>({
+  const form = useFieldForm<SearchFields>({
     resolver: zodResolver(searchSchema),
     defaultValues: { search: props.searchText },
   });

@@ -2,7 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useCallback, useState } from "react";
 import {
-  useForm,
   type Control,
   type DefaultValues,
   type FieldPath,
@@ -17,6 +16,7 @@ import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { useFieldForm } from "@/shared/ui/fields/form/form";
 
 const t = texts(table);
 
@@ -33,7 +33,7 @@ export function useSaveForm<F extends FieldValues>(opts: {
   clear: boolean;
 }) {
   const { schema, defaults, save, refusable, clear } = opts;
-  const form = useForm<F>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const form = useFieldForm<F>({ resolver: zodResolver(schema), defaultValues: defaults });
   const [error, setError] = useState<ApiError | null>(null);
   const fieldsOf = useCallback(
     (e: ApiError) => refusable.filter((f) => e.details?.some((d) => d.field === f)),

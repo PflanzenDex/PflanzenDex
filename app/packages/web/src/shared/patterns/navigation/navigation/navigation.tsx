@@ -106,7 +106,7 @@ export const LEGACY_LIGHT_PATH = "/light";
 /** The query parameters below the plants of the Sammlung: the grouping and the open management of the locations. */
 export const GROUP_PARAM = "group";
 export const MANAGE_PARAM = "manage";
-/** The plants grouped by care phase, with "Jetzt umgestellt" (US-PHA-01, US-PHA-03). */
+/** The plants grouped by care phase, with "Umstellen" (US-PHA-01, US-PHA-03). */
 export const PHASES_ADDRESS = `${PATHS.collection}?view=plants&${GROUP_PARAM}=phase`;
 /** The management of locations and light zones, opened in the plants of the Sammlung (US-LIC). */
 export const MANAGE_ADDRESS = `${PATHS.collection}?view=plants&${MANAGE_PARAM}=locations`;

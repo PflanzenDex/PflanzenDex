@@ -6,6 +6,7 @@ import { encode } from "uqr";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { PrintLabelsPage } from "./print-labels-page";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./print-labels-page.de.json";
@@ -87,7 +88,11 @@ const pick = async (user: ReturnType<typeof userEvent.setup>, name: RegExp) =>
   user.click(await screen.findByRole("checkbox", { name }));
 const chooseFormat = (user: ReturnType<typeof userEvent.setup>, format: string) =>
   user.selectOptions(screen.getByRole("combobox", { name: "Format" }), format);
-const printButton = () => screen.getByRole("button", { name: "Drucken" }) as HTMLButtonElement;
+// The print button names its count: "Etiketten drucken", "1 Etikett drucken" or "3 Etiketten drucken" (US-QS-32).
+const printButton = () =>
+  screen.getByRole("button", {
+    name: /^(\d+\s+Etikett(en)?|Etiketten) drucken$/,
+  }) as HTMLButtonElement;
 
 beforeEach(() => {
   vi.mocked(encode).mockClear();
@@ -175,7 +180,7 @@ describe("US-BES-17 printing QR pot labels", () => {
     expect(printRegion().parentElement).toBe(document.body);
   });
 
-  it("US-BES-17 with nothing chosen Drucken is disabled and says what to do next (P-09)", async () => {
+  it("US-BES-17 with nothing chosen the button Etiketten drucken is disabled and says what to do next (P-09)", async () => {
     server([card()], { s1: species(null) });
     const user = userEvent.setup();
     show();
@@ -189,6 +194,29 @@ describe("US-BES-17 printing QR pot labels", () => {
     await waitFor(() => expect(printButton().disabled).toBe(false));
     await user.click(printButton());
     expect(window.print).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-32 the print button counts the chosen plants across the pages: 2, then 3 Etiketten drucken, 1 Etikett drucken", async () => {
+    setViewportWidth(360);
+    server(
+      [1, 2, 3, 4, 5].map((n) => card({ id: `e${n}`, name: `Pflanze ${n}` })),
+      { s1: species(null) },
+    );
+    const user = userEvent.setup();
+    show();
+    await screen.findByRole("checkbox", { name: /Pflanze 1/ });
+    expect(printButton().textContent).toBe("Etiketten drucken");
+    await pick(user, /Pflanze 1/);
+    await pick(user, /Pflanze 2/);
+    await chooseFormat(user, "A4-Bogen");
+    expect(screen.getByRole("button", { name: "2\u00a0Etiketten drucken" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Weiter" }));
+    await pick(user, /Pflanze 5/);
+    expect(screen.getByRole("button", { name: "3\u00a0Etiketten drucken" })).toBeTruthy();
+    await pick(user, /Pflanze 5/);
+    await user.click(screen.getByRole("button", { name: "Zurück" }));
+    await pick(user, /Pflanze 2/);
+    expect(screen.getByRole("button", { name: "1\u00a0Etikett drucken" })).toBeTruthy();
   });
 
   it("US-BES-17 a species that cannot be read leaves its cultivar out and the page says so (P-10)", async () => {

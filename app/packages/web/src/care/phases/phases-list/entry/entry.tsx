@@ -9,7 +9,7 @@ import { needsSwitch, switchedText } from "../../phase-groups";
 /** Called with the specimens to switch and the text to show afterwards; without it the list only shows. */
 export type Confirm = (specimenIds: readonly string[], success: string) => void;
 
-/** The hint and the button "Jetzt umgestellt" of an entry whose plant has to move (US-PHA-03). */
+/** The hint and the button "Umstellen" of an entry whose plant has to move (US-PHA-03). */
 function SwitchAction(props: {
   row: PhasesRow;
   locations: readonly LightLocation[];
@@ -20,17 +20,17 @@ function SwitchAction(props: {
   return (
     <>
       <p className="font-semibold">
-        Stelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.
+        Stelle die Pflanze an den Soll-Standort und tippe dann „Umstellen“.
       </p>
       <Button
         type="button"
         size="touch"
         className="mt-2"
         disabled={props.busy}
-        aria-label={`Jetzt umgestellt: ${z.name}`}
+        aria-label={`Umstellen: ${z.name}`}
         onClick={() => props.onConfirm([z.specimenId], switchedText([z], props.locations))}
       >
-        Jetzt umgestellt
+        Umstellen
       </Button>
     </>
   );
@@ -93,10 +93,10 @@ function CompactEntry(props: {
             variant="secondary"
             className="shrink-0 px-3"
             disabled={props.busy}
-            aria-label={`Jetzt umgestellt: ${z.name}`}
+            aria-label={`Umstellen: ${z.name}`}
             onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
           >
-            Jetzt umgestellt
+            Umstellen
           </Button>
         )}
       </div>

@@ -191,7 +191,7 @@ describe("US-QS-23 Überblick", () => {
     expect(within(panel).getByText(/Letzte Messung: 12,5 cm/)).toBeTruthy();
     expect(within(panel).getByText(/am 01\.10\.2026/)).toBeTruthy();
     expect(within(panel).getByText("Trend: stabil")).toBeTruthy();
-    expect(within(panel).getByText("Zustand:").textContent).toContain("Gesund");
+    expect(within(panel).getByText("Qualität:").textContent).toContain("Gesund");
     expect(within(panel).getByText("Noch kein Foto")).toBeTruthy();
     expect(panel.innerHTML).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });
@@ -408,21 +408,30 @@ describe("US-QS-23 Mehr", () => {
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
-      "Kennzeichen",
-      "Fangdatum",
-      "Archivieren",
+      "Kennzeichen ändern",
+      "Fangdatum ändern",
+      "Pflanze archivieren",
     ]);
-    await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Pflanze archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
   });
 
-  it("US-QS-23 Eingetopft is offered for a cutting only", async () => {
+  it("US-QS-32 the menu items name object and verb: Umtopfen eintragen for a plant, Eintopfen eintragen for a cutting", async () => {
+    setViewportWidth(360);
+    show([card()], { onRepot: vi.fn() });
+    await open();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    expect(screen.getByRole("menuitem", { name: "Umtopfen eintragen" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Umgetopft" })).toBeNull();
+  });
+
+  it("US-QS-23 Eintopfen eintragen is offered for a cutting only", async () => {
     setViewportWidth(360);
     show([card({ status: "cutting" })], { onRepot: vi.fn() });
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
-    expect(screen.getByRole("menuitem", { name: "Eingetopft" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Eintopfen eintragen" })).toBeTruthy();
   });
 
   it("US-QS-23 without any rarer action there is no menu", async () => {

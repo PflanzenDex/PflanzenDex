@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, OctagonAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "../../../ui/button/button";
 
@@ -15,6 +15,11 @@ export type SegmentedControlProps<V extends string> = {
   options: readonly SegmentedOption<V>[];
   value: V;
   onChange: (value: V) => void;
+  /**
+   * A segment that holds errors (US-QS-32, F-0106): the mark and the text the caller gives for it (German), which the
+   * accessible name carries after the label, e.g. "1 Angabe fehlt". The component reads no German text itself.
+   */
+  alerts?: Readonly<Partial<Record<V, string | undefined>>>;
   className?: string;
 };
 
@@ -27,7 +32,7 @@ export type SegmentedControlProps<V extends string> = {
  * the one-screen gate that this row may scroll sideways at 200 % text (issue 1183); at normal text size it must fit.
  */
 export function SegmentedControl<V extends string>(props: SegmentedControlProps<V>) {
-  const { options, value, onChange } = props;
+  const { options, value, onChange, alerts } = props;
   return (
     <div
       role="group"
@@ -57,6 +62,12 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
           >
             {selected ? <Check aria-hidden="true" className="size-4 shrink-0" /> : null}
             {o.label}
+            {alerts?.[o.value] ? (
+              <>
+                <OctagonAlert aria-hidden="true" className="size-4 shrink-0 text-destructive" />
+                <span className="sr-only">, {alerts[o.value]}</span>
+              </>
+            ) : null}
             {o.keyHint ? (
               <kbd aria-hidden="true" className="hidden font-mono text-xs font-normal md:inline">
                 {o.keyHint.visible}

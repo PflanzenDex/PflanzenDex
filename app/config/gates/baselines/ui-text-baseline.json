@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1112,
+  "maxTotal": 1108,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -31,7 +31,7 @@
     },
     {
       "file": "packages/web/src/account/settings-page/groups/switch-groups/switch-groups.tsx",
-      "count": 5
+      "count": 4
     },
     {
       "file": "packages/web/src/account/settings-page/keeper-style/keeper-style.tsx",
@@ -83,7 +83,7 @@
     },
     {
       "file": "packages/web/src/ai/clients-section/how-to/how-to.tsx",
-      "count": 5
+      "count": 4
     },
     {
       "file": "packages/web/src/ai/drafts-section/drafts-section.tsx",
@@ -583,7 +583,7 @@
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-collection.tsx",
-      "count": 13
+      "count": 12
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",
@@ -639,7 +639,7 @@
     },
     {
       "file": "packages/web/src/swap/pages/match/match.tsx",
-      "count": 4
+      "count": 3
     },
     {
       "file": "packages/web/src/swap/parts/friend-offers/request-form/request-form.tsx",

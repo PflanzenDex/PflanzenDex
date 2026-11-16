@@ -210,7 +210,7 @@ const page = () => (
   </MemoryRouter>
 );
 const openForm = async () => {
-  await userEvent.click(await findCardButton("Fangdatum korrigieren: Bogenhanf"));
+  await userEvent.click(await findCardButton("Fangdatum ändern: Bogenhanf"));
   return screen.getByLabelText("Fangdatum") as HTMLInputElement;
 };
 

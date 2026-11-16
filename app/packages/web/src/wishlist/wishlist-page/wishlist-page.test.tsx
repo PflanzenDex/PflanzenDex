@@ -47,7 +47,11 @@ const candidate = (extra: Record<string, unknown> = {}) => ({
 });
 const list = (
   candidates: unknown[],
-  hint = { text: "Als Nächstes dran: Korbmarante.", nextAction: "Besorge diese Pflanze zuerst." },
+  hint: { text: string; nextAction: string | null } = {
+    text: "Als Nächstes dran: Korbmarante.",
+    // The thinnest zone says its room in the row, so the page shows no line of its own (US-QS-32, F-0162).
+    nextAction: null,
+  },
 ) => ({
   candidates,
   zones,
@@ -125,7 +129,18 @@ describe("US-WUN-01 page of the candidate list", () => {
     expect(within(item).getByText("Calathea orbifolia").tagName).toBe("I");
     expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
     expect(item.textContent).toContain("Mittel");
-    expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
+    expect(screen.queryByText(/Besorge diese Pflanze/)).toBeNull();
+  });
+
+  it("US-QS-32 F-0162 a tie keeps its one line above the list; no line is repeated when the first row says the room", async () => {
+    fakeServer(
+      list([candidate()], {
+        text: "Als Nächstes dran: Korbmarante.",
+        nextAction: "Die Zonen sind gleich belegt: Beginne oben.",
+      }),
+    );
+    view(<WishlistPage api="http://api" token={token} />);
+    expect(await screen.findByText("Die Zonen sind gleich belegt: Beginne oben.")).toBeTruthy();
   });
 
   it("US-QS-08 · WCAG 2.5.3 the wish row's details button name contains its visible rank, title and zone", async () => {

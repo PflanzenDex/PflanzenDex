@@ -5,6 +5,7 @@ import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager"
 import { keepTogether } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
 import { loadWateringDue, markWatered, type WateringDueRow } from "../../api/reminders-api";
@@ -56,15 +57,17 @@ function Row(props: {
   );
 }
 
+/**
+ * The due rows with their marks and the one-step pick of several. The write belongs to `DueList`, which stays mounted
+ * while the list is empty, so the result of the last write still shows then (F-0075, US-QS-32).
+ */
 function Rows(props: {
-  api: string;
-  token: Token;
   rows: readonly WateringDueRow[];
+  busy: boolean;
+  water: (ids: readonly string[]) => void;
   param?: PagerPart;
 }) {
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
-  const again = useInvalidate(KEY);
-  const write = useWriteAction(props.token, again);
   const toggle = (id: string) =>
     setChosen((c) => {
       const next = new Set(c);
@@ -73,7 +76,7 @@ function Rows(props: {
     });
   const water = (ids: readonly string[]) => {
     setChosen(new Set());
-    void write.run((t) => markWatered(props.api, t, ids), ui("done"));
+    props.water(ids);
   };
   const picked = props.rows.filter((r) => chosen.has(r.specimenId)).map((r) => r.specimenId);
   return (
@@ -88,29 +91,24 @@ function Rows(props: {
           <Row
             row={r}
             checked={chosen.has(r.specimenId)}
-            busy={write.running}
+            busy={props.busy}
             onToggle={() => toggle(r.specimenId)}
             onWater={() => water([r.specimenId])}
           />
         )}
       />
-      <Button
-        size="touch"
-        className="self-start"
-        disabled={write.running || picked.length < 2}
-        onClick={() => water(picked)}
-      >
-        {picked.length < 2 ? ui("pickMore") : ui("pickedCount", { count: picked.length })}
-      </Button>
-      {write.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3">
-          {write.error.text}
-        </p>
-      )}
-      {write.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {write.message}
-        </p>
+      {/* One mark is no bulk entry: the hint says how to get there, the button only shows from two marks (US-QS-32). */}
+      {picked.length < 2 ? (
+        <p className="m-0 text-sm text-muted-foreground">{ui("pickMore")}</p>
+      ) : (
+        <Button
+          size="touch"
+          className="self-start"
+          disabled={props.busy}
+          onClick={() => water(picked)}
+        >
+          {ui("pickedCount", { count: picked.length })}
+        </Button>
       )}
     </div>
   );
@@ -144,28 +142,55 @@ export function WateringList(props: {
   );
 }
 
+/**
+ * The list with its write. The result of "Gegossen" is a line of reserved height above the list (F-0075, SG-FEED-01): it
+ * stays when the last plant is marked and the list shows its empty state, and the announcer says the same text once (the
+ * line carries no role). A refusal is the alert below the list (P-10, SG-FEED-02).
+ */
 function DueList(props: { api: string; token: Token; param?: PagerPart }) {
   const load = useCallback((t: string) => loadWateringDue(props.api, t), [props.api]);
+  const again = useInvalidate(KEY);
+  const announce = useAnnounce();
+  const [result, setResult] = useState<string | null>(null);
+  // A refusal is not said here: it is the alert below. Only a success is the result line and the announcement.
+  const write = useWriteAction(props.token, again, (message, kind) => {
+    if (kind === "error") return;
+    setResult(message);
+    announce?.announce(message);
+  });
+  const water = (ids: readonly string[]) => {
+    setResult(null);
+    void write.run((t) => markWatered(props.api, t, ids), ui("done"));
+  };
   return (
-    <LoadFrame
-      queryKey={KEY}
-      token={props.token}
-      load={load}
-      loadingText={ui("loading")}
-      loadingFallback={<WateringListSkeleton label={ui("loading")} />}
-    >
-      {(rows) =>
-        rows.length === 0 ? (
-          <EmptyState level={3} title={ui("none.title")} description={ui("none.description")} />
-        ) : (
-          <Rows
-            api={props.api}
-            token={props.token}
-            rows={rows}
-            {...(props.param ? { param: props.param } : {})}
-          />
-        )
-      }
-    </LoadFrame>
+    // No gap around the reserved line: it costs one text line and nothing more, so the sheet still fits (QG-U8).
+    <div className="flex flex-col">
+      <p className="min-h-[1lh] text-sm">{result}</p>
+      <LoadFrame
+        queryKey={KEY}
+        token={props.token}
+        load={load}
+        loadingText={ui("loading")}
+        loadingFallback={<WateringListSkeleton label={ui("loading")} />}
+      >
+        {(rows) =>
+          rows.length === 0 ? (
+            <EmptyState level={3} title={ui("none.title")} description={ui("none.description")} />
+          ) : (
+            <Rows
+              rows={rows}
+              busy={write.running}
+              water={water}
+              {...(props.param ? { param: props.param } : {})}
+            />
+          )
+        }
+      </LoadFrame>
+      {write.error && (
+        <p role="alert" className="mt-3 rounded-lg border border-destructive p-3">
+          {write.error.text}
+        </p>
+      )}
+    </div>
   );
 }

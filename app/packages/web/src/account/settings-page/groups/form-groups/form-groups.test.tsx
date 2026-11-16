@@ -32,15 +32,25 @@ const PROFILE = {
   motion: "system" as const,
 };
 
-/** The settings with the server of the profile; the saves are not part of these tests. */
-function fakeServer() {
+/**
+ * The settings with the server of the profile. A save answers `refusal` (400) when one is given, else the profile it
+ * sends back; the tests that do not save never reach that branch.
+ */
+type Profile = Omit<typeof PROFILE, "displayName"> & { displayName: string | null };
+
+function fakeServer(options: { profile?: Profile; refusal?: unknown } = {}) {
   vi.stubGlobal(
     "fetch",
-    vi.fn<typeof fetch>(async (url) => {
+    vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       if (path === "/achievements/settings") return response(200, { calmMode: false });
       if (path === "/onboarding/style") return response(200, { style: "few", chosen: true });
-      if (path === "/account/profile") return response(200, PROFILE);
+      if (path === "/account/profile" && init?.method === "PUT") {
+        return options.refusal
+          ? response(400, options.refusal)
+          : response(200, options.profile ?? PROFILE);
+      }
+      if (path === "/account/profile") return response(200, options.profile ?? PROFILE);
       return response(404, {});
     }),
   );
@@ -95,7 +105,7 @@ describe("US-QS-32 a settings group with its own save asks before it discards ty
     await userEvent.type(name, " Beispiel");
     await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
     const question = await screen.findByRole("dialog", QUESTION);
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(screen.queryByLabelText("Anzeigename")).toBeNull());
     expect(address).not.toContain("sheet=profile");
   });
@@ -107,5 +117,74 @@ describe("US-QS-32 a settings group with its own save asks before it discards ty
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByLabelText("Anzeigename")).toBeNull());
     expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+  });
+});
+
+describe("US-QS-32 the settings groups say how to fix a field (F-0085, F-0092)", () => {
+  it("US-QS-32 · F-0085 an emptied Anzeigename shows its message at the field when it is left", async () => {
+    fakeServer();
+    renderSettings("profile");
+    const name = await screen.findByLabelText<HTMLInputElement>("Anzeigename");
+    await userEvent.clear(name);
+    await userEvent.tab();
+    expect((await screen.findByRole("alert")).textContent).toBe("Gib einen Namen ein.");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("US-QS-32 · F-0085 no name stored yet: an empty Anzeigename is valid when it is left", async () => {
+    fakeServer({ profile: { ...PROFILE, displayName: null } });
+    renderSettings("profile");
+    const name = await screen.findByLabelText<HTMLInputElement>("Anzeigename");
+    await userEvent.click(name);
+    await userEvent.tab();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(name.getAttribute("aria-invalid")).toBeNull();
+  });
+
+  it("US-QS-32 · F-0085 an emptied buffer of the wishlist shows its rule when it is left", async () => {
+    fakeServer();
+    renderSettings("wishlist");
+    const buffer = await screen.findByLabelText<HTMLInputElement>(
+      "Mindestzahl offener Wünsche je Zone",
+    );
+    await userEvent.clear(buffer);
+    await userEvent.tab();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Gib eine ganze Zahl von 0 bis 10 ein.",
+    );
+    expect(buffer.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("US-QS-32 · F-0085 an emptied light threshold shows its rule at that field when it is left", async () => {
+    fakeServer();
+    renderSettings("light");
+    const first = await screen.findByLabelText<HTMLInputElement>("Direkt unter der Lampe ab");
+    await userEvent.clear(first);
+    await userEvent.tab();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Gib eine ganze Zahl von 1 bis 200.000 Lux ein.",
+    );
+    expect(first.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("US-QS-32 · F-0092 a refused name says how to fix it at its field, not the generic line", async () => {
+    fakeServer({
+      refusal: {
+        error: {
+          code: "input.invalid",
+          details: [{ field: "displayName", code: "input.invalid" }],
+        },
+      },
+    });
+    renderSettings("profile");
+    const name = await screen.findByLabelText<HTMLInputElement>("Anzeigename");
+    await userEvent.type(name, " Beispiel");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("Gib einen Namen ein, höchstens 80 Zeichen.");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      screen.queryByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),
+    ).toBeNull();
   });
 });

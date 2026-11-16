@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { useSay, type Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useWriteAction, type ApiError } from "../../../../../shared/data";
 import { createFriendCode, sendFriendRequest } from "../../../../api/friends-api";
 import { CodeForm } from "../../../../parts/code-form/code-form";
@@ -12,11 +12,17 @@ type Token = () => Promise<string | undefined>;
 
 /**
  * Sends the code form's request and hands a refusal back to the field; one request at a time (a double tap sends one).
- * The confirmation is a toast; a refused code is not, it stays at its field (P-10).
+ * The confirmation goes to `shown`: the request is not on this layer, so it stays a toast until the in-place row of FX-09
+ * (SG-FEED-03, US-QS-32). A refused code is not a toast, it stays at its field (P-10).
  */
-function useSendRequest(api: string, token: Token, reload: () => void, say: Say) {
+function useSendRequest(
+  api: string,
+  token: Token,
+  reload: () => void,
+  shown: (message: string) => void,
+) {
   const write = useWriteAction(token, reload, (message, kind) => {
-    if (kind !== "error") say(message);
+    if (kind !== "error") shown(message);
   });
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const send = async (code: string): Promise<boolean> => {
@@ -43,9 +49,11 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
   const { api, token } = props;
   const [tab, setTab] = useState<Tab>("invite");
   const [created, setCreated] = useState<CreatedFriendCode | null>(null);
+  // The code of an invitation shows in place (the card), so its result is said; a sent request is not on this layer.
   const say = useSay();
+  const toast = useToast();
   const invite = useWriteAction(token, props.onWritten, say);
-  const request = useSendRequest(api, token, props.onWritten, say);
+  const request = useSendRequest(api, token, props.onWritten, (message) => toast.show({ message }));
   const tabs: { id: Tab; label: string }[] = [
     { id: "invite", label: "Einladen" },
     { id: "code", label: "Code eingeben" },

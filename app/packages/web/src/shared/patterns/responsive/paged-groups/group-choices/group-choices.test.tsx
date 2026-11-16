@@ -166,6 +166,18 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     expect(chips[1]?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 
+  it("US-QS-32 · SG-BTN-01 the chosen chip is secondary, the other chips are plain (no outline look)", async () => {
+    layout = { row: 300, chips: [90, 90, 90] };
+    show(choicesOf(3), "/collection?view=plants&part=g2");
+    const chips = screen.getAllByRole("button", { name: /Gruppe/ });
+    expect(chips[1]?.className.split(/\s+/)).toContain("bg-secondary");
+    for (const i of [0, 2]) {
+      const classes = chips[i]?.className.split(/\s+/) ?? [];
+      expect(classes).toContain("text-primary");
+      expect(classes.some((c) => /^(border|bg)(-|$)/.test(c))).toBe(false);
+    }
+  });
+
   it("US-QS-19 choosing in the selection field keeps the selection field", async () => {
     layout = { row: 300, chips: [200, 200, 200] };
     show(choicesOf(3), "/collection?view=plants&part=g1");

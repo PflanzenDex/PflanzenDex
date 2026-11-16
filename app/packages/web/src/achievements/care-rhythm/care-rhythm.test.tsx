@@ -135,7 +135,7 @@ describe("US-ACH-04 explicit pause", () => {
     expect(calls).toEqual(["POST /achievements/rhythm/pauses"]);
   });
 
-  it("US-ACH-04 a pause longer than 4 weeks is refused with its reason and stays visible", async () => {
+  it("US-QS-32 · US-ACH-04 a refusal of the server for a too long pause stands at its field Bis, with its reason", async () => {
     showWithWrites(
       answer(),
       () =>
@@ -145,11 +145,29 @@ describe("US-ACH-04 explicit pause", () => {
     );
     await screen.findByLabelText("Von");
     fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
-    fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
-      target: { value: "2026-09-01" },
-    });
+    const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+    fireEvent.change(until, { target: { value: "2026-07-14" } });
     fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
-    expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("Höchstens 4 Wochen: spätestens 28.07.2026.");
+    expect(until.getAttribute("aria-invalid")).toBe("true");
+    expect(until.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+  });
+
+  it("US-QS-32 · US-ACH-04 a pause of seven weeks marks Bis with the last allowed day when it is left, and sends nothing", async () => {
+    const calls = showWithWrites(answer(), () => new Response("{}", { status: 201 }));
+    await screen.findByLabelText("Von");
+    fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-11-24" } });
+    const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+    fireEvent.change(until, { target: { value: "2027-01-12" } });
+    fireEvent.blur(until);
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Höchstens 4 Wochen: spätestens 21.12.2026.",
+    );
+    expect(until.getAttribute("aria-invalid")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls).toEqual([]);
   });
 
   it("US-QS-32 a new pause starts with today's date (prefilled, US-ACH-04); a typed text that is no day sends nothing", async () => {
@@ -167,6 +185,37 @@ describe("US-ACH-04 explicit pause", () => {
       "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
     );
     expect(calls).toEqual([]);
+  });
+
+  it("US-QS-32 · US-ACH-04 a coarse pointer (the system picker) with a seven-week range marks Bis with the last allowed day, takes the focus and sends no request", async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(pointer: coarse)",
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      const calls = showWithWrites(answer(), () => new Response("{}", { status: 201 }));
+      await screen.findByLabelText("Von");
+      fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-11-24" } });
+      const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+      fireEvent.change(until, { target: { value: "2027-01-12" } });
+      fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe("Höchstens 4 Wochen: spätestens 21.12.2026.");
+      expect(until.getAttribute("aria-invalid")).toBe("true");
+      expect(until.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+      expect(document.activeElement).toBe(until);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(calls).toEqual([]);
+    } finally {
+      window.matchMedia = original;
+    }
   });
 });
 

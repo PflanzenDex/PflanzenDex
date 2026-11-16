@@ -20,7 +20,7 @@ const GO: Record<TodayTarget, string> = {
   treatments: "Zu Behandlung",
   care_phases: "Zu Pflegephasen",
   measurements: "Zum Messen",
-  hints: "Zu Hinweisen",
+  hints: "Zu „Fehlt noch“",
   wishlist: "Zur Wunschliste",
   equipment: "Zu den Geräten",
 };

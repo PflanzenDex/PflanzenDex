@@ -7,8 +7,8 @@
   "news.speciesUnknown": "Art unbekannt",
   "news.asOf": "Stand: {date}",
   "news.offline": " (keine Verbindung, zuletzt geladener Stand)",
-  "news.okay": "Okay",
-  "news.okayDone": "Okay.",
+  "news.okay": "Als gelesen markieren",
+  "news.okayDone": "Als gelesen markiert.",
   "feed.type.newSpecies": "Neue Art gefangen",
   "feed.type.newCutting": "Neuer Steckling",
   "feed.type.newSpecimen": "Neue Pflanze",
@@ -26,7 +26,6 @@
   "feed.filter": "Filter ({count})",
   "feed.title": "Neu bei Freunden",
   "feed.loading": "Neuigkeiten werden geladen …",
-  "feed.asOf": "Stand: {date}",
   "feed.list": "Neuigkeiten",
   "layers.requests": "Anfragen",
   "layers.news": "Neu bei Freunden",
@@ -44,5 +43,9 @@
   "page.title": "Freunde",
   "page.loading": "Freunde werden geladen …",
   "friendCollection.title": "Sammlung eines Freundes",
-  "friendCollection.loading": "Sammlung wird geladen …"
+  "friendCollection.loading": "Sammlung wird geladen …",
+  "collection.shares": "Art, Name, Fangdatum und Stecklinge",
+  "feed.asOf": "Stand: {date}",
+  "feed.addFriend": "Freund hinzufügen",
+  "feed.shareOwn": "Selbst etwas teilen"
 }

@@ -17,7 +17,7 @@ import {
 type Action = (() => void) | null;
 
 /**
- * The question's state and its buttons (US-QS-32): "Weiter bearbeiten" keeps the layer, "Verwerfen" runs the pending
+ * The question's state and its buttons (US-QS-32): "Weiter bearbeiten" keeps the layer, "Eingabe verwerfen" runs the pending
  * action (the close the person asked for, or a cancel of a form).
  */
 function useQuestion(refs: Refs, id: string) {

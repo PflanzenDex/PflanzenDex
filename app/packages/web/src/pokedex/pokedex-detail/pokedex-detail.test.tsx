@@ -60,7 +60,7 @@ const open = async (onOpenSpecies?: (id: string) => void) => {
   view(
     <PokedexPage api="http://api" token={token} {...(onOpenSpecies ? { onOpenSpecies } : {})} />,
   );
-  await screen.findByRole("heading", { level: 1, name: "Pokédex" });
+  await screen.findByRole("heading", { level: 1, name: "Arten" });
 };
 // The entry's name is its German name where known, so the scientific name is found anywhere in the accessible name.
 const card = (name: string) =>
@@ -80,7 +80,7 @@ describe("US-POK-09 view details of a species", () => {
     const d = within(detail());
     expect(d.getByText("Ficus lyrata")).toBeTruthy();
     expect(d.getByText(/Gattung: Ficus/)).toBeTruthy();
-    expect(d.getByText(/Familie: Moraceae \(Maulbeergewächse\)/)).toBeTruthy();
+    expect(d.getByText(/Familie: Maulbeergewächse \(Moraceae\)/)).toBeTruthy();
     expect(d.getByText(/Status: gefangen/)).toBeTruthy();
     expect(d.getByText(/3 Pflanzen/)).toBeTruthy();
     expect(d.getByText("'Bambino'")).toBeTruthy();

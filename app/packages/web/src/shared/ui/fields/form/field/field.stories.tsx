@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useForm } from "react-hook-form";
-import { Form, FormRoot } from "../form";
+import { Form, FormRoot, useFieldForm } from "../form";
 import { Input } from "../../input/input";
 import { Field } from "./field";
 
@@ -9,7 +8,7 @@ import { Field } from "./field";
 type Values = { diameterCm: string; heightCm: string };
 
 function Demo({ optional = false }: { optional?: boolean }) {
-  const form = useForm<Values>({ defaultValues: { diameterCm: "", heightCm: "" } });
+  const form = useFieldForm<Values>({ defaultValues: { diameterCm: "", heightCm: "" } });
   return (
     <Form {...form}>
       <FormRoot className="flex max-w-xs flex-col gap-4 p-4">

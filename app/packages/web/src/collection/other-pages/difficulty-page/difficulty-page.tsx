@@ -23,7 +23,7 @@ import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
-import { ENTRY_FACTS, entryLine, factsOf } from "./difficulty-page.values";
+import { ENTRY_FACTS, entryLine, factsOf, missingValuesText } from "./difficulty-page.values";
 
 /** The layer of one species of the comparison: `?sheet=compare-<id>` (US-QS-22). */
 const layerId = (r: DifficultyRow): string => `compare-${r.speciesId}`;
@@ -119,6 +119,7 @@ function Values({ row }: { row: DifficultyRow }) {
   return (
     <FactGrid
       facts={factsOf(row)}
+      countText={missingValuesText}
       next={
         row.lightNeedUnknown ? (
           <LightNeedAction speciesId={row.speciesId} speciesName={row.speciesName} />

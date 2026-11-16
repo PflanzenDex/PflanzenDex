@@ -78,7 +78,7 @@ export function Provenance({ value }: { value: SpecimenCard["provenance"] }) {
 
 export function Treatment({ card }: { card: SpecimenCard }) {
   const b = card.treatment;
-  if (!b) return <Quiet>keine offene Behandlung</Quiet>;
+  if (!b) return <Quiet>Keine offene Behandlung.</Quiet>;
   return (
     <p>
       Behandlung: {b.reason} ·{" "}

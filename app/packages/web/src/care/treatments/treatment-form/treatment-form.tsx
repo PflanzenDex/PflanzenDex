@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
+import { useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
@@ -10,6 +10,7 @@ import {
   FormMessage,
   useFormField,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -163,7 +164,7 @@ export function TreatmentForm(props: {
   chosen?: readonly string[];
 }) {
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<TreatmentFields>({
+  const form = useFieldForm<TreatmentFields>({
     resolver: zodResolver(treatmentSchema),
     defaultValues: { ...treatmentDefaults(today), specimenIds: [...(props.chosen ?? [])] },
   });

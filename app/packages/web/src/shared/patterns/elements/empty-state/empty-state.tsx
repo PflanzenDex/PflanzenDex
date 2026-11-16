@@ -67,11 +67,11 @@ export function EmptyState({
       ) : null}
       {action ? (
         action.href !== undefined ? (
-          <Button asChild variant={variant === "error" ? "outline" : "default"}>
+          <Button asChild variant={variant === "error" ? "tinted" : "default"}>
             <a href={action.href}>{action.label}</a>
           </Button>
         ) : (
-          <Button variant={variant === "error" ? "outline" : "default"} onClick={action.onClick}>
+          <Button variant={variant === "error" ? "tinted" : "default"} onClick={action.onClick}>
             {action.label}
           </Button>
         )

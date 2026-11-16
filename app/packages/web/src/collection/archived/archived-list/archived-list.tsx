@@ -39,10 +39,10 @@ export function ArchivedList(props: {
                     type="button"
                     variant="outline"
                     size="sm"
-                    aria-label={`Fangdatum korrigieren: ${e.name}`}
+                    aria-label={`Fangdatum ändern: ${e.name}`}
                     onClick={() => props.onCatchDate?.(e)}
                   >
-                    Fangdatum
+                    Fangdatum ändern
                   </Button>
                 )}
                 <NetworkSlot visible={false}>

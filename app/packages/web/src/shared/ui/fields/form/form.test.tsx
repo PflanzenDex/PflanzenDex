@@ -2,7 +2,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { applyServerError } from "@/shared/lib/error-text";
@@ -15,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "./form";
 import { Input } from "../input/input";
 import { Button } from "../../button/button";
@@ -31,7 +31,7 @@ function Demo({
   onValid?: (v: Values) => void;
   serverFail?: boolean;
 }) {
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
+  const form = useFieldForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
   return (
     <Form {...form}>
       <FormRoot
@@ -117,7 +117,7 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
 });
 
 function Bare({ withMessageText = false }: { withMessageText?: boolean }) {
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
+  const form = useFieldForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
   return (
     <Form {...form}>
       <FormRoot onSubmit={form.handleSubmit(() => {})}>
@@ -214,7 +214,7 @@ describe("FormRoot (US-QS-07 · DS-48)", () => {
 });
 
 function NetworkForm({ onValid }: { onValid: (v: Values) => void }) {
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
+  const form = useFieldForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
   return (
     <Form {...form}>
       <FormRoot onSubmit={form.handleSubmit(onValid)}>
@@ -270,5 +270,129 @@ describe("Form needs the network (US-QS-30 · SG-BTN-05)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(() => expect(onValid).toHaveBeenCalledTimes(1));
     expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera" });
+  });
+});
+
+const pairSchema = z.object({
+  name: z.string().min(1, "Gib einen Namen ein."),
+  note: z.string().min(1, "Gib eine Notiz ein."),
+});
+type PairValues = z.infer<typeof pairSchema>;
+
+function Pair({ onValid = () => {} }: { onValid?: (v: PairValues) => void }) {
+  const form = useFieldForm<PairValues>({
+    resolver: zodResolver(pairSchema),
+    defaultValues: { name: "", note: "" },
+  });
+  return (
+    <Form {...form}>
+      <FormRoot onSubmit={form.handleSubmit(onValid)}>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="note"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notiz</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <button type="submit">Speichern</button>
+      </FormRoot>
+    </Form>
+  );
+}
+
+/**
+ * Reads the frame (aria-invalid), the label colour and the message of one field at every DOM change of its item, so a
+ * state where they disagree is seen even when it lasts one render (SG-FORM-05).
+ */
+function watchField(input: HTMLElement) {
+  const item = input.parentElement as HTMLElement;
+  const states: string[] = [];
+  const snap = () => {
+    const framed = input.getAttribute("aria-invalid") === "true";
+    const red = item.querySelector("label")?.className.includes("text-destructive") ?? false;
+    const message = item.querySelector('[role="alert"]') !== null;
+    states.push(`${framed}|${red}|${message}`);
+  };
+  const observer = new MutationObserver(snap);
+  observer.observe(item, { subtree: true, attributes: true, childList: true, characterData: true });
+  snap();
+  return { states, stop: () => observer.disconnect() };
+}
+
+describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
+  it("US-QS-32 · SG-FORM-05 a field left empty shows its message, red frame and label, and a valid value clears all three in one render", async () => {
+    render(<Pair />);
+    const name = screen.getByRole("textbox", { name: "Name" });
+    await userEvent.click(name);
+    await userEvent.click(document.body);
+    await screen.findByRole("alert");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    const watch = watchField(name);
+    await userEvent.type(name, "Monstera");
+    await waitFor(() => expect(name.getAttribute("aria-invalid")).toBeNull());
+    watch.stop();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(watch.states).toContain("true|true|true");
+    expect(watch.states.filter((s) => new Set(s.split("|")).size > 1)).toEqual([]);
+    expect(watch.states.at(-1)).toBe("false|false|false");
+  });
+
+  it("US-QS-32 · SG-FORM-05 no error shows while the first characters are typed in a field not yet left", async () => {
+    render(<Pair />);
+    const name = screen.getByRole("textbox", { name: "Name" });
+    await userEvent.type(name, "M{Backspace}");
+    expect(name.getAttribute("aria-invalid")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-FORM-05 a send marks every empty field and moves the focus to the first wrong one", async () => {
+    const onValid = vi.fn();
+    render(<Pair onValid={onValid} />);
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    const name = screen.getByRole("textbox", { name: "Name" });
+    const note = screen.getByRole("textbox", { name: "Notiz" });
+    await waitFor(() => expect(document.activeElement).toBe(name));
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(note.getAttribute("aria-invalid")).toBe("true");
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts.map((a) => a.textContent)).toEqual([
+      "Gib einen Namen ein.",
+      "Gib eine Notiz ein.",
+    ]);
+    expect(onValid).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-FORM-05 after a send, correcting one field clears its frame, label and message together and keeps the other error", async () => {
+    render(<Pair />);
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    const name = screen.getByRole("textbox", { name: "Name" });
+    const note = screen.getByRole("textbox", { name: "Notiz" });
+    await waitFor(() => expect(document.activeElement).toBe(name));
+    const watch = watchField(name);
+    await userEvent.type(name, "Monstera");
+    await waitFor(() => expect(name.getAttribute("aria-invalid")).toBeNull());
+    watch.stop();
+    expect(watch.states.filter((s) => new Set(s.split("|")).size > 1)).toEqual([]);
+    expect(note.getAttribute("aria-invalid")).toBe("true");
+    expect((await screen.findByRole("alert")).textContent).toBe("Gib eine Notiz ein.");
   });
 });

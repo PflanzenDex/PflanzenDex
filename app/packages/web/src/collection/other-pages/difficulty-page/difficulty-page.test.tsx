@@ -106,12 +106,12 @@ describe("US-BES-05 page of the difficulty overview", () => {
     view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
     const values = await valuesOf("Bogenhanf");
     expect([...values.entries()]).toEqual([
-      ["Botanischer Name", "Dracaena trifasciata"],
+      ["Lateinischer Name", "Dracaena trifasciata"],
       ["Lichtzone", "Zone 2"],
       ["Gießregel", "alle 10 Tage"],
       ["Substrat", "Humus"],
       ["Schnitt", "selten"],
-      ["Erfolgskriterium", "Neue Blätter wachsen aufrecht."],
+      ["Erfolgskriterien", "Neue Blätter wachsen aufrecht."],
       ["Schwierigkeit", "Leicht"],
     ]);
   });
@@ -130,7 +130,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(values.has("Lichtzone")).toBe(false);
     expect(values.has("Substrat")).toBe(false);
     const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
-    expect(within(layer).getByText("4 Angaben fehlen")).toBeTruthy();
+    expect(within(layer).getByText("4 Vergleichswerte fehlen")).toBeTruthy();
     expect(within(layer).getByRole("link", { name: "Artprofil öffnen" }).getAttribute("href")).toBe(
       "/discover/species/sp1",
     );
@@ -273,8 +273,8 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     const entries = within(
       await screen.findByRole("list", { name: "Artenvergleich" }),
     ).getAllByRole("listitem");
-    expect(entries[0]?.textContent).toContain("Leicht · 1 Angabe fehlt");
-    expect(entries[1]?.textContent).toContain("1 Angabe fehlt");
+    expect(entries[0]?.textContent).toContain("Leicht · 1\u00a0Vergleichswert fehlt");
+    expect(entries[1]?.textContent).toContain("1\u00a0Vergleichswert fehlt");
     expect(screen.queryByText(/unbekannt/)).toBeNull();
   });
 
@@ -329,7 +329,7 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     expect(values.has("Substrat")).toBe(false);
     expect(values.has("Lichtzone")).toBe(false);
     const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
-    expect(within(layer).getByText("3 Angaben fehlen")).toBeTruthy();
+    expect(within(layer).getByText("3 Vergleichswerte fehlen")).toBeTruthy();
   });
 
   it("US-QS-24 the layer of a species with nothing unknown shows no fold line", async () => {

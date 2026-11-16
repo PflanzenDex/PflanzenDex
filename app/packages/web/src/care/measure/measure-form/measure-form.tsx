@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { localToday, MEASUREMENT_LIMITS, MEDIA_LIMITS } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -37,7 +37,7 @@ function EtiolationSigns({ signs }: { signs: string | null }) {
   return (
     <details className="text-sm">
       <DisclosureSummary className="rounded-md">Wie erkennen?</DisclosureSummary>
-      <p>Vergeilung-Anzeichen dieser Art: {signs}</p>
+      <p>Vergeilungsanzeichen dieser Art: {signs}</p>
     </details>
   );
 }
@@ -148,7 +148,7 @@ export function MeasureForm(props: {
   photoStatus?: string | null;
 }) {
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<MeasurementFields>({
+  const form = useFieldForm<MeasurementFields>({
     resolver: zodResolver(measurementSchema),
     defaultValues: measurementDefaults(today),
   });

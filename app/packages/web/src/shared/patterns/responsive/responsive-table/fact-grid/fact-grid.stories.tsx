@@ -20,7 +20,7 @@ export const Default: Story = {
   args: {
     facts,
     next: (
-      <Button type="button" variant="outline" size="sm">
+      <Button type="button" variant="tinted" size="sm">
         Artprofil öffnen
       </Button>
     ),

@@ -1,13 +1,15 @@
 {
   "progressLoading": "Fortschritt wird geladen …",
-  "loading": "Pokédex wird geladen …",
-  "heading": "Pokédex",
+  "loading": "Arten werden geladen …",
+  "heading": "Arten",
   "sectionHeading": "Arten",
   "progressTitle": "Fortschritt",
+  "caught.one": "{count} Art gefangen",
+  "caught.other": "{count} Arten gefangen",
   "milestonesTitle": "Meilensteine",
   "cardsOpener": "Sammlerkarten ansehen",
   "cardsTitle": "Sammlerkarten",
   "uncountedOpener": "Noch nicht gezählt ({count})",
   "uncountedTitle": "Noch nicht gezählt",
-  "uncountedNone": "Jede deiner Pflanzen zählt schon für den Pokédex."
+  "uncountedNone": "Jede deiner Pflanzen zählt schon als gefangene Art."
 }

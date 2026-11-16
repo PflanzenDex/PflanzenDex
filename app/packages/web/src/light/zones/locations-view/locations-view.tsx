@@ -62,7 +62,7 @@ export function LocationForm(props: {
             </option>
           ))}
         </SelectField>
-        <SelectField control={control} name="kind" label="Art">
+        <SelectField control={control} name="kind" label="Innen oder außen">
           <option value="indoor">innen</option>
           <option value="outdoor">außen</option>
         </SelectField>

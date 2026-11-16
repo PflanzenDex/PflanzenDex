@@ -11,7 +11,7 @@ import table from "./area-header.de.json";
 
 const ui = texts(table);
 
-/** The modes that have a shortcut of their own (US-QS-11): the Pokédex is the species mode, the wishes the wishlist. */
+/** The modes that have a shortcut of their own (US-QS-11): the species mode, the wishes the wishlist. */
 const SHORTCUT_OF_VIEW: Partial<Record<SammlungView, ShortcutId>> = {
   species: "species",
   wishlist: "wishlist",

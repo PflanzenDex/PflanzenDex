@@ -130,9 +130,9 @@ afterEach(() => {
   growth.moments = null;
 });
 
-/** The course lives in its own layer "Verlauf", opened from the fact line (US-WAC-01, US-QS-15). */
+/** The course lives in its own layer "Messverlauf", opened from the fact line (US-WAC-01, US-QS-15). */
 const openCourse = async () =>
-  userEvent.click(await screen.findByRole("button", { name: /^Verlauf \(/ }));
+  userEvent.click(await screen.findByRole("button", { name: /^Messverlauf \(/ }));
 
 /** The entries and their photos are in the part "Messungen" of the layer (US-QS-15). */
 const openEntries = async () => {
@@ -153,14 +153,14 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(screen.getByText(/Höhe\./)).toBeTruthy();
   });
 
-  it('US-WAC-03 shows rate and trend of the view; with one measurement "noch keine Rate"', async () => {
+  it('US-WAC-03 shows rate and trend of the view; with one measurement "noch nicht berechenbar (1 Messung)"', async () => {
     fakeServer();
     show();
     await screen.findAllByText("noch keine Messung");
     await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     await openCourse();
-    expect(await screen.findByText("1 Messung — noch keine Rate")).toBeTruthy();
+    expect(await screen.findByText("noch nicht berechenbar (1 Messung)")).toBeTruthy();
   });
 
   it("US-WAC-01 saves with Idempotency-Key, reports the measurement and reloads the course", async () => {
@@ -291,7 +291,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     expect((await screen.findByRole("alert")).textContent).toContain("Das hat nicht geklappt.");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByRole("button", { name: /^Verlauf \(/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Messverlauf \(/ })).toBeTruthy();
   });
 
   it("US-WAC-01 without sign-in while loading: error text, no call to the API", async () => {

@@ -5,6 +5,11 @@ import { Input } from "@/shared/ui/fields/input/input";
 import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
 import { SUPPLY_LABELS } from "../../../labels";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../equipment.de.json";
+
+const t = texts(table);
 
 const LEVELS = ["available", "low", "empty"] as const satisfies readonly SupplyLevel[];
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
@@ -32,10 +37,8 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
         Text in der Behandlung (optional)
         <Input value={text} onChange={(e) => setText(e.target.value)} />
       </label>
-      <p className="m-0 text-xs text-muted-foreground">
-        Der freie Text deiner Behandlungen bleibt, wie er ist; die Verknüpfung findet nur den Vorrat
-        dazu.
-      </p>
+      {/* One line at 14 px (SG-COPY-05, SG-TYPE-03; the sentence was 12 px); the rest sits behind Mehr erfahren. */}
+      <MoreHelp more={t("link.more")}>Dein Behandlungstext bleibt, wie er ist.</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
         Verknüpfung speichern
       </Button>

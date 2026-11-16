@@ -50,7 +50,7 @@ async function askFor(c: Card, onYes: OnYes, counter: string | null): Promise<De
   return { type: "refused", error: errorText(r.error.code) };
 }
 
-/** Stores "Nein" or "Später" and turns the answer into a deck action; a refusal keeps the card (P-10). */
+/** Stores "Ablehnen" or "Später" and turns the answer into a deck action; a refusal keeps the card (P-10). */
 function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<DeckAction> {
   return onAnswer(c.offerId, a).then((r) => {
     // Decided by an open request of mine: the card moves on with the reason, nothing is stored (US-TAU-03, P-10).
@@ -63,7 +63,7 @@ function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<De
           type: "no",
           card: c,
           answeredOn,
-          notice: `Nein: ${title(c)}. Der Freund erfährt davon nichts.`,
+          notice: `Abgelehnt: ${title(c)}. Der Freund erfährt davon nichts.`,
         }
       : {
           type: "later",
@@ -76,7 +76,7 @@ function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<De
 
 /**
  * The writes of the deck (US-TAU-02, US-TAU-03, US-TAU-06): the deck moves on only when the write succeeded, a refusal
- * stays visible (P-10). "Nein" and "Später" are stored privately; `takeBack` removes a stored answer (undo, "Wieder
+ * stays visible (P-10). "Ablehnen" and "Später" are stored privately; `takeBack` removes a stored answer (undo, "Wieder
  * ansehen", "Aus der Liste entfernen").
  */
 export function useDeck(props: {

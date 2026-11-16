@@ -38,6 +38,7 @@ export const DifficultyPage = lazyPage(() =>
 );
 export { loadCardSummary, loadSpecimenCount } from "./specimens/cards/cards-api";
 export { createSpecimen, setSpecimenLocation } from "./specimens/model/specimens-api";
+export { careProfileLayerId } from "./plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab";
 /**
  * The marker step of a further plant (US-BES-03, US-QS-15): its own chunk, loaded with step 2 of the first plant. It
  * reads the rule of the chosen species and reports it to the flow, so neither the sibling read nor the field reach the
@@ -58,6 +59,7 @@ export {
 } from "./markers/marker/marker-rule";
 export { createStart } from "./specimens/model/create-start";
 export type { CreateFields } from "./specimens/model/schemas";
+export { createSchema } from "./specimens/model/schemas";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";
 export {

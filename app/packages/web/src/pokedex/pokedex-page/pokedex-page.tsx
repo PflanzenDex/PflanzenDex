@@ -8,7 +8,7 @@ import { useCallback, useEffect } from "react";
 import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { LoadFrame, SCREEN_STALE_TIME } from "../../shared/data";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
@@ -21,6 +21,7 @@ import { NewlyCaught } from "../caught/newly-caught/newly-caught";
 import table from "./pokedex-page.de.json";
 
 const ui = texts(table);
+const plural = plurals(table);
 const CARDS_LAYER = "cards";
 const UNCOUNTED_LAYER = "uncounted";
 
@@ -30,7 +31,7 @@ type Host = { onCaption: (text: string | null) => void };
 /** Tells the host the count line of the loaded page and takes it back when the page goes away (US-QS-14). */
 function ReportCaption({ host, caught }: { host: Host | undefined; caught: number }) {
   useEffect(() => {
-    host?.onCaption(`${caught} gefangen`);
+    host?.onCaption(plural.counted("caught", caught));
     return () => host?.onCaption(null);
   }, [host, caught]);
   return null;
