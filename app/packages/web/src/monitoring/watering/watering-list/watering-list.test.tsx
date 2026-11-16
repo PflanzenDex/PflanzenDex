@@ -79,11 +79,12 @@ describe("US-MON-05 watering list", () => {
     ).toBeTruthy();
   });
 
-  it("US-MON-05 says why the list is empty and where the interval is set (P-08, P-09)", async () => {
+  it("US-MON-05 · US-QS-32 · issue 2233 the empty list is one line and one step to where the interval is set (P-09)", async () => {
     fakeServer([]);
     show();
-    expect(await screen.findByText(/^Heute nichts zu gießen\./)).toBeTruthy();
-    expect(screen.getByText(/Pflegeprofil/)).toBeTruthy();
+    expect(await screen.findByText(/^Heute nichts zu gießen\.$/)).toBeTruthy();
+    const action = screen.getByRole("link", { name: "Gießintervall eintragen" });
+    expect(action.getAttribute("href")).toBe("/collection");
   });
 
   it("US-MON-05 'Gegossen' writes today's entry for that plant and the row disappears", async () => {

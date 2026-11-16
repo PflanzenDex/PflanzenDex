@@ -98,7 +98,6 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
         <OfferList
           offers={props.data.offers}
           busy={withdraw.running}
-          onOffer={() => layer.openLayer()}
           onWithdraw={(o: OfferView) =>
             void withdraw.run(
               (t) => withdrawOffer(api, t, o.id),

@@ -26,8 +26,6 @@ export function OfferList(props: {
   offers: readonly OfferView[];
   busy: boolean;
   onWithdraw: (o: OfferView) => void;
-  /** Opens the layer "Zum Tausch anbieten" from the empty list (US-QS-32); without it the line has no action. */
-  onOffer?: (() => void) | undefined;
 }) {
   const size = useCardPageSize();
   return (
@@ -39,10 +37,8 @@ export function OfferList(props: {
         {t("offers.title")}
       </h2>
       {props.offers.length === 0 ? (
-        <EmptySection
-          text={t("offers.none")}
-          {...(props.onOffer ? { action: { label: t("offers.add"), onClick: props.onOffer } } : {})}
-        />
+        // One line only: "Zum Tausch anbieten" stands in the page's title bar (SG-STATE-01, issue 2233).
+        <EmptySection text={t("offers.none")} />
       ) : (
         <Pager
           items={props.offers}
