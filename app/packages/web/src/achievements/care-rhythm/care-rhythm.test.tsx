@@ -149,7 +149,7 @@ describe("US-ACH-04 explicit pause", () => {
     fireEvent.change(until, { target: { value: "2026-07-14" } });
     fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toMatch(/höchstens 4 Wochen/);
+    expect(alert.textContent).toBe("Höchstens 4 Wochen: spätestens 28.07.2026.");
     expect(until.getAttribute("aria-invalid")).toBe("true");
     expect(until.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
   });
@@ -162,7 +162,7 @@ describe("US-ACH-04 explicit pause", () => {
     fireEvent.change(until, { target: { value: "2027-01-12" } });
     fireEvent.blur(until);
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "Wähle ein Datum bis zum 21.12.2026.",
+      "Höchstens 4 Wochen: spätestens 21.12.2026.",
     );
     expect(until.getAttribute("aria-invalid")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
@@ -185,6 +185,37 @@ describe("US-ACH-04 explicit pause", () => {
       "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
     );
     expect(calls).toEqual([]);
+  });
+
+  it("US-QS-32 · US-ACH-04 a coarse pointer (the system picker) with a seven-week range marks Bis with the last allowed day, takes the focus and sends no request", async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(pointer: coarse)",
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      const calls = showWithWrites(answer(), () => new Response("{}", { status: 201 }));
+      await screen.findByLabelText("Von");
+      fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-11-24" } });
+      const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+      fireEvent.change(until, { target: { value: "2027-01-12" } });
+      fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe("Höchstens 4 Wochen: spätestens 21.12.2026.");
+      expect(until.getAttribute("aria-invalid")).toBe("true");
+      expect(until.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+      expect(document.activeElement).toBe(until);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(calls).toEqual([]);
+    } finally {
+      window.matchMedia = original;
+    }
   });
 });
 
