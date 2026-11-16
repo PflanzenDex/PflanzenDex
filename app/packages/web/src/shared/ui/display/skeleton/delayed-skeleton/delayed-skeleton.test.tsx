@@ -257,10 +257,24 @@ describe("US-QS-32 the app start shows its skeletons without the delay (SG-STATE
     }
   });
 
-  it("US-QS-32 · Q-27 the first act of the keeper ends the start: a later page change waits for the delay again", () => {
+  it("US-QS-32 · Q-27 a tap on the drawn start frame acts on nothing and keeps the start", () => {
     const end = beginAppStart();
     try {
-      window.dispatchEvent(new Event("pointerdown"));
+      document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      render(loading);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    } finally {
+      end();
+    }
+  });
+
+  it("US-QS-32 · Q-27 the first act on a control ends the start: a later page change waits for the delay again", () => {
+    const end = beginAppStart();
+    const link = document.createElement("a");
+    link.href = "/collection";
+    document.body.append(link);
+    try {
+      link.dispatchEvent(new Event("pointerdown", { bubbles: true }));
       render(loading);
       expect(screen.queryByRole("status")).toBeNull();
       act(() => {
@@ -268,6 +282,7 @@ describe("US-QS-32 the app start shows its skeletons without the delay (SG-STATE
       });
       expect(screen.getAllByRole("status")).toHaveLength(1);
     } finally {
+      link.remove();
       end();
     }
   });

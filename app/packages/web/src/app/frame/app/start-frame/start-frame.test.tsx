@@ -43,9 +43,14 @@ describe("US-QS-32 one loading picture from the app start to the page (SG-STATE-
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
-  it("US-QS-32 a device with a kept sign-in likely opens signed in; one without does not", () => {
+  it("US-QS-32 a device with a kept, live sign-in likely opens signed in; an expired or missing one does not", () => {
+    const key = "oidc.user:https://id.example:pflanzendex";
     expect(likelySignedIn()).toBe(false);
-    window.localStorage.setItem("oidc.user:https://id.example:pflanzendex", "{}");
+    window.localStorage.setItem(key, JSON.stringify({ expires_at: Date.now() / 1000 - 60 }));
+    expect(likelySignedIn()).toBe(false);
+    window.localStorage.setItem(key, "kein JSON");
+    expect(likelySignedIn()).toBe(false);
+    window.localStorage.setItem(key, JSON.stringify({ expires_at: Date.now() / 1000 + 3600 }));
     expect(likelySignedIn()).toBe(true);
   });
 });

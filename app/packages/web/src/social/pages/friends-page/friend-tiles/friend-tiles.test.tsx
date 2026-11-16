@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { LayerRow, LayerTile } from "./friend-tiles";
 
 afterEach(cleanup);
@@ -50,10 +51,20 @@ describe("US-QS-32 the tiles of Freunde are neutral (SG-COLOR-02, SG-LIST-05)", 
 
 describe("US-QS-32 a tile keeps its size while its count loads (SG-STATE-02, F-0247, issue 1995)", () => {
   it("US-QS-32 · SG-STATE-02 a loading count is a bar of the count line's height from the first frame", () => {
-    show("loading");
-    const tile = screen.getByRole("button", { name: /Anfragen/ });
-    const reserve = tile.querySelector("[data-count-skeleton]");
-    expect(reserve?.className).toContain("h-5");
-    expect(tile.textContent).toBe("Anfragenlädt …");
+    vi.useFakeTimers();
+    try {
+      show("loading");
+      const tile = screen.getByRole("button", { name: /Anfragen/ });
+      const reserve = tile.querySelector("[data-count-skeleton]");
+      expect(reserve?.className).toContain("h-5");
+      // The box stands at once; its bar and loading text come after the delay (DS-57).
+      expect(tile.textContent).toBe("Anfragen");
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+      expect(tile.textContent).toBe("Anfragenlädt …");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

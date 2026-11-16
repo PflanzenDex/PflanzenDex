@@ -1,5 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { cn } from "@/shared/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { LoadFrame, useRequest, type Request } from "../../../shared/data";
 import { loadDeletions, type DeletionEntry, type DeletionsView } from "../../api/access-api";
 import { OperatorRow } from "../operator-parts/operator-parts";
@@ -109,24 +111,34 @@ export function DeletionSection(props: {
   );
 }
 
-/** A figure space: as wide as a digit, so the skeleton of the summary has its width without showing a number (P-08). */
-const FIGURE = "\u2007";
+/** The words of the skeleton, transparent; with `bar` on the skeleton's bars that break like the text. */
+function DeadlineWords({ bar }: { bar: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "select-none text-transparent",
+        bar &&
+          "rounded-control bg-muted [-webkit-box-decoration-break:clone] [box-decoration-break:clone] animate-pulse motion-reduce:animate-none",
+      )}
+    >
+      {t("row.none")}
+    </span>
+  );
+}
 
 /**
- * The value of "Löschfristen" while its counts load (SG-STATE-02, F-0338, issue 2038): the summary's own words, transparent
- * on skeleton bars that break like the text (`box-decoration-break: clone`), with a figure space for each count. So the row has
- * its final height from the first frame, on one line or two, and shows no number (P-08); the loading text is for
- * assistive technology.
+ * The value of "Löschfristen" while its counts load (SG-STATE-02, F-0338, issue 2038): the words of the common answer
+ * ("Keine Frist offen") transparent, so the row has that line's height from the first frame and shows no number (P-08);
+ * after the delay of DS-57 they stand on skeleton bars. The loading text is for assistive technology. Counts above zero
+ * give the longer summary, which can take a second line on a narrow phone.
  */
 function DeadlineSkeleton() {
   return (
     <span data-deadline-skeleton="">
-      <span
-        aria-hidden="true"
-        className="select-none rounded-control bg-muted text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone] animate-pulse motion-reduce:animate-none"
-      >
-        {t("row.summary", { near: FIGURE, past: FIGURE, identity: FIGURE })}
-      </span>
+      <DelayedSkeleton before={<DeadlineWords bar={false} />}>
+        <DeadlineWords bar />
+      </DelayedSkeleton>
       <span className="sr-only">{t("row.loading")}</span>
     </span>
   );

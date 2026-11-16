@@ -28,26 +28,32 @@ describe("US-QS-15 the title area at a larger text size (issue 1019)", () => {
 });
 
 describe("US-QS-32 the count line keeps its place while it loads (SG-STATE-02, F-0018, issue 1871)", () => {
-  const header = (caption: string | null) =>
+  const header = (caption: string | null, reserveCaption = true) =>
     render(
       <SammlungHeader
         view="plants"
         options={[{ value: "plants", label: "Pflanzen" }]}
         onChoose={vi.fn()}
         caption={caption}
+        reserveCaption={reserveCaption}
       />,
     );
 
-  it("US-QS-32 · SG-STATE-02 while the count loads a skeleton bar of the line's height stands under the heading", () => {
+  it("US-QS-32 · SG-STATE-02 while the count loads an empty box of the line's height stands under the heading", () => {
     const { container } = header(null);
-    const reserve = container.querySelector("[data-caption-skeleton]");
+    const reserve = container.querySelector("[data-caption-reserve]");
     expect(reserve?.className).toContain("h-5");
     expect(reserve?.previousElementSibling?.tagName).toBe("H1");
   });
 
   it("US-QS-32 · SG-STATE-02 the loaded count takes the place of the bar", () => {
     const { container } = header("3 Pflanzen");
-    expect(container.querySelector("[data-caption-skeleton]")).toBeNull();
+    expect(container.querySelector("[data-caption-reserve]")).toBeNull();
     expect(screen.getByText("3 Pflanzen").className).toContain("text-sm");
+  });
+
+  it("US-QS-32 a header without a count line (Entdecken) reserves nothing", () => {
+    const { container } = header(null, false);
+    expect(container.querySelector("[data-caption-reserve]")).toBeNull();
   });
 });

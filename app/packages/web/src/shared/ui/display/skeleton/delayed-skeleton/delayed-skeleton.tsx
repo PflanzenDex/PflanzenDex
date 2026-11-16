@@ -16,42 +16,58 @@ export const SKELETON_DELAY_MS = 200;
  */
 export const STATUS_HOLD_MS = 300;
 
-/** The events that end the app start: the keeper acts, or goes back or forward in the history. */
-const START_ENDS = ["pointerdown", "keydown", "popstate"] as const;
+/** The acts that can end the app start: a press, a click (a screen reader's activation too) or a key on a control. */
+const START_ACTS = ["pointerdown", "click", "keydown"] as const;
+
+/** What a page change starts from: a link, a button or another control (a tap on the drawn start frame is none). */
+const CONTROL =
+  "a[href], button, input, select, textarea, summary, [role='button'], [role='link'], [tabindex]";
 
 /** True during the app start (SG-STATE-02, owner answer Q-27): see `beginAppStart`. */
 let starting = false;
 
 /**
- * Starts the app start (SG-STATE-02, owner answer Q-27, issue 1876): until the keeper first acts (a pointer, a key) or goes
- * back or forward, every skeleton shows at once, without the delay of DS-57, so the start is one loading picture from the
- * first paint to the content. Everything that loads before that act is part of the start; a page change inside the app
- * follows an act, so the delay applies to it again. The entry calls it once before the first render; it returns the end,
- * which tests call. Without it (tests, stories) every skeleton waits for the delay.
+ * Starts the app start (SG-STATE-02, owner answer Q-27, issue 1876): until the keeper first acts on a control (a press, a
+ * click or a key on a link, a button, a field), goes back or forward, or leaves the page, every skeleton shows at once,
+ * without the delay of DS-57, so the start is one loading picture from the first paint to the content. A tap or a scroll
+ * on the drawn start frame acts on nothing, so it keeps the picture. A page change inside the app follows such an act, so
+ * the delay applies to it again. The entry calls it once before the first render; it returns the end, which tests call.
+ * Without it (tests, stories) every skeleton waits for the delay.
  */
-export function beginAppStart(
-  target: Pick<Window, "addEventListener" | "removeEventListener"> = window,
-) {
+export function beginAppStart(target: Window = window) {
   starting = true;
-  const end = () => {
-    starting = false;
-    for (const type of START_ENDS) target.removeEventListener(type, end, true);
+  const act = (event: Event) => {
+    const on = event.target;
+    if (on instanceof Element && on.closest(CONTROL)) end();
   };
-  for (const type of START_ENDS) target.addEventListener(type, end, true);
+  const hidden = () => {
+    if (target.document.visibilityState === "hidden") end();
+  };
+  function end() {
+    starting = false;
+    for (const type of START_ACTS) target.removeEventListener(type, act, true);
+    target.removeEventListener("popstate", end, true);
+    target.document.removeEventListener("visibilitychange", hidden);
+  }
+  for (const type of START_ACTS) target.addEventListener(type, act, true);
+  target.addEventListener("popstate", end, true);
+  target.document.addEventListener("visibilitychange", hidden);
   return end;
 }
 
 /**
  * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57); during the app
- * start at once (`beginAppStart`, SG-STATE-02). Used as a
- * Suspense fallback it mounts while the part waits and unmounts with it, so the timer ends with the wait. It never holds
- * the skeleton once shown: the skeleton goes as soon as the part arrives.
+ * start at once (`beginAppStart`, SG-STATE-02). Until then it renders `before`, nothing by default: a box that keeps the
+ * part's place without drawing it (SG-STATE-02). Used as a Suspense fallback it mounts while the part waits and unmounts
+ * with it, so the timer ends with the wait. It never holds the skeleton once shown: it goes as soon as the part arrives.
  */
 export function DelayedSkeleton({
   delayMs = SKELETON_DELAY_MS,
+  before = null,
   children,
 }: {
   delayMs?: number;
+  before?: ReactNode;
   children: ReactNode;
 }) {
   const outerDue = useContext(DueContext);
@@ -61,7 +77,7 @@ export function DelayedSkeleton({
     const id = window.setTimeout(() => setDue(true), delayMs);
     return () => window.clearTimeout(id);
   }, [delayMs, due]);
-  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : null;
+  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : before;
 }
 
 type LoaderPhase = "idle" | "waiting" | "shown" | "over";

@@ -787,7 +787,7 @@ describe("US-ACC-04 operator page: the topic Löschfristen", () => {
     expect(screen.getByRole("dialog")).toBe(dialog);
   });
 
-  it("US-QS-32 · SG-STATE-02 while its counts load the row Löschfristen shows the summary's shape as a skeleton, no number (F-0338, issue 2038)", async () => {
+  it("US-QS-32 · SG-STATE-02 while its counts load the row Löschfristen keeps the line of its common answer, no number (F-0338, issue 2038)", async () => {
     let answer: () => void = () => undefined;
     deletionsGate = new Promise<void>((resolve) => {
       answer = resolve;
@@ -795,7 +795,7 @@ describe("US-ACC-04 operator page: the topic Löschfristen", () => {
     await open();
     const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     const shape = row.querySelector("[data-deadline-skeleton] [aria-hidden='true']");
-    expect(shape?.textContent).toContain("überschritten");
+    expect(shape?.textContent).toBe("Keine Frist offen");
     expect(shape?.textContent).not.toMatch(/\d/);
     expect(shape?.className).toContain("text-transparent");
     answer();
