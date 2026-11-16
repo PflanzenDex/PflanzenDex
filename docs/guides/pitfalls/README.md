@@ -285,3 +285,11 @@ IDs are never renumbered.
 - **Fix:** Build the tag from an alphabet that cannot spell any label the test checks for (no "n" and no "r" for "anna" and "bernd"), or check the tagged form (`${tag} anna`) and ids. Read the received body before suspecting a leak: the nearest names of a refusal come from the caller's own rows.
 - **Can it become a gate?** No: which strings a test asserts on is judgment; the AI read tests now pin the alphabet in a test (US-KI-12).
 - **Source:** Issue #2193, CI run 43782439237.
+
+## PF-035 A check on leaving a field eats the tap on send, and a click test in jsdom never sees it
+
+- **Symptom:** A form with an empty required field is sent by tap on a phone: the field turns red and shows its message, nothing is sent, and the focus stays on the send button instead of moving to the field. Enter in the field and every `userEvent.click` test work.
+- **Cause:** The press first moves the focus from the field to the button (`mousedown`). The field's check on leaving (react-hook-form `mode: "onTouched"`) renders its message before the release, and a phone also closes its keyboard; the page moves under the finger, the release lands beside the button, and the browser sends no `click`. jsdom has no layout, so a click test cannot show the shift.
+- **Fix:** Keep the focus in the field while the send button is pressed (`keepFieldFocus` in `shared/ui/fields/form/form-context.ts`, wired in `FormRoot`; a send button outside a `<form>` prevents its own `mousedown`), so the send checks every field and focuses the first wrong one. Pin it with a split press in the test (`user.pointer({ keys: "[MouseLeft>]" })`, assert focus and no message, then `"[/MouseLeft]"`), not with `click` alone.
+- **Can it become a gate?** No: whether a press can shift the page depends on what the check renders; the shared `FormRoot` covers every form built on it.
+- **Source:** Issue #2216 (recheck of FX-13 on four devices).
