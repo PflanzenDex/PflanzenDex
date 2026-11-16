@@ -8,6 +8,7 @@ import {
   covers,
   DCR_POLICIES,
   DCR_POLICY_TYPE,
+  EMAIL_THEME,
   PKCE_POLICY,
   PKCE_PROFILE,
   RESOURCE_CLIENT_ID,
@@ -133,11 +134,21 @@ async function ensureClientPolicy(kc, { path, key, want, label }) {
   return [`${have ? "updated" : "created"} ${label} ${want.name}`];
 }
 
-/** Brings the realm to the target state. Returns the list of changes (empty = nothing to do). */
+// 5. The e-mail theme of the realm (US-QS-32, F-0376): the realm import sets it on a new realm only, so a running realm gets
+// it here. A partial update: only `emailTheme` is sent, the other settings of the realm stay as they are.
+async function ensureEmailTheme(kc) {
+  const realm = await kc.get("");
+  if (realm.emailTheme === EMAIL_THEME) return [];
+  await kc.put("", { emailTheme: EMAIL_THEME });
+  return [`set the e-mail theme of the realm to ${EMAIL_THEME}`];
+}
+
+/** Brings the realm to the target state (the MCP endpoint and the e-mail theme). Returns the list of changes (empty = nothing to do). */
 export async function setupMcpRealm(kc, { resourceUrl }) {
   if (!/^https?:\/\/[^/]+\/.+/.test(resourceUrl ?? ""))
     throw new Error(`AI_RESOURCE_URL is not a URL: ${resourceUrl}`);
   return [
+    ...(await ensureEmailTheme(kc)),
     ...(await ensureScopes(kc, resourceUrl)),
     ...(await ensureResourceClient(kc, resourceUrl)),
     ...(await ensureDcrPolicies(kc)),
