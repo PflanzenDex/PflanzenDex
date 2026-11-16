@@ -17,6 +17,7 @@ import { Label } from "../../display/label/label";
 import {
   FieldContext,
   ItemContext,
+  focusSend,
   keepFieldFocus,
   useFormField,
   useItemContextValue,
@@ -179,6 +180,7 @@ const FormRoot = React.forwardRef<
       void onSubmit?.(event);
     }}
     onMouseDown={(event) => keepFieldFocus(event, onMouseDown)}
+    onClickCapture={focusSend}
     {...props}
   />
 ));

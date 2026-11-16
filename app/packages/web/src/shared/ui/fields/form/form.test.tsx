@@ -417,7 +417,7 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
     expect(onValid).not.toHaveBeenCalled();
   });
 
-  it("US-QS-32 · SG-FORM-05 a press on send keeps a typed field's focus, and the valid send goes through (issue 2216)", async () => {
+  it("US-QS-32 · US-QS-14 a press on a valid send goes through and leaves the focus on the send button (issue 2216)", async () => {
     const onValid = vi.fn();
     render(<Pair onValid={onValid} />);
     await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Monstera");
@@ -426,6 +426,6 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(() => expect(onValid).toHaveBeenCalled());
     expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera", note: "Fenster" });
-    expect(document.activeElement).toBe(note);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Speichern" }));
   });
 });
