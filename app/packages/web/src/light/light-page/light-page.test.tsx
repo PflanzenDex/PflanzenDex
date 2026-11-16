@@ -102,7 +102,7 @@ beforeEach(() => setViewportWidth(1024));
 /** The first button of that name: from 768 px the "+" of a list is in the column header and in the segment row (hidden on a desktop). */
 const pressFirst = (name: string) =>
   userEvent.click(screen.getAllByRole("button", { name })[0] as HTMLElement);
-const REFERENCE = "Lichthunger und Einstufung";
+const REFERENCE = "Lichtbedarf und Einstufung";
 
 describe("US-LIC-05 page locations and light zones", () => {
   it("US-LIC-04 the page shows the classification rules with the zone table of the account", async () => {
@@ -131,7 +131,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect(headings[0]).toMatchObject({ tagName: "H1", textContent: "Standorte und Lichtzonen" });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.queryByRole("heading", { name: "Einstufungsregeln" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Lichthunger" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Lichtbedarf" })).toBeNull();
   });
 
   it("shows a status while loading and then zone and location from the API", async () => {
@@ -205,8 +205,8 @@ describe("US-LIC-05 page locations and light zones", () => {
       screen.getByLabelText("Name", { selector: "form[aria-label='Lichtzone anlegen'] input" }),
       "Fensterbank",
     );
-    await userEvent.type(screen.getByLabelText("Obergrenze"), "8000");
-    await userEvent.click(screen.getByRole("button", { name: "Zone anlegen" }));
+    await userEvent.type(screen.getByLabelText("Lux-Obergrenze"), "8000");
+    await userEvent.click(screen.getByRole("button", { name: "Lichtzone anlegen" }));
     expect(await screen.findByRole("heading", { name: "Fensterbank" })).toBeTruthy();
     const post = calls.find((a) => a.method === "POST" && a.url === "/light-zones");
     expect(post?.body).toEqual({
@@ -229,7 +229,10 @@ describe("US-LIC-05 page locations and light zones", () => {
       screen.getByLabelText("Name", { selector: "form[aria-label='Standort anlegen'] input" }),
       "Fensterbank",
     );
-    await userEvent.selectOptions(screen.getAllByLabelText("Art")[0] as HTMLElement, "outdoor");
+    await userEvent.selectOptions(
+      screen.getAllByLabelText("Innen oder außen")[0] as HTMLElement,
+      "outdoor",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Standort anlegen" }));
     expect(await screen.findByRole("heading", { name: "Fensterbank" })).toBeTruthy();
     const post = calls.find((a) => a.method === "POST" && a.url === "/locations");
@@ -361,8 +364,8 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     );
     await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
-    await userEvent.click(screen.getByRole("button", { name: "Art" }));
-    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art"), "15000");
+    await userEvent.click(screen.getByRole("button", { name: "Rechner" }));
+    await userEvent.type(screen.getByLabelText("Lichtbedarf der Art"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
     expect(await screen.findByText("Lichtzone: Zone 2")).toBeTruthy();
     const get = calls.find((a) => a.url === "/light-zones/derivation");
@@ -376,9 +379,9 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     render(<LightPage api="http://api" token={token} onOpenCollection={() => undefined} />);
     await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
-    await userEvent.click(screen.getByRole("button", { name: "Art" }));
+    await userEvent.click(screen.getByRole("button", { name: "Rechner" }));
     signedIn = false;
-    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art"), "15000");
+    await userEvent.type(screen.getByLabelText("Lichtbedarf der Art"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
     expect((await screen.findAllByText(SIGNED_OUT)).length).toBeGreaterThan(0);
   });
@@ -392,7 +395,7 @@ describe("US-LIC-05 · DS-48 forms and refusals", () => {
     );
     await screen.findByText("Noch keine Lichtzonen", { exact: false });
     await pressFirst("Neue Lichtzone");
-    await userEvent.click(screen.getByRole("button", { name: "Zone anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Lichtzone anlegen" }));
     const name = screen.getByLabelText("Name", {
       selector: "form[aria-label='Lichtzone anlegen'] input",
     });
@@ -422,8 +425,8 @@ describe("US-LIC-05 · DS-48 forms and refusals", () => {
       selector: "form[aria-label='Lichtzone anlegen'] input",
     });
     await userEvent.type(name, "Zone 2");
-    await userEvent.type(screen.getByLabelText("Obergrenze"), "8000");
-    await userEvent.click(screen.getByRole("button", { name: "Zone anlegen" }));
+    await userEvent.type(screen.getByLabelText("Lux-Obergrenze"), "8000");
+    await userEvent.click(screen.getByRole("button", { name: "Lichtzone anlegen" }));
     expect(await screen.findByText("Eine Lichtzone mit diesem Namen gibt es schon.")).toBeTruthy();
     expect(screen.queryByText(/raw server text/)).toBeNull();
     expect(document.activeElement).toBe(name);
@@ -532,10 +535,10 @@ describe("US-QS-19 management on one screen", () => {
     );
     await userEvent.click(await screen.findByRole("button", { name: REFERENCE }));
     expect(
-      (await screen.findByRole("button", { name: "Lichthunger" })).getAttribute("aria-pressed"),
+      (await screen.findByRole("button", { name: "Lichtbedarf" })).getAttribute("aria-pressed"),
     ).toBe("true");
     // The species page by the free height of the layer (issue 1155); jsdom has no layout, so the starting value holds all three.
-    const list = screen.getByRole("list", { name: "Lichthunger der Arten" });
+    const list = screen.getByRole("list", { name: "Lichtbedarf der Arten" });
     expect(list.hasAttribute("data-page-fit")).toBe(true);
     for (const name of ["Art a", "Art b", "Art c"])
       expect(within(list).getByText(name)).toBeTruthy();

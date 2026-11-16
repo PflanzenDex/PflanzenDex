@@ -14,7 +14,7 @@ export interface CostView {
   readonly total: CostLine & { readonly type: null };
   /** Types with at least one record, in the order of the types. */
   readonly byType: readonly (CostLine & { readonly type: EquipmentType })[];
-  /** The coverage in the keeper's words, e.g. "Summe über 7 von 11 Teilen Equipment". */
+  /** The coverage in the keeper's words, e.g. "Summe über 7 von 11 Geräten". */
   readonly coverage: string;
   /** What to do next (P-09); empty when every record has a price or there is no record. */
   readonly nextAction: string | null;
@@ -38,7 +38,7 @@ function line(items: readonly EquipmentRow[]): CostLine {
 
 /**
  * The cost view (US-EQU-09): the sum of the acquisition costs per type and in total, **only** across the records with a
- * set price. It says for how many records the price is missing ("Summe über 7 von 11 Teilen Equipment") and shows
+ * set price. It says for how many records the price is missing ("Summe über 7 von 11 Geräten") and shows
  * "unbekannt" instead of 0 where no price is known (P-08). Purely derived from the keeper's own records on every call
  * (P-01); no estimate of electricity or replacement costs. A record counts here whether it is a device or a consumable.
  */
@@ -54,11 +54,11 @@ export function equipmentCosts(items: readonly EquipmentRow[]): CostView {
     coverage:
       total.count === 0
         ? "Noch kein Gerät erfasst."
-        : `Summe über ${total.priced} von ${total.count} ${total.count === 1 ? "Teil" : "Teilen"}`,
+        : `Summe über ${total.priced} von ${total.count} ${total.count === 1 ? "Gerät" : "Geräten"}`,
     nextAction:
       missing === 0
         ? null
-        : `Bei ${missing} ${missing === 1 ? "Teil fehlt" : "Teilen fehlt"} der Preis. Trage ihn unter Geräte nach, wenn du ihn kennst; sonst bleibt er unbekannt.`,
+        : `Bei ${missing} ${missing === 1 ? "Gerät fehlt" : "Geräten fehlt"} der Preis. Trage ihn unter Geräte nach, wenn du ihn kennst; sonst bleibt er unbekannt.`,
     note: NOTE,
   };
 }

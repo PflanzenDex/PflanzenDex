@@ -7,7 +7,7 @@ import table from "./required-fields.de.json";
 
 const t = texts(table);
 
-const LEVELS = [2, 3, 4].map((s): [string, string] => [String(s), `Stufe ${s}`]);
+const LEVELS = [2, 3, 4].map((s): [string, string] => [String(s), `Zone ${s}`]);
 
 function LightFields({ control }: { control: Control<ProposalFields> }) {
   return (
@@ -24,7 +24,7 @@ function LightFields({ control }: { control: Control<ProposalFields> }) {
         <ChoiceField
           control={control}
           name="standardLevel"
-          label="Standard-Stufe (Lichtzone)"
+          label="Standard-Lichtzone"
           optional
           emptyLabel="Unbekannt"
           options={LEVELS}
@@ -92,7 +92,7 @@ export function TextStepFields({ control }: { control: Control<ProposalFields> }
       <AreaField
         control={control}
         name="etiolationSigns"
-        label="Vergeilung-Anzeichen"
+        label="Vergeilungsanzeichen"
         required
         wide
         help={t("etiolationSigns.hint")}

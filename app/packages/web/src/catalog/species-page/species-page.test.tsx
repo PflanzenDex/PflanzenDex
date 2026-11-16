@@ -89,14 +89,14 @@ async function toStepTwo(etiolation = "x", success = "y") {
   await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
   await screen.findByText(/Schritt 2 von 2/);
-  await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), etiolation);
+  await userEvent.type(screen.getByLabelText(/Vergeilungsanzeichen/), etiolation);
   await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), success);
 }
 
 async function fillProposal(etiolation: string, success: string) {
   await toStepTwo(etiolation, success);
   await userEvent.selectOptions(await screen.findByLabelText(/Schwierigkeit/), "1");
-  await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
+  await userEvent.selectOptions(screen.getByLabelText(/Standard-Lichtzone/), "2");
   await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
 }
 
@@ -443,7 +443,7 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     expect(more.open).toBe(false);
     expect(more.contains(within(layer).getByLabelText(/Schwierigkeit/))).toBe(true);
     expect(more.contains(within(layer).getByLabelText(/Lichtbedarf/))).toBe(true);
-    expect(more.contains(within(layer).getByLabelText(/Vergeilung-Anzeichen/))).toBe(false);
+    expect(more.contains(within(layer).getByLabelText(/Vergeilungsanzeichen/))).toBe(false);
     expect(
       within(layer).getByRole("button", { name: "Vorschlag speichern" }).parentElement?.className,
     ).toContain("sticky");

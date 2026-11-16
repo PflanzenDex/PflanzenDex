@@ -138,7 +138,7 @@ describe("US-QS-21 the catalog list is paged", () => {
     const list = screen.getByRole("list", { name: "Treffer" });
     expect(within(list).getAllByRole("button")).toHaveLength(HITS_PER_PAGE);
     expect(screen.getByText(`Seite 1 von ${Math.ceil(45 / HITS_PER_PAGE)}`)).toBeTruthy();
-    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Einfach")).toHaveLength(
+    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Leicht")).toHaveLength(
       HITS_PER_PAGE,
     );
     expect(screen.queryByText("Mehr laden")).toBeNull();

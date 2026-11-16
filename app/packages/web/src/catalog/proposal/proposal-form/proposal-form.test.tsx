@@ -31,7 +31,7 @@ describe("US-QS-32 · SG-FORM-01 the species proposal marks its fields", () => {
     renderStep(2);
     for (const label of [
       "Schwierigkeit (optional)",
-      "Standard-Stufe (Lichtzone) (optional)",
+      "Standard-Lichtzone (optional)",
       "Weichblättrige C3-Pflanze (sonnenliebend) (optional)",
       "Deutscher Name (optional)",
       "Familie (deutsch) (optional)",
@@ -52,11 +52,11 @@ describe("US-QS-32 · SG-FORM-01 the species proposal marks its fields", () => {
 
   it("US-QS-32 · SG-FORM-01 the two required texts carry no mark and one hint line each", () => {
     renderStep(2);
-    const etiolation = screen.getByLabelText("Vergeilung-Anzeichen");
+    const etiolation = screen.getByLabelText("Vergeilungsanzeichen");
     const success = screen.getByLabelText("Erfolgskriterien");
     expect((etiolation as HTMLTextAreaElement).required).toBe(true);
     expect((success as HTMLTextAreaElement).required).toBe(true);
-    expect(screen.queryByLabelText(/Vergeilung-Anzeichen \(optional\)/)).toBeNull();
+    expect(screen.queryByLabelText(/Vergeilungsanzeichen \(optional\)/)).toBeNull();
     const hintOf = (el: HTMLElement) =>
       (el.getAttribute("aria-describedby") ?? "")
         .split(" ")

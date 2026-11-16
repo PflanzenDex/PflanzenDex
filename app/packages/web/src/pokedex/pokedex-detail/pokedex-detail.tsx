@@ -42,7 +42,7 @@ const family = (c: CaughtSpecies) =>
     ? "unbekannt"
     : c.familyGerman === null
       ? c.familyLatin
-      : `${c.familyLatin} (${c.familyGerman})`;
+      : `${c.familyGerman} (${c.familyLatin})`;
 
 /**
  * The details of one caught species (US-POK-09), the content of its layer (US-QS-22): "Schließen" and Escape belong to

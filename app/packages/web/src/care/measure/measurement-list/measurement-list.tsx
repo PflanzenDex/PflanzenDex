@@ -10,7 +10,7 @@ import table from "./measurement-list.de.json";
 const t = texts(table);
 
 /**
- * The measurements of a specimen, newest first, paged by the free height of the layer "Verlauf" (US-QS-15): whole
+ * The measurements of a specimen, newest first, paged by the free height of the layer "Messverlauf" (US-QS-15): whole
  * entries per page, `data-page-fit`. The pictures are the compact ones of a paged list, so one entry with its photo
  * fits a phone (`MeasurementPhoto`, US-QS-23). The caller shows the empty state; this list has at least one measurement.
  */
@@ -25,8 +25,8 @@ export function MeasurementList(props: {
 }) {
   const { measurements } = props;
   return (
-    <section aria-labelledby="verlauf-title" className="flex min-h-0 flex-1 flex-col">
-      <h2 id="verlauf-title" className="sr-only">
+    <section aria-labelledby="messungen-title" className="flex min-h-0 flex-1 flex-col">
+      <h2 id="messungen-title" className="sr-only">
         {t("heading")}
       </h2>
       <Pager

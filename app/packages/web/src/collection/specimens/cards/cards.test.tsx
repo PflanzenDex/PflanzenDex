@@ -335,8 +335,8 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
     dueDate: { kind, days, text },
   });
 
-  it('without open treatment: "keine offene Behandlung"', () => {
-    expect(html([card()])).toContain("keine offene Behandlung");
+  it('without open treatment: "Keine offene Behandlung."', () => {
+    expect(html([card()])).toContain("Keine offene Behandlung.");
   });
 
   it("shows reason and due date, overdue items are highlighted", () => {

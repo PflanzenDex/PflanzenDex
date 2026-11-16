@@ -47,7 +47,7 @@ export function MeasurementFacts({ view }: { view: MeasurementView }) {
       </div>
       <GrowthSummary growth={view.growth} />
       <div>
-        <dt className="font-semibold">Letzte Bewertung</dt>
+        <dt className="font-semibold">Letzte Qualität</dt>
         <dd className="m-0 mt-0.5 text-muted-foreground">
           {lastRating && last
             ? [QUALITY_NAME[lastRating], dateText(last.date), last.note].filter(Boolean).join(" · ")

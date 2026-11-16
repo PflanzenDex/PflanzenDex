@@ -7,7 +7,7 @@ const numberFormat = new Intl.NumberFormat("de-DE");
 
 export const orUnknown = (value: string | null) => value ?? UNKNOWN;
 
-export const DIFFICULTY: Record<number, string> = { 1: "Einfach", 2: "Medium", 3: "Schwer" };
+export const DIFFICULTY: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 export const GROWTH: Record<GrowthMeasure, string> = {
   height: "Höhe",
   rosette_diameter: "Rosettendurchmesser",
@@ -24,10 +24,10 @@ export const STATUS: Record<Species["reviewStatus"], string> = {
 
 export const lux = (n: number | null) =>
   n === null ? UNKNOWN : `${numberFormat.format(n)}\u00a0Lux`;
-/** Difficulty and default level may be unknown (P-08, #1003): never a guessed "Einfach" or "Stufe 2". */
+/** Difficulty and default level may be unknown (P-08, #1003): never a guessed "Leicht" or "Zone 2". */
 export const difficultyText = (d: number | null) =>
   d === null ? UNKNOWN : (DIFFICULTY[d] ?? UNKNOWN);
-export const levelText = (l: number | null) => (l === null ? UNKNOWN : `Stufe ${l}`);
+export const levelText = (l: number | null) => (l === null ? UNKNOWN : `Zone ${l}`);
 /** The growth measure may be unknown (P-08, #1005): never a guessed "Höhe". */
 export const growthText = (m: GrowthMeasure | null) => (m === null ? UNKNOWN : GROWTH[m]);
 
@@ -47,7 +47,8 @@ export function badge(species: Species): string {
   return STATUS[species.reviewStatus];
 }
 
-export const FIELDS: Record<string, string> = {
+/** The labels of the species fields by key (US-QS-32): typed, so a lookup by an unknown key does not compile. */
+export const FIELDS = {
   latinName: "Lateinischer Name",
   germanName: "Deutscher Name",
   englishName: "Englischer Name",
@@ -55,11 +56,11 @@ export const FIELDS: Record<string, string> = {
   familyGerman: "Familie (deutsch)",
   familyLatin: "Familie (lateinisch)",
   difficulty: "Schwierigkeit",
-  standardLevel: "Standard-Stufe",
+  standardLevel: "Standard-Lichtzone",
   lightDemandLux: "Lichtbedarf",
   dormancyFrom: "Ruhephase von",
   dormancyUntil: "Ruhephase bis",
   growthMeasure: "Wachstumsmaß",
-  etiolationSigns: "Vergeilung-Anzeichen",
+  etiolationSigns: "Vergeilungsanzeichen",
   successCriteria: "Erfolgskriterien",
-};
+} as const satisfies Record<string, string>;

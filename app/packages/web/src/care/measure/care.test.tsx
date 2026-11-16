@@ -245,7 +245,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(page).not.toContain("Was messen?");
     const facts = renderToString(<MeasurementFacts view={v} />);
     expect(facts).toContain("Was messen?");
-    expect(facts).toContain("Letzte Bewertung");
+    expect(facts).toContain("Letzte Qualität");
   });
 
   it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
@@ -298,7 +298,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toMatch(/<option value="etiolated"[^>]*>Vergeilt\/dünn<\/option>/);
     // The summary holds the text and then the decorative chevron icon (US-QS-32 · SG-ICON-01); it stays closed.
     expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<svg/);
-    expect(html).toContain("Vergeilung-Anzeichen dieser Art: Rosette streckt sich.");
+    expect(html).toContain("Vergeilungsanzeichen dieser Art: Rosette streckt sich.");
   });
 
   it("US-WAC-02 without etiolation signs (or from an older server) the form shows no disclosure", () => {

@@ -59,7 +59,7 @@ const open = async (list = caught) => {
     ),
   );
   view(<PokedexPage api="http://api" token={token} />);
-  await screen.findByRole("heading", { level: 1, name: "Pokédex" });
+  await screen.findByRole("heading", { level: 1, name: "Arten" });
 };
 const shown = () =>
   [...document.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species"));
@@ -143,7 +143,7 @@ describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
     expect(screen.queryByRole("button", { name: "Fehlend" })).toBeNull();
     expect(
       within(layer).getByText(
-        /Fehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist/,
+        /Fehlende Arten zeigt „Arten“ erst, wenn der Artenkatalog aufgebaut ist/,
       ),
     ).toBeTruthy();
   });

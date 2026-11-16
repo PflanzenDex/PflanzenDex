@@ -1,20 +1,24 @@
 import { useCallback, useMemo } from "react";
 import type { GrowthTrend } from "@pflanzendex/core";
 import { LoadFrame } from "../../../shared/data";
+import { NBSP } from "@/shared/lib/text-rules/texts";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { growthLines } from "../../measure/measurement-header/growth-summary/growth-text";
 
 type Token = () => Promise<string | undefined>;
 
-/** Rate and trend against the own history only, never a species average (P-08, US-WAC-03); etiolated growth is no success. */
+/** Wachstum and trend against the own history only, never a species average (P-08, US-WAC-03); etiolated growth is no success. */
 function GrowthLines({ growth }: { growth: GrowthTrend }) {
   const lines = growthLines(growth);
   return (
     // One line (US-QS-23); it wraps only when the trend sentence needs more room.
     <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
       <span>Wachstum: {lines.rate}</span>
-      <span aria-hidden="true">·</span>
-      <span>Trend: {lines.trend || "unbekannt"}</span>
+      {/* The dot sticks to the trend (US-QS-32): a line never ends with " ·" and the trend starts the next line. */}
+      <span>
+        <span aria-hidden="true">·{NBSP}</span>
+        Trend: {lines.trend || "unbekannt"}
+      </span>
     </p>
   );
 }
