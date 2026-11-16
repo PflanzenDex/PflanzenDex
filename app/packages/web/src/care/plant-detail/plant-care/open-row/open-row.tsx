@@ -2,7 +2,7 @@ import type { TreatmentListRow } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { dateText } from "../../../shared/text";
 
-/** One open treatment of the plant with "Erledigt" (US-BEH-02); a row of the paged list "Offene Behandlungen". */
+/** One open treatment of the plant with "Abhaken" (US-BEH-02); a row of the paged list "Offene Behandlungen". */
 export function OpenRow(props: { row: TreatmentListRow; busy: boolean; onDone: () => void }) {
   const { row } = props;
   return (
@@ -18,7 +18,7 @@ export function OpenRow(props: { row: TreatmentListRow; busy: boolean; onDone: (
         aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
         onClick={props.onDone}
       >
-        Erledigt
+        Abhaken
       </Button>
     </div>
   );

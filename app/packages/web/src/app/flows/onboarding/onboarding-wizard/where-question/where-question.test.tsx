@@ -268,8 +268,19 @@ describe("US-ONB-02 the question 'Wo steht sie?' says why it has no place and re
     await userEvent.click(screen.getByRole("button", { name: "Später" }));
     expect(screen.queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
     expect(screen.queryByText(REASON)).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
     expect(w.writes.map((x) => x.path)).not.toContain("/specimens/e1/location");
+  });
+
+  it("US-QS-32 the question names its save as Standort übernehmen, next to Später", async () => {
+    world();
+    view();
+    await toSaveStep();
+    await savePlant();
+    expect(await screen.findByText("Wo steht sie?")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Standort übernehmen" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Hier steht sie" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Später" })).toBeTruthy();
   });
 
   it("US-ONB-02 after the retry the focus is on the created heading, not on the body", async () => {

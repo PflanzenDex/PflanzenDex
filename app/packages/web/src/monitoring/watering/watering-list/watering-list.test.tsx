@@ -104,10 +104,29 @@ describe("US-MON-05 watering list", () => {
     show();
     await user.click(await screen.findByRole("checkbox", { name: /Ficus/ }));
     await user.click(screen.getByRole("checkbox", { name: /Aloe/ }));
-    await user.click(screen.getByRole("button", { name: "2 als gegossen eintragen" }));
+    await user.click(screen.getByRole("button", { name: "2 eintragen" }));
     await screen.findByText("Heute nichts zu gießen");
     expect(posts).toHaveLength(1);
     expect(posts[0]?.specimenIds).toEqual(["s1", "s2"]);
+  });
+
+  it("US-QS-32 the bulk button shows only from two marks and reads '2 eintragen'; below two the hint is text, not a button", async () => {
+    fakeServer([ficus, aloe]);
+    const user = userEvent.setup();
+    show();
+    const bulk = () => screen.queryByRole("button", { name: /^\d+ eintragen$/ });
+    const hint = "Mehrere markieren, dann gemeinsam eintragen";
+    expect(
+      await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }),
+    ).toBeTruthy();
+    expect(bulk()).toBeNull();
+    expect(screen.getByText(hint).tagName).toBe("P");
+    await user.click(screen.getByRole("checkbox", { name: /Ficus/ }));
+    expect(bulk()).toBeNull();
+    expect(screen.getByText(hint)).toBeTruthy();
+    await user.click(screen.getByRole("checkbox", { name: /Aloe/ }));
+    expect(screen.getByRole("button", { name: "2 eintragen" })).toBeTruthy();
+    expect(screen.queryByText(hint)).toBeNull();
   });
 
   it("US-QS-32 · F-0075 after the last plant is marked 'Gegossen' the result stands above the empty state and is said once", async () => {
@@ -128,7 +147,7 @@ describe("US-MON-05 watering list", () => {
     show();
     await user.click(await screen.findByRole("checkbox", { name: /Ficus/ }));
     await user.click(screen.getByRole("checkbox", { name: /Aloe/ }));
-    await user.click(screen.getByRole("button", { name: "2 als gegossen eintragen" }));
+    await user.click(screen.getByRole("button", { name: "2 eintragen" }));
     const empty = await screen.findByText("Heute nichts zu gießen");
     const result = resultLine("Als gegossen eingetragen.");
     expect(result.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

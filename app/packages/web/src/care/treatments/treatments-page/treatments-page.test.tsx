@@ -341,12 +341,12 @@ const doneEntry = (id: string, doneAt: string, agent: string | null = null) => (
 });
 
 describe("US-BEH-03 Behandlung abhaken", () => {
-  it('US-BEH-03 every open row has an "Erledigt" action that names the row for screen readers', async () => {
+  it('US-QS-32 · US-BEH-03 every open row has an "Abhaken" action that names the row for screen readers', async () => {
     doneServer();
     show();
     const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
     const buttons = within(list).getAllByRole("button");
-    expect(buttons.map((b) => b.textContent)).toEqual(["Erledigt", "Erledigt"]);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Abhaken", "Abhaken"]);
     expect(buttons[0]?.getAttribute("aria-label")).toBe("Grund a bei Aloe als erledigt abhaken");
   });
 

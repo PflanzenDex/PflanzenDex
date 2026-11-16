@@ -82,7 +82,7 @@ describe("US-PHA-03 client of the confirm API", () => {
   });
 });
 
-describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
+describe("US-PHA-03 'Umstellen' on the page of the care phases", () => {
   it("US-PHA-03 a tap sets the specimen, the row updates at once and the page says what changed", async () => {
     const state = {
       phases: [row("e1", "Bogenhanf", "s1", "s2")],
@@ -96,12 +96,12 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     const fetchFn = fakeServer(state);
     render(<CarePhasesPage api="http://api" token={token} />);
     expect(await screen.findByText("Standort: Wohnzimmer")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Jetzt umgestellt: Bogenhanf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Umstellen: Bogenhanf" }));
     expect((await screen.findByRole("status")).textContent).toContain(
       "„Bogenhanf“ steht jetzt am Standort „Kühler Flur“.",
     );
     expect(await screen.findByText("Standort: Kühler Flur")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Jetzt umgestellt/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Umstellen/ })).toBeNull();
     expect(posts(fetchFn)).toHaveLength(1);
     expect(sent(fetchFn).specimenIds).toEqual(["e1"]);
   });
@@ -114,7 +114,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     };
     const fetchFn = fakeServer(state);
     render(<CarePhasesPage api="http://api" token={token} />);
-    const button = await screen.findByRole("button", { name: "Jetzt umgestellt: Bogenhanf" });
+    const button = await screen.findByRole("button", { name: "Umstellen: Bogenhanf" });
     await userEvent.dblClick(button);
     await vi.waitFor(() => expect(posts(fetchFn)).toHaveLength(1));
     expect((button as HTMLButtonElement).disabled).toBe(true);
@@ -130,7 +130,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     });
     render(<CarePhasesPage api="http://api" token={token} />);
     expect(await screen.findByText("Am Ziel")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /umgestellt/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Umstellen/ })).toBeNull();
     expect(screen.getByText("Soll-Standort: unbekannt")).toBeTruthy();
   });
 
@@ -167,9 +167,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
       confirm: () => response(409, { error: { code: "care.target_unknown", text } }),
     });
     render(<CarePhasesPage api="http://api" token={token} />);
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Jetzt umgestellt: Bogenhanf" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Umstellen: Bogenhanf" }));
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText(text)).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
@@ -187,9 +185,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     };
     fakeServer(state);
     render(<CarePhasesPage api="http://api" token={token} />);
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Jetzt umgestellt: Bogenhanf" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Umstellen: Bogenhanf" }));
     expect((await screen.findByRole("alert")).textContent).toContain(text);
     await vi.waitFor(() => expect(screen.queryByText("Bogenhanf")).toBeNull());
     expect(screen.getByRole("alert").textContent).toContain(text);
@@ -202,7 +198,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
       confirm: () => response(200, { specimens: [] }),
     });
     render(<CarePhasesPage api="http://api" token={async () => (signedIn ? "tok" : undefined)} />);
-    const button = await screen.findByRole("button", { name: "Jetzt umgestellt: Bogenhanf" });
+    const button = await screen.findByRole("button", { name: "Umstellen: Bogenhanf" });
     signedIn = false;
     await userEvent.click(button);
     // The refusal (by its code) is replaced by the load error of the reload that follows; both ask to sign in.

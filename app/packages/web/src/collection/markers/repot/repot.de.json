@@ -50,7 +50,7 @@
   "observe.hint": "Hake an, was du siehst. Nach dem Umtopfen sind die Haken wieder leer.",
   "observe.failed": "Der Haken bei „{sign}“ ist nicht gespeichert.",
   "observe.retry": "Erneut versuchen",
-  "plan.repot": "Umgetopft",
+  "plan.repot": "Umtopfen eintragen",
   "plan.signsNone": "Beobachtungen: keine",
   "plan.signsList": "Beobachtungen: {list}",
   "plan.signsOpen": "Beobachtungen notieren"

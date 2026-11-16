@@ -21,8 +21,8 @@ afterEach(() => {
   cleanup();
 });
 
-/** Opens the menu "Mehr" of the open plant and chooses the repot ("Umgetopft" for a plant, "Eingetopft" for a cutting). */
-async function chooseRepot(item: "Umgetopft" | "Eingetopft") {
+/** Opens the menu "Mehr" of the open plant and chooses the repot ("Umtopfen eintragen" for a plant, "Eintopfen eintragen" for a cutting). */
+async function chooseRepot(item: "Umtopfen eintragen" | "Eintopfen eintragen") {
   await openPlant("Bogenhanf");
   const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
   await userEvent.click(within(layer).getByRole("button", { name: "Mehr" }));
@@ -37,10 +37,10 @@ async function save() {
 }
 
 describe("US-BES-19 the plant's repot names its pot", () => {
-  it("US-BES-19 the menu offers Umgetopft for a plant and the form asks for the day and the pot", async () => {
+  it("US-BES-19 the menu offers Umtopfen eintragen for a plant and the form asks for the day and the pot", async () => {
     fakeRepotServer({ plan: { freePots: [{ id: "p1", name: "Topf A", diameterCm: 14 }] } });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     expect(within(form).getByLabelText("Umgetopft am")).toBeTruthy();
     expect(within(form).getByRole("combobox", { name: "In welchen Topf?" })).toBeTruthy();
@@ -51,7 +51,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       plan: { freePots: [{ id: "p1", name: "Topf A", diameterCm: 14 }] },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: "In welchen Topf?" }),
@@ -74,7 +74,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     const select = within(form).getByRole("combobox", {
       name: "In welchen Topf?",
@@ -93,7 +93,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: "In welchen Topf?" }),
@@ -113,7 +113,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: "In welchen Topf?" }),
@@ -140,7 +140,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     expect(within(form).queryByRole("combobox", { name: "In welchen Topf?" })).toBeNull();
     // No pot select, so no line about pots at all (US-QS-32, F-0200).
@@ -157,7 +157,7 @@ describe("US-QS-32 the pot field has no hint of its own (F-0200)", () => {
       plan: { currentPot: { id: "p0", name: "Terrakotta", diameterCm: 12 }, freePots: [] },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     const select = within(form).getByRole<HTMLSelectElement>("combobox", {
       name: "In welchen Topf?",
@@ -169,10 +169,10 @@ describe("US-QS-32 the pot field has no hint of its own (F-0200)", () => {
 });
 
 describe("US-BES-04 the cutting keeps its form", () => {
-  it("US-BES-04 the menu offers Eingetopft for a cutting, and its form has no pot and sends none", async () => {
+  it("US-BES-04 the menu offers Eintopfen eintragen for a cutting, and its form has no pot and sends none", async () => {
     const sent = fakeRepotServer({ card: { status: "cutting" } });
     renderCollection();
-    await chooseRepot("Eingetopft");
+    await chooseRepot("Eintopfen eintragen");
     const form = await screen.findByRole("form", { name: "Steckling eintopfen" });
     expect(within(form).getByLabelText("Eingetopft am")).toBeTruthy();
     expect(within(form).queryByRole("combobox", { name: "In welchen Topf?" })).toBeNull();

@@ -126,7 +126,7 @@ function Current(props: {
 }
 
 /**
- * The match deck, one card at a time (US-TAU-01). "Ja" asks for the offer (US-TAU-03); "Nein" and "Später" are stored
+ * The match deck, one card at a time (US-TAU-01). "Anfragen" asks for the offer (US-TAU-03); "Ablehnen" and "Später" are stored
  * privately (US-TAU-02); every answer stays findable in the lists below the card, an ended offer is marked, and only the
  * keeper removes an entry (US-TAU-06).
  */

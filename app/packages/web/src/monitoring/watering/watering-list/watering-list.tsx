@@ -97,14 +97,19 @@ function Rows(props: {
           />
         )}
       />
-      <Button
-        size="touch"
-        className="self-start"
-        disabled={props.busy || picked.length < 2}
-        onClick={() => water(picked)}
-      >
-        {picked.length < 2 ? ui("pickMore") : ui("pickedCount", { count: picked.length })}
-      </Button>
+      {/* One mark is no bulk entry: the hint says how to get there, the button only shows from two marks (US-QS-32). */}
+      {picked.length < 2 ? (
+        <p className="m-0 text-sm text-muted-foreground">{ui("pickMore")}</p>
+      ) : (
+        <Button
+          size="touch"
+          className="self-start"
+          disabled={props.busy}
+          onClick={() => water(picked)}
+        >
+          {ui("pickedCount", { count: picked.length })}
+        </Button>
+      )}
     </div>
   );
 }

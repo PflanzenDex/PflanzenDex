@@ -126,7 +126,7 @@ describe("US-ENT-01 suggestions as a card", () => {
     expect(c.queryByRole("link")).toBeNull();
   });
 
-  it("US-ENT-01 offers Nein, Später and Ja as buttons and moves to the next card", async () => {
+  it("US-ENT-01 offers Kein Interesse, Später and Wünschen as buttons and moves to the next card", async () => {
     fakeServer(async () =>
       response(200, deckOf(suggestion("Aspidistra elatior"), suggestion("Ficus lyrata"))),
     );
@@ -135,9 +135,9 @@ describe("US-ENT-01 suggestions as a card", () => {
     await card();
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
       "Mehr erfahren",
-      "Nein",
+      "Kein Interesse",
       "Später",
-      "Ja",
+      "Wünschen",
     ]);
     await user.click(screen.getByRole("button", { name: "Später" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
@@ -175,7 +175,7 @@ describe("US-ENT-01 suggestions as a card", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
     expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Neuer Stapel" }));
@@ -225,7 +225,7 @@ describe("US-QS-14 focus follows the view (SC 2.4.3)", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     const end = await screen.findByRole("heading", { name: /Für heute durch/ });
     expect(document.activeElement).toBe(end);
     await user.click(screen.getByRole("button", { name: "Neuer Stapel" }));
@@ -243,7 +243,7 @@ describe("US-QS-14 focus follows the view (SC 2.4.3)", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Nein" }));
+    await user.click(screen.getByRole("button", { name: "Kein Interesse" }));
     await user.click(await screen.findByRole("button", { name: "Neuer Stapel" }));
     const heading = await screen.findByRole("heading", { name: /Keine neuen Vorschläge/ });
     expect(document.activeElement).toBe(heading);
@@ -257,7 +257,22 @@ describe("US-ENT-04 decisions are saved", () => {
       .filter(([u]) => new URL(String(u)).pathname === "/discover/decisions")
       .map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
 
-  it("US-ENT-04 Ja and Nein write the decision at once and move on; Später writes nothing", async () => {
+  it("US-QS-32 the deck names its decisions in object-free words: Wünschen, Kein Interesse, Später; no button reads Ja or Nein", async () => {
+    fakeServer(async () => response(200, deckOf(suggestion("Ficus lyrata"))));
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    expect(screen.getByRole("button", { name: "Wünschen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Kein Interesse" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Später" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^(Ja|Nein)$/ })).toBeNull();
+    expect(
+      screen.getByText(
+        "„Wünschen“ legt die Art auf die Wunschliste, „Kein Interesse“ verwirft sie dort, „Später“ speichert nichts.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-ENT-04 Wünschen and Kein Interesse write the decision at once and move on; Später writes nothing", async () => {
     const fetchFn = fakeServer(async () =>
       response(
         200,
@@ -271,9 +286,9 @@ describe("US-ENT-04 decisions are saved", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Nein" }));
+    await user.click(screen.getByRole("button", { name: "Kein Interesse" }));
     expect(await screen.findByRole("heading", { name: "Aloe vera" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Später" }));
     expect(posts(fetchFn)).toEqual([
@@ -284,7 +299,7 @@ describe("US-ENT-04 decisions are saved", () => {
     expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
   });
 
-  it("US-ENT-04 a swipe to the right decides Ja, a swipe to the left Nein", async () => {
+  it("US-ENT-04 a swipe to the right decides Wünschen, a swipe to the left Kein Interesse", async () => {
     const fetchFn = fakeServer(async () => response(200, two()));
     render(<DiscoverPage api="http://api" token={token} />);
     const swipe = (el: HTMLElement, from: number, to: number) => {
@@ -312,7 +327,7 @@ describe("US-ENT-04 decisions are saved", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByText("Karte 1 von 2")).toBeTruthy();
     expect(screen.queryByText(/Für heute durch/)).toBeNull();
@@ -361,11 +376,11 @@ describe("US-ENT-01 the card flies off for a decision, the keyboard decides with
     expect(posts(fetchFn)).toEqual([]);
   });
 
-  it("US-ENT-01 the keyboard decides without a pointer: Enter on Ja writes Yes and the card leaves", async () => {
+  it("US-ENT-01 the keyboard decides without a pointer: Enter on Wünschen writes Yes and the card leaves", async () => {
     const fetchFn = fakeServer(async () => response(200, two()));
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    screen.getByRole("button", { name: "Ja" }).focus();
+    screen.getByRole("button", { name: "Wünschen" }).focus();
     await userEvent.keyboard("{Enter}");
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     expect(posts(fetchFn).map((b) => b.decision)).toEqual(["yes"]);
@@ -403,13 +418,13 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
       .map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
   const back = () => screen.findByRole("button", { name: "Rückgängig" });
 
-  it("US-ENT-04 Rückgängig takes the Ja back on the server and the card returns to the front", async () => {
+  it("US-ENT-04 Rückgängig takes the Wünschen back on the server and the card returns to the front", async () => {
     const fetchFn = fakeServer(async () => response(200, two()));
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     await user.click(await back());
     expect(await screen.findByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
@@ -420,12 +435,12 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
     expect(screen.queryByRole("button", { name: "Rückgängig" })).toBeNull();
   });
 
-  it("US-ENT-04 on the end view Rückgängig takes the last Ja back and the count of new wishes goes down", async () => {
+  it("US-ENT-04 on the end view Rückgängig takes the last Wünschen back and the count of new wishes goes down", async () => {
     fakeServer(async () => response(200, deckOf(suggestion("Aspidistra elatior"))));
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
     expect(screen.getByText(/1 neu auf der Wunschliste\./)).toBeTruthy();
     await user.click(await back());
@@ -438,7 +453,7 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Später" }));
     expect(await screen.findByRole("heading", { name: "Für heute durch" })).toBeTruthy();
@@ -456,7 +471,7 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     await user.click(await back());
     expect((await screen.findByRole("alert")).textContent).toBe(
@@ -472,7 +487,7 @@ describe("US-ENT-04 Rückgängig takes the last decision back", () => {
     const user = userEvent.setup();
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
-    await user.click(screen.getByRole("button", { name: "Ja" }));
+    await user.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     const button = await back();
     button.focus();

@@ -50,7 +50,7 @@ function ReportCount({ host, count }: { host: PhasesHost | undefined; count: num
 }
 
 /**
- * Care phases (US-PHA-01) with "Jetzt umgestellt" (US-PHA-03): loads phases and locations; if one fails, the loading
+ * Care phases (US-PHA-01) with "Umstellen" (US-PHA-03): loads phases and locations; if one fails, the loading
  * fails as a whole. After a confirmation the list is loaded again, so the rows show the new location at once. It is
  * shown as the grouping "nach Pflegephase" of the plants in the Sammlung (US-QS-14): below the title of that
  * destination, so its own heading is a section name for screen readers.

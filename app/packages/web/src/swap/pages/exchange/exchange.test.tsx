@@ -150,7 +150,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     const calls = server({ offers: [offer()] });
     view();
     await userEvent.click(
-      await screen.findByRole("button", { name: "Angebot für Haworthia zurückziehen" }),
+      await screen.findByRole("button", { name: "Angebot zurückziehen: Haworthia" }),
     );
     expect(await screen.findByText("Das Angebot für Haworthia ist zurückgezogen.")).toBeTruthy();
     expect(calls[0]).toMatchObject({ method: "POST", path: "/offers/o1/withdraw" });

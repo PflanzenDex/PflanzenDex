@@ -108,8 +108,8 @@ function DeclinedList(props: Handlers & { rows: readonly MatchEntry[] }) {
       </h2>
       {rows.length === 0 ? (
         <p className={HINT}>
-          Noch nichts abgelehnt. Mit „Nein“ sortierst du eine Karte aus; hier findest du sie wieder
-          und kannst sie dir noch einmal überlegen.
+          Noch nichts abgelehnt. Mit „Ablehnen“ sortierst du eine Karte aus; hier findest du sie
+          wieder und kannst sie dir noch einmal überlegen.
         </p>
       ) : (
         <ul className="m-0 list-none p-0 text-sm">
