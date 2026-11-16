@@ -18,6 +18,10 @@ import { nameOf } from "../../parts/request-list/request-list";
 import { FriendEquipment } from "./friend-equipment/friend-equipment";
 import { FriendCard } from "./friend-card/friend-card";
 import { FriendCollectionSkeleton } from "./friend-collection.skeleton";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../social.de.json";
+
+const tx = texts(table);
 
 const EQUIPMENT_LAYER = "equipment";
 
@@ -96,7 +100,7 @@ function Body(props: {
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="text-sm text-muted-foreground">
-        Freigegeben von {name}: nur Art, Anzahl und Fangdatum, keine Wertung und keinen Vergleich.
+        Freigegeben von {name}, ohne Wertung und Vergleich: nur {tx("shared.fields")}.
       </p>
       <SegmentedControl label="Filter" options={FILTERS} value={filter} onChange={setFilter} />
       {wish.message && (

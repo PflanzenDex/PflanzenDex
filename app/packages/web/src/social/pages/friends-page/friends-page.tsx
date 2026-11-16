@@ -55,7 +55,7 @@ function useOfferCount(
 type Options = {
   /** Calm mode is on or not known yet: the tiles show their names without counts (US-ACH-08). */
   calm: boolean;
-  /** The text mark of the exchange while "Tauschen" is not open yet (US-ONB-05); the tiles still lead to the lock page. */
+  /** The text mark of the exchange while "Tauschbörse" is not open yet (US-ONB-05); the tiles still lead to the lock page. */
   swapMark?: string | undefined;
 };
 

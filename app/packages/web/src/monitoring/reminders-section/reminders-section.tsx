@@ -25,7 +25,7 @@ const PUSH_SET_UP = false;
 /**
  * The reminders of an account (epic MON) as one section of "Konto" (US-QS-17): three rows while push is not set up,
  * each opens its layer (US-QS-15). The inbox with what was reminded (US-MON-01), the settings in two layers (US-MON-08:
- * "Wann erinnern?" and "Pausen je Anlass", each saved from its own footer) and, once push is set up, the push devices.
+ * "Wann erinnern?" and "Erinnerungen aussetzen", each saved from its own footer) and, once push is set up, the push devices.
  * Every part loads and fails on its own (P-10); a closed layer loads nothing.
  */
 export function RemindersSection(props: { api: string; token: Token }) {
@@ -42,7 +42,7 @@ export function RemindersSection(props: { api: string; token: Token }) {
       <LayerPart
         id="times"
         title="Wann erinnern?"
-        value="Uhrzeit, Erinnerungspause und Messung"
+        value="Uhrzeit, Ruhezeit und Messung"
         primaryAction={
           <Button type="submit" form={TIMES_FORM} className="w-full">
             Erinnerungen speichern
@@ -53,8 +53,8 @@ export function RemindersSection(props: { api: string; token: Token }) {
       </LayerPart>
       <LayerPart
         id="pauses"
-        title="Pausen je Anlass"
-        value="Anlässe bis zu einem Tag pausieren"
+        title="Erinnerungen aussetzen"
+        value="Je Anlass bis zu einem Datum"
         primaryAction={
           <Button type="submit" form={PAUSES_FORM} className="w-full">
             Pausen speichern

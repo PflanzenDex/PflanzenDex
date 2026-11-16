@@ -1,12 +1,11 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
-import { Badge } from "@/shared/ui/display/badge/badge";
 import { currentTimeZone, LoadFrame } from "../../../shared/data";
 import { loadHistory } from "../../api/swaps-api";
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
-import { CAUSE_TEXT, STATUS_TEXT } from "../swap-requests/swap-text";
+import { CAUSE_TEXT } from "../swap-requests/swap-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 import { SwapHistorySkeleton } from "./swap-history.skeleton";
@@ -22,15 +21,39 @@ const dayText = (iso: string): string =>
     new Date(iso),
   );
 
+/**
+ * The line of an entry worded from its outcome (US-SOZ-13, SG-COPY-03): only a handover says a plant changed hands; a
+ * declined, withdrawn or broken-off swap says what happened to the request. It replaces the status badge.
+ */
+export function outcomeLine(e: Pick<HistoryEntry, "status" | "direction">, who: string): string {
+  switch (e.status) {
+    case "handed_over":
+      return t(
+        e.direction === "given" ? "history.handedOver.given" : "history.handedOver.received",
+        { who },
+      );
+    case "declined":
+      return t(e.direction === "given" ? "history.declined.given" : "history.declined.received", {
+        who,
+      });
+    case "withdrawn":
+      return t(e.direction === "given" ? "history.withdrawn.given" : "history.withdrawn.received", {
+        who,
+      });
+    case "canceled":
+      return t("history.canceled", { who });
+    default:
+      return t("history.open", { who });
+  }
+}
+
 function Entry({ e }: { e: HistoryEntry }) {
   const who = e.friend ?? t("history.someone");
   return (
     <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="text-sm text-muted-foreground">{dayText(e.date)}</span>
       <span className="font-semibold">{e.species ?? t("history.speciesUnknown")}</span>
-      <span className="text-sm">
-        {e.direction === "given" ? t("history.given", { who }) : t("history.received", { who })}
-      </span>
+      <span className="text-sm">{outcomeLine(e, who)}</span>
       <span className="text-sm">
         {TYPE_TEXT[e.type]} · {MODE_TEXT[e.mode]}
       </span>
@@ -40,16 +63,12 @@ function Entry({ e }: { e: HistoryEntry }) {
           {t("history.reason", { reason: e.reason })}
         </span>
       )}
-      <span className="mt-1">
-        {/* Every entry is an ended swap: outlined, like the ended states in "Meine" and "Anfragen" (US-QS-32). */}
-        <Badge variant="outline">{STATUS_TEXT[e.status]}</Badge>
-      </span>
     </div>
   );
 }
 
 /**
- * The swap history (US-SOZ-13): completed and ended swaps with date, friend, given or received, species and status. The
+ * The swap history (US-SOZ-13): completed and ended swaps with date, species and the outcome with the friend. The
  * friend is the name stored at the request, so the history stays after the friendship ended. Nothing disappears (P-10);
  * without entries the section says what it is for (P-09).
  */

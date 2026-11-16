@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { OctagonAlert } from "lucide-react";
 import { afterEach, describe, expect, it } from "vitest";
-import { ErrorNotice } from "./parts";
+import { ErrorNotice, PageFrame } from "./parts";
 
 afterEach(cleanup);
 
@@ -36,5 +36,17 @@ describe("ErrorNotice of the collection (US-QS-32 · SG-COLOR-04, SG-STATE-03)",
     const alert = screen.getByRole("alert");
     expect(alert.textContent).toContain("Der Haken ist nicht gespeichert.");
     expect(alert.textContent).toContain("Der Server ist gerade nicht erreichbar.");
+  });
+});
+
+describe("US-QS-32 the page of Sammlung is flat (SG-SHAPE-05, SG-SHAPE-06)", () => {
+  it("US-QS-32 PageFrame has no frame, no border and no shadow, so a group inside it is not nested in a frame", () => {
+    render(<PageFrame>Inhalt</PageFrame>);
+    const frame = screen.getByText("Inhalt");
+    expect(frame.className).not.toContain("border-border");
+    expect(frame.className).not.toContain("bg-card");
+    expect(frame.className).not.toContain("rounded-2xl");
+    expect(frame.className).not.toMatch(/shadow/);
+    expect(frame.className).toContain("px-4");
   });
 });

@@ -32,7 +32,7 @@ export function TimeFields({ sendTime, quiet, days, on }: TimeFieldsProps) {
         </p>
       </div>
       <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="mb-1 text-sm font-medium">Erinnerungspause</legend>
+        <legend className="mb-1 text-sm font-medium">Ruhezeit</legend>
         <div className="flex flex-wrap gap-3">
           <div className="flex flex-col gap-1">
             <Label htmlFor="quiet-from">Von</Label>

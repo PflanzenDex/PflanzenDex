@@ -14,12 +14,12 @@ type Token = () => Promise<string | undefined>;
 function PauseList(props: { pauses: RhythmPauseItem[]; remove: (id: string) => void }) {
   if (props.pauses.length === 0) return null;
   return (
-    <ul aria-label="Eingetragene Pausen" className="m-0 mt-2 flex list-none flex-col gap-1 p-0">
+    <ul aria-label="Eingetragener Urlaub" className="m-0 mt-2 flex list-none flex-col gap-1 p-0">
       {props.pauses.map((p) => (
         <li key={p.id} className="flex items-center gap-2">
           <span>{`${dateText(p.from)} bis ${dateText(p.until)}`}</span>
           <Button type="button" variant="outline" size="sm" onClick={() => props.remove(p.id)}>
-            {`Pause vom ${dateText(p.from)} entfernen`}
+            {`Urlaub vom ${dateText(p.from)} entfernen`}
           </Button>
         </li>
       ))}
@@ -42,14 +42,14 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
   const submit = () => {
     // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is sent.
     if (!isHandedDate(from) || !isHandedDate(until)) return;
-    void write.run((t) => addRhythmPause(api, t, { from, until }), "Pause eingetragen.");
+    void write.run((t) => addRhythmPause(api, t, { from, until }), "Urlaub eingetragen.");
   };
   return (
     <div className="flex min-w-0 flex-col gap-3 text-sm">
       <div className="flex flex-col gap-2">
         <p className="m-0 text-muted-foreground">
-          In einer Pause von höchstens 4 Wochen zählen fällige Termine nicht. Dein Rhythmus bleibt
-          bestehen. Auch Tage, an denen alle deine Pflanzen ruhen, zählen nicht.
+          Urlaub oder Krankheit, höchstens 4 Wochen: fällige Termine zählen dann nicht gegen deinen
+          Pflegerhythmus. Auch Tage, an denen alle deine Pflanzen ruhen, zählen nicht.
         </p>
         <label className="flex flex-col gap-1">
           Von
@@ -60,12 +60,12 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
           <DateField value={until} onChange={(e) => setUntil(e.target.value)} />
         </label>
         <Button type="button" onClick={submit} disabled={write.running} className="self-start">
-          Pause eintragen
+          Urlaub eintragen
         </Button>
       </div>
       <PauseList
         pauses={pauses}
-        remove={(id) => void write.run((t) => removeRhythmPause(api, t, id), "Pause entfernt.")}
+        remove={(id) => void write.run((t) => removeRhythmPause(api, t, id), "Urlaub entfernt.")}
       />
       {write.error && (
         <p role="alert" className="mt-2 text-destructive">

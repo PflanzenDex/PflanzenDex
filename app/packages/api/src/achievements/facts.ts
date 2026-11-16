@@ -33,7 +33,11 @@ export interface FactsRead {
   readonly measurements: readonly YearMeasurement[];
 }
 
-/** A course is the set of treatments sharing a course id; a single treatment without course is no course (assumption). */
+/**
+ * The finished-or-open treatments as courses: the treatments sharing a course id are one course, and a single
+ * treatment without a course id is a course of one date (owner answer RR-Q2, US-ACH-01, US-ACH-07). A treatment
+ * counts as completed when its last or only date is ticked off; a course counts once.
+ */
 function courseFacts(
   perSpecimen: readonly { id: string; done: readonly TreatmentRow[] }[],
   open: ReadonlyMap<string, readonly TreatmentRow[]>,
@@ -41,10 +45,10 @@ function courseFacts(
   const courses = new Map<string, { specimenId: string; rows: TreatmentRow[] }>();
   for (const p of perSpecimen) {
     for (const t of [...p.done, ...(open.get(p.id) ?? [])]) {
-      if (t.courseId === null) continue;
-      const course = courses.get(t.courseId) ?? { specimenId: p.id, rows: [] };
+      const key = t.courseId === null ? `single:${t.id}` : `course:${t.courseId}`;
+      const course = courses.get(key) ?? { specimenId: p.id, rows: [] };
       course.rows.push(t);
-      courses.set(t.courseId, course);
+      courses.set(key, course);
     }
   }
   return [...courses.values()].map((c) => ({
@@ -73,7 +77,7 @@ function measurementRows(
 /**
  * Reads the keeper's own data into the plain facts of the achievements (US-ACH-01, FR-ACH-02): nothing is stored.
  * Archived specimens stay in (the event history is kept, P-10). A course is the set of treatments sharing a course id;
- * a single treatment without course is no course (assumption, decided by the PO). The handover instant becomes the
+ * a single treatment without course is a course of one date (owner answer RR-Q2, see `courseFacts`). The handover instant becomes the
  * local date in the keeper's time zone (NFR-08). Measurements and treatments are read once for all specimens (NFR-12),
  * in the order of the per-specimen reads: collections are small (starting value, assumption).
  */
