@@ -5,6 +5,10 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider, type FeatureStates } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import {
+  AppBarSlotProvider,
+  useAppBarSlot,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
 import { AccountArea } from "./account-area";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
@@ -93,6 +97,17 @@ function fakeServer(status = 200, calmMode = false) {
     }),
   );
   return puts;
+}
+
+/** The top bar of the shell in miniature: the brand until a page claims it, then the page's header (GlobalHeader). */
+function TestBar() {
+  const bar = useAppBarSlot();
+  return (
+    <header>
+      {bar?.claimed ? null : <span>Marke</span>}
+      <div data-app-bar-slot="" ref={bar?.setElement} />
+    </header>
+  );
 }
 
 function Address() {
@@ -488,6 +503,33 @@ describe("US-QS-14 · US-QS-17 Konto has exactly one h1 on every width", () => {
     expect(screen.getByRole("link", { name: "Zurück zu Konto" }).getAttribute("href")).toBe(
       "/account",
     );
+  });
+
+  it("US-QS-32 on a phone the section Einstellungen puts its h1 and its way back into the top bar, the content keeps none (issue 2231)", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    const { container } = render(
+      <MemoryRouter initialEntries={["/account/settings"]}>
+        <AppBarSlotProvider>
+          <TestBar />
+          <main>
+            <AccountArea
+              api="http://api"
+              token={async () => "tok"}
+              account={account}
+              onSignOut={() => undefined}
+              onEverywhereSignOut={() => undefined}
+            />
+          </main>
+        </AppBarSlotProvider>
+      </MemoryRouter>,
+    );
+    const bar = container.querySelector("[data-app-bar-slot]") as HTMLElement;
+    await within(bar).findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(within(bar).getByRole("link", { name: "Zurück zu Konto" })).toBeTruthy();
+    expect(screen.queryByText("Marke")).toBeNull();
+    expect(container.querySelector("main h1")).toBeNull();
+    expect(headings1()).toEqual(["Einstellungen"]);
   });
 
   it("US-QS-14 the index on a phone keeps the one h1 Konto", async () => {

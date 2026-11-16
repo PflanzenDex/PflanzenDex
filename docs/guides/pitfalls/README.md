@@ -293,3 +293,11 @@ IDs are never renumbered.
 - **Fix:** Keep the focus in the field while the send button is pressed (`keepFieldFocus` in `shared/ui/fields/form/form-context.ts`, wired in `FormRoot`; a send button outside a `<form>` prevents its own `mousedown`), and give the button the focus on the pointer click (`focusSend`, only for `detail > 0`: Enter's implicit click must leave the focus in the field). The send then checks every field and focuses the first wrong one, and a valid send keeps the focus on the busy button (US-QS-14). Pin it with a split press in the test (`user.pointer({ keys: "[MouseLeft>]" })`, assert focus and no message, then `"[/MouseLeft]"`), not with `click` alone.
 - **Can it become a gate?** No: whether a press can shift the page depends on what the check renders; the shared `FormRoot` covers every form built on it.
 - **Source:** Issue #2216 (recheck of FX-13 on four devices).
+
+## PF-036 `hyphens: auto` lowers the min-content width, so a "longest word" minimum breaks the word anyway
+
+- **Symptom:** A title that should keep its longest word whole (`min-w-min`, or a flex item's automatic minimum) breaks as "Samm-lung" at 200 % text and the action stays beside it instead of wrapping under it. Unit tests that check the classes pass; a real phone may pass too when its browser has no German hyphenation dictionary.
+- **Cause:** The base layer sets `hyphens: auto` on every h1 (issue 1315). With hyphenation on, the browser counts each syllable as a possible line break, so the min-content width is the widest syllable, not the widest word.
+- **Fix:** Set `hyphens: manual` (`hyphens-manual`) on every title whose minimum must be a whole word (`KEEP_WORD` in `page-header.tsx`); keep `hyphens: auto` only where a word wider than the column may break.
+- **Can it become a gate?** Partly: the e2e check "US-QS-32 bar titles at 200 % text" in `reflow.spec.ts` reads the lines of each word of the bar title; other headings need the same thought when they get a word minimum.
+- **Source:** Issue #2231 (recheck of FX-44 step 1).
