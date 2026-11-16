@@ -347,6 +347,25 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
   });
 
+  it("US-QS-32 · US-BES-03 a tap on save while the cleared marker is focused keeps it until the press ends, then the marker takes the message and the focus (issue 2216)", async () => {
+    server(OWNED, ZONES, LOCATIONS, noMarkerWhenOwned);
+    view();
+    await toSave();
+    const user = userEvent.setup();
+    const marker = await screen.findByLabelText("Kennzeichen");
+    await user.clear(marker);
+    await untilSaveEnabled();
+    const save = screen.getByRole("button", { name: "Pflanze speichern" });
+    // The press starts: the marker keeps the focus, so its message does not appear and move the button under the finger.
+    await user.pointer({ keys: "[MouseLeft>]", target: save });
+    expect(document.activeElement).toBe(marker);
+    expect(screen.queryByText(CLIENT_MARKER_TEXT)).toBeNull();
+    await user.pointer({ keys: "[/MouseLeft]", target: save });
+    expect(await screen.findByText(CLIENT_MARKER_TEXT)).toBeTruthy();
+    expect(document.activeElement).toBe(marker);
+    expect(writes).toEqual([]);
+  });
+
   it("US-QS-32 · US-BES-03 the third plant checks its missing markers on send: the empty one takes the message and the focus", async () => {
     server([
       {
