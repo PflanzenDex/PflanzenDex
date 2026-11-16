@@ -1,4 +1,5 @@
 import { SpeciesPageSkeleton } from "@/catalog";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { DiscoverPageSkeleton } from "@/discover";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
@@ -27,9 +28,8 @@ export function DiscoverModeSkeleton({ view }: { view: DiscoverView }) {
 export function DiscoverRouteSkeleton({ view }: { view: DiscoverView }) {
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-4">
-      <h1 data-route-fallback="" className="text-2xl font-semibold">
-        {t("page.title")}
-      </h1>
+      {/* The title is the page's header: in the top bar below md, where the page puts it (issue 2230). */}
+      <PageHeader fallback title={t("page.title")} />
       <DelayedSkeleton>
         <div className="flex min-w-0 flex-col gap-3">
           <Skeleton className="h-11 w-full rounded-pill" />

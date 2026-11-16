@@ -82,3 +82,20 @@ describe("routeFallbackOf: 'Sammlung' follows the mode the address names (US-QS-
     );
   });
 });
+
+describe("routeFallbackOf: the root address (US-QS-16, issue 2230)", () => {
+  it("US-QS-16 · issue 2230 the root address shows the skeleton of Heute, the page it redirects to", () => {
+    render(<>{routeFallbackOf("/", "", state)}</>);
+    const title = screen.getByRole("heading", { level: 1, name: "Heute" });
+    expect(title.hasAttribute("data-route-fallback")).toBe(true);
+  });
+
+  it("US-QS-14 issue 2230 · the Betreiber address shows its title and the rows of its page while it loads", async () => {
+    await expectOneLoadingStatus(
+      <>{routeFallbackOf("/operator", "", state)}</>,
+      "Zahlen werden geladen …",
+    );
+    const title = screen.getByRole("heading", { level: 1, name: "Betreiber" });
+    expect(title.hasAttribute("data-route-fallback")).toBe(true);
+  });
+});

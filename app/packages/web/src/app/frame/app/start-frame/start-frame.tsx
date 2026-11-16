@@ -1,23 +1,125 @@
+import { createPortal } from "react-dom";
 import { useLocation } from "react-router";
 import { cn } from "@/shared/lib/utils";
 import {
+  useAppBarSlot,
+  useBarClaim,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
+import {
+  BAR_SLOTS,
+  BRAND_HREF,
   DISPLAY_NAME,
-  destinationHeading,
+  OPERATOR_ADDRESS,
+  barRow,
+  barTitle,
+  barWords,
+  bottomBar,
+  brandLink,
+  contentRow,
+  contentTitle,
   stackedItem,
+  stackedLabel,
+  stackedPill,
+  startTitleOf,
+  topBar,
 } from "@/shared/patterns/navigation/nav-item";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
-
-/** The slots of the bottom bar while the destinations are not known: the bar holds at most five (DS-25). */
-const BAR_SLOTS = 5;
+import { TodaySkeletonBody } from "@/today";
+import { OperatorRouteBody } from "@/account";
+import { startBarLabels } from "./bar-labels";
 
 /**
- * The page skeleton of the address (SG-STATE-02, issue 1876): the destination's heading where its page puts it, and the
- * blocks under it. The start frame and the signed-in frame show the same one, so the start is one loading picture.
+ * The title of the page as its header draws it (issue 2230): the row of the top bar below `md` (`inBar`, the bar's own
+ * classes) or the row of the content from `md` (the page's content classes). It is the one h1 of the start.
+ */
+function TitleRow(props: { title: string; inBar: boolean }) {
+  return (
+    <div data-page-header="" className={props.inBar ? barRow : contentRow}>
+      <h1
+        data-route-fallback=""
+        className={props.inBar ? barTitle : cn(contentTitle, "font-semibold text-2xl")}
+      >
+        {props.title}
+      </h1>
+    </div>
+  );
+}
+
+/**
+ * The title in the shell's top bar while the routes load (issue 2230): it claims the bar like a page header, so the brand does
+ * not show between the start and the page. It renders nothing unless the bar has mounted and holds no other claim.
+ */
+function BarTitle(props: { title: string }) {
+  const bar = useAppBarSlot();
+  const owned = useBarClaim(true);
+  return owned && bar?.element
+    ? createPortal(<TitleRow title={props.title} inBar />, bar.element)
+    : null;
+}
+
+/**
+ * The skeleton body of the address, the body its route shows while it loads (issue 2230): "Heute" for the root and for
+ * "Heute" (the root redirects there), "Betreiber" for its page; every other address keeps the generic page skeleton.
+ */
+function StartBody(props: { pathname: string }) {
+  const address = props.pathname === "/" ? BRAND_HREF : props.pathname;
+  if (address === BRAND_HREF) return <TodaySkeletonBody />;
+  if (address === OPERATOR_ADDRESS) return <OperatorRouteBody />;
+  return <PageSkeleton />;
+}
+
+/**
+ * The bottom bar of the start: the same box as the shell's bar, with its slots at the height of the labels the shell stored
+ * (`startBarLabels`). The pill has the classes of the selected-or-not pill, the label words are the words of the bar in
+ * transparent ink on the skeleton, so a label that wraps at 200 % text takes the same height (issue 2230).
+ */
+function StartBar() {
+  return (
+    <div aria-hidden="true" data-start-bar="" className={bottomBar}>
+      {startBarLabels()
+        .slice(0, BAR_SLOTS)
+        .map((label, index) => (
+          <span key={index} className={cn(stackedItem, stackedLabel(false), "flex-1")}>
+            <span
+              className={cn(
+                stackedPill(false),
+                "animate-pulse bg-muted motion-reduce:animate-none",
+              )}
+            />
+            <span
+              className={cn(
+                barWords,
+                "rounded-control bg-muted text-transparent animate-pulse motion-reduce:animate-none",
+              )}
+            >
+              {label}
+            </span>
+          </span>
+        ))}
+    </div>
+  );
+}
+
+/**
+ * The page skeleton of the address while the shell's routes load (SG-STATE-02, issue 1876, issue 2230): the title in the top bar
+ * below `md` (it claims the bar), from `md` in the content, then the body of the address. The shell shows it until the route's
+ * own skeleton is there, so the start is one picture.
  */
 export function StartPageSkeleton() {
-  const heading = destinationHeading(useLocation().pathname);
-  return <PageSkeleton {...(heading ? { heading } : {})} />;
+  const { pathname } = useLocation();
+  const title = startTitleOf(pathname);
+  const md = useIsMd();
+  return (
+    <>
+      {title !== null && !md ? <BarTitle title={title} /> : null}
+      <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
+        {title !== null && md ? <TitleRow title={title} inBar={false} /> : null}
+        <StartBody pathname={pathname} />
+      </div>
+    </>
+  );
 }
 
 /**
@@ -25,9 +127,14 @@ export function StartPageSkeleton() {
  * bottom bar below `md`, the rail from `md` and the sidebar from `xl`, with the page skeleton in the main column. It has
  * the boxes of `AppShell` (the same classes for frame, header, main and bar), so nothing moves when the shell replaces it,
  * and it shows through the session check and while the code of the shell loads. It is drawn, not operable: the bars have
- * no links yet, so it holds no control and no landmark for them.
+ * no links yet, so it holds no control and no landmark for them. The top bar carries the title of the address where the
+ * page has one, as the page does (issue 2230); the root shows "Heute", where it redirects.
  */
 export function StartFrame() {
+  const { pathname } = useLocation();
+  const title = startTitleOf(pathname);
+  const md = useIsMd();
+  const inBar = title !== null && !md;
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row">
       <div
@@ -43,27 +150,23 @@ export function StartFrame() {
         <Skeleton className="h-11 w-40" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="top-0 z-40 flex items-center gap-4 border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] tall-window:sticky md:hidden">
-          <span className="flex min-h-[44px] items-center text-lg font-bold">{DISPLAY_NAME}</span>
+        <div className={topBar}>
+          {inBar && title !== null ? (
+            <div data-app-bar-slot="" className="flex min-w-0 flex-1 items-center">
+              <TitleRow title={title} inBar />
+            </div>
+          ) : (
+            <span className={brandLink}>{DISPLAY_NAME}</span>
+          )}
         </div>
         <main className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[calc(4rem+env(safe-area-inset-bottom))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10">
-          <div className="mx-auto w-full max-w-180">
-            <StartPageSkeleton />
+          <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
+            {title !== null && !inBar ? <TitleRow title={title} inBar={false} /> : null}
+            <StartBody pathname={pathname} />
           </div>
         </main>
       </div>
-      <div
-        aria-hidden="true"
-        data-start-bar=""
-        className="inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden"
-      >
-        {Array.from({ length: BAR_SLOTS }, (_, i) => (
-          <span key={i} className={cn(stackedItem, "flex-1")}>
-            <Skeleton className="h-[30px] w-14 max-w-full rounded-full" />
-            <Skeleton className="h-3 w-10 max-w-full" />
-          </span>
-        ))}
-      </div>
+      <StartBar />
     </div>
   );
 }

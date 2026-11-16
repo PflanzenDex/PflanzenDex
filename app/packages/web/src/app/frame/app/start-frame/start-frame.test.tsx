@@ -1,15 +1,35 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { likelySignedIn } from "@/account";
+import { navItems, PATHS } from "@/shared/patterns/navigation/navigation/navigation";
+import { barWords, bottomBar, topBar } from "@/shared/patterns/navigation/nav-item";
+import { GlobalHeader } from "../../global-header/global-header";
+import { MobileNavBar } from "../../mobile-nav-bar/mobile-nav-bar";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { beginAppStart } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { BAR_LABELS_KEY } from "./bar-labels";
 import { StartFrame } from "./start-frame";
 
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
 });
+
+beforeEach(() => setViewportWidth(360));
+
+/** The top bar of a frame: the element that carries the bar's own class string. */
+function topBarOf(container: HTMLElement): HTMLElement | undefined {
+  return Array.from(container.querySelectorAll("div")).find((d) => d.className === topBar);
+}
+
+/** Renders the frame at the start of the app (the skeleton shows at once, SG-STATE-02) and ends the start after the test. */
+function startingAt(path: string) {
+  const end = beginAppStart();
+  const view = frameAt(path);
+  return { ...view, end };
+}
 
 function frameAt(path: string) {
   return render(
@@ -52,5 +72,87 @@ describe("US-QS-32 one loading picture from the app start to the page (SG-STATE-
     expect(likelySignedIn()).toBe(false);
     window.localStorage.setItem(key, JSON.stringify({ expires_at: Date.now() / 1000 + 3600 }));
     expect(likelySignedIn()).toBe(true);
+  });
+});
+
+describe("US-QS-32 the start frame carries the title of the page where it is shown (issue 2230)", () => {
+  it("US-QS-32 below md the title of Heute is the top bar's title, and the brand is gone", () => {
+    const { container } = frameAt(PATHS.today);
+    const bar = container.querySelector("[data-app-bar-slot]");
+    expect(bar?.querySelector("h1")?.textContent).toBe("Heute");
+    expect(container.textContent).not.toContain("PflanzenDéx");
+    expect(container.querySelector("main h1")).toBeNull();
+  });
+
+  it("US-QS-32 from md the title is the h1 of the content, and the top bar holds no title", () => {
+    setViewportWidth(1024);
+    const { container } = frameAt(PATHS.today);
+    expect(container.querySelector("main h1")?.textContent).toBe("Heute");
+    expect(container.querySelector(".top-0 h1")).toBeNull();
+  });
+
+  it("US-QS-32 the root shows the title and the body of Heute, the page it redirects to", () => {
+    const { container, end } = startingAt("/");
+    try {
+      expect(container.querySelector("[data-app-bar-slot] h1")?.textContent).toBe("Heute");
+      expect(screen.getByRole("status").textContent).toContain("Heute wird geladen …");
+    } finally {
+      end();
+    }
+  });
+
+  it("US-QS-32 the Betreiber page shows its name in the top bar and its own loading status", () => {
+    const { container, end } = startingAt(PATHS.operator);
+    try {
+      expect(container.querySelector("[data-app-bar-slot] h1")?.textContent).toBe("Betreiber");
+      expect(screen.getByRole("status").textContent).toContain("Zahlen werden geladen …");
+    } finally {
+      end();
+    }
+  });
+
+  it("US-QS-32 an address without a page title of its own keeps the brand in the top bar", () => {
+    const { container } = frameAt(PATHS.account);
+    expect(container.querySelector("[data-app-bar-slot]")).toBeNull();
+    expect(container.textContent).toContain("PflanzenDéx");
+  });
+});
+
+describe("US-QS-32 the start frame and the shell draw the bars alike (issue 2230)", () => {
+  it("US-QS-32 the top bar has the class string of the shell's top bar", () => {
+    const { container: start } = frameAt(PATHS.today);
+    const shell = render(
+      <MemoryRouter>
+        <GlobalHeader />
+      </MemoryRouter>,
+    );
+    expect(topBarOf(start)?.className).toBe(topBar);
+    expect(shell.container.querySelector("header")?.className).toBe(topBar);
+  });
+
+  it("US-QS-32 the bottom bar and its words have the class strings of the shell's bottom bar", () => {
+    const { container: start } = frameAt(PATHS.today);
+    const shell = render(
+      <MemoryRouter>
+        <MobileNavBar items={navItems({})} />
+      </MemoryRouter>,
+    );
+    const startBar = start.querySelector<HTMLElement>("[data-start-bar]");
+    expect(startBar?.className).toBe(bottomBar);
+    expect(shell.container.querySelector("nav[data-bottom-bar]")?.className).toBe(bottomBar);
+    const realWords = shell.container.querySelector("nav[data-bottom-bar] a > span:last-child");
+    expect(realWords?.className).toContain(barWords);
+    expect(startBar?.querySelector("span > span:last-child")?.className).toContain(barWords);
+  });
+
+  it("US-QS-32 the start frame draws the labels the shell stored on this device", () => {
+    const stored = ["Heute", "Sammlung", "Entdecken", "Freunde", "Mehr"];
+    window.localStorage.setItem(BAR_LABELS_KEY, JSON.stringify(stored));
+    const { container } = frameAt(PATHS.today);
+    const labels = Array.from(
+      container.querySelectorAll("[data-start-bar] > span > span:last-child"),
+      (s) => s.textContent,
+    );
+    expect(labels).toEqual(stored);
   });
 });

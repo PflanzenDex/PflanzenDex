@@ -16,6 +16,8 @@ export const SETTINGS_LAYER_IDS: readonly string[] = Object.values(SETTINGS_LAYE
 export const SettingsPage = lazyPage(() =>
   import("./settings-page/settings-page").then((m) => ({ default: m.SettingsPage })),
 );
+// The rows of "Betreiber" while its page loads: the start frame draws the same body (issue 2230).
+export { OperatorRouteBody } from "./operator/operator-page/operator-page.skeleton";
 export const OperatorPage = lazyPage(() =>
   import("./operator/operator-page/operator-page").then((m) => ({ default: m.OperatorPage })),
 );

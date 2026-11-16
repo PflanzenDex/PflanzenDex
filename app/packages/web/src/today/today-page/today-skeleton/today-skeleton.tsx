@@ -1,30 +1,23 @@
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../today.de.json";
+import { TodaySkeletonBody } from "./today-skeleton-body/today-skeleton-body";
 
 const t = texts(table);
 
 /**
- * The skeleton of "Heute" in the shape of `TodayPage` (US-QS-14, DS-52, DS-53, issue 1697): the title, the summary line,
- * the "Jetzt dran" card and two tiles, in the container of the page. It is the route fallback and the fallback of the
- * area's parts, so the page keeps one shape while it loads. The title stands at once; the blocks wait for the delay (DS-57).
+ * The skeleton of "Heute" in the shape of `TodayPage` (US-QS-14, DS-52, DS-53, issue 1697): the title, then the body of
+ * the page (`TodaySkeletonBody`). It is the route fallback of "Heute", so the page keeps one shape while it loads. The title
+ * stands at once; the blocks wait for the delay (DS-57). The bar shows one title while several are mounted (issue 2230).
  */
 export function TodaySkeleton() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <PageHeader fallback title={t("page.title")} />
-      <DelayedSkeleton>
-        <SkeletonGroup label={t("page.loading")} className="flex min-w-0 flex-col gap-3">
-          <Skeleton className="h-5 w-2/3" />
-          <Skeleton className="h-24 w-full rounded-card" />
-          <div className="grid grid-cols-2 gap-2">
-            <Skeleton className="h-20 rounded-card" />
-            <Skeleton className="h-20 rounded-card" />
-          </div>
-        </SkeletonGroup>
-      </DelayedSkeleton>
+      <TodaySkeletonBody />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useAppBarSlot, useBarClaim } from "./app-bar-slot/app-bar-slot";
+import { barRow, barTitle, contentRow, contentTitle } from "../nav-item";
 
 /**
  * The way back of a page (US-QS-14): an icon-only chevron of 44 px (DS-15, DS-17), a ghost button because going back is a
@@ -54,25 +55,17 @@ export type PageHeaderProps = {
 function titleMinimum(hasBack: boolean, hasAction: boolean): string {
   if (hasAction) return "min-w-min flex-1 [overflow-wrap:normal]";
   if (hasBack) return "max-w-full grow basis-[230px] [overflow-wrap:break-word]";
-  return "min-w-20 flex-1 [overflow-wrap:anywhere]";
+  return contentTitle;
 }
 
-/**
- * The row in the bar (US-QS-32): at least 44 px high, the title beside the way back, the actions at the trailing edge. It
- * wraps like the row in the content (issue 1177): at a large text size the action goes under the title, not beside it.
- */
-const BAR_ROW = "flex min-h-[44px] w-full min-w-0 flex-wrap items-center gap-2";
-/** The title in the bar: 18 px semibold, wraps to two lines at 200 % text before it is cut (SG-TYPE-05). */
-const BAR_TITLE = "min-w-0 flex-1 break-words text-lg font-semibold";
 /**
  * The title in the bar beside an action: at least its longest word, as in the content (issue 1230). Shrinking it to zero
  * made the bar 616 px tall at 200 % text (the title wrapped letter by letter), and the page grew past the window (FX-44).
  */
 const BAR_TITLE_WITH_ACTION = "min-w-min flex-1 [overflow-wrap:normal] text-lg font-semibold";
+/** The title in the bar: 18 px semibold without an action (`barTitle`, nav-item), with one the longer variant. */
 const barTitleClass = (hasAction: boolean): string =>
-  hasAction ? BAR_TITLE_WITH_ACTION : BAR_TITLE;
-/** The row in the content, as on every width above `md` and wherever no bar is present. */
-const CONTENT_ROW = "flex min-w-0 flex-wrap items-center gap-2";
+  hasAction ? BAR_TITLE_WITH_ACTION : barTitle;
 /** The object's name as the first line of a form (SG-HEAD-01): inline, 16 px semibold, two lines, then cut. */
 export const PAGE_SUBJECT_CLASS = "m-0 line-clamp-2 break-words text-base font-semibold";
 
@@ -134,7 +127,7 @@ function HeaderRow(props: {
         Heading === "h1" ? "text-2xl" : "text-xl",
       );
   return (
-    <div data-page-header="" className={cn(inBar ? BAR_ROW : CONTENT_ROW, props.className)}>
+    <div data-page-header="" className={cn(inBar ? barRow : contentRow, props.className)}>
       {back ? <BackControl back={back} /> : null}
       <Heading
         {...(props.headingId ? { id: props.headingId } : {})}

@@ -5,6 +5,7 @@
   "welcome.switchAccount": "Konto wechseln",
   "frame.region": "Über PflanzenDéx",
   "loading.label": "Einen Moment, die Anmeldung wird geprüft …",
+  "operator.loading": "Zahlen werden geladen …",
   "error.retry": "Erneut versuchen",
   "error.reloadPage": "Seite neu laden",
   "library.failed": "Die Anmeldung konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.",

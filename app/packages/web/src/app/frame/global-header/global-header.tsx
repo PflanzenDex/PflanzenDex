@@ -3,6 +3,8 @@ import {
   BRAND_HREF,
   BRAND_LINK_LABEL,
   DISPLAY_NAME,
+  brandLink,
+  topBar,
 } from "../../../shared/patterns/navigation/nav-item";
 import { useAppBarSlot } from "../../../shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
 
@@ -16,13 +18,9 @@ import { useAppBarSlot } from "../../../shared/patterns/navigation/page-header/a
 export function GlobalHeader() {
   const bar = useAppBarSlot();
   return (
-    <header className="top-0 z-40 flex items-center gap-4 border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] tall-window:sticky md:hidden">
+    <header className={topBar}>
       {bar?.claimed ? null : (
-        <Link
-          to={BRAND_HREF}
-          aria-label={BRAND_LINK_LABEL}
-          className="flex min-h-[44px] items-center text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
+        <Link to={BRAND_HREF} aria-label={BRAND_LINK_LABEL} className={brandLink}>
           {DISPLAY_NAME}
         </Link>
       )}

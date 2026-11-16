@@ -1,3 +1,4 @@
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
@@ -37,9 +38,8 @@ export function FriendsRouteSkeleton() {
   return (
     <LayerHost data-fit-screen="">
       <section className="flex min-w-0 flex-col gap-3">
-        <h1 data-route-fallback="" className="text-2xl font-semibold">
-          {t("page.title")}
-        </h1>
+        {/* The title is the page's header: in the top bar below md, where the page puts it (issue 2230). */}
+        <PageHeader fallback title={t("page.title")} />
         <DelayedSkeleton>
           <FriendsPageSkeleton label={t("page.loading")} />
         </DelayedSkeleton>

@@ -96,3 +96,52 @@ export const BRAND_HREF = "/today";
 
 /** Accessible name of every brand link; the brand leads to "Heute", the home screen (US-QS-16). */
 export const BRAND_LINK_LABEL = `${DISPLAY_NAME}, zu Heute`;
+
+/** The slots of the bottom bar (DS-25): at most five, or four destinations and "Mehr"; the start frame draws the same count. */
+export const BAR_SLOTS = 5;
+
+/** The button of the drawer at the end of the bottom bar, when destinations do not fit (DS-25). */
+export const MORE_LABEL = "Mehr";
+
+/** The labels of the bottom bar as it shows them: the destinations, or four and "Mehr" when they do not fit (DS-25). */
+export function barLabelsOf(items: readonly NavItem[]): string[] {
+  return items.length > BAR_SLOTS
+    ? [...items.slice(0, BAR_SLOTS - 1).map((item) => item.label), MORE_LABEL]
+    : items.map((item) => item.label);
+}
+
+/**
+ * The classes of the shell's bars and of their rows (issue 2230): the top bar, the bottom bar, the row of a page's title in
+ * the bar (`barRow`, `barTitle`) and in the content (`contentRow`), the brand and the words under the icons (`barWords`).
+ * The shell and the start frame use these strings, so the start draws the bars at the height the page's bars have.
+ */
+export const topBar =
+  "top-0 z-40 flex items-center gap-4 border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] tall-window:sticky md:hidden";
+export const bottomBar =
+  "inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden";
+export const brandLink =
+  "flex min-h-[44px] items-center text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+export const barRow = "flex min-h-[44px] w-full min-w-0 flex-wrap items-center gap-2";
+export const barTitle = "min-w-0 flex-1 break-words text-lg font-semibold";
+export const contentRow = "flex min-w-0 flex-wrap items-center gap-2";
+/** The words under an icon: a label wraps to at most two lines in its slot, and a long word breaks at a syllable (US-QS-32). */
+export const barWords = "block max-w-full text-center hyphens-auto [overflow-wrap:anywhere]";
+
+/** The defaults of the bottom bar for a keeper without a stored copy of its labels (`start-frame/bar-labels.ts`). */
+export const DEFAULT_BAR_LABELS = ["Heute", "Sammlung", "Entdecken", "Freunde", "Konto"];
+
+/** The Betreiber page: its name in the top bar and its address (equals `PATHS.operator`, as `BRAND_HREF` equals `PATHS.today`). */
+export const OPERATOR_HEADING = "Betreiber";
+export const OPERATOR_ADDRESS = "/operator";
+
+/**
+ * The title the start frame and the page's skeleton show in the top bar for an address, where its page has one (issue 2230):
+ * "Heute" for the root too, which redirects there; `null` for every other address, which keeps the brand.
+ */
+export const startTitleOf = (pathname: string): string | null =>
+  pathname === OPERATOR_ADDRESS
+    ? OPERATOR_HEADING
+    : destinationHeading(pathname === "/" ? BRAND_HREF : pathname);
+
+/** The title of a page's row in the content (SG-HEAD-01): the minimum width of the title, without a way back or an action. */
+export const contentTitle = "min-w-20 flex-1 [overflow-wrap:anywhere]";
