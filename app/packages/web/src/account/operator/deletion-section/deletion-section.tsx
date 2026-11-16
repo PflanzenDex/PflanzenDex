@@ -130,8 +130,8 @@ function DeadlineWords({ bar }: { bar: boolean }) {
 /**
  * The value of "Löschfristen" while its counts load (SG-STATE-02, F-0338, issue 2038): the words of the common answer
  * ("Keine Frist offen") transparent, so the row has that line's height from the first frame and shows no number (P-08);
- * after the delay of DS-57 they stand on skeleton bars. The loading text is for assistive technology. Counts above zero
- * give the longer summary, which can take a second line on a narrow phone.
+ * after the delay of DS-57 they stand on skeleton bars. The loading text is for assistive technology. The summary of
+ * counts above zero is one line too (owner answer 2026-11-16), so the row keeps its height when they arrive.
  */
 function DeadlineSkeleton() {
   return (

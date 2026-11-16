@@ -107,7 +107,7 @@ describe("US-ACC-04 the topic Löschfristen shows the deadlines in UTC and the o
   it("US-ACC-04 the overview row shows the counts of the card, and the dates are UTC", () => {
     expect(
       deadlineSummary(view({ near: [request], past: [identity], identityRemovals: [identity] })),
-    ).toBe("1 nahe · 1 überschritten · 1 offen beim Anmeldedienst");
+    ).toBe("1 nahe · 1 überschritten · 1 offen");
     expect(utcText(identity.deadline)).toMatch(/10\.10\.2026.*08:00 UTC/);
   });
 
@@ -119,9 +119,7 @@ describe("US-ACC-04 the topic Löschfristen shows the deadlines in UTC and the o
       ),
     );
     render(inRouter(<DeadlineRow api="http://api" token={async () => "tok"} />));
-    expect(
-      await screen.findByText("1 nahe · 0 überschritten · 1 offen beim Anmeldedienst"),
-    ).toBeTruthy();
+    expect(await screen.findByText("1 nahe · 0 überschritten · 1 offen")).toBeTruthy();
   });
 
   it("US-ACC-04 a failed load is named in the row, which still opens the layer with the reason (P-10)", async () => {
