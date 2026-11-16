@@ -7,12 +7,8 @@ import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
-import {
-  profileSchema,
-  toProfile,
-  toProfileFields,
-  type ProfileFields as Fields,
-} from "../../../schemas";
+import { toProfile, toProfileFields, type ProfileFields as Fields } from "../../../schemas";
+import { fixText, groupSchema } from "./group-rules";
 import { BufferField, NameFields, ThresholdsField } from "../../../settings-fields/settings-fields";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ProfileSaver } from "../profile-saver";
@@ -39,7 +35,7 @@ function sameAsSaved(next: AccountProfile, keys: readonly Key[], saved: AccountP
 /** The form of one group and its save: the group's fields go onto the stored profile; a refusal marks them (P-10). */
 function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boolean) {
   const form = useFieldForm<Fields>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(groupSchema(saver.saved.displayName)),
     defaultValues: toProfileFields(saver.saved, deviceTimeZone()),
   });
   const [message, setMessage] = useState<string | null>(null);
@@ -49,7 +45,7 @@ function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boo
       keys.filter((k) => e.details?.some((d) => d.field === k)).flatMap(fieldPathsOf),
     [keys],
   );
-  const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf);
+  const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf, fixText);
 
   const send = form.handleSubmit(
     async (values) => {
