@@ -277,3 +277,11 @@ IDs are never renumbered.
 - **Fix:** Before pushing a change to the entry, run `npm run build -w @pflanzendex/web && npm run bundle-budget` in `app/`, and compare with dev's number (build dev's `src` the same way). When the change needs room, either make room first in its own PR (code that the first paint does not use, in a lazy chunk) or ask the owner about the ceiling (ADR 0018); never edit `quality-limits.json` to pass.
 - **Can it become a gate?** It is one already (QG-U6 in CI); running it in `make gates` costs a full build on every push.
 - **Source:** FX-08, PR #2182 (the app start of issue 1876 was taken out of the PR for it).
+
+## PF-034 A random fixture tag spells the label a bare isolation check looks for
+
+- **Symptom:** A tenant-isolation test fails now and then with B's answer "containing" A's label: `expected '{"error":{"code":"specimen.not_found"…' not to contain 'anna'`, while the same head passes on the next run. The answer only held B's own name, "Bereich npfemdanna bernd – blau".
+- **Cause:** The test tags its fixture names with a random string (a UUID with digits mapped to letters). The alphabet held every letter of "anna", so about one tag in ten thousand spelled it, and B's own names carry the tag. A bare `not.toContain("anna")` then fails on B's data, not on a leak.
+- **Fix:** Build the tag from an alphabet that cannot spell any label the test checks for (no "n" and no "r" for "anna" and "bernd"), or check the tagged form (`${tag} anna`) and ids. Read the received body before suspecting a leak: the nearest names of a refusal come from the caller's own rows.
+- **Can it become a gate?** No: which strings a test asserts on is judgment; the AI read tests now pin the alphabet in a test (US-KI-12).
+- **Source:** Issue #2193, CI run 43782439237.
