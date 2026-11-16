@@ -370,10 +370,25 @@ test("US-QS-32 · F-0321 · F-0322: no page id in the theme carries .ftl (Keyclo
   }
 });
 
-test("US-QS-32 · F-0326: the verify-email page names its new-mail link without a leftover, the back link has no glyph", () => {
-  assert.equal(de.doClickHere, "E-Mail erneut senden");
+test("US-QS-32 · F-0326: doClickHere is shared by the verify-email and the page-expired pages, so it names no page result; the verify sentence continues the link with ', um'", () => {
+  // The base page-expired template uses doClickHere for its restart and continue links (pageExpiredMsg1/2), so a result such
+  // as "E-Mail erneut senden" would label the wrong action there.
+  assert.notEqual(
+    de.doClickHere,
+    "Hier klicken",
+    "the base default names no result either, but is replaced",
+  );
+  assert.doesNotMatch(
+    de.doClickHere,
+    /E-Mail|Anmeldung|Passwort|senden|erneut/,
+    "no page result in the shared text",
+  );
   assert.equal(de.emailVerifyInstruction2, "Keine E-Mail bekommen?");
-  assert.equal(de.emailVerifyInstruction3, "", "the sentence ends in the link");
+  assert.match(
+    de.emailVerifyInstruction3,
+    /^, um dir eine neue E-Mail schicken zu lassen\.$/,
+    "the sentence continues the link",
+  );
   assert.equal(de.backToLogin, "Zurück zur Anmeldung");
   assert.equal(de.backToApplication, "Zurück zur App");
   assert.equal(de.updatePasswordMessage, "Lege ein Passwort fest, um dein Konto zu aktivieren.");
