@@ -114,16 +114,16 @@ Assumptions, decided by the PO (revisable):
 Acceptance criteria:
 
 - "Seen" state per account on the server; on the first visit silent creation, no banner.
-- Banner "Friends have N new plants: …" stays until "Okay".
+- Banner "Friends have N new plants: …" stays until "Als gelesen markieren".
 - If the data is missing (no network), the block shows the last state with "As of DD.MM.YYYY" (FR-SOZ-03).
 
 Assumptions, decided by the PO (revisable):
 
-- "New" means visible to me since my last "Okay": the later of the moment the specimen was shared and the start of the friendship, not the catch date. An old specimen that is shared today is new to me today; a friend I made today shows everything as new once, and what I saw before is never new again. The seen state is one instant per account (`feed_seen`), private to it (P-04).
+- "New" means visible to me since my last "Als gelesen markieren": the later of the moment the specimen was shared and the start of the friendship, not the catch date. An old specimen that is shared today is new to me today; a friend I made today shows everything as new once, and what I saw before is never new again. The seen state is one instant per account (`feed_seen`), private to it (P-04).
 - The first visit creates the state silently: the banner is empty and the app marks the feed as seen up to the instant it read. There is no banner for what was shared before the person looked.
-- "Okay" marks the feed as seen up to the instant the banner was read (`asOf`), not up to now: what became visible in between is still new. The state only moves forward and never past now; repeating the call changes nothing.
-- The banner names friend and species with a count and nothing else (P-05); it shows nothing for private specimens, while a friend has "Everything private" on, or after the friendship ended. It stays until "Okay". It is shown on the page "Freunde"; on the start page "Heute" the same news is a tile "n Neu bei Freunden" with a layer holding the banner's text, "Stand" and "Okay" (US-QS-18, issue 1156), and a failed load stays quiet there (the page "Freunde" says it, P-10).
-- Offline (FR-SOZ-03): the screens show the last loaded copy; every answer carries the instant it was read and the banner and the feed show it as "Stand: DD.MM.YYYY", so an older copy is recognizable. "Okay" needs a connection and is disabled without one (the write buffer of US-QS-10 is not used for it, because the banner would still say "new" afterwards).
+- "Als gelesen markieren" marks the feed as seen up to the instant the banner was read (`asOf`), not up to now: what became visible in between is still new. The state only moves forward and never past now; repeating the call changes nothing.
+- The banner names friend and species with a count and nothing else (P-05); it shows nothing for private specimens, while a friend has "Everything private" on, or after the friendship ended. It stays until "Als gelesen markieren". It is shown on the page "Freunde"; on the start page "Heute" the same news is a tile "n Neu bei Freunden" with a layer holding the banner's text, "Stand" and "Als gelesen markieren" (US-QS-18, issue 1156), and a failed load stays quiet there (the page "Freunde" says it, P-10).
+- Offline (FR-SOZ-03): the screens show the last loaded copy; every answer carries the instant it was read and the banner and the feed show it as "Stand: DD.MM.YYYY", so an older copy is recognizable. "Als gelesen markieren" needs a connection and is disabled without one (the write buffer of US-QS-10 is not used for it, because the banner would still say "new" afterwards).
 - The server clock and the database clock are assumed to agree to the second; the comparison uses instants, not calendar dates (a visit is a moment, not a day).
 
 ### US-SOZ-07 · View and compare a friend's collection · 🟨 new

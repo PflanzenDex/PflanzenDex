@@ -46,7 +46,7 @@ const show = (caught: CaughtSpecies[]) =>
   render(<NewlyCaught api="http://api" token={token} caught={caught} />);
 
 describe("US-POK-12 banner for newly caught species", () => {
-  it("US-POK-12 shows the species that are caught but not seen, until Okay", async () => {
+  it("US-POK-12 shows the species that are caught but not seen, until 'Als gesehen markieren'", async () => {
     const server = fakeServer(["Aloe vera"]);
     show([card("Aloe vera"), card("Citrus limon"), card("Ficus lyrata")]);
     const banner = await screen.findByRole("status");
@@ -54,11 +54,11 @@ describe("US-POK-12 banner for newly caught species", () => {
     expect(server.posts).toEqual([]);
   });
 
-  it("US-POK-12 Okay writes the seen state with the shown species and removes the banner", async () => {
+  it("US-POK-12 'Als gesehen markieren' writes the seen state with the shown species and removes the banner", async () => {
     const server = fakeServer(["Aloe vera"]);
     show([card("Aloe vera"), card("Citrus limon")]);
     await screen.findByRole("status");
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Als gesehen markieren" }));
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
     expect(server.posts).toEqual([{ species: ["Citrus limon"] }]);
     expect(server.state()).toEqual(["Aloe vera", "Citrus limon"]);
@@ -90,15 +90,15 @@ describe("US-POK-12 banner for newly caught species", () => {
     expect(server.posts).toEqual([]);
   });
 
-  it("US-POK-12 a refused Okay keeps the banner and shows the German text of the code", async () => {
+  it("US-POK-12 a refused 'Als gesehen markieren' keeps the banner and shows the German text of the code", async () => {
     fakeServer(["Aloe vera"], { postStatus: 409 });
     show([card("Aloe vera"), card("Citrus limon")]);
     await screen.findByRole("status");
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Als gesehen markieren" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("noch nicht gefangen");
     expect(alert.textContent).not.toContain("raw server text");
-    expect(screen.getByRole("button", { name: "Okay" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Als gesehen markieren" })).toBeTruthy();
     expect(screen.getByText(/Neu gefangen: Citrus limon/)).toBeTruthy();
   });
 });

@@ -8,7 +8,7 @@ type Token = () => Promise<string | undefined>;
 
 /**
  * One calm hint (US-ONB-07): a short note at the place where it helps, no modal, no overlay, no blocking. Showing it is
- * recorded once (it starts the 7 days); "Okay" stores the dismissal per account and the note never returns. A failed
+ * recorded once (it starts the 7 days); "Hinweis schließen" stores the dismissal per account and the note never returns. A failed
  * save keeps the note and says so (P-10). Announced as text for screen readers, reachable by keyboard (NFR-13).
  */
 export function HintNote(props: {
@@ -40,7 +40,7 @@ export function HintNote(props: {
       <p className="m-0 min-w-0 flex-1">{HINT_TEXTS[occasion]}</p>
       <NetworkSlot visible={false}>
         <Button type="button" variant="ghost" needsNetwork onClick={() => void dismiss()}>
-          Okay
+          Hinweis schließen
         </Button>
       </NetworkSlot>
       {failed && (

@@ -286,11 +286,11 @@ describe("US-ACH-03 new achievements in the overview", () => {
     ],
   });
 
-  it("US-ACH-03 marks a new achievement with text and Okay writes the seen state with its id", async () => {
+  it("US-ACH-03 marks a new achievement with text and 'Als gesehen markieren' writes the seen state with its id", async () => {
     serve(withNew(true));
     expect((await screen.findAllByText(/\(neu\)/)).length).toBe(1);
     expect(screen.getByText(/1 neuer Erfolg/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Als gesehen markieren" }));
     await waitFor(() => {
       const post = vi
         .mocked(fetch)
@@ -301,10 +301,10 @@ describe("US-ACH-03 new achievements in the overview", () => {
     });
   });
 
-  it("US-ACH-03 an achievement that is not new carries no mark and no Okay", async () => {
+  it("US-ACH-03 an achievement that is not new carries no mark and no 'Als gesehen markieren'", async () => {
     serve(withNew(false));
     await screen.findByText("Steckling bewurzelt");
     expect(screen.queryByText(/\(neu\)/)).toBeNull();
-    expect(screen.queryByRole("button", { name: "Okay" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Als gesehen markieren" })).toBeNull();
   });
 });
