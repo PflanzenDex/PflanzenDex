@@ -108,7 +108,7 @@ function Stack(props: {
  */
 function Cards(props: {
   deck: SuggestionDeck;
-  /** Writes "Ja" or "Nein" (US-ENT-04); the card moves on only after it is saved, so nothing is lost silently (P-10). */
+  /** Writes "Wünschen" or "Kein Interesse" (US-ENT-04); the card moves on only after it is saved, so nothing is lost silently (P-10). */
   onDecide: OnDecide;
   /** Takes the last Yes or No back (US-ENT-04); the card returns to the deck once it is taken back. */
   onUndo: OnUndo;

@@ -167,21 +167,21 @@ describe("US-BES-04 create a cutting in the form", () => {
 });
 
 describe("US-BES-04 repotted on the card", () => {
-  it("US-BES-04: only a cutting has 'Eingetopft'", async () => {
+  it("US-BES-04: only a cutting has 'Eintopfen eintragen'", async () => {
     fakeServer();
     render(page());
-    expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
+    expect(await findCardButton("Eintopfen eintragen: Ableger")).toBeTruthy();
     await userEvent.keyboard("{Escape}");
     await userEvent.keyboard("{Escape}");
     await openPlant("Alte Pflanze");
-    expect(await findCardButton("Archivieren: Alte Pflanze")).toBeTruthy();
-    expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull();
+    expect(await findCardButton("Pflanze archivieren: Alte Pflanze")).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Eintopfen eintragen" })).toBeNull();
   });
 
-  it("US-BES-04: tapping Eingetopft changes nothing until Speichern, Abbrechen changes nothing either", async () => {
+  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Speichern, Abbrechen changes nothing either", async () => {
     const { posts } = fakeServer();
     render(page());
-    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     expect(await screen.findByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
     expect(posts).toHaveLength(0);
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
@@ -189,13 +189,13 @@ describe("US-BES-04 repotted on the card", () => {
       expect(screen.queryByRole("heading", { name: "Steckling eintopfen" })).toBeNull(),
     );
     expect(posts).toHaveLength(0);
-    expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
+    expect(await findCardButton("Eintopfen eintragen: Ableger")).toBeTruthy();
   });
 
   it("US-BES-04: the date of the form is preset to the keeper's local today (NFR-08)", async () => {
     fakeServer();
     render(page());
-    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     const today = localToday(new Date(), currentTimeZone());
     expect(((await screen.findByLabelText("Eingetopft am")) as HTMLInputElement).value).toBe(
       showDateText(today),
@@ -205,7 +205,7 @@ describe("US-BES-04 repotted on the card", () => {
   it("US-BES-04: Speichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
     const { posts } = fakeServer();
     render(page());
-    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-10-01" },
     });
@@ -216,7 +216,7 @@ describe("US-BES-04 repotted on the card", () => {
     const toast = await screen.findByText(/„Ableger“ ist eingetopft/);
     expect(toast.textContent).toContain("Lichtzone");
     await vi.waitFor(() =>
-      expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull(),
+      expect(screen.queryByRole("menuitem", { name: "Eintopfen eintragen" })).toBeNull(),
     );
   });
 
@@ -234,7 +234,7 @@ describe("US-BES-04 repotted on the card", () => {
       ),
     });
     render(page());
-    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-12-24" },
     });
@@ -258,7 +258,7 @@ describe("US-BES-04 repotted on the card", () => {
       ),
     });
     render(page());
-    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-08-31" },
     });
@@ -278,7 +278,7 @@ describe("US-BES-04 repotted on the card", () => {
       ),
     });
     render(page());
-    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
+    await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     await userEvent.click(await screen.findByRole("button", { name: "Speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("kein Steckling");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();

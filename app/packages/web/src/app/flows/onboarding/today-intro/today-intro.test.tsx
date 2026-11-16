@@ -230,7 +230,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     expect(created?.body["speciesId"]).toBe("sp1");
     expect(created?.body).not.toHaveProperty("lightZoneId");
     expect(created?.body).not.toHaveProperty("locationId");
-    await userEvent.click(screen.getByRole("button", { name: "Miss deine Pflanze" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze messen" }));
     expect(open).toHaveBeenCalledWith("collection");
   });
 
@@ -414,7 +414,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     await saveFirstPlant();
     expect(await screen.findByText(/Wo steht sie\?/)).toBeTruthy();
     await userEvent.selectOptions(screen.getByLabelText("Licht bei Zuhause"), "z3");
-    await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
+    await userEvent.click(screen.getByRole("button", { name: "Standort übernehmen" }));
     await vi.waitFor(() =>
       expect(w.writes.find((x) => x.path === "/specimens/e1/location")?.body).toEqual({
         locationId: "l1",
@@ -424,7 +424,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
       lightZoneId: "z3",
     });
     expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
     expect((await screen.findByRole("status")).textContent).toBe(
       "Standort gespeichert: Zuhause, Zone 3.",
     );
@@ -438,7 +438,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     view();
     await saveFirstPlant();
     expect(await screen.findByText("Balkon (Zone 4)")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
+    await userEvent.click(screen.getByRole("button", { name: "Standort übernehmen" }));
     expect((await screen.findByRole("status")).textContent).toBe(
       "Standort gespeichert: Balkon, Zone 4.",
     );
@@ -453,7 +453,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(w.writes.map((x) => x.path)).not.toContain("/specimens/e1/location");
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
   });
 
   it("US-ONB-02 Heute shows no permanent card about missing locations or light zones", async () => {
@@ -500,7 +500,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
       }),
     );
     expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
     expect(await screen.findByText("Alles ist jetzt offen.")).toBeTruthy();
   });
 

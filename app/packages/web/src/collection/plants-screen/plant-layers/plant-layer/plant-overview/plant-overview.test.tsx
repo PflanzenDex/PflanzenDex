@@ -37,7 +37,7 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
 
   it("NFR-13 the row of Gießen, Behandeln and Notizen may wrap, so at 200 % text the buttons stay inside their column", () => {
     overview(<button type="button">Gießen</button>);
-    const treat = screen.getByRole("button", { name: "Behandeln: Birkenfeige" });
+    const treat = screen.getByRole("button", { name: "Behandlung planen: Birkenfeige" });
     const classes = (treat.parentElement as HTMLElement).className.split(" ");
     expect(classes).toEqual(
       expect.arrayContaining(["flex", "flex-wrap", "[&>button]:grow", "[&>button]:basis-1/4"]),
@@ -51,7 +51,7 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
 
   it("NFR-13 the column does not grow with its widest row, and the measurement may move below the photo", () => {
     overview();
-    const treat = screen.getByRole("button", { name: "Behandeln: Birkenfeige" });
+    const treat = screen.getByRole("button", { name: "Behandlung planen: Birkenfeige" });
     const column = treat.parentElement?.parentElement as HTMLElement;
     expect(column.className.split(" ")).toContain("grid-cols-[minmax(0,1fr)]");
     const measurement = screen.getByText("noch keine Messung").parentElement as HTMLElement;
@@ -69,8 +69,8 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
 
   it("US-QS-23 shows the texts of the table, with unknown values as unbekannt", () => {
     overview();
-    expect(screen.getByRole("button", { name: "Behandeln: Birkenfeige" }).textContent).toBe(
-      "Behandeln",
+    expect(screen.getByRole("button", { name: "Behandlung planen: Birkenfeige" }).textContent).toBe(
+      "Behandlung planen",
     );
     expect(screen.getByText("Trend: unbekannt")).toBeTruthy();
     expect(screen.getByText(/^Art: Ficus benjamina · Status: /)).toBeTruthy();

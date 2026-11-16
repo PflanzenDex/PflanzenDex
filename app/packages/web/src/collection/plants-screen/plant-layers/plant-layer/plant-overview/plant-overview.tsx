@@ -64,7 +64,7 @@ export function Chips({ card }: { card: SpecimenCard }) {
 /**
  * "Überblick" (US-QS-23): fits the layer without scroll on a phone. The latest photo as a thumbnail beside the last
  * measurement, the growth trend of the own history (a slot of `care`, P-08), the state and the open treatment; "Gießen"
- * (a slot of `monitoring`), "Behandeln" and "Notizen" are outline buttons, the filled "Messen" sits in the layer's
+ * (a slot of `monitoring`), "Behandlung planen" and "Notizen" are outline buttons, the filled "Messen" sits in the layer's
  * primary slot.
  */
 export function PlantOverview(props: {

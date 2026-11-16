@@ -147,7 +147,7 @@ async function tickOffTreatment(page: Page): Promise<void> {
     .click();
   await plan.getByLabel(/^Grund/).fill("Wollläuse");
   await page.getByRole("button", { name: "Behandlung speichern" }).click();
-  // Not in the lower-half check: the layer "Behandlungen" opens from the top of the window, and its first row ("Erledigt")
+  // Not in the lower-half check: the layer "Behandlungen" opens from the top of the window, and its first row ("Abhaken")
   // lies in the upper half by design (docs/records/test-logs/qs-one-screen/360x640-heute-behandeln.png).
   await page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ }).click();
   await expect(page.getByText(/„Wollläuse“ als erledigt eingetragen am/)).toBeVisible();

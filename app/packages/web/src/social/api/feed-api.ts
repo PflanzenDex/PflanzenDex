@@ -28,7 +28,7 @@ export const loadBanner = (
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<Banner>> => call<Banner>(fetchFn, `${api}/feed/banner`, token);
 
-/** "Okay" on the banner and the silent creation of the first visit (US-SOZ-06): marks the feed as seen up to `upTo`. */
+/** "Als gelesen markieren" on the banner and the silent creation of the first visit (US-SOZ-06): marks the feed as seen up to `upTo`. */
 export async function markFeedSeen(
   api: string,
   token: string,

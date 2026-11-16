@@ -97,14 +97,19 @@ function Rows(props: {
           />
         )}
       />
-      <Button
-        size="touch"
-        className="self-start"
-        disabled={props.busy || picked.length < 2}
-        onClick={() => water(picked)}
-      >
-        {picked.length < 2 ? ui("pickMore") : ui("pickedCount", { count: picked.length })}
-      </Button>
+      {/* One mark is no bulk entry: the hint says how to get there, the button only shows from two marks (US-QS-32). */}
+      {picked.length < 2 ? (
+        <p className="m-0 text-sm text-muted-foreground">{ui("pickMore")}</p>
+      ) : (
+        <Button
+          size="touch"
+          className="self-start"
+          disabled={props.busy}
+          onClick={() => water(picked)}
+        >
+          {ui("pickedCount", { count: picked.length })}
+        </Button>
+      )}
     </div>
   );
 }
@@ -112,7 +117,7 @@ function Rows(props: {
 /**
  * The plants that are due to be watered today (US-MON-05): last watering plus the interval of the current phase. The
  * intervals are the keeper's own entries in the care profile; without one a plant is not listed (nothing is invented,
- * P-08), and the empty state says where to set it (P-09). "Gegossen" writes today's entry; several can be marked and
+ * P-08), and the empty state says where to set it (P-09). "Gießen eintragen" writes today's entry; several can be marked and
  * entered in one step.
  */
 export function WateringList(props: {
@@ -138,7 +143,7 @@ export function WateringList(props: {
 }
 
 /**
- * The list with its write. The result of "Gegossen" is a line of reserved height above the list (F-0075, SG-FEED-01): it
+ * The list with its write. The result of "Gießen eintragen" is a line of reserved height above the list (F-0075, SG-FEED-01): it
  * stays when the last plant is marked and the list shows its empty state, and the announcer says the same text once (the
  * line carries no role). A refusal is the alert below the list (P-10, SG-FEED-02).
  */

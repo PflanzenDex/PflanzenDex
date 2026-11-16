@@ -86,7 +86,7 @@ async function setProfile(
 async function archivePlant(page: Page, plant: string): Promise<void> {
   await openPlant(page, plant);
   await page.getByRole("button", { name: "Mehr" }).click();
-  await page.getByRole("menuitem", { name: "Archivieren" }).click();
+  await page.getByRole("menuitem", { name: "Pflanze archivieren" }).click();
   const form = page.getByRole("form", { name: "Pflanze archivieren" });
   await form.getByRole("button", { name: "Archivieren" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();

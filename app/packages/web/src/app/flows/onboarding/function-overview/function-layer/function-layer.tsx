@@ -3,7 +3,6 @@ import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { errorText } from "@/shared/lib/error-text";
-import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { UnlockEntry } from "../../../unlock/model/unlock-api";
 import {
@@ -20,8 +19,6 @@ import { FUNCTION_PURPOSES } from "./function-purposes";
 // feature outside the core, the keeper's switch. The texts come from the overview's message table.
 const t = texts(table);
 type Write = Pick<ReturnType<typeof useWriteAction>, "message" | "error" | "running">;
-const LINK =
-  "inline-flex min-h-[44px] items-center rounded-control px-1 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 /**
  * The state as a word, never by colour alone (NFR-13): open, locked, locked but openable by one tap (US-ONB-06), or switched
@@ -143,13 +140,16 @@ export function FunctionLayer(props: {
           <p className="m-0 text-sm text-muted-foreground">{t("way", { ways: waysText(entry) })}</p>
         )}
         {!off && (
-          <Link
-            to={locked ? lockAddress(entry.id) : functionAddress(entry.id)}
-            aria-label={locked ? t("link.lookAria", { name }) : t("link.openAria", { name })}
-            className={cn(LINK, "self-start")}
-          >
-            {locked ? t("link.look") : t("link.open")}
-          </Link>
+          // The link is a button of the quiet "link" look (US-QS-32, F-0298): it names its function, and it keeps the
+          // 44 px hit area the underlined link had.
+          <Button asChild variant="link" size="sm" className="self-start">
+            <Link
+              to={locked ? lockAddress(entry.id) : functionAddress(entry.id)}
+              aria-label={locked ? t("link.lookAria", { name }) : t("link.openAria", { name })}
+            >
+              {locked ? t("link.look", { name }) : t("link.open", { name })}
+            </Link>
+          </Button>
         )}
         <WriteNotes {...write} />
       </div>

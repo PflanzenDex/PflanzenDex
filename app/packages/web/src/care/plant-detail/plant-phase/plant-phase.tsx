@@ -23,7 +23,7 @@ const Loading = ({ text }: { text: string }) => (
 
 type Phase = { row: PhasesRow | null; locations: readonly LightLocation[] };
 
-/** The care phase of this plant with "Jetzt umgestellt" (US-PHA-01, US-PHA-03); an unknown phase says so (P-08). */
+/** The care phase of this plant with "Umstellen" (US-PHA-01, US-PHA-03); an unknown phase says so (P-08). */
 export function PhaseOfPlant(props: { api: string; token: Token; specimenId: string }) {
   const { api, token, specimenId } = props;
   const again = useInvalidate(["care", "phases"]);

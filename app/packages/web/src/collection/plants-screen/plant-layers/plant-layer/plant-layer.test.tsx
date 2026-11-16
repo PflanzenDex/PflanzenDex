@@ -210,7 +210,7 @@ describe("US-QS-23 Überblick", () => {
     const panel = within(layer).getByRole("tabpanel");
     expect(within(panel).getByText("11 Tage überfällig")).toBeTruthy();
     expect(panel.textContent).not.toMatch(/Tg\./);
-    expect(within(panel).getByRole("button", { name: "Behandeln: Aloe" })).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Behandlung planen: Aloe" })).toBeTruthy();
   });
 
   it("US-QS-23 · P-08 without a measurement and a trend the overview says unbekannt, nothing is invented", async () => {
@@ -242,7 +242,7 @@ describe("US-QS-23 Überblick", () => {
     const layer = await open();
     const measure = within(layer).getByRole("button", { name: "Messen: Aloe" });
     expect(measure.className).toContain("bg-primary");
-    for (const name of ["Gießen", "Behandeln: Aloe"]) {
+    for (const name of ["Gießen", "Behandlung planen: Aloe"]) {
       expect(within(layer).getByRole("button", { name }).className).not.toContain("bg-primary");
     }
     expect(
@@ -254,11 +254,11 @@ describe("US-QS-23 Überblick", () => {
     expect(onMeasure).toHaveBeenCalledOnce();
   });
 
-  it("US-QS-23 Behandeln leads to the tab Pflege", async () => {
+  it("US-QS-32 · US-QS-23 Behandlung planen leads to the tab Pflege", async () => {
     setViewportWidth(360);
     show([card()]);
     const layer = await open();
-    await userEvent.click(within(layer).getByRole("button", { name: "Behandeln: Aloe" }));
+    await userEvent.click(within(layer).getByRole("button", { name: "Behandlung planen: Aloe" }));
     expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e1&tab=pflege");
   });
 });
@@ -408,21 +408,30 @@ describe("US-QS-23 Mehr", () => {
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
-      "Kennzeichen",
-      "Fangdatum",
-      "Archivieren",
+      "Kennzeichen ändern",
+      "Fangdatum ändern",
+      "Pflanze archivieren",
     ]);
-    await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Pflanze archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
   });
 
-  it("US-QS-23 Eingetopft is offered for a cutting only", async () => {
+  it("US-QS-32 the menu items name object and verb: Umtopfen eintragen for a plant, Eintopfen eintragen for a cutting", async () => {
+    setViewportWidth(360);
+    show([card()], { onRepot: vi.fn() });
+    await open();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    expect(screen.getByRole("menuitem", { name: "Umtopfen eintragen" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Umgetopft" })).toBeNull();
+  });
+
+  it("US-QS-23 Eintopfen eintragen is offered for a cutting only", async () => {
     setViewportWidth(360);
     show([card({ status: "cutting" })], { onRepot: vi.fn() });
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
-    expect(screen.getByRole("menuitem", { name: "Eingetopft" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Eintopfen eintragen" })).toBeTruthy();
   });
 
   it("US-QS-23 without any rarer action there is no menu", async () => {

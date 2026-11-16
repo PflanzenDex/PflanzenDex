@@ -5,10 +5,10 @@
   "since.never": "noch nie als gegossen eingetragen",
   "since.days": "zuletzt vor {days} Tagen gegossen",
   "interval": "Intervall alle {days}",
-  "water": "Gegossen",
-  "waterOne": "{name} als gegossen eintragen",
+  "water": "Gießen eintragen",
+  "waterOne": "Gießen eintragen: {name}",
   "pickMore": "Mehrere markieren, dann gemeinsam eintragen",
-  "pickedCount": "{count} als gegossen eintragen",
+  "pickedCount": "{count} eintragen",
   "pager": "Zu gießen",
   "done": "Als gegossen eingetragen.",
   "days": "{count} Tage"

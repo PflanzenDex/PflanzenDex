@@ -67,7 +67,7 @@ describe("US-ENT-10 the stack names the position in text and hides the cards bel
 
   it("US-ENT-10 the buttons No, Later, Yes stay as tap targets of at least 44 px", () => {
     setup();
-    for (const name of ["Nein", "Später", "Ja"])
+    for (const name of ["Kein Interesse", "Später", "Wünschen"])
       expect(screen.getByRole("button", { name }).className).toContain("min-h-[48px]");
   });
 });
@@ -82,7 +82,7 @@ describe("US-ENT-10 the arrow keys and Backspace decide while the deck has the f
 
   it("US-ENT-10 left is No on a button of the deck", async () => {
     const { onDecide } = setup();
-    key(screen.getByRole("button", { name: "Ja" }), "ArrowLeft");
+    key(screen.getByRole("button", { name: "Wünschen" }), "ArrowLeft");
     await screen.findByRole("heading", { name: "Aloe vera" });
     expect(onDecide).toHaveBeenCalledExactlyOnceWith("Ficus lyrata", "no");
   });
@@ -144,7 +144,7 @@ describe("US-ENT-10 the keys of the deck are listed in the shortcut overview of 
 });
 
 describe("US-ENT-10 a screen reader hears the result of each decision", () => {
-  it("US-ENT-10 Ja and Rückgängig are told in the polite live region of the app (US-QS-10)", async () => {
+  it("US-ENT-10 Wünschen and Rückgängig are told in the polite live region of the app (US-QS-10)", async () => {
     const onDecide = vi.fn(async (_s: string, decision: "yes" | "no") => ({
       ok: true as const,
       value: { decision, saved: true },
@@ -157,14 +157,14 @@ describe("US-ENT-10 a screen reader hears the result of each decision", () => {
     );
     const region = () => container.querySelector("[aria-live='polite'].sr-only")?.textContent;
     key(front(), "ArrowRight");
-    await waitFor(() => expect(region()).toBe("Ja: auf der Wunschliste."));
+    await waitFor(() => expect(region()).toBe("Wünschen: auf der Wunschliste."));
     key(await screen.findByRole("heading", { name: "Aloe vera" }), "Backspace");
     await waitFor(() => expect(region()).toBe("Rückgängig: die Karte liegt wieder oben."));
   });
 });
 
 describe("US-ENT-10 Rückgängig brings the card back from the side it left", () => {
-  it("US-ENT-10 after a Nein the card taken back comes in from the left", async () => {
+  it("US-ENT-10 after a Kein Interesse the card taken back comes in from the left", async () => {
     const before = window.matchMedia;
     window.matchMedia = ((query: string) => ({
       matches: false,

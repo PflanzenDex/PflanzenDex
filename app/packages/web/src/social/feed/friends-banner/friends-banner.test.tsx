@@ -56,7 +56,7 @@ const clockAt = (iso: string) => {
 };
 
 describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
-  it("US-SOZ-06 names friend and species, says 'Stand' and stays until 'Okay'", async () => {
+  it("US-SOZ-06 names friend and species, says 'Stand' and stays until 'Als gelesen markieren'", async () => {
     clockAt("2026-11-15T12:00:00Z");
     const { posts } = server(banner());
     render(<FriendsBanner api="http://api" token={token} />);
@@ -64,7 +64,7 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
     expect(region.textContent).toContain("Freunde haben 3 neue Pflanzen:");
     expect(region.textContent).toContain("Anna: 2 × Echte Aloe, Name unbekannt: 1 × Art unbekannt");
     expect(region.textContent).toContain("Stand: 06.10.2026");
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Als gelesen markieren" }));
     await vi.waitFor(() =>
       expect(screen.queryByRole("region", { name: /Neu bei Freunden/ })).toBeNull(),
     );
@@ -105,7 +105,7 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
     await vi.waitFor(() => expect(container.textContent).toBe(""));
   });
 
-  it("US-QS-32 SG-COPY-06 a failed 'Okay' shows the German text of its error code, not a generic sentence", async () => {
+  it("US-QS-32 SG-COPY-06 a failed 'Als gelesen markieren' shows the German text of its error code, not a generic sentence", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url, init) => {
@@ -116,19 +116,19 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
       }),
     );
     render(<FriendsBanner api="http://api" token={token} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Okay" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Als gelesen markieren" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Darauf hast du keinen Zugriff.");
     expect(screen.getByRole("region", { name: /Neu bei Freunden/ })).toBeTruthy();
   });
 
-  it("US-SOZ-06 · US-QS-15 · issue 1157 the compact banner is one row with 'Okay' at its end and leaves 'Stand' to the feed", async () => {
+  it("US-SOZ-06 · US-QS-15 · issue 1157 the compact banner is one row with 'Als gelesen markieren' at its end and leaves 'Stand' to the feed", async () => {
     server(banner());
     render(<FriendsBanner api="http://api" token={token} compact />);
     const region = await screen.findByRole("region", { name: /Neu bei Freunden/ });
     expect(region.className).toContain("flex-wrap");
     expect(region.textContent).toContain("Freunde haben 3 neue Pflanzen:");
     expect(region.textContent).not.toContain("Stand:");
-    expect(screen.getByRole("button", { name: "Okay" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Als gelesen markieren" })).toBeTruthy();
   });
 });
 
