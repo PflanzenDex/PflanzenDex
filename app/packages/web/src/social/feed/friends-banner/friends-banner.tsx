@@ -59,9 +59,11 @@ export function useNewPlants(api: string, token: Token) {
 }
 
 /**
- * What is new, when it was read, and "Als gelesen markieren" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Als gelesen markieren". `compact` is
- * one row with "Als gelesen markieren" at its end and no "Stand" line, for a place that says "Stand" itself (the layer "Neu bei Freunden",
- * owner decision 2026-11-02, issue 1157); without a network the "Stand" stays, so an old copy is still recognizable.
+ * What is new, when it was read, and "Als gelesen markieren" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Als gelesen markieren".
+ * "Stand" shows only for a copy older than today, in calendar days of the keeper's zone (US-QS-32, FR-SOZ-03); without a network it
+ * always shows, with the note about the missing connection, so an old copy stays recognizable. `compact` is one row with "Als gelesen
+ * markieren" at its end and no "Stand" line while online, for a place that says "Stand" itself (the layer "Neu bei Freunden",
+ * owner decision 2026-11-02, issue 1157).
  */
 export function NewPlantsBody(props: {
   api: string;
@@ -71,11 +73,15 @@ export function NewPlantsBody(props: {
   onSeen?: () => void;
   compact?: boolean;
 }) {
-  const { news, okay, compact } = props;
+  const { news, okay, compact, offline } = props;
   const seen = async () => {
     await okay.run((tk) => markFeedSeen(props.api, tk, news.asOf), t("news.okayDone"));
     props.onSeen?.();
   };
+  const zone = currentTimeZone();
+  const copyDay = localToday(new Date(news.asOf), zone);
+  const today = localToday(new Date(), zone);
+  const showAsOf = offline || (!compact && copyDay < today);
   return (
     <>
       <p className={compact ? "min-w-0 flex-1 basis-48" : undefined}>
@@ -86,22 +92,17 @@ export function NewPlantsBody(props: {
         </strong>{" "}
         {news.items.map(itemText).join(", ")}
       </p>
-      {compact && !props.offline ? null : (
+      {showAsOf && (
         <p className="text-sm text-muted-foreground">
-          {t("news.asOf", {
-            date: summaryDate(
-              localToday(new Date(news.asOf), currentTimeZone()),
-              localToday(new Date(), currentTimeZone()),
-            ),
-          })}
-          {props.offline ? t("news.offline") : ""}
+          {t("news.asOf", { date: summaryDate(copyDay, today) })}
+          {offline ? t("news.offline") : ""}
         </p>
       )}
       <div>
         <Button
           type="button"
           size={compact ? "default" : "touch"}
-          disabled={okay.running || props.offline}
+          disabled={okay.running || offline}
           onClick={() => void seen()}
         >
           {t("news.okay")}
@@ -119,8 +120,8 @@ export function NewPlantsBody(props: {
 /**
  * "Friends have N new plants: …" (US-SOZ-06): stays until "Als gelesen markieren". What is new is what became visible to me since the last
  * "Als gelesen markieren" (shared, or the friendship started), read through what friends share (P-05); the banner names friend and species only.
- * "Stand: heute" (or "vor 3 Tagen", else the date) tells when the data is from, so an older copy shown without a network
- * is recognizable (FR-SOZ-03, US-QS-32).
+ * "Stand: gestern" (or "vor 3 Tagen", else the date) tells when an older copy is from; a copy of today has no "Stand", and without a
+ * network it always shows, so an old copy stays recognizable (FR-SOZ-03, US-QS-32).
  * Without news (and on the very first visit) nothing is shown. `quiet` keeps a failed load from adding a second error.
  */
 function NewPlantsBanner(props: { api: string; token: Token; quiet?: boolean; compact?: boolean }) {

@@ -102,11 +102,10 @@ function Body(props: {
   const size = usePageSize();
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      {/* One line naming only what the friend shares (US-QS-32, F-0265); none while nothing is shared. */}
+      {/* One line naming only what the friend shares (US-QS-32, F-0265), without the name: the title names the friend, and a long
+          name must not wrap the line at 360 px. None while nothing is shared. */}
       {props.cards.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {name} teilt {tx("collection.shares")}.
-        </p>
+        <p className="text-sm text-muted-foreground">Geteilt: {tx("collection.shares")}.</p>
       ) : null}
       <SegmentedControl label="Filter" options={FILTERS} value={filter} onChange={setFilter} />
       {wish.message && (
