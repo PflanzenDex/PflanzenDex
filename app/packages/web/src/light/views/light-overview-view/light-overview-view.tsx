@@ -43,7 +43,7 @@ function Row({ r }: { r: LightOverviewRow }) {
  * its free height instead of a table that scrolls the layer (US-QS-15, issue 1155); a species with an unknown lux need
  * has no position and stays last, with its next step on the row (P-09, P-10).
  */
-export function LightOverviewView(props: { data: LightOverview; onOpenCollection: () => void }) {
+export function LightOverviewView(props: { data: LightOverview }) {
   const { data } = props;
   return (
     <section aria-labelledby="overview" className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">

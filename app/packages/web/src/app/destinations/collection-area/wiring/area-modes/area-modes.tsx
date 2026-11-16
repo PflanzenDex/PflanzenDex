@@ -103,7 +103,7 @@ export function ModeBody(p: ModeProps) {
         title={t("manage.title")}
         back={{ label: t("manage.back"), onBack: p.onCloseManage }}
       >
-        <LightPage api={api} token={token} onOpenCollection={p.onCloseManage} hosted />
+        <LightPage api={api} token={token} hosted />
       </FullView>
     );
   if (measuring)

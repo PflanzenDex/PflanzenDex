@@ -22,12 +22,11 @@ const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
   lightNeedUnknown: false,
   ...extra,
 });
-const noop = () => undefined;
 const show = (rows: LightOverviewRow[]) => {
   const data: LightOverview = { rows };
   render(
     <MemoryRouter>
-      <LightOverviewView data={data} onOpenCollection={noop} />
+      <LightOverviewView data={data} />
     </MemoryRouter>,
   );
 };
@@ -36,7 +35,7 @@ describe("US-LIC-03: light overview view", () => {
   it("US-QS-32 shows one line and the next step in the empty state: Pflanze anlegen links to the add-plant form (P-09)", () => {
     render(
       <MemoryRouter>
-        <LightOverviewView data={{ rows: [] }} onOpenCollection={noop} />
+        <LightOverviewView data={{ rows: [] }} />
       </MemoryRouter>,
     );
     expect(screen.getByText("Noch keine Art: lege zuerst eine Pflanze an.")).toBeTruthy();
