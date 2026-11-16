@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import type { TestAccount } from "../account";
 import { SCREENS } from "./one-screen/register";
 
@@ -158,6 +158,24 @@ export async function controlsWithoutBoundary(page: Page): Promise<string[]> {
       })
       .map((el) => `${el.tagName.toLowerCase()} "${(el.textContent ?? "").trim().slice(0, 30)}"`),
   );
+}
+
+/** The words of an element's text that run over more than one line, i.e. break inside the word (a word on one line has one top). */
+export async function brokenWords(element: Locator): Promise<string[]> {
+  return element.evaluate((el) => {
+    const broken: string[] = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      for (const match of (node.textContent ?? "").matchAll(/\S+/g)) {
+        const range = document.createRange();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        if (new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size > 1)
+          broken.push(match[0]);
+      }
+    }
+    return broken;
+  });
 }
 
 /** Status texts (role status or alert) whose text colour equals the colour behind them, so they cannot be read. */
