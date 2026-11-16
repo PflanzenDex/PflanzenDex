@@ -152,24 +152,34 @@ describe("US-SOZ-07 a friend's shared collection", () => {
       "/friends?sheet=sharing",
     );
     expect(screen.queryByRole("list", { name: /Sammlung von/ })).toBeNull();
-    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265).
-    expect(document.body.textContent).not.toContain("teilt Art");
+    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265). The line starts with "Geteilt:".
+    expect(document.body.textContent).not.toContain("Geteilt:");
   });
 
-  it("US-QS-32 F-0265 the line names the friend and the shared fields, and nothing more", async () => {
+  it("US-QS-32 F-0265 the line names only the shared fields; the title already names the friend", async () => {
     show({ friend: { name: "Anna" }, cards: [card()] });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    expect(screen.getByText("Anna teilt Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
+    expect(screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
+    expect(screen.queryByText(/Anna teilt/)).toBeNull();
     expect(document.body.textContent).not.toContain("ohne Wertung");
+  });
+
+  it("US-QS-32 F-0265 a long display name stays out of the line, so the line does not wrap at 360 px", async () => {
+    const name = "Maximiliane-Friederike von Hohenzollern";
+    show({ friend: { name }, cards: [card()] });
+    await screen.findByRole("list", { name: `Sammlung von ${name}` });
+    const line = screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.");
+    expect(line.textContent).not.toContain(name);
+    expect(line.textContent).not.toContain("Maximiliane");
+    // The name is in the title once, the line names only the shared fields.
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(collectionTitle(name));
   });
 
   it("US-SOZ-07 facts only: no rank, no score, no comparison between friends; the way back is offered", async () => {
     show({ friend: { name: null }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
     // One line naming only what the friend shares (US-QS-32, F-0265); no rank, no comparison.
-    expect(
-      screen.getByText("Name unbekannt teilt Art, Name, Fangdatum und Stecklinge."),
-    ).toBeTruthy();
+    expect(screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
