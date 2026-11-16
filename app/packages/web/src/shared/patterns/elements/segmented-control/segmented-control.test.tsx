@@ -2,8 +2,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SegmentedControl } from "./segmented-control";
+import { rowFits } from "./label-probe/label-probe";
 
 afterEach(cleanup);
 
@@ -160,10 +161,12 @@ describe("US-QS-32 segmented control with four choices (the Sammlung switch)", (
     expect(container.querySelector('[role="group"]')?.getAttribute("data-scroll-x")).toBeNull();
   });
 
-  it("US-QS-32 two or three choices keep one row that scrolls sideways at a larger text size, and no grid of two", () => {
+  it("US-QS-32 two or three choices fit their row at normal text: one row, no sideways marker and no grid of two", () => {
     const { container } = render(<Host />);
     const group = container.querySelector('[role="group"]');
-    expect(group?.getAttribute("data-scroll-x")).toBe("row");
+    expect(group?.getAttribute("data-scroll-x")).toBeNull();
+    expect(group?.hasAttribute("data-stacked")).toBe(false);
+    expect(group?.className).toContain("grid-flow-col");
     expect(group?.className).not.toContain("grid-cols-2");
     expect(group?.className).not.toContain("@min-");
   });
@@ -202,14 +205,97 @@ describe("US-QS-32 segmented control while an action runs (busy)", () => {
   });
 });
 
-describe("US-QS-15 the switch at a larger text size (issue 1019)", () => {
-  it("US-QS-15 the choices stay in one row that scrolls sideways inside its own box, and no choice shrinks or wraps", () => {
-    const { container } = render(<Host />);
-    const group = container.querySelector('[role="group"]');
-    expect(group?.className).toContain("overflow-x-auto");
-    expect(group?.className).not.toContain("flex-wrap");
-    for (const choice of container.querySelectorAll("button"))
-      expect(choice.className).toContain("shrink-0");
+describe("US-QS-15 the switch at a larger text size (issue 1019, issue 2232)", () => {
+  it("US-QS-15 rowFits: a row fits while the widest label with its padding fits its equal column", () => {
+    // 360 px phone, 16 px gutters, 4 px track padding: 320 px inside, two columns of 158 px with the 4 px gap.
+    expect(rowFits({ inner: 320, gap: 4, widest: 120, chrome: 10, count: 2 })).toBe(true);
+    expect(rowFits({ inner: 320, gap: 4, widest: 150, chrome: 10, count: 2 })).toBe(false);
+    expect(rowFits({ inner: 320, gap: 4, widest: 90, chrome: 10, count: 3 })).toBe(true);
+    expect(rowFits({ inner: 320, gap: 4, widest: 100, chrome: 10, count: 3 })).toBe(false);
+    // A hidden group (no width yet) keeps the row until it is measured again.
+    expect(rowFits({ inner: 0, gap: 4, widest: 100, chrome: 10, count: 2 })).toBe(true);
+  });
+
+  describe("US-QS-15 at 200 % text on a 360 px phone the print format stacks instead of clipping (issue 2232)", () => {
+    let width = 0;
+    let label = 0;
+    beforeEach(() => {
+      vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(() => width);
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+        () =>
+          ({
+            width: label,
+            height: 20,
+            top: 0,
+            left: 0,
+            right: label,
+            bottom: 20,
+            x: 0,
+            y: 0,
+          }) as DOMRect,
+      );
+    });
+    afterEach(() => vi.restoreAllMocks());
+
+    const FORMAT = [
+      { value: "sheet", label: "A4-Bogen" },
+      { value: "single", label: "Einzeletikett" },
+    ];
+    const renderFormat = () =>
+      render(
+        <SegmentedControl
+          label="Format"
+          options={FORMAT}
+          value="sheet"
+          onChange={() => undefined}
+        />,
+      );
+
+    it("US-QS-15 the longest label does not fit its column: the segments stack in one column, labels may wrap, nothing scrolls sideways", () => {
+      // "Einzeletikett" in semibold at 200 % text is about 190 px; the group is 328 px wide on a 360 px phone.
+      width = 328;
+      label = 190;
+      const { container } = renderFormat();
+      const group = container.querySelector('[role="group"]');
+      expect(group?.hasAttribute("data-stacked")).toBe(true);
+      expect(group?.className.split(" ")).toEqual(
+        expect.arrayContaining(["grid-cols-1", "rounded-2xl"]),
+      );
+      expect(group?.className).not.toContain("grid-flow-col");
+      expect(group?.className).not.toContain("overflow-x-auto");
+      expect(group?.getAttribute("data-scroll-x")).toBeNull();
+      for (const choice of container.querySelectorAll("button")) {
+        expect(choice.className).toContain("break-words");
+        expect(choice.className).not.toContain("whitespace-nowrap");
+        expect(choice.className).toContain("rounded-full");
+      }
+    });
+
+    it("US-QS-15 the labels fit at normal text: one row of pills, each label on one line", () => {
+      width = 328;
+      label = 95;
+      const { container } = renderFormat();
+      const group = container.querySelector('[role="group"]');
+      expect(group?.hasAttribute("data-stacked")).toBe(false);
+      expect(group?.className).toContain("grid-flow-col");
+      for (const choice of container.querySelectorAll("button"))
+        expect(choice.className).toContain("whitespace-nowrap");
+    });
+
+    it("US-QS-15 the hidden one-line copy of the labels is never announced", () => {
+      width = 328;
+      label = 95;
+      renderFormat();
+      expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+        "A4-Bogen",
+        "Einzeletikett",
+      ]);
+      // The copy is generated content inside an aria-hidden box: the label is text once, in its button.
+      expect(screen.getAllByText("Einzeletikett")).toHaveLength(1);
+      const copy = document.querySelector('[data-label="Einzeletikett"]');
+      expect(copy?.textContent).toBe("");
+      expect(copy?.closest('[aria-hidden="true"]')).toBeTruthy();
+    });
   });
 });
 

@@ -1,6 +1,7 @@
 import { OctagonAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "../../../ui/button/button";
+import { LabelProbe, useStacked } from "./label-probe/label-probe";
 
 export type SegmentedOption<V extends string> = {
   value: V;
@@ -30,6 +31,9 @@ export type SegmentedControlProps<V extends string> = {
 
 // Two or three choices: one row of equal columns, the segments share the full width (SG-CTRL-01); the track is a pill.
 const ROW_LAYOUT = "grid-flow-col auto-cols-fr rounded-full";
+// Two or three choices whose longest label does not fit its column (200 % text on a 360 px phone, issue 2232): the
+// segments stack in one column at the full width, and the track takes the 22 px card radius (SG-SHAPE-02).
+const STACK_LAYOUT = "grid-cols-1 rounded-2xl";
 // Four choices (the Sammlung switch, issue 1858): two columns, and one row of four from a container width given in rem.
 // Measured in a browser at 100 % text: the widest label in its selected (semibold) state, "Wünsche", needs 73.3 px with
 // its padding and border, so one row of four needs 313 px (19.6 rem) with the gaps and the track. The phone container
@@ -44,23 +48,26 @@ const FOUR_LAYOUT = "grid-cols-2 rounded-2xl @min-[20rem]:grid-cols-4 @min-[20re
  * is a 44 px target that shares the full width. The selected one is a raised card fill with a semibold label and a 1 px
  * boundary in the field colour; the others carry the same boundary, transparent, so nothing jumps. The selection is never
  * shown by colour alone.
- * Two or three choices stay in one row: at a larger text size the row scrolls sideways inside its own box instead of
- * running past the right edge or taking the height of the screen (issue 1019). `data-scroll-x="row"` tells the one-screen
- * gate that this row may scroll sideways at 200 % text (issue 1183); at normal text size it must fit.
+ * Two or three choices sit in one row while the longest label fits its column; when it does not (200 % text on a phone,
+ * issue 2232) the segments stack in one column at the full width, so no label is clipped, runs past its segment or
+ * scrolls sideways. The row is judged by measuring, not by a fixed breakpoint, because the labels differ per screen.
  * Four choices are one row at normal text on a phone and a 2 x 2 grid at a larger text size, so every view stays visible
  * (issue 1858). The grid is judged by the width of its container (a container query in rem), not by the viewport.
  */
 export function SegmentedControl<V extends string>(props: SegmentedControlProps<V>) {
   const { options, value, onChange, alerts, disabled } = props;
   const four = options.length === 4;
+  const labels = options.map((o) => o.label).join("\u0000");
+  const { group: groupRef, probe, stacked } = useStacked(!four, labels);
   const group = (
     <div
+      ref={groupRef}
       role="group"
       aria-label={props.label}
-      data-scroll-x={four ? undefined : "row"}
+      data-stacked={stacked ? "" : undefined}
       className={cn(
-        "grid w-full gap-1 overflow-x-auto overscroll-x-contain bg-muted p-1 [scrollbar-width:none]",
-        four ? FOUR_LAYOUT : ROW_LAYOUT,
+        "relative grid w-full gap-1 bg-muted p-1",
+        four ? FOUR_LAYOUT : stacked ? STACK_LAYOUT : ROW_LAYOUT,
         props.className,
       )}
     >
@@ -78,7 +85,10 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             className={cn(
               // The segment is 44 px high at least (the button's minimum); its vertical padding is 4 px, not the button's 8 px,
               // so that two rows of four at 200 % text fit on a 360 x 640 window (issue 1858, round 3).
-              "min-w-[44px] shrink-0 gap-1 rounded-full border px-1 py-1",
+              "min-w-[44px] gap-1 rounded-full border px-1 py-1",
+              // In a row a label stays on one line (the row stacks before it would clip); stacked, a label longer than
+              // the whole width wraps between words instead of running past its segment.
+              !four && !stacked ? "whitespace-nowrap" : "break-words",
               selected
                 ? "border-input bg-card font-semibold text-foreground shadow-elevation-1 hover:bg-card hover:text-foreground forced-colors:border-[color:Highlight]"
                 : "border-transparent font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",
@@ -99,6 +109,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
           </Button>
         );
       })}
+      {four ? null : <LabelProbe probeRef={probe} options={options} alerts={alerts} />}
     </div>
   );
   // The container of the four-choice grid: its width, not the viewport's, decides the columns (the container query).
