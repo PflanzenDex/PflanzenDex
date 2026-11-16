@@ -165,11 +165,11 @@ describe("US-QS-32 the AI clients: one line of hint, the rest behind Mehr erfahr
   it("US-QS-32 F-0302 'Verbundene KI-Clients' says one line; the rest sits behind Mehr erfahren and does not repeat it", async () => {
     fakeServer([row()]);
     show();
-    const line = await screen.findByText("Ein KI-Client sieht nur deine Daten.");
+    const line = await screen.findByText("Ein KI-Client sieht nur deine eigenen Daten.");
     expect(line.closest("details")).toBeNull();
     const more = line.parentElement?.querySelector("details");
-    expect(more?.textContent).toContain("Die Daten von Freunden sieht er nie.");
     expect(more?.textContent).toContain("Dein KI-Client (zum Beispiel Claude oder ChatGPT)");
-    expect(more?.textContent).not.toContain("Ein KI-Client sieht nur deine Daten.");
+    // The visible line says the privacy fact once; the disclosure does not say it again (US-QS-32).
+    expect(more?.textContent).not.toMatch(/sieht nur|Freunde/);
   });
 });

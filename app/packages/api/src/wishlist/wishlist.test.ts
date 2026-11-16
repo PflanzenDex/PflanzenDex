@@ -179,8 +179,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     ]);
     expect(list[0]).toMatchObject({
       title: `Cereus ${run} deutsch (Cereus ${run})`,
-      // The first wish of the thinnest zone names the room instead of the count (US-QS-32, F-0162).
-      zoneText: "Zone 4 · am meisten Platz",
+      zoneText: "Zone 4 · 0 Pflanzen",
       priority: { kind: "thinnest" },
     });
     expect(list[3]).toMatchObject({ zone: null, priority: { kind: "zone_unknown" } });

@@ -186,7 +186,7 @@ describe("US-SOZ-05 feed through the API", () => {
     expect(body.events.length).toBeGreaterThan(0);
     expectExactKeys(
       body,
-      { events: [FEED_EVENT], asOf: true, hint: { text: true, nextAction: true } },
+      { events: [FEED_EVENT], asOf: true, hint: { kind: true, text: true, nextAction: true } },
       "GET /feed",
     );
   });

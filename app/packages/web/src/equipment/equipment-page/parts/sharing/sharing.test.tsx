@@ -16,9 +16,10 @@ describe("US-QS-32 the privacy line of a shared device (SG-COPY-05, SG-TYPE-03)"
     expect(line.parentElement?.className).toContain("text-sm");
     expect(line.parentElement?.className).not.toContain("text-xs");
     const more = line.parentElement?.querySelector("details");
-    expect(more?.textContent).toContain("Lichtstufe");
+    expect(more?.textContent).toContain("Kaufort, Seriennummer, Standort oder Kaufdatum");
     expect(more?.textContent).toContain("Zurückziehen wirkt beim nächsten Abruf");
-    expect(more?.textContent).not.toContain("Freunde sehen nie den Preis.");
+    // The price is said once, in the visible line; the disclosure lists only the other hidden fields (US-QS-32).
+    expect(more?.textContent).not.toMatch(/Preis|Lichtstufe/);
   });
 });
 
@@ -28,9 +29,7 @@ describe("US-EQU-12 sharing control", () => {
     render(<Sharing item={item} actions={{ busy: false, shared: new Map(), onShare }} />);
     expect(screen.getByLabelText("Freigabe für Freunde")).toHaveProperty("value", "private");
     expect(screen.queryByLabelText(/Erfahrung für Freunde/)).toBeNull();
-    expect(
-      screen.getByText(/nie Preis, Kaufort, Seriennummer, Standort oder Kaufdatum/),
-    ).toBeTruthy();
+    expect(screen.getByText(/Kaufort, Seriennummer, Standort oder Kaufdatum/)).toBeTruthy();
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Freigabe für Freunde"), "friends");
     await user.type(screen.getByLabelText(/Erfahrung für Freunde/), "  sehr hell ");

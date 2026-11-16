@@ -35,7 +35,7 @@ const candidate = (extra: Record<string, unknown> = {}) => ({
   title: "Korbmarante (Calathea orbifolia)",
   zone: { id: "z3", name: "Fenster 3" },
   stock: 1,
-  zoneText: "Fenster 3 · am meisten Platz",
+  zoneText: "Fenster 3 — 1 Pflanze",
   difficulty: 2,
   reasoning: "Mag gleichmäßig feuchte Erde.",
   image: { url: "https://upload.example/c.jpg", source: "Wikimedia Commons" },
@@ -127,8 +127,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     expect(item.textContent).toContain("1. Korbmarante");
     // The scientific name is italic on the meta line, once (US-QS-32, SG-TYPE-08).
     expect(within(item).getByText("Calathea orbifolia").tagName).toBe("I");
-    // The first wish's meta line names the room of the thinnest zone (US-QS-32, F-0162).
-    expect(item.textContent).toContain("Fenster 3 · am meisten Platz");
+    expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
     expect(item.textContent).toContain("Mittel");
     expect(screen.queryByText(/Besorge diese Pflanze/)).toBeNull();
   });
@@ -149,11 +148,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     view(<WishlistPage api="http://api" token={token} />);
     const btn = await screen.findByRole("button", { name: /^1\. Korbmarante/ });
     const label = btn.getAttribute("aria-label") ?? "";
-    for (const text of [
-      "1. Korbmarante Calathea orbifolia",
-      "Fenster 3 · am meisten Platz",
-      "Mittel",
-    ])
+    for (const text of ["1. Korbmarante Calathea orbifolia", "Fenster 3 — 1 Pflanze", "Mittel"])
       expect(label).toContain(text);
   });
 

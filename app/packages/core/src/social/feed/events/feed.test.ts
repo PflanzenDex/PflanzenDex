@@ -175,6 +175,8 @@ describe("US-SOZ-05 new among friends", () => {
       { today: TODAY },
     );
     expect(none.hint.nextAction).toMatch(/Code/);
+    expect(none.hint.kind).toBe("no_friends");
+    expect((await feed()).hint.kind).toBe("nothing_shared");
     expect((await feed()).hint.text).toMatch(/teilen noch nichts/);
     await share("anna", "a1");
     expect((await feed()).hint.nextAction).toMatch(/Sammlung/);

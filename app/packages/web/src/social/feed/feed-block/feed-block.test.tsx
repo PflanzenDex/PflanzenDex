@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedBlock } from "./feed-block";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
@@ -11,6 +11,8 @@ import { FeedSkeleton } from "./feed-block.skeleton";
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
+/** The address of the page, so a test sees which layer a button opens (US-QS-32). */
+const Where = () => <span data-testid="where">{useLocation().search}</span>;
 const friends = [
   { id: "f1", name: "Anna" },
   { id: "f2", name: null },
@@ -27,7 +29,7 @@ const event = (extra: Record<string, unknown> = {}) => ({
 });
 const feed = (
   events: unknown[],
-  hint = { text: "Das ist neu.", nextAction: "Schau in die Sammlung." },
+  hint = { kind: "new", text: "Das ist neu.", nextAction: "Schau in die Sammlung." },
 ) => ({
   events,
   asOf: "2026-10-06T10:00:00.000Z",
@@ -118,7 +120,9 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     );
   });
 
-  it("US-QS-32 F-0258 the line above the news is one plain line: no 'Stand' and no bold instruction without a link", async () => {
+  it("US-QS-32 FR-SOZ-03 'Stand: heute' is its own muted line; the hint above it stays one plain line", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:05:00Z"));
     server(feed([event()]));
     render(
       <MemoryRouter>
@@ -128,27 +132,84 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     const hint = (await screen.findByText("Das ist neu.")).closest("p") as HTMLElement;
     expect(hint.textContent).toBe("Das ist neu.");
     expect(hint.querySelector("strong")).toBeNull();
-    expect(screen.queryByText("Schau in die Sammlung.")).toBeNull();
-    expect(document.body.textContent).not.toContain("Stand:");
+    const asOf = screen.getByText("Stand: heute");
+    expect(asOf.tagName).toBe("P");
+    expect(asOf.className).toContain("text-muted-foreground");
+    expect(asOf.className).not.toContain("font-semibold");
+    expect(document.body.textContent).not.toContain("06.10.2026");
+    vi.useRealTimers();
   });
 
-  it("US-QS-32 F-0258 an empty feed is one plain line and no bold instruction", async () => {
+  it("US-QS-32 F-0258 the instruction without a link is not shown; a state with no action shows the line alone", async () => {
+    server(feed([event()]));
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    await screen.findByText("Das ist neu.");
+    expect(screen.queryByText("Schau in die Sammlung.")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Freund hinzufügen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Selbst etwas teilen" })).toBeNull();
+  });
+
+  it("US-QS-32 P-09 no friend yet: the line and 'Freund hinzufügen', which opens the add-friend layer", async () => {
     server(
       feed([], {
+        kind: "no_friends",
         text: "Noch keine Freunde.",
-        nextAction: "Lade jemanden mit einem Code ein.",
+        nextAction: "Lade jemanden ein.",
       }),
     );
     render(
       <MemoryRouter>
+        <Where />
         <FeedBlock api="http://api" token={token} friends={[]} />
       </MemoryRouter>,
     );
     const hint = (await screen.findByText("Noch keine Freunde.")).closest("p") as HTMLElement;
     expect(hint.textContent).toBe("Noch keine Freunde.");
-    expect(hint.querySelector("strong")).toBeNull();
-    expect(screen.queryByText("Lade jemanden mit einem Code ein.")).toBeNull();
+    expect(screen.queryByText("Lade jemanden ein.")).toBeNull();
     expect(screen.queryByRole("list", { name: "Neuigkeiten" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Freund hinzufügen" }));
+    expect(screen.getByTestId("where").textContent).toBe("?sheet=add");
+  });
+
+  it("US-QS-32 P-09 a friend shares nothing yet: 'Selbst etwas teilen' opens what friends see", async () => {
+    server(
+      feed([], {
+        kind: "nothing_shared",
+        text: "Deine Freunde teilen noch nichts.",
+        nextAction: "Bitte sie.",
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <Where />
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Deine Freunde teilen noch nichts.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Selbst etwas teilen" }));
+    expect(screen.getByTestId("where").textContent).toBe("?sheet=sharing");
+  });
+
+  it("US-QS-32 P-09 nothing new in the period offers no button; the filter above is the way on", async () => {
+    server(
+      feed([], {
+        kind: "nothing_new",
+        text: "Nichts Neues in diesem Zeitraum.",
+        nextAction: "Filter.",
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Nichts Neues in diesem Zeitraum.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Freund hinzufügen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Selbst etwas teilen" })).toBeNull();
   });
 });
 

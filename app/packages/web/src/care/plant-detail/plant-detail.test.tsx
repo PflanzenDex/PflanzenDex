@@ -266,11 +266,11 @@ describe("US-QS-23 Pflege", () => {
     expect(await screen.findByText(/Pflegephase: unbekannt/)).toBeTruthy();
   });
 
-  it("US-QS-32 'Ruhephase eintragen' switches the plant's care to the segment Pflegeprofil in the address", async () => {
+  it("US-QS-32 'Ruhephase eintragen' opens the own care-profile layer of the plant, the one the Pflegeprofil part opens", async () => {
     server(base);
     show();
     await userEvent.click(await screen.findByRole("button", { name: "Ruhephase eintragen" }));
-    expect(screen.getByTestId("address").textContent).toContain("teil=profil");
+    expect(screen.getByTestId("address").textContent).toBe("?sheet=profil-e1");
   });
 
   it("US-QS-23 the care phase shows with Jetzt umgestellt, which confirms through the existing operation", async () => {

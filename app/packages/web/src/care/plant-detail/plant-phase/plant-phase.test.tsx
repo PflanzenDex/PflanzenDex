@@ -86,7 +86,7 @@ describe("US-QS-32 a plant without a dormancy period (SG-COPY-05, DS-65)", () =>
     expect(screen.queryByText(/Ruhephasen-Zeitraum/)).toBeNull();
   });
 
-  it("US-QS-32 'Ruhephase eintragen' opens the segment Pflegeprofil of the same plant layer (the address part teil)", async () => {
+  it("US-QS-32 'Ruhephase eintragen' opens the own care-profile layer of this plant (sheet profil-<id>), as the Pflegeprofil part does", async () => {
     fakeServer({
       "/care-phases": () => response(200, { phases: [] }),
       "/locations": () => response(200, { locations: [location] }),
@@ -101,6 +101,6 @@ describe("US-QS-32 a plant without a dormancy period (SG-COPY-05, DS-65)", () =>
       </QueryClientProvider>,
     );
     await userEvent.click(await screen.findByRole("button", { name: "Ruhephase eintragen" }));
-    expect(screen.getByTestId("address").textContent).toBe("?tab=pflege&teil=profil");
+    expect(screen.getByTestId("address").textContent).toBe("?tab=pflege&sheet=profil-e1");
   });
 });

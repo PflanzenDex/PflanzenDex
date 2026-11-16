@@ -11,6 +11,6 @@
   "step.connect": "KI-Client verbinden",
   "step.newTask": "Auftrag anlegen",
   "tasks.loading": "Aufträge werden geladen …",
-  "clients.more": "Die Daten von Freunden sieht er nie. Dein KI-Client (zum Beispiel Claude oder ChatGPT) kann sich über eine offene Schnittstelle mit deinem Konto verbinden. Der Anbieter deines KI-Clients erhält die Daten, die dein Client abruft; die App selbst sendet nichts an einen KI-Dienst. Ohne KI-Client funktioniert alles weiter wie bisher.",
+  "clients.more": "Dein KI-Client (zum Beispiel Claude oder ChatGPT) kann sich über eine offene Schnittstelle mit deinem Konto verbinden. Der Anbieter deines KI-Clients erhält die Daten, die dein Client abruft; die App selbst sendet nichts an einen KI-Dienst. Ohne KI-Client funktioniert alles weiter wie bisher.",
   "tasks.more": "Zum Beispiel ein Artprofil. Das Ergebnis kommt als Entwurf und zählt erst, wenn du es übernimmst. Offene Aufträge verfallen nach 14 Tagen."
 }

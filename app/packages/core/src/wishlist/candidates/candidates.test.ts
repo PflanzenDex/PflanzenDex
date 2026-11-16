@@ -86,8 +86,7 @@ describe("US-WUN-01 what a candidate shows", () => {
       title: "Zebra-Haworthie (Haworthia fasciata)",
       zone: { id: Z3, name: "Lampe 3" },
       stock: 1,
-      // The only wish is the first one in the thinnest zone: its meta line names the room (US-QS-32, F-0162).
-      zoneText: "Zone 3 · am meisten Platz",
+      zoneText: "Zone 3 · 1 Pflanze",
       difficulty: 2,
       reasoning: "Bleibt klein und mag helles Licht.",
       image: {
@@ -114,14 +113,9 @@ describe("US-WUN-01 what a candidate shows", () => {
   it("US-WUN-01 the stock text says '0 Pflanzen' for an empty zone and names an unknown zone as unknown", async () => {
     stock = new ZoneStockStub({ anna: stockAnna(0, 4, 4) });
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
-    wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: Z2 });
-    wishes.seed("anna", { id: "c", name: "Cereus" });
+    wishes.seed("anna", { id: "b", name: "Bryophyllum" });
     const list = (await candidates()).candidates;
-    expect(list.map((c) => c.zoneText)).toEqual([
-      "Zone 2 · am meisten Platz",
-      "Zone 2 · 0 Pflanzen",
-      "Ziel-Zone unbekannt",
-    ]);
+    expect(list.map((c) => c.zoneText)).toEqual(["Zone 2 · 0 Pflanzen", "Ziel-Zone unbekannt"]);
   });
 
   it("US-WUN-01 explains why: the thinnest zone is named, other zones point to where room is left", async () => {
@@ -199,12 +193,13 @@ describe("US-WUN-01 empty list and the next action (P-09)", () => {
     expect(hint.nextAction).toBeNull();
   });
 
-  it("US-QS-32 the first wish's meta line names the room of the thinnest zone; the other rows keep their count", async () => {
+  it("US-QS-32 F-0162 the first row of the thinnest zone keeps its count; the room is said by its priority text", async () => {
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
     wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: Z3 });
     wishes.seed("anna", { id: "c", name: "Cereus", targetZoneId: Z3 });
     const [first, second, third] = (await candidates()).candidates;
-    expect(first?.zoneText).toBe("Zone 3 · am meisten Platz");
+    expect(first?.zoneText).toBe("Zone 3 · 1 Pflanze");
+    expect(first?.priority.text).toContain("am meisten Platz");
     expect(second?.zoneText).toBe("Zone 3 · 1 Pflanze");
     expect(third?.zoneText).toBe("Zone 2 · 5 Pflanzen");
   });

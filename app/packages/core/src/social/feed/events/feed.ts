@@ -38,21 +38,25 @@ const inPeriod = (e: FeedEvent, q: FeedQuery) => {
 function hintFor(friends: number, events: number, shared: number): Feed["hint"] {
   if (friends === 0)
     return {
+      kind: "no_friends",
       text: "Noch keine Freunde.",
       nextAction: "Lade jemanden mit einem Code ein oder gib einen erhaltenen Code ein.",
     };
   if (shared === 0)
     return {
+      kind: "nothing_shared",
       text: "Deine Freunde teilen noch nichts.",
       nextAction:
         "Bitte sie, Pflanzen unter „Was Freunde sehen“ freizugeben, und gib selbst etwas frei.",
     };
   if (events === 0)
     return {
+      kind: "nothing_new",
       text: "Nichts Neues in diesem Zeitraum.",
       nextAction: "Wähle einen anderen Filter oder schau dir die Sammlung eines Freundes an.",
     };
   return {
+    kind: "new",
     text: "Das ist neu bei deinen Freunden.",
     nextAction: "Schau dir die Sammlung eines Freundes an.",
   };

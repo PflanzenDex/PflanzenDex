@@ -53,6 +53,5 @@
   "plan.repot": "Umgetopft",
   "plan.signsNone": "Beobachtungen: keine",
   "plan.signsList": "Beobachtungen: {list}",
-  "plan.signsOpen": "Beobachtungen notieren",
-  "pot.keepHint": "Ohne Auswahl bleibt der alte Topf frei."
+  "plan.signsOpen": "Beobachtungen notieren"
 }

@@ -57,7 +57,7 @@ export function equipmentCosts(items: readonly EquipmentRow[]): CostView {
     nextAction:
       missing === 0
         ? null
-        : `Bei ${missing} ${missing === 1 ? "Teil" : "Teilen"} ist der Preis unbekannt.`,
+        : `Bei ${missing} ${missing === 1 ? "Gerät" : "Geräten"} ist der Preis unbekannt.`,
     note: NOTE,
   };
 }

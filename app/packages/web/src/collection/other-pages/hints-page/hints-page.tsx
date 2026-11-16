@@ -163,7 +163,7 @@ function HintList(props: {
       ) : (
         <>
           <MoreHelp className="mb-3" more={ui("quietMore")}>
-            {plurals(table).word("quiet", props.data.hints.length)}
+            {plurals(table).word("quiet", new Set(props.data.hints.map((h) => h.specimenId)).size)}
           </MoreHelp>
           {props.host ? (
             <HintPages hints={props.data.hints} card={card} />

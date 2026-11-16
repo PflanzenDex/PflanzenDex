@@ -151,17 +151,20 @@ describe("US-BES-19 the plant's repot names its pot", () => {
   });
 });
 
-describe("US-QS-32 the pot hint shows only with a pot select (F-0200)", () => {
-  it("US-QS-32 with a pot to choose, one line at the pot field says what happens without a choice", async () => {
+describe("US-QS-32 the pot field has no hint of its own (F-0200)", () => {
+  it("US-QS-32 with a pot to choose the select preselects the recorded pot and no line explains the pots", async () => {
     fakeRepotServer({
       plan: { currentPot: { id: "p0", name: "Terrakotta", diameterCm: 12 }, freePots: [] },
     });
     renderCollection();
     await chooseRepot("Umgetopft");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
-    expect(within(form).getByRole("combobox", { name: "In welchen Topf?" })).toBeTruthy();
-    expect(within(form).getByText("Ohne Auswahl bleibt der alte Topf frei.")).toBeTruthy();
+    const select = within(form).getByRole<HTMLSelectElement>("combobox", {
+      name: "In welchen Topf?",
+    });
+    expect(select.value).toBe("p0");
     expect(form.textContent).not.toContain("Ohne Topfauswahl");
+    expect(form.textContent).not.toContain("bleibt der alte Topf frei");
   });
 });
 

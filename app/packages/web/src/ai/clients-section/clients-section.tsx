@@ -139,7 +139,7 @@ function List(props: { api: string; token: Token; rows: readonly AiConnection[] 
   const write = useWriteAction(props.token, again);
   return (
     <div className="flex min-w-0 max-w-xl flex-col gap-3">
-      <MoreHelp more={ui("clients.more")}>Ein KI-Client sieht nur deine Daten.</MoreHelp>
+      <MoreHelp more={ui("clients.more")}>Ein KI-Client sieht nur deine eigenen Daten.</MoreHelp>
       {props.rows.length === 0 ? (
         <EmptySheet
           title="Noch ist kein KI-Client verbunden"

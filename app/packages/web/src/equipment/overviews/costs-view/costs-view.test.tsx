@@ -15,10 +15,10 @@ afterEach(cleanup);
 const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("US-QS-32 the cost view says one line about the missing prices (SG-FMT-03)", () => {
-  it("US-QS-32 two parts without a price agree in number: 'Bei 2 Teilen ist der Preis unbekannt.'", () => {
+  it("US-QS-32 two devices without a price agree in number: 'Bei 2 Geräten ist der Preis unbekannt.'", () => {
     render(<CostsView items={[item("Lamp", 10), item("Pump", null), item("Pot", null)]} />);
     expect(screen.getByRole("region", { name: "Kosten" }).textContent).toContain(
-      "Bei 2 Teilen ist der Preis unbekannt.",
+      "Bei 2 Geräten ist der Preis unbekannt.",
     );
   });
 });
@@ -29,7 +29,7 @@ describe("US-EQU-09 cost view", () => {
     const section = screen.getByRole("region", { name: "Kosten" });
     expect(section.textContent).toContain("62,40 €");
     expect(section.textContent).toContain("Summe über 2 von 3 Geräten");
-    expect(section.textContent).toContain("Bei 1 Teil ist der Preis unbekannt.");
+    expect(section.textContent).toContain("Bei 1 Gerät ist der Preis unbekannt.");
     const lamp = within(screen.getByRole("list", { name: "Kosten je Art" })).getAllByRole(
       "listitem",
     )[0] as HTMLElement;

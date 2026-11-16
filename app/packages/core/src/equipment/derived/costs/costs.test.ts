@@ -31,12 +31,16 @@ describe("US-EQU-09 cost view", () => {
     ];
     const view = equipmentCosts(items);
     expect(view.coverage).toBe("Summe über 7 von 11 Geräten");
-    expect(view.nextAction).toBe("Bei 4 Teilen ist der Preis unbekannt.");
+    expect(view.nextAction).toBe("Bei 4 Geräten ist der Preis unbekannt.");
   });
 
-  it("US-QS-32 the missing-price line agrees in number: one part is 'Teil'", () => {
-    const view = equipmentCosts([item("Lamp", 10), item("Pump", null)]);
-    expect(view.nextAction).toBe("Bei 1 Teil ist der Preis unbekannt.");
+  it("US-QS-32 the missing-price line says 'Gerät' like the coverage line and agrees in number", () => {
+    expect(equipmentCosts([item("Lamp", 10), item("Pump", null)]).nextAction).toBe(
+      "Bei 1 Gerät ist der Preis unbekannt.",
+    );
+    expect(
+      equipmentCosts([item("Lamp", 10), item("Pump", null), item("Pot", null)]).nextAction,
+    ).toBe("Bei 2 Geräten ist der Preis unbekannt.");
   });
 
   it("US-EQU-09 no price known means unknown, never 0 (P-08)", () => {

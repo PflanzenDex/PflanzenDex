@@ -13,6 +13,7 @@ import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
 import table from "../../social.de.json";
 import { FeedSkeleton } from "./feed-block.skeleton";
+import { FeedHint } from "./feed-hint/feed-hint";
 
 const t = texts(table);
 
@@ -133,8 +134,9 @@ const activeFilters = (f: FeedFilter) =>
  * "Neu bei Freunden" (US-SOZ-05), the content of the layer of that name (US-QS-20): what friends newly collected, newest first, derived from what they share (nothing
  * private ever shows up, P-05). Default period 30 days; filters by friend and "only new species". An unknown date says
  * "Datum unbekannt" (P-08). Every state says what to do next (P-09). No ranking and no comparison between friends.
- * On one screen (US-QS-15, owner decision 2026-11-02, issue 1157): the filters open behind "Filter (n)", the next step
- * and "Stand" are one line, and the events page by the free height of the layer.
+ * On one screen (US-QS-15, owner decision 2026-11-02, issue 1157): the filters open behind "Filter (n)", the hint is one
+ * line with the one action that fits its state, "Stand" is its own muted line (FR-SOZ-03), and the events page by the
+ * free height of the layer.
  */
 export function FeedBlock(props: {
   api: string;
@@ -160,8 +162,7 @@ export function FeedBlock(props: {
       >
         {(feed: Feed) => (
           <>
-            {/* One plain line (SG-COPY-05, US-QS-32, F-0258): no bold instruction without a link, and no "Stand" line. */}
-            <p className="text-sm">{feed.hint.text}</p>
+            <FeedHint feed={feed} />
             {feed.events.length > 0 && (
               <Pager
                 items={feed.events}
