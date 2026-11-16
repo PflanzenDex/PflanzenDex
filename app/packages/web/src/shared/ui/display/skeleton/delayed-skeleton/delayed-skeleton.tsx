@@ -25,6 +25,8 @@ const CONTROL =
 
 /** True during the app start (SG-STATE-02, owner answer Q-27): see `beginAppStart`. */
 let starting = false;
+/** True while the app puts its own address back (`runWithoutEndingStart`): the popstate of that is no act of the keeper. */
+let puttingBack = false;
 
 /**
  * Starts the app start (SG-STATE-02, owner answer Q-27, issue 1876): until the keeper first acts on a control (a press, a
@@ -43,16 +45,35 @@ export function beginAppStart(target: Window = window) {
   const hidden = () => {
     if (target.document.visibilityState === "hidden") end();
   };
+  // Back or forward ends the start; a popstate the app puts back itself (`runWithoutEndingStart`) does not (issue 2244).
+  const back = () => {
+    if (!puttingBack) end();
+  };
   function end() {
     starting = false;
     for (const type of START_ACTS) target.removeEventListener(type, act, true);
-    target.removeEventListener("popstate", end, true);
+    target.removeEventListener("popstate", back, true);
     target.document.removeEventListener("visibilitychange", hidden);
   }
   for (const type of START_ACTS) target.addEventListener(type, act, true);
-  target.addEventListener("popstate", end, true);
+  target.addEventListener("popstate", back, true);
   target.document.addEventListener("visibilitychange", hidden);
   return end;
+}
+
+/**
+ * Runs `put`, a change of the address that the app makes itself: the sign-in return puts the address of the person back
+ * (US-BES-17, issue 1823). The popstate it dispatches, with which the router reads the address again, is no page change of
+ * the keeper, so it does not end the app start: the skeletons that mount after it would wait for their delay and leave main
+ * empty meanwhile (issue 2244). A back or forward of the keeper still ends the start.
+ */
+export function runWithoutEndingStart(put: () => void): void {
+  puttingBack = true;
+  try {
+    put();
+  } finally {
+    puttingBack = false;
+  }
 }
 
 /**

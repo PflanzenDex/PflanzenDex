@@ -1,4 +1,5 @@
 import type { UserManager, User } from "oidc-client-ts";
+import { runWithoutEndingStart } from "../../shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { addressFromState, oidcSettings, returnAddress, returnState } from "./account-api";
 
 const env = import.meta.env as Record<string, string | undefined>;
@@ -59,11 +60,14 @@ export const hereState = (): string =>
 // state only the path stays, as before. The router was created at the callback's address and does not see a
 // `replaceState`; a `popstate` makes it read the address again, so the layer or form of the query opens and a later
 // navigation does not write the sign-in's parameters back (issue 1823). The history entry keeps the router's own state.
+// That popstate is no page change of the keeper, so the app start goes on (issue 2244).
 function restoreAddress(state: unknown): void {
   const address = addressFromState(window.location.origin, state) ?? new URL(here()).pathname;
   const entry: unknown = window.history.state;
   window.history.replaceState(entry, "", address);
-  window.dispatchEvent(new PopStateEvent("popstate", { state: entry }));
+  runWithoutEndingStart(() =>
+    window.dispatchEvent(new PopStateEvent("popstate", { state: entry })),
+  );
 }
 
 // The state of an error response of the sign-in library; anything else carries none.
