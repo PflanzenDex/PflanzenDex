@@ -68,6 +68,6 @@
   "match.entry.requests": "Anfrage ansehen",
   "match.entry.requests.aria": "Anfrage ansehen: {name}",
   "match.alreadyRequested": "Schon angefragt: {title}.",
-  "deck.askMore": "„Ja“ fragt das Angebot an, „Nein“ und „Später“ bleiben bei dir gespeichert. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
+  "deck.askMore": "„Anfragen“ fragt das Angebot an, „Ablehnen“ und „Später“ bleiben bei dir gespeichert. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
   "deck.friendFallback": "Ein Freund"
 }

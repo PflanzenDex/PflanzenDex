@@ -63,7 +63,7 @@ function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<De
           type: "no",
           card: c,
           answeredOn,
-          notice: `Ablehnen: ${title(c)}. Der Freund erfährt davon nichts.`,
+          notice: `Abgelehnt: ${title(c)}. Der Freund erfährt davon nichts.`,
         }
       : {
           type: "later",

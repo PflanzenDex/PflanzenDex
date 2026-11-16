@@ -501,10 +501,12 @@ describe("US-QS-26 Heute narrowed to the watering tasks by its address", () => {
     expect(address()).toBe("/today?tasks=watering");
   });
 
-  it('US-QS-26 each watering row keeps its action: "Gießen eintragen" stays on the row of the filtered list', async () => {
+  it('US-QS-26 each watering row keeps its action: "Gegossen" stays on the row of the filtered list', async () => {
     fakeServer({ due: DUE });
     show("/today?tasks=watering");
-    expect(await screen.findByRole("button", { name: "Gießen eintragen: Ficus" })).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }),
+    ).toBeTruthy();
   });
 
   it('US-QS-26 the button "Alle Aufgaben zeigen" clears the filter: the address loses it and the whole day with its tiles shows again', async () => {
@@ -1092,7 +1094,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     const user = userEvent.setup();
     show("/today?sheet=watering");
     expect(await screen.findByText(/Läuse/)).toBeTruthy();
-    const watering = await screen.findByRole("button", { name: "Gießen eintragen: Ficus" });
+    const watering = await screen.findByRole("button", { name: "Ficus als gegossen eintragen" });
     const todayBefore = requestsTo("/today");
     const dueBefore = requestsTo("/watering/due");
     await user.click(watering);

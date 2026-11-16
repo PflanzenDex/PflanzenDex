@@ -45,7 +45,7 @@ function History(props: {
       empty={{
         isEmpty: (rows: readonly TreatmentRow[]) => rows.length === 0,
         title: "Noch keine erledigte Behandlung für diese Pflanze",
-        description: "Hake oben einen offenen Termin mit „Erledigt“ ab, dann erscheint er hier.",
+        description: "Hake oben einen offenen Termin mit „Abhaken“ ab, dann erscheint er hier.",
         action: { label: "Andere Pflanze wählen", onClick: props.onChoose },
       }}
     >

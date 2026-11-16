@@ -13,7 +13,7 @@ export const HintsPage = lazyPage(() =>
 export const CareProfileSection = lazyPage(() =>
   import("./care-profile-page/care-profile-page").then((m) => ({ default: m.CareProfileSection })),
 );
-/** The page a scanned pot label opens (US-BES-17): the plant with "Gießen eintragen" and "Messen", its own address `/label/:id`. */
+/** The page a scanned pot label opens (US-BES-17): the plant with "Gegossen" and "Messen", its own address `/label/:id`. */
 export const PotLabelPage = lazyPage(() =>
   import("./other-pages/pot-label-page/pot-label-page").then((m) => ({
     default: m.PotLabelPage,

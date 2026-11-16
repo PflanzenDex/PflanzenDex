@@ -252,6 +252,9 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     await current();
     await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Abgelehnt: Echte Aloe 1. Der Freund erfährt davon nichts.",
+    );
     await press(/^Später/);
     expect(
       await screen.findByText("Für jetzt durch: 0 angefragt, 1 für später, 1 abgelehnt"),
@@ -606,7 +609,7 @@ describe("US-QS-32 the match deck: no intro under the title, one line above the 
     const line = screen.getByText("Ben1 erfährt nur von einer Anfrage.");
     expect(line.closest("details")).toBeNull();
     const more = line.parentElement?.querySelector("details");
-    expect(more?.textContent).toContain("„Ja“ fragt das Angebot an");
+    expect(more?.textContent).toContain("„Anfragen“ fragt das Angebot an");
     expect(more?.textContent).toContain(
       "Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
     );

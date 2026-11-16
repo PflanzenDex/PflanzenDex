@@ -89,11 +89,11 @@ afterEach(() => {
 });
 
 describe("US-BES-17 a scanned pot label opens the plant with quick actions", () => {
-  it("US-BES-17 an own active plant shows its name, the large actions Gießen eintragen and Messen, and a link to its normal view", async () => {
+  it("US-BES-17 an own active plant shows its name, the large actions Gegossen and Messen, and a link to its normal view", async () => {
     server({ "GET /specimens/e1": () => json(200, specimen()) });
     show();
     expect(await screen.findByRole("heading", { level: 1, name: "Aloe vera" })).toBeTruthy();
-    const water = screen.getByRole("button", { name: "Gießen eintragen" });
+    const water = screen.getByRole("button", { name: "Gegossen" });
     const measure = screen.getByRole("button", { name: "Messen" });
     expect(water.className).toContain("min-h-[48px]");
     expect(measure.className).toContain("min-h-[48px]");
@@ -101,14 +101,14 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     expect(link.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-e1");
   });
 
-  it("US-BES-17 Gießen eintragen writes the watering once for today and confirms it", async () => {
+  it("US-BES-17 Gegossen writes the watering once for today and confirms it", async () => {
     const calls = server({
       "GET /specimens/e1": () => json(200, specimen()),
       "POST /watering": () => json(200, { date: "2026-11-06", specimens: ["e1"], created: 1 }),
     });
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Gießen eintragen" }));
+    await user.click(await screen.findByRole("button", { name: "Gegossen" }));
     expect((await screen.findByRole("status")).textContent).toBe("Heute als gegossen eingetragen.");
     const writes = calls.filter((c) => c.method === "POST");
     expect(writes).toHaveLength(1);
@@ -124,7 +124,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     });
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Gießen eintragen" }));
+    await user.click(await screen.findByRole("button", { name: "Gegossen" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe(ERROR_TEXTS["specimen.archived"]);
     expect(alert.textContent).not.toContain("raw server text");
@@ -151,7 +151,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
       await screen.findByRole("heading", { level: 1, name: "Pflanze nicht gefunden" }),
     ).toBeTruthy();
     const foreignHtml = foreign.innerHTML;
-    expect(screen.queryByRole("button", { name: "Gießen eintragen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Gegossen" })).toBeNull();
     cleanup();
     const { container: unknownLabel } = show("unbekannt");
     expect(
@@ -181,7 +181,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     show();
     expect(await screen.findByRole("heading", { level: 1, name: "Aloe vera" })).toBeTruthy();
     expect(screen.getByText(ERROR_TEXTS["specimen.archived"])).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Gießen eintragen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Gegossen" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Messen" })).toBeNull();
     expect(screen.getByRole("link", { name: "Zur Sammlung" })).toBeTruthy();
   });

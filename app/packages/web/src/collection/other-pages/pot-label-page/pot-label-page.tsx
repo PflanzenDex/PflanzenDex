@@ -1,5 +1,5 @@
 // The page a scanned pot label opens (US-BES-17, FR-BES-25): the plant of the signed-in keeper with the quick actions
-// "Gießen eintragen" and "Messen". The address carries only the specimen id, which is opaque (FR-BES-25); nothing of the plant
+// "Gegossen" and "Messen". The address carries only the specimen id, which is opaque (FR-BES-25); nothing of the plant
 // is read before the keeper is signed in (the app shows the sign-in first), and a foreign id looks like an unknown one.
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
@@ -79,7 +79,7 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
 
 /**
  * The plant with its two quick actions; an archived plant says so and offers no action (US-BES-17, P-09, P-10).
- * "Gießen eintragen" and "Gedüngt" refresh all monitoring data, so the watering and the fertilizing line show the new state (US-MON-05, US-MON-09).
+ * "Gegossen" and "Gedüngt" refresh all monitoring data, so the watering and the fertilizing line show the new state (US-MON-05, US-MON-09).
  */
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
   const { api, token, specimen, onMeasure } = props;

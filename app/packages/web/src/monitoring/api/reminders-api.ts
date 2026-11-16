@@ -76,7 +76,7 @@ export async function loadWateringDue(
   return r.ok ? { ok: true, value: r.value.due } : r;
 }
 
-/** "Gießen eintragen" for one or several specimens; the server takes today's date in the zone of the profile. */
+/** "Gegossen" for one or several specimens; the server takes today's date in the zone of the profile. */
 export const markWatered = (
   api: string,
   token: string,

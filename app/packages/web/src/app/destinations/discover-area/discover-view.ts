@@ -20,7 +20,7 @@ const parse = (v: string | null | undefined): DiscoverView | null =>
   v === "suggestions" || v === "catalog" ? v : null;
 
 /**
- * Whether the suggestions are offered. They are the function "discover" (US-ENT), and every Ja or Nein on a card writes a
+ * Whether the suggestions are offered. They are the function "discover" (US-ENT), and every Wünschen or Kein Interesse on a card writes a
  * wish (US-ENT-04): so the keeper's switch of the wishlist (US-ONB-09) hides them as well as the switch of "discover".
  * Without them the catalog stays.
  */

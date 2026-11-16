@@ -97,7 +97,7 @@ export function NewPlantsBody(props: {
           {props.offline ? t("news.offline") : ""}
         </p>
       )}
-      <div className={compact ? "shrink-0" : undefined}>
+      <div>
         <Button
           type="button"
           size={compact ? "default" : "touch"}

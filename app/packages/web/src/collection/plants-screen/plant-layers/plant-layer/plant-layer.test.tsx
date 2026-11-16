@@ -210,7 +210,7 @@ describe("US-QS-23 Überblick", () => {
     const panel = within(layer).getByRole("tabpanel");
     expect(within(panel).getByText("11 Tage überfällig")).toBeTruthy();
     expect(panel.textContent).not.toMatch(/Tg\./);
-    expect(within(panel).getByRole("button", { name: "Behandlung planen: Aloe" })).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Behandeln: Aloe" })).toBeTruthy();
   });
 
   it("US-QS-23 · P-08 without a measurement and a trend the overview says unbekannt, nothing is invented", async () => {
@@ -242,7 +242,7 @@ describe("US-QS-23 Überblick", () => {
     const layer = await open();
     const measure = within(layer).getByRole("button", { name: "Messen: Aloe" });
     expect(measure.className).toContain("bg-primary");
-    for (const name of ["Gießen", "Behandlung planen: Aloe"]) {
+    for (const name of ["Gießen", "Behandeln: Aloe"]) {
       expect(within(layer).getByRole("button", { name }).className).not.toContain("bg-primary");
     }
     expect(
@@ -254,11 +254,11 @@ describe("US-QS-23 Überblick", () => {
     expect(onMeasure).toHaveBeenCalledOnce();
   });
 
-  it("US-QS-32 · US-QS-23 Behandlung planen leads to the tab Pflege", async () => {
+  it("US-QS-23 Behandeln leads to the tab Pflege", async () => {
     setViewportWidth(360);
     show([card()]);
     const layer = await open();
-    await userEvent.click(within(layer).getByRole("button", { name: "Behandlung planen: Aloe" }));
+    await userEvent.click(within(layer).getByRole("button", { name: "Behandeln: Aloe" }));
     expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e1&tab=pflege");
   });
 });

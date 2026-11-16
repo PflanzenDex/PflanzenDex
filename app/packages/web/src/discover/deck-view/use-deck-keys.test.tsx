@@ -157,7 +157,7 @@ describe("US-ENT-10 a screen reader hears the result of each decision", () => {
     );
     const region = () => container.querySelector("[aria-live='polite'].sr-only")?.textContent;
     key(front(), "ArrowRight");
-    await waitFor(() => expect(region()).toBe("Wünschen: auf der Wunschliste."));
+    await waitFor(() => expect(region()).toBe("Auf der Wunschliste."));
     key(await screen.findByRole("heading", { name: "Aloe vera" }), "Backspace");
     await waitFor(() => expect(region()).toBe("Rückgängig: die Karte liegt wieder oben."));
   });

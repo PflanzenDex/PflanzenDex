@@ -3,7 +3,7 @@ import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 
 /**
  * Placeholder with the layout of the watering list on a phone: three rows (checkbox with name and interval, the
- * "Gießen eintragen" button), then the button for several plants (US-MON-05, DS-52, DS-53). It shows after the delay (DS-57).
+ * "Gegossen" button), then the button for several plants (US-MON-05, DS-52, DS-53). It shows after the delay (DS-57).
  */
 export function WateringListSkeleton({ label }: { label: string }) {
   return (

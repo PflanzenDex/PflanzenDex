@@ -86,11 +86,11 @@ describe("US-MON-05 watering list", () => {
     expect(screen.getByText(/Pflegeprofil/)).toBeTruthy();
   });
 
-  it("US-MON-05 'Gießen eintragen' writes today's entry for that plant and the row disappears", async () => {
+  it("US-MON-05 'Gegossen' writes today's entry for that plant and the row disappears", async () => {
     const posts = fakeServer([ficus, aloe]);
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Gießen eintragen: Ficus" }));
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
     await vi.waitFor(() => expect(resultLine("Als gegossen eingetragen.")).toBeTruthy());
     expect(posts).toHaveLength(1);
     expect(posts[0]?.specimenIds).toEqual(["s1"]);
@@ -116,7 +116,9 @@ describe("US-MON-05 watering list", () => {
     show();
     const bulk = () => screen.queryByRole("button", { name: /^\d+ eintragen$/ });
     const hint = "Mehrere markieren, dann gemeinsam eintragen";
-    expect(await screen.findByRole("button", { name: "Gießen eintragen: Ficus" })).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }),
+    ).toBeTruthy();
     expect(bulk()).toBeNull();
     expect(screen.getByText(hint).tagName).toBe("P");
     await user.click(screen.getByRole("checkbox", { name: /Ficus/ }));
@@ -127,11 +129,11 @@ describe("US-MON-05 watering list", () => {
     expect(screen.queryByText(hint)).toBeNull();
   });
 
-  it("US-QS-32 · F-0075 after the last plant is marked 'Gießen eintragen' the result stands above the empty state and is said once", async () => {
+  it("US-QS-32 · F-0075 after the last plant is marked 'Gegossen' the result stands above the empty state and is said once", async () => {
     fakeServer([ficus]);
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Gießen eintragen: Ficus" }));
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
     const empty = await screen.findByText("Heute nichts zu gießen");
     const result = resultLine("Als gegossen eingetragen.");
     expect(result.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -156,7 +158,7 @@ describe("US-MON-05 watering list", () => {
     fakeServer([ficus, aloe]);
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Gießen eintragen: Ficus" }));
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
     const result = await vi.waitFor(() => resultLine("Als gegossen eingetragen."));
     const remaining = await screen.findByText("Aloe");
     expect(
@@ -177,7 +179,7 @@ describe("US-MON-05 watering list", () => {
     );
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Gießen eintragen: Ficus" }));
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Diese Pflanze gibt es nicht.");
     expect(screen.getByText("Ficus")).toBeTruthy();
   });
