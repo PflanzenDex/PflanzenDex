@@ -28,7 +28,6 @@ export const MeasuredView = lazyPage(() =>
   import("./views/account-views/account-views").then((m) => ({ default: m.MeasuredView })),
 );
 export { apiUrl } from "./api/account-api";
-export { likelySignedIn } from "./api/sign-in-client";
 export type { Account } from "./api/account-api";
 /** The question after the first plant (US-ONB-03): its code loads only when the first plant was saved (DS-08). */
 export const KeeperStyleQuestion = lazyPage(() =>

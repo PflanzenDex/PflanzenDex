@@ -6,7 +6,6 @@ import {
   apiUrl,
   useSession,
   InvitationPage,
-  likelySignedIn,
   type State,
 } from "../../../account";
 import { useClearOnSignOut } from "../../../shared/data";
@@ -14,7 +13,6 @@ import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-bo
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { pageTitle } from "../../../shared/patterns/navigation/navigation/navigation";
 import { useAccountMotion } from "@/shared/platform/device/motion/motion-setting";
-import { StartFrame } from "./start-frame/start-frame";
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
@@ -118,9 +116,6 @@ export function App() {
   useAccountMotion(motionOf(z));
   // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
   if (z.kind === "signedOut") return <SignedOutWelcome session={s} state={z} />;
-  // A keeper who was signed in on this device sees the signed-in frame with the page skeleton from the first paint, through
-  // the session check and the shell's code, without an empty frame (SG-STATE-02, issue 1876); the card stays for sign-in.
-  if (z.kind === "loading" && likelySignedIn()) return <StartFrame />;
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">
@@ -128,7 +123,7 @@ export function App() {
       </main>
     );
   return (
-    <RouteBoundary resetKey="signed-in" fallback={<StartFrame />}>
+    <RouteBoundary resetKey="signed-in">
       <SignedInFrame
         session={s}
         account={z.account}
