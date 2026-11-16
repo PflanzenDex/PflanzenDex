@@ -33,10 +33,10 @@ import {
   IMPORT_PATH,
   LABELS_PATH,
   PATHS,
-  destinationHeading,
   type LinkTarget,
   type View,
 } from "../shared/patterns/navigation/navigation/navigation";
+import { destinationHeading } from "../shared/patterns/navigation/nav-item";
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
