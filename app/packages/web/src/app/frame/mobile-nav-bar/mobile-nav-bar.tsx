@@ -5,6 +5,9 @@ import { Button } from "@/shared/ui/button/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { cn } from "@/shared/lib/utils";
 import {
+  BAR_SLOTS,
+  barWords,
+  bottomBar,
   isActivePath,
   stackedItem,
   stackedLabel,
@@ -13,17 +16,6 @@ import {
 } from "../../../shared/patterns/navigation/nav-item";
 import { NavNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
 import { ReselectLink } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
-
-/** At most 5 slots in the bar (DS-25): 5 destinations, or 4 plus "Mehr". */
-const BAR_SLOTS = 5;
-
-/**
- * The words under the icons (US-QS-32, SG-NAV-07, F-0354): a label wraps to at most two lines inside its slot, and a word
- * too wide for the slot breaks at a syllable with a hyphen (`hyphens-auto`; the document is `lang="de"`).
- * `[overflow-wrap:anywhere]` is only the last fallback, so nothing leaves its slot. No label leaves the view at a larger
- * text size (owner decision 2026-11-14, which reverses issue 1107); the bar grows with its labels.
- */
-const barWords = "block max-w-full text-center hyphens-auto [overflow-wrap:anywhere]";
 
 /**
  * The label of a slot. With a text mark the accessible name reads "Freunde, Noch gesperrt" with no blank before the comma
@@ -134,11 +126,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
   const moreActive = inDrawer.some((i) => isActivePath(pathname, i.href));
 
   return (
-    <nav
-      aria-label="Navigation unten"
-      data-bottom-bar
-      className="inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] tall-window:fixed md:hidden"
-    >
+    <nav aria-label="Navigation unten" data-bottom-bar className={bottomBar}>
       {inBar.map((item) => (
         <ReselectLink
           key={item.href}

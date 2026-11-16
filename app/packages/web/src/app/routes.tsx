@@ -17,6 +17,7 @@ import { FunctionOverview, TodayIntro, UnlockPage } from "./flows";
 import { isShownLocked, lockMark, useUnlocks } from "./flows/unlock";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { useRouteFallback } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
+import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fallback/home-redirect/home-redirect";
 import {
   AccountArea,
   TodayArea,
@@ -176,7 +177,7 @@ export function AppRoutes(props: {
           }
         />
         {/* "Heute" is the home screen: the root address, old bookmarks and the brand lead there (US-QS-16). */}
-        <Route path="/" element={<Navigate to={PATHS.today} replace />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
         {/* A scanned pot label opens its plant (US-BES-17); the id is opaque and the page asks the server as the keeper. */}
         <Route path="/label/:id" element={<PotLabelPage api={api} token={s.token} />} />

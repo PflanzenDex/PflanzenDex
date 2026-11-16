@@ -1,6 +1,7 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { LoadFrame } from "../../../shared/data";
 import { loadOverview } from "../../api/access-api";
@@ -170,7 +171,8 @@ export function OperatorPage(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadOverview(api, t), [api]);
   return (
     <div data-fit-screen="" className="flex min-w-0 flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Betreiber</h1>
+      {/* The page's header like every destination's: in the top bar below md, where the start frame already put it (issue 2230). */}
+      <PageHeader title="Betreiber" />
       <LoadFrame
         queryKey={[...OPERATOR_KEY, "overview"]}
         token={token}

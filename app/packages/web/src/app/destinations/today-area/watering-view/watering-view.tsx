@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { WateringList, WateringListSkeleton } from "@/monitoring";
-import { TodayFilter, WATERING_TASKS, taskFilterOf, todayTexts } from "@/today";
+import { todayTexts } from "@/today";
+import { TodayFilter } from "./today-filter/today-filter";
+import { WATERING_TASKS, taskFilterOf } from "./today-filter/task-filter";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 

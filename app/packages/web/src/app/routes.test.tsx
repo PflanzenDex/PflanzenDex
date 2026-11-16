@@ -41,6 +41,7 @@ vi.mock("../pokedex/pokedex-page/pokedex-page", () => {
 });
 
 import { AppRoutes } from "./routes";
+import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fallback/home-redirect/home-redirect";
 import { AddPlant } from "@/app/flows";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 
@@ -159,5 +160,17 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     await screen.findByRole("heading", { name: "Sammlung" });
     // Konto is not on this screen: its chunk comes from the idle preload of the shell (issue 1645).
     await waitFor(() => expect(AccountArea.loaded()).not.toBeNull());
+  });
+});
+
+describe("US-QS-16 · issue 2230 the root address has no empty frame", () => {
+  it("US-QS-16 · issue 2230 the root address holds the skeleton of Heute while it redirects, its title in place", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <HomeRedirect />
+      </MemoryRouter>,
+    );
+    const title = screen.getByRole("heading", { level: 1, name: "Heute" });
+    expect(title.hasAttribute("data-route-fallback")).toBe(true);
   });
 });

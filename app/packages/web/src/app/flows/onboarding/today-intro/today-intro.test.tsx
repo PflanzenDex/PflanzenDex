@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HINT_MAX_WORDS } from "@pflanzendex/core";
 import { useInvalidate } from "../../../../shared/data";
 import { HINT_TEXTS } from "./hint/hint-texts";
+import { HintNote } from "./hint";
 import { TodayIntro } from "./today-intro";
 
 const response = (status: number, body: unknown) =>
@@ -581,6 +582,77 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
     await tasksShown();
     expect(paths()).toContain("/specimens/count");
     expect(paths()).not.toContain("/specimens/cards");
+  });
+
+  it("US-QS-32 · issue 2230 a keeper with plants waits for the hints before the tasks show, so a notice never lands above them later", async () => {
+    fakeServer(
+      world({ zones: [], cards: [{ id: "e1" }], hint: "function_unlocked", guideEnded: true }),
+    );
+    const release = holdPath("/onboarding/hints");
+    view();
+    await vi.waitFor(() => expect(paths()).toContain("/onboarding/hints"));
+    expect(tasksHidden()).toBe(true);
+    release();
+    expect(await tasksShown()).toBeTruthy();
+    expect(await screen.findByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
+  });
+
+  it("US-QS-32 · issue 2230 a due note waits for its code, so the note never lands above the tasks later", async () => {
+    fakeServer(
+      world({ zones: [], cards: [{ id: "e1" }], hint: "function_unlocked", guideEnded: true }),
+    );
+    const original = HintNote.load;
+    let release!: () => void;
+    const code = new Promise<void>((done) => (release = done));
+    const load = vi.spyOn(HintNote, "load").mockImplementation(async () => {
+      await code;
+      return original();
+    });
+    const loaded = vi.spyOn(HintNote, "loaded").mockReturnValue(null);
+    try {
+      view();
+      await vi.waitFor(() => expect(paths()).toContain("/onboarding/hints"));
+      await vi.waitFor(() => expect(load).toHaveBeenCalled());
+      expect(tasksHidden()).toBe(true);
+      release();
+      expect(await tasksShown()).toBeTruthy();
+      expect(screen.getByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
+    } finally {
+      load.mockRestore();
+      loaded.mockRestore();
+    }
+  });
+
+  it("US-QS-32 · issue 2230 · P-10 a keeper whose hints cannot be asked still sees the tasks: the answer ends as failed", async () => {
+    fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
+    // The sign-in is lost right after the count answered: the token of the hints cannot be read.
+    let countAnswered = false;
+    const serve = fetch;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        if (new URL(String(url)).pathname === "/specimens/count") countAnswered = true;
+        return serve(url, init);
+      }),
+    );
+    const lost = async () => {
+      if (countAnswered) throw new Error("sign-in lost");
+      return "tok";
+    };
+    render(
+      <MemoryRouter>
+        <TodayIntro
+          lookup={LOOKUP}
+          api="http://api"
+          token={lost}
+          onOpen={open}
+          fallback={<p role="status">Heute wird geladen …</p>}
+        >
+          <p>Aufgaben des Tages</p>
+        </TodayIntro>
+      </MemoryRouter>,
+    );
+    expect(await tasksShown()).toBeTruthy();
   });
 
   it("US-QS-16 when the count is not there the tasks still show, Heute is never blank", async () => {

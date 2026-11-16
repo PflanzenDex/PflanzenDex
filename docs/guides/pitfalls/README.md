@@ -301,3 +301,11 @@ IDs are never renumbered.
 - **Fix:** Set `hyphens: manual` (`hyphens-manual`) on every title whose minimum must be a whole word (`KEEP_WORD` in `page-header.tsx`); keep `hyphens: auto` only where a word wider than the column may break.
 - **Can it become a gate?** Partly: the e2e check "US-QS-32 bar titles at 200 % text" in `reflow.spec.ts` reads the lines of each word of the bar title; other headings need the same thought when they get a word minimum.
 - **Source:** Issue #2231 (recheck of FX-44 step 1).
+
+## PF-037 A portal is not hidden with its subtree, so two mounted headers both draw into the top bar
+
+- **Symptom:** The top bar shows the page title twice ("Heute Heute", two h1) for a moment after a cold start or a sign-in, while the page below looks right.
+- **Cause:** A `PageHeader` below `md` portals its row into the shell's bar slot. Heute's intro keeps its tasks mounted in a hidden wrapper while it waits and renders its own fallback beside them. A hidden wrapper or a suspended subtree hides its own DOM, not the DOM it portalled elsewhere, so both headers draw in the bar.
+- **Fix:** A shared slot has one owner: `AppBarSlot` keeps the claims in mount order, and only the first claim draws in the bar (`useBarClaim`). Any new portal target that several mounted components can fill needs the same rule.
+- **Can it become a gate?** No: whether two claimants can be mounted at once depends on the page's Suspense structure. The claim-order test in `app-bar-slot.test.tsx` and the hand-over test in `start-frame/handover.test.tsx` pin this case.
+- **Source:** Issue #2230 (recheck of FX-08 on four devices).
