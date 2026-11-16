@@ -267,6 +267,34 @@ describe("US-QS-32 PageHeader in the top bar below md (SG-HEAD-01, SG-HEAD-04, S
     expect(title.className).toContain("text-lg");
   });
 
+  it("US-QS-32 a bar title beside an action is never hyphenated, so its longest word stays whole and the action wraps under it at 200 % text (issue 2231)", () => {
+    render(
+      <InShell>
+        <PageHeader title="Sammlung" action={<button type="button">Ansicht</button>} />
+      </InShell>,
+    );
+    // The base layer hyphenates every h1 (issue 1315); a hyphenation point would lower the title's minimum to "Samm-".
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className.split(" ")).toContain("hyphens-manual");
+    expect(title.className.split(" ")).toContain("min-w-min");
+  });
+
+  it("NFR-13 a content title that keeps its longest word is never hyphenated, with an action or a way back (issue 2231)", () => {
+    setViewportWidth(1024);
+    inRouter(
+      <>
+        <PageHeader title="Tauschbörse" action={<button type="button">Anbieten</button>} />
+        <PageHeader title="Passende Angebote" heading="h2" back={back} />
+        <PageHeader title="Freunde" heading="h2" />
+      </>,
+    );
+    const [withAction, withBack, plain] = screen.getAllByRole("heading");
+    expect(withAction?.className.split(" ")).toContain("hyphens-manual");
+    expect(withBack?.className.split(" ")).toContain("hyphens-manual");
+    // A title without either keeps the base layer's syllable break for a word wider than the window (issue 1315).
+    expect(plain?.className.split(" ")).not.toContain("hyphens-manual");
+  });
+
   it("US-QS-32 the bar's back control keeps its 44 px target and stays at the leading edge", () => {
     render(
       <InShell>

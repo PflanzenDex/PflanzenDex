@@ -42,18 +42,20 @@ export type PageHeaderProps = {
   className?: string;
 };
 
+const KEEP_WORD = "hyphens-manual"; // a hyphenation point would lower the minimum to a syllable: "Samm-lung" (issue 2231)
+
 /**
  * The minimum width of the title (NFR-13). With an action the title is at least its longest word and no word breaks
  * inside (issue 1230): the row wraps and the action goes under the title (issue 1177). The longest word grows with the
  * text, so the action wraps instead of squeezing the title. A title beside a way back without an action claims 230 px or
  * its longest word, whichever is more: when the row cannot give that, it wraps and the back control sits above the title
  * (issues 1226, 1254). The 230 px do not grow with the text, the longest word does; `break-word` keeps that word in the
- * minimum (`anywhere` would remove it) and `max-w-full` caps it, so only a word wider than the whole column breaks. Any
- * other title keeps 5 rem.
+ * minimum (`anywhere` would remove it) and `max-w-full` caps it, so only a word wider than the whole column breaks. Both
+ * keep the word whole (KEEP_WORD). Any other title keeps 5 rem and the hyphenation of every h1 (issue 1315).
  */
 function titleMinimum(hasBack: boolean, hasAction: boolean): string {
-  if (hasAction) return "min-w-min flex-1 [overflow-wrap:normal]";
-  if (hasBack) return "max-w-full grow basis-[230px] [overflow-wrap:break-word]";
+  if (hasAction) return `min-w-min flex-1 [overflow-wrap:normal] ${KEEP_WORD}`;
+  if (hasBack) return `max-w-full grow basis-[230px] [overflow-wrap:break-word] ${KEEP_WORD}`;
   return "min-w-20 flex-1 [overflow-wrap:anywhere]";
 }
 
@@ -68,7 +70,7 @@ const BAR_TITLE = "min-w-0 flex-1 break-words text-lg font-semibold";
  * The title in the bar beside an action: at least its longest word, as in the content (issue 1230). Shrinking it to zero
  * made the bar 616 px tall at 200 % text (the title wrapped letter by letter), and the page grew past the window (FX-44).
  */
-const BAR_TITLE_WITH_ACTION = "min-w-min flex-1 [overflow-wrap:normal] text-lg font-semibold";
+const BAR_TITLE_WITH_ACTION = `min-w-min flex-1 [overflow-wrap:normal] ${KEEP_WORD} text-lg font-semibold`;
 const barTitleClass = (hasAction: boolean): string =>
   hasAction ? BAR_TITLE_WITH_ACTION : BAR_TITLE;
 /** The row in the content, as on every width above `md` and wherever no bar is present. */
