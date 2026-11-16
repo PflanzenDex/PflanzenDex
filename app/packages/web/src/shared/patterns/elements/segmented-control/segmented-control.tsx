@@ -76,7 +76,9 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             aria-keyshortcuts={o.keyHint?.aria}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-w-[44px] shrink-0 gap-1 rounded-full border px-1",
+              // The segment is 44 px high at least (the button's minimum); its vertical padding is 4 px, not the button's 8 px,
+              // so that two rows of four at 200 % text fit on a 360 x 640 window (issue 1858, round 3).
+              "min-w-[44px] shrink-0 gap-1 rounded-full border px-1 py-1",
               selected
                 ? "border-input bg-card font-semibold text-foreground shadow-elevation-1 hover:bg-card hover:text-foreground forced-colors:border-[color:Highlight]"
                 : "border-transparent font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",

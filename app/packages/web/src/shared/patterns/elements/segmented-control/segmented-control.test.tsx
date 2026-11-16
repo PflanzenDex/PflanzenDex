@@ -57,6 +57,15 @@ describe("US-QS-14 segmented control", () => {
     for (const l of labels) expect(l.className).toContain("min-h-[44px]");
   });
 
+  it("US-QS-32 round 3 a segment keeps 4 px of vertical padding, so two rows of four fit at 200 % text (the 44 px minimum holds)", () => {
+    const { container } = render(<Host />);
+    for (const l of container.querySelectorAll("button")) {
+      const classes = l.className.split(" ");
+      expect(classes).toEqual(expect.arrayContaining(["py-1", "min-h-[44px]"]));
+      expect(classes).not.toContain("py-2");
+    }
+  });
+
   it("US-QS-32 the selected segment has no check mark: the raised fill, the weight and the boundary tell it apart", () => {
     const { container } = render(<Host />);
     const labels = container.querySelectorAll("button");
