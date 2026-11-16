@@ -46,7 +46,10 @@ describe("US-QS-32 the count line keeps its place while it loads (SG-STATE-02, F
     const { container } = header(null);
     const reserve = container.querySelector("[data-caption-reserve]");
     expect(reserve?.className).toContain("h-5");
-    expect(reserve?.previousElementSibling?.tagName).toBe("H1");
+    // The heading row of PageHeader stands right above it (in the content here; in the top bar below md on a phone).
+    const row = reserve?.previousElementSibling;
+    expect(row?.hasAttribute("data-page-header")).toBe(true);
+    expect(row?.querySelector("h1")?.textContent).toBe("Sammlung");
   });
 
   it("US-QS-32 · SG-STATE-02 the loaded count takes the place of the bar", () => {

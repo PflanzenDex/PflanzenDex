@@ -187,7 +187,7 @@ describe("US-QS-32 the repot form is a full view: the task in the header, one h1
   it("US-QS-32 one h1 with the task and a back control to the Sammlung; the plant's name is the subject line", async () => {
     fakeRepotServer({ plan: { freePots: [{ id: "p1", name: "Topf A", diameterCm: 14 }] } });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     await screen.findByRole("form", { name: "Pflanze umtopfen" });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1, name: "Pflanze umtopfen" })).toBeTruthy();
