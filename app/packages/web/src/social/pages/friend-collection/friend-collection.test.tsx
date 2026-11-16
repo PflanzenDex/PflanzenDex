@@ -122,16 +122,22 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     show({ friend: { name: "Anna" }, cards: [] });
     expect(await screen.findByText(/Anna hat noch nichts freigegeben/)).toBeTruthy();
     expect(screen.queryByRole("list", { name: /Sammlung von/ })).toBeNull();
+    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265).
+    expect(document.body.textContent).not.toContain("teilt Art");
+  });
+
+  it("US-QS-32 F-0265 the line names the friend and the shared fields, and nothing more", async () => {
+    show({ friend: { name: "Anna" }, cards: [card()] });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.getByText("Anna teilt Art, Anzahl und Fangdatum.")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("ohne Wertung");
   });
 
   it("US-SOZ-07 facts only: no rank, no score, no comparison between friends; the way back is offered", async () => {
     show({ friend: { name: null }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
-    expect(
-      screen.getByText(
-        "Freigegeben von Name unbekannt, ohne Wertung und Vergleich: nur Art, Name, Fangdatum, ob es ein Steckling ist und wann er eingetopft wurde.",
-      ),
-    ).toBeTruthy();
+    // One line naming only what the friend shares (US-QS-32, F-0265); no rank, no comparison.
+    expect(screen.getByText("Name unbekannt teilt Art, Anzahl und Fangdatum.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );

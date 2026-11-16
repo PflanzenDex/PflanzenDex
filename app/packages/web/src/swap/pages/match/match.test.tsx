@@ -598,3 +598,27 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
     expect(document.body.textContent).not.toMatch(/angefragt,|für später,/);
   });
 });
+
+describe("US-QS-32 the match deck: no intro under the title, one line above the buttons (F-0279)", () => {
+  it("US-QS-32 F-0279 no intro under the title; one line above the buttons names the friend, the rest sits behind Mehr erfahren", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    expect(screen.queryByText(/Angebote deiner Freunde, deren Art/)).toBeNull();
+    const line = screen.getByText("Ben1 erfährt nur von einer Anfrage.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("„Ja“ fragt das Angebot an");
+    expect(more?.textContent).toContain(
+      "Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
+    );
+    expect(more?.textContent).not.toContain("Der Freund erfährt davon nichts");
+  });
+
+  it("US-QS-32 F-0279 a card without its giver's name says 'Ein Freund' in the same line", async () => {
+    server([card(1, { ownerName: null })]);
+    open();
+    await current();
+    expect(screen.getByText("Ein Freund erfährt nur von einer Anfrage.")).toBeTruthy();
+  });
+});

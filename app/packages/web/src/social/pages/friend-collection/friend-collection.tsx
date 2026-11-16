@@ -99,9 +99,12 @@ function Body(props: {
   const size = usePageSize();
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
-        Freigegeben von {name}, ohne Wertung und Vergleich: nur {tx("shared.fields")}.
-      </p>
+      {/* One line naming only what the friend shares (US-QS-32, F-0265); none while nothing is shared. */}
+      {props.cards.length > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {name} teilt {tx("collection.shares")}.
+        </p>
+      ) : null}
       <SegmentedControl label="Filter" options={FILTERS} value={filter} onChange={setFilter} />
       {wish.message && (
         <p role="status" className="rounded-lg border border-border p-3">
