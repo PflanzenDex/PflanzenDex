@@ -364,6 +364,32 @@ test("US-QS-32 · F-0322: the reset page names an empty field as its label does,
   assert.equal(de.missingUsernameMessage, "Bitte gib einen Benutzernamen ein.");
 });
 
+test("US-QS-32 · issue 2214: the reset page never fills its field from the last sign-in attempt, so the keeper names the account", () => {
+  const field = read("field.ftl");
+  const input = field.slice(
+    field.indexOf("<#macro input "),
+    field.indexOf("</#macro>", field.indexOf("<#macro input ")),
+  );
+  const blank = input.indexOf('<#if pageId == "login-reset-password" && name == "username">');
+  assert.ok(blank > 0, "the input macro clears the reset page's user name field");
+  assert.match(input.slice(blank), /^<#if [^>]+>\s*<#local value = "">\s*<\/#if>/);
+  assert.ok(
+    blank < input.indexOf('value="${value}"'),
+    "the value is cleared before the field is rendered",
+  );
+  // No theme template may bring the attempted user name back onto the reset page.
+  assert.equal(
+    existsSync(join(login, "login-reset-password.ftl")),
+    false,
+    "keycloak.v2 renders the reset page itself",
+  );
+  // An empty field is refused by Keycloak with missingUsernameMessage, which the reset page shows as its own text.
+  assert.equal(
+    de.pdxResetMissingUsername,
+    "Gib deine E-Mail-Adresse oder deinen Benutzernamen ein.",
+  );
+});
+
 test("US-QS-32 · F-0321 · F-0322: no page id in the theme carries .ftl (Keycloak's pageId is the template name without it)", () => {
   for (const file of [template, read("field.ftl")]) {
     assert.doesNotMatch(file, /pageId\s*[=!]=\s*"[^"]*\.ftl"/);
