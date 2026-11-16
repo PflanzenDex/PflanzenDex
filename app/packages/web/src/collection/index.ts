@@ -25,6 +25,8 @@ export const PrintLabelsPage = lazyPage(() =>
     default: m.PrintLabelsPage,
   })),
 );
+/** The format the labels were printed in last on this device, and its callback (US-QS-32): the route gives them to the page. */
+export { labelFormatProps } from "./other-pages/print-labels-page/label-sheet/label-format";
 /** The import of plants from a CSV file (US-BES-18, FR-BES-26): its own address `/collection/import`, shown while "csv_import" is on. */
 export const ImportPage = lazyPage(() =>
   import("./other-pages/import-page/import-page").then((m) => ({ default: m.ImportPage })),

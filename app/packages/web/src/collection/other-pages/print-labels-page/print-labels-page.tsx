@@ -17,7 +17,7 @@ import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { useFeature } from "@/shared/data";
 import { useCardPages, type CardPages } from "../../specimens/cards/use-card-pages";
 import { PrintRegion, type LabelFormat, type LabelPlant } from "./label-sheet/label-sheet";
-import { useLabelFormat } from "./label-sheet/label-format";
+import { useLabelFormatChoice, type LabelFormatProps } from "./label-sheet/label-sheet";
 import { useLabelCultivars, type LabelCultivars } from "./use-label-cultivars";
 import table from "./print-labels-page.de.json";
 import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
@@ -46,25 +46,25 @@ function nextStep(chosen: number, preparing: boolean): string {
   return ui("ready");
 }
 
-/** The print page of the keeper's plants. The switch "pot_labels" off sends the address to the collection (P-12). */
-export function PrintLabelsPage(props: { api: string; token: Token }) {
+/**
+ * The print page of the keeper's plants. The switch "pot_labels" off sends the address to the collection (P-12). The
+ * format starts with `format` and each choice is passed to `onFormat`: the route gives both (US-QS-32).
+ */
+export function PrintLabelsPage(props: { api: string; token: Token } & Partial<LabelFormatProps>) {
   const on = useFeature("pot_labels");
   if (!on) return <Navigate to={PATHS.collection} replace />;
-  return <LabelsView api={props.api} token={props.token} />;
+  return <LabelsView {...props} format={props.format ?? "sheet"} />;
 }
 
-function LabelsView(props: { api: string; token: Token }) {
+function LabelsView(props: { api: string; token: Token } & LabelFormatProps) {
   const { api, token } = props;
   const list = useCardPages(api, token);
   const rows = useRowPageSize();
   // The chosen plants are kept as cards: the choice survives a reload of the list and the printed plant stays exact.
   const [chosen, setChosen] = useState<SpecimenCard[]>([]);
-  const [format, chooseFormat] = useLabelFormat();
-  const cultivars = useLabelCultivars(
-    api,
-    token,
-    chosen.map((c) => c.speciesId),
-  );
+  const [format, chooseFormat] = useLabelFormatChoice(props);
+  const speciesIds = chosen.map((c) => c.speciesId);
+  const cultivars = useLabelCultivars(api, token, speciesIds);
   const plants: LabelPlant[] = chosen.map((c) => ({
     id: c.id,
     name: c.name,

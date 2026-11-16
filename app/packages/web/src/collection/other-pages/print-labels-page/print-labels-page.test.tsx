@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { PrintLabelsPage } from "./print-labels-page";
+import type { LabelFormat } from "./label-sheet/label-sheet";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./print-labels-page.de.json";
 import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
@@ -69,12 +70,19 @@ function Address() {
   return <p data-testid="address">{`${at.pathname}${at.search}`}</p>;
 }
 
-function show(features: Record<string, boolean> = { pot_labels: true }) {
+/** The page at its address; `pageProps` are the format and the callback the route passes (US-QS-32). */
+function show(
+  features: Record<string, boolean> = { pot_labels: true },
+  pageProps: { format?: LabelFormat; onFormat?: (format: LabelFormat) => void } = {},
+) {
   return render(
     <MemoryRouter initialEntries={["/collection/labels"]}>
       <FeaturesProvider features={features}>
         <Routes>
-          <Route path="/collection/labels" element={<PrintLabelsPage api={API} token={TOKEN} />} />
+          <Route
+            path="/collection/labels"
+            element={<PrintLabelsPage api={API} token={TOKEN} {...pageProps} />}
+          />
           <Route path="/collection" element={<Address />} />
         </Routes>
       </FeaturesProvider>
@@ -98,8 +106,6 @@ const printButton = () =>
 beforeEach(() => {
   vi.mocked(encode).mockClear();
   vi.spyOn(window, "print").mockImplementation(() => undefined);
-  // The last used format is kept on this device (US-QS-32): every test starts without it.
-  window.localStorage.clear();
 });
 
 afterEach(() => {
@@ -276,26 +282,20 @@ describe("US-QS-32 the print format is a segmented control with a preselected ch
     expect(screen.queryByRole("option", { name: "Format wählen" })).toBeNull();
   });
 
-  it("US-QS-32 the last used format is preselected on the next visit", async () => {
+  it("US-QS-32 a choice is reported to the route at once, and the page starts with the format the route passes", async () => {
     server([card()], { s1: species(null) });
     const user = userEvent.setup();
-    const first = show();
+    const chosen: LabelFormat[] = [];
+    const first = show(undefined, { onFormat: (format) => chosen.push(format) });
     await screen.findByRole("group", { name: "Format" });
     await chooseFormat(user, "Einzeletikett");
     expect(pressed("Einzeletikett")).toBe("true");
+    expect(chosen).toEqual(["single"]);
     first.unmount();
-    show();
+    show(undefined, { format: "single" });
     expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
     expect(pressed("Einzeletikett")).toBe("true");
     expect(pressed("A4-Bogen")).toBe("false");
-  });
-
-  it("US-QS-32 a stored format that is not one of the two falls back to A4-Bogen", async () => {
-    server([card()], { s1: species(null) });
-    window.localStorage.setItem("pflanzendex.print-labels-format", "pdf-tiny");
-    show();
-    expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
-    expect(pressed("A4-Bogen")).toBe("true");
   });
 });
 
