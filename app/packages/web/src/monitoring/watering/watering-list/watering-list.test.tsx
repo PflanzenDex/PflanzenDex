@@ -5,11 +5,17 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../shared/data";
+import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
 import { WateringList } from "./watering-list";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
+/** The result line on the page; the announcer's copy is hidden (`sr-only`) and is not matched. */
+const resultLine = (text: string) => screen.getByText(text, { ignore: ".sr-only" });
+/** What the announcer says (its polite live region, `sr-only`). */
+const announced = () =>
+  document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
 const ficus = {
   specimenId: "s1",
   name: "Ficus",
@@ -45,13 +51,16 @@ function fakeServer(initial: unknown[]) {
   );
   return posts;
 }
+// The app shell mounts the announcer above the page; the result line is said through it (US-QS-32).
 const show = () =>
   render(
-    <QueryClientProvider client={createQueryClient()}>
-      <MemoryRouter>
-        <WateringList api="http://api" token={token} />
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <AnnouncerProvider>
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter>
+          <WateringList api="http://api" token={token} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    </AnnouncerProvider>,
   );
 afterEach(() => {
   cleanup();
@@ -82,7 +91,7 @@ describe("US-MON-05 watering list", () => {
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Als gegossen eingetragen.");
+    await vi.waitFor(() => expect(resultLine("Als gegossen eingetragen.")).toBeTruthy());
     expect(posts).toHaveLength(1);
     expect(posts[0]?.specimenIds).toEqual(["s1"]);
     expect(posts[0]?.timeZone).toBeTruthy();
@@ -99,6 +108,43 @@ describe("US-MON-05 watering list", () => {
     await screen.findByText("Heute nichts zu gießen");
     expect(posts).toHaveLength(1);
     expect(posts[0]?.specimenIds).toEqual(["s1", "s2"]);
+  });
+
+  it("US-QS-32 · F-0075 after the last plant is marked 'Gegossen' the result stands above the empty state and is said once", async () => {
+    fakeServer([ficus]);
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
+    const empty = await screen.findByText("Heute nichts zu gießen");
+    const result = resultLine("Als gegossen eingetragen.");
+    expect(result.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(result.closest('[role="status"],[role="alert"],[aria-live]')).toBeNull();
+    expect(announced()).toBe("Als gegossen eingetragen.");
+  });
+
+  it("US-QS-32 · F-0075 several plants marked at once: the result stands above the empty state too", async () => {
+    fakeServer([ficus, aloe]);
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("checkbox", { name: /Ficus/ }));
+    await user.click(screen.getByRole("checkbox", { name: /Aloe/ }));
+    await user.click(screen.getByRole("button", { name: "2 als gegossen eintragen" }));
+    const empty = await screen.findByText("Heute nichts zu gießen");
+    const result = resultLine("Als gegossen eingetragen.");
+    expect(result.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(announced()).toBe("Als gegossen eingetragen.");
+  });
+
+  it("US-QS-32 · F-0075 while rows remain the result stands above the list, not inside it", async () => {
+    fakeServer([ficus, aloe]);
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
+    const result = await vi.waitFor(() => resultLine("Als gegossen eingetragen."));
+    const remaining = await screen.findByText("Aloe");
+    expect(
+      result.compareDocumentPosition(remaining) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("US-MON-05 shows a refusal of the server and keeps the list (P-10)", async () => {

@@ -70,7 +70,7 @@ const INTERVAL = TREATMENT_LIMITS.courseInterval;
  */
 export const treatmentSchema = z
   .object({
-    specimenIds: z.array(z.string()).min(1, "Wähle mindestens eine Pflanze."),
+    specimenIds: z.array(z.string()).min(1, ui("plantsMissing")),
     reason: z.string().trim().min(1, "Nenne einen Grund, zum Beispiel Wollläuse."),
     agent: z.string(),
     date: requiredDate("Wähle ein Datum für den ersten Termin."),

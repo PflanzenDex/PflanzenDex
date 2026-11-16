@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { useRequest, type ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
@@ -103,7 +104,7 @@ function RepotFormBody(props: FormState & { plan: RepotPlanView | null; reload: 
   const today = useToday();
   const [error, setError] = useState<ApiError | null>(null);
   const potChoice = potChoiceOf(planted, plan);
-  const form = useForm<RepotFields>({
+  const form = useFieldForm<RepotFields>({
     resolver: zodResolver(repotSchema),
     defaultValues: { date: today, potId: plan?.currentPot?.id ?? "" },
   });
@@ -188,10 +189,7 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
   return <RepotFormBody {...props} plan={plan.value} reload={plan.retry} />;
 }
 
-/**
- * Pot a cutting (US-BES-04) or repot a plant (US-BES-19): one day field preset to today, for a plant the pot it moves
- * into, "Speichern" writes, "Abbrechen" changes nothing.
- */
+/** Pot a cutting (US-BES-04) or repot a plant (US-BES-19): the day preset to today; "Speichern" writes, "Abbrechen" does not. */
 export function RepotForm(props: { state: FormState }) {
   const { state } = props;
   if (state.open.status === CUTTING_STATUS)

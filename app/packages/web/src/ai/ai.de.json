@@ -1,6 +1,10 @@
 {
   "clients.loading": "Verbundene KI-Clients werden geladen …",
   "howTo.add": "Füge in deinem KI-Client eine eigene Anbindung (MCP) mit dieser Adresse hinzu:",
+  "howTo.copied": "Adresse kopiert",
+  "howTo.copiedSaid": "Adresse kopiert.",
+  "howTo.copy": "Adresse kopieren",
+  "howTo.copyFailed": "Kopieren hat nicht geklappt. Markiere die Adresse oben und kopiere sie selbst.",
   "drafts.empty": "Hier erscheinen die Ergebnisse deiner Aufträge.",
   "drafts.loading": "Entwürfe werden geladen …",
   "log.loading": "Protokoll wird geladen …",

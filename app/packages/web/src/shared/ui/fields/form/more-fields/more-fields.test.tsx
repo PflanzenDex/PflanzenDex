@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FormRoot } from "../form";
+import { FormRoot, useFieldForm } from "../form";
 import { Input } from "../../input/input";
 import { FormMoreFields, MoreFields } from "./more-fields";
 
@@ -13,7 +12,7 @@ type Values = { name: string; note: string };
 
 /** A form with one required field and one optional field behind the disclosure; the buttons fill or refuse it from outside. */
 function Harness() {
-  const form = useForm<Values>({ defaultValues: { name: "", note: "" } });
+  const form = useFieldForm<Values>({ defaultValues: { name: "", note: "" } });
   return (
     <>
       <button type="button" onClick={() => form.setValue("note", "Kurz")}>

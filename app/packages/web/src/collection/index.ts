@@ -58,6 +58,7 @@ export {
 } from "./markers/marker/marker-rule";
 export { createStart } from "./specimens/model/create-start";
 export type { CreateFields } from "./specimens/model/schemas";
+export { createSchema } from "./specimens/model/schemas";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";
 export {

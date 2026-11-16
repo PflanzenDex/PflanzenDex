@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { MarkerInput } from "../marker-fields/marker-fields";
 import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
@@ -21,7 +21,7 @@ export function MarkerForm(props: {
   onSend: (marker: string) => Promise<ApiError | null>;
   onCancel: () => void;
 }) {
-  const form = useForm<MarkerFields>({
+  const form = useFieldForm<MarkerFields>({
     resolver: zodResolver(markerSchema),
     defaultValues: { marker: props.marker ?? "" },
   });

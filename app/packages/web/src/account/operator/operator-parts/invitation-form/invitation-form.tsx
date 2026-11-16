@@ -1,9 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import type { MutableRefObject } from "react";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { BUSY_LOOK } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -22,7 +21,7 @@ export function InvitationForm(props: {
   onCreate: (days: number) => Promise<boolean>;
   focusRef?: MutableRefObject<HTMLInputElement | null>;
 }) {
-  const form = useForm<InvitationDaysFields>({
+  const form = useFieldForm<InvitationDaysFields>({
     resolver: zodResolver(invitationDaysSchema),
     defaultValues: { days: String(DAYS.default) },
   });

@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 import { useLocation, useSearchParams } from "react-router";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { dropPageParts, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { changesOf, draftOf } from "../../care-profile-draft";
 import type { Lists } from "../care-profile-sections/care-profile-sections";
@@ -37,7 +37,7 @@ export function CareProfileCard(props: {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const initial = draftOf(entry);
-  const form = useForm<CareProfileFields>({
+  const form = useFieldForm<CareProfileFields>({
     resolver: zodResolver(careProfileSchema),
     defaultValues: initial,
   });

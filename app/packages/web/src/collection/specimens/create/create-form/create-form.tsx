@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import {
   speciesDisplayName,
   type Species,
   type LightLocation,
   type LightZone,
 } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { refusesCatchDate } from "../../../markers/catch-date/catch-date-field/catch-date-field";
 import { useToday } from "../../../markers/catch-date/use-today";
@@ -77,7 +77,7 @@ export function CreateForm(props: {
   const rule = markerRule(props.siblings);
   const today = useToday();
   const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
-  const form = useForm<CreateFields>({
+  const form = useFieldForm<CreateFields>({
     resolver: zodResolver(createSchema(rule)),
     defaultValues: createStart(rule, today),
   });

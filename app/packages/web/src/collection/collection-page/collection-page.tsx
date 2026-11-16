@@ -34,7 +34,7 @@ export function CollectionPage(props: Props) {
   // The plants are read page by page; the first page is part of the view, a failure of it fails the whole view (P-10).
   const plants = useCardPages(api, token);
   const afterAction = useInvalidate(COLLECTION_KEY);
-  // Results of the writes are toasts, so the list keeps its place (DS-54, US-QS-07).
+  // Results of the writes are said or shown as toasts, so the list keeps its place (DS-54, US-QS-07, US-QS-32).
   const say = useSay();
   const archived = useArchive(api, token, afterAction, say);
   const potted = useRepot(api, token, afterAction, say);

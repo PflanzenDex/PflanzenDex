@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { currentTimeZone, setProfileTimeZone } from "../../shared/data";
 import {
   ShortcutProvider,
@@ -63,12 +64,18 @@ function fakeServer(
 }
 /** The settings; with `sheet` the address names the layer that is open (`?sheet=<group>`). */
 const at = (sheet?: string) => `/${sheet ? `?sheet=${sheet}` : ""}`;
+// The app shell mounts the announcer above the page; a switch says its save through it (US-QS-32).
 const show = (sheet?: string) =>
   render(
-    <MemoryRouter initialEntries={[at(sheet)]}>
-      <SettingsPage api="http://api" token={token} />
-    </MemoryRouter>,
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={[at(sheet)]}>
+        <SettingsPage api="http://api" token={token} />
+      </MemoryRouter>
+    </AnnouncerProvider>,
   );
+/** What the announcer says (its polite live region, `sr-only`). */
+const announced = () =>
+  document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
 
 beforeAll(() => setViewportWidth(1024));
 
@@ -102,7 +109,7 @@ describe("US-ACC-02 settings page: display name", () => {
     expect(puts[0]?.body["displayName"]).toBe("Anna Beispiel");
   });
 
-  it("US-ACC-02 a cleared display name is sent as empty text so the server refuses it and the field is marked", async () => {
+  it("US-QS-32 · F-0085 a cleared display name is refused on the client: its message shows at the field and nothing is sent", async () => {
     const puts = fakeServer(PROFILE, () =>
       response(400, {
         error: {
@@ -118,10 +125,10 @@ describe("US-ACC-02 settings page: display name", () => {
     await user.clear(name);
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     const alert = await screen.findByRole("alert");
-    expect(puts[0]?.body["displayName"]).toBe("");
+    expect(alert.textContent).toBe("Gib einen Namen ein.");
     expect(name.getAttribute("aria-invalid")).toBe("true");
     expect(name.getAttribute("aria-describedby")).toContain(alert.id);
-    expect(screen.getByText(/darf aber nicht leer sein/)).toBeTruthy();
+    expect(puts).toEqual([]);
   });
 });
 
@@ -175,7 +182,9 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.clear(zone);
     await user.type(zone, "Mars/Olympus");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Wähle eine Zeitzone aus der Liste.",
+    );
     expect(zone.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByLabelText("Anzeigename").getAttribute("aria-invalid")).not.toBe("true");
     expect((zone as HTMLInputElement).value).toBe("Mars/Olympus");
@@ -246,7 +255,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const user = userEvent.setup();
     show("notifications");
     await user.click(await screen.findByRole("checkbox", { name: "Behandlungen" }));
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.body["notifications"]).toEqual({ ...PROFILE.notifications, treatment: false });
     await user.click(screen.getByRole("checkbox", { name: "Tausch" }));
@@ -293,7 +302,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     });
     expect((box as HTMLInputElement).checked).toBe(false);
     await user.click(box);
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
@@ -398,7 +407,8 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findAllByRole("alert");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
-    expect(document.body.textContent).toContain("Die Eingabe ist ungültig");
+    expect(document.body.textContent).toContain("Gib einen Namen ein, höchstens 80 Zeichen.");
+    expect(document.body.textContent).not.toContain("Die Eingabe ist ungültig");
   });
 
   it("US-ACC-02 · DS-48 editing a refused field takes its error away", async () => {
@@ -533,7 +543,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const user = userEvent.setup();
     show("privacy");
     await user.click(await screen.findByRole("checkbox", { name: "Alles privat" }));
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts[0]?.body["positionThresholds"]).toBeNull();
   });
 

@@ -161,7 +161,9 @@ export function SpecimenPicker(props: {
             resetKey={`${query}|${place}`}
             {...(props.focusRef ? { focusRef: props.focusRef } : {})}
           />
-          <FormMessage />
+          <div className="min-h-5">
+            <FormMessage />
+          </div>
         </FormItem>
       )}
     />

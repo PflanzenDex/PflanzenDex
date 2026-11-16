@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import type { LightZone, SpecimenCard } from "@pflanzendex/core";
 import {
   Form,
@@ -9,6 +9,7 @@ import {
   FormItem,
   FormLabel,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../../../shared/data";
@@ -119,7 +120,7 @@ export function LightZoneForm(props: {
 }) {
   const { open: card, send, setOpen, zones } = props.state;
   const [error, setError] = useState<ApiError | null>(null);
-  const form = useForm<ZoneFields>({ values: { lightZoneId: ownZoneId(card, zones.items) } });
+  const form = useFieldForm<ZoneFields>({ values: { lightZoneId: ownZoneId(card, zones.items) } });
   const submit = form.handleSubmit(async ({ lightZoneId }) =>
     setError(await send(lightZoneId === "" ? null : lightZoneId)),
   );

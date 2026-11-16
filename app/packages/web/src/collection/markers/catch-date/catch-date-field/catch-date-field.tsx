@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import type { ApiError } from "../../../../shared/data";
@@ -121,7 +122,7 @@ export function CatchDateForm(props: {
   const { open, send, setOpen } = props.state;
   const today = useToday();
   const [error, setError] = useState<ApiError | null>(null);
-  const form = useForm<CatchDateFields>({
+  const form = useFieldForm<CatchDateFields>({
     resolver: zodResolver(catchDateSchema),
     defaultValues: { catchDate: open.caughtAt ?? today },
   });

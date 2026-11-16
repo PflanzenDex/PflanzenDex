@@ -774,7 +774,9 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
     expect(await within(form).findByText("Wähle mindestens eine Pflanze.")).toBeTruthy();
     expect(
-      within(form).getByRole("button", { name: "Pflanzen (0)" }).getAttribute("aria-pressed"),
+      within(form)
+        .getByRole("button", { name: "Pflanzen (0), 1 Angabe fehlt" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     // A plant is chosen, the reason is missing: the view moves to the reason and names it.
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
@@ -782,9 +784,11 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(
       await within(form).findByText("Nenne einen Grund, zum Beispiel Wollläuse."),
     ).toBeTruthy();
-    expect(within(form).getByRole("button", { name: "Termin" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
+    expect(
+      within(form)
+        .getByRole("button", { name: "Termin, 1 Angabe fehlt" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
     expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement);
   });
 
