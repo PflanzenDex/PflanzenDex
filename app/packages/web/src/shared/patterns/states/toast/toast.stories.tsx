@@ -53,7 +53,7 @@ function Triggers() {
     <div className="flex flex-wrap gap-2 p-4">
       <Button onClick={() => toast.show({ message: "Gegossen." })}>Bestätigung</Button>
       <Button
-        variant="outline"
+        variant="plain"
         onClick={() =>
           toast.show({ message: "Gelöscht.", action: { label: "Rückgängig", onAction: noop } })
         }
@@ -61,7 +61,7 @@ function Triggers() {
         Mit Rückgängig
       </Button>
       <Button
-        variant="outline"
+        variant="plain"
         onClick={() => toast.show({ kind: "error", message: "Speichern fehlgeschlagen." })}
       >
         Fehler

@@ -15,6 +15,9 @@ vi.mock("@/shared/platform/browser/network", async (importOriginal) => {
 
 afterEach(cleanup);
 
+// A border of the variant itself, not the forced-colors border of the base look (`forced-colors:border`).
+const hasOwnBorder = (classes: string) => classes.split(/\s+/).some((c) => /^border(-|$)/.test(c));
+
 describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
   it("US-QS-07 · DS-36 renders a native button that fires onClick and keeps its name", async () => {
     const onClick = vi.fn();
@@ -162,20 +165,24 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
 
   it("US-QS-07 · DS-36 asChild renders the child element with the button styling and keeps link semantics", () => {
     render(
-      <Button asChild variant="outline">
+      <Button asChild variant="tinted">
         <a href="/pflanzen">Zu den Pflanzen</a>
       </Button>,
     );
     const link = screen.getByRole("link", { name: "Zu den Pflanzen" });
     expect(link.getAttribute("href")).toBe("/pflanzen");
     expect(screen.queryByRole("button")).toBeNull();
-    expect(link.className).toContain("border");
+    expect(link.className.split(/\s+/)).toContain("bg-accent");
+    expect(hasOwnBorder(link.className)).toBe(false);
   });
 
   it("US-QS-07 · DS-35 offers every named variant", () => {
     for (const variant of [
       "default",
       "secondary",
+      "tinted",
+      "plain",
+      "destructive-plain",
       "outline",
       "ghost",
       "destructive",
@@ -183,6 +190,51 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     ] as const) {
       render(<Button variant={variant}>{variant}</Button>);
       expect(screen.getByRole("button", { name: variant })).toBeTruthy();
+    }
+  });
+
+  it("US-QS-32 · SG-BTN-01 tinted is an accent fill with dark green text and no border", () => {
+    render(<Button variant="tinted">Anbieten</Button>);
+    const classes = screen.getByRole("button", { name: "Anbieten" }).className.split(/\s+/);
+    expect(classes).toContain("bg-accent");
+    expect(classes).toContain("text-accent-foreground");
+    expect(hasOwnBorder(classes.join(" "))).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 plain is green text only, with no fill and no border", () => {
+    render(<Button variant="plain">Später</Button>);
+    const classes = screen.getByRole("button", { name: "Später" }).className.split(/\s+/);
+    expect(classes).toContain("text-primary");
+    expect(classes.some((c) => /^bg-/.test(c))).toBe(false);
+    expect(hasOwnBorder(classes.join(" "))).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-03 destructive-plain is red text with no fill and no border", () => {
+    render(<Button variant="destructive-plain">Konto löschen</Button>);
+    const classes = screen.getByRole("button", { name: "Konto löschen" }).className.split(/\s+/);
+    expect(classes).toContain("text-destructive");
+    expect(classes.some((c) => /^bg-/.test(c))).toBe(false);
+    expect(hasOwnBorder(classes.join(" "))).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 outline is a deprecated alias with exactly the tinted look", () => {
+    render(
+      <>
+        <Button variant="tinted">Mehr laden</Button>
+        <Button variant="outline">Mehr laden alt</Button>
+      </>,
+    );
+    const tinted = screen.getByRole("button", { name: "Mehr laden" }).className.split(/\s+/);
+    const outline = screen.getByRole("button", { name: "Mehr laden alt" }).className.split(/\s+/);
+    expect(outline.slice().sort()).toEqual(tinted.slice().sort());
+    expect(hasOwnBorder(outline.join(" "))).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 no button variant draws a border of its own, except secondary", () => {
+    for (const variant of ["default", "tinted", "plain", "destructive-plain", "outline"] as const) {
+      render(<Button variant={variant}>{`v-${variant}`}</Button>);
+      const cls = screen.getByRole("button", { name: `v-${variant}` }).className;
+      expect(hasOwnBorder(cls), variant).toBe(false);
     }
   });
 
@@ -208,13 +260,6 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(classes).toContain("border");
     expect(classes).toContain("border-input");
     expect(classes).toContain("bg-secondary");
-  });
-
-  it("US-QS-14 · the outline variant draws its boundary in --primary (ADR 0017)", () => {
-    render(<Button variant="outline">Mehr Angaben</Button>);
-    const classes = screen.getByRole("button", { name: "Mehr Angaben" }).className.split(/\s+/);
-    expect(classes).toContain("border");
-    expect(classes).toContain("border-primary");
   });
 });
 

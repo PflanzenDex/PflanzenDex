@@ -138,7 +138,7 @@ describe("welcome in the sign-in frame (US-QS-14)", () => {
     expect(html).toMatch(/<svg[^>]*aria-hidden="true"/);
   });
 
-  it("US-QS-14 sign-in is the filled button and comes first, registration the outline button", () => {
+  it("US-QS-14 · US-QS-32 sign-in is the filled button and comes first, registration the tinted button", () => {
     const html = renderToString(
       <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
     );
@@ -146,7 +146,7 @@ describe("welcome in the sign-in frame (US-QS-14)", () => {
     expect(signIn).toContain(">Anmelden<");
     expect(signIn).toContain("bg-primary text-primary-foreground");
     expect(register).toContain(">Konto anlegen<");
-    expect(register).toContain("border border-primary bg-transparent");
+    expect(register).toContain("bg-accent text-accent-foreground");
     expect(register).not.toContain("bg-primary text-primary-foreground");
   });
 

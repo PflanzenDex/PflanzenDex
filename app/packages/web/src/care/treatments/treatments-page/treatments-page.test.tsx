@@ -569,7 +569,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
 });
 
 describe("US-QS-15 the open treatments fit a layer", () => {
-  it("US-QS-15 · US-BEH-03 a row is compact: reason and agent in one line, the chip, and an outline Erledigt that names the plant", async () => {
+  it("US-QS-15 · US-BEH-03 a row is compact: reason and agent in one line, the chip, and a tinted Erledigt that names the plant", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(
@@ -606,7 +606,7 @@ describe("US-QS-15 the open treatments fit a layer", () => {
     // One heading, no sentence above the list (US-QS-15).
     expect(screen.queryByText(/Behandle diese Pflanzen zuerst/)).toBeNull();
     const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
-    expect(done.className).toContain("border-primary");
+    expect(done.className).toContain("bg-accent");
     expect(done.className).not.toContain("bg-primary");
   });
 });

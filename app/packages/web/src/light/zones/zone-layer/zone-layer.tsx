@@ -60,7 +60,7 @@ export function ZoneLayer(props: {
         ) : (
           <Button
             type="button"
-            variant="outline"
+            variant="destructive-plain"
             onClick={() => {
               setError(null);
               setAsking(true);

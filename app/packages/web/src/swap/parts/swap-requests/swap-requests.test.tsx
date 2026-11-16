@@ -82,6 +82,21 @@ describe("US-SOZ-10 requests for my offers", () => {
     expect(screen.getByRole("button", { name: "Anderes vorschlagen: Echte Aloe" })).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-BTN-02 the Anfragen part has one filled button for a received request: Annehmen; Ablehnen and Anderes vorschlagen are plain", async () => {
+    server({ received: [side()] });
+    show();
+    await screen.findByRole("list", { name: "Anfragen" });
+    const filled = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Annehmen"]);
+    for (const name of ["Ablehnen: Echte Aloe", "Anderes vorschlagen: Echte Aloe"]) {
+      const classes = screen.getByRole("button", { name }).className.split(/\s+/);
+      expect(classes).toContain("text-primary");
+      expect(classes.some((c) => /^(border|bg)(-|$)/.test(c))).toBe(false);
+    }
+  });
+
   it("accepting sends the action and says what happened and what comes next (P-09)", async () => {
     const posts = server({ received: [side()] });
     show();

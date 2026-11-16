@@ -88,7 +88,7 @@ export function ModeSection(props: {
       </MoreHelp>
       <Button
         type="button"
-        variant="outline"
+        variant="tinted"
         size="touch"
         aria-disabled={props.running || undefined}
         aria-busy={props.running || undefined}
@@ -113,23 +113,16 @@ export function InvitationsArea(props: {
     <div className="flex flex-col gap-4">
       <InvitationForm running={props.running} onCreate={props.onCreate} focusRef={field} />
       {props.created && <NewCode created={props.created} />}
-      <InvitationList invitations={props.invitations} onStart={() => field.current?.focus()} />
+      <InvitationList invitations={props.invitations} />
     </div>
   );
 }
 
 /** The invitations in pages of whole entries (`?lfrom=n` in the layer, US-QS-15); the newest first, as the server sends them. */
-export function InvitationList(props: {
-  invitations: readonly InvitationRecord[];
-  onStart: () => void;
-}) {
+export function InvitationList(props: { invitations: readonly InvitationRecord[] }) {
   if (props.invitations.length === 0)
     return (
-      <EmptyState
-        title="Noch keine Einladung erstellt"
-        description="Erstelle oben einen Code."
-        action={{ label: "Gültigkeit wählen", onClick: props.onStart }}
-      />
+      <EmptyState title="Noch keine Einladung erstellt" description="Erstelle oben einen Code." />
     );
   return (
     <Pager

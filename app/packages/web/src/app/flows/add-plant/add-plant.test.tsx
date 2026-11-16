@@ -214,11 +214,13 @@ describe("US-QS-14 · US-ONB-01 Pflanze anlegen is a full-view page with one pag
     expect(title.closest("[data-fit-screen]")).not.toBeNull();
   });
 
-  it("US-QS-14 the step's back is an outline button and 'Mehr Angaben' a ghost button, no filled grey one (ADR 0017)", async () => {
+  it("US-QS-32 · SG-BTN-01 the step's back is a plain button, and 'Mehr Angaben' a ghost button, no filled grey one (ADR 0017)", async () => {
     server();
     view();
     await toSave();
-    expect(screen.getByRole("button", { name: "Zurück" }).className).toContain("border-primary");
+    const back = screen.getByRole("button", { name: "Zurück" }).className.split(/\s+/);
+    expect(back).toContain("text-primary");
+    expect(back.some((c) => /^(border|bg)(-|$)/.test(c))).toBe(false);
     const more = screen.getByRole("button", { name: "Mehr Angaben" }).className;
     expect(more).toContain("hover:bg-accent");
     expect(more).not.toContain("border-primary");
@@ -501,6 +503,20 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
     expect(await screen.findByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-BTN-02 after the first plant is saved, the next step is the one filled button and another plant is tinted", async () => {
+    server();
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    const another = await screen.findByRole("button", { name: "Noch eine Pflanze" });
+    expect(another.className.split(/\s+/)).toContain("bg-accent");
+    const filled = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Zur Sammlung"]);
   });
 
   it("US-ONB-01 the done screen leads to the collection (issue 1638)", async () => {
