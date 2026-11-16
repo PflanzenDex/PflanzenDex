@@ -12,7 +12,7 @@ const NEWS_KEY = ["achievements", "news"] as const;
 /**
  * The quiet banner "Erfolg: <name>" (US-ACH-03): it appears when an action succeeded and made an achievement new, with
  * a link to the overview. It never blocks anything and needs no confirmation; "Schließen" only hides it. The seen state
- * is written by "Okay" in the overview, so a missed moment stays visible there. The state is created silently on the
+ * is written by "Als gesehen markieren" in the overview, so a missed moment stays visible there. The state is created silently on the
  * first evaluation (no flood of banners). Calm mode, a read error or an unknown state show nothing (US-ACH-08); there
  * is no push and no e-mail (FR-ACH-06). The text is a status for assistive technology; nothing animates (NFR-13).
  */

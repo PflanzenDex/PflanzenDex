@@ -75,7 +75,7 @@ function Open({ item }: { item: AchievementItem }) {
 /** The cards of each state: earned newest first, open in the order of the definitions (US-ACH-02). */
 const CARDS = { earned: Earned, open: Open };
 
-/** "Okay" writes the seen state of the new achievements; they stay earned and only lose the mark (US-ACH-03). */
+/** "Als gesehen markieren" writes the seen state of the new achievements; they stay earned and only lose the mark (US-ACH-03). */
 function NewNotice(props: { api: string; token: Token; ids: string[] }) {
   const { api, token, ids } = props;
   const reload = useInvalidate(["achievements"]);
@@ -95,7 +95,7 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
         pendingLabel="Wird gespeichert …"
         onClick={() => void write.run((t) => markSeen(api, t, ids), "")}
       >
-        Okay
+        Als gesehen markieren
       </Button>
       {write.error && (
         <p role="alert" className="m-0 text-destructive">

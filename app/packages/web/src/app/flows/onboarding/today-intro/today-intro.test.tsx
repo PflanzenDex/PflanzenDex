@@ -515,7 +515,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
 });
 
 describe("US-ONB-07 calm hints on Heute", () => {
-  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due hint is a short note without modal; it is recorded as shown and 'Okay' dismisses it for good", async () => {
+  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due hint is a short note without modal; it is recorded as shown and 'Hinweis schließen' dismisses it for good", async () => {
     const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
     fakeServer(w);
     view();
@@ -530,7 +530,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
     // looking for something is never held back: the tasks stay, the note comes above them
     const tasks = screen.getByText("Aufgaben des Tages");
     expect(note.compareDocumentPosition(tasks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
     await vi.waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
     expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
       "/onboarding/hints/first_plant_saved:dismissed",
@@ -553,7 +553,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
       "fetch",
       vi.fn<typeof fetch>(async () => response(500, { error: { code: "server.error" } })),
     );
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
     expect((await screen.findByRole("alert")).textContent).toContain("nicht speichern");
     expect(screen.getByRole("status", { name: "Hinweis" })).toBeTruthy();
   });
