@@ -8,6 +8,20 @@ import { Sharing } from "./sharing";
 const item = { id: "e1", type: "Lamp", name: "Lampe Alpha" } as unknown as EquipmentRow;
 afterEach(cleanup);
 
+describe("US-QS-32 the privacy line of a shared device (SG-COPY-05, SG-TYPE-03)", () => {
+  it("US-QS-32 one line at 14 px says what friends never see; the full list and the withdrawal sit behind Mehr erfahren", () => {
+    render(<Sharing item={item} actions={{ busy: false, shared: new Map(), onShare: vi.fn() }} />);
+    const line = screen.getByText("Freunde sehen nie den Preis.");
+    expect(line.closest("details")).toBeNull();
+    expect(line.parentElement?.className).toContain("text-sm");
+    expect(line.parentElement?.className).not.toContain("text-xs");
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("Lichtstufe");
+    expect(more?.textContent).toContain("Zurückziehen wirkt beim nächsten Abruf");
+    expect(more?.textContent).not.toContain("Freunde sehen nie den Preis.");
+  });
+});
+
 describe("US-EQU-12 sharing control", () => {
   it("US-EQU-12 is private by default, names what friends never see and sends the choice with the note", async () => {
     const onShare = vi.fn();

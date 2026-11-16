@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
-import { localToday, type Feed, type FeedEvent, type FeedType } from "@pflanzendex/core";
+import type { Feed, FeedEvent, FeedType } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
-import { keepTogether, summaryDate } from "@/shared/lib/format";
+import { keepTogether } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { currentTimeZone, LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "../../../shared/data";
 import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
@@ -160,18 +160,8 @@ export function FeedBlock(props: {
       >
         {(feed: Feed) => (
           <>
-            <p className="text-sm">
-              {feed.hint.text} <strong>{feed.hint.nextAction}</strong>{" "}
-              <span className="text-muted-foreground">
-                ·{" "}
-                {t("feed.asOf", {
-                  date: summaryDate(
-                    localToday(new Date(feed.asOf), currentTimeZone()),
-                    localToday(new Date(), currentTimeZone()),
-                  ),
-                })}
-              </span>
-            </p>
+            {/* One plain line (SG-COPY-05, US-QS-32, F-0258): no bold instruction without a link, and no "Stand" line. */}
+            <p className="text-sm">{feed.hint.text}</p>
             {feed.events.length > 0 && (
               <Pager
                 items={feed.events}

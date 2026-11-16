@@ -69,9 +69,7 @@ export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
           </Checkbox>
         ))}
       </NetworkSlot>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Erinnerungen werden erst verschickt, wenn sie eingerichtet sind.
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">Erinnerungen nur, wenn eingerichtet.</p>
       <Feedback error={error} />
     </div>
   );

@@ -31,7 +31,12 @@ describe("US-EQU-09 cost view", () => {
     ];
     const view = equipmentCosts(items);
     expect(view.coverage).toBe("Summe über 7 von 11 Geräten");
-    expect(view.nextAction).toContain("Bei 4 Geräten fehlt der Preis");
+    expect(view.nextAction).toBe("Bei 4 Teilen ist der Preis unbekannt.");
+  });
+
+  it("US-QS-32 the missing-price line agrees in number: one part is 'Teil'", () => {
+    const view = equipmentCosts([item("Lamp", 10), item("Pump", null)]);
+    expect(view.nextAction).toBe("Bei 1 Teil ist der Preis unbekannt.");
   });
 
   it("US-EQU-09 no price known means unknown, never 0 (P-08)", () => {
@@ -56,6 +61,6 @@ describe("US-EQU-09 cost view", () => {
   it("US-EQU-09 adds cents without drift and gives no estimate of electricity or replacement costs", () => {
     const view = equipmentCosts([item("Lamp", 0.1), item("Lamp", 0.2)]);
     expect(view.total.sumEur).toBe(0.3);
-    expect(view.note).toContain("Stromkosten und Ersatzkosten");
+    expect(view.note).toBe("Ohne Strom- und Ersatzkosten.");
   });
 });

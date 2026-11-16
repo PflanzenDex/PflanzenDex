@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../shared/data";
 import { CarePhasesPage } from "../../phases/care-phases-page/care-phases-page";
@@ -46,7 +48,9 @@ describe("US-PHA-01 the phase of a plant and the grouping share the query cache"
     const client = createQueryClient();
     const plant = render(
       <QueryClientProvider client={client}>
-        <PhaseOfPlant api="http://api" token={token} specimenId="e1" />
+        <MemoryRouter>
+          <PhaseOfPlant api="http://api" token={token} specimenId="e1" />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
     expect(await screen.findByText("Soll-Phase heute: Ruhephase")).toBeTruthy();
@@ -59,5 +63,44 @@ describe("US-PHA-01 the phase of a plant and the grouping share the query cache"
     );
     expect(await screen.findByText("Bogenhanf")).toBeTruthy();
     expect(screen.queryByText("Die Seite konnte nicht geladen werden.")).toBeNull();
+  });
+});
+
+describe("US-QS-32 a plant without a dormancy period (SG-COPY-05, DS-65)", () => {
+  it("US-QS-32 says 'Pflegephase: unbekannt' in one line and offers 'Ruhephase eintragen' as a plain button", async () => {
+    fakeServer({
+      "/care-phases": () => response(200, { phases: [] }),
+      "/locations": () => response(200, { locations: [location] }),
+    });
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter>
+          <PhaseOfPlant api="http://api" token={token} specimenId="e1" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect((await screen.findByText("Pflegephase: unbekannt")).textContent).toBe(
+      "Pflegephase: unbekannt",
+    );
+    expect(screen.getByRole("button", { name: "Ruhephase eintragen" })).toBeTruthy();
+    expect(screen.queryByText(/Ruhephasen-Zeitraum/)).toBeNull();
+  });
+
+  it("US-QS-32 'Ruhephase eintragen' opens the segment Pflegeprofil of the same plant layer (the address part teil)", async () => {
+    fakeServer({
+      "/care-phases": () => response(200, { phases: [] }),
+      "/locations": () => response(200, { locations: [location] }),
+    });
+    const Address = () => <span data-testid="address">{useLocation().search}</span>;
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter initialEntries={["/?tab=pflege"]}>
+          <PhaseOfPlant api="http://api" token={token} specimenId="e1" />
+          <Address />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Ruhephase eintragen" }));
+    expect(screen.getByTestId("address").textContent).toBe("?tab=pflege&teil=profil");
   });
 });

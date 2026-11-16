@@ -74,7 +74,8 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     expect(first?.textContent).toContain("Neue Art gefangen · 04.10.2026");
     expect(second?.textContent).toContain("Name unbekannt: 3 Pflanzen Art unbekannt");
     expect(second?.textContent).toContain("Neuer Steckling · Datum unbekannt");
-    expect(screen.getByText("Schau in die Sammlung.")).toBeTruthy();
+    // The hint is one plain line; its instruction has no link and is not shown (US-QS-32, F-0258).
+    expect(screen.queryByText("Schau in die Sammlung.")).toBeNull();
   });
 
   it("US-SOZ-05 loads the last 30 days by default and sends the filters to the server", async () => {
@@ -100,15 +101,14 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     );
   });
 
-  it("US-SOZ-05 · US-QS-15 · issue 1157 the filters are closed at first, next step and 'Stand' share one line, and the events page by the free height", async () => {
+  it("US-SOZ-05 · US-QS-15 · issue 1157 the filters are closed at first, and the events page by the free height", async () => {
     server(feed([event()]));
     render(
       <MemoryRouter>
         <FeedBlock api="http://api" token={token} friends={friends} />
       </MemoryRouter>,
     );
-    const hint = (await screen.findByText("Das ist neu.")).closest("p") as HTMLElement;
-    expect(hint.textContent).toContain("Stand: ");
+    await screen.findByText("Das ist neu.");
     expect(screen.queryByLabelText("Freund")).toBeNull();
     expect(screen.getByRole("button", { name: "Filter (0)" }).getAttribute("aria-expanded")).toBe(
       "false",
@@ -118,9 +118,7 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
     );
   });
 
-  it("US-QS-32 says 'Stand: heute' when the feed was read today", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-10-06T10:05:00Z"));
+  it("US-QS-32 F-0258 the line above the news is one plain line: no 'Stand' and no bold instruction without a link", async () => {
     server(feed([event()]));
     render(
       <MemoryRouter>
@@ -128,14 +126,16 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
       </MemoryRouter>,
     );
     const hint = (await screen.findByText("Das ist neu.")).closest("p") as HTMLElement;
-    expect(hint.textContent).toContain("Stand: heute");
-    expect(hint.textContent).not.toContain("06.10.2026");
+    expect(hint.textContent).toBe("Das ist neu.");
+    expect(hint.querySelector("strong")).toBeNull();
+    expect(screen.queryByText("Schau in die Sammlung.")).toBeNull();
+    expect(document.body.textContent).not.toContain("Stand:");
   });
 
-  it("US-SOZ-05 an empty feed still says what to do next", async () => {
+  it("US-QS-32 F-0258 an empty feed is one plain line and no bold instruction", async () => {
     server(
       feed([], {
-        text: "Du hast noch keine Freunde.",
+        text: "Noch keine Freunde.",
         nextAction: "Lade jemanden mit einem Code ein.",
       }),
     );
@@ -144,7 +144,10 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
         <FeedBlock api="http://api" token={token} friends={[]} />
       </MemoryRouter>,
     );
-    expect(await screen.findByText("Lade jemanden mit einem Code ein.")).toBeTruthy();
+    const hint = (await screen.findByText("Noch keine Freunde.")).closest("p") as HTMLElement;
+    expect(hint.textContent).toBe("Noch keine Freunde.");
+    expect(hint.querySelector("strong")).toBeNull();
+    expect(screen.queryByText("Lade jemanden mit einem Code ein.")).toBeNull();
     expect(screen.queryByRole("list", { name: "Neuigkeiten" })).toBeNull();
   });
 });

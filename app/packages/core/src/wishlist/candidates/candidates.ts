@@ -104,6 +104,15 @@ function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candid
   };
 }
 
+/**
+ * The first wish of the thinnest zone says where the room is in its meta line, "Zone 4 · am meisten Platz", instead of the
+ * count (US-QS-32, F-0162); the other rows keep their count.
+ */
+const firstRow = (c: Candidate): Candidate =>
+  c.priority.kind === "thinnest" && c.zone
+    ? { ...c, zoneText: `${zoneLabel(c.zone.name)} · am meisten Platz` }
+    : c;
+
 /** Stock ascending; zone order, name and id break ties; unknown zone last. */
 function byStock(zones: readonly ZoneStock[]) {
   const place = (c: Candidate): number => zones.findIndex((z) => z.zoneId === c.zone?.id);
@@ -114,12 +123,14 @@ function byStock(zones: readonly ZoneStock[]) {
     a.id.localeCompare(b.id);
 }
 
-function nextActionFor(first: Candidate, zoneName: string): string {
-  if (first.priority.kind === "thinnest")
-    return `Besorge diese Pflanze zuerst: ${zoneName} hat am meisten Platz.`;
-  if (first.priority.kind === "tie")
-    return "Die Zonen sind gleich belegt: Beginne mit dem Wunsch ganz oben.";
-  return "Beginne mit dem Wunsch ganz oben: seine Zone ist unter deinen Wünschen am wenigsten belegt.";
+/**
+ * The line above the list. None for the thinnest zone: its first row already says "am meisten Platz" (F-0162), so the
+ * page does not repeat it.
+ */
+function nextActionFor(first: Candidate): string | null {
+  if (first.priority.kind === "thinnest") return null;
+  if (first.priority.kind === "tie") return "Die Zonen sind gleich belegt: Beginne oben.";
+  return "Beginne oben: seine Zone ist am wenigsten belegt.";
 }
 
 function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
@@ -132,11 +143,11 @@ function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
   if (!first.zone)
     return {
       text: "Kein offener Wunsch hat eine Ziel-Lichtzone 2 bis 4.",
-      nextAction: "Lege einen Wunsch mit Ziel-Zone an, damit die Liste zeigt, wo Platz ist.",
+      nextAction: "Lege einen Wunsch mit Ziel-Zone an.",
     };
   return {
     text: `Als Nächstes dran: ${first.title} (${first.zoneText}).`,
-    nextAction: nextActionFor(first, zoneLabel(first.zone.name)),
+    nextAction: nextActionFor(first),
   };
 }
 
@@ -166,7 +177,10 @@ export async function wishCandidates(
     deps.stock.buffer?.(userId),
   ]);
   const s = standing(zones);
-  const candidates = open.map((w) => candidate(w, zones, s)).sort(byStock(zones));
+  const candidates = open
+    .map((w) => candidate(w, zones, s))
+    .sort(byStock(zones))
+    .map((c, i) => (i === 0 ? firstRow(c) : c));
   const duplicates = keyless.map(duplicate);
   return {
     candidates,

@@ -8,7 +8,6 @@ import {
   GRID,
   PageFrame,
   Plain,
-  Quiet,
   Status,
   TITLE,
   ErrorNotice,
@@ -19,12 +18,12 @@ import { loadSpecimenHints } from "../../insights/api/hints-api";
 import { setSpecimenLocation } from "../../specimens/model/specimens-api";
 import { HintCount, type useHintCount } from "../../insights/api/hint-count/hint-count";
 import { HintCard, type HintTarget } from "./hint-card/hint-card";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import table from "./hints-page.de.json";
 
 const ui = texts(table);
 export type { HintTarget };
-
 interface Data {
   readonly hints: readonly SpecimenHint[];
   readonly locations: readonly LightLocation[];
@@ -163,7 +162,9 @@ function HintList(props: {
         />
       ) : (
         <>
-          <Quiet className="mb-3">{ui("quiet")}</Quiet>
+          <MoreHelp className="mb-3" more={ui("quietMore")}>
+            {plurals(table).word("quiet", props.data.hints.length)}
+          </MoreHelp>
           {props.host ? (
             <HintPages hints={props.data.hints} card={card} />
           ) : (

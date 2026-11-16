@@ -175,10 +175,10 @@ describe("US-SOZ-05 new among friends", () => {
       { today: TODAY },
     );
     expect(none.hint.nextAction).toMatch(/Code/);
-    expect((await feed()).hint.text).toMatch(/noch nichts freigegeben/);
+    expect((await feed()).hint.text).toMatch(/teilen noch nichts/);
     await share("anna", "a1");
     expect((await feed()).hint.nextAction).toMatch(/Sammlung/);
-    expect((await feed({ days: 1 })).hint.text).toMatch(/nichts Neues/);
+    expect((await feed({ days: 1 })).hint.text).toMatch(/Nichts Neues/);
   });
 });
 

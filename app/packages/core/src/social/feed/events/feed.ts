@@ -38,18 +38,18 @@ const inPeriod = (e: FeedEvent, q: FeedQuery) => {
 function hintFor(friends: number, events: number, shared: number): Feed["hint"] {
   if (friends === 0)
     return {
-      text: "Du hast noch keine Freunde.",
+      text: "Noch keine Freunde.",
       nextAction: "Lade jemanden mit einem Code ein oder gib einen erhaltenen Code ein.",
     };
   if (shared === 0)
     return {
-      text: "Deine Freunde haben noch nichts freigegeben.",
+      text: "Deine Freunde teilen noch nichts.",
       nextAction:
         "Bitte sie, Pflanzen unter „Was Freunde sehen“ freizugeben, und gib selbst etwas frei.",
     };
   if (events === 0)
     return {
-      text: "In diesem Zeitraum gibt es nichts Neues bei deinen Freunden.",
+      text: "Nichts Neues in diesem Zeitraum.",
       nextAction: "Wähle einen anderen Filter oder schau dir die Sammlung eines Freundes an.",
     };
   return {

@@ -215,6 +215,7 @@ describe("US-QS-23 Pflege", () => {
     render(
       <MemoryRouter>
         <PlantCare api={API} token={TOKEN} specimen={{ id: "e1", name: "Aloe" }} />
+        <Where />
       </MemoryRouter>,
     );
 
@@ -263,6 +264,13 @@ describe("US-QS-23 Pflege", () => {
     server(base);
     show();
     expect(await screen.findByText(/Pflegephase: unbekannt/)).toBeTruthy();
+  });
+
+  it("US-QS-32 'Ruhephase eintragen' switches the plant's care to the segment Pflegeprofil in the address", async () => {
+    server(base);
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Ruhephase eintragen" }));
+    expect(screen.getByTestId("address").textContent).toContain("teil=profil");
   });
 
   it("US-QS-23 the care phase shows with Jetzt umgestellt, which confirms through the existing operation", async () => {

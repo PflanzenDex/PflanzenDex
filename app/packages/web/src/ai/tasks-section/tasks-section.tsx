@@ -111,9 +111,7 @@ function List(props: {
     );
   return (
     <div className="flex min-w-0 max-w-xl flex-col gap-3">
-      <MoreHelp more="Ein Auftrag bittet deinen KI-Client um etwas, zum Beispiel ein Artprofil. Das Ergebnis kommt als Entwurf und zählt erst, wenn du es übernimmst. Offene Aufträge verfallen nach 14 Tagen.">
-        Ein Auftrag bittet deinen KI-Client um etwas. Das Ergebnis kommt als Entwurf.
-      </MoreHelp>
+      <MoreHelp more={ui("tasks.more")}>Ein Auftrag bittet deinen KI-Client um etwas.</MoreHelp>
       {props.rows.length === 0 ? (
         <NoTasks clientConnected={props.clientConnected} />
       ) : (

@@ -26,7 +26,6 @@
   "feed.filter": "Filter ({count})",
   "feed.title": "Neu bei Freunden",
   "feed.loading": "Neuigkeiten werden geladen …",
-  "feed.asOf": "Stand: {date}",
   "feed.list": "Neuigkeiten",
   "layers.requests": "Anfragen",
   "layers.news": "Neu bei Freunden",
@@ -44,5 +43,6 @@
   "page.title": "Freunde",
   "page.loading": "Freunde werden geladen …",
   "friendCollection.title": "Sammlung eines Freundes",
-  "friendCollection.loading": "Sammlung wird geladen …"
+  "friendCollection.loading": "Sammlung wird geladen …",
+  "collection.shares": "Art, Anzahl und Fangdatum"
 }

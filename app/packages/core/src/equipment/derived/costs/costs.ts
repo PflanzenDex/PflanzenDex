@@ -22,8 +22,7 @@ export interface CostView {
   readonly note: string;
 }
 
-const NOTE =
-  "Nicht enthalten sind Stromkosten und Ersatzkosten: Ohne deine Angaben schätzen wir nichts.";
+const NOTE = "Ohne Strom- und Ersatzkosten.";
 
 function line(items: readonly EquipmentRow[]): CostLine {
   const prices = items.flatMap((e) => (e.priceEur === null ? [] : [e.priceEur]));
@@ -58,7 +57,7 @@ export function equipmentCosts(items: readonly EquipmentRow[]): CostView {
     nextAction:
       missing === 0
         ? null
-        : `Bei ${missing} ${missing === 1 ? "Gerät fehlt" : "Geräten fehlt"} der Preis. Trage ihn unter Geräte nach, wenn du ihn kennst; sonst bleibt er unbekannt.`,
+        : `Bei ${missing} ${missing === 1 ? "Teil" : "Teilen"} ist der Preis unbekannt.`,
     note: NOTE,
   };
 }

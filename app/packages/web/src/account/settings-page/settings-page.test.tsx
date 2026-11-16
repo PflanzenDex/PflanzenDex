@@ -924,3 +924,24 @@ describe("US-QS-33 settings: motion", () => {
     await waitFor(() => expect(field.value).toBe("system"));
   });
 });
+
+describe("US-QS-32 settings: one line of hint, the rest behind Mehr erfahren (SG-COPY-05)", () => {
+  it("US-QS-32 the Wunschliste warning says its one line; the zones and the default sit behind Mehr erfahren", async () => {
+    fakeServer();
+    show("wishlist");
+    await screen.findByLabelText(/Mindestzahl offener Wünsche/);
+    const line = screen.getByText("Warnt bei zu wenigen offenen Wünschen.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.closest("div")?.querySelector("details");
+    expect(more?.textContent).toContain("Gilt je Zone 2 bis 4.");
+    expect(more?.textContent).not.toContain("Warnt bei zu wenigen offenen Wünschen.");
+  });
+
+  it("US-QS-32 the notification group says in one line that reminders need a setup", async () => {
+    fakeServer();
+    show("notifications");
+    await screen.findByRole("checkbox", { name: "Tausch" });
+    expect(screen.getByText("Erinnerungen nur, wenn eingerichtet.")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("werden erst verschickt");
+  });
+});

@@ -154,7 +154,7 @@ describe("US-SOZ-05 feed through the API", () => {
   it("US-SOZ-05 nothing shared yet: an empty feed that says what to do next (P-09)", async () => {
     const r = await feed(subB);
     expect(r.body.events).toEqual([]);
-    expect(r.body.hint.text).toMatch(/noch nichts freigegeben/);
+    expect(r.body.hint.text).toMatch(/teilen noch nichts/);
   });
 
   it("US-SOZ-05 shows what the friend shares, newest first, with the first specimen as new species", async () => {
@@ -213,7 +213,7 @@ describe("US-SOZ-05 feed through the API", () => {
   it("US-SOZ-05 the viewer who is no friend sees nothing; the owner has no friends yet in the feed of a stranger (P-05)", async () => {
     const r = await feed(subC);
     expect(r.body.events).toEqual([]);
-    expect(r.body.hint.text).toMatch(/noch keine Freunde/);
+    expect(r.body.hint.text).toMatch(/Noch keine Freunde/);
   });
 
   it("US-SOZ-05 'Everything private' empties the feed of the friend, ending the friendship too", async () => {

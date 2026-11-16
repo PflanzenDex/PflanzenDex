@@ -13,7 +13,12 @@ const t = texts(table);
 export function PotField(props: { control: Control<RepotFields>; plan: RepotPlanView }) {
   const { currentPot, freePots } = props.plan;
   return (
-    <Field control={props.control} name="potId" label={t("pot.label")}>
+    <Field
+      control={props.control}
+      name="potId"
+      label={t("pot.label")}
+      description={t("pot.keepHint")}
+    >
       {(field) => (
         <Select {...field}>
           {currentPot ? (

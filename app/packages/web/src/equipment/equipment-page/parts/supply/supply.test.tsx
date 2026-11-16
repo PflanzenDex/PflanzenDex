@@ -76,6 +76,16 @@ describe("US-EQU-05 supply of a consumable", () => {
     expect(container.textContent).toBe("");
   });
 
+  it("US-QS-32 the link note is one line at 14 px; the rest sits behind Mehr erfahren", async () => {
+    render(<Supply item={consumable()} actions={actions()} />);
+    const line = screen.getByText("Dein Behandlungstext bleibt, wie er ist.");
+    expect(line.parentElement?.className).toContain("text-sm");
+    expect(line.parentElement?.className).not.toContain("text-xs");
+    expect(line.closest("details")?.querySelector("details")).not.toBeNull();
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("Die Verknüpfung findet nur den Vorrat dazu.");
+  });
+
   it("US-EQU-05 a plant agent can be linked, an empty text removes the link; other consumables cannot", async () => {
     const a = actions();
     const { rerender } = render(<Supply item={consumable()} actions={a} />);
