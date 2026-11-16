@@ -14,6 +14,8 @@ function fakeRealm() {
   let next = 1;
   const id = () => `id-${next++}`;
   const state = {
+    // The realm representation: a fresh realm has no e-mail theme (US-QS-32, F-0376).
+    realm: { id: "realm-id", realm: "pflanzendex", displayName: "PflanzenDéx", emailTheme: null },
     scopes: [{ id: id(), name: "offline_access", protocol: "openid-connect", attributes: {} }],
     optional: [],
     mappers: {},
@@ -52,7 +54,7 @@ function fakeRealm() {
   const clone = (x) => structuredClone(x);
   const kc = {
     async get(path) {
-      if (path === "") return { id: "realm-id", realm: "pflanzendex" };
+      if (path === "") return clone(state.realm);
       if (path === "/client-scopes") return clone(state.scopes);
       if (path === "/default-optional-client-scopes") return clone(state.optional);
       let m = path.match(/^\/client-scopes\/(.+)\/protocol-mappers\/models$/);
@@ -75,6 +77,8 @@ function fakeRealm() {
     },
     async put(path, body) {
       writes.push(`PUT ${path}`);
+      // A partial update of the realm, as Keycloak applies it: only the fields sent change.
+      if (path === "") return void Object.assign(state.realm, clone(body));
       let m = path.match(/^\/default-optional-client-scopes\/(.+)$/);
       if (m)
         return void state.optional.push({
@@ -102,7 +106,11 @@ function fakeRealm() {
 test("US-KI-07: a fresh realm gets scopes, audience mapper, resource client, registration policies and PKCE S256", async () => {
   const { kc, state } = fakeRealm();
   const changes = await setupMcpRealm(kc, { resourceUrl: URL_MCP });
-  assert.equal(changes.length, 14, changes.join("\n"));
+  assert.equal(changes.length, 15, changes.join("\n"));
+  assert.ok(
+    changes.includes("set the e-mail theme of the realm to pflanzendex"),
+    changes.join("\n"),
+  );
 
   const names = ["pflanzen:read", "pflanzen:draft", "pflanzen:write"];
   for (const name of names) {
@@ -277,4 +285,23 @@ test("US-KI-07: covers compares arrays as sets and objects as subsets", () => {
   assert.ok(!covers({ a: ["x"] }, { a: ["x", "y"] }));
   assert.ok(!covers({ a: { b: "1" } }, { a: { b: "2" } }));
   assert.ok(!covers(undefined, { a: 1 }));
+});
+
+// US-QS-32 (F-0376): the realm imports with the e-mail theme of the product only on its first start; the setup step sets it on
+// a running realm, once, and touches nothing else of the realm.
+test("US-QS-32 · F-0376: the setup step sets the e-mail theme of a running realm once and keeps its other settings", async () => {
+  const { kc, state, writes } = fakeRealm();
+  state.realm.emailTheme = "keycloak";
+  const changes = await setupMcpRealm(kc, { resourceUrl: URL_MCP });
+  assert.ok(
+    changes.includes("set the e-mail theme of the realm to pflanzendex"),
+    changes.join("\n"),
+  );
+  assert.equal(state.realm.emailTheme, "pflanzendex");
+  assert.equal(state.realm.displayName, "PflanzenDéx", "the other settings of the realm are kept");
+  assert.equal(writes.filter((w) => w === "PUT ").length, 1, "one update of the realm");
+
+  writes.length = 0;
+  assert.deepEqual(await setupMcpRealm(kc, { resourceUrl: URL_MCP }), []);
+  assert.deepEqual(writes, [], "a second run writes nothing");
 });
