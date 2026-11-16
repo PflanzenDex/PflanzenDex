@@ -76,12 +76,23 @@ test("US-QG-07: a PR that changes only a gate test is left to a human too: the h
     ".claude/hooks/rules.test.mjs",
     ".claude/hooks/worktree.test.mjs",
     "app/tools/workflow/merge-pr.test.mjs",
+    "app/tools/check/code/layout/layout-rules.test.mjs",
+    "app/tools/workflow/actions/ci-reuse/gate-review/gate-review.test.mjs",
   ]) {
     const found = problems({ ...ok, files: [{ path: f }] }, known);
     assert.equal(found.length, 1, f);
     assert.match(found[0], /gate files, which a human must merge/, f);
     assert.ok(found[0].includes(f), f);
   }
+});
+
+test("US-QG-07: a PR that changes only app tests or product tooling tests is no gate PR, so make merge accepts it (issue 2222)", () => {
+  const files = [
+    "app/packages/api/src/ai/reads/areas.test.ts",
+    "app/packages/web/src/app/destinations/account-area/whats-new/news-lines.test.ts",
+    "app/tools/keycloak/theme.test.mjs",
+  ].map((path) => ({ path }));
+  assert.deepEqual(problems({ ...ok, files: [...ok.files, ...files] }, known), []);
 });
 
 test("US-QG-07: a PR that changes a threshold or an exception list is refused, a PR that only shrinks a baseline is not", () => {
