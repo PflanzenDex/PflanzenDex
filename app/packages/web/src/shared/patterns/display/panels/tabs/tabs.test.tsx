@@ -114,9 +114,37 @@ describe("Tabs (US-QS-07, DS-34)", () => {
 });
 
 describe("US-QS-07 the selected tab in dark mode (issue 1045)", () => {
-  it("US-QS-07 the selected tab is the green intent fill, not a card that disappears on the track", () => {
+  it("US-QS-32 the selected tab is a raised card with a boundary in the field colour, not a green fill", () => {
     render(<Tabs label="x" tabs={tabs} />);
-    expect(screen.getByRole("tab", { name: "Licht" }).className).toContain("bg-accent");
+    const selected = screen.getByRole("tab", { name: "Licht" }).className.split(" ");
+    expect(selected).toEqual(
+      expect.arrayContaining(["bg-card", "shadow-elevation-1", "border", "border-input"]),
+    );
+    expect(selected).not.toContain("bg-accent");
     expect(screen.getByRole("tab", { name: "Boden" }).className).not.toContain("bg-accent");
+  });
+});
+
+describe("US-QS-32 the selected tab has two cues besides the fill (SG-CTRL-01)", () => {
+  it("US-QS-32 the selected tab has a semibold label in the text colour, the others a normal label", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    const selected = screen.getByRole("tab", { name: "Licht" }).className.split(" ");
+    expect(selected).toEqual(expect.arrayContaining(["font-semibold", "text-foreground"]));
+    const other = screen.getByRole("tab", { name: "Boden" }).className.split(" ");
+    expect(other).toEqual(expect.arrayContaining(["font-normal", "text-muted-foreground"]));
+    expect(other).not.toContain("font-semibold");
+  });
+
+  it("US-QS-32 the other tabs carry a transparent boundary of the same width, so nothing jumps", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    const other = screen.getByRole("tab", { name: "Boden" }).className.split(" ");
+    expect(other).toEqual(expect.arrayContaining(["border", "border-transparent"]));
+    expect(other).not.toContain("border-input");
+  });
+
+  it("US-QS-32 the tabs stay equal width (flex-1) with the boundary", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    for (const tab of screen.getAllByRole("tab"))
+      expect(tab.className.split(" ")).toContain("flex-1");
   });
 });

@@ -8,7 +8,7 @@ import {
   type HandOver,
 } from "@/app/destinations/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "../account";
-import { ImportPage, PotLabelPage, PrintLabelsPage } from "@/collection";
+import { ImportPage, PotLabelPage, PrintLabelsPage, labelFormatProps } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
 import { anniversaryTile } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
@@ -62,7 +62,11 @@ function collectionSubRoutes(api: string, token: Token, locks: ReturnType<typeof
     <>
       <Route
         path={LABELS_PATH}
-        element={locks.page("pot_labels") ?? <PrintLabelsPage api={api} token={token} />}
+        element={
+          locks.page("pot_labels") ?? (
+            <PrintLabelsPage api={api} token={token} {...labelFormatProps()} />
+          )
+        }
       />
       <Route
         path={IMPORT_PATH}

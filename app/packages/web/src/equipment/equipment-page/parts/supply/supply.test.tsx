@@ -50,13 +50,42 @@ describe("US-EQU-05 supply of a consumable", () => {
     expect(a.onSupply).toHaveBeenCalledWith(expect.objectContaining({ id: "c1" }), "empty");
   });
 
-  it("US-QS-22 the three levels share one row instead of filling a line each (issue 1283)", () => {
+  it("US-QS-32 the three levels are one full-width row of equal columns, the shared segmented control", () => {
     render(<Supply item={consumable()} actions={actions()} />);
-    for (const name of ["Vorhanden", "Wird knapp", "Leer"]) {
-      const classes = screen.getByRole("button", { name }).className.split(" ");
-      expect(classes).toContain("flex-1");
-      expect(classes).not.toContain("w-full");
-    }
+    const group = screen.getByRole("group", { name: "Vorrat von Neem" });
+    expect(group.className).toContain("w-full");
+    expect(group.className).toContain("auto-cols-fr");
+    expect(group.querySelectorAll("button")).toHaveLength(3);
+  });
+
+  it("US-QS-32 the supply has a visible label Vorrat above its group", () => {
+    const { container } = render(<Supply item={consumable()} actions={actions()} />);
+    const label = screen.getByText("Vorrat", { exact: true });
+    const group = screen.getByRole("group", { name: "Vorrat von Neem" });
+    expect(label.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.contains(label)).toBe(true);
+  });
+
+  it("US-QS-32 the chosen level is the pressed one and no level is a filled primary button", () => {
+    render(<Supply item={consumable({ supply: "empty" })} actions={actions()} />);
+    expect(screen.getByRole("button", { name: "Leer" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Vorhanden" }).getAttribute("aria-pressed")).toBe(
+      "false",
+    );
+    for (const name of ["Vorhanden", "Wird knapp", "Leer"])
+      expect(screen.getByRole("button", { name }).className).not.toContain("bg-primary");
+  });
+
+  it("US-QS-32 while an action runs no level can be tapped (busy handling as before)", async () => {
+    const a = { ...actions(), busy: true };
+    render(<Supply item={consumable()} actions={a} />);
+    expect(screen.getByRole("button", { name: "Vorhanden" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    for (const name of ["Vorhanden", "Wird knapp", "Leer"])
+      expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Leer" }));
+    expect(a.onSupply).not.toHaveBeenCalled();
   });
 
   it("US-EQU-05 tapping the current level sends nothing", async () => {

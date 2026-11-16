@@ -9,15 +9,15 @@ import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { Pager, type PagerPaging } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
+import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Button } from "@/shared/ui/button/button";
-import { Label } from "@/shared/ui/display/label/label";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { Select } from "@/shared/ui/fields/select/select";
 import { errorText } from "@/shared/lib/error-text";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { useFeature } from "@/shared/data";
 import { useCardPages, type CardPages } from "../../specimens/cards/use-card-pages";
 import { PrintRegion, type LabelFormat, type LabelPlant } from "./label-sheet/label-sheet";
+import { useLabelFormatChoice, type LabelFormatProps } from "./label-sheet/label-sheet";
 import { useLabelCultivars, type LabelCultivars } from "./use-label-cultivars";
 import table from "./print-labels-page.de.json";
 import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
@@ -39,33 +39,32 @@ function pagingOf(list: CardPages): PagerPaging {
   };
 }
 
-/** What the next step is (P-09): the missing choice, or the print once everything is ready. */
-function nextStep(chosen: number, format: LabelFormat | "", preparing: boolean): string {
+/** What the next step is (P-09): the missing plant, or the print once everything is ready (the format is always chosen). */
+function nextStep(chosen: number, preparing: boolean): string {
   if (chosen === 0) return ui("noPlant");
-  if (format === "") return ui("noFormat");
   if (preparing) return ui("preparing");
   return ui("ready");
 }
 
-/** The print page of the keeper's plants. The switch "pot_labels" off sends the address to the collection (P-12). */
-export function PrintLabelsPage(props: { api: string; token: Token }) {
+/**
+ * The print page of the keeper's plants. The switch "pot_labels" off sends the address to the collection (P-12). The
+ * format starts with `format` and each choice is passed to `onFormat`: the route gives both (US-QS-32).
+ */
+export function PrintLabelsPage(props: { api: string; token: Token } & Partial<LabelFormatProps>) {
   const on = useFeature("pot_labels");
   if (!on) return <Navigate to={PATHS.collection} replace />;
-  return <LabelsView api={props.api} token={props.token} />;
+  return <LabelsView {...props} format={props.format ?? "sheet"} />;
 }
 
-function LabelsView(props: { api: string; token: Token }) {
+function LabelsView(props: { api: string; token: Token } & LabelFormatProps) {
   const { api, token } = props;
   const list = useCardPages(api, token);
   const rows = useRowPageSize();
   // The chosen plants are kept as cards: the choice survives a reload of the list and the printed plant stays exact.
   const [chosen, setChosen] = useState<SpecimenCard[]>([]);
-  const [format, setFormat] = useState<LabelFormat | "">("");
-  const cultivars = useLabelCultivars(
-    api,
-    token,
-    chosen.map((c) => c.speciesId),
-  );
+  const [format, chooseFormat] = useLabelFormatChoice(props);
+  const speciesIds = chosen.map((c) => c.speciesId);
+  const cultivars = useLabelCultivars(api, token, speciesIds);
   const plants: LabelPlant[] = chosen.map((c) => ({
     id: c.id,
     name: c.name,
@@ -104,11 +103,11 @@ function LabelsView(props: { api: string; token: Token }) {
             chosen={chosen}
             onToggle={toggle}
             format={format}
-            onFormat={setFormat}
+            onFormat={chooseFormat}
             cultivars={cultivars}
           />
         </RequestState>
-        {chosen.length > 0 && format !== "" ? (
+        {chosen.length > 0 ? (
           <PrintRegion label={ui("printRegion")} plants={plants} format={format} />
         ) : null}
       </FullView>
@@ -122,27 +121,27 @@ function ChoicePanel(props: {
   rows: number;
   chosen: readonly SpecimenCard[];
   onToggle: (card: SpecimenCard) => void;
-  format: LabelFormat | "";
-  onFormat: (format: LabelFormat | "") => void;
+  format: LabelFormat;
+  onFormat: (format: LabelFormat) => void;
   cultivars: LabelCultivars;
 }) {
-  const { list, rows, chosen, onToggle, format, cultivars } = props;
-  const ready = chosen.length > 0 && format !== "" && cultivars.status === "ready";
+  const { list, rows, chosen, onToggle, format, onFormat, cultivars } = props;
+  const ready = chosen.length > 0 && cultivars.status === "ready";
   return (
     // No min-h-0: at a larger text size the panel grows with its content and scrolls in the frame (issue 1113).
     <div className="flex min-w-0 flex-1 flex-col gap-4">
       <p className="text-sm text-muted-foreground">{ui("intro")}</p>
       <div className="flex flex-col gap-1">
-        <Label htmlFor="print-labels-format">{ui("format")}</Label>
-        <Select
-          id="print-labels-format"
+        <p className="font-semibold">{ui("format")}</p>
+        <SegmentedControl
+          label={ui("format")}
+          options={[
+            { value: "sheet", label: ui("formatSheet") },
+            { value: "single", label: ui("formatSingle") },
+          ]}
           value={format}
-          onChange={(e) => props.onFormat(e.target.value as LabelFormat | "")}
-        >
-          <option value="">{ui("formatNone")}</option>
-          <option value="sheet">{ui("formatSheet")}</option>
-          <option value="single">{ui("formatSingle")}</option>
-        </Select>
+          onChange={onFormat}
+        />
       </div>
       <Pager
         items={list.cards}
@@ -168,7 +167,7 @@ function ChoicePanel(props: {
         ready={ready}
         count={chosen.length}
         unreadable={cultivars.unreadable}
-        hint={nextStep(chosen.length, format, cultivars.status === "pending")}
+        hint={nextStep(chosen.length, cultivars.status === "pending")}
       />
     </div>
   );
