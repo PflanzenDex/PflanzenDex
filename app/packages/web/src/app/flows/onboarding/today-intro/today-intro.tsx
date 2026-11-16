@@ -9,7 +9,7 @@ import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
 import { GuideEndNote } from "./first-plant-guide/guide-end-note/guide-end-note";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import type { LinkTarget } from "../../../../shared/patterns/navigation/navigation/navigation";
-import { useGuideEnd, useHints } from "./use-hints";
+import { useGuideEnd, useHints, useNoteCode } from "./use-hints";
 
 type Token = () => Promise<string | undefined>;
 type Target = Extract<LinkTarget, "species" | "collection">;
@@ -53,20 +53,22 @@ function useAnswered(count: Request<OnboardingCounts>): boolean {
  * account is judged by the count only once this visit has it (`answered`, issue 1795): until then a copy that says "new"
  * waits while its refresh is on its way, and a copy that a failed refresh left behind shows the tasks.
  */
-function stageOf(
-  count: Request<OnboardingCounts>,
-  answered: boolean,
-  hints: HintState | "failed" | null,
-  ended: boolean,
-) {
+function stageOf(input: {
+  count: Request<OnboardingCounts>;
+  answered: boolean;
+  hints: HintState | "failed" | null;
+  ended: boolean;
+  /** The code of a due note is in hand (issue 2230). */
+  codeReady: boolean;
+}) {
+  const { count, answered, hints, ended, codeReady } = input;
   const counts = count.value;
   const copyNew = counts !== undefined && isNewAccount(counts);
   const waiting = copyNew && !answered && count.refreshing;
   const newAccount = copyNew && answered;
-  // Undecided: the count, or the hints of an account with a count, are still loading. The hints wait for every account with a
-  // count (issue 2230): a notice that arrives later would land above the tasks and move them. Without a count the tasks show.
+  // Undecided: the count, the hints of an account with a count, or a due note's code is still loading (issue 2230).
   const undecided =
-    count.status === "pending" || waiting || (counts !== undefined && hints === null);
+    count.status === "pending" || waiting || (counts !== undefined && hints === null) || !codeReady;
   const guide = newAccount && hints !== null && !ended;
   return {
     undecided,
@@ -148,7 +150,9 @@ export function TodayIntro(props: {
   const answered = useAnswered(r);
   const [hints, setHints] = useHints(api, token, r.value);
   const guide = useGuideEnd(api, token, hints);
-  const stage = stageOf(r, answered, hints, guide.ended);
+  const note = noteOf(hints);
+  const codeReady = useNoteCode(note);
+  const stage = stageOf({ count: r, answered, hints, ended: guide.ended, codeReady });
   return (
     <>
       {stage.undecided && props.fallback}

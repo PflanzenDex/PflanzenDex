@@ -10,7 +10,13 @@ import { MobileNavBar } from "../../mobile-nav-bar/mobile-nav-bar";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { beginAppStart } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { BAR_LABELS_KEY } from "./bar-labels";
-import { StartFrame } from "./start-frame";
+import {
+  AppBarSlotProvider,
+  useAppBarSlot,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
+import { TodaySkeleton } from "@/today";
+import type { ReactNode } from "react";
+import { StartFrame, StartPageSkeleton } from "./start-frame";
 
 afterEach(() => {
   cleanup();
@@ -154,5 +160,45 @@ describe("US-QS-32 the start frame and the shell draw the bars alike (issue 2230
       (s) => s.textContent,
     );
     expect(labels).toEqual(stored);
+  });
+});
+
+describe("US-QS-32 the shell's start skeleton hands the title over to the route's skeleton (issue 2230)", () => {
+  /** The shell's bar and main in miniature: the bar element a title claims, then the content (AppShell lays them out so). */
+  function ShellBar() {
+    const bar = useAppBarSlot();
+    return (
+      <header>
+        {bar?.claimed ? null : <span>PflanzenDéx</span>}
+        <div data-app-bar-slot="" ref={bar?.setElement} />
+      </header>
+    );
+  }
+  const shell = (content: ReactNode) => (
+    <MemoryRouter initialEntries={[PATHS.today]}>
+      <AppBarSlotProvider>
+        <ShellBar />
+        <main>{content}</main>
+      </AppBarSlotProvider>
+    </MemoryRouter>
+  );
+
+  it("US-QS-32 below md the start's title is in the bar, not the content, and no brand shows in its place", () => {
+    const { container } = render(shell(<StartPageSkeleton />));
+    expect(container.querySelector("[data-app-bar-slot] h1")?.textContent).toBe("Heute");
+    expect(container.querySelector("main h1")).toBeNull();
+    expect(container.textContent).not.toContain("PflanzenDéx");
+  });
+
+  it("US-QS-32 the route's skeleton takes the title over without a second title or a move of the row", () => {
+    const { container, rerender } = render(shell(<StartPageSkeleton />));
+    const rowBefore = container.querySelector("[data-app-bar-slot] [data-page-header]")?.className;
+    rerender(shell(<TodaySkeleton />));
+    expect(container.querySelectorAll("h1")).toHaveLength(1);
+    expect(container.querySelector("[data-app-bar-slot] h1")?.textContent).toBe("Heute");
+    expect(container.querySelector("[data-app-bar-slot] [data-page-header]")?.className).toBe(
+      rowBefore,
+    );
+    expect(container.querySelector("main h1")).toBeNull();
   });
 });
