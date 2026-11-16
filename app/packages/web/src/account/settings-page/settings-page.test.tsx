@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { currentTimeZone, setProfileTimeZone } from "../../shared/data";
 import {
   ShortcutProvider,
@@ -63,12 +64,18 @@ function fakeServer(
 }
 /** The settings; with `sheet` the address names the layer that is open (`?sheet=<group>`). */
 const at = (sheet?: string) => `/${sheet ? `?sheet=${sheet}` : ""}`;
+// The app shell mounts the announcer above the page; a switch says its save through it (US-QS-32).
 const show = (sheet?: string) =>
   render(
-    <MemoryRouter initialEntries={[at(sheet)]}>
-      <SettingsPage api="http://api" token={token} />
-    </MemoryRouter>,
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={[at(sheet)]}>
+        <SettingsPage api="http://api" token={token} />
+      </MemoryRouter>
+    </AnnouncerProvider>,
   );
+/** What the announcer says (its polite live region, `sr-only`). */
+const announced = () =>
+  document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
 
 beforeAll(() => setViewportWidth(1024));
 
@@ -246,7 +253,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const user = userEvent.setup();
     show("notifications");
     await user.click(await screen.findByRole("checkbox", { name: "Behandlungen" }));
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.body["notifications"]).toEqual({ ...PROFILE.notifications, treatment: false });
     await user.click(screen.getByRole("checkbox", { name: "Tausch" }));
@@ -293,7 +300,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     });
     expect((box as HTMLInputElement).checked).toBe(false);
     await user.click(box);
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
@@ -533,7 +540,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const user = userEvent.setup();
     show("privacy");
     await user.click(await screen.findByRole("checkbox", { name: "Alles privat" }));
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts[0]?.body["positionThresholds"]).toBeNull();
   });
 

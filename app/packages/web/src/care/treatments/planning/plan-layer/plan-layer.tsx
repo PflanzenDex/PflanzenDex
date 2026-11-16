@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useInvalidate, useRequest, type ApiError } from "@/shared/data";
 import { OPEN_KEY, SPECIMENS_KEY } from "../../../shared/api/query-keys";
 import { RefusalAlert } from "../../../shared/notices/notices";
@@ -53,16 +53,17 @@ function PlanBody(props: {
 /**
  * "Behandlung planen" as a layer above the treatments (US-QS-18, A-04): plants with search, location filter and pages,
  * the term in a second view, and the save button in the footer, so it stays in view. A successful save closes the layer
- * (back to the layer Behandlungen) and confirms it as a toast; a refusal stays in the layer with its German text (P-10).
+ * (back to the layer Behandlungen), where the planned treatment shows, and says the result (US-QS-32); a refusal stays
+ * in the layer with its German text (P-10).
  */
 export function PlanLayer(props: { api: string; token: Token }) {
   const { api, token } = props;
   const { open, closeLayer } = useLayer(PLAN_LAYER);
-  const toast = useToast();
+  const say = useSay();
   const refreshOpen = useInvalidate(OPEN_KEY);
   const planning = usePlanning(api, token, (message) => {
     refreshOpen();
-    toast.show({ message });
+    say(message);
   });
   useEffect(() => {
     if (!open) planning.reset();

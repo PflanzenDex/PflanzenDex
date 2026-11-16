@@ -1,15 +1,30 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { createRoot } from "react-dom/client";
+import { AnnouncerProvider } from "../../../platform/announcer/announcer";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toastDuration } from "./toast-item/toast-item";
-import { ToastProvider, useToast, type ToastOptions } from "./toast-provider/toast-provider";
+import {
+  ToastProvider,
+  useSay,
+  useToast,
+  type Say,
+  type ToastOptions,
+} from "./toast-provider/toast-provider";
 
 let api: ReturnType<typeof useToast>;
 function Capture() {
   api = useToast();
   return null;
 }
+let say: Say = () => undefined;
+function CaptureSay() {
+  say = useSay();
+  return null;
+}
+/** The announcer's own live region (`sr-only`), not the viewport of the toasts. */
+const announcer = () => document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]');
 function setup() {
   render(
     <ToastProvider>
@@ -185,5 +200,47 @@ describe("Toast (US-QS-07, P-10)", () => {
     setup();
     const viewport = region("polite").parentElement as HTMLElement;
     expect(viewport.className).toContain("md:right-[max(1.5rem,calc((100vw-120rem)/2+1.5rem))]");
+  });
+});
+
+describe("US-QS-32 · a result is said, a refusal stays a toast (SG-FEED-01, SG-FEED-04, P-10)", () => {
+  it("US-QS-32 · useSay success goes to the announcer's live region and renders no toast", () => {
+    render(
+      <AnnouncerProvider>
+        <CaptureSay />
+      </AnnouncerProvider>,
+    );
+    act(() => say("Gespeichert."));
+    expect(announcer()?.textContent).toBe("Gespeichert.");
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Meldung schließen" })).toBeNull();
+  });
+
+  it("US-QS-32 · useSay error still renders the toast in the assertive region, and is not said as a success", () => {
+    render(
+      <AnnouncerProvider>
+        <CaptureSay />
+      </AnnouncerProvider>,
+    );
+    act(() => say("Speichern fehlgeschlagen.", "error"));
+    expect(within(region("assertive")).getByText("Speichern fehlgeschlagen.")).toBeTruthy();
+    expect(announcer()?.textContent).toBe("");
+  });
+
+  it("US-QS-32 · without an announcer above, a success is a toast, so nothing is lost (P-10)", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() =>
+      root.render(
+        <ToastProvider>
+          <CaptureSay />
+        </ToastProvider>,
+      ),
+    );
+    act(() => say("Gegossen."));
+    expect(screen.getByRole("status").textContent).toContain("Gegossen.");
+    act(() => root.unmount());
+    host.remove();
   });
 });
