@@ -20,6 +20,7 @@ import { PathNotes } from "@/wishlist";
 import { useWishHandOver } from "@/app/flows/add-plant/wish-to-specimen";
 import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "@/app/flows/unlock";
 import { SignedInFeatures } from "@/app/flows/unlock/model/keeper-switches/keeper-switches";
+import { StartPageSkeleton } from "../start-frame/start-frame";
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const AppRoutes = lazyPage(() => import("@/app/routes").then((m) => ({ default: m.AppRoutes })));
@@ -133,7 +134,8 @@ export function SignedInFrame({
                 </Suspense>
               )}
             </div>
-            <RouteBoundary resetKey={pathname}>
+            {/* While the route table loads, the page skeleton of the start frame stays, so the start is one picture (issue 1876). */}
+            <RouteBoundary resetKey={pathname} fallback={<StartPageSkeleton />}>
               <AppRoutes
                 api={api}
                 session={s}

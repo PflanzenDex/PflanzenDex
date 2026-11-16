@@ -15,6 +15,7 @@
   "chips.locationUnknown": "Standort unbekannt",
   "chips.treatment": "Behandeln",
   "slot.loading": "Lädt …",
+  "slot.water": "Gießen",
   "overview.measure": "Messen",
   "overview.measureLabel": "Messen: {name}",
   "overview.trend": "Trend: {value}",

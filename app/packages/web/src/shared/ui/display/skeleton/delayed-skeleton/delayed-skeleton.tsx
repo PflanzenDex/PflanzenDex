@@ -16,8 +16,34 @@ export const SKELETON_DELAY_MS = 200;
  */
 export const STATUS_HOLD_MS = 300;
 
+/** The events that end the app start: the keeper acts, or goes back or forward in the history. */
+const START_ENDS = ["pointerdown", "keydown", "popstate"] as const;
+
+/** True during the app start (SG-STATE-02, owner answer Q-27): see `beginAppStart`. */
+let starting = false;
+
 /**
- * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57). Used as a
+ * Starts the app start (SG-STATE-02, owner answer Q-27, issue 1876): until the keeper first acts (a pointer, a key) or goes
+ * back or forward, every skeleton shows at once, without the delay of DS-57, so the start is one loading picture from the
+ * first paint to the content. Everything that loads before that act is part of the start; a page change inside the app
+ * follows an act, so the delay applies to it again. The entry calls it once before the first render; it returns the end,
+ * which tests call. Without it (tests, stories) every skeleton waits for the delay.
+ */
+export function beginAppStart(
+  target: Pick<Window, "addEventListener" | "removeEventListener"> = window,
+) {
+  starting = true;
+  const end = () => {
+    starting = false;
+    for (const type of START_ENDS) target.removeEventListener(type, end, true);
+  };
+  for (const type of START_ENDS) target.addEventListener(type, end, true);
+  return end;
+}
+
+/**
+ * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57); during the app
+ * start at once (`beginAppStart`, SG-STATE-02). Used as a
  * Suspense fallback it mounts while the part waits and unmounts with it, so the timer ends with the wait. It never holds
  * the skeleton once shown: the skeleton goes as soon as the part arrives.
  */
@@ -29,7 +55,7 @@ export function DelayedSkeleton({
   children: ReactNode;
 }) {
   const outerDue = useContext(DueContext);
-  const [due, setDue] = useState(delayMs <= 0 || outerDue);
+  const [due, setDue] = useState(() => delayMs <= 0 || outerDue || starting);
   useEffect(() => {
     if (due) return;
     const id = window.setTimeout(() => setDue(true), delayMs);

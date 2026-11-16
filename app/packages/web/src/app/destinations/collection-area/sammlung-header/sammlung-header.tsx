@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import {
   SegmentedControl,
   type SegmentedOption,
 } from "../../../../shared/patterns/elements/segmented-control/segmented-control";
 
 /**
- * The title area of the destination "Sammlung" (US-QS-14): the one main heading, a small count line when the shown
- * view has loaded, and the switch between the views. Takes data and callbacks only (DS-44).
+ * The title area of the destination "Sammlung" (US-QS-14): the one main heading, a small count line, and the switch between
+ * the views. While the shown view loads (`caption` null) a skeleton bar holds the line's height, so the switch keeps its
+ * place when the count arrives (SG-STATE-02, F-0018). Takes data and callbacks only (DS-44).
  */
 export function SammlungHeader<V extends string>(props: {
   view: V;
@@ -27,7 +29,11 @@ export function SammlungHeader<V extends string>(props: {
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
-          {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
+          {props.caption ? (
+            <p className="text-sm text-muted-foreground">{props.caption}</p>
+          ) : (
+            <CaptionSkeleton />
+          )}
         </div>
         {props.action}
       </div>
@@ -38,6 +44,18 @@ export function SammlungHeader<V extends string>(props: {
         onChange={props.onChoose}
       />
       {props.children}
+    </div>
+  );
+}
+
+/**
+ * The count line while it loads (SG-STATE-02, F-0018): a bar in a box of the line's height (`text-sm`, 1.25 rem, so it
+ * grows with the text size like the line). The route's fallback of "Sammlung" reserves the same box.
+ */
+function CaptionSkeleton() {
+  return (
+    <div data-caption-skeleton="" className="flex h-5 items-center">
+      <Skeleton className="h-3.5 w-24" />
     </div>
   );
 }

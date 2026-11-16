@@ -18,7 +18,7 @@ import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { TITLE } from "../specimens/cards/parts/parts";
 import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { PlantTile } from "./rows/plant-tile/plant-tile";
+import { PlantTile, PlantTileSkeleton } from "./rows/plant-tile/plant-tile";
 import { PlantLayers } from "./plant-layers/plant-layers";
 import { ARCHIVE_LAYER, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
@@ -49,14 +49,13 @@ type Props = LayerProps & {
   summary: SpecimenSummary;
 };
 
-// Two tiles per row from a 360 px phone at normal text, one per row at a larger text size (issue 1019). 8.75 rem lets
-// two columns fit the 294 px of the list at 360 px, so a page holds 6 tiles (owner decision 2026-11-01, issue 1108);
-// a column is never wider than the list, so at a larger text size a tile stays inside its card (issue 1113). The wider
-// windows keep 3 and 4 columns at normal text and lose columns as the text grows, because the minimum is in rem (issue 1304).
+// Two tiles per row at 360 px and normal text, one at a larger text size (issue 1019): 8.75 rem fits two columns in the 294
+// px list, so a page holds 6 (owner decision 2026-11-01, issue 1108); a column is never wider than the list (issue 1113).
+// Wider windows keep 3 and 4 columns at normal text and lose columns as the text grows: the minimum is in rem (issue 1304).
 const TILES =
   "grid grid-cols-[repeat(auto-fill,minmax(min(8.75rem,100%),1fr))] gap-2 md:grid-cols-[repeat(auto-fill,minmax(min(11rem,100%),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(min(max(9.5rem,22%),100%),1fr))]";
 
-/** The server paging of a list of plants for the Pager (FR-BES-23): the total, the loading state and a failure's text. */
+/** The server paging of a list of plants for the Pager (FR-BES-23): total, loading state, failure, tile skeleton (F-0124). */
 function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {
   return {
     total: list.total ?? fallbackTotal,
@@ -67,6 +66,7 @@ function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {
     onRetry: list.retry,
     loadingText: t("list.loading"),
     retryText: t("list.retry"),
+    placeholder: <PlantTileSkeleton />,
   };
 }
 

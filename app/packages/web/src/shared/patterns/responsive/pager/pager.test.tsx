@@ -623,3 +623,65 @@ describe("FR-BES-23 Pager of a server list", () => {
     ]);
   });
 });
+
+describe("US-QS-32 a page on its way shows its entries' skeletons, not an empty frame (SG-STATE-02, F-0124, issue 1913)", () => {
+  const paging = (loading: boolean, failure?: string, placeholder = true) => ({
+    total: 5,
+    loading,
+    ...(failure === undefined ? {} : { failure }),
+    onMore: vi.fn(),
+    onRetry: vi.fn(),
+    loadingText: "Pflanzen werden geladen …",
+    retryText: "Erneut versuchen",
+    ...(placeholder ? { placeholder: <span data-testid="tile-skeleton" /> } : {}),
+  });
+  const list = (p: ReturnType<typeof paging>) =>
+    render(
+      <MemoryRouter>
+        <Pager
+          items={["a"]}
+          pageSize={3}
+          label="Pflanzen"
+          paging={p}
+          renderItem={(item) => <span>{item}</span>}
+        />
+      </MemoryRouter>,
+    );
+
+  it("US-QS-32 · SG-STATE-02 the missing entries of the page get skeletons, the list is busy and the note is read out only", () => {
+    vi.useFakeTimers();
+    try {
+      list(paging(true));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
+      const ul = screen.getByRole("list", { name: "Pflanzen" });
+      expect(ul.getAttribute("aria-busy")).toBe("true");
+      expect(ul.children).toHaveLength(3);
+      expect(screen.getAllByTestId("tile-skeleton")).toHaveLength(2);
+      expect(screen.getByText("Pflanzen werden geladen …").className).toContain("sr-only");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("US-QS-32 · P-10 a failed page shows no skeletons: the failure and its retry stand", () => {
+    list(paging(false, "Nicht geladen"));
+    expect(screen.queryAllByTestId("tile-skeleton")).toHaveLength(0);
+    expect(screen.getByRole("list", { name: "Pflanzen" }).getAttribute("aria-busy")).toBeNull();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+
+  it("US-QS-32 without a skeleton the note keeps showing the loading text", () => {
+    vi.useFakeTimers();
+    try {
+      list(paging(true, undefined, false));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
+      expect(screen.getByText("Pflanzen werden geladen …").className).not.toContain("sr-only");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

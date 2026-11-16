@@ -16,6 +16,23 @@ export async function newManager(): Promise<UserManager> {
   });
 }
 
+/** The key prefix under which the sign-in library keeps a signed-in user in `localStorage` (oidc-client-ts). */
+const USER_KEY_PREFIX = "oidc.user:";
+
+/**
+ * Whether this device likely opens signed in (SG-STATE-02, issue 1876): a user is kept from an earlier sign-in, or the
+ * address is the return of a sign-in. Read before the library has loaded, so the start shows the signed-in frame from its
+ * first paint; it is a guess for the loading picture only, the session check decides. Unreadable storage counts as no.
+ */
+export function likelySignedIn(): boolean {
+  try {
+    if (new URLSearchParams(window.location.search).has("code")) return true;
+    return Object.keys(window.localStorage).some((key) => key.startsWith(USER_KEY_PREFIX));
+  } catch {
+    return false;
+  }
+}
+
 // The address this page is at, as the sign-in returns to it (US-BES-17, #1619): the bare path, which is the redirect URI.
 export const here = (): string => returnAddress(window.location.origin, window.location.pathname);
 

@@ -1,5 +1,4 @@
 import { useCallback, type ReactNode } from "react";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LoadFrame, useRequest, type Request } from "../../../shared/data";
 import { loadDeletions, type DeletionEntry, type DeletionsView } from "../../api/access-api";
@@ -110,15 +109,37 @@ export function DeletionSection(props: {
   );
 }
 
+/** A figure space: as wide as a digit, so the skeleton of the summary has its width without showing a number (P-08). */
+const FIGURE = "\u2007";
+
 /**
- * The value of the row "Löschfristen": the counts once they are there. While they load it shows the loading text after the
- * short delay of a skeleton (DS-57), so a fast load shows nothing; a failure is named in one line, and the layer offers
- * the retry (P-09, P-10).
+ * The value of "Löschfristen" while its counts load (SG-STATE-02, F-0338, issue 2038): the summary's own words, transparent
+ * on skeleton bars that break like the text (`box-decoration-break: clone`), with a figure space for each count. So the row has
+ * its final height from the first frame, on one line or two, and shows no number (P-08); the loading text is for
+ * assistive technology.
+ */
+function DeadlineSkeleton() {
+  return (
+    <span data-deadline-skeleton="">
+      <span
+        aria-hidden="true"
+        className="select-none rounded-control bg-muted text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone] animate-pulse motion-reduce:animate-none"
+      >
+        {t("row.summary", { near: FIGURE, past: FIGURE, identity: FIGURE })}
+      </span>
+      <span className="sr-only">{t("row.loading")}</span>
+    </span>
+  );
+}
+
+/**
+ * The value of the row "Löschfristen": the counts once they are there, their skeleton while they load (SG-STATE-02); a
+ * failure is named in one line, and the layer offers the retry (P-09, P-10).
  */
 function deadlineValue(r: Request<DeletionsView>): ReactNode {
   if (r.value !== undefined) return deadlineSummary(r.value);
   if (r.status === "error") return t("row.failed");
-  return <DelayedSkeleton>{t("row.loading")}</DelayedSkeleton>;
+  return <DeadlineSkeleton />;
 }
 
 /**

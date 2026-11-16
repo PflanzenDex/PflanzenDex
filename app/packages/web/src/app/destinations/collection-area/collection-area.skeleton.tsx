@@ -70,7 +70,7 @@ function HeaderBlock({ className }: { className: string }) {
 
 /**
  * The route's fallback of "Sammlung" until its chunk is there (issue 1727, as "Entdecken" in issue 1697): the title stands
- * at once as the one h1 (its focus waits for the page's own heading, RouteFocus), the switch and the action keep the
+ * at once as the one h1 (its focus waits for the page's own heading, RouteFocus), the count line, the switch and the action keep the
  * height of the loaded header, and the blocks and the mode's body wait for the delay.
  */
 export function CollectionRouteSkeleton({ shape }: { shape: SammlungShape }) {
@@ -82,9 +82,13 @@ export function CollectionRouteSkeleton({ shape }: { shape: SammlungShape }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="mb-1.5 flex flex-col gap-1.5">
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-            <h1 data-route-fallback="" className="text-2xl font-semibold">
-              {t("title")}
-            </h1>
+            <div className="min-w-0">
+              <h1 data-route-fallback="" className="text-2xl font-semibold">
+                {t("title")}
+              </h1>
+              {/* The count line of `SammlungHeader` (F-0018): its box at once, its bar after the delay. */}
+              <HeaderBlock className="h-5 w-24 py-[3px]" />
+            </div>
             {arranged ? (
               <HeaderBlock className="h-11 w-24 shrink-0" />
             ) : (

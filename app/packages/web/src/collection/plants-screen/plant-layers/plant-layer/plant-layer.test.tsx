@@ -493,3 +493,21 @@ describe("US-QS-14 issue 1784 · the plant layer slot shows the shape of its par
     expect(await screen.findByText("Behandlungen der Pflanze")).toBeTruthy();
   });
 });
+
+describe("US-QS-32 the action row of a plant has all its buttons from the first frame (SG-STATE-02, F-0082, issue 1889)", () => {
+  it("US-QS-32 · SG-STATE-02 while 'Gießen' loads, its disabled button stands in its place before 'Behandeln'", async () => {
+    setViewportWidth(360);
+    const never = new Promise<never>(() => undefined);
+    function Pending(): ReactNode {
+      // A part that suspends for good, as a chunk on its way.
+      throw never;
+    }
+    show([card()], { slots: { ...SLOTS, water: () => <Pending /> } });
+    const layer = await open();
+    const water = within(layer).getByRole("button", { name: "Gießen" });
+    expect((water as HTMLButtonElement).disabled).toBe(true);
+    expect(water.getAttribute("aria-busy")).toBe("true");
+    const treat = within(layer).getByRole("button", { name: /Behandeln/ });
+    expect(water.nextElementSibling).toBe(treat);
+  });
+});
