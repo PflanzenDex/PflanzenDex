@@ -20,10 +20,15 @@ type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-ex
 let pool: Pool;
 let admin: Pool;
 let app: ReturnType<typeof createApp>;
-const tag = randomUUID()
-  .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
-  .replace(/-/g, "")
-  .slice(0, 10);
+// #2193: no "n" and no "r" in the alphabet, so a tag never spells an account label ("anna", "bernd").
+const DIGIT_LETTERS = "ghijklmqst";
+/** The fixture tag of a UUID: ten characters, each one the image of one hex digit (#2193: see the test at the end). */
+const tagOf = (uuid: string) =>
+  uuid
+    .replace(/[0-9]/g, (z) => DIGIT_LETTERS[Number(z)] ?? "x")
+    .replace(/-/g, "")
+    .slice(0, 10);
+const tag = tagOf(randomUUID());
 const subA = `ki12-${randomUUID()}`;
 const subB = `ki12-${randomUUID()}`;
 const CLIENT = "https://claude.ai/oauth/mcp-oauth-client-metadata";
@@ -450,6 +455,15 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
         const r = await tool(subB, name, { specimen });
         expect(r.body["error"].code).toBe("specimen.not_found");
         expect(JSON.stringify(r.body)).not.toContain("anna");
+        // The nearest names come from B's own rows (#2193): none for an id, B's own specimen name for a name, no id of A's.
+        const nearest = r.body["error"].data["nearest"] as string[];
+        if (specimen === A.specimen["id"]) expect(nearest).toEqual([]);
+        else {
+          expect(nearest.length).toBeGreaterThan(0);
+          for (const label of nearest) expect([B.specimen["name"]]).toContain(label);
+        }
+        for (const id of [A.specimen["id"], A.species["id"], A.zone["id"]])
+          expect(JSON.stringify(nearest)).not.toContain(id);
       }
     const res = await call(ai(subB), "GET", `/mcp/treatments/history?specimen=${A.specimen["id"]}`);
     expect(res.status).toBe(404); // never 403: no existence leak
@@ -611,5 +625,19 @@ describe("US-ONB-09 the AI client and the keeper switches", () => {
     expect(entry?.["state"]).not.toBe("keeper_off");
     expect(entry).toEqual(beforeSwitch);
     expect(entry).toEqual(await appEntry(subS, WISH));
+  });
+});
+
+// #2193: the fixture tag must never spell an account label. A tag holding "anna" fails the bare name checks, because B's own
+// names hold the tag ("Bereich <tag> bernd").
+describe("US-KI-12 the fixture tag (#2193)", () => {
+  it("US-KI-12 the fixture tag can never spell an account label (#2193)", () => {
+    // The tag's letters are the digit letters and the hex letters a-f. A label with a letter outside them cannot occur.
+    const alphabet = new Set(DIGIT_LETTERS + "abcdef");
+    for (const label of ["anna", "bernd"])
+      expect(
+        [...label].some((letter) => !alphabet.has(letter)),
+        `"${label}" cannot occur: one of its letters is outside the tag alphabet`,
+      ).toBe(true);
   });
 });

@@ -1,7 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { User, UserManager } from "oidc-client-ts";
 import { setProfileTimeZone, type ApiError } from "../../shared/data";
-import { clearPhotoCache } from "../../shared/platform/browser/use-stored-photo";
 import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
@@ -77,7 +76,11 @@ async function forgetSignIn(mgr: UserManager): Promise<void> {
   await mgr.removeUser();
   window.sessionStorage.removeItem(LIVE);
   setProfileTimeZone(null);
-  clearPhotoCache();
+  // The photo module is loaded here, not at the start (DS-08); a module never loaded has an empty cache, so a failed import loses nothing.
+  void import("../../shared/platform/browser/use-stored-photo").then(
+    (m) => m.clearPhotoCache(),
+    () => undefined,
+  );
 }
 
 // The text of a failed sign-out, chosen by code: no answer says the connection is missing, a server text is shown as it is,

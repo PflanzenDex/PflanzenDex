@@ -8,7 +8,7 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import { DISPLAY_NAME, START_MODES, type NavItem } from "../nav-item";
+import { START_MODES, pageTitle, type NavItem } from "../nav-item";
 
 export type View =
   "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
@@ -158,11 +158,6 @@ export function navItems(who: Who): NavItem[] {
     ...(START_MODES[e.id] ?? {}),
   }));
 }
-
-/** The display name is not imported from core: the root barrel of core would add about 5 kB gzip to the initial bundle (DS-08). */
-const PRODUCT = DISPLAY_NAME;
-/** "Name – PflanzenDéx", or the product alone without a name (US-QS-09, WCAG 2.4.2). */
-export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : PRODUCT);
 
 /**
  * The page title of the address (US-QS-09, WCAG 2.4.2): the name of the navigation entry, so title, entry and heading
