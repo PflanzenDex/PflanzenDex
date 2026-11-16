@@ -11,7 +11,7 @@ import {
 import { useClearOnSignOut } from "../../../shared/data";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
-import { pageTitle } from "../../../shared/patterns/navigation/navigation/navigation";
+import { pageTitle } from "@/shared/patterns/navigation/nav-item";
 import { useAccountMotion } from "@/shared/platform/device/motion/motion-setting";
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */

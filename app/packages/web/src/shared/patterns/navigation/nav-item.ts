@@ -69,6 +69,11 @@ export const isActivePath = (pathname: string, href: string) =>
 /** How the product is shown to users (US-QS-14). Identifiers, repository and docs keep "PflanzenDex". */
 export const DISPLAY_NAME = "PflanzenDéx";
 
+/** The display name is not imported from core: the root barrel of core would add about 5 kB gzip to the initial bundle (DS-08). */
+const PRODUCT = DISPLAY_NAME;
+/** "Name – PflanzenDéx", or the product alone without a name (US-QS-09, WCAG 2.4.2). Lives here so the start does not load the navigation chunk (DS-08). */
+export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : PRODUCT);
+
 /** Where every brand link leads: "Heute", the home screen (US-QS-16); equals `PATHS.today`. */
 export const BRAND_HREF = "/today";
 
