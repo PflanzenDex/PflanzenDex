@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { localToday } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -8,6 +8,9 @@ import { errorText } from "@/shared/lib/error-text";
 import { currentTimeZone, useInvalidate, useWriteAction } from "../../../shared/data";
 import type { RhythmPauseItem } from "../../achievements-api";
 import { addRhythmPause, removeRhythmPause } from "./pause-api";
+import { isPauseTooLong, lastPauseDay } from "./pause-limit";
+
+const TOO_LONG = "achievements.pause_too_long";
 
 type Token = () => Promise<string | undefined>;
 
@@ -39,9 +42,13 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
   const [until, setUntil] = useState(today);
   const refresh = useInvalidate(["achievements"]);
   const write = useWriteAction(token, refresh);
+  const refusalId = useId();
+  // "Bis" takes the last day the limit allows; the server's refusal of a too long pause stands at its field too (F-0371).
+  const tooLongByServer = write.error?.code === TOO_LONG;
   const submit = () => {
-    // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is sent.
-    if (!isHandedDate(from) || !isHandedDate(until)) return;
+    // Nothing is sent for a typed text that is no day, or a pause longer than the limit: the field shows its message
+    // when it is left (US-QS-32, F-0371).
+    if (!isHandedDate(from) || !isHandedDate(until) || isPauseTooLong(from, until)) return;
     void write.run((t) => addRhythmPause(api, t, { from, until }), "Urlaub eingetragen.");
   };
   return (
@@ -57,8 +64,19 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
         </label>
         <label className="flex flex-col gap-1">
           Bis (einschließlich)
-          <DateField value={until} onChange={(e) => setUntil(e.target.value)} />
+          <DateField
+            value={until}
+            onChange={(e) => setUntil(e.target.value)}
+            max={from !== "" && isHandedDate(from) ? lastPauseDay(from) : undefined}
+            invalid={tooLongByServer}
+            aria-describedby={tooLongByServer ? refusalId : undefined}
+          />
         </label>
+        {tooLongByServer && (
+          <p id={refusalId} role="alert" className="text-sm font-medium text-destructive">
+            {errorText(TOO_LONG)}
+          </p>
+        )}
         <Button type="button" onClick={submit} disabled={write.running} className="self-start">
           Urlaub eintragen
         </Button>
@@ -67,7 +85,7 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
         pauses={pauses}
         remove={(id) => void write.run((t) => removeRhythmPause(api, t, id), "Urlaub entfernt.")}
       />
-      {write.error && (
+      {write.error && !tooLongByServer && (
         <p role="alert" className="mt-2 text-destructive">
           {errorText(write.error.code)}
         </p>
