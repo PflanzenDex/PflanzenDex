@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState, type ReactNode } from "react";
-import { useForm, type Control, type Path } from "react-hook-form";
+import { type Control, type Path } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -38,7 +38,7 @@ function sameAsSaved(next: AccountProfile, keys: readonly Key[], saved: AccountP
 
 /** The form of one group and its save: the group's fields go onto the stored profile; a refusal marks them (P-10). */
 function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boolean) {
-  const form = useForm<Fields>({
+  const form = useFieldForm<Fields>({
     resolver: zodResolver(profileSchema),
     defaultValues: toProfileFields(saver.saved, deviceTimeZone()),
   });

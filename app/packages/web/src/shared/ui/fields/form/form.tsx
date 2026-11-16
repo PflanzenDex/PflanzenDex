@@ -3,11 +3,13 @@ import * as React from "react";
 import {
   Controller,
   FormProvider,
+  useForm,
   useFormContext,
   useFormState,
   type ControllerProps,
   type FieldPath,
   type FieldValues,
+  type UseFormProps,
 } from "react-hook-form";
 import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
@@ -21,11 +23,20 @@ import {
 } from "./form-context";
 
 /**
- * Form family on react-hook-form (US-QS-07, DS-47, DS-48). `Form` is the provider; spread `useForm()` into it.
- * Validation comes from a zod schema through `zodResolver`. Ids, `aria-describedby` and `aria-invalid` are wired
- * automatically; the invalid border comes from the control's `aria-invalid` (see Input).
+ * Form family on react-hook-form (US-QS-07, DS-47, DS-48): `Form` is the provider, spread `useFieldForm()` into it.
+ * Zod schemas validate through `zodResolver`; ids, `aria-describedby` and `aria-invalid` are wired (see Input).
  */
 const Form = FormProvider;
+
+/**
+ * The hook of every form (US-QS-32, SG-FORM-05): a field is validated when it is left and on each change after that,
+ * so its message and red frame clear together; on send all fields are validated and the first wrong one takes focus.
+ */
+function useFieldForm<T extends FieldValues>(
+  options?: Omit<UseFormProps<T>, "mode" | "reValidateMode">,
+) {
+  return useForm<T>({ ...options, mode: "onTouched", reValidateMode: "onChange" });
+}
 
 /** Binds a named field to the form; the render prop receives react-hook-form's `field` (spread it on the control). */
 function FormField<
@@ -77,10 +88,7 @@ const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithout
 );
 FormLabel.displayName = "FormLabel";
 
-/**
- * Wraps exactly one control (Input, Textarea, Select, ...) and gives it `id`, `aria-describedby` and `aria-invalid`.
- * `aria-describedby` lists only the description and message that are rendered, so no id dangles (US-QS-14).
- */
+/** Wraps one control: `id`, `aria-describedby` (rendered parts only, US-QS-14) and `aria-invalid`. */
 const FormControl = React.forwardRef<HTMLElement, React.ComponentPropsWithoutRef<typeof Slot>>(
   (props, ref) => {
     const { error, controlId, descriptionId, messageId, rendered } = useFormField();
@@ -156,9 +164,8 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
 FormMessage.displayName = "FormMessage";
 
 /**
- * The `<form>` of the Form family (US-QS-07, DS-47, DS-48). Place it directly under the `Form` provider and pass
- * `onSubmit={form.handleSubmit(...)}`: the browser's own validation bubbles are off (`noValidate`, the zod
- * resolver owns validation) and the native submit never reloads the page. The handler may be async.
+ * The `<form>` of the Form family, directly under `Form`, with `onSubmit={form.handleSubmit(...)}`: `noValidate`
+ * (the zod resolver validates) and no native reload. The handler may be async.
  */
 const FormRoot = React.forwardRef<
   HTMLFormElement,
@@ -187,5 +194,6 @@ export {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
   useFormField,
 };

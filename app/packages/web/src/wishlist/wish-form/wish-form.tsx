@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
@@ -81,7 +81,7 @@ export function WishForm(props: {
   /** Resolves true when the wish was saved, so the form can be emptied. */
   onSend: (input: WishInput) => Promise<boolean>;
 }) {
-  const form = useForm<WishFields>({
+  const form = useFieldForm<WishFields>({
     resolver: zodResolver(wishSchema),
     defaultValues: EMPTY_FIELDS,
   });

@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
-import { Form, FormRoot } from "../form";
+import { Form, FormRoot, useFieldForm } from "../form";
 import { Input } from "../../input/input";
 import { Field } from "./field";
 
@@ -12,7 +11,7 @@ afterEach(cleanup);
 type Values = { diameterCm: string };
 
 function Demo(props: { optional?: boolean; suffix?: string }) {
-  const form = useForm<Values>({ defaultValues: { diameterCm: "" } });
+  const form = useFieldForm<Values>({ defaultValues: { diameterCm: "" } });
   return (
     <Form {...form}>
       <FormRoot>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import { localToday, specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
@@ -15,6 +15,7 @@ import {
 } from "../../../../collection";
 import { currentTimeZone, SIGN_IN, type ApiError } from "../../../../shared/data";
 import { useOwnZones } from "./save-step/use-own-zones";
+import { useFieldForm } from "@/shared/ui/fields/form/form";
 
 type Token = () => Promise<string | undefined>;
 
@@ -55,7 +56,7 @@ function useMarkerPart(
 ) {
   const [rule, setRule] = useState<MarkerRule | null>(null);
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<CreateFields>({ defaultValues: markerFormStart(today) });
+  const form = useFieldForm<CreateFields>({ defaultValues: markerFormStart(today) });
   useServerRefusal(refusal, form.setError, markerRefusalFields);
   // The form takes the preset of the long form once per species and rule. A step that comes back for the same species
   // keeps the marker the keeper typed (US-ONB-01), so the preset is not set again on every visit.

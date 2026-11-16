@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday } from "@pflanzendex/core";
 import { useEffect, useRef, useState } from "react";
-import { useForm, useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
+import { useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { currentTimeZone } from "@/shared/data";
 import { cn } from "@/shared/lib/utils";
 import { CourseFields, TermFields } from "../../../treatment-form/treatment-form";
@@ -68,7 +68,7 @@ export function PlanForm(props: {
   onSend: (input: TreatmentInput) => Promise<boolean>;
 }) {
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<TreatmentFields>({
+  const form = useFieldForm<TreatmentFields>({
     resolver: zodResolver(treatmentSchema),
     defaultValues: treatmentDefaults(today),
   });

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import {
@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -70,7 +71,7 @@ export function WishForm(props: {
   /** Resolves true when the wish was saved, so the form can be emptied. */
   onCreate: (input: EquipmentWishInput) => Promise<boolean>;
 }) {
-  const form = useForm<WishFields>({
+  const form = useFieldForm<WishFields>({
     resolver: zodResolver(wishSchema),
     defaultValues: EMPTY_WISH,
   });
