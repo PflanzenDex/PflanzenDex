@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { Button } from "@/shared/ui/button/button";
 import {
   DelayedSkeleton,
   useHeldLoader,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { useRequest } from "../../shared/data";
 import { loadDeletion, type DeletionState } from "../privacy-api";
 import { DELETION_KEY, useDeletionAction } from "./use-deletion-action/use-deletion-action";
 import { DeletionBody, DeletionFooter, day, type Step } from "./deletion-steps/deletion-steps";
+import table from "./deletion-card.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -23,15 +28,16 @@ function deletionValue(state: DeletionState | undefined, waiting: boolean): Reac
 }
 
 /**
- * Deleting the own account with a grace period (US-ACC-04): a row "Konto löschen" that shows the state, and its layer.
- * Not yet requested, the layer names what goes and stays (step 1), then asks for the word LÖSCHEN (step 2); the footer
- * with the one filled action stays below the scroll region (US-QS-15). Requested, the layer shows the date and can take
- * the request back. A closed layer loads nothing; the row needs only the state (P-10: a failure stays in the row).
+ * Deleting the own account with a grace period (US-ACC-04): a red plain "Konto löschen" below the export, with the state
+ * under it (SG-BTN-03, F-0303), and its layer. Not yet requested, the layer names what goes and stays (step 1), then asks
+ * for the word LÖSCHEN (step 2); the footer with the one filled action stays below the scroll region (US-QS-15).
+ * Requested, the layer shows the date and can take the request back. A closed layer loads nothing; the row needs only the
+ * state (P-10: a failure stays in the row).
  */
 export function DeletionCard(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadDeletion(props.api, t), [props.api]);
   const r = useRequest({ queryKey: DELETION_KEY, fresh: true, token: props.token, load });
-  const { open, closeLayer } = useLayer("delete");
+  const { open, openLayer, closeLayer } = useLayer("delete");
   const act = useDeletionAction({ api: props.api, token: props.token, loaded: r.value });
   const [step, setStep] = useState<Step>(1);
   const [typed, setTyped] = useState("");
@@ -52,7 +58,22 @@ export function DeletionCard(props: { api: string; token: Token }) {
     <LayerPart
       id="delete"
       title="Konto löschen?"
-      value={deletionValue(state, waiting)}
+      opener={
+        <div className="@lg:col-span-2 mt-3 grid justify-items-start gap-1">
+          <Button
+            type="button"
+            variant="destructive-plain"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            onClick={(event) => openLayer(event.currentTarget)}
+          >
+            {t("open")}
+          </Button>
+          <div className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+            {deletionValue(state, waiting)}
+          </div>
+        </div>
+      }
       primaryAction={
         <DeletionFooter
           state={state}

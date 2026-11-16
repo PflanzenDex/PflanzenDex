@@ -78,7 +78,7 @@ const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
           {title ? <p className="font-semibold">{title}</p> : null}
           {children ? <div>{children}</div> : null}
           {action ? (
-            <Button variant="outline" size="sm" className="mt-2" onClick={action.onClick}>
+            <Button variant="tinted" size="sm" className="mt-2" onClick={action.onClick}>
               {action.label}
             </Button>
           ) : null}

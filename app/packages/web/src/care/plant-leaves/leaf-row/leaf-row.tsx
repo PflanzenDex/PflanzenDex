@@ -12,7 +12,7 @@ const t = texts(table);
 const mm = (value: number | null): string => (value === null ? t("unknown") : t("size", { value }));
 
 /**
- * One leaf of the list (US-WAC-07): its date and sizes, with "Entfernen" on the same line, and the note below. "Entfernen"
+ * One leaf of the list (US-WAC-07): its date and sizes, with "Blatt entfernen" on the same line, and the note below. "Blatt entfernen"
  * asks first (P-10); the question then takes the room below the note, so the row keeps its compact line otherwise.
  */
 export function LeafRow(props: { row: Leaf; busy: boolean; onRemove: (row: Leaf) => void }) {
@@ -29,7 +29,7 @@ export function LeafRow(props: { row: Leaf; busy: boolean; onRemove: (row: Leaf)
         {asking ? null : (
           <Button
             type="button"
-            variant="outline"
+            variant="destructive-plain"
             size="touch"
             className="w-auto shrink-0"
             disabled={props.busy}
@@ -55,7 +55,7 @@ export function LeafRow(props: { row: Leaf; busy: boolean; onRemove: (row: Leaf)
             >
               {t("removeConfirm")}
             </Button>
-            <Button type="button" variant="outline" size="touch" onClick={() => setAsking(false)}>
+            <Button type="button" variant="plain" size="touch" onClick={() => setAsking(false)}>
               {t("cancel")}
             </Button>
           </div>

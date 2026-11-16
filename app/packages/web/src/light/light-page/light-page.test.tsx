@@ -292,6 +292,22 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect(screen.getByRole("button", { name: "Lichtzone löschen" })).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-BTN-03 'Lichtzone löschen' is a red plain button and the last action of the layer", async () => {
+    fakeServer({ zones: [zone] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    const remove = screen.getByRole("button", { name: "Lichtzone löschen" });
+    expect(remove.className.split(/\s+/)).toContain("text-destructive");
+    expect(remove.className.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
+    // The layer's own wrapper holds its form and the delete control; the control comes last in it.
+    const layer = remove.parentElement as HTMLElement;
+    expect(layer.querySelectorAll("button").item(layer.querySelectorAll("button").length - 1)).toBe(
+      remove,
+    );
+  });
+
   it("US-QS-19 deleting can be cancelled; the rows have no delete button", async () => {
     fakeServer({ zones: [zone] });
     render(

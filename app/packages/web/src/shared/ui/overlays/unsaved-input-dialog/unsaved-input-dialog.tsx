@@ -7,7 +7,7 @@ const t = texts(table);
 
 /**
  * "Eingabe verwerfen?" (US-QS-32, SG-FORM-06, SG-SHEET-05): a close or Back with typed input that is not saved asks first.
- * "Weiter bearbeiten" (and Escape) keeps the form and its input, and it is the default; "Verwerfen" leaves them. One
+ * "Weiter bearbeiten" (and Escape) keeps the form and its input, and it is the default; "Eingabe verwerfen" leaves them. One
  * dialog, two verbs, never "Ja" or "Nein". Used by the plant forms (US-QS-15) and by the layers (`LayerSheet`).
  */
 export function UnsavedInputDialog(props: {
@@ -33,7 +33,7 @@ export function UnsavedInputDialog(props: {
           <Button type="button" size="touch" onClick={props.onKeep}>
             {t("keep")}
           </Button>
-          <Button type="button" size="touch" variant="outline" onClick={props.onDiscard}>
+          <Button type="button" size="touch" variant="destructive-plain" onClick={props.onDiscard}>
             {t("discard")}
           </Button>
         </div>

@@ -74,7 +74,7 @@ describe("US-POK-10 collector rank and progress", () => {
 });
 
 describe("US-POK-10 the progress row reads as a button (issue 1045)", () => {
-  it("US-POK-10 the row is an outline button that opens the layer, not a grey pill", () => {
+  it("US-POK-10 · US-QS-32 the row is a tinted button that opens the layer, not a grey pill", () => {
     render(
       <MemoryRouter>
         <ProgressRow caught={3} uncounted={0} />
@@ -82,7 +82,7 @@ describe("US-POK-10 the progress row reads as a button (issue 1045)", () => {
     );
     const button = screen.getByRole("button", { name: /– Fortschritt$/ });
     expect(button.getAttribute("aria-haspopup")).toBe("dialog");
-    expect(button.className).toContain("text-primary");
+    expect(button.className.split(/\s+/)).toContain("bg-accent");
     expect(button.className).not.toContain("border-border");
   });
 });

@@ -33,7 +33,7 @@ export function Popover(props: PopoverProps) {
       <Button
         ref={triggerRef}
         type="button"
-        variant="outline"
+        variant="tinted"
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-controls={open ? id : undefined}

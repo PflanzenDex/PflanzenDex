@@ -38,6 +38,19 @@ describe("EmptyState (US-QS-07, DS-26, P-09)", () => {
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-BTN-01 the error state's next step is a tinted button, not an outline one", () => {
+    render(
+      <EmptyState
+        variant="error"
+        title="Laden fehlgeschlagen"
+        action={{ label: "Erneut versuchen", onClick: () => undefined }}
+      />,
+    );
+    const classes = screen.getByRole("button", { name: "Erneut versuchen" }).className.split(/\s+/);
+    expect(classes).toContain("bg-accent");
+    expect(classes.some((c) => /^border(-|$)/.test(c))).toBe(false);
+  });
+
   it("US-QS-21 compact drops the icon tile and keeps the title and the next step (issue 1343)", () => {
     const { container } = render(
       <EmptyState compact title="Leer" action={{ label: "Weiter", href: "/x" }} />,

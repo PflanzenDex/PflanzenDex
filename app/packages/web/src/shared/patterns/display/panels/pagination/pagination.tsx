@@ -57,7 +57,7 @@ export function Pagination(props: PaginationProps) {
         <li>
           <Button
             type="button"
-            variant="outline"
+            variant="plain"
             size="icon"
             aria-label="Vorherige Seite"
             disabled={page <= 1}
@@ -83,7 +83,7 @@ export function Pagination(props: PaginationProps) {
         <li>
           <Button
             type="button"
-            variant="outline"
+            variant="plain"
             size="icon"
             aria-label="Nächste Seite"
             disabled={page >= pageCount}

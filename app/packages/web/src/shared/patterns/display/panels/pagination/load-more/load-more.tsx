@@ -100,7 +100,7 @@ export function LoadMore(props: LoadMoreProps) {
         <Button
           ref={buttonRef}
           type="button"
-          variant="outline"
+          variant="plain"
           disabled={pending}
           aria-busy={pending || undefined}
           onClick={onClick}

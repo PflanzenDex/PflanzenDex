@@ -95,7 +95,7 @@ describe("US-QS-32 a settings group with its own save asks before it discards ty
     await userEvent.type(name, " Beispiel");
     await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
     const question = await screen.findByRole("dialog", QUESTION);
-    await userEvent.click(within(question).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(screen.queryByLabelText("Anzeigename")).toBeNull());
     expect(address).not.toContain("sheet=profile");
   });
