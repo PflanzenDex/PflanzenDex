@@ -213,11 +213,11 @@ describe("US-BES-02 Seite Sammlung", () => {
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
 
-  it("US-ONB-01 Weitere Pflanze opens the quick flow, not the species choice", async () => {
+  it("US-ONB-01 Pflanze anlegen (the plus) opens the quick flow, not the species choice", async () => {
     fakeServer({ specimens: [specimen()] });
     const [onAdd, onSpeciesChoose] = [vi.fn(), vi.fn()];
     render(page({ onAdd, onSpeciesChoose }));
-    await userEvent.click(await screen.findByRole("button", { name: "Weitere Pflanze" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     expect(onAdd).toHaveBeenCalledOnce();
     expect(onSpeciesChoose).not.toHaveBeenCalled();
   });

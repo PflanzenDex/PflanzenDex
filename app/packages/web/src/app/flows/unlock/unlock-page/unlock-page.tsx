@@ -57,10 +57,10 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
       <h1 id="unlock-title" className="text-2xl font-semibold">
         Diese Funktion gibt es hier nicht
       </h1>
-      <p>Zurück zum Start findest du alles, was die App für dich bereithält.</p>
+      <p>Unter dieser Adresse findest du keine Funktion.</p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button asChild>
-          <Link to={PATHS.today}>Zum Start</Link>
+          <Link to={PATHS.today}>Zu Heute</Link>
         </Button>
         <Button asChild variant="outline">
           <Link to={accountAddress("functions")}>Alle Funktionen ansehen</Link>

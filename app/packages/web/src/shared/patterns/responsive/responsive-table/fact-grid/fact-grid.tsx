@@ -18,6 +18,8 @@ export const isUnknown = (value: React.ReactNode): boolean =>
 
 export type FactGridProps = {
   facts: readonly Fact[];
+  /** The words of the fold for a count of unknown facts; the default is "1 Angabe fehlt" (US-QS-24, US-QS-32). */
+  countText?: (count: number) => string;
   /**
    * The next step for the unknown facts (P-09): an opener or a link of the caller, e.g. a `LayerOpener` or a link to
    * the species profile. Without one a neutral sentence says what to do.
@@ -28,13 +30,13 @@ export type FactGridProps = {
 
 /** The fold line of unknown facts with its German plural: "1 Angabe fehlt", "12 Angaben fehlen" (US-QS-24). */
 export const missingText = (count: number): string =>
-  count === 1 ? "1 Angabe fehlt" : `${count} Angaben fehlen`;
+  count === 1 ? "1\u00a0Angabe fehlt" : `${count}\u00a0Angaben fehlen`;
 
 /**
  * The known facts as a compact label/value grid; the unknown ones fold into ONE line with their count, their names
  * behind the count and the next step beside it (US-QS-24, P-08, P-09, P-10). A view with no unknown fact shows no line.
  */
-export function FactGrid({ facts, next, className }: FactGridProps) {
+export function FactGrid({ facts, next, className, countText = missingText }: FactGridProps) {
   const known = facts.filter((f) => !isUnknown(f.value));
   const unknown = facts.filter((f) => isUnknown(f.value)).map((f) => f.label);
   return (
@@ -54,7 +56,9 @@ export function FactGrid({ facts, next, className }: FactGridProps) {
           ))}
         </dl>
       ) : null}
-      {unknown.length > 0 ? <UnknownFold labels={unknown} next={next} /> : null}
+      {unknown.length > 0 ? (
+        <UnknownFold labels={unknown} next={next} countText={countText} />
+      ) : null}
     </div>
   );
 }
@@ -65,13 +69,21 @@ export function FoldNext() {
 }
 
 /** One line: the count opens the names of the missing facts, the next step stands beside it (US-QS-24). */
-function UnknownFold({ labels, next }: { labels: readonly string[]; next?: React.ReactNode }) {
+function UnknownFold({
+  labels,
+  next,
+  countText,
+}: {
+  labels: readonly string[];
+  next?: React.ReactNode;
+  countText: (count: number) => string;
+}) {
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-2 text-muted-foreground">
       <details className="min-w-0">
         {/* `relative`: the sr-only name list is absolutely positioned; without a positioned box it escapes an inner scroll region and makes the page scroll (US-QS-15, DS-61). */}
         <DisclosureSummary className="relative inline-flex w-auto gap-2 rounded-sm tabular-nums focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-          <span>{missingText(labels.length)}</span>
+          <span>{countText(labels.length)}</span>
           <span className="sr-only"> (Namen anzeigen)</span>
         </DisclosureSummary>
         <p className="m-0 break-words pb-2 text-foreground">{labels.join(", ")}</p>

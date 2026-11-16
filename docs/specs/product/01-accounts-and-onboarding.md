@@ -72,7 +72,7 @@ Acceptance criteria:
 - Given the identity service answers that the user does not exist (404), then the removal counts as done and the job goes on.
 - Given the identity service refuses (401, 403, 5xx) or does not answer, then the job fails with the error code `privacy.identity_removal_failed`, nothing is erased, and the job retries like its other steps (P-10).
 - Given the identity service is not configured (one of its settings missing), then the API starts, the startup log names the missing settings without any value, the removal stays pending, and the operator removes the user by hand (runbook) and marks it in "Fristen".
-- Given open identity removals, when the operator opens "Fristen", then each shows its sign-in subject and its completion time, in pages of five (as the invitation list does).
+- Given open identity removals, when the operator opens "Löschfristen", then each shows its sign-in subject and its completion time, in pages of five (as the invitation list does).
 - Given an open identity removal, when the operator marks it removed, then the log entry is closed (`identity_removed_at` set, subject cleared). A second mark changes nothing and answers success; an unknown entry answers 404 `privacy.entry_not_found`; a plant keeper gets `access.denied` and nothing changes.
 - Given the identity service settings, when the application answers, logs or writes the database, then the client secret appears nowhere.
 

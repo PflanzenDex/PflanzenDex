@@ -130,7 +130,7 @@ export function FunctionLayer(props: {
       <div className="flex min-w-0 flex-col gap-3">
         <p className="m-0">{FUNCTION_PURPOSES[entry.id]}</p>
         {feature === undefined ? (
-          <p className="m-0 text-sm text-muted-foreground">{t("keeper.core")}</p>
+          <p className="m-0 text-sm text-muted-foreground">{t("keeper.core", { name })}</p>
         ) : (
           <KeeperSwitch
             feature={feature}

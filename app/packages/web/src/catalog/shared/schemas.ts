@@ -25,7 +25,7 @@ export const proposalSchema = z
     ),
     softLeaf: z.enum(["", "yes", "no"]),
     growthMeasure: required("Wähle das Wachstumsmaß."),
-    etiolationSigns: required("Beschreibe die Vergeilung-Anzeichen."),
+    etiolationSigns: required("Beschreibe die Vergeilungsanzeichen."),
     successCriteria: required("Beschreibe die Erfolgskriterien."),
     germanName: optional,
     englishName: optional,

@@ -25,7 +25,7 @@ export function ZoneLayer(props: {
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   return (
-    <LayerSheet id={zoneLayerId(zone.id)} title="Lichtzone bearbeiten">
+    <LayerSheet id={zoneLayerId(zone.id)} title="Lichtzone ändern">
       <div className="flex flex-col gap-4">
         <ZoneForm
           start={zone}

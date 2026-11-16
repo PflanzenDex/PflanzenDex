@@ -151,7 +151,7 @@ function Row(props: Props) {
       <Button
         type="button"
         size="icon"
-        aria-label="Weitere Pflanze"
+        aria-label="Pflanze anlegen"
         onClick={props.onSpeciesChoose}
       >
         <Plus aria-hidden="true" className="size-5" />

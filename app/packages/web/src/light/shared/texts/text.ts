@@ -23,13 +23,13 @@ export const zoneName = (zones: readonly LightZone[], id: string | null): string
 
 const FIELDS: Record<string, string> = {
   name: "Name",
-  luxCeiling: "Lux-Decke",
+  luxCeiling: "Lux-Obergrenze",
   ppfd: "PPFD",
   sortOrder: "Reihenfolge",
   species: "Art",
   lightZoneId: "Lichtzone",
-  lightDemandLux: "Lux-Bedarf",
-  standardLevel: "Standard-Stufe",
+  lightDemandLux: "Lichtbedarf",
+  standardLevel: "Standard-Lichtzone",
 };
 const ZONE_USER_KIND: Record<ZoneUser["kind"], string> = {
   location: "Standort",
@@ -49,16 +49,16 @@ export function fieldNames(f: ApiError): string[] {
 
 const REASON: Record<string, string> = {
   standard:
-    "Die Art bleibt bei ihrer Standard-Stufe: die nächste Zone wäre mehr Licht als sie braucht (mehr Licht bringt Stress).",
+    "Die Art bleibt bei ihrer Standard-Lichtzone: die nächste Zone wäre mehr Licht als sie braucht (mehr Licht bringt Stress).",
   promoted:
-    "Der Lux-Bedarf erreicht mindestens 80 % der Lux-Decke der Stufe darunter und liegt nicht mehr als 30 % unter der Decke dieser Zone.",
+    "Der Lichtbedarf erreicht mindestens 80 % der Lux-Obergrenze der Zone darunter und liegt nicht mehr als 30 % unter der Obergrenze dieser Zone.",
   need_to_low_for_higher_zone:
     "Die nächste Zone wäre mehr Licht als die Art braucht (mehr Licht bringt Stress). Sie bleibt hier.",
   soft_leaf:
-    "Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft. Sie bleibt bei der Standard-Stufe.",
+    "Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft. Sie bleibt bei der Standard-Lichtzone.",
   top_zone: "Das ist die höchste Zone deines Kontos.",
   no_need:
-    "Lichtbedarf eintragen: Für diese Art ist kein Lux-Bedarf bekannt, deshalb bleibt die Zone unbekannt. Trage ihn im Katalog ein, dann wird die Zone abgeleitet.",
+    "Lichtbedarf eintragen: Für diese Art ist kein Lichtbedarf bekannt, deshalb bleibt die Zone unbekannt. Trage ihn im Katalog ein, dann wird die Zone abgeleitet.",
   no_adult_zone:
     "Du hast keine Zone für erwachsene Pflanzen. Lege eine zweite Lichtzone an (die erste ist Stecklingslicht).",
 };

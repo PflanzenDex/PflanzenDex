@@ -96,7 +96,7 @@ describe("US-ACH-02 achievements overview", () => {
     expect(within(list).getByText("Steckling bewurzelt")).toBeTruthy();
     expect(list.textContent).toContain("Erreicht am 04.05.2026 mit Aloe 1");
     expect(list.textContent).toContain(
-      "Nächster Schritt: Hake das letzte offene Datum der Kur bei Aloe 2 ab.",
+      "Nächster Schritt: Hake die offene Behandlung bei Aloe 2 ab.",
     );
     await userEvent.click(screen.getByRole("button", { name: /^Wachstum/ }));
     expect((await screen.findByRole("list", { name: "Erfolge" })).textContent).toContain(

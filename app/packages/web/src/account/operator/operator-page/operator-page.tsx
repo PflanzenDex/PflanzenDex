@@ -36,10 +36,10 @@ function Numbers(props: { overview: OperatorOverview }) {
         <dt className="text-sm text-muted-foreground sm:text-base">Konten</dt>
         <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.accounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">
-          {keepTogether(`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`)}
+          {keepTogether(`Aktive Konten (letzte ${o.activeWindowDays} Tage)`)}
         </dt>
         <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.activeAccounts}</dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro Nutzer</dt>
+        <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro aktivem Konto</dt>
         <dd className="m-0 flex flex-col items-start font-semibold [overflow-wrap:anywhere]">
           <span>{costPerUserText(o.costPerUser)}</span>
           {!o.costPerUser.known && o.costPerUser.reason === "no_figure" && <EnterCostButton />}
@@ -56,7 +56,7 @@ function CostLayer(props: { overview: OperatorOverview; actions: Actions }) {
   return (
     <div className="flex flex-col gap-3">
       <LayerNotice notice={props.actions.notice} scope="cost" />
-      <MoreHelp more="Die Kosten pro Nutzer sind dieser Betrag geteilt durch die aktiven Nutzer.">
+      <MoreHelp more="Die Kosten pro aktivem Konto sind dieser Betrag geteilt durch die aktiven Konten.">
         Trage die echten Hosting-Kosten eines Monats ein.
       </MoreHelp>
       <CostForm

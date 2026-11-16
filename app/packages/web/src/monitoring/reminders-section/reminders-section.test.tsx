@@ -46,6 +46,6 @@ describe("US-QS-32 the reminders section while push is not set up", () => {
     expect(screen.queryByText("Browser für Push abmelden")).toBeNull();
     expect(screen.getByRole("button", { name: /^Posteingang/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Wann erinnern\?/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^Pausen je Anlass/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Erinnerungen aussetzen/ })).toBeTruthy();
   });
 });

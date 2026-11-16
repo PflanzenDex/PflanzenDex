@@ -106,8 +106,8 @@ describe("US-ACC-05 operator area: counts, no content", () => {
   it("US-ACC-05 shows accounts and active users, and the cost per user as unknown (P-08)", async () => {
     const facts = await numbers();
     expect(fact(facts, "Konten")).toBe("12");
-    expect(fact(facts, "Aktive Nutzer (letzte 30 Tage)")).toBe("5");
-    expect(fact(facts, "Kosten pro Nutzer")).toMatch(/^unbekannt/);
+    expect(fact(facts, "Aktive Konten (letzte 30 Tage)")).toBe("5");
+    expect(fact(facts, "Kosten pro aktivem Konto")).toMatch(/^unbekannt/);
     expect(facts.textContent).not.toMatch(/€|EUR|\$/);
   });
 
@@ -144,7 +144,7 @@ describe("US-ACC-05 operator area: counts, no content", () => {
 describe("US-ACC-05 monthly cost and cost per user", () => {
   it("US-ACC-05 without a figure: cost per user is unbekannt and Kosten eintragen opens the cost layer (P-08, P-09)", async () => {
     const facts = await numbers();
-    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekanntKosten eintragen");
+    expect(fact(facts, "Kosten pro aktivem Konto")).toBe("unbekanntKosten eintragen");
     expect(within(facts).getByText("unbekannt")).toBeTruthy();
     expect(within(facts).getByRole("button", { name: "Kosten eintragen" })).toBeTruthy();
     // The monthly cost is shown once, in its own overview row (US-QS-15), not in the sheet.
@@ -174,7 +174,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       },
     });
     const facts = await numbers();
-    expect(fact(facts, "Kosten pro Nutzer")).toMatch(
+    expect(fact(facts, "Kosten pro aktivem Konto")).toMatch(
       /^10,00\s€ \(September 2026, manuell eingetragen\)$/,
     );
     expect(within(facts).queryByRole("button", { name: "Kosten eintragen" })).toBeNull();
@@ -188,7 +188,9 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       costPerUser: { known: false, reason: "no_active_accounts" },
     });
     const facts = await numbers();
-    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
+    expect(fact(facts, "Kosten pro aktivem Konto")).toBe(
+      "unbekannt: es gibt noch keine aktiven Konten",
+    );
   });
 
   it("US-QS-24 US-ACC-05 the cost form has no heading that repeats the layer title and its save button sits in a sticky footer", async () => {
@@ -742,7 +744,7 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
     });
 });
 
-describe("US-ACC-04 operator page: the card Fristen", () => {
+describe("US-ACC-04 operator page: the topic Löschfristen", () => {
   it("US-ACC-04 marking an identity removal posts once and confirms it in words (issue 1673)", async () => {
     const identity = {
       kind: "identity",
@@ -759,7 +761,7 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     );
     deletions = { warningDays: 7, near: [], past: [], identityRemovals: [identity] };
     await open();
-    await topic(/^Fristen/);
+    await topic(/^Löschfristen/);
     await userEvent.click(
       await screen.findByRole("button", { name: "Als entfernt markieren, Kennung sub-1" }),
     );
@@ -769,33 +771,33 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     ]);
   });
 
-  it("US-ACC-04 a tap on the row Fristen while its counts still load opens the layer, which shows them once they arrive (issue 1722)", async () => {
+  it("US-ACC-04 a tap on the row Löschfristen while its counts still load opens the layer, which shows them once they arrive (issue 1722)", async () => {
     let answer: () => void = () => undefined;
     deletionsGate = new Promise<void>((resolve) => {
       answer = resolve;
     });
     await open();
     // The row shows its loading text while the counts are on their way (DS-57: after the short delay).
-    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     await userEvent.click(row);
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("heading", { name: "Fristen" })).toBeTruthy();
+    expect(within(dialog).getByRole("heading", { name: "Löschfristen" })).toBeTruthy();
     answer();
-    expect(await within(dialog).findByText("Keine offenen Löschungen")).toBeTruthy();
+    expect(await within(dialog).findByText("Nichts zu tun.")).toBeTruthy();
     expect(screen.getByRole("dialog")).toBe(dialog);
   });
 
-  it("US-ACC-04 a press on the row Fristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
+  it("US-ACC-04 a press on the row Löschfristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
     let answer: () => void = () => undefined;
     deletionsGate = new Promise<void>((resolve) => {
       answer = resolve;
     });
     await open();
-    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     fireEvent.pointerDown(row);
     answer();
     // The counts arrive while the press is still on the row; the row must stay the one the press started on.
-    expect(await screen.findByRole("button", { name: /0 nahe/ })).toBe(row);
+    expect(await screen.findByRole("button", { name: /Keine Frist offen/ })).toBe(row);
     fireEvent.pointerUp(row);
     fireEvent.click(row);
     expect(await screen.findByRole("dialog")).toBeTruthy();

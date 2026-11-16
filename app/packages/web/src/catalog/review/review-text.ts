@@ -43,7 +43,8 @@ export function summaryText(list: ReviewList, now: number): string {
 /** Why the profile cannot be approved yet, in words a reviewer can act on. */
 export function issueText(issue: ApprovalIssue): string {
   if (issue.reason === "name_approved") return t("issue.nameApproved");
-  const name = FIELDS[issue.field] ?? issue.field;
+  // An API field name may be unknown to the table: it is shown as it is (P-10).
+  const name = (FIELDS as Partial<Record<string, string>>)[issue.field] ?? issue.field;
   return issue.reason === "source_missing"
     ? "Quelle fehlt (Pflicht für Lichtbedarf und Ruhephase)"
     : `${name} fehlt`;

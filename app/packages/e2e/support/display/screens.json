@@ -391,7 +391,7 @@
       }
     ],
     "layerFile": "light/zones/zone-layer/zone-layer.tsx",
-    "title": "Lichtzone bearbeiten"
+    "title": "Lichtzone ändern"
   },
   {
     "id": "collection-view-plants-manage-locations-sheet-hints",
@@ -405,7 +405,7 @@
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&sheet=reference",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
-    "title": "Lichthunger und Einstufung"
+    "title": "Lichtbedarf und Einstufung"
   },
   {
     "id": "collection-view-plants-group-location",
@@ -586,7 +586,7 @@
       }
     ],
     "layerFile": "light/zones/location-layer/location-layer.tsx",
-    "title": "Standort bearbeiten"
+    "title": "Standort ändern"
   },
   {
     "id": "collection-view-plants-manage-locations-list-locations-sheet-hints",
@@ -600,7 +600,7 @@
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations&sheet=reference",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
-    "title": "Lichthunger und Einstufung"
+    "title": "Lichtbedarf und Einstufung"
   },
   {
     "id": "today-sheet-hints",
@@ -769,7 +769,7 @@
     "id": "account-achievements",
     "account": "test2",
     "path": "/account/achievements",
-    "title": "Erfolge"
+    "title": "Erfolge und Rückblick"
   },
   {
     "id": "account-reminders",
@@ -970,7 +970,7 @@
     "account": "test3",
     "path": "/operator?sheet=fristen",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
-    "title": "Betreiber: Fristen"
+    "title": "Betreiber: Löschfristen"
   },
   {
     "id": "operator-sheet-registrierung",
@@ -1063,7 +1063,7 @@
     "account": "test2",
     "path": "/account/achievements?sheet=pause",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
-    "title": "Pause eintragen"
+    "title": "Urlaub eintragen"
   },
   {
     "id": "today-tasks",
@@ -1193,7 +1193,7 @@
       }
     ],
     "layerFile": "care/measure/measure-page/course-layer/course-layer.tsx",
-    "title": "Verlauf: Pflanze"
+    "title": "Messverlauf: Pflanze"
   },
   {
     "id": "collection-equipment-item",

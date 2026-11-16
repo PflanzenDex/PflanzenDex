@@ -34,7 +34,7 @@ export function CodeForm(props: {
   const pending = props.running || form.formState.isSubmitting;
   return (
     <section aria-label="Code eingeben" className="flex min-w-0 flex-col gap-3">
-      <p className="text-muted-foreground">Dein Code geht als Anfrage an die Person.</p>
+      <p className="text-muted-foreground">Wer dir den Code gegeben hat, bekommt eine Anfrage.</p>
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <TextField

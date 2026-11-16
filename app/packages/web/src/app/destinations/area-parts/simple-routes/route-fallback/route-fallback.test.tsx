@@ -57,7 +57,7 @@ describe("routeFallbackOf: 'Sammlung' follows the mode the address names (US-QS-
   it("US-QS-14 issue 1727 · the address names the mode: the species show the Pokédex's skeleton", async () => {
     await expectOneLoadingStatus(
       <>{routeFallbackOf("/collection", "?view=species", state)}</>,
-      "Pokédex wird geladen …",
+      "Arten werden geladen …",
     );
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Sammlung");
   });

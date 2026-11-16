@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { evaluateAchievements } from "@pflanzendex/core";
 import { achievementsView } from "./view";
 import { readAchievementFacts, type FactSources } from "./facts";
 
@@ -107,13 +108,31 @@ describe("US-ACH-01 facts from the own data", () => {
       { specimenId: "a", date: "2026-03-02", quality: "healthy", hasPhoto: true },
       { specimenId: "a", date: "2026-03-09", quality: "etiolated", hasPhoto: false },
     ]);
-    // One course with a done and an open date; the single treatment without course is no course.
+    // One course with a done and an open date; the single treatment without course is a course of one date (RR-Q2).
     expect(facts.treatmentCourses).toEqual([
       { specimenId: "a", dates: [{ doneOn: "2026-02-01" }, { doneOn: null }] },
+      { specimenId: "a", dates: [{ doneOn: "2026-01-01" }] },
     ]);
     // 23:30 UTC on 1 July is already 2 July in Berlin (NFR-08); only finished handovers count.
     expect(facts.handovers).toEqual([{ date: "2026-07-02", specimenId: "b" }]);
     expect(names.get("a")).toBe("Aloe a");
+  });
+
+  it("US-ACH-01 · US-ACH-07 a finished single treatment counts as a completed treatment: it earns the achievement and the year counts it (RR-Q2, F-0383)", async () => {
+    const s = sources({
+      treatments: {
+        open: async () => new Map(),
+        doneMany: async () => new Map([["a", [treatment("t9", null, "2026-11-14")]]]),
+      },
+    });
+    const { facts } = await readAchievementFacts(s, "anna", "Europe/Berlin");
+    expect(facts.treatmentCourses).toEqual([
+      { specimenId: "a", dates: [{ doneOn: "2026-11-14" }] },
+    ]);
+    const earned = evaluateAchievements(facts, "2026-11-15").find(
+      (a) => a.id === "treatment-completed",
+    );
+    expect(earned).toMatchObject({ earned: true, earnedOn: "2026-11-14", specimenId: "a" });
   });
 
   it("US-ACH-01 a specimen whose species is unknown has no dormancy period (P-08)", async () => {
@@ -170,7 +189,7 @@ describe("NFR-12 one read per kind for all specimens", () => {
 });
 
 describe("US-ACH-02 overview view", () => {
-  it("US-ACH-02 earned items carry the specimen name, open ones the next step with a name", async () => {
+  it("US-ACH-02 earned items carry the specimen name", async () => {
     const v = await achievementsView(sources(), null, {
       userId: "anna",
       timeZone: "Europe/Berlin",
@@ -183,14 +202,33 @@ describe("US-ACH-02 overview view", () => {
       "cutting-rooted",
       "Aloe a",
     ]);
-    expect(care?.open.find((o) => o.id === "treatment-completed")?.nextStep).toMatchObject({
-      key: "treatment-completed.next",
-      specimenName: "Aloe a",
-    });
+    // The finished single treatment of "Aloe a" completes a treatment (RR-Q2), the open course does not matter then.
+    expect(care?.earned.map((e) => [e.id, e.specimenName])).toContainEqual([
+      "treatment-completed",
+      "Aloe a",
+    ]);
     expect(v.groups[2]?.earned[0]).toMatchObject({
       id: "first-handover",
       earnedOn: "2026-07-02",
       specimenName: "Aloe b",
+    });
+  });
+
+  it("US-ACH-02 an open treatment names its specimen in the next step", async () => {
+    const s = sources({
+      treatments: {
+        open: async () => new Map([["a", [treatment("t3", "c1", null)]]]),
+        doneMany: async () => new Map([["a", [treatment("t1", "c1", "2026-02-01")]]]),
+      },
+    });
+    const v = await achievementsView(s, null, {
+      userId: "anna",
+      timeZone: "Europe/Berlin",
+      now: new Date("2026-10-15T10:00:00Z"),
+    });
+    expect(v.groups[0]?.open.find((o) => o.id === "treatment-completed")?.nextStep).toMatchObject({
+      key: "treatment-completed.next",
+      specimenName: "Aloe a",
     });
   });
 

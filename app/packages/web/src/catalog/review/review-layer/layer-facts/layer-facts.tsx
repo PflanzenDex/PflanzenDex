@@ -4,6 +4,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { ageText, issueText } from "../../review-text";
 import {
+  FIELDS,
   growthText,
   difficultyText,
   dormancyPhase,
@@ -14,6 +15,9 @@ import {
 import table from "./layer-facts.de.json";
 
 const t = texts(table);
+
+/** The label of a field in the words of the shared field table (US-QS-32); the key stands in for an unknown one. */
+const field = (key: keyof typeof FIELDS): string => FIELDS[key];
 
 /**
  * One label and its value. Beside each other the label takes the room it needs and the value the rest; in a box narrower
@@ -34,11 +38,11 @@ function Facts(props: { entry: ReviewEntry }) {
   if (!s) return <p className="text-sm text-muted-foreground">{t("facts.unavailable")}</p>;
   return (
     <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-3 [overflow-wrap:anywhere] @min-[12rem]:grid-cols-[auto_minmax(0,1fr)] @min-[12rem]:gap-y-1 [&_dd]:m-0 [&_dt]:text-muted-foreground">
-      <Row label={t("label.difficulty")}>{difficultyText(s.difficulty)}</Row>
-      <Row label={t("label.standardLevel")}>{levelText(s.standardLevel)}</Row>
-      <Row label={t("label.light")}>{lux(s.lightDemandLux)}</Row>
+      <Row label={field("difficulty")}>{difficultyText(s.difficulty)}</Row>
+      <Row label={field("standardLevel")}>{levelText(s.standardLevel)}</Row>
+      <Row label={field("lightDemandLux")}>{lux(s.lightDemandLux)}</Row>
       <Row label={t("label.dormancy")}>{dormancyPhase(s)}</Row>
-      <Row label={t("label.growth")}>{growthText(s.growthMeasure)}</Row>
+      <Row label={field("growthMeasure")}>{growthText(s.growthMeasure)}</Row>
       <Row label={t("label.source")}>{orUnknown(s.source)}</Row>
     </dl>
   );
@@ -54,11 +58,11 @@ export function LayerTexts(props: { entry: ReviewEntry }) {
   return (
     <dl className="m-0 flex flex-col gap-3 [overflow-wrap:anywhere] [&_dd]:m-0 [&_dt]:text-muted-foreground">
       <div>
-        <dt>{t("label.etiolation")}</dt>
+        <dt>{field("etiolationSigns")}</dt>
         <dd>{orUnknown(s.etiolationSigns)}</dd>
       </div>
       <div>
-        <dt>{t("label.success")}</dt>
+        <dt>{field("successCriteria")}</dt>
         <dd>{orUnknown(s.successCriteria)}</dd>
       </div>
     </dl>

@@ -134,7 +134,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
 
   it("US-QS-14 · US-POK-06 the address with view=species shows the species mode and its count line", async () => {
     renderAt("/collection?view=species");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
     expect(checked("Arten")).toBe(true);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
@@ -142,7 +142,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
   it("US-QS-14 the stored choice is used when the address has none", async () => {
     window.localStorage.setItem(VIEW_KEY, "species");
     renderAt("/collection");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
     expect(checked("Arten")).toBe(true);
   });
 
@@ -165,7 +165,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
     await userEvent.click(screen.getByText("Arten"));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species");
     expect(window.localStorage.getItem(VIEW_KEY)).toBe("species");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
     expect(document.activeElement).toBe(radio("Arten"));
     expect(document.querySelector("[aria-live=polite]")?.textContent).toContain("Arten");
   });
@@ -180,7 +180,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
     await userEvent.tab();
     await userEvent.keyboard("{Enter}");
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
     expect(document.activeElement).toBe(radio("Arten"));
     await userEvent.tab({ shift: true });
     await userEvent.keyboard(" ");
@@ -192,7 +192,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
     renderAt("/collection");
     await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     await userEvent.click(screen.getByText("Arten"));
-    await screen.findByText("1 gefangen");
+    await screen.findByText("1 Art gefangen");
     await act(async () => window.history.back());
     // A memory router has no browser history: the address entry is what counts, so check the chosen mode is address driven.
     expect(screen.getByTestId("address").textContent).toContain("view=species");
@@ -209,7 +209,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
     await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     await userEvent.click(screen.getByText("Arten"));
     await waitFor(() => expect(checked("Arten")).toBe(true));
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
   });
 });
 
@@ -248,7 +248,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
 
   it("US-QS-14 the wishlist mode is reachable from the keyboard", async () => {
     renderAt("/collection?view=species");
-    await screen.findByText("1 gefangen");
+    await screen.findByText("1 Art gefangen");
     radio("Wünsche").focus();
     await userEvent.keyboard("{Enter}");
     expect(await screen.findByText("0 offene Wünsche")).toBeTruthy();
@@ -273,12 +273,12 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
     expect(checked("Arten")).toBe(true);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByText(/Lege in der Sammlung eine Pflanze an/)).toBeTruthy();
-    expect(await arrangement()).toEqual(["Pokédex", "Schwierigkeit *"]);
+    expect(await arrangement()).toEqual(["Name", "Schwierigkeit *"]);
   });
 
   it("US-QS-32 · SG-ICON-01 the chosen arrangement in the layer Ansicht is marked by a check icon, not a glyph", async () => {
     renderAt("/collection?view=species");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
     await openView();
     const group = await screen.findByRole("group", { name: "Anordnung der Arten" });
     const [pokedex, difficulty] = within(group).getAllByRole("button");
@@ -289,14 +289,14 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
 
   it("US-QS-14 · issue 1096 the species mode offers the arrangement Pokédex and Schwierigkeit in the layer Ansicht beside the title; the Pokédex is the default", async () => {
     renderAt("/collection?view=species");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
-    expect(await arrangement()).toEqual(["Pokédex *", "Schwierigkeit"]);
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
+    expect(await arrangement()).toEqual(["Name *", "Schwierigkeit"]);
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species&sheet=view");
   });
 
   it("US-QS-14 · issue 1096 choosing Schwierigkeit keeps the species mode, changes the address, announces it and returns the focus to Ansicht", async () => {
     renderAt("/collection?view=species");
-    await screen.findByText("1 gefangen");
+    await screen.findByText("1 Art gefangen");
     await openView();
     await userEvent.click(await screen.findByRole("button", { name: "Schwierigkeit" }));
     expect(screen.getByTestId("address").textContent).toBe(
@@ -308,14 +308,14 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
       expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ansicht" })),
     );
     await openView();
-    await userEvent.click(await screen.findByRole("button", { name: "Pokédex" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Name" }));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
   });
 
   it("US-QS-14 an unknown sort shows the Pokédex", async () => {
     renderAt("/collection?view=species&sort=unsinn");
-    expect(await screen.findByText("1 gefangen")).toBeTruthy();
+    expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
   });
 
   it("US-QS-22 · issue 1096 Wunschliste and Geräte offer no Ansicht, but a hidden stand-in keeps the header's height", async () => {

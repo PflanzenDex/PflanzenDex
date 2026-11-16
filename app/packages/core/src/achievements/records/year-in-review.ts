@@ -86,7 +86,10 @@ const inYear = (date: string | null, year: number): boolean =>
 const byDate = <T extends { date: string }>(list: readonly T[]): T[] =>
   [...list].sort((a, b) => a.date.localeCompare(b.date));
 
-/** A treatment course is completed in the year when every date is ticked off and the last tick falls in the year. */
+/**
+ * A treatment course (a single treatment is a course of one date, RR-Q2) is completed in the year when every date is
+ * ticked off and the last tick falls in the year.
+ */
 function completedIn(course: { doneOn: readonly (string | null)[] }, year: number): boolean {
   const done = course.doneOn.filter((d): d is string => d !== null);
   if (done.length === 0 || done.length !== course.doneOn.length) return false;

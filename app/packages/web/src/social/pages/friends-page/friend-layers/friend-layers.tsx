@@ -81,7 +81,7 @@ export function HelpLayer() {
     <Layer id="help" title={tx("layers.help")}>
       <div className="flex flex-col gap-3">
         <p>{tx("help.code")}</p>
-        <p>{tx("help.sharing")}</p>
+        <p>{tx("help.sharing", { fields: tx("shared.fields") })}</p>
         <p>{tx("help.withdraw")}</p>
       </div>
     </Layer>

@@ -63,7 +63,7 @@ export function DerivationForm({ onDerive }: { onDerive: Derive }) {
         <TextField
           control={control}
           name="lightDemandLux"
-          label="Lux-Bedarf der Art"
+          label="Lichtbedarf der Art"
           suffix="lx"
           type="number"
           inputMode="numeric"
@@ -71,10 +71,10 @@ export function DerivationForm({ onDerive }: { onDerive: Derive }) {
           max={LUX_LIMITS[1]}
           step={1}
         />
-        <SelectField control={control} name="standardLevel" label="Standard-Stufe">
-          <option value="2">Stufe 2</option>
-          <option value="3">Stufe 3</option>
-          <option value="4">Stufe 4</option>
+        <SelectField control={control} name="standardLevel" label="Standard-Lichtzone">
+          <option value="2">Zone 2</option>
+          <option value="3">Zone 3</option>
+          <option value="4">Zone 4</option>
         </SelectField>
         <SoftLeaf control={control} />
         <RefusalAlert sent={sent} />
